@@ -46,23 +46,24 @@ These rules apply to human developers and coding agents working in this reposito
 
 29. UI Context / Control Adapters provide bounded context, not authority.
 30. Prefer native/bound data sources over scraping visible UI text.
-31. DataTable is optional; do not force a host into one data representation.
-32. Object discovery is bounded, cycle-safe, cancellation-aware, and non-executable.
-33. Discoverability never implies tool permission.
-34. Host-defined semantics may enrich discovery but must not be invented by the model.
+31. Support common native host data representations directly; do not force hosts through DataTable or another canonical representation.
+32. DataTable/DataView/DataSet are supported representations, not the canonical Hive contract.
+33. Object discovery is bounded, cycle-safe, cancellation-aware, and non-executable.
+34. Discoverability never implies tool permission.
+35. Host-defined semantics may enrich discovery but must not be invented by the model.
 
 ## Intervention and portability
 
-35. Approval is one intervention type, not the intervention architecture.
+36. Approval is one intervention type, not the intervention architecture.
 36. Intervention requests capture target state/version and must reject stale application.
 37. Competing intervention resolutions are serialized where required.
 38. Configuration export/import uses the same authoritative Hive contracts as runtime persistence.
 39. Credentials are omitted from normal exports and protected when explicitly included.
-40. Import conflicts and compatibility failures are explicit, never silent overwrites.
+41. Import conflicts and compatibility failures are explicit, never silent overwrites.
 
 ## Code quality and testing
 
-41. No empty catch blocks.
+42. No empty catch blocks.
 42. One JSON serialization stack.
 43. No duplicated implementation of the same computation.
 44. Prefer structured error classification over string matching.
@@ -82,4 +83,5 @@ These rules apply to human developers and coding agents working in this reposito
 55. Update architecture before structural code changes.
 56. Complete the active slice fully without implementing future slices.
 57. Example code must use the same public APIs and enforcement boundaries as real hosts.
-58. Every example should have a complete copyable code snippet and expected result.
+59. Examples and automated tests are developed alongside the feature they demonstrate; they are not postponed to a final phase.
+60. Every public example should have a complete copyable code snippet and expected result.
