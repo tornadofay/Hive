@@ -70,9 +70,11 @@ These rules apply to human developers and coding agents working in this reposito
 45. Timeout and budget settings are explicit and validated.
 46. Configuration must actually drive the behavior it configures.
 47. Repeated lookup paths use real indexes.
-48. Every production-facing feature needs normal-path and edge-case tests.
-49. Concurrency, cancellation, timeout, recovery, stale-state, security, and persistence boundaries require deterministic tests.
-50. Do not claim tests or verification that were not actually run.
+48. Every implementation slice needs unit tests, example verification through the public API, and all relevant boundary/edge-case tests before the slice is complete.
+49. Concurrency, cancellation, timeout, recovery, stale-state, security, persistence, provider, MAF, and WinForms boundaries require deterministic tests whenever the slice touches them.
+50. System/end-to-end tests are required for important cross-boundary behavior that unit tests cannot prove; do not replace unit coverage with end-to-end tests.
+51. Edge-case coverage means all known and contract-relevant cases, not a claim that every conceivable future failure is mathematically exhaustible.
+52. Do not claim tests or verification that were not actually run.
 
 ## Documentation and workflow
 
