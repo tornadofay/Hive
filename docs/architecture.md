@@ -563,6 +563,14 @@ Host.WinForms never bypasses Hive.Management.
 48. Phase and slice numbers are ordinal, not version numbers.
 49. Do not create documentation that contradicts these source-of-truth boundaries.
 50. When adding or removing rules in `AGENTS.md`, renumber the whole list and verify that there are no duplicates or gaps.
+51. An Agent's persistent cognitive identity/state may outlive every individual runtime incarnation.
+52. Death ends the current Agent runtime/incarnation; it does not delete the Agent or its persistent cognitive state.
+53. Dream processing may operate while no Agent runtime is active, and may continue across host-application shutdown/restart through durable state.
+54. Dream outputs are simulated/predicted/hypothetical evidence and must never be recorded as actual experience.
+55. Human edits made while an Agent is inactive are part of versioned persistent state and must be incorporated by the next valid wake/reincarnation path.
+56. Questions are first-class, provenance-bearing, specialization-aware cognitive objects; semantically duplicate questions should be avoided when existing evidence is sufficient.
+57. CognitiveAgents remain complete autonomous cognitive entities; CognitiveHive adds collective cognition without owning or replacing member cognition.
+58. New lifecycle, Dream, Question, or collective-cognition behavior must remain additive to the generation that owns it and must not become an implicit prerequisite of the base Agent/Hive.
 
 ---
 
