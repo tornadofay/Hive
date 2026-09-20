@@ -1,252 +1,500 @@
 # Hive — Roadmap (ordered, slice-level implementation path)
 
-This is the granular companion to `docs/architecture.md` Section 8. Each slice is sized to be one GPT session (run-bounded execution). When a slice starts, copy its Objective/Files/Verify into `docs/Hive_Active_Work.md` as the working scratchpad for that session.
+This is the granular companion to `docs/architecture.md`. Each slice is sized to be one GPT session (run-bounded execution).
 
-Numbering is `Phase.Slice` (for example `1.7`) — an ordinal sequence within a phase, not a version string.
+When a slice starts, copy its Objective / Files / Verify into `docs/Hive_Active_Work.md`.
 
-Phases 0–1 are detailed enough to build from directly. Phases 2–9 stay lighter until the project reaches them.
+Status belongs only in `docs/Hive_Current_Status.md`.
 
----
+Numbering is `Phase.Slice`; it is an ordinal implementation sequence, not a version number.
 
-## Phase 0 — Foundations
-
-### 0.1 — Solution & project scaffolding
-
-**Objective:** create the `.sln` and all empty projects (`Hive.Core`, `Hive.Agents`, `Hive.Persistence`, `Hive.Coordination`, `Hive.Tools`, `Hive.Providers.OpenAICompatible`, `Hive.Management`, `Hive.Host.WinForms`, `Hive.Tests`) with correct reference directions.
-
-**Files:** `Hive.sln`, each project's `.csproj`, one placeholder class each.
-
-**Verify:** `dotnet build` succeeds; inspect `Hive.Host.WinForms.csproj` to confirm it references only `Hive.Management`, not Core/Persistence directly.
-
-### 0.2 — Common infrastructure
-
-**Objective:** implement IDs, base error/result types, an `IClock` time abstraction, a base event envelope type, and lock in `System.Text.Json`.
-
-**Files:** `Hive.Core/Foundation/*`.
-
-**Verify:** unit tests for ID equality, a fake `IClock` usable in tests, JSON round-trip of a sample event envelope.
-
-### 0.3 — Generic Resource base model
-
-**Objective:** implement `Resource` (Identity/Owner/Scope/Version/Provenance/Lifecycle/Permissions/Metadata) and the canonical `ResourceScope` enum (`Global/Tenant/User/Workspace/Agent/Runtime/Execution`).
-
-**Files:** `Hive.Core/Resources/*`.
-
-**Verify:** unit test confirming a sample derived resource carries all fields and fails closed when identity is missing.
-
-### 0.4 — Database bootstrap
-
-**Objective:** LocalDB connection, a migration tool (DbUp is the current recommendation), create Hive's own database, first migration.
-
-**Files:** `Hive.Persistence/Migrations/*`, connection configuration.
-
-**Verify:** running the migration tool creates the database with the placeholder table; confirm via direct query.
-
-### 0.5 — Test harness
-
-**Objective:** scaffold `Hive.Tests` (xUnit is the current recommendation) with one trivial passing test.
-
-**Files:** `Hive.Tests/*`.
-
-**Verify:** `dotnet test` shows 1 passing test.
+Phases are deliberately ordered so the platform foundations exist before higher-level cognition, management, and Hive governance depend on them.
 
 ---
 
-## Phase 1 — Multi-Agent Pipeline MVP
+# Phase 0 — Foundations
 
-### 1.1 — Provider / ProviderAccount / Execution Target schema
+## 0.1 — Solution and project scaffolding
 
-**Objective:** these three as concrete `Resource`-derived types with persistence, including the three-state capability field.
+**Objective:** create the solution and projects:
 
-**Files:** `Hive.Core/Providers/{Provider,ProviderAccount,ExecutionTarget,Capability}.cs`, `Hive.Persistence/Providers/*`.
+```text
+Hive.Core
+Hive.Agents
+Hive.Persistence
+Hive.Coordination
+Hive.Tools
+Hive.Providers.OpenAICompatible
+Hive.Management
+Hive.Host.WinForms
+Hive.Example.WinForms
+Hive.Tests
+```
 
-**Verify:** unit test — create a Provider, add a ProviderAccount, query both back.
+**Reference rule:** Host.WinForms and Example.WinForms use Hive.Management for management/persistence operations and do not bypass the facade.
 
-### 1.2 — `ISecretStore`
+**Verify:** solution builds; project references match architecture.
 
-**Objective:** encrypt/decrypt via Windows DPAPI; a redaction helper for logging.
+## 0.2 — Common infrastructure
 
-**Files:** `Hive.Core/Security/ISecretStore.cs`, `Hive.Persistence/Security/DpapiSecretStore.cs`.
+IDs, immutable value objects, typed errors/results, `IClock`, JSON configuration, event envelope, correlation/causation IDs.
 
-**Verify:** unit test — store a fake key, decrypt it back, and confirm the raw DB row does not contain the plaintext.
+**Verify:** unit tests for identity/equality, fake clock, JSON round-trip, typed errors.
 
-### 1.3 — OpenAI-compatible adapter, basic chat call
+## 0.3 — Identity and Resource foundation
 
-**Objective:** the one shared adapter's non-streaming chat completion, parameterized by base URL + key.
+Implement Deployment, Tenant, Principal, User, Session, Workspace, Agent, Runtime, Execution, Resource, ResourceScope, ownership keys, provenance, and lifecycle/version metadata.
 
-**Files:** `Hive.Providers.OpenAICompatible/OpenAICompatibleChatClient.cs`.
+**Verify:** scope/ownership matrix, missing-identity fail-closed tests, immutable identity snapshot tests.
 
-**Verify:** automated test against a local fake HTTP server; one manual smoke test against a real provider.
+## 0.4 — Persistence bootstrap
 
-### 1.4 — Capability-aware target selection
+Hive-owned SQL Server database, LocalDB development setup, DbUp migrations, schema-version tracking, indexes.
 
-**Objective:** mandatory hard filter — select an Execution Target that supports a required capability; fail clearly if none qualify.
+**Verify:** clean install, repeat migration, failed migration, unknown future schema version.
 
-**Files:** `Hive.Core/Execution/ExecutionTargetSelector.cs`.
+## 0.5 — Test harness and test conventions
 
-**Verify:** unit tests for a supported match, an unsupported exclusion, and a no-qualifying-target typed error.
+xUnit, shared fixtures, fake provider infrastructure, fake clock, test database strategy, deterministic event tests.
 
-### 1.5 — Agent identity core types + Factory
-
-**Objective:** `AgentDefinition` / `RuntimeInstance` / `Execution` and `AgentFactory.CreateIncarnation`.
-
-**Files:** `Hive.Agents/{AgentDefinition,RuntimeInstance,Execution,AgentFactory}.cs`.
-
-**Verify:** unit test — Factory creates a first incarnation with empty initial state.
-
-### 1.6 — EventLog + Snapshot + transactional Outbox
-
-**Objective:** append-only event log, snapshot fold, outbox row written in the same transaction as the triggering event.
-
-**Files:** `Hive.Persistence/Events/{EventLogStore,SnapshotStore,OutboxStore}.cs`.
-
-**Verify:** unit test appending events + outbox row in one transaction; forced rollback confirms neither persists.
-
-### 1.7 — Outbox poller
-
-**Objective:** background sweep processing unprocessed outbox rows (stub handler for now; Phase 3 builds the real postmortem behavior).
-
-**Files:** `Hive.Agents/Lifecycle/OutboxPoller.cs`.
-
-**Verify:** manual test — insert a row directly, confirm the poller processes it; kill the process before processing and confirm a restart still picks it up.
-
-### 1.8 — First real agent execution, single step
-
-**Objective:** wire one MAF agent to Hive's `IChatModelProvider`, execute one request, record the resulting event(s).
-
-**Files:** `Hive.Agents/Execution/AgentExecutor.cs`.
-
-**Verify:** manual smoke test — send a simple request, confirm a real response returns and an event is written.
-
-### 1.9 — Document parsing (text-native formats)
-
-**Objective:** extract text from Word/Excel/text-based PDFs.
-
-**Files:** `Hive.Tools/Ingestion/DocumentParser.cs`.
-
-**Verify:** unit test against a checked-in sample file, confirming expected extracted text.
-
-### 1.10 — Vision routing for scanned/image content
-
-**Objective:** rasterize/prepare non-text-extractable pages and route through a Vision-capable target.
-
-**Files:** `Hive.Tools/Ingestion/ImageRouter.cs`.
-
-**Verify:** manual smoke test with one real scanned sample.
-
-### 1.11 — Structured Output extraction
-
-**Objective:** extract a typed record; fields depend on the first document type selected.
-
-**Files:** `Hive.Agents/Extraction/StructuredExtractor.cs`, the schema type.
-
-**Verify:** test against a fixed sample input, confirming the returned object matches the schema.
-
-### 1.12 — Validation
-
-**Objective:** required-field/type/range checks before a record is eligible for the write step.
-
-**Files:** `Hive.Agents/Extraction/Validator.cs`.
-
-**Verify:** unit tests for valid and invalid records.
-
-### 1.13 — Business-app write Tool, approval-gated
-
-**Objective:** the Tool proposes a write, holds `PendingApproval`, executes only after explicit approval.
-
-**Files:** `Hive.Tools/BusinessApp/WriteRecordTool.cs`, `IApprovalGate`.
-
-**Verify:** unit test — pending state blocks execution; simulated approval releases it and hits a fake business-app client.
-
-### 1.14 — MAF Sequential orchestration for the whole pipeline
-
-**Objective:** wire ingest → extract → validate → write as one MAF Sequential workflow.
-
-**Files:** `Hive.Coordination/Pipelines/DocumentPipeline.cs`.
-
-**Verify:** manual end-to-end run on one real sample document, pausing for approval at the write step.
-
-### 1.15 — `Hive.Management` facade: Providers + Agents
-
-**Objective:** CRUD service layer for Provider/ProviderAccount and AgentDefinition.
-
-**Files:** `Hive.Management/{ProviderManagementService,AgentManagementService}.cs`.
-
-**Verify:** unit tests for create/read/update on both.
-
-### 1.16 — `HiveSettingsForm` + `HiveConfigurationContext` + Providers page
-
-**Objective:** actual WinForms shell plus Providers page (add provider/account, enter/test a key).
-
-**Files:** `Hive.Host.WinForms/Forms/HiveSettingsForm.cs`, `Hive.Host.WinForms/UI/Configuration/{HiveConfigurationContext,Providers/ProvidersPage}.cs`.
-
-**Verify:** manual UI test — add a real provider account and click Test Connection.
-
-### 1.17 — Full-pipeline crash/resume test
-
-**Objective:** verify Phase 1 crash safety end to end.
-
-**Files:** none (verification-only slice).
-
-**Verify:** kill the WinForms process mid-pipeline, relaunch, confirm resume from the last checkpoint and that pending outbox work still gets processed.
-
-### 1.18 — Metrics, budget cap, OpenTelemetry
-
-**Objective:** request/success/failure/timeout counters, token/cost tracking, hard per-incarnation budget, OpenTelemetry console exporter.
-
-**Files:** `Hive.Core/Observability/*`, `Hive.Agents/Execution/BudgetGuard.cs`.
-
-**Verify:** unit test — tiny configured limit halts execution with a typed error; visually confirm telemetry output during a manual run.
+**Verify:** baseline suite passes; no vendor/network calls.
 
 ---
 
-## Phase 2 — Persistence Hardening
+# Phase 1 — Provider Platform and Execution
 
-- 2.1 Event schema versioning/upcasting
-- 2.2 Snapshot cadence
-- 2.3 Generic Resource audit
+## 1.1 — Provider / ProviderAccount / ExecutionTarget
 
-## Phase 3 — Death / Postmortem / Reincarnation
+Concrete resource types and persistence.
 
-- 3.1 Evidence extraction
-- 3.2 Candidate deduction generation
-- 3.3 Learning Review page
-- 3.4 `AgentFactory.Reincarnate`
-- 3.5 Real postmortem trigger replacing the Phase 1 outbox stub
+**Verify:** create/read/update, ownership/scope, indexes, duplicate identity handling.
 
-## Phase 4 — Hive Membership & Coordination
+## 1.2 — Secret storage and redaction
 
-- 4.1 `HiveDefinition` + membership/roles
-- 4.2 Configurable agent membership
-- 4.3 Shared claims-with-provenance store
-- 4.4 Supervisor controls
+`ISecretStore`, DPAPI-backed implementation, secure replacement/deletion, diagnostic redaction.
 
-## Phase 5 — Hive Governance Patterns
+**Verify:** plaintext never persists, diagnostics never contain secrets, replacement invalidates previous credential.
 
-- 5.1 Manager-led strategy
-- 5.2 Democratic/Voting strategy + first voting rule
-- 5.3 Adversarial/Critique strategy + conflict-resolution rule
-- 5.4 Strategy-selection UI
+## 1.3 — OpenAI-compatible provider adapter
 
-## Phase 6 — Cognitive Safety
+One shared adapter for compatible hosted/local endpoints.
 
-- 6.1 Goal embeddings + `VECTOR_DISTANCE` drift check
-- 6.2 Credit assignment
-- 6.3 AGM-style belief revision
+**Verify:** fake HTTP provider covers success, malformed response, timeout, cancellation, authentication failure, rate limit, transport failure, structured-output failure.
 
-## Phase 7 — Multi-Tenancy & Scale
+A manual smoke test may be performed against a real provider outside automated tests.
 
-- 7.1 Real authentication
-- 7.2 Re-evaluate distributed execution need
-- 7.3 `Hive.Host.Web` or `.Wpf` on the same management facade
+## 1.4 — Capability evidence
 
-## Phase 8 — Tooling & Extensibility
+Three-state capability records:
 
-- 8.1 MCP-based tool registration
-- 8.2 Per-agent tool permission enforcement audit
+```text
+Supported
+Unsupported
+Unknown
+```
 
-## Phase 9 — Observability & Ops
+Evidence/provenance is stored separately from the capability decision.
 
-- 9.1 Full metrics taxonomy + dashboards
-- 9.2 CI/CD pipeline
-- 9.3 Replay-based regression tests off the event log
+**Verify:** unknown is never promoted to supported for a required capability.
+
+## 1.5 — Rich execution requirements
+
+Implement Required, Preferred, Optional, and Forbidden.
+
+**Verify:** deterministic filtering and diagnostics.
+
+## 1.6 — Execution selection policy
+
+Implement Auto, Preferred, Fixed and FreeOnly, FreePreferred, NoRestriction.
+
+Separate technical capability from cost and authorization.
+
+**Verify:** policy matrix and explanation tests.
+
+## 1.7 — Execution planner
+
+`IExecutionPlanner` returns a provider-neutral `ExecutionPlan`.
+
+**Verify:** candidate ranking, rejection diagnostics, no qualifying target, fixed-target failure, unknown-cost behavior.
+
+## 1.8 — Agent Definition / Runtime / Execution
+
+Implement the three identity levels:
+
+```text
+Agent Definition
+Runtime Instance
+Execution
+```
+
+**Verify:** multiple runtime instances from one definition do not share mutable state.
+
+## 1.9 — Immutable execution snapshot
+
+Snapshot provider settings, agent configuration, capability assignments, runtime overrides, identity, budget, and applicable policy.
+
+**Verify:** live configuration edits never change an already-running execution.
+
+## 1.10 — Execution lifecycle and budgets
+
+Cancellation, timeout, budget caps, terminal state protection.
+
+**Verify:** cancellation/timeout races, late provider completion, budget exhaustion, duplicate terminal transitions.
+
+---
+
+# Phase 2 — Persistent Cognition and First-Class Resources
+
+## 2.1 — Cognitive Kernel
+
+Stable runtime substrate for cognitive identity, lifecycle, state revision, persistence, event activation, recovery, and concurrency ownership.
+
+**Verify:** state revision ordering, recovery, concurrent mutation protection.
+
+## 2.2 — Cognitive Strategy
+
+Replaceable strategy contract.
+
+A strategy may choose deterministic action, no model call, tool action, or model reasoning.
+
+**Verify:** deterministic path does not invoke provider; strategy replacement does not change kernel contracts.
+
+## 2.3 — Reasoning Requirement
+
+Provider-neutral reasoning requirements separated from execution target selection.
+
+**Verify:** the same cognitive requirement can be planned onto different compatible targets.
+
+## 2.4 — Persistent goals, beliefs, intentions, plans
+
+Implement durable cognitive state.
+
+**Verify:** restart/recovery preserves state; invalid transitions rejected; stale revisions rejected.
+
+## 2.5 — Experience and cognitive event history
+
+Capture bounded evidence and outcomes.
+
+**Verify:** correlation/causation, bounded payloads, replay of supported transitions.
+
+## 2.6 — Memory resource family
+
+Implement working, episodic, semantic, procedural, and extensible memory-family contracts.
+
+**Verify:** runtime-private memory isolation, shared-memory authorization, scope enforcement.
+
+## 2.7 — Knowledge / Wiki
+
+Knowledge resource, Wiki source, provenance, versions, relationships, retrieval contract.
+
+**Verify:** source/version lifecycle, permission checks, bounded retrieval.
+
+## 2.8 — Skills
+
+Versioned reusable skills, dependencies, constraints, capability assignments.
+
+Executable handlers remain runtime registrations.
+
+**Verify:** versioning, dependency validation, disabled-skill enforcement.
+
+## 2.9 — Learning Candidates and governance
+
+Candidate generation, evidence, confidence, provenance, review state, promotion/rejection.
+
+**Verify:** candidates cannot directly mutate authoritative resources.
+
+## 2.10 — Capability assignments and runtime overrides
+
+Implement profile defaults plus runtime Inherit / Enabled / Disabled.
+
+**Verify:** effective state is correct and captured in execution snapshots.
+
+## 2.11 — Generic Resource Inventory
+
+Generic inventory API plus typed projections.
+
+**Verify:** future/unknown resource types remain visible without new Agent properties.
+
+## 2.12 — Death / postmortem / reincarnation
+
+Execution/runtime/agent/cognitive lifecycle semantics, durable evidence, candidate deductions, governed reincarnation.
+
+**Verify:** dead state is not deleted; reincarnation references prior durable history; concurrent postmortem runs remain deterministic.
+
+---
+
+# Phase 3 — Host Integration
+
+## 3.1 — Generic Host Context contract
+
+Typed bounded host observations and context snapshots without host-domain coupling.
+
+**Verify:** size limits, provenance, redaction, immutable snapshots.
+
+## 3.2 — Host identity propagation
+
+Identity context through execution, tools, events, memory, knowledge, learning, policy, and tracing.
+
+**Verify:** identity is preserved and never inferred from model text.
+
+## 3.3 — WinForms UI Context
+
+Support Forms, UserControls, control trees, bounded properties, and bindings.
+
+**Verify:** bounded traversal, cancellation, redaction, no executable reflection path.
+
+## 3.4 — Native data-source adapters
+
+BindingSource, lists, collections, DataTable, bound controls, explicit projections.
+
+**Verify:** native source is preferred over visible-text scraping; bounded collection behavior.
+
+## 3.5 — Object discovery
+
+Bounded read-oriented discovery of host-owned objects.
+
+**Verify:** depth/item limits, cycle handling, unsupported type handling, no authority escalation.
+
+## 3.6 — Control Adapters
+
+Explicit adapters for controls/data sources where generic discovery is insufficient.
+
+**Verify:** adapter registration, isolation, malformed host objects, lifecycle cleanup.
+
+## 3.7 — Host-side tool boundary
+
+Turn explicit host capabilities into governed tools.
+
+**Verify:** discoverability does not imply tool authorization; unauthorized tools remain unavailable.
+
+## 3.8 — Document/image extraction example workload
+
+Implement parsing, vision routing, structured extraction, validation as a normal capability built from the platform.
+
+**Verify:** this workload passes entirely through the same provider/planner/context/tool/policy infrastructure as other workloads.
+
+---
+
+# Phase 4 — Management, Intervention and Portability
+
+## 4.1 — Hive.Management facade
+
+Authoritative CRUD/query/action services over Core/Persistence/Agents/Cognition.
+
+**Verify:** management operations use the same underlying state and policy as runtime APIs.
+
+## 4.2 — WinForms configuration shell
+
+`HiveSettingsForm` + `HiveConfigurationContext`.
+
+**Verify:** navigation is declarative and the shell contains no feature-specific persistence logic.
+
+## 4.3 — Providers / Models / Execution Targets page
+
+**Verify:** add/edit/remove provider/account/target, capability evidence, test connection, redaction.
+
+## 4.4 — Agents page
+
+**Verify:** agent definitions, resource assignments, runtime defaults, selection policy.
+
+## 4.5 — Cognition page
+
+**Verify:** inspect cognitive state, lifecycle, goals, plans, revision, protected intervention entry points.
+
+## 4.6 — Learning Review page
+
+**Verify:** inspect candidate provenance/evidence/confidence, approve/reject, stale/concurrent review protection.
+
+## 4.7 — Knowledge / Wiki page
+
+**Verify:** CRUD, versioning, provenance, permissions, bounded retrieval.
+
+## 4.8 — Skills page
+
+**Verify:** versioning, dependencies, assignments, enable/disable policy.
+
+## 4.9 — Storage page
+
+**Verify:** LocalDB configuration, migration status, connection test, safe diagnostics.
+
+## 4.10 — Runtime Diagnostics page
+
+Show runtime identity, execution state, cognitive revision, target, budget, correlation IDs, intervention state, and safe provider operational data.
+
+**Verify:** secrets/sensitive payloads remain redacted.
+
+## 4.11 — Generic Resource Inventory UI
+
+**Verify:** known types get specialized views; unknown types still appear.
+
+## 4.12 — General Human Intervention
+
+Implement Inspect / Approve / Reject / Pause / Resume / Cancel / Retire / Shutdown / Redirect / Defer / RequestInformation.
+
+**Verify:** stale state/version, concurrency, authorization, terminal request behavior.
+
+## 4.13 — Configuration portability
+
+Export/import authoritative configuration:
+
+- Providers;
+- Models;
+- Execution Targets;
+- Agents;
+- Hives;
+- Skills;
+- Knowledge / Wiki;
+- Memory configuration;
+- Learning configuration;
+- Tools;
+- Permissions;
+- policies;
+- supported runtime defaults.
+
+**Verify:** version compatibility, conflicts, round-trip, credentials omitted by default, protected credential-bearing export.
+
+---
+
+# Phase 5 — Example Application and Production Test Depth
+
+## 5.1 — Example application foundation
+
+Create `Hive.Example.WinForms`.
+
+Every example is an isolated feature with:
+
+- its own UI area;
+- complete public-API code snippet;
+- explanation;
+- expected result;
+- failure/edge path where applicable.
+
+## 5.2 — Execution examples
+
+Basic execution, planner selection, cancellation, timeout, structured output, budget.
+
+## 5.3 — Cognition examples
+
+Persistent cognition, deterministic decision, goals, beliefs, plans, restart/recovery.
+
+## 5.4 — Resource examples
+
+Skills, Knowledge/Wiki, Memory, Learning Candidates, capability assignments, runtime overrides.
+
+## 5.5 — Host integration examples
+
+Forms, UserControls, BindingSource, DataTable, native collections, bounded object discovery, Control Adapter.
+
+## 5.6 — Intervention examples
+
+Pause/resume/cancel/approve/reject/request-information/redirect/defer and stale-request scenarios.
+
+## 5.7 — Portability examples
+
+Export, import, version conflict, credential-safe configuration movement.
+
+## 5.8 — Document/image example
+
+End-to-end example using existing generic infrastructure.
+
+## 5.9 — Production edge-case test expansion
+
+Add deterministic tests for:
+
+- races;
+- crashes;
+- late completions;
+- stale interventions;
+- cross-scope access;
+- memory contamination;
+- config mutation during execution;
+- duplicate outbox delivery;
+- recovery;
+- malformed provider output;
+- malformed configuration packages;
+- host object cycles;
+- resource deletion/version conflicts.
+
+## 5.10 — WinForms smoke automation
+
+Automate critical management and example flows.
+
+---
+
+# Phase 6 — Hive Membership & Coordination
+
+## 6.1 — Hive Definition
+
+## 6.2 — Membership and roles
+
+## 6.3 — Configurable agent composition
+
+## 6.4 — Message/DTO communication
+
+## 6.5 — Shared claims with provenance
+
+## 6.6 — Supervisor controls
+
+All coordination uses MAF workflow/orchestration primitives where applicable.
+
+---
+
+# Phase 7 — Hive Governance Patterns
+
+## 7.1 — Manager-led strategy
+
+## 7.2 — Democratic/voting strategy
+
+## 7.3 — Adversarial/critique strategy
+
+## 7.4 — Conflict resolution
+
+## 7.5 — Governance strategy selection and policy UI
+
+---
+
+# Phase 8 — Cognitive Safety, Scale and Extensibility
+
+## 8.1 — Goal drift / embedding checks
+
+## 8.2 — Credit assignment
+
+## 8.3 — Belief revision
+
+## 8.4 — Cognitive safety policies
+
+## 8.5 — Authentication boundary
+
+## 8.6 — Distributed execution decision point
+
+Re-evaluate distributed infrastructure only from measured requirements.
+
+## 8.7 — MCP/tool extensibility
+
+## 8.8 — Additional host surfaces
+
+Web/WPF or other hosts use the same Management/Core contracts.
+
+---
+
+# Phase 9 — Observability, Operations and Replay
+
+## 9.1 — Full metrics taxonomy
+
+## 9.2 — Dashboards and operational views
+
+## 9.3 — CI/CD
+
+## 9.4 — Event-log replay regression
+
+## 9.5 — Long-running resilience tests
+
+## 9.6 — Production diagnostics and support tooling
+
+---
+
+## Slice rule
+
+Each active slice must be complete for its intended scope, production-safe against known edge cases, and compatible with documented future phases.
+
+Do not build future-phase implementation early merely because the architecture already mentions it.
