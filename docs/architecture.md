@@ -168,18 +168,81 @@ Future generations remain open-ended and may coexist with older generations.
 
 This gives Hive long-term flexibility without making type mutation a correctness problem.
 
+### Base Agent mechanisms vs CognitiveAgent semantics
+
+A base `Agent` may be substantially capable without being a `CognitiveAgent`. The boundary is **not** "simple features versus smart features"; it is whether the Agent owns adaptive cognitive interpretation and revision.
+
+Base Agent mechanisms may include:
+
+- **Objectives** = explicit work targets with lifecycle/status, completion criteria, priority, deadline, and dependency metadata. An Objective can make a base Agent objective-driven without giving it autonomous goal formation or reconsideration.
+- **Memory infrastructure** = durable storage/retrieval for conversation, execution history, artifacts, tool results, checkpoints, configuration, and other explicitly addressed state. Cognitive memory semantics belong to `CognitiveAgent`.
+- **Question protocol** = first-class question/answer transport, provenance, ownership, status, timeout, answer type, and waiting. The base Agent may know what required information is missing without dynamically generating cognitive inquiry strategies.
+- **Patience / Understanding Gate** = a deterministic or policy-driven gate that prevents consequential work until required information or explicit confirmation is available. The principle is **understand the minimum required information before trying to solve**; it does not require the Agent to understand everything.
+- **Simulation infrastructure** = generic bounded simulation/job execution, scenario inputs, predicted outputs, parallel simulation execution, and result storage. Cognitive `Dreams` are a higher-level use of this infrastructure.
+- **Delegation and coordination interfaces** = request work from another Agent/Hive, await answers, and preserve provenance without requiring autonomous cognitive delegation decisions.
+- **Lifecycle and persistence** = creation, suspension, death of an execution/incarnation, wake/recreation, durable state, and human management of inactive state.
+
+These mechanisms are intentionally reusable by later CognitiveAgent implementations.
+
+A mechanism becomes cognitive when the Agent can autonomously interpret and revise it as part of its own ongoing cognition—for example: forming/revising Goals, revising Beliefs, selecting and reconsidering Intentions, generating/choosing Questions, deciding what to Dream and why, interpreting simulation results, revising its self-model, or changing strategy from experience.
+
 ### Cognitive Kernel vs Cognitive Strategy
 
 Inside `CognitiveAgent` only:
 
-- **Cognitive Kernel** = durable substrate: identity binding, lifecycle, state versioning, event history, recovery, concurrency ownership, and intervention boundaries.
-- **Cognitive Strategy** = replaceable reasoning algorithm: belief revision, attention, goals, intentions, planning, impasse handling, reflection, learning, and deterministic-vs-reasoning routing.
+- **Cognitive Kernel** = durable cognitive substrate: identity binding, lifecycle, cognitive-state versioning, event history, recovery, concurrency ownership, and intervention boundaries.
+- **Cognitive Strategy** = replaceable adaptive reasoning process: belief revision, attention, goal formation/reconsideration, intention selection, planning, impasse handling, reflection, learning, Dream selection/interpretation, Question generation/selection, and deterministic-vs-reasoning routing.
 - **Reasoning Requirement** = what reasoning capability is required.
 - **Execution Planning** = where/how the requirement executes.
 
 A cognitive strategy may decide that no model call is necessary.
 
 ---
+
+## 4. Dynamic Hives, population, and Swarms
+
+### Dynamic Hives, population, and Swarms
+
+A base Agent may own or sponsor one or more Hives as a normal delegation/coordination capability. The Agent does not become a Hive and does not need to be cognitively upgraded to create one.
+
+A Hive may:
+
+- add existing Agents;
+- create required Agent instances/definitions for missing specialties when authorized;
+- manage membership and role assignment;
+- coordinate the member Agents;
+- become dormant when no active work requires it;
+- later be reactivated with its persistent membership and member state intact.
+
+A **Swarm** is an active collective work session over a Hive. The Hive is persistent; a Swarm is temporary. When the work session ends, the Swarm ends and the Hive may return to Dormant state rather than deleting its members.
+
+For a solo Agent that is not currently inside a parent Hive:
+
+```
+Agent
+  ↓
+requires multiple specialties
+  ↓
+creates/sponsors Hive
+  ↓
+Hive builds required membership
+  ↓
+Swarm executes the collective work
+  ↓
+work complete
+  ↓
+Swarm ends
+  ↓
+Hive becomes Dormant
+```
+
+For an Agent that is already a member of a Hive, the default rule is different:
+
+> A member Agent does not independently create a child Hive during normal Hive-managed work. It requests missing capabilities/specialists from the parent Hive, and the parent Hive remains the population authority.
+
+A Hive may therefore create or reuse a specialist Agent when a required specialty is missing. The created Agent remains an independent Agent entity with its own identity, state, memory, and later lifecycle.
+
+The term **Herd** may be used informally for a group's members, but Hive and Swarm are the architectural terms. This avoids creating a third overlapping lifecycle abstraction.
 
 ## 4. V1 Document & Business-App Integration
 
