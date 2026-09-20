@@ -67,7 +67,19 @@ Verify: supported match, unsupported exclusion, unknown exclusion for hard requi
 
 ## 1.5 — Base Agent & AgentFactory
 Objective: implement `Agent`, `AgentDefinition`, `RuntimeInstance`, `Execution`, and `AgentFactory.Create<TAgent>()` against base contracts. The selected type is fixed for the created resource/runtime.
-Verify: multiple runtimes from one definition remain isolated; the factory does not require cognitive types.
+
+The base Agent contract may also expose reusable non-cognitive mechanisms:
+- Objectives with explicit lifecycle/status and completion criteria;
+- memory storage/retrieval infrastructure for explicitly addressed state;
+- first-class Question/Answer protocol with provenance, waiting, and timeout;
+- Patience / Understanding Gate that blocks consequential work until required information or confirmation exists;
+- bounded Simulation job infrastructure, including parallel scenario execution and prediction/result storage;
+- delegation/coordination interfaces for requesting work from other Agents or Hives;
+- lifecycle/dormancy controls that do not require CognitiveAgent.
+
+These are mechanisms. The base Agent must not autonomously form/revise cognitive Goals or Beliefs, choose its own Dream/Question strategy, or reinterpret experience as a cognitive learning process.
+
+Verify: multiple runtimes from one definition remain isolated; objective lifecycle works; question waiting/timeout works; required-understanding gates block premature action; simulation jobs preserve scenario provenance; delegation requests preserve ownership/provenance; the factory does not require cognitive types.
 
 ## 1.6 — Event Log, Snapshots & Transactional Outbox
 Objective: append-only event log, snapshot fold, and atomic event+snapshot+outbox persistence.
@@ -141,6 +153,15 @@ Provide governed shared claims without making the shared store authoritative ove
 ## 2.5 — Supervisor Controls
 Observe/pause/stop members through Hive/MAF-supported mechanisms.
 
+## 2.6 — Agent-Owned Hive Creation & Hive Lifecycle
+Allow an Agent to explicitly create/sponsor a Hive for a bounded need without changing the Agent's own type. Define Hive lifecycle states including Active and Dormant, with persistent membership and state.
+
+## 2.7 — Swarm Work Sessions
+Define a Swarm as a temporary active work session over a persistent Hive. Starting a Swarm activates selected members; completing the work ends the Swarm and may return the Hive to Dormant state without deleting the Hive or its members.
+
+## 2.8 — Specialty-Driven Population
+Allow an authorized Hive to identify missing required specialties, create or reuse suitable Agent definitions/instances, add them to membership, and retain them after the current Swarm ends. Member Agents normally request additional specialties through the parent Hive rather than recursively creating child Hives.
+
 All coordination uses MAF orchestration primitives where applicable; Hive does not become a second workflow engine.
 
 ---
@@ -163,7 +184,7 @@ Expose governance mode and policy through Hive.Management.
 
 # Phase 4 — CognitiveAgent : Agent
 
-The base Agent and V1 pipeline continue working unchanged throughout this phase. CognitiveAgent is created explicitly; no runtime type promotion or demotion is introduced.
+The base Agent and V1 pipeline continue working unchanged throughout this phase. The base Agent may already provide Objectives, Question transport, patience/understanding gates, memory infrastructure, simulations, delegation, and Hive creation as reusable mechanisms. CognitiveAgent is created explicitly and adds adaptive cognition over those mechanisms; no runtime type promotion or demotion is introduced.
 
 ## 4.1 — Cognitive Kernel
 Persistent cognitive identity binding, lifecycle, state versioning, recovery, and per-runtime concurrency ownership.
