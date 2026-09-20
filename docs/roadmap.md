@@ -310,7 +310,7 @@ Operational diagnostics, safe support exports, and controlled replay tooling.
 
 ## Ordering invariant
 
-The order is intentional. The cognitive lifecycle, Dreams, and Questions remain CognitiveAgent-generation capabilities before collective cognition is added; CognitiveHive then extends them with cross-agent coordination without moving individual cognition into the Hive.
+The order is intentional. Base Agent mechanisms such as Objectives, Question transport, patience/understanding gates, memory infrastructure, simulations, delegation, and Hive sponsorship remain available before CognitiveAgent is added. The cognitive lifecycle, Dreams, and Questions remain CognitiveAgent-generation capabilities before collective cognition is added; CognitiveHive then extends them with cross-agent coordination without moving individual cognition into the Hive.
 
 
 ```
