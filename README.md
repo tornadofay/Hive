@@ -62,6 +62,28 @@ A normal Agent does not later turn into a CognitiveAgent, and a CognitiveAgent d
 
 This keeps the base platform stable while allowing future agent/hive generations to introduce new implementation ideas without breaking existing projects.
 
+## Base Agent capability boundary
+
+The base `Agent` is allowed to be capable without being cognitive. It may provide reusable mechanisms such as:
+
+- explicit **Objectives** with lifecycle, completion criteria, priority, deadlines, and dependencies;
+- durable **memory infrastructure** for explicitly addressed conversation, execution history, artifacts, tool results, checkpoints, and configuration state;
+- a first-class **Question/Answer protocol** with provenance, ownership, status, waiting, and timeout;
+- a **Patience / Understanding Gate** that blocks consequential work until required information or confirmation is available;
+- bounded **Simulation infrastructure** that can execute and compare hypothetical scenarios in parallel;
+- **Delegation/coordination** interfaces for requesting work from other Agents or Hives;
+- lifecycle and persistence controls that allow runtime death, dormancy, and later recreation.
+
+These mechanisms become cognitive only when a CognitiveAgent can autonomously interpret, revise, select, or learn from them—for example forming Goals, revising Beliefs, choosing Questions, selecting Dreams, interpreting simulation outcomes, or changing strategy from experience.
+
+## Dynamic Hives and Swarms
+
+A base Agent may sponsor a persistent Hive when a problem requires multiple specialties. The Agent remains an Agent; the Hive becomes a separate managed collective.
+
+A Hive manages membership and may create or reuse missing specialist Agents when authorized. A **Swarm** is the active work session over that persistent Hive. When the work is complete, the Swarm ends and the Hive may become Dormant without deleting its members or accumulated state.
+
+A member Agent inside a Hive normally requests missing specialties from the parent Hive rather than creating child Hives itself. This keeps population authority with the Hive while allowing a solo Agent to create or reactivate specialist Hives when needed.
+
 ## Cognitive lifecycle (later generation)
 
 A CognitiveAgent is a persistent cognitive entity whose runtime incarnation may end completely while its identity and cognitive state remain durable:
