@@ -4,29 +4,28 @@ Last updated: 2026-09-20
 
 ## Repository state
 
-Documentation and architecture baseline.
+Architecture/documentation baseline only. No implementation has started.
 
 ## Current phase
 
 Phase 0 — Foundations.
 
-## Completed
+## Architecture decisions now locked
 
-- GitHub repository initialized.
-- Hive defined as a general-purpose multi-agent platform rather than a workflow-specific product.
-- MAF dependency boundary established.
-- Persistent cognitive runtime elevated to a first-class subsystem.
-- Skills, Knowledge, Wiki, Memory, Learning Candidates, capability assignments, and runtime overrides established as first-class resource categories.
-- General human intervention established as a core capability.
-- Rich capability-aware execution planning established.
-- Detailed host identity propagation established.
-- Generic host integration and WinForms UI Context / Control Adapters established.
-- Configuration portability established.
-- Generic resource inventory established.
-- WinForms management surface and required areas established.
-- Dedicated example application requirements established.
-- Production-oriented automated testing and edge-case requirements established.
-- Engineering rules established in `AGENTS.md`.
+- Hive is general-purpose; the real V1 forcing function is automating data entry from documents/images into the existing business application.
+- The V1 pipeline is not Hive's permanent definition; it determines implementation order.
+- `Agent` and `Hive` are stable base types.
+- `CognitiveAgent : Agent` and `CognitiveHive : Hive` are later additive generations.
+- Concrete type is selected at creation; there is no runtime promotion/demotion.
+- Different Agent/Hive generations can coexist without ancestor contract changes.
+- Persistent cognition belongs to the CognitiveAgent generation rather than being a prerequisite of the base Agent.
+- Hive uses MAF for execution/orchestration mechanisms MAF already provides.
+- One shared OpenAI-compatible provider adapter serves compatible providers/local servers through configuration.
+- V1 provider configurations currently targeted: Groq, OpenRouter, Cloudflare, Cerebras, NVIDIA, Google, and local OpenAI-compatible servers.
+- The business-app integration boundary must be decided before the write-tool slice: API versus narrowly scoped UI integration.
+- Generic host integration is deferred until a second real host proves the need.
+- V1 human intervention is Approve/Reject at the business-app write; the broader intervention taxonomy is later.
+- Tests and examples are developed with each implementation slice; no unperformed verification is claimed.
 
 ## Not started
 
@@ -37,4 +36,4 @@ Phase 0 — Foundations.
 - WinForms management host.
 - Example application.
 
-No implementation or test coverage claims are made beyond the documentation bootstrap.
+No implementation or test-coverage claims are made beyond this documentation baseline.
