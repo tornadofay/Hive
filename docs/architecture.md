@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-20 (rev 10 — stable Agent/Hive inheritance model plus persistent cognitive lifecycle, Dreams, Questions, and collective cognition boundaries)
+Last updated: 2026-09-20 (rev 11 — base Agent mechanisms, cognitive boundary, dynamic Hives, and Swarm lifecycle)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -135,8 +135,10 @@ The hierarchy is a **creation-time type choice**, not a runtime promotion system
 Agent (base)                              Hive (base)
   instructions, tools, context,           membership, roles, communication,
   conversation, execution,                 delegation, authorization,
-  resource references,                    governance-pattern execution
-  complete and useful alone               via MAF, complete and useful alone
+  resources, objectives,                   population, lifecycle,
+  questions, patience,                     coordination via MAF,
+  memory/simulation mechanisms             complete and useful alone
+  complete and useful alone
        │                                        │
        ▼                                        ▼
 CognitiveAgent : Agent                  CognitiveHive : Hive
@@ -198,8 +200,6 @@ Inside `CognitiveAgent` only:
 A cognitive strategy may decide that no model call is necessary.
 
 ---
-
-## 4. Dynamic Hives, population, and Swarms
 
 ### Dynamic Hives, population, and Swarms
 
