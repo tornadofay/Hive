@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-20 (rev 9 — stable Agent/Hive inheritance model, V1 pipeline ordering, no runtime type promotion, scoped host integration)
+Last updated: 2026-09-20 (rev 10 — stable Agent/Hive inheritance model plus persistent cognitive lifecycle, Dreams, Questions, and collective cognition boundaries)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
