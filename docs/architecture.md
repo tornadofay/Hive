@@ -1,12 +1,14 @@
 # Hive — Architecture & Roadmap (Living Document)
 
-Last updated: 2026-09-19 (rev 5 — one shared OpenAI-compatible adapter, Execution Target concept, proven WinForms config shape, AGENTS.md-derived rules)
+Last updated: 2026-09-20 (rev 6 — clarified general-purpose project scope vs. V1 validation workload)
 
 Treat this file as the single source of truth. Update it before any structural code change. Status lives only in `Hive_Current_Status.md`; the current work slice lives only in `Hive_Active_Work.md` (Rule 21).
 
 ## 0. Purpose & Scope
 
-- V1 use case: automating data entry from documents/images into the user's own business app, via a fixed multi-agent pipeline.
+- Hive is a **general-purpose platform for building, running, coordinating, and governing multi-agent systems**. The architecture is intentionally broader than any single business workflow.
+- The document/image data-entry pipeline is the **V1 validation workload**: a deliberately narrow first system used to prove the provider, execution, persistence, lifecycle, management, authorization, orchestration, recovery, and observability foundations.
+- The long-term architecture covers normal agents, agent runtimes, Hives, cognitive agents, persistent state, learning governance, resource ownership, coordination, and later governance/cognitive-safety patterns.
 - Clean rewrite; HAgent is a design reference only, but its validated, real patterns are adopted directly where they are genuinely good: the single shared OpenAI-compatible adapter, the WinForms configuration shape, and a curated set of its engineering rules (Section 7.1).
 - V1 interface is WinForms; all logic UI-agnostic; Hive is a pure library first.
 - Full `Tenant → Users → Agents → Hives → Resources` hierarchy modeled from day one.
@@ -17,7 +19,7 @@ Treat this file as the single source of truth. Update it before any structural c
 
 MAF owns: agent pipeline, tool invocation, workflow orchestration (Sequential/Concurrent/Handoff/GroupChat/Magentic), checkpoints, generic HITL, basic model routing, the actual model-service call.
 
-Hive owns: the provider control plane (Section 2), the document ingestion pipeline (Section 3), the management surface (Section 4), resource ownership (Section 5), agent identity (Section 6), learning governance, Hive membership/roles/authorization and — from Phase 5 — governance patterns, persistent cognition. **The LLM never becomes the authority.**
+Hive owns: the provider control plane (Section 2), the document ingestion pipeline (Section 3) for the V1 workload, the management surface (Section 4), resource ownership (Section 5), agent identity (Section 6), learning governance, Hive membership/roles/authorization and — from Phase 5 — governance patterns, persistent cognition. **The LLM never becomes the authority.**
 
 Migration note: evaluated against MAF's current capabilities only; a future MAF equivalent is a deliberate migration decision, never automatic.
 
@@ -40,6 +42,8 @@ Migration note: evaluated against MAF's current capabilities only; a future MAF 
 **Explicitly deferred/rejected:** Temporal/Dapr, PostgreSQL/pgvector, Elasticsearch, Akka.NET, Orleans, DiskANN, a Hive-built orchestration engine, a bespoke secrets-vault subsystem before it's needed.
 
 ## 3. Document & Vision Ingestion Pipeline
+
+This is the pipeline for the **V1 validation workload**, not the boundary of Hive's overall purpose.
 
 ```text
 Input file (PDF/Word/Excel/image) → format-specific parsing → route to capability
@@ -121,6 +125,8 @@ An active execution runs against an **immutable snapshot** of its configuration 
 - Common infrastructure; Hive's own database, separate from any business-app database
 
 ### Phase 1 — Multi-Agent Pipeline MVP — current phase
+
+Phase 1 is the first concrete validation workload, not the full definition of Hive.
 
 - `Hive.Providers.OpenAICompatible`: one adapter implementation, configured against the concrete providers recorded in `Hive_Current_Status.md` as `Provider` / `ProviderAccount` / `Execution Target` records
 - Several Agent Definitions in a fixed pipeline (ingest → extract → validate → write) via MAF Sequential orchestration
