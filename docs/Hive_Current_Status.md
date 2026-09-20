@@ -15,6 +15,9 @@ Phase 0 — Foundations.
 - Hive is general-purpose; the real V1 forcing function is automating data entry from documents/images into the existing business application.
 - The V1 pipeline is not Hive's permanent definition; it determines implementation order.
 - `Agent` and `Hive` are stable base types.
+- The base Agent may provide reusable Objectives, memory infrastructure, Question/Answer transport, Patience / Understanding Gate, Simulation infrastructure, delegation, and Hive sponsorship without becoming a CognitiveAgent.
+- A base Agent may sponsor a persistent Hive for multi-specialty work; a Swarm is the active work session and a Hive may become Dormant afterward.
+- Hive population authority belongs to the Hive during Hive-managed work; member Agents normally request missing specialties rather than recursively creating child Hives.
 - `CognitiveAgent : Agent` and `CognitiveHive : Hive` are later additive generations.
 - Concrete type is selected at creation; there is no runtime promotion/demotion.
 - Different Agent/Hive generations can coexist without ancestor contract changes.
