@@ -53,11 +53,11 @@ Hive-owned SQL Server database, LocalDB development setup, DbUp migrations, sche
 
 **Verify:** clean install, repeat migration, failed migration, unknown future schema version.
 
-## 0.5 — Test harness and test conventions
+## 0.5 — Test harness and example host foundation
 
-xUnit, shared fixtures, fake provider infrastructure, fake clock, test database strategy, deterministic event tests.
+Scaffold xUnit, shared fixtures, fake provider infrastructure, fake clock, test database strategy, deterministic event-test conventions, and the initial `Hive.Example.WinForms` shell.
 
-**Verify:** baseline suite passes; no vendor/network calls.
+**Verify:** baseline tests pass; the example host builds; automated tests make no vendor/network calls.
 
 ---
 
@@ -79,7 +79,9 @@ Concrete resource types and persistence.
 
 One shared adapter for compatible hosted/local endpoints.
 
-**Verify:** fake HTTP provider covers success, malformed response, timeout, cancellation, authentication failure, rate limit, transport failure, structured-output failure.
+Add the provider example page and complete public-API snippet to `Hive.Example.WinForms`.
+
+**Verify:** fake HTTP provider covers success, malformed response, timeout, cancellation, authentication failure, rate limit, transport failure, structured-output failure; the example uses the same public provider contract.
 
 A manual smoke test may be performed against a real provider outside automated tests.
 
@@ -245,9 +247,19 @@ Support Forms, UserControls, control trees, bounded properties, and bindings.
 
 ## 3.4 — Native data-source adapters
 
-BindingSource, lists, collections, DataTable, bound controls, explicit projections.
+Support common native .NET representations directly:
 
-**Verify:** native source is preferred over visible-text scraping; bounded collection behavior.
+- BindingSource;
+- DataTable / DataView / DataSet;
+- arrays;
+- IList / IReadOnlyList / IBindingList;
+- dictionaries/key-value collections;
+- POCOs/records;
+- bounded IEnumerable sources;
+- bound controls;
+- explicit projections.
+
+**Verify:** native sources are preserved where practical; representations do not require conversion to DataTable.
 
 ## 3.5 — Object discovery
 
@@ -355,69 +367,130 @@ Export/import authoritative configuration:
 
 ---
 
-# Phase 5 — Example Application and Production Test Depth
+# Cross-cutting Example + Test Rule
 
-## 5.1 — Example application foundation
+The example application and production tests are developed **alongside each feature**, not postponed into a separate phase.
 
-Create `Hive.Example.WinForms`.
+Each implementation slice decides which layers are necessary:
 
-Every example is an isolated feature with:
-
-- its own UI area;
+- unit tests;
+- contract/integration tests;
+- targeted system/end-to-end tests;
+- concurrency/recovery tests;
+- example page/scenario;
 - complete public-API code snippet;
-- explanation;
-- expected result;
-- failure/edge path where applicable.
+- WinForms smoke/automation coverage where required.
 
-## 5.2 — Execution examples
+## Example host foundation
 
-Basic execution, planner selection, cancellation, timeout, structured output, budget.
+Create `Hive.Example.WinForms` during the early implementation work once the public Core/Management boundary exists.
 
-## 5.3 — Cognition examples
+The example host is a thin consumer of the same public APIs used by real hosts.
 
-Persistent cognition, deterministic decision, goals, beliefs, plans, restart/recovery.
+Examples are added beside the features they demonstrate:
 
-## 5.4 — Resource examples
+- execution and planning;
+- persistent cognition;
+- Skills;
+- Knowledge / Wiki;
+- Memory;
+- Learning;
+- human intervention;
+- configuration portability;
+- host UI Context / Control Adapters;
+- diagnostics;
+- runtime isolation and recovery;
+- document/image extraction as one workload.
 
-Skills, Knowledge/Wiki, Memory, Learning Candidates, capability assignments, runtime overrides.
+## Production test rule
 
-## 5.5 — Host integration examples
+Tests are added with the feature that introduces the behavior.
 
-Forms, UserControls, BindingSource, DataTable, native collections, bounded object discovery, Control Adapter.
+Use the lowest test layer that can actually prove an invariant:
 
-## 5.6 — Intervention examples
+```text
+unit
+  ↓
+contract/integration
+  ↓
+targeted system/end-to-end
+  ↓
+UI smoke / automation where required
+```
 
-Pause/resume/cancel/approve/reject/request-information/redirect/defer and stale-request scenarios.
+Do not create a later testing phase to catch up on coverage.
 
-## 5.7 — Portability examples
+---
 
-Export, import, version conflict, credential-safe configuration movement.
+# Phase 5 — Hive Membership & Coordination
 
-## 5.8 — Document/image example
+## 5.1 — Hive Definition
 
-End-to-end example using existing generic infrastructure.
+## 5.2 — Membership and roles
 
-## 5.9 — Production edge-case test expansion
+## 5.3 — Configurable agent composition
 
-Add deterministic tests for:
+## 5.4 — Message/DTO communication
 
-- races;
-- crashes;
-- late completions;
-- stale interventions;
-- cross-scope access;
-- memory contamination;
-- config mutation during execution;
-- duplicate outbox delivery;
-- recovery;
-- malformed provider output;
-- malformed configuration packages;
-- host object cycles;
-- resource deletion/version conflicts.
+## 5.5 — Shared claims with provenance
 
-## 5.10 — WinForms smoke automation
+## 5.6 — Supervisor controls
 
-Automate critical management and example flows.
+All coordination uses MAF workflow/orchestration primitives where applicable.
+
+---
+
+# Phase 6 — Hive Governance Patterns
+
+## 6.1 — Manager-led strategy
+
+## 6.2 — Democratic/voting strategy
+
+## 6.3 — Adversarial/critique strategy
+
+## 6.4 — Conflict resolution
+
+## 6.5 — Governance strategy selection and policy UI
+
+---
+
+# Phase 7 — Cognitive Safety, Scale and Extensibility
+
+## 7.1 — Goal drift / embedding checks
+
+## 7.2 — Credit assignment
+
+## 7.3 — Belief revision
+
+## 7.4 — Cognitive safety policies
+
+## 7.5 — Authentication boundary
+
+## 7.6 — Distributed execution decision point
+
+Re-evaluate distributed infrastructure only from measured requirements.
+
+## 7.7 — MCP/tool extensibility
+
+## 7.8 — Additional host surfaces
+
+Web/WPF or other hosts use the same Management/Core contracts.
+
+---
+
+# Phase 8 — Observability, Operations and Replay
+
+## 8.1 — Full metrics taxonomy
+
+## 8.2 — Dashboards and operational views
+
+## 8.3 — CI/CD
+
+## 8.4 — Event-log replay regression
+
+## 8.5 — Long-running resilience tests
+
+## 8.6 — Production diagnostics and support tooling
 
 ---
 
