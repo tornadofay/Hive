@@ -23,6 +23,7 @@ Host Application
 |      │                            │                 |
 |      ▼                            ▼                 |
 | CognitiveAgent               CognitiveHive          |
+| complete individual mind      collective cognition  |
 | (later, additive)            (later, additive)     |
 |                                                      |
 | Provider Control Plane / Execution Planning          |
@@ -61,6 +62,38 @@ A normal Agent does not later turn into a CognitiveAgent, and a CognitiveAgent d
 
 This keeps the base platform stable while allowing future agent/hive generations to introduce new implementation ideas without breaking existing projects.
 
+## Cognitive lifecycle (later generation)
+
+A CognitiveAgent is a persistent cognitive entity whose runtime incarnation may end completely while its identity and cognitive state remain durable:
+
+```
+Persistent Agent state
+        ↓
+   runtime incarnation
+        ↓
+      operate
+        ↓
+       Death
+        ↓
+  no Agent runtime
+        │
+   ┌────┴────┐
+   │         │
+ Dreams   human review/edit
+   │         │
+   └────┬────┘
+        ↓
+ persistent state
+        ↓
+   Wake/Reincarnation
+        ↓
+ new runtime incarnation
+```
+
+Dreams are bounded simulations/analyses that can run against persisted state without an active Agent runtime. They may explore multiple hypothetical plans in parallel and compare predicted outcomes. Dream results remain distinguishable from actual experiences.
+
+Questions are explicit cognitive work items. A Hive may route different Questions to Agents according to specialty so the members investigate different aspects of the same user objective; answers remain attributable and can feed collective reasoning.
+
 ## V1 data-entry pipeline
 
 ```
@@ -95,6 +128,11 @@ A generic host-integration framework is deliberately later.
 - **General-purpose architecture, concrete V1 forcing function**
 - **Base Agent and Hive are complete on their own**
 - **CognitiveAgent/CognitiveHive are later additive generations**
+- **An Agent's persistent cognitive state outlives any one runtime incarnation; runtime death is not Agent deletion**
+- **Dreams can process persisted cognition while no Agent runtime is active**
+- **Dream results remain simulations/predictions and are never silently treated as actual experience**
+- **Questions are first-class, specialty-aware cognitive objects rather than repeated prompt text**
+- **CognitiveHive adds collective cognition without replacing or owning member cognition**
 - **No runtime type promotion/demotion**
 - **Provider-neutral and capability-aware execution planning**
 - **One shared OpenAI-compatible provider transport**
@@ -114,7 +152,7 @@ V1 starts with:
 1. Providers / Models / Execution Targets
 2. Agents
 
-Later areas are added when their owning phase lands: Hive Membership, Governance, Cognition, Learning Review, Knowledge/Skills/Memory, Storage, Runtime Diagnostics, Human Intervention, Resource Inventory, Configuration Import/Export, and generic host-integration diagnostics.
+Later areas are added when their owning phase lands: Hive Membership, Governance, Cognition, Dreams, Questions, Learning Review, Knowledge/Skills/Memory, Storage, Runtime Diagnostics, Human Intervention, Resource Inventory, Configuration Import/Export, and generic host-integration diagnostics.
 
 ## Example application
 
