@@ -34,7 +34,7 @@ approval / result
 
 Vision and image/document extraction are therefore capabilities that emerge from the general platform. They are not Hive's permanent scope.
 
-Longer-term capabilities such as persistent cognition, collective cognition, generic host integration, broader governance, and additional host surfaces remain part of Hive's architecture, but they must not become prerequisites for the V1 pipeline.
+Longer-term capabilities such as persistent individual cognition, offline Dream processing, structured Questions, collective cognition, generic host integration, broader governance, and additional host surfaces remain part of Hive's architecture, but they must not become prerequisites for the V1 pipeline.
 
 ### Primary design goals
 
@@ -91,6 +91,7 @@ Not every deployment must use every level.
 - capability evidence and execution requirements;
 - authorization and tool permission policy;
 - Hive-owned durable state, event history, snapshots, and outbox semantics;
+- cognitive lifecycle, Dream, and Question semantics for the cognitive generations;
 - host application integration;
 - WinForms management facade and configuration surface;
 - human intervention beyond MAF's lower-level request mechanics;
@@ -107,7 +108,7 @@ Hive must never build a second workflow/orchestration engine merely because Hive
 |---|---|---|
 | Language/runtime | C# / .NET 10 only | Single runtime baseline |
 | Agent programming model | Microsoft Agent Framework | Reuse MAF execution/orchestration |
-| Execution model | Ephemeral execution + durable Hive state + transactional outbox | Execution objects may end; Hive-owned durable state survives |
+| Execution model | Ephemeral execution + durable Agent/Hive state + transactional outbox | Execution objects and Agent incarnations may end; durable cognitive state survives and can be processed without a live Agent runtime |
 | Persistence | SQL Server; LocalDB for development | Hive database is isolated from host business data |
 | Vector storage | SQL Server `VECTOR` / `VECTOR_DISTANCE` behind `IVectorStore` | Replaceable storage boundary |
 | Provider adapter | One shared OpenAI-compatible adapter | Compatible providers are configurations, not new adapter implementations |
@@ -141,10 +142,12 @@ Agent (base)                              Hive (base)
 CognitiveAgent : Agent                  CognitiveHive : Hive
   adds: Cognitive Kernel,                 adds: collective/shared cognition
   Cognitive Strategy,                     while each member keeps its own
-  Reasoning Requirement,                  agent-level state and type
-  persistent goals/beliefs/
+  Reasoning Requirement,                  Agent/CognitiveAgent identity,
+  persistent goals/beliefs/               cognition, and state
   intentions/plans,
-  experience, death/reincarnation
+  experience, self-model,
+  death/wake/reincarnation,
+  Dreams, and Questions
        │                                        │
        ▼                                        ▼
 Future generations remain open-ended and may coexist with older generations.
@@ -385,9 +388,74 @@ It remains compatible with the ordinary Agent execution boundary and MAF.
 
 ### CognitiveHive
 
-`CognitiveHive : Hive` is a later generation that adds collective/shared cognition while preserving each member's own Agent/CognitiveAgent identity and state.
+`CognitiveHive : Hive` is a later generation that adds collective/shared cognition while preserving each member's own Agent/CognitiveAgent identity, cognition, and state.
+
+Collective cognition is additive. A CognitiveAgent remains a complete autonomous cognitive entity when outside a Hive, and a Hive does not become the owner of the member's individual goals, beliefs, plans, memory, self-model, or lifecycle.
 
 It must not turn the base Hive into a requirement for ordinary Agents.
+
+### Cognitive lifecycle
+
+An Agent's persistent identity and cognitive state are distinct from any particular runtime incarnation:
+
+```
+Agent identity + persistent cognitive state
+                  │
+                  ▼
+          Incarnation / runtime
+                  │
+               operates
+                  │
+                  ▼
+                Death
+                  │
+        runtime no longer exists
+                  │
+                  ├───────────────┐
+                  ▼               ▼
+             Dream/analysis   human review/edit
+                  │               │
+                  └───────┬───────┘
+                          ▼
+                 persistent state
+                          │
+                          ▼
+                     Wake / Reincarnation
+                          │
+                          ▼
+                  new runtime incarnation
+```
+
+**Death** is the complete end of the current runtime/incarnation. It is not deletion of the Agent, its identity, or its persistent cognitive state.
+
+A CognitiveAgent may remain fully usable as persistent state while no Agent runtime is active. The host application may also be completely shut down during this period. A later wake reconstructs a new runtime from the durable state plus any valid human or cognitive updates made while the Agent was inactive.
+
+### Dreams
+
+**Dreams** are bounded cognitive simulations/analyses performed against persistent Agent state without requiring the normal Agent runtime to be active.
+
+Dreams may:
+
+- replay or analyze historical experience;
+- generate hypothetical alternatives;
+- run multiple bounded simulations in parallel;
+- compare predicted outcomes;
+- explore plans or strategies before the next wake;
+- identify unresolved questions or candidate state changes.
+
+Dream output is never silently treated as an event that actually happened. Persistent records distinguish at least actual observations/experiences from simulations, hypotheses, predictions, and other non-observed results.
+
+A Dream may produce candidate changes to goals, beliefs, plans, memories, self-model, skills, or other cognitive resources, but authoritative state changes remain subject to the same validation, ownership, authorization, provenance, and concurrency rules as other Hive-owned state.
+
+### Questions
+
+**Questions** are first-class cognitive objects representing an information gap, uncertainty, decision point, or request for evidence.
+
+A Question carries structured context, specialty/role requirements, provenance, answer state, and any required evidence or answer type. Questions are not merely strings appended to a prompt.
+
+Questions are specialty-aware. In a Hive, different Agents may receive different questions about the same user objective based on their specialization. The system should recognize semantically duplicate questions and avoid redundant work when existing evidence is sufficient.
+
+Answers remain attributable to the Agent, Dream/simulation, source, or other evidence that produced them. Individual Agents may use their own Questions independently; CognitiveHive can coordinate Question assignment, cross-agent evidence, synthesis, conflict handling, and collective reasoning.
 
 ### Future generations
 
@@ -397,7 +465,7 @@ Future generations may add different cognitive strategies or different Hive coor
 
 ## 11. Cognitive Resources
 
-Advanced persistent cognitive resources are delivered after the cognitive runtime branch exists.
+Advanced persistent cognitive resources are delivered after the cognitive lifecycle branch exists. Persistent resources must preserve the distinction between actual experience and simulated/dreamed outcomes.
 
 They include:
 
