@@ -23,6 +23,10 @@ Phase 0 — Foundations.
 - One shared OpenAI-compatible provider adapter serves compatible providers/local servers through configuration.
 - V1 provider configurations currently targeted: Groq, OpenRouter, Cloudflare, Cerebras, NVIDIA, Google, and local OpenAI-compatible servers.
 - The business-app integration boundary must be decided before the write-tool slice: API versus narrowly scoped UI integration.
+- CognitiveAgent persists its cognition independently of any one runtime incarnation; death ends the incarnation, not the Agent or its durable state.
+- Dreams are bounded offline cognitive simulations/analysis that can run with no live Agent runtime, including during host-application downtime; Dream output remains distinct from actual experience.
+- Questions are first-class, specialty-aware cognitive objects that can be owned by individual CognitiveAgents and coordinated collectively by CognitiveHive.
+- CognitiveHive adds collective cognition without moving or replacing member-level cognition.
 - Generic host integration is deferred until a second real host proves the need.
 - V1 human intervention is Approve/Reject at the business-app write; the broader intervention taxonomy is later.
 - Tests and examples are developed with each implementation slice; no unperformed verification is claimed.
