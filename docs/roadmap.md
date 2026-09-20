@@ -175,13 +175,22 @@ Replaceable strategy contract capable of deterministic decisions and explicit no
 Provider-neutral reasoning requirements kept separate from concrete Execution Target planning.
 
 ## 4.4 — Persistent Cognitive State
-Beliefs, bounded workspace/attention, goals, intentions, plans, methods, impasses, and revision-safe transitions.
+Beliefs, bounded workspace/attention, goals, intentions, plans, methods, self-model, impasses, and revision-safe transitions. Persistent state is independent of whether a runtime incarnation is currently active.
 
 ## 4.5 — Experience & Cognitive Event History
-Bounded experience capture, provenance, outcomes, and replayable supported transitions.
+Bounded experience capture, provenance, actual outcomes, and replayable supported transitions. Actual observations/experiences remain distinguishable from simulated or predicted material.
 
-## 4.6 — Death / Postmortem / Reincarnation
-Define cognitive/runtime death, durable postmortem evidence, governed deductions, and explicit reincarnation into a new runtime/incarnation while preserving history.
+## 4.6 — Death / Wake / Reincarnation Lifecycle
+Define death as complete termination of the current runtime/incarnation, preserve Agent identity and cognitive state, support inactive periods with no live runtime, and explicitly reconstruct a new runtime from durable state when the Agent wakes.
+
+## 4.7 — Postmortem & Dream Processing
+Define bounded postmortem processing plus a Dream subsystem that can inspect history, generate hypothetical alternatives, run multiple simulations in parallel, compare predicted outcomes, and produce candidate cognitive-state updates without requiring the Agent runtime to remain alive.
+
+## 4.8 — Questions
+Define first-class Questions with structured context, specialty, provenance, answer type, evidence requirements, status, and confidence/uncertainty where applicable. Support specialty-specific questions so different Agents can investigate different aspects of the same user objective.
+
+## 4.9 — Cognitive State Reconciliation
+Integrate human edits, Dream results, Question answers, experience, beliefs, goals, plans, and other candidate updates through versioning, provenance, authorization, validation, and concurrency boundaries before the next wake/reincarnation.
 
 ---
 
@@ -209,8 +218,14 @@ Hive-level collective state is distinct from each member's own Agent/CognitiveAg
 ## 6.2 — Collective Strategy
 Coordinate planning/reasoning across members without moving member cognition into the Hive itself.
 
-## 6.3 — Collective Conflict & Consensus
-Bounded coordination, conflict resolution, and consensus mechanisms.
+## 6.3 — Collective Questions & Specialty Routing
+Route Questions by Agent specialty, avoid semantically duplicate work where evidence already exists, and allow each Agent to retain its own Questions and answers.
+
+## 6.4 — Cross-Agent Evidence & Synthesis
+Combine attributable answers, experiences, Dreams, observations, and other evidence into collective reasoning without erasing individual provenance.
+
+## 6.5 — Collective Conflict & Consensus
+Bounded coordination, conflict resolution, disagreement handling, and consensus mechanisms.
 
 Base Hive coordination remains usable without CognitiveHive.
 
@@ -274,7 +289,8 @@ Operational diagnostics, safe support exports, and controlled replay tooling.
 
 ## Ordering invariant
 
-The order is intentional:
+The order is intentional. The cognitive lifecycle, Dreams, and Questions remain CognitiveAgent-generation capabilities before collective cognition is added; CognitiveHive then extends them with cross-agent coordination without moving individual cognition into the Hive.
+
 
 ```
 Foundations
