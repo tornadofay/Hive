@@ -1,12 +1,14 @@
 # Hive
 
-Hive is a C# / .NET 10 multi-agent automation platform for turning documents and images into governed writes to a user's business application.
+Hive is a general-purpose C# / .NET 10 platform for building, running, coordinating, and governing multi-agent systems.
 
-Hive is built on the Microsoft Agent Framework (MAF) where MAF already owns the underlying behavior. Hive adds the provider control plane, document ingestion, resource ownership, management surface, agent identity, authorization, learning governance, and later cognitive/governance semantics.
+It is built on the Microsoft Agent Framework (MAF) wherever MAF already owns the underlying behavior. Hive adds the semantics and infrastructure around that foundation: provider control, execution-target selection, persistent resources and state, agent identity and lifecycle, authorization, learning governance, Hive membership, cognitive state, observability, and other higher-level system concerns.
 
-## V1
+The document/image data-entry pipeline described below is **a V1 validation workload**, not the definition or long-term purpose of Hive.
 
-The first target is a fixed multi-agent pipeline:
+## V1 validation workload
+
+The first concrete workload exercises Hive as a fixed multi-agent pipeline for automating data entry from documents/images into a business application:
 
 ```text
 Document / Image
@@ -20,7 +22,9 @@ Extraction / Validation
 Human-approved business-app write
 ```
 
-The V1 host is WinForms. The application logic is UI-agnostic; Hive is designed as a library first.
+This workload is intentionally narrow so the underlying agent, provider, persistence, execution, management, authorization, and recovery architecture can be built and validated without prematurely solving every possible Hive use case.
+
+The V1 host is WinForms. Application logic is UI-agnostic; Hive is designed as a library first.
 
 ## Core design
 
@@ -65,7 +69,7 @@ The solution/projects will be created by Phase 0.1 according to `docs/roadmap.md
 
 Phase 0 establishes the solution and persistence/test foundations.
 
-Phase 1 builds the first real document-to-business-app multi-agent pipeline, provider platform, management UI, crash/resume behavior, capability-aware selection, budgets, and observability.
+Phase 1 builds the first concrete multi-agent validation workload, provider platform, management UI, crash/resume behavior, capability-aware selection, budgets, and observability.
 
 Later phases cover persistence hardening, death/postmortem/reincarnation, Hive membership and coordination, governance patterns, cognitive safety, multi-tenancy/scale, tooling, and operations.
 
