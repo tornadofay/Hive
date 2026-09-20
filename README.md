@@ -1,45 +1,159 @@
 # Hive
 
-Hive is a general-purpose C# / .NET 10 platform for building, running, coordinating, and governing multi-agent systems.
+**Hive is a general-purpose C# / .NET 10 platform for building, running, coordinating, observing, governing, and evolving multi-agent systems.**
 
-It is built on the Microsoft Agent Framework (MAF) wherever MAF already owns the underlying behavior. Hive adds the semantics and infrastructure around that foundation: provider control, execution-target selection, persistent resources and state, agent identity and lifecycle, authorization, learning governance, Hive membership, cognitive state, observability, and other higher-level system concerns.
+Hive is built on the Microsoft Agent Framework (MAF) where MAF already owns the underlying behavior. Hive adds the platform-level semantics and infrastructure around that foundation:
 
-The document/image data-entry pipeline described below is **a V1 validation workload**, not the definition or long-term purpose of Hive.
+- persistent cognitive runtimes;
+- first-class Skills, Knowledge, Wiki, Memory, and Learning Candidates;
+- capability assignments and runtime overrides;
+- provider/account/model execution control;
+- capability-aware execution planning;
+- host identity propagation;
+- generic host integration;
+- WinForms UI Context / Control Adapters;
+- general human intervention;
+- durable state, snapshots, and transactional outbox;
+- resource ownership and generic resource inventory;
+- configuration portability;
+- authorization and governance;
+- WinForms management;
+- diagnostics and production-focused testing;
+- multi-agent Hives and later governance patterns.
 
-## V1 validation workload
+A document/image extraction workflow is only one example workload. It is not the definition of Hive.
 
-The first concrete workload exercises Hive as a fixed multi-agent pipeline for automating data entry from documents/images into a business application:
+## Architecture
 
 ```text
-Document / Image
-      ↓
-Ingestion / Parsing
-      ↓
-Capability-aware execution target selection
-      ↓
-Extraction / Validation
-      ↓
-Human-approved business-app write
+Host Application
+      │
+      ├── API / service integration
+      └── WinForms UI Context / Control Adapters
+      │
+      ▼
++------------------------------------------------------+
+|                       Hive                           |
+|                                                      |
+|  Identity / Tenancy / Resource Ownership             |
+|  Agent Definitions / Runtime Instances               |
+|  Persistent Cognitive Runtime                       |
+|  Memory / Knowledge / Wiki / Skills / Learning      |
+|  Provider Control Plane / Execution Planning         |
+|  General Human Intervention                          |
+|  Tools / Authorization / Governance                  |
+|  Management / Diagnostics / Portability              |
+|  Events / Snapshots / Transactional Outbox           |
+|  Hive Membership / Coordination                      |
++------------------------------------------------------+
+      │
+      ▼
+Microsoft Agent Framework
+      │
+      ├── Agent execution
+      ├── Workflow orchestration
+      ├── Checkpoints / resume
+      ├── Human-in-the-loop primitives
+      └── Workflow execution infrastructure
+      │
+      ▼
+Provider / Model
 ```
 
-This workload is intentionally narrow so the underlying agent, provider, persistence, execution, management, authorization, and recovery architecture can be built and validated without prematurely solving every possible Hive use case.
+Hive does not become an orchestration engine where MAF already provides the required mechanism.
 
-The V1 host is WinForms. Application logic is UI-agnostic; Hive is designed as a library first.
-
-## Core design
+## Core principles
 
 - **C# / .NET 10 only**
-- **Microsoft Agent Framework (MAF)** for agent execution and orchestration
-- **SQL Server** for Hive's own database; LocalDB for development
-- **SQL Server VECTOR / VECTOR_DISTANCE** behind `IVectorStore` when vector storage is needed
-- **One OpenAI-compatible provider adapter** for all compatible providers and local servers
-- **Execution Target** is the capability-bearing unit: Provider + ProviderAccount + Model
-- Capability state is explicitly `Supported`, `Unsupported`, or `Unknown`
-- Provider credentials are encrypted at rest and redacted from diagnostics
-- Append-only events with snapshots and transactional outbox
-- Immutable configuration snapshots per running execution
-- Terminal execution outcomes are protected from late provider responses
-- The LLM proposes; Hive decides
+- **MAF-first:** use MAF for behavior it already owns
+- **Provider-neutral Core**
+- **Persistent cognition is a first-class capability**
+- **Resources are first-class:** Skills, Knowledge, Wiki, Memory, Learning Candidates, assignments, overrides, and future resource types
+- **Execution planning is capability-aware and explainable**
+- **Identity is explicit and propagated**
+- **Human intervention is broader than approval**
+- **Host integration can work with APIs or desktop UI**
+- **WinForms UI Context / Control Adapters are bounded, non-authoritative context mechanisms**
+- **Hive state is separate from the host application's business database**
+- **Running executions use immutable configuration snapshots**
+- **Terminal outcomes cannot be overwritten by late provider responses**
+- **Secrets are encrypted at rest and redacted from diagnostics**
+- **The LLM proposes/reasons; Hive enforcement boundaries remain authoritative**
+- **Unknown provider capability is never silently treated as supported**
+- **Production tests cover concurrency, failure, recovery, security, and edge cases**
+
+## Host integration
+
+Hive is designed to integrate with real applications, including desktop software.
+
+The host integration boundary can consume:
+
+- Forms;
+- UserControls;
+- bindings;
+- BindingSource;
+- native collections;
+- DataTable;
+- bounded application objects;
+- explicit Control Adapters;
+- API/service contracts.
+
+Discovery is bounded and read-oriented. Discovering an object never grants permission to execute against it.
+
+This lets workloads such as document/image extraction, business-app automation, developer tooling, simulations, and other agent-driven systems use the same underlying Hive infrastructure.
+
+## Management surface
+
+The WinForms management application is organized around authoritative Hive state:
+
+1. Providers / Models / Execution Targets
+2. Agents
+3. Cognition
+4. Learning Review
+5. Knowledge / Wiki
+6. Skills
+7. Storage
+8. Runtime Diagnostics
+9. Human Intervention
+10. Resource Inventory
+11. Configuration Import / Export
+12. Host Integration / UI Context diagnostics
+
+The UI is a thin shell over `Hive.Management`.
+
+## Example application
+
+`Hive.Example.WinForms` is a separate example/verification host.
+
+Every example is isolated from reusable implementation code and includes a complete public-API code snippet that can be copied and run as documentation.
+
+Examples cover the platform itself: execution, planning, cognition, memory, knowledge, skills, learning, intervention, portability, host integration, diagnostics, and one document/image workload.
+
+## Automated tests
+
+`Hive.Tests` is intended to provide production-oriented unit and contract coverage.
+
+Important test categories include:
+
+- identity and scope isolation;
+- capability matching;
+- execution planning;
+- immutable snapshots;
+- cognitive state/recovery;
+- memory ownership;
+- learning promotion/rejection;
+- intervention races and stale requests;
+- terminal-state protection;
+- provider failures and timeouts;
+- transactional outbox;
+- crash/resume;
+- configuration portability;
+- secret redaction;
+- host object discovery limits;
+- tool authorization;
+- concurrent runtime isolation.
+
+No test coverage claim is made until the corresponding automated test actually exists.
 
 ## Repository structure
 
@@ -50,36 +164,23 @@ Hive/
 │   ├── roadmap.md
 │   ├── Hive_Current_Status.md
 │   └── Hive_Active_Work.md
+├── AGENTS.md
 └── README.md
 ```
 
-The solution/projects will be created by Phase 0.1 according to `docs/roadmap.md`.
-
-## Documentation rules
-
-`docs/architecture.md` is the architectural source of truth. Update it before structural code changes.
-
-`docs/Hive_Current_Status.md` contains the current implementation/status only.
-
-`docs/Hive_Active_Work.md` contains only the current implementation slice and its verification notes.
-
-`docs/roadmap.md` is the granular implementation plan. It is not a second source of status.
-
-## Roadmap
-
-Phase 0 establishes the solution and persistence/test foundations.
-
-Phase 1 builds the first concrete multi-agent validation workload, provider platform, management UI, crash/resume behavior, capability-aware selection, budgets, and observability.
-
-Later phases cover persistence hardening, death/postmortem/reincarnation, Hive membership and coordination, governance patterns, cognitive safety, multi-tenancy/scale, tooling, and operations.
-
-See [`docs/architecture.md`](docs/architecture.md) and [`docs/roadmap.md`](docs/roadmap.md).
-
 ## Project status
 
-**Phase 0 — not yet implemented.**
+**Phase 0 — Foundations.**
 
-The repository is currently documentation/scaffolding only. No implementation or test claims are made until the corresponding slices are completed and recorded in `docs/Hive_Current_Status.md`.
+The repository is currently documentation/scaffolding only. Implementation status and test claims are recorded only in `docs/Hive_Current_Status.md`.
+
+See [Architecture](docs/architecture.md) and [Roadmap](docs/roadmap.md).
+
+## Official MAF reference
+
+Hive's MAF boundary should be checked against Microsoft's current Agent Framework documentation as MAF evolves:
+
+https://learn.microsoft.com/en-us/agent-framework/workflows/
 
 ## License
 
