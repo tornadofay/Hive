@@ -542,48 +542,65 @@ Agent / Tool / Cognitive Runtime
 
 ### WinForms UI Context
 
-The WinForms integration supports bounded inspection of:
+The WinForms integration supports the host's native data representations rather than forcing them into one canonical representation.
+
+Common supported representations include:
 
 - Forms;
 - UserControls;
 - control trees;
 - data bindings;
-- BindingSource and native data sources;
-- DataTable;
-- native collections;
-- bounded application-owned objects;
+- BindingSource;
+- DataTable / DataView / DataSet;
+- arrays;
+- IList / IReadOnlyList / IBindingList and similar collection contracts;
+- dictionaries / key-value collections;
+- POCOs and records;
+- application-owned object graphs;
 - bounded projections;
-- Control Adapters.
+- explicit Control Adapters.
+
+There is no Hive-wide canonical DataTable model.
+
+A DataTable is simply one supported .NET representation. Hive preserves the native source when the host needs identity, binding behavior, editing, or type information, while also supporting a bounded normalized projection when an agent context needs normalization.
 
 ### UI Context rules
 
-- Visible pixels are not the primary source of truth when a native/bound source is available.
-- Bound/native sources are preferred over scraping displayed text.
-- `DataTable` is supported but never mandatory.
-- Object discovery is bounded, read-oriented, and non-executable.
+- Prefer the host's native/bound source when it already exposes the needed information.
+- Do not scrape visible pixels or text when a native source is available.
+- Do not require the host to convert a source into DataTable, JSON, dictionaries, or another intermediate representation merely so Hive can consume it.
+- Preserve source-specific semantics where they matter to the host.
+- Use bounded projections only at the context boundary that actually needs normalization.
+- Object discovery is bounded, read-oriented, cycle-safe, cancellation-aware, and non-executable.
 - Discovery reports evidence; it does not invent business meaning.
 - Host-defined semantics and authorization can enrich or override discovery.
 - Sensitive data must be redacted according to host/Hive policy.
 - Context limits must prevent unbounded traversal or accidental capture of the host application.
-- A discovered object never becomes a tool merely because it was discoverable.
+- Discoverability never grants authority or tool permission.
 
-### Control Adapters
+### Data-source and control adapters
 
-Control adapters convert host-specific UI/data structures into explicit Hive context contracts.
+Hive uses adapters to understand host structures without forcing every host into one representation.
 
 Examples:
 
 ```text
-DataGridView → tabular projection
-BindingSource → bounded collection view
-DataTable → schema + row projection
-TextBox → bounded text observation
-ComboBox → selected value + bounded options
-Custom control → explicit adapter contract
+DataGridView       → rows/columns + bound source metadata
+BindingSource      → bounded current/list view
+DataTable          → native table + schema/row projection
+DataView           → filtered/sorted native view + bounded projection
+IList<T>           → bounded typed collection view
+IEnumerable<T>     → bounded enumeration snapshot
+POCO / record      → bounded property graph
+Dictionary         → bounded key/value projection
+TextBox            → bounded text/value observation
+ComboBox           → selected value + bounded options
+Custom control     → explicit adapter contract
 ```
 
-This subsystem is a general host-integration capability. Document/image extraction is only one possible workload built on top of it.
+The adapter system is not a collection of special cases hidden behind one data type. It is a common inspection/projection contract plus representation-specific adapters where necessary.
 
+This subsystem is a general host-integration capability. Document/image extraction is only one possible workload built on top of it.
 ---
 
 ## 9. General Human Intervention
@@ -772,6 +789,11 @@ Every area is a separate page/folder and uses the same management facade.
 
 Hive includes a dedicated example application that demonstrates the public architecture instead of becoming a hidden second implementation.
 
+The example application is a development/documentation surface and integration host, not a replacement for automated tests and not a separate implementation phase.
+
+Examples are added alongside the feature they demonstrate. The relevant implementation slice should add the appropriate automated tests, example scenario, complete public-API snippet, and manual smoke path when the capability has meaningful UI/host behavior.
+
+
 The example application must have:
 
 - clear separation between reusable library code and example code;
@@ -808,27 +830,26 @@ Testing is part of the architecture, not a final cleanup task.
 
 ### Unit tests
 
-Cover:
+Cover deterministic logic and small contracts:
 
-- deterministic core logic;
 - serialization;
 - resource scope/ownership;
-- identity propagation;
+- identity value semantics;
 - planner rules;
 - capability matching;
 - intervention state transitions;
 - stale detection;
 - cognitive state transitions;
 - learning governance;
-- runtime overrides;
-- resource inventory;
+- runtime override resolution;
+- resource inventory rules;
 - configuration package validation;
 - redaction;
 - error classification.
 
 ### Contract/integration tests
 
-Cover:
+Cover boundaries where unit tests are not enough:
 
 - SQL persistence;
 - migrations;
@@ -836,7 +857,25 @@ Cover:
 - snapshot recovery;
 - provider adapters through fake/local infrastructure;
 - MAF integration boundaries;
-- host integration contracts.
+- configuration import/export;
+- host integration contracts;
+- real binding/data-source behavior.
+
+### System / end-to-end tests
+
+Use the assembled Hive components with fake/local external dependencies to verify important cross-boundary paths:
+
+- host input;
+- identity;
+- resource policy;
+- execution planning;
+- MAF workflow/agent execution;
+- persistence;
+- intervention;
+- recovery;
+- resulting state.
+
+A whole-system automated test is valuable, but it is not a unit test merely because it runs automatically. Keep system tests targeted and deterministic rather than duplicating every unit assertion at end-to-end level.
 
 ### Concurrency/recovery tests
 
