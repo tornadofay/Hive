@@ -22,6 +22,16 @@ public sealed class HivePersistenceOptionsTests
     }
 
     [Fact]
+    public void ConnectionStringOptions_CreateDatabaseByDefault()
+    {
+        var options = new HiveDatabaseOptions(
+            "Server=localhost\\MSSQLSERVER01;Database=Hive;Trusted_Connection=True;");
+
+        Assert.True(options.CreateDatabaseIfMissing);
+        Assert.Equal("Hive", options.DatabaseName);
+    }
+
+    [Fact]
     public void ToString_DoesNotExposeConnectionString()
     {
         var options = new HiveDatabaseOptions(
