@@ -5,7 +5,7 @@ using Hive.Host.WinForms.UI.Theme;
 
 namespace Hive.Example.WinForms;
 
-internal sealed partial class ThemeFoundationExampleForm
+internal sealed partial class ThemeFoundationExampleView
 {
     private readonly List<CrudExampleItem> _crudExampleItems =
     [
