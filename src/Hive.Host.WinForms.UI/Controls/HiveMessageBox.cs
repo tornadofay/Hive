@@ -3,6 +3,7 @@ using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Theme;
+using System.ComponentModel;
 
 namespace Hive.Host.WinForms.UI.Controls;
 
@@ -836,6 +837,7 @@ public static class HiveMessageBox
             AccessibleRole = AccessibleRole.PushButton;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public HiveMessageButtonKind Kind
         {
             get => _kind;
@@ -1026,6 +1028,7 @@ public static class HiveMessageBox
             BackColor = Color.Transparent;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public HiveMessageType MessageType
         {
             get => _messageType;
