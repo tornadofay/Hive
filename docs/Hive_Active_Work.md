@@ -34,8 +34,8 @@ Current 0.6 implementation also fixes the example page navigation to keep one ac
 - added HiveButton using the selected renderer behind a Hive-owned control boundary;
 - added HiveMessageBox as a Hive-owned themed dialog;
 - added reusable data-page primitives: HiveListPageLayout and HivePaginationBar;
-- generic CRUD composition is now part of the 0.6 reusable UI foundation: HiveCrudPage<TItem> owns generic Add/Edit/Delete/Refresh interaction, selection, list population, search/filter presentation, busy-state, cancellation, loading/empty/no-match states, keyboard interaction, and structured operation-failure notification, while consumers provide domain-specific load/edit/delete callbacks;
-- the generic CRUD presentation follows a consistent real-world page hierarchy: title/description, search and actions, primary list surface, then compact status/count feedback; destructive delete remains a contextual danger action with confirmation;
+- generic CRUD composition is now part of the 0.6 reusable UI foundation: HiveCrudPage<TItem> owns generic Add/Edit/Delete/Refresh interaction, selection, list population, search/filter presentation, compact toolbar composition, busy-state, cancellation, loading/empty/no-match states, keyboard interaction, structured operation-failure notification, and the integrated HivePaginationBar footer with configurable page size, while consumers provide domain-specific load/edit/delete callbacks;
+- the generic CRUD presentation follows a compact real-world page hierarchy: title/description, one-row search/actions toolbar, primary list surface immediately below, then a compact status/pagination footer; destructive delete remains a contextual danger action with confirmation;
 - reusable editor-layout composition is implemented as HiveEditorLayout for the repeated labeled-field/action-footer pattern found across HAgent configuration editors, with consistent field spacing and a dedicated right-aligned action footer;
 - replaced the Example startup placeholder with the 0.6 UI-foundation verification surface;
 - the full 0.7 Example Host Shell is intentionally not started yet;
