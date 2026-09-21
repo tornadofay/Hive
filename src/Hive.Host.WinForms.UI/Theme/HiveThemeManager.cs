@@ -200,15 +200,33 @@ public sealed class HiveThemeManager : IHiveThemeManager
     {
         grid.BackgroundColor = theme.Palette.WindowBackground;
         grid.GridColor = theme.Palette.Border;
+        grid.BorderStyle = BorderStyle.FixedSingle;
+        grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+        grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.SingleHorizontal;
+        grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+        grid.ColumnHeadersHeight = 36;
+        grid.RowTemplate.Height = 32;
+        grid.EnableHeadersVisualStyles = false;
+
         grid.DefaultCellStyle.BackColor = theme.Palette.InputBackground;
         grid.DefaultCellStyle.ForeColor = theme.Palette.Text;
-        grid.EnableHeadersVisualStyles = false;
         grid.DefaultCellStyle.SelectionBackColor = theme.Palette.Selection;
         grid.DefaultCellStyle.SelectionForeColor = theme.Palette.Text;
+
+        grid.AlternatingRowsDefaultCellStyle.BackColor =
+            theme.Palette.Surface;
+        grid.AlternatingRowsDefaultCellStyle.ForeColor =
+            theme.Palette.Text;
+        grid.AlternatingRowsDefaultCellStyle.SelectionBackColor =
+            theme.Palette.Selection;
+        grid.AlternatingRowsDefaultCellStyle.SelectionForeColor =
+            theme.Palette.Text;
+
         grid.ColumnHeadersDefaultCellStyle.BackColor = theme.Palette.Surface;
         grid.ColumnHeadersDefaultCellStyle.ForeColor = theme.Palette.Text;
-        grid.ColumnHeadersDefaultCellStyle.SelectionBackColor = theme.Palette.Selection;
+        grid.ColumnHeadersDefaultCellStyle.SelectionBackColor = theme.Palette.Surface;
         grid.ColumnHeadersDefaultCellStyle.SelectionForeColor = theme.Palette.Text;
+
         grid.RowHeadersDefaultCellStyle.BackColor = theme.Palette.Surface;
         grid.RowHeadersDefaultCellStyle.ForeColor = theme.Palette.Text;
         grid.RowHeadersDefaultCellStyle.SelectionBackColor = theme.Palette.Selection;
