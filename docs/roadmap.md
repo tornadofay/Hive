@@ -93,7 +93,7 @@ Define a small discovery contract such as `IHiveExample` with category, subcateg
 
 Examples are grouped by feature area and grow with the platform. The shell itself uses only Hive-owned UI contracts.
 
-Verify: adding one new example implementation makes it appear in navigation without additional shell wiring; selecting an example replaces the content view correctly; navigation remains usable with many examples.
+Verify: adding one new example implementation makes it appear in navigation without additional shell wiring; selecting an example replaces the content view correctly; navigation remains usable with many examples; Light/Dark/System theme changes preserve navigation selection and scroll position; representative CRUD and dialog surfaces remain readable and consistent at supported compact and normal window sizes; no avoidable UI warnings or resource-lifetime regressions are introduced.
 
 ---
 
