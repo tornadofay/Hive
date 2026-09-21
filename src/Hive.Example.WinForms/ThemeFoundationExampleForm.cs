@@ -25,7 +25,8 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         ShowInTaskbar = true;
         StartPosition = FormStartPosition.CenterScreen;
 
-        BodyPanel.Padding = Padding.Empty;
+        SetBodyPadding(Padding.Empty);
+        _themeManager.ThemeChanged += ThemeManagerOnChanged;
 
         _navigation = new Panel
         {
@@ -63,15 +64,28 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         AddNavigation("Dialogs", ShowDialogs);
 
         BuildContent();
+        ApplyExampleTheme(Theme);
         ShowOverview();
     }
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
+        {
+            _themeManager.ThemeChanged -= ThemeManagerOnChanged;
             _pageTitleFont.Dispose();
+        }
 
         base.Dispose(disposing);
+    }
+
+    private void ThemeManagerOnChanged(object? sender, EventArgs e) =>
+        ApplyExampleTheme(_themeManager.Theme);
+
+    private void ApplyExampleTheme(HiveThemeDefinition theme)
+    {
+        _navigation.BackColor = theme.VisualStates.NavigationBackground;
+        _content.BackColor = theme.Palette.Surface;
     }
 
     private void BuildContent()
