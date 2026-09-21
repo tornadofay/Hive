@@ -71,9 +71,20 @@ Developer verification: **36 tests passed, 0 failed, 0 skipped in 1.5 seconds.**
 
 ### Phase 0.4 — Persistence bootstrap
 
-Active slice. Structural persistence implementation has not started yet.
+Active slice. Implementation is present in Hive.Persistence; developer verification is pending.
 
-The next implementation boundary is Hive-owned SQL Server persistence with LocalDB development support, DbUp migrations, schema-version compatibility protection, and initial indexes.
+Implemented:
+- SQL Server/LocalDB database configuration;
+- DbUp SQL Server 7.2.0 migration runner;
+- Microsoft.Data.SqlClient 7.1.0;
+- Hive-owned schema-version tracking and DbUp journal configuration;
+- future-schema compatibility rejection;
+- transaction-per-script migration execution;
+- bootstrap metadata schema with primary/unique indexes;
+- persistence option tests and SQL integration tests;
+- public example under docs/examples/Phase04_Persistence.md.
+
+The required SQL Server/LocalDB integration suite has not yet been run, so 0.4 is not complete.
 
 ## Completed
 
@@ -103,7 +114,7 @@ The next implementation boundary is Hive-owned SQL Server persistence with Local
 
 ## Not started
 
-- Phase 0.4 Persistence bootstrap — active.
+- Phase 0.4 Persistence bootstrap — active and awaiting developer verification.
 - Phase 0.5 Test harness beyond slice-specific tests already introduced.
 - Phase 0.6 WinForms UI/UX Foundation.
 - Phase 0.7 Example Host Shell.
