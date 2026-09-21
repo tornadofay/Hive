@@ -176,18 +176,18 @@ public static class HiveMessageBox
 
     private sealed class HiveMessageDialog : Form
     {
-        private const int DesignWidth = 560;
-        private const int MinWidth = 460;
-        private const int MinHeight = 260;
+        private const int DesignWidth = 580;
+        private const int MinWidth = 480;
+        private const int MinHeight = 270;
         private const int MaxHeight = 720;
 
-        private const int OuterPadding = 24;
-        private const int IconColumnWidth = 82;
-        private const int IconSize = 56;
-        private const int AccentBarHeight = 5;
-        private const int FooterHeight = 68;
-        private const int DetailsHeight = 156;
-        private const int MaxMessageHeight = 260;
+        private const int OuterPadding = 28;
+        private const int IconColumnWidth = 76;
+        private const int IconSize = 52;
+        private const int AccentBarHeight = 4;
+        private const int FooterHeight = 64;
+        private const int DetailsHeight = 148;
+        private const int MaxMessageHeight = 250;
 
         private readonly HiveMessageOptions _options;
         private readonly IHiveThemeManager _themeManager;
@@ -255,10 +255,10 @@ public static class HiveMessageBox
             AccessibleRole = AccessibleRole.Dialog;
             KeyPreview = true;
 
-            _titleFont = new Font("Segoe UI Semibold", 15f, FontStyle.Bold);
-            _messageFont = new Font("Segoe UI", 11.25f);
-            _detailsFont = new Font("Consolas", 9.5f);
-            _buttonFont = new Font("Segoe UI Semibold", 10.25f, FontStyle.Bold);
+            _titleFont = new Font("Segoe UI Semibold", 14.5f, FontStyle.Bold);
+            _messageFont = new Font("Segoe UI", 10.5f);
+            _detailsFont = new Font("Consolas", 9.2f);
+            _buttonFont = new Font("Segoe UI Semibold", 9.7f, FontStyle.Bold);
 
             _root = new TableLayoutPanel
             {
@@ -536,13 +536,13 @@ public static class HiveMessageBox
             _accentBar.BackColor = GetAccentColor(_theme, _options.Type);
 
             _title.ForeColor = _theme.Palette.Text;
-            _message.ForeColor = _theme.Palette.MutedText;
+            _message.ForeColor = _theme.Palette.Text;
             _detailsLink.LinkColor = _theme.Palette.Accent;
             _detailsLink.ActiveLinkColor = _theme.Palette.AccentHover;
 
             _detailsContainer.BackColor = _theme.Palette.ElevatedSurface;
             _details.BackColor = _theme.Palette.InputBackground;
-            _details.ForeColor = _theme.Palette.Text;
+            _details.ForeColor = _theme.Palette.MutedText;
             _details.Font = _detailsFont;
 
             _borderPen?.Dispose();
@@ -553,6 +553,8 @@ public static class HiveMessageBox
             _icon.ApplyTheme(
                 _theme,
                 GetAccentColor(_theme, _options.Type));
+
+            _footer.BackColor = _theme.Palette.Surface;
 
             _primaryButton.ApplyTheme(_theme, HiveMessageButtonKind.Primary);
             _secondaryButton.ApplyTheme(_theme, HiveMessageButtonKind.Secondary);
