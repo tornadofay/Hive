@@ -129,9 +129,8 @@ public sealed class HiveButton : UserControl
         _renderer.BackColor = background;
         _renderer.ForeColor = foreground;
         _renderer.UseAccentColor = useAccentColor;
-        _renderer.HighEmphasis = highEmphasis;
+        _renderer.HighEmphasis = highEmphasis && HighEmphasis && Enabled;
         _renderer.Depth = depth;
-        _renderer.HighEmphasis = HighEmphasis && Enabled;
     }
 
     protected override void OnEnabledChanged(EventArgs e)
