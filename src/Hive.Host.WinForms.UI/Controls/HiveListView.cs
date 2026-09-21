@@ -143,11 +143,9 @@ public sealed class HiveListView : ListView
             return;
         }
 
-        var color = !Enabled || !e.Item.Enabled
+        var color = !Enabled
             ? theme.Palette.DisabledText
-            : e.Item.Selected
-                ? theme.Palette.Text
-                : theme.Palette.Text;
+            : theme.Palette.Text;
 
         var flags = TextFormatFlags.VerticalCenter |
                     TextFormatFlags.EndEllipsis |
