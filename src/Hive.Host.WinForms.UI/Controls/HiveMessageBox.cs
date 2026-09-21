@@ -495,6 +495,26 @@ public static class HiveMessageBox
             }
         }
 
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+
+            if (_windowPath is null)
+                return;
+
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+            using var border = new Pen(
+                _theme.Palette.Border,
+                1.5f)
+            {
+                Alignment = PenAlignment.Inset
+            };
+
+            e.Graphics.DrawPath(border, _windowPath);
+        }
+
         protected override void OnSizeChanged(EventArgs e)
         {
             base.OnSizeChanged(e);
@@ -513,7 +533,7 @@ public static class HiveMessageBox
         {
             MinimumSize = new Size(MinWidth, MinHeight);
 
-            BackColor = _theme.Palette.Surface;
+            BackColor = _theme.Palette.Border;
             ForeColor = _theme.Palette.Text;
 
             _root.BackColor = _theme.Palette.Surface;
