@@ -9,6 +9,7 @@ namespace Hive.Host.WinForms.UI.Controls;
 public sealed class HiveExampleTestSurface : UserControl
 {
     private readonly FlowLayoutPanel _actions;
+    private readonly TableLayoutPanel _workspace;
     private readonly HiveButton _runButton;
     private readonly HiveButton _copyButton;
     private readonly Label _status;
