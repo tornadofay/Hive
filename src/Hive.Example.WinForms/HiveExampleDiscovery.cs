@@ -20,7 +20,7 @@ internal static class HiveExampleDiscovery
                 continue;
             }
 
-            if (Activator.CreateInstance(type) is IHiveExample example)
+            if (Activator.CreateInstance(type, nonPublic: true) is IHiveExample example)
                 examples.Add(example);
         }
 
