@@ -37,6 +37,9 @@ internal sealed class HiveWindowHeader : Control
     private readonly Font _subtitleFont = new("Segoe UI", 8f, FontStyle.Regular);
     private readonly Font _buttonFont = new("Segoe UI Symbol", 12f, FontStyle.Regular);
 
+    private int Scale(int designPixels) =>
+        HiveDpi.Scale(this, designPixels);
+
     public HiveWindowHeader()
     {
         SetStyle(
@@ -48,11 +51,16 @@ internal sealed class HiveWindowHeader : Control
             true);
 
         Dock = DockStyle.Top;
-        Height = HeaderHeight;
-        MinimumSize = new Size(0, HeaderHeight);
+        ApplyDpi();
         Cursor = Cursors.Default;
     }
 
+    public void ApplyDpi()
+    {
+        Height = Scale(HeaderHeight);
+        MinimumSize = new Size(0, Scale(HeaderHeight));
+        Invalidate();
+    }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public string Title
@@ -171,10 +179,10 @@ internal sealed class HiveWindowHeader : Control
 
         e.Graphics.FillRectangle(background, bounds);
 
-        var textLeft = 18;
+        var textLeft = Scale(18);
         var textWidth = Math.Max(
-            80,
-            Width - textLeft - GetButtonCount() * ButtonWidth - 18);
+            Scale(80),
+            Width - textLeft - GetButtonCount() * Scale(ButtonWidth) - Scale(18));
 
         if (string.IsNullOrWhiteSpace(_subtitle))
         {
@@ -194,7 +202,7 @@ internal sealed class HiveWindowHeader : Control
                 e.Graphics,
                 _title,
                 _titleFont,
-                new Rectangle(textLeft, 5, textWidth, 24),
+                new Rectangle(textLeft, Scale(5), textWidth, Scale(24)),
                 _foreground,
                 TextFormatFlags.VerticalCenter |
                 TextFormatFlags.EndEllipsis |
@@ -204,7 +212,7 @@ internal sealed class HiveWindowHeader : Control
                 e.Graphics,
                 _subtitle,
                 _subtitleFont,
-                new Rectangle(textLeft, 28, textWidth, 20),
+                new Rectangle(textLeft, Scale(28), textWidth, Scale(20)),
                 _subtitleForeground,
                 TextFormatFlags.VerticalCenter |
                 TextFormatFlags.EndEllipsis |
@@ -374,9 +382,9 @@ internal sealed class HiveWindowHeader : Control
         return indexFromRight < 0
             ? Rectangle.Empty
             : new Rectangle(
-                Width - ButtonWidth * (indexFromRight + 1),
+                Width - Scale(ButtonWidth) * (indexFromRight + 1),
                 0,
-                ButtonWidth,
+                Scale(ButtonWidth),
                 Height);
     }
 
