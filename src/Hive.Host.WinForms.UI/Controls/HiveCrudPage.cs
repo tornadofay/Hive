@@ -108,7 +108,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Padding = Padding.Empty
         };
 
-        _pageLayout.HeaderPanel.Padding = new Padding(0, 4, 0, 4);
+        _pageLayout.HeaderPanel.Padding = new Padding(12, 4, 12, 4);
         _pageLayout.HeaderPanel.Controls.Add(_descriptionLabel);
         _pageLayout.HeaderPanel.Controls.Add(_titleLabel);
 
