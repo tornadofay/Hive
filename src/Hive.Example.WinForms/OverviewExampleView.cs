@@ -22,8 +22,6 @@ internal sealed class OverviewExampleView : UserControl
     private readonly IHiveThemeManager _themeManager;
     private readonly Label _hostText;
     private readonly Label _uiText;
-    private readonly Label _navigationText;
-    private readonly Label _architectureText;
     private readonly Font _eyebrowFont;
     private readonly Font _titleFont;
     private readonly Font _sectionFont;
