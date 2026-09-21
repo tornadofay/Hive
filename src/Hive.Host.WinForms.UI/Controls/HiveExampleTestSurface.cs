@@ -122,6 +122,8 @@ public sealed class HiveExampleTestSurface : UserControl
         {
             AutoSize = true,
             Height = 36,
+            AccessibleRole = AccessibleRole.StatusBar,
+            AccessibleName = "Example status",
             Text = "Ready",
             TextAlign = ContentAlignment.MiddleLeft,
             Margin = new Padding(12, 0, 0, 0),
