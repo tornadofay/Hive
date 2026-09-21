@@ -29,9 +29,9 @@ public sealed class HivePaginationBar : UserControl
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96));
 
         _previousButton = CreateButton("Previous");
         _previousButton.Click += (_, _) =>
@@ -131,8 +131,17 @@ public sealed class HivePaginationBar : UserControl
             Text = text,
             Style = HiveButtonStyle.Secondary,
             Dock = DockStyle.Fill,
-            Margin = new Padding(0, 0, 8, 0)
+            Margin = Padding.Empty
         };
+
+    internal void ApplyTheme(HiveThemeDefinition theme)
+    {
+        ArgumentNullException.ThrowIfNull(theme);
+
+        BackColor = theme.Palette.Surface;
+        _pageLabel.ForeColor = theme.Palette.MutedText;
+        _pageLabel.BackColor = Color.Transparent;
+    }
 
     private void UpdateState()
     {
