@@ -222,6 +222,7 @@ public static class HiveMessageBox
 
         private HiveThemeDefinition _theme;
         private GraphicsPath? _windowPath;
+        private Pen? _windowBorderPen;
         private bool _updatingSize;
 
         public HiveMessageDialog(
@@ -495,6 +496,7 @@ public static class HiveMessageBox
             if (disposing)
             {
                 _windowPath?.Dispose();
+                _windowBorderPen?.Dispose();
                 _titleFont.Dispose();
                 _messageFont.Dispose();
                 _detailsFont.Dispose();
@@ -512,14 +514,8 @@ public static class HiveMessageBox
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
-            using var border = new Pen(
-                _theme.Palette.Border,
-                1.5f)
-            {
-                Alignment = PenAlignment.Inset
-            };
-
-            e.Graphics.DrawPath(border, _windowPath);
+            if (_windowBorderPen is not null)
+                e.Graphics.DrawPath(_windowBorderPen, _windowPath);
         }
 
         protected override void OnSizeChanged(EventArgs e)
@@ -556,8 +552,14 @@ public static class HiveMessageBox
 
             _detailsContainer.BackColor = _theme.Palette.ElevatedSurface;
             _details.BackColor = _theme.Palette.InputBackground;
-            _details.ForeColor = _theme.Palette.MutedText;
+            _details.ForeColor = _theme.Palette.Text;
             _details.Font = _detailsFont;
+
+            _windowBorderPen?.Dispose();
+            _windowBorderPen = new Pen(_theme.Palette.Border, 1.5f)
+            {
+                Alignment = PenAlignment.Inset
+            };
 
             _icon.ApplyTheme(
                 _theme,
@@ -1085,6 +1087,7 @@ public static class HiveMessageBox
             _textBrush?.Dispose();
             _disabledBrush?.Dispose();
             _focusPen?.Dispose();
+            _borderPen?.Dispose();
 
             _backgroundBrush = null;
             _hoverBrush = null;
