@@ -10,9 +10,8 @@ internal sealed class HiveExampleHostForm : HiveForm
 {
     private const int NavigationWidth = 236;
     private const int CompactNavigationWidth = 214;
-    private const int OutputExpandedHeight = 190;
-    private const int OutputOverlayMaxWidth = 760;
-    private const int OutputOverlayMargin = 12;
+    private const int OutputExpandedHeight = 232;
+    private const int OutputOverlayMargin = 0;
     private const int OutputButtonWidth = 118;
     private const int OutputButtonHeight = 36;
     private const int OutputButtonMargin = 12;
@@ -295,24 +294,20 @@ internal sealed class HiveExampleHostForm : HiveForm
 
         var outputHeight = Math.Min(
             OutputExpandedHeight,
-            Math.Max(120, _viewHost.ClientSize.Height -
+            Math.Max(
+                120,
+                _viewHost.ClientSize.Height -
                 (OutputOverlayMargin * 2)));
 
-        var overlayWidth = Math.Min(
-            OutputOverlayMaxWidth,
-            Math.Max(
-                0,
-                _viewHost.ClientSize.Width -
-                (OutputOverlayMargin * 2)));
+        var overlayWidth = Math.Max(
+            0,
+            _viewHost.ClientSize.Width -
+            (OutputOverlayMargin * 2));
 
         var overlayHeight = Math.Max(0, outputHeight);
 
         _outputView.Bounds = new Rectangle(
-            Math.Max(
-                OutputOverlayMargin,
-                _viewHost.ClientSize.Width -
-                overlayWidth -
-                OutputOverlayMargin),
+            OutputOverlayMargin,
             Math.Max(
                 OutputOverlayMargin,
                 _viewHost.ClientSize.Height -
