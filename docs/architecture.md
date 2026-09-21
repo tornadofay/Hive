@@ -297,22 +297,48 @@ The decision is recorded as an architecture decision and the implementation cont
 
 ---
 
-## 5. Management Surface
+## 5. Workspace and Management Surface
 
-`Hive.Management` is the authoritative management facade.
+`Hive.Management` is the authoritative management facade. `Workspace` is the authoritative human-facing operational surface over that facade; host UI code does not bypass the facade for management or persistence operations.
 
-Every host UI is a thin presentation shell over that facade. Host UI code does not bypass the facade for management or persistence operations.
+A Workspace may contain:
+
+- normal **LLM mode** chat, including attachments/file upload and explicit user model selection;
+- **Agentic mode** chat with an Agent or Hive;
+- active Agent/Hive visibility, including organization and current active Swarm membership;
+- WorkItems/tasks, execution/activity state, Questions, notifications, and approvals;
+- inspection of the selected Agent's objective, questions, plan/state, and execution target where authorized;
+- bounded host-context bindings registered by business applications;
+- configuration and intervention controls provided by Hive.Management.
+
+Model-selection semantics differ by mode:
+
+- In **LLM mode**, the user explicitly selects the model/execution target subject to normal capability and authorization policy, with a configured default available.
+- In **Agentic mode**, the Agent/Hive selects an execution target through the normal Execution Planner and policy boundary. The Workspace displays the selected target and relevant diagnostics, but the user is not required to choose the model for every Agent decision.
+
+Workspace is not a cognitive authority. It displays and controls authoritative Agent/Hive state; it does not invent Agent decisions or rewrite cognitive state outside the normal management/authorization contracts.
+
+A business application can register a host context through a bounded public API such as:
+
+```csharp
+ai.Register(this);
+```
+
+Registration binds host context to Workspace/Hive management and may reuse an existing specialized Agent. Registration does not by itself create a new Agent, create a Hive, or imply that multiple open forms must communicate. Host-specific specialization and lifecycle are explicit policy/configuration.
+
+When multiple registered specialized Agents need to collaborate, the Workspace can display them as a Hive and show the current collaborating subset as a Swarm. The visual representation does not itself create a Hive or Swarm; durable creation and membership follow the Agent/Hive contracts.
 
 V1 management areas:
 
-1. Providers / Models / Execution Targets
-2. Agents
+1. Workspace
+2. Providers / Models / Execution Targets
+3. Agents
 
 Later areas are added only when their owning phase lands:
 
 - Hive Membership
 - Governance
-- Cognition / Learning Review
+- Cognition / Dreams / Questions / Learning Review
 - Knowledge / Skills / Memory
 - Storage
 - Runtime Diagnostics
@@ -346,7 +372,7 @@ Canonical scopes:
 Global / Tenant / User / Workspace / Agent / Runtime / Execution
 ```
 
-Resource examples include Provider, ProviderAccount, ExecutionTarget, AgentDefinition, HiveDefinition, and later Memory, Knowledge, Wiki, Skill, LearningCandidate, and CognitiveState resources.
+Resource examples include Provider, ProviderAccount, ExecutionTarget, AgentDefinition, HiveDefinition, Workspace, WorkItem, Question, Memory, Knowledge, Wiki, Skill, LearningCandidate, and CognitiveState resources.
 
 Assignments are references/policies, not copies of the assigned resource.
 
@@ -357,7 +383,7 @@ Unknown future resource types remain representable through the generic inventory
 ## 7. Execution Planning
 
 ```
-Agent intent
+Agent intent or WorkItem
     ↓
 Reasoning Requirement
     ↓
@@ -368,6 +394,8 @@ Execution Planner
 Execution Target
     ↓
 MAF execution / model call
+
+LLM mode is a Workspace interaction path where the user chooses the execution target. Agentic mode uses this planner on behalf of the Agent/Hive.
 ```
 
 A required capability must be explicitly supported. Unknown capability evidence does not qualify for a hard requirement.
@@ -391,6 +419,16 @@ Terminal execution state cannot be overwritten by a late provider result.
 
 ## 8. Human Intervention
 
+### V1 WorkItem semantics
+
+For V1, **one submitted document is one WorkItem**. A batch submission is a collection of independent WorkItems rather than one giant execution. Each WorkItem has its own identity, lifecycle, provenance, status, approvals, and terminal result.
+
+A runtime incarnation is not inherently bound one-to-one to a WorkItem. A runtime may process multiple WorkItems according to its execution policy, and a WorkItem may require multiple executions/steps. The WorkItem is the durable unit of user-visible work; Execution remains the concrete execution/lifecycle unit.
+
+An active Swarm may be represented as the set of Hive members participating in a WorkItem or related Question. The Swarm is derived/session state, not a persistent resource.
+
+
+
 Approval is one intervention action, not the entire architecture.
 
 The broader contract may eventually support:
@@ -411,6 +449,8 @@ Intervention never bypasses authorization, capability, budget, or host validatio
 ## 9. Events, Snapshots, and Transactional Outbox
 
 Hive uses append-oriented event history with durable snapshots as recovery aids.
+
+Every durable event carries an explicit event type and **payload schema version**. Event readers/upcasters must be able to translate supported older payload versions to the current contract without rewriting historical events. Database schema versioning and event-payload versioning are separate concerns.
 
 When deferred follow-up work is required:
 
@@ -518,6 +558,8 @@ Dreams may:
 Dream output is never silently treated as an event that actually happened. Persistent records distinguish at least actual observations/experiences from simulations, hypotheses, predictions, and other non-observed results.
 
 A Dream may produce candidate changes to goals, beliefs, plans, memories, self-model, skills, or other cognitive resources, but authoritative state changes remain subject to the same validation, ownership, authorization, provenance, and concurrency rules as other Hive-owned state.
+
+Dream processing is subject to applicable authorization, model/provider quota, token/cost budget, time budget, concurrency/parallelism limits, retrieval/work limits, and other resource-governance rules. Being offline or asleep never bypasses those limits.
 
 ### Questions
 
