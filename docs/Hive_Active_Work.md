@@ -4,32 +4,30 @@ Last updated: 2026-09-21
 
 ## Active slice
 
-**0.5 — Test harness**
+**0.6 — WinForms UI/UX Foundation**
 
-Phase 0.4 is complete and verified by the developer. Do not begin 0.6 or any later slice until 0.5 is complete and its verification has actually been performed.
+Phase 0.5 is complete and verified by the developer. Do not begin 0.7 or any later slice until 0.6 is complete and its manual UI verification has actually been performed.
 
 ## Objective
 
-Establish the reusable test infrastructure required by later Hive slices:
+Establish the shared WinForms visual foundation used by Hive.Host.WinForms and Hive.Example.WinForms. ReaLTaiizor remains behind Hive.Host.WinForms.UI.
 
-- xUnit test conventions for the .NET 10 solution;
-- deterministic fake provider infrastructure;
-- fake clock infrastructure;
-- test-database strategy for persistence tests;
-- deterministic event-test conventions;
-- clear separation between unit tests and real persistence/MAF/provider boundary tests.
+- Light / Dark / System theme modes;
+- Hive-owned semantic palette, typography, spacing, and visual-state tokens;
+- HiveButton and HiveMessageBox consumer-facing contracts;
+- ReaLTaiizor 3.8.2.1 isolated inside Hive.Host.WinForms.UI;
+- representative Example host verification surface without direct ReaLTaiizor references.
 
 ## Implementation progress
 
-0.5 implementation is in progress in `Hive.Tests`:
+0.6 implementation is in progress:
 
-- reusable `FakeClock` implementing the existing `IClock` contract, with deterministic set/advance operations;
-- deterministic test-only `FakeProvider` with request recording, configured response/failure, delay, and cancellation handling;
-- centralized `PersistenceTestDatabase` setup using the explicit checked-in SQL test connection configuration;
-- deterministic `EventTestData` factory using fixed UTC timestamps and explicit payload versions;
-- existing clock and event tests migrated to the shared deterministic helpers;
-- focused tests covering fake-clock boundaries, fake-provider success/failure/cancellation, and deterministic event test data;
-- request recording in the fake provider is concurrency-safe without introducing a production provider abstraction.
+- pinned ReaLTaiizor 3.8.2.1 in Hive.Host.WinForms.UI;
+- HiveThemeMode, HiveThemeDefinition, semantic palette/typography/spacing/visual-state tokens;
+- HiveThemeManager with Light / Dark / System resolution;
+- HiveButton wrapping the selected renderer without exposing ReaLTaiizor to consuming forms;
+- HiveMessageBox wrapping the ReaLTaiizor message-box implementation;
+- permanent Example startup form exercising the theme modes and representative native WinForms controls.
 
 ## 0.4 completion record
 
@@ -53,27 +51,27 @@ Phase 0.4 was completed after the developer ran the full Hive.Tests suite agains
 - CognitiveAgent/CognitiveHive;
 - Example Host Shell beyond any test-harness developer tooling specifically required by this slice.
 
-## 0.5 Verification
+## 0.6 Verification
 
 The implementation requires verification of:
 
-1. reusable fake provider behavior is deterministic and does not call a real vendor;
-2. fake clock behavior is deterministic and supports boundary-time tests;
-3. persistence tests have a documented, repeatable database strategy without hidden environment-variable prerequisites;
-4. event tests have deterministic serialization/upcasting conventions;
-5. unit tests remain independent from real SQL Server except where the persistence boundary explicitly requires integration coverage;
-6. the full suite continues to run through the normal Visual Studio solution test workflow.
+1. representative Example form renders correctly in Light mode;
+2. representative Example form renders correctly in Dark mode;
+3. System mode resolves and renders correctly;
+4. HiveButton and HiveMessageBox work through Hive-owned contracts;
+5. no consuming form references ReaLTaiizor directly;
+6. the solution builds and Hive.Example.WinForms launches normally.
 
 Verification is currently pending. No 0.5 pass claim is recorded yet.
 
 ## Completion record
 
-Complete this section after verification:
+0.5 completion record:
 
-- Build result:
-- Verification result:
-- Commit:
-- Next slice:
+- Build/test execution result: PASS — developer ran the normal Visual Studio Hive.Tests workflow.
+- Verification result: PASS — 52 tests, 52 passed, 0 failed, 0 skipped, 1.6 seconds.
+- Commit: 8204c05fe263c87d1674563b5034f5e32c3a6525.
+- Next slice: 0.6 — WinForms UI/UX Foundation.
 
 ## Dependency direction
 
