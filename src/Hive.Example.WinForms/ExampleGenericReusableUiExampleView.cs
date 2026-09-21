@@ -38,14 +38,6 @@ var example = new HiveExampleTestSurface
     InputText = "test value"
 };
 
-example.CodeSnippet = """
-var output = services.GetExampleOutput();
-
-var example = new HiveExampleTestSurface
-{
-    InputText = "test value"
-};
-
 example.SetInformation(
     "Description of the example.",
     "Expected result.",
@@ -60,7 +52,6 @@ example.ConfigureRun(
     },
     output,
     this);
-""";
 """;
 
         _surface.SetInformation(
