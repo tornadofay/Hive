@@ -103,6 +103,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
             case TextBoxBase:
             case ComboBox:
             case ListBox:
+            case ListView:
                 control.BackColor = control.Enabled
                     ? theme.Palette.InputBackground
                     : theme.Palette.DisabledBackground;
