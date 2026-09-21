@@ -88,17 +88,24 @@ A member Agent inside a Hive normally requests missing specialties from the pare
 
 `Hive.Workspace` is the human-facing operational surface over `Hive.Management`.
 
-LLM mode behaves like a normal chat: the user can choose the execution target/model and upload files. Agentic mode chats with an Agent or Hive; the Agent/Hive selects execution targets through the normal capability/policy planner and the Workspace shows the selected target.
+For **V1**, the Workspace is intentionally limited to the operational path needed to process submitted images:
 
-The Workspace can display:
+- submit/attach an image to a WorkItem;
+- view WorkItem status and activity;
+- view relevant execution/provider status;
+- receive WorkItem notifications;
+- view PendingApproval;
+- Approve / Reject the governed business-app write.
 
-- active Agents and their specializations;
-- Hive organization and current collaborating Swarm members;
-- WorkItems and activity;
-- Questions and notifications;
-- pending approvals;
-- execution/provider information;
-- registered host contexts.
+This V1 surface works with a single Agent and does not require a Hive.
+
+Later Workspace extensions are added when their owning platform capabilities exist:
+
+- general **LLM mode** with explicit model/execution-target selection;
+- **Agentic mode** with Agent/Hive-selected execution targets;
+- Agent and Hive organization/topology;
+- active Swarm membership;
+- Questions, cognitive state, and other later-generation views.
 
 A business application can register a host context with a bounded API such as:
 
