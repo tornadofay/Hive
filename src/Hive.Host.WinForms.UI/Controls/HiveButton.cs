@@ -333,8 +333,9 @@ public sealed class HiveButton : UserControl
 
     private void RebuildPath()
     {
-        _buttonRegion = null;
         Region = null;
+        _buttonRegion?.Dispose();
+        _buttonRegion = null;
 
         _path?.Dispose();
         _path = null;
