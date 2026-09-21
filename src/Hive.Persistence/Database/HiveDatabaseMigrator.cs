@@ -1,5 +1,6 @@
 using System.Reflection;
 using DbUp;
+using DbUp.Engine.Output;
 using Hive.Core;
 
 namespace Hive.Persistence;
@@ -33,7 +34,11 @@ public sealed class HiveDatabaseMigrator
         try
         {
             if (_options.CreateDatabaseIfMissing)
-                EnsureDatabase.For.SqlDatabase(_options.ConnectionString);
+            {
+                EnsureDatabase.For.SqlDatabase(
+                    _options.ConnectionString,
+                    new NoOpUpgradeLog());
+            }
 
             var previousVersion =
                 await _schemaVersionStore
@@ -53,7 +58,7 @@ public sealed class HiveDatabaseMigrator
                 return Result<HiveDatabaseMigrationOutcome>.Failure(
                     Error.Unsupported(
                         "hive.persistence.unsupported-schema",
-                        $"The Hive database schema version {previousVersion.Value} is below the minimum supported version {HiveDatabaseSchema.MinimumSupportedSchemaVersion}."));
+                        $"The Hive database schema version {previousVersion.Value} is below the minimum supported schema version {HiveDatabaseSchema.MinimumSupportedSchemaVersion}."));
             }
 
             var upgrader = DeployChanges
