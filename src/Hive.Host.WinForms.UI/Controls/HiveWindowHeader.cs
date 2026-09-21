@@ -296,6 +296,8 @@ internal sealed class HiveWindowHeader : Control
 
     protected override void Dispose(bool disposing)
     {
+        base.Dispose(disposing);
+
         if (disposing)
         {
             _titleFont.Dispose();
@@ -303,8 +305,6 @@ internal sealed class HiveWindowHeader : Control
             _buttonFont.Dispose();
             _borderPen?.Dispose();
         }
-
-        base.Dispose(disposing);
     }
 
     private int GetButtonCount() =>
