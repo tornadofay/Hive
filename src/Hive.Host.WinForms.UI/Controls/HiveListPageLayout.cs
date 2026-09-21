@@ -19,8 +19,6 @@ public sealed class HiveListPageLayout : UserControl
 
     public HiveListPageLayout()
     {
-        AutoScaleMode = AutoScaleMode.Dpi;
-        AutoScaleDimensions = new SizeF(HiveDpi.DesignDpi, HiveDpi.DesignDpi);
         Dock = DockStyle.Fill;
         BackColor = SystemColors.Window;
         Padding = Padding.Empty;
@@ -100,19 +98,13 @@ public sealed class HiveListPageLayout : UserControl
         }
     }
 
-    protected override void OnDpiChanged(DpiChangedEventArgs e)
-    {
-        base.OnDpiChanged(e);
-        UpdateRowHeights();
-    }
-
     private void UpdateRowHeights()
     {
         if (_layout.RowStyles.Count != 3)
             return;
 
-        _layout.RowStyles[0].Height = HiveDpi.Scale(this, _headerHeight);
-        _layout.RowStyles[1].Height = HiveDpi.Scale(this, _actionBarHeight);
+        _layout.RowStyles[0].Height = _headerHeight;
+        _layout.RowStyles[1].Height = _actionBarHeight;
         _layout.RowStyles[2].Height = 100f;
     }
 
