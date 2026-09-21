@@ -513,7 +513,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
     protected override void Dispose(bool disposing)
     {
-        _operationCancellation?.Cancel();
+        if (disposing)
+            _operationCancellation?.Cancel();
 
         base.Dispose(disposing);
 
