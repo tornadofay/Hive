@@ -59,7 +59,7 @@ Phase 0 — Foundations.
 
 ### Phase 0.7 — First-Class Example Host Shell
 
-Active. The shell implementation has not yet been started at this checkpoint.
+Active. The shell implementation is now in place. Automated UI verification is not introduced; developer manual verification remains required.
 
 
 ### Phase 0.3 — Identity, WorkItem & Resource foundation
