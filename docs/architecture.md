@@ -255,16 +255,12 @@ The term **Herd** may be used informally for a group's members, but it is not an
 
 ## 4. V1 Document & Business-App Integration
 
-The V1 forcing function is the complete pipeline from source document/image to a governed business-app write.
+The V1 forcing function is the complete pipeline from the first supported input image to a governed business-app write. The first V1 input is intentionally an image; additional document formats are additive later capabilities.
 
 ```
-Input PDF / Word / Excel / image
+Submitted image
         ↓
-format-specific parsing
-        ↓
-text extraction or page rasterization
-        ↓
-text / vision target
+image preparation / vision routing
         ↓
 structured extraction
         ↓
@@ -283,19 +279,20 @@ business-app result
 
 The write remains a governed Tool. Hive's database is never a direct gateway to the host application's business database.
 
-### 4.1 Host integration decision gate
+### 4.1 Dual Business-App Integration Contract
 
-Before implementation of the write boundary, determine whether the real business application exposes a usable API/protocol.
+V1 supports **both API/service integration and bounded UI integration**. They are not mutually exclusive, and a single WorkItem or operation may use the API, the UI, or both.
 
-**API path:** the write Tool calls that API directly. No generic UI-adapter subsystem is required for V1.
+**API/service path:** a write Tool may call the real application's supported API/service directly when that capability is available.
 
-**UI path:** if the application has no usable API and is a desktop application, implement only the bounded read/write integration needed for the actual controls and data sources in that application.
+**UI path:** a bounded UI integration may inspect or operate on the actual host application's UI when needed, including when no usable API exists. The contract is defined against the real WinForms host rather than a universal UI abstraction.
 
-Do not import a universal multi-representation object-discovery framework merely because another host might need it later.
+For the V1 WinForms boundary, discovery can cover the Form hierarchy, `Form` instances, `UserControl` instances, `Control`-derived and custom controls, container controls such as Panels and GroupBoxes, nested descendants, and relevant runtime/data-source context. This discovery exists to provide bounded host context to the Agent; it does not grant permission to click, edit, invoke, or otherwise mutate controls.
 
-The decision is recorded as an architecture decision and the implementation contract it implies. It is a gate, not a fake implementation milestone.
+API and UI integration may therefore be combined within one workflow—for example, using an API for data retrieval and a UI path for a host operation that has no equivalent API.
 
----
+Generic cross-host integration remains later. V1 proves the concrete WinForms boundary first, then later phases may generalize proven patterns to other host technologies.
+
 
 ## 5. Workspace and Management Surface
 
@@ -323,6 +320,8 @@ A business application can register a host context through a bounded public API 
 ```csharp
 ai.Register(this);
 ```
+
+For V1 WinForms integration, the registered context can expose bounded discovery of the complete relevant Form/control hierarchy, including UserControls, custom/inherited controls, Panels, GroupBoxes, other container controls, nested descendants, and relevant runtime/data-source context. The discovery boundary is structural/contextual and must be cycle-safe, bounded, cancellable, and read-oriented unless a separate action is explicitly authorized.
 
 Registration binds host context to Workspace/Hive management and may reuse an existing specialized Agent. Registration does not by itself create a new Agent, create a Hive, or imply that multiple open forms must communicate. Host-specific specialization and lifecycle are explicit policy/configuration.
 
@@ -649,7 +648,7 @@ Coverage must include, as applicable:
 - stale-state and lifecycle races;
 - recovery/crash behavior;
 - authorization/scope/credential security;
-- UI smoke/automation when behavior cannot be proven elsewhere.
+- manual developer verification of UI behavior where applicable; no separate smoke-test or UI-automation framework is required by the architecture.
 
 Network-provider tests use fakes/local infrastructure and never real vendor accounts.
 
@@ -713,7 +712,7 @@ Host.WinForms never bypasses Hive.Management.
 16. Running executions use immutable effective configuration snapshots.
 17. Terminal execution state is protected from late results.
 18. Private runtime state is isolated by explicit ownership.
-19. Generic host integration is built only when a real host requires it.
+19. Generic cross-host integration is built only when a second real host requires it; V1 WinForms host discovery is part of the initial concrete integration boundary.
 20. Host discovery never grants tool permission.
 21. Approval is one intervention action; V1 only needs Approve/Reject at the business-app write.
 22. State-changing persistence is append-oriented; snapshots are recovery aids.
@@ -726,7 +725,7 @@ Host.WinForms never bypasses Hive.Management.
 29. Configuration must actually drive the behavior it configures and have tests.
 30. Repeated lookup paths use real indexes.
 31. Network-provider tests never use real vendor accounts.
-32. Every implementation slice has the required unit/edge/integration/recovery/security/UI coverage for its boundary.
+32. Every implementation slice has the required unit/edge/integration/recovery/security coverage for its boundary, plus manual developer verification of user-facing UI behavior where applicable.
 33. Do not claim verification that was not actually performed.
 34. Update architecture before structural code changes.
 35. Complete the active slice before starting future slices.
@@ -765,16 +764,15 @@ Host.WinForms never bypasses Hive.Management.
 - **Phase 4 — CognitiveAgent : Agent**
 - **Phase 5 — Cognitive Resources**
 - **Phase 6 — CognitiveHive : Hive**
-- **Phase 7 — Generic Host Integration**
+- **Phase 7 — Additional Generic Host Integration**
 - **Phase 8 — Multi-Tenancy, Scale, Configuration Portability & Extensibility**
 - **Phase 9 — Observability, Operations & Replay**
 
 ---
 
-## 18. Open Questions
+## 18. Deferred Decisions
 
-1. Does the real business application expose a usable API, or must V1 integrate through its UI?
-2. Which document type should Phase 1 handle first?
-3. Which exact business-app controls/objects are required if UI integration is necessary?
-4. Which authentication provider should Phase 8 support first?
-5. Which UI automation framework should be used for WinForms smoke tests?
+1. Which authentication provider should Phase 8 support when real multi-user requirements arrive (for example local accounts, Microsoft/Entra, Google, or a company IdP)?
+2. Whether a future automated UI-testing tool is warranted after real UI test-maintenance needs appear. This is not required for current development because the developer performs manual testing.
+
+The V1 integration mode is not a deferred decision: Hive explicitly supports both API/service and bounded WinForms UI integration. The first V1 input type is not a deferred decision: it is an image.
