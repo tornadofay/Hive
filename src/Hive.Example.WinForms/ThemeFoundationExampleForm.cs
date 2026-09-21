@@ -11,7 +11,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
     private readonly Panel _content;
     private readonly Label _pageTitle;
     private readonly Label _pageDescription;
-    private readonly HiveThemeManager _themeManager;
+    private readonly IHiveThemeManager _themeManager;
 
     public ThemeFoundationExampleForm()
         : base(
@@ -20,7 +20,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
             new Size(1100, 700),
             new Size(900, 560))
     {
-        _themeManager = (HiveThemeManager)ThemeManager;
+        _themeManager = ThemeManager;
         ShowInTaskbar = true;
         StartPosition = FormStartPosition.CenterScreen;
 
@@ -275,10 +275,11 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         button.Click += (_, _) =>
             HiveMessageBox.Show(
                 this,
-                message,
-                text,
-                buttons,
-                MessageBoxIcon.None,
+                new HiveMessageOptions(
+                    text,
+                    message,
+                    type,
+                    buttons),
                 _themeManager);
 
         _content.Controls.Add(button);
