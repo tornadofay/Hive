@@ -230,6 +230,12 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         // Keep the action control visually deterministic. The control itself
         // remains the same HiveButton in both states.
         _toggleButton.Text = collapsed ? "Show" : "Hide";
+        _toggleButton.AccessibleName = collapsed
+            ? "Show output"
+            : "Hide output";
+        _toggleButton.AccessibleDescription = collapsed
+            ? "Show the shared example output pane."
+            : "Hide the shared example output pane.";
 
         CollapseStateChanged?.Invoke(this, EventArgs.Empty);
     }
