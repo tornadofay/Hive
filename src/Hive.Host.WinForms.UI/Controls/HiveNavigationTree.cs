@@ -20,13 +20,6 @@ public sealed class HiveNavigationTree : TreeView
 
     public HiveNavigationTree()
     {
-        SetStyle(
-            ControlStyles.UserPaint |
-            ControlStyles.AllPaintingInWmPaint |
-            ControlStyles.OptimizedDoubleBuffer |
-            ControlStyles.ResizeRedraw,
-            true);
-
         DrawMode = TreeViewDrawMode.OwnerDrawText;
         BorderStyle = BorderStyle.None;
         FullRowSelect = true;
