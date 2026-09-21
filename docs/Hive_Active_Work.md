@@ -23,6 +23,9 @@ Establish the shared WinForms visual foundation used by Hive.Host.WinForms and H
 0.6 implementation is in progress:
 
 - pinned ReaLTaiizor 3.8.2.1 in Hive.Host.WinForms.UI;
+- implemented the reusable rounded HiveForm shell and custom gradient header;
+- implemented Primary / Secondary / Navigation HiveButton styles;
+- implemented semantic HiveMessageBox variants with optional technical details and clipboard copy;
 - added HiveThemeMode, HiveThemeDefinition, semantic palette/typography/spacing/visual-state tokens;
 - added IHiveThemeManager and HiveThemeManager with Light / Dark / System resolution;
 - added HiveButton using the selected renderer behind a Hive-owned control boundary;
