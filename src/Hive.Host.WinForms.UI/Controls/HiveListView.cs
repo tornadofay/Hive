@@ -196,7 +196,7 @@ public sealed class HiveListView : ListView
                 row.Right - 1,
                 row.Bottom - 1);
 
-            if (selected)
+            if (selected && Enabled)
             {
                 using var accent = new SolidBrush(theme.Palette.Accent);
                 e.Graphics.FillRectangle(
@@ -207,7 +207,7 @@ public sealed class HiveListView : ListView
                     Math.Max(8, row.Height - 10));
             }
 
-            if (selected && Focused)
+            if (selected && Focused && Enabled)
             {
                 using var focusPen = new Pen(theme.VisualStates.FocusedBorder);
                 var focus = Rectangle.Inflate(row, -1, -1);
