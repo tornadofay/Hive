@@ -87,34 +87,6 @@ public sealed class HiveThemeManager : IHiveThemeManager
     {
         switch (control)
         {
-            case HiveNavigationTree navigationTree:
-                navigationTree.ApplyTheme(theme);
-                return;
-
-            case HiveListView listView:
-                listView.ApplyTheme(theme);
-                break;
-
-            case HiveBorderPanel borderPanel:
-                borderPanel.ApplyTheme(theme);
-                break;
-
-            case HiveButton hiveButton:
-                hiveButton.ApplyTheme(theme);
-                break;
-
-            case HiveEditorLayout editorLayout:
-                editorLayout.ApplyTheme(theme);
-                break;
-
-            case HiveListPageLayout listPageLayout:
-                listPageLayout.ApplyTheme(theme);
-                break;
-
-            case HivePaginationBar paginationBar:
-                paginationBar.ApplyTheme(theme);
-                break;
-
             case Form:
                 SetBackColor(control, theme.Palette.WindowBackground);
                 SetForeColor(control, theme.Palette.Text);
@@ -189,6 +161,37 @@ public sealed class HiveThemeManager : IHiveThemeManager
 
         foreach (Control child in control.Controls)
             ApplyControl(child, theme);
+
+        switch (control)
+        {
+            case HiveNavigationTree navigationTree:
+                navigationTree.ApplyTheme(theme);
+                break;
+
+            case HiveListView listView:
+                listView.ApplyTheme(theme);
+                break;
+
+            case HiveBorderPanel borderPanel:
+                borderPanel.ApplyTheme(theme);
+                break;
+
+            case HiveButton hiveButton:
+                hiveButton.ApplyTheme(theme);
+                break;
+
+            case HiveEditorLayout editorLayout:
+                editorLayout.ApplyTheme(theme);
+                break;
+
+            case HiveListPageLayout listPageLayout:
+                listPageLayout.ApplyTheme(theme);
+                break;
+
+            case HivePaginationBar paginationBar:
+                paginationBar.ApplyTheme(theme);
+                break;
+        }
     }
 
     private static void ApplyDataGridViewTheme(
