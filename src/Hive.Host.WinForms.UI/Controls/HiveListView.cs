@@ -35,11 +35,6 @@ public sealed class HiveListView : ListView
     {
         ArgumentNullException.ThrowIfNull(theme);
 
-        var topIndex = IsHandleCreated ? TopItem?.Index ?? -1 : -1;
-        var selectedIndex = SelectedIndices.Count > 0
-            ? SelectedIndices[0]
-            : -1;
-
         _theme = theme;
 
         if (BackColor != theme.Palette.InputBackground)
@@ -48,18 +43,7 @@ public sealed class HiveListView : ListView
         if (ForeColor != theme.Palette.Text)
             ForeColor = theme.Palette.Text;
 
-        _headerFont?.Dispose();
-        _headerFont = new Font(
-            theme.Typography.FontFamily,
-            8.8f,
-            FontStyle.Bold);
-
-        if (selectedIndex >= 0 && selectedIndex < Items.Count)
-            Items[selectedIndex].Selected = true;
-
-        if (topIndex >= 0 && topIndex < Items.Count)
-            Items[topIndex].EnsureVisible();
-
+        EnsureHeaderFont(theme);
         _hoverIndex = -1;
         Invalidate();
     }
@@ -189,6 +173,21 @@ public sealed class HiveListView : ListView
 
         _hoverIndex = -1;
         Invalidate();
+    }
+
+    private void EnsureHeaderFont(HiveThemeDefinition theme)
+    {
+        var family = theme.Typography.FontFamily;
+
+        if (_headerFont is not null &&
+            string.Equals(_headerFont.FontFamily.Name, family, StringComparison.Ordinal) &&
+            Math.Abs(_headerFont.Size - 8.8f) <= 0.01f)
+        {
+            return;
+        }
+
+        _headerFont?.Dispose();
+        _headerFont = new Font(family, 8.8f, FontStyle.Bold);
     }
 
     protected override void Dispose(bool disposing)
