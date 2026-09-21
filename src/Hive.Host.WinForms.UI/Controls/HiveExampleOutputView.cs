@@ -8,8 +8,8 @@ namespace Hive.Host.WinForms.UI.Controls;
 
 public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
 {
-    private const int HeaderHeight = 48;
-    private const int ActionWidth = 88;
+    private const int HeaderHeight = 52;
+    private const int ActionWidth = 92;
     private const int ActionGap = 8;
     private const int SurfaceRadius = 8;
 
@@ -72,7 +72,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             ColumnCount = 2,
             RowCount = 1,
             Margin = Padding.Empty,
-            Padding = new Padding(10, 7, 10, 7),
+            Padding = new Padding(10, 8, 10, 8),
         };
         _header.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
@@ -140,6 +140,9 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _copyButton.Click += (_, _) => Copy();
         _clearButton.Click += (_, _) => Clear();
         _toggleButton.Click += (_, _) => ToggleCollapsed();
+
+        _copyButton.Margin = new Padding(0, 0, ActionGap, 0);
+        _clearButton.Margin = new Padding(0, 0, ActionGap, 0);
 
         _actions.Controls.Add(_copyButton);
         _actions.Controls.Add(_clearButton);
@@ -271,7 +274,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Style = HiveButtonStyle.Secondary,
             Width = ActionWidth,
             Height = 34,
-            Margin = new Padding(ActionGap / 2, 0, ActionGap / 2, 0),
+            Margin = Padding.Empty,
             AccessibleRole = AccessibleRole.PushButton,
             TabStop = true
         };
