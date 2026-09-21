@@ -38,7 +38,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private const int DefaultPageSize = 25;
 
     private readonly HivePage _pageLayout;
-        private readonly Label _searchLabel;
+    private readonly Label _searchLabel;
     private readonly TextBox _searchBox;
     private readonly TableLayoutPanel _actionLayout;
     private readonly FlowLayoutPanel _searchPanel;
@@ -254,7 +254,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
     public event EventHandler<HiveCrudOperationFailedEventArgs>? OperationFailed;
 
-    public HiveListPageLayout PageLayout => _pageLayout;
+    public HivePage PageLayout => _pageLayout;
 
     public ListView ListView => _list;
 
@@ -398,7 +398,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     public string Title
     {
         get => _pageLayout.Title;
-        set => _titleLabel.Text = value ?? string.Empty;
+        set => _pageLayout.Title = value ?? string.Empty;
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
