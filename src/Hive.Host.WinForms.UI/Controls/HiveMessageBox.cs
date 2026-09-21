@@ -246,12 +246,12 @@ public static class HiveMessageBox
                 true);
 
             FormBorderStyle = FormBorderStyle.None;
-            Padding = new Padding(2);
+            Padding = Padding.Empty;
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             MinimumSize = new Size(MinWidth, MinHeight);
             ClientSize = new Size(DesignWidth, 320);
-            BackColor = _theme.Palette.Border;
+            BackColor = _theme.VisualStates.FocusedBorder;
             ForeColor = _theme.Palette.Text;
             AccessibleRole = AccessibleRole.Dialog;
             KeyPreview = true;
@@ -264,6 +264,7 @@ public static class HiveMessageBox
             _root = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
+                Margin = new Padding(2),
                 ColumnCount = 1,
                 RowCount = 3,
                 Margin = Padding.Empty,
