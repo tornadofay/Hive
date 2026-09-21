@@ -180,6 +180,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             ? default
             : (TItem?)_list.SelectedItems[0].Tag;
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool AllowAdd
     {
         get => _addButton.Visible;
@@ -190,6 +191,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool AllowEdit
     {
         get => _editButton.Visible;
@@ -200,6 +202,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool AllowDelete
     {
         get => _deleteButton.Visible;
@@ -210,18 +213,21 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool ShowRefresh
     {
         get => _refreshButton.Visible;
         set => _refreshButton.Visible = value;
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string Title
     {
         get => _titleLabel.Text;
         set => _titleLabel.Text = value ?? string.Empty;
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string Description
     {
         get => _descriptionLabel.Text;
@@ -230,6 +236,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
     public IReadOnlyList<HiveCrudColumn<TItem>> Columns => _columns;
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Func<CancellationToken, Task<IReadOnlyList<TItem>>>? LoadItemsAsync
     {
         get => _loadItemsAsync;
@@ -240,6 +247,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Func<TItem?, CancellationToken, Task<TItem?>>? EditItemAsync
     {
         get => _editItemAsync;
@@ -250,6 +258,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Func<TItem, CancellationToken, Task>? DeleteItemAsync
     {
         get => _deleteItemAsync;
@@ -260,6 +269,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Func<TItem, string>? GetItemDisplayName
     {
         get => _getItemDisplayName;
