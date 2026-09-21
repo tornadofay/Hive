@@ -6,8 +6,7 @@ using Xunit;
 
 namespace Hive.Tests;
 
-[Collection("HivePersistence")]
-public sealed class HivePersistenceIntegrationTests
+public sealed class HivePersistenceIntegrationTests : IClassFixture<HivePersistenceDatabaseFixture>
 {
     private readonly HivePersistenceDatabaseFixture _database;
 
