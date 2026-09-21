@@ -93,13 +93,13 @@ public sealed class HiveEditorLayout : UserControl
 
     protected override void Dispose(bool disposing)
     {
+        base.Dispose(disposing);
+
         if (disposing)
         {
             _descriptionFont.Dispose();
             _titleFont.Dispose();
         }
-
-        base.Dispose(disposing);
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
