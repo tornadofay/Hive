@@ -69,6 +69,7 @@ The initial foundation includes:
 - HiveMessageBox with semantic message types and optional technical details;
 - Hive-specific controls only where Hive needs behavior or styling beyond ordinary WinForms controls;
 - a replaceable seam around the third-party rendering dependency.
+- reusable data-page composition primitives: a header/action/content list layout and an optional pagination bar; domain pages keep their own columns, filters, editors, CRUD operations, and persistence behavior.
 
 Do not create a complete replacement control toolkit or wrap every WinForms control merely to rename it. The selected library is an implementation detail behind `Hive.Host.WinForms.UI`.
 
