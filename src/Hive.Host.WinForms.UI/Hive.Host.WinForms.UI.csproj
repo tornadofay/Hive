@@ -7,4 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="ReaLTaiizor" Version="3.8.2.1" />
+  </ItemGroup>
 </Project>
