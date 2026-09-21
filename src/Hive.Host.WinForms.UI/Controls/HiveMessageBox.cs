@@ -986,9 +986,6 @@ public static class HiveMessageBox
                     HiveDpi.Scale(this, 1f));
             }
 
-            if (kind == HiveMessageButtonKind.Primary)
-                _borderPen?.Dispose();
-
             _disabledBrush = new SolidBrush(palette.DisabledBackground);
             _focusPen = new Pen(
                 palette.Accent,
