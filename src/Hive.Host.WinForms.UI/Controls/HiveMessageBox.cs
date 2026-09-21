@@ -219,6 +219,8 @@ public static class HiveMessageBox
 
         private HiveThemeDefinition _theme;
         private GraphicsPath? _windowPath;
+        private GraphicsPath? _borderPath;
+        private Pen? _borderPen;
         private bool _updatingSize;
 
         public HiveMessageDialog(
@@ -481,6 +483,8 @@ public static class HiveMessageBox
                     _themeManager.ThemeChanged -= ThemeManagerOnChanged;
 
                 _windowPath?.Dispose();
+                _borderPath?.Dispose();
+                _borderPen?.Dispose();
                 _titleFont.Dispose();
                 _messageFont.Dispose();
                 _detailsFont.Dispose();
@@ -494,14 +498,12 @@ public static class HiveMessageBox
         {
             base.OnPaint(e);
 
+            if (_borderPath is null || _borderPen is null)
+                return;
+
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-            using var borderPath = CreateRoundedRectanglePath(
-                new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f),
-                12f);
-
-            using var borderPen = new Pen(_theme.Palette.Border, 1.2f);
-            e.Graphics.DrawPath(borderPen, borderPath);
+            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            e.Graphics.DrawPath(_borderPen, _borderPath);
         }
 
         protected override void OnSizeChanged(EventArgs e)
@@ -539,6 +541,9 @@ public static class HiveMessageBox
             _details.BackColor = _theme.Palette.InputBackground;
             _details.ForeColor = _theme.Palette.Text;
             _details.Font = _detailsFont;
+
+            _borderPen?.Dispose();
+            _borderPen = new Pen(_theme.Palette.Border, 1.2f);
 
             _icon.ApplyTheme(
                 _theme,
@@ -775,12 +780,21 @@ public static class HiveMessageBox
                 new RectangleF(0, 0, Width, Height),
                 12f);
 
+            var newBorderPath = CreateRoundedRectanglePath(
+                new RectangleF(0.6f, 0.6f, Width - 1.2f, Height - 1.2f),
+                11.4f);
+
             _windowPath?.Dispose();
             _windowPath = newPath;
+
+            _borderPath?.Dispose();
+            _borderPath = newBorderPath;
 
             var oldRegion = Region;
             Region = new Region(newPath);
             oldRegion?.Dispose();
+
+            Invalidate();
         }
 
         private HiveMessageButton CreateActionButton() =>
@@ -1135,7 +1149,8 @@ public static class HiveMessageBox
             if (_backgroundBrush is null ||
                 _accentBrush is null ||
                 _ringPen is null ||
-                _glyphPen is null)
+                _glyphPen is null ||
+                _surfaceBrush is null)
                 return;
 
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
@@ -1160,8 +1175,6 @@ public static class HiveMessageBox
                 circle.Height - 2);
 
             var centerX = circle.Left + circle.Width / 2f;
-            var centerY = circle.Top + circle.Height / 2f;
-
             switch (_messageType)
             {
                 case HiveMessageType.Information:
@@ -1200,14 +1213,13 @@ public static class HiveMessageBox
                         e.Graphics.FillPath(_accentBrush, _warningPath);
 
                         e.Graphics.FillRectangle(
-                            _surfaceBrush!,
-
+                            _surfaceBrush,
                             centerX - 2,
                             circle.Top + circle.Height * 0.38f,
                             4,
                             circle.Height * 0.22f);
                         e.Graphics.FillEllipse(
-                            _surfaceBrush!,
+                            _surfaceBrush,
                             centerX - 2,
                             circle.Top + circle.Height * 0.66f,
                             4,
