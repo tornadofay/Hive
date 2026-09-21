@@ -8,8 +8,9 @@ namespace Hive.Example.WinForms;
 
 internal sealed class HiveExampleHostForm : HiveForm
 {
-    private const int NavigationWidth = 246;
-    private const int OutputExpandedHeight = 190;
+    private const int NavigationWidth = 236;
+    private const int CompactNavigationWidth = 214;
+    private const int OutputExpandedHeight = 176;
     private const int OutputCollapsedHeight = 44;
 
     private readonly IHiveThemeManager _themeManager;
@@ -24,6 +25,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     private readonly Label _viewSubtitle;
     private readonly Panel _viewHost;
     private readonly TableLayoutPanel _contentLayout;
+    private readonly TableLayoutPanel _shell;
     private readonly HiveExampleOutputView _outputView;
     private readonly Font _navigationTitleFont;
     private readonly Font _navigationDescriptionFont;
@@ -65,7 +67,7 @@ internal sealed class HiveExampleHostForm : HiveForm
         _viewTitleFont = new Font("Segoe UI Semibold", 16f, FontStyle.Bold);
         _viewSubtitleFont = new Font("Segoe UI", 8.9f);
 
-        var shell = new TableLayoutPanel
+        _shell = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 3,
@@ -73,11 +75,11 @@ internal sealed class HiveExampleHostForm : HiveForm
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        shell.ColumnStyles.Add(
+        _shell.ColumnStyles.Add(
             new ColumnStyle(SizeType.Absolute, NavigationWidth));
-        shell.ColumnStyles.Add(
+        _shell.ColumnStyles.Add(
             new ColumnStyle(SizeType.Absolute, 1));
-        shell.ColumnStyles.Add(
+        _shell.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
 
         _navigationSurface = new Panel
@@ -147,7 +149,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             ColumnCount = 1,
             RowCount = 4,
             Margin = Padding.Empty,
-            Padding = new Padding(28, 22, 28, 24)
+            Padding = new Padding(24, 18, 24, 20)
         };
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -183,16 +185,23 @@ internal sealed class HiveExampleHostForm : HiveForm
         _contentLayout.Controls.Add(_viewHost, 0, 2);
         _contentLayout.Controls.Add(_outputView, 0, 3);
 
-        shell.Controls.Add(_navigationSurface, 0, 0);
-        shell.Controls.Add(_navigationSeparator, 1, 0);
-        shell.Controls.Add(_contentLayout, 2, 0);
+        _shell.Controls.Add(_navigationSurface, 0, 0);
+        _shell.Controls.Add(_navigationSeparator, 1, 0);
+        _shell.Controls.Add(_contentLayout, 2, 0);
 
         BodyPanel.Padding = Padding.Empty;
-        BodyPanel.Controls.Add(shell);
+        BodyPanel.Controls.Add(_shell);
 
         BuildNavigation();
         _themeManager.Apply(BodyPanel);
+        UpdateResponsiveLayout();
         SelectFirstExample();
+    }
+
+    protected override void OnResize(EventArgs e)
+    {
+        base.OnResize(e);
+        UpdateResponsiveLayout();
     }
 
     protected override void Dispose(bool disposing)
@@ -220,6 +229,21 @@ internal sealed class HiveExampleHostForm : HiveForm
         _viewTitle.ForeColor = theme.Palette.Text;
         _viewSubtitle.ForeColor = theme.Palette.MutedText;
         _viewHost.BackColor = theme.Palette.Surface;
+    }
+
+    private void UpdateResponsiveLayout()
+    {
+        if (ClientSize.Width <= 0 || _shell.ColumnStyles.Count == 0)
+            return;
+
+        var width = ClientSize.Width < 1080
+            ? CompactNavigationWidth
+            : NavigationWidth;
+
+        if (Math.Abs(_shell.ColumnStyles[0].Width - width) < 0.1f)
+            return;
+
+        _shell.ColumnStyles[0].Width = width;
     }
 
     private void BuildNavigation()
