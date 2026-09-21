@@ -42,8 +42,11 @@ The pass covers:
 
 - added IHiveExample and the Example-side service provider contract;
 - added reflection discovery for internal IHiveExample implementations in the designated Example assembly;
-- added the first-class HiveExampleHostForm with Category → Subcategory → Example TreeView navigation;
-- active example views are replaced in one right-side host and disposed deterministically;
+- added the first-class HiveExampleHostForm with Category → Subcategory → Example navigation and a replaceable right-side view;
+- added themed navigation rendering with explicit selected/hover/focus states and preservation of selection/scroll during theme changes;
+- added themed lightweight ListView rendering for CRUD selection/hover/disabled states;
+- refined the shared palette, visual-state tokens, button hierarchy, window header, editor rhythm, CRUD density, pagination, and message-dialog presentation;
+- made the permanent Example host behave as a normal desktop window and improved compact-window resizing;
 - converted the existing 0.6 UI foundation surface from a top-level form into a discoverable UserControl example;
 - updated Program to launch HiveExampleHostForm;
 - removed the legacy 0.6 top-level form path.
@@ -57,7 +60,7 @@ The pass covers:
 5. Light / Dark / System theme changes continue to propagate to the active example;
 6. the full solution builds and Hive.Example.WinForms launches normally.
 
-No 0.7 verification is recorded yet.
+Implementation is complete for the current UI polish pass. Automated UI verification is intentionally not introduced; developer manual verification is still required for theme-state preservation, resizing, interaction states, CRUD, dialogs, and overall visual acceptance.
 
 ## Dependency direction
 
