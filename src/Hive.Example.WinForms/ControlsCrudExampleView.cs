@@ -34,7 +34,7 @@ internal sealed class ControlsCrudExampleView : UserControl
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
         Padding = Padding.Empty;
-        AutoScroll = false;
+        AutoScroll = true;
 
         var root = new TableLayoutPanel
         {
