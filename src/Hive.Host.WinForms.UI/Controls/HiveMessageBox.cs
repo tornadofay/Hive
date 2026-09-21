@@ -3,7 +3,6 @@ using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Theme;
-using System.ComponentModel;
 
 namespace Hive.Host.WinForms.UI.Controls;
 
@@ -182,12 +181,12 @@ public static class HiveMessageBox
         private const int MaxHeight = 720;
 
         private const int OuterPadding = 24;
-        private const int IconColumnWidth = 74;
-        private const int IconSize = 52;
+        private const int IconColumnWidth = 82;
+        private const int IconSize = 56;
         private const int AccentBarHeight = 5;
-        private const int FooterHeight = 64;
+        private const int FooterHeight = 68;
         private const int DetailsHeight = 156;
-        private const int MaxMessageHeight = 220;
+        private const int MaxMessageHeight = 260;
 
         private readonly HiveMessageOptions _options;
         private readonly IHiveThemeManager _themeManager;
@@ -253,10 +252,10 @@ public static class HiveMessageBox
             AccessibleRole = AccessibleRole.Dialog;
             KeyPreview = true;
 
-            _titleFont = new Font("Segoe UI Semibold", 13.5f, FontStyle.Bold);
-            _messageFont = new Font("Segoe UI", 10f);
-            _detailsFont = new Font("Consolas", 9f);
-            _buttonFont = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
+            _titleFont = new Font("Segoe UI Semibold", 15f, FontStyle.Bold);
+            _messageFont = new Font("Segoe UI", 11.25f);
+            _detailsFont = new Font("Consolas", 9.5f);
+            _buttonFont = new Font("Segoe UI Semibold", 10.25f, FontStyle.Bold);
 
             _root = new TableLayoutPanel
             {
@@ -350,7 +349,7 @@ public static class HiveMessageBox
             {
                 Dock = DockStyle.Top,
                 AutoScroll = true,
-                Margin = new Padding(0, 8, 0, 0),
+                Margin = new Padding(0, 10, 0, 0),
                 Padding = Padding.Empty,
                 BackColor = Color.Transparent
             };
@@ -392,7 +391,7 @@ public static class HiveMessageBox
                 Visible = options.DetailsExpanded && !string.IsNullOrWhiteSpace(options.Details),
                 Height = DetailsHeight,
                 Dock = DockStyle.Top,
-                Margin = Padding.Empty,
+                Margin = new Padding(0, 0, 0, 4),
                 Padding = new Padding(12)
             };
 
@@ -444,7 +443,7 @@ public static class HiveMessageBox
                 WrapContents = false,
                 AutoSize = false,
                 Margin = Padding.Empty,
-                Padding = new Padding(12, 8, 24, 12)
+                Padding = new Padding(12, 10, 24, 12)
             };
 
             _primaryButton = CreateActionButton();
@@ -501,7 +500,7 @@ public static class HiveMessageBox
                 new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f),
                 12f);
 
-            using var borderPen = new Pen(_theme.Palette.Border, 1f);
+            using var borderPen = new Pen(_theme.Palette.Border, 1.2f);
             e.Graphics.DrawPath(borderPen, borderPath);
         }
 
@@ -539,6 +538,7 @@ public static class HiveMessageBox
             _detailsContainer.BackColor = _theme.Palette.ElevatedSurface;
             _details.BackColor = _theme.Palette.InputBackground;
             _details.ForeColor = _theme.Palette.Text;
+            _details.Font = _detailsFont;
 
             _icon.ApplyTheme(
                 _theme,
@@ -655,7 +655,7 @@ public static class HiveMessageBox
                 new Size(int.MaxValue, int.MaxValue),
                 TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
 
-            return Math.Max(104, Math.Min(180, measured.Width + 36));
+            return Math.Max(112, Math.Min(190, measured.Width + 40));
         }
 
         private HiveMessageButton? ResolveCancelButton()
@@ -735,7 +735,7 @@ public static class HiveMessageBox
 
             var messageHeight = Math.Max(
                 IconSize,
-                _title.PreferredHeight + 8 + _messageViewport.Height);
+                _title.PreferredHeight + 10 + _messageViewport.Height);
 
             var detailsHeight = _detailsContainer.Visible
                 ? DetailsHeight
@@ -1018,6 +1018,7 @@ public static class HiveMessageBox
 
         private SolidBrush? _backgroundBrush;
         private SolidBrush? _accentBrush;
+        private SolidBrush? _surfaceBrush;
         private Pen? _ringPen;
         private Pen? _glyphPen;
         private Font? _questionFont;
@@ -1059,6 +1060,7 @@ public static class HiveMessageBox
 
             _backgroundBrush?.Dispose();
             _accentBrush?.Dispose();
+            _surfaceBrush?.Dispose();
             _ringPen?.Dispose();
             _glyphPen?.Dispose();
             _questionFont?.Dispose();
@@ -1066,11 +1068,12 @@ public static class HiveMessageBox
 
             _backgroundBrush = new SolidBrush(
                 Color.FromArgb(
-                    38,
-                    Blend(_surface, _accent, 0.70f)));
+                    34,
+                    Blend(_surface, _accent, 0.72f)));
 
             _accentBrush = new SolidBrush(_accent);
-            _ringPen = new Pen(Color.FromArgb(72, _accent), 1.5f)
+            _surfaceBrush = new SolidBrush(_surface);
+            _ringPen = new Pen(Color.FromArgb(88, _accent), 1.5f)
             {
                 Alignment = PenAlignment.Inset
             };
@@ -1196,15 +1199,15 @@ public static class HiveMessageBox
                     {
                         e.Graphics.FillPath(_accentBrush, _warningPath);
 
-                        using var innerBrush = new SolidBrush(_surface);
                         e.Graphics.FillRectangle(
-                            innerBrush,
+                            _surfaceBrush!,
+
                             centerX - 2,
                             circle.Top + circle.Height * 0.38f,
                             4,
                             circle.Height * 0.22f);
                         e.Graphics.FillEllipse(
-                            innerBrush,
+                            _surfaceBrush!,
                             centerX - 2,
                             circle.Top + circle.Height * 0.66f,
                             4,
@@ -1245,6 +1248,7 @@ public static class HiveMessageBox
                 _glyphPen?.Dispose();
                 _questionFont?.Dispose();
                 _warningPath?.Dispose();
+                _surfaceBrush?.Dispose();
             }
 
             base.Dispose(disposing);
