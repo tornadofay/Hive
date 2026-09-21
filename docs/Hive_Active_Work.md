@@ -18,6 +18,8 @@ Establish the shared WinForms visual foundation used by Hive.Host.WinForms and H
 - ReaLTaiizor 3.8.2.1 isolated inside Hive.Host.WinForms.UI;
 - representative Example host verification surface without direct ReaLTaiizor references.
 
+Current 0.6 implementation also fixes the example page navigation to keep one active page host, removes the message-button focus rectangle, and isolates the dialog's technical-details scrolling from the outer dialog surface. Local build/manual verification is still pending.
+
 ## Implementation progress
 
 0.6 implementation is in progress:
@@ -31,6 +33,7 @@ Establish the shared WinForms visual foundation used by Hive.Host.WinForms and H
 - added IHiveThemeManager and HiveThemeManager with Light / Dark / System resolution;
 - added HiveButton using the selected renderer behind a Hive-owned control boundary;
 - added HiveMessageBox as a Hive-owned themed dialog;
+- added shared DPI-aware data-page primitives: HiveListPageLayout and HivePaginationBar; these own presentation/navigation mechanics only, while feature pages retain domain columns, filters, editors, CRUD, permissions, and persistence;
 - replaced the Example startup placeholder with the 0.6 UI-foundation verification surface;
 - the full 0.7 Example Host Shell is intentionally not started yet;
 - removed the obsolete placeholder form.
