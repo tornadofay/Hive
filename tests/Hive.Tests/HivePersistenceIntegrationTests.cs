@@ -6,141 +6,106 @@ using Xunit;
 
 namespace Hive.Tests;
 
+[Collection("HivePersistence")]
 public sealed class HivePersistenceIntegrationTests
 {
+    private readonly HivePersistenceDatabaseFixture _database;
+
+    public HivePersistenceIntegrationTests(HivePersistenceDatabaseFixture database)
+    {
+        _database = database;
+    }
+
     [Fact]
     public async Task CleanAndRepeatMigration_IsIdempotentAndRecordsCurrentSchema()
     {
-        var databaseName = CreateDatabaseName();
-        var options = CreateOptions(databaseName);
+        _database.ResetSchema();
+        var options = _database.Options;
 
-        try
-        {
-            var migrator = new HiveDatabaseMigrator(options);
+        var migrator = new HiveDatabaseMigrator(options);
 
-            var first = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
-            Assert.True(first.IsSuccess);
-            Assert.NotNull(first.Value);
-            Assert.Equal(HiveDatabaseMigrationStatus.Applied, first.Value.Status);
-            Assert.Equal(0, first.Value.PreviousSchemaVersion);
-            Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, first.Value.CurrentSchemaVersion);
-            Assert.Equal(1, first.Value.AppliedMigrationCount);
+        var first = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
+        Assert.True(first.IsSuccess);
+        Assert.NotNull(first.Value);
+        Assert.Equal(HiveDatabaseMigrationStatus.Applied, first.Value.Status);
+        Assert.Equal(0, first.Value.PreviousSchemaVersion);
+        Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, first.Value.CurrentSchemaVersion);
+        Assert.Equal(1, first.Value.AppliedMigrationCount);
 
-            var second = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
-            Assert.True(second.IsSuccess);
-            Assert.NotNull(second.Value);
-            Assert.Equal(HiveDatabaseMigrationStatus.AlreadyCurrent, second.Value.Status);
-            Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, second.Value.PreviousSchemaVersion);
-            Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, second.Value.CurrentSchemaVersion);
-            Assert.Equal(0, second.Value.AppliedMigrationCount);
+        var second = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
+        Assert.True(second.IsSuccess);
+        Assert.NotNull(second.Value);
+        Assert.Equal(HiveDatabaseMigrationStatus.AlreadyCurrent, second.Value.Status);
+        Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, second.Value.PreviousSchemaVersion);
+        Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, second.Value.CurrentSchemaVersion);
+        Assert.Equal(0, second.Value.AppliedMigrationCount);
 
-            var storedVersion = await ReadSchemaVersionAsync(options);
-            Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, storedVersion);
-            Assert.True(await IndexExistsAsync(options, "PK_HiveSchemaVersion"));
-            Assert.True(await IndexExistsAsync(options, "UX_HiveSchemaVersion_SchemaVersion"));
-        }
-        finally
-        {
-            await DropDatabaseAsync(options);
-        }
+        var storedVersion = await ReadSchemaVersionAsync(options);
+        Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, storedVersion);
+        Assert.True(await IndexExistsAsync(options, "PK_HiveSchemaVersion"));
+        Assert.True(await IndexExistsAsync(options, "UX_HiveSchemaVersion_SchemaVersion"));
     }
 
     [Fact]
     public async Task FutureSchemaVersion_IsRejectedBeforeMigration()
     {
-        var databaseName = CreateDatabaseName();
-        var options = CreateOptions(databaseName);
+        _database.ResetSchema();
+        var options = _database.Options;
 
-        try
-        {
-            var migrator = new HiveDatabaseMigrator(options);
-            var initial = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
+        var migrator = new HiveDatabaseMigrator(options);
+        var initial = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
 
-            Assert.True(initial.IsSuccess);
+        Assert.True(initial.IsSuccess);
 
-            await SetSchemaVersionAsync(
-                options,
-                HiveDatabaseSchema.CurrentSchemaVersion + 1);
+        await SetSchemaVersionAsync(
+            options,
+            HiveDatabaseSchema.CurrentSchemaVersion + 1);
 
-            var rejected = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
+        var rejected = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
 
-            Assert.True(rejected.IsFailure);
-            Assert.NotNull(rejected.Error);
-            Assert.Equal("hive.persistence.future-schema", rejected.Error.Code);
-            Assert.Equal(ErrorCategory.Unsupported, rejected.Error.Category);
-            Assert.Equal(
-                HiveDatabaseSchema.CurrentSchemaVersion + 1,
-                await ReadSchemaVersionAsync(options));
-        }
-        finally
-        {
-            await DropDatabaseAsync(options);
-        }
+        Assert.True(rejected.IsFailure);
+        Assert.NotNull(rejected.Error);
+        Assert.Equal("hive.persistence.future-schema", rejected.Error.Code);
+        Assert.Equal(ErrorCategory.Unsupported, rejected.Error.Category);
+        Assert.Equal(
+            HiveDatabaseSchema.CurrentSchemaVersion + 1,
+            await ReadSchemaVersionAsync(options));
     }
 
     [Fact]
     public async Task FailedMigration_DoesNotAdvanceSchemaVersionOrLeavePartialChanges()
     {
+        _database.ResetSchema();
+        var options = _database.Options;
 
-        var databaseName = CreateDatabaseName();
-        var options = CreateOptions(databaseName);
+        var migrator = new HiveDatabaseMigrator(options);
+        var initial = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
 
-        try
-        {
-            var migrator = new HiveDatabaseMigrator(options);
-            var initial = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
+        Assert.True(initial.IsSuccess);
 
-            Assert.True(initial.IsSuccess);
+        var failingUpgrade = DeployChanges
+            .To.SqlDatabase(options.ConnectionString)
+            .WithScript(
+                "999_TestFailure",
+                """
+                CREATE TABLE [dbo].[HiveMigrationFailureProbe]
+                (
+                    [Id] INT NOT NULL
+                );
 
-            var failingUpgrade = DeployChanges
-                .To.SqlDatabase(options.ConnectionString)
-                .WithScript(
-                    "999_TestFailure",
-                    """
-                    CREATE TABLE [dbo].[HiveMigrationFailureProbe]
-                    (
-                        [Id] INT NOT NULL
-                    );
+                THROW 51000, 'Intentional Hive migration failure for integration testing.', 1;
+                """)
+            .WithTransactionPerScript()
+            .LogToNowhere()
+            .Build();
 
-                    THROW 51000, 'Intentional Hive migration failure for integration testing.', 1;
-                    """)
-                .WithTransactionPerScript()
-                .LogToNowhere()
-                .Build();
+        var result = failingUpgrade.PerformUpgrade();
 
-            var result = failingUpgrade.PerformUpgrade();
-
-            Assert.False(result.Successful);
-            Assert.Equal(
-                HiveDatabaseSchema.CurrentSchemaVersion,
-                await ReadSchemaVersionAsync(options));
-            Assert.False(await TableExistsAsync(options, "HiveMigrationFailureProbe"));
-        }
-        finally
-        {
-            await DropDatabaseAsync(options);
-        }
-    }
-
-    private static string CreateDatabaseName() =>
-        $"Hive_Test_{Guid.NewGuid():N}";
-
-    private static HiveDatabaseOptions CreateOptions(string databaseName)
-    {
-        var connectionString = Environment.GetEnvironmentVariable("HIVE_TEST_CONNECTION_STRING");
-
-        if (string.IsNullOrWhiteSpace(connectionString))
-            return HiveDatabaseOptions.LocalDevelopment(databaseName);
-
-        var builder = new SqlConnectionStringBuilder(connectionString)
-        {
-            InitialCatalog = databaseName,
-            ApplicationName = "Hive.Tests"
-        };
-
-        return new HiveDatabaseOptions(
-            builder.ConnectionString,
-            createDatabaseIfMissing: true);
+        Assert.False(result.Successful);
+        Assert.Equal(
+            HiveDatabaseSchema.CurrentSchemaVersion,
+            await ReadSchemaVersionAsync(options));
+        Assert.False(await TableExistsAsync(options, "HiveMigrationFailureProbe"));
     }
 
     private static async Task<int> ReadSchemaVersionAsync(HiveDatabaseOptions options)
@@ -220,26 +185,5 @@ public sealed class HivePersistenceIntegrationTests
         command.Parameters.AddWithValue("@TableName", $"dbo.{tableName}");
 
         return Convert.ToInt32(await command.ExecuteScalarAsync()) == 1;
-    }
-
-    private static async Task DropDatabaseAsync(HiveDatabaseOptions options)
-    {
-        var builder = new SqlConnectionStringBuilder(options.ConnectionString);
-        var databaseName = builder.InitialCatalog.Replace("]", "]]", StringComparison.Ordinal);
-        builder.InitialCatalog = "master";
-
-        await using var connection = new SqlConnection(builder.ConnectionString);
-        await connection.OpenAsync();
-
-        await using var command = connection.CreateCommand();
-        command.CommandText = $"""
-            IF DB_ID(N'{databaseName.Replace("'", "''", StringComparison.Ordinal)}') IS NOT NULL
-            BEGIN
-                ALTER DATABASE [{databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-                DROP DATABASE [{databaseName}];
-            END;
-            """;
-
-        await command.ExecuteNonQueryAsync();
     }
 }
