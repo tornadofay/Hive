@@ -158,8 +158,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _searchBox.TextChanged += SearchBoxOnTextChanged;
         _searchBox.KeyDown += SearchBoxOnKeyDown;
 
-        searchPanel.Controls.Add(_searchLabel);
-        searchPanel.Controls.Add(_searchBox);
+        _searchPanel.Controls.Add(_searchLabel);
+        _searchPanel.Controls.Add(_searchBox);
 
         _actionButtons = new FlowLayoutPanel
         {
