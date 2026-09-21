@@ -1,4 +1,5 @@
 using Hive.Core;
+using Hive.Tests.TestInfrastructure;
 using Xunit;
 
 namespace Hive.Tests;
@@ -64,18 +65,8 @@ public sealed class CommonResultAndClockTests
     public void Clock_CanBeSuppliedByCallerForDeterministicTime()
     {
         var expected = new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero);
-        IClock clock = new FixedClock(expected);
+        IClock clock = new FakeClock(expected);
 
         Assert.Equal(expected, clock.UtcNow);
-    }
-
-    private sealed class FixedClock : IClock
-    {
-        public FixedClock(DateTimeOffset utcNow)
-        {
-            UtcNow = utcNow;
-        }
-
-        public DateTimeOffset UtcNow { get; }
     }
 }
