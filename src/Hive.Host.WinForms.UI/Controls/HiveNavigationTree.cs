@@ -13,7 +13,6 @@ public sealed class HiveNavigationTree : TreeView
 
     private HiveThemeDefinition? _theme;
     private TreeNode? _hoverNode;
-    private bool _restoringState;
     private Font? _categoryFont;
     private Font? _groupFont;
     private Font? _itemFont;
@@ -71,14 +70,6 @@ public sealed class HiveNavigationTree : TreeView
         Invalidate();
     }
 
-    protected override void OnAfterSelect(TreeViewEventArgs e)
-    {
-        if (_restoringState)
-            return;
-
-        base.OnAfterSelect(e);
-    }
-
     protected override void OnDrawNode(DrawTreeNodeEventArgs e)
     {
         var theme = _theme;
@@ -126,9 +117,9 @@ public sealed class HiveNavigationTree : TreeView
 
         var textColor = selected
             ? theme.VisualStates.NavigationSelectedText
-            : e.Node.Level == 0
+            : Enabled
                 ? theme.VisualStates.NavigationText
-                : theme.VisualStates.NavigationText;
+                : theme.Palette.DisabledText;
 
         var textRectangle = new Rectangle(
             e.Bounds.Left + 4,
