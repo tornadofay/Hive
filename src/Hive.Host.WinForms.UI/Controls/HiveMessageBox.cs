@@ -246,7 +246,7 @@ public static class HiveMessageBox
                 true);
 
             FormBorderStyle = FormBorderStyle.None;
-            Padding = new Padding(1);
+            Padding = new Padding(2);
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             MinimumSize = new Size(MinWidth, MinHeight);
