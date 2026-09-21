@@ -4,13 +4,13 @@ Last updated: 2026-09-21
 
 ## Repository state
 
-Phase 0.1 and 0.2 are complete. The active implementation slice is Phase 0.3 Identity, WorkItem & Resource foundation. The 0.3 source contracts, tests, and public API example are committed to main; developer verification of the 0.3 suite is pending.
+Phase 0.1, 0.2, and 0.3 are complete. The active implementation slice is Phase 0.4 Persistence bootstrap. The 0.3 source contracts, tests, and public API example are committed to main and the developer has verified the full suite.
 
 ## Current phase
 
 Phase 0 — Foundations.
 
-**Active slice: 0.3 — Identity, WorkItem & Resource foundation.**
+**Active slice: 0.4 — Persistence bootstrap.**
 
 ## Architecture decisions now locked
 
@@ -67,9 +67,23 @@ Implemented in `Hive.Core`:
 - focused 0.3 contract tests;
 - copyable 0.3 public API example under `docs/examples`.
 
-0.3 automated verification is pending.
+Developer verification: **36 tests passed, 0 failed, 0 skipped in 1.5 seconds.** Full-solution rebuild and application launch were also reported successful.
+
+### Phase 0.4 — Persistence bootstrap
+
+Active slice. Structural persistence implementation has not started yet.
+
+The next implementation boundary is Hive-owned SQL Server persistence with LocalDB development support, DbUp migrations, schema-version compatibility protection, and initial indexes.
 
 ## Completed
+
+### Phase 0.3 — Identity, WorkItem & Resource foundation
+
+- Implemented the typed identity/resource foundation in `Hive.Core`.
+- Added focused 0.3 tests and the public API example.
+- Developer ran the complete suite: **36 tests passed, 0 failed, 0 skipped in 1.5 seconds.**
+- Developer reports the full solution rebuilds successfully and the application launches successfully.
+- 0.3 completion gate satisfied.
 
 ### Phase 0.1 — Solution & project scaffolding
 
@@ -89,7 +103,7 @@ Implemented in `Hive.Core`:
 
 ## Not started
 
-- Phase 0.4 Persistence bootstrap.
+- Phase 0.4 Persistence bootstrap — active.
 - Phase 0.5 Test harness beyond slice-specific tests already introduced.
 - Phase 0.6 WinForms UI/UX Foundation.
 - Phase 0.7 Example Host Shell.
@@ -99,4 +113,4 @@ Implemented in `Hive.Core`:
 - WinForms management host.
 - Example application features.
 
-0.3 remains active until its developer-run verification is completed.
+0.4 is active. 0.3 is complete; no 0.4 pass claim is recorded until its required migration verification is actually performed.
