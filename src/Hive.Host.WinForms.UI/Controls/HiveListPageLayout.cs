@@ -135,13 +135,4 @@ public sealed class HiveListPageLayout : UserControl
             Margin = Padding.Empty,
             Padding = padding
         };
-
-    private static void ApplySurface(Control root, HiveThemeDefinition theme)
-    {
-        foreach (Control child in root.Controls)
-        {
-            if (child is Panel or UserControl)
-                child.BackColor = theme.Palette.Surface;
-        }
-    }
 }
