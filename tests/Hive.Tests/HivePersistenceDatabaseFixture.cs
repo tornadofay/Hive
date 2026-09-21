@@ -12,6 +12,7 @@ public sealed class HivePersistenceDatabaseFixture : IDisposable
         DatabaseName = $"Hive_Test_{Guid.NewGuid():N}";
         Options = CreateOptions(DatabaseName);
         EnsureDatabase.For.SqlDatabase(Options.ConnectionString);
+        Console.WriteLine($"Hive persistence test database: {DatabaseName}");
     }
 
     public string DatabaseName { get; }
