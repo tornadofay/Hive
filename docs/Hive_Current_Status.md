@@ -4,7 +4,7 @@ Last updated: 2026-09-21
 
 ## Repository state
 
-Phase 0.1 through 0.5 are complete. The active implementation slice is Phase 0.6 WinForms UI/UX Foundation. The developer has verified the full Hive.Tests suite after the 0.5 test-harness changes.
+Phase 0.1 through 0.5 are complete. The active implementation slice is Phase 0.7 first-class Example Host UI/UX polish. The 0.6 WinForms UI/UX foundation is the shared base being polished and exercised through the permanent Example host.
 
 ## Current phase
 
