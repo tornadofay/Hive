@@ -622,7 +622,9 @@ public static class HiveMessageBox
             _details.Font = _detailsFont;
 
             _borderPen?.Dispose();
-            _borderPen = new Pen(_theme.Palette.Border, 1.2f);
+            _borderPen = new Pen(
+                _theme.Palette.Border,
+                HiveDpi.Scale(this, 1.2f));
 
             _icon.ApplyTheme(
                 _theme,
