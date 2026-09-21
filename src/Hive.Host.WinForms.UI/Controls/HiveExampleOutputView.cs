@@ -9,10 +9,14 @@ namespace Hive.Host.WinForms.UI.Controls;
 public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
 {
     private readonly TableLayoutPanel _root;
+    private readonly TableLayoutPanel _header;
+    private readonly TableLayoutPanel _titleLayout;
     private readonly Label _title;
+    private readonly Label _meta;
     private readonly HiveButton _copyButton;
     private readonly HiveButton _clearButton;
     private readonly HiveButton _toggleButton;
+    private readonly Panel _outputFrame;
     private readonly TextBox _output;
     private readonly Font _titleFont;
     private readonly Font _outputFont;
@@ -45,7 +49,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _root.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
 
-        var header = new TableLayoutPanel
+        _header = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 4,
@@ -53,14 +57,29 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Margin = Padding.Empty,
             Padding = Padding.Empty,
         };
-        header.ColumnStyles.Add(
+        _header.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
-        header.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Absolute, 88));
-        header.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Absolute, 88));
-        header.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Absolute, 88));
+        _header.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Absolute, 84));
+        _header.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Absolute, 84));
+        _header.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Absolute, 84));
+
+        _titleLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = Padding.Empty,
+            Padding = new Padding(2, 1, 8, 1)
+        };
+        _titleLayout.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Percent, 100f));
+        _titleLayout.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, 20));
+        _titleLayout.RowStyles.Add(
+            new RowStyle(SizeType.Percent, 100f));
 
         _title = new Label
         {
@@ -68,10 +87,26 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             AutoSize = false,
             Font = _titleFont,
             Margin = Padding.Empty,
-            Padding = new Padding(2, 0, 0, 0),
-            Text = "Example output",
-            TextAlign = ContentAlignment.MiddleLeft
+            Padding = Padding.Empty,
+            Text = "Output",
+            TextAlign = ContentAlignment.MiddleLeft,
+            UseMnemonic = false
         };
+
+        _meta = new Label
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            Font = new Font("Segoe UI", 8.1f),
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            Text = "No output yet",
+            TextAlign = ContentAlignment.MiddleLeft,
+            UseMnemonic = false
+        };
+
+        _titleLayout.Controls.Add(_title, 0, 0);
+        _titleLayout.Controls.Add(_meta, 0, 1);
 
         _copyButton = new HiveButton
         {
@@ -79,7 +114,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Style = HiveButtonStyle.Secondary,
             Dock = DockStyle.Fill,
             MinimumSize = new Size(80, 32),
-            Size = new Size(80, 32),
+            Size = new Size(78, 32),
             Margin = new Padding(6, 0, 0, 0),
             Enabled = false
         };
@@ -91,7 +126,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Style = HiveButtonStyle.Secondary,
             Dock = DockStyle.Fill,
             MinimumSize = new Size(88, 32),
-            Size = new Size(88, 32),
+            Size = new Size(78, 32),
             Margin = new Padding(6, 0, 0, 0)
         };
         _toggleButton.Click += (_, _) => ToggleCollapsed();
@@ -102,10 +137,17 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Style = HiveButtonStyle.Secondary,
             Dock = DockStyle.Fill,
             MinimumSize = new Size(88, 32),
-            Size = new Size(88, 32),
+            Size = new Size(78, 32),
             Margin = Padding.Empty
         };
         _clearButton.Click += (_, _) => Clear();
+
+        _outputFrame = new Panel
+        {
+            Dock = DockStyle.Fill,
+            Margin = new Padding(0, 4, 0, 0),
+            Padding = new Padding(1)
+        };
 
         _output = new TextBox
         {
@@ -114,18 +156,20 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             ReadOnly = true,
             ScrollBars = ScrollBars.Both,
             WordWrap = false,
-            BorderStyle = BorderStyle.FixedSingle,
+            BorderStyle = BorderStyle.None,
             Font = _outputFont,
             Margin = Padding.Empty,
             Padding = new Padding(8),
         };
 
-        header.Controls.Add(_title, 0, 0);
-        header.Controls.Add(_copyButton, 1, 0);
-        header.Controls.Add(_clearButton, 2, 0);
-        header.Controls.Add(_toggleButton, 3, 0);
-        _root.Controls.Add(header, 0, 0);
-        _root.Controls.Add(_output, 0, 1);
+        _outputFrame.Controls.Add(_output);
+
+        _header.Controls.Add(_titleLayout, 0, 0);
+        _header.Controls.Add(_copyButton, 1, 0);
+        _header.Controls.Add(_clearButton, 2, 0);
+        _header.Controls.Add(_toggleButton, 3, 0);
+        _root.Controls.Add(_header, 0, 0);
+        _root.Controls.Add(_outputFrame, 0, 1);
 
         Controls.Add(_root);
     }
@@ -157,7 +201,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             return;
 
         _collapsed = collapsed;
-        _output.Visible = !_collapsed;
+        _outputFrame.Visible = !_collapsed;
         _root.RowStyles[1].Height = _collapsed ? 0f : 100f;
         _root.RowStyles[1].SizeType = _collapsed
             ? SizeType.Absolute
@@ -217,7 +261,25 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
 
     private void UpdateActionState()
     {
-        _copyButton.Enabled = _output.TextLength > 0;
+        var hasOutput = _output.TextLength > 0;
+        _copyButton.Enabled = hasOutput;
+
+        if (!hasOutput)
+        {
+            _meta.Text = "No output yet";
+            return;
+        }
+
+        var lineCount = 1;
+        for (var index = 0; index < _output.TextLength; index++)
+        {
+            if (_output.Text[index] == '\n')
+                lineCount++;
+        }
+
+        _meta.Text = lineCount == 1
+            ? "1 line"
+            : $"{lineCount:N0} lines";
     }
 
     internal void ApplyTheme(HiveThemeDefinition theme)
@@ -228,6 +290,8 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _title.ForeColor = theme.Palette.Text;
         _output.BackColor = theme.Palette.InputBackground;
         _output.ForeColor = theme.Palette.Text;
+        _outputFrame.BackColor = theme.Palette.Border;
+        _meta.ForeColor = theme.Palette.MutedText;
     }
 
     protected override void Dispose(bool disposing)
@@ -236,6 +300,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         {
             _titleFont.Dispose();
             _outputFont.Dispose();
+            _meta.Font.Dispose();
         }
 
         base.Dispose(disposing);
