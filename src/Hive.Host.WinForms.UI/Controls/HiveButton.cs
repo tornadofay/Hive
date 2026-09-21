@@ -282,6 +282,7 @@ public sealed class HiveButton : UserControl
             case HiveButtonStyle.Primary:
                 background = theme.Palette.Accent;
                 hover = theme.Palette.AccentHover;
+                pressed = ControlPaint.Dark(theme.Palette.Accent, 0.12f);
                 foreground = theme.Palette.AccentForeground;
                 border = theme.Palette.AccentHover;
                 break;
@@ -307,8 +308,8 @@ public sealed class HiveButton : UserControl
 
             case HiveButtonStyle.Danger:
                 background = theme.VisualStates.Error;
-                hover = ControlPaint.Light(theme.VisualStates.Error, 0.08f);
-                pressed = ControlPaint.Dark(theme.VisualStates.Error, 0.08f);
+                hover = ControlPaint.Dark(theme.VisualStates.Error, 0.06f);
+                pressed = ControlPaint.Dark(theme.VisualStates.Error, 0.14f);
                 foreground = theme.Palette.AccentForeground;
                 border = theme.VisualStates.Error;
                 break;
