@@ -185,6 +185,7 @@ public static class HiveMessageBox
 
         private HiveThemeDefinition _theme;
         private GraphicsPath? _windowPath;
+        private bool _updatingSize;
 
         public HiveMessageDialog(
             HiveMessageOptions options,
@@ -473,7 +474,6 @@ public static class HiveMessageBox
         {
             base.OnSizeChanged(e);
             UpdateWindowRegion();
-            UpdateDialogSize();
         }
 
         private void ThemeManagerOnChanged(object? sender, EventArgs e)
@@ -661,6 +661,22 @@ public static class HiveMessageBox
         }
 
         private void UpdateDialogSize()
+        {
+            if (_updatingSize)
+                return;
+
+            _updatingSize = true;
+            try
+            {
+                UpdateDialogSizeCore();
+            }
+            finally
+            {
+                _updatingSize = false;
+            }
+        }
+
+        private void UpdateDialogSizeCore()
         {
             var width = Math.Max(MinWidth, Math.Min(DesignWidth, Width));
             var contentWidth =
@@ -1058,6 +1074,12 @@ public static class HiveMessageBox
                 25f,
                 FontStyle.Bold);
 
+            RebuildGeometry();
+            Invalidate();
+        }
+
+        private void RebuildGeometry()
+        {
             var size = Math.Min(ClientSize.Width, ClientSize.Height);
             _successPoints = new[]
             {
@@ -1071,8 +1093,6 @@ public static class HiveMessageBox
                 new PointF(size * 0.77f, size * 0.78f),
                 new PointF(size * 0.23f, size * 0.78f)
             };
-
-            Invalidate();
         }
 
         protected override void OnSizeChanged(EventArgs e)
@@ -1080,36 +1100,7 @@ public static class HiveMessageBox
             base.OnSizeChanged(e);
 
             if (_accent != Color.Empty && _surface != Color.Empty)
-            {
-                var theme = new HiveThemeDefinition(
-                    HiveThemeMode.Light,
-                    new HivePalette(
-                        _surface,
-                        _surface,
-                        _surface,
-                        Color.Black,
-                        Color.Gray,
-                        Color.LightGray,
-                        _accent,
-                        _accent,
-                        Color.White,
-                        Color.White,
-                        Color.LightGray,
-                        Color.Gray,
-                        Color.LightBlue),
-                    new HiveTypography("Segoe UI", 9f, 13f),
-                    new HiveSpacing(4, 8, 12, 16, 24),
-                    new HiveVisualStates(
-                        _accent,
-                        _accent,
-                        _accent,
-                        Color.LightGray,
-                        Color.Gray)
-                    {
-                        Information = _accent
-                    });
-                ApplyTheme(theme, _accent);
-            }
+                RebuildGeometry();
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -1165,14 +1156,27 @@ public static class HiveMessageBox
 
                 case HiveMessageType.Success:
                     if (_successPoints is not null)
-                        e.Graphics.DrawLines(_glyphPen, Offset(_successPoints, circle));
+                        e.Graphics.DrawLines(
+                            _glyphPen,
+                            new[]
+                            {
+                                new PointF(circle.Left + _successPoints[0].X, circle.Top + _successPoints[0].Y),
+                                new PointF(circle.Left + _successPoints[1].X, circle.Top + _successPoints[1].Y),
+                                new PointF(circle.Left + _successPoints[2].X, circle.Top + _successPoints[2].Y)
+                            });
                     break;
 
                 case HiveMessageType.Warning:
                     if (_warningPoints is not null)
                     {
                         using var warningPath = new GraphicsPath();
-                        warningPath.AddPolygon(Offset(_warningPoints, circle));
+                        warningPath.AddPolygon(
+                            new[]
+                            {
+                                new PointF(circle.Left + _warningPoints[0].X, circle.Top + _warningPoints[0].Y),
+                                new PointF(circle.Left + _warningPoints[1].X, circle.Top + _warningPoints[1].Y),
+                                new PointF(circle.Left + _warningPoints[2].X, circle.Top + _warningPoints[2].Y)
+                            });
                         e.Graphics.FillPath(_accentBrush, warningPath);
 
                         using var innerBrush = new SolidBrush(_surface);
@@ -1226,22 +1230,6 @@ public static class HiveMessageBox
             }
 
             base.Dispose(disposing);
-        }
-
-        private static PointF[] Offset(
-            PointF[] points,
-            Rectangle circle)
-        {
-            var offsetX = circle.Left;
-            var offsetY = circle.Top;
-
-            var result = new PointF[points.Length];
-            for (var i = 0; i < points.Length; i++)
-                result[i] = new PointF(
-                    offsetX + points[i].X,
-                    offsetY + points[i].Y);
-
-            return result;
         }
 
         private static Color Blend(Color first, Color second, float amount)
