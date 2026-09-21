@@ -38,55 +38,35 @@ public sealed class HiveNavigationTree : TreeView
     {
         ArgumentNullException.ThrowIfNull(theme);
 
-        var canPreserveNativeState = IsHandleCreated;
         var selected = SelectedNode;
-        var top = canPreserveNativeState ? TopNode : null;
-        var hadFocus = canPreserveNativeState && Focused;
-        var expandedNodes = canPreserveNativeState
-            ? GetExpandedNodes()
-            : Array.Empty<TreeNode>();
+        var top = IsHandleCreated ? TopNode : null;
 
-        _restoringState = true;
+        BeginUpdate();
         try
         {
-            BeginUpdate();
-            try
-            {
-                _theme = theme;
+            _theme = theme;
 
-                if (BackColor != theme.VisualStates.NavigationBackground)
-                    BackColor = theme.VisualStates.NavigationBackground;
+            if (BackColor != theme.VisualStates.NavigationBackground)
+                BackColor = theme.VisualStates.NavigationBackground;
 
-                if (ForeColor != theme.VisualStates.NavigationText)
-                    ForeColor = theme.VisualStates.NavigationText;
+            if (ForeColor != theme.VisualStates.NavigationText)
+                ForeColor = theme.VisualStates.NavigationText;
 
-                RebuildFonts(theme);
-                _hoverNode = null;
-            }
-            finally
-            {
-                EndUpdate();
-            }
-
-            foreach (var node in expandedNodes)
-            {
-                if (!node.IsExpanded)
-                    node.Expand();
-            }
-
-            if (selected is not null)
-                SelectedNode = selected;
-
-            if (top is not null && IsHandleCreated)
-                TopNode = top;
-
-            if (hadFocus && CanFocus)
-                Focus();
+            EnsureFonts(theme);
         }
         finally
         {
-            _restoringState = false;
+            EndUpdate();
         }
+
+        // Theme changes must repaint the existing native tree state, not rebuild it.
+        // Restoring only if the native control actually changed state prevents
+        // selection/scroll assignments from causing a visible jump.
+        if (selected is not null && !ReferenceEquals(SelectedNode, selected))
+            SelectedNode = selected;
+
+        if (top is not null && IsHandleCreated && !ReferenceEquals(TopNode, top))
+            TopNode = top;
 
         Invalidate();
     }
@@ -208,48 +188,6 @@ public sealed class HiveNavigationTree : TreeView
             _groupFont?.Dispose();
             _itemFont?.Dispose();
         }
-    }
-
-    private List<TreeNode> GetExpandedNodes()
-    {
-        var nodes = new List<TreeNode>();
-        foreach (TreeNode root in Nodes)
-            CollectExpandedNodes(root, nodes);
-
-        return nodes;
-    }
-
-    private static void CollectExpandedNodes(
-        TreeNode node,
-        List<TreeNode> expandedNodes)
-    {
-        if (node.IsExpanded)
-            expandedNodes.Add(node);
-
-        foreach (TreeNode child in node.Nodes)
-            CollectExpandedNodes(child, expandedNodes);
-    }
-
-    private void RebuildFonts(HiveThemeDefinition theme)
-    {
-        _categoryFont?.Dispose();
-        _groupFont?.Dispose();
-        _itemFont?.Dispose();
-
-        _categoryFont = new Font(
-            theme.Typography.FontFamily,
-            9.5f,
-            FontStyle.Bold);
-
-        _groupFont = new Font(
-            theme.Typography.FontFamily,
-            9.1f,
-            FontStyle.Bold);
-
-        _itemFont = new Font(
-            theme.Typography.FontFamily,
-            theme.Typography.BodySize,
-            FontStyle.Regular);
     }
 
     private static GraphicsPath CreateRoundedPath(
