@@ -8,7 +8,7 @@ namespace Hive.Host.WinForms.UI.Controls;
 public sealed class HiveEditorLayout : UserControl
 {
     private const int DefaultLabelColumnWidth = 168;
-    private const int DefaultFieldHeight = 74;
+    private const int DefaultFieldHeight = 72;
     private const int FooterHeight = 58;
     private const int FooterSeparatorHeight = 1;
 
@@ -90,6 +90,27 @@ public sealed class HiveEditorLayout : UserControl
         _root.Controls.Add(_fields, 0, 0);
         _root.Controls.Add(_footerRoot, 0, 1);
         Controls.Add(_root);
+    }
+
+    protected override void OnResize(EventArgs e)
+    {
+        base.OnResize(e);
+
+        if (_fields.ColumnStyles.Count == 0)
+            return;
+
+        var width = ClientSize.Width;
+        var target = width < 560
+            ? 112
+            : width < 720
+                ? 136
+                : DefaultLabelColumnWidth;
+
+        if (_labelColumnWidth == target)
+            return;
+
+        _labelColumnWidth = target;
+        _fields.ColumnStyles[0].Width = target;
     }
 
     protected override void Dispose(bool disposing)
