@@ -14,6 +14,7 @@ internal sealed class OverviewExampleView : UserControl
     private readonly Label _intro;
     private readonly LinkLabel _repositoryLink;
     private readonly Label _projectText;
+    private readonly IHiveThemeManager _themeManager;
     private readonly Label _hostText;
     private readonly Label _uiText;
     private readonly Label _navigationText;
@@ -25,8 +26,12 @@ internal sealed class OverviewExampleView : UserControl
     private readonly Font _cardTitleFont;
     private readonly Font _linkFont;
 
-    public OverviewExampleView()
+    public OverviewExampleView(IHiveThemeManager themeManager)
     {
+        ArgumentNullException.ThrowIfNull(themeManager);
+
+        _themeManager = themeManager;
+
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
         Padding = Padding.Empty;
@@ -83,13 +88,15 @@ internal sealed class OverviewExampleView : UserControl
         _uiText.Text =
             "Shared WinForms foundation for themes, controls, CRUD, dialogs, navigation, and example testing.";
 
-        ApplyTheme(new HiveThemeManager().Theme);
+        _themeManager.ThemeChanged += ThemeManagerOnChanged;
+        ApplyTheme(_themeManager.Theme);
     }
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
+            _themeManager.ThemeChanged -= ThemeManagerOnChanged;
             _eyebrowFont.Dispose();
             _titleFont.Dispose();
             _sectionFont.Dispose();
@@ -290,6 +297,11 @@ internal sealed class OverviewExampleView : UserControl
         return (Label)card.Controls
             .OfType<Label>()
             .First(control => control.Dock == DockStyle.Fill);
+    }
+
+    private void ThemeManagerOnChanged(object? sender, EventArgs e)
+    {
+        ApplyTheme(_themeManager.Theme);
     }
 
     private void OpenRepository()
