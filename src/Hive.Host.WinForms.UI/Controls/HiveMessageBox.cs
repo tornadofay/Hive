@@ -525,7 +525,6 @@ public static class HiveMessageBox
         {
             MinimumSize = new Size(MinWidth, MinHeight);
 
-        private void ApplyTheme()
         {
             BackColor = _theme.Palette.Surface;
             ForeColor = _theme.Palette.Text;
