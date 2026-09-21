@@ -14,6 +14,7 @@ public abstract class HiveForm : Form
     private readonly Panel _bodyPanel;
     private IHiveThemeManager _themeManager;
     private Font _formFont;
+    private Padding _bodyPadding;
     private Region? _windowRegion;
 
     protected HiveForm(
@@ -48,10 +49,11 @@ public abstract class HiveForm : Form
             AllowHelp = false
         };
 
+        _bodyPadding = new Padding(_themeManager.Theme.Spacing.Xl);
         _bodyPanel = new Panel
         {
             Dock = DockStyle.Fill,
-            Padding = new Padding(_themeManager.Theme.Spacing.Xl),
+            Padding = _bodyPadding,
             BackColor = _themeManager.Theme.Palette.Surface
         };
 
@@ -89,6 +91,16 @@ public abstract class HiveForm : Form
         _header.Title = title;
         _header.Subtitle = subtitle;
         Text = title;
+    }
+
+    protected void SetBodyPadding(Padding padding)
+    {
+        _bodyPadding = padding;
+        _bodyPanel.Padding = padding;
+    }
+
+    protected virtual void OnThemeChanged(HiveThemeDefinition theme)
+    {
     }
 
     public void SetThemeManager(IHiveThemeManager themeManager)
@@ -150,7 +162,7 @@ public abstract class HiveForm : Form
         previousFont.Dispose();
 
         _bodyPanel.BackColor = theme.Palette.Surface;
-        _bodyPanel.Padding = new Padding(theme.Spacing.Xl);
+        _bodyPanel.Padding = _bodyPadding;
 
         _header.Height = HeaderHeight;
         _header.ApplyTheme(theme);
@@ -158,8 +170,11 @@ public abstract class HiveForm : Form
         _themeManager.Apply(_bodyPanel);
     }
 
-    private void ThemeManagerOnThemeChanged(object? sender, EventArgs e) =>
+    private void ThemeManagerOnThemeChanged(object? sender, EventArgs e)
+    {
         ApplyTheme();
+        OnThemeChanged(_themeManager.Theme);
+    }
 
     private void HeaderOnHelpClicked(object? sender, EventArgs e) =>
         OnHeaderHelp();
