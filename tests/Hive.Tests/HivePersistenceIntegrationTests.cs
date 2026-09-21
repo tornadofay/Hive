@@ -24,7 +24,7 @@ public sealed class HivePersistenceIntegrationTests : IClassFixture<HivePersiste
         var migrator = new HiveDatabaseMigrator(options);
 
         var first = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
-        Assert.True(first.IsSuccess);
+        Assert.True(first.IsSuccess, first.Error is null ? "Migration failed without an error." : $"Migration failed: {first.Error.Code} [{first.Error.Category}] {first.Error.Message}");
         Assert.NotNull(first.Value);
         Assert.Equal(HiveDatabaseMigrationStatus.Applied, first.Value.Status);
         Assert.Equal(0, first.Value.PreviousSchemaVersion);
@@ -32,7 +32,7 @@ public sealed class HivePersistenceIntegrationTests : IClassFixture<HivePersiste
         Assert.Equal(1, first.Value.AppliedMigrationCount);
 
         var second = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
-        Assert.True(second.IsSuccess);
+        Assert.True(second.IsSuccess, second.Error is null ? "Repeat migration failed without an error." : $"Repeat migration failed: {second.Error.Code} [{second.Error.Category}] {second.Error.Message}");
         Assert.NotNull(second.Value);
         Assert.Equal(HiveDatabaseMigrationStatus.AlreadyCurrent, second.Value.Status);
         Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, second.Value.PreviousSchemaVersion);
@@ -54,7 +54,7 @@ public sealed class HivePersistenceIntegrationTests : IClassFixture<HivePersiste
         var migrator = new HiveDatabaseMigrator(options);
         var initial = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
 
-        Assert.True(initial.IsSuccess);
+        Assert.True(initial.IsSuccess, initial.Error is null ? "Initial migration failed without an error." : $"Initial migration failed: {initial.Error.Code} [{initial.Error.Category}] {initial.Error.Message}");
 
         await SetSchemaVersionAsync(
             options,
@@ -100,7 +100,7 @@ public sealed class HivePersistenceIntegrationTests : IClassFixture<HivePersiste
 
         var result = failingUpgrade.PerformUpgrade();
 
-        Assert.False(result.Successful);
+        Assert.False(result.Successful, result.Error?.Message ?? "The intentional failing migration unexpectedly succeeded.");
         Assert.Equal(
             HiveDatabaseSchema.CurrentSchemaVersion,
             await ReadSchemaVersionAsync(options));
