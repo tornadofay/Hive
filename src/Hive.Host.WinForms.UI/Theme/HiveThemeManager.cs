@@ -40,14 +40,17 @@ public sealed class HiveThemeManager : IHiveThemeManager
         ColorTranslator.FromHtml("#6B7280"),
         ColorTranslator.FromHtml("#1E3A5F"));
 
+    private HiveThemeDefinition _theme;
+
     public HiveThemeManager(HiveThemeMode mode = HiveThemeMode.System)
     {
         Mode = mode;
+        _theme = CreateTheme(ResolveEffectiveMode(mode));
     }
 
     public HiveThemeMode Mode { get; private set; }
 
-    public HiveThemeDefinition Theme => CreateTheme(ResolveEffectiveMode(Mode));
+    public HiveThemeDefinition Theme => _theme;
 
     public event EventHandler? ThemeChanged;
 
@@ -57,6 +60,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
             return;
 
         Mode = mode;
+        _theme = CreateTheme(ResolveEffectiveMode(mode));
         ThemeChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -109,8 +113,8 @@ public sealed class HiveThemeManager : IHiveThemeManager
 
             case CheckBox:
             case RadioButton:
-            case Label:
             case LinkLabel:
+            case Label:
                 control.ForeColor = control.Enabled
                     ? theme.Palette.Text
                     : theme.Palette.DisabledText;
