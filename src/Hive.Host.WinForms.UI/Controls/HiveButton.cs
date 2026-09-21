@@ -85,7 +85,7 @@ public sealed class HiveButton : UserControl
                 break;
 
             case HiveButtonStyle.Secondary:
-                _renderer.BackColor = theme.Palette.SurfaceSecondary;
+                _renderer.BackColor = theme.Palette.Surface;
                 _renderer.ForeColor = theme.Palette.Text;
                 _renderer.UseAccentColor = false;
                 break;
