@@ -42,7 +42,7 @@ Phase 0 — Foundations.
 - CognitiveHive adds collective cognition without moving or replacing member-level cognition.
 - Generic cross-host integration is deferred until a second real host proves the need to generalize V1 patterns.
 - V1 human intervention is Approve/Reject at the business-app write; the broader intervention taxonomy is later.
-- Developer manual testing is the current UI/application verification approach; no smoke-test or UI-automation framework is required by the architecture.
+- Developer manual testing is the current UI/application verification approach; no UI-automation framework is required by the architecture.
 - Authentication-provider selection is deferred until real multi-user requirements reach Phase 8.
 - Tests and examples are developed with each implementation slice; no unperformed verification is claimed.
 
