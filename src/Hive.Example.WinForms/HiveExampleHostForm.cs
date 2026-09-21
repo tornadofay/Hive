@@ -44,6 +44,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     {
         ShowInTaskbar = true;
         StartPosition = FormStartPosition.CenterScreen;
+        WindowState = FormWindowState.Maximized;
         ConfigureHeader(
             allowMove: true,
             allowClose: true,
@@ -288,25 +289,30 @@ internal sealed class HiveExampleHostForm : HiveForm
                 });
         }
 
-        foreach (TreeNode category in _navigation.Nodes)
-        {
-            category.Expand();
-            foreach (TreeNode subcategory in category.Nodes)
-                subcategory.Expand();
-        }
+        // Keep the navigation compact on startup. Users expand only the branch
+        // they need instead of receiving an open tree by default.
+        _navigation.CollapseAll();
     }
 
     private void SelectFirstExample()
     {
+        TreeNode? firstExample = null;
+
         foreach (TreeNode category in _navigation.Nodes)
         {
-            var exampleNode = FindFirstExampleNode(category);
-            if (exampleNode is null)
-                continue;
-
-            _navigation.SelectedNode = exampleNode;
-            return;
+            firstExample = FindFirstExampleNode(category);
+            if (firstExample is not null)
+                break;
         }
+
+        if (firstExample is null)
+            return;
+
+        _navigation.SelectedNode = firstExample;
+
+        // Selecting a nested node can cause WinForms to reveal its ancestors.
+        // Collapse again so startup always honors the closed-tree design.
+        _navigation.CollapseAll();
     }
 
     private static TreeNode? FindFirstExampleNode(TreeNode parent)
