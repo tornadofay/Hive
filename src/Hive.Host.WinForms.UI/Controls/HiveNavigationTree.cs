@@ -51,35 +51,41 @@ public sealed class HiveNavigationTree : TreeView
         var hadFocus = canPreserveNativeState && Focused;
 
         _restoringState = true;
-        BeginUpdate();
         try
         {
-            _theme = theme;
+            BeginUpdate();
+            try
+            {
+                _theme = theme;
 
-            if (BackColor != theme.VisualStates.NavigationBackground)
-                BackColor = theme.VisualStates.NavigationBackground;
+                if (BackColor != theme.VisualStates.NavigationBackground)
+                    BackColor = theme.VisualStates.NavigationBackground;
 
-            if (ForeColor != theme.VisualStates.NavigationText)
-                ForeColor = theme.VisualStates.NavigationText;
+                if (ForeColor != theme.VisualStates.NavigationText)
+                    ForeColor = theme.VisualStates.NavigationText;
 
-            RebuildFonts(theme);
-            _hoverNode = null;
+                RebuildFonts(theme);
+                _hoverNode = null;
+            }
+            finally
+            {
+                EndUpdate();
+            }
+
+            if (selected is not null)
+                SelectedNode = selected;
+
+            if (top is not null && IsHandleCreated)
+                TopNode = top;
+
+            if (hadFocus && CanFocus)
+                Focus();
         }
         finally
         {
-            EndUpdate();
+            _restoringState = false;
         }
 
-        if (selected is not null)
-            SelectedNode = selected;
-
-        if (top is not null && IsHandleCreated)
-            TopNode = top;
-
-        if (hadFocus && CanFocus)
-            Focus();
-
-        _restoringState = false;
         Invalidate();
     }
 
