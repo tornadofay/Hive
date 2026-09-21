@@ -214,6 +214,25 @@ public sealed class HiveNavigationTree : TreeView
             Invalidate(node.Bounds);
     }
 
+    protected override void OnMouseDown(MouseEventArgs e)
+    {
+        base.OnMouseDown(e);
+
+        if (!Enabled || e.Button != MouseButtons.Left)
+            return;
+
+        var node = GetNodeAt(e.Location);
+        if (node is null || node.Nodes.Count == 0)
+            return;
+
+        if (!GetGlyphBounds(node).Contains(e.Location))
+            return;
+
+        node.Toggle();
+        SelectedNode = node;
+        Focus();
+    }
+
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
@@ -309,6 +328,31 @@ public sealed class HiveNavigationTree : TreeView
                string.Equals(font.FontFamily.Name, family, StringComparison.Ordinal) &&
                Math.Abs(font.Size - size) <= 0.01f &&
                font.Style == style;
+    }
+
+    private Rectangle GetGlyphBounds(TreeNode node)
+    {
+        const int glyphSize = 12;
+        const int glyphGap = 5;
+
+        var rowTop = node.Bounds.Top + RowVerticalPadding;
+        var rowHeight = Math.Max(
+            1,
+            node.Bounds.Height - RowVerticalPadding * 2);
+
+        var rowLeft = RowHorizontalPadding;
+        var glyphLeft = Math.Max(
+            rowLeft + 3,
+            node.Bounds.Left - glyphSize - glyphGap);
+        var glyphTop = rowTop + Math.Max(
+            0,
+            (rowHeight - glyphSize) / 2);
+
+        return new Rectangle(
+            glyphLeft - 3,
+            glyphTop - 3,
+            glyphSize + 6,
+            glyphSize + 6);
     }
 
     private static GraphicsPath CreateRoundedPath(
