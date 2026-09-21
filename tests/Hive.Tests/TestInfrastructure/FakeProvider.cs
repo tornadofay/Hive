@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace Hive.Tests.TestInfrastructure;
 
 internal sealed record FakeProviderRequest(
@@ -9,9 +11,9 @@ internal sealed record FakeProviderResponse(
 
 internal sealed class FakeProvider
 {
-    private readonly List<FakeProviderRequest> _requests = [];
+    private readonly ConcurrentQueue<FakeProviderRequest> _requests = new();
 
-    public IReadOnlyList<FakeProviderRequest> Requests => _requests;
+    public IReadOnlyList<FakeProviderRequest> Requests => _requests.ToArray();
 
     public FakeProviderResponse Response { get; set; } =
         new("fake-response");
@@ -26,7 +28,7 @@ internal sealed class FakeProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        _requests.Add(request);
+        _requests.Enqueue(request);
 
         if (Delay > TimeSpan.Zero)
             await Task.Delay(Delay, cancellationToken).ConfigureAwait(false);
