@@ -13,9 +13,9 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
     private readonly TableLayoutPanel _titleLayout;
     private readonly Label _title;
     private readonly Label _meta;
-    private readonly HiveButton _copyButton;
-    private readonly HiveButton _clearButton;
-    private readonly HiveButton _toggleButton;
+    private readonly Button _copyButton;
+    private readonly Button _clearButton;
+    private readonly Button _toggleButton;
     private readonly Panel _outputFrame;
     private readonly TextBox _output;
     private readonly Font _titleFont;
@@ -110,38 +110,16 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _titleLayout.Controls.Add(_title, 0, 0);
         _titleLayout.Controls.Add(_meta, 0, 1);
 
-        _copyButton = new HiveButton
-        {
-            Text = "Copy",
-            Style = HiveButtonStyle.Secondary,
-            Dock = DockStyle.Fill,
-            MinimumSize = new Size(80, 32),
-            Size = new Size(86, 32),
-            Margin = new Padding(6, 0, 0, 0),
-            Enabled = false
-        };
+        _copyButton = CreateActionButton("Copy", enabled: false);
+        _copyButton.Margin = new Padding(6, 0, 0, 0);
         _copyButton.Click += (_, _) => Copy();
 
-        _clearButton = new HiveButton
-        {
-            Text = "Clear",
-            Style = HiveButtonStyle.Secondary,
-            Dock = DockStyle.Fill,
-            MinimumSize = new Size(80, 32),
-            Size = new Size(86, 32),
-            Margin = new Padding(6, 0, 0, 0)
-        };
+        _clearButton = CreateActionButton("Clear");
+        _clearButton.Margin = new Padding(6, 0, 0, 0);
         _clearButton.Click += (_, _) => Clear();
 
-        _toggleButton = new HiveButton
-        {
-            Text = "Hide",
-            Style = HiveButtonStyle.Secondary,
-            Dock = DockStyle.Fill,
-            MinimumSize = new Size(80, 32),
-            Size = new Size(86, 32),
-            Margin = new Padding(6, 0, 0, 0)
-        };
+        _toggleButton = CreateActionButton("Hide");
+        _toggleButton.Margin = new Padding(6, 0, 0, 0);
         _toggleButton.Click += (_, _) => ToggleCollapsed();
 
         _outputFrame = new Panel
@@ -252,6 +230,23 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         OutputAvailabilityChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    private static Button CreateActionButton(
+        string text,
+        bool enabled = true) =>
+        new()
+        {
+            AutoSize = false,
+            Text = text,
+            Dock = DockStyle.Fill,
+            Height = 32,
+            Margin = Padding.Empty,
+            Padding = new Padding(8, 0, 8, 0),
+            FlatStyle = FlatStyle.Flat,
+            UseVisualStyleBackColor = false,
+            TabStop = true,
+            Enabled = enabled
+        };
+
     private void Copy()
     {
         if (string.IsNullOrEmpty(_output.Text))
@@ -300,10 +295,29 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
 
         BackColor = theme.Palette.ElevatedSurface;
         _title.ForeColor = theme.Palette.Text;
+        ApplyActionButtonTheme(_copyButton, theme);
+        ApplyActionButtonTheme(_clearButton, theme);
+        ApplyActionButtonTheme(_toggleButton, theme);
         _output.BackColor = theme.Palette.InputBackground;
         _output.ForeColor = theme.Palette.Text;
         _outputFrame.BackColor = theme.Palette.Border;
         _meta.ForeColor = theme.Palette.MutedText;
+    }
+
+    private static void ApplyActionButtonTheme(
+        Button button,
+        HiveThemeDefinition theme)
+    {
+        button.BackColor = button.Enabled
+            ? theme.Palette.ElevatedSurface
+            : theme.Palette.DisabledBackground;
+        button.ForeColor = button.Enabled
+            ? theme.Palette.Text
+            : theme.Palette.DisabledText;
+        button.FlatAppearance.BorderColor = button.Enabled
+            ? theme.Palette.Border
+            : theme.VisualStates.DisabledBorder;
+        button.FlatAppearance.BorderSize = 1;
     }
 
     protected override void Dispose(bool disposing)
