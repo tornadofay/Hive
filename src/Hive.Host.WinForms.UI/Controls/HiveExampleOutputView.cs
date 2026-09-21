@@ -19,6 +19,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
     private readonly Panel _outputFrame;
     private readonly TextBox _output;
     private readonly Font _titleFont;
+    private readonly Font _metaFont;
     private readonly Font _outputFont;
     private bool _collapsed;
 
@@ -32,6 +33,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             "Segoe UI Semibold",
             9.5f,
             FontStyle.Bold);
+        _metaFont = new Font("Segoe UI", 8.1f);
         _outputFont = new Font("Consolas", 9f);
 
         _root = new TableLayoutPanel
@@ -97,7 +99,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         {
             Dock = DockStyle.Fill,
             AutoSize = false,
-            Font = new Font("Segoe UI", 8.1f),
+            Font = _metaFont,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
             Text = "No output yet",
@@ -136,7 +138,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Text = "Clear",
             Style = HiveButtonStyle.Secondary,
             Dock = DockStyle.Fill,
-            MinimumSize = new Size(88, 32),
+            MinimumSize = new Size(72, 32),
             Size = new Size(78, 32),
             Margin = Padding.Empty
         };
@@ -302,8 +304,8 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         if (disposing)
         {
             _titleFont.Dispose();
+            _metaFont.Dispose();
             _outputFont.Dispose();
-            _meta.Font.Dispose();
         }
 
         base.Dispose(disposing);
