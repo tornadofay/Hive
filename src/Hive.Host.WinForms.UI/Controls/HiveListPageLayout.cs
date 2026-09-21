@@ -40,9 +40,9 @@ public sealed class HiveListPageLayout : UserControl
             new RowStyle(SizeType.Percent, 100f));
 
         _headerPanel = CreateSurfacePanel(
-            new Padding(12, 4, 12, 4));
+            new Padding(16, 8, 16, 8));
         _actionBarPanel = CreateSurfacePanel(
-            new Padding(12, 4, 12, 4));
+            new Padding(16, 6, 16, 6));
         _contentPanel = CreateSurfacePanel(
             new Padding(12, 8, 12, 8));
 
