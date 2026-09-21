@@ -37,9 +37,6 @@ public sealed class HiveNavigationTree : TreeView
     {
         ArgumentNullException.ThrowIfNull(theme);
 
-        var selected = SelectedNode;
-        var top = IsHandleCreated ? TopNode : null;
-
         BeginUpdate();
         try
         {
@@ -58,28 +55,23 @@ public sealed class HiveNavigationTree : TreeView
             EndUpdate();
         }
 
-        // Theme changes must repaint the existing native tree state, not rebuild it.
-        // Restoring only if the native control actually changed state prevents
-        // selection/scroll assignments from causing a visible jump.
-        if (selected is not null && !ReferenceEquals(SelectedNode, selected))
-            SelectedNode = selected;
-
-        if (top is not null && IsHandleCreated && !ReferenceEquals(TopNode, top))
-            TopNode = top;
-
+        // Theme changes repaint the existing native tree only. Do not reassign
+        // selection or TopNode here: those assignments can cause the native TreeView
+        // to scroll or re-center even when its state did not actually change.
         Invalidate();
     }
 
     protected override void OnDrawNode(DrawTreeNodeEventArgs e)
     {
         var theme = _theme;
-        if (theme is null)
+        if (theme is null || e.Node is null)
         {
             base.OnDrawNode(e);
             return;
         }
 
-        var selected = ReferenceEquals(e.Node, SelectedNode);
+        var selected = (e.State & TreeNodeStates.Selected) != 0;
+        var focused = (e.State & TreeNodeStates.Focused) != 0;
         var hovered = ReferenceEquals(e.Node, _hoverNode) && !selected;
         var row = new Rectangle(
             RowHorizontalPadding,
@@ -137,13 +129,23 @@ public sealed class HiveNavigationTree : TreeView
             TextFormatFlags.EndEllipsis |
             TextFormatFlags.NoPrefix);
 
-        if (Focused && selected)
+        if (focused && selected)
         {
             using var focusPen = new Pen(theme.Palette.Accent, 1f);
             var focusRectangle = Rectangle.Inflate(row, -1, -1);
             using var path = CreateRoundedPath(focusRectangle, 6);
             e.Graphics.DrawPath(focusPen, path);
         }
+    }
+
+    protected override void OnAfterSelect(TreeViewEventArgs e)
+    {
+        base.OnAfterSelect(e);
+
+        // The native TreeView can update selection state and paint in separate
+        // messages. Repaint once after the selection settles so old/new states
+        // cannot remain visually stale.
+        Invalidate();
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -179,6 +181,62 @@ public sealed class HiveNavigationTree : TreeView
             _groupFont?.Dispose();
             _itemFont?.Dispose();
         }
+    }
+
+    private void EnsureFonts(HiveThemeDefinition theme)
+    {
+        var family = theme.Typography.FontFamily;
+        var bodySize = theme.Typography.BodySize;
+        var categorySize = bodySize + 0.5f;
+
+        if (FontMatches(_categoryFont, family, categorySize, FontStyle.Bold) &&
+            FontMatches(_groupFont, family, bodySize, FontStyle.Bold) &&
+            FontMatches(_itemFont, family, bodySize, FontStyle.Regular))
+        {
+            return;
+        }
+
+        Font? categoryFont = null;
+        Font? groupFont = null;
+        Font? itemFont = null;
+
+        try
+        {
+            categoryFont = new Font(family, categorySize, FontStyle.Bold);
+            groupFont = new Font(family, bodySize, FontStyle.Bold);
+            itemFont = new Font(family, bodySize, FontStyle.Regular);
+        }
+        catch
+        {
+            categoryFont?.Dispose();
+            groupFont?.Dispose();
+            itemFont?.Dispose();
+            throw;
+        }
+
+        var previousCategoryFont = _categoryFont;
+        var previousGroupFont = _groupFont;
+        var previousItemFont = _itemFont;
+
+        _categoryFont = categoryFont;
+        _groupFont = groupFont;
+        _itemFont = itemFont;
+
+        previousCategoryFont?.Dispose();
+        previousGroupFont?.Dispose();
+        previousItemFont?.Dispose();
+    }
+
+    private static bool FontMatches(
+        Font? font,
+        string family,
+        float size,
+        FontStyle style)
+    {
+        return font is not null &&
+               string.Equals(font.FontFamily.Name, family, StringComparison.Ordinal) &&
+               Math.Abs(font.Size - size) <= 0.01f &&
+               font.Style == style;
     }
 
     private static GraphicsPath CreateRoundedPath(
