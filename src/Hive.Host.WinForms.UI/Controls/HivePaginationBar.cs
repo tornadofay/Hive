@@ -16,12 +16,10 @@ public sealed class HivePaginationBar : UserControl
 
     public HivePaginationBar()
     {
-        AutoScaleMode = AutoScaleMode.Dpi;
-        AutoScaleDimensions = new SizeF(HiveDpi.DesignDpi, HiveDpi.DesignDpi);
-        Height = HiveDpi.Scale(this, 44);
+        Height = 44;
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
-        Padding = HiveDpi.Scale(this, new Padding(0, 4, 0, 4));
+        Padding = new Padding(0, 4, 0, 4);
 
         var layout = new TableLayoutPanel
         {
@@ -31,9 +29,9 @@ public sealed class HivePaginationBar : UserControl
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, HiveDpi.Scale(this, 96)));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, HiveDpi.Scale(this, 96)));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96));
 
         _previousButton = CreateButton("Previous");
         _previousButton.Click += (_, _) =>
@@ -127,26 +125,13 @@ public sealed class HivePaginationBar : UserControl
         set => _pageLabel.Text = value ?? string.Empty;
     }
 
-    protected override void OnDpiChanged(DpiChangedEventArgs e)
-    {
-        base.OnDpiChanged(e);
-        Height = HiveDpi.Scale(this, 44);
-        Padding = HiveDpi.Scale(this, new Padding(0, 4, 0, 4));
-
-        if (Controls.Count == 1 && Controls[0] is TableLayoutPanel layout)
-        {
-            layout.ColumnStyles[0].Width = HiveDpi.Scale(this, 96);
-            layout.ColumnStyles[2].Width = HiveDpi.Scale(this, 96);
-        }
-    }
-
     private HiveButton CreateButton(string text) =>
         new()
         {
             Text = text,
             Style = HiveButtonStyle.Secondary,
             Dock = DockStyle.Fill,
-            Margin = HiveDpi.Scale(this, new Padding(0, 0, 8, 0))
+            Margin = new Padding(0, 0, 8, 0)
         };
 
     private void UpdateState()
