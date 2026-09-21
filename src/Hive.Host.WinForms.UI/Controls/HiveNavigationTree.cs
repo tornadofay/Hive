@@ -203,13 +203,17 @@ public sealed class HiveNavigationTree : TreeView
     protected override void OnAfterExpand(TreeViewEventArgs e)
     {
         base.OnAfterExpand(e);
-        Invalidate(e.Node.Bounds);
+
+        if (e.Node is TreeNode node)
+            Invalidate(node.Bounds);
     }
 
     protected override void OnAfterCollapse(TreeViewEventArgs e)
     {
         base.OnAfterCollapse(e);
-        Invalidate(e.Node.Bounds);
+
+        if (e.Node is TreeNode node)
+            Invalidate(node.Bounds);
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
