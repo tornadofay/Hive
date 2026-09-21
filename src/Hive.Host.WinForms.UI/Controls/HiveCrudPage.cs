@@ -173,7 +173,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             WrapContents = false,
             AutoSize = false,
             Margin = Padding.Empty,
-            Padding = new Padding(4, 4, 0, 4)
+            Padding = new Padding(0, 4, 0, 4)
         };
 
         _addButton = CreateActionButton("Add", HiveButtonStyle.Primary);
