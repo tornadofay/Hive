@@ -141,8 +141,8 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _copyButton.AccessibleDescription = "Copy the current example output.";
         _clearButton.AccessibleName = "Clear output";
         _clearButton.AccessibleDescription = "Clear the current example output.";
-        _toggleButton.AccessibleName = "Hide output";
-        _toggleButton.AccessibleDescription = "Hide the shared example output pane.";
+        _toggleButton.AccessibleName = "Show output";
+        _toggleButton.AccessibleDescription = "Show the shared example output pane.";
 
         _copyButton.Click += (_, _) => Copy();
         _clearButton.Click += (_, _) => Clear();
