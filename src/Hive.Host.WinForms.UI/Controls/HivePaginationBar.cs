@@ -10,12 +10,14 @@ public sealed class HivePaginationBar : UserControl
     private readonly HiveButton _previousButton;
     private readonly HiveButton _nextButton;
     private readonly Label _pageLabel;
+    private readonly Font _pageFont;
     private int _pageNumber = 1;
     private bool _canGoPrevious;
     private bool _canGoNext;
 
     public HivePaginationBar()
     {
+        _pageFont = new Font("Segoe UI", 8.8f);
         Height = 40;
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
@@ -54,7 +56,7 @@ public sealed class HivePaginationBar : UserControl
         _pageLabel = new Label
         {
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 8.8f),
+            Font = _pageFont,
             AutoSize = false,
             TextAlign = ContentAlignment.MiddleCenter,
             Margin = Padding.Empty
@@ -140,6 +142,14 @@ public sealed class HivePaginationBar : UserControl
         BackColor = theme.Palette.Surface;
         _pageLabel.ForeColor = theme.Palette.MutedText;
         _pageLabel.BackColor = Color.Transparent;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+            _pageFont.Dispose();
+
+        base.Dispose(disposing);
     }
 
     private void UpdateState()
