@@ -1,4 +1,5 @@
 using Hive.Core;
+using Hive.Tests.TestInfrastructure;
 using System.Text.Json;
 using Xunit;
 
@@ -105,7 +106,7 @@ public sealed class EventInfrastructureTests
 
         var envelope = serializer.CreateEnvelope(
             EventId.New(),
-            DateTimeOffset.UtcNow,
+            EventTestData.Timestamp,
             new EventType("customer.created"),
             new EventPayloadVersion(3),
             CorrelationId.New(),
