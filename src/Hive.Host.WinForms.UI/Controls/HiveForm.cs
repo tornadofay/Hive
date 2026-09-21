@@ -74,6 +74,25 @@ public abstract class HiveForm : Form
 
     protected virtual int CornerRadiusValue => CornerRadius;
 
+    protected void ConfigureHeader(
+        bool allowMove = true,
+        bool allowClose = true,
+        bool allowMinimize = false,
+        bool allowHelp = false)
+    {
+        _header.AllowMove = allowMove;
+        _header.AllowClose = allowClose;
+        _header.AllowMinimize = allowMinimize;
+        _header.AllowHelp = allowHelp;
+    }
+
+    protected void SetHeaderText(string title, string subtitle = "")
+    {
+        _header.Title = title;
+        _header.Subtitle = subtitle;
+        Text = title;
+    }
+
     public void SetThemeManager(IHiveThemeManager themeManager)
     {
         ArgumentNullException.ThrowIfNull(themeManager);
