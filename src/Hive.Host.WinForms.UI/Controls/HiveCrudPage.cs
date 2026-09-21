@@ -27,7 +27,7 @@ public sealed class HiveCrudOperationFailedEventArgs : EventArgs
     public Exception Exception { get; }
 }
 
-public sealed class HiveCrudPage<TItem> : UserControl
+public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 {
     private readonly HiveListPageLayout _pageLayout;
     private readonly Label _titleLabel;
@@ -301,18 +301,7 @@ public sealed class HiveCrudPage<TItem> : UserControl
 
         await ExecuteAsync(
             HiveCrudOperation.Load,
-            async token =>
-            {
-                SetStatus("Loading...");
-                var items = await _loadItemsAsync(token);
-                _items = items ?? throw new InvalidOperationException(
-                    "LoadItemsAsync returned null.");
-
-                RebuildItems();
-                SetStatus(_items.Count == 0
-                    ? "No items."
-                    : $"{_items.Count} item(s).");
-            },
+            LoadItemsCoreAsync,
             cancellationToken);
     }
 
@@ -347,7 +336,7 @@ public sealed class HiveCrudPage<TItem> : UserControl
                     return;
                 }
 
-                await RefreshAsync(token);
+                await LoadItemsCoreAsync(token);
                 SetStatus(item is null ? "Added." : "Updated.");
             },
             CancellationToken.None);
@@ -378,10 +367,27 @@ public sealed class HiveCrudPage<TItem> : UserControl
             {
                 SetStatus("Deleting...");
                 await _deleteItemAsync(item, token);
-                await RefreshAsync(token);
+                await LoadItemsCoreAsync(token);
                 SetStatus("Deleted.");
             },
             CancellationToken.None);
+    }
+
+    private async Task LoadItemsCoreAsync(CancellationToken cancellationToken)
+    {
+        if (_loadItemsAsync is null)
+            throw new InvalidOperationException(
+                "LoadItemsAsync must be configured before refreshing the CRUD page.");
+
+        SetStatus("Loading...");
+        var items = await _loadItemsAsync(cancellationToken);
+        _items = items ?? throw new InvalidOperationException(
+            "LoadItemsAsync returned null.");
+
+        RebuildItems();
+        SetStatus(_items.Count == 0
+            ? "No items."
+            : $"{_items.Count} item(s).");
     }
 
     private async Task ExecuteAsync(
