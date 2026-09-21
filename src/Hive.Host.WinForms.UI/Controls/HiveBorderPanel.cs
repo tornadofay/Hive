@@ -106,6 +106,8 @@ internal sealed class HiveBorderPanel : Panel
             previousRegion?.Dispose();
             _paintPath?.Dispose();
             _paintPath = null;
+            _borderPen?.Dispose();
+            _borderPen = null;
         }
 
         base.Dispose(disposing);
