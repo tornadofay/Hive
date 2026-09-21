@@ -10,6 +10,8 @@ public sealed class HivePaginationBar : UserControl
     private readonly HiveButton _nextButton;
     private readonly Label _pageLabel;
     private int _pageNumber = 1;
+    private bool _canGoPrevious;
+    private bool _canGoNext;
 
     public HivePaginationBar()
     {
@@ -90,20 +92,26 @@ public sealed class HivePaginationBar : UserControl
 
     public bool CanGoPrevious
     {
-        get;
+        get => _canGoPrevious;
         set
         {
-            field = value;
+            if (_canGoPrevious == value)
+                return;
+
+            _canGoPrevious = value;
             UpdateState();
         }
     }
 
     public bool CanGoNext
     {
-        get;
+        get => _canGoNext;
         set
         {
-            field = value;
+            if (_canGoNext == value)
+                return;
+
+            _canGoNext = value;
             UpdateState();
         }
     }
