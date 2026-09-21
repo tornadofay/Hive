@@ -46,6 +46,7 @@ The pass covers:
 - added themed navigation rendering with explicit selected/hover/focus states and preservation of selection/scroll during theme changes;
 - added themed lightweight ListView rendering for CRUD selection/hover/disabled states;
 - refined the shared palette, visual-state tokens, button hierarchy, window header, editor rhythm, CRUD density, pagination, and message-dialog presentation;
+- added the reusable HivePage composition surface for common title/description, action-bar, and content-page layouts; HiveCrudPage now composes it instead of maintaining a separate list-page shell;
 - made the permanent Example host behave as a normal desktop window and improved compact-window resizing;
 - split the UI foundation into separate discoverable Theme, Controls & CRUD, and Dialogs examples under UI → Foundation, removing the duplicate in-view section navigation;
 - converted the existing 0.6 UI foundation surface from a top-level form into discoverable UserControl examples;
