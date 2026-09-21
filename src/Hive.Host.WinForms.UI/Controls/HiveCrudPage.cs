@@ -35,7 +35,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private const int ActionButtonWidth = 92;
     private const int CompactActionButtonWidth = 84;
     private const int ActionBarActionsWidth = 400;
-    private const int PaginationWidth = 300;
+    private const int PaginationWidth = 260;
     private const int DefaultPageSize = 25;
 
     private readonly HiveListPageLayout _pageLayout;
@@ -971,7 +971,11 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                 ? "No pages"
                 : $"Page {_pagination.PageNumber} of {totalPages}";
 
-            _statusLabel.Text = BuildStatusText(matchingCount, visibleCount);
+            _statusLabel.Text = BuildStatusText(
+                matchingCount,
+                visibleCount,
+                _pagination.PageNumber,
+                _pageSize);
             UpdateEmptyState(matchingCount);
         }
         finally
@@ -1024,14 +1028,22 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         RebuildItems();
     }
 
-    private static string BuildStatusText(int totalCount, int visibleCount)
+    private static string BuildStatusText(
+        int totalCount,
+        int visibleCount,
+        int pageNumber,
+        int pageSize)
     {
         if (totalCount == 0)
             return "0 items";
 
-        return totalCount == visibleCount
-            ? $"{totalCount:N0} items"
-            : $"{totalCount:N0} items";
+        if (visibleCount >= totalCount)
+            return $"{totalCount:N0} items";
+
+        var firstVisible = ((pageNumber - 1) * pageSize) + 1;
+        var lastVisible = firstVisible + visibleCount - 1;
+
+        return $"Showing {firstVisible:N0}-{lastVisible:N0} of {totalCount:N0}";
     }
 
     private void ChangePage(int delta)
