@@ -115,6 +115,7 @@ public abstract class HiveForm : Form
         _themeManager = themeManager;
         _themeManager.ThemeChanged += ThemeManagerOnThemeChanged;
         ApplyTheme();
+        OnThemeChanged(_themeManager.Theme);
     }
 
     protected virtual void OnHeaderHelp()
@@ -154,7 +155,7 @@ public abstract class HiveForm : Form
     {
         var theme = _themeManager.Theme;
 
-        BackColor = theme.Palette.WindowBackground;
+        BackColor = theme.Palette.Border;
         ForeColor = theme.Palette.Text;
         if (!string.Equals(
                 _formFont.FontFamily.Name,
