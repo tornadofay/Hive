@@ -13,6 +13,7 @@ internal sealed class ThemeFoundationExampleView : UserControl
     private readonly Panel _preview;
     private readonly Label _previewTitle;
     private readonly Label _previewText;
+    private readonly Font _previewTitleFont;
     private readonly HiveButton _lightButton;
     private readonly HiveButton _darkButton;
     private readonly HiveButton _systemButton;
@@ -22,6 +23,11 @@ internal sealed class ThemeFoundationExampleView : UserControl
         ArgumentNullException.ThrowIfNull(themeManager);
 
         _themeManager = themeManager;
+        _previewTitleFont = new Font(
+            "Segoe UI Semibold",
+            11f,
+            FontStyle.Bold);
+
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
         Padding = Padding.Empty;
@@ -99,7 +105,7 @@ internal sealed class ThemeFoundationExampleView : UserControl
         _previewTitle = new Label
         {
             AutoSize = true,
-            Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold),
+            Font = _previewTitleFont,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
             Text = "Surface hierarchy"
@@ -145,6 +151,9 @@ internal sealed class ThemeFoundationExampleView : UserControl
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
 
         base.Dispose(disposing);
+
+        if (disposing)
+            _previewTitleFont.Dispose();
     }
 
     private HiveButton CreateThemeButton(string text, HiveThemeMode mode)
