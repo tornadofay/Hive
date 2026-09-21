@@ -1,5 +1,5 @@
 using System.Windows.Forms;
-using ReaLTaiizor.Forms;
+using ReaLTaiizor.Controls;
 
 namespace Hive.Host.WinForms.UI.Controls;
 
