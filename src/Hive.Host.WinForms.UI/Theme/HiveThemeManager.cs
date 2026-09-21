@@ -99,10 +99,6 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 hiveButton.ApplyTheme(theme);
                 break;
 
-            case HiveEditorLayout editorLayout:
-                editorLayout.ApplyTheme(theme);
-                break;
-
             case Form:
                 SetBackColor(control, theme.Palette.WindowBackground);
                 SetForeColor(control, theme.Palette.Text);
