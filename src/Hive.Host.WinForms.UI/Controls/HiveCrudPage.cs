@@ -906,23 +906,6 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         return count;
     }
 
-    private bool TryBuildVisibleRow(TItem item, string[] values)
-    {
-        var matches = string.IsNullOrWhiteSpace(_searchText);
-
-        for (var index = 0; index < _columns.Count; index++)
-        {
-            var value = _columns[index].ValueSelector(item) ?? string.Empty;
-            values[index] = value;
-
-            if (!matches &&
-                value.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
-                matches = true;
-        }
-
-        return matches;
-    }
-
     private bool MatchesSearch(TItem item)
     {
         if (string.IsNullOrWhiteSpace(_searchText))
@@ -948,7 +931,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                 : "No items match the current search.";
     }
 
-    private void UpdateStatusSummary(int? visibleCount = null)
+    private void UpdateStatusSummary()
     {
         RebuildItems();
     }
