@@ -364,6 +364,9 @@ internal sealed class HiveExampleHostForm : HiveForm
         }
 
         _themeManager.Apply(nextView);
+
+        if (nextView is OverviewExampleView overview)
+            overview.ApplyTheme(_themeManager.Theme);
     }
 
     private void OutputViewOnCollapseStateChanged(object? sender, EventArgs e)
