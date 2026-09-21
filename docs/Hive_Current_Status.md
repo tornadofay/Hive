@@ -48,6 +48,7 @@ Phase 0 — Foundations.
 - Generic cross-host integration is deferred until a second real host proves the need to generalize V1 patterns.
 - V1 human intervention is Approve/Reject at the business-app write; the broader intervention taxonomy is later.
 - Developer manual testing is the current UI/application verification approach; no UI-automation framework is required by the architecture.
+- The current Example startup form is a 0.6 UI-foundation verification surface. It is not the Phase 0.7 Example Host Shell; 0.7 remains intentionally not started until 0.6 verification is complete.
 - Authentication-provider selection is deferred until real multi-user requirements reach Phase 8.
 - Tests and examples are developed with each implementation slice; no unperformed verification is claimed.
 - Phase 0.3 identity/resource contracts use explicit typed identity, owner, scope, provenance, version, lifecycle, and WorkItem state. Scope matching is a structural boundary and does not itself grant authorization.
