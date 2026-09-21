@@ -9,6 +9,8 @@ internal sealed class ThemeFoundationExample : IHiveExample
 
     public string Subcategory => "Foundation";
 
+    public int Order => 10;
+
     public string Title => "Theme";
 
     public UserControl CreateView(IServiceProvider services)
