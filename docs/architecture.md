@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-21 (rev 18 — production WinForms shell, dialogs, and shared DPI foundation)
+Last updated: 2026-09-21 (rev 19 — reusable WinForms data-page composition)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
