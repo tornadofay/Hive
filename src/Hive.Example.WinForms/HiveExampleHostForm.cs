@@ -8,15 +8,21 @@ namespace Hive.Example.WinForms;
 
 internal sealed class HiveExampleHostForm : HiveForm
 {
-    private const int NavigationWidth = 250;
+    private const int NavigationWidth = 246;
 
     private readonly IHiveThemeManager _themeManager;
     private readonly HiveExampleServices _services;
     private readonly IReadOnlyList<IHiveExample> _examples;
-    private readonly TreeView _navigation;
+    private readonly Panel _navigationSurface;
+    private readonly Panel _navigationSeparator;
+    private readonly HiveNavigationTree _navigation;
+    private readonly Label _navigationTitle;
+    private readonly Label _navigationDescription;
     private readonly Label _viewTitle;
     private readonly Label _viewSubtitle;
     private readonly Panel _viewHost;
+    private readonly Font _navigationTitleFont;
+    private readonly Font _navigationDescriptionFont;
     private readonly Font _viewTitleFont;
     private readonly Font _viewSubtitleFont;
 
@@ -38,13 +44,15 @@ internal sealed class HiveExampleHostForm : HiveForm
             throw new InvalidOperationException(
                 "No IHiveExample implementations were discovered in the Example assembly.");
 
-        _viewTitleFont = new Font("Segoe UI Semibold", 15f, FontStyle.Bold);
-        _viewSubtitleFont = new Font("Segoe UI", 8.8f);
+        _navigationTitleFont = new Font("Segoe UI Semibold", 10f, FontStyle.Bold);
+        _navigationDescriptionFont = new Font("Segoe UI", 8.4f);
+        _viewTitleFont = new Font("Segoe UI Semibold", 16f, FontStyle.Bold);
+        _viewSubtitleFont = new Font("Segoe UI", 8.9f);
 
         var shell = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 2,
+            ColumnCount = 3,
             RowCount = 1,
             Margin = Padding.Empty,
             Padding = Padding.Empty
@@ -52,32 +60,70 @@ internal sealed class HiveExampleHostForm : HiveForm
         shell.ColumnStyles.Add(
             new ColumnStyle(SizeType.Absolute, NavigationWidth));
         shell.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Absolute, 1));
+        shell.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
 
-        _navigation = new TreeView
+        _navigationSurface = new Panel
         {
             Dock = DockStyle.Fill,
-            BorderStyle = BorderStyle.None,
-            FullRowSelect = true,
-            HideSelection = false,
-            HotTracking = false,
-            ShowLines = true,
-            ShowPlusMinus = true,
-            ShowRootLines = false,
-            Indent = 18,
-            ItemHeight = 26,
             Margin = Padding.Empty,
-            Padding = new Padding(12, 12, 8, 12)
+            Padding = new Padding(16, 16, 12, 12)
+        };
+
+        var navigationLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        navigationLayout.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, 22));
+        navigationLayout.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, 20));
+        navigationLayout.RowStyles.Add(
+            new RowStyle(SizeType.Percent, 100f));
+
+        _navigationTitle = new Label
+        {
+            AutoSize = true,
+            Dock = DockStyle.Fill,
+            Font = _navigationTitleFont,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            Text = "Examples",
+            TextAlign = ContentAlignment.MiddleLeft
+        };
+
+        _navigationDescription = new Label
+        {
+            AutoSize = true,
+            Dock = DockStyle.Fill,
+            Font = _navigationDescriptionFont,
+            Margin = new Padding(0, 0, 0, 6),
+            Padding = Padding.Empty,
+            Text = $"{_examples.Count:N0} example{(_examples.Count == 1 ? string.Empty : "s")} available",
+            TextAlign = ContentAlignment.MiddleLeft
+        };
+
+        _navigation = new HiveNavigationTree
+        {
+            Dock = DockStyle.Fill
         };
         _navigation.AfterSelect += NavigationAfterSelect;
 
-        var navigationHost = new Panel
+        navigationLayout.Controls.Add(_navigationTitle, 0, 0);
+        navigationLayout.Controls.Add(_navigationDescription, 0, 1);
+        navigationLayout.Controls.Add(_navigation, 0, 2);
+        _navigationSurface.Controls.Add(navigationLayout);
+
+        _navigationSeparator = new Panel
         {
             Dock = DockStyle.Fill,
-            Margin = Padding.Empty,
-            Padding = new Padding(0, 0, 1, 0)
+            Margin = Padding.Empty
         };
-        navigationHost.Controls.Add(_navigation);
 
         var content = new TableLayoutPanel
         {
@@ -119,17 +165,15 @@ internal sealed class HiveExampleHostForm : HiveForm
         content.Controls.Add(_viewSubtitle, 0, 1);
         content.Controls.Add(_viewHost, 0, 2);
 
-        shell.Controls.Add(navigationHost, 0, 0);
-        shell.Controls.Add(content, 1, 0);
+        shell.Controls.Add(_navigationSurface, 0, 0);
+        shell.Controls.Add(_navigationSeparator, 1, 0);
+        shell.Controls.Add(content, 2, 0);
 
         BodyPanel.Padding = Padding.Empty;
         BodyPanel.Controls.Add(shell);
 
         BuildNavigation();
-        ApplyShellTheme(_themeManager.Theme);
-
-        _themeManager.ThemeChanged += ThemeManagerOnChanged;
-
+        _themeManager.Apply(BodyPanel);
         SelectFirstExample();
     }
 
@@ -137,13 +181,25 @@ internal sealed class HiveExampleHostForm : HiveForm
     {
         if (disposing)
         {
-            _themeManager.ThemeChanged -= ThemeManagerOnChanged;
             DisposeActiveView();
+            _navigationTitleFont.Dispose();
+            _navigationDescriptionFont.Dispose();
             _viewTitleFont.Dispose();
             _viewSubtitleFont.Dispose();
         }
 
         base.Dispose(disposing);
+    }
+
+    protected override void OnThemeChanged(HiveThemeDefinition theme)
+    {
+        _navigationSurface.BackColor = theme.VisualStates.NavigationBackground;
+        _navigationSeparator.BackColor = theme.VisualStates.NavigationBorder;
+        _navigationTitle.ForeColor = theme.VisualStates.NavigationText;
+        _navigationDescription.ForeColor = theme.Palette.MutedText;
+        _viewTitle.ForeColor = theme.Palette.Text;
+        _viewSubtitle.ForeColor = theme.Palette.MutedText;
+        _viewHost.BackColor = theme.Palette.Surface;
     }
 
     private void BuildNavigation()
@@ -174,11 +230,11 @@ internal sealed class HiveExampleHostForm : HiveForm
                 currentCategory.Nodes.Add(currentSubcategory);
             }
 
-            var exampleNode = new TreeNode(example.Title)
-            {
-                Tag = example
-            };
-            currentSubcategory.Nodes.Add(exampleNode);
+            currentSubcategory.Nodes.Add(
+                new TreeNode(example.Title)
+                {
+                    Tag = example
+                });
         }
 
         foreach (TreeNode category in _navigation.Nodes)
@@ -235,8 +291,8 @@ internal sealed class HiveExampleHostForm : HiveForm
         {
             var previousView = _activeView;
             _viewHost.Controls.Clear();
-            _activeView = nextView;
             _viewHost.Controls.Add(nextView);
+            _activeView = nextView;
 
             previousView?.Dispose();
 
@@ -251,7 +307,7 @@ internal sealed class HiveExampleHostForm : HiveForm
         }
         finally
         {
-            _viewHost.ResumeLayout(true);
+            _viewHost.ResumeLayout(false);
         }
 
         _themeManager.Apply(nextView);
@@ -267,23 +323,5 @@ internal sealed class HiveExampleHostForm : HiveForm
 
         _viewHost.Controls.Clear();
         activeView.Dispose();
-    }
-
-    private void ApplyShellTheme(HiveThemeDefinition theme)
-    {
-        _navigation.BackColor = theme.VisualStates.NavigationBackground;
-        _navigation.ForeColor = theme.VisualStates.NavigationText;
-        _navigation.LineColor = theme.VisualStates.NavigationBorder;
-
-        _viewTitle.ForeColor = theme.Palette.Text;
-        _viewSubtitle.ForeColor = theme.Palette.MutedText;
-        _viewHost.BackColor = theme.Palette.Surface;
-    }
-
-    private void ThemeManagerOnChanged(object? sender, EventArgs e)
-    {
-        ApplyShellTheme(_themeManager.Theme);
-        if (_activeView is not null)
-            _themeManager.Apply(_activeView);
     }
 }
