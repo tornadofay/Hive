@@ -128,6 +128,9 @@ public sealed class HiveThemeManager : IHiveThemeManager
             case TextBoxBase:
             case ComboBox:
             case ListBox:
+            case NumericUpDown:
+            case DomainUpDown:
+            case DateTimePicker:
                 SetBackColor(
                     control,
                     control.Enabled
@@ -180,12 +183,17 @@ public sealed class HiveThemeManager : IHiveThemeManager
         grid.GridColor = theme.Palette.Border;
         grid.DefaultCellStyle.BackColor = theme.Palette.InputBackground;
         grid.DefaultCellStyle.ForeColor = theme.Palette.Text;
+        grid.EnableHeadersVisualStyles = false;
         grid.DefaultCellStyle.SelectionBackColor = theme.Palette.Selection;
         grid.DefaultCellStyle.SelectionForeColor = theme.Palette.Text;
         grid.ColumnHeadersDefaultCellStyle.BackColor = theme.Palette.Surface;
         grid.ColumnHeadersDefaultCellStyle.ForeColor = theme.Palette.Text;
+        grid.ColumnHeadersDefaultCellStyle.SelectionBackColor = theme.Palette.Selection;
+        grid.ColumnHeadersDefaultCellStyle.SelectionForeColor = theme.Palette.Text;
         grid.RowHeadersDefaultCellStyle.BackColor = theme.Palette.Surface;
         grid.RowHeadersDefaultCellStyle.ForeColor = theme.Palette.Text;
+        grid.RowHeadersDefaultCellStyle.SelectionBackColor = theme.Palette.Selection;
+        grid.RowHeadersDefaultCellStyle.SelectionForeColor = theme.Palette.Text;
     }
 
     private static void SetBackColor(Control control, Color color)
