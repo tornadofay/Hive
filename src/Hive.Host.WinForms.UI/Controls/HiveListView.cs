@@ -15,9 +15,9 @@ public sealed class HiveListView : ListView
 
     public HiveListView()
     {
+        // ListView is a native Win32 control. Keep the native paint path intact and
+        // use OwnerDraw for the item-specific visuals instead of forcing UserPaint.
         SetStyle(
-            ControlStyles.UserPaint |
-            ControlStyles.AllPaintingInWmPaint |
             ControlStyles.OptimizedDoubleBuffer |
             ControlStyles.ResizeRedraw,
             true);
@@ -31,7 +31,6 @@ public sealed class HiveListView : ListView
         HeaderStyle = ColumnHeaderStyle.Nonclickable;
         BorderStyle = BorderStyle.None;
         LabelWrap = false;
-        HeaderStyle = ColumnHeaderStyle.Nonclickable;
         Margin = Padding.Empty;
         DoubleBuffered = true;
 
@@ -40,7 +39,7 @@ public sealed class HiveListView : ListView
             ColorDepth = ColorDepth.Depth32Bit,
             ImageSize = new Size(1, RowHeight)
         };
-        _rowImageList.Images.Add(new Bitmap(1, 36));
+        _rowImageList.Images.Add(new Bitmap(1, RowHeight));
         SmallImageList = _rowImageList;
     }
 
@@ -57,11 +56,14 @@ public sealed class HiveListView : ListView
             ForeColor = theme.Palette.Text;
 
         EnsureHeaderFont(theme);
+
         var previous = _hoverIndex;
         _hoverIndex = -1;
 
         if (previous >= 0 && previous < Items.Count)
             Invalidate(GetItemRect(previous));
+
+        Invalidate();
     }
 
     protected override void OnDrawColumnHeader(
@@ -120,75 +122,6 @@ public sealed class HiveListView : ListView
             e.Bounds.Bottom - 1);
     }
 
-    protected override void OnDrawItem(DrawListViewItemEventArgs e)
-    {
-        var theme = _theme;
-        if (theme is null)
-        {
-            e.DrawDefault = true;
-            return;
-        }
-
-        var item = e.Item;
-        if (item is null)
-        {
-            e.DrawDefault = true;
-            return;
-        }
-
-        var selected = item.Selected;
-        var hovered = item.Index == _hoverIndex && !selected;
-        var row = new Rectangle(
-            1,
-            e.Bounds.Top,
-            Math.Max(0, ClientSize.Width - 2),
-            e.Bounds.Height);
-
-        var background = !Enabled
-            ? theme.Palette.DisabledBackground
-            : selected
-                ? theme.Palette.Selection
-                : hovered
-                    ? theme.VisualStates.HoverBackground
-                    : item.Index % 2 == 0
-                        ? theme.Palette.InputBackground
-                        : theme.Palette.Surface;
-
-        using var brush = new SolidBrush(background);
-        e.Graphics.FillRectangle(brush, row);
-
-        using var separator = new Pen(theme.Palette.Border);
-        e.Graphics.DrawLine(
-            separator,
-            row.Left,
-            row.Bottom - 1,
-            row.Right - 1,
-            row.Bottom - 1);
-
-        if (selected)
-        {
-            using var accent = new SolidBrush(theme.Palette.Accent);
-            e.Graphics.FillRectangle(
-                accent,
-                row.Left,
-                row.Top + 5,
-                3,
-                Math.Max(8, row.Height - 10));
-        }
-
-        if (selected && Focused)
-        {
-            using var focusPen = new Pen(theme.VisualStates.FocusedBorder);
-            var focus = Rectangle.Inflate(row, -1, -1);
-            e.Graphics.DrawRectangle(
-                focusPen,
-                focus.Left,
-                focus.Top,
-                Math.Max(0, focus.Width - 1),
-                Math.Max(0, focus.Height - 1));
-        }
-    }
-
     protected override void OnDrawSubItem(DrawListViewSubItemEventArgs e)
     {
         var theme = _theme;
@@ -198,7 +131,67 @@ public sealed class HiveListView : ListView
             return;
         }
 
-        var color = !Enabled
+        var item = e.Item;
+        var selected = item.Selected;
+        var hovered = item.Index == _hoverIndex && !selected;
+
+        // Draw the whole row from the first column only. ListView can issue an
+        // extra DrawItem notification while hovering; keeping the row background
+        // here prevents that native repaint from covering custom text.
+        if (e.ColumnIndex == 0)
+        {
+            var row = new Rectangle(
+                1,
+                e.Bounds.Top,
+                Math.Max(0, ClientSize.Width - 2),
+                e.Bounds.Height);
+
+            var background = !Enabled
+                ? theme.Palette.DisabledBackground
+                : selected
+                    ? theme.Palette.Selection
+                    : hovered
+                        ? theme.VisualStates.HoverBackground
+                        : item.Index % 2 == 0
+                            ? theme.Palette.InputBackground
+                            : theme.Palette.Surface;
+
+            using var brush = new SolidBrush(background);
+            e.Graphics.FillRectangle(brush, row);
+
+            using var separator = new Pen(theme.Palette.Border);
+            e.Graphics.DrawLine(
+                separator,
+                row.Left,
+                row.Bottom - 1,
+                row.Right - 1,
+                row.Bottom - 1);
+
+            if (selected)
+            {
+                using var accent = new SolidBrush(theme.Palette.Accent);
+                e.Graphics.FillRectangle(
+                    accent,
+                    row.Left,
+                    row.Top + 5,
+                    3,
+                    Math.Max(8, row.Height - 10));
+            }
+
+            if (selected && Focused)
+            {
+                using var focusPen = new Pen(theme.VisualStates.FocusedBorder);
+                var focus = Rectangle.Inflate(row, -1, -1);
+                e.Graphics.DrawRectangle(
+                    focusPen,
+                    focus.Left,
+                    focus.Top,
+                    Math.Max(0, focus.Width - 1),
+                    Math.Max(0, focus.Height - 1));
+            }
+        }
+
+        var color = !Enabled || !item.Enabled
             ? theme.Palette.DisabledText
             : theme.Palette.Text;
 
@@ -256,8 +249,11 @@ public sealed class HiveListView : ListView
         if (_hoverIndex < 0)
             return;
 
+        var previous = _hoverIndex;
         _hoverIndex = -1;
-        Invalidate();
+
+        if (previous >= 0 && previous < Items.Count)
+            Invalidate(GetItemRect(previous));
     }
 
     private void EnsureHeaderFont(HiveThemeDefinition theme)
