@@ -602,8 +602,12 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private void UpdateToolbarLayout()
     {
         var compact = ClientSize.Width > 0 && ClientSize.Width < 860;
+        var expectedRows = compact && _searchBox.Visible ? 2 : 1;
+        var expectedColumns = compact ? 1 : 2;
+
         if (_compactToolbar == compact &&
-            _actionLayout.ColumnCount == (compact ? 1 : 2))
+            _actionLayout.ColumnCount == expectedColumns &&
+            _actionLayout.RowCount == expectedRows)
             return;
 
         _compactToolbar = compact;
