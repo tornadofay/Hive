@@ -21,9 +21,15 @@ Establish the reusable test infrastructure required by later Hive slices:
 
 ## Implementation progress
 
-0.5 implementation has not started yet.
+0.5 implementation is in progress in `Hive.Tests`:
 
-The test project already contains slice-specific xUnit verification from Phases 0.2–0.4. This slice will consolidate reusable test infrastructure and conventions without duplicating or unnecessarily rewriting those tests.
+- reusable `FakeClock` implementing the existing `IClock` contract, with deterministic set/advance operations;
+- deterministic test-only `FakeProvider` with request recording, configured response/failure, delay, and cancellation handling;
+- centralized `PersistenceTestDatabase` setup using the explicit checked-in SQL test connection configuration;
+- deterministic `EventTestData` factory using fixed UTC timestamps and explicit payload versions;
+- existing clock and event tests migrated to the shared deterministic helpers;
+- focused tests covering fake-clock boundaries, fake-provider success/failure/cancellation, and deterministic event test data;
+- request recording in the fake provider is concurrency-safe without introducing a production provider abstraction.
 
 ## 0.4 completion record
 
