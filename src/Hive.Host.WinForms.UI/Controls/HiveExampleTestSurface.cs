@@ -16,9 +16,13 @@ public sealed class HiveExampleTestSurface : UserControl
     private readonly TextBox _code;
     private readonly Label _inputTitle;
     private readonly Label _codeTitle;
+    private readonly Label _details;
+    private readonly Label _note;
     private readonly Font _sectionFont;
     private readonly Font _inputFont;
     private readonly Font _codeFont;
+    private readonly Font _detailsFont;
+    private readonly Font _noteFont;
     private HiveThemeDefinition? _theme;
     private CancellationTokenSource? _runCancellation;
     private bool _busy;
@@ -38,12 +42,14 @@ public sealed class HiveExampleTestSurface : UserControl
             FontStyle.Bold);
         _inputFont = new Font("Consolas", 9f);
         _codeFont = new Font("Consolas", 9f);
+        _detailsFont = new Font("Segoe UI", 9f);
+        _noteFont = new Font("Segoe UI", 8.6f);
 
         var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 2,
+            RowCount = 4,
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
@@ -53,6 +59,10 @@ public sealed class HiveExampleTestSurface : UserControl
             new RowStyle(SizeType.Absolute, 44));
         root.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
+        root.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, 112));
+        root.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, 44));
 
         _actions = new FlowLayoutPanel
         {
@@ -160,8 +170,34 @@ public sealed class HiveExampleTestSurface : UserControl
         workspace.Controls.Add(_input, 0, 1);
         workspace.Controls.Add(_code, 1, 1);
 
+        _details = new Label
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            Text = string.Empty,
+            Font = _detailsFont,
+            Padding = new Padding(1, 7, 20, 4),
+            Margin = Padding.Empty,
+            UseMnemonic = false,
+            AutoEllipsis = false
+        };
+
+        _note = new Label
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            Text = string.Empty,
+            Font = _noteFont,
+            Padding = new Padding(1, 4, 20, 5),
+            Margin = Padding.Empty,
+            UseMnemonic = false,
+            AutoEllipsis = false
+        };
+
         root.Controls.Add(_actions, 0, 0);
         root.Controls.Add(workspace, 0, 1);
+        root.Controls.Add(_details, 0, 2);
+        root.Controls.Add(_note, 0, 3);
         Controls.Add(root);
     }
 
@@ -218,7 +254,46 @@ public sealed class HiveExampleTestSurface : UserControl
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public string Description
+    {
+        get => _details.Text;
+        set => UpdateDetails(value, ExpectedResult);
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public string ExpectedResult { get; set; } = string.Empty;
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public string NoteTitle { get; set; } = string.Empty;
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public string NoteText { get; set; } = string.Empty;
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsBusy => _busy;
+
+    public void SetInformation(
+        string description,
+        string expectedResult,
+        string? noteTitle = null,
+        string? noteText = null)
+    {
+        ExpectedResult = expectedResult ?? string.Empty;
+        NoteTitle = noteTitle ?? string.Empty;
+        NoteText = noteText ?? string.Empty;
+
+        UpdateDetails(
+            description ?? string.Empty,
+            ExpectedResult);
+
+        var note = string.IsNullOrWhiteSpace(NoteTitle)
+            ? NoteText
+            : string.IsNullOrWhiteSpace(NoteText)
+                ? NoteTitle
+                : NoteTitle + ": " + NoteText;
+
+        _note.Text = note;
+    }
 
     public void SetStatus(string text) =>
         _status.Text = text ?? string.Empty;
@@ -319,6 +394,8 @@ public sealed class HiveExampleTestSurface : UserControl
             _sectionFont.Dispose();
             _inputFont.Dispose();
             _codeFont.Dispose();
+            _detailsFont.Dispose();
+            _noteFont.Dispose();
         }
 
         base.Dispose(disposing);
@@ -333,6 +410,8 @@ public sealed class HiveExampleTestSurface : UserControl
         _status.ForeColor = theme.Palette.MutedText;
         _inputTitle.ForeColor = theme.Palette.Text;
         _codeTitle.ForeColor = theme.Palette.Text;
+        _details.ForeColor = theme.Palette.Text;
+        _note.ForeColor = theme.Palette.MutedText;
         _input.BackColor = theme.Palette.InputBackground;
         _input.ForeColor = theme.Palette.Text;
         _code.BackColor = theme.Palette.InputBackground;
@@ -378,6 +457,23 @@ public sealed class HiveExampleTestSurface : UserControl
         }
     }
 
+    private void UpdateDetails(
+        string description,
+        string expectedResult)
+    {
+        var expected = string.IsNullOrWhiteSpace(expectedResult)
+            ? string.Empty
+            : Environment.NewLine + Environment.NewLine +
+              "Expected result" + Environment.NewLine +
+              expectedResult;
+
+        _details.Text =
+            (string.IsNullOrWhiteSpace(description)
+                ? string.Empty
+                : "Description" + Environment.NewLine + description) +
+            expected;
+    }
+
     private IHiveThemeManager? FindHiveThemeManager()
     {
         if (FindForm() is HiveForm form)
@@ -397,5 +493,4 @@ public sealed class HiveExampleTestSurface : UserControl
             Text = text,
             TextAlign = ContentAlignment.MiddleLeft
         };
-    
-    }
+}
