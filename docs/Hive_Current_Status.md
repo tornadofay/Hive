@@ -4,7 +4,7 @@ Last updated: 2026-09-21
 
 ## Repository state
 
-The initial Phase 0.1 .NET 10 solution/project scaffold is implemented, merged into main, and locally verified by the developer. The current implementation slice is Phase 0.2 common infrastructure, with its first implementation set committed to main and local verification pending.
+The initial Phase 0.1 .NET 10 solution/project scaffold is implemented, merged into main, and locally verified by the developer. The current implementation slice is Phase 0.2 common infrastructure. The first 0.2 implementation set is committed to main, the compilation defect in `Result.cs` has been corrected, and focused 0.2 contract tests are now present; automated 0.2 test execution is still pending.
 
 ## Current phase
 
@@ -55,7 +55,9 @@ Phase 0 — Foundations.
 
 ### Phase 0.2 — Common infrastructure
 
-The first 0.2 implementation set is committed to `Hive.Core`: common technical IDs, typed errors/results, `IClock`, durable event envelope contracts, System.Text.Json serialization, and sequential event-payload upcasting infrastructure. No local 0.2 build/test verification is claimed yet.
+The common infrastructure implementation is present in `Hive.Core`, including common technical IDs, typed errors/results, `IClock`, durable event envelope contracts, System.Text.Json serialization, sequential event-payload upcasting infrastructure, and the corrected `Result.cs` declaration.
+
+Focused 0.2 xUnit v3 contract tests are now present in `Hive.Tests`. The solution rebuild and application launch were reported successful by the developer after pulling the current main branch. Automated 0.2 test execution has not yet been performed and is therefore not recorded as passing.
 
 ## Completed
 
@@ -65,20 +67,20 @@ The first 0.2 implementation set is committed to `Hive.Core`: common technical I
 - Hive.Example.WinForms is the current developer startup project.
 - Developer reports a successful full-solution rebuild.
 - Developer reports the example application launches successfully with the current placeholder form.
-- No automated tests exist in this slice; xUnit/test harness is intentionally deferred to Phase 0.5.
+- No automated tests were required in this slice; the real test infrastructure remains a later Phase 0 capability.
 
 ## Not started
 
 - Phase 0.3 Identity, WorkItem & Resource foundation.
 - Phase 0.4 Persistence bootstrap.
-- Phase 0.5 Test harness.
+- Phase 0.5 Test harness beyond the focused tests needed to verify 0.2.
 - Phase 0.6 WinForms UI/UX Foundation.
 - Phase 0.7 Example Host Shell.
 - Phase 0.8 Example Developer Test Tools.
 - Later implementation slices.
 - Database schema.
-- Automated tests beyond the later test-harness slice.
+- Automated tests beyond the current 0.2 contract suite.
 - WinForms management host.
 - Example application features.
 
-The 0.1 scaffold is locally verified; no verification is claimed here beyond the developer-reported result.
+The 0.1 scaffold is locally verified; 0.2 remains active until its required automated verification is actually executed.
