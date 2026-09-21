@@ -42,6 +42,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private readonly Label _descriptionLabel;
     private readonly Label _searchLabel;
     private readonly TextBox _searchBox;
+    private readonly TableLayoutPanel _actionLayout;
+    private readonly FlowLayoutPanel _searchPanel;
     private readonly FlowLayoutPanel _actionButtons;
     private readonly Label _statusLabel;
     private readonly HiveButton _addButton;
@@ -66,6 +68,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private string _searchText = string.Empty;
     private int _pageSize = DefaultPageSize;
     private bool _busy;
+    private bool _compactToolbar = false;
 
     public HiveCrudPage()
     {
@@ -109,7 +112,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _pageLayout.HeaderPanel.Controls.Add(_descriptionLabel);
         _pageLayout.HeaderPanel.Controls.Add(_titleLabel);
 
-        var actionLayout = new TableLayoutPanel
+        _actionLayout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
@@ -117,10 +120,10 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, ActionBarActionsWidth));
+        _actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        _actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, ActionBarActionsWidth));
 
-        var searchPanel = new FlowLayoutPanel
+        _searchPanel = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
@@ -183,9 +186,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _actionButtons.Controls.Add(_deleteButton);
         _actionButtons.Controls.Add(_refreshButton);
 
-        actionLayout.Controls.Add(searchPanel, 0, 0);
-        actionLayout.Controls.Add(_actionButtons, 1, 0);
-        _pageLayout.ActionBarPanel.Controls.Add(actionLayout);
+        _actionLayout.Controls.Add(_searchPanel, 0, 0);
+        _actionLayout.Controls.Add(_actionButtons, 1, 0);
+        _pageLayout.ActionBarPanel.Controls.Add(_actionLayout);
 
         var contentLayout = new TableLayoutPanel
         {
@@ -273,6 +276,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _getItemDisplayName = item => item?.ToString() ?? "item";
         _pagination.PageNumber = 1;
         UpdateActionState();
+        UpdateToolbarLayout();
         UpdateEmptyState(0);
         UpdateStatusSummary();
     }
@@ -511,6 +515,12 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             cancellationToken);
     }
 
+    protected override void OnResize(EventArgs e)
+    {
+        base.OnResize(e);
+        UpdateToolbarLayout();
+    }
+
     protected override void Dispose(bool disposing)
     {
         if (disposing)
@@ -525,6 +535,58 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _descriptionFont.Dispose();
             _searchLabelFont.Dispose();
             _emptyStateFont.Dispose();
+        }
+    }
+
+    private void UpdateToolbarLayout()
+    {
+        var compact = ClientSize.Width > 0 && ClientSize.Width < 760;
+        if (_compactToolbar == compact &&
+            _actionLayout.ColumnCount == (compact ? 1 : 2))
+            return;
+
+        _compactToolbar = compact;
+
+        _actionLayout.SuspendLayout();
+        try
+        {
+            _actionLayout.Controls.Remove(_searchPanel);
+            _actionLayout.Controls.Remove(_actionButtons);
+            _actionLayout.ColumnStyles.Clear();
+            _actionLayout.RowStyles.Clear();
+
+            if (compact)
+            {
+                _pageLayout.ActionBarHeight = 88;
+                _actionLayout.ColumnCount = 1;
+                _actionLayout.RowCount = 2;
+                _actionLayout.ColumnStyles.Add(
+                    new ColumnStyle(SizeType.Percent, 100f));
+                _actionLayout.RowStyles.Add(
+                    new RowStyle(SizeType.Absolute, 40f));
+                _actionLayout.RowStyles.Add(
+                    new RowStyle(SizeType.Absolute, 44f));
+                _actionLayout.Controls.Add(_searchPanel, 0, 0);
+                _actionLayout.Controls.Add(_actionButtons, 0, 1);
+            }
+            else
+            {
+                _pageLayout.ActionBarHeight = ActionBarHeight;
+                _actionLayout.ColumnCount = 2;
+                _actionLayout.RowCount = 1;
+                _actionLayout.ColumnStyles.Add(
+                    new ColumnStyle(SizeType.Percent, 100f));
+                _actionLayout.ColumnStyles.Add(
+                    new ColumnStyle(SizeType.Absolute, ActionBarActionsWidth));
+                _actionLayout.RowStyles.Add(
+                    new RowStyle(SizeType.Percent, 100f));
+                _actionLayout.Controls.Add(_searchPanel, 0, 0);
+                _actionLayout.Controls.Add(_actionButtons, 1, 0);
+            }
+        }
+        finally
+        {
+            _actionLayout.ResumeLayout(true);
         }
     }
 
@@ -722,6 +784,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
     private void RebuildItems()
     {
+        var previouslySelected = SelectedItem;
+
         _list.BeginUpdate();
         try
         {
@@ -742,17 +806,28 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
             foreach (var item in _items)
             {
-                var values = new string[_columns.Count];
-                if (!TryBuildVisibleRow(item, values))
+                if (!MatchesSearch(item))
                     continue;
 
                 if (matchedIndex >= firstMatchIndex &&
                     visibleCount < _pageSize)
                 {
-                    _list.Items.Add(new ListViewItem(values)
+                    var values = new string[_columns.Count];
+                    for (var index = 0; index < _columns.Count; index++)
+                        values[index] =
+                            _columns[index].ValueSelector(item) ?? string.Empty;
+
+                    var listItem = new ListViewItem(values)
                     {
                         Tag = item
-                    });
+                    };
+
+                    _list.Items.Add(listItem);
+
+                    if (previouslySelected is not null &&
+                        Equals(previouslySelected, item))
+                        listItem.Selected = true;
+
                     visibleCount++;
                 }
 
