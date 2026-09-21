@@ -73,3 +73,9 @@ public sealed class HivePersistenceDatabaseFixture
     }
 
 }
+
+[CollectionDefinition("HivePersistence", DisableParallelization = true)]
+public sealed class HivePersistenceCollection :
+    ICollectionFixture<HivePersistenceDatabaseFixture>
+{
+}
