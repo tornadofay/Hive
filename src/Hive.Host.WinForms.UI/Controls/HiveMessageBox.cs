@@ -187,7 +187,9 @@ public static class HiveMessageBox
         private const int AccentBarHeight = 4;
         private const int FooterHeight = 64;
         private const int DetailsHeight = 148;
+        private const int DetailsActionColumnWidth = 122;
         private const int MaxMessageHeight = 250;
+        private const int MaxDialogWidth = 760;
 
         private readonly HiveMessageOptions _options;
         private readonly IHiveThemeManager _themeManager;
@@ -410,7 +412,7 @@ public static class HiveMessageBox
             _detailsLayout.ColumnStyles.Add(
                 new ColumnStyle(SizeType.Percent, 100f));
             _detailsLayout.ColumnStyles.Add(
-                new ColumnStyle(SizeType.Absolute, 112));
+                new ColumnStyle(SizeType.Absolute, DetailsActionColumnWidth));
 
             _details = new TextBox
             {
@@ -729,9 +731,25 @@ public static class HiveMessageBox
 
         private void UpdateDialogSizeCore()
         {
+            var footerRequiredWidth = _footer.Controls
+                .OfType<Control>()
+                .Where(control => control.Visible)
+                .Sum(control =>
+                    control.Width +
+                    control.Margin.Left +
+                    control.Margin.Right);
+
+            footerRequiredWidth +=
+                _footer.Padding.Left +
+                _footer.Padding.Right;
+
+            var minimumRequiredWidth = footerRequiredWidth + OuterPadding * 2;
+
             var width = Math.Max(
                 MinWidth,
-                Math.Min(DesignWidth, Width));
+                Math.Min(
+                    MaxDialogWidth,
+                    Math.Max(DesignWidth, Width, minimumRequiredWidth)));
 
             var contentWidth =
                 width -

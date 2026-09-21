@@ -70,7 +70,8 @@ public sealed class HiveNavigationTree : TreeView
             return;
         }
 
-        var selected = ReferenceEquals(e.Node, SelectedNode);
+        var selected = (e.State & TreeNodeStates.Selected) != 0;
+        var focused = (e.State & TreeNodeStates.Focused) != 0;
         var hovered = ReferenceEquals(e.Node, _hoverNode) && !selected;
         var row = new Rectangle(
             RowHorizontalPadding,
@@ -128,13 +129,23 @@ public sealed class HiveNavigationTree : TreeView
             TextFormatFlags.EndEllipsis |
             TextFormatFlags.NoPrefix);
 
-        if (Focused && selected)
+        if (focused && selected)
         {
             using var focusPen = new Pen(theme.Palette.Accent, 1f);
             var focusRectangle = Rectangle.Inflate(row, -1, -1);
             using var path = CreateRoundedPath(focusRectangle, 6);
             e.Graphics.DrawPath(focusPen, path);
         }
+    }
+
+    protected override void OnAfterSelect(TreeViewEventArgs e)
+    {
+        base.OnAfterSelect(e);
+
+        // The native TreeView can update selection state and paint in separate
+        // messages. Repaint once after the selection settles so old/new states
+        // cannot remain visually stale.
+        Invalidate();
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
