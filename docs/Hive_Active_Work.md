@@ -1,10 +1,10 @@
 # Hive — Active Work
 
-Last updated: 2026-09-20
+Last updated: 2026-09-21
 
 ## Active slice
 
-None. The architecture baseline is being finalized before implementation begins.
+None. The architecture baseline is finalized before implementation begins.
 
 ## Next planned slice
 
