@@ -20,7 +20,7 @@ public sealed class HivePersistenceIntegrationTests
         {
             var migrator = new HiveDatabaseMigrator(options);
 
-            var first = await migrator.MigrateAsync();
+            var first = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
             Assert.True(first.IsSuccess);
             Assert.NotNull(first.Value);
             Assert.Equal(HiveDatabaseMigrationStatus.Applied, first.Value.Status);
@@ -28,7 +28,7 @@ public sealed class HivePersistenceIntegrationTests
             Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, first.Value.CurrentSchemaVersion);
             Assert.Equal(1, first.Value.AppliedMigrationCount);
 
-            var second = await migrator.MigrateAsync();
+            var second = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
             Assert.True(second.IsSuccess);
             Assert.NotNull(second.Value);
             Assert.Equal(HiveDatabaseMigrationStatus.AlreadyCurrent, second.Value.Status);
@@ -58,7 +58,7 @@ public sealed class HivePersistenceIntegrationTests
         try
         {
             var migrator = new HiveDatabaseMigrator(options);
-            var initial = await migrator.MigrateAsync();
+            var initial = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
 
             Assert.True(initial.IsSuccess);
 
@@ -66,7 +66,7 @@ public sealed class HivePersistenceIntegrationTests
                 options,
                 HiveDatabaseSchema.CurrentSchemaVersion + 1);
 
-            var rejected = await migrator.MigrateAsync();
+            var rejected = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
 
             Assert.True(rejected.IsFailure);
             Assert.NotNull(rejected.Error);
@@ -93,7 +93,7 @@ public sealed class HivePersistenceIntegrationTests
         try
         {
             var migrator = new HiveDatabaseMigrator(options);
-            var initial = await migrator.MigrateAsync();
+            var initial = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
 
             Assert.True(initial.IsSuccess);
 

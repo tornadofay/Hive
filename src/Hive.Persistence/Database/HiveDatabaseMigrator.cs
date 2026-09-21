@@ -109,7 +109,7 @@ public sealed class HiveDatabaseMigrator
         {
             throw;
         }
-        catch (Exception ex)
+        catch (Exception )
         {
             return Result<HiveDatabaseMigrationOutcome>.Failure(
                 new Error(
