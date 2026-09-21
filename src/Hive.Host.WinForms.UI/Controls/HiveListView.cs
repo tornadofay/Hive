@@ -163,9 +163,9 @@ public sealed class HiveListView : ListView
         if (e.ColumnIndex == 0)
         {
             var row = new Rectangle(
-                1,
+                0,
                 e.Bounds.Top,
-                Math.Max(0, ClientSize.Width - 2),
+                ClientSize.Width,
                 e.Bounds.Height);
 
             var background = !Enabled
