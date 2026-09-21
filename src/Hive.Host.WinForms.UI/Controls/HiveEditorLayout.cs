@@ -7,20 +7,23 @@ namespace Hive.Host.WinForms.UI.Controls;
 public sealed class HiveEditorLayout : UserControl
 {
     private const int DefaultLabelColumnWidth = 190;
-    private const int DefaultFieldHeight = 62;
+    private const int DefaultFieldHeight = 68;
     private const int FooterHeight = 54;
+    private const int FooterSeparatorHeight = 1;
 
     private readonly TableLayoutPanel _root;
     private readonly TableLayoutPanel _fields;
+    private readonly TableLayoutPanel _footerRoot;
     private readonly FlowLayoutPanel _footer;
+    private readonly Panel _footerSeparator;
     private readonly Font _descriptionFont;
     private readonly Font _titleFont;
     private int _labelColumnWidth = DefaultLabelColumnWidth;
 
     public HiveEditorLayout()
     {
-        _descriptionFont = new Font("Segoe UI", 8.1f);
-        _titleFont = new Font("Segoe UI", 9.5f, FontStyle.Bold);
+        _descriptionFont = new Font("Segoe UI", 8.5f);
+        _titleFont = new Font("Segoe UI Semibold", 9.4f, FontStyle.Bold);
 
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
@@ -52,6 +55,25 @@ public sealed class HiveEditorLayout : UserControl
         _fields.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
 
+        _footerRoot = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        _footerRoot.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        _footerRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, FooterSeparatorHeight));
+        _footerRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+
+        _footerSeparator = new Panel
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+
         _footer = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -62,8 +84,10 @@ public sealed class HiveEditorLayout : UserControl
             Padding = new Padding(0, 8, 0, 8)
         };
 
+        _footerRoot.Controls.Add(_footerSeparator, 0, 0);
+        _footerRoot.Controls.Add(_footer, 0, 1);
         _root.Controls.Add(_fields, 0, 0);
-        _root.Controls.Add(_footer, 0, 1);
+        _root.Controls.Add(_footerRoot, 0, 1);
         Controls.Add(_root);
     }
 
@@ -138,7 +162,7 @@ public sealed class HiveEditorLayout : UserControl
         var editorHost = new Panel
         {
             Dock = DockStyle.Fill,
-            Padding = new Padding(0, 8, 0, 5),
+            Padding = new Padding(0, 10, 0, 8),
             Margin = Padding.Empty
         };
 
@@ -150,7 +174,7 @@ public sealed class HiveEditorLayout : UserControl
     public HiveButton AddActionButton(
         string text,
         HiveButtonStyle style = HiveButtonStyle.Secondary,
-        int width = 110)
+        int width = 104)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
 
@@ -173,7 +197,7 @@ public sealed class HiveEditorLayout : UserControl
         var panel = new Panel
         {
             Dock = DockStyle.Fill,
-            Padding = new Padding(0, 8, 12, 0),
+            Padding = new Padding(0, 10, 18, 0),
             Margin = Padding.Empty
         };
 
@@ -182,7 +206,8 @@ public sealed class HiveEditorLayout : UserControl
             Text = description ?? string.Empty,
             Dock = DockStyle.Fill,
             Font = _descriptionFont,
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
         };
 
         var titleLabel = new Label
@@ -191,7 +216,8 @@ public sealed class HiveEditorLayout : UserControl
             Dock = DockStyle.Top,
             Height = 22,
             Font = _titleFont,
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
         };
 
         panel.Controls.Add(descriptionLabel);
