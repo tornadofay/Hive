@@ -157,7 +157,8 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 break;
 
             case TextBoxBase textBox:
-                textBox.BorderStyle = BorderStyle.FixedSingle;
+                if (textBox.BorderStyle != BorderStyle.FixedSingle)
+                    textBox.BorderStyle = BorderStyle.FixedSingle;
                 SetBackColor(
                     textBox,
                     textBox.Enabled
@@ -171,7 +172,8 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 break;
 
             case ComboBox comboBox:
-                comboBox.FlatStyle = FlatStyle.Standard;
+                if (comboBox.FlatStyle != FlatStyle.Standard)
+                    comboBox.FlatStyle = FlatStyle.Standard;
                 SetBackColor(
                     comboBox,
                     comboBox.Enabled
@@ -185,7 +187,8 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 break;
 
             case ListBox listBox:
-                listBox.BorderStyle = BorderStyle.FixedSingle;
+                if (listBox.BorderStyle != BorderStyle.FixedSingle)
+                    listBox.BorderStyle = BorderStyle.FixedSingle;
                 SetBackColor(
                     listBox,
                     listBox.Enabled
@@ -199,7 +202,8 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 break;
 
             case NumericUpDown numericUpDown:
-                numericUpDown.BorderStyle = BorderStyle.FixedSingle;
+                if (numericUpDown.BorderStyle != BorderStyle.FixedSingle)
+                    numericUpDown.BorderStyle = BorderStyle.FixedSingle;
                 SetBackColor(
                     numericUpDown,
                     numericUpDown.Enabled
@@ -213,7 +217,8 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 break;
 
             case DomainUpDown domainUpDown:
-                domainUpDown.BorderStyle = BorderStyle.FixedSingle;
+                if (domainUpDown.BorderStyle != BorderStyle.FixedSingle)
+                    domainUpDown.BorderStyle = BorderStyle.FixedSingle;
                 SetBackColor(
                     domainUpDown,
                     domainUpDown.Enabled
