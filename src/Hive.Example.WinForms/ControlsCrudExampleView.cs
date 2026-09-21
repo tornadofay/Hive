@@ -112,11 +112,22 @@ internal sealed class ControlsCrudExampleView : UserControl
             Margin = new Padding(0, 0, 8, 0)
         };
 
+        var disabled = new HiveButton
+        {
+            Text = "Disabled",
+            Style = HiveButtonStyle.Secondary,
+            Width = 110,
+            Height = 36,
+            Margin = new Padding(0, 0, 8, 0),
+            Enabled = false
+        };
+
         _controls.Controls.Add(input);
         _controls.Controls.Add(enabledCheck);
         _controls.Controls.Add(disabledCheck);
         _controls.Controls.Add(primary);
         _controls.Controls.Add(secondary);
+        _controls.Controls.Add(disabled);
 
         _crud = new HiveCrudPage<CrudExampleItem>
         {
