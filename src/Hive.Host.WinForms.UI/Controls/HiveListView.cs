@@ -35,7 +35,7 @@ public sealed class HiveListView : ListView
     {
         ArgumentNullException.ThrowIfNull(theme);
 
-        var topItem = TopItem;
+        var topIndex = IsHandleCreated ? TopItem?.Index ?? -1 : -1;
         var selectedIndex = SelectedIndices.Count > 0
             ? SelectedIndices[0]
             : -1;
@@ -57,8 +57,8 @@ public sealed class HiveListView : ListView
         if (selectedIndex >= 0 && selectedIndex < Items.Count)
             Items[selectedIndex].Selected = true;
 
-        if (topItem is not null)
-            TopItem = topItem;
+        if (topIndex >= 0 && topIndex < Items.Count)
+            Items[topIndex].EnsureVisible();
 
         _hoverIndex = -1;
         Invalidate();
