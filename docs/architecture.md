@@ -648,7 +648,7 @@ Coverage must include, as applicable:
 - stale-state and lifecycle races;
 - recovery/crash behavior;
 - authorization/scope/credential security;
-- manual developer verification of UI behavior where applicable; no separate smoke-test or UI-automation framework is required by the architecture.
+- manual developer verification of UI behavior where applicable; no separate UI-automation framework is required by the architecture.
 
 Network-provider tests use fakes/local infrastructure and never real vendor accounts.
 
