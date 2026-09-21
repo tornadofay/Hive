@@ -233,17 +233,6 @@ public sealed class HiveNavigationTree : TreeView
         base.OnMouseDown(e);
     }
 
-    protected override void OnBeforeSelect(TreeViewCancelEventArgs e)
-    {
-        if (e.Node is not null && e.Node.Nodes.Count > 0)
-        {
-            e.Cancel = true;
-            return;
-        }
-
-        base.OnBeforeSelect(e);
-    }
-
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
