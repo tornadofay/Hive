@@ -221,7 +221,7 @@ The UI foundation exposes a Hive-owned theme vocabulary:
 
 Theme resolution is deterministic. `System` resolves from the Windows application-theme preference when available and falls back to Light when the OS setting cannot be read.
 
-The theme manager is stateful but UI-only. Changing the mode raises one theme-change notification and reapplies the effective theme to registered/attached control trees. It does not own application settings, persistence, Agent/Hive state, or host business data.
+The theme manager is stateful but UI-only. Changing the mode raises one theme-change notification. Consumers reapply the effective theme to their attached control trees in response to that notification. The manager does not own application settings, persistence, Agent/Hive state, or host business data.
 
 #### Hive-owned controls
 
