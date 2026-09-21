@@ -199,5 +199,18 @@ internal sealed class ThemeFoundationExampleView : UserControl
     {
         _themeState.Text =
             $"Selected: {_themeManager.Mode}    Effective: {_themeManager.Theme.Mode}";
+
+        _lightButton.Style =
+            _themeManager.Mode == HiveThemeMode.Light
+                ? HiveButtonStyle.NavigationSelected
+                : HiveButtonStyle.Secondary;
+        _darkButton.Style =
+            _themeManager.Mode == HiveThemeMode.Dark
+                ? HiveButtonStyle.NavigationSelected
+                : HiveButtonStyle.Secondary;
+        _systemButton.Style =
+            _themeManager.Mode == HiveThemeMode.System
+                ? HiveButtonStyle.NavigationSelected
+                : HiveButtonStyle.Secondary;
     }
 }
