@@ -205,7 +205,7 @@ Phase 0.6 establishes the shared WinForms visual foundation used by `Hive.Host.W
 #### Rendering dependency boundary
 
 - `Hive.Host.WinForms.UI` is the only Hive project permitted to reference ReaLTaiizor.
-- ReaLTaiizor is pinned to version `3.8.2.1` for this slice. citeturn922533search0
+- ReaLTaiizor is pinned to version `3.8.2.1` for this slice. 
 - Consuming forms and platform services reference Hive-owned UI contracts only; they do not reference ReaLTaiizor namespaces or controls directly.
 - Hive-specific controls that use ReaLTaiizor do so behind composition/adaptation boundaries so the underlying rendering library can be replaced without changing consuming-form contracts.
 
@@ -923,7 +923,7 @@ Hive is built for production real-world applications. The default coding standar
 - No arbitrary sleeps, real vendor accounts, hidden environment variables, or accidental machine state.
 - Test doubles remain test-only unless a production contract later requires a reusable fake.
 - Tests prove normal, invalid, boundary, cancellation, concurrency, recovery, and security behavior where applicable.
-- Core contract tests explicitly include using Hive.Core; and using Xunit;.
+- Core contract test files explicitly import Hive.Core and Xunit alongside any additional required namespaces.
 
 ## 14. Testing & Production Readiness
 
