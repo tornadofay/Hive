@@ -106,7 +106,8 @@ internal sealed class HiveExampleHostForm : HiveForm
         {
             Dock = DockStyle.Fill,
             Margin = Padding.Empty,
-            Padding = new Padding(16, 16, 12, 12)
+            Padding = new Padding(16, 16, 12, 12),
+            AccessibleName = "Example navigation panel"
         };
 
         var navigationLayout = new TableLayoutPanel
@@ -196,7 +197,8 @@ internal sealed class HiveExampleHostForm : HiveForm
         {
             Dock = DockStyle.Fill,
             Margin = new Padding(0, 0, 0, 12),
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            AccessibleName = "Example content"
         };
         _viewHost.Resize += (_, _) => UpdateOutputOverlayBounds();
 
@@ -441,9 +443,6 @@ internal sealed class HiveExampleHostForm : HiveForm
         UpdateOutputOverlayBounds();
 
         _themeManager.Apply(nextView);
-
-        if (nextView is OverviewExampleView overview)
-            overview.ApplyTheme(_themeManager.Theme);
     }
 
     private void OutputViewOnCollapseStateChanged(object? sender, EventArgs e)
