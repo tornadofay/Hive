@@ -1,6 +1,7 @@
 using DbUp;
 using Hive.Core;
 using Hive.Persistence;
+using Hive.Tests.TestInfrastructure;
 using Microsoft.Data.SqlClient;
 using Xunit;
 
@@ -11,8 +12,9 @@ public sealed class HivePersistenceIntegrationTests
     [Fact]
     public async Task CleanAndRepeatMigration_IsIdempotentAndRecordsCurrentSchema()
     {
-        var options = CreateOptions("Hive_Test_CleanRepeat");
-        ResetSchema(options);
+        var database = new PersistenceTestDatabase("Hive_Test_CleanRepeat");
+        database.Reset();
+        var options = database.Options;
 
         var migrator = new HiveDatabaseMigrator(options);
 
@@ -41,8 +43,9 @@ public sealed class HivePersistenceIntegrationTests
     [Fact]
     public async Task FutureSchemaVersion_IsRejectedBeforeMigration()
     {
-        var options = CreateOptions("Hive_Test_FutureSchema");
-        ResetSchema(options);
+        var database = new PersistenceTestDatabase("Hive_Test_FutureSchema");
+        database.Reset();
+        var options = database.Options;
 
         var migrator = new HiveDatabaseMigrator(options);
         var initial = await migrator.MigrateAsync(CancellationToken.None);
@@ -67,8 +70,9 @@ public sealed class HivePersistenceIntegrationTests
     [Fact]
     public async Task FailedMigration_DoesNotAdvanceSchemaVersionOrLeavePartialChanges()
     {
-        var options = CreateOptions("Hive_Test_FailedMigration");
-        ResetSchema(options);
+        var database = new PersistenceTestDatabase("Hive_Test_FailedMigration");
+        database.Reset();
+        var options = database.Options;
 
         var migrator = new HiveDatabaseMigrator(options);
         var initial = await migrator.MigrateAsync(CancellationToken.None);
@@ -104,41 +108,6 @@ public sealed class HivePersistenceIntegrationTests
             HiveDatabaseSchema.CurrentSchemaVersion,
             await ReadSchemaVersionAsync(options));
         Assert.False(await TableExistsAsync(options, "HiveMigrationFailureProbe"));
-    }
-
-    private static HiveDatabaseOptions CreateOptions(string databaseName)
-    {
-        var builder = new SqlConnectionStringBuilder(
-            HivePersistenceTestConfiguration.ConnectionString)
-        {
-            InitialCatalog = databaseName,
-            ApplicationName = "Hive.Tests"
-        };
-
-        return new HiveDatabaseOptions(
-            builder.ConnectionString,
-            createDatabaseIfMissing: true);
-    }
-
-    private static void ResetSchema(HiveDatabaseOptions options)
-    {
-        EnsureDatabase.For.SqlDatabase(options.ConnectionString);
-
-        using var connection = new SqlConnection(options.ConnectionString);
-        connection.Open();
-
-        using var command = connection.CreateCommand();
-        command.CommandText = """
-            IF OBJECT_ID(N'dbo.HiveMigrationJournal', N'U') IS NOT NULL
-                DROP TABLE [dbo].[HiveMigrationJournal];
-
-            IF OBJECT_ID(N'dbo.HiveSchemaVersion', N'U') IS NOT NULL
-                DROP TABLE [dbo].[HiveSchemaVersion];
-
-            IF OBJECT_ID(N'dbo.HiveMigrationFailureProbe', N'U') IS NOT NULL
-                DROP TABLE [dbo].[HiveMigrationFailureProbe];
-            """;
-        command.ExecuteNonQuery();
     }
 
     private static async Task<int> ReadSchemaVersionAsync(HiveDatabaseOptions options)
