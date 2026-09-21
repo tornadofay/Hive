@@ -26,6 +26,16 @@ The shell must discover IHiveExample implementations without a central manual re
 - preserve Light / Dark / System theme behavior through the shared IHiveThemeManager;
 - no feature-specific platform functionality is added to the shell.
 
+## Implementation progress
+
+- added IHiveExample and the Example-side service provider contract;
+- added reflection discovery for internal IHiveExample implementations in the designated Example assembly;
+- added the first-class HiveExampleHostForm with Category → Subcategory → Example TreeView navigation;
+- active example views are replaced in one right-side host and disposed deterministically;
+- converted the existing 0.6 UI foundation surface from a top-level form into a discoverable UserControl example;
+- updated Program to launch HiveExampleHostForm;
+- removed the legacy 0.6 top-level form path.
+
 ## Verification
 
 1. adding an IHiveExample implementation makes it appear without editing shell registration code;
