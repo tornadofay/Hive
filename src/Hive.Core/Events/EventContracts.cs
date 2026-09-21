@@ -38,7 +38,7 @@ public readonly record struct EventPayloadVersion
 
 public sealed record EventEnvelope
 {
-    private EventEnvelope(
+    public EventEnvelope(
         EventId eventId,
         DateTimeOffset occurredAtUtc,
         EventType eventType,
