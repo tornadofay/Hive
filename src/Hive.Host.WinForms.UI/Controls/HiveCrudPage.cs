@@ -33,7 +33,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private const int ActionBarHeight = 48;
     private const int StatusHeight = 28;
     private const int ActionButtonWidth = 88;
-    private const int ActionBarActionsWidth = 388;
+    private const int ActionBarActionsWidth = 400;
 
     private readonly HiveListPageLayout _pageLayout;
     private readonly Label _titleLabel;
@@ -137,7 +137,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
         _searchBox = new TextBox
         {
-            Width = 220,
+            Width = 180,
             Height = 36,
             BorderStyle = BorderStyle.FixedSingle,
             Margin = Padding.Empty,
@@ -153,7 +153,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _actionButtons = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.RightToLeft,
+            FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false,
             AutoSize = false,
             Margin = Padding.Empty,
@@ -170,10 +170,10 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _deleteButton.Click += async (_, _) => await DeleteAsync();
         _refreshButton.Click += async (_, _) => await RefreshAsync();
 
-        _actionButtons.Controls.Add(_refreshButton);
-        _actionButtons.Controls.Add(_deleteButton);
-        _actionButtons.Controls.Add(_editButton);
         _actionButtons.Controls.Add(_addButton);
+        _actionButtons.Controls.Add(_editButton);
+        _actionButtons.Controls.Add(_deleteButton);
+        _actionButtons.Controls.Add(_refreshButton);
 
         actionLayout.Controls.Add(searchPanel, 0, 0);
         actionLayout.Controls.Add(_actionButtons, 1, 0);
@@ -211,7 +211,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Margin = Padding.Empty
         };
         _list.SelectedIndexChanged += (_, _) => UpdateActionState();
-        _list.DoubleClick += async (_, _) =>
+        _list.ItemActivate += async (_, _) =>
         {
             if (SelectedItem is not null)
                 await EditAsync(SelectedItem);
