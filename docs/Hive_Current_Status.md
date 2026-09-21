@@ -10,7 +10,7 @@ Phase 0.1 through 0.5 are complete. The active implementation slice is Phase 0.6
 
 Phase 0 — Foundations.
 
-**Active slice: 0.6 — WinForms UI/UX Foundation.**
+**Active slice: 0.7 — First-Class Example Host Shell.**
 
 ## Architecture decisions now locked
 
@@ -50,12 +50,17 @@ Phase 0 — Foundations.
 - Developer manual testing is the current UI/application verification approach; no UI-automation framework is required by the architecture.
 - Reusable WinForms data-page composition is now defined as a presentation boundary: HiveListPageLayout and HivePaginationBar are generic UI primitives, HiveCrudPage<TItem> adds generic CRUD interaction orchestration without domain or persistence knowledge, and HiveEditorLayout provides reusable labeled-field/action-footer composition; the reusable CRUD page also provides consistent search presentation, loading/empty/no-match states, keyboard interaction, contextual actions, and compact count/status feedback. Feature-specific columns, filtering semantics, validation, specialized editors, authorization, and persistence remain outside Hive. `ListView` is the lightweight default list surface, while `DataGridView` remains available for richer tabular cases. The 0.6 UX refinement also gives the page a deliberate application hierarchy, semantic danger treatment for delete, compact toolbar actions, and a consistent editor footer rather than leaving consumers with a raw control/demo layout.
 - WinForms DPI scaling is delegated to the .NET 10/WinForms platform; Hive does not maintain a custom DPI helper or manual DPI scaling layer.
-- The current Example startup form is a 0.6 UI-foundation verification surface. It is not the Phase 0.7 Example Host Shell; 0.7 remains intentionally not started until 0.6 verification is complete.
+- The 0.6 UI foundation is now the shared rendering/composition layer. The active Example application work is Phase 0.7: a first-class Category → Subcategory → Example shell with replaceable right-side views.
 - Authentication-provider selection is deferred until real multi-user requirements reach Phase 8.
 - Tests and examples are developed with each implementation slice; no unperformed verification is claimed.
 - Phase 0.3 identity/resource contracts use explicit typed identity, owner, scope, provenance, version, lifecycle, and WorkItem state. Scope matching is a structural boundary and does not itself grant authorization.
 
 ## Current implementation progress
+
+### Phase 0.7 — First-Class Example Host Shell
+
+Active. The shell implementation has not yet been started at this checkpoint.
+
 
 ### Phase 0.3 — Identity, WorkItem & Resource foundation
 
@@ -130,10 +135,10 @@ Implemented so far:
 
 ## Not started
 
-- Phase 0.7 Example Host Shell.
+- Phase 0.8 Example Developer Test Tools.
 - Phase 0.8 Example Developer Test Tools.
 - Later implementation slices.
 - WinForms management host.
 - Example application features.
 
-0.5 is complete and verified. 0.6 is active and awaiting developer UI verification.
+0.5 is complete and verified. 0.6 was accepted after developer manual interaction with the Example UI. 0.7 is now active and awaiting implementation.
