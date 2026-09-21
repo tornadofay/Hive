@@ -229,9 +229,10 @@ The foundation introduces only consumer-facing Hive contracts:
 
 - `HiveForm` provides the shared rounded, borderless application-window shell, custom header, window movement, and theme-aware body surface.
 - `HiveButton` provides a Hive-owned button surface with Primary, Secondary, and Navigation styles while hiding the ReaLTaiizor implementation detail.
-- `HiveMessageBox` provides a Hive-owned semantic dialog with Information, Success, Warning, Error, and Question variants, standard `DialogResult` semantics, optional technical details, and copy support.
-- `HiveForm` provides the reusable borderless rounded window shell and body surface.
-- The custom header supports title, subtitle, close, optional minimize/help actions, and window movement with a compact visual hierarchy similar to the established HAgent WinForms visual language.
+- `HiveMessageBox` provides a Hive-owned semantic dialog with Information, Success, Warning, Error, and Question variants, standard `DialogResult` semantics, optional technical details, and copy support. It uses a compact dialog-specific shell rather than the full `HiveForm` application header: rounded surface, thin semantic accent bar, semantic circular icon, clear caption/message hierarchy, optional details panel, and right-aligned action buttons.
+- `HiveForm` provides the reusable borderless rounded application-window shell and body surface.
+- The custom application header supports title, subtitle, close, optional minimize/help actions, and window movement with a compact visual hierarchy similar to the established HAgent WinForms visual language.
+- `HiveMessageBox` may take visual direction from the useful HAgent message-dialog characteristics, but its implementation remains smaller, Hive-owned, theme-driven, and free of HAgent dependencies.
 - Semantic message colors and navigation colors are theme tokens rather than form-specific constants.
 
 The visual direction intentionally carries forward the useful HAgent characteristics—rounded windows, a distinctive header, strong semantic accents, compact navigation, and explanatory field labels—without copying HAgent's monolithic UI implementation. Hive keeps the implementation smaller, theme-driven, disposable, and independent of HAgent types.
