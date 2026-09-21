@@ -122,11 +122,13 @@ public sealed class HiveListView : ListView
             Math.Max(0, ClientSize.Width - 2),
             e.Bounds.Height);
 
-        var background = selected
-            ? theme.Palette.Selection
-            : hovered
-                ? theme.VisualStates.HoverBackground
-                : theme.Palette.InputBackground;
+        var background = !Enabled
+            ? theme.Palette.DisabledBackground
+            : selected
+                ? theme.Palette.Selection
+                : hovered
+                    ? theme.VisualStates.HoverBackground
+                    : theme.Palette.InputBackground;
 
         using var brush = new SolidBrush(background);
         e.Graphics.FillRectangle(brush, row);
@@ -141,11 +143,11 @@ public sealed class HiveListView : ListView
             return;
         }
 
-        var color = e.Item.Selected
-            ? theme.Palette.Text
-            : e.Item.Enabled
+        var color = !Enabled || !e.Item.Enabled
+            ? theme.Palette.DisabledText
+            : e.Item.Selected
                 ? theme.Palette.Text
-                : theme.Palette.DisabledText;
+                : theme.Palette.Text;
 
         var flags = TextFormatFlags.VerticalCenter |
                     TextFormatFlags.EndEllipsis |
