@@ -89,7 +89,14 @@ public sealed class HiveListView : ListView
             return;
         }
 
-        using var background = new SolidBrush(theme.Palette.ElevatedSurface);
+        var headerBackground = Enabled
+            ? theme.Palette.ElevatedSurface
+            : theme.Palette.DisabledBackground;
+        var headerForeground = Enabled
+            ? theme.Palette.Text
+            : theme.Palette.DisabledText;
+
+        using var background = new SolidBrush(headerBackground);
         e.Graphics.FillRectangle(background, e.Bounds);
 
         if (e.ColumnIndex < Columns.Count - 1)
@@ -126,7 +133,7 @@ public sealed class HiveListView : ListView
             header.Text,
             _headerFont ?? Font,
             Rectangle.Inflate(e.Bounds, -10, 0),
-            theme.Palette.Text,
+            headerForeground,
             flags);
 
         using var bottom = new Pen(theme.Palette.Border);
