@@ -14,6 +14,8 @@ internal sealed class HiveWindowHeader : Control
     private const int WindowCommandClose = 1;
     private const int WindowCommandMinimize = 2;
     private const int WindowCommandHelp = 3;
+    private const int WindowCommandTheme = 4;
+    private const int WindowCommandMaximize = 5;
 
     private string _title = string.Empty;
     private string _subtitle = string.Empty;
@@ -23,6 +25,8 @@ internal sealed class HiveWindowHeader : Control
     private bool _allowClose = true;
     private bool _allowMinimize;
     private bool _allowHelp;
+    private bool _allowThemeToggle = true;
+    private bool _allowMaximize = true;
 
     private Color _background1;
     private Color _foreground;
@@ -121,6 +125,34 @@ internal sealed class HiveWindowHeader : Control
 
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public bool AllowThemeToggle
+    {
+        get => _allowThemeToggle;
+        set
+        {
+            if (_allowThemeToggle == value)
+                return;
+
+            _allowThemeToggle = value;
+            Invalidate();
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public bool AllowMaximize
+    {
+        get => _allowMaximize;
+        set
+        {
+            if (_allowMaximize == value)
+                return;
+
+            _allowMaximize = value;
+            Invalidate();
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public bool AllowHelp
     {
         get => _allowHelp;
@@ -206,8 +238,20 @@ internal sealed class HiveWindowHeader : Control
                 TextFormatFlags.NoPrefix);
         }
 
+        var form = FindForm();
+        var themeGlyph = form is HiveForm hiveForm &&
+                         hiveForm.Theme.Palette.WindowBackground.GetBrightness() < 0.5f
+            ? "☀"
+            : "☾";
+
+        var maximizeGlyph = form?.WindowState == FormWindowState.Maximized
+            ? "❐"
+            : "□";
+
         DrawCommandButton(e.Graphics, WindowCommandHelp, _allowHelp, "?");
+        DrawCommandButton(e.Graphics, WindowCommandTheme, _allowThemeToggle, themeGlyph);
         DrawCommandButton(e.Graphics, WindowCommandMinimize, _allowMinimize, "—");
+        DrawCommandButton(e.Graphics, WindowCommandMaximize, _allowMaximize, maximizeGlyph);
         DrawCommandButton(e.Graphics, WindowCommandClose, _allowClose, "×");
     }
 
@@ -279,6 +323,28 @@ internal sealed class HiveWindowHeader : Control
                     form.WindowState = FormWindowState.Minimized;
                 break;
 
+            case WindowCommandMaximize:
+                if (FindForm() is { } form)
+                {
+                    form.WindowState = form.WindowState == FormWindowState.Maximized
+                        ? FormWindowState.Normal
+                        : FormWindowState.Maximized;
+                }
+                break;
+
+            case WindowCommandTheme:
+                if (FindForm() is HiveForm hiveForm)
+                {
+                    var isDark =
+                        hiveForm.Theme.Palette.WindowBackground.GetBrightness() < 0.5f;
+
+                    hiveForm.ThemeManager.SetMode(
+                        isDark
+                            ? HiveThemeMode.Light
+                            : HiveThemeMode.Dark);
+                }
+                break;
+
             case WindowCommandHelp:
                 HelpClicked?.Invoke(this, EventArgs.Empty);
                 break;
@@ -300,7 +366,9 @@ internal sealed class HiveWindowHeader : Control
 
     private int GetButtonCount() =>
         (_allowHelp ? 1 : 0) +
+        (_allowThemeToggle ? 1 : 0) +
         (_allowMinimize ? 1 : 0) +
+        (_allowMaximize ? 1 : 0) +
         (_allowClose ? 1 : 0);
 
     private void DrawCommandButton(
@@ -347,8 +415,14 @@ internal sealed class HiveWindowHeader : Control
         if (_allowClose && GetCommandBounds(WindowCommandClose).Contains(point))
             return WindowCommandClose;
 
+        if (_allowMaximize && GetCommandBounds(WindowCommandMaximize).Contains(point))
+            return WindowCommandMaximize;
+
         if (_allowMinimize && GetCommandBounds(WindowCommandMinimize).Contains(point))
             return WindowCommandMinimize;
+
+        if (_allowThemeToggle && GetCommandBounds(WindowCommandTheme).Contains(point))
+            return WindowCommandTheme;
 
         if (_allowHelp && GetCommandBounds(WindowCommandHelp).Contains(point))
             return WindowCommandHelp;
@@ -361,9 +435,19 @@ internal sealed class HiveWindowHeader : Control
         var indexFromRight = command switch
         {
             WindowCommandClose when _allowClose => 0,
-            WindowCommandMinimize when _allowMinimize => _allowClose ? 1 : 0,
+            WindowCommandMaximize when _allowMaximize =>
+                (_allowClose ? 1 : 0),
+            WindowCommandMinimize when _allowMinimize =>
+                (_allowClose ? 1 : 0) + (_allowMaximize ? 1 : 0),
+            WindowCommandTheme when _allowThemeToggle =>
+                (_allowClose ? 1 : 0) +
+                (_allowMaximize ? 1 : 0) +
+                (_allowMinimize ? 1 : 0),
             WindowCommandHelp when _allowHelp =>
-                (_allowClose ? 1 : 0) + (_allowMinimize ? 1 : 0),
+                (_allowClose ? 1 : 0) +
+                (_allowMaximize ? 1 : 0) +
+                (_allowMinimize ? 1 : 0) +
+                (_allowThemeToggle ? 1 : 0),
             _ => -1
         };
 
