@@ -128,6 +128,7 @@ public static class HiveMessageBox
         private readonly HiveThemeDefinition _theme;
         private readonly Label _icon;
         private readonly Label _message;
+        private readonly Font _iconFont;
         private readonly LinkLabel _detailsLink;
         private readonly TextBox _details;
         private readonly Label _copyStatus;
@@ -225,6 +226,7 @@ public static class HiveMessageBox
             {
                 _message.Font.Dispose();
                 _details.Font.Dispose();
+                _iconFont.Dispose();
             }
 
             base.Dispose(disposing);
@@ -296,16 +298,18 @@ public static class HiveMessageBox
         private Label CreateIcon()
         {
             var accent = GetAccentColor(Theme, _options.Type);
+            _iconFont = new Font(
+                Theme.Typography.FontFamily,
+                16f,
+                FontStyle.Bold);
+
             var icon = new Label
             {
                 AutoSize = false,
                 Size = new Size(48, 48),
                 Text = GetIconGlyph(_options.Type),
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font(
-                    Theme.Typography.FontFamily,
-                    16f,
-                    FontStyle.Bold),
+                Font = _iconFont,
                 ForeColor = Color.White,
                 BackColor = accent,
                 Margin = new Padding(0, 2, Theme.Spacing.Md, 0)
@@ -426,7 +430,9 @@ public static class HiveMessageBox
         {
             if (e.KeyCode == Keys.Escape)
             {
-                DialogResult = FindResult(DialogResult.Cancel);
+                DialogResult = HasCancelButton(_options.Buttons)
+                    ? DialogResult.Cancel
+                    : DialogResult.None;
                 e.Handled = true;
                 Close();
                 return;
@@ -461,7 +467,10 @@ public static class HiveMessageBox
                 _ => DialogResult.OK
             };
 
-        private static DialogResult FindResult(DialogResult result) => result;
+        private static bool HasCancelButton(MessageBoxButtons buttons) =>
+            buttons is MessageBoxButtons.OKCancel
+                or MessageBoxButtons.YesNoCancel
+                or MessageBoxButtons.RetryCancel;
 
         private static string GetSubtitle(HiveMessageType type) =>
             type switch
