@@ -140,30 +140,30 @@ public sealed class HiveNavigationTree : TreeView
                     ? _selectedGlyphPen
                     : _glyphPen;
 
-            if (glyphPen is null)
-                return;
-
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-            var centerX = glyphLeft + glyphSize / 2f;
-            var centerY = glyphTop + glyphSize / 2f;
-            var half = 3.5f;
-
-            e.Graphics.DrawLine(
-                glyphPen,
-                centerX - half,
-                centerY,
-                centerX + half,
-                centerY);
-
-            if (!e.Node.IsExpanded)
+            if (glyphPen is not null)
             {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+                var centerX = glyphLeft + glyphSize / 2f;
+                var centerY = glyphTop + glyphSize / 2f;
+                var half = 3.5f;
+
                 e.Graphics.DrawLine(
                     glyphPen,
-                    centerX,
-                    centerY - half,
-                    centerX,
-                    centerY + half);
+                    centerX - half,
+                    centerY,
+                    centerX + half,
+                    centerY);
+
+                if (!e.Node.IsExpanded)
+                {
+                    e.Graphics.DrawLine(
+                        glyphPen,
+                        centerX,
+                        centerY - half,
+                        centerX,
+                        centerY + half);
+                }
             }
 
             textLeft = Math.Max(
