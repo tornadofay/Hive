@@ -33,13 +33,17 @@ Phase 0 — Foundations.
 - Hive uses MAF for execution/orchestration mechanisms MAF already provides.
 - One shared OpenAI-compatible provider adapter serves compatible providers/local servers through configuration.
 - V1 provider configurations currently targeted: Groq, OpenRouter, Cloudflare, Cerebras, NVIDIA, Google, and local OpenAI-compatible servers.
-- The business-app integration boundary must be decided before the write-tool slice: API versus narrowly scoped UI integration.
+- V1 business-app integration explicitly supports both API/service and bounded UI integration; they are not mutually exclusive and may be used together per WorkItem or operation.
+- The first V1 document/input type is an image.
+- V1 WinForms host discovery covers the relevant Form/control hierarchy, including Forms, UserControls, custom/inherited controls, Panels, GroupBoxes, other containers, nested controls, and relevant runtime/data-source context; discovery never grants action authority.
 - CognitiveAgent persists its cognition independently of any one runtime incarnation; death ends the incarnation, not the Agent or its durable state.
 - Dreams are bounded offline cognitive simulations/analysis that can run with no live Agent runtime, including during host-application downtime; Dream output remains distinct from actual experience.
 - Questions are first-class, specialty-aware cognitive objects that can be owned by individual CognitiveAgents and coordinated collectively by CognitiveHive.
 - CognitiveHive adds collective cognition without moving or replacing member-level cognition.
-- Generic host integration is deferred until a second real host proves the need.
+- Generic cross-host integration is deferred until a second real host proves the need to generalize V1 patterns.
 - V1 human intervention is Approve/Reject at the business-app write; the broader intervention taxonomy is later.
+- Developer manual testing is the current UI/application verification approach; no smoke-test or UI-automation framework is required by the architecture.
+- Authentication-provider selection is deferred until real multi-user requirements reach Phase 8.
 - Tests and examples are developed with each implementation slice; no unperformed verification is claimed.
 
 ## Not started
