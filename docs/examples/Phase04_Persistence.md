@@ -1,11 +1,12 @@
 # Phase 0.4 — Persistence bootstrap example
 
-This example uses the public Hive.Persistence API to create the LocalDB development database when necessary and run the embedded DbUp migrations.
+This example uses the public Hive.Persistence API to create Hive's SQL Server database when necessary and run the embedded DbUp migrations.
 
 ```csharp
 using Hive.Persistence;
 
-var options = HiveDatabaseOptions.LocalDevelopment("Hive");
+var options = new HiveDatabaseOptions(
+    "Server=localhost\\MSSQLSERVER01;Database=Hive;Trusted_Connection=True;");
 
 var migrator = new HiveDatabaseMigrator(options);
 var result = await migrator.MigrateAsync();
@@ -36,12 +37,14 @@ Expected subsequent-run result:
 Migration status: AlreadyCurrent; schema: 1; scripts applied: 0
 ```
 
-The default LocalDB target is:
+For local development without an explicit server connection string, use:
 
 ```text
 (localdb)\MSSQLLocalDB
 ```
 
-Production or shared SQL Server connections are supplied explicitly through HiveDatabaseOptions. Connection strings are runtime configuration and must not be committed to source control or written to diagnostics.
+Hive creates the target database automatically by default before applying migrations. Set `createDatabaseIfMissing: false` only when the database must already exist.
+
+Connection strings are runtime configuration and must not be committed to source control or written to diagnostics.
 
 A database whose recorded Hive schema version is newer than the code-supported version is rejected before normal migration proceeds.
