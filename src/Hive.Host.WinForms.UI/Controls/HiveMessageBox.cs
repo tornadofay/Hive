@@ -525,7 +525,6 @@ public static class HiveMessageBox
         {
             _theme = _themeManager.Theme;
             ApplyTheme();
-            UpdateDialogSize();
             Invalidate();
         }
 
