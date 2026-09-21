@@ -535,7 +535,7 @@ public static class HiveMessageBox
         private int Scale(int designPixels) =>
             HiveDpi.Scale(this, designPixels);
 
-        private float Scale(float designPixels) =>
+        private float ScaleF(float designPixels) =>
             HiveDpi.Scale(this, designPixels);
 
         private void ApplyDpiMetrics()
@@ -867,16 +867,16 @@ public static class HiveMessageBox
 
             var newPath = CreateRoundedRectanglePath(
                 new RectangleF(0, 0, Width, Height),
-                Scale(12f));
+                ScaleF(12f));
 
-            var borderInset = Scale(0.6f);
+            var borderInset = ScaleF(0.6f);
             var newBorderPath = CreateRoundedRectanglePath(
                 new RectangleF(
                     borderInset,
                     borderInset,
                     Width - borderInset * 2f,
                     Height - borderInset * 2f),
-                Scale(11.4f));
+                ScaleF(11.4f));
 
             _windowPath?.Dispose();
             _windowPath = newPath;
