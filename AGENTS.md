@@ -88,7 +88,7 @@ These rules apply to human developers and coding agents working in this reposito
 67. Timeout and budget settings are explicit and validated.
 68. Repeated lookup paths use real indexes.
 69. Every implementation slice requires the relevant unit, boundary/edge, integration, recovery/concurrency, security, and public-example verification before completion; UI behavior is manually verified by the developer where applicable.
-70. System/end-to-end tests are required where unit tests cannot prove an important cross-boundary contract. No separate smoke-test or UI-automation framework is required unless a later concrete need justifies it.
+70. System/end-to-end tests are required where unit tests cannot prove an important cross-boundary contract. No separate UI-automation framework is required unless a later concrete need justifies it.
 71. Edge-case coverage means all known and contract-relevant cases; do not claim exhaustive coverage of every conceivable future failure.
 72. Do not claim tests, builds, or verification that were not actually run.
 73. Update `docs/architecture.md` before structural code changes.
@@ -120,4 +120,4 @@ These rules apply to human developers and coding agents working in this reposito
 95. V1 supports both API/service and bounded UI integration; an operation may use either path or both according to host capability and authorization.
 96. The first V1 submitted document/input type is an image; later document types are additive and must not redefine Hive's scope.
 97. V1 WinForms host discovery covers the Form/control hierarchy, UserControls, custom and inherited controls, container controls such as Panels and GroupBoxes, nested controls, and relevant runtime/data-source context; discovery never grants action authority.
-98. Authentication-provider selection is deferred until real multi-user requirements reach that phase. UI automation-tool selection is also deferred; developer manual UI testing is sufficient for current work and no smoke-test framework is an architectural requirement.
+98. Authentication-provider selection is deferred until real multi-user requirements reach that phase. UI automation-tool selection is also deferred; developer manual UI testing is sufficient for current work.
