@@ -10,6 +10,8 @@ internal sealed class DialogsExample : IHiveExample
 
     public string Subcategory => "Foundation";
 
+    public int Order => 30;
+
     public string Title => "Dialogs";
 
     public UserControl CreateView(IServiceProvider services)
