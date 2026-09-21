@@ -154,15 +154,18 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
 
         AddNavigation(
             "Theme",
+            _themePage,
             "Theme",
             "Light, Dark, and System modes use semantic theme tokens.",
             selected: true);
         AddNavigation(
             "Controls",
+            _controlsPage,
             "Controls",
             "Native WinForms and Hive-specific control states.");
         AddNavigation(
             "Dialogs",
+            _dialogsPage,
             "Dialogs",
             "Semantic dialogs and technical error details.");
 
@@ -209,6 +212,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
 
     private void AddNavigation(
         string text,
+        Control page,
         string title,
         string description,
         bool selected = false)
@@ -238,17 +242,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
                 button.Style = HiveButtonStyle.NavigationSelected;
             }
 
-            ShowPage(
-                text switch
-                {
-                    "Theme" => _themePage,
-                    "Controls" => _controlsPage,
-                    "Dialogs" => _dialogsPage,
-                    _ => throw new InvalidOperationException(
-                        $"Unknown example section '{text}'.")
-                },
-                title,
-                description);
+            ShowPage(page, title, description);
         };
 
         _navigation.Controls.Add(button);
