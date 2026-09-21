@@ -12,6 +12,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
     private readonly Label _pageTitle;
     private readonly Label _pageDescription;
     private readonly IHiveThemeManager _themeManager;
+    private readonly Font _pageTitleFont;
 
     public ThemeFoundationExampleForm()
         : base(
@@ -39,10 +40,11 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
             Padding = new Padding(28, 24, 28, 24)
         };
 
+        _pageTitleFont = new Font("Segoe UI", 16f, FontStyle.Bold);
         _pageTitle = new Label
         {
             AutoSize = true,
-            Font = new Font("Segoe UI", 16f, FontStyle.Bold)
+            Font = _pageTitleFont
         };
 
         _pageDescription = new Label
@@ -62,6 +64,14 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
 
         BuildContent();
         ShowOverview();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+            _pageTitleFont.Dispose();
+
+        base.Dispose(disposing);
     }
 
     private void BuildContent()
