@@ -82,28 +82,40 @@ public static class HiveMessageBox
         string message,
         string title = "Information",
         IHiveThemeManager? themeManager = null) =>
-        Show(owner, message, title, HiveMessageType.Information, MessageBoxButtons.OK, themeManager);
+        Show(
+            owner,
+            new HiveMessageOptions(title, message, HiveMessageType.Information),
+            themeManager);
 
     public static DialogResult ShowSuccess(
         IWin32Window? owner,
         string message,
         string title = "Success",
         IHiveThemeManager? themeManager = null) =>
-        Show(owner, message, title, HiveMessageType.Success, MessageBoxButtons.OK, themeManager);
+        Show(
+            owner,
+            new HiveMessageOptions(title, message, HiveMessageType.Success),
+            themeManager);
 
     public static DialogResult ShowWarning(
         IWin32Window? owner,
         string message,
         string title = "Warning",
         IHiveThemeManager? themeManager = null) =>
-        Show(owner, message, title, HiveMessageType.Warning, MessageBoxButtons.OK, themeManager);
+        Show(
+            owner,
+            new HiveMessageOptions(title, message, HiveMessageType.Warning),
+            themeManager);
 
     public static DialogResult ShowError(
         IWin32Window? owner,
         string message,
         string title = "Error",
         IHiveThemeManager? themeManager = null) =>
-        Show(owner, message, title, HiveMessageType.Error, MessageBoxButtons.OK, themeManager);
+        Show(
+            owner,
+            new HiveMessageOptions(title, message, HiveMessageType.Error),
+            themeManager);
 
     public static DialogResult ShowQuestion(
         IWin32Window? owner,
@@ -111,7 +123,10 @@ public static class HiveMessageBox
         string title = "Question",
         MessageBoxButtons buttons = MessageBoxButtons.YesNo,
         IHiveThemeManager? themeManager = null) =>
-        Show(owner, message, title, HiveMessageType.Question, buttons, themeManager);
+        Show(
+            owner,
+            new HiveMessageOptions(title, message, HiveMessageType.Question, buttons),
+            themeManager);
 
     private static HiveMessageType ToMessageType(MessageBoxIcon icon) =>
         icon switch
