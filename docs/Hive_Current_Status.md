@@ -4,13 +4,13 @@ Last updated: 2026-09-21
 
 ## Repository state
 
-Phase 0.1, 0.2, 0.3, and 0.4 are complete. The active implementation slice is Phase 0.5 Test harness. The 0.4 persistence implementation and verification are committed to main and the developer has verified the full suite.
+Phase 0.1 through 0.5 are complete. The active implementation slice is Phase 0.6 WinForms UI/UX Foundation. The developer has verified the full Hive.Tests suite after the 0.5 test-harness changes.
 
 ## Current phase
 
 Phase 0 — Foundations.
 
-**Active slice: 0.5 — Test harness.**
+**Active slice: 0.6 — WinForms UI/UX Foundation.**
 
 ## Architecture decisions now locked
 
@@ -86,7 +86,9 @@ Developer verification: **44 tests passed, 0 failed, 0 skipped in 3.3 seconds.**
 
 ### Phase 0.5 — Test harness
 
-Active slice. Implementation is in progress in Hive.Tests.
+Complete. The reusable test-harness infrastructure is implemented and verified.
+
+Developer verification: **52 tests passed, 0 failed, 0 skipped in 1.6 seconds.** The normal Visual Studio Hive.Tests workflow completed successfully.
 
 Implemented so far:
 - reusable FakeClock;
@@ -125,13 +127,12 @@ Implemented so far:
 
 ## Not started
 
-- Phase 0.5 Test harness — active.
-- Phase 0.5 Test harness — active.
-- Phase 0.6 WinForms UI/UX Foundation.
+- Phase 0.7 Example Host Shell.
+- Phase 0.8 Example Developer Test Tools.
 - Phase 0.7 Example Host Shell.
 - Phase 0.8 Example Developer Test Tools.
 - Later implementation slices.
 - WinForms management host.
 - Example application features.
 
-0.5 is active. 0.4 is complete and verified; no 0.5 pass claim is recorded yet.
+0.5 is complete and verified. 0.6 is active and awaiting developer UI verification.
