@@ -33,7 +33,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private const int ActionBarHeight = 46;
     private const int FooterHeight = 42;
     private const int ActionButtonWidth = 92;
-    private const int ActionBarActionsWidth = 408;
+    private const int ActionBarActionsWidth = 400;
     private const int PaginationWidth = 300;
     private const int DefaultPageSize = 25;
 
@@ -153,7 +153,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Margin = Padding.Empty,
             Padding = new Padding(8, 6, 8, 6),
             PlaceholderText = "Search...",
-            TabIndex = 1
+            TabIndex = 1,
+            AccessibleName = "Search items",
+            AccessibleDescription = "Filter the current list by the visible column values."
         };
         _searchBox.TextChanged += SearchBoxOnTextChanged;
         _searchBox.KeyDown += SearchBoxOnKeyDown;
@@ -213,6 +215,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Dock = DockStyle.Fill,
             TabIndex = 2
         };
+        _list.AccessibleName = "CRUD item list";
         _list.SelectedIndexChanged += (_, _) => UpdateActionState();
         _list.ItemActivate += async (_, _) =>
         {
@@ -540,7 +543,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
     private void UpdateToolbarLayout()
     {
-        var compact = ClientSize.Width > 0 && ClientSize.Width < 760;
+        var compact = ClientSize.Width > 0 && ClientSize.Width < 860;
         if (_compactToolbar == compact &&
             _actionLayout.ColumnCount == (compact ? 1 : 2))
             return;
