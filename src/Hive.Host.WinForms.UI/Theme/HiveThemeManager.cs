@@ -271,6 +271,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
     {
         grid.BackgroundColor = theme.Palette.WindowBackground;
         grid.GridColor = theme.Palette.Border;
+        grid.EnableHeadersVisualStyles = false;
 
         grid.DefaultCellStyle.BackColor = theme.Palette.InputBackground;
         grid.DefaultCellStyle.ForeColor = theme.Palette.Text;
