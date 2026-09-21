@@ -158,18 +158,18 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 palette.DisabledText)
             {
                 NavigationBackground = effectiveMode == HiveThemeMode.Dark
-                    ? ColorTranslator.FromHtml("#101B28")
-                    : ColorTranslator.FromHtml("#17344E"),
+                    ? ColorTranslator.FromHtml("#161F27")
+                    : ColorTranslator.FromHtml("#202B35"),
                 NavigationHover = effectiveMode == HiveThemeMode.Dark
-                    ? ColorTranslator.FromHtml("#244A69")
-                    : ColorTranslator.FromHtml("#2E5D82"),
+                    ? ColorTranslator.FromHtml("#24323D")
+                    : ColorTranslator.FromHtml("#2B3B47"),
                 NavigationPressed = effectiveMode == HiveThemeMode.Dark
-                    ? ColorTranslator.FromHtml("#1B3C57")
-                    : ColorTranslator.FromHtml("#254E70"),
-                NavigationText = ColorTranslator.FromHtml("#F3F0FF"),
+                    ? ColorTranslator.FromHtml("#2A3945")
+                    : ColorTranslator.FromHtml("#344855"),
+                NavigationText = ColorTranslator.FromHtml("#F1F5F9"),
                 NavigationBorder = effectiveMode == HiveThemeMode.Dark
-                    ? ColorTranslator.FromHtml("#2A465E")
-                    : ColorTranslator.FromHtml("#45667F"),
+                    ? ColorTranslator.FromHtml("#303D47")
+                    : ColorTranslator.FromHtml("#465866"),
                 Information = effectiveMode == HiveThemeMode.Dark
                     ? ColorTranslator.FromHtml("#78A9FF")
                     : ColorTranslator.FromHtml("#2563EB"),
@@ -183,8 +183,8 @@ public sealed class HiveThemeManager : IHiveThemeManager
                     ? ColorTranslator.FromHtml("#EC6A6A")
                     : ColorTranslator.FromHtml("#CF3E3E"),
                 Question = effectiveMode == HiveThemeMode.Dark
-                    ? ColorTranslator.FromHtml("#7D9DBA")
-                    : ColorTranslator.FromHtml("#5E63D3")
+                    ? ColorTranslator.FromHtml("#94A3B8")
+                    : ColorTranslator.FromHtml("#64748B")
             });
     }
 
