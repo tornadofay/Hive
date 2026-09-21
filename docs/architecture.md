@@ -298,22 +298,30 @@ Generic cross-host integration remains later. V1 proves the concrete WinForms bo
 
 `Hive.Management` is the authoritative management facade. `Workspace` is the authoritative human-facing operational surface over that facade; host UI code does not bypass the facade for management or persistence operations.
 
-A Workspace may contain:
+For V1, Workspace is intentionally a small operational surface over Hive.Management. It supports:
 
-- normal **LLM mode** chat, including attachments/file upload and explicit user model selection;
-- **Agentic mode** chat with an Agent or Hive;
-- active Agent/Hive visibility, including organization and current active Swarm membership;
-- WorkItems/tasks, execution/activity state, Questions, notifications, and approvals;
-- inspection of the selected Agent's objective, questions, plan/state, and execution target where authorized;
-- bounded host-context bindings registered by business applications;
-- configuration and intervention controls provided by Hive.Management.
+- image submission/attachments bound to WorkItems;
+- WorkItem status and execution/activity;
+- relevant execution/provider status;
+- WorkItem notifications;
+- pending approvals and the Approve / Reject action for the governed business-app write.
 
-Model-selection semantics differ by mode:
+This V1 surface works with a single Agent and does not require Hive membership or Swarm state.
+
+Later Workspace extensions are phase-gated by the capabilities that own their underlying state. These include:
+
+- general **LLM mode** with explicit user model selection;
+- **Agentic mode** with Agent/Hive-selected execution targets;
+- Agent/Hive organization and topology;
+- active Swarm membership;
+- Questions, cognitive state, Dreams, and other later-generation views.
+
+For later modes:
 
 - In **LLM mode**, the user explicitly selects the model/execution target subject to normal capability and authorization policy, with a configured default available.
 - In **Agentic mode**, the Agent/Hive selects an execution target through the normal Execution Planner and policy boundary. The Workspace displays the selected target and relevant diagnostics, but the user is not required to choose the model for every Agent decision.
 
-Workspace is not a cognitive authority. It displays and controls authoritative Agent/Hive state; it does not invent Agent decisions or rewrite cognitive state outside the normal management/authorization contracts.
+Workspace is not a cognitive authority. It displays and controls authoritative Agent/Hive state; it does not invent Agent decisions or rewrite cognitive state outside the normal management/authorization contracts. It displays and controls authoritative Agent/Hive state; it does not invent Agent decisions or rewrite cognitive state outside the normal management/authorization contracts.
 
 A business application can register a host context through a bounded public API such as:
 
@@ -325,11 +333,11 @@ For V1 WinForms integration, the registered context can expose bounded discovery
 
 Registration binds host context to Workspace/Hive management and may reuse an existing specialized Agent. Registration does not by itself create a new Agent, create a Hive, or imply that multiple open forms must communicate. Host-specific specialization and lifecycle are explicit policy/configuration.
 
-When multiple registered specialized Agents need to collaborate, the Workspace can display them as a Hive and show the current collaborating subset as a Swarm. The visual representation does not itself create a Hive or Swarm; durable creation and membership follow the Agent/Hive contracts.
+After Phase 2 establishes Hive membership and Swarm state, the Workspace can display Agent/Hive organization and the current collaborating subset as a Swarm. The visual representation does not itself create a Hive or Swarm; durable creation and membership follow the Agent/Hive contracts.
 
 V1 management areas:
 
-1. Workspace
+1. Workspace — V1 operational WorkItem/approval surface
 2. Providers / Models / Execution Targets
 3. Agents
 
@@ -337,6 +345,8 @@ Later areas are added only when their owning phase lands:
 
 - Hive Membership
 - Governance
+- Agent/Hive organization and Swarm views
+- LLM mode / Agentic mode
 - Cognition / Dreams / Questions / Learning Review
 - Knowledge / Skills / Memory
 - Storage
