@@ -7,11 +7,14 @@ namespace Hive.Host.WinForms.UI.Controls;
 
 public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
 {
+    private readonly TableLayoutPanel _root;
     private readonly Label _title;
     private readonly HiveButton _clearButton;
+    private readonly HiveButton _toggleButton;
     private readonly TextBox _output;
     private readonly Font _titleFont;
     private readonly Font _outputFont;
+    private bool _collapsed;
 
     public HiveExampleOutputView()
     {
@@ -25,31 +28,33 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             FontStyle.Bold);
         _outputFont = new Font("Consolas", 9f);
 
-        var root = new TableLayoutPanel
+        _root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 2,
             Margin = Padding.Empty,
-            Padding = new Padding(10),
+            Padding = new Padding(10, 6, 10, 8),
         };
-        root.ColumnStyles.Add(
+        _root.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
-        root.RowStyles.Add(
-            new RowStyle(SizeType.Absolute, 40));
-        root.RowStyles.Add(
+        _root.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, 36));
+        _root.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
 
         var header = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 2,
+            ColumnCount = 3,
             RowCount = 1,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
         };
         header.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
+        header.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Absolute, 96));
         header.ColumnStyles.Add(
             new ColumnStyle(SizeType.Absolute, 96));
 
@@ -63,6 +68,17 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Text = "Example output",
             TextAlign = ContentAlignment.MiddleLeft
         };
+
+        _toggleButton = new HiveButton
+        {
+            Text = "Hide",
+            Style = HiveButtonStyle.Secondary,
+            Dock = DockStyle.Fill,
+            MinimumSize = new Size(88, 32),
+            Size = new Size(88, 32),
+            Margin = new Padding(6, 0, 0, 0)
+        };
+        _toggleButton.Click += (_, _) => ToggleCollapsed();
 
         _clearButton = new HiveButton
         {
@@ -89,11 +105,12 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         };
 
         header.Controls.Add(_title, 0, 0);
-        header.Controls.Add(_clearButton, 1, 0);
-        root.Controls.Add(header, 0, 0);
-        root.Controls.Add(_output, 0, 1);
+        header.Controls.Add(_toggleButton, 1, 0);
+        header.Controls.Add(_clearButton, 2, 0);
+        _root.Controls.Add(header, 0, 0);
+        _root.Controls.Add(_output, 0, 1);
 
-        Controls.Add(root);
+        Controls.Add(_root);
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -104,6 +121,29 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
     }
 
     public TextBox OutputTextBox => _output;
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool IsCollapsed => _collapsed;
+
+    public event EventHandler? CollapseStateChanged;
+
+    public void ToggleCollapsed() =>
+        SetCollapsed(!_collapsed);
+
+    public void SetCollapsed(bool collapsed)
+    {
+        if (_collapsed == collapsed)
+            return;
+
+        _collapsed = collapsed;
+        _output.Visible = !_collapsed;
+        _root.RowStyles[1].Height = _collapsed ? 0f : 100f;
+        _root.RowStyles[1].SizeType = _collapsed
+            ? SizeType.Absolute
+            : SizeType.Percent;
+        _toggleButton.Text = _collapsed ? "Show" : "Hide";
+        CollapseStateChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     public void Clear() => _output.Clear();
 
