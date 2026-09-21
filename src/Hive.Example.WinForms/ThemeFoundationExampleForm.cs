@@ -103,6 +103,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         _controlsPage.Controls.Add(CreateBodyLabel(
             "Hive-prefixed controls exist only where Hive adds a consumer-facing contract or styling beyond ordinary WinForms."));
         BuildControlsPage();
+        BuildListCompositionExample();
 
         _dialogsPage.Controls.Add(CreateBodyLabel(
             "HiveMessageBox provides semantic Information, Success, Warning, Error, and Question dialogs with optional technical details."));
@@ -242,6 +243,77 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         _controlsPage.Controls.Add(disabled);
         _controlsPage.Controls.Add(primary);
         _controlsPage.Controls.Add(secondary);
+    }
+
+    private void BuildListCompositionExample()
+    {
+        var listPage = new HiveListPageLayout
+        {
+            Width = Scale(760),
+            Height = Scale(280),
+            Margin = Scale(new Padding(0, 18, 0, 12))
+        };
+
+        listPage.HeaderPanel.Padding = Scale(new Padding(12, 8, 12, 4));
+        listPage.HeaderPanel.Controls.Add(new Label
+        {
+            AutoSize = true,
+            Text = "Reusable list composition",
+            Font = new Font("Segoe UI", 11f, FontStyle.Bold),
+            ForeColor = Theme.Palette.Text
+        });
+
+        listPage.ActionBarPanel.Padding = Scale(new Padding(12, 6, 12, 6));
+        listPage.ActionBarPanel.Controls.Add(new Label
+        {
+            AutoSize = true,
+            Dock = DockStyle.Fill,
+            Text = "Domain pages supply their own filters, CRUD commands, columns, and editors.",
+            TextAlign = ContentAlignment.MiddleLeft,
+            ForeColor = Theme.Palette.MutedText
+        });
+
+        var content = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        content.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        content.RowStyles.Add(new RowStyle(SizeType.Absolute, Scale(44)));
+
+        var list = new ListView
+        {
+            Dock = DockStyle.Fill,
+            View = View.Details,
+            FullRowSelect = true,
+            HideSelection = false,
+            HeaderStyle = ColumnHeaderStyle.Nonclickable,
+            BorderStyle = BorderStyle.FixedSingle
+        };
+        list.Columns.Add("Name", Scale(220));
+        list.Columns.Add("Type", Scale(160));
+        list.Columns.Add("Status", Scale(140));
+        list.Items.Add(new ListViewItem(new[] { "Example provider", "Provider", "Enabled" }));
+        list.Items.Add(new ListViewItem(new[] { "Example agent", "Agent", "Enabled" }));
+        list.Items.Add(new ListViewItem(new[] { "Example resource", "Resource", "Ready" }));
+
+        var pager = new HivePaginationBar
+        {
+            CanGoNext = true,
+            CanGoPrevious = false
+        };
+        pager.NextRequested += (_, _) => pager.CanGoPrevious = true;
+        pager.PreviousRequested += (_, _) => pager.CanGoPrevious = pager.PageNumber > 1;
+
+        content.Controls.Add(list, 0, 0);
+        content.Controls.Add(pager, 0, 1);
+        listPage.ContentPanel.Controls.Add(content);
+
+        _controlsPage.Controls.Add(listPage);
+        ThemeManager.Apply(listPage);
     }
 
     private void BuildDialogsPage()
