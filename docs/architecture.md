@@ -223,6 +223,17 @@ Theme resolution is deterministic. `System` resolves from the Windows applicatio
 
 The theme manager is stateful but UI-only. Changing the mode raises one theme-change notification. Consumers reapply the effective theme to their attached control trees in response to that notification. The manager does not own application settings, persistence, Agent/Hive state, or host business data.
 
+#### Reusable data-oriented UI composition
+
+Hive will reuse the presentation mechanics of data-oriented pages without generalizing domain CRUD semantics. The reusable foundation may provide:
+- a three-region list-page layout (header, action/filter region, content);
+- a styled native `ListView`-based tabular/list surface where its native behavior is sufficient;
+- an optional paging/navigation bar that owns page state and navigation events, not data retrieval;
+- optional master/detail composition where a bounded list and selected-item details are useful.
+
+These controls do not own Provider, Agent, Resource, or other domain schemas. Columns, filters, editors, validation, create/update/delete operations, permissions, and persistence remain owned by the feature page and its management/application boundary. This allows Provider and Agent pages to share the list shell while keeping their different columns and create/edit forms.
+
+`DataGridView` remains available when its richer native tabular behavior is specifically required. Hive does not introduce a generic ORM-like CRUD control.
 The WinForms foundation is DPI-aware as a shared infrastructure concern, not a dialog-specific feature. The Example host opts into Per-Monitor-V2 DPI awareness through its executable project configuration, while Hive-owned forms use WinForms DPI auto-scaling and custom-painted Hive controls derive geometry, spacing, hit targets, and drawing metrics from the current control DPI. Runtime-created example controls must use the shared DPI scaling helper for fixed design values so they are not introduced at an unscaled 96-DPI size. Moving a window between monitors with different DPI must rescale the complete Hive-owned visual surface consistently.
 
 
