@@ -256,7 +256,7 @@ public sealed class HiveListView : ListView
     {
         base.OnMouseMove(e);
 
-        var item = GetItemAt(e.X, e.Y);
+        var item = Enabled ? GetItemAt(e.X, e.Y) : null;
         var next = item?.Index ?? -1;
         if (_hoverIndex == next)
             return;
