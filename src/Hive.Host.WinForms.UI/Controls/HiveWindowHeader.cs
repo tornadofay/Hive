@@ -32,6 +32,7 @@ internal sealed class HiveWindowHeader : Control
     private Color _buttonHover;
     private Color _buttonPressed;
     private Color _closeHover;
+    private Pen? _borderPen;
 
     private readonly Font _titleFont = new("Segoe UI", 10f, FontStyle.Bold);
     private readonly Font _subtitleFont = new("Segoe UI", 8f, FontStyle.Regular);
@@ -148,6 +149,9 @@ internal sealed class HiveWindowHeader : Control
         _buttonHover = theme.VisualStates.HoverBackground;
         _buttonPressed = theme.VisualStates.PressedBackground;
         _closeHover = theme.VisualStates.Error;
+
+        _borderPen?.Dispose();
+        _borderPen = new Pen(theme.Palette.Border);
         Invalidate();
     }
 
@@ -167,6 +171,9 @@ internal sealed class HiveWindowHeader : Control
             90f);
 
         e.Graphics.FillRectangle(background, bounds);
+
+        if (_borderPen is not null)
+            e.Graphics.DrawLine(_borderPen, 0, Height - 1, Width - 1, Height - 1);
 
         var textLeft = 18;
         var textWidth = Math.Max(
@@ -294,6 +301,7 @@ internal sealed class HiveWindowHeader : Control
             _titleFont.Dispose();
             _subtitleFont.Dispose();
             _buttonFont.Dispose();
+            _borderPen?.Dispose();
         }
 
         base.Dispose(disposing);
