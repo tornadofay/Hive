@@ -35,7 +35,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private const int ActionButtonWidth = 92;
     private const int CompactActionButtonWidth = 84;
     private const int ActionButtonSpacing = 8;
-    private const int InitialInitialActionBarActionsWidth =
+    private const int InitialActionBarActionsWidth =
         (ActionButtonWidth + ActionButtonSpacing) * 4;
     private const int PaginationWidth = 260;
     private const int DefaultPageSize = 25;
@@ -125,7 +125,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Padding = Padding.Empty
         };
         _actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        _actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, ActionBarActionsWidth));
+        _actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, InitialActionBarActionsWidth));
 
         _searchPanel = new FlowLayoutPanel
         {
