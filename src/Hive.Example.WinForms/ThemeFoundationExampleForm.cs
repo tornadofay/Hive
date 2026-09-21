@@ -37,8 +37,8 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         _navigation = new FlowLayoutPanel
         {
             Dock = DockStyle.Left,
-            Width = Scale(190),
-            Padding = Scale(new Padding(12, 18, 12, 12)),
+            Width = 190,
+            Padding = new Padding(12, 18, 12, 12),
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
             AutoScroll = true,
@@ -48,7 +48,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         _content = new Panel
         {
             Dock = DockStyle.Fill,
-            Padding = Scale(new Padding(28, 24, 28, 24))
+            Padding = new Padding(28, 24, 28, 24)
         };
 
         _contentLayout = new TableLayoutPanel
@@ -74,8 +74,8 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         _pageDescription = new Label
         {
             AutoSize = true,
-            MaximumSize = Scale(new Size(800, 80)),
-            Margin = Scale(new Padding(0, 8, 0, 20))
+            MaximumSize = new Size(800, 80),
+            Margin = new Padding(0, 8, 0, 20)
         };
 
         _pageBody = new Panel
@@ -97,7 +97,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         _themePage.Controls.Add(CreateThemeButton("Light", HiveThemeMode.Light));
         _themePage.Controls.Add(CreateThemeButton("Dark", HiveThemeMode.Dark));
         _themePage.Controls.Add(CreateThemeButton("System", HiveThemeMode.System));
-        _themeState.Margin = Scale(new Padding(0, 18, 0, 0));
+        _themeState.Margin = new Padding(0, 18, 0, 0);
         _themePage.Controls.Add(_themeState);
 
         _controlsPage.Controls.Add(CreateBodyLabel(
@@ -173,9 +173,9 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         {
             Text = text,
             Style = HiveButtonStyle.Navigation,
-            Width = Scale(166),
-            Height = Scale(42),
-            Margin = Scale(new Padding(0, 0, 0, 8))
+            Width = 166,
+            Height = 42,
+            Margin = new Padding(0, 0, 0, 8)
         };
 
         button.Click += (_, _) => action();
@@ -199,17 +199,17 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
     {
         var input = new TextBox
         {
-            Width = Scale(320),
-            Height = Scale(28),
+            Width = 320,
+            Height = 28,
             Text = "Native WinForms TextBox",
-            Margin = Scale(new Padding(0, 0, 0, 8))
+            Margin = new Padding(0, 0, 0, 8)
         };
 
         var checkBox = new CheckBox
         {
             AutoSize = true,
             Text = "Native WinForms CheckBox",
-            Margin = Scale(new Padding(0, 0, 0, 8))
+            Margin = new Padding(0, 0, 0, 8)
         };
 
         var disabled = new CheckBox
@@ -217,25 +217,25 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
             AutoSize = true,
             Enabled = false,
             Text = "Disabled control state",
-            Margin = Scale(new Padding(0, 0, 0, 2))
+            Margin = new Padding(0, 0, 0, 2)
         };
 
         var primary = new HiveButton
         {
             Text = "HiveButton — Primary",
             Style = HiveButtonStyle.Primary,
-            Width = Scale(190),
-            Height = Scale(40),
-            Margin = Scale(new Padding(0, 10, 0, 0))
+            Width = 190,
+            Height = 40,
+            Margin = new Padding(0, 10, 0, 0)
         };
 
         var secondary = new HiveButton
         {
             Text = "HiveButton — Secondary",
             Style = HiveButtonStyle.Secondary,
-            Width = Scale(190),
-            Height = Scale(40),
-            Margin = Scale(new Padding(0, 8, 0, 0))
+            Width = 190,
+            Height = 40,
+            Margin = new Padding(0, 8, 0, 0)
         };
 
         _controlsPage.Controls.Add(input);
@@ -249,12 +249,12 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
     {
         var listPage = new HiveListPageLayout
         {
-            Width = Scale(620),
-            Height = Scale(280),
-            Margin = Scale(new Padding(0, 18, 0, 12))
+            Width = 620,
+            Height = 280,
+            Margin = new Padding(0, 18, 0, 12)
         };
 
-        listPage.HeaderPanel.Padding = Scale(new Padding(12, 8, 12, 4));
+        listPage.HeaderPanel.Padding = new Padding(12, 8, 12, 4);
         listPage.HeaderPanel.Controls.Add(new Label
         {
             AutoSize = true,
@@ -263,7 +263,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
             ForeColor = Theme.Palette.Text
         });
 
-        listPage.ActionBarPanel.Padding = Scale(new Padding(12, 6, 12, 6));
+        listPage.ActionBarPanel.Padding = new Padding(12, 6, 12, 6);
         listPage.ActionBarPanel.Controls.Add(new Label
         {
             AutoSize = true,
@@ -282,7 +282,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
             Padding = Padding.Empty
         };
         content.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        content.RowStyles.Add(new RowStyle(SizeType.Absolute, Scale(44)));
+        content.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
 
         var list = new ListView
         {
@@ -293,9 +293,9 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
             HeaderStyle = ColumnHeaderStyle.Nonclickable,
             BorderStyle = BorderStyle.FixedSingle
         };
-        list.Columns.Add("Name", Scale(220));
-        list.Columns.Add("Type", Scale(160));
-        list.Columns.Add("Status", Scale(140));
+        list.Columns.Add("Name", 220);
+        list.Columns.Add("Type", 160);
+        list.Columns.Add("Status", 140);
         list.Items.Add(new ListViewItem(new[] { "Example provider", "Provider", "Enabled" }));
         list.Items.Add(new ListViewItem(new[] { "Example agent", "Agent", "Enabled" }));
         list.Items.Add(new ListViewItem(new[] { "Example resource", "Resource", "Ready" }));
@@ -344,9 +344,9 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         {
             Text = "Error with technical details",
             Style = HiveButtonStyle.Secondary,
-            Width = Scale(220),
-            Height = Scale(40),
-            Margin = Scale(new Padding(0, 12, 0, 0))
+            Width = 220,
+            Height = 40,
+            Margin = new Padding(0, 12, 0, 0)
         };
         details.Click += (_, _) =>
             HiveMessageBox.Show(
@@ -369,9 +369,9 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         {
             Text = text,
             Style = HiveButtonStyle.Secondary,
-            Width = Scale(110),
-            Height = Scale(38),
-            Margin = Scale(new Padding(0, 0, 0, 8))
+            Width = 110,
+            Height = 38,
+            Margin = new Padding(0, 0, 0, 8)
         };
 
         button.Click += (_, _) =>
@@ -393,9 +393,9 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         {
             Text = text,
             Style = HiveButtonStyle.Secondary,
-            Width = Scale(190),
-            Height = Scale(40),
-            Margin = Scale(new Padding(0, 0, 0, 8))
+            Width = 190,
+            Height = 40,
+            Margin = new Padding(0, 0, 0, 8)
         };
 
         button.Click += (_, _) =>
@@ -446,7 +446,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         {
             AutoSize = true,
             Text = text ?? string.Empty,
-            MaximumSize = Scale(new Size(700, 120)),
-            Margin = Scale(new Padding(0, 0, 0, 12))
+            MaximumSize = new Size(700, 120),
+            Margin = new Padding(0, 0, 0, 12)
         };
 }
