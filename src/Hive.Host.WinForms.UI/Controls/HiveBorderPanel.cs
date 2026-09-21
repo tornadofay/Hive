@@ -102,7 +102,9 @@ internal sealed class HiveBorderPanel : Panel
     {
         if (ClientSize.Width <= 1 || ClientSize.Height <= 1)
         {
+            var oldRegion = Region;
             Region = null;
+            oldRegion?.Dispose();
             return;
         }
 
@@ -114,7 +116,9 @@ internal sealed class HiveBorderPanel : Panel
                 ClientSize.Height),
             _cornerRadius);
 
+        var previousRegion = Region;
         Region = new Region(path);
+        previousRegion?.Dispose();
     }
 
     private static GraphicsPath CreateRoundedPath(
