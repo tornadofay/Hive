@@ -42,6 +42,9 @@ public sealed class HiveNavigationTree : TreeView
         var selected = SelectedNode;
         var top = canPreserveNativeState ? TopNode : null;
         var hadFocus = canPreserveNativeState && Focused;
+        var expandedNodes = canPreserveNativeState
+            ? GetExpandedNodes()
+            : Array.Empty<TreeNode>();
 
         _restoringState = true;
         try
@@ -63,6 +66,12 @@ public sealed class HiveNavigationTree : TreeView
             finally
             {
                 EndUpdate();
+            }
+
+            foreach (var node in expandedNodes)
+            {
+                if (!node.IsExpanded)
+                    node.Expand();
             }
 
             if (selected is not null)
@@ -199,6 +208,26 @@ public sealed class HiveNavigationTree : TreeView
             _groupFont?.Dispose();
             _itemFont?.Dispose();
         }
+    }
+
+    private List<TreeNode> GetExpandedNodes()
+    {
+        var nodes = new List<TreeNode>();
+        foreach (TreeNode root in Nodes)
+            CollectExpandedNodes(root, nodes);
+
+        return nodes;
+    }
+
+    private static void CollectExpandedNodes(
+        TreeNode node,
+        List<TreeNode> expandedNodes)
+    {
+        if (node.IsExpanded)
+            expandedNodes.Add(node);
+
+        foreach (TreeNode child in node.Nodes)
+            CollectExpandedNodes(child, expandedNodes);
     }
 
     private void RebuildFonts(HiveThemeDefinition theme)
