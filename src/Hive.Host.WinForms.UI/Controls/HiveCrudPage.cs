@@ -161,7 +161,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
         _addButton = CreateActionButton("Add", HiveButtonStyle.Primary);
         _editButton = CreateActionButton("Edit", HiveButtonStyle.Secondary);
-        _deleteButton = CreateActionButton("Delete", HiveButtonStyle.Secondary);
+        _deleteButton = CreateActionButton("Delete", HiveButtonStyle.Danger);
         _refreshButton = CreateActionButton("Refresh", HiveButtonStyle.Secondary);
 
         _addButton.Click += async (_, _) => await EditAsync(null);
