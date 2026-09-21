@@ -46,6 +46,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private readonly TableLayoutPanel _actionLayout;
     private readonly FlowLayoutPanel _searchPanel;
     private readonly FlowLayoutPanel _actionButtons;
+    private readonly TableLayoutPanel _footerLayout;
     private readonly Label _statusLabel;
     private readonly HiveButton _addButton;
     private readonly HiveButton _editButton;
