@@ -16,6 +16,18 @@ The shell must discover IHiveExample implementations without a central manual re
 
 ## 0.7 implementation scope
 
+The active 0.7 pass is now a full production UI/UX polish pass over the shared WinForms foundation and Example host. It is intentionally limited to presentation, interaction quality, responsiveness, state handling, theme consistency, and UI-code performance. No later platform functionality is introduced.
+
+The pass covers:
+- professional desktop layout, spacing, hierarchy, typography, and visual density;
+- Category → Subcategory → Example navigation and stable selection/scroll/focus state;
+- Light / Dark / System themes and semantic visual states;
+- CRUD list, search, actions, pagination, empty/loading/error states, and editor presentation;
+- dialogs and technical-error presentation;
+- resize behavior and compact supported dimensions;
+- consistent native/Hive control styling;
+- disposal, nullability, allocation, layout, painting, and traversal discipline on UI paths.
+
 - add the IHiveExample discovery contract;
 - discover examples from the designated Example assembly;
 - build a left-side Category → Subcategory → Example tree;
