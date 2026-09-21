@@ -29,9 +29,9 @@ public sealed class HivePaginationBar : UserControl
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
 
         _previousButton = CreateButton("Previous");
         _previousButton.Click += (_, _) =>
