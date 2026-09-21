@@ -9,6 +9,7 @@ public sealed class HiveListView : ListView
     private HiveThemeDefinition? _theme;
     private int _hoverIndex = -1;
     private Font? _headerFont;
+    private readonly ImageList _rowImageList;
 
     public HiveListView()
     {
@@ -25,10 +26,18 @@ public sealed class HiveListView : ListView
         GridLines = false;
         MultiSelect = false;
         HeaderStyle = ColumnHeaderStyle.Nonclickable;
-        BorderStyle = BorderStyle.FixedSingle;
+        BorderStyle = BorderStyle.None;
         LabelWrap = false;
         Margin = Padding.Empty;
         DoubleBuffered = true;
+
+        _rowImageList = new ImageList
+        {
+            ColorDepth = ColorDepth.Depth32Bit,
+            ImageSize = new Size(1, 36)
+        };
+        _rowImageList.Images.Add(new Bitmap(1, 36));
+        SmallImageList = _rowImageList;
     }
 
     internal void ApplyTheme(HiveThemeDefinition theme)
@@ -130,6 +139,14 @@ public sealed class HiveListView : ListView
 
         using var brush = new SolidBrush(background);
         e.Graphics.FillRectangle(brush, row);
+
+        using var separator = new Pen(theme.Palette.Border);
+        e.Graphics.DrawLine(
+            separator,
+            row.Left,
+            row.Bottom - 1,
+            row.Right - 1,
+            row.Bottom - 1);
     }
 
     protected override void OnDrawSubItem(DrawListViewSubItemEventArgs e)
@@ -171,6 +188,24 @@ public sealed class HiveListView : ListView
             Rectangle.Inflate(e.Bounds, -10, 0),
             color,
             flags);
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        base.OnPaint(e);
+
+        var theme = _theme;
+        if (theme is null)
+            return;
+
+        var border = ClientRectangle;
+        border.Width -= 1;
+        border.Height -= 1;
+        if (border.Width <= 0 || border.Height <= 0)
+            return;
+
+        using var pen = new Pen(theme.Palette.Border);
+        e.Graphics.DrawRectangle(pen, border);
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -217,6 +252,9 @@ public sealed class HiveListView : ListView
         base.Dispose(disposing);
 
         if (disposing)
+        {
             _headerFont?.Dispose();
+            _rowImageList.Dispose();
+        }
     }
 }
