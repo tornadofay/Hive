@@ -591,6 +591,12 @@ public static class HiveMessageBox
             _tertiaryButton.Margin = HiveDpi.Scale(
                 this,
                 new Padding(8, 0, 0, 0));
+
+            _icon.ApplyDpi();
+            _primaryButton.ApplyDpi();
+            _secondaryButton.ApplyDpi();
+            _tertiaryButton.ApplyDpi();
+            _copyButton.ApplyDpi();
         }
 
         private void ApplyTheme()
@@ -954,6 +960,12 @@ public static class HiveMessageBox
             set => _kind = value;
         }
 
+        public void ApplyDpi()
+        {
+            if (_theme is not null)
+                ApplyTheme(_theme, _kind);
+        }
+
         public void ApplyTheme(
             HiveThemeDefinition theme,
             HiveMessageButtonKind kind)
@@ -1169,6 +1181,29 @@ public static class HiveMessageBox
                 _messageType = value;
                 Invalidate();
             }
+        }
+
+        public void ApplyDpi()
+        {
+            if (_accent == Color.Empty || _surface == Color.Empty)
+                return;
+
+            _ringPen?.Dispose();
+            _glyphPen?.Dispose();
+
+            var scale = HiveDpi.Scale(this, 1f);
+            _ringPen = new Pen(Color.FromArgb(88, _accent), 1.5f * scale)
+            {
+                Alignment = PenAlignment.Inset
+            };
+            _glyphPen = new Pen(_accent, 3f * scale)
+            {
+                StartCap = LineCap.Round,
+                EndCap = LineCap.Round
+            };
+
+            RebuildGeometry();
+            Invalidate();
         }
 
         public void ApplyTheme(
