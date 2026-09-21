@@ -99,6 +99,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             ScrollBars = ScrollBars.Both,
             WordWrap = false,
             BorderStyle = BorderStyle.FixedSingle,
+            DetectUrls = false,
             Font = _outputFont,
             Margin = Padding.Empty,
             Padding = new Padding(8),
@@ -180,6 +181,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _title.ForeColor = theme.Palette.Text;
         _output.BackColor = theme.Palette.InputBackground;
         _output.ForeColor = theme.Palette.Text;
+        _output.BorderStyle = BorderStyle.FixedSingle;
     }
 
     protected override void Dispose(bool disposing)
