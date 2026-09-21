@@ -88,15 +88,6 @@ Examples are grouped by feature area and grow with the platform. The shell itsel
 
 Verify: adding one new example implementation makes it appear in navigation without additional shell wiring; selecting an example replaces the content view correctly; navigation remains usable with many examples.
 
-## 0.8 — Example Developer Test Tools
-Objective: add developer-facing test execution to `Hive.Example.WinForms` without coupling the application to xUnit runner internals.
-
-The Example host may invoke `dotnet test` as an external process, with selectable project/filter arguments and streamed output/results. It may also provide lightweight example self-checks for immediate interactive feedback, but those checks are not authoritative test-suite results.
-
-The authoritative test suite remains `Hive.Tests`.
-
-Verify: the Example host can start a real `Hive.Tests` run, display live output and final success/failure, stop a running test process, and return a useful result when the test process cannot start.
-
 ---
 
 # Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1)
