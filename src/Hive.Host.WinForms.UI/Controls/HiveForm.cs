@@ -7,8 +7,8 @@ namespace Hive.Host.WinForms.UI.Controls;
 
 public abstract class HiveForm : Form
 {
-    private const int HeaderHeight = 54;
-    private const int CornerRadius = 14;
+    private const int HeaderHeight = 56;
+    private const int CornerRadius = 12;
 
     private readonly HiveWindowHeader _header;
     private readonly Panel _bodyPanel;
@@ -31,6 +31,7 @@ public abstract class HiveForm : Form
         ShowInTaskbar = false;
         DoubleBuffered = true;
         KeyPreview = true;
+        AutoScaleMode = AutoScaleMode.Dpi;
         Padding = new Padding(1);
         MinimumSize = minimumSize ?? new Size(640, 420);
         Size = initialSize ?? new Size(900, 600);
@@ -166,11 +167,15 @@ public abstract class HiveForm : Form
             Font = _formFont;
         }
 
-        _bodyPanel.BackColor = theme.Palette.Surface;
-        _bodyPanel.Padding = _bodyPadding;
+        if (_bodyPanel.BackColor != theme.Palette.Surface)
+            _bodyPanel.BackColor = theme.Palette.Surface;
+        if (_bodyPanel.Padding != _bodyPadding)
+            _bodyPanel.Padding = _bodyPadding;
 
-        _header.Height = HeaderHeight;
-        _header.MinimumSize = new Size(0, HeaderHeight);
+        if (_header.Height != HeaderHeight)
+            _header.Height = HeaderHeight;
+        if (_header.MinimumSize.Height != HeaderHeight)
+            _header.MinimumSize = new Size(0, HeaderHeight);
         _header.ApplyTheme(theme);
 
         _themeManager.Apply(_bodyPanel);
