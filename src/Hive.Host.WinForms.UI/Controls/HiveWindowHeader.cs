@@ -1,0 +1,388 @@
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Windows.Forms;
+using System.Runtime.InteropServices;
+using Hive.Host.WinForms.UI.Theme;
+
+namespace Hive.Host.WinForms.UI.Controls;
+
+internal sealed class HiveWindowHeader : Control
+{
+    private const int HeaderHeight = 54;
+    private const int ButtonWidth = 42;
+    private const int WindowCommandNone = 0;
+    private const int WindowCommandClose = 1;
+    private const int WindowCommandMinimize = 2;
+    private const int WindowCommandHelp = 3;
+
+    private string _title = string.Empty;
+    private string _subtitle = string.Empty;
+    private int _hoveredCommand;
+    private int _pressedCommand;
+    private bool _allowMove = true;
+    private bool _allowClose = true;
+    private bool _allowMinimize;
+    private bool _allowHelp;
+
+    private Color _background1;
+    private Color _background2;
+    private Color _foreground;
+    private Color _subtitleForeground;
+    private Color _buttonHover;
+    private Color _buttonPressed;
+    private Color _closeHover;
+
+    private readonly Font _titleFont = new("Segoe UI", 10f, FontStyle.Bold);
+    private readonly Font _subtitleFont = new("Segoe UI", 8f, FontStyle.Regular);
+    private readonly Font _buttonFont = new("Segoe UI Symbol", 12f, FontStyle.Regular);
+
+    public HiveWindowHeader()
+    {
+        SetStyle(
+            ControlStyles.UserPaint |
+            ControlStyles.AllPaintingInWmPaint |
+            ControlStyles.OptimizedDoubleBuffer |
+            ControlStyles.ResizeRedraw |
+            ControlStyles.SupportsTransparentBackColor,
+            true);
+
+        Dock = DockStyle.Top;
+        Height = HeaderHeight;
+        MinimumSize = new Size(0, HeaderHeight);
+        Cursor = Cursors.Default;
+    }
+
+    public string Title
+    {
+        get => _title;
+        set
+        {
+            var next = value ?? string.Empty;
+            if (string.Equals(_title, next, StringComparison.Ordinal))
+                return;
+
+            _title = next;
+            Text = next;
+            Invalidate();
+        }
+    }
+
+    public string Subtitle
+    {
+        get => _subtitle;
+        set
+        {
+            var next = value ?? string.Empty;
+            if (string.Equals(_subtitle, next, StringComparison.Ordinal))
+                return;
+
+            _subtitle = next;
+            Invalidate();
+        }
+    }
+
+    public bool AllowMove
+    {
+        get => _allowMove;
+        set => _allowMove = value;
+    }
+
+    public bool AllowClose
+    {
+        get => _allowClose;
+        set
+        {
+            if (_allowClose == value)
+                return;
+
+            _allowClose = value;
+            Invalidate();
+        }
+    }
+
+    public bool AllowMinimize
+    {
+        get => _allowMinimize;
+        set
+        {
+            if (_allowMinimize == value)
+                return;
+
+            _allowMinimize = value;
+            Invalidate();
+        }
+    }
+
+    public bool AllowHelp
+    {
+        get => _allowHelp;
+        set
+        {
+            if (_allowHelp == value)
+                return;
+
+            _allowHelp = value;
+            Invalidate();
+        }
+    }
+
+    public event EventHandler? HelpClicked;
+
+    public void ApplyTheme(HiveThemeDefinition theme)
+    {
+        ArgumentNullException.ThrowIfNull(theme);
+
+        _background1 = theme.VisualStates.NavigationBackground;
+        _background2 = theme.Mode == HiveThemeMode.Dark
+            ? ColorTranslator.FromHtml("#4A3476")
+            : ColorTranslator.FromHtml("#58277E");
+        _foreground = theme.VisualStates.NavigationText;
+        _subtitleForeground = Color.FromArgb(210, _foreground);
+        _buttonHover = Color.FromArgb(54, Color.White);
+        _buttonPressed = Color.FromArgb(82, Color.White);
+        _closeHover = Color.FromArgb(220, 70, 102);
+        Invalidate();
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        base.OnPaint(e);
+
+        var bounds = ClientRectangle;
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+            return;
+
+        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        using var background = new LinearGradientBrush(
+            bounds,
+            _background1,
+            _background2,
+            90f);
+
+        e.Graphics.FillRectangle(background, bounds);
+
+        var textLeft = 18;
+        var buttonSpace = GetButtonCount() * ButtonWidth;
+        var textWidth = Math.Max(80, Width - textLeft - buttonSpace - 18);
+
+        if (string.IsNullOrWhiteSpace(_subtitle))
+        {
+            TextRenderer.DrawText(
+                e.Graphics,
+                _title,
+                _titleFont,
+                new Rectangle(textLeft, 0, textWidth, Height),
+                _foreground,
+                TextFormatFlags.VerticalCenter |
+                TextFormatFlags.EndEllipsis |
+                TextFormatFlags.NoPrefix);
+        }
+        else
+        {
+            TextRenderer.DrawText(
+                e.Graphics,
+                _title,
+                _titleFont,
+                new Rectangle(textLeft, 5, textWidth, 24),
+                _foreground,
+                TextFormatFlags.VerticalCenter |
+                TextFormatFlags.EndEllipsis |
+                TextFormatFlags.NoPrefix);
+
+            TextRenderer.DrawText(
+                e.Graphics,
+                _subtitle,
+                _subtitleFont,
+                new Rectangle(textLeft, 28, textWidth, 20),
+                _subtitleForeground,
+                TextFormatFlags.VerticalCenter |
+                TextFormatFlags.EndEllipsis |
+                TextFormatFlags.NoPrefix);
+        }
+
+        DrawCommandButton(e.Graphics, WindowCommandHelp, _allowHelp, "?", 0);
+        DrawCommandButton(e.Graphics, WindowCommandMinimize, _allowMinimize, "—", 1);
+        DrawCommandButton(e.Graphics, WindowCommandClose, _allowClose, "×", 2);
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+
+        var command = HitTestCommand(e.Location);
+        if (_hoveredCommand == command)
+            return;
+
+        _hoveredCommand = command;
+        Cursor = command == WindowCommandNone
+            ? Cursors.Default
+            : Cursors.Hand;
+        Invalidate();
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+        _hoveredCommand = WindowCommandNone;
+        _pressedCommand = WindowCommandNone;
+        Cursor = Cursors.Default;
+        Invalidate();
+    }
+
+    protected override void OnMouseDown(MouseEventArgs e)
+    {
+        base.OnMouseDown(e);
+
+        if (e.Button != MouseButtons.Left)
+            return;
+
+        var command = HitTestCommand(e.Location);
+        if (command != WindowCommandNone)
+        {
+            _pressedCommand = command;
+            Invalidate();
+            return;
+        }
+
+        if (_allowMove)
+            BeginWindowMove();
+    }
+
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+
+        if (e.Button != MouseButtons.Left)
+            return;
+
+        var command = _pressedCommand;
+        _pressedCommand = WindowCommandNone;
+        Invalidate();
+
+        if (command == WindowCommandNone || command != HitTestCommand(e.Location))
+            return;
+
+        switch (command)
+        {
+            case WindowCommandClose:
+                FindForm()?.Close();
+                break;
+
+            case WindowCommandMinimize:
+                var form = FindForm();
+                if (form is not null)
+                    form.WindowState = FormWindowState.Minimized;
+                break;
+
+            case WindowCommandHelp:
+                HelpClicked?.Invoke(this, EventArgs.Empty);
+                break;
+        }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _titleFont.Dispose();
+            _subtitleFont.Dispose();
+            _buttonFont.Dispose();
+        }
+
+        base.Dispose(disposing);
+    }
+
+    private int GetButtonCount() =>
+        (_allowHelp ? 1 : 0) +
+        (_allowMinimize ? 1 : 0) +
+        (_allowClose ? 1 : 0);
+
+    private void DrawCommandButton(
+        Graphics graphics,
+        int command,
+        bool visible,
+        string glyph,
+        int order)
+    {
+        if (!visible)
+            return;
+
+        var x = Width - ButtonWidth;
+        if (_allowMinimize && command != WindowCommandClose)
+            x -= ButtonWidth;
+        if (_allowHelp && command == WindowCommandHelp)
+            x -= _allowMinimize ? ButtonWidth * 2 : ButtonWidth;
+
+        if (command == WindowCommandMinimize && _allowClose)
+            x -= ButtonWidth;
+
+        var rect = new Rectangle(x, 0, ButtonWidth, Height);
+        var hovered = _hoveredCommand == command;
+        var pressed = _pressedCommand == command;
+
+        if (hovered || pressed)
+        {
+            var fill = command == WindowCommandClose
+                ? _closeHover
+                : pressed
+                    ? _buttonPressed
+                    : _buttonHover;
+
+            using var brush = new SolidBrush(fill);
+            graphics.FillRectangle(brush, rect);
+        }
+
+        TextRenderer.DrawText(
+            graphics,
+            glyph,
+            _buttonFont,
+            rect,
+            _foreground,
+            TextFormatFlags.HorizontalCenter |
+            TextFormatFlags.VerticalCenter |
+            TextFormatFlags.NoPadding);
+    }
+
+    private int HitTestCommand(Point point)
+    {
+        if (point.Y < 0 || point.Y >= Height)
+            return WindowCommandNone;
+
+        var x = Width - ButtonWidth;
+
+        if (_allowClose && point.X >= x)
+            return WindowCommandClose;
+
+        x -= ButtonWidth;
+        if (_allowMinimize && point.X >= x)
+            return WindowCommandMinimize;
+
+        if (_allowHelp)
+        {
+            x -= ButtonWidth;
+            if (point.X >= x)
+                return WindowCommandHelp;
+        }
+
+        return WindowCommandNone;
+    }
+
+    private static void BeginWindowMove()
+    {
+        ReleaseCapture();
+        SendMessage(GetForegroundWindow(), 0x00A1, new IntPtr(2), IntPtr.Zero);
+    }
+
+    [DllImport("user32.dll")]
+    private static extern bool ReleaseCapture();
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SendMessage(
+        IntPtr hWnd,
+        int message,
+        IntPtr wParam,
+        IntPtr lParam);
+}
