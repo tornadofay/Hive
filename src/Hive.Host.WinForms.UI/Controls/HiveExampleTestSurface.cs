@@ -61,9 +61,9 @@ public sealed class HiveExampleTestSurface : UserControl
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        root.ColumnStyles.Add(
+        _root.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
-        root.RowStyles.Add(
+        _root.RowStyles.Add(
             new RowStyle(SizeType.Absolute, 44));
         root.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
