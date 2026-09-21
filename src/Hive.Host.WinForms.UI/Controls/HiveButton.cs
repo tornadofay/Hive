@@ -212,9 +212,11 @@ public sealed class HiveButton : UserControl
         using var fill = new SolidBrush(colors.Background);
         e.Graphics.FillPath(fill, _path);
 
+        var showFocus = Enabled && Focused;
+
         using var border = new Pen(
-            Focused ? colors.FocusBorder : colors.Border,
-            Focused ? FocusBorderWidth : BorderWidth)
+            showFocus ? colors.FocusBorder : colors.Border,
+            showFocus ? FocusBorderWidth : BorderWidth)
         {
             Alignment = PenAlignment.Inset
         };
