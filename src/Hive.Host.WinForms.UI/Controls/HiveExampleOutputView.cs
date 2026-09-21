@@ -137,6 +137,13 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _clearButton = CreateActionButton("Clear");
         _toggleButton = CreateActionButton("Hide");
 
+        _copyButton.AccessibleName = "Copy output";
+        _copyButton.AccessibleDescription = "Copy the current example output.";
+        _clearButton.AccessibleName = "Clear output";
+        _clearButton.AccessibleDescription = "Clear the current example output.";
+        _toggleButton.AccessibleName = "Hide output";
+        _toggleButton.AccessibleDescription = "Hide the shared example output pane.";
+
         _copyButton.Click += (_, _) => Copy();
         _clearButton.Click += (_, _) => Clear();
         _toggleButton.Click += (_, _) => ToggleCollapsed();
@@ -160,6 +167,8 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Dock = DockStyle.Fill,
             Multiline = true,
             ReadOnly = true,
+            AccessibleName = "Example output",
+            AccessibleDescription = "Read-only output produced by the current example.",
             ScrollBars = ScrollBars.Both,
             WordWrap = false,
             BorderStyle = BorderStyle.None,
