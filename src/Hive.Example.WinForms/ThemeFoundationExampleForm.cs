@@ -58,14 +58,13 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         BodyPanel.Controls.Add(_content);
         BodyPanel.Controls.Add(_navigation);
 
-        AddNavigation("Overview", ShowOverview);
         AddNavigation("Theme", ShowTheme);
         AddNavigation("Controls", ShowControls);
         AddNavigation("Dialogs", ShowDialogs);
 
         BuildContent();
         ApplyExampleTheme(Theme);
-        ShowOverview();
+        ShowTheme();
     }
 
     protected override void Dispose(bool disposing)
@@ -107,20 +106,6 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
 
         button.Click += (_, _) => action();
         _navigation.Controls.Add(button);
-    }
-
-    private void ShowOverview()
-    {
-        SetPage(
-            "UI foundation",
-            "A production-oriented WinForms shell inspired by the useful parts of HAgent: a custom window header, compact navigation, semantic themes, reusable controls, and a Hive-owned message dialog.");
-
-        ClearPageActions();
-
-        var status = CreateBodyLabel(
-            "Renderer boundary: ReaLTaiizor remains inside Hive.Host.WinForms.UI.\r\n" +
-            "Consumer forms use Hive-owned contracts only.");
-        _content.Controls.Add(status);
     }
 
     private void ShowTheme()
