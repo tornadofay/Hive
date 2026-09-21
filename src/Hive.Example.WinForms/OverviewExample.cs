@@ -15,6 +15,12 @@ internal sealed class OverviewExample : IHiveExample
     public UserControl CreateView(IServiceProvider services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        return new OverviewExampleView();
+
+        var themeManager = services.GetService(typeof(Hive.Host.WinForms.UI.Theme.IHiveThemeManager))
+            as Hive.Host.WinForms.UI.Theme.IHiveThemeManager
+            ?? throw new InvalidOperationException(
+                "The Example host did not provide IHiveThemeManager.");
+
+        return new OverviewExampleView(themeManager);
     }
 }
