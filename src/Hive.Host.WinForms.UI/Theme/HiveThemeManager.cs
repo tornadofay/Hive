@@ -113,20 +113,87 @@ public sealed class HiveThemeManager : IHiveThemeManager
                         : theme.Palette.DisabledText);
                 break;
 
-            case TextBoxBase:
-            case ComboBox:
-            case ListBox:
-            case NumericUpDown:
-            case DomainUpDown:
-            case DateTimePicker:
+            case TextBoxBase textBox:
+                textBox.BorderStyle = BorderStyle.FixedSingle;
                 SetBackColor(
-                    control,
-                    control.Enabled
+                    textBox,
+                    textBox.Enabled
                         ? theme.Palette.InputBackground
                         : theme.Palette.DisabledBackground);
                 SetForeColor(
-                    control,
-                    control.Enabled
+                    textBox,
+                    textBox.Enabled
+                        ? theme.Palette.Text
+                        : theme.Palette.DisabledText);
+                break;
+
+            case ComboBox comboBox:
+                comboBox.FlatStyle = FlatStyle.Standard;
+                SetBackColor(
+                    comboBox,
+                    comboBox.Enabled
+                        ? theme.Palette.InputBackground
+                        : theme.Palette.DisabledBackground);
+                SetForeColor(
+                    comboBox,
+                    comboBox.Enabled
+                        ? theme.Palette.Text
+                        : theme.Palette.DisabledText);
+                break;
+
+            case ListBox listBox:
+                listBox.BorderStyle = BorderStyle.FixedSingle;
+                SetBackColor(
+                    listBox,
+                    listBox.Enabled
+                        ? theme.Palette.InputBackground
+                        : theme.Palette.DisabledBackground);
+                SetForeColor(
+                    listBox,
+                    listBox.Enabled
+                        ? theme.Palette.Text
+                        : theme.Palette.DisabledText);
+                break;
+
+            case NumericUpDown numericUpDown:
+                numericUpDown.BorderStyle = BorderStyle.FixedSingle;
+                SetBackColor(
+                    numericUpDown,
+                    numericUpDown.Enabled
+                        ? theme.Palette.InputBackground
+                        : theme.Palette.DisabledBackground);
+                SetForeColor(
+                    numericUpDown,
+                    numericUpDown.Enabled
+                        ? theme.Palette.Text
+                        : theme.Palette.DisabledText);
+                break;
+
+            case DomainUpDown domainUpDown:
+                domainUpDown.BorderStyle = BorderStyle.FixedSingle;
+                SetBackColor(
+                    domainUpDown,
+                    domainUpDown.Enabled
+                        ? theme.Palette.InputBackground
+                        : theme.Palette.DisabledBackground);
+                SetForeColor(
+                    domainUpDown,
+                    domainUpDown.Enabled
+                        ? theme.Palette.Text
+                        : theme.Palette.DisabledText);
+                break;
+
+            case DateTimePicker dateTimePicker:
+                dateTimePicker.CalendarMonthBackground = theme.Palette.InputBackground;
+                dateTimePicker.CalendarForeColor = theme.Palette.Text;
+                SetBackColor(
+                    dateTimePicker,
+                    dateTimePicker.Enabled
+                        ? theme.Palette.InputBackground
+                        : theme.Palette.DisabledBackground);
+                SetForeColor(
+                    dateTimePicker,
+                    dateTimePicker.Enabled
                         ? theme.Palette.Text
                         : theme.Palette.DisabledText);
                 break;
@@ -143,6 +210,14 @@ public sealed class HiveThemeManager : IHiveThemeManager
 
             case CheckBox:
             case RadioButton:
+                SetBackColor(control, Color.Transparent);
+                SetForeColor(
+                    control,
+                    control.Enabled
+                        ? theme.Palette.Text
+                        : theme.Palette.DisabledText);
+                break;
+
             case LinkLabel:
             case Label:
                 SetForeColor(
@@ -265,7 +340,13 @@ public sealed class HiveThemeManager : IHiveThemeManager
         return new HiveThemeDefinition(
             effectiveMode,
             palette,
-            new HiveTypography("Segoe UI", 9.25f, 15f),
+            new HiveTypography("Segoe UI", 9.25f, 15.5f)
+            {
+                SmallSize = 8.5f,
+                SectionSize = 9.25f,
+                TitleSize = 16f,
+                MonospaceSize = 9f
+            },
             new HiveSpacing(4, 8, 12, 16, 24),
             new HiveVisualStates(
                 dark
