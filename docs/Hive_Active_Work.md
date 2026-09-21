@@ -25,7 +25,8 @@ The slice is limited to:
 
 The 0.4 implementation is committed to Hive.Persistence:
 
-- SQL Server persistence options with an explicit LocalDB development configuration;
+- SQL Server persistence options with automatic database creation enabled by default;
+- LocalDB development configuration using the same persistence boundary;
 - SQL Server database creation support for development when configured;
 - DbUp SQL Server 7.2.0 migration runner with transaction-per-script execution;
 - Microsoft.Data.SqlClient 7.1.0 connectivity;
