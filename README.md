@@ -210,14 +210,27 @@ V1 starts with:
 
 1. Providers / Models / Execution Targets
 2. Agents
+3. V1 WorkItems / Operational Workspace
 
 Later areas are added when their owning phase lands: Hive Membership, Governance, Cognition, Dreams, Questions, Learning Review, Knowledge/Skills/Memory, Storage, Runtime Diagnostics, Human Intervention, Resource Inventory, Configuration Import/Export, and generic host-integration diagnostics.
 
+## WinForms UI foundation
+
+Hive's WinForms surfaces share a common UI foundation established in Phase 0.
+
+ReaLTaiizor is the selected third-party rendering layer. It is isolated behind `Hive.Host.WinForms.UI`; consuming forms do not reference the third-party library directly. Hive owns the theme contract, semantic design tokens, and Hive-specific controls where additional behavior or styling is required.
+
+The foundation starts with Light / Dark / System modes and shared palette, typography, spacing, and visual-state rules. Standard WinForms controls remain valid when their native behavior is sufficient; Hive does not wrap every control merely to rename it.
+
 ## Example application
 
-`Hive.Example.WinForms` demonstrates the public API and real-host composition.
+`Hive.Example.WinForms` is a first-class developer-facing application, not a temporary demo. It uses the same UI foundation as the rest of Hive.
 
-Examples are developed alongside the feature they demonstrate. The developer performs manual UI/application testing; no separate UI-automation framework is required by the architecture.
+Examples are organized as Category → Subcategory → Example through a left-side navigation surface and a replaceable content `UserControl`. Examples are auto-discovered through a small `IHiveExample` contract so adding an example does not require central shell wiring.
+
+The Example host also provides developer test tools that invoke `dotnet test` externally against `Hive.Tests` and stream results. The authoritative test suite remains `Hive.Tests`.
+
+The developer performs manual UI/application testing; no separate UI-automation framework is required by the architecture.
 
 ## Automated tests
 
