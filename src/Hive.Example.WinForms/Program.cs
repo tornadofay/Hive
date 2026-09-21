@@ -11,7 +11,7 @@ internal static class Program
         ApplicationConfiguration.Initialize();
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
         Application.ThreadException += OnThreadException;
-        Application.Run(new ThemeFoundationExampleForm());
+        Application.Run(new HiveExampleHostForm());
     }
 
     private static void OnThreadException(
