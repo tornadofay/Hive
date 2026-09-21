@@ -108,8 +108,9 @@ internal sealed class HiveBorderPanel : Panel
     {
         if (disposing)
         {
+            var previousRegion = Region;
             Region = null;
-            
+            previousRegion?.Dispose();
         }
 
         base.Dispose(disposing);
