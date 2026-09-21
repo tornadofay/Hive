@@ -167,6 +167,9 @@ internal sealed class ThemeFoundationExampleView : UserControl
             Margin = new Padding(0, 0, 8, 0)
         };
 
+        button.AccessibleName = $"{text} theme mode";
+        button.AccessibleDescription = $"Switch the application theme to {text} mode.";
+
         button.Click += (_, _) =>
         {
             _themeManager.SetMode(mode);
