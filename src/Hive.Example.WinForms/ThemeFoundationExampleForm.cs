@@ -108,10 +108,6 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
             "HiveMessageBox provides semantic Information, Success, Warning, Error, and Question dialogs with optional technical details."));
         BuildDialogsPage();
 
-        _pageBody.Controls.Add(_dialogsPage);
-        _pageBody.Controls.Add(_controlsPage);
-        _pageBody.Controls.Add(_themePage);
-
         _contentLayout.Controls.Add(_pageTitle, 0, 0);
         _contentLayout.Controls.Add(_pageDescription, 0, 1);
         _contentLayout.Controls.Add(_pageBody, 0, 2);
@@ -351,10 +347,23 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         _pageTitle.Text = title;
         _pageDescription.Text = description;
 
-        foreach (Control child in _pageBody.Controls)
-            child.Visible = ReferenceEquals(child, page);
+        if (!ReferenceEquals(page.Parent, _pageBody))
+        {
+            _pageBody.SuspendLayout();
+            try
+            {
+                _pageBody.Controls.Clear();
+                page.Dock = DockStyle.Fill;
+                page.Visible = true;
+                _pageBody.Controls.Add(page);
+            }
+            finally
+            {
+                _pageBody.ResumeLayout(true);
+            }
+        }
 
-        page.BringToFront();
+        _themeManager.Apply(page);
     }
 
     private void UpdateThemeState() =>
