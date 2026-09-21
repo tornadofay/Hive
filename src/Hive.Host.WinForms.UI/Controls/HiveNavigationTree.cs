@@ -44,9 +44,10 @@ public sealed class HiveNavigationTree : TreeView
     {
         ArgumentNullException.ThrowIfNull(theme);
 
+        var canPreserveNativeState = IsHandleCreated;
         var selected = SelectedNode;
-        var top = TopNode;
-        var hadFocus = Focused;
+        var top = canPreserveNativeState ? TopNode : null;
+        var hadFocus = canPreserveNativeState && Focused;
 
         BeginUpdate();
         try
@@ -70,7 +71,7 @@ public sealed class HiveNavigationTree : TreeView
         if (selected is not null)
             SelectedNode = selected;
 
-        if (top is not null)
+        if (top is not null && IsHandleCreated)
             TopNode = top;
 
         if (hadFocus && CanFocus)
