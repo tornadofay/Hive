@@ -95,8 +95,24 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 listView.ApplyTheme(theme);
                 break;
 
+            case HiveBorderPanel borderPanel:
+                borderPanel.ApplyTheme(theme);
+                break;
+
             case HiveButton hiveButton:
                 hiveButton.ApplyTheme(theme);
+                break;
+
+            case HiveEditorLayout editorLayout:
+                editorLayout.ApplyTheme(theme);
+                break;
+
+            case HiveListPageLayout listPageLayout:
+                listPageLayout.ApplyTheme(theme);
+                break;
+
+            case HivePaginationBar paginationBar:
+                paginationBar.ApplyTheme(theme);
                 break;
 
             case Form:
