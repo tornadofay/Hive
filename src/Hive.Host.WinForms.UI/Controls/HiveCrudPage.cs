@@ -54,6 +54,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private readonly Font _titleFont;
     private readonly Font _descriptionFont;
     private readonly Font _searchLabelFont;
+    private readonly Font _emptyStateFont;
     private readonly List<HiveCrudColumn<TItem>> _columns = new();
 
     private IReadOnlyList<TItem> _items = Array.Empty<TItem>();
@@ -82,6 +83,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _titleFont = new Font("Segoe UI Semibold", 15f, FontStyle.Bold);
         _descriptionFont = new Font("Segoe UI", 8.9f);
         _searchLabelFont = new Font("Segoe UI Semibold", 8.8f, FontStyle.Bold);
+        _emptyStateFont = new Font("Segoe UI", 9.5f);
 
         _titleLabel = new Label
         {
@@ -221,7 +223,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Dock = DockStyle.Fill,
             AutoSize = false,
             TextAlign = ContentAlignment.MiddleCenter,
-            Font = new Font("Segoe UI", 9.5f),
+            Font = _emptyStateFont,
             Margin = Padding.Empty,
             Padding = new Padding(16),
             Visible = false
@@ -518,6 +520,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _titleFont.Dispose();
             _descriptionFont.Dispose();
             _searchLabelFont.Dispose();
+            _emptyStateFont.Dispose();
         }
 
         base.Dispose(disposing);
