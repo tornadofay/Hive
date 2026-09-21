@@ -9,6 +9,11 @@ internal sealed class OverviewExampleView : UserControl
 {
     private const string RepositoryUrl = "https://github.com/tornadofay/Hive";
 
+    private readonly Panel _hero;
+    private readonly TableLayoutPanel _cards;
+    private readonly TableLayoutPanel _navigationSection;
+    private readonly TableLayoutPanel _architectureSection;
+    private readonly TableLayoutPanel _projectSection;
     private readonly Label _eyebrow;
     private readonly Label _title;
     private readonly Label _intro;
@@ -55,29 +60,29 @@ internal sealed class OverviewExampleView : UserControl
         };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
-        var hero = CreateHero();
-        var cards = CreateCards();
-        var navigationSection = CreateSection(
+        _hero = CreateHero();
+        _cards = CreateCards();
+        _navigationSection = CreateSection(
             "How to use this form",
             "The left navigation is the Example Host index. Expand a category and subcategory, then select an example. The selected example replaces the main content area without rebuilding the host shell. The output pane at the bottom is shared across examples.");
-        var architectureSection = CreateSection(
+        _architectureSection = CreateSection(
             "What this application demonstrates",
             "Hive.Example.WinForms is a permanent developer-facing host for exercising the reusable Hive UI foundation. It demonstrates the controls, interaction patterns, CRUD composition, dialogs, themes, and the reusable example-test surface used by ordinary developer examples.");
-        var projectSection = CreateSection(
+        _projectSection = CreateSection(
             "Project direction",
             "Hive is a general-purpose C# / .NET 10 platform for building, running, coordinating, observing, governing, and evolving multi-agent systems. Microsoft Agent Framework provides underlying execution and workflow infrastructure where it already owns the mechanism; Hive supplies the platform contracts, governance, management, persistence, host integration, and higher-level boundaries.");
 
-        root.Controls.Add(hero, 0, 0);
-        root.Controls.Add(cards, 0, 1);
-        root.Controls.Add(navigationSection, 0, 2);
-        root.Controls.Add(architectureSection, 0, 3);
-        root.Controls.Add(projectSection, 0, 4);
+        root.Controls.Add(_hero, 0, 0);
+        root.Controls.Add(_cards, 0, 1);
+        root.Controls.Add(_navigationSection, 0, 2);
+        root.Controls.Add(_architectureSection, 0, 3);
+        root.Controls.Add(_projectSection, 0, 4);
 
         Controls.Add(root);
 
-        _projectText = FindCardBody(cards, 0);
-        _hostText = FindCardBody(cards, 1);
-        _uiText = FindCardBody(cards, 2);
+        _projectText = FindCardBody(_cards, 0);
+        _hostText = FindCardBody(_cards, 1);
+        _uiText = FindCardBody(_cards, 2);
 
         _projectText.Text =
             "General-purpose .NET 10 multi-agent platform, with a concrete V1 forcing function.";
@@ -325,6 +330,11 @@ internal sealed class OverviewExampleView : UserControl
     private void ApplyTheme(HiveThemeDefinition theme)
     {
         BackColor = theme.Palette.Surface;
+        _hero.BackColor = theme.Palette.ElevatedSurface;
+        _cards.BackColor = theme.Palette.Surface;
+        _navigationSection.BackColor = theme.Palette.Surface;
+        _architectureSection.BackColor = theme.Palette.Surface;
+        _projectSection.BackColor = theme.Palette.Surface;
         _eyebrow.ForeColor = theme.Palette.Accent;
         _title.ForeColor = theme.Palette.Text;
         _intro.ForeColor = theme.Palette.MutedText;
@@ -334,11 +344,9 @@ internal sealed class OverviewExampleView : UserControl
         _hostText.ForeColor = theme.Palette.Text;
         _uiText.ForeColor = theme.Palette.Text;
 
-        foreach (var panel in Controls
-                     .OfType<TableLayoutPanel>()
-                     .SelectMany(control => control.Controls.OfType<Control>()))
+        foreach (Control card in _cards.Controls)
         {
-            panel.BackColor = theme.Palette.ElevatedSurface;
+            card.BackColor = theme.Palette.ElevatedSurface;
         }
     }
 }
