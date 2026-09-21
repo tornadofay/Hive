@@ -28,7 +28,7 @@ internal sealed partial class ThemeFoundationExampleView
             Dock = DockStyle.Top,
             Width = 780,
             Height = 452,
-            MinimumSize = new Size(520, 420),
+            MinimumSize = new Size(420, 420),
             Margin = new Padding(0, 18, 0, 12),
             Title = "Generic CRUD composition",
             Description = "Hive provides the reusable page workflow and interaction model; the consuming feature provides its data, rules, and editor.",
@@ -38,15 +38,15 @@ internal sealed partial class ThemeFoundationExampleView
         crud.SetColumns(
             new HiveCrudColumn<CrudExampleItem>(
                 "Name",
-                310,
+                190,
                 item => item.Name),
             new HiveCrudColumn<CrudExampleItem>(
                 "Type",
-                180,
+                110,
                 item => item.Type),
             new HiveCrudColumn<CrudExampleItem>(
                 "Status",
-                130,
+                90,
                 item => item.Status));
 
         crud.LoadItemsAsync = LoadCrudExampleItemsAsync;
