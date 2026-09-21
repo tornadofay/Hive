@@ -6,6 +6,8 @@ namespace Hive.Host.WinForms.UI.Controls;
 
 public sealed class HiveListView : ListView
 {
+    private const int RowHeight = 36;
+
     private HiveThemeDefinition? _theme;
     private int _hoverIndex = -1;
     private Font? _headerFont;
@@ -28,13 +30,14 @@ public sealed class HiveListView : ListView
         HeaderStyle = ColumnHeaderStyle.Nonclickable;
         BorderStyle = BorderStyle.None;
         LabelWrap = false;
+        HeaderStyle = ColumnHeaderStyle.Nonclickable;
         Margin = Padding.Empty;
         DoubleBuffered = true;
 
         _rowImageList = new ImageList
         {
             ColorDepth = ColorDepth.Depth32Bit,
-            ImageSize = new Size(1, 36)
+            ImageSize = new Size(1, RowHeight)
         };
         _rowImageList.Images.Add(new Bitmap(1, 36));
         SmallImageList = _rowImageList;
@@ -53,8 +56,11 @@ public sealed class HiveListView : ListView
             ForeColor = theme.Palette.Text;
 
         EnsureHeaderFont(theme);
+        var previous = _hoverIndex;
         _hoverIndex = -1;
-        Invalidate();
+
+        if (previous >= 0 && previous < Items.Count)
+            Invalidate(GetItemRect(previous));
     }
 
     protected override void OnDrawColumnHeader(
@@ -103,6 +109,14 @@ public sealed class HiveListView : ListView
             Rectangle.Inflate(e.Bounds, -10, 0),
             theme.Palette.Text,
             flags);
+
+        using var bottom = new Pen(theme.Palette.Border);
+        e.Graphics.DrawLine(
+            bottom,
+            e.Bounds.Left,
+            e.Bounds.Bottom - 1,
+            e.Bounds.Right - 1,
+            e.Bounds.Bottom - 1);
     }
 
     protected override void OnDrawItem(DrawListViewItemEventArgs e)
@@ -135,7 +149,9 @@ public sealed class HiveListView : ListView
                 ? theme.Palette.Selection
                 : hovered
                     ? theme.VisualStates.HoverBackground
-                    : theme.Palette.InputBackground;
+                    : item.Index % 2 == 0
+                        ? theme.Palette.InputBackground
+                        : theme.Palette.Surface;
 
         using var brush = new SolidBrush(background);
         e.Graphics.FillRectangle(brush, row);
@@ -147,6 +163,29 @@ public sealed class HiveListView : ListView
             row.Bottom - 1,
             row.Right - 1,
             row.Bottom - 1);
+
+        if (selected)
+        {
+            using var accent = new SolidBrush(theme.Palette.Accent);
+            e.Graphics.FillRectangle(
+                accent,
+                row.Left,
+                row.Top + 5,
+                3,
+                Math.Max(8, row.Height - 10));
+        }
+
+        if (selected && Focused)
+        {
+            using var focusPen = new Pen(theme.VisualStates.FocusedBorder);
+            var focus = Rectangle.Inflate(row, -1, -1);
+            e.Graphics.DrawRectangle(
+                focusPen,
+                focus.Left,
+                focus.Top,
+                Math.Max(0, focus.Width - 1),
+                Math.Max(0, focus.Height - 1));
+        }
     }
 
     protected override void OnDrawSubItem(DrawListViewSubItemEventArgs e)
@@ -190,24 +229,6 @@ public sealed class HiveListView : ListView
             flags);
     }
 
-    protected override void OnPaint(PaintEventArgs e)
-    {
-        base.OnPaint(e);
-
-        var theme = _theme;
-        if (theme is null)
-            return;
-
-        var border = ClientRectangle;
-        border.Width -= 1;
-        border.Height -= 1;
-        if (border.Width <= 0 || border.Height <= 0)
-            return;
-
-        using var pen = new Pen(theme.Palette.Border);
-        e.Graphics.DrawRectangle(pen, border);
-    }
-
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
@@ -217,8 +238,14 @@ public sealed class HiveListView : ListView
         if (_hoverIndex == next)
             return;
 
+        var previous = _hoverIndex;
         _hoverIndex = next;
-        Invalidate();
+
+        if (previous >= 0 && previous < Items.Count)
+            Invalidate(GetItemRect(previous));
+
+        if (next >= 0 && next < Items.Count)
+            Invalidate(GetItemRect(next));
     }
 
     protected override void OnMouseLeave(EventArgs e)
@@ -249,12 +276,13 @@ public sealed class HiveListView : ListView
 
     protected override void Dispose(bool disposing)
     {
-        base.Dispose(disposing);
-
         if (disposing)
         {
+            SmallImageList = null;
             _headerFont?.Dispose();
             _rowImageList.Dispose();
         }
+
+        base.Dispose(disposing);
     }
 }
