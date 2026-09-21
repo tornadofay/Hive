@@ -480,10 +480,12 @@ public static class HiveMessageBox
         protected override void Dispose(bool disposing)
         {
             if (disposing)
-            {
-                if (_subscribedToTheme)
-                    _themeManager.ThemeChanged -= ThemeManagerOnChanged;
+                _themeManager.ThemeChanged -= ThemeManagerOnChanged;
 
+            base.Dispose(disposing);
+
+            if (disposing)
+            {
                 _windowPath?.Dispose();
                 _borderPath?.Dispose();
                 _borderPen?.Dispose();
@@ -492,8 +494,6 @@ public static class HiveMessageBox
                 _detailsFont.Dispose();
                 _buttonFont.Dispose();
             }
-
-            base.Dispose(disposing);
         }
 
         protected override void OnPaint(PaintEventArgs e)
