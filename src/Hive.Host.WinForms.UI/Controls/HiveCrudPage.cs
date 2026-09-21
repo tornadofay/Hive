@@ -39,6 +39,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private readonly HiveButton _deleteButton;
     private readonly HiveButton _refreshButton;
     private readonly ListView _list;
+    private readonly Font _titleFont;
+    private readonly Font _descriptionFont;
     private readonly List<HiveCrudColumn<TItem>> _columns = new();
 
     private IReadOnlyList<TItem> _items = Array.Empty<TItem>();
@@ -60,11 +62,14 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Dock = DockStyle.Fill
         };
 
+        _titleFont = new Font("Segoe UI Semibold", 15f, FontStyle.Bold);
+        _descriptionFont = new Font("Segoe UI", 8.8f);
+
         _titleLabel = new Label
         {
             AutoSize = true,
             Dock = DockStyle.Top,
-            Font = new Font("Segoe UI Semibold", 15f, FontStyle.Bold),
+            Font = _titleFont,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
             Text = "Items"
@@ -74,7 +79,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         {
             AutoSize = true,
             Dock = DockStyle.Top,
-            Font = new Font("Segoe UI", 8.8f),
+            Font = _descriptionFont,
             Margin = new Padding(0, 5, 0, 0),
             Padding = Padding.Empty
         };
@@ -92,7 +97,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Padding = Padding.Empty
         };
         actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        actionLayout.ColumnStyles.Add(new ColumnStyle.Absolute, 220f);
+        actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220f));
 
         _actionButtons = new FlowLayoutPanel
         {
@@ -321,6 +326,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         {
             _operationCancellation?.Cancel();
             _operationCancellation?.Dispose();
+            _titleFont.Dispose();
+            _descriptionFont.Dispose();
         }
 
         base.Dispose(disposing);
