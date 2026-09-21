@@ -180,15 +180,17 @@ internal sealed class HiveExampleHostForm : HiveForm
     protected override void Dispose(bool disposing)
     {
         if (disposing)
-        {
             DisposeActiveView();
+
+        base.Dispose(disposing);
+
+        if (disposing)
+        {
             _navigationTitleFont.Dispose();
             _navigationDescriptionFont.Dispose();
             _viewTitleFont.Dispose();
             _viewSubtitleFont.Dispose();
         }
-
-        base.Dispose(disposing);
     }
 
     protected override void OnThemeChanged(HiveThemeDefinition theme)
