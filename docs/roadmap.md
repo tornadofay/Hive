@@ -28,12 +28,13 @@ Objective: create `Hive.Core`, `Hive.Agents`, `Hive.Persistence`, `Hive.Coordina
 Verify: solution builds; forbidden references are absent.
 
 ## 0.2 — Common infrastructure
-Objective: IDs, immutable value objects, typed errors/results, `IClock`, event envelope, correlation/causation IDs, and one JSON serialization stack.
-Verify: normal/invalid/boundary unit tests and JSON round-trip.
+Objective: IDs, immutable value objects, typed errors/results, `IClock`, event envelope with event type and payload schema version, correlation/causation IDs, event upcasting compatibility boundary, and one JSON serialization stack.
+Verify: normal/invalid/boundary unit tests, JSON round-trip, older-event payload upcast tests, and rejection of unsupported event schema versions.
 
-## 0.3 — Identity & Resource foundation
-Objective: Deployment/Tenant/Principal/User/Session/Workspace/Agent/Runtime/Execution identity, Resource envelope, ownership, scope, provenance, lifecycle/version metadata.
-Verify: scope matrix, missing-identity fail-closed cases, immutable identity snapshots.
+## 0.3 — Identity, WorkItem & Resource foundation
+Objective: Deployment/Tenant/Principal/User/Session/Workspace/Agent/Hive/Runtime/Execution/WorkItem identity, Resource envelope, ownership, scope, provenance, lifecycle/version metadata.
+V1 work-unit rule: one submitted document is one WorkItem; a batch is multiple WorkItems.
+Verify: scope matrix, missing-identity fail-closed cases, immutable identity snapshots, WorkItem lifecycle and provenance isolation.
 
 ## 0.4 — Persistence bootstrap
 Objective: Hive-owned SQL Server database, LocalDB development setup, DbUp migrations, schema-version tracking, indexes.
@@ -66,71 +67,80 @@ Objective: required-capability filtering and explainable selection diagnostics.
 Verify: supported match, unsupported exclusion, unknown exclusion for hard requirements, no-qualifying-target, fixed-target failure.
 
 ## 1.5 — Base Agent & AgentFactory
-Objective: implement `Agent`, `AgentDefinition`, `RuntimeInstance`, `Execution`, and `AgentFactory.Create<TAgent>()` against base contracts. The selected type is fixed for the created resource/runtime.
+Objective: implement `Agent`, `AgentDefinition`, `RuntimeInstance`, `Execution`, and `AgentFactory.Create<TAgent>()` against base contracts. The selected generation is fixed when the Agent is created; there is no runtime promotion/demotion.
 
-The base Agent contract may also expose reusable non-cognitive mechanisms:
-- Objectives with explicit lifecycle/status and completion criteria;
-- memory storage/retrieval infrastructure for explicitly addressed state;
-- first-class Question/Answer protocol with provenance, waiting, and timeout;
-- Patience / Understanding Gate that blocks consequential work until required information or confirmation exists;
-- bounded Simulation job infrastructure, including parallel scenario execution and prediction/result storage;
-- delegation/coordination interfaces for requesting work from other Agents or Hives;
-- lifecycle/dormancy controls that do not require CognitiveAgent.
+Generation creation is explicit and policy-authorized. The factory may create any supported generation when the caller's authorization/policy permits it; it never infers CognitiveAgent creation from task complexity.
 
-These are mechanisms. The base Agent must not autonomously form/revise cognitive Goals or Beliefs, choose its own Dream/Question strategy, or reinterpret experience as a cognitive learning process.
+Verify: multiple runtimes from one definition remain isolated; generation selection is explicit; unauthorized generation creation is rejected; the factory does not require cognitive types.
 
-Verify: multiple runtimes from one definition remain isolated; objective lifecycle works; question waiting/timeout works; required-understanding gates block premature action; simulation jobs preserve scenario provenance; delegation requests preserve ownership/provenance; the factory does not require cognitive types.
+## 1.7 — Base Agent Work Protocols
+Objective: add only the reusable base mechanisms required by the V1 boundary: Objective lifecycle, WorkItem binding/provenance, memory storage/retrieval infrastructure, Question/Answer transport, Patience / Understanding Gate, and delegation interfaces.
 
-## 1.6 — Event Log, Snapshots & Transactional Outbox
+Simulation/Dream execution and Agent-owned Hive creation are architecturally supported mechanisms but are not pulled into this slice unless a V1 boundary actually requires them.
+
+These mechanisms must not autonomously form/revise cognitive Goals or Beliefs, select Dreams, generate adaptive Questions, reinterpret experience, or learn from outcomes.
+
+Verify: objective and WorkItem lifecycle, question waiting/timeout, minimum-understanding gates, delegation ownership/provenance, and isolation across multiple runtime instances.
+
+## 1.7 — Event Log, Snapshots & Transactional Outbox
 Objective: append-only event log, snapshot fold, and atomic event+snapshot+outbox persistence.
 Verify: rollback leaves neither event nor outbox; replay of supported base events is deterministic.
 
-## 1.7 — Outbox Poller
+## 1.8 — Outbox Poller
 Objective: process committed unhandled outbox rows after transaction commit.
 Verify: duplicate delivery safety and crash-before-processing recovery.
 
-## 1.8 — First Real Agent Execution
+## 1.9 — First Real Agent Execution
 Objective: connect a base Agent to MAF and the Hive provider boundary for one request, with correlation and durable lifecycle events.
 Verify: fake-provider automated path plus manual real-provider smoke test.
 
-## 1.9 — Hive.Management Facade
+## 1.10 — Hive.Management Facade
 Objective: CRUD facade for Providers, ProviderAccounts, ExecutionTargets, and AgentDefinitions.
 Verify: service-level validation, authorization/scope cases, persistence integration.
 
-## 1.10 — HiveSettingsForm & Providers Page
+## 1.11 — Workspace & Operational Surface
+Objective: implement the initial Workspace shell over Hive.Management with LLM mode, Agentic mode, attachments/file upload, user-visible Agent/Hive organization, active Swarm membership, WorkItems/activity, notifications, and the approval surface.
+
+LLM mode uses explicit user model selection with a configured default. Agentic mode displays the Agent/Hive-selected execution target rather than requiring the user to choose a model for every decision.
+
+The Workspace is a control/inspection surface, not a cognitive authority. It must remain usable when only a single Agent is active and must not create Hives merely because multiple forms are visible.
+
+Verify: mode switching, default/explicit model selection in LLM mode, Agentic-mode execution-target display, active-member topology display, pending-approval display, notification path, and public API boundaries.
+
+## 1.13 — HiveSettingsForm & Providers Page
 Objective: thin WinForms shell, shared configuration context, provider/account setup and connection test.
 Verify: UI smoke path; management logic remains outside the form.
 
-## 1.11 — Document Parsing
+## 1.13 — Document Parsing
 Objective: text extraction from Word, Excel, and text-native PDFs for the first chosen V1 document types.
 Verify: checked-in sample fixtures, malformed/corrupt input, bounded extraction.
 
-## 1.12 — Business-App Integration Boundary Decision
+## 1.14 — Business-App Integration Boundary Decision
 Type: architecture decision gate.
 Objective: determine API/service integration versus UI-level integration for the real business application and define only the required V1 contract.
 Verify: documented decision, boundary contract, authorization model, test strategy, and exact host surface.
 
-## 1.13 — Vision Routing
+## 1.15 — Vision Routing
 Objective: rasterize/prepare non-text-extractable pages and route them to a Vision-capable execution target.
 Verify: fixed scanned/image sample, unsupported-capability failure, bounded page/image handling.
 
-## 1.14 — Structured Extraction & Validation
+## 1.16 — Structured Extraction & Validation
 Objective: structured-output extraction to typed candidate data with required-field/type/domain validation.
 Verify: valid sample, missing fields, invalid types, malformed model output, rejection path.
 
-## 1.15 — Business-App Write Tool
+## 1.17 — Business-App Write Tool
 Objective: propose a write, hold `PendingApproval`, and perform the write only after explicit approval.
 Verify: pending blocks execution; rejection prevents side effect; approval reaches a fake client; duplicate approval cannot duplicate the write.
 
-## 1.16 — MAF Sequential V1 Pipeline
+## 1.18 — MAF Sequential V1 Pipeline
 Objective: wire ingest → extract → validate → write as one MAF Sequential workflow.
 Verify: end-to-end fake-host path plus one controlled real sample/manual smoke path.
 
-## 1.17 — Full-Pipeline Crash/Resume
+## 1.19 — Full-Pipeline Crash/Resume
 Objective: prove event/outbox/recovery behavior across the complete V1 pipeline.
 Verify: process termination at several checkpoints, restart, resume without duplicate terminal writes.
 
-## 1.18 — Metrics, Budget Cap & OpenTelemetry
+## 1.20 — Metrics, Budget Cap & OpenTelemetry
 Objective: request/success/failure/timeout counters, token/cost tracking, hard per-runtime budget, and console OpenTelemetry.
 Verify: configured limit produces typed stop; telemetry contains correlation data and no secrets.
 
@@ -154,13 +164,12 @@ Provide governed shared claims without making the shared store authoritative ove
 Observe/pause/stop members through Hive/MAF-supported mechanisms.
 
 ## 2.6 — Agent-Owned Hive Creation & Hive Lifecycle
-Allow an Agent to explicitly create/sponsor a Hive for a bounded need without changing the Agent's own type. Define Hive lifecycle states including Active and Dormant, with persistent membership and state.
+Allow an Agent to explicitly create/sponsor a persistent Hive for a bounded need without changing the Agent's own type. Sponsorship is a relationship, not implicit lifecycle ownership; sponsor death/retirement/deletion does not automatically delete the Hive or its members.
 
-## 2.7 — Swarm Work Sessions
-Define a Swarm as a temporary active work session over a persistent Hive. Starting a Swarm activates selected members; completing the work ends the Swarm and may return the Hive to Dormant state without deleting the Hive or its members.
+## 2.7 — Specialty-Driven Population & Swarm Participation
+Allow an authorized Hive to create or reuse Agents of any supported generation for missing specialties, including CognitiveAgents when the Hive's population policy explicitly permits that generation.
 
-## 2.8 — Specialty-Driven Population
-Allow an authorized Hive to identify missing required specialties, create or reuse suitable Agent definitions/instances, add them to membership, and retain them after the current Swarm ends. Member Agents normally request additional specialties through the parent Hive rather than recursively creating child Hives.
+Define Swarm as the active subset of Hive members collaborating on a WorkItem, Question, or bounded problem. Swarm is derived/session state, not a persistent resource. A member Agent normally requests missing specialists through the parent Hive rather than recursively creating a child Hive.
 
 All coordination uses MAF orchestration primitives where applicable; Hive does not become a second workflow engine.
 
@@ -205,7 +214,7 @@ Bounded experience capture, provenance, actual outcomes, and replayable supporte
 Define death as complete termination of the current runtime/incarnation, preserve Agent identity and cognitive state, support inactive periods with no live runtime, and explicitly reconstruct a new runtime from durable state when the Agent wakes.
 
 ## 4.7 — Postmortem & Dream Processing
-Define bounded postmortem processing plus a Dream subsystem that can inspect history, generate hypothetical alternatives, run multiple simulations in parallel, compare predicted outcomes, and produce candidate cognitive-state updates without requiring the Agent runtime to remain alive.
+Define bounded postmortem processing plus a Dream subsystem that can inspect history, generate hypothetical alternatives, run multiple simulations in parallel, compare predicted outcomes, and produce candidate cognitive-state updates without requiring the Agent runtime to remain alive. Dream processing is governed by applicable authorization, provider/model quota, token/cost budget, time budget, concurrency/parallelism limits, retrieval/work limits, and cancellation.
 
 ## 4.8 — Questions
 Define first-class Questions with structured context, specialty, provenance, answer type, evidence requirements, status, and confidence/uncertainty where applicable. Support specialty-specific questions so different Agents can investigate different aspects of the same user objective.
@@ -310,7 +319,7 @@ Operational diagnostics, safe support exports, and controlled replay tooling.
 
 ## Ordering invariant
 
-The order is intentional. Base Agent mechanisms such as Objectives, Question transport, patience/understanding gates, memory infrastructure, simulations, delegation, and Hive sponsorship remain available before CognitiveAgent is added. The cognitive lifecycle, Dreams, and Questions remain CognitiveAgent-generation capabilities before collective cognition is added; CognitiveHive then extends them with cross-agent coordination without moving individual cognition into the Hive.
+The order is intentional. Base Agent contracts reserve reusable mechanisms such as Objectives, Question transport, patience/understanding gates, memory infrastructure, simulation interfaces, delegation, and Hive sponsorship. Implementation is pulled into the earliest phase only when the current V1 boundary requires it. The cognitive lifecycle, Dreams, and adaptive Questions remain CognitiveAgent-generation capabilities; CognitiveHive later extends them with cross-agent coordination without moving individual cognition into the Hive.
 
 
 ```
