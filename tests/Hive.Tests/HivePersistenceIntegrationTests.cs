@@ -38,6 +38,8 @@ public sealed class HivePersistenceIntegrationTests
 
             var storedVersion = await ReadSchemaVersionAsync(options);
             Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, storedVersion);
+            Assert.True(await IndexExistsAsync(options, "PK_HiveSchemaVersion"));
+            Assert.True(await IndexExistsAsync(options, "UX_HiveSchemaVersion_SchemaVersion"));
         }
         finally
         {
@@ -219,6 +221,32 @@ public sealed class HivePersistenceIntegrationTests
         command.Parameters.AddWithValue("@SchemaVersion", version);
 
         Assert.Equal(1, await command.ExecuteNonQueryAsync());
+    }
+
+    private static async Task<bool> IndexExistsAsync(
+        HiveDatabaseOptions options,
+        string indexName)
+    {
+        await using var connection = new SqlConnection(options.ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT CASE
+                WHEN EXISTS
+                (
+                    SELECT 1
+                    FROM sys.indexes
+                    WHERE [object_id] = OBJECT_ID(N'dbo.HiveSchemaVersion')
+                      AND [name] = @IndexName
+                )
+                THEN 1
+                ELSE 0
+            END;
+            """;
+        command.Parameters.AddWithValue("@IndexName", indexName);
+
+        return Convert.ToInt32(await command.ExecuteScalarAsync()) == 1;
     }
 
     private static async Task<bool> TableExistsAsync(
