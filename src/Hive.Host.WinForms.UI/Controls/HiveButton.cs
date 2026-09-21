@@ -27,6 +27,7 @@ public sealed class HiveButton : UserControl
     private bool _hovered;
     private bool _pressed;
     private GraphicsPath? _path;
+    private Region? _buttonRegion;
 
     public HiveButton()
     {
@@ -230,6 +231,9 @@ public sealed class HiveButton : UserControl
     {
         if (disposing)
         {
+            Region = null;
+            _buttonRegion?.Dispose();
+            _buttonRegion = null;
             _path?.Dispose();
             _path = null;
         }
@@ -329,6 +333,9 @@ public sealed class HiveButton : UserControl
 
     private void RebuildPath()
     {
+        _buttonRegion = null;
+        Region = null;
+
         _path?.Dispose();
         _path = null;
 
@@ -346,6 +353,9 @@ public sealed class HiveButton : UserControl
                 ClientSize.Width - 1f,
                 ClientSize.Height - 1f),
             radius);
+
+        _buttonRegion = new Region(_path);
+        Region = _buttonRegion;
     }
 
     private void ApplyCurrentTheme()
