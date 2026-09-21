@@ -34,7 +34,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private const int FooterHeight = 42;
     private const int ActionButtonWidth = 92;
     private const int CompactActionButtonWidth = 84;
-    private const int ActionBarActionsWidth = 400;
+    private const int ActionButtonSpacing = 8;
     private const int PaginationWidth = 260;
     private const int DefaultPageSize = 25;
 
@@ -330,6 +330,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         set
         {
             _addButton.Visible = value;
+            UpdateToolbarLayout();
             UpdateActionState();
         }
     }
@@ -341,6 +342,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         set
         {
             _editButton.Visible = value;
+            UpdateToolbarLayout();
             UpdateActionState();
         }
     }
@@ -352,6 +354,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         set
         {
             _deleteButton.Visible = value;
+            UpdateToolbarLayout();
             UpdateActionState();
         }
     }
@@ -363,6 +366,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         set
         {
             _refreshButton.Visible = value;
+            UpdateToolbarLayout();
             UpdateActionState();
         }
     }
@@ -604,10 +608,14 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         var compact = ClientSize.Width > 0 && ClientSize.Width < 860;
         var expectedRows = compact && _searchBox.Visible ? 2 : 1;
         var expectedColumns = compact ? 1 : 2;
+        var actionWidth = GetVisibleActionBarWidth(compact);
 
         if (_compactToolbar == compact &&
             _actionLayout.ColumnCount == expectedColumns &&
-            _actionLayout.RowCount == expectedRows)
+            _actionLayout.RowCount == expectedRows &&
+            (compact ||
+             _actionLayout.ColumnStyles.Count < 2 ||
+             Math.Abs(_actionLayout.ColumnStyles[1].Width - actionWidth) < 0.1f))
             return;
 
         _compactToolbar = compact;
@@ -665,7 +673,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                 _actionLayout.ColumnStyles.Add(
                     new ColumnStyle(SizeType.Percent, 100f));
                 _actionLayout.ColumnStyles.Add(
-                    new ColumnStyle(SizeType.Absolute, ActionBarActionsWidth));
+                    new ColumnStyle(SizeType.Absolute, actionWidth));
                 _actionLayout.RowStyles.Add(
                     new RowStyle(SizeType.Percent, 100f));
                 _actionLayout.Controls.Add(_searchPanel, 0, 0);
@@ -676,6 +684,21 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         {
             _actionLayout.ResumeLayout(true);
         }
+    }
+
+    private int GetVisibleActionBarWidth(bool compact)
+    {
+        if (compact)
+            return 0;
+
+        var buttonWidth = ActionButtonWidth;
+        var visibleCount =
+            (_addButton.Visible ? 1 : 0) +
+            (_editButton.Visible ? 1 : 0) +
+            (_deleteButton.Visible ? 1 : 0) +
+            (_refreshButton.Visible ? 1 : 0);
+
+        return visibleCount * (buttonWidth + ActionButtonSpacing);
     }
 
     private void SearchBoxOnTextChanged(object? sender, EventArgs e)
