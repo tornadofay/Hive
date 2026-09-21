@@ -21,6 +21,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     private readonly Label _viewTitle;
     private readonly Label _viewSubtitle;
     private readonly Panel _viewHost;
+    private readonly HiveExampleOutputView _outputView;
     private readonly Font _navigationTitleFont;
     private readonly Font _navigationDescriptionFont;
     private readonly Font _viewTitleFont;
@@ -44,7 +45,10 @@ internal sealed class HiveExampleHostForm : HiveForm
             allowHelp: false);
 
         _themeManager = ThemeManager;
-        _services = new HiveExampleServices(_themeManager);
+        _outputView = new HiveExampleOutputView();
+        _services = new HiveExampleServices(
+            _themeManager,
+            _outputView);
         _examples = HiveExampleDiscovery.Discover(
             Assembly.GetExecutingAssembly());
 
@@ -137,13 +141,14 @@ internal sealed class HiveExampleHostForm : HiveForm
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 3,
+            RowCount = 4,
             Margin = Padding.Empty,
             Padding = new Padding(28, 22, 28, 24)
         };
         content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         content.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        content.RowStyles.Add(new RowStyle(SizeType.Absolute, 190));
 
         _viewTitle = new Label
         {
@@ -165,13 +170,14 @@ internal sealed class HiveExampleHostForm : HiveForm
         _viewHost = new Panel
         {
             Dock = DockStyle.Fill,
-            Margin = Padding.Empty,
+            Margin = new Padding(0, 0, 0, 12),
             Padding = Padding.Empty
         };
 
         content.Controls.Add(_viewTitle, 0, 0);
         content.Controls.Add(_viewSubtitle, 0, 1);
         content.Controls.Add(_viewHost, 0, 2);
+        content.Controls.Add(_outputView, 0, 3);
 
         shell.Controls.Add(_navigationSurface, 0, 0);
         shell.Controls.Add(_navigationSeparator, 1, 0);
@@ -188,7 +194,10 @@ internal sealed class HiveExampleHostForm : HiveForm
     protected override void Dispose(bool disposing)
     {
         if (disposing)
+        {
             DisposeActiveView();
+            _outputView.Dispose();
+        }
 
         base.Dispose(disposing);
 
