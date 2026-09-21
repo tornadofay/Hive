@@ -46,8 +46,8 @@ The pass covers:
 - added themed navigation rendering with explicit selected/hover/focus states and preservation of selection/scroll during theme changes;
 - added themed lightweight ListView rendering for CRUD selection/hover/disabled states;
 - refined the shared palette, visual-state tokens, button hierarchy, window header, editor rhythm, CRUD density, pagination, and message-dialog presentation;
-- added a reusable Example test surface for the common input, copyable C# snippet, Run, busy/status, cancellation, and exception-handling pattern;
-- added one persistent global Example output surface exposed to every example through the Example service provider; specialized examples may use it or keep their own UI;
+- added a reusable standard Example test surface that centralizes the repeated HAgent-style example UI: Run/copy actions, busy/status state, editable test input, copyable C# reproduction snippet, description, expected-result, note, cancellation, and exception handling;
+- added one persistent global Example output surface exposed to every example through the Example service provider, implemented as a collapsible bottom pane with Clear/Show/Hide behavior; specialized examples may use it or keep their own UI;
 - made the permanent Example host behave as a normal desktop window and improved compact-window resizing;
 - split the UI foundation into separate discoverable Theme, Controls & CRUD, and Dialogs examples under UI → Foundation, removing the duplicate in-view section navigation;
 - converted the existing 0.6 UI foundation surface from a top-level form into discoverable UserControl examples;
