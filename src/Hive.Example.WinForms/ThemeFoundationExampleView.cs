@@ -61,7 +61,7 @@ internal sealed class ThemeFoundationExampleView : UserControl
         {
             Dock = DockStyle.Top,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
+            WrapContents = true,
             AutoSize = true,
             Margin = new Padding(0, 18, 0, 0),
             Padding = Padding.Empty
