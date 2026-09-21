@@ -382,7 +382,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             _navigation.CollapseAll();
             ExpandNavigationParents(firstExample);
             _navigation.SelectedNode = firstExample;
-            _navigation.EnsureVisible(firstExample);
+            firstExample.EnsureVisible();
             return;
         }
     }
