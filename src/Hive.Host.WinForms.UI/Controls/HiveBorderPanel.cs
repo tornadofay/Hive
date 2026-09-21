@@ -11,6 +11,7 @@ internal sealed class HiveBorderPanel : Panel
     private const int DefaultCornerRadius = 7;
 
     private HiveThemeDefinition? _theme;
+    private Color? _borderColor;
     private int _cornerRadius = DefaultCornerRadius;
     public HiveBorderPanel()
     {
@@ -24,6 +25,20 @@ internal sealed class HiveBorderPanel : Panel
         Margin = Padding.Empty;
         Padding = new Padding(1);
         BackColor = SystemColors.Window;
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    internal Color? BorderColor
+    {
+        get => _borderColor;
+        set
+        {
+            if (_borderColor == value)
+                return;
+
+            _borderColor = value;
+            Invalidate();
+        }
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -71,7 +86,7 @@ internal sealed class HiveBorderPanel : Panel
             ClientSize.Height <= 1)
             return;
 
-        using var pen = new Pen(theme.Palette.Border, 1f)
+        using var pen = new Pen(_borderColor ?? theme.Palette.Border, 1f)
         {
             Alignment = PenAlignment.Inset
         };
