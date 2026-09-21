@@ -129,8 +129,6 @@ Implemented so far:
 
 - Phase 0.7 Example Host Shell.
 - Phase 0.8 Example Developer Test Tools.
-- Phase 0.7 Example Host Shell.
-- Phase 0.8 Example Developer Test Tools.
 - Later implementation slices.
 - WinForms management host.
 - Example application features.
