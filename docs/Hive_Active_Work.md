@@ -26,11 +26,13 @@ Establish the shared WinForms visual foundation used by Hive.Host.WinForms and H
 - implemented the reusable rounded HiveForm shell and custom gradient header;
 - implemented Primary / Secondary / Navigation HiveButton styles;
 - implemented semantic HiveMessageBox variants with optional technical details and clipboard copy;
+- refined HiveMessageBox to use a compact HAgent-inspired visual hierarchy: semantic accent bar, circular icon, clear caption/message typography, details surface, and custom action buttons;
 - added HiveThemeMode, HiveThemeDefinition, semantic palette/typography/spacing/visual-state tokens;
 - added IHiveThemeManager and HiveThemeManager with Light / Dark / System resolution;
 - added HiveButton using the selected renderer behind a Hive-owned control boundary;
 - added HiveMessageBox as a Hive-owned themed dialog;
-- replaced the Example startup placeholder with the permanent UI-foundation verification form;
+- replaced the Example startup placeholder with the 0.6 UI-foundation verification surface;
+- the full 0.7 Example Host Shell is intentionally not started yet;
 - removed the obsolete placeholder form.
 
 No 0.6 build or manual UI verification has been recorded yet.
