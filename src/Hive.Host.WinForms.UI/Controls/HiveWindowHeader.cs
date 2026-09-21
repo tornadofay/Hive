@@ -25,7 +25,6 @@ internal sealed class HiveWindowHeader : Control
     private bool _allowHelp;
 
     private Color _background1;
-    private Color _background2;
     private Color _foreground;
     private Color _subtitleForeground;
     private Color _buttonHover;
@@ -142,7 +141,6 @@ internal sealed class HiveWindowHeader : Control
         ArgumentNullException.ThrowIfNull(theme);
 
         _background1 = theme.Palette.ElevatedSurface;
-        _background2 = theme.Palette.Surface;
         _foreground = theme.Palette.Text;
         _subtitleForeground = theme.Palette.MutedText;
         _buttonHover = theme.VisualStates.HoverBackground;
