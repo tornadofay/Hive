@@ -73,7 +73,7 @@ Generation creation is explicit and policy-authorized. The factory may create an
 
 Verify: multiple runtimes from one definition remain isolated; generation selection is explicit; unauthorized generation creation is rejected; the factory does not require cognitive types.
 
-## 1.7 — Base Agent Work Protocols
+## 1.6 — Base Agent Work Protocols
 Objective: add only the reusable base mechanisms required by the V1 boundary: Objective lifecycle, WorkItem binding/provenance, memory storage/retrieval infrastructure, Question/Answer transport, Patience / Understanding Gate, and delegation interfaces.
 
 Simulation/Dream execution and Agent-owned Hive creation are architecturally supported mechanisms but are not pulled into this slice unless a V1 boundary actually requires them.
@@ -107,7 +107,7 @@ The Workspace is a control/inspection surface, not a cognitive authority. It mus
 
 Verify: mode switching, default/explicit model selection in LLM mode, Agentic-mode execution-target display, active-member topology display, pending-approval display, notification path, and public API boundaries.
 
-## 1.13 — HiveSettingsForm & Providers Page
+## 1.12 — HiveSettingsForm & Providers Page
 Objective: thin WinForms shell, shared configuration context, provider/account setup and connection test.
 Verify: UI smoke path; management logic remains outside the form.
 
