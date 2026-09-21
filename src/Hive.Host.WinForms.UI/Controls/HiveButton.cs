@@ -32,10 +32,10 @@ public sealed class HiveButton : UserControl
 
     [Browsable(true)]
     [DefaultValue("Button")]
-    public override string Text
+    public override string? Text
     {
         get => _renderer.Text;
-        set => _renderer.Text = value;
+        set => _renderer.Text = value ?? string.Empty;
     }
 
     [DefaultValue(true)]
