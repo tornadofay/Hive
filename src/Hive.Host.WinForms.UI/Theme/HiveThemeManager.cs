@@ -90,7 +90,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
         {
             // Resume children first. The root performs the single final layout pass,
             // preventing theme changes from producing transient gaps or reflow artifacts.
-            for (var index = controls.Count - 1; index >= 0; index--)
+            for (var index = controls.Count - 1; index > 0; index--)
                 controls[index].ResumeLayout(false);
 
             root.ResumeLayout(true);
