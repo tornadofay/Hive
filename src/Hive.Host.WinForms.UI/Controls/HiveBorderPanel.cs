@@ -2,6 +2,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Theme;
+using System.ComponentModel;
 
 namespace Hive.Host.WinForms.UI.Controls;
 
@@ -25,6 +26,7 @@ internal sealed class HiveBorderPanel : Panel
         BackColor = SystemColors.Window;
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     internal int CornerRadius
     {
         get => _cornerRadius;

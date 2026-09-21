@@ -267,7 +267,6 @@ public static class HiveMessageBox
                 Margin = Padding.Empty,
                 ColumnCount = 1,
                 RowCount = 3,
-                Margin = Padding.Empty,
                 Padding = Padding.Empty,
                 BackColor = _theme.Palette.Surface
             };

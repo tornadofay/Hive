@@ -202,7 +202,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
         grid.GridColor = theme.Palette.Border;
         grid.BorderStyle = BorderStyle.FixedSingle;
         grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
-        grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.SingleHorizontal;
+        grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Raised;
         grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
         grid.ColumnHeadersHeight = 36;
         grid.RowTemplate.Height = 32;
