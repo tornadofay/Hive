@@ -4,13 +4,13 @@ Last updated: 2026-09-21
 
 ## Repository state
 
-Phase 0.1, 0.2, and 0.3 are complete. The active implementation slice is Phase 0.4 Persistence bootstrap. The 0.3 source contracts, tests, and public API example are committed to main and the developer has verified the full suite.
+Phase 0.1, 0.2, 0.3, and 0.4 are complete. The active implementation slice is Phase 0.5 Test harness. The 0.4 persistence implementation and verification are committed to main and the developer has verified the full suite.
 
 ## Current phase
 
 Phase 0 — Foundations.
 
-**Active slice: 0.4 — Persistence bootstrap.**
+**Active slice: 0.5 — Test harness.**
 
 ## Architecture decisions now locked
 
@@ -71,9 +71,7 @@ Developer verification: **36 tests passed, 0 failed, 0 skipped in 1.5 seconds.**
 
 ### Phase 0.4 — Persistence bootstrap
 
-Active slice. Implementation is present in Hive.Persistence; developer verification is pending.
-
-Implemented:
+Completed in Hive.Persistence:
 - SQL Server/LocalDB database configuration with automatic database creation enabled by default;
 - DbUp SQL Server 7.2.0 migration runner;
 - Microsoft.Data.SqlClient 7.1.0;
@@ -84,7 +82,7 @@ Implemented:
 - persistence option tests and SQL integration tests;
 - public example under docs/examples/Phase04_Persistence.md.
 
-The required SQL Server/LocalDB integration suite has not yet been run, so 0.4 is not complete.
+Developer verification: **44 tests passed, 0 failed, 0 skipped in 3.3 seconds.** The persistence integration tests executed successfully against the developer SQL Server instance and created the Hive test databases.
 
 ## Completed
 
@@ -114,14 +112,13 @@ The required SQL Server/LocalDB integration suite has not yet been run, so 0.4 i
 
 ## Not started
 
-- Phase 0.4 Persistence bootstrap — active and awaiting developer verification.
-- Phase 0.5 Test harness beyond slice-specific tests already introduced.
+- Phase 0.5 Test harness — active.
+- Phase 0.5 Test harness — active.
 - Phase 0.6 WinForms UI/UX Foundation.
 - Phase 0.7 Example Host Shell.
 - Phase 0.8 Example Developer Test Tools.
 - Later implementation slices.
-- Database schema.
 - WinForms management host.
 - Example application features.
 
-0.4 is active. 0.3 is complete; no 0.4 pass claim is recorded until its required migration verification is actually performed.
+0.5 is active. 0.4 is complete and verified; no 0.5 pass claim is recorded yet.
