@@ -426,9 +426,6 @@ internal sealed class HiveExampleHostForm : HiveForm
 
         nextView.Dock = DockStyle.Fill;
 
-        _outputView.Clear();
-        _outputView.SetCollapsed(true);
-
         try
         {
             var previousView = _activeView;
@@ -453,6 +450,9 @@ internal sealed class HiveExampleHostForm : HiveForm
             _viewTitle.Text = example.Title;
             _viewSubtitle.Text =
                 $"{example.Category} / {example.Subcategory}";
+
+            _outputView.Clear();
+            _outputView.SetCollapsed(true);
         }
         catch
         {
