@@ -110,10 +110,15 @@ internal sealed partial class ThemeFoundationExampleForm
         object? sender,
         HiveCrudOperationFailedEventArgs e)
     {
-        HiveMessageBox.ShowError(
+        HiveMessageBox.Show(
             this,
-            $"The generic CRUD example could not complete the {e.Operation.ToString().ToLowerInvariant()} operation.",
-            "CRUD example",
+            new HiveMessageOptions(
+                "CRUD operation failed",
+                $"The {e.Operation.ToString().ToLowerInvariant()} operation could not be completed.",
+                HiveMessageType.Error,
+                MessageBoxButtons.OK,
+                e.Exception.ToString(),
+                DetailsExpanded: true),
             ThemeManager);
     }
 
