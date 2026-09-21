@@ -66,7 +66,6 @@ internal sealed class HiveBorderPanel : Panel
         if (BackColor != theme.Palette.Surface)
             BackColor = theme.Palette.Surface;
 
-        RebuildRegion();
         Invalidate();
     }
 
