@@ -11,7 +11,9 @@ internal sealed class HiveExampleHostForm : HiveForm
     private const int NavigationWidth = 236;
     private const int CompactNavigationWidth = 214;
     private const int OutputExpandedHeight = 176;
-    private const int OutputCollapsedHeight = 44;
+    private const int OutputButtonWidth = 118;
+    private const int OutputButtonHeight = 36;
+    private const int OutputButtonMargin = 12;
 
     private readonly IHiveThemeManager _themeManager;
     private readonly HiveExampleServices _services;
@@ -27,6 +29,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     private readonly TableLayoutPanel _contentLayout;
     private readonly TableLayoutPanel _shell;
     private readonly HiveExampleOutputView _outputView;
+    private readonly HiveButton _outputRevealButton;
     private readonly Font _navigationTitleFont;
     private readonly Font _navigationDescriptionFont;
     private readonly Font _viewTitleFont;
@@ -53,7 +56,21 @@ internal sealed class HiveExampleHostForm : HiveForm
 
         _themeManager = ThemeManager;
         _outputView = new HiveExampleOutputView();
+        _outputRevealButton = new HiveButton
+        {
+            Text = "Show Output",
+            Style = HiveButtonStyle.Secondary,
+            Size = new Size(OutputButtonWidth, OutputButtonHeight),
+            Margin = Padding.Empty,
+            Anchor = AnchorStyles.Right | AnchorStyles.Bottom,
+            TabIndex = 0
+        };
+        _outputRevealButton.Click += (_, _) =>
+            _outputView.SetCollapsed(false);
+
         _outputView.CollapseStateChanged += OutputViewOnCollapseStateChanged;
+        _outputView.OutputAvailabilityChanged += OutputViewOnOutputAvailabilityChanged;
+
         _services = new HiveExampleServices(
             _themeManager,
             _outputView);
@@ -149,14 +166,13 @@ internal sealed class HiveExampleHostForm : HiveForm
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 4,
+            RowCount = 3,
             Margin = Padding.Empty,
             Padding = new Padding(24, 18, 24, 20)
         };
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        _contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, OutputExpandedHeight));
 
         _viewTitle = new Label
         {
@@ -181,11 +197,11 @@ internal sealed class HiveExampleHostForm : HiveForm
             Margin = new Padding(0, 0, 0, 12),
             Padding = Padding.Empty
         };
+        _viewHost.Resize += (_, _) => UpdateOutputOverlayBounds();
 
         _contentLayout.Controls.Add(_viewTitle, 0, 0);
         _contentLayout.Controls.Add(_viewSubtitle, 0, 1);
         _contentLayout.Controls.Add(_viewHost, 0, 2);
-        _contentLayout.Controls.Add(_outputView, 0, 3);
 
         _shell.Controls.Add(_navigationSurface, 0, 0);
         _shell.Controls.Add(_navigationSeparator, 1, 0);
@@ -194,10 +210,17 @@ internal sealed class HiveExampleHostForm : HiveForm
         BodyPanel.Padding = Padding.Empty;
         BodyPanel.Controls.Add(_shell);
 
+        _viewHost.Controls.Add(_outputRevealButton);
+        _viewHost.Controls.Add(_outputView);
+        _outputView.BringToFront();
+        _outputRevealButton.BringToFront();
+
         BuildNavigation();
         _themeManager.Apply(BodyPanel);
         _responsiveLayoutReady = true;
         UpdateResponsiveLayout();
+        UpdateOutputOverlayBounds();
+        OutputViewOnCollapseStateChanged(_outputView, EventArgs.Empty);
         SelectFirstExample();
     }
 
@@ -205,12 +228,19 @@ internal sealed class HiveExampleHostForm : HiveForm
     {
         base.OnResize(e);
         UpdateResponsiveLayout();
+        UpdateOutputOverlayBounds();
     }
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
+        {
+            _navigation.AfterSelect -= NavigationAfterSelect;
+            _outputView.CollapseStateChanged -= OutputViewOnCollapseStateChanged;
+            _outputView.OutputAvailabilityChanged -= OutputViewOnOutputAvailabilityChanged;
+            _outputRevealButton.Dispose();
             DisposeActiveView();
+        }
 
         base.Dispose(disposing);
 
@@ -236,9 +266,6 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private void UpdateResponsiveLayout()
     {
-        // WinForms can raise OnResize while the base HiveForm constructor is
-        // still constructing the derived form. Do not touch derived fields
-        // until the Example Host layout has been initialized.
         if (!_responsiveLayoutReady ||
             ClientSize.Width <= 0 ||
             _shell.ColumnStyles.Count == 0)
@@ -252,6 +279,37 @@ internal sealed class HiveExampleHostForm : HiveForm
             return;
 
         _shell.ColumnStyles[0].Width = width;
+    }
+
+    private void UpdateOutputOverlayBounds()
+    {
+        if (_viewHost.ClientSize.Width <= 0 ||
+            _viewHost.ClientSize.Height <= 0)
+            return;
+
+        var outputHeight = Math.Min(
+            OutputExpandedHeight,
+            Math.Max(120, _viewHost.ClientSize.Height));
+
+        _outputView.Bounds = new Rectangle(
+            0,
+            Math.Max(0, _viewHost.ClientSize.Height - outputHeight),
+            _viewHost.ClientSize.Width,
+            outputHeight);
+
+        _outputRevealButton.Bounds = new Rectangle(
+            Math.Max(
+                0,
+                _viewHost.ClientSize.Width -
+                OutputButtonWidth -
+                OutputButtonMargin),
+            Math.Max(
+                0,
+                _viewHost.ClientSize.Height -
+                OutputButtonHeight -
+                OutputButtonMargin),
+            OutputButtonWidth,
+            OutputButtonHeight);
     }
 
     private void BuildNavigation()
@@ -289,8 +347,6 @@ internal sealed class HiveExampleHostForm : HiveForm
                 });
         }
 
-        // Keep the navigation compact on startup. Users expand only the branch
-        // they need instead of receiving an open tree by default.
         _navigation.CollapseAll();
     }
 
@@ -302,8 +358,6 @@ internal sealed class HiveExampleHostForm : HiveForm
             if (firstExample?.Tag is not IHiveExample example)
                 continue;
 
-            // Initialize the main view directly, then leave the navigation compact
-            // with its Overview category visible as the startup context.
             ShowExample(example);
             _navigation.CollapseAll();
             _navigation.SelectedNode = category;
@@ -334,16 +388,20 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private void ShowExample(IHiveExample example)
     {
+        _outputView.Clear();
+        _outputView.SetCollapsed(true);
+
         var nextView = example.CreateView(_services);
         ArgumentNullException.ThrowIfNull(nextView);
 
         nextView.Dock = DockStyle.Fill;
 
-        _viewHost.SuspendLayout();
         try
         {
             var previousView = _activeView;
-            _viewHost.Controls.Clear();
+            if (previousView is not null)
+                _viewHost.Controls.Remove(previousView);
+
             _viewHost.Controls.Add(nextView);
             _activeView = nextView;
 
@@ -358,10 +416,10 @@ internal sealed class HiveExampleHostForm : HiveForm
             nextView.Dispose();
             throw;
         }
-        finally
-        {
-            _viewHost.ResumeLayout(true);
-        }
+
+        _outputView.BringToFront();
+        _outputRevealButton.BringToFront();
+        UpdateOutputOverlayBounds();
 
         _themeManager.Apply(nextView);
 
@@ -371,12 +429,20 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private void OutputViewOnCollapseStateChanged(object? sender, EventArgs e)
     {
-        _contentLayout.RowStyles[3].Height =
-            _outputView.IsCollapsed
-                ? OutputCollapsedHeight
-                : OutputExpandedHeight;
+        _outputRevealButton.Visible = _outputView.IsCollapsed;
+        if (!_outputView.IsCollapsed)
+            _outputView.BringToFront();
+        else
+            _outputRevealButton.BringToFront();
+    }
 
-        _contentLayout.PerformLayout();
+    private void OutputViewOnOutputAvailabilityChanged(object? sender, EventArgs e)
+    {
+        if (_outputView.OutputTextBox.TextLength == 0)
+            return;
+
+        _outputView.SetCollapsed(false);
+        _outputView.BringToFront();
     }
 
     private void DisposeActiveView()
@@ -387,7 +453,7 @@ internal sealed class HiveExampleHostForm : HiveForm
         if (activeView is null)
             return;
 
-        _viewHost.Controls.Clear();
+        _viewHost.Controls.Remove(activeView);
         activeView.Dispose();
     }
 }
