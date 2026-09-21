@@ -11,9 +11,9 @@ Vision, document parsing, structured extraction, validation, business-app integr
 ```
 Host Application
       │
-      ├── API integration
-      │        or
-      └── scoped UI integration when the real host has no usable API
+      ├── API/service integration
+      └── bounded UI integration
+           (both may be used for the same WorkItem/operation)
       │
       ▼
 +------------------------------------------------------+
@@ -108,6 +108,8 @@ ai.Register(this);
 
 Registration may bind or reuse a specialized Agent. It does not automatically create an Agent or Hive, and multiple open forms do not automatically become a Hive merely because they are visible at the same time.
 
+For V1, business-app integration supports **both API/service and bounded UI integration**. They are not mutually exclusive: a WorkItem or individual operation may use the API, the UI, or both. The V1 WinForms UI path can discover the application's Form hierarchy, UserControls, `Control`-derived and custom controls, containers such as Panels and GroupBoxes, nested controls, and relevant runtime/data-source context. Discovery provides context only; it never grants permission to click, edit, invoke, or otherwise mutate a control.
+
 ## V1 work-unit semantics
 
 One submitted document is one WorkItem. A batch is multiple WorkItems. WorkItem identity and lifecycle are independent of individual runtime/execution lifetimes.
@@ -147,11 +149,9 @@ Questions are explicit cognitive work items. A Hive may route different Question
 ## V1 data-entry pipeline
 
 ```
-Document / image
+Image (first V1 input)
       ↓
-parse / rasterize
-      ↓
-text or vision capability
+image preparation / vision
       ↓
 structured extraction
       ↓
@@ -164,12 +164,11 @@ Approve / Reject
 
 The business-app write is a governed Tool. Hive never treats its own database as a gateway to the host application's business database.
 
-The exact integration boundary is decided before the write implementation:
+V1 does not choose between API and UI as an architecture decision. Both integration paths are supported from the start, and the implementation may use either or both per operation according to the real application's capabilities and authorization policy.
 
-- API/service when the real application exposes a usable API;
-- narrowly scoped UI/control integration when it does not.
+The first V1 input is an image. Additional document formats can be added later without redefining Hive.
 
-A generic host-integration framework is deliberately later.
+Generic cross-host integration remains later; the initial UI discovery contract is specifically for the real WinForms host boundary used by V1.
 
 ## Core principles
 
@@ -211,7 +210,7 @@ Later areas are added when their owning phase lands: Hive Membership, Governance
 
 `Hive.Example.WinForms` demonstrates the public API and real-host composition.
 
-Examples are developed alongside the feature they demonstrate and are not a substitute for automated tests.
+Examples are developed alongside the feature they demonstrate. The developer performs manual UI/application testing; no separate smoke-test or UI-automation framework is required by the architecture.
 
 ## Automated tests
 
@@ -233,7 +232,7 @@ Important categories include:
 - later cognitive state and recovery;
 - host integration boundaries.
 
-No test coverage or verification claim is made until the corresponding test actually exists and has actually been run.
+No test coverage or verification claim is made until the corresponding test or manual verification actually exists and has actually been performed.
 
 ## Repository structure
 
