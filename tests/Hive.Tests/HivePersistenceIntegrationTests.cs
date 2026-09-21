@@ -6,21 +6,13 @@ using Xunit;
 
 namespace Hive.Tests;
 
-[Collection("HivePersistence")]
 public sealed class HivePersistenceIntegrationTests
 {
-    private readonly HivePersistenceDatabaseFixture _database;
-
-    public HivePersistenceIntegrationTests(HivePersistenceDatabaseFixture database)
-    {
-        _database = database;
-    }
-
     [Fact]
     public async Task CleanAndRepeatMigration_IsIdempotentAndRecordsCurrentSchema()
     {
-        _database.ResetSchema();
-        var options = _database.Options;
+        var options = CreateOptions("Hive_Test_CleanRepeat");
+        ResetSchema(options);
 
         var migrator = new HiveDatabaseMigrator(options);
 
@@ -49,8 +41,8 @@ public sealed class HivePersistenceIntegrationTests
     [Fact]
     public async Task FutureSchemaVersion_IsRejectedBeforeMigration()
     {
-        _database.ResetSchema();
-        var options = _database.Options;
+        var options = CreateOptions("Hive_Test_FutureSchema");
+        ResetSchema(options);
 
         var migrator = new HiveDatabaseMigrator(options);
         var initial = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
@@ -75,13 +67,17 @@ public sealed class HivePersistenceIntegrationTests
     [Fact]
     public async Task FailedMigration_DoesNotAdvanceSchemaVersionOrLeavePartialChanges()
     {
-        _database.ResetSchema();
-        var options = _database.Options;
+        var options = CreateOptions("Hive_Test_FailedMigration");
+        ResetSchema(options);
 
         var migrator = new HiveDatabaseMigrator(options);
         var initial = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
 
-        Assert.True(initial.IsSuccess);
+        Assert.True(
+            initial.IsSuccess,
+            initial.Error is null
+                ? "Initial migration failed without an error."
+                : $"Initial migration failed: {initial.Error.Code} [{initial.Error.Category}] {initial.Error.Message}");
 
         var failingUpgrade = DeployChanges
             .To.SqlDatabase(options.ConnectionString)
@@ -101,11 +97,48 @@ public sealed class HivePersistenceIntegrationTests
 
         var result = failingUpgrade.PerformUpgrade();
 
-        Assert.False(result.Successful, result.Error?.Message ?? "The intentional failing migration unexpectedly succeeded.");
+        Assert.False(
+            result.Successful,
+            result.Error?.Message ?? "The intentional failing migration unexpectedly succeeded.");
         Assert.Equal(
             HiveDatabaseSchema.CurrentSchemaVersion,
             await ReadSchemaVersionAsync(options));
         Assert.False(await TableExistsAsync(options, "HiveMigrationFailureProbe"));
+    }
+
+    private static HiveDatabaseOptions CreateOptions(string databaseName)
+    {
+        var builder = new SqlConnectionStringBuilder(
+            HivePersistenceTestConfiguration.ConnectionString)
+        {
+            InitialCatalog = databaseName,
+            ApplicationName = "Hive.Tests"
+        };
+
+        return new HiveDatabaseOptions(
+            builder.ConnectionString,
+            createDatabaseIfMissing: true);
+    }
+
+    private static void ResetSchema(HiveDatabaseOptions options)
+    {
+        EnsureDatabase.For.SqlDatabase(options.ConnectionString);
+
+        using var connection = new SqlConnection(options.ConnectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            IF OBJECT_ID(N'dbo.HiveMigrationJournal', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveMigrationJournal];
+
+            IF OBJECT_ID(N'dbo.HiveSchemaVersion', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveSchemaVersion];
+
+            IF OBJECT_ID(N'dbo.HiveMigrationFailureProbe', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveMigrationFailureProbe];
+            """;
+        command.ExecuteNonQuery();
     }
 
     private static async Task<int> ReadSchemaVersionAsync(HiveDatabaseOptions options)
