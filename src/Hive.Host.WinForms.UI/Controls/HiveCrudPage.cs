@@ -29,12 +29,12 @@ public sealed class HiveCrudOperationFailedEventArgs : EventArgs
 
 public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 {
-    private const int HeaderHeight = 58;
-    private const int ActionBarHeight = 44;
-    private const int FooterHeight = 40;
-    private const int ActionButtonWidth = 86;
-    private const int ActionBarActionsWidth = 400;
-    private const int PaginationWidth = 250;
+    private const int HeaderHeight = 64;
+    private const int ActionBarHeight = 46;
+    private const int FooterHeight = 42;
+    private const int ActionButtonWidth = 84;
+    private const int ActionBarActionsWidth = 380;
+    private const int PaginationWidth = 230;
     private const int DefaultPageSize = 25;
 
     private readonly HiveListPageLayout _pageLayout;
@@ -79,9 +79,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             ActionBarHeight = ActionBarHeight
         };
 
-        _titleFont = new Font("Segoe UI Semibold", 15.5f, FontStyle.Bold);
+        _titleFont = new Font("Segoe UI Semibold", 15f, FontStyle.Bold);
         _descriptionFont = new Font("Segoe UI", 8.9f);
-        _searchLabelFont = new Font("Segoe UI Semibold", 8.7f, FontStyle.Bold);
+        _searchLabelFont = new Font("Segoe UI Semibold", 8.8f, FontStyle.Bold);
 
         _titleLabel = new Label
         {
@@ -90,7 +90,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Font = _titleFont,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
-            Text = "Items"
+            Text = "Items",
+            TabIndex = 0
         };
 
         _descriptionLabel = new Label
@@ -146,7 +147,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             BorderStyle = BorderStyle.FixedSingle,
             Margin = Padding.Empty,
             Padding = new Padding(8, 6, 8, 6),
-            PlaceholderText = "Search by any visible value..."
+            PlaceholderText = "Search...",
+            TabIndex = 1
         };
         _searchBox.TextChanged += SearchBoxOnTextChanged;
         _searchBox.KeyDown += SearchBoxOnKeyDown;
@@ -201,18 +203,10 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Padding = new Padding(1)
         };
 
-        _list = new ListView
+        _list = new HiveListView
         {
             Dock = DockStyle.Fill,
-            View = View.Details,
-            FullRowSelect = true,
-            HideSelection = false,
-            GridLines = false,
-            MultiSelect = false,
-            HeaderStyle = ColumnHeaderStyle.Nonclickable,
-            BorderStyle = BorderStyle.FixedSingle,
-            LabelWrap = false,
-            Margin = Padding.Empty
+            TabIndex = 2
         };
         _list.SelectedIndexChanged += (_, _) => UpdateActionState();
         _list.ItemActivate += async (_, _) =>
@@ -227,6 +221,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Dock = DockStyle.Fill,
             AutoSize = false,
             TextAlign = ContentAlignment.MiddleCenter,
+            Font = new Font("Segoe UI", 9.5f),
             Margin = Padding.Empty,
             Padding = new Padding(16),
             Visible = false
@@ -252,13 +247,14 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             AutoSize = false,
             TextAlign = ContentAlignment.MiddleLeft,
             Margin = Padding.Empty,
-            Padding = new Padding(2, 0, 0, 0)
+            Padding = new Padding(4, 0, 0, 0)
         };
 
         _pagination = new HivePaginationBar
         {
             Dock = DockStyle.Fill,
-            Height = FooterHeight
+            Height = FooterHeight,
+            TabStop = true
         };
         _pagination.PreviousRequested += (_, _) => ChangePage(-1);
         _pagination.NextRequested += (_, _) => ChangePage(1);
