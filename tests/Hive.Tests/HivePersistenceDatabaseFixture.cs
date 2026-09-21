@@ -1,4 +1,5 @@
 using DbUp;
+using Hive.Core;
 using Hive.Persistence;
 using Microsoft.Data.SqlClient;
 using Xunit;
@@ -9,8 +10,8 @@ public sealed class HivePersistenceDatabaseFixture : IDisposable
 {
     public HivePersistenceDatabaseFixture()
     {
-        DatabaseName = $"Hive_Test_{Guid.NewGuid():N}";
-        Options = CreateOptions(DatabaseName);
+        Options = new HiveDatabaseOptions(HivePersistenceTestConfiguration.ConnectionString);
+        DatabaseName = Options.DatabaseName;
         EnsureDatabase.For.SqlDatabase(Options.ConnectionString);
         Console.WriteLine($"Hive persistence test database: {DatabaseName}");
     }
@@ -37,29 +38,6 @@ public sealed class HivePersistenceDatabaseFixture : IDisposable
 
     public void Dispose()
     {
-        if (string.Equals(
-            Environment.GetEnvironmentVariable("HIVE_KEEP_TEST_DATABASE"),
-            "1",
-            StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        using var connection = CreateMasterConnection();
-        connection.Open();
-
-        using var command = connection.CreateCommand();
-        var escapedName = DatabaseName.Replace("]", "]]", StringComparison.Ordinal);
-        var quotedLiteral = DatabaseName.Replace("'", "''", StringComparison.Ordinal);
-
-        command.CommandText = $"""
-            IF DB_ID(N'{quotedLiteral}') IS NOT NULL
-            BEGIN
-                ALTER DATABASE [{escapedName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-                DROP DATABASE [{escapedName}];
-            END;
-            """;
-        command.ExecuteNonQuery();
     }
 
     private SqlConnection CreateMasterOrDatabaseConnection()
@@ -77,23 +55,6 @@ public sealed class HivePersistenceDatabaseFixture : IDisposable
         return new SqlConnection(builder.ConnectionString);
     }
 
-    private static HiveDatabaseOptions CreateOptions(string databaseName)
-    {
-        var connectionString = Environment.GetEnvironmentVariable("HIVE_TEST_CONNECTION_STRING");
-
-        if (string.IsNullOrWhiteSpace(connectionString))
-            return HiveDatabaseOptions.LocalDevelopment(databaseName);
-
-        var builder = new SqlConnectionStringBuilder(connectionString)
-        {
-            InitialCatalog = databaseName,
-            ApplicationName = "Hive.Tests"
-        };
-
-        return new HiveDatabaseOptions(
-            builder.ConnectionString,
-            createDatabaseIfMissing: true);
-    }
 }
 
 [CollectionDefinition("HivePersistence", DisableParallelization = true)]
