@@ -4,7 +4,7 @@ Last updated: 2026-09-21
 
 ## Repository state
 
-Architecture/documentation baseline only. No implementation has started.
+Architecture/documentation baseline is implemented through the initial 0.1 scaffold. Implementation has started, but 0.1 verification has not yet been completed or claimed.
 
 ## Current phase
 
@@ -53,14 +53,14 @@ Phase 0 — Foundations.
 
 ## Not started
 
-- Phase 0.1 solution/project scaffolding.
+- Phase 0.1 solution/project scaffolding — active.
 - Phase 0.6 WinForms UI/UX Foundation.
 - Phase 0.7 Example Host Shell.
 - Phase 0.8 Example Developer Test Tools.
-- Implementation code.
+- Later implementation slices remain not started.
 - Database schema.
 - Automated tests.
 - WinForms management host.
 - Example application.
 
-No implementation or test-coverage claims are made beyond this documentation baseline.
+The 0.1 scaffold has been committed, but no build/test verification has been performed or claimed in this environment.
