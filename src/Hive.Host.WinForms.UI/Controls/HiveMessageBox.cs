@@ -854,6 +854,7 @@ public static class HiveMessageBox
         private SolidBrush? _textBrush;
         private SolidBrush? _disabledBrush;
         private Pen? _focusPen;
+        private Pen? _borderPen;
 
         public HiveMessageButton()
         {
@@ -909,6 +910,15 @@ public static class HiveMessageBox
             _focusPen = new Pen(
                 palette.Accent,
                 2f);
+
+            _borderPen = new Pen(
+                kind == HiveMessageButtonKind.Primary
+                    ? palette.AccentHover
+                    : palette.Border,
+                1f)
+            {
+                Alignment = PenAlignment.Inset
+            };
 
             Invalidate();
         }
@@ -992,6 +1002,9 @@ public static class HiveMessageBox
                 TextFormatFlags.EndEllipsis |
                 TextFormatFlags.NoPrefix);
 
+            if (_borderPen is not null)
+                e.Graphics.DrawPath(_borderPen, _path);
+
             if (Focused && _focusPen is not null)
             {
                 var lineWidth = Math.Max(
@@ -1038,6 +1051,7 @@ public static class HiveMessageBox
             _textBrush = null;
             _disabledBrush = null;
             _focusPen = null;
+            _borderPen = null;
         }
     }
 
