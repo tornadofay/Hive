@@ -314,6 +314,18 @@ public sealed class HiveThemeManager : IHiveThemeManager
         grid.RowHeadersDefaultCellStyle.ForeColor = theme.Palette.Text;
         grid.RowHeadersDefaultCellStyle.SelectionBackColor = theme.Palette.Selection;
         grid.RowHeadersDefaultCellStyle.SelectionForeColor = theme.Palette.Text;
+
+        if (!grid.Enabled)
+        {
+            grid.DefaultCellStyle.BackColor = theme.Palette.DisabledBackground;
+            grid.DefaultCellStyle.ForeColor = theme.Palette.DisabledText;
+            grid.DefaultCellStyle.SelectionBackColor = theme.Palette.DisabledBackground;
+            grid.DefaultCellStyle.SelectionForeColor = theme.Palette.DisabledText;
+            grid.AlternatingRowsDefaultCellStyle.BackColor =
+                theme.Palette.DisabledBackground;
+            grid.AlternatingRowsDefaultCellStyle.ForeColor =
+                theme.Palette.DisabledText;
+        }
     }
 
     private static void SetBackColor(Control control, Color color)
