@@ -331,13 +331,21 @@ public sealed class HiveThemeManager : IHiveThemeManager
     {
         grid.BackgroundColor = theme.Palette.WindowBackground;
         grid.GridColor = theme.Palette.Border;
-        grid.BorderStyle = BorderStyle.FixedSingle;
-        grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
-        grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Raised;
-        grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
-        grid.ColumnHeadersHeight = 36;
-        grid.RowTemplate.Height = 32;
-        grid.EnableHeadersVisualStyles = false;
+
+        if (grid.BorderStyle != BorderStyle.FixedSingle)
+            grid.BorderStyle = BorderStyle.FixedSingle;
+        if (grid.CellBorderStyle != DataGridViewCellBorderStyle.SingleHorizontal)
+            grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+        if (grid.RowHeadersBorderStyle != DataGridViewHeaderBorderStyle.Raised)
+            grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Raised;
+        if (grid.ColumnHeadersBorderStyle != DataGridViewHeaderBorderStyle.Single)
+            grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+        if (grid.ColumnHeadersHeight != 36)
+            grid.ColumnHeadersHeight = 36;
+        if (grid.RowTemplate.Height != 32)
+            grid.RowTemplate.Height = 32;
+        if (grid.EnableHeadersVisualStyles)
+            grid.EnableHeadersVisualStyles = false;
 
         grid.DefaultCellStyle.BackColor = theme.Palette.InputBackground;
         grid.DefaultCellStyle.ForeColor = theme.Palette.Text;
