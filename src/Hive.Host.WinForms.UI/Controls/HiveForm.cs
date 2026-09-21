@@ -202,6 +202,17 @@ public abstract class HiveForm : Form
         if (!IsHandleCreated || Width <= 0 || Height <= 0)
             return;
 
+        // Maximized WinForms windows should use the full client rectangle.
+        // Keeping the rounded Region while maximized clips the screen corners
+        // and can interfere with native resize/snap behavior.
+        if (WindowState == FormWindowState.Maximized)
+        {
+            Region = null;
+            _windowRegion?.Dispose();
+            _windowRegion = null;
+            return;
+        }
+
         var radius = Math.Min(
             Math.Max(1, CornerRadius),
             Math.Min(Width, Height) / 2);
