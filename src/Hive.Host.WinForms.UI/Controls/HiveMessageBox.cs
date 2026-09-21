@@ -814,12 +814,12 @@ public static class HiveMessageBox
                 TextFormatFlags.WordBreak | TextFormatFlags.NoPadding);
 
             _messageViewport.Height = Math.Max(
-                24,
-                Math.Min(MaxMessageHeight, messageMeasured.Height));
+                Scale(24),
+                Math.Min(maxMessageHeight, messageMeasured.Height));
 
             var messageHeight = Math.Max(
-                IconSize,
-                _title.PreferredHeight + 10 + _messageViewport.Height);
+                Scale(IconSize),
+                _title.PreferredHeight + Scale(10) + _messageViewport.Height);
 
             var detailsHeight = _detailsContainer.Visible
                 ? Scale(DetailsHeight)
@@ -971,7 +971,9 @@ public static class HiveMessageBox
                 _hoverBrush = new SolidBrush(palette.AccentHover);
                 _pressedBrush = new SolidBrush(palette.Border);
                 _textBrush = new SolidBrush(palette.AccentForeground);
-                _borderPen = new Pen(palette.Accent, 1f);
+                _borderPen = new Pen(
+                    palette.Accent,
+                    HiveDpi.Scale(this, 1f));
             }
             else
             {
@@ -979,11 +981,18 @@ public static class HiveMessageBox
                 _hoverBrush = new SolidBrush(theme.VisualStates.HoverBackground);
                 _pressedBrush = new SolidBrush(theme.VisualStates.PressedBackground);
                 _textBrush = new SolidBrush(palette.Text);
-                _borderPen = new Pen(palette.Border, 1f);
+                _borderPen = new Pen(
+                    palette.Border,
+                    HiveDpi.Scale(this, 1f));
             }
 
+            if (kind == HiveMessageButtonKind.Primary)
+                _borderPen?.Dispose();
+
             _disabledBrush = new SolidBrush(palette.DisabledBackground);
-            _focusPen = new Pen(palette.Accent, 2f);
+            _focusPen = new Pen(
+                palette.Accent,
+                HiveDpi.Scale(this, 2f));
 
             Invalidate();
         }
@@ -1074,15 +1083,21 @@ public static class HiveMessageBox
 
             if (Focused && _focusPen is not null)
             {
+                var inset = HiveDpi.Scale(this, 3f);
+                var focusPathWidth = Math.Max(
+                    1f,
+                    Width - inset * 2f - HiveDpi.Scale(this, 1f));
+                var focusPathHeight = Math.Max(
+                    1f,
+                    Height - inset * 2f - HiveDpi.Scale(this, 1f));
+
                 using var focusPath = CreateRoundedRectanglePath(
-                    var inset = HiveDpi.Scale(this, 3f);
-                    using var focusPath = CreateRoundedRectanglePath(
-                        new RectangleF(
-                            inset,
-                            inset,
-                            Width - inset * 2f - HiveDpi.Scale(this, 1f),
-                            Height - inset * 2f - HiveDpi.Scale(this, 1f)),
-                        HiveDpi.Scale(this, 6f));
+                    new RectangleF(
+                        inset,
+                        inset,
+                        focusPathWidth,
+                        focusPathHeight),
+                    HiveDpi.Scale(this, 6f));
                 e.Graphics.DrawPath(_focusPen, focusPath);
             }
         }
