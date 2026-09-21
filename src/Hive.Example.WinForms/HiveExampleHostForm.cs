@@ -283,7 +283,11 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private void UpdateOutputOverlayBounds()
     {
-        if (_viewHost.ClientSize.Width <= 0 ||
+        // WinForms may raise OnResize while the base HiveForm constructor is
+        // still constructing this derived form. Do not access overlay controls
+        // until the Example Host layout has been initialized.
+        if (!_responsiveLayoutReady ||
+            _viewHost.ClientSize.Width <= 0 ||
             _viewHost.ClientSize.Height <= 0)
             return;
 
