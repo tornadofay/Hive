@@ -1,4 +1,5 @@
 using DbUp;
+using DbUp.Engine.Output;
 using Hive.Persistence;
 using Microsoft.Data.SqlClient;
 
@@ -22,7 +23,9 @@ internal sealed class PersistenceTestDatabase
             builder.ConnectionString,
             createDatabaseIfMissing: true);
 
-        EnsureDatabase.For.SqlDatabase(Options.ConnectionString);
+        EnsureDatabase.For.SqlDatabase(
+            Options.ConnectionString,
+            new NoOpUpgradeLog());
     }
 
     public HiveDatabaseOptions Options { get; }
