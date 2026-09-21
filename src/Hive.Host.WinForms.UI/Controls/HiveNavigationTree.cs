@@ -198,14 +198,14 @@ public sealed class HiveNavigationTree : TreeView
 
     protected override void Dispose(bool disposing)
     {
+        base.Dispose(disposing);
+
         if (disposing)
         {
             _categoryFont?.Dispose();
             _groupFont?.Dispose();
             _itemFont?.Dispose();
         }
-
-        base.Dispose(disposing);
     }
 
     private void RebuildFonts(HiveThemeDefinition theme)
