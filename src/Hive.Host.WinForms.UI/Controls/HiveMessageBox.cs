@@ -921,7 +921,7 @@ public static class HiveMessageBox
             {
                 _backgroundBrush = new SolidBrush(palette.Accent);
                 _hoverBrush = new SolidBrush(palette.AccentHover);
-                _pressedBrush = new SolidBrush(theme.VisualStates.PressedBackground);
+                _pressedBrush = new SolidBrush(ControlPaint.Dark(palette.Accent, 0.12f));
                 _textBrush = new SolidBrush(palette.AccentForeground);
             }
             else
