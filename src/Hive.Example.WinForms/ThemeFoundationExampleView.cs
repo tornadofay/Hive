@@ -268,12 +268,11 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
-            AutoSize = false,
+            AutoSize = true,
             AutoScroll = true,
-            MinimumSize = Size.Empty,
             Margin = Padding.Empty,
             Padding = new Padding(0, 2, 12, 2),
-            Visible = false
+            Visible = false,
         };
 
     private void BuildControlsPage()
