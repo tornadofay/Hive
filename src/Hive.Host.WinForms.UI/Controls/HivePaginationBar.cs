@@ -18,7 +18,7 @@ public sealed class HivePaginationBar : UserControl
     public HivePaginationBar()
     {
         _pageFont = new Font("Segoe UI", 8.8f);
-        Height = 40;
+        Height = 42;
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
         Padding = new Padding(0, 3, 0, 3);
@@ -31,9 +31,9 @@ public sealed class HivePaginationBar : UserControl
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 88));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 88));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
 
         _previousButton = CreateButton("Previous");
         _previousButton.AccessibleName = "Previous page";
