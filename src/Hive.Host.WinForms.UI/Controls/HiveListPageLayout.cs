@@ -97,25 +97,6 @@ public sealed class HiveListPageLayout : UserControl
         }
     }
 
-    public void ApplyTheme(HiveThemeDefinition theme)
-    {
-        ArgumentNullException.ThrowIfNull(theme);
-
-        BackColor = theme.Palette.Surface;
-        _headerPanel.BackColor = theme.Palette.Surface;
-        _actionBarPanel.BackColor = theme.Palette.Surface;
-        _contentPanel.BackColor = theme.Palette.Surface;
-
-        if (_headerPanel.Controls.Count > 0)
-            ApplySurface(_headerPanel, theme);
-
-        if (_actionBarPanel.Controls.Count > 0)
-            ApplySurface(_actionBarPanel, theme);
-
-        if (_contentPanel.Controls.Count > 0)
-            ApplySurface(_contentPanel, theme);
-    }
-
     protected override void OnDpiChanged(DpiChangedEventArgs e)
     {
         base.OnDpiChanged(e);
