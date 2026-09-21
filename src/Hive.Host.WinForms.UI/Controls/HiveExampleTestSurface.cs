@@ -64,7 +64,7 @@ public sealed class HiveExampleTestSurface : UserControl
         _root.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
         _root.RowStyles.Add(
-            new RowStyle(SizeType.Absolute, 44));
+            new RowStyle(SizeType.AutoSize));
         _root.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
         _root.RowStyles.Add(
@@ -76,8 +76,8 @@ public sealed class HiveExampleTestSurface : UserControl
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
-            AutoSize = false,
+            WrapContents = true,
+            AutoSize = true,
             Margin = Padding.Empty,
             Padding = new Padding(0, 4, 0, 4)
         };
