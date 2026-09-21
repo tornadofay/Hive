@@ -430,6 +430,10 @@ internal sealed class HiveExampleHostForm : HiveForm
         {
             var previousView = _activeView;
 
+            // Theme the new view before it enters the visible host surface so
+            // switching examples never exposes an unthemed frame.
+            _themeManager.Apply(nextView);
+
             _viewHost.SuspendLayout();
             try
             {
@@ -466,8 +470,6 @@ internal sealed class HiveExampleHostForm : HiveForm
         _outputView.BringToFront();
         _outputRevealButton.BringToFront();
         UpdateOutputOverlayBounds();
-
-        _themeManager.Apply(nextView);
     }
 
     private void OutputViewOnCollapseStateChanged(object? sender, EventArgs e)
