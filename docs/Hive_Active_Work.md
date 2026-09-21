@@ -34,8 +34,8 @@ Current 0.6 implementation also fixes the example page navigation to keep one ac
 - added HiveButton using the selected renderer behind a Hive-owned control boundary;
 - added HiveMessageBox as a Hive-owned themed dialog;
 - added reusable data-page primitives: HiveListPageLayout and HivePaginationBar;
-- generic CRUD composition is now part of the 0.6 reusable UI foundation: HiveCrudPage<TItem> owns generic Add/Edit/Delete/Refresh interaction and selection, while consumers provide domain-specific load/edit/delete callbacks;
-- reusable editor-layout composition is planned for the repeated labeled-field/action-footer pattern found across HAgent configuration editors;
+- generic CRUD composition is now part of the 0.6 reusable UI foundation: HiveCrudPage<TItem> owns generic Add/Edit/Delete/Refresh interaction, selection, list population, busy-state, cancellation, and structured operation-failure notification, while consumers provide domain-specific load/edit/delete callbacks;
+- reusable editor-layout composition is implemented as HiveEditorLayout for the repeated labeled-field/action-footer pattern found across HAgent configuration editors;
 - replaced the Example startup placeholder with the 0.6 UI-foundation verification surface;
 - the full 0.7 Example Host Shell is intentionally not started yet;
 - removed the obsolete placeholder form.
@@ -59,6 +59,8 @@ The implementation requires verification of:
 2. representative Example form renders correctly in Dark mode;
 3. System mode resolves and renders correctly;
 4. HiveButton and HiveMessageBox work through Hive-owned contracts;
+5. the reusable CRUD example supports Add/Edit/Delete/Refresh and the list surface has practical display height;
+6. the reusable editor example demonstrates the labeled-field/action-footer composition;
 5. no consuming form references ReaLTaiizor directly;
 6. the solution builds and Hive.Example.WinForms launches normally.
 
