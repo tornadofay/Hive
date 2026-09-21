@@ -267,6 +267,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         if (!hasOutput)
         {
             _meta.Text = "No output yet";
+            _clearButton.Enabled = false;
             return;
         }
 
@@ -280,6 +281,8 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _meta.Text = lineCount == 1
             ? "1 line"
             : $"{lineCount:N0} lines";
+
+        _clearButton.Enabled = true;
     }
 
     internal void ApplyTheme(HiveThemeDefinition theme)
