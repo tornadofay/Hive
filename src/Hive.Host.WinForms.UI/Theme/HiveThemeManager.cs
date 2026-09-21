@@ -191,6 +191,14 @@ public sealed class HiveThemeManager : IHiveThemeManager
             case HivePaginationBar paginationBar:
                 paginationBar.ApplyTheme(theme);
                 break;
+
+            case HiveExampleTestSurface exampleTestSurface:
+                exampleTestSurface.ApplyTheme(theme);
+                break;
+
+            case HiveExampleOutputView exampleOutputView:
+                exampleOutputView.ApplyTheme(theme);
+                break;
         }
     }
 
