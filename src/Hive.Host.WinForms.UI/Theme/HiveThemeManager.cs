@@ -155,7 +155,22 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 palette.Border,
                 palette.Accent,
                 palette.Border,
-                palette.DisabledText));
+                palette.DisabledText)
+            {
+                NavigationBackground = effectiveMode == HiveThemeMode.Dark
+                    ? ColorTranslator.FromHtml("#17112F")
+                    : ColorTranslator.FromHtml("#1F1845"),
+                NavigationHover = effectiveMode == HiveThemeMode.Dark
+                    ? ColorTranslator.FromHtml("#2B2052")
+                    : ColorTranslator.FromHtml("#4C3684"),
+                NavigationPressed = effectiveMode == HiveThemeMode.Dark
+                    ? ColorTranslator.FromHtml("#21183E")
+                    : ColorTranslator.FromHtml("#3D2B6E"),
+                NavigationText = ColorTranslator.FromHtml("#F3F0FF"),
+                NavigationBorder = effectiveMode == HiveThemeMode.Dark
+                    ? ColorTranslator.FromHtml("#3C315F")
+                    : ColorTranslator.FromHtml("#5E4A92")
+            });
     }
 
     private static HiveThemeMode ResolveEffectiveMode(HiveThemeMode mode)
