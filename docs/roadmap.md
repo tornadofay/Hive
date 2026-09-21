@@ -12,7 +12,7 @@ Depending on the slice boundary, required coverage includes:
 2. contract/integration tests for persistence, MAF, HTTP/provider, configuration, or WinForms boundaries;
 3. concurrency/cancellation/recovery/stale-state tests for mutable runtime and durable state;
 4. security tests for authorization, scope, secrets, and unsafe inputs;
-5. UI smoke/automation for user-facing behavior that cannot be proven elsewhere;
+5. manual developer verification for user-facing UI behavior where applicable;
 6. public-API example verification for externally meaningful capabilities.
 
 No build, test, or verification claim may be recorded unless it was actually run.
@@ -60,7 +60,7 @@ Verify: no plaintext persistence, redacted diagnostics, replacement invalidates 
 
 ## 1.3 — OpenAI-compatible Provider Adapter
 Objective: one shared adapter parametrized by base URL and credentials for compatible hosted/local targets.
-Verify: local fake-server tests for success, malformed response, timeout, cancellation, authentication failure, rate limit, transport failure, and structured-output failure; one real-provider manual smoke test when available.
+Verify: local fake-server tests for success, malformed response, timeout, cancellation, authentication failure, rate limit, transport failure, and structured-output failure; the developer may manually verify a real provider when appropriate.
 
 ## 1.4 — Capability-aware Execution Target Selection
 Objective: required-capability filtering and explainable selection diagnostics.
@@ -92,7 +92,7 @@ Verify: duplicate delivery safety and crash-before-processing recovery.
 
 ## 1.9 — First Real Agent Execution
 Objective: connect a base Agent to MAF and the Hive provider boundary for one request, with correlation and durable lifecycle events.
-Verify: fake-provider automated path plus manual real-provider smoke test.
+Verify: fake-provider automated path plus manual real-provider developer verification when appropriate.
 
 ## 1.10 — Hive.Management Facade
 Objective: CRUD facade for Providers, ProviderAccounts, ExecutionTargets, and AgentDefinitions.
@@ -109,16 +109,16 @@ Verify: mode switching, default/explicit model selection in LLM mode, Agentic-mo
 
 ## 1.12 — HiveSettingsForm & Providers Page
 Objective: thin WinForms shell, shared configuration context, provider/account setup and connection test.
-Verify: UI smoke path; management logic remains outside the form.
+Verify: management logic remains outside the form; developer manually verifies the UI flow.
 
-## 1.13 — Document Parsing
-Objective: text extraction from Word, Excel, and text-native PDFs for the first chosen V1 document types.
-Verify: checked-in sample fixtures, malformed/corrupt input, bounded extraction.
+## 1.13 — Image Input & WinForms Host Context
+Objective: establish image as the first V1 input and define the concrete WinForms host-context boundary. The host integration must support broad Form/control discovery across Forms, UserControls, custom/inherited controls, Panels, GroupBoxes, other containers, nested controls, and relevant runtime/data-source context.
+Verify: checked-in image fixture, bounded/cycle-safe/cancellation-aware host discovery, correct context/provenance exposure, and no implied control-action authority.
 
-## 1.14 — Business-App Integration Boundary Decision
-Type: architecture decision gate.
-Objective: determine API/service integration versus UI-level integration for the real business application and define only the required V1 contract.
-Verify: documented decision, boundary contract, authorization model, test strategy, and exact host surface.
+## 1.14 — Dual Business-App Integration Contract
+Type: architecture/contract implementation slice.
+Objective: support both API/service and bounded UI integration. The same WorkItem or operation may use either path or both; the choice is made by actual operation capability and authorization, not a global API-vs-UI architecture gate.
+Verify: fake API path, fake/bounded WinForms UI path, authorization boundary, provenance, and combined API+UI path where a real operation needs both.
 
 ## 1.15 — Vision Routing
 Objective: rasterize/prepare non-text-extractable pages and route them to a Vision-capable execution target.
@@ -134,7 +134,7 @@ Verify: pending blocks execution; rejection prevents side effect; approval reach
 
 ## 1.18 — MAF Sequential V1 Pipeline
 Objective: wire ingest → extract → validate → write as one MAF Sequential workflow.
-Verify: end-to-end fake-host path plus one controlled real sample/manual smoke path.
+Verify: end-to-end fake-host path plus developer manual verification with one controlled real sample when available.
 
 ## 1.19 — Full-Pipeline Crash/Resume
 Objective: prove event/outbox/recovery behavior across the complete V1 pipeline.
@@ -261,20 +261,19 @@ Base Hive coordination remains usable without CognitiveHive.
 
 ---
 
-# Phase 7 — Generic Host Integration
+# Phase 7 — Additional Generic Host Integration
 
-Only pull this phase forward when a second real host application with meaningfully different integration requirements proves the need.
+Only pull this phase forward when a second real host application with meaningfully different integration requirements proves the need to generalize patterns already proven by the V1 WinForms boundary.
 
 ## 7.1 — Generic Host Context
 Provider-neutral bounded host observations/context.
 
-## 7.2 — Native Data-Source & Control Adapters
-Generalize the exact patterns proven in V1 to DataTable, BindingSource, DataGridView, native collections, controls, and other host representations.
+## 7.2 — Cross-Host Data-Source & Control Adapters
+Generalize V1's WinForms integration patterns to other host representations only when a second real host requires it.
 
-## 7.3 — Bounded Object Discovery
-Cycle-safe, cancellation-aware, bounded, read-oriented discovery with no authority implication.
+## 7.3 — Cross-Host Bounded Object Discovery
+Generalize the proven V1 discovery contract to other UI/object models. Discovery remains cycle-safe, cancellation-aware, bounded, read-oriented, and never grants action authority.
 
----
 
 # Phase 8 — Multi-Tenancy, Scale, Configuration Portability & Extensibility
 
