@@ -163,7 +163,7 @@ internal sealed class OverviewExampleView : UserControl
             Font = _linkFont,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
-            Text = "Open Hive on GitHub",
+            Text = "github.com/tornadofay/Hive",
             LinkBehavior = LinkBehavior.HoverUnderline,
             TabStop = true,
             TabIndex = 0,
@@ -327,7 +327,7 @@ internal sealed class OverviewExampleView : UserControl
         }
     }
 
-    private void ApplyTheme(HiveThemeDefinition theme)
+    internal void ApplyTheme(HiveThemeDefinition theme)
     {
         BackColor = theme.Palette.Surface;
         _hero.BackColor = theme.Palette.ElevatedSurface;
