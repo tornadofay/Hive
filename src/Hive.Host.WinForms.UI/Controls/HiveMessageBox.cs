@@ -1084,7 +1084,6 @@ public static class HiveMessageBox
 
             if (Focused && _focusPen is not null)
             {
-                var lineHeight = Math.Max(1f, HiveDpi.Scale(this, 2f));
                 var lineWidth = Math.Max(
                     HiveDpi.Scale(this, 28f),
                     Math.Min(
@@ -1100,7 +1099,8 @@ public static class HiveMessageBox
                     lineY,
                     lineX + lineWidth,
                     lineY);
-            }        }
+            }
+        }
 
         protected override void Dispose(bool disposing)
         {
