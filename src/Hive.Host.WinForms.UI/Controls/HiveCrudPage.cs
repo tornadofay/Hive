@@ -247,7 +247,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
         _getItemDisplayName = item => item?.ToString() ?? "item";
         UpdateActionState();
-        UpdateEmptyState();
+        UpdateEmptyState(0);
         UpdateStatusSummary(0);
     }
 
