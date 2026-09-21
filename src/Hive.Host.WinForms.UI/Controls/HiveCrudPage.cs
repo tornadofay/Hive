@@ -652,6 +652,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                 await LoadItemsCoreAsync(token);
             },
             CancellationToken.None);
+
+        RestoreScrollState(scrollState);
     }
 
     private List<(ScrollableControl Control, Point Position)> CaptureScrollState()
