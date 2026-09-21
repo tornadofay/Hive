@@ -84,6 +84,9 @@ public sealed class HiveExampleTestSurface : UserControl
         {
             Text = "Run example",
             Style = HiveButtonStyle.Primary,
+            AccessibleName = "Run example",
+            AccessibleDescription = "Run the current developer example.",
+
             Width = 126,
             Height = 36,
             Margin = Padding.Empty
@@ -106,6 +109,9 @@ public sealed class HiveExampleTestSurface : UserControl
         {
             Text = "Copy code",
             Style = HiveButtonStyle.Secondary,
+            AccessibleName = "Copy code",
+            AccessibleDescription = "Copy the C# reproduction snippet.",
+
             Width = 106,
             Height = 36,
             Margin = new Padding(8, 0, 0, 0)
@@ -150,6 +156,9 @@ public sealed class HiveExampleTestSurface : UserControl
         {
             Dock = DockStyle.Fill,
             Multiline = true,
+            AccessibleName = "Test input",
+            AccessibleDescription = "Editable input used by the current example.",
+
             ScrollBars = ScrollBars.Both,
             WordWrap = false,
             BorderStyle = BorderStyle.FixedSingle,
@@ -163,6 +172,9 @@ public sealed class HiveExampleTestSurface : UserControl
             Dock = DockStyle.Fill,
             Multiline = true,
             ReadOnly = true,
+            AccessibleName = "C# reproduction snippet",
+            AccessibleDescription = "Read-only C# code showing how to reproduce the example.",
+
             ScrollBars = ScrollBars.Both,
             WordWrap = false,
             BorderStyle = BorderStyle.FixedSingle,
