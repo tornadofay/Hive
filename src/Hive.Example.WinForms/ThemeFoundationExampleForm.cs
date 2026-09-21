@@ -259,7 +259,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         {
             AutoSize = true,
             Text = "Reusable list composition",
-            Font = new Font("Segoe UI", 11f, FontStyle.Bold),
+            Font = CreateOwnedBoldFont(11f),
             ForeColor = Theme.Palette.Text
         });
 
