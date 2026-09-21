@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-21 (rev 22 — production CRUD/editor UX composition)
+Last updated: 2026-09-21 (rev 23 — first-class Example Host Shell)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -878,6 +878,8 @@ The foundation must not become a complete replacement control toolkit. Standard 
 This layer is replaceable: changing the underlying rendering library must not require unrelated forms to change their public Hive UI contracts.
 
 ### 13.2 First-Class Example Host
+The Phase 0.7 shell is a host-side composition surface, not a Hive platform runtime. It discovers only IHiveExample implementations from designated Example assemblies, builds a Category → Subcategory → Example tree, and replaces one right-side UserControl view at a time. The shell owns view lifetime and navigation state; individual examples own their feature UI and do not register themselves with the shell manually.
+
 
 `Hive.Example.WinForms` is a permanent developer-facing application used to demonstrate public APIs, inspect platform behavior, and reduce developer friction while building Hive.
 
