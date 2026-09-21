@@ -166,7 +166,7 @@ public sealed class HiveEditorLayout : UserControl
         return button;
     }
 
-    private static Panel CreateLabelPanel(
+    private Panel CreateLabelPanel(
         string title,
         string description)
     {
