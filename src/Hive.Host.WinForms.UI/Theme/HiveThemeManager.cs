@@ -22,7 +22,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
         Color.White,
         ColorTranslator.FromHtml("#FFFFFF"),
         ColorTranslator.FromHtml("#F1F3F5"),
-        ColorTranslator.FromHtml("#7A8699"),
+        ColorTranslator.FromHtml("#667085"),
         ColorTranslator.FromHtml("#DCE9FF"));
 
     private static readonly HivePalette DarkPalette = new(
