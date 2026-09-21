@@ -9,38 +9,42 @@ internal sealed partial class ThemeFoundationExampleForm
 {
     private readonly List<CrudExampleItem> _crudExampleItems =
     [
-        new(1, "Example provider", "Provider", "Enabled"),
-        new(2, "Example agent", "Agent", "Enabled"),
-        new(3, "Example resource", "Resource", "Ready"),
-        new(4, "Example workspace", "Workspace", "Ready"),
-        new(5, "Example execution", "Execution", "Running")
+        new(1, "OpenAI-compatible provider", "Provider", "Enabled"),
+        new(2, "Document extraction agent", "Agent", "Enabled"),
+        new(3, "Business application", "Resource", "Ready"),
+        new(4, "Operations workspace", "Workspace", "Ready"),
+        new(5, "Invoice import", "Work item", "Running"),
+        new(6, "Vision model target", "Execution target", "Enabled"),
+        new(7, "Approval policy", "Policy", "Ready"),
+        new(8, "Customer lookup tool", "Tool", "Disabled")
     ];
 
-    private int _nextCrudExampleId = 6;
+    private int _nextCrudExampleId = 9;
 
     private void BuildCrudCompositionExample()
     {
         var crud = new HiveCrudPage<CrudExampleItem>
         {
-            Width = 720,
-            Height = 400,
+            Dock = DockStyle.Top,
+            Width = 820,
+            Height = 460,
             Margin = new Padding(0, 18, 0, 12),
             Title = "Generic CRUD composition",
-            Description = "Hive owns list/action orchestration; the consumer supplies columns, load/edit/delete callbacks, and its specialized editor."
+            Description = "Hive provides the reusable page workflow and interaction model; the consuming feature provides its data, rules, and editor."
         };
 
         crud.SetColumns(
             new HiveCrudColumn<CrudExampleItem>(
                 "Name",
-                240,
+                310,
                 item => item.Name),
             new HiveCrudColumn<CrudExampleItem>(
                 "Type",
-                150,
+                180,
                 item => item.Type),
             new HiveCrudColumn<CrudExampleItem>(
                 "Status",
-                120,
+                130,
                 item => item.Status));
 
         crud.LoadItemsAsync = LoadCrudExampleItemsAsync;
@@ -131,9 +135,9 @@ internal sealed partial class ThemeFoundationExampleForm
             IHiveThemeManager themeManager)
             : base(
                 existing is null ? "Add example item" : "Edit example item",
-                "The editor remains consumer-owned; Hive only supplies the reusable field layout.",
-                new Size(760, 460),
-                new Size(620, 380),
+                "The editor remains consumer-owned; Hive supplies the shared field composition and interaction rhythm.",
+                new Size(760, 500),
+                new Size(640, 420),
                 themeManager)
         {
             Item = existing ?? new CrudExampleItem(0, string.Empty, string.Empty, "Ready");
@@ -144,32 +148,34 @@ internal sealed partial class ThemeFoundationExampleForm
             };
 
             _name.Text = Item.Name;
+            _name.BorderStyle = BorderStyle.FixedSingle;
+
             _type.Text = Item.Type;
+            _type.BorderStyle = BorderStyle.FixedSingle;
+
             _status.DropDownStyle = ComboBoxStyle.DropDownList;
             _status.Items.AddRange(["Ready", "Enabled", "Disabled", "Running"]);
             _status.SelectedItem = Item.Status;
 
             _editorLayout.AddField(
                 "Name",
-                "Display name used by the consumer.",
+                "Human-readable name shown in lists and related views.",
                 _name);
             _editorLayout.AddField(
                 "Type",
-                "Domain-specific type supplied by the consumer.",
+                "Consumer-defined resource or capability category.",
                 _type);
             _editorLayout.AddField(
                 "Status",
-                "Consumer-owned status value.",
+                "Current consumer-owned lifecycle or operational state.",
                 _status);
 
             var save = _editorLayout.AddActionButton(
                 "Save",
-                HiveButtonStyle.Primary,
-                110);
+                HiveButtonStyle.Primary);
             var cancel = _editorLayout.AddActionButton(
                 "Cancel",
-                HiveButtonStyle.Secondary,
-                110);
+                HiveButtonStyle.Secondary);
 
             save.Click += (_, _) => Save();
             cancel.Click += (_, _) =>
@@ -178,9 +184,12 @@ internal sealed partial class ThemeFoundationExampleForm
                 Close();
             };
 
-            BodyPanel.Padding = new Padding(24);
+            BodyPanel.Padding = new Padding(28);
             BodyPanel.Controls.Add(_editorLayout);
             ThemeManager.Apply(_editorLayout);
+
+            AcceptButton = save;
+            CancelButton = cancel;
         }
 
         public CrudExampleItem Item { get; private set; }
