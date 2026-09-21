@@ -60,7 +60,7 @@ internal sealed partial class ThemeFoundationExampleView
         {
             var availableWidth = _controlsPage.ClientSize.Width - 12;
             if (availableWidth > 0)
-                crud.Width = Math.Max(520, availableWidth);
+                crud.Width = Math.Max(420, availableWidth);
         };
         _themeManager.Apply(crud);
 
