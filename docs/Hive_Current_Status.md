@@ -49,6 +49,7 @@ Phase 0 — Foundations.
 - V1 human intervention is Approve/Reject at the business-app write; the broader intervention taxonomy is later.
 - Developer manual testing is the current UI/application verification approach; no UI-automation framework is required by the architecture.
 - Reusable WinForms data-page composition is now defined as a presentation boundary: HiveListPageLayout and HivePaginationBar are generic UI primitives; feature-specific columns, filtering, editors, CRUD, authorization, and persistence remain outside them. `ListView` is the lightweight default list surface, while `DataGridView` remains available for richer tabular cases.
+- WinForms DPI scaling is delegated to the .NET 10/WinForms platform; Hive does not maintain a custom DPI helper or manual DPI scaling layer.
 - The current Example startup form is a 0.6 UI-foundation verification surface. It is not the Phase 0.7 Example Host Shell; 0.7 remains intentionally not started until 0.6 verification is complete.
 - Authentication-provider selection is deferred until real multi-user requirements reach Phase 8.
 - Tests and examples are developed with each implementation slice; no unperformed verification is claimed.
