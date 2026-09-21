@@ -39,6 +39,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         (ActionButtonWidth + ActionButtonSpacing) * 4;
     private const int PaginationWidth = 260;
     private const int DefaultPageSize = 25;
+    private const int MinimumSearchWidth = 180;
+    private const int MaximumSearchWidth = 420;
 
     private readonly HiveListPageLayout _pageLayout;
     private readonly Label _titleLabel;
@@ -151,7 +153,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
         _searchBox = new TextBox
         {
-            Width = 210,
+            Width = 280,
             Height = 32,
             BorderStyle = BorderStyle.FixedSingle,
             Margin = Padding.Empty,
@@ -686,6 +688,31 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         {
             _actionLayout.ResumeLayout(true);
         }
+
+        UpdateSearchBoxWidth();
+    }
+
+    private void UpdateSearchBoxWidth()
+    {
+        if (!_searchPanel.Visible ||
+            _searchPanel.ClientSize.Width <= 0)
+            return;
+
+        var availableWidth =
+            _searchPanel.ClientSize.Width -
+            _searchPanel.Padding.Left -
+            _searchPanel.Padding.Right -
+            _searchLabel.Width -
+            _searchLabel.Margin.Left -
+            _searchLabel.Margin.Right;
+
+        var targetWidth = Math.Clamp(
+            availableWidth,
+            MinimumSearchWidth,
+            MaximumSearchWidth);
+
+        if (_searchBox.Width != targetWidth)
+            _searchBox.Width = targetWidth;
     }
 
     private int GetVisibleActionBarWidth(bool compact)
