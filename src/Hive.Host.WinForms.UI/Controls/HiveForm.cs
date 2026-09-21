@@ -79,12 +79,16 @@ public abstract class HiveForm : Form
         bool allowMove = true,
         bool allowClose = true,
         bool allowMinimize = false,
-        bool allowHelp = false)
+        bool allowMaximize = true,
+        bool allowHelp = false,
+        bool allowThemeToggle = true)
     {
         _header.AllowMove = allowMove;
         _header.AllowClose = allowClose;
         _header.AllowMinimize = allowMinimize;
+        _header.AllowMaximize = allowMaximize;
         _header.AllowHelp = allowHelp;
+        _header.AllowThemeToggle = allowThemeToggle;
     }
 
     protected void SetHeaderText(string title, string subtitle = "")
