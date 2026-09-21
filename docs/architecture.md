@@ -123,6 +123,7 @@ Phase 0.4 establishes the Hive-owned SQL Server persistence boundary without put
 - Hive.Persistence may reference Hive.Core contracts, but Core never references Persistence.
 - Hive's database is a separate database owned by Hive. It is never used as a gateway to the host application's business database.
 - Hosts provide database configuration; credentials are not written to the repository, migration scripts, logs, or Hive database metadata.
+- `HiveDatabaseOptions` enables database creation by default. Passing `createDatabaseIfMissing: false` is an explicit opt-out when the host requires pre-provisioned databases.
 
 #### Database technology
 
