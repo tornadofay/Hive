@@ -28,6 +28,7 @@ public sealed class HiveExampleTestSurface : UserControl
     private CancellationTokenSource? _runCancellation;
     private bool _busy;
     private bool _compactWorkspace;
+    private string _runButtonText = "Run example";
     private string _description = string.Empty;
     private string _expectedResult = string.Empty;
     private string _noteTitle = string.Empty;
@@ -93,6 +94,12 @@ public sealed class HiveExampleTestSurface : UserControl
         };
         _runButton.Click += async (_, _) =>
         {
+            if (_busy)
+            {
+                Cancel();
+                return;
+            }
+
             if (_runAction is null)
             {
                 SetStatus("No example is configured.");
@@ -263,8 +270,14 @@ public sealed class HiveExampleTestSurface : UserControl
     [DefaultValue("Run example")]
     public string RunButtonText
     {
-        get => _runButton.Text;
-        set => _runButton.Text = value ?? string.Empty;
+        get => _runButtonText;
+        set
+        {
+            _runButtonText = value ?? string.Empty;
+
+            if (!_busy)
+                _runButton.Text = _runButtonText;
+        }
     }
 
     [DefaultValue("Test input")]
@@ -542,7 +555,17 @@ public sealed class HiveExampleTestSurface : UserControl
         bool busy,
         string text)
     {
-        _runButton.Enabled = !busy;
+        _runButton.Enabled = true;
+        _runButton.Text = busy ? "Cancel" : _runButtonText;
+        _runButton.Style = busy
+            ? HiveButtonStyle.Secondary
+            : HiveButtonStyle.Primary;
+        _runButton.AccessibleName = busy
+            ? "Cancel example"
+            : "Run example";
+        _runButton.AccessibleDescription = busy
+            ? "Cancel the currently running developer example."
+            : "Run the current developer example.";
         _copyButton.Enabled = !busy;
         _input.Enabled = !busy;
         _status.Text = text;
