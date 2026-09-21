@@ -23,33 +23,23 @@ Establish the shared WinForms visual foundation used by Hive.Host.WinForms and H
 0.6 implementation is in progress:
 
 - pinned ReaLTaiizor 3.8.2.1 in Hive.Host.WinForms.UI;
-- HiveThemeMode, HiveThemeDefinition, semantic palette/typography/spacing/visual-state tokens;
-- HiveThemeManager with Light / Dark / System resolution;
-- HiveButton wrapping the selected renderer without exposing ReaLTaiizor to consuming forms;
-- HiveMessageBox wrapping the ReaLTaiizor message-box implementation;
-- permanent Example startup form exercising the theme modes and representative native WinForms controls.
+- added HiveThemeMode, HiveThemeDefinition, semantic palette/typography/spacing/visual-state tokens;
+- added IHiveThemeManager and HiveThemeManager with Light / Dark / System resolution;
+- added HiveButton using the selected renderer behind a Hive-owned control boundary;
+- added HiveMessageBox as a Hive-owned themed dialog;
+- replaced the Example startup placeholder with the permanent UI-foundation verification form;
+- removed the obsolete placeholder form.
 
-## 0.4 completion record
+No 0.6 build or manual UI verification has been recorded yet.
 
-Phase 0.4 was completed after the developer ran the full Hive.Tests suite against SQL Server.
+## 0.5 completion record
 
-- Build/test execution result: **PASS — developer test run completed successfully.**
-- Persistence verification result: **PASS — 44 tests, 44 passed, 0 failed, 0 skipped, 3.3 seconds.**
-- Database verification: **PASS — persistence integration tests executed against the developer SQL Server instance and Hive created the test databases and applied the bootstrap migration.**
-- Verification result: **PASS for the 0.4 completion gate based on the developer-run suite.**
-- Ready commit before starting 0.5: `6b2ed7703b659400779d9a46e943c7ad12ea9f8e`
-- Next slice: **0.5 — Test harness**
+Phase 0.5 was completed after the developer ran the normal Visual Studio Hive.Tests workflow.
 
-## Out of scope for 0.5
-
-- new persistence domain tables;
-- provider production implementation;
-- Agent/Hive behavior;
-- MAF orchestration;
-- WinForms UI;
-- V1 image/document pipeline;
-- CognitiveAgent/CognitiveHive;
-- Example Host Shell beyond any test-harness developer tooling specifically required by this slice.
+- Build/test execution result: PASS — developer ran the full suite successfully.
+- Verification result: PASS — 52 tests, 52 passed, 0 failed, 0 skipped, 1.6 seconds.
+- Commit: 8204c05fe263c87d1674563b5034f5e32c3a6525.
+- Next slice: 0.6 — WinForms UI/UX Foundation.
 
 ## 0.6 Verification
 
@@ -62,7 +52,7 @@ The implementation requires verification of:
 5. no consuming form references ReaLTaiizor directly;
 6. the solution builds and Hive.Example.WinForms launches normally.
 
-Verification is currently pending. No 0.5 pass claim is recorded yet.
+Verification is currently pending.
 
 ## Completion record
 
