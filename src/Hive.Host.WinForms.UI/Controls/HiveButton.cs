@@ -12,6 +12,7 @@ public enum HiveButtonStyle
     Primary,
     Secondary,
     Navigation,
+    NavigationSelected,
     Danger
 }
 
@@ -98,6 +99,14 @@ public sealed class HiveButton : UserControl
             case HiveButtonStyle.Navigation:
                 _renderer.BackColor = theme.VisualStates.NavigationBackground;
                 _renderer.ForeColor = theme.VisualStates.NavigationText;
+                _renderer.UseAccentColor = false;
+                _renderer.HighEmphasis = false;
+                _renderer.Depth = 0;
+                break;
+
+            case HiveButtonStyle.NavigationSelected:
+                _renderer.BackColor = theme.VisualStates.NavigationSelected;
+                _renderer.ForeColor = theme.VisualStates.NavigationSelectedText;
                 _renderer.UseAccentColor = false;
                 _renderer.HighEmphasis = false;
                 _renderer.Depth = 0;
