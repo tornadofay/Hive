@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-21 (rev 16 — production coding and performance standards)
+Last updated: 2026-09-21 (rev 17 — production WinForms shell and dialogs)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -228,9 +228,11 @@ The theme manager is stateful but UI-only. Changing the mode raises one theme-ch
 The foundation introduces only consumer-facing Hive contracts:
 
 - `HiveForm` provides the shared rounded, borderless application-window shell, custom header, window movement, and theme-aware body surface.
-- `HiveButton` provides a Hive-owned button surface and behavior while hiding the ReaLTaiizor implementation detail.
-- `HiveMessageBox` provides a Hive-owned semantic dialog with Information, Success, Warning, Error, and Question variants, standard `DialogResult` semantics, and optional technical details.
-- The custom header supports title, subtitle, close, optional minimize/help actions, and a compact visual hierarchy similar to the established HAgent WinForms visual language.
+- `HiveButton` provides a Hive-owned button surface with Primary, Secondary, and Navigation styles while hiding the ReaLTaiizor implementation detail.
+- `HiveMessageBox` provides a Hive-owned semantic dialog with Information, Success, Warning, Error, and Question variants, standard `DialogResult` semantics, optional technical details, and copy support.
+- `HiveForm` provides the reusable borderless rounded window shell and body surface.
+- The custom header supports title, subtitle, close, optional minimize/help actions, and window movement with a compact visual hierarchy similar to the established HAgent WinForms visual language.
+- Semantic message colors and navigation colors are theme tokens rather than form-specific constants.
 
 The visual direction intentionally carries forward the useful HAgent characteristics—rounded windows, a distinctive header, strong semantic accents, compact navigation, and explanatory field labels—without copying HAgent's monolithic UI implementation. Hive keeps the implementation smaller, theme-driven, disposable, and independent of HAgent types.
 
