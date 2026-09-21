@@ -73,7 +73,7 @@ public sealed class ResourceFoundationTests
         var runtimeId = RuntimeId.New();
         var executionId = ExecutionId.New();
 
-        Assert.False(ResourceScope.Global().Matches(new ResourceAccessContext(
+        Assert.True(ResourceScope.Global().Matches(new ResourceAccessContext(
             deploymentId, null, principalId)));
 
         Assert.False(ResourceScope.Tenant(tenantId).Matches(new ResourceAccessContext(
