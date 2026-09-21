@@ -5,27 +5,17 @@ using Hive.Host.WinForms.UI.Theme;
 
 namespace Hive.Example.WinForms;
 
-internal sealed partial class ThemeFoundationExampleView : UserControl
+internal sealed class ThemeFoundationExampleView : UserControl
 {
     private readonly IHiveThemeManager _themeManager;
-    private readonly FlowLayoutPanel _navigation;
-    private readonly Panel _content;
-    private readonly TableLayoutPanel _contentLayout;
-    private readonly Panel _pageBody;
-    private readonly FlowLayoutPanel _themePage;
-    private readonly FlowLayoutPanel _controlsPage;
-    private readonly FlowLayoutPanel _dialogsPage;
-    private readonly Label _navigationTitle;
-    private readonly Label _navigationDescription;
-    private readonly Label _pageTitle;
-    private readonly Label _pageDescription;
     private readonly Label _themeState;
-    private readonly Font _navigationTitleFont;
-    private readonly Font _navigationDescriptionFont;
-    private readonly Font _pageTitleFont;
-    private readonly TableLayoutPanel _bodyPanel;
-
-    private HiveButton? _selectedNavigationButton;
+    private readonly Label _description;
+    private readonly Panel _preview;
+    private readonly Label _previewTitle;
+    private readonly Label _previewText;
+    private readonly HiveButton _lightButton;
+    private readonly HiveButton _darkButton;
+    private readonly HiveButton _systemButton;
 
     public ThemeFoundationExampleView(IHiveThemeManager themeManager)
     {
@@ -35,40 +25,67 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
         Padding = Padding.Empty;
+        AutoScroll = true;
 
-        _bodyPanel = new TableLayoutPanel
+        var root = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = 1,
+            Dock = DockStyle.Top,
+            Width = 900,
+            ColumnCount = 1,
+            RowCount = 4,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
-            BackColor = SystemColors.Window
+            AutoSize = true
         };
-        _bodyPanel.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Absolute, 184f));
-        _bodyPanel.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Percent, 100f));
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-        _navigation = new FlowLayoutPanel
+        _description = new Label
         {
-            Dock = DockStyle.Fill,
-            Padding = new Padding(14, 16, 12, 12),
-            FlowDirection = FlowDirection.TopDown,
+            AutoSize = true,
+            MaximumSize = new Size(860, 72),
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            Text = "Light, Dark, and System modes are applied through Hive's semantic theme contract. The sample below shows surface, text, border, and interactive-state changes."
+        };
+
+        var modeButtons = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false,
-            AutoScroll = true,
-            AutoSize = false,
-            MinimumSize = new Size(184, 0),
-            Margin = Padding.Empty
+            AutoSize = true,
+            Margin = new Padding(0, 18, 0, 0),
+            Padding = Padding.Empty
         };
 
-        _content = new Panel
+        _lightButton = CreateThemeButton("Light", HiveThemeMode.Light);
+        _darkButton = CreateThemeButton("Dark", HiveThemeMode.Dark);
+        _systemButton = CreateThemeButton("System", HiveThemeMode.System);
+
+        modeButtons.Controls.Add(_lightButton);
+        modeButtons.Controls.Add(_darkButton);
+        modeButtons.Controls.Add(_systemButton);
+
+        _themeState = new Label
         {
-            Dock = DockStyle.Fill,
-            Padding = new Padding(26, 22, 26, 22)
+            AutoSize = true,
+            Margin = new Padding(0, 14, 0, 0),
+            Padding = Padding.Empty
         };
 
-        _contentLayout = new TableLayoutPanel
+        _preview = new Panel
+        {
+            Dock = DockStyle.Top,
+            Height = 190,
+            Margin = new Padding(0, 18, 0, 0),
+            Padding = new Padding(20)
+        };
+
+        var previewLayout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
@@ -76,116 +93,50 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        _contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        previewLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        previewLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        previewLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-        _navigationTitleFont = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
-        _navigationDescriptionFont = new Font("Segoe UI", 8.4f);
-        _pageTitleFont = new Font("Segoe UI Semibold", 16f, FontStyle.Bold);
-
-        _navigationTitle = new Label
+        _previewTitle = new Label
         {
             AutoSize = true,
-            Font = _navigationTitleFont,
-            Margin = new Padding(2, 0, 0, 2),
-            Padding = Padding.Empty,
-            Text = "SECTIONS"
-        };
-
-        _navigationDescription = new Label
-        {
-            AutoSize = true,
-            Font = _navigationDescriptionFont,
-            Margin = new Padding(2, 0, 0, 14),
-            Padding = Padding.Empty,
-            Text = "Shared UI foundation"
-        };
-
-        _pageTitle = new Label
-        {
-            AutoSize = true,
-            Font = _pageTitleFont,
+            Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold),
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            Text = "Surface hierarchy"
         };
 
-        _pageDescription = new Label
-        {
-            AutoSize = true,
-            MaximumSize = new Size(900, 72),
-            Margin = new Padding(0, 6, 0, 18)
-        };
-
-        _pageBody = new Panel
+        _previewText = new Label
         {
             Dock = DockStyle.Fill,
-            AutoSize = false,
-            AutoScroll = false,
-            MinimumSize = Size.Empty,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Margin = new Padding(0, 8, 0, 0),
+            Padding = Padding.Empty,
+            Text = "Elevated surfaces, borders, muted text, accent colors, selection, hover, focus, and disabled states are all driven by the same theme definition."
         };
 
-        _themePage = CreatePage();
-        _controlsPage = CreatePage();
-        _dialogsPage = CreatePage();
+        var previewButton = new HiveButton
+        {
+            Text = "Interactive state",
+            Style = HiveButtonStyle.Secondary,
+            Width = 150,
+            Height = 36,
+            Margin = new Padding(0, 12, 0, 0)
+        };
 
-        _themeState = CreateBodyLabel();
+        previewLayout.Controls.Add(_previewTitle, 0, 0);
+        previewLayout.Controls.Add(_previewText, 0, 1);
+        previewLayout.Controls.Add(previewButton, 0, 2);
+        _preview.Controls.Add(previewLayout);
 
-        _themePage.Controls.Add(CreateBodyLabel(
-            "Light, Dark, and System modes use Hive-owned semantic tokens and can be switched at runtime."));
-        _themePage.Controls.Add(CreateThemeButton("Light", HiveThemeMode.Light));
-        _themePage.Controls.Add(CreateThemeButton("Dark", HiveThemeMode.Dark));
-        _themePage.Controls.Add(CreateThemeButton("System", HiveThemeMode.System));
-        _themeState.Margin = new Padding(0, 16, 0, 0);
-        _themePage.Controls.Add(_themeState);
+        root.Controls.Add(_description, 0, 0);
+        root.Controls.Add(modeButtons, 0, 1);
+        root.Controls.Add(_themeState, 0, 2);
+        root.Controls.Add(_preview, 0, 3);
 
-        _controlsPage.Controls.Add(CreateBodyLabel(
-            "Hive-specific controls add only the consumer-facing behavior or styling that ordinary WinForms controls do not provide."));
-        BuildControlsPage();
-        BuildListCompositionExample();
-
-        _dialogsPage.Controls.Add(CreateBodyLabel(
-            "HiveMessageBox provides consistent semantic dialogs, optional technical details, and a predictable button hierarchy."));
-        BuildDialogsPage();
-
-        _contentLayout.Controls.Add(_pageTitle, 0, 0);
-        _contentLayout.Controls.Add(_pageDescription, 0, 1);
-        _contentLayout.Controls.Add(_pageBody, 0, 2);
-
-        _content.Controls.Add(_contentLayout);
-        _bodyPanel.Controls.Add(_navigation, 0, 0);
-        _bodyPanel.Controls.Add(_content, 1, 0);
-
-        _navigation.Controls.Add(_navigationTitle);
-        _navigation.Controls.Add(_navigationDescription);
-
-        Controls.Add(_bodyPanel);
-
-        AddNavigation(
-            "Theme",
-            _themePage,
-            "Theme",
-            "Light, Dark, and System modes use semantic theme tokens.",
-            selected: true);
-        AddNavigation(
-            "Controls",
-            _controlsPage,
-            "Controls",
-            "Native WinForms and Hive-specific control states.");
-        AddNavigation(
-            "Dialogs",
-            _dialogsPage,
-            "Dialogs",
-            "Semantic dialogs and technical error details.");
+        Controls.Add(root);
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
-        _themeManager.Apply(_bodyPanel);
-        ShowPage(
-            _themePage,
-            "Theme",
-            "Light, Dark, and System modes use Hive-owned semantic tokens and can be switched at runtime.");
+        ApplyTheme();
         UpdateThemeState();
     }
 
@@ -195,196 +146,9 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
 
         base.Dispose(disposing);
-
-        if (disposing)
-        {
-            _navigationTitleFont.Dispose();
-            _navigationDescriptionFont.Dispose();
-            _pageTitleFont.Dispose();
-        }
     }
 
-    private void ThemeManagerOnChanged(object? sender, EventArgs e)
-    {
-        ApplyExampleTheme(_themeManager.Theme);
-        UpdateThemeState();
-    }
-
-    private void ApplyExampleTheme(HiveThemeDefinition theme)
-    {
-        _bodyPanel.BackColor = theme.Palette.Surface;
-        _navigation.BackColor = theme.VisualStates.NavigationBackground;
-        _navigationTitle.ForeColor = theme.VisualStates.NavigationText;
-        _navigationDescription.ForeColor = theme.Palette.MutedText;
-        _content.BackColor = theme.Palette.Surface;
-        _contentLayout.BackColor = theme.Palette.Surface;
-        _pageBody.BackColor = theme.Palette.Surface;
-        _themePage.BackColor = theme.Palette.Surface;
-        _controlsPage.BackColor = theme.Palette.Surface;
-        _dialogsPage.BackColor = theme.Palette.Surface;
-    }
-
-    private void AddNavigation(
-        string text,
-        Control page,
-        string title,
-        string description,
-        bool selected = false)
-    {
-        var button = new HiveButton
-        {
-            Text = text,
-            Style = selected
-                ? HiveButtonStyle.NavigationSelected
-                : HiveButtonStyle.Navigation,
-            Width = 158,
-            Height = 38,
-            Margin = new Padding(0, 0, 0, 6)
-        };
-
-        if (selected)
-            _selectedNavigationButton = button;
-
-        button.Click += (_, _) =>
-        {
-            if (!ReferenceEquals(_selectedNavigationButton, button))
-            {
-                if (_selectedNavigationButton is not null)
-                    _selectedNavigationButton.Style = HiveButtonStyle.Navigation;
-
-                _selectedNavigationButton = button;
-                button.Style = HiveButtonStyle.NavigationSelected;
-            }
-
-            ShowPage(page, title, description);
-        };
-
-        _navigation.Controls.Add(button);
-    }
-
-    private static FlowLayoutPanel CreatePage() =>
-        new()
-        {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = false,
-            AutoSize = true,
-            AutoScroll = true,
-            Margin = Padding.Empty,
-            Padding = new Padding(0, 2, 12, 2),
-            Visible = false,
-        };
-
-    private void BuildControlsPage()
-    {
-        var input = new TextBox
-        {
-            Width = 320,
-            Height = 28,
-            Text = "Native WinForms TextBox",
-            Margin = new Padding(0, 0, 0, 8)
-        };
-
-        var checkBox = new CheckBox
-        {
-            AutoSize = true,
-            Text = "Native WinForms CheckBox",
-            Margin = new Padding(0, 0, 0, 8)
-        };
-
-        var disabled = new CheckBox
-        {
-            AutoSize = true,
-            Enabled = false,
-            Text = "Disabled control state",
-            Margin = new Padding(0, 0, 0, 8)
-        };
-
-        var primary = new HiveButton
-        {
-            Text = "HiveButton — Primary",
-            Style = HiveButtonStyle.Primary,
-            Width = 190,
-            Height = 38,
-            Margin = new Padding(0, 8, 0, 0)
-        };
-
-        var secondary = new HiveButton
-        {
-            Text = "HiveButton — Secondary",
-            Style = HiveButtonStyle.Secondary,
-            Width = 190,
-            Height = 38,
-            Margin = new Padding(0, 6, 0, 0)
-        };
-
-        _controlsPage.Controls.Add(input);
-        _controlsPage.Controls.Add(checkBox);
-        _controlsPage.Controls.Add(disabled);
-        _controlsPage.Controls.Add(primary);
-        _controlsPage.Controls.Add(secondary);
-    }
-
-    private void BuildListCompositionExample()
-    {
-        BuildCrudCompositionExample();
-    }
-
-    private void BuildDialogsPage()
-    {
-        AddDialogButton(
-            "Information",
-            HiveMessageType.Information,
-            "The information operation completed.");
-
-        AddDialogButton(
-            "Success",
-            HiveMessageType.Success,
-            "The operation completed successfully.");
-
-        AddDialogButton(
-            "Warning",
-            HiveMessageType.Warning,
-            "Review the current state before continuing.");
-
-        AddDialogButton(
-            "Error",
-            HiveMessageType.Error,
-            "The operation could not be completed.");
-
-        AddDialogButton(
-            "Question",
-            HiveMessageType.Question,
-            "Continue with this operation?",
-            MessageBoxButtons.YesNo);
-
-        var details = new HiveButton
-        {
-            Text = "Error with technical details",
-            Style = HiveButtonStyle.Secondary,
-            Width = 220,
-            Height = 38,
-            Margin = new Padding(0, 10, 0, 0)
-        };
-
-        details.Click += (_, _) =>
-            HiveMessageBox.Show(
-                this,
-                new HiveMessageOptions(
-                    "Operation failed",
-                    "The operation could not be completed.",
-                    HiveMessageType.Error,
-                    MessageBoxButtons.OK,
-                    "Example technical details\r\nCode: UI-0001\r\nPath: Hive.Example.WinForms",
-                    DetailsExpanded: true),
-                _themeManager);
-
-        _dialogsPage.Controls.Add(details);
-    }
-
-    private HiveButton CreateThemeButton(
-        string text,
-        HiveThemeMode mode)
+    private HiveButton CreateThemeButton(string text, HiveThemeMode mode)
     {
         var button = new HiveButton
         {
@@ -392,7 +156,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
             Style = HiveButtonStyle.Secondary,
             Width = 104,
             Height = 36,
-            Margin = new Padding(0, 0, 8, 8)
+            Margin = new Padding(0, 0, 8, 0)
         };
 
         button.Click += (_, _) =>
@@ -404,81 +168,28 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         return button;
     }
 
-    private void AddDialogButton(
-        string text,
-        HiveMessageType type,
-        string message,
-        MessageBoxButtons buttons = MessageBoxButtons.OK)
+    private void ThemeManagerOnChanged(object? sender, EventArgs e)
     {
-        var button = new HiveButton
-        {
-            Text = text,
-            Style = HiveButtonStyle.Secondary,
-            Width = 190,
-            Height = 38,
-            Margin = new Padding(0, 0, 0, 6)
-        };
-
-        button.Click += (_, _) =>
-            HiveMessageBox.Show(
-                this,
-                new HiveMessageOptions(
-                    text,
-                    message,
-                    type,
-                    buttons),
-                _themeManager);
-
-        _dialogsPage.Controls.Add(button);
+        ApplyTheme();
+        UpdateThemeState();
     }
 
-    private void ShowPage(
-        Control page,
-        string title,
-        string description)
+    private void ApplyTheme()
     {
-        _pageTitle.Text = title;
-        _pageDescription.Text = description;
+        var theme = _themeManager.Theme;
 
-        _pageBody.SuspendLayout();
-        try
-        {
-            _pageBody.Controls.Clear();
-
-            page.Dock = DockStyle.Fill;
-            page.Anchor = AnchorStyles.Top |
-                          AnchorStyles.Bottom |
-                          AnchorStyles.Left |
-                          AnchorStyles.Right;
-            page.Visible = true;
-
-            _pageBody.Controls.Add(page);
-            page.BringToFront();
-        }
-        finally
-        {
-            _pageBody.ResumeLayout(true);
-        }
-
-        _themeManager.Apply(page);
+        BackColor = theme.Palette.Surface;
+        ForeColor = theme.Palette.Text;
+        _description.ForeColor = theme.Palette.Text;
+        _themeState.ForeColor = theme.Palette.MutedText;
+        _preview.BackColor = theme.Palette.ElevatedSurface;
+        _previewTitle.ForeColor = theme.Palette.Text;
+        _previewText.ForeColor = theme.Palette.MutedText;
     }
 
     private void UpdateThemeState()
     {
         _themeState.Text =
-            $"Selected: {_themeManager.Mode}\r\nEffective: {_themeManager.Theme.Mode}";
+            $"Selected: {_themeManager.Mode}    Effective: {_themeManager.Theme.Mode}";
     }
-
-    private static Label CreateBodyLabel(string? text = null) =>
-        new()
-        {
-            AutoSize = true,
-            Text = text ?? string.Empty,
-            MaximumSize = new Size(720, 120),
-            Margin = new Padding(0, 0, 0, 12)
-        };
-
-    private IHiveThemeManager ThemeManager => _themeManager;
-
-    private Panel BodyPanel => _bodyPanel;
 }
