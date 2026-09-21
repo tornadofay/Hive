@@ -630,9 +630,11 @@ Credentials are excluded by default.
 
 ## 13. Example Application
 
-`Hive.Example.WinForms` is a public-API example and verification host.
+`Hive.Example.WinForms` is a first-class public-API example and verification host, not a temporary demonstration.
 
-Examples are added alongside the features they demonstrate. They are not a separate implementation and do not replace automated tests.
+Examples are added alongside the features they demonstrate. They use the shared WinForms UI foundation and scalable Category → Subcategory → Example navigation.
+
+The Example host includes developer-oriented test execution tools, but it does not replace `Hive.Tests` or become the authoritative test runner.
 
 Every major public feature example should include:
 
@@ -643,7 +645,54 @@ Every major public feature example should include:
 
 The V1 example should demonstrate the document-to-business-app pipeline using the same public boundaries available to real hosts.
 
----
+### 13.1 WinForms UI Foundation
+
+The WinForms visual foundation is a platform-level host concern and is established in Phase 0 so later forms do not independently invent themes, controls, message boxes, spacing, or visual states.
+
+Hive uses **ReaLTaiizor** as the selected third-party rendering layer. ReaLTaiizor remains behind `Hive.Host.WinForms.UI`; consuming forms and platform services do not reference it directly. The selected package version is pinned when the UI foundation is implemented.
+
+Hive owns the consumer-facing UI contracts and design vocabulary:
+
+- Light / Dark / System theme modes;
+- semantic palette, typography, spacing, and common visual-state tokens;
+- Hive-specific controls only where Hive needs additional behavior or styling;
+- shared controls such as HiveButton and HiveMessageBox where a Hive-owned contract is useful.
+
+The foundation must not become a complete replacement control toolkit. Standard WinForms controls remain valid when their native behavior and Hive styling are sufficient. A Hive-prefixed control is created because Hive needs a contract or behavior, not merely to rename a framework control.
+
+This layer is replaceable: changing the underlying rendering library must not require unrelated forms to change their public Hive UI contracts.
+
+### 13.2 First-Class Example Host
+
+`Hive.Example.WinForms` is a permanent developer-facing application used to demonstrate public APIs, inspect platform behavior, and reduce developer friction while building Hive.
+
+The shell uses a left-side Category → Subcategory → Example navigation surface and a right-side replaceable `UserControl`. Nested TabPages are not the primary gallery-navigation mechanism.
+
+Examples implement a small contract such as:
+
+```csharp
+public interface IHiveExample
+{
+    string Category { get; }
+    string Subcategory { get; }
+    string Title { get; }
+
+    UserControl CreateView(IServiceProvider services);
+}
+```
+
+Only designated example assemblies are scanned. Adding an example should require implementing the contract, not editing the shell's central registration code.
+
+The Example host may provide a developer test panel that invokes `dotnet test` as an external process against `Hive.Tests`. The Example host must not become an xUnit runner and must not embed xUnit runner internals. Example self-checks may provide immediate feedback but are not authoritative test results.
+
+The Example host is a first-class project from repository scaffolding onward, grows with Hive, and uses the same Hive UI foundation as all other WinForms surfaces.
+
+### 13.3 UI Foundation Scope Boundary
+
+The UI foundation is infrastructure, not a mechanism for pulling future platform capabilities into Phase 0. It must not require Hive membership, Swarm, CognitiveAgent, CognitiveHive, Dreams, Questions, or other later-generation behavior.
+
+Phase 1 and later features consume the shared UI foundation instead of creating parallel form/control systems.
+
 
 ## 14. Testing & Production Readiness
 
@@ -679,6 +728,8 @@ Hive.Tools
 Hive.Providers.OpenAICompatible
 Hive.Management
 Hive.Host.WinForms
+Hive.Host.WinForms.UI
+Hive.Example.WinForms
 Hive.Tests
 ```
 
@@ -692,13 +743,17 @@ Agents / Persistence / Tools / Providers
 Management
    ↑
 Host.WinForms
+   ↑
+Host.WinForms.UI
+
+Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contracts
 ```
 
 Coordination may depend on Core + Agents + MAF.
 
 Host.WinForms never bypasses Hive.Management.
 
-`Hive.Example.WinForms` is added when its examples become relevant; it is not a substitute for tests.
+`Hive.Example.WinForms` is created during Phase 0 and remains a first-class developer-facing project; its test tools are not a substitute for `Hive.Tests`.
 
 ---
 
