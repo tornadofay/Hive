@@ -571,6 +571,17 @@ public sealed class HiveExampleTestSurface : UserControl
             : "Run the current developer example.";
         _copyButton.Enabled = !busy;
         _input.Enabled = !busy;
+
+        if (_theme is not null)
+        {
+            _input.BackColor = busy
+                ? _theme.Palette.DisabledBackground
+                : _theme.Palette.InputBackground;
+            _input.ForeColor = busy
+                ? _theme.Palette.DisabledText
+                : _theme.Palette.Text;
+        }
+
         _status.Text = text;
     }
 
