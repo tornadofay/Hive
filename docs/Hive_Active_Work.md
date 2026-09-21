@@ -23,9 +23,21 @@ The slice is limited to:
 
 ## Implementation progress
 
-0.4 implementation has not started yet.
+The 0.4 implementation is committed to Hive.Persistence:
 
-The architecture must be updated before any structural persistence code is introduced. The implementation will be limited to the ordered 0.4 boundary: database ownership/connection abstraction, LocalDB development support, DbUp migration infrastructure, schema-version compatibility protection, and initial indexes.
+- SQL Server persistence options with an explicit LocalDB development configuration;
+- SQL Server database creation support for development when configured;
+- DbUp SQL Server 7.2.0 migration runner with transaction-per-script execution;
+- Microsoft.Data.SqlClient 7.1.0 connectivity;
+- Hive-owned singleton schema-version metadata;
+- DbUp migration journal isolated under the Hive-owned database;
+- future-schema rejection before normal migration execution;
+- structured migration success/failure results without exposing connection credentials;
+- bootstrap migration creating the schema-version table and its required primary/unique indexes;
+- focused persistence option tests and SQL Server/LocalDB integration tests;
+- copyable public API example in docs/examples/Phase04_Persistence.md.
+
+No 0.4 verification pass is recorded yet because the SQL integration suite has not been run in the developer environment.
 
 ## 0.3 completion record
 
