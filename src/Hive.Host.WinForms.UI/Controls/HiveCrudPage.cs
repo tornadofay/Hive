@@ -29,10 +29,11 @@ public sealed class HiveCrudOperationFailedEventArgs : EventArgs
 
 public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 {
-    private const int HeaderHeight = 78;
-    private const int ActionBarHeight = 58;
-    private const int StatusHeight = 32;
-    private const int ActionButtonWidth = 96;
+    private const int HeaderHeight = 64;
+    private const int ActionBarHeight = 48;
+    private const int StatusHeight = 28;
+    private const int ActionButtonWidth = 88;
+    private const int ActionBarActionsWidth = 388;
 
     private readonly HiveListPageLayout _pageLayout;
     private readonly Label _titleLabel;
@@ -97,7 +98,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Padding = Padding.Empty
         };
 
-        _pageLayout.HeaderPanel.Padding = new Padding(0, 9, 0, 7);
+        _pageLayout.HeaderPanel.Padding = new Padding(0, 4, 0, 4);
         _pageLayout.HeaderPanel.Controls.Add(_descriptionLabel);
         _pageLayout.HeaderPanel.Controls.Add(_titleLabel);
 
@@ -110,7 +111,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Padding = Padding.Empty
         };
         actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, ActionBarActionsWidth));
 
         var searchPanel = new FlowLayoutPanel
         {
@@ -119,7 +120,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             WrapContents = false,
             AutoSize = false,
             Margin = Padding.Empty,
-            Padding = new Padding(0, 10, 12, 10)
+            Padding = new Padding(0, 6, 12, 6)
         };
 
         _searchLabel = new Label
@@ -136,7 +137,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
         _searchBox = new TextBox
         {
-            Width = 260,
+            Width = 220,
             Height = 36,
             BorderStyle = BorderStyle.FixedSingle,
             Margin = Padding.Empty,
@@ -156,7 +157,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             WrapContents = false,
             AutoSize = false,
             Margin = Padding.Empty,
-            Padding = new Padding(12, 10, 0, 10)
+            Padding = new Padding(8, 6, 0, 6)
         };
 
         _addButton = CreateActionButton("Add", HiveButtonStyle.Primary);
@@ -588,9 +589,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         catch (Exception exception)
         {
             SetStatus("Operation failed.");
-            OperationFailed?.Invoke(
-                this,
-                new HiveCrudOperationFailedEventArgs(operation, exception));
+            RaiseOperationFailed(operation, exception);
         }
         finally
         {
@@ -601,6 +600,25 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             SetBusy(false);
             UpdateStatusSummary();
         }
+    }
+
+    private void RaiseOperationFailed(
+        HiveCrudOperation operation,
+        Exception exception)
+    {
+        var handler = OperationFailed;
+        if (handler is null)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                exception.ToString());
+            return;
+        }
+
+        handler(
+            this,
+            new HiveCrudOperationFailedEventArgs(
+                operation,
+                exception));
     }
 
     private void SetBusy(bool busy)
