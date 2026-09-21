@@ -111,7 +111,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         _pageBody = new Panel
         {
             Dock = DockStyle.Fill,
-            AutoScroll = true,
+            AutoScroll = false,
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
@@ -431,17 +431,21 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         _pageBody.SuspendLayout();
         try
         {
-            if (!ReferenceEquals(page.Parent, _pageBody))
-            {
-                _pageBody.Controls.Clear();
-                page.Dock = DockStyle.Fill;
-                page.Visible = true;
-                _pageBody.Controls.Add(page);
-            }
+            _pageBody.Controls.Clear();
+
+            page.Dock = DockStyle.Fill;
+            page.Anchor = AnchorStyles.Top |
+                          AnchorStyles.Bottom |
+                          AnchorStyles.Left |
+                          AnchorStyles.Right;
+            page.Visible = true;
+
+            _pageBody.Controls.Add(page);
+            page.BringToFront();
         }
         finally
         {
-            _pageBody.ResumeLayout(false);
+            _pageBody.ResumeLayout(true);
         }
 
         _themeManager.Apply(page);

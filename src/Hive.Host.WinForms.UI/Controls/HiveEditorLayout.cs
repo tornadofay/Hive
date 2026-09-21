@@ -143,22 +143,15 @@ public sealed class HiveEditorLayout : UserControl
         var row = _fields.RowCount;
         _fields.RowCount++;
 
-        var minimumEditorHeight = Math.Max(
-            editor.MinimumSize.Height,
-            editor.PreferredSize.Height);
-        var resolvedHeight = Math.Max(
-            height,
-            minimumEditorHeight + 20);
-
         if (_fields.RowStyles.Count <= row)
         {
             _fields.RowStyles.Add(
-                new RowStyle(SizeType.Absolute, resolvedHeight));
+                new RowStyle(SizeType.Absolute, height));
         }
         else
         {
             _fields.RowStyles[row].SizeType = SizeType.Absolute;
-            _fields.RowStyles[row].Height = resolvedHeight;
+            _fields.RowStyles[row].Height = height;
         }
 
         _fields.Controls.Add(
