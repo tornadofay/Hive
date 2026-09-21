@@ -72,7 +72,9 @@ public sealed class HiveNavigationTree : TreeView
 
         var selected = (e.State & TreeNodeStates.Selected) != 0;
         var focused = (e.State & TreeNodeStates.Focused) != 0;
-        var hovered = ReferenceEquals(e.Node, _hoverNode) && !selected;
+        var hovered = Enabled &&
+                      ReferenceEquals(e.Node, _hoverNode) &&
+                      !selected;
         var row = new Rectangle(
             RowHorizontalPadding,
             e.Bounds.Top + RowVerticalPadding,
@@ -80,16 +82,18 @@ public sealed class HiveNavigationTree : TreeView
             Math.Max(1, e.Bounds.Height - RowVerticalPadding * 2));
 
         using (var background = new SolidBrush(
-                   selected
-                       ? theme.VisualStates.NavigationSelected
-                       : hovered
-                           ? theme.VisualStates.NavigationHover
-                           : theme.VisualStates.NavigationBackground))
+                   !Enabled
+                       ? theme.Palette.DisabledBackground
+                       : selected
+                           ? theme.VisualStates.NavigationSelected
+                           : hovered
+                               ? theme.VisualStates.NavigationHover
+                               : theme.VisualStates.NavigationBackground))
         {
             e.Graphics.FillRectangle(background, row);
         }
 
-        if (selected)
+        if (selected && Enabled)
         {
             using var accent = new SolidBrush(theme.Palette.Accent);
             e.Graphics.FillRectangle(
@@ -152,7 +156,7 @@ public sealed class HiveNavigationTree : TreeView
     {
         base.OnMouseMove(e);
 
-        var next = GetNodeAt(e.Location);
+        var next = Enabled ? GetNodeAt(e.Location) : null;
         if (ReferenceEquals(next, _hoverNode))
             return;
 
