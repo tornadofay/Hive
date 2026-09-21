@@ -961,9 +961,7 @@ public static class HiveMessageBox
             _hovered = false;
             _pressed = false;
             Cursor = Enabled ? Cursors.Hand : Cursors.Default;
-
-            if (_theme is not null)
-                ApplyTheme(_theme, _kind);
+            Invalidate();
         }
 
         protected override void OnMouseEnter(EventArgs e)
