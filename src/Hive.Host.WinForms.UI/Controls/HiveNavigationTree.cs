@@ -32,29 +32,25 @@ public sealed class HiveNavigationTree : TreeView
         DoubleBuffered = true;
         Margin = Padding.Empty;
         Padding = new Padding(4, 8, 4, 8);
+        AccessibleRole = AccessibleRole.Outline;
+        AccessibleName = "Example navigation";
+        AccessibleDescription =
+            "Browse Hive examples by category, subcategory, and example.";
     }
 
     internal void ApplyTheme(HiveThemeDefinition theme)
     {
         ArgumentNullException.ThrowIfNull(theme);
 
-        BeginUpdate();
-        try
-        {
-            _theme = theme;
+        _theme = theme;
 
-            if (BackColor != theme.VisualStates.NavigationBackground)
-                BackColor = theme.VisualStates.NavigationBackground;
+        if (BackColor != theme.VisualStates.NavigationBackground)
+            BackColor = theme.VisualStates.NavigationBackground;
 
-            if (ForeColor != theme.VisualStates.NavigationText)
-                ForeColor = theme.VisualStates.NavigationText;
+        if (ForeColor != theme.VisualStates.NavigationText)
+            ForeColor = theme.VisualStates.NavigationText;
 
-            EnsureFonts(theme);
-        }
-        finally
-        {
-            EndUpdate();
-        }
+        EnsureFonts(theme);
 
         // Theme changes repaint the existing native tree only. Do not reassign
         // selection or TopNode here: those assignments can cause the native TreeView
