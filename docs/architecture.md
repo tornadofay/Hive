@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-21 (rev 23 — first-class Example Host Shell)
+Last updated: 2026-09-21 (rev 24 — production UI polish contract)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -909,6 +909,18 @@ The Example host is a first-class project from repository scaffolding onward, gr
 The UI foundation is infrastructure, not a mechanism for pulling future platform capabilities into Phase 0. It must not require Hive membership, Swarm, CognitiveAgent, CognitiveHive, Dreams, Questions, or other later-generation behavior.
 
 Phase 1 and later features consume the shared UI foundation instead of creating parallel form/control systems.
+
+### 13.4 UI Design and Responsiveness Contract
+
+The shared WinForms UI foundation is held to application-grade desktop UI standards rather than demonstration-oriented styling. Shared presentation contracts cover hierarchy, spacing, typography, visual density, navigation states, semantic colors, focus/hover/pressed/disabled states, dialog presentation, CRUD presentation, and resize behavior.
+
+Theme changes must preserve user navigation state and must not cause avoidable TreeView scrolling, selection changes, focus loss, or layout jumps. Theme application should update only controls whose effective visual state changes and should avoid unnecessary handle recreation, control-tree traversal, layout passes, painting, or GDI/resource churn.
+
+Responsive behavior is achieved through normal WinForms anchoring/docking/layout containers and bounded minimum sizes. Hive does not introduce a custom DPI system. Shared controls must remain usable when the host window is resized within its supported bounds, including compact desktop dimensions.
+
+UI controls own their disposable fonts, brushes, pens, paths, and child controls and release them deterministically. Theme tokens are stable immutable values and are reused rather than reconstructed by individual consumers.
+
+The Example host is the permanent visual acceptance surface for the UI foundation. Before the 0.7 slice is considered complete, the developer manually verifies Light, Dark, and System modes, navigation state preservation, resize behavior, CRUD presentation, dialogs, focus/hover/disabled states, and consistent rendering across the shared controls.
 
 
 ## Engineering Standards
