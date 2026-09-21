@@ -749,7 +749,9 @@ public static class HiveMessageBox
                 MinWidth,
                 Math.Min(
                     MaxDialogWidth,
-                    Math.Max(DesignWidth, Width, minimumRequiredWidth)));
+                    Math.Max(
+                        DesignWidth,
+                        Math.Max(Width, minimumRequiredWidth))));
 
             var contentWidth =
                 width -
