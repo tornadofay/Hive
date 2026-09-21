@@ -638,6 +638,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         if (item is null && !_addButton.Visible)
             return;
 
+        var scrollState = CaptureScrollState();
+
         await ExecuteAsync(
             HiveCrudOperation.Edit,
             async token =>
@@ -650,6 +652,38 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                 await LoadItemsCoreAsync(token);
             },
             CancellationToken.None);
+    }
+
+    private List<(ScrollableControl Control, Point Position)> CaptureScrollState()
+    {
+        var state = new List<(ScrollableControl Control, Point Position)>();
+        for (Control? control = this; control is not null; control = control.Parent)
+        {
+            if (control is ScrollableControl scrollable && scrollable.AutoScroll)
+                state.Add((scrollable, scrollable.AutoScrollPosition));
+        }
+
+        return state;
+    }
+
+    private void RestoreScrollState(
+        IReadOnlyList<(ScrollableControl Control, Point Position)> state)
+    {
+        if (state.Count == 0 || IsDisposed || !IsHandleCreated)
+            return;
+
+        BeginInvoke(new MethodInvoker(() =>
+        {
+            foreach (var (control, position) in state)
+            {
+                if (control.IsDisposed || !control.IsHandleCreated)
+                    continue;
+
+                control.AutoScrollPosition = new Point(
+                    -position.X,
+                    -position.Y);
+            }
+        }));
     }
 
     private async Task DeleteAsync()
@@ -781,6 +815,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         {
             _list.EndUpdate();
         }
+
+        if (_list is HiveListView hiveList)
+            hiveList.ResetColumnLayout();
     }
 
     private void RebuildItems()
