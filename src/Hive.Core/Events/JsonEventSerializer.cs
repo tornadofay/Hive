@@ -101,6 +101,11 @@ public sealed class JsonEventSerializer
         };
 
         options.Converters.Add(new JsonStringEnumConverter());
+        options.Converters.Add(new EventIdJsonConverter());
+        options.Converters.Add(new CorrelationIdJsonConverter());
+        options.Converters.Add(new CausationIdJsonConverter());
+        options.Converters.Add(new EventTypeJsonConverter());
+        options.Converters.Add(new EventPayloadVersionJsonConverter());
 
         return options;
     }
