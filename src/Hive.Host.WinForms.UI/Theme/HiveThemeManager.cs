@@ -214,8 +214,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
                     control.Enabled
                         ? theme.Palette.Text
                         : theme.Palette.DisabledText);
-                if (control is Label)
-                    SetBackColor(control, Color.Transparent);
+                SetBackColor(control, Color.Transparent);
                 break;
 
             case DataGridView grid:
