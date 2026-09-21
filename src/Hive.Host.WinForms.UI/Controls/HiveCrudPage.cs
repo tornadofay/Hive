@@ -157,6 +157,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             AccessibleName = "Search items",
             AccessibleDescription = "Filter the current list by the visible column values."
         };
+        _searchBox.AccessibleRole = AccessibleRole.Text;
         _searchBox.TextChanged += SearchBoxOnTextChanged;
         _searchBox.KeyDown += SearchBoxOnKeyDown;
 
@@ -177,6 +178,15 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _editButton = CreateActionButton("Edit", HiveButtonStyle.Secondary);
         _deleteButton = CreateActionButton("Delete", HiveButtonStyle.Danger);
         _refreshButton = CreateActionButton("Refresh", HiveButtonStyle.Secondary);
+
+        _addButton.AccessibleName = "Add item";
+        _addButton.AccessibleDescription = "Create a new item.";
+        _editButton.AccessibleName = "Edit selected item";
+        _editButton.AccessibleDescription = "Edit the currently selected item.";
+        _deleteButton.AccessibleName = "Delete selected item";
+        _deleteButton.AccessibleDescription = "Delete the currently selected item.";
+        _refreshButton.AccessibleName = "Refresh items";
+        _refreshButton.AccessibleDescription = "Reload the current item list.";
 
         _addButton.Click += async (_, _) => await EditAsync(null);
         _editButton.Click += async (_, _) => await EditAsync(SelectedItem);
@@ -255,7 +265,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             AutoSize = false,
             TextAlign = ContentAlignment.MiddleLeft,
             Margin = Padding.Empty,
-            Padding = new Padding(4, 0, 0, 0)
+            Padding = new Padding(4, 0, 0, 0),
+            AccessibleRole = AccessibleRole.StatusBar,
+            AccessibleName = "List status"
         };
 
         _pagination = new HivePaginationBar
