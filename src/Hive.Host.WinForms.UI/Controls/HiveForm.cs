@@ -176,13 +176,9 @@ public abstract class HiveForm : Form
 
         if (_bodyPanel.BackColor != theme.Palette.Surface)
             _bodyPanel.BackColor = theme.Palette.Surface;
-        if (_bodyPanel.Padding != _bodyPadding)
-            _bodyPanel.Padding = _bodyPadding;
 
-        if (_header.Height != HeaderHeight)
-            _header.Height = HeaderHeight;
-        if (_header.MinimumSize.Height != HeaderHeight)
-            _header.MinimumSize = new Size(0, HeaderHeight);
+        // Geometry is established during construction/configuration.
+        // Theme changes must not rewrite padding or dimensions.
         _header.ApplyTheme(theme);
 
         _themeManager.Apply(_bodyPanel);
