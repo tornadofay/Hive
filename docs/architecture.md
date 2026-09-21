@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-21 (rev 19 — reusable WinForms data-page composition)
+Last updated: 2026-09-21 (rev 20 — reusable WinForms data-page composition)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -234,7 +234,7 @@ Hive will reuse the presentation mechanics of data-oriented pages without genera
 These controls do not own Provider, Agent, Resource, or other domain schemas. Columns, filters, editors, validation, create/update/delete operations, permissions, and persistence remain owned by the feature page and its management/application boundary. This allows Provider and Agent pages to share the list shell while keeping their different columns and create/edit forms.
 
 `DataGridView` remains available when its richer native tabular behavior is specifically required. Hive does not introduce a generic ORM-like CRUD control.
-The WinForms foundation is DPI-aware as a shared infrastructure concern, not a dialog-specific feature. The Example host opts into Per-Monitor-V2 DPI awareness through its executable project configuration, while Hive-owned forms use WinForms DPI auto-scaling and custom-painted Hive controls derive geometry, spacing, hit targets, and drawing metrics from the current control DPI. Runtime-created example controls must use the shared DPI scaling helper for fixed design values so they are not introduced at an unscaled 96-DPI size. Moving a window between monitors with different DPI must rescale the complete Hive-owned visual surface consistently.
+WinForms DPI behavior is delegated to the .NET 10 / WinForms platform rather than duplicated in Hive. Hive does not maintain a custom DPI helper or manual control-tree scaling layer. Normal forms and controls use WinForms' built-in scaling behavior; custom-painted Hive controls keep their own design geometry unless a concrete, measured DPI defect requires a focused exception.
 
 
 #### Hive-owned controls and window shell
