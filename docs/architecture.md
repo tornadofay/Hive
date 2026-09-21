@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-21 (rev 14 — test harness boundary)
+Last updated: 2026-09-21 (rev 15 — WinForms UI/UX foundation)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -197,6 +197,60 @@ Persistence integration tests use an explicit connection string stored in `Hive.
 Event tests use fixed `DateTimeOffset` values, deterministic typed IDs, and explicit payload JSON. Serialization round-trips compare contract fields rather than incidental JSON property ordering. Upcast tests construct the exact older payload version and verify the normalized current contract.
 
 Test infrastructure is verification support only. It does not become a second runtime, provider, persistence, or orchestration architecture.
+
+### 0.6 WinForms UI/UX Foundation
+
+Phase 0.6 establishes the shared WinForms visual foundation used by `Hive.Host.WinForms` and `Hive.Example.WinForms`. The rendering dependency is an implementation detail of `Hive.Host.WinForms.UI`.
+
+#### Rendering dependency boundary
+
+- `Hive.Host.WinForms.UI` is the only Hive project permitted to reference ReaLTaiizor.
+- ReaLTaiizor is pinned to version `3.8.2.1` for this slice. citeturn922533search0
+- Consuming forms and platform services reference Hive-owned UI contracts only; they do not reference ReaLTaiizor namespaces or controls directly.
+- Hive-specific controls that use ReaLTaiizor do so behind composition/adaptation boundaries so the underlying rendering library can be replaced without changing consuming-form contracts.
+
+#### Theme contract
+
+The UI foundation exposes a Hive-owned theme vocabulary:
+
+- `HiveThemeMode`: `Light`, `Dark`, `System`;
+- semantic palette roles for application background, surface, elevated surface, text, muted text, border, accent, accent-hover, accent foreground, input, disabled input, disabled text, and selection;
+- typography roles for body and heading text;
+- spacing tokens for the common 4/8/12/16/24 pixel scale;
+- common visual-state tokens for normal, hover, pressed, focused, disabled, and selected states.
+
+Theme resolution is deterministic. `System` resolves from the Windows application-theme preference when available and falls back to Light when the OS setting cannot be read.
+
+The theme manager is stateful but UI-only. Changing the mode raises one theme-change notification and reapplies the effective theme to registered/attached control trees. It does not own application settings, persistence, Agent/Hive state, or host business data.
+
+#### Hive-owned controls
+
+The foundation introduces only controls with a consumer-facing Hive contract:
+
+- `HiveButton` provides a Hive-owned button surface and behavior while hiding the ReaLTaiizor implementation detail.
+- `HiveMessageBox` provides a Hive-owned message-box entry point with standard WinForms result/button/icon semantics while keeping the selected renderer behind the UI project boundary.
+
+Ordinary WinForms controls remain first-class. The foundation styles common native controls through the theme manager where practical; it does not create Hive-prefixed wrappers merely to rename every framework control.
+
+#### Representative verification surface
+
+A representative example form in `Hive.Example.WinForms` exercises:
+
+- Light, Dark, and System mode selection;
+- a HiveButton;
+- a HiveMessageBox;
+- representative native WinForms controls such as labels, text input, check boxes, and panels;
+- disabled/focused/selected visual states where the control supports them.
+
+The example form is the manual UI verification surface for this phase. No UI automation framework is introduced.
+
+#### Replaceability contract
+
+The public consumer surface consists only of Hive-owned theme contracts and the small Hive-specific controls introduced by this phase. The representative example must compile without a ReaLTaiizor namespace/import. Replacing ReaLTaiizor later must therefore be limited to `Hive.Host.WinForms.UI` and must not require unrelated form changes.
+
+#### Scope boundary
+
+Phase 0.6 establishes visual infrastructure only. It does not introduce Hive membership, Swarm, Agent/Hive runtime behavior, cognitive generations, Dreams, Questions, or Workspace feature behavior.
 ---
 
 ## 1. MAF Dependency Boundary
