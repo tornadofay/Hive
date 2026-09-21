@@ -26,6 +26,8 @@ public abstract class HiveForm : Form
     {
         _themeManager = themeManager ?? new HiveThemeManager();
 
+        AutoScaleMode = AutoScaleMode.Dpi;
+        AutoScaleDimensions = new SizeF(HiveDpi.DesignDpi, HiveDpi.DesignDpi);
         FormBorderStyle = FormBorderStyle.None;
         StartPosition = FormStartPosition.CenterParent;
         ShowInTaskbar = false;
@@ -96,8 +98,17 @@ public abstract class HiveForm : Form
     protected void SetBodyPadding(Padding padding)
     {
         _bodyPadding = padding;
-        _bodyPanel.Padding = padding;
+        _bodyPanel.Padding = HiveDpi.Scale(this, padding);
     }
+
+    protected int Scale(int designPixels) =>
+        HiveDpi.Scale(this, designPixels);
+
+    protected Size Scale(Size designSize) =>
+        HiveDpi.Scale(this, designSize);
+
+    protected Padding Scale(Padding designPadding) =>
+        HiveDpi.Scale(this, designPadding);
 
     protected virtual void OnThemeChanged(HiveThemeDefinition theme)
     {
@@ -132,6 +143,15 @@ public abstract class HiveForm : Form
         UpdateWindowRegion();
     }
 
+    protected override void OnDpiChanged(DpiChangedEventArgs e)
+    {
+        base.OnDpiChanged(e);
+        _header.ApplyDpi();
+        _header.Height = Scale(HeaderHeight);
+        _header.MinimumSize = new Size(0, Scale(HeaderHeight));
+        UpdateWindowRegion();
+    }
+
     protected override void Dispose(bool disposing)
     {
         if (disposing)
@@ -162,9 +182,11 @@ public abstract class HiveForm : Form
         previousFont.Dispose();
 
         _bodyPanel.BackColor = theme.Palette.Surface;
-        _bodyPanel.Padding = _bodyPadding;
+        _bodyPanel.Padding = HiveDpi.Scale(this, _bodyPadding);
 
-        _header.Height = HeaderHeight;
+        _header.ApplyDpi();
+        _header.Height = Scale(HeaderHeight);
+        _header.MinimumSize = new Size(0, Scale(HeaderHeight));
         _header.ApplyTheme(theme);
 
         _themeManager.Apply(_bodyPanel);
@@ -185,7 +207,7 @@ public abstract class HiveForm : Form
             return;
 
         var radius = Math.Min(
-            Math.Max(1, CornerRadius),
+            Math.Max(1, Scale(CornerRadius)),
             Math.Min(Width, Height) / 2);
 
         using var path = CreateRoundedPath(
