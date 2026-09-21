@@ -279,6 +279,24 @@ internal sealed class HiveWindowHeader : Control
         Invalidate();
     }
 
+    protected override void OnDoubleClick(EventArgs e)
+    {
+        base.OnDoubleClick(e);
+
+        if (!_allowMaximize ||
+            HitTestCommand(PointToClient(Cursor.Position)) != WindowCommandNone)
+            return;
+
+        if (FindForm() is { } form &&
+            form.FormBorderStyle == FormBorderStyle.None)
+        {
+            form.WindowState =
+                form.WindowState == FormWindowState.Maximized
+                    ? FormWindowState.Normal
+                    : FormWindowState.Maximized;
+        }
+    }
+
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
@@ -349,6 +367,17 @@ internal sealed class HiveWindowHeader : Control
             case WindowCommandHelp:
                 HelpClicked?.Invoke(this, EventArgs.Empty);
                 break;
+        }
+    }
+
+    protected override void OnMouseCaptureChanged(EventArgs e)
+    {
+        base.OnMouseCaptureChanged(e);
+
+        if (!Capture && _pressedCommand != WindowCommandNone)
+        {
+            _pressedCommand = WindowCommandNone;
+            Invalidate();
         }
     }
 
