@@ -32,8 +32,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private const int HeaderHeight = 64;
     private const int ActionBarHeight = 46;
     private const int FooterHeight = 42;
-    private const int ActionButtonWidth = 84;
-    private const int ActionBarActionsWidth = 380;
+    private const int ActionButtonWidth = 92;
+    private const int ActionBarActionsWidth = 408;
     private const int PaginationWidth = 300;
     private const int DefaultPageSize = 25;
 
@@ -201,11 +201,11 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, FooterHeight));
 
-        var listHost = new Panel
+        var listHost = new HiveBorderPanel
         {
             Dock = DockStyle.Fill,
             Margin = Padding.Empty,
-            Padding = new Padding(1)
+            CornerRadius = 7
         };
 
         _list = new HiveListView
@@ -755,6 +755,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _busy = busy;
         _list.Enabled = !busy;
         _searchBox.Enabled = !busy;
+        _pagination.Enabled = !busy;
         UpdateActionState();
     }
 
