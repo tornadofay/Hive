@@ -805,11 +805,13 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         }
         catch (ObjectDisposedException)
         {
-            // The owning UI has already started closing; there is no state to restore.
+            System.Diagnostics.Debug.WriteLine(
+                "HiveCrudPage scroll restoration skipped because the control is disposing.");
         }
         catch (InvalidOperationException) when (!IsHandleCreated || IsDisposed)
         {
-            // The control handle disappeared between the guard and BeginInvoke.
+            System.Diagnostics.Debug.WriteLine(
+                "HiveCrudPage scroll restoration skipped because its handle is no longer available.");
         }
     }
 
