@@ -370,7 +370,7 @@ public static class HiveMessageBox
             var panel = new FlowLayoutPanel
             {
                 AutoSize = true,
-                FlowDirection = FlowDirection.RightToLeft,
+                FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
                 Margin = Padding.Empty,
                 Padding = Padding.Empty
