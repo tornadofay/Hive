@@ -8,7 +8,7 @@ public sealed class HiveDatabaseOptions
 
     public HiveDatabaseOptions(
         string connectionString,
-        bool createDatabaseIfMissing = false,
+        bool createDatabaseIfMissing = true,
         int commandTimeoutSeconds = 30)
     {
         if (string.IsNullOrWhiteSpace(connectionString))
