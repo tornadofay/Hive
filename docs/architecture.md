@@ -112,7 +112,7 @@ Scope matching does not itself grant authorization. Later management/security sl
 
 ---
 
-### 0.2 Persistence bootstrap
+### 0.4 Persistence bootstrap
 
 Phase 0.4 establishes the Hive-owned SQL Server persistence boundary without putting database dependencies into Hive.Core or the host application.
 
