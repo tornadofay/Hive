@@ -25,7 +25,7 @@ public sealed class HiveNavigationTree : TreeView
         HideSelection = false;
         HotTracking = false;
         ShowLines = false;
-        ShowPlusMinus = true;
+        ShowPlusMinus = false;
         ShowRootLines = false;
         Indent = 18;
         ItemHeight = RowHeight;
@@ -118,10 +118,60 @@ public sealed class HiveNavigationTree : TreeView
                 ? theme.VisualStates.NavigationText
                 : theme.Palette.DisabledText;
 
+        var textLeft = e.Bounds.Left + 4;
+
+        if (e.Node.Nodes.Count > 0)
+        {
+            var glyphSize = 12;
+            var glyphLeft = Math.Max(
+                row.Left + 3,
+                e.Bounds.Left - glyphSize - 5);
+            var glyphTop = row.Top + Math.Max(
+                0,
+                (row.Height - glyphSize) / 2);
+
+            using var glyphPen = new Pen(
+                selected
+                    ? theme.VisualStates.NavigationSelectedText
+                    : theme.VisualStates.NavigationText,
+                1.5f)
+            {
+                StartCap = LineCap.Round,
+                EndCap = LineCap.Round
+            };
+
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+            var centerX = glyphLeft + glyphSize / 2f;
+            var centerY = glyphTop + glyphSize / 2f;
+            var half = 3.5f;
+
+            e.Graphics.DrawLine(
+                glyphPen,
+                centerX - half,
+                centerY,
+                centerX + half,
+                centerY);
+
+            if (!e.Node.IsExpanded)
+            {
+                e.Graphics.DrawLine(
+                    glyphPen,
+                    centerX,
+                    centerY - half,
+                    centerX,
+                    centerY + half);
+            }
+
+            textLeft = Math.Max(
+                textLeft,
+                glyphLeft + glyphSize + 5);
+        }
+
         var textRectangle = new Rectangle(
-            e.Bounds.Left + 4,
+            textLeft,
             row.Top,
-            Math.Max(0, ClientSize.Width - e.Bounds.Left - 12),
+            Math.Max(0, ClientSize.Width - textLeft - 12),
             row.Height);
 
         TextRenderer.DrawText(
@@ -147,10 +197,19 @@ public sealed class HiveNavigationTree : TreeView
     {
         base.OnAfterSelect(e);
 
-        // The native TreeView can update selection state and paint in separate
-        // messages. Repaint once after the selection settles so old/new states
-        // cannot remain visually stale.
         Invalidate();
+    }
+
+    protected override void OnAfterExpand(TreeViewEventArgs e)
+    {
+        base.OnAfterExpand(e);
+        Invalidate(e.Node.Bounds);
+    }
+
+    protected override void OnAfterCollapse(TreeViewEventArgs e)
+    {
+        base.OnAfterCollapse(e);
+        Invalidate(e.Node.Bounds);
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
