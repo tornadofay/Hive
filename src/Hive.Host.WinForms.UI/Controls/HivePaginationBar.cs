@@ -39,7 +39,6 @@ public sealed class HivePaginationBar : UserControl
             if (!CanGoPrevious)
                 return;
 
-            PageNumber--;
             PreviousRequested?.Invoke(this, EventArgs.Empty);
         };
 
@@ -49,7 +48,6 @@ public sealed class HivePaginationBar : UserControl
             if (!CanGoNext)
                 return;
 
-            PageNumber++;
             NextRequested?.Invoke(this, EventArgs.Empty);
         };
 
