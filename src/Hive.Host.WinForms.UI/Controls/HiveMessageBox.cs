@@ -935,6 +935,18 @@ public static class HiveMessageBox
                 : null;
         }
 
+        protected override void OnEnabledChanged(EventArgs e)
+        {
+            base.OnEnabledChanged(e);
+
+            _hovered = false;
+            _pressed = false;
+            Cursor = Enabled ? Cursors.Hand : Cursors.Default;
+
+            if (_theme is not null)
+                ApplyTheme(_theme, _kind);
+        }
+
         protected override void OnMouseEnter(EventArgs e)
         {
             base.OnMouseEnter(e);
