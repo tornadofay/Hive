@@ -57,25 +57,36 @@ public readonly record struct ResourceScope
             ResourceScopeKind.Global => true,
 
             ResourceScopeKind.Tenant =>
-                Identity == context.TenantId?.Value,
+                context.TenantId is not null
+                && Identity == context.TenantId.Value.Value,
 
             ResourceScopeKind.User =>
-                Identity == context.UserId?.Value,
+                context.TenantId is not null
+                && context.UserId is not null
+                && Identity == context.UserId.Value.Value,
 
             ResourceScopeKind.Workspace =>
-                Identity == context.WorkspaceId?.Value,
+                context.TenantId is not null
+                && context.WorkspaceId is not null
+                && Identity == context.WorkspaceId.Value.Value,
 
             ResourceScopeKind.Agent =>
-                Identity == context.AgentId?.Value,
+                context.TenantId is not null
+                && context.AgentId is not null
+                && Identity == context.AgentId.Value.Value,
 
             ResourceScopeKind.Runtime =>
-                context.AgentId is not null
-                && Identity == context.RuntimeId?.Value,
+                context.TenantId is not null
+                && context.AgentId is not null
+                && context.RuntimeId is not null
+                && Identity == context.RuntimeId.Value.Value,
 
             ResourceScopeKind.Execution =>
-                context.AgentId is not null
+                context.TenantId is not null
+                && context.AgentId is not null
                 && context.RuntimeId is not null
-                && Identity == context.ExecutionId?.Value,
+                && context.ExecutionId is not null
+                && Identity == context.ExecutionId.Value.Value,
 
             _ => false
         };
@@ -158,6 +169,12 @@ public sealed record ResourceProvenance
         CausationId? causationId = null,
         ResourceReference? source = null)
     {
+        if (createdBy == default)
+            throw new ArgumentException("Creating principal is required.", nameof(createdBy));
+
+        if (correlationId == default)
+            throw new ArgumentException("CorrelationId is required.", nameof(correlationId));
+
         CreatedBy = createdBy;
         CreatedAtUtc = createdAtUtc.ToUniversalTime();
         CorrelationId = correlationId;
@@ -225,8 +242,14 @@ public sealed class ResourceEnvelope<TIdentity>
         ResourceLifecycle lifecycle,
         IReadOnlyDictionary<string, string>? metadata = null)
     {
+        if (!Enum.IsDefined(kind))
+            throw new ArgumentOutOfRangeException(nameof(kind), kind, "Resource kind is invalid.");
+
         if (EqualityComparer<TIdentity>.Default.Equals(identity, default))
             throw new ArgumentException("Resource identity is required.", nameof(identity));
+
+        if (owner == default)
+            throw new ArgumentException("Resource owner is required.", nameof(owner));
 
         Kind = kind;
         Identity = identity;
