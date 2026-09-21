@@ -173,8 +173,14 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 break;
 
             case DateTimePicker dateTimePicker:
-                dateTimePicker.CalendarMonthBackground = theme.Palette.InputBackground;
-                dateTimePicker.CalendarForeColor = theme.Palette.Text;
+                dateTimePicker.CalendarMonthBackground =
+                    dateTimePicker.Enabled
+                        ? theme.Palette.InputBackground
+                        : theme.Palette.DisabledBackground;
+                dateTimePicker.CalendarForeColor =
+                    dateTimePicker.Enabled
+                        ? theme.Palette.Text
+                        : theme.Palette.DisabledText;
                 SetBackColor(
                     dateTimePicker,
                     dateTimePicker.Enabled
