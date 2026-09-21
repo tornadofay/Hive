@@ -48,8 +48,6 @@ public sealed class HivePersistenceIntegrationTests
     [Fact]
     public async Task FutureSchemaVersion_IsRejectedBeforeMigration()
     {
-        RequirePersistenceIntegration();
-
         var databaseName = CreateDatabaseName();
         var options = CreateOptions(databaseName);
 
@@ -83,7 +81,6 @@ public sealed class HivePersistenceIntegrationTests
     [Fact]
     public async Task FailedMigration_DoesNotAdvanceSchemaVersionOrLeavePartialChanges()
     {
-        RequirePersistenceIntegration();
 
         var databaseName = CreateDatabaseName();
         var options = CreateOptions(databaseName);
