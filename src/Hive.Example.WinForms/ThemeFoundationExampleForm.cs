@@ -105,7 +105,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
 
         var status = CreateBodyLabel(
             "Renderer boundary: ReaLTaiizor remains inside Hive.Host.WinForms.UI.\r\n" +
-            "Consumer forms use Hive-owned contracts only.);
+            "Consumer forms use Hive-owned contracts only.");
         _content.Controls.Add(status);
     }
 
