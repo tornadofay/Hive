@@ -4,51 +4,39 @@ Last updated: 2026-09-21
 
 ## Active slice
 
-**0.3 — Identity, WorkItem & Resource foundation**
+**0.4 — Persistence bootstrap**
 
-Phase 0.2 is complete. Do not begin 0.4 or any later slice until 0.3 is complete and its verification has actually been performed.
+Phase 0.3 is complete and verified by the developer. Do not begin 0.5 or any later slice until 0.4 is complete and its verification has actually been performed.
 
 ## Objective
 
-Implement the common identity and resource foundation required by all later Hive capabilities:
+Establish the Hive-owned SQL Server persistence boundary required by later durable state, with LocalDB support for development, DbUp migrations, schema-version compatibility checks, and the initial database indexing strategy.
 
-- Deployment/Tenant/Principal/User/Session/Workspace/Agent/Hive/Runtime/Execution/WorkItem identities;
-- explicit Resource envelope with owner and canonical scope;
-- immutable provenance and resource references;
-- positive resource versioning;
-- resource lifecycle metadata and controlled lifecycle transitions;
-- scope matching with fail-closed missing identity handling;
-- immutable identity snapshots and metadata isolation;
-- WorkItem identity independent from Runtime/Execution lifetime;
-- WorkItem lifecycle/status transitions with versioned state;
-- copyable public API example.
+The slice is limited to:
+- Hive-owned SQL Server database boundary;
+- LocalDB development connection strategy;
+- DbUp migration execution with ordered versioned scripts;
+- durable schema-version tracking;
+- migration compatibility checks for unsupported future schema versions;
+- required initial indexes for the Phase 0 foundation tables;
+- deterministic migration error handling without partial successful migration claims.
 
 ## Implementation progress
 
-The 0.3 implementation is committed to `Hive.Core`:
+0.4 implementation has not started yet.
 
-- strongly typed non-empty identities for all required resource/runtime/work identifiers;
-- `ResourceKind` inventory classification;
-- `ResourceScope` and `ResourceAccessContext` with the documented Global/Tenant/User/Workspace/Agent/Runtime/Execution scope matrix;
-- fail-closed scope matching when required deployment, tenant, principal, agent, runtime, user, workspace, or execution identity is absent;
-- `ResourceVersion` with monotonic advancement and overflow protection;
-- `ResourceLifecycle` with Active/Suspended/Retired transitions and retirement protection;
-- `ResourceProvenance` with creator principal, creation time, correlation/causation IDs, and optional source reference;
-- immutable `ResourceEnvelope<TIdentity>` with copied metadata and identity snapshots;
-- `WorkItem` with creation, queue/run/pending-approval/completed/rejected/failed/cancelled statuses, suspension/resume, retirement, immutable identity preservation, and versioned transitions.
+The architecture must be updated before any structural persistence code is introduced. The implementation will be limited to the ordered 0.4 boundary: database ownership/connection abstraction, LocalDB development support, DbUp migration infrastructure, schema-version compatibility protection, and initial indexes.
 
-A copyable public-API example is in `docs/examples/Phase03_Identity_Resource.md`.
+## 0.3 completion record
 
-## 0.2 completion record
-
-Phase 0.2 was completed after the developer pulled the fixes, rebuilt the full solution, launched the application successfully, and ran the complete test suite.
+Phase 0.3 was completed after the developer pulled the correction, rebuilt the full solution, launched the application successfully, and ran the complete test suite.
 
 - Build result: **PASS — developer reports full-solution rebuild succeeds.**
 - Runtime result: **PASS — developer reports the solution runs successfully.**
-- Test result: **PASS — 20 tests, 20 passed, 0 failed, 0 skipped, 1.3 seconds.**
-- Verification result: **PASS for the 0.2 completion gate based on the developer-run test suite.**
-- Ready commit before starting 0.3: `0381a2fc75ebf0aeb2020d62b970d46124d455fe`
-- Next slice: **0.3 — Identity, WorkItem & Resource foundation**
+- Test result: **PASS — 36 tests, 36 passed, 0 failed, 0 skipped, 1.5 seconds.**
+- Verification result: **PASS for the 0.3 completion gate based on the developer-run test suite.**
+- Ready commit before starting 0.4: `7c6db0f85da8e96a93e771a4f2c52d1d79af559d`
+- Next slice: **0.4 — Persistence bootstrap**
 
 ## Dependency direction
 
@@ -78,39 +66,39 @@ Additional constraints:
 - Hive.Example.WinForms must not reference xUnit runner internals.
 - Do not create compatibility/legacy projects or duplicate architecture paths.
 
-## Out of scope for 0.3
+## Out of scope for 0.4
 
-- persistence schema or database migrations;
 - provider implementation;
-- Agent/Hive behavior beyond identity contracts;
-- authorization/permission policy beyond explicit scope matching;
-- database-backed WorkItem persistence;
+- Agent/Hive behavior;
 - execution orchestration;
-- UI foundation or Example host navigation;
+- WinForms UI/UX;
 - V1 image/document pipeline;
 - CognitiveAgent/CognitiveHive;
-- later persistence/outbox behavior.
+- event log, snapshots, and transactional outbox beyond any schema-version foundation needed by persistence bootstrap;
+- production deployment automation.
 
-## 0.3 Verification
+## 0.4 Verification
 
 The implementation requires verification of:
 
-1. all eleven typed identity contracts reject empty values and support stable round-tripping;
-2. the complete scope matrix matches when all required identity components are present;
-3. each scope fails closed for missing required identity components;
-4. wrong tenant/user/workspace/agent/runtime/execution identity does not match;
-5. resource metadata is copied so external mutation cannot alter the resource;
-6. identity snapshots remain stable when a resource is versioned;
-7. resource versions are positive, monotonic, and overflow-safe;
-8. retired resource lifecycle cannot be reactivated;
-9. WorkItem transitions preserve identity, owner, scope, and provenance while incrementing version and updating lifecycle time;
-10. terminal WorkItems cannot be transitioned;
-11. suspended WorkItems can resume without losing work status;
-12. separate WorkItems do not share mutable state;
-13. the public example remains consistent with the actual public API.
+1. a clean development database can be initialized successfully from an empty database;
+2. rerunning migrations is idempotent and produces no duplicate schema/version state;
+3. a deliberately failing migration does not advance the recorded schema version;
+4. an unsupported future schema version is detected and rejected before normal migration/execution proceeds;
+5. required initial indexes exist after a clean migration;
+6. migration history/schema-version state is deterministic and inspectable;
+7. database connection configuration supports both SQL Server and LocalDB development without provider-specific logic leaking into Hive.Core.
 
-Automated execution is currently pending. No 0.3 pass claim is recorded yet.
+Verification is currently pending. No 0.4 pass claim is recorded yet.
 
+## Completion record
+
+Complete this section after verification:
+
+- Build result:
+- Verification result:
+- Commit:
+- Next slice:
 ## Completion record
 
 Complete this section after verification:
