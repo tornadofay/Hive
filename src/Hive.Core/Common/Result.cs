@@ -16,22 +16,26 @@ public enum ErrorCategory
     Internal
 }
 
-public sealed record Error(
-    string Code,
-    ErrorCategory Category,
-    string Message)
+public sealed record Error
 {
-    public Error
+    public Error(string code, ErrorCategory category, string message)
     {
-        if (string.IsNullOrWhiteSpace(Code))
-            throw new ArgumentException("Error code is required.", nameof(Code));
+        if (string.IsNullOrWhiteSpace(code))
+            throw new ArgumentException("Error code is required.", nameof(code));
 
-        if (string.IsNullOrWhiteSpace(Message))
-            throw new ArgumentException("Error message is required.", nameof(Message));
+        if (string.IsNullOrWhiteSpace(message))
+            throw new ArgumentException("Error message is required.", nameof(message));
 
-        Code = Code.Trim();
-        Message = Message.Trim();
+        Code = code.Trim();
+        Category = category;
+        Message = message.Trim();
     }
+
+    public string Code { get; }
+
+    public ErrorCategory Category { get; }
+
+    public string Message { get; }
 
     public static Error Validation(string code, string message) =>
         new(code, ErrorCategory.Validation, message);
