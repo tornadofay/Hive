@@ -1094,13 +1094,12 @@ public static class HiveMessageBox
                 var lineX = (Width - lineWidth) / 2f;
                 var lineY = Height - HiveDpi.Scale(this, 4f);
 
-                using var focusBrush = new SolidBrush(_focusPen.Color);
-                e.Graphics.FillRectangle(
-                    focusBrush,
+                e.Graphics.DrawLine(
+                    _focusPen,
                     lineX,
                     lineY,
-                    lineWidth,
-                    lineHeight);
+                    lineX + lineWidth,
+                    lineY);
             }        }
 
         protected override void Dispose(bool disposing)
