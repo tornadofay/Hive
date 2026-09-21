@@ -216,21 +216,32 @@ public sealed class HiveNavigationTree : TreeView
 
     protected override void OnMouseDown(MouseEventArgs e)
     {
-        base.OnMouseDown(e);
-
         if (!Enabled || e.Button != MouseButtons.Left)
+        {
+            base.OnMouseDown(e);
             return;
+        }
 
         var node = GetNodeAt(e.Location);
-        if (node is null || node.Nodes.Count == 0)
+        if (node is not null && node.Nodes.Count > 0)
+        {
+            node.Toggle();
+            Focus();
             return;
+        }
 
-        if (!GetGlyphBounds(node).Contains(e.Location))
+        base.OnMouseDown(e);
+    }
+
+    protected override void OnBeforeSelect(TreeViewCancelEventArgs e)
+    {
+        if (e.Node is not null && e.Node.Nodes.Count > 0)
+        {
+            e.Cancel = true;
             return;
+        }
 
-        node.Toggle();
-        SelectedNode = node;
-        Focus();
+        base.OnBeforeSelect(e);
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -245,10 +256,10 @@ public sealed class HiveNavigationTree : TreeView
         _hoverNode = next;
 
         if (previousNode is not null)
-            Invalidate(previousNode.Bounds);
+            Invalidate(GetRowBounds(previousNode));
 
         if (next is not null)
-            Invalidate(next.Bounds);
+            Invalidate(GetRowBounds(next));
     }
 
     protected override void OnMouseLeave(EventArgs e)
@@ -272,6 +283,16 @@ public sealed class HiveNavigationTree : TreeView
             _groupFont?.Dispose();
             _itemFont?.Dispose();
         }
+    }
+
+    private Rectangle GetRowBounds(TreeNode node)
+    {
+        var row = node.Bounds;
+        return new Rectangle(
+            RowHorizontalPadding,
+            row.Top + RowVerticalPadding,
+            Math.Max(0, ClientSize.Width - RowHorizontalPadding * 2),
+            Math.Max(1, row.Height - RowVerticalPadding * 2));
     }
 
     private void EnsureFonts(HiveThemeDefinition theme)
