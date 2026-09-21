@@ -376,13 +376,24 @@ internal sealed class HiveExampleHostForm : HiveForm
         foreach (TreeNode category in _navigation.Nodes)
         {
             var firstExample = FindFirstExampleNode(category);
-            if (firstExample?.Tag is not IHiveExample example)
+            if (firstExample?.Tag is not IHiveExample)
                 continue;
 
-            ShowExample(example);
             _navigation.CollapseAll();
-            _navigation.SelectedNode = category;
+            ExpandNavigationParents(firstExample);
+            _navigation.SelectedNode = firstExample;
+            _navigation.EnsureVisible(firstExample);
             return;
+        }
+    }
+
+    private static void ExpandNavigationParents(TreeNode node)
+    {
+        var parent = node.Parent;
+        while (parent is not null)
+        {
+            parent.Expand();
+            parent = parent.Parent;
         }
     }
 
