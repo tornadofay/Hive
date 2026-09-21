@@ -39,7 +39,7 @@ Objective: create the complete initial solution structure:
 
 Establish the dependency direction from the beginning. `Hive.Host.WinForms.UI` owns the ReaLTaiizor dependency, `Hive.Host.WinForms` consumes the UI foundation, and `Hive.Example.WinForms` consumes public platform contracts plus the WinForms/UI layers. No core/platform project may depend on the Example host.
 
-Verify: solution builds; forbidden references are absent; ReaLTaiizor is referenced only by `Hive.Host.WinForms.UI`; the Example host is isolated from test-framework internals.
+Verify: solution builds; forbidden references are absent; the UI project boundary for ReaLTaiizor is reserved for 0.6; the Example host is isolated from test-framework internals.
 
 ## 0.2 — Common infrastructure
 Objective: IDs, immutable value objects, typed errors/results, `IClock`, event envelope with event type and payload schema version, correlation/causation IDs, event upcasting compatibility boundary, and one JSON serialization stack.
