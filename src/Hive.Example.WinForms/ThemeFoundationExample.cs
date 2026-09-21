@@ -1,5 +1,4 @@
 using System.Windows.Forms;
-
 using Hive.Host.WinForms.UI.Theme;
 
 namespace Hive.Example.WinForms;
@@ -10,7 +9,7 @@ internal sealed class ThemeFoundationExample : IHiveExample
 
     public string Subcategory => "Foundation";
 
-    public string Title => "Theme, Controls & CRUD";
+    public string Title => "Theme";
 
     public UserControl CreateView(IServiceProvider services)
     {
