@@ -219,7 +219,7 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private void NavigationAfterSelect(object? sender, TreeViewEventArgs e)
     {
-        if (e.Node.Tag is IHiveExample example)
+        if (e.Node?.Tag is IHiveExample example)
             ShowExample(example);
     }
 
