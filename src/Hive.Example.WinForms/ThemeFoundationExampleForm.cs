@@ -5,7 +5,7 @@ using Hive.Host.WinForms.UI.Theme;
 
 namespace Hive.Example.WinForms;
 
-internal sealed class ThemeFoundationExampleForm : HiveForm
+internal sealed partial class ThemeFoundationExampleForm : HiveForm
 {
     private readonly FlowLayoutPanel _navigation;
     private readonly Panel _content;
@@ -247,73 +247,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
 
     private void BuildListCompositionExample()
     {
-        var listPage = new HiveListPageLayout
-        {
-            Width = 620,
-            Height = 280,
-            Margin = new Padding(0, 18, 0, 12)
-        };
-
-        listPage.HeaderPanel.Padding = new Padding(12, 8, 12, 4);
-        listPage.HeaderPanel.Controls.Add(new Label
-        {
-            AutoSize = true,
-            Text = "Reusable list composition",
-            Font = _pageTitleFont,
-            ForeColor = Theme.Palette.Text
-        });
-
-        listPage.ActionBarPanel.Padding = new Padding(12, 6, 12, 6);
-        listPage.ActionBarPanel.Controls.Add(new Label
-        {
-            AutoSize = true,
-            Dock = DockStyle.Fill,
-            Text = "Domain pages supply their own filters, CRUD commands, columns, and editors.",
-            TextAlign = ContentAlignment.MiddleLeft,
-            ForeColor = Theme.Palette.MutedText
-        });
-
-        var content = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 1,
-            RowCount = 2,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty
-        };
-        content.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        content.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
-
-        var list = new ListView
-        {
-            Dock = DockStyle.Fill,
-            View = View.Details,
-            FullRowSelect = true,
-            HideSelection = false,
-            HeaderStyle = ColumnHeaderStyle.Nonclickable,
-            BorderStyle = BorderStyle.FixedSingle
-        };
-        list.Columns.Add("Name", 220);
-        list.Columns.Add("Type", 160);
-        list.Columns.Add("Status", 140);
-        list.Items.Add(new ListViewItem(new[] { "Example provider", "Provider", "Enabled" }));
-        list.Items.Add(new ListViewItem(new[] { "Example agent", "Agent", "Enabled" }));
-        list.Items.Add(new ListViewItem(new[] { "Example resource", "Resource", "Ready" }));
-
-        var pager = new HivePaginationBar
-        {
-            CanGoNext = true,
-            CanGoPrevious = false
-        };
-        pager.NextRequested += (_, _) => pager.CanGoPrevious = true;
-        pager.PreviousRequested += (_, _) => pager.CanGoPrevious = pager.PageNumber > 1;
-
-        content.Controls.Add(list, 0, 0);
-        content.Controls.Add(pager, 0, 1);
-        listPage.ContentPanel.Controls.Add(content);
-
-        _controlsPage.Controls.Add(listPage);
-        ThemeManager.Apply(listPage);
+        BuildCrudCompositionExample();
     }
 
     private void BuildDialogsPage()
