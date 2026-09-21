@@ -324,11 +324,12 @@ internal sealed class HiveWindowHeader : Control
                 break;
 
             case WindowCommandMaximize:
-                if (FindForm() is { } form)
+                if (FindForm() is { } maximizeForm)
                 {
-                    form.WindowState = form.WindowState == FormWindowState.Maximized
-                        ? FormWindowState.Normal
-                        : FormWindowState.Maximized;
+                    maximizeForm.WindowState =
+                        maximizeForm.WindowState == FormWindowState.Maximized
+                            ? FormWindowState.Normal
+                            : FormWindowState.Maximized;
                 }
                 break;
 
