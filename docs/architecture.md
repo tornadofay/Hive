@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-21 (rev 21 — reusable WinForms data-page and CRUD composition)
+Last updated: 2026-09-21 (rev 22 — production CRUD/editor UX composition)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -227,11 +227,15 @@ The theme manager is stateful but UI-only. Changing the mode raises one theme-ch
 
 Hive reuses presentation and CRUD orchestration mechanics for data-oriented pages without assigning domain meaning to them. The reusable foundation may provide:
 - a three-region list-page layout (header, action/filter region, content);
-- a styled native `ListView`-based tabular/list surface where its native behavior is sufficient;
+- a structured CRUD toolbar with a clear primary action, contextual edit/delete actions, refresh, and optional client-side search;
+- a styled native `ListView`-based tabular/list surface where its native behavior is sufficient, with predictable selection and keyboard interaction;
+- explicit loading, empty, and no-match states plus a compact record-count/status footer;
 - an optional paging/navigation bar that owns page state and navigation events, not data retrieval;
-- a generic `HiveCrudPage<TItem>` that owns Add/Edit/Delete/Refresh UI orchestration, selection, list population, and operation busy-state while receiving load/edit/delete callbacks from the consuming feature;
-- reusable editor-layout composition for the repeated label/description + field + action-footer pattern;
+- a generic `HiveCrudPage<TItem>` that owns Add/Edit/Delete/Refresh UI orchestration, selection, list population, search state, busy-state, empty-state presentation, keyboard interaction, and operation failure notification while receiving load/edit/delete callbacks from the consuming feature;
+- reusable editor-layout composition for the repeated label/description + field + action-footer pattern, with consistent field spacing and a dedicated action footer;
 - optional master/detail composition where a bounded list and selected-item details are useful.
+
+The reusable page follows a consistent application UX hierarchy: page title/description first, query/filter controls and actions second, primary data surface third, and compact status feedback last. Destructive actions remain secondary and require confirmation. The reusable editor keeps domain validation and authorization outside the layout while providing a consistent field rhythm, readable labels/descriptions, and right-aligned primary/secondary actions.
 
 `HiveCrudPage<TItem>` is a UI/application-boundary primitive, not an ORM or persistence abstraction. The consumer supplies columns/projections, filters, validation, authorization, persistence, and the domain-specific editor through callbacks or composition. The control does not know Provider, Agent, Resource, or any other domain schema, and it never creates or mutates domain state on its own. This lets Provider, Agent, Tool, Policy, and future configuration pages share the same CRUD interaction contract while retaining different columns and specialized edit forms.
 
