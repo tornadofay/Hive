@@ -14,10 +14,10 @@ internal sealed class OverviewExampleView : UserControl
     private readonly TableLayoutPanel _navigationSection;
     private readonly TableLayoutPanel _architectureSection;
     private readonly TableLayoutPanel _projectSection;
-    private readonly Label _eyebrow;
-    private readonly Label _title;
-    private readonly Label _intro;
-    private readonly LinkLabel _repositoryLink;
+    private Label _eyebrow = null!;
+    private Label _title = null!;
+    private Label _intro = null!;
+    private LinkLabel _repositoryLink = null!;
     private readonly Label _projectText;
     private readonly IHiveThemeManager _themeManager;
     private readonly Label _hostText;
@@ -296,10 +296,19 @@ internal sealed class OverviewExampleView : UserControl
         TableLayoutPanel cards,
         int column)
     {
-        var card = (Panel)cards.GetControlFromPosition(column, 0);
-        return (Label)card.Controls
+        if (cards.GetControlFromPosition(column, 0) is not Panel card)
+        {
+            throw new InvalidOperationException(
+                "The Overview page card could not be created.");
+        }
+
+        var body = card.Controls
             .OfType<Label>()
-            .First(control => control.Dock == DockStyle.Fill);
+            .FirstOrDefault(control => control.Dock == DockStyle.Fill);
+
+        return body
+            ?? throw new InvalidOperationException(
+                "The Overview page card body could not be found.");
     }
 
     private void ThemeManagerOnChanged(object? sender, EventArgs e)
