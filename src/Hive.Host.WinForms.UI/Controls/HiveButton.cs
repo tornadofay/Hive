@@ -138,6 +138,7 @@ public sealed class HiveButton : UserControl
     {
         base.OnEnabledChanged(e);
         Cursor = Enabled ? Cursors.Hand : Cursors.Default;
+        ApplyCurrentTheme();
     }
 
     private void ApplyCurrentTheme()
