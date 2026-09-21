@@ -149,9 +149,9 @@ internal sealed class HiveExampleHostForm : HiveForm
             Margin = Padding.Empty,
             Padding = new Padding(28, 22, 28, 24)
         };
-        content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        content.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 190));
 
         _viewTitle = new Label
