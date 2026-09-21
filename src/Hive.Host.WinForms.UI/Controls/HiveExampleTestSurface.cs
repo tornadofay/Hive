@@ -26,6 +26,10 @@ public sealed class HiveExampleTestSurface : UserControl
     private HiveThemeDefinition? _theme;
     private CancellationTokenSource? _runCancellation;
     private bool _busy;
+    private string _description = string.Empty;
+    private string _expectedResult = string.Empty;
+    private string _noteTitle = string.Empty;
+    private string _noteText = string.Empty;
     private Func<CancellationToken, Task>? _runAction;
     private IHiveExampleOutput? _output;
     private IWin32Window? _owner;
@@ -256,18 +260,46 @@ public sealed class HiveExampleTestSurface : UserControl
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string Description
     {
-        get => _details.Text;
-        set => UpdateDetails(value, ExpectedResult);
+        get => _description;
+        set
+        {
+            _description = value ?? string.Empty;
+            UpdateDetails();
+        }
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public string ExpectedResult { get; set; } = string.Empty;
+    public string ExpectedResult
+    {
+        get => _expectedResult;
+        set
+        {
+            _expectedResult = value ?? string.Empty;
+            UpdateDetails();
+        }
+    }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public string NoteTitle { get; set; } = string.Empty;
+    public string NoteTitle
+    {
+        get => _noteTitle;
+        set
+        {
+            _noteTitle = value ?? string.Empty;
+            UpdateNote();
+        }
+    }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public string NoteText { get; set; } = string.Empty;
+    public string NoteText
+    {
+        get => _noteText;
+        set
+        {
+            _noteText = value ?? string.Empty;
+            UpdateNote();
+        }
+    }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsBusy => _busy;
@@ -278,21 +310,13 @@ public sealed class HiveExampleTestSurface : UserControl
         string? noteTitle = null,
         string? noteText = null)
     {
-        ExpectedResult = expectedResult ?? string.Empty;
-        NoteTitle = noteTitle ?? string.Empty;
-        NoteText = noteText ?? string.Empty;
+        _description = description ?? string.Empty;
+        _expectedResult = expectedResult ?? string.Empty;
+        _noteTitle = noteTitle ?? string.Empty;
+        _noteText = noteText ?? string.Empty;
 
-        UpdateDetails(
-            description ?? string.Empty,
-            ExpectedResult);
-
-        var note = string.IsNullOrWhiteSpace(NoteTitle)
-            ? NoteText
-            : string.IsNullOrWhiteSpace(NoteText)
-                ? NoteTitle
-                : NoteTitle + ": " + NoteText;
-
-        _note.Text = note;
+        UpdateDetails();
+        UpdateNote();
     }
 
     public void SetStatus(string text) =>
@@ -457,21 +481,28 @@ public sealed class HiveExampleTestSurface : UserControl
         }
     }
 
-    private void UpdateDetails(
-        string description,
-        string expectedResult)
+    private void UpdateDetails()
     {
-        var expected = string.IsNullOrWhiteSpace(expectedResult)
+        var expected = string.IsNullOrWhiteSpace(_expectedResult)
             ? string.Empty
             : Environment.NewLine + Environment.NewLine +
               "Expected result" + Environment.NewLine +
-              expectedResult;
+              _expectedResult;
 
         _details.Text =
-            (string.IsNullOrWhiteSpace(description)
+            (string.IsNullOrWhiteSpace(_description)
                 ? string.Empty
-                : "Description" + Environment.NewLine + description) +
+                : "Description" + Environment.NewLine + _description) +
             expected;
+    }
+
+    private void UpdateNote()
+    {
+        _note.Text = string.IsNullOrWhiteSpace(_noteTitle)
+            ? _noteText
+            : string.IsNullOrWhiteSpace(_noteText)
+                ? _noteTitle
+                : _noteTitle + ": " + _noteText;
     }
 
     private IHiveThemeManager? FindHiveThemeManager()
