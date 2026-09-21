@@ -81,7 +81,12 @@ public sealed class HiveEditorLayout : UserControl
 
     public FlowLayoutPanel FooterPanel => _footer;
 
-    public void ClearFields() => _fields.Controls.Clear();
+    public void ClearFields()
+    {
+        _fields.Controls.Clear();
+        _fields.RowStyles.Clear();
+        _fields.RowCount = 0;
+    }
 
     public void AddField(
         string title,
