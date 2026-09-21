@@ -879,6 +879,18 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _busy = busy;
         _list.Enabled = !busy;
         _searchBox.Enabled = !busy;
+
+        if (FindForm() is HiveForm hiveForm)
+        {
+            var theme = hiveForm.ThemeManager.Theme;
+            _searchBox.BackColor = busy
+                ? theme.Palette.DisabledBackground
+                : theme.Palette.InputBackground;
+            _searchBox.ForeColor = busy
+                ? theme.Palette.DisabledText
+                : theme.Palette.Text;
+        }
+
         _pagination.Enabled = !busy;
         UpdateActionState();
     }
