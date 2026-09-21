@@ -203,7 +203,11 @@ public abstract class HiveForm : Form
             Math.Min(Width, Height) / 2);
 
         using var path = CreateRoundedPath(
-            new Rectangle(0, 0, Width, Height),
+            new RectangleF(
+                0.5f,
+                0.5f,
+                Width - 1f,
+                Height - 1f),
             radius);
 
         var nextRegion = new Region(path);
@@ -214,16 +218,35 @@ public abstract class HiveForm : Form
     }
 
     private static GraphicsPath CreateRoundedPath(
-        Rectangle bounds,
-        int radius)
+        RectangleF bounds,
+        float radius)
     {
-        var diameter = radius * 2;
+        var diameter = Math.Min(
+            radius * 2f,
+            Math.Min(bounds.Width, bounds.Height));
+
         var path = new GraphicsPath();
 
-        path.AddArc(bounds.X, bounds.Y, diameter, diameter, 180f, 90f);
-        path.AddArc(bounds.Right - diameter, bounds.Y, diameter, diameter, 270f, 90f);
-        path.AddArc(bounds.Right - diameter, bounds.Bottom - diameter, diameter, diameter, 0f, 90f);
-        path.AddArc(bounds.X, bounds.Bottom - diameter, diameter, diameter, 90f, 90f);
+        path.AddArc(
+            new RectangleF(bounds.X, bounds.Y, diameter, diameter),
+            180f,
+            90f);
+        path.AddArc(
+            new RectangleF(bounds.Right - diameter, bounds.Y, diameter, diameter),
+            270f,
+            90f);
+        path.AddArc(
+            new RectangleF(
+                bounds.Right - diameter,
+                bounds.Bottom - diameter,
+                diameter,
+                diameter),
+            0f,
+            90f);
+        path.AddArc(
+            new RectangleF(bounds.X, bounds.Bottom - diameter, diameter, diameter),
+            90f,
+            90f);
         path.CloseFigure();
 
         return path;
