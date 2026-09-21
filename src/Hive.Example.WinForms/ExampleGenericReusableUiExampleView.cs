@@ -31,10 +31,19 @@ internal sealed class ExampleGenericReusableUiExampleView : UserControl
             "Demonstrate the reusable Hive Example UI surface.";
 
         _surface.CodeSnippet = """
+var output = services.GetExampleOutput();
+
 var example = new HiveExampleTestSurface
 {
-    InputText = "test value",
-    CodeSnippet = "var result = await RunExampleAsync(...);"
+    InputText = "test value"
+};
+
+example.CodeSnippet = """
+var output = services.GetExampleOutput();
+
+var example = new HiveExampleTestSurface
+{
+    InputText = "test value"
 };
 
 example.SetInformation(
@@ -46,11 +55,12 @@ example.SetInformation(
 example.ConfigureRun(
     async token =>
     {
-        // Only the example-specific test logic lives here.
+        // Only example-specific test logic lives here.
         await Task.CompletedTask;
     },
     output,
-    owner);
+    this);
+""";
 """;
 
         _surface.SetInformation(
