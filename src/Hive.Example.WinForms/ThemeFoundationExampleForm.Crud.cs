@@ -30,7 +30,8 @@ internal sealed partial class ThemeFoundationExampleForm
             Height = 460,
             Margin = new Padding(0, 18, 0, 12),
             Title = "Generic CRUD composition",
-            Description = "Hive provides the reusable page workflow and interaction model; the consuming feature provides its data, rules, and editor."
+            Description = "Hive provides the reusable page workflow and interaction model; the consuming feature provides its data, rules, and editor.",
+            PageSize = 5
         };
 
         crud.SetColumns(
