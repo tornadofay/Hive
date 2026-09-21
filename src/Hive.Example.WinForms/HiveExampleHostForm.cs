@@ -35,6 +35,14 @@ internal sealed class HiveExampleHostForm : HiveForm
             new Size(1180, 760),
             new Size(960, 620))
     {
+        ShowInTaskbar = true;
+        StartPosition = FormStartPosition.CenterScreen;
+        ConfigureHeader(
+            allowMove: true,
+            allowClose: true,
+            allowMinimize: true,
+            allowHelp: false);
+
         _themeManager = ThemeManager;
         _services = new HiveExampleServices(_themeManager);
         _examples = HiveExampleDiscovery.Discover(
