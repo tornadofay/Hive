@@ -127,7 +127,20 @@ public sealed class HivePersistenceIntegrationTests
 
     private static HiveDatabaseOptions CreateOptions(string databaseName)
     {
-        return HiveDatabaseOptions.LocalDevelopment(databaseName);
+        var connectionString = Environment.GetEnvironmentVariable("HIVE_TEST_CONNECTION_STRING");
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+            return HiveDatabaseOptions.LocalDevelopment(databaseName);
+
+        var builder = new SqlConnectionStringBuilder(connectionString)
+        {
+            InitialCatalog = databaseName,
+            ApplicationName = "Hive.Tests"
+        };
+
+        return new HiveDatabaseOptions(
+            builder.ConnectionString,
+            createDatabaseIfMissing: true);
     }
 
     private static async Task<int> ReadSchemaVersionAsync(HiveDatabaseOptions options)
