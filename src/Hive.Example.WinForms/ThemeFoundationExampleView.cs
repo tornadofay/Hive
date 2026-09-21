@@ -15,11 +15,17 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
     private readonly FlowLayoutPanel _themePage;
     private readonly FlowLayoutPanel _controlsPage;
     private readonly FlowLayoutPanel _dialogsPage;
+    private readonly Label _navigationTitle;
+    private readonly Label _navigationDescription;
     private readonly Label _pageTitle;
     private readonly Label _pageDescription;
     private readonly Label _themeState;
+    private readonly Font _navigationTitleFont;
+    private readonly Font _navigationDescriptionFont;
     private readonly Font _pageTitleFont;
     private readonly Panel _bodyPanel;
+
+    private HiveButton? _selectedNavigationButton;
 
     public ThemeFoundationExampleView(IHiveThemeManager themeManager)
     {
@@ -39,8 +45,8 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         _navigation = new FlowLayoutPanel
         {
             Dock = DockStyle.Left,
-            Width = 190,
-            Padding = new Padding(12, 18, 12, 12),
+            Width = 184,
+            Padding = new Padding(14, 16, 12, 12),
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
             AutoScroll = true,
@@ -50,7 +56,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         _content = new Panel
         {
             Dock = DockStyle.Fill,
-            Padding = new Padding(28, 24, 28, 24)
+            Padding = new Padding(26, 22, 26, 22)
         };
 
         _contentLayout = new TableLayoutPanel
@@ -65,25 +71,47 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
 
-        _pageTitleFont = new Font("Segoe UI", 16f, FontStyle.Bold);
+        _navigationTitleFont = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
+        _navigationDescriptionFont = new Font("Segoe UI", 8.4f);
+        _pageTitleFont = new Font("Segoe UI Semibold", 16f, FontStyle.Bold);
+
+        _navigationTitle = new Label
+        {
+            AutoSize = true,
+            Font = _navigationTitleFont,
+            Margin = new Padding(2, 0, 0, 2),
+            Padding = Padding.Empty,
+            Text = "SECTIONS"
+        };
+
+        _navigationDescription = new Label
+        {
+            AutoSize = true,
+            Font = _navigationDescriptionFont,
+            Margin = new Padding(2, 0, 0, 14),
+            Padding = Padding.Empty,
+            Text = "Shared UI foundation"
+        };
+
         _pageTitle = new Label
         {
             AutoSize = true,
             Font = _pageTitleFont,
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
         };
 
         _pageDescription = new Label
         {
             AutoSize = true,
-            MaximumSize = new Size(800, 80),
-            Margin = new Padding(0, 8, 0, 20)
+            MaximumSize = new Size(900, 72),
+            Margin = new Padding(0, 6, 0, 18)
         };
 
         _pageBody = new Panel
         {
             Dock = DockStyle.Fill,
-            AutoScroll = false,
+            AutoScroll = true,
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
@@ -99,16 +127,16 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         _themePage.Controls.Add(CreateThemeButton("Light", HiveThemeMode.Light));
         _themePage.Controls.Add(CreateThemeButton("Dark", HiveThemeMode.Dark));
         _themePage.Controls.Add(CreateThemeButton("System", HiveThemeMode.System));
-        _themeState.Margin = new Padding(0, 18, 0, 0);
+        _themeState.Margin = new Padding(0, 16, 0, 0);
         _themePage.Controls.Add(_themeState);
 
         _controlsPage.Controls.Add(CreateBodyLabel(
-            "Hive-prefixed controls exist only where Hive adds a consumer-facing contract or styling beyond ordinary WinForms."));
+            "Hive-specific controls add only the consumer-facing behavior or styling that ordinary WinForms controls do not provide."));
         BuildControlsPage();
         BuildListCompositionExample();
 
         _dialogsPage.Controls.Add(CreateBodyLabel(
-            "HiveMessageBox provides semantic Information, Success, Warning, Error, and Question dialogs with optional technical details."));
+            "HiveMessageBox provides consistent semantic dialogs, optional technical details, and a predictable button hierarchy."));
         BuildDialogsPage();
 
         _contentLayout.Controls.Add(_pageTitle, 0, 0);
@@ -118,38 +146,32 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         _content.Controls.Add(_contentLayout);
         _bodyPanel.Controls.Add(_content);
         _bodyPanel.Controls.Add(_navigation);
+
+        _navigation.Controls.Add(_navigationTitle);
+        _navigation.Controls.Add(_navigationDescription);
+
         Controls.Add(_bodyPanel);
 
         AddNavigation(
             "Theme",
-            () => ShowPage(
-                _themePage,
-                "Theme",
-                "Light, Dark, and System modes use Hive-owned semantic tokens and can be switched at runtime."));
-
+            "Theme",
+            "Light, Dark, and System modes use semantic theme tokens.",
+            selected: true);
         AddNavigation(
             "Controls",
-            () => ShowPage(
-                _controlsPage,
-                "Controls",
-                "Hive-prefixed controls exist only where Hive adds a consumer-facing contract or styling beyond ordinary WinForms."));
-
+            "Controls",
+            "Native WinForms and Hive-specific control states.");
         AddNavigation(
             "Dialogs",
-            () => ShowPage(
-                _dialogsPage,
-                "Dialogs",
-                "HiveMessageBox provides semantic Information, Success, Warning, Error, and Question dialogs with optional technical details."));
+            "Dialogs",
+            "Semantic dialogs and technical error details.");
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(_bodyPanel);
-        ApplyExampleTheme(_themeManager.Theme);
-
         ShowPage(
             _themePage,
             "Theme",
             "Light, Dark, and System modes use Hive-owned semantic tokens and can be switched at runtime.");
-
         UpdateThemeState();
     }
 
@@ -158,6 +180,8 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         if (disposing)
         {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
+            _navigationTitleFont.Dispose();
+            _navigationDescriptionFont.Dispose();
             _pageTitleFont.Dispose();
         }
 
@@ -173,6 +197,8 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
     private void ApplyExampleTheme(HiveThemeDefinition theme)
     {
         _navigation.BackColor = theme.VisualStates.NavigationBackground;
+        _navigationTitle.ForeColor = theme.VisualStates.NavigationText;
+        _navigationDescription.ForeColor = theme.Palette.MutedText;
         _content.BackColor = theme.Palette.Surface;
         _contentLayout.BackColor = theme.Palette.Surface;
         _pageBody.BackColor = theme.Palette.Surface;
@@ -181,18 +207,50 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         _dialogsPage.BackColor = theme.Palette.Surface;
     }
 
-    private void AddNavigation(string text, Action action)
+    private void AddNavigation(
+        string text,
+        string title,
+        string description,
+        bool selected = false)
     {
         var button = new HiveButton
         {
             Text = text,
-            Style = HiveButtonStyle.Navigation,
-            Width = 166,
-            Height = 42,
-            Margin = new Padding(0, 0, 0, 8)
+            Style = selected
+                ? HiveButtonStyle.NavigationSelected
+                : HiveButtonStyle.Navigation,
+            Width = 158,
+            Height = 38,
+            Margin = new Padding(0, 0, 0, 6)
         };
 
-        button.Click += (_, _) => action();
+        if (selected)
+            _selectedNavigationButton = button;
+
+        button.Click += (_, _) =>
+        {
+            if (!ReferenceEquals(_selectedNavigationButton, button))
+            {
+                if (_selectedNavigationButton is not null)
+                    _selectedNavigationButton.Style = HiveButtonStyle.Navigation;
+
+                _selectedNavigationButton = button;
+                button.Style = HiveButtonStyle.NavigationSelected;
+            }
+
+            ShowPage(
+                text switch
+                {
+                    "Theme" => _themePage,
+                    "Controls" => _controlsPage,
+                    "Dialogs" => _dialogsPage,
+                    _ => throw new InvalidOperationException(
+                        $"Unknown example section '{text}'.")
+                },
+                title,
+                description);
+        };
+
         _navigation.Controls.Add(button);
     }
 
@@ -205,7 +263,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
             AutoSize = false,
             AutoScroll = true,
             Margin = Padding.Empty,
-            Padding = Padding.Empty,
+            Padding = new Padding(0, 2, 12, 2),
             Visible = false
         };
 
@@ -231,7 +289,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
             AutoSize = true,
             Enabled = false,
             Text = "Disabled control state",
-            Margin = new Padding(0, 0, 0, 2)
+            Margin = new Padding(0, 0, 0, 8)
         };
 
         var primary = new HiveButton
@@ -239,8 +297,8 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
             Text = "HiveButton — Primary",
             Style = HiveButtonStyle.Primary,
             Width = 190,
-            Height = 40,
-            Margin = new Padding(0, 10, 0, 0)
+            Height = 38,
+            Margin = new Padding(0, 8, 0, 0)
         };
 
         var secondary = new HiveButton
@@ -248,8 +306,8 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
             Text = "HiveButton — Secondary",
             Style = HiveButtonStyle.Secondary,
             Width = 190,
-            Height = 40,
-            Margin = new Padding(0, 8, 0, 0)
+            Height = 38,
+            Margin = new Padding(0, 6, 0, 0)
         };
 
         _controlsPage.Controls.Add(input);
@@ -297,8 +355,8 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
             Text = "Error with technical details",
             Style = HiveButtonStyle.Secondary,
             Width = 220,
-            Height = 40,
-            Margin = new Padding(0, 12, 0, 0)
+            Height = 38,
+            Margin = new Padding(0, 10, 0, 0)
         };
 
         details.Click += (_, _) =>
@@ -316,15 +374,17 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         _dialogsPage.Controls.Add(details);
     }
 
-    private HiveButton CreateThemeButton(string text, HiveThemeMode mode)
+    private HiveButton CreateThemeButton(
+        string text,
+        HiveThemeMode mode)
     {
         var button = new HiveButton
         {
             Text = text,
             Style = HiveButtonStyle.Secondary,
-            Width = 110,
-            Height = 38,
-            Margin = new Padding(0, 0, 0, 8)
+            Width = 104,
+            Height = 36,
+            Margin = new Padding(0, 0, 8, 8)
         };
 
         button.Click += (_, _) =>
@@ -347,8 +407,8 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
             Text = text,
             Style = HiveButtonStyle.Secondary,
             Width = 190,
-            Height = 40,
-            Margin = new Padding(0, 0, 0, 8)
+            Height = 38,
+            Margin = new Padding(0, 0, 0, 6)
         };
 
         button.Click += (_, _) =>
@@ -385,7 +445,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         }
         finally
         {
-            _pageBody.ResumeLayout(true);
+            _pageBody.ResumeLayout(false);
         }
 
         _themeManager.Apply(page);
@@ -402,7 +462,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         {
             AutoSize = true,
             Text = text ?? string.Empty,
-            MaximumSize = new Size(700, 120),
+            MaximumSize = new Size(720, 120),
             Margin = new Padding(0, 0, 0, 12)
         };
 
