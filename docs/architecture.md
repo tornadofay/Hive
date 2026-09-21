@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-20 (rev 11 — base Agent mechanisms, cognitive boundary, dynamic Hives, and Swarm lifecycle)
+Last updated: 2026-09-21 (rev 12 — base mechanisms, fixed generations, Workspace, V1 work items, dynamic Hives, and non-persistent Swarms)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -43,7 +43,7 @@ Longer-term capabilities such as persistent individual cognition, offline Dream 
 3. Later generations such as `CognitiveAgent : Agent` and `CognitiveHive : Hive` that add behavior without changing the base contracts.
 4. Provider-neutral, capability-aware execution planning.
 5. Host integration sized to the actual current host requirement instead of a speculative universal adapter framework.
-6. A reusable WinForms management surface over authoritative Hive state.
+6. A reusable Workspace/control surface over authoritative Hive state and human intervention.
 7. Production-oriented automated tests for normal paths, edge cases, concurrency, recovery, persistence, and security.
 8. Microsoft Agent Framework (MAF) wherever MAF already owns the required mechanism.
 
@@ -83,6 +83,7 @@ Not every deployment must use every level.
 ### Hive owns
 
 - tenant/user/workspace/resource ownership;
+- Workspace interaction and operational state;
 - stable Agent and Hive identities;
 - the Agent/Hive type hierarchy;
 - persistent cognitive runtime and cognitive strategy, but only for cognitive generations;
@@ -108,7 +109,7 @@ Hive must never build a second workflow/orchestration engine merely because Hive
 |---|---|---|
 | Language/runtime | C# / .NET 10 only | Single runtime baseline |
 | Agent programming model | Microsoft Agent Framework | Reuse MAF execution/orchestration |
-| Execution model | Ephemeral execution + durable Agent/Hive state + transactional outbox | Execution objects and Agent incarnations may end; durable cognitive state survives and can be processed without a live Agent runtime |
+| Execution model | Ephemeral execution + durable Agent/Hive state + transactional outbox | Execution objects and Agent incarnations may end; durable state survives; one V1 submitted document is one WorkItem, while a batch is multiple WorkItems |
 | Persistence | SQL Server; LocalDB for development | Hive database is isolated from host business data |
 | Vector storage | SQL Server `VECTOR` / `VECTOR_DISTANCE` behind `IVectorStore` | Replaceable storage boundary |
 | Provider adapter | One shared OpenAI-compatible adapter | Compatible providers are configurations, not new adapter implementations |
@@ -167,6 +168,10 @@ Future generations remain open-ended and may coexist with older generations.
 8. Base runtime/persistence/execution infrastructure is written against the base contracts and does not need to know which descendant type is being used.
 9. A subtype may use additional state and events owned by that subtype, but ancestor-owned state semantics remain stable.
 10. A future generation may be introduced without forcing existing Agent/Hive implementations to change.
+11. Agent generation is selected explicitly when the Agent is created; it never changes automatically during runtime or reincarnation.
+12. A creator may request any supported Agent generation, including a CognitiveAgent, only when explicit authorization/policy permits that generation; generation is never inferred automatically from task complexity.
+13. Agent generation and Hive membership are independent. A base Hive may contain CognitiveAgents and a base Agent may create or join Hives without changing type.
+14. The Agent that sponsors a Hive is not the Hive's lifecycle owner. Sponsorship is a relationship; sponsor retirement, runtime death, or deletion does not automatically delete or retire the Hive or its members.
 
 This gives Hive long-term flexibility without making type mutation a correctness problem.
 
@@ -203,18 +208,22 @@ A cognitive strategy may decide that no model call is necessary.
 
 ### Dynamic Hives, population, and Swarms
 
-A base Agent may own or sponsor one or more Hives as a normal delegation/coordination capability. The Agent does not become a Hive and does not need to be cognitively upgraded to create one.
+A base Agent may sponsor one or more persistent Hives as a normal delegation/coordination capability. The Agent does not become a Hive and does not need to be cognitively upgraded to create one.
 
 A Hive may:
 
-- add existing Agents;
-- create required Agent instances/definitions for missing specialties when authorized;
+- add existing Agents of any supported generation when authorized;
+- create or reuse Agent instances/definitions for missing specialties when authorized;
 - manage membership and role assignment;
-- coordinate the member Agents;
-- become dormant when no active work requires it;
-- later be reactivated with its persistent membership and member state intact.
+- coordinate member Agents;
+- become Dormant when no active work requires it;
+- later reactivate with its persistent membership and member state intact.
 
-A **Swarm** is an active collective work session over a Hive. The Hive is persistent; a Swarm is temporary. When the work session ends, the Swarm ends and the Hive may return to Dormant state rather than deleting its members.
+A Hive is a persistent resource. Its sponsor is a relationship, not an implicit lifecycle owner. Sponsor retirement, runtime death, or deletion does not automatically delete the Hive or its independent members.
+
+A **Swarm is not a persistent resource or another hierarchy layer.** It is the temporary set of selected Hive members actively collaborating on a WorkItem, Question, or other bounded problem. It has no separate durable identity, repository, or independent lifecycle. When collaboration ends, the Swarm simply ceases to be active; the Hive and its Agents remain.
+
+The active set may contain one member, several members, or all members of the Hive. A Hive does not require a Swarm to perform ordinary work.
 
 For a solo Agent that is not currently inside a parent Hive:
 
@@ -223,26 +232,26 @@ Agent
   ↓
 requires multiple specialties
   ↓
-creates/sponsors Hive
+creates/sponsors persistent Hive
   ↓
-Hive builds required membership
+Hive creates/reuses required membership
   ↓
-Swarm executes the collective work
+selected members form an active Swarm for the problem
   ↓
 work complete
   ↓
-Swarm ends
+selected members leave the active set
   ↓
-Hive becomes Dormant
+Hive may become Dormant
 ```
 
 For an Agent that is already a member of a Hive, the default rule is different:
 
 > A member Agent does not independently create a child Hive during normal Hive-managed work. It requests missing capabilities/specialists from the parent Hive, and the parent Hive remains the population authority.
 
-A Hive may therefore create or reuse a specialist Agent when a required specialty is missing. The created Agent remains an independent Agent entity with its own identity, state, memory, and later lifecycle.
+A Hive may create or reuse a specialist Agent when a required specialty is missing. The created Agent remains an independent Agent entity with its own generation, identity, state, memory, and later lifecycle. A Hive may create a CognitiveAgent specialist when explicitly authorized by its population policy; the generation is not inferred automatically.
 
-The term **Herd** may be used informally for a group's members, but Hive and Swarm are the architectural terms. This avoids creating a third overlapping lifecycle abstraction.
+The term **Herd** may be used informally for a group's members, but it is not an architectural resource. **Hive** is the persistent collective; **Swarm** describes the currently collaborating subset.
 
 ## 4. V1 Document & Business-App Integration
 
