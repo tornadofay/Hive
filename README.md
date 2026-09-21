@@ -210,7 +210,7 @@ Later areas are added when their owning phase lands: Hive Membership, Governance
 
 `Hive.Example.WinForms` demonstrates the public API and real-host composition.
 
-Examples are developed alongside the feature they demonstrate. The developer performs manual UI/application testing; no separate smoke-test or UI-automation framework is required by the architecture.
+Examples are developed alongside the feature they demonstrate. The developer performs manual UI/application testing; no separate UI-automation framework is required by the architecture.
 
 ## Automated tests
 
