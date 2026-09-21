@@ -220,6 +220,7 @@ internal sealed class HiveExampleHostForm : HiveForm
 
         BuildNavigation();
         _themeManager.Apply(BodyPanel);
+        OnThemeChanged(_themeManager.Theme);
         _responsiveLayoutReady = true;
         UpdateResponsiveLayout();
         UpdateOutputOverlayBounds();
@@ -420,13 +421,13 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private void ShowExample(IHiveExample example)
     {
-        _outputView.Clear();
-        _outputView.SetCollapsed(true);
-
         var nextView = example.CreateView(_services);
         ArgumentNullException.ThrowIfNull(nextView);
 
         nextView.Dock = DockStyle.Fill;
+
+        _outputView.Clear();
+        _outputView.SetCollapsed(true);
 
         try
         {
