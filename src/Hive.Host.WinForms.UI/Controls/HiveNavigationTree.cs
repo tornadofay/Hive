@@ -182,7 +182,7 @@ public sealed class HiveNavigationTree : TreeView
             TextFormatFlags.EndEllipsis |
             TextFormatFlags.NoPrefix);
 
-        if (focused && selected)
+        if (Enabled && focused && selected)
         {
             using var focusPen = new Pen(theme.Palette.Accent, 1f);
             var focusRectangle = Rectangle.Inflate(row, -1, -1);
