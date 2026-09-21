@@ -45,7 +45,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _root.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
         _root.RowStyles.Add(
-            new RowStyle(SizeType.Absolute, 36));
+            new RowStyle(SizeType.Absolute, 40));
         _root.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
 
@@ -113,7 +113,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Text = "Copy",
             Style = HiveButtonStyle.Secondary,
             Dock = DockStyle.Fill,
-            MinimumSize = new Size(80, 32),
+            MinimumSize = new Size(72, 32),
             Size = new Size(78, 32),
             Margin = new Padding(6, 0, 0, 0),
             Enabled = false
@@ -125,7 +125,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Text = "Hide",
             Style = HiveButtonStyle.Secondary,
             Dock = DockStyle.Fill,
-            MinimumSize = new Size(88, 32),
+            MinimumSize = new Size(72, 32),
             Size = new Size(78, 32),
             Margin = new Padding(6, 0, 0, 0)
         };
