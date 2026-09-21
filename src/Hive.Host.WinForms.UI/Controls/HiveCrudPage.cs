@@ -33,6 +33,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private const int ActionBarHeight = 46;
     private const int FooterHeight = 42;
     private const int ActionButtonWidth = 92;
+    private const int CompactActionButtonWidth = 84;
     private const int ActionBarActionsWidth = 400;
     private const int PaginationWidth = 300;
     private const int DefaultPageSize = 25;
@@ -569,6 +570,15 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _actionLayout.Controls.Remove(_actionButtons);
             _actionLayout.ColumnStyles.Clear();
             _actionLayout.RowStyles.Clear();
+
+            var actionButtonWidth = compact
+                ? CompactActionButtonWidth
+                : ActionButtonWidth;
+
+            _addButton.Width = actionButtonWidth;
+            _editButton.Width = actionButtonWidth;
+            _deleteButton.Width = actionButtonWidth;
+            _refreshButton.Width = actionButtonWidth;
 
             if (compact)
             {
