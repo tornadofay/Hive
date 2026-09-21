@@ -284,7 +284,7 @@ public static class HiveMessageBox
             _contentPanel = new Panel
             {
                 Dock = DockStyle.Fill,
-                AutoScroll = true,
+                AutoScroll = false,
                 Margin = Padding.Empty,
                 Padding = new Padding(
                     OuterPadding,
@@ -935,7 +935,6 @@ public static class HiveMessageBox
         private SolidBrush? _pressedBrush;
         private SolidBrush? _textBrush;
         private SolidBrush? _disabledBrush;
-        private Pen? _borderPen;
         private Pen? _focusPen;
 
         public HiveMessageButton()
@@ -985,9 +984,6 @@ public static class HiveMessageBox
                 _hoverBrush = new SolidBrush(palette.AccentHover);
                 _pressedBrush = new SolidBrush(palette.Border);
                 _textBrush = new SolidBrush(palette.AccentForeground);
-                _borderPen = new Pen(
-                    palette.Accent,
-                    HiveDpi.Scale(this, 1f));
             }
             else
             {
@@ -995,9 +991,6 @@ public static class HiveMessageBox
                 _hoverBrush = new SolidBrush(theme.VisualStates.HoverBackground);
                 _pressedBrush = new SolidBrush(theme.VisualStates.PressedBackground);
                 _textBrush = new SolidBrush(palette.Text);
-                _borderPen = new Pen(
-                    palette.Border,
-                    HiveDpi.Scale(this, 1f));
             }
 
             _disabledBrush = new SolidBrush(palette.DisabledBackground);
@@ -1078,9 +1071,6 @@ public static class HiveMessageBox
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             e.Graphics.FillPath(brush, _path);
 
-            if (_borderPen is not null)
-                e.Graphics.DrawPath(_borderPen, _path);
-
             TextRenderer.DrawText(
                 e.Graphics,
                 Text,
@@ -1131,7 +1121,6 @@ public static class HiveMessageBox
             _pressedBrush?.Dispose();
             _textBrush?.Dispose();
             _disabledBrush?.Dispose();
-            _borderPen?.Dispose();
             _focusPen?.Dispose();
 
             _backgroundBrush = null;
@@ -1139,7 +1128,6 @@ public static class HiveMessageBox
             _pressedBrush = null;
             _textBrush = null;
             _disabledBrush = null;
-            _borderPen = null;
             _focusPen = null;
         }
     }
