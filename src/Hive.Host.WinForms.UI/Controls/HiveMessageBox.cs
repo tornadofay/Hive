@@ -248,11 +248,12 @@ public static class HiveMessageBox
                 true);
 
             FormBorderStyle = FormBorderStyle.None;
+            Padding = new Padding(1);
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             MinimumSize = new Size(MinWidth, MinHeight);
             ClientSize = new Size(DesignWidth, 320);
-            BackColor = _theme.Palette.Surface;
+            BackColor = _theme.Palette.Border;
             ForeColor = _theme.Palette.Text;
             AccessibleRole = AccessibleRole.Dialog;
             KeyPreview = true;
