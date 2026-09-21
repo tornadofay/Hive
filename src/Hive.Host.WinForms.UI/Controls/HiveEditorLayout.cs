@@ -20,6 +20,7 @@ public sealed class HiveEditorLayout : UserControl
     private readonly Font _descriptionFont;
     private readonly Font _titleFont;
     private int _labelColumnWidth = DefaultLabelColumnWidth;
+    private bool _layoutInitialized;
 
     public HiveEditorLayout()
     {
@@ -90,13 +91,15 @@ public sealed class HiveEditorLayout : UserControl
         _root.Controls.Add(_fields, 0, 0);
         _root.Controls.Add(_footerRoot, 0, 1);
         Controls.Add(_root);
+        _layoutInitialized = true;
     }
 
     protected override void OnResize(EventArgs e)
     {
         base.OnResize(e);
 
-        if (_fields.ColumnStyles.Count == 0)
+        if (!_layoutInitialized ||
+            _fields.ColumnStyles.Count == 0)
             return;
 
         var width = ClientSize.Width;
