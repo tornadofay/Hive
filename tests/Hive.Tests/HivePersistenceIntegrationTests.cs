@@ -16,7 +16,7 @@ public sealed class HivePersistenceIntegrationTests
 
         var migrator = new HiveDatabaseMigrator(options);
 
-        var first = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
+        var first = await migrator.MigrateAsync(CancellationToken.None);
         Assert.True(first.IsSuccess, first.Error is null ? "Migration failed without an error." : $"Migration failed: {first.Error.Code} [{first.Error.Category}] {first.Error.Message}");
         Assert.NotNull(first.Value);
         Assert.Equal(HiveDatabaseMigrationStatus.Applied, first.Value.Status);
@@ -24,7 +24,7 @@ public sealed class HivePersistenceIntegrationTests
         Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, first.Value.CurrentSchemaVersion);
         Assert.Equal(1, first.Value.AppliedMigrationCount);
 
-        var second = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
+        var second = await migrator.MigrateAsync(CancellationToken.None);
         Assert.True(second.IsSuccess, second.Error is null ? "Repeat migration failed without an error." : $"Repeat migration failed: {second.Error.Code} [{second.Error.Category}] {second.Error.Message}");
         Assert.NotNull(second.Value);
         Assert.Equal(HiveDatabaseMigrationStatus.AlreadyCurrent, second.Value.Status);
@@ -45,7 +45,7 @@ public sealed class HivePersistenceIntegrationTests
         ResetSchema(options);
 
         var migrator = new HiveDatabaseMigrator(options);
-        var initial = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
+        var initial = await migrator.MigrateAsync(CancellationToken.None);
 
         Assert.True(initial.IsSuccess, initial.Error is null ? "Initial migration failed without an error." : $"Initial migration failed: {initial.Error.Code} [{initial.Error.Category}] {initial.Error.Message}");
 
@@ -53,7 +53,7 @@ public sealed class HivePersistenceIntegrationTests
             options,
             HiveDatabaseSchema.CurrentSchemaVersion + 1);
 
-        var rejected = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
+        var rejected = await migrator.MigrateAsync(CancellationToken.None);
 
         Assert.True(rejected.IsFailure);
         Assert.NotNull(rejected.Error);
@@ -71,7 +71,7 @@ public sealed class HivePersistenceIntegrationTests
         ResetSchema(options);
 
         var migrator = new HiveDatabaseMigrator(options);
-        var initial = await migrator.MigrateAsync(TestContext.Current.CancellationToken);
+        var initial = await migrator.MigrateAsync(CancellationToken.None);
 
         Assert.True(
             initial.IsSuccess,
