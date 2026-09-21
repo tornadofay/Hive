@@ -297,7 +297,7 @@ public sealed class HiveButton : UserControl
                 pressed = ControlPaint.Dark(theme.Palette.Accent, 0.12f);
                 foreground = theme.Palette.AccentForeground;
                 border = theme.Palette.AccentHover;
-                focusBorder = theme.Palette.Accent;
+                focusBorder = theme.Palette.AccentForeground;
                 break;
 
             case HiveButtonStyle.Secondary:
@@ -325,8 +325,9 @@ public sealed class HiveButton : UserControl
                 hover = ControlPaint.Dark(theme.VisualStates.Error, 0.06f);
                 pressed = ControlPaint.Dark(theme.VisualStates.Error, 0.14f);
                 foreground = theme.Palette.AccentForeground;
+                foreground = theme.Palette.AccentForeground;
                 border = theme.VisualStates.Error;
-                focusBorder = theme.VisualStates.Error;
+                focusBorder = theme.Palette.AccentForeground;
                 break;
 
             default:
