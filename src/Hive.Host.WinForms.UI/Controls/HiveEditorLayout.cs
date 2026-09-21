@@ -16,8 +16,8 @@ public sealed class HiveEditorLayout : UserControl
     private readonly TableLayoutPanel _footerRoot;
     private readonly FlowLayoutPanel _footer;
     private readonly Panel _footerSeparator;
-    private Font _descriptionFont;
-    private Font _titleFont;
+    private readonly Font _descriptionFont;
+    private readonly Font _titleFont;
     private int _labelColumnWidth = DefaultLabelColumnWidth;
 
     public HiveEditorLayout()
@@ -111,21 +111,6 @@ public sealed class HiveEditorLayout : UserControl
         _footerRoot.BackColor = theme.Palette.ElevatedSurface;
         _footer.BackColor = theme.Palette.ElevatedSurface;
         _footerSeparator.BackColor = theme.Palette.Border;
-
-        if (!FontMatches(_descriptionFont, theme.Typography.FontFamily, 8.7f, FontStyle.Regular))
-        {
-            _descriptionFont.Dispose();
-            _titleFont.Dispose();
-
-            _descriptionFont = new Font(
-                theme.Typography.FontFamily,
-                8.7f);
-
-            _titleFont = new Font(
-                theme.Typography.FontFamily,
-                9.7f,
-                FontStyle.Bold);
-        }
 
         Invalidate(true);
     }
@@ -224,18 +209,6 @@ public sealed class HiveEditorLayout : UserControl
         _footer.Controls.Add(button);
         return button;
     }
-
-    private static bool FontMatches(
-        Font font,
-        string family,
-        float size,
-        FontStyle style) =>
-        string.Equals(
-            font.FontFamily.Name,
-            family,
-            StringComparison.Ordinal) &&
-        Math.Abs(font.Size - size) <= 0.01f &&
-        font.Style == style;
 
     private Panel CreateLabelPanel(
         string title,
