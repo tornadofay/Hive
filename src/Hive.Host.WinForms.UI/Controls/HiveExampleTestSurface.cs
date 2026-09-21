@@ -200,7 +200,7 @@ public sealed class HiveExampleTestSurface : UserControl
         };
 
         root.Controls.Add(_actions, 0, 0);
-        root.Controls.Add(workspace, 0, 1);
+        root.Controls.Add(_workspace, 0, 1);
         root.Controls.Add(_details, 0, 2);
         root.Controls.Add(_note, 0, 3);
         Controls.Add(root);
