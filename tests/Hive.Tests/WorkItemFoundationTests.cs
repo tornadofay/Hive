@@ -1,3 +1,6 @@
+using Hive.Core;
+using Xunit;
+
 namespace Hive.Tests;
 
 public sealed class WorkItemFoundationTests
