@@ -513,17 +513,18 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
     protected override void Dispose(bool disposing)
     {
+        _operationCancellation?.Cancel();
+
+        base.Dispose(disposing);
+
         if (disposing)
         {
-            _operationCancellation?.Cancel();
             _operationCancellation?.Dispose();
             _titleFont.Dispose();
             _descriptionFont.Dispose();
             _searchLabelFont.Dispose();
             _emptyStateFont.Dispose();
         }
-
-        base.Dispose(disposing);
     }
 
     private void SearchBoxOnTextChanged(object? sender, EventArgs e)
