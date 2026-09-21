@@ -7,9 +7,9 @@ namespace Hive.Host.WinForms.UI.Controls;
 
 public sealed class HiveNavigationTree : TreeView
 {
-    private const int RowHeight = 32;
-    private const int RowHorizontalPadding = 6;
-    private const int RowVerticalPadding = 2;
+    private const int RowHeight = 34;
+    private const int RowHorizontalPadding = 5;
+    private const int RowVerticalPadding = 1;
 
     private HiveThemeDefinition? _theme;
     private TreeNode? _hoverNode;
@@ -27,8 +27,9 @@ public sealed class HiveNavigationTree : TreeView
         ShowLines = false;
         ShowPlusMinus = true;
         ShowRootLines = false;
-        Indent = 20;
+        Indent = 18;
         ItemHeight = RowHeight;
+        DoubleBuffered = true;
         Margin = Padding.Empty;
         Padding = new Padding(4, 8, 4, 8);
     }
@@ -111,6 +112,7 @@ public sealed class HiveNavigationTree : TreeView
             _ => _itemFont ?? Font
         };
 
+        var isGroup = e.Node.Tag is null && e.Node.Nodes.Count > 0;
         var textColor = selected
             ? theme.VisualStates.NavigationSelectedText
             : Enabled
