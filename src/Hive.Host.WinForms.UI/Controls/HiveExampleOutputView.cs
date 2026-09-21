@@ -34,7 +34,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             ColumnCount = 1,
             RowCount = 2,
             Margin = Padding.Empty,
-            Padding = new Padding(10, 6, 10, 8),
+            Padding = new Padding(10, 4, 10, 4),
         };
         _root.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
