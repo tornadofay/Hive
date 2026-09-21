@@ -1011,8 +1011,7 @@ public static class HiveMessageBox
         private Pen? _ringPen;
         private Pen? _glyphPen;
         private Font? _questionFont;
-        private PointF[]? _successPoints;
-        private PointF[]? _warningPoints;
+        private GraphicsPath? _warningPath;
 
         public HiveMessageIcon()
         {
@@ -1052,6 +1051,7 @@ public static class HiveMessageBox
             _ringPen?.Dispose();
             _glyphPen?.Dispose();
             _questionFont?.Dispose();
+            _warningPath?.Dispose();
 
             _backgroundBrush = new SolidBrush(
                 Color.FromArgb(
@@ -1080,19 +1080,30 @@ public static class HiveMessageBox
 
         private void RebuildGeometry()
         {
+            _warningPath?.Dispose();
+            _warningPath = null;
+
             var size = Math.Min(ClientSize.Width, ClientSize.Height);
-            _successPoints = new[]
-            {
-                new PointF(size * 0.26f, size * 0.53f),
-                new PointF(size * 0.44f, size * 0.70f),
-                new PointF(size * 0.76f, size * 0.32f)
-            };
-            _warningPoints = new[]
-            {
-                new PointF(size * 0.50f, size * 0.19f),
-                new PointF(size * 0.77f, size * 0.78f),
-                new PointF(size * 0.23f, size * 0.78f)
-            };
+            if (size <= 2)
+                return;
+
+            var circleLeft = (ClientSize.Width - size) / 2f;
+            var circleTop = (ClientSize.Height - size) / 2f;
+
+            _warningPath = new GraphicsPath();
+            _warningPath.AddPolygon(
+                new[]
+                {
+                    new PointF(
+                        circleLeft + size * 0.50f,
+                        circleTop + size * 0.19f),
+                    new PointF(
+                        circleLeft + size * 0.77f,
+                        circleTop + size * 0.78f),
+                    new PointF(
+                        circleLeft + size * 0.23f,
+                        circleTop + size * 0.78f)
+                });
         }
 
         protected override void OnSizeChanged(EventArgs e)
@@ -1155,29 +1166,24 @@ public static class HiveMessageBox
                     break;
 
                 case HiveMessageType.Success:
-                    if (_successPoints is not null)
-                        e.Graphics.DrawLines(
-                            _glyphPen,
-                            new[]
-                            {
-                                new PointF(circle.Left + _successPoints[0].X, circle.Top + _successPoints[0].Y),
-                                new PointF(circle.Left + _successPoints[1].X, circle.Top + _successPoints[1].Y),
-                                new PointF(circle.Left + _successPoints[2].X, circle.Top + _successPoints[2].Y)
-                            });
+                    var p1 = new PointF(
+                        circle.Left + circle.Width * 0.26f,
+                        circle.Top + circle.Height * 0.53f);
+                    var p2 = new PointF(
+                        circle.Left + circle.Width * 0.44f,
+                        circle.Top + circle.Height * 0.70f);
+                    var p3 = new PointF(
+                        circle.Left + circle.Width * 0.76f,
+                        circle.Top + circle.Height * 0.32f);
+
+                    e.Graphics.DrawLine(_glyphPen, p1, p2);
+                    e.Graphics.DrawLine(_glyphPen, p2, p3);
                     break;
 
                 case HiveMessageType.Warning:
-                    if (_warningPoints is not null)
+                    if (_warningPath is not null)
                     {
-                        using var warningPath = new GraphicsPath();
-                        warningPath.AddPolygon(
-                            new[]
-                            {
-                                new PointF(circle.Left + _warningPoints[0].X, circle.Top + _warningPoints[0].Y),
-                                new PointF(circle.Left + _warningPoints[1].X, circle.Top + _warningPoints[1].Y),
-                                new PointF(circle.Left + _warningPoints[2].X, circle.Top + _warningPoints[2].Y)
-                            });
-                        e.Graphics.FillPath(_accentBrush, warningPath);
+                        e.Graphics.FillPath(_accentBrush, _warningPath);
 
                         using var innerBrush = new SolidBrush(_surface);
                         e.Graphics.FillRectangle(
@@ -1227,6 +1233,7 @@ public static class HiveMessageBox
                 _ringPen?.Dispose();
                 _glyphPen?.Dispose();
                 _questionFont?.Dispose();
+                _warningPath?.Dispose();
             }
 
             base.Dispose(disposing);
