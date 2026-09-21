@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Drawing;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows.Forms;
 using ReaLTaiizor.Controls;
 using Hive.Host.WinForms.UI.Theme;
@@ -32,7 +33,8 @@ public sealed class HiveButton : UserControl
 
     [Browsable(true)]
     [DefaultValue("Button")]
-    public override string? Text
+    [AllowNull]
+    public override string Text
     {
         get => _renderer.Text;
         set => _renderer.Text = value ?? string.Empty;
