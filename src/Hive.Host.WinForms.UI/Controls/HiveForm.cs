@@ -7,6 +7,7 @@ namespace Hive.Host.WinForms.UI.Controls;
 
 public abstract class HiveForm : Form
 {
+    private const int HeaderHeight = 54;
     private const int CornerRadius = 14;
 
     private readonly HiveWindowHeader _header;
@@ -70,10 +71,7 @@ public abstract class HiveForm : Form
 
     protected Panel BodyPanel => _bodyPanel;
 
-    protected virtual int HeaderHeight => 54;
-
-    protected virtual int CornerRadiusValue => CornerRadius;
-
+    
     protected void ConfigureHeader(
         bool allowMove = true,
         bool allowClose = true,
@@ -128,6 +126,7 @@ public abstract class HiveForm : Form
         {
             _themeManager.ThemeChanged -= ThemeManagerOnThemeChanged;
 
+            Region = null;
             _windowRegion?.Dispose();
             _windowRegion = null;
             _formFont.Dispose();
@@ -171,7 +170,7 @@ public abstract class HiveForm : Form
             return;
 
         var radius = Math.Min(
-            Math.Max(1, CornerRadiusValue),
+            Math.Max(1, CornerRadius),
             Math.Min(Width, Height) / 2);
 
         using var path = CreateRoundedPath(
