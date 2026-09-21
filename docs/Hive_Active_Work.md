@@ -33,7 +33,9 @@ Current 0.6 implementation also fixes the example page navigation to keep one ac
 - added IHiveThemeManager and HiveThemeManager with Light / Dark / System resolution;
 - added HiveButton using the selected renderer behind a Hive-owned control boundary;
 - added HiveMessageBox as a Hive-owned themed dialog;
-- added reusable data-page primitives: HiveListPageLayout and HivePaginationBar; these own presentation/navigation mechanics only, while feature pages retain domain columns, filters, editors, CRUD, permissions, and persistence;
+- added reusable data-page primitives: HiveListPageLayout and HivePaginationBar;
+- generic CRUD composition is now part of the 0.6 reusable UI foundation: HiveCrudPage<TItem> owns generic Add/Edit/Delete/Refresh interaction and selection, while consumers provide domain-specific load/edit/delete callbacks;
+- reusable editor-layout composition is planned for the repeated labeled-field/action-footer pattern found across HAgent configuration editors;
 - replaced the Example startup placeholder with the 0.6 UI-foundation verification surface;
 - the full 0.7 Example Host Shell is intentionally not started yet;
 - removed the obsolete placeholder form.
