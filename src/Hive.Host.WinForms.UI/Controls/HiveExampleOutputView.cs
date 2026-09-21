@@ -135,7 +135,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
 
         _copyButton = CreateActionButton("Copy");
         _clearButton = CreateActionButton("Clear");
-        _toggleButton = CreateActionButton("Hide");
+        _toggleButton = CreateActionButton("Show");
 
         _copyButton.AccessibleName = "Copy output";
         _copyButton.AccessibleDescription = "Copy the current example output.";
