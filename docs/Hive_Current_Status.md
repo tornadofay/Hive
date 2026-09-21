@@ -60,7 +60,7 @@ Phase 0 — Foundations.
 
 ### Phase 0.7 — First-Class Example Host Shell
 
-Active. The shell implementation is now in place. Automated UI verification is not introduced; developer manual verification remains required.
+Active. The Example host and shared UI polish implementation are in place. The remaining acceptance is developer manual verification of visual quality, theme state preservation, resizing, interaction states, CRUD presentation, dialogs, and desktop-window behavior.
 
 
 ### Phase 0.3 — Identity, WorkItem & Resource foundation
