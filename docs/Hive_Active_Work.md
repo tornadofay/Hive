@@ -4,77 +4,38 @@ Last updated: 2026-09-21
 
 ## Active slice
 
-**0.6 — WinForms UI/UX Foundation**
+**0.7 — First-Class Example Host Shell**
 
-Phase 0.5 is complete and verified by the developer. Do not begin 0.7 or any later slice until 0.6 is complete and its manual UI verification has actually been performed.
+Phase 0.6 was accepted after the developer exercised the shared UI foundation in the real Example application, including CRUD editing/deletion, pagination, editor interaction, and error/failure presentation. The implementation now proceeds to the documented 0.7 shell; do not begin Phase 0.8 or later slices.
 
 ## Objective
 
-Establish the shared WinForms visual foundation used by Hive.Host.WinForms and Hive.Example.WinForms. ReaLTaiizor remains behind Hive.Host.WinForms.UI.
+Turn Hive.Example.WinForms into a permanent developer-facing host with scalable Category → Subcategory → Example navigation and one replaceable right-side UserControl view.
 
-- Light / Dark / System theme modes;
-- Hive-owned semantic palette, typography, spacing, and visual-state tokens;
-- HiveButton and HiveMessageBox consumer-facing contracts;
-- ReaLTaiizor 3.8.2.1 isolated inside Hive.Host.WinForms.UI;
-- representative Example host verification surface without direct ReaLTaiizor references.
+The shell must discover IHiveExample implementations without a central manual registration list, own navigation/view lifetime, and consume only Hive-owned UI contracts.
 
-Current 0.6 implementation also fixes the example page navigation to keep one active page host, removes the message-button focus rectangle, isolates the dialog's technical-details scrolling from the outer dialog surface, and delegates DPI scaling to .NET 10/WinForms instead of maintaining a Hive-specific DPI layer. Local build/manual verification is still pending.
+## 0.7 implementation scope
 
-## Implementation progress
+- add the IHiveExample discovery contract;
+- discover examples from the designated Example assembly;
+- build a left-side Category → Subcategory → Example tree;
+- replace the active right-side view without stacking or overlapping pages;
+- dispose the previous example view deterministically;
+- provide the shared Example services through IServiceProvider;
+- keep the existing 0.6 UI foundation as the first discoverable example;
+- preserve Light / Dark / System theme behavior through the shared IHiveThemeManager;
+- no feature-specific platform functionality is added to the shell.
 
-0.6 implementation is in progress:
+## Verification
 
-- pinned ReaLTaiizor 3.8.2.1 in Hive.Host.WinForms.UI;
-- implemented the reusable rounded HiveForm shell and custom gradient header;
-- implemented Primary / Secondary / Navigation HiveButton styles;
-- implemented semantic HiveMessageBox variants with optional technical details and clipboard copy;
-- refined HiveMessageBox to use a compact HAgent-inspired visual hierarchy: semantic accent bar, circular icon, clear caption/message typography, details surface, and custom action buttons;
-- added HiveThemeMode, HiveThemeDefinition, semantic palette/typography/spacing/visual-state tokens;
-- added IHiveThemeManager and HiveThemeManager with Light / Dark / System resolution;
-- added HiveButton using the selected renderer behind a Hive-owned control boundary;
-- added HiveMessageBox as a Hive-owned themed dialog;
-- added reusable data-page primitives: HiveListPageLayout and HivePaginationBar;
-- generic CRUD composition is now part of the 0.6 reusable UI foundation: HiveCrudPage<TItem> owns generic Add/Edit/Delete/Refresh interaction, selection, list population, search/filter presentation, compact toolbar composition, busy-state, cancellation, loading/empty/no-match states, keyboard interaction, structured operation-failure notification, and the integrated HivePaginationBar footer with configurable page size, while consumers provide domain-specific load/edit/delete callbacks;
-- the generic CRUD presentation follows a compact real-world page hierarchy: title/description, one-row search/actions toolbar, primary list surface immediately below, then a compact status/pagination footer; destructive delete remains a contextual danger action with confirmation;
-- reusable editor-layout composition is implemented as HiveEditorLayout for the repeated labeled-field/action-footer pattern found across HAgent configuration editors, with consistent field spacing and a dedicated right-aligned action footer;
-- replaced the Example startup placeholder with the 0.6 UI-foundation verification surface;
-- the full 0.7 Example Host Shell is intentionally not started yet;
-- removed the obsolete placeholder form.
+1. adding an IHiveExample implementation makes it appear without editing shell registration code;
+2. category/subcategory/example navigation selects exactly one active view;
+3. switching examples disposes the previous view and does not accumulate controls;
+4. the shell remains usable with multiple examples;
+5. Light / Dark / System theme changes continue to propagate to the active example;
+6. the full solution builds and Hive.Example.WinForms launches normally.
 
-No 0.6 build or manual UI verification has been recorded yet.
-
-## 0.5 completion record
-
-Phase 0.5 was completed after the developer ran the normal Visual Studio Hive.Tests workflow.
-
-- Build/test execution result: PASS — developer ran the full suite successfully.
-- Verification result: PASS — 52 tests, 52 passed, 0 failed, 0 skipped, 1.6 seconds.
-- Commit: 8204c05fe263c87d1674563b5034f5e32c3a6525.
-- Next slice: 0.6 — WinForms UI/UX Foundation.
-
-## 0.6 Verification
-
-The implementation requires verification of:
-
-1. representative Example form renders correctly in Light mode;
-2. representative Example form renders correctly in Dark mode;
-3. System mode resolves and renders correctly;
-4. HiveButton and HiveMessageBox work through Hive-owned contracts;
-5. the reusable CRUD example supports Add/Edit/Delete/Refresh and the list surface has practical display height;
-6. the reusable editor example demonstrates the labeled-field/action-footer composition;
-5. no consuming form references ReaLTaiizor directly;
-6. the solution builds and Hive.Example.WinForms launches normally.
-
-Verification is currently pending.
-
-## Completion record
-
-0.5 completion record:
-
-- Build/test execution result: PASS — developer ran the normal Visual Studio Hive.Tests workflow.
-- Verification result: PASS — 52 tests, 52 passed, 0 failed, 0 skipped, 1.6 seconds.
-- Commit: 8204c05fe263c87d1674563b5034f5e32c3a6525.
-- Next slice: 0.6 — WinForms UI/UX Foundation.
+No 0.7 verification is recorded yet.
 
 ## Dependency direction
 
@@ -96,10 +57,11 @@ Coordination may depend on Core + Agents + MAF contracts where required.
 No core/platform project may depend on Example.WinForms.
 ```
 
-Additional constraints:
+## Constraints
 
 - WinForms-specific types remain outside Hive.Core.
-- Provider transport remains outside Hive.Core.
-- The ReaLTaiizor package is **not introduced in 0.1**; it is added and verified in 0.6, and only Hive.Host.WinForms.UI may reference it.
-- Hive.Example.WinForms must not reference xUnit runner internals.
-- Do not create compatibility/legacy projects or duplicate architecture paths.
+- ReaLTaiizor remains exclusively inside Hive.Host.WinForms.UI.
+- Hive.Example.WinForms does not reference xUnit runner internals.
+- The shell must not become an alternate test runner.
+- No central manual example registration table.
+- Do not start Phase 0.8 until 0.7 is complete and manually verified.
