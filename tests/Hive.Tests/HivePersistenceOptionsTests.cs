@@ -1,5 +1,6 @@
 using Hive.Core;
 using Hive.Persistence;
+using Microsoft.Data.SqlClient;
 using Xunit;
 
 namespace Hive.Tests;
@@ -14,8 +15,10 @@ public sealed class HivePersistenceOptionsTests
         Assert.Equal(@"(localdb)\MSSQLLocalDB", options.ServerName);
         Assert.Equal("Hive_Test", options.DatabaseName);
         Assert.True(options.CreateDatabaseIfMissing);
-        Assert.Contains("Integrated Security=True", options.ConnectionString, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("TrustServerCertificate=True", options.ConnectionString, StringComparison.OrdinalIgnoreCase);
+        var builder = new SqlConnectionStringBuilder(options.ConnectionString);
+
+        Assert.True(builder.IntegratedSecurity);
+        Assert.True(builder.TrustServerCertificate);
     }
 
     [Fact]
