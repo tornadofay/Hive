@@ -13,6 +13,8 @@ internal sealed class HiveBorderPanel : Panel
     private HiveThemeDefinition? _theme;
     private Color? _borderColor;
     private int _cornerRadius = DefaultCornerRadius;
+    private GraphicsPath? _paintPath;
+    private Pen? _borderPen;
     public HiveBorderPanel()
     {
         SetStyle(
@@ -37,6 +39,7 @@ internal sealed class HiveBorderPanel : Panel
                 return;
 
             _borderColor = value;
+            RebuildPaintResources();
             Invalidate();
         }
     }
@@ -53,6 +56,7 @@ internal sealed class HiveBorderPanel : Panel
 
             _cornerRadius = next;
             RebuildRegion();
+            RebuildPaintResources();
             Invalidate();
         }
     }
@@ -66,6 +70,7 @@ internal sealed class HiveBorderPanel : Panel
         if (BackColor != theme.Palette.Surface)
             BackColor = theme.Palette.Surface;
 
+        RebuildPaintResources();
         Invalidate();
     }
 
@@ -73,34 +78,23 @@ internal sealed class HiveBorderPanel : Panel
     {
         base.OnSizeChanged(e);
         RebuildRegion();
+        RebuildPaintResources();
     }
 
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
 
-        var theme = _theme;
-        if (theme is null ||
+        if (_theme is null ||
+            _paintPath is null ||
+            _borderPen is null ||
             ClientSize.Width <= 1 ||
             ClientSize.Height <= 1)
             return;
 
-        using var pen = new Pen(_borderColor ?? theme.Palette.Border, 1f)
-        {
-            Alignment = PenAlignment.Inset
-        };
-
-        using var path = CreateRoundedPath(
-            new RectangleF(
-                0.5f,
-                0.5f,
-                ClientSize.Width - 1f,
-                ClientSize.Height - 1f),
-            _cornerRadius);
-
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
         e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-        e.Graphics.DrawPath(pen, path);
+        e.Graphics.DrawPath(_borderPen, _paintPath);
     }
 
     protected override void Dispose(bool disposing)
@@ -110,9 +104,39 @@ internal sealed class HiveBorderPanel : Panel
             var previousRegion = Region;
             Region = null;
             previousRegion?.Dispose();
+            _paintPath?.Dispose();
+            _paintPath = null;
         }
 
         base.Dispose(disposing);
+    }
+
+    private void RebuildPaintResources()
+    {
+        _paintPath?.Dispose();
+        _paintPath = null;
+        _borderPen?.Dispose();
+        _borderPen = null;
+
+        if (_theme is null ||
+            ClientSize.Width <= 1 ||
+            ClientSize.Height <= 1)
+            return;
+
+        _paintPath = CreateRoundedPath(
+            new RectangleF(
+                0.5f,
+                0.5f,
+                ClientSize.Width - 1f,
+                ClientSize.Height - 1f),
+            _cornerRadius);
+
+        _borderPen = new Pen(
+            _borderColor ?? _theme.Palette.Border,
+            1f)
+        {
+            Alignment = PenAlignment.Inset
+        };
     }
 
     private void RebuildRegion()
