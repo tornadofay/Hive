@@ -6,7 +6,7 @@ This example uses the public Hive.Persistence API to create Hive's SQL Server da
 using Hive.Persistence;
 
 var options = new HiveDatabaseOptions(
-    "Server=localhost\\MSSQLSERVER01;Database=Hive;Trusted_Connection=True;");
+    "Server=YOUR_SQL_SERVER;Database=Hive;Trusted_Connection=True;");
 
 var migrator = new HiveDatabaseMigrator(options);
 var result = await migrator.MigrateAsync();
