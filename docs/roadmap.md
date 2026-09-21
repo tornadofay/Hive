@@ -44,6 +44,45 @@ Verify: clean install, repeat migration, failed migration, incompatible future s
 Objective: xUnit scaffolding, fake provider infrastructure, fake clock, test-database strategy, deterministic event-test conventions.
 Verify: baseline tests pass and automated tests make no real vendor/network calls.
 
+## 0.6 — WinForms UI/UX Foundation
+Objective: establish the shared WinForms visual foundation used by Hive.Host.WinForms and Hive.Example.WinForms. ReaLTaiizor is the selected third-party rendering layer. Hive owns the theme contract, semantic design tokens, and any Hive-specific wrappers; application forms do not reference ReaLTaiizor directly.
+
+The initial foundation includes:
+- Light / Dark / System theme modes;
+- Hive-owned palette, typography, spacing, and common visual-state tokens;
+- Hive-specific controls only where Hive needs behavior or styling beyond ordinary WinForms controls;
+- shared controls such as HiveButton and HiveMessageBox where a Hive-owned contract is useful;
+- a replaceable seam around the third-party rendering dependency.
+
+Do not create a complete replacement control toolkit or wrap every WinForms control merely to rename it. The selected library is an implementation detail behind `Hive.Host.WinForms.UI`.
+
+Verify: a representative sample form renders in Light and Dark modes, shared styling is consistent, no consuming form references ReaLTaiizor directly, and the UI layer can replace the rendering dependency without changing consumer-facing Hive UI contracts. Pin the exact ReaLTaiizor package version during implementation.
+
+## 0.7 — First-Class Example Host Shell
+Objective: make `Hive.Example.WinForms` a permanent developer-facing application rather than a temporary demonstration.
+
+The shell uses scalable navigation:
+- Category;
+- Subcategory;
+- Example.
+
+Use a left-side tree/list navigation surface and a right-side replaceable example `UserControl`. Do not use nested Category → Subcategory → Example TabPages as the primary navigation model.
+
+Define a small discovery contract such as `IHiveExample` with category, subcategory, title, and a `CreateView(IServiceProvider services)` factory. Discover only designated example assemblies so adding an example requires implementing the contract without manual shell wiring.
+
+Examples are grouped by feature area and grow with the platform. The shell itself uses only Hive-owned UI contracts.
+
+Verify: adding one new example implementation makes it appear in navigation without additional shell wiring; selecting an example replaces the content view correctly; navigation remains usable with many examples.
+
+## 0.8 — Example Developer Test Tools
+Objective: add developer-facing test execution to `Hive.Example.WinForms` without coupling the application to xUnit runner internals.
+
+The Example host may invoke `dotnet test` as an external process, with selectable project/filter arguments and streamed output/results. It may also provide lightweight example self-checks for immediate interactive feedback, but those checks are not authoritative test-suite results.
+
+The authoritative test suite remains `Hive.Tests`.
+
+Verify: the Example host can start a real `Hive.Tests` run, display live output and final success/failure, stop a running test process, and return a useful result when the test process cannot start.
+
 ---
 
 # Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1)
