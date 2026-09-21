@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Theme;
 
 namespace Hive.Host.WinForms.UI.Controls;
@@ -162,8 +162,9 @@ internal sealed class HiveWindowHeader : Control
         e.Graphics.FillRectangle(background, bounds);
 
         var textLeft = 18;
-        var buttonSpace = GetButtonCount() * ButtonWidth;
-        var textWidth = Math.Max(80, Width - textLeft - buttonSpace - 18);
+        var textWidth = Math.Max(
+            80,
+            Width - textLeft - GetButtonCount() * ButtonWidth - 18);
 
         if (string.IsNullOrWhiteSpace(_subtitle))
         {
@@ -200,9 +201,9 @@ internal sealed class HiveWindowHeader : Control
                 TextFormatFlags.NoPrefix);
         }
 
-        DrawCommandButton(e.Graphics, WindowCommandHelp, _allowHelp, "?", 0);
-        DrawCommandButton(e.Graphics, WindowCommandMinimize, _allowMinimize, "—", 1);
-        DrawCommandButton(e.Graphics, WindowCommandClose, _allowClose, "×", 2);
+        DrawCommandButton(e.Graphics, WindowCommandHelp, _allowHelp, "?");
+        DrawCommandButton(e.Graphics, WindowCommandMinimize, _allowMinimize, "—");
+        DrawCommandButton(e.Graphics, WindowCommandClose, _allowClose, "×");
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -269,8 +270,7 @@ internal sealed class HiveWindowHeader : Control
                 break;
 
             case WindowCommandMinimize:
-                var form = FindForm();
-                if (form is not null)
+                if (FindForm() is { } form)
                     form.WindowState = FormWindowState.Minimized;
                 break;
 
@@ -301,68 +301,7 @@ internal sealed class HiveWindowHeader : Control
         Graphics graphics,
         int command,
         bool visible,
-        string glyph,
-        int order)
-    {
-        if (!visible)
-            return;
-
-        var x = Width - ButtonWidth;
-        if (_allowMinimize && command != WindowCommandClose)
-            x -= ButtonWidth;
-        if (_allowHelp && command == WindowCommandHelp)
-            x -= _allowMinimize ? ButtonWidth * 2 : ButtonWidth;
-
-        if (command == WindowCommandMinimize && _allowClose)
-            x -= ButtonWidth;
-
-        var rect = new Rectangle(x, 0, ButtonWidth, Height);
-        var hovered = _hoveredCommand == command;
-        var pressed = _pressedCommand == command;
-
-        if (hovered || pressed)
-        {
-            var fill = command == WindowCommandClose
-                ? _closeHover
-                : pressed
-                    ? _buttonPressed
-                    : _buttonHover;
-
-            using var brush = new SolidBrush(fill);
-            graphics.FillRectangle(brush, rect);
-        }
-
-        TextRenderer.DrawText(
-            graphics,
-            glyph,
-            _buttonFont,
-            rect,
-            _foreground,
-            TextFormatFlags.HorizontalCenter |
-            TextFormatFlags.VerticalCenter |
-            TextFormatFlags.NoPadding);
-    }
-
-    private int HitTestCommand(Point point)
-    {
-        if (point.Y < 0 || point.Y >= Height)
-            return WindowCommandNone;
-
-        foreach (var command in GetVisibleCommands())
-        {
-            if (GetCommandBounds(command).Contains(point))
-                return command;
-        }
-
-        return WindowCommandNone;
-    }
-
-    private void DrawCommandButton(
-        Graphics graphics,
-        int command,
-        bool visible,
-        string glyph,
-        int order)
+        string glyph)
     {
         if (!visible)
             return;
@@ -394,44 +333,55 @@ internal sealed class HiveWindowHeader : Control
             TextFormatFlags.NoPadding);
     }
 
-    private IReadOnlyList<int> GetVisibleCommands()
+    private int HitTestCommand(Point point)
     {
-        var commands = new List<int>(3);
+        if (point.Y < 0 || point.Y >= Height)
+            return WindowCommandNone;
 
-        if (_allowHelp)
-            commands.Add(WindowCommandHelp);
-        if (_allowMinimize)
-            commands.Add(WindowCommandMinimize);
-        if (_allowClose)
-            commands.Add(WindowCommandClose);
+        if (_allowClose && GetCommandBounds(WindowCommandClose).Contains(point))
+            return WindowCommandClose;
 
-        return commands;
+        if (_allowMinimize && GetCommandBounds(WindowCommandMinimize).Contains(point))
+            return WindowCommandMinimize;
+
+        if (_allowHelp && GetCommandBounds(WindowCommandHelp).Contains(point))
+            return WindowCommandHelp;
+
+        return WindowCommandNone;
     }
 
     private Rectangle GetCommandBounds(int command)
     {
-        var visible = GetVisibleCommands();
-        var index = visible.IndexOf(command);
-        return index < 0
+        var indexFromRight = command switch
+        {
+            WindowCommandClose when _allowClose => 0,
+            WindowCommandMinimize when _allowMinimize => _allowClose ? 1 : 0,
+            WindowCommandHelp when _allowHelp =>
+                (_allowClose ? 1 : 0) + (_allowMinimize ? 1 : 0),
+            _ => -1
+        };
+
+        return indexFromRight < 0
             ? Rectangle.Empty
             : new Rectangle(
-                Width - ButtonWidth * (index + 1),
+                Width - ButtonWidth * (indexFromRight + 1),
                 0,
                 ButtonWidth,
                 Height);
     }
 
-    private static void BeginWindowMove()
+    private void BeginWindowMove()
     {
+        var form = FindForm();
+        if (form is null)
+            return;
+
         ReleaseCapture();
-        SendMessage(GetForegroundWindow(), 0x00A1, new IntPtr(2), IntPtr.Zero);
+        SendMessage(form.Handle, 0x00A1, new IntPtr(2), IntPtr.Zero);
     }
 
     [DllImport("user32.dll")]
     private static extern bool ReleaseCapture();
-
-    [DllImport("user32.dll")]
-    private static extern IntPtr GetForegroundWindow();
 
     [DllImport("user32.dll")]
     private static extern IntPtr SendMessage(
