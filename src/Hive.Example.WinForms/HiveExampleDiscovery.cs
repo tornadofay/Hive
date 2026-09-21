@@ -26,6 +26,10 @@ internal static class HiveExampleDiscovery
 
         examples.Sort(static (left, right) =>
         {
+            var order = left.Order.CompareTo(right.Order);
+            if (order != 0)
+                return order;
+
             var category = StringComparer.OrdinalIgnoreCase.Compare(
                 left.Category,
                 right.Category);
