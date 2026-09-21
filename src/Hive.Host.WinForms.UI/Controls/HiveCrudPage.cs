@@ -664,7 +664,6 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
             source.Dispose();
             SetBusy(false);
-            UpdateStatusSummary();
         }
     }
 
