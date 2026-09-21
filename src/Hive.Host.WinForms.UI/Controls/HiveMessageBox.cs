@@ -1084,24 +1084,24 @@ public static class HiveMessageBox
 
             if (Focused && _focusPen is not null)
             {
-                var inset = HiveDpi.Scale(this, 3f);
-                var focusPathWidth = Math.Max(
-                    1f,
-                    Width - inset * 2f - HiveDpi.Scale(this, 1f));
-                var focusPathHeight = Math.Max(
-                    1f,
-                    Height - inset * 2f - HiveDpi.Scale(this, 1f));
+                var lineHeight = Math.Max(1f, HiveDpi.Scale(this, 2f));
+                var lineWidth = Math.Max(
+                    HiveDpi.Scale(this, 28f),
+                    Math.Min(
+                        HiveDpi.Scale(this, 56f),
+                        Width - HiveDpi.Scale(this, 24f)));
 
-                using var focusPath = CreateRoundedRectanglePath(
-                    new RectangleF(
-                        inset,
-                        inset,
-                        focusPathWidth,
-                        focusPathHeight),
-                    HiveDpi.Scale(this, 6f));
-                e.Graphics.DrawPath(_focusPen, focusPath);
-            }
-        }
+                var lineX = (Width - lineWidth) / 2f;
+                var lineY = Height - HiveDpi.Scale(this, 4f);
+
+                using var focusBrush = new SolidBrush(_focusPen.Color);
+                e.Graphics.FillRectangle(
+                    focusBrush,
+                    lineX,
+                    lineY,
+                    lineWidth,
+                    lineHeight);
+            }        }
 
         protected override void Dispose(bool disposing)
         {
