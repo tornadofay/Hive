@@ -355,7 +355,6 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
             child.Visible = ReferenceEquals(child, page);
 
         page.BringToFront();
-        page.Focus();
     }
 
     private void UpdateThemeState() =>
