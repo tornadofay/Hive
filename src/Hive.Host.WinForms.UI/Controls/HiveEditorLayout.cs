@@ -13,10 +13,15 @@ public sealed class HiveEditorLayout : UserControl
     private readonly TableLayoutPanel _root;
     private readonly TableLayoutPanel _fields;
     private readonly FlowLayoutPanel _footer;
+    private readonly Font _descriptionFont;
+    private readonly Font _titleFont;
     private int _labelColumnWidth = DefaultLabelColumnWidth;
 
     public HiveEditorLayout()
     {
+        _descriptionFont = new Font("Segoe UI", 8.1f);
+        _titleFont = new Font("Segoe UI", 9.5f, FontStyle.Bold);
+
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
         Padding = Padding.Empty;
@@ -60,6 +65,17 @@ public sealed class HiveEditorLayout : UserControl
         _root.Controls.Add(_fields, 0, 0);
         _root.Controls.Add(_footer, 0, 1);
         Controls.Add(_root);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _descriptionFont.Dispose();
+            _titleFont.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -165,7 +181,7 @@ public sealed class HiveEditorLayout : UserControl
         {
             Text = description ?? string.Empty,
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 8.1f),
+            Font = _descriptionFont,
             Margin = Padding.Empty
         };
 
@@ -174,7 +190,7 @@ public sealed class HiveEditorLayout : UserControl
             Text = title,
             Dock = DockStyle.Top,
             Height = 22,
-            Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+            Font = _titleFont,
             Margin = Padding.Empty
         };
 
