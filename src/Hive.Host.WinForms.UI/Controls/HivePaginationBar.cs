@@ -36,6 +36,8 @@ public sealed class HivePaginationBar : UserControl
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 88));
 
         _previousButton = CreateButton("Previous");
+        _previousButton.AccessibleName = "Previous page";
+        _previousButton.AccessibleDescription = "Move to the previous page of results.";
         _previousButton.Click += (_, _) =>
         {
             if (!CanGoPrevious)
@@ -45,6 +47,8 @@ public sealed class HivePaginationBar : UserControl
         };
 
         _nextButton = CreateButton("Next");
+        _nextButton.AccessibleName = "Next page";
+        _nextButton.AccessibleDescription = "Move to the next page of results.";
         _nextButton.Click += (_, _) =>
         {
             if (!CanGoNext)
@@ -59,7 +63,8 @@ public sealed class HivePaginationBar : UserControl
             Font = _pageFont,
             AutoSize = false,
             TextAlign = ContentAlignment.MiddleCenter,
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            AccessibleName = "Current page"
         };
 
         layout.Controls.Add(_previousButton, 0, 0);
