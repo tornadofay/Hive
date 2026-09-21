@@ -152,7 +152,7 @@ internal sealed class HiveExampleHostForm : HiveForm
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        _contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 190));
+        _contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, OutputExpandedHeight));
 
         _viewTitle = new Label
         {
