@@ -33,6 +33,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     private readonly Font _viewSubtitleFont;
 
     private UserControl? _activeView;
+    private bool _responsiveLayoutReady;
 
     public HiveExampleHostForm()
         : base(
@@ -194,6 +195,7 @@ internal sealed class HiveExampleHostForm : HiveForm
 
         BuildNavigation();
         _themeManager.Apply(BodyPanel);
+        _responsiveLayoutReady = true;
         UpdateResponsiveLayout();
         SelectFirstExample();
     }
@@ -233,7 +235,12 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private void UpdateResponsiveLayout()
     {
-        if (ClientSize.Width <= 0 || _shell.ColumnStyles.Count == 0)
+        // WinForms can raise OnResize while the base HiveForm constructor is
+        // still constructing the derived form. Do not touch derived fields
+        // until the Example Host layout has been initialized.
+        if (!_responsiveLayoutReady ||
+            ClientSize.Width <= 0 ||
+            _shell.ColumnStyles.Count == 0)
             return;
 
         var width = ClientSize.Width < 1080
