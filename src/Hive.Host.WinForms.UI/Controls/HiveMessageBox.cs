@@ -525,7 +525,6 @@ public static class HiveMessageBox
         {
             MinimumSize = new Size(MinWidth, MinHeight);
 
-        {
             BackColor = _theme.Palette.Surface;
             ForeColor = _theme.Palette.Text;
 
@@ -801,7 +800,7 @@ public static class HiveMessageBox
                     borderInset,
                     Width - borderInset * 2f,
                     Height - borderInset * 2f),
-                11.4f));
+                11.4f);
 
             _windowPath?.Dispose();
             _windowPath = newPath;
@@ -1002,9 +1001,9 @@ public static class HiveMessageBox
             if (Focused && _focusPen is not null)
             {
                 var lineWidth = Math.Max(
-                    28f),
+                    28f,
                     Math.Min(
-                        56f),
+                        56f,
                         Width - 24f));
 
                 var lineX = (Width - lineWidth) / 2f;
