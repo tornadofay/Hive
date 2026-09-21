@@ -84,6 +84,19 @@ Completed in Hive.Persistence:
 
 Developer verification: **44 tests passed, 0 failed, 0 skipped in 3.3 seconds.** The persistence integration tests executed successfully against the developer SQL Server instance and created the Hive test databases.
 
+### Phase 0.5 — Test harness
+
+Active slice. Implementation is in progress in Hive.Tests.
+
+Implemented so far:
+- reusable FakeClock;
+- deterministic test-only FakeProvider;
+- centralized PersistenceTestDatabase helper;
+- deterministic EventTestData factory;
+- existing clock/event tests migrated to the shared helpers;
+- focused tests for clock, provider, and event test infrastructure;
+- no new production provider abstraction introduced.
+
 ## Completed
 
 ### Phase 0.3 — Identity, WorkItem & Resource foundation
