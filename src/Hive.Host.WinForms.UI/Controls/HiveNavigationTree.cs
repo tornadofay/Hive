@@ -108,11 +108,11 @@ public sealed class HiveNavigationTree : TreeView
             _ => _itemFont ?? Font
         };
 
-        var textColor = selected
-            ? theme.VisualStates.NavigationSelectedText
-            : Enabled
-                ? theme.VisualStates.NavigationText
-                : theme.Palette.DisabledText;
+        var textColor = !Enabled
+            ? theme.Palette.DisabledText
+            : selected
+                ? theme.VisualStates.NavigationSelectedText
+                : theme.VisualStates.NavigationText;
 
         var textLeft = e.Bounds.Left + 4;
 
@@ -127,9 +127,11 @@ public sealed class HiveNavigationTree : TreeView
                 (row.Height - glyphSize) / 2);
 
             using var glyphPen = new Pen(
-                selected
-                    ? theme.VisualStates.NavigationSelectedText
-                    : theme.VisualStates.NavigationText,
+                !Enabled
+                    ? theme.Palette.DisabledText
+                    : selected
+                        ? theme.VisualStates.NavigationSelectedText
+                        : theme.VisualStates.NavigationText,
                 1.5f)
             {
                 StartCap = LineCap.Round,
@@ -220,8 +222,14 @@ public sealed class HiveNavigationTree : TreeView
         if (ReferenceEquals(next, _hoverNode))
             return;
 
+        var previousNode = _hoverNode;
         _hoverNode = next;
-        Invalidate();
+
+        if (previousNode is not null)
+            Invalidate(previousNode.Bounds);
+
+        if (next is not null)
+            Invalidate(next.Bounds);
     }
 
     protected override void OnMouseLeave(EventArgs e)
