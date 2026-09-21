@@ -28,6 +28,13 @@ public sealed class HiveButton : UserControl
     private bool _pressed;
     private GraphicsPath? _path;
     private Region? _buttonRegion;
+    private SolidBrush? _backgroundBrush;
+    private SolidBrush? _hoverBrush;
+    private SolidBrush? _pressedBrush;
+    private SolidBrush? _disabledBrush;
+    private Pen? _borderPen;
+    private Pen? _focusPen;
+    private Pen? _disabledBorderPen;
 
     public HiveButton()
     {
@@ -72,8 +79,8 @@ public sealed class HiveButton : UserControl
                 return;
 
             _style = value;
-            Invalidate();
             ApplyCurrentTheme();
+            Invalidate();
         }
     }
 
@@ -85,6 +92,7 @@ public sealed class HiveButton : UserControl
         ArgumentNullException.ThrowIfNull(theme);
 
         _theme = theme;
+        RebuildPaintResources();
         Invalidate();
     }
 
@@ -204,25 +212,35 @@ public sealed class HiveButton : UserControl
             return;
         }
 
-        var colors = ResolveColors(theme);
+        var fill = !Enabled
+            ? _disabledBrush
+            : _pressed
+                ? _pressedBrush
+                : _hovered
+                    ? _hoverBrush
+                    : _backgroundBrush;
+
+        if (fill is null)
+            return;
 
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
         e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-
-        using var fill = new SolidBrush(colors.Background);
         e.Graphics.FillPath(fill, _path);
 
-        var showFocus = Enabled && Focused;
+        var border = !Enabled
+            ? _disabledBorderPen
+            : Enabled && Focused
+                ? _focusPen
+                : _borderPen;
 
-        using var border = new Pen(
-            showFocus ? colors.FocusBorder : colors.Border,
-            showFocus ? FocusBorderWidth : BorderWidth)
-        {
-            Alignment = PenAlignment.Inset
-        };
-        e.Graphics.DrawPath(border, _path);
+        if (border is not null)
+            e.Graphics.DrawPath(border, _path);
 
-        DrawText(e.Graphics, colors.Foreground);
+        DrawText(
+            e.Graphics,
+            Enabled
+                ? _theme?.Palette.Text ?? SystemColors.ControlText
+                : _theme?.Palette.DisabledText ?? SystemColors.GrayText);
     }
 
     protected override bool IsInputKey(Keys keyData) =>
@@ -238,6 +256,7 @@ public sealed class HiveButton : UserControl
             _buttonRegion = null;
             _path?.Dispose();
             _path = null;
+            DisposePaintResources();
         }
 
         base.Dispose(disposing);
@@ -262,20 +281,11 @@ public sealed class HiveButton : UserControl
 
     private ButtonColors ResolveColors(HiveThemeDefinition theme)
     {
-        if (!Enabled)
-        {
-            return new ButtonColors(
-                theme.Palette.DisabledBackground,
-                theme.Palette.DisabledText,
-                theme.VisualStates.DisabledBorder,
-                theme.VisualStates.DisabledBorder);
-        }
-
         var background = theme.Palette.ElevatedSurface;
-        var foreground = theme.Palette.Text;
-        var border = theme.Palette.Border;
         var hover = theme.VisualStates.HoverBackground;
         var pressed = theme.VisualStates.PressedBackground;
+        var border = theme.Palette.Border;
+        var focusBorder = theme.Palette.Accent;
 
         switch (_style)
         {
@@ -283,8 +293,8 @@ public sealed class HiveButton : UserControl
                 background = theme.Palette.Accent;
                 hover = theme.Palette.AccentHover;
                 pressed = ControlPaint.Dark(theme.Palette.Accent, 0.12f);
-                foreground = theme.Palette.AccentForeground;
                 border = theme.Palette.AccentHover;
+                focusBorder = theme.Palette.Accent;
                 break;
 
             case HiveButtonStyle.Secondary:
@@ -302,36 +312,78 @@ public sealed class HiveButton : UserControl
                 background = theme.VisualStates.NavigationSelected;
                 hover = theme.VisualStates.NavigationSelected;
                 pressed = theme.VisualStates.NavigationPressed;
-                foreground = theme.VisualStates.NavigationSelectedText;
                 border = theme.Palette.Accent;
+                focusBorder = theme.Palette.Accent;
                 break;
 
             case HiveButtonStyle.Danger:
                 background = theme.VisualStates.Error;
                 hover = ControlPaint.Dark(theme.VisualStates.Error, 0.06f);
                 pressed = ControlPaint.Dark(theme.VisualStates.Error, 0.14f);
-                foreground = theme.Palette.AccentForeground;
                 border = theme.VisualStates.Error;
+                focusBorder = theme.VisualStates.Error;
                 break;
 
             default:
                 throw new ArgumentOutOfRangeException(nameof(Style), _style, null);
         }
 
-        if (_pressed)
-            background = pressed;
-        else if (_hovered)
-            background = hover;
-
-        var focusBorder = theme.Palette.Accent;
-        if (_style == HiveButtonStyle.Danger)
-            focusBorder = theme.VisualStates.Error;
-
         return new ButtonColors(
             background,
-            foreground,
+            hover,
+            pressed,
             border,
             focusBorder);
+    }
+
+    private void RebuildPaintResources()
+    {
+        DisposePaintResources();
+
+        var theme = _theme;
+        if (theme is null)
+            return;
+
+        var colors = ResolveColors(theme);
+
+        _backgroundBrush = new SolidBrush(colors.Background);
+        _hoverBrush = new SolidBrush(colors.Hover);
+        _pressedBrush = new SolidBrush(colors.Pressed);
+        _disabledBrush = new SolidBrush(theme.Palette.DisabledBackground);
+
+        _borderPen = new Pen(colors.Border, BorderWidth)
+        {
+            Alignment = PenAlignment.Inset
+        };
+        _focusPen = new Pen(colors.FocusBorder, FocusBorderWidth)
+        {
+            Alignment = PenAlignment.Inset
+        };
+        _disabledBorderPen = new Pen(
+            theme.VisualStates.DisabledBorder,
+            BorderWidth)
+        {
+            Alignment = PenAlignment.Inset
+        };
+    }
+
+    private void DisposePaintResources()
+    {
+        _backgroundBrush?.Dispose();
+        _hoverBrush?.Dispose();
+        _pressedBrush?.Dispose();
+        _disabledBrush?.Dispose();
+        _borderPen?.Dispose();
+        _focusPen?.Dispose();
+        _disabledBorderPen?.Dispose();
+
+        _backgroundBrush = null;
+        _hoverBrush = null;
+        _pressedBrush = null;
+        _disabledBrush = null;
+        _borderPen = null;
+        _focusPen = null;
+        _disabledBorderPen = null;
     }
 
     private void RebuildPath()
@@ -404,7 +456,8 @@ public sealed class HiveButton : UserControl
 
     private readonly record struct ButtonColors(
         Color Background,
-        Color Foreground,
+        Color Hover,
+        Color Pressed,
         Color Border,
         Color FocusBorder);
 }
