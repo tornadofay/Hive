@@ -78,7 +78,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
             root.ResumeLayout(false);
         }
 
-        root.Invalidate(true);
+        root.Invalidate();
     }
 
     private static void ApplyControl(
