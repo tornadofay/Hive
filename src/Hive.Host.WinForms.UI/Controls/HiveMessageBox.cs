@@ -141,6 +141,39 @@ public static class HiveMessageBox
         };
 
 
+    private static GraphicsPath CreateRoundedRectanglePath(
+        RectangleF rectangle,
+        float radius)
+    {
+        var diameter = Math.Min(
+            radius * 2f,
+            Math.Min(rectangle.Width, rectangle.Height));
+
+        if (diameter <= 0f)
+            return new GraphicsPath();
+
+        var path = new GraphicsPath();
+        var arc = new RectangleF(
+            rectangle.Left,
+            rectangle.Top,
+            diameter,
+            diameter);
+
+        path.AddArc(arc, 180f, 90f);
+
+        arc.X = rectangle.Right - diameter;
+        path.AddArc(arc, 270f, 90f);
+
+        arc.Y = rectangle.Bottom - diameter;
+        path.AddArc(arc, 0f, 90f);
+
+        arc.X = rectangle.Left;
+        path.AddArc(arc, 90f, 90f);
+
+        path.CloseFigure();
+        return path;
+    }
+
     private sealed class HiveMessageDialog : Form
     {
         private const int DesignWidth = 560;
