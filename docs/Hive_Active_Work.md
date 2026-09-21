@@ -4,65 +4,53 @@ Last updated: 2026-09-21
 
 ## Active slice
 
-**0.2 — Common infrastructure**
+**0.3 — Identity, WorkItem & Resource foundation**
 
-The 0.1 solution/project scaffolding is complete and has been verified locally by the developer. Do not begin 0.3 or any later slice until 0.2 is complete and its verification has actually been performed.
+Phase 0.2 is complete. Do not begin 0.4 or any later slice until 0.3 is complete and its verification has actually been performed.
 
 ## Objective
 
-Implement the common platform infrastructure shared by every later Hive capability:
+Implement the common identity and resource foundation required by all later Hive capabilities:
 
-- stable identifiers and ID value types;
-- immutable common value objects;
-- typed errors/results;
-- IClock;
-- durable event envelope;
-- explicit event type and payload schema version;
-- correlation and causation IDs;
-- event payload upcasting compatibility boundary;
-- one JSON serialization stack.
+- Deployment/Tenant/Principal/User/Session/Workspace/Agent/Hive/Runtime/Execution/WorkItem identities;
+- explicit Resource envelope with owner and canonical scope;
+- immutable provenance and resource references;
+- positive resource versioning;
+- resource lifecycle metadata and controlled lifecycle transitions;
+- scope matching with fail-closed missing identity handling;
+- immutable identity snapshots and metadata isolation;
+- WorkItem identity independent from Runtime/Execution lifetime;
+- WorkItem lifecycle/status transitions with versioned state;
+- copyable public API example.
 
 ## Implementation progress
 
-The 0.2 implementation set is committed to `Hive.Core`:
+The 0.3 implementation is committed to `Hive.Core`:
 
-- common technical IDs: `EventId`, `CorrelationId`, `CausationId`;
-- typed `Error`, `Result`, and `Result<T>`;
-- `IClock` and `SystemClock`;
-- `EventType`, `EventPayloadVersion`, and `EventEnvelope`;
-- `IEventUpcaster`, `EventUpcasterRegistry`, and sequential version upcasting;
-- System.Text.Json event serialization with stable converters for common event values;
-- typed `EventSerializationException` for malformed/future/incompatible event payloads.
+- strongly typed non-empty identities for all required resource/runtime/work identifiers;
+- `ResourceKind` inventory classification;
+- `ResourceScope` and `ResourceAccessContext` with the documented Global/Tenant/User/Workspace/Agent/Runtime/Execution scope matrix;
+- fail-closed scope matching when required deployment, tenant, principal, agent, runtime, user, workspace, or execution identity is absent;
+- `ResourceVersion` with monotonic advancement and overflow protection;
+- `ResourceLifecycle` with Active/Suspended/Retired transitions and retirement protection;
+- `ResourceProvenance` with creator principal, creation time, correlation/causation IDs, and optional source reference;
+- immutable `ResourceEnvelope<TIdentity>` with copied metadata and identity snapshots;
+- `WorkItem` with creation, queue/run/pending-approval/completed/rejected/failed/cancelled statuses, suspension/resume, retirement, immutable identity preservation, and versioned transitions.
 
-The `Result` implementation was corrected after the initial compilation failure: the invalid record-constructor-body syntax was replaced with an explicit constructor while preserving the public contract.
+A copyable public-API example is in `docs/examples/Phase03_Identity_Resource.md`.
 
-The `Hive.Tests` project now contains focused 0.2 contract tests for:
+## 0.2 completion record
 
-- identifier validation and round-tripping;
-- Error / Result invariants;
-- deterministic IClock usage;
-- EventEnvelope invariants;
-- JSON envelope/payload round-tripping;
-- malformed and future schema rejection;
-- sequential event upcasting;
-- duplicate, missing, and non-sequential upcaster handling.
+Phase 0.2 was completed after the developer pulled the fixes, rebuilt the full solution, launched the application successfully, and ran the complete test suite.
 
-Current automated-test execution remains pending. No test-pass claim is recorded yet.
-
-## 0.1 completion record
-
-The initial .NET 10 solution scaffold was merged into main and manually verified by the developer.
-
-- Build result: **PASS — developer reports full solution rebuild succeeds locally after pulling the current main branch.**
-- Runtime result: **PASS — developer reports the solution runs successfully after the rebuild.**
-- Verification result: **PASS for the 0.1 scaffold boundary; all eleven projects are present in the solution and the solution participates in a successful full rebuild.**
-- Automated tests: **Not executed for 0.1 by design.**
-- Commit: 590ca87dfc1c4e1d99308394167ad29202317c69
-- Next slice: **0.2 — Common infrastructure**
+- Build result: **PASS — developer reports full-solution rebuild succeeds.**
+- Runtime result: **PASS — developer reports the solution runs successfully.**
+- Test result: **PASS — 20 tests, 20 passed, 0 failed, 0 skipped, 1.3 seconds.**
+- Verification result: **PASS for the 0.2 completion gate based on the developer-run test suite.**
+- Ready commit before starting 0.3: `0381a2fc75ebf0aeb2020d62b970d46124d455fe`
+- Next slice: **0.3 — Identity, WorkItem & Resource foundation**
 
 ## Dependency direction
-
-The initial project references enforce these boundaries:
 
 ```
 Hive.Core
@@ -90,34 +78,38 @@ Additional constraints:
 - Hive.Example.WinForms must not reference xUnit runner internals.
 - Do not create compatibility/legacy projects or duplicate architecture paths.
 
-## Out of scope for 0.2
+## Out of scope for 0.3
 
-- identity/domain resources beyond shared ID/value infrastructure;
 - persistence schema or database migrations;
 - provider implementation;
-- Agent/Hive behavior;
-- UI foundation;
-- Example navigation;
-- provider/database/fake-host test infrastructure belonging to later slices;
+- Agent/Hive behavior beyond identity contracts;
+- authorization/permission policy beyond explicit scope matching;
+- database-backed WorkItem persistence;
+- execution orchestration;
+- UI foundation or Example host navigation;
 - V1 image/document pipeline;
 - CognitiveAgent/CognitiveHive;
-- automated end-to-end behavior.
+- later persistence/outbox behavior.
 
-## 0.2 Verification
+## 0.3 Verification
 
-The current verification record is:
+The implementation requires verification of:
 
-1. **Developer-reported full-solution rebuild: PASS.**
-2. **Developer-reported application launch: PASS.**
-3. 0.2 contract-test suite has been added to `Hive.Tests`.
-4. Automated execution of the 0.2 suite has **not yet been performed here**, so 0.2 is not marked complete.
-5. The required 0.2 checks cover:
-   - common ID/value/error/result invariants;
-   - event envelope preservation;
-   - JSON serialization round-trip;
-   - supported older-event payload upcasting;
-   - rejection of unsupported future/incompatible payload versions;
-   - deterministic clock injection.
+1. all eleven typed identity contracts reject empty values and support stable round-tripping;
+2. the complete scope matrix matches when all required identity components are present;
+3. each scope fails closed for missing required identity components;
+4. wrong tenant/user/workspace/agent/runtime/execution identity does not match;
+5. resource metadata is copied so external mutation cannot alter the resource;
+6. identity snapshots remain stable when a resource is versioned;
+7. resource versions are positive, monotonic, and overflow-safe;
+8. retired resource lifecycle cannot be reactivated;
+9. WorkItem transitions preserve identity, owner, scope, and provenance while incrementing version and updating lifecycle time;
+10. terminal WorkItems cannot be transitioned;
+11. suspended WorkItems can resume without losing work status;
+12. separate WorkItems do not share mutable state;
+13. the public example remains consistent with the actual public API.
+
+Automated execution is currently pending. No 0.3 pass claim is recorded yet.
 
 ## Completion record
 
