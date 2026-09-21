@@ -248,6 +248,10 @@ public static class HiveMessageBox
             FormBorderStyle = FormBorderStyle.None;
             Padding = new Padding(2);
             ShowInTaskbar = false;
+            ControlBox = false;
+            MaximizeBox = false;
+            MinimizeBox = false;
+            DoubleBuffered = true;
             StartPosition = FormStartPosition.CenterParent;
             MinimumSize = new Size(MinWidth, MinHeight);
             ClientSize = new Size(DesignWidth, 320);
@@ -381,6 +385,8 @@ public static class HiveMessageBox
             {
                 AutoSize = true,
                 Visible = !string.IsNullOrWhiteSpace(options.Details),
+                AccessibleName = "Technical details",
+                AccessibleDescription = "Show or hide technical details.",
                 Text = options.DetailsExpanded
                     ? "Hide details  ▲"
                     : "Show details  ▼",
