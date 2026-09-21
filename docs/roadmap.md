@@ -64,8 +64,10 @@ Objective: establish the shared WinForms visual foundation used by Hive.Host.Win
 The initial foundation includes:
 - Light / Dark / System theme modes;
 - Hive-owned palette, typography, spacing, and common visual-state tokens;
+- HiveForm as the reusable application-window shell;
+- HiveButton with Primary / Secondary / Navigation styles;
+- HiveMessageBox with semantic message types and optional technical details;
 - Hive-specific controls only where Hive needs behavior or styling beyond ordinary WinForms controls;
-- shared controls such as HiveButton and HiveMessageBox where a Hive-owned contract is useful;
 - a replaceable seam around the third-party rendering dependency.
 
 Do not create a complete replacement control toolkit or wrap every WinForms control merely to rename it. The selected library is an implementation detail behind `Hive.Host.WinForms.UI`.
