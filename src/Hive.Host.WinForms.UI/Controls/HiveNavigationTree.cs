@@ -112,7 +112,6 @@ public sealed class HiveNavigationTree : TreeView
             _ => _itemFont ?? Font
         };
 
-        var isGroup = e.Node.Tag is null && e.Node.Nodes.Count > 0;
         var textColor = selected
             ? theme.VisualStates.NavigationSelectedText
             : Enabled
