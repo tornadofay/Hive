@@ -32,8 +32,8 @@ public sealed class HiveThemeManager : IHiveThemeManager
         ColorTranslator.FromHtml("#F2F4F7"),
         ColorTranslator.FromHtml("#98A2B3"),
         ColorTranslator.FromHtml("#2B3642"),
-        ColorTranslator.FromHtml("#5B9DFF"),
-        ColorTranslator.FromHtml("#76B0FF"),
+        ColorTranslator.FromHtml("#2E6EC7"),
+        ColorTranslator.FromHtml("#3876C6"),
         ColorTranslator.FromHtml("#FFFFFF"),
         ColorTranslator.FromHtml("#12181F"),
         ColorTranslator.FromHtml("#222831"),
@@ -404,7 +404,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
                     ? ColorTranslator.FromHtml("#E9B949")
                     : ColorTranslator.FromHtml("#B77908"),
                 Error = dark
-                    ? ColorTranslator.FromHtml("#EE7777")
+                    ? ColorTranslator.FromHtml("#C94C4C")
                     : ColorTranslator.FromHtml("#C73636"),
                 Question = dark
                     ? ColorTranslator.FromHtml("#A7B1BF")
