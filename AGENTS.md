@@ -72,8 +72,8 @@ These rules apply to human developers and coding agents working in this reposito
 
 ## Host integration and intervention
 
-57. V1 host integration is limited to the actual business application boundary proved by the integration decision gate.
-58. Do not build a generic UI/object-discovery framework before a second differently-shaped real host requires it.
+57. V1 business-app integration supports both API/service and bounded UI integration; they are not mutually exclusive and may be used together per WorkItem or operation.
+58. V1 WinForms host discovery is a bounded first-class integration capability; generic cross-host UI/object-discovery abstractions remain later.
 59. Prefer native/bound host data sources over visible-text scraping.
 60. Host discovery is bounded, cancellation-aware, read-oriented, and never grants tool permission.
 61. Approval is one intervention type; V1 only needs Approve/Reject for the business-app write.
@@ -87,8 +87,8 @@ These rules apply to human developers and coding agents working in this reposito
 66. Prefer structured error classification over string matching.
 67. Timeout and budget settings are explicit and validated.
 68. Repeated lookup paths use real indexes.
-69. Every implementation slice requires the relevant unit, boundary/edge, integration, recovery/concurrency, security, UI, and public-example verification before completion.
-70. System/end-to-end tests are required where unit tests cannot prove an important cross-boundary contract.
+69. Every implementation slice requires the relevant unit, boundary/edge, integration, recovery/concurrency, security, and public-example verification before completion; UI behavior is manually verified by the developer where applicable.
+70. System/end-to-end tests are required where unit tests cannot prove an important cross-boundary contract. No separate smoke-test or UI-automation framework is required unless a later concrete need justifies it.
 71. Edge-case coverage means all known and contract-relevant cases; do not claim exhaustive coverage of every conceivable future failure.
 72. Do not claim tests, builds, or verification that were not actually run.
 73. Update `docs/architecture.md` before structural code changes.
@@ -117,3 +117,7 @@ These rules apply to human developers and coding agents working in this reposito
 92. Every durable event carries an explicit event type and payload schema version; supported older payload versions must be upcastable without rewriting historical events.
 93. Dream processing is subject to applicable authorization, provider/model quota, token/cost budget, time budget, concurrency/parallelism, retrieval/work limits, and cancellation; offline status never bypasses governance.
 94. Workspace approval, notification, activity, and Agent/Hive topology views expose authoritative state through Hive.Management and never create hidden Agent/Hive behavior.
+95. V1 supports both API/service and bounded UI integration; an operation may use either path or both according to host capability and authorization.
+96. The first V1 submitted document/input type is an image; later document types are additive and must not redefine Hive's scope.
+97. V1 WinForms host discovery covers the Form/control hierarchy, UserControls, custom and inherited controls, container controls such as Panels and GroupBoxes, nested controls, and relevant runtime/data-source context; discovery never grants action authority.
+98. Authentication-provider selection is deferred until real multi-user requirements reach that phase. UI automation-tool selection is also deferred; developer manual UI testing is sufficient for current work and no smoke-test framework is an architectural requirement.
