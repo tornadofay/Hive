@@ -29,9 +29,16 @@ public sealed class HiveCrudOperationFailedEventArgs : EventArgs
 
 public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 {
+    private const int HeaderHeight = 78;
+    private const int ActionBarHeight = 58;
+    private const int StatusHeight = 32;
+    private const int ActionButtonWidth = 96;
+
     private readonly HiveListPageLayout _pageLayout;
     private readonly Label _titleLabel;
     private readonly Label _descriptionLabel;
+    private readonly Label _searchLabel;
+    private readonly TextBox _searchBox;
     private readonly FlowLayoutPanel _actionButtons;
     private readonly Label _statusLabel;
     private readonly HiveButton _addButton;
@@ -39,8 +46,10 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private readonly HiveButton _deleteButton;
     private readonly HiveButton _refreshButton;
     private readonly ListView _list;
+    private readonly Label _emptyStateLabel;
     private readonly Font _titleFont;
     private readonly Font _descriptionFont;
+    private readonly Font _searchLabelFont;
     private readonly List<HiveCrudColumn<TItem>> _columns = new();
 
     private IReadOnlyList<TItem> _items = Array.Empty<TItem>();
@@ -49,6 +58,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private Func<TItem, CancellationToken, Task>? _deleteItemAsync;
     private Func<TItem, string>? _getItemDisplayName;
     private CancellationTokenSource? _operationCancellation;
+    private string _searchText = string.Empty;
     private bool _busy;
 
     public HiveCrudPage()
@@ -59,11 +69,14 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
         _pageLayout = new HiveListPageLayout
         {
-            Dock = DockStyle.Fill
+            Dock = DockStyle.Fill,
+            HeaderHeight = HeaderHeight,
+            ActionBarHeight = ActionBarHeight
         };
 
-        _titleFont = new Font("Segoe UI Semibold", 15f, FontStyle.Bold);
-        _descriptionFont = new Font("Segoe UI", 8.8f);
+        _titleFont = new Font("Segoe UI Semibold", 15.5f, FontStyle.Bold);
+        _descriptionFont = new Font("Segoe UI", 8.9f);
+        _searchLabelFont = new Font("Segoe UI Semibold", 8.7f, FontStyle.Bold);
 
         _titleLabel = new Label
         {
@@ -77,14 +90,14 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
         _descriptionLabel = new Label
         {
-            AutoSize = true,
-            Dock = DockStyle.Top,
+            AutoSize = false,
+            Dock = DockStyle.Fill,
             Font = _descriptionFont,
-            Margin = new Padding(0, 5, 0, 0),
+            Margin = new Padding(0, 4, 0, 0),
             Padding = Padding.Empty
         };
 
-        _pageLayout.HeaderPanel.Padding = new Padding(0, 2, 0, 0);
+        _pageLayout.HeaderPanel.Padding = new Padding(0, 9, 0, 7);
         _pageLayout.HeaderPanel.Controls.Add(_descriptionLabel);
         _pageLayout.HeaderPanel.Controls.Add(_titleLabel);
 
@@ -97,25 +110,53 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Padding = Padding.Empty
         };
         actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220f));
+        actionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
-        _actionButtons = new FlowLayoutPanel
+        var searchPanel = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false,
             AutoSize = false,
             Margin = Padding.Empty,
-            Padding = new Padding(0, 5, 0, 5)
+            Padding = new Padding(0, 10, 12, 10)
         };
 
-        _statusLabel = new Label
+        _searchLabel = new Label
+        {
+            AutoSize = false,
+            Font = _searchLabelFont,
+            Text = "Search",
+            TextAlign = ContentAlignment.MiddleLeft,
+            Width = 48,
+            Height = 36,
+            Margin = new Padding(0, 0, 8, 0),
+            Padding = Padding.Empty
+        };
+
+        _searchBox = new TextBox
+        {
+            Width = 260,
+            Height = 36,
+            BorderStyle = BorderStyle.FixedSingle,
+            Margin = Padding.Empty,
+            Padding = new Padding(8, 7, 8, 7),
+            PlaceholderText = "Search by any visible value..."
+        };
+        _searchBox.TextChanged += SearchBoxOnTextChanged;
+        _searchBox.KeyDown += SearchBoxOnKeyDown;
+
+        searchPanel.Controls.Add(_searchLabel);
+        searchPanel.Controls.Add(_searchBox);
+
+        _actionButtons = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.RightToLeft,
+            WrapContents = false,
             AutoSize = false,
-            TextAlign = ContentAlignment.MiddleRight,
             Margin = Padding.Empty,
-            Padding = new Padding(8, 0, 0, 0)
+            Padding = new Padding(12, 10, 0, 10)
         };
 
         _addButton = CreateActionButton("Add", HiveButtonStyle.Primary);
@@ -128,14 +169,32 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _deleteButton.Click += async (_, _) => await DeleteAsync();
         _refreshButton.Click += async (_, _) => await RefreshAsync();
 
-        _actionButtons.Controls.Add(_addButton);
-        _actionButtons.Controls.Add(_editButton);
-        _actionButtons.Controls.Add(_deleteButton);
         _actionButtons.Controls.Add(_refreshButton);
+        _actionButtons.Controls.Add(_deleteButton);
+        _actionButtons.Controls.Add(_editButton);
+        _actionButtons.Controls.Add(_addButton);
 
-        actionLayout.Controls.Add(_actionButtons, 0, 0);
-        actionLayout.Controls.Add(_statusLabel, 1, 0);
+        actionLayout.Controls.Add(searchPanel, 0, 0);
+        actionLayout.Controls.Add(_actionButtons, 1, 0);
         _pageLayout.ActionBarPanel.Controls.Add(actionLayout);
+
+        var contentLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, StatusHeight));
+
+        var listHost = new Panel
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = new Padding(1)
+        };
 
         _list = new ListView
         {
@@ -147,6 +206,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             MultiSelect = false,
             HeaderStyle = ColumnHeaderStyle.Nonclickable,
             BorderStyle = BorderStyle.FixedSingle,
+            LabelWrap = false,
             Margin = Padding.Empty
         };
         _list.SelectedIndexChanged += (_, _) => UpdateActionState();
@@ -155,12 +215,40 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             if (SelectedItem is not null)
                 await EditAsync(SelectedItem);
         };
+        _list.KeyDown += ListOnKeyDown;
 
-        _pageLayout.SetContent(_list);
+        _emptyStateLabel = new Label
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Margin = Padding.Empty,
+            Padding = new Padding(16),
+            Visible = false
+        };
+
+        listHost.Controls.Add(_list);
+        listHost.Controls.Add(_emptyStateLabel);
+
+        _statusLabel = new Label
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = Padding.Empty,
+            Padding = new Padding(2, 0, 0, 0)
+        };
+
+        contentLayout.Controls.Add(listHost, 0, 0);
+        contentLayout.Controls.Add(_statusLabel, 0, 1);
+
+        _pageLayout.SetContent(contentLayout);
         Controls.Add(_pageLayout);
 
         _getItemDisplayName = item => item?.ToString() ?? "item";
         UpdateActionState();
+        UpdateEmptyState();
+        UpdateStatusSummary(0);
     }
 
     public event EventHandler<HiveCrudOperationFailedEventArgs>? OperationFailed;
@@ -174,6 +262,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     public Panel ActionBarPanel => _pageLayout.ActionBarPanel;
 
     public Label StatusLabel => _statusLabel;
+
+    public TextBox SearchBox => _searchBox;
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsBusy => _busy;
@@ -222,7 +312,47 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     public bool ShowRefresh
     {
         get => _refreshButton.Visible;
-        set => _refreshButton.Visible = value;
+        set
+        {
+            _refreshButton.Visible = value;
+            UpdateActionState();
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool ShowSearch
+    {
+        get => _searchBox.Visible;
+        set
+        {
+            _searchBox.Visible = value;
+            _searchLabel.Visible = value;
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            var normalized = value ?? string.Empty;
+            if (string.Equals(_searchText, normalized, StringComparison.Ordinal))
+                return;
+
+            _searchText = normalized;
+            if (!string.Equals(_searchBox.Text, normalized, StringComparison.Ordinal))
+                _searchBox.Text = normalized;
+            else
+                RebuildItems();
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public string SearchPlaceholder
+    {
+        get => _searchBox.PlaceholderText;
+        set => _searchBox.PlaceholderText = value ?? string.Empty;
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -281,8 +411,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         set => _getItemDisplayName = value;
     }
 
-    public void SetColumns(
-        IReadOnlyList<HiveCrudColumn<TItem>> columns)
+    public void SetColumns(IReadOnlyList<HiveCrudColumn<TItem>> columns)
     {
         ArgumentNullException.ThrowIfNull(columns);
 
@@ -297,15 +426,13 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         RebuildItems();
     }
 
-    public void SetColumns(
-        params HiveCrudColumn<TItem>[] columns) =>
+    public void SetColumns(params HiveCrudColumn<TItem>[] columns) =>
         SetColumns((IReadOnlyList<HiveCrudColumn<TItem>>)columns);
 
     public void SetStatus(string text) =>
         _statusLabel.Text = text ?? string.Empty;
 
-    public async Task RefreshAsync(
-        CancellationToken cancellationToken = default)
+    public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
         if (_loadItemsAsync is null)
             throw new InvalidOperationException(
@@ -328,9 +455,49 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _operationCancellation?.Dispose();
             _titleFont.Dispose();
             _descriptionFont.Dispose();
+            _searchLabelFont.Dispose();
         }
 
         base.Dispose(disposing);
+    }
+
+    private void SearchBoxOnTextChanged(object? sender, EventArgs e)
+    {
+        var value = _searchBox.Text;
+        if (string.Equals(_searchText, value, StringComparison.Ordinal))
+            return;
+
+        _searchText = value;
+        RebuildItems();
+    }
+
+    private void SearchBoxOnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode != Keys.Escape || string.IsNullOrEmpty(_searchBox.Text))
+            return;
+
+        _searchBox.Clear();
+        e.Handled = true;
+        e.SuppressKeyPress = true;
+    }
+
+    private async void ListOnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (_busy)
+            return;
+
+        if (e.KeyCode == Keys.Enter && SelectedItem is not null)
+        {
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+            await EditAsync(SelectedItem);
+        }
+        else if (e.KeyCode == Keys.Delete && SelectedItem is not null)
+        {
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+            await DeleteAsync();
+        }
     }
 
     private async Task EditAsync(TItem? item)
@@ -348,13 +515,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                 SetStatus(item is null ? "Adding..." : "Editing...");
                 var result = await _editItemAsync(item, token);
                 if (result is null)
-                {
-                    SetStatus("No changes.");
                     return;
-                }
 
                 await LoadItemsCoreAsync(token);
-                SetStatus(item is null ? "Added." : "Updated.");
             },
             CancellationToken.None);
     }
@@ -385,7 +548,6 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                 SetStatus("Deleting...");
                 await _deleteItemAsync(item, token);
                 await LoadItemsCoreAsync(token);
-                SetStatus("Deleted.");
             },
             CancellationToken.None);
     }
@@ -402,9 +564,6 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             "LoadItemsAsync returned null.");
 
         RebuildItems();
-        SetStatus(_items.Count == 0
-            ? "No items."
-            : $"{_items.Count} item(s).");
     }
 
     private async Task ExecuteAsync(
@@ -436,12 +595,11 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         finally
         {
             if (ReferenceEquals(_operationCancellation, source))
-            {
                 _operationCancellation = null;
-            }
 
             source.Dispose();
             SetBusy(false);
+            UpdateStatusSummary();
         }
     }
 
@@ -449,6 +607,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     {
         _busy = busy;
         _list.Enabled = !busy;
+        _searchBox.Enabled = !busy;
         UpdateActionState();
     }
 
@@ -481,20 +640,38 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _list.BeginUpdate();
         try
         {
+            _list.SelectedItems.Clear();
             _list.Items.Clear();
+
+            var visibleCount = 0;
 
             foreach (var item in _items)
             {
                 var values = new string[_columns.Count];
-                for (var index = 0; index < _columns.Count; index++)
-                    values[index] = _columns[index].ValueSelector(item) ?? string.Empty;
+                var matches = string.IsNullOrWhiteSpace(_searchText);
 
-                var row = new ListViewItem(values)
+                for (var index = 0; index < _columns.Count; index++)
+                {
+                    var value = _columns[index].ValueSelector(item) ?? string.Empty;
+                    values[index] = value;
+
+                    if (!matches &&
+                        value.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+                        matches = true;
+                }
+
+                if (!matches)
+                    continue;
+
+                _list.Items.Add(new ListViewItem(values)
                 {
                     Tag = item
-                };
-                _list.Items.Add(row);
+                });
+                visibleCount++;
             }
+
+            _statusLabel.Text = BuildStatusText(_items.Count, visibleCount);
+            UpdateEmptyState(visibleCount);
         }
         finally
         {
@@ -504,6 +681,33 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         UpdateActionState();
     }
 
+    private void UpdateEmptyState(int visibleCount)
+    {
+        var show = visibleCount == 0;
+        _emptyStateLabel.Visible = show;
+        _emptyStateLabel.Text =
+            _items.Count == 0
+                ? "No items to display."
+                : "No items match the current search.";
+    }
+
+    private void UpdateStatusSummary(int? visibleCount = null)
+    {
+        var count = visibleCount ?? _list.Items.Count;
+        _statusLabel.Text = BuildStatusText(_items.Count, count);
+        UpdateEmptyState(count);
+    }
+
+    private static string BuildStatusText(int totalCount, int visibleCount)
+    {
+        if (totalCount == 0)
+            return "0 items";
+
+        return totalCount == visibleCount
+            ? $"{totalCount:N0} items"
+            : $"{visibleCount:N0} of {totalCount:N0} items";
+    }
+
     private static HiveButton CreateActionButton(
         string text,
         HiveButtonStyle style) =>
@@ -511,9 +715,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         {
             Text = text,
             Style = style,
-            Width = 112,
+            Width = ActionButtonWidth,
             Height = 36,
-            Margin = new Padding(0, 0, 8, 0)
+            Margin = new Padding(8, 0, 0, 0)
         };
 
     private IHiveThemeManager? ThemeManager()
