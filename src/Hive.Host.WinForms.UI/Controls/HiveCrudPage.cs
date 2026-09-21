@@ -250,7 +250,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         listHost.Controls.Add(_list);
         listHost.Controls.Add(_emptyStateLabel);
 
-        var footerLayout = new TableLayoutPanel
+        _footerLayout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
@@ -258,8 +258,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        footerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        footerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, PaginationWidth));
+        _footerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        _footerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, PaginationWidth));
 
         _statusLabel = new Label
         {
@@ -281,11 +281,11 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _pagination.PreviousRequested += (_, _) => ChangePage(-1);
         _pagination.NextRequested += (_, _) => ChangePage(1);
 
-        footerLayout.Controls.Add(_statusLabel, 0, 0);
-        footerLayout.Controls.Add(_pagination, 1, 0);
+        _footerLayout.Controls.Add(_statusLabel, 0, 0);
+        _footerLayout.Controls.Add(_pagination, 1, 0);
 
         contentLayout.Controls.Add(listHost, 0, 0);
-        contentLayout.Controls.Add(footerLayout, 0, 1);
+        contentLayout.Controls.Add(_footerLayout, 0, 1);
 
         _pageLayout.SetContent(contentLayout);
         Controls.Add(_pageLayout);
