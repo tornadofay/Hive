@@ -9,6 +9,8 @@ namespace Hive.Example.WinForms;
 internal sealed class HiveExampleHostForm : HiveForm
 {
     private const int NavigationWidth = 246;
+    private const int OutputExpandedHeight = 190;
+    private const int OutputCollapsedHeight = 44;
 
     private readonly IHiveThemeManager _themeManager;
     private readonly HiveExampleServices _services;
@@ -21,6 +23,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     private readonly Label _viewTitle;
     private readonly Label _viewSubtitle;
     private readonly Panel _viewHost;
+    private readonly TableLayoutPanel _contentLayout;
     private readonly HiveExampleOutputView _outputView;
     private readonly Font _navigationTitleFont;
     private readonly Font _navigationDescriptionFont;
@@ -46,6 +49,7 @@ internal sealed class HiveExampleHostForm : HiveForm
 
         _themeManager = ThemeManager;
         _outputView = new HiveExampleOutputView();
+        _outputView.CollapseStateChanged += OutputViewOnCollapseStateChanged;
         _services = new HiveExampleServices(
             _themeManager,
             _outputView);
@@ -137,7 +141,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             Margin = Padding.Empty
         };
 
-        var content = new TableLayoutPanel
+        _contentLayout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
@@ -148,7 +152,7 @@ internal sealed class HiveExampleHostForm : HiveForm
         content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         content.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        content.RowStyles.Add(new RowStyle(SizeType.Absolute, 190));
+        _contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 190));
 
         _viewTitle = new Label
         {
@@ -174,14 +178,14 @@ internal sealed class HiveExampleHostForm : HiveForm
             Padding = Padding.Empty
         };
 
-        content.Controls.Add(_viewTitle, 0, 0);
-        content.Controls.Add(_viewSubtitle, 0, 1);
-        content.Controls.Add(_viewHost, 0, 2);
-        content.Controls.Add(_outputView, 0, 3);
+        _contentLayout.Controls.Add(_viewTitle, 0, 0);
+        _contentLayout.Controls.Add(_viewSubtitle, 0, 1);
+        _contentLayout.Controls.Add(_viewHost, 0, 2);
+        _contentLayout.Controls.Add(_outputView, 0, 3);
 
         shell.Controls.Add(_navigationSurface, 0, 0);
         shell.Controls.Add(_navigationSeparator, 1, 0);
-        shell.Controls.Add(content, 2, 0);
+        shell.Controls.Add(_contentLayout, 2, 0);
 
         BodyPanel.Padding = Padding.Empty;
         BodyPanel.Controls.Add(shell);
@@ -327,6 +331,16 @@ internal sealed class HiveExampleHostForm : HiveForm
         }
 
         _themeManager.Apply(nextView);
+    }
+
+    private void OutputViewOnCollapseStateChanged(object? sender, EventArgs e)
+    {
+        _contentLayout.RowStyles[3].Height =
+            _outputView.IsCollapsed
+                ? OutputCollapsedHeight
+                : OutputExpandedHeight;
+
+        _contentLayout.PerformLayout();
     }
 
     private void DisposeActiveView()
