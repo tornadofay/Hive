@@ -153,13 +153,18 @@ public abstract class HiveForm : Form
 
         BackColor = theme.Palette.WindowBackground;
         ForeColor = theme.Palette.Text;
-        var nextFont = new Font(
-            theme.Typography.FontFamily,
-            theme.Typography.BodySize);
-        var previousFont = _formFont;
-        _formFont = nextFont;
-        Font = nextFont;
-        previousFont.Dispose();
+        if (!string.Equals(
+                _formFont.FontFamily.Name,
+                theme.Typography.FontFamily,
+                StringComparison.Ordinal) ||
+            Math.Abs(_formFont.Size - theme.Typography.BodySize) > 0.01f)
+        {
+            _formFont.Dispose();
+            _formFont = new Font(
+                theme.Typography.FontFamily,
+                theme.Typography.BodySize);
+            Font = _formFont;
+        }
 
         _bodyPanel.BackColor = theme.Palette.Surface;
         _bodyPanel.Padding = _bodyPadding;
