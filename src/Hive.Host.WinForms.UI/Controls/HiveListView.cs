@@ -10,6 +10,7 @@ public sealed class HiveListView : ListView
 
     private HiveThemeDefinition? _theme;
     private int _hoverIndex = -1;
+    private int _naturalLastColumnWidth = -1;
     private Font? _headerFont;
     private readonly ImageList _rowImageList;
 
@@ -41,6 +42,18 @@ public sealed class HiveListView : ListView
         };
         _rowImageList.Images.Add(new Bitmap(1, RowHeight));
         SmallImageList = _rowImageList;
+    }
+
+    protected override void OnResize(EventArgs e)
+    {
+        base.OnResize(e);
+        FillLastColumn();
+    }
+
+    internal void ResetColumnLayout()
+    {
+        _naturalLastColumnWidth = -1;
+        FillLastColumn();
     }
 
     internal void ApplyTheme(HiveThemeDefinition theme)
@@ -79,13 +92,16 @@ public sealed class HiveListView : ListView
         using var background = new SolidBrush(theme.Palette.ElevatedSurface);
         e.Graphics.FillRectangle(background, e.Bounds);
 
-        using var divider = new Pen(theme.Palette.Border);
-        e.Graphics.DrawLine(
-            divider,
-            e.Bounds.Right - 1,
-            e.Bounds.Top + 5,
-            e.Bounds.Right - 1,
-            e.Bounds.Bottom - 5);
+        if (e.ColumnIndex < Columns.Count - 1)
+        {
+            using var divider = new Pen(theme.Palette.Border);
+            e.Graphics.DrawLine(
+                divider,
+                e.Bounds.Right - 1,
+                e.Bounds.Top + 5,
+                e.Bounds.Right - 1,
+                e.Bounds.Bottom - 5);
+        }
 
         var flags = TextFormatFlags.VerticalCenter |
                     TextFormatFlags.EndEllipsis |
@@ -260,6 +276,31 @@ public sealed class HiveListView : ListView
 
         if (previous >= 0 && previous < Items.Count)
             Invalidate(GetItemRect(previous));
+    }
+
+    private void FillLastColumn()
+    {
+        if (Columns.Count == 0 || ClientSize.Width <= 0)
+            return;
+
+        var lastIndex = Columns.Count - 1;
+
+        if (_naturalLastColumnWidth < 0)
+            _naturalLastColumnWidth = Columns[lastIndex].Width;
+
+        var precedingWidth = 0;
+        for (var index = 0; index < lastIndex; index++)
+            precedingWidth += Columns[index].Width;
+
+        var availableWidth = ClientSize.Width - precedingWidth;
+        var targetWidth = Math.Max(
+            _naturalLastColumnWidth,
+            Math.Max(1, availableWidth));
+
+        if (Columns[lastIndex].Width == targetWidth)
+            return;
+
+        Columns[lastIndex].Width = targetWidth;
     }
 
     private void EnsureHeaderFont(HiveThemeDefinition theme)
