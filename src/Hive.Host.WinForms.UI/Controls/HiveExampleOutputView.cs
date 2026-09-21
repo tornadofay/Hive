@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Theme;
 
@@ -9,6 +10,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
 {
     private readonly TableLayoutPanel _root;
     private readonly Label _title;
+    private readonly HiveButton _copyButton;
     private readonly HiveButton _clearButton;
     private readonly HiveButton _toggleButton;
     private readonly TextBox _output;
@@ -46,7 +48,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         var header = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 3,
+            ColumnCount = 4,
             RowCount = 1,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
@@ -54,9 +56,11 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         header.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
         header.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Absolute, 96));
+            new ColumnStyle(SizeType.Absolute, 88));
         header.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Absolute, 96));
+            new ColumnStyle(SizeType.Absolute, 88));
+        header.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Absolute, 88));
 
         _title = new Label
         {
@@ -68,6 +72,18 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Text = "Example output",
             TextAlign = ContentAlignment.MiddleLeft
         };
+
+        _copyButton = new HiveButton
+        {
+            Text = "Copy",
+            Style = HiveButtonStyle.Secondary,
+            Dock = DockStyle.Fill,
+            MinimumSize = new Size(80, 32),
+            Size = new Size(80, 32),
+            Margin = new Padding(6, 0, 0, 0),
+            Enabled = false
+        };
+        _copyButton.Click += (_, _) => Copy();
 
         _toggleButton = new HiveButton
         {
@@ -105,8 +121,9 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         };
 
         header.Controls.Add(_title, 0, 0);
-        header.Controls.Add(_toggleButton, 1, 0);
+        header.Controls.Add(_copyButton, 1, 0);
         header.Controls.Add(_clearButton, 2, 0);
+        header.Controls.Add(_toggleButton, 3, 0);
         _root.Controls.Add(header, 0, 0);
         _root.Controls.Add(_output, 0, 1);
 
@@ -117,7 +134,11 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
     public string OutputText
     {
         get => _output.Text;
-        set => _output.Text = value ?? string.Empty;
+        set
+        {
+            _output.Text = value ?? string.Empty;
+            UpdateActionState();
+        }
     }
 
     public TextBox OutputTextBox => _output;
@@ -145,7 +166,11 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         CollapseStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    public void Clear() => _output.Clear();
+    public void Clear()
+    {
+        _output.Clear();
+        UpdateActionState();
+    }
 
     public void Write(
         string title,
@@ -163,6 +188,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
 
         _output.SelectionStart = _output.TextLength;
         _output.ScrollToCaret();
+        UpdateActionState();
     }
 
     public void Append(string value)
@@ -170,6 +196,28 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _output.AppendText(value ?? string.Empty);
         _output.SelectionStart = _output.TextLength;
         _output.ScrollToCaret();
+        UpdateActionState();
+    }
+
+    private void Copy()
+    {
+        if (string.IsNullOrEmpty(_output.Text))
+            return;
+
+        try
+        {
+            Clipboard.SetText(_output.Text);
+        }
+        catch (ExternalException exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"HiveExampleOutputView clipboard copy failed: {exception}");
+        }
+    }
+
+    private void UpdateActionState()
+    {
+        _copyButton.Enabled = _output.TextLength > 0;
     }
 
     internal void ApplyTheme(HiveThemeDefinition theme)
