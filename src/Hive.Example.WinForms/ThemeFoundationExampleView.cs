@@ -120,26 +120,36 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         _bodyPanel.Controls.Add(_navigation);
         Controls.Add(_bodyPanel);
 
-        AddNavigation("Theme", () => ShowPage(
-            _themePage,
+        AddNavigation(
             "Theme",
-            "Light, Dark, and System modes use Hive-owned semantic tokens and can be switched at runtime."));
-        AddNavigation("Controls", () => ShowPage(
-            _controlsPage,
+            () => ShowPage(
+                _themePage,
+                "Theme",
+                "Light, Dark, and System modes use Hive-owned semantic tokens and can be switched at runtime."));
+
+        AddNavigation(
             "Controls",
-            "Hive-prefixed controls exist only where Hive adds a consumer-facing contract or styling beyond ordinary WinForms."));
-        AddNavigation("Dialogs", () => ShowPage(
-            _dialogsPage,
+            () => ShowPage(
+                _controlsPage,
+                "Controls",
+                "Hive-prefixed controls exist only where Hive adds a consumer-facing contract or styling beyond ordinary WinForms."));
+
+        AddNavigation(
             "Dialogs",
-            "HiveMessageBox provides semantic Information, Success, Warning, Error, and Question dialogs with optional technical details."));
+            () => ShowPage(
+                _dialogsPage,
+                "Dialogs",
+                "HiveMessageBox provides semantic Information, Success, Warning, Error, and Question dialogs with optional technical details."));
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(_bodyPanel);
         ApplyExampleTheme(_themeManager.Theme);
+
         ShowPage(
             _themePage,
             "Theme",
             "Light, Dark, and System modes use Hive-owned semantic tokens and can be switched at runtime.");
+
         UpdateThemeState();
     }
 
@@ -186,7 +196,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         _navigation.Controls.Add(button);
     }
 
-    private FlowLayoutPanel CreatePage() =>
+    private static FlowLayoutPanel CreatePage() =>
         new()
         {
             Dock = DockStyle.Fill,
@@ -260,18 +270,22 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
             "Information",
             HiveMessageType.Information,
             "The information operation completed.");
+
         AddDialogButton(
             "Success",
             HiveMessageType.Success,
             "The operation completed successfully.");
+
         AddDialogButton(
             "Warning",
             HiveMessageType.Warning,
             "Review the current state before continuing.");
+
         AddDialogButton(
             "Error",
             HiveMessageType.Error,
             "The operation could not be completed.");
+
         AddDialogButton(
             "Question",
             HiveMessageType.Question,
@@ -286,6 +300,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
             Height = 40,
             Margin = new Padding(0, 12, 0, 0)
         };
+
         details.Click += (_, _) =>
             HiveMessageBox.Show(
                 this,
@@ -294,9 +309,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
                     "The operation could not be completed.",
                     HiveMessageType.Error,
                     MessageBoxButtons.OK,
-                    "Example technical details
-Code: UI-0001
-Path: Hive.Example.WinForms",
+                    "Example technical details\r\nCode: UI-0001\r\nPath: Hive.Example.WinForms",
                     DetailsExpanded: true),
                 _themeManager);
 
@@ -351,35 +364,40 @@ Path: Hive.Example.WinForms",
         _dialogsPage.Controls.Add(button);
     }
 
-    private void ShowPage(Control page, string title, string description)
+    private void ShowPage(
+        Control page,
+        string title,
+        string description)
     {
         _pageTitle.Text = title;
         _pageDescription.Text = description;
 
-        if (!ReferenceEquals(page.Parent, _pageBody))
+        _pageBody.SuspendLayout();
+        try
         {
-            _pageBody.SuspendLayout();
-            try
+            if (!ReferenceEquals(page.Parent, _pageBody))
             {
                 _pageBody.Controls.Clear();
                 page.Dock = DockStyle.Fill;
                 page.Visible = true;
                 _pageBody.Controls.Add(page);
             }
-            finally
-            {
-                _pageBody.ResumeLayout(true);
-            }
+        }
+        finally
+        {
+            _pageBody.ResumeLayout(true);
         }
 
         _themeManager.Apply(page);
     }
 
-    private void UpdateThemeState() =>
-        _themeState.Text = $"Selected: {_themeManager.Mode}
-Effective: {_themeManager.Theme.Mode}";
+    private void UpdateThemeState()
+    {
+        _themeState.Text =
+            $"Selected: {_themeManager.Mode}\r\nEffective: {_themeManager.Theme.Mode}";
+    }
 
-    private Label CreateBodyLabel(string? text = null) =>
+    private static Label CreateBodyLabel(string? text = null) =>
         new()
         {
             AutoSize = true,
