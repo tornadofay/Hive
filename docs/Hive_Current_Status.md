@@ -74,7 +74,7 @@ Developer verification: **36 tests passed, 0 failed, 0 skipped in 1.5 seconds.**
 Active slice. Implementation is present in Hive.Persistence; developer verification is pending.
 
 Implemented:
-- SQL Server/LocalDB database configuration;
+- SQL Server/LocalDB database configuration with automatic database creation enabled by default;
 - DbUp SQL Server 7.2.0 migration runner;
 - Microsoft.Data.SqlClient 7.1.0;
 - Hive-owned schema-version tracking and DbUp journal configuration;
