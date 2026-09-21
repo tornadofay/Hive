@@ -620,7 +620,10 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             (compact ||
              _actionLayout.ColumnStyles.Count < 2 ||
              Math.Abs(_actionLayout.ColumnStyles[1].Width - actionWidth) < 0.1f))
+        {
+            UpdateSearchBoxWidth();
             return;
+        }
 
         _compactToolbar = compact;
 
