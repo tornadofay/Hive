@@ -1,4 +1,6 @@
+using Hive.Core;
 using System.Text.Json;
+using Xunit;
 
 namespace Hive.Tests;
 
