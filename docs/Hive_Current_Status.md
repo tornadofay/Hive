@@ -4,7 +4,7 @@ Last updated: 2026-09-21
 
 ## Repository state
 
-The initial Phase 0.1 .NET 10 solution/project scaffold is implemented, merged into main, and locally verified by the developer. The current implementation slice is Phase 0.2 common infrastructure.
+The initial Phase 0.1 .NET 10 solution/project scaffold is implemented, merged into main, and locally verified by the developer. The current implementation slice is Phase 0.2 common infrastructure, with its first implementation set committed to main and local verification pending.
 
 ## Current phase
 
@@ -50,6 +50,12 @@ Phase 0 — Foundations.
 - Developer manual testing is the current UI/application verification approach; no UI-automation framework is required by the architecture.
 - Authentication-provider selection is deferred until real multi-user requirements reach Phase 8.
 - Tests and examples are developed with each implementation slice; no unperformed verification is claimed.
+
+## Current implementation progress
+
+### Phase 0.2 — Common infrastructure
+
+The first 0.2 implementation set is committed to `Hive.Core`: common technical IDs, typed errors/results, `IClock`, durable event envelope contracts, System.Text.Json serialization, and sequential event-payload upcasting infrastructure. No local 0.2 build/test verification is claimed yet.
 
 ## Completed
 
