@@ -10,5 +10,7 @@ internal interface IHiveExample
 
     string Title { get; }
 
+    int Order => 0;
+
     UserControl CreateView(IServiceProvider services);
 }
