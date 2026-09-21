@@ -72,9 +72,10 @@ public sealed class HiveDatabaseMigrator
             if (!upgradeResult.Successful)
             {
                 return Result<HiveDatabaseMigrationOutcome>.Failure(
-                    Error.External(
+                    new Error(
                         "hive.persistence.migration-failed",
-                        $"Hive database migration failed: {upgradeResult.Error?.Message ?? "Unknown migration failure."}"));
+                        ErrorCategory.External,
+                        "Hive database migration failed."));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -111,9 +112,10 @@ public sealed class HiveDatabaseMigrator
         catch (Exception ex)
         {
             return Result<HiveDatabaseMigrationOutcome>.Failure(
-                Error.External(
+                new Error(
                     "hive.persistence.migration-unexpected",
-                    $"Hive database migration failed unexpectedly: {ex.Message}"));
+                    ErrorCategory.External,
+                    "Hive database migration failed unexpectedly."));
         }
     }
 }
