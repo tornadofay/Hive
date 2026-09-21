@@ -29,11 +29,13 @@ public sealed class HiveCrudOperationFailedEventArgs : EventArgs
 
 public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 {
-    private const int HeaderHeight = 64;
-    private const int ActionBarHeight = 48;
-    private const int StatusHeight = 28;
-    private const int ActionButtonWidth = 88;
+    private const int HeaderHeight = 58;
+    private const int ActionBarHeight = 44;
+    private const int FooterHeight = 40;
+    private const int ActionButtonWidth = 86;
     private const int ActionBarActionsWidth = 400;
+    private const int PaginationWidth = 250;
+    private const int DefaultPageSize = 25;
 
     private readonly HiveListPageLayout _pageLayout;
     private readonly Label _titleLabel;
@@ -48,6 +50,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private readonly HiveButton _refreshButton;
     private readonly ListView _list;
     private readonly Label _emptyStateLabel;
+    private readonly HivePaginationBar _pagination;
     private readonly Font _titleFont;
     private readonly Font _descriptionFont;
     private readonly Font _searchLabelFont;
@@ -60,6 +63,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private Func<TItem, string>? _getItemDisplayName;
     private CancellationTokenSource? _operationCancellation;
     private string _searchText = string.Empty;
+    private int _pageSize = DefaultPageSize;
     private bool _busy;
 
     public HiveCrudPage()
@@ -120,7 +124,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             WrapContents = false,
             AutoSize = false,
             Margin = Padding.Empty,
-            Padding = new Padding(0, 6, 12, 6)
+            Padding = new Padding(0, 4, 12, 4)
         };
 
         _searchLabel = new Label
@@ -130,18 +134,18 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Text = "Search",
             TextAlign = ContentAlignment.MiddleLeft,
             Width = 48,
-            Height = 36,
-            Margin = new Padding(0, 0, 8, 0),
+            Height = 32,
+            Margin = new Padding(0, 0, 6, 0),
             Padding = Padding.Empty
         };
 
         _searchBox = new TextBox
         {
-            Width = 180,
-            Height = 36,
+            Width = 210,
+            Height = 32,
             BorderStyle = BorderStyle.FixedSingle,
             Margin = Padding.Empty,
-            Padding = new Padding(8, 7, 8, 7),
+            Padding = new Padding(8, 6, 8, 6),
             PlaceholderText = "Search by any visible value..."
         };
         _searchBox.TextChanged += SearchBoxOnTextChanged;
@@ -157,7 +161,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             WrapContents = false,
             AutoSize = false,
             Margin = Padding.Empty,
-            Padding = new Padding(8, 6, 0, 6)
+            Padding = new Padding(4, 4, 0, 4)
         };
 
         _addButton = CreateActionButton("Add", HiveButtonStyle.Primary);
@@ -188,7 +192,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Padding = Padding.Empty
         };
         contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, StatusHeight));
+        contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, FooterHeight));
 
         var listHost = new Panel
         {
@@ -231,6 +235,17 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         listHost.Controls.Add(_list);
         listHost.Controls.Add(_emptyStateLabel);
 
+        var footerLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        footerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        footerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, PaginationWidth));
+
         _statusLabel = new Label
         {
             Dock = DockStyle.Fill,
@@ -240,16 +255,28 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Padding = new Padding(2, 0, 0, 0)
         };
 
+        _pagination = new HivePaginationBar
+        {
+            Dock = DockStyle.Fill,
+            Height = FooterHeight
+        };
+        _pagination.PreviousRequested += (_, _) => ChangePage(-1);
+        _pagination.NextRequested += (_, _) => ChangePage(1);
+
+        footerLayout.Controls.Add(_statusLabel, 0, 0);
+        footerLayout.Controls.Add(_pagination, 1, 0);
+
         contentLayout.Controls.Add(listHost, 0, 0);
-        contentLayout.Controls.Add(_statusLabel, 0, 1);
+        contentLayout.Controls.Add(footerLayout, 0, 1);
 
         _pageLayout.SetContent(contentLayout);
         Controls.Add(_pageLayout);
 
         _getItemDisplayName = item => item?.ToString() ?? "item";
+        _pagination.PageNumber = 1;
         UpdateActionState();
         UpdateEmptyState(0);
-        UpdateStatusSummary(0);
+        UpdateStatusSummary();
     }
 
     public event EventHandler<HiveCrudOperationFailedEventArgs>? OperationFailed;
@@ -342,6 +369,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                 return;
 
             _searchText = normalized;
+            _pagination.PageNumber = 1;
             if (!string.Equals(_searchBox.Text, normalized, StringComparison.Ordinal))
                 _searchBox.Text = normalized;
             else
@@ -355,6 +383,43 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         get => _searchBox.PlaceholderText;
         set => _searchBox.PlaceholderText = value ?? string.Empty;
     }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public int PageSize
+    {
+        get => _pageSize;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
+            if (_pageSize == value)
+                return;
+
+            _pageSize = value;
+            _pagination.PageNumber = 1;
+            RebuildItems();
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public int PageNumber
+    {
+        get => _pagination.PageNumber;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
+            _pagination.PageNumber = value;
+            RebuildItems();
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool ShowPagination
+    {
+        get => _pagination.Visible;
+        set => _pagination.Visible = value;
+    }
+
+    public HivePaginationBar PaginationBar => _pagination;
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string Title
@@ -469,6 +534,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             return;
 
         _searchText = value;
+        _pagination.PageNumber = 1;
         RebuildItems();
     }
 
@@ -662,35 +728,48 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _list.SelectedItems.Clear();
             _list.Items.Clear();
 
+            var matchingCount = CountMatchingItems();
+            var totalPages = matchingCount == 0
+                ? 1
+                : (matchingCount + _pageSize - 1) / _pageSize;
+
+            if (_pagination.PageNumber > totalPages)
+                _pagination.PageNumber = totalPages;
+
+            var firstMatchIndex = (_pagination.PageNumber - 1) * _pageSize;
+            var matchedIndex = 0;
             var visibleCount = 0;
 
             foreach (var item in _items)
             {
                 var values = new string[_columns.Count];
-                var matches = string.IsNullOrWhiteSpace(_searchText);
-
-                for (var index = 0; index < _columns.Count; index++)
-                {
-                    var value = _columns[index].ValueSelector(item) ?? string.Empty;
-                    values[index] = value;
-
-                    if (!matches &&
-                        value.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
-                        matches = true;
-                }
-
-                if (!matches)
+                if (!TryBuildVisibleRow(item, values))
                     continue;
 
-                _list.Items.Add(new ListViewItem(values)
+                if (matchedIndex >= firstMatchIndex &&
+                    visibleCount < _pageSize)
                 {
-                    Tag = item
-                });
-                visibleCount++;
+                    _list.Items.Add(new ListViewItem(values)
+                    {
+                        Tag = item
+                    });
+                    visibleCount++;
+                }
+
+                matchedIndex++;
+                if (visibleCount >= _pageSize &&
+                    matchedIndex >= firstMatchIndex + _pageSize)
+                    break;
             }
 
-            _statusLabel.Text = BuildStatusText(_items.Count, visibleCount);
-            UpdateEmptyState(visibleCount);
+            _pagination.CanGoPrevious = _pagination.PageNumber > 1;
+            _pagination.CanGoNext = _pagination.PageNumber < totalPages;
+            _pagination.PageText = matchingCount == 0
+                ? "No pages"
+                : $"Page {_pagination.PageNumber} of {totalPages}";
+
+            _statusLabel.Text = BuildStatusText(matchingCount, visibleCount);
+            UpdateEmptyState(matchingCount);
         }
         finally
         {
@@ -700,9 +779,53 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         UpdateActionState();
     }
 
-    private void UpdateEmptyState(int visibleCount)
+    private int CountMatchingItems()
     {
-        var show = visibleCount == 0;
+        var count = 0;
+        foreach (var item in _items)
+        {
+            if (MatchesSearch(item))
+                count++;
+        }
+
+        return count;
+    }
+
+    private bool TryBuildVisibleRow(TItem item, string[] values)
+    {
+        var matches = string.IsNullOrWhiteSpace(_searchText);
+
+        for (var index = 0; index < _columns.Count; index++)
+        {
+            var value = _columns[index].ValueSelector(item) ?? string.Empty;
+            values[index] = value;
+
+            if (!matches &&
+                value.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+                matches = true;
+        }
+
+        return matches;
+    }
+
+    private bool MatchesSearch(TItem item)
+    {
+        if (string.IsNullOrWhiteSpace(_searchText))
+            return true;
+
+        for (var index = 0; index < _columns.Count; index++)
+        {
+            var value = _columns[index].ValueSelector(item);
+            if (value?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) == true)
+                return true;
+        }
+
+        return false;
+    }
+
+    private void UpdateEmptyState(int matchingCount)
+    {
+        var show = matchingCount == 0;
         _emptyStateLabel.Visible = show;
         _emptyStateLabel.Text =
             _items.Count == 0
@@ -712,9 +835,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
     private void UpdateStatusSummary(int? visibleCount = null)
     {
-        var count = visibleCount ?? _list.Items.Count;
-        _statusLabel.Text = BuildStatusText(_items.Count, count);
-        UpdateEmptyState(count);
+        RebuildItems();
     }
 
     private static string BuildStatusText(int totalCount, int visibleCount)
@@ -724,7 +845,20 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
         return totalCount == visibleCount
             ? $"{totalCount:N0} items"
-            : $"{visibleCount:N0} of {totalCount:N0} items";
+            : $"{totalCount:N0} items";
+    }
+
+    private void ChangePage(int delta)
+    {
+        if (_busy)
+            return;
+
+        var nextPage = _pagination.PageNumber + delta;
+        if (nextPage < 1)
+            return;
+
+        _pagination.PageNumber = nextPage;
+        RebuildItems();
     }
 
     private static HiveButton CreateActionButton(
