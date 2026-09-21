@@ -39,7 +39,6 @@ internal sealed class ControlsCrudExampleView : UserControl
         var root = new TableLayoutPanel
         {
             Dock = DockStyle.Top,
-            Width = 900,
             ColumnCount = 1,
             RowCount = 3,
             Margin = Padding.Empty,
