@@ -19,10 +19,18 @@ public enum HiveButtonStyle
 public sealed class HiveButton : UserControl
 {
     private readonly MaterialButton _renderer;
+    private readonly HiveBorderPanel _frame;
     private HiveButtonStyle _style = HiveButtonStyle.Primary;
 
     public HiveButton()
     {
+        _frame = new HiveBorderPanel
+        {
+            Dock = DockStyle.Fill,
+            Padding = new Padding(2),
+            CornerRadius = 8
+        };
+
         _renderer = new MaterialButton
         {
             AutoSize = false,
@@ -34,7 +42,8 @@ public sealed class HiveButton : UserControl
         };
 
         _renderer.Click += (_, e) => OnClick(e);
-        Controls.Add(_renderer);
+        _frame.Controls.Add(_renderer);
+        Controls.Add(_frame);
 
         MinimumSize = new Size(88, 36);
         Size = new Size(120, 38);
@@ -83,6 +92,7 @@ public sealed class HiveButton : UserControl
         var useAccentColor = false;
         var highEmphasis = false;
         var depth = 0;
+        var border = theme.Palette.Border;
 
         switch (_style)
         {
@@ -92,25 +102,30 @@ public sealed class HiveButton : UserControl
                 useAccentColor = true;
                 highEmphasis = true;
                 depth = 1;
+                border = theme.Palette.AccentHover;
                 break;
 
             case HiveButtonStyle.Secondary:
+                border = theme.Palette.Border;
                 break;
 
             case HiveButtonStyle.Navigation:
                 background = theme.VisualStates.NavigationBackground;
                 foreground = theme.VisualStates.NavigationText;
+                border = theme.VisualStates.NavigationBorder;
                 break;
 
             case HiveButtonStyle.NavigationSelected:
                 background = theme.VisualStates.NavigationSelected;
                 foreground = theme.VisualStates.NavigationSelectedText;
+                border = theme.Palette.Accent;
                 break;
 
             case HiveButtonStyle.Danger:
                 background = theme.VisualStates.Error;
                 foreground = theme.Palette.AccentForeground;
                 highEmphasis = true;
+                border = theme.VisualStates.Error;
                 break;
 
             default:
@@ -124,8 +139,11 @@ public sealed class HiveButton : UserControl
             useAccentColor = false;
             highEmphasis = false;
             depth = 0;
+            border = theme.VisualStates.DisabledBorder;
         }
 
+        _frame.BorderColor = border;
+        _frame.BackColor = border;
         _renderer.BackColor = background;
         _renderer.ForeColor = foreground;
         _renderer.UseAccentColor = useAccentColor;
