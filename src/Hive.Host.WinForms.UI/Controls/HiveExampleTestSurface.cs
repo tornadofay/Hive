@@ -26,6 +26,7 @@ public sealed class HiveExampleTestSurface : UserControl
     private HiveThemeDefinition? _theme;
     private CancellationTokenSource? _runCancellation;
     private bool _busy;
+    private bool _compactWorkspace;
     private string _description = string.Empty;
     private string _expectedResult = string.Empty;
     private string _noteTitle = string.Empty;
@@ -124,7 +125,7 @@ public sealed class HiveExampleTestSurface : UserControl
         _actions.Controls.Add(_copyButton);
         _actions.Controls.Add(_status);
 
-        var workspace = new TableLayoutPanel
+        _workspace = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
@@ -132,13 +133,13 @@ public sealed class HiveExampleTestSurface : UserControl
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        workspace.ColumnStyles.Add(
+        _workspace.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 50f));
-        workspace.ColumnStyles.Add(
+        _workspace.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 50f));
-        workspace.RowStyles.Add(
+        _workspace.RowStyles.Add(
             new RowStyle(SizeType.Absolute, 28));
-        workspace.RowStyles.Add(
+        _workspace.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
 
         _inputTitle = CreateSectionLabel("Test input");
@@ -169,10 +170,10 @@ public sealed class HiveExampleTestSurface : UserControl
             Padding = new Padding(8)
         };
 
-        workspace.Controls.Add(_inputTitle, 0, 0);
-        workspace.Controls.Add(_codeTitle, 1, 0);
-        workspace.Controls.Add(_input, 0, 1);
-        workspace.Controls.Add(_code, 1, 1);
+        _workspace.Controls.Add(_inputTitle, 0, 0);
+        _workspace.Controls.Add(_codeTitle, 1, 0);
+        _workspace.Controls.Add(_input, 0, 1);
+        _workspace.Controls.Add(_code, 1, 1);
 
         _details = new Label
         {
@@ -203,6 +204,14 @@ public sealed class HiveExampleTestSurface : UserControl
         root.Controls.Add(_details, 0, 2);
         root.Controls.Add(_note, 0, 3);
         Controls.Add(root);
+
+        UpdateWorkspaceLayout();
+    }
+
+    protected override void OnResize(EventArgs e)
+    {
+        base.OnResize(e);
+        UpdateWorkspaceLayout();
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -440,6 +449,78 @@ public sealed class HiveExampleTestSurface : UserControl
         _input.ForeColor = theme.Palette.Text;
         _code.BackColor = theme.Palette.InputBackground;
         _code.ForeColor = theme.Palette.Text;
+    }
+
+    private void UpdateWorkspaceLayout()
+    {
+        var compact = ClientSize.Width > 0 && ClientSize.Width < 820;
+        if (_compactWorkspace == compact &&
+            _workspace.ColumnCount == (compact ? 1 : 2))
+            return;
+
+        _compactWorkspace = compact;
+
+        _workspace.SuspendLayout();
+        try
+        {
+            _workspace.Controls.Clear();
+            _workspace.ColumnStyles.Clear();
+            _workspace.RowStyles.Clear();
+
+            if (compact)
+            {
+                _workspace.ColumnCount = 1;
+                _workspace.RowCount = 4;
+                _workspace.ColumnStyles.Add(
+                    new ColumnStyle(SizeType.Percent, 100f));
+                for (var row = 0; row < 4; row++)
+                {
+                    _workspace.RowStyles.Add(
+                        new RowStyle(
+                            row is 0 or 2
+                                ? SizeType.Absolute
+                                : SizeType.Percent,
+                            row is 0 or 2 ? 28f : 50f));
+                }
+
+                _inputTitle.Margin = new Padding(0, 0, 0, 2);
+                _codeTitle.Margin = new Padding(0, 8, 0, 2);
+                _input.Margin = Padding.Empty;
+                _code.Margin = Padding.Empty;
+
+                _workspace.Controls.Add(_inputTitle, 0, 0);
+                _workspace.Controls.Add(_input, 0, 1);
+                _workspace.Controls.Add(_codeTitle, 0, 2);
+                _workspace.Controls.Add(_code, 0, 3);
+            }
+            else
+            {
+                _workspace.ColumnCount = 2;
+                _workspace.RowCount = 2;
+                _workspace.ColumnStyles.Add(
+                    new ColumnStyle(SizeType.Percent, 50f));
+                _workspace.ColumnStyles.Add(
+                    new ColumnStyle(SizeType.Percent, 50f));
+                _workspace.RowStyles.Add(
+                    new RowStyle(SizeType.Absolute, 28));
+                _workspace.RowStyles.Add(
+                    new RowStyle(SizeType.Percent, 100f));
+
+                _inputTitle.Margin = Padding.Empty;
+                _codeTitle.Margin = Padding.Empty;
+                _input.Margin = new Padding(0, 0, 6, 0);
+                _code.Margin = new Padding(6, 0, 0, 0);
+
+                _workspace.Controls.Add(_inputTitle, 0, 0);
+                _workspace.Controls.Add(_codeTitle, 1, 0);
+                _workspace.Controls.Add(_input, 0, 1);
+                _workspace.Controls.Add(_code, 1, 1);
+            }
+        }
+        finally
+        {
+            _workspace.ResumeLayout(true);
+        }
     }
 
     private void SetBusy(
