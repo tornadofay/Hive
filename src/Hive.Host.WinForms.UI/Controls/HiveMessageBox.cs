@@ -479,7 +479,7 @@ public static class HiveMessageBox
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
+            if (disposing && _subscribedToTheme)
                 _themeManager.ThemeChanged -= ThemeManagerOnChanged;
 
             base.Dispose(disposing);
