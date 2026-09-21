@@ -222,8 +222,6 @@ public static class HiveMessageBox
 
         private HiveThemeDefinition _theme;
         private GraphicsPath? _windowPath;
-        private GraphicsPath? _borderPath;
-        private Pen? _borderPen;
         private bool _updatingSize;
 
         public HiveMessageDialog(
@@ -490,25 +488,11 @@ public static class HiveMessageBox
             if (disposing)
             {
                 _windowPath?.Dispose();
-                _borderPath?.Dispose();
-                _borderPen?.Dispose();
                 _titleFont.Dispose();
                 _messageFont.Dispose();
                 _detailsFont.Dispose();
                 _buttonFont.Dispose();
             }
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            base.OnPaint(e);
-
-            if (_borderPath is null || _borderPen is null)
-                return;
-
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-            e.Graphics.DrawPath(_borderPen, _borderPath);
         }
 
         protected override void OnSizeChanged(EventArgs e)
@@ -548,11 +532,6 @@ public static class HiveMessageBox
             _details.BackColor = _theme.Palette.InputBackground;
             _details.ForeColor = _theme.Palette.MutedText;
             _details.Font = _detailsFont;
-
-            _borderPen?.Dispose();
-            _borderPen = new Pen(
-                _theme.Palette.Border,
-                1.2f);
 
             _icon.ApplyTheme(
                 _theme,
@@ -815,23 +794,15 @@ public static class HiveMessageBox
             }
 
             var newPath = CreateRoundedRectanglePath(
-                new RectangleF(0, 0, Width, Height),
-                12f);
-
-            var borderInset = 0.6f;
-            var newBorderPath = CreateRoundedRectanglePath(
                 new RectangleF(
-                    borderInset,
-                    borderInset,
-                    Width - borderInset * 2f,
-                    Height - borderInset * 2f),
-                11.4f);
+                    0.5f,
+                    0.5f,
+                    Width - 1f,
+                    Height - 1f),
+                12f);
 
             _windowPath?.Dispose();
             _windowPath = newPath;
-
-            _borderPath?.Dispose();
-            _borderPath = newBorderPath;
 
             var oldRegion = Region;
             Region = new Region(newPath);
