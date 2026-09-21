@@ -81,7 +81,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         _pageBody = new Panel
         {
             Dock = DockStyle.Fill,
-            AutoScroll = true,
+            AutoScroll = false,
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
@@ -249,7 +249,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
     {
         var listPage = new HiveListPageLayout
         {
-            Width = Scale(760),
+            Width = Scale(620),
             Height = Scale(280),
             Margin = Scale(new Padding(0, 18, 0, 12))
         };
