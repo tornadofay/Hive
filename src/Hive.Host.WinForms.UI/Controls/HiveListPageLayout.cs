@@ -45,6 +45,17 @@ public sealed class HiveListPageLayout : UserControl
         UpdateRowHeights();
     }
 
+    internal void ApplyTheme(HiveThemeDefinition theme)
+    {
+        ArgumentNullException.ThrowIfNull(theme);
+
+        BackColor = theme.Palette.Surface;
+        _layout.BackColor = theme.Palette.Surface;
+        _headerPanel.BackColor = theme.Palette.ElevatedSurface;
+        _actionBarPanel.BackColor = theme.Palette.Surface;
+        _contentPanel.BackColor = theme.Palette.WindowBackground;
+    }
+
     public Panel HeaderPanel => _headerPanel;
 
     public Panel ActionBarPanel => _actionBarPanel;
