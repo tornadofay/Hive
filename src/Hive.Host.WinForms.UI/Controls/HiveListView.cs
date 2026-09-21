@@ -132,6 +132,12 @@ public sealed class HiveListView : ListView
         }
 
         var item = e.Item;
+        if (item is null)
+        {
+            e.DrawDefault = true;
+            return;
+        }
+
         var selected = item.Selected;
         var hovered = item.Index == _hoverIndex && !selected;
 
@@ -191,7 +197,7 @@ public sealed class HiveListView : ListView
             }
         }
 
-        var color = !Enabled || !item.Enabled
+        var color = !Enabled
             ? theme.Palette.DisabledText
             : theme.Palette.Text;
 
