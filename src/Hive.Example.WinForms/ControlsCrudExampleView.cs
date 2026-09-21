@@ -64,7 +64,7 @@ internal sealed class ControlsCrudExampleView : UserControl
         {
             Dock = DockStyle.Top,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
+            WrapContents = true,
             AutoSize = true,
             Margin = new Padding(0, 16, 0, 0),
             Padding = Padding.Empty
