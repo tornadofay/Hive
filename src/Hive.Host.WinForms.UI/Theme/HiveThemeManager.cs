@@ -158,18 +158,18 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 palette.DisabledText)
             {
                 NavigationBackground = effectiveMode == HiveThemeMode.Dark
-                    ? ColorTranslator.FromHtml("#17112F")
-                    : ColorTranslator.FromHtml("#1F1845"),
+                    ? ColorTranslator.FromHtml("#101B28")
+                    : ColorTranslator.FromHtml("#17344E"),
                 NavigationHover = effectiveMode == HiveThemeMode.Dark
-                    ? ColorTranslator.FromHtml("#2B2052")
-                    : ColorTranslator.FromHtml("#4C3684"),
+                    ? ColorTranslator.FromHtml("#244A69")
+                    : ColorTranslator.FromHtml("#2E5D82"),
                 NavigationPressed = effectiveMode == HiveThemeMode.Dark
-                    ? ColorTranslator.FromHtml("#21183E")
-                    : ColorTranslator.FromHtml("#3D2B6E"),
+                    ? ColorTranslator.FromHtml("#1B3C57")
+                    : ColorTranslator.FromHtml("#254E70"),
                 NavigationText = ColorTranslator.FromHtml("#F3F0FF"),
                 NavigationBorder = effectiveMode == HiveThemeMode.Dark
-                    ? ColorTranslator.FromHtml("#3C315F")
-                    : ColorTranslator.FromHtml("#5E4A92"),
+                    ? ColorTranslator.FromHtml("#2A465E")
+                    : ColorTranslator.FromHtml("#45667F"),
                 Information = effectiveMode == HiveThemeMode.Dark
                     ? ColorTranslator.FromHtml("#78A9FF")
                     : ColorTranslator.FromHtml("#2563EB"),
@@ -183,7 +183,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
                     ? ColorTranslator.FromHtml("#EC6A6A")
                     : ColorTranslator.FromHtml("#CF3E3E"),
                 Question = effectiveMode == HiveThemeMode.Dark
-                    ? ColorTranslator.FromHtml("#8E93F0")
+                    ? ColorTranslator.FromHtml("#7D9DBA")
                     : ColorTranslator.FromHtml("#5E63D3")
             });
     }
