@@ -3,6 +3,7 @@ using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Theme;
+using System.ComponentModel;
 
 namespace Hive.Host.WinForms.UI.Controls;
 
@@ -52,6 +53,8 @@ internal sealed class HiveWindowHeader : Control
         Cursor = Cursors.Default;
     }
 
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public string Title
     {
         get => _title;
@@ -67,6 +70,7 @@ internal sealed class HiveWindowHeader : Control
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public string Subtitle
     {
         get => _subtitle;
@@ -81,12 +85,15 @@ internal sealed class HiveWindowHeader : Control
         }
     }
 
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public bool AllowMove
     {
         get => _allowMove;
         set => _allowMove = value;
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public bool AllowClose
     {
         get => _allowClose;
@@ -100,6 +107,7 @@ internal sealed class HiveWindowHeader : Control
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public bool AllowMinimize
     {
         get => _allowMinimize;
@@ -113,6 +121,8 @@ internal sealed class HiveWindowHeader : Control
         }
     }
 
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public bool AllowHelp
     {
         get => _allowHelp;
