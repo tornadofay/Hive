@@ -11,8 +11,6 @@ public sealed class HivePersistenceIntegrationTests
     [Fact]
     public async Task CleanAndRepeatMigration_IsIdempotentAndRecordsCurrentSchema()
     {
-        RequirePersistenceIntegration();
-
         var databaseName = CreateDatabaseName();
         var options = CreateOptions(databaseName);
 
@@ -127,66 +125,12 @@ public sealed class HivePersistenceIntegrationTests
         }
     }
 
-    private static void RequirePersistenceIntegration()
-    {
-        Assert.SkipUnless(
-            string.Equals(
-                Environment.GetEnvironmentVariable("HIVE_RUN_PERSISTENCE_INTEGRATION"),
-                "1",
-                StringComparison.Ordinal),
-            "Set HIVE_RUN_PERSISTENCE_INTEGRATION=1 to run the SQL Server/LocalDB persistence integration tests.");
-    }
-
     private static string CreateDatabaseName() =>
         $"Hive_Test_{Guid.NewGuid():N}";
 
     private static HiveDatabaseOptions CreateOptions(string databaseName)
     {
-        var server =
-            Environment.GetEnvironmentVariable("HIVE_TEST_SQL_SERVER")
-            ?? @"(localdb)\MSSQLLocalDB";
-
-        var integratedSecurity =
-            !string.Equals(
-                Environment.GetEnvironmentVariable("HIVE_TEST_SQL_INTEGRATED_SECURITY"),
-                "false",
-                StringComparison.OrdinalIgnoreCase);
-
-        if (integratedSecurity)
-        {
-            var builder = new SqlConnectionStringBuilder
-            {
-                DataSource = server,
-                InitialCatalog = databaseName,
-                IntegratedSecurity = true,
-                TrustServerCertificate = true,
-                ApplicationName = "Hive.Tests"
-            };
-
-            return new HiveDatabaseOptions(
-                builder.ConnectionString,
-                createDatabaseIfMissing: true);
-        }
-
-        var username = Environment.GetEnvironmentVariable("HIVE_TEST_SQL_USER");
-        var password = Environment.GetEnvironmentVariable("HIVE_TEST_SQL_PASSWORD");
-
-        Assert.False(string.IsNullOrWhiteSpace(username));
-        Assert.False(string.IsNullOrWhiteSpace(password));
-
-        var sqlBuilder = new SqlConnectionStringBuilder
-        {
-            DataSource = server,
-            InitialCatalog = databaseName,
-            UserID = username,
-            Password = password,
-            TrustServerCertificate = true,
-            ApplicationName = "Hive.Tests"
-        };
-
-        return new HiveDatabaseOptions(
-            sqlBuilder.ConnectionString,
-            createDatabaseIfMissing: true);
+        return HiveDatabaseOptions.LocalDevelopment(databaseName);
     }
 
     private static async Task<int> ReadSchemaVersionAsync(HiveDatabaseOptions options)
