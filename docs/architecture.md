@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-21 (rev 20 — reusable WinForms data-page composition)
+Last updated: 2026-09-21 (rev 21 — reusable WinForms data-page and CRUD composition)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -225,15 +225,17 @@ The theme manager is stateful but UI-only. Changing the mode raises one theme-ch
 
 #### Reusable data-oriented UI composition
 
-Hive will reuse the presentation mechanics of data-oriented pages without generalizing domain CRUD semantics. The reusable foundation may provide:
+Hive reuses presentation and CRUD orchestration mechanics for data-oriented pages without assigning domain meaning to them. The reusable foundation may provide:
 - a three-region list-page layout (header, action/filter region, content);
 - a styled native `ListView`-based tabular/list surface where its native behavior is sufficient;
 - an optional paging/navigation bar that owns page state and navigation events, not data retrieval;
+- a generic `HiveCrudPage<TItem>` that owns Add/Edit/Delete/Refresh UI orchestration, selection, list population, and operation busy-state while receiving load/edit/delete callbacks from the consuming feature;
+- reusable editor-layout composition for the repeated label/description + field + action-footer pattern;
 - optional master/detail composition where a bounded list and selected-item details are useful.
 
-These controls do not own Provider, Agent, Resource, or other domain schemas. Columns, filters, editors, validation, create/update/delete operations, permissions, and persistence remain owned by the feature page and its management/application boundary. This allows Provider and Agent pages to share the list shell while keeping their different columns and create/edit forms.
+`HiveCrudPage<TItem>` is a UI/application-boundary primitive, not an ORM or persistence abstraction. The consumer supplies columns/projections, filters, validation, authorization, persistence, and the domain-specific editor through callbacks or composition. The control does not know Provider, Agent, Resource, or any other domain schema, and it never creates or mutates domain state on its own. This lets Provider, Agent, Tool, Policy, and future configuration pages share the same CRUD interaction contract while retaining different columns and specialized edit forms.
 
-`DataGridView` remains available when its richer native tabular behavior is specifically required. Hive does not introduce a generic ORM-like CRUD control.
+`DataGridView` remains available when its richer native tabular behavior is specifically required. Hive does not introduce a generic ORM, repository, or domain CRUD model.
 WinForms DPI behavior is delegated to the .NET 10 / WinForms platform rather than duplicated in Hive. Hive does not maintain a custom DPI helper or manual control-tree scaling layer. Normal forms and controls use WinForms' built-in scaling behavior; custom-painted Hive controls keep their own design geometry unless a concrete, measured DPI defect requires a focused exception.
 
 
