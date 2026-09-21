@@ -20,7 +20,13 @@ public sealed record HivePalette(
 public sealed record HiveTypography(
     string FontFamily,
     float BodySize,
-    float HeadingSize);
+    float HeadingSize)
+{
+    public float SmallSize { get; init; } = 8.5f;
+    public float SectionSize { get; init; } = 9.25f;
+    public float TitleSize { get; init; } = 16f;
+    public float MonospaceSize { get; init; } = 9f;
+}
 
 public sealed record HiveSpacing(
     int Xs,
