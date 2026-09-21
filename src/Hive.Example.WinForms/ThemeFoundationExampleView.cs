@@ -181,14 +181,16 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
     protected override void Dispose(bool disposing)
     {
         if (disposing)
-        {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
+
+        base.Dispose(disposing);
+
+        if (disposing)
+        {
             _navigationTitleFont.Dispose();
             _navigationDescriptionFont.Dispose();
             _pageTitleFont.Dispose();
         }
-
-        base.Dispose(disposing);
     }
 
     private void ThemeManagerOnChanged(object? sender, EventArgs e)
