@@ -307,6 +307,10 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 theme.Palette.DisabledBackground;
             grid.AlternatingRowsDefaultCellStyle.ForeColor =
                 theme.Palette.DisabledText;
+            grid.AlternatingRowsDefaultCellStyle.SelectionBackColor =
+                theme.Palette.DisabledBackground;
+            grid.AlternatingRowsDefaultCellStyle.SelectionForeColor =
+                theme.Palette.DisabledText;
 
             grid.ColumnHeadersDefaultCellStyle.BackColor =
                 theme.Palette.DisabledBackground;
