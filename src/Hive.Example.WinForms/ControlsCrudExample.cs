@@ -9,6 +9,8 @@ internal sealed class ControlsCrudExample : IHiveExample
 
     public string Subcategory => "Foundation";
 
+    public int Order => 20;
+
     public string Title => "Controls & CRUD";
 
     public UserControl CreateView(IServiceProvider services)
