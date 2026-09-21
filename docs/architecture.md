@@ -223,12 +223,16 @@ Theme resolution is deterministic. `System` resolves from the Windows applicatio
 
 The theme manager is stateful but UI-only. Changing the mode raises one theme-change notification. Consumers reapply the effective theme to their attached control trees in response to that notification. The manager does not own application settings, persistence, Agent/Hive state, or host business data.
 
-#### Hive-owned controls
+#### Hive-owned controls and window shell
 
-The foundation introduces only controls with a consumer-facing Hive contract:
+The foundation introduces only consumer-facing Hive contracts:
 
+- `HiveForm` provides the shared rounded, borderless application-window shell, custom header, window movement, and theme-aware body surface.
 - `HiveButton` provides a Hive-owned button surface and behavior while hiding the ReaLTaiizor implementation detail.
-- `HiveMessageBox` provides a Hive-owned message-box entry point with standard WinForms result/button/icon semantics while keeping the selected renderer behind the UI project boundary.
+- `HiveMessageBox` provides a Hive-owned semantic dialog with Information, Success, Warning, Error, and Question variants, standard `DialogResult` semantics, and optional technical details.
+- The custom header supports title, subtitle, close, optional minimize/help actions, and a compact visual hierarchy similar to the established HAgent WinForms visual language.
+
+The visual direction intentionally carries forward the useful HAgent characteristics—rounded windows, a distinctive header, strong semantic accents, compact navigation, and explanatory field labels—without copying HAgent's monolithic UI implementation. Hive keeps the implementation smaller, theme-driven, disposable, and independent of HAgent types.
 
 Ordinary WinForms controls remain first-class. The foundation styles common native controls through the theme manager where practical; it does not create Hive-prefixed wrappers merely to rename every framework control.
 
