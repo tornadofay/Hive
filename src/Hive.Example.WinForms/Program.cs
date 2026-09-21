@@ -1,4 +1,5 @@
 using System.Windows.Forms;
+using Hive.Host.WinForms.UI.Controls;
 
 namespace Hive.Example.WinForms;
 
@@ -19,41 +20,18 @@ internal static class Program
     {
         System.Diagnostics.Debug.WriteLine(e.Exception.ToString());
 
-        using var dialog = new UnhandledExceptionDialog(e.Exception);
-        dialog.ShowDialog();
-    }
+        var owner = Application.OpenForms.Count > 0
+            ? Application.OpenForms[0]
+            : null;
 
-    private sealed class UnhandledExceptionDialog : Form
-    {
-        public UnhandledExceptionDialog(Exception exception)
-        {
-            Text = "Hive Example — Unhandled UI exception";
-            StartPosition = FormStartPosition.CenterScreen;
-            Size = new Size(760, 460);
-            MinimumSize = new Size(600, 360);
-
-            var message = new TextBox
-            {
-                Dock = DockStyle.Fill,
-                Multiline = true,
-                ReadOnly = true,
-                ScrollBars = ScrollBars.Both,
-                Text = exception.ToString(),
-                WordWrap = false,
-                Margin = Padding.Empty
-            };
-
-            var close = new Button
-            {
-                Dock = DockStyle.Bottom,
-                Height = 40,
-                Text = "Close",
-                DialogResult = DialogResult.OK
-            };
-
-            Controls.Add(message);
-            Controls.Add(close);
-            AcceptButton = close;
-        }
+        HiveMessageBox.Show(
+            owner,
+            new HiveMessageOptions(
+                "Unhandled UI exception",
+                "An unexpected UI error occurred. The technical details are shown below.",
+                HiveMessageType.Error,
+                MessageBoxButtons.OK,
+                e.Exception.ToString(),
+                DetailsExpanded: true));
     }
 }
