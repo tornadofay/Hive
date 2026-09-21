@@ -20,7 +20,7 @@ Phase 0 — Foundations.
 - Generation and Hive membership are independent; base Hives may contain CognitiveAgents and base Agents may sponsor Hives.
 - Hive sponsorship is not lifecycle ownership. A Hive and its independent members survive sponsor runtime death/retirement/deletion unless explicitly retired.
 - Swarm is a non-persistent active subset of Hive members collaborating on a bounded problem; it is not another architectural resource/lifecycle layer.
-- Workspace is the human-facing operational surface with LLM mode, Agentic mode, topology, activity, Questions, notifications, and approvals. Host form registration is bounded and does not imply automatic Hive creation.
+- Workspace is the human-facing operational surface over Hive.Management. V1 is limited to image submission, WorkItem status/activity, relevant execution/provider status, notifications, and business-app write Approve/Reject. Agent/Hive topology, Swarm views, general LLM mode, and Agentic mode are later phase-gated Workspace extensions.
 - V1 WorkItem semantics are fixed: one submitted document is one WorkItem; batches are multiple WorkItems.
 - Durable events carry event type and payload schema version with an upcasting compatibility boundary separate from database schema versioning.
 - Dream processing is bounded by applicable authorization, quota, cost/token, time, concurrency, retrieval/work, and cancellation policies.
