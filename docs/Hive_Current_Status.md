@@ -1,6 +1,6 @@
 # Hive — Current Status
 
-Last updated: 2026-09-20
+Last updated: 2026-09-21
 
 ## Repository state
 
@@ -16,6 +16,14 @@ Phase 0 — Foundations.
 - The V1 pipeline is not Hive's permanent definition; it determines implementation order.
 - `Agent` and `Hive` are stable base types.
 - The base Agent may provide reusable Objectives, memory infrastructure, Question/Answer transport, Patience / Understanding Gate, Simulation infrastructure, delegation, and Hive sponsorship without becoming a CognitiveAgent.
+- Agent generation is fixed at creation. Authorized creators may request any supported generation, including CognitiveAgent; generation is never inferred or promoted automatically.
+- Generation and Hive membership are independent; base Hives may contain CognitiveAgents and base Agents may sponsor Hives.
+- Hive sponsorship is not lifecycle ownership. A Hive and its independent members survive sponsor runtime death/retirement/deletion unless explicitly retired.
+- Swarm is a non-persistent active subset of Hive members collaborating on a bounded problem; it is not another architectural resource/lifecycle layer.
+- Workspace is the human-facing operational surface with LLM mode, Agentic mode, topology, activity, Questions, notifications, and approvals. Host form registration is bounded and does not imply automatic Hive creation.
+- V1 WorkItem semantics are fixed: one submitted document is one WorkItem; batches are multiple WorkItems.
+- Durable events carry event type and payload schema version with an upcasting compatibility boundary separate from database schema versioning.
+- Dream processing is bounded by applicable authorization, quota, cost/token, time, concurrency, retrieval/work, and cancellation policies.
 - A base Agent may sponsor a persistent Hive for multi-specialty work; a Swarm is the active work session and a Hive may become Dormant afterward.
 - Hive population authority belongs to the Hive during Hive-managed work; member Agents normally request missing specialties rather than recursively creating child Hives.
 - `CognitiveAgent : Agent` and `CognitiveHive : Hive` are later additive generations.
