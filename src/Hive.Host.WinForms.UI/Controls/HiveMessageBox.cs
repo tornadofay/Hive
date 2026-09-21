@@ -974,6 +974,10 @@ public static class HiveMessageBox
         protected override void OnMouseEnter(EventArgs e)
         {
             base.OnMouseEnter(e);
+
+            if (!Enabled)
+                return;
+
             _hovered = true;
             Invalidate();
         }
@@ -989,11 +993,12 @@ public static class HiveMessageBox
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
-            if (e.Button == MouseButtons.Left)
-            {
-                _pressed = true;
-                Invalidate();
-            }
+
+            if (!Enabled || e.Button != MouseButtons.Left)
+                return;
+
+            _pressed = true;
+            Invalidate();
         }
 
         protected override void OnMouseUp(MouseEventArgs e)
@@ -1041,7 +1046,7 @@ public static class HiveMessageBox
             if (_borderPen is not null)
                 e.Graphics.DrawPath(_borderPen, _path);
 
-            if (Focused && _focusPen is not null)
+            if (Enabled && Focused && _focusPen is not null)
             {
                 var lineWidth = Math.Max(
                     28f,
