@@ -98,14 +98,20 @@ Verify: fake-provider automated path plus manual real-provider developer verific
 Objective: CRUD facade for Providers, ProviderAccounts, ExecutionTargets, and AgentDefinitions.
 Verify: service-level validation, authorization/scope cases, persistence integration.
 
-## 1.11 — Workspace & Operational Surface
-Objective: implement the initial Workspace shell over Hive.Management with LLM mode, Agentic mode, attachments/file upload, user-visible Agent/Hive organization, active Swarm membership, WorkItems/activity, notifications, and the approval surface.
+## 1.11 — V1 Workspace & WorkItem Operations
+Objective: implement the V1 operational Workspace over Hive.Management for image submission and governed business-app processing.
 
-LLM mode uses explicit user model selection with a configured default. Agentic mode displays the Agent/Hive-selected execution target rather than requiring the user to choose a model for every decision.
+V1 scope:
+- submit/attach an image to a WorkItem;
+- view WorkItem status and activity;
+- view relevant execution/provider status;
+- receive WorkItem notifications;
+- view PendingApproval;
+- Approve / Reject the governed business-app write.
 
-The Workspace is a control/inspection surface, not a cognitive authority. It must remain usable when only a single Agent is active and must not create Hives merely because multiple forms are visible.
+The V1 Workspace works with a single Agent and does not require Hive membership or Swarm state.
 
-Verify: mode switching, default/explicit model selection in LLM mode, Agentic-mode execution-target display, active-member topology display, pending-approval display, notification path, and public API boundaries.
+Verify: image submission creates the correct WorkItem, status/activity are visible, approval state is visible, Approve/Reject changes the authoritative WorkItem state correctly, stale approval is rejected, and the Workspace does not create hidden Hive/Swarm behavior.
 
 ## 1.12 — HiveSettingsForm & Providers Page
 Objective: thin WinForms shell, shared configuration context, provider/account setup and connection test.
@@ -173,7 +179,15 @@ Define Swarm as the active subset of Hive members collaborating on a WorkItem, Q
 
 All coordination uses MAF orchestration primitives where applicable; Hive does not become a second workflow engine.
 
----
+## 2.8 — Workspace Coordination & Agentic Extensions
+Extend Workspace after Hive membership and Swarm contracts exist.
+
+Objective: add Agent/Hive organization and topology, active Swarm visibility, and Agentic mode where an Agent/Hive selects execution targets through the normal planner/policy boundary.
+
+General LLM mode with explicit model selection may be added here as a general Workspace capability; it is not part of V1 document processing.
+
+Verify: topology reflects authoritative Hive membership, Swarm views reflect derived active membership, Agentic mode displays the selected execution target, and Workspace does not create Hive/Swarm state merely by displaying it.
+
 
 # Phase 3 — Hive Governance Patterns
 
