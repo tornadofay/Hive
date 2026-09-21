@@ -7,8 +7,10 @@ namespace Hive.Example.WinForms;
 
 internal sealed class ThemeFoundationExampleForm : HiveForm
 {
-    private readonly Panel _navigation;
+    private readonly FlowLayoutPanel _navigation;
     private readonly Panel _content;
+    private readonly TableLayoutPanel _contentLayout;
+    private readonly FlowLayoutPanel _pageBody;
     private readonly Label _pageTitle;
     private readonly Label _pageDescription;
     private readonly IHiveThemeManager _themeManager;
@@ -28,11 +30,15 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         SetBodyPadding(Padding.Empty);
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
 
-        _navigation = new Panel
+        _navigation = new FlowLayoutPanel
         {
             Dock = DockStyle.Left,
             Width = 190,
-            Padding = new Padding(12, 18, 12, 12)
+            Padding = new Padding(12, 18, 12, 12),
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            AutoScroll = true,
+            Margin = Padding.Empty
         };
 
         _content = new Panel
@@ -41,20 +47,48 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
             Padding = new Padding(28, 24, 28, 24)
         };
 
+        _contentLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+
         _pageTitleFont = new Font("Segoe UI", 16f, FontStyle.Bold);
         _pageTitle = new Label
         {
             AutoSize = true,
-            Font = _pageTitleFont
+            Font = _pageTitleFont,
+            Margin = Padding.Empty
         };
 
         _pageDescription = new Label
         {
             AutoSize = true,
-            MaximumSize = new Size(700, 80),
+            MaximumSize = new Size(800, 80),
             Margin = new Padding(0, 8, 0, 20)
         };
 
+        _pageBody = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            AutoScroll = true,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+
+        _contentLayout.Controls.Add(_pageTitle, 0, 0);
+        _contentLayout.Controls.Add(_pageDescription, 0, 1);
+        _contentLayout.Controls.Add(_pageBody, 0, 2);
+
+        _content.Controls.Add(_contentLayout);
         BodyPanel.Controls.Add(_content);
         BodyPanel.Controls.Add(_navigation);
 
@@ -62,7 +96,6 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         AddNavigation("Controls", ShowControls);
         AddNavigation("Dialogs", ShowDialogs);
 
-        BuildContent();
         ApplyExampleTheme(Theme);
         ShowTheme();
     }
@@ -85,12 +118,8 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
     {
         _navigation.BackColor = theme.VisualStates.NavigationBackground;
         _content.BackColor = theme.Palette.Surface;
-    }
-
-    private void BuildContent()
-    {
-        _content.Controls.Add(_pageDescription);
-        _content.Controls.Add(_pageTitle);
+        _contentLayout.BackColor = theme.Palette.Surface;
+        _pageBody.BackColor = theme.Palette.Surface;
     }
 
     private void AddNavigation(string text, Action action)
@@ -123,7 +152,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         var current = CreateBodyLabel();
         current.Name = "ThemeState";
         current.Margin = new Padding(0, 18, 0, 0);
-        _content.Controls.Add(current);
+        _pageBody.Controls.Add(current);
         UpdateThemeState(current);
     }
 
@@ -138,6 +167,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         var input = new TextBox
         {
             Width = 320,
+            Height = 28,
             Text = "Native WinForms TextBox"
         };
 
@@ -160,7 +190,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
             Style = HiveButtonStyle.Primary,
             Width = 190,
             Height = 40,
-            Margin = new Padding(0, 16, 0, 8)
+            Margin = new Padding(0, 10, 0, 0)
         };
 
         var secondary = new HiveButton
@@ -168,24 +198,15 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
             Text = "HiveButton — Secondary",
             Style = HiveButtonStyle.Secondary,
             Width = 190,
-            Height = 40
+            Height = 40,
+            Margin = new Padding(0, 8, 0, 0)
         };
 
-        var panel = new FlowLayoutPanel
-        {
-            AutoSize = true,
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = false,
-            Dock = DockStyle.Top
-        };
-
-        panel.Controls.Add(input);
-        panel.Controls.Add(checkBox);
-        panel.Controls.Add(disabled);
-        panel.Controls.Add(primary);
-        panel.Controls.Add(secondary);
-
-        _content.Controls.Add(panel);
+        _pageBody.Controls.Add(input);
+        _pageBody.Controls.Add(checkBox);
+        _pageBody.Controls.Add(disabled);
+        _pageBody.Controls.Add(primary);
+        _pageBody.Controls.Add(secondary);
     }
 
     private void ShowDialogs()
@@ -238,7 +259,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
                     DetailsExpanded: true),
                 _themeManager);
 
-        _content.Controls.Add(details);
+        _pageBody.Controls.Add(details);
     }
 
     private void AddThemeButton(string text, HiveThemeMode mode)
@@ -249,17 +270,17 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
             Style = HiveButtonStyle.Secondary,
             Width = 110,
             Height = 38,
-            Margin = new Padding(0, 0, 8, 0)
+            Margin = new Padding(0, 0, 0, 8)
         };
 
         button.Click += (_, _) =>
         {
             _themeManager.SetMode(mode);
-            if (_content.Controls["ThemeState"] is Label state)
+            if (_pageBody.Controls["ThemeState"] is Label state)
                 UpdateThemeState(state);
         };
 
-        _content.Controls.Add(button);
+        _pageBody.Controls.Add(button);
     }
 
     private void AddActionButton(string text, HiveThemeMode mode) =>
@@ -290,7 +311,7 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
                     buttons),
                 _themeManager);
 
-        _content.Controls.Add(button);
+        _pageBody.Controls.Add(button);
     }
 
     private void SetPage(string title, string description)
@@ -301,10 +322,10 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
 
     private void ClearPageActions()
     {
-        while (_content.Controls.Count > 2)
+        while (_pageBody.Controls.Count > 0)
         {
-            var last = _content.Controls[_content.Controls.Count - 1];
-            _content.Controls.RemoveAt(_content.Controls.Count - 1);
+            var last = _pageBody.Controls[_pageBody.Controls.Count - 1];
+            _pageBody.Controls.RemoveAt(_pageBody.Controls.Count - 1);
             last.Dispose();
         }
     }
@@ -317,7 +338,6 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
         {
             AutoSize = true,
             Text = text ?? string.Empty,
-            MaximumSize = new Size(700, 120),
-            Margin = new Padding(0, 10, 0, 0)
+            MaximumSize = new Size(700, 120)
         };
 }
