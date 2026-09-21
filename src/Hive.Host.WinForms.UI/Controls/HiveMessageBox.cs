@@ -246,6 +246,7 @@ public static class HiveMessageBox
                 true);
 
             FormBorderStyle = FormBorderStyle.None;
+            AutoScaleMode = AutoScaleMode.Dpi;
             Padding = new Padding(2);
             ShowInTaskbar = false;
             ControlBox = false;
