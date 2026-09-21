@@ -246,7 +246,7 @@ public static class HiveMessageBox
                 true);
 
             FormBorderStyle = FormBorderStyle.None;
-            Padding = Padding.Empty;
+            Padding = new Padding(2);
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             MinimumSize = new Size(MinWidth, MinHeight);
@@ -264,7 +264,7 @@ public static class HiveMessageBox
             _root = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                Margin = new Padding(2),
+                Margin = Padding.Empty,
                 ColumnCount = 1,
                 RowCount = 3,
                 Margin = Padding.Empty,
