@@ -12,6 +12,16 @@ public sealed class HiveListView : ListView
     private int _hoverIndex = -1;
     private int _naturalLastColumnWidth = -1;
     private Font? _headerFont;
+    private SolidBrush? _headerBackgroundBrush;
+    private SolidBrush? _headerDisabledBrush;
+    private SolidBrush? _rowInputBrush;
+    private SolidBrush? _rowSurfaceBrush;
+    private SolidBrush? _rowHoverBrush;
+    private SolidBrush? _rowSelectionBrush;
+    private SolidBrush? _rowDisabledBrush;
+    private SolidBrush? _accentBrush;
+    private Pen? _borderPen;
+    private Pen? _focusPen;
     private readonly ImageList _rowImageList;
 
     public HiveListView()
@@ -69,6 +79,7 @@ public sealed class HiveListView : ListView
             ForeColor = theme.Palette.Text;
 
         EnsureHeaderFont(theme);
+        RebuildPaintResources(theme);
 
         var previous = _hoverIndex;
         _hoverIndex = -1;
@@ -76,6 +87,14 @@ public sealed class HiveListView : ListView
         if (previous >= 0 && previous < Items.Count)
             Invalidate(GetItemRect(previous));
 
+        Invalidate();
+    }
+
+    protected override void OnEnabledChanged(EventArgs e)
+    {
+        base.OnEnabledChanged(e);
+
+        _hoverIndex = -1;
         Invalidate();
     }
 
@@ -89,21 +108,20 @@ public sealed class HiveListView : ListView
             return;
         }
 
-        var headerBackground = Enabled
-            ? theme.Palette.ElevatedSurface
-            : theme.Palette.DisabledBackground;
+        var background = Enabled
+            ? _headerBackgroundBrush
+            : _headerDisabledBrush;
         var headerForeground = Enabled
             ? theme.Palette.Text
             : theme.Palette.DisabledText;
 
-        using var background = new SolidBrush(headerBackground);
-        e.Graphics.FillRectangle(background, e.Bounds);
+        if (background is not null)
+            e.Graphics.FillRectangle(background, e.Bounds);
 
-        if (e.ColumnIndex < Columns.Count - 1)
+        if (e.ColumnIndex < Columns.Count - 1 && _borderPen is not null)
         {
-            using var divider = new Pen(theme.Palette.Border);
             e.Graphics.DrawLine(
-                divider,
+                _borderPen,
                 e.Bounds.Right - 1,
                 e.Bounds.Top + 5,
                 e.Bounds.Right - 1,
@@ -136,13 +154,15 @@ public sealed class HiveListView : ListView
             headerForeground,
             flags);
 
-        using var bottom = new Pen(theme.Palette.Border);
-        e.Graphics.DrawLine(
-            bottom,
-            e.Bounds.Left,
-            e.Bounds.Bottom - 1,
-            e.Bounds.Right - 1,
-            e.Bounds.Bottom - 1);
+        if (_borderPen is not null)
+        {
+            e.Graphics.DrawLine(
+                _borderPen,
+                e.Bounds.Left,
+                e.Bounds.Bottom - 1,
+                e.Bounds.Right - 1,
+                e.Bounds.Bottom - 1);
+        }
     }
 
     protected override void OnDrawSubItem(DrawListViewSubItemEventArgs e)
@@ -176,43 +196,43 @@ public sealed class HiveListView : ListView
                 e.Bounds.Height);
 
             var background = !Enabled
-                ? theme.Palette.DisabledBackground
+                ? _rowDisabledBrush
                 : selected
-                    ? theme.Palette.Selection
+                    ? _rowSelectionBrush
                     : hovered
-                        ? theme.VisualStates.HoverBackground
+                        ? _rowHoverBrush
                         : item.Index % 2 == 0
-                            ? theme.Palette.InputBackground
-                            : theme.Palette.Surface;
+                            ? _rowInputBrush
+                            : _rowSurfaceBrush;
 
-            using var brush = new SolidBrush(background);
-            e.Graphics.FillRectangle(brush, row);
+            if (background is not null)
+                e.Graphics.FillRectangle(background, row);
 
-            using var separator = new Pen(theme.Palette.Border);
-            e.Graphics.DrawLine(
-                separator,
-                row.Left,
-                row.Bottom - 1,
-                row.Right - 1,
-                row.Bottom - 1);
-
-            if (selected && Enabled)
+            if (_borderPen is not null)
             {
-                using var accent = new SolidBrush(theme.Palette.Accent);
+                e.Graphics.DrawLine(
+                    _borderPen,
+                    row.Left,
+                    row.Bottom - 1,
+                    row.Right - 1,
+                    row.Bottom - 1);
+            }
+
+            if (selected && Enabled && _accentBrush is not null)
+            {
                 e.Graphics.FillRectangle(
-                    accent,
+                    _accentBrush,
                     row.Left,
                     row.Top + 5,
                     3,
                     Math.Max(8, row.Height - 10));
             }
 
-            if (selected && Focused && Enabled)
+            if (selected && Focused && Enabled && _focusPen is not null)
             {
-                using var focusPen = new Pen(theme.VisualStates.FocusedBorder);
                 var focus = Rectangle.Inflate(row, -1, -1);
                 e.Graphics.DrawRectangle(
-                    focusPen,
+                    _focusPen,
                     focus.Left,
                     focus.Top,
                     Math.Max(0, focus.Width - 1),
@@ -310,6 +330,23 @@ public sealed class HiveListView : ListView
         Columns[lastIndex].Width = targetWidth;
     }
 
+    private void RebuildPaintResources(HiveThemeDefinition theme)
+    {
+        DisposePaintResources();
+
+        _headerBackgroundBrush = new SolidBrush(theme.Palette.ElevatedSurface);
+        _headerDisabledBrush = new SolidBrush(theme.Palette.DisabledBackground);
+        _rowInputBrush = new SolidBrush(theme.Palette.InputBackground);
+        _rowSurfaceBrush = new SolidBrush(theme.Palette.Surface);
+        _rowHoverBrush = new SolidBrush(theme.VisualStates.HoverBackground);
+        _rowSelectionBrush = new SolidBrush(theme.Palette.Selection);
+        _rowDisabledBrush = new SolidBrush(theme.Palette.DisabledBackground);
+        _accentBrush = new SolidBrush(theme.Palette.Accent);
+
+        _borderPen = new Pen(theme.Palette.Border);
+        _focusPen = new Pen(theme.VisualStates.FocusedBorder);
+    }
+
     private void EnsureHeaderFont(HiveThemeDefinition theme)
     {
         var family = theme.Typography.FontFamily;
@@ -327,12 +364,38 @@ public sealed class HiveListView : ListView
         _headerFont = new Font(family, size, FontStyle.Bold);
     }
 
+    private void DisposePaintResources()
+    {
+        _headerBackgroundBrush?.Dispose();
+        _headerDisabledBrush?.Dispose();
+        _rowInputBrush?.Dispose();
+        _rowSurfaceBrush?.Dispose();
+        _rowHoverBrush?.Dispose();
+        _rowSelectionBrush?.Dispose();
+        _rowDisabledBrush?.Dispose();
+        _accentBrush?.Dispose();
+        _borderPen?.Dispose();
+        _focusPen?.Dispose();
+
+        _headerBackgroundBrush = null;
+        _headerDisabledBrush = null;
+        _rowInputBrush = null;
+        _rowSurfaceBrush = null;
+        _rowHoverBrush = null;
+        _rowSelectionBrush = null;
+        _rowDisabledBrush = null;
+        _accentBrush = null;
+        _borderPen = null;
+        _focusPen = null;
+    }
+
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
             SmallImageList = null;
             _headerFont?.Dispose();
+            DisposePaintResources();
             _rowImageList.Dispose();
         }
 
