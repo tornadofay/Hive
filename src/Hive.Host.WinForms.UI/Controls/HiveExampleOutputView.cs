@@ -296,8 +296,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         var lineCount = 1;
         for (var index = 0; index < _output.TextLength; index++)
         {
-            if (_output.Text[index] == '
-')
+            if (_output.Text[index] == '\n')
                 lineCount++;
         }
 
