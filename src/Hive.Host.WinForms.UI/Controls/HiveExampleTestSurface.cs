@@ -65,7 +65,7 @@ public sealed class HiveExampleTestSurface : UserControl
             new ColumnStyle(SizeType.Percent, 100f));
         _root.RowStyles.Add(
             new RowStyle(SizeType.Absolute, 44));
-        root.RowStyles.Add(
+        _root.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
         _root.RowStyles.Add(
             new RowStyle(SizeType.AutoSize));
