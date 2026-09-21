@@ -32,8 +32,8 @@ internal sealed class DialogsExampleView : UserControl
         _buttons = new FlowLayoutPanel
         {
             Dock = DockStyle.Top,
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = false,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true,
             AutoSize = true,
             Margin = new Padding(0, 18, 0, 0),
             Padding = Padding.Empty
@@ -98,6 +98,8 @@ internal sealed class DialogsExampleView : UserControl
     {
         var button = CreateButton(text, HiveButtonStyle.Secondary, 200);
 
+        button.TabIndex = _buttons.Controls.Count;
+
         button.Click += (_, _) =>
             HiveMessageBox.Show(
                 this,
@@ -121,6 +123,6 @@ internal sealed class DialogsExampleView : UserControl
             Style = style,
             Width = width,
             Height = 38,
-            Margin = new Padding(0, 0, 0, 8)
+            Margin = new Padding(0, 0, 10, 10)
         };
 }
