@@ -6,9 +6,9 @@ namespace Hive.Host.WinForms.UI.Controls;
 
 public sealed class HiveEditorLayout : UserControl
 {
-    private const int DefaultLabelColumnWidth = 190;
-    private const int DefaultFieldHeight = 68;
-    private const int FooterHeight = 54;
+    private const int DefaultLabelColumnWidth = 176;
+    private const int DefaultFieldHeight = 72;
+    private const int FooterHeight = 58;
     private const int FooterSeparatorHeight = 1;
 
     private readonly TableLayoutPanel _root;
@@ -22,8 +22,8 @@ public sealed class HiveEditorLayout : UserControl
 
     public HiveEditorLayout()
     {
-        _descriptionFont = new Font("Segoe UI", 8.5f);
-        _titleFont = new Font("Segoe UI Semibold", 9.4f, FontStyle.Bold);
+        _descriptionFont = new Font("Segoe UI", 8.7f);
+        _titleFont = new Font("Segoe UI Semibold", 9.7f, FontStyle.Bold);
 
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
@@ -162,7 +162,7 @@ public sealed class HiveEditorLayout : UserControl
         var editorHost = new Panel
         {
             Dock = DockStyle.Fill,
-            Padding = new Padding(0, 10, 0, 8),
+            Padding = new Padding(0, 11, 0, 9),
             Margin = Padding.Empty
         };
 
