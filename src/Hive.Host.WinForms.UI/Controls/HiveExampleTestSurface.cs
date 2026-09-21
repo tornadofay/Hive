@@ -386,15 +386,12 @@ public sealed class HiveExampleTestSurface : UserControl
         return null;
     }
 
-    private static Label CreateSectionLabel(string text) =>
+    private Label CreateSectionLabel(string text) =>
         new()
         {
             Dock = DockStyle.Fill,
             AutoSize = false,
-            Font = new Font(
-                "Segoe UI Semibold",
-                9f,
-                FontStyle.Bold),
+            Font = _sectionFont,
             Margin = Padding.Empty,
             Padding = new Padding(2, 2, 0, 0),
             Text = text,
