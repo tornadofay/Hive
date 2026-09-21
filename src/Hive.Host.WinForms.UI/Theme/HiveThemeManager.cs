@@ -22,7 +22,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
         Color.White,
         ColorTranslator.FromHtml("#FFFFFF"),
         ColorTranslator.FromHtml("#F1F3F5"),
-        ColorTranslator.FromHtml("#98A2B3"),
+        ColorTranslator.FromHtml("#7A8699"),
         ColorTranslator.FromHtml("#DCE9FF"));
 
     private static readonly HivePalette DarkPalette = new(
@@ -37,7 +37,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
         ColorTranslator.FromHtml("#FFFFFF"),
         ColorTranslator.FromHtml("#12181F"),
         ColorTranslator.FromHtml("#222831"),
-        ColorTranslator.FromHtml("#6F7A86"),
+        ColorTranslator.FromHtml("#A5AFBA"),
         ColorTranslator.FromHtml("#24466F"));
 
     private HiveThemeDefinition _theme;
@@ -305,6 +305,24 @@ public sealed class HiveThemeManager : IHiveThemeManager
             grid.AlternatingRowsDefaultCellStyle.BackColor =
                 theme.Palette.DisabledBackground;
             grid.AlternatingRowsDefaultCellStyle.ForeColor =
+                theme.Palette.DisabledText;
+
+            grid.ColumnHeadersDefaultCellStyle.BackColor =
+                theme.Palette.DisabledBackground;
+            grid.ColumnHeadersDefaultCellStyle.ForeColor =
+                theme.Palette.DisabledText;
+            grid.ColumnHeadersDefaultCellStyle.SelectionBackColor =
+                theme.Palette.DisabledBackground;
+            grid.ColumnHeadersDefaultCellStyle.SelectionForeColor =
+                theme.Palette.DisabledText;
+
+            grid.RowHeadersDefaultCellStyle.BackColor =
+                theme.Palette.DisabledBackground;
+            grid.RowHeadersDefaultCellStyle.ForeColor =
+                theme.Palette.DisabledText;
+            grid.RowHeadersDefaultCellStyle.SelectionBackColor =
+                theme.Palette.DisabledBackground;
+            grid.RowHeadersDefaultCellStyle.SelectionForeColor =
                 theme.Palette.DisabledText;
         }
     }
