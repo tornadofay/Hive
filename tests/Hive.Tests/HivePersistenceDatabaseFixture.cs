@@ -36,6 +36,14 @@ public sealed class HivePersistenceDatabaseFixture : IDisposable
 
     public void Dispose()
     {
+        if (string.Equals(
+            Environment.GetEnvironmentVariable("HIVE_KEEP_TEST_DATABASE"),
+            "1",
+            StringComparison.Ordinal))
+        {
+            return;
+        }
+
         using var connection = CreateMasterConnection();
         connection.Open();
 
