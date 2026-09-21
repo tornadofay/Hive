@@ -13,7 +13,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
     private static readonly HivePalette LightPalette = new(
         ColorTranslator.FromHtml("#F4F6F8"),
         ColorTranslator.FromHtml("#FFFFFF"),
-        ColorTranslator.FromHtml("#FFFFFF"),
+        ColorTranslator.FromHtml("#FBFCFE"),
         ColorTranslator.FromHtml("#1D2939"),
         ColorTranslator.FromHtml("#667085"),
         ColorTranslator.FromHtml("#D8DEE8"),
@@ -267,7 +267,9 @@ public sealed class HiveThemeManager : IHiveThemeManager
                     ? ColorTranslator.FromHtml("#293541")
                     : ColorTranslator.FromHtml("#E5EBF2"),
                 palette.Accent,
-                palette.Border,
+                dark
+                    ? ColorTranslator.FromHtml("#3A4652")
+                    : ColorTranslator.FromHtml("#C9D0DA"),
                 palette.DisabledText)
             {
                 NavigationBackground = dark
