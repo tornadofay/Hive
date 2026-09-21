@@ -35,6 +35,7 @@ public sealed class HiveButton : UserControl
     private Pen? _borderPen;
     private Pen? _focusPen;
     private Pen? _disabledBorderPen;
+    private Color _foregroundColor;
 
     public HiveButton()
     {
@@ -239,7 +240,7 @@ public sealed class HiveButton : UserControl
         DrawText(
             e.Graphics,
             Enabled
-                ? _theme?.Palette.Text ?? SystemColors.ControlText
+                ? _foregroundColor
                 : _theme?.Palette.DisabledText ?? SystemColors.GrayText);
     }
 
@@ -284,6 +285,7 @@ public sealed class HiveButton : UserControl
         var background = theme.Palette.ElevatedSurface;
         var hover = theme.VisualStates.HoverBackground;
         var pressed = theme.VisualStates.PressedBackground;
+        var foreground = theme.Palette.Text;
         var border = theme.Palette.Border;
         var focusBorder = theme.Palette.Accent;
 
@@ -293,6 +295,7 @@ public sealed class HiveButton : UserControl
                 background = theme.Palette.Accent;
                 hover = theme.Palette.AccentHover;
                 pressed = ControlPaint.Dark(theme.Palette.Accent, 0.12f);
+                foreground = theme.Palette.AccentForeground;
                 border = theme.Palette.AccentHover;
                 focusBorder = theme.Palette.Accent;
                 break;
@@ -312,6 +315,7 @@ public sealed class HiveButton : UserControl
                 background = theme.VisualStates.NavigationSelected;
                 hover = theme.VisualStates.NavigationSelected;
                 pressed = theme.VisualStates.NavigationPressed;
+                foreground = theme.VisualStates.NavigationSelectedText;
                 border = theme.Palette.Accent;
                 focusBorder = theme.Palette.Accent;
                 break;
@@ -320,6 +324,7 @@ public sealed class HiveButton : UserControl
                 background = theme.VisualStates.Error;
                 hover = ControlPaint.Dark(theme.VisualStates.Error, 0.06f);
                 pressed = ControlPaint.Dark(theme.VisualStates.Error, 0.14f);
+                foreground = theme.Palette.AccentForeground;
                 border = theme.VisualStates.Error;
                 focusBorder = theme.VisualStates.Error;
                 break;
@@ -332,6 +337,7 @@ public sealed class HiveButton : UserControl
             background,
             hover,
             pressed,
+            foreground,
             border,
             focusBorder);
     }
@@ -348,6 +354,7 @@ public sealed class HiveButton : UserControl
 
         _backgroundBrush = new SolidBrush(colors.Background);
         _hoverBrush = new SolidBrush(colors.Hover);
+        _foregroundColor = colors.Foreground;
         _pressedBrush = new SolidBrush(colors.Pressed);
         _disabledBrush = new SolidBrush(theme.Palette.DisabledBackground);
 
@@ -458,6 +465,7 @@ public sealed class HiveButton : UserControl
         Color Background,
         Color Hover,
         Color Pressed,
+        Color Foreground,
         Color Border,
         Color FocusBorder);
 }
