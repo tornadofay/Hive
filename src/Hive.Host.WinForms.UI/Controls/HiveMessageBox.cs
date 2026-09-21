@@ -966,8 +966,6 @@ public static class HiveMessageBox
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e);
-
             if (_path is null ||
                 _backgroundBrush is null ||
                 _hoverBrush is null ||
