@@ -121,9 +121,9 @@ internal sealed class ControlsCrudExampleView : UserControl
         {
             Dock = DockStyle.Top,
             Width = 860,
-            Height = 560,
-            MinimumSize = new Size(420, 560),
-            Margin = new Padding(0, 20, 0, 12),
+            Height = 480,
+            MinimumSize = new Size(420, 420),
+            Margin = new Padding(0, 18, 0, 12),
             Title = "Generic CRUD composition",
             Description = "Reusable list, search, actions, pagination, selection, keyboard interaction, and editor workflow.",
             PageSize = 5
