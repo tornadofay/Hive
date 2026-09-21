@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-21 (rev 15 — WinForms UI/UX foundation)
+Last updated: 2026-09-21 (rev 16 — production coding and performance standards)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -881,6 +881,49 @@ The UI foundation is infrastructure, not a mechanism for pulling future platform
 
 Phase 1 and later features consume the shared UI foundation instead of creating parallel form/control systems.
 
+
+## Engineering Standards
+
+Hive is built for production real-world applications. The default coding standard is clean, warning-free, lightweight, and performance-conscious without sacrificing correctness or maintainability.
+
+### Correctness and contracts
+
+- Nullable reference types remain enabled. Nullability mismatches are fixed at the contract boundary; they are not suppressed.
+- Affected projects must compile with zero errors and zero new warnings before a slice is considered complete.
+- Public APIs expose only required consumer contracts and avoid leaking framework/vendor implementation types.
+- One authoritative implementation owns each validation, state transition, serialization rule, calculation, or policy decision.
+- Failures use structured/typed classification with useful context. Boundary catches must not silently swallow the underlying cause.
+
+### Performance
+
+- Prefer immutable cached derived state for stable data such as theme definitions, parsed configuration, capability maps, or other repeatedly requested values.
+- Avoid unnecessary allocations, repeated parsing/reflection, repeated registry/file/database/network access, and avoidable LINQ/delegate overhead in hot paths.
+- Avoid speculative micro-optimization. Optimize measured or contractually important costs such as allocation rate, I/O, UI responsiveness, concurrency, and repeated lookups.
+- Avoid hidden I/O or expensive work in property getters, formatting methods, or control rendering paths.
+- Keep asynchronous operations cancellation-aware. Do not use sync-over-async, arbitrary sleeps, or Task.Run to mask blocking design. Use ValueTask only where the actual call pattern benefits from its lower-allocation semantics.
+- Dispose owned resources deterministically, including streams, database objects, timers, GDI/images, and WinForms controls.
+
+### WinForms
+
+- UI handlers must remain responsive; database, network, filesystem, and other blocking work must not run synchronously on the UI thread.
+- Theme and control updates should avoid unnecessary tree traversals, layout passes, repainting, and object creation.
+- Hive-specific controls exist only for a real Hive consumer contract, behavior, or styling need. Native WinForms controls remain preferred where they already satisfy the requirement.
+
+### Persistence
+
+- Use parameterized SQL and explicit transaction boundaries where required.
+- Repeated lookup paths require appropriate indexes.
+- Avoid N+1 queries and hidden database work from property accessors or UI formatting.
+- Keep connection/command/reader lifetimes bounded and disposable.
+
+### Tests
+
+- Test code follows the same production-quality standards as runtime code.
+- Tests are deterministic, isolated, concurrency-safe, lightweight, and repeatable.
+- No arbitrary sleeps, real vendor accounts, hidden environment variables, or accidental machine state.
+- Test doubles remain test-only unless a production contract later requires a reusable fake.
+- Tests prove normal, invalid, boundary, cancellation, concurrency, recovery, and security behavior where applicable.
+- Core contract tests explicitly include using Hive.Core; and using Xunit;.
 
 ## 14. Testing & Production Readiness
 
