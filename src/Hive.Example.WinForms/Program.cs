@@ -38,7 +38,6 @@ internal static class Program
                 Multiline = true,
                 ReadOnly = true,
                 ScrollBars = ScrollBars.Both,
-                Font = new Font("Consolas", 9f),
                 Text = exception.ToString(),
                 WordWrap = false,
                 Margin = Padding.Empty
