@@ -245,6 +245,8 @@ public static class HiveMessageBox
                 ControlStyles.ResizeRedraw,
                 true);
 
+            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleDimensions = new SizeF(HiveDpi.DesignDpi, HiveDpi.DesignDpi);
             FormBorderStyle = FormBorderStyle.None;
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
@@ -470,6 +472,7 @@ public static class HiveMessageBox
 
             ApplyButtons();
             ApplyTheme();
+            ApplyDpiMetrics();
             UpdateDialogSize();
 
             AcceptButton = _primaryButton;
@@ -513,12 +516,81 @@ public static class HiveMessageBox
             UpdateWindowRegion();
         }
 
+        protected override void OnDpiChanged(DpiChangedEventArgs e)
+        {
+            base.OnDpiChanged(e);
+            ApplyDpiMetrics();
+            UpdateDialogSize();
+            UpdateWindowRegion();
+        }
+
         private void ThemeManagerOnChanged(object? sender, EventArgs e)
         {
             _theme = _themeManager.Theme;
             ApplyTheme();
             UpdateDialogSize();
             Invalidate();
+        }
+
+        private int Scale(int designPixels) =>
+            HiveDpi.Scale(this, designPixels);
+
+        private float Scale(float designPixels) =>
+            HiveDpi.Scale(this, designPixels);
+
+        private void ApplyDpiMetrics()
+        {
+            MinimumSize = HiveDpi.Scale(this, new Size(MinWidth, MinHeight));
+
+            _root.RowStyles[0].Height = Scale(AccentBarHeight);
+            _root.RowStyles[2].Height = Scale(FooterHeight);
+
+            _contentPanel.Padding = HiveDpi.Scale(
+                this,
+                new Padding(OuterPadding, OuterPadding, OuterPadding, 8));
+
+            _messageLayout.ColumnStyles[0].Width = Scale(IconColumnWidth);
+
+            _icon.Size = HiveDpi.Scale(this, new Size(IconSize, IconSize));
+            _icon.Margin = HiveDpi.Scale(this, new Padding(0, 0, 18, 0));
+
+            _messageViewport.Margin = HiveDpi.Scale(
+                this,
+                new Padding(0, 10, 0, 0));
+
+            _detailsLink.Margin = HiveDpi.Scale(
+                this,
+                new Padding(0, 14, 0, 8));
+
+            _detailsContainer.Height = Scale(DetailsHeight);
+            _detailsContainer.Margin = HiveDpi.Scale(
+                this,
+                new Padding(0, 0, 0, 4));
+            _detailsContainer.Padding = HiveDpi.Scale(
+                this,
+                new Padding(12));
+
+            _detailsLayout.ColumnStyles[1].Width = Scale(112);
+
+            _copyButton.Width = Scale(108);
+            _copyButton.Height = Scale(36);
+            _copyButton.Margin = HiveDpi.Scale(
+                this,
+                new Padding(6, 0, 0, 0));
+
+            _footer.Padding = HiveDpi.Scale(
+                this,
+                new Padding(12, 10, 24, 12));
+
+            _primaryButton.Margin = HiveDpi.Scale(
+                this,
+                new Padding(8, 0, 0, 0));
+            _secondaryButton.Margin = HiveDpi.Scale(
+                this,
+                new Padding(8, 0, 0, 0));
+            _tertiaryButton.Margin = HiveDpi.Scale(
+                this,
+                new Padding(8, 0, 0, 0));
         }
 
         private void ApplyTheme()
@@ -661,7 +733,9 @@ public static class HiveMessageBox
                 new Size(int.MaxValue, int.MaxValue),
                 TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
 
-            return Math.Max(112, Math.Min(190, measured.Width + 40));
+            return Math.Max(
+                Scale(112),
+                Math.Min(Scale(190), measured.Width + Scale(40)));
         }
 
         private HiveMessageButton? ResolveCancelButton()
@@ -719,20 +793,24 @@ public static class HiveMessageBox
 
         private void UpdateDialogSizeCore()
         {
-            var width = Math.Max(MinWidth, Math.Min(DesignWidth, Width));
+            var width = Math.Max(
+                Scale(MinWidth),
+                Math.Min(Scale(DesignWidth), Width));
+
             var contentWidth =
                 width -
-                (OuterPadding * 2) -
-                IconColumnWidth;
+                Scale(OuterPadding * 2) -
+                Scale(IconColumnWidth);
 
-            contentWidth = Math.Max(260, contentWidth);
+            contentWidth = Math.Max(Scale(260), contentWidth);
 
-            _message.MaximumSize = new Size(contentWidth, MaxMessageHeight);
+            var maxMessageHeight = Scale(MaxMessageHeight);
+            _message.MaximumSize = new Size(contentWidth, maxMessageHeight);
 
             var messageMeasured = TextRenderer.MeasureText(
                 _message.Text,
                 _messageFont,
-                new Size(contentWidth, MaxMessageHeight),
+                new Size(contentWidth, maxMessageHeight),
                 TextFormatFlags.WordBreak | TextFormatFlags.NoPadding);
 
             _messageViewport.Height = Math.Max(
@@ -744,29 +822,31 @@ public static class HiveMessageBox
                 _title.PreferredHeight + 10 + _messageViewport.Height);
 
             var detailsHeight = _detailsContainer.Visible
-                ? DetailsHeight
+                ? Scale(DetailsHeight)
                 : 0;
 
             var detailsLinkHeight = _detailsLink.Visible
-                ? 34
+                ? Scale(34)
                 : 0;
 
             var requestedHeight =
-                AccentBarHeight +
-                OuterPadding +
+                Scale(AccentBarHeight) +
+                Scale(OuterPadding) +
                 messageHeight +
                 detailsLinkHeight +
                 detailsHeight +
-                8 +
-                FooterHeight;
+                Scale(8) +
+                Scale(FooterHeight);
 
             var maxAllowed = Math.Min(
-                MaxHeight,
-                Screen.FromControl(this).WorkingArea.Height - 40);
+                Scale(MaxHeight),
+                Screen.FromControl(this).WorkingArea.Height - Scale(40));
 
             ClientSize = new Size(
                 width,
-                Math.Max(MinHeight, Math.Min(maxAllowed, requestedHeight)));
+                Math.Max(
+                    Scale(MinHeight),
+                    Math.Min(maxAllowed, requestedHeight)));
         }
 
         private void UpdateWindowRegion()
@@ -779,11 +859,16 @@ public static class HiveMessageBox
 
             var newPath = CreateRoundedRectanglePath(
                 new RectangleF(0, 0, Width, Height),
-                12f);
+                Scale(12f));
 
+            var borderInset = Scale(0.6f);
             var newBorderPath = CreateRoundedRectanglePath(
-                new RectangleF(0.6f, 0.6f, Width - 1.2f, Height - 1.2f),
-                11.4f);
+                new RectangleF(
+                    borderInset,
+                    borderInset,
+                    Width - borderInset * 2f,
+                    Height - borderInset * 2f),
+                Scale(11.4f));
 
             _windowPath?.Dispose();
             _windowPath = newPath;
@@ -801,9 +886,11 @@ public static class HiveMessageBox
         private HiveMessageButton CreateActionButton() =>
             new()
             {
-                Height = 40,
+                Height = Scale(40),
                 Font = _buttonFont,
-                Margin = new Padding(8, 0, 0, 0)
+                Margin = HiveDpi.Scale(
+                    this,
+                    new Padding(8, 0, 0, 0))
             };
 
         private static Color GetAccentColor(
@@ -909,7 +996,7 @@ public static class HiveMessageBox
             _path = Width > 1 && Height > 1
                 ? CreateRoundedRectanglePath(
                     new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f),
-                    8f)
+                    HiveDpi.Scale(this, 8f))
                 : null;
         }
 
@@ -988,8 +1075,14 @@ public static class HiveMessageBox
             if (Focused && _focusPen is not null)
             {
                 using var focusPath = CreateRoundedRectanglePath(
-                    new RectangleF(3f, 3f, Width - 7f, Height - 7f),
-                    6f);
+                    var inset = HiveDpi.Scale(this, 3f);
+                    using var focusPath = CreateRoundedRectanglePath(
+                        new RectangleF(
+                            inset,
+                            inset,
+                            Width - inset * 2f - HiveDpi.Scale(this, 1f),
+                            Height - inset * 2f - HiveDpi.Scale(this, 1f)),
+                        HiveDpi.Scale(this, 6f));
                 e.Graphics.DrawPath(_focusPen, focusPath);
             }
         }
@@ -1088,11 +1181,12 @@ public static class HiveMessageBox
 
             _accentBrush = new SolidBrush(_accent);
             _surfaceBrush = new SolidBrush(_surface);
-            _ringPen = new Pen(Color.FromArgb(88, _accent), 1.5f)
+            var scale = HiveDpi.Scale(this, 1f);
+            _ringPen = new Pen(Color.FromArgb(88, _accent), 1.5f * scale)
             {
                 Alignment = PenAlignment.Inset
             };
-            _glyphPen = new Pen(_accent, 3f)
+            _glyphPen = new Pen(_accent, 3f * scale)
             {
                 StartCap = LineCap.Round,
                 EndCap = LineCap.Round
