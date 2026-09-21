@@ -13,6 +13,7 @@ public sealed class HiveNavigationTree : TreeView
 
     private HiveThemeDefinition? _theme;
     private TreeNode? _hoverNode;
+    private bool _restoringState;
     private Font? _categoryFont;
     private Font? _groupFont;
     private Font? _itemFont;
@@ -49,6 +50,7 @@ public sealed class HiveNavigationTree : TreeView
         var top = canPreserveNativeState ? TopNode : null;
         var hadFocus = canPreserveNativeState && Focused;
 
+        _restoringState = true;
         BeginUpdate();
         try
         {
@@ -77,7 +79,16 @@ public sealed class HiveNavigationTree : TreeView
         if (hadFocus && CanFocus)
             Focus();
 
+        _restoringState = false;
         Invalidate();
+    }
+
+    protected override void OnAfterSelect(TreeViewEventArgs e)
+    {
+        if (_restoringState)
+            return;
+
+        base.OnAfterSelect(e);
     }
 
     protected override void OnDrawNode(DrawTreeNodeEventArgs e)
