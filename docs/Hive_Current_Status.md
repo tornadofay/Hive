@@ -105,7 +105,7 @@ Developer verification: **44 tests passed, 0 failed, 0 skipped in 3.3 seconds.**
 
 - Common technical IDs, typed Error/Result contracts, IClock, durable event envelope contracts, event payload schema versioning, upcasting registry, and System.Text.Json serialization implemented.
 - Initial `Result.cs` compilation defect corrected.
-- Focused xUnit v3 contract tests added.
+- Focused xUnit contract tests added.
 - Developer rebuilt the solution and launched the application successfully.
 - Developer ran the complete test suite: **20 tests passed, 0 failed, 0 skipped in 1.3 seconds.**
 - 0.2 completion gate satisfied.
