@@ -36,7 +36,7 @@ public sealed class HiveButton : UserControl
         Controls.Add(_renderer);
 
         MinimumSize = new Size(88, 36);
-        Size = new Size(120, 40);
+        Size = new Size(120, 38);
         Margin = new Padding(0);
         Cursor = Cursors.Hand;
         TabStop = true;
@@ -83,31 +83,46 @@ public sealed class HiveButton : UserControl
                 _renderer.BackColor = theme.Palette.Accent;
                 _renderer.ForeColor = theme.Palette.AccentForeground;
                 _renderer.UseAccentColor = true;
+                _renderer.HighEmphasis = true;
+                _renderer.Depth = 1;
                 break;
 
             case HiveButtonStyle.Secondary:
-                _renderer.BackColor = theme.Palette.Surface;
+                _renderer.BackColor = theme.Palette.ElevatedSurface;
                 _renderer.ForeColor = theme.Palette.Text;
                 _renderer.UseAccentColor = false;
+                _renderer.HighEmphasis = false;
+                _renderer.Depth = 0;
                 break;
 
             case HiveButtonStyle.Navigation:
                 _renderer.BackColor = theme.VisualStates.NavigationBackground;
                 _renderer.ForeColor = theme.VisualStates.NavigationText;
                 _renderer.UseAccentColor = false;
+                _renderer.HighEmphasis = false;
+                _renderer.Depth = 0;
                 break;
 
             case HiveButtonStyle.Danger:
                 _renderer.BackColor = theme.VisualStates.Error;
                 _renderer.ForeColor = theme.Palette.AccentForeground;
                 _renderer.UseAccentColor = false;
+                _renderer.HighEmphasis = true;
+                _renderer.Depth = 0;
                 break;
 
             default:
                 throw new ArgumentOutOfRangeException();
         }
 
-        _renderer.HighEmphasis = HighEmphasis;
+        if (_style is HiveButtonStyle.Primary or HiveButtonStyle.Danger)
+            _renderer.HighEmphasis = true;
+    }
+
+    protected override void OnEnabledChanged(EventArgs e)
+    {
+        base.OnEnabledChanged(e);
+        Cursor = Enabled ? Cursors.Hand : Cursors.Default;
     }
 
     private void ApplyCurrentTheme()
