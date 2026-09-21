@@ -364,6 +364,7 @@ public static class HiveMessageBox
                 Margin = Padding.Empty,
                 Padding = Padding.Empty,
                 BackColor = Color.Transparent,
+                Font = _messageFont,
                 Text = options.Message,
                 UseMnemonic = false
             };
