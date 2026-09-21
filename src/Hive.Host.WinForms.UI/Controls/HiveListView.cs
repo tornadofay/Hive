@@ -195,9 +195,9 @@ public sealed class HiveListView : ListView
 
     protected override void Dispose(bool disposing)
     {
+        base.Dispose(disposing);
+
         if (disposing)
             _headerFont?.Dispose();
-
-        base.Dispose(disposing);
     }
 }
