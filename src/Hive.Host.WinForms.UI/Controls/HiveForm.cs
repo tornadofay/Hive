@@ -7,8 +7,18 @@ namespace Hive.Host.WinForms.UI.Controls;
 
 public abstract class HiveForm : Form
 {
-    private const int HeaderHeight = 56;
     private const int CornerRadius = 10;
+    private const int ResizeGripSize = 8;
+    private const int WmNcHitTest = 0x0084;
+    private const int HtClient = 1;
+    private const int HtLeft = 10;
+    private const int HtRight = 11;
+    private const int HtTop = 12;
+    private const int HtTopLeft = 13;
+    private const int HtTopRight = 14;
+    private const int HtBottom = 15;
+    private const int HtBottomLeft = 16;
+    private const int HtBottomRight = 17;
 
     private readonly HiveWindowHeader _header;
     private readonly Panel _bodyPanel;
@@ -138,6 +148,32 @@ public abstract class HiveForm : Form
         UpdateWindowRegion();
     }
 
+    protected override void WndProc(ref Message message)
+    {
+        if (message.Msg == WmNcHitTest &&
+            WindowState == FormWindowState.Normal &&
+            FormBorderStyle == FormBorderStyle.None)
+        {
+            base.WndProc(ref message);
+
+            if ((long)message.Result == HtClient)
+            {
+                var point = PointToClient(GetScreenPoint(message.LParam));
+                var hitTest = GetResizeHitTest(point);
+
+                if (hitTest != HtClient)
+                {
+                    message.Result = (IntPtr)hitTest;
+                    return;
+                }
+            }
+
+            return;
+        }
+
+        base.WndProc(ref message);
+    }
+
     protected override void Dispose(bool disposing)
     {
         if (disposing)
@@ -192,6 +228,49 @@ public abstract class HiveForm : Form
 
     private void HeaderOnHelpClicked(object? sender, EventArgs e) =>
         OnHeaderHelp();
+
+    private static Point GetScreenPoint(IntPtr lParam)
+    {
+        var value = unchecked((long)lParam);
+
+        return new Point(
+            unchecked((short)(value & 0xFFFF)),
+            unchecked((short)((value >> 16) & 0xFFFF)));
+    }
+
+    private int GetResizeHitTest(Point point)
+    {
+        var left = point.X >= 0 && point.X < ResizeGripSize;
+        var right = point.X >= Math.Max(0, ClientSize.Width - ResizeGripSize);
+        var top = point.Y >= 0 && point.Y < ResizeGripSize;
+        var bottom = point.Y >= Math.Max(0, ClientSize.Height - ResizeGripSize);
+
+        if (left && top)
+            return HtTopLeft;
+
+        if (right && top)
+            return HtTopRight;
+
+        if (left && bottom)
+            return HtBottomLeft;
+
+        if (right && bottom)
+            return HtBottomRight;
+
+        if (left)
+            return HtLeft;
+
+        if (right)
+            return HtRight;
+
+        if (top)
+            return HtTop;
+
+        if (bottom)
+            return HtBottom;
+
+        return HtClient;
+    }
 
     private void UpdateWindowRegion()
     {
