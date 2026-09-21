@@ -325,7 +325,6 @@ public sealed class HiveButton : UserControl
                 hover = ControlPaint.Dark(theme.VisualStates.Error, 0.06f);
                 pressed = ControlPaint.Dark(theme.VisualStates.Error, 0.14f);
                 foreground = theme.Palette.AccentForeground;
-                foreground = theme.Palette.AccentForeground;
                 border = theme.VisualStates.Error;
                 focusBorder = theme.Palette.AccentForeground;
                 break;
