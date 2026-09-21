@@ -30,7 +30,6 @@ internal sealed class ThemeFoundationExampleView : UserControl
         var root = new TableLayoutPanel
         {
             Dock = DockStyle.Top,
-            Width = 900,
             ColumnCount = 1,
             RowCount = 4,
             Margin = Padding.Empty,
