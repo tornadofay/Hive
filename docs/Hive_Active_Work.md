@@ -20,3 +20,5 @@ See `docs/roadmap.md` for the objective and verification criteria.
 - Do not implement future governance/cognition/resource phases early.
 - Preserve the base Agent/Hive dependency direction.
 - Keep the V1 forcing function visible in subsequent slice decisions.
+- Keep V1 Workspace scope limited to WorkItem/image processing and business-app approval operations.
+- Do not pull Agent/Hive topology, Swarm views, general LLM mode, or Agentic mode into Phase 1; their Workspace extensions require the owning later capabilities.
