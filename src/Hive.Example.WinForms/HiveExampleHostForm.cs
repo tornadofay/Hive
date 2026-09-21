@@ -431,13 +431,23 @@ internal sealed class HiveExampleHostForm : HiveForm
         try
         {
             var previousView = _activeView;
-            if (previousView is not null)
-                _viewHost.Controls.Remove(previousView);
 
-            _viewHost.Controls.Add(nextView);
-            _activeView = nextView;
+            _viewHost.SuspendLayout();
+            try
+            {
+                _viewHost.Controls.Add(nextView);
+                _activeView = nextView;
 
-            previousView?.Dispose();
+                if (previousView is not null)
+                {
+                    _viewHost.Controls.Remove(previousView);
+                    previousView.Dispose();
+                }
+            }
+            finally
+            {
+                _viewHost.ResumeLayout(true);
+            }
 
             _viewTitle.Text = example.Title;
             _viewSubtitle.Text =
@@ -445,6 +455,9 @@ internal sealed class HiveExampleHostForm : HiveForm
         }
         catch
         {
+            if (_viewHost.Controls.Contains(nextView))
+                _viewHost.Controls.Remove(nextView);
+
             nextView.Dispose();
             throw;
         }
