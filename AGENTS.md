@@ -47,68 +47,73 @@ These rules apply to human developers and coding agents working in this reposito
 35. A base Agent may explicitly sponsor or create a Hive without changing its own type. A member Agent inside a Hive normally requests new specialists through the parent Hive.
 36. Hive population authority controls creation/reuse of member Agents; recursive child-Hive creation is not the default behavior of Hive members.
 37. A Swarm is a temporary active work session over a persistent Hive; ending a Swarm may return the Hive to Dormant without deleting its members or state.
-38. Agent identity and persistent cognitive state are distinct from Runtime/RuntimeInstance/Incarnation lifetime.
-39. Agent death means complete termination of the current runtime/incarnation; it does not delete the Agent or its persistent cognitive state.
-40. Dream processing may operate against persisted cognitive state while no Agent runtime is active, including while the host application is shut down.
-41. Dream outputs are simulations, predictions, hypotheses, or candidate analyses and must never be recorded as actual experience or observation.
-42. Human edits made while an Agent is inactive are durable cognitive-state changes and must be versioned, authorized, and incorporated by the next valid wake/reincarnation path.
-43. Questions are first-class, provenance-bearing, specialty-aware cognitive objects; semantically duplicate questions should be avoided when existing evidence is sufficient.
-44. Cognitive strategies are replaceable and provider-neutral.
-45. A cognitive strategy may act deterministically and may decide not to call an LLM.
-46. Reasoning Requirement and concrete Execution Planning are separate concerns.
-47. Running executions consume immutable effective-configuration snapshots.
-48. Terminal execution outcomes cannot be overwritten by late provider completion.
-49. Runtime mutable state is isolated by explicit ownership.
-50. Cognitive work must remain bounded by applicable time, work, recursion, retrieval, and model-usage limits.
-51. Model output, retrieved content, memory, and observations are evidence/input, never authorization.
+38. Cognitive strategies are replaceable and provider-neutral.
+39. A cognitive strategy may act deterministically and may decide not to call an LLM.
+40. Reasoning Requirement and concrete Execution Planning are separate concerns.
+41. Running executions consume immutable effective-configuration snapshots.
+42. Terminal execution outcomes cannot be overwritten by late provider completion.
+43. Runtime mutable state is isolated by explicit ownership.
+44. Cognitive work must remain bounded by applicable time, work, recursion, retrieval, and model-usage limits.
+45. Model output, retrieved content, memory, and observations are evidence/input, never authorization.
 
 ## Resources, providers, and security
 
-52. Resource scope and ownership are explicit.
-53. Shared resources require explicit scope and authorization.
-54. Private runtime memory must not leak across runtime instances.
-55. Unknown future resource types remain representable through the generic resource inventory.
-56. Capability support is explicitly Supported / Unsupported / Unknown.
-57. Capability requirements are explicitly Required / Preferred / Optional / Forbidden.
-58. Quota, rate limits, health, capacity, cost, and capability are separate state dimensions.
-59. Provider credentials are encrypted at rest and redacted everywhere else.
-60. Network-provider automated tests use fakes/local infrastructure, never real vendor accounts.
-61. Authorization is enforced in code, not by prompt text.
-62. Configuration must actually drive the behavior it configures.
+46. Resource scope and ownership are explicit.
+47. Shared resources require explicit scope and authorization.
+48. Private runtime memory must not leak across runtime instances.
+49. Unknown future resource types remain representable through the generic resource inventory.
+50. Capability support is explicitly Supported / Unsupported / Unknown.
+51. Capability requirements are explicitly Required / Preferred / Optional / Forbidden.
+52. Quota, rate limits, health, capacity, cost, and capability are separate state dimensions.
+53. Provider credentials are encrypted at rest and redacted everywhere else.
+54. Network-provider automated tests use fakes/local infrastructure, never real vendor accounts.
+55. Authorization is enforced in code, not by prompt text.
+56. Configuration must actually drive the behavior it configures.
 
 ## Host integration and intervention
 
-63. V1 host integration is limited to the actual business application boundary proved by the integration decision gate.
-64. Do not build a generic UI/object-discovery framework before a second differently-shaped real host requires it.
-65. Prefer native/bound host data sources over visible-text scraping.
-66. Host discovery is bounded, cancellation-aware, read-oriented, and never grants tool permission.
-67. Approval is one intervention type; V1 only needs Approve/Reject for the business-app write.
-68. Intervention requests capture target state/version and reject stale application.
+57. V1 host integration is limited to the actual business application boundary proved by the integration decision gate.
+58. Do not build a generic UI/object-discovery framework before a second differently-shaped real host requires it.
+59. Prefer native/bound host data sources over visible-text scraping.
+60. Host discovery is bounded, cancellation-aware, read-oriented, and never grants tool permission.
+61. Approval is one intervention type; V1 only needs Approve/Reject for the business-app write.
+62. Intervention requests capture target state/version and reject stale application.
 
 ## Code quality, testing, and workflow
 
-69. No empty catch blocks.
-70. Use one JSON serialization stack.
-71. Do not duplicate the same computation in multiple layers.
-72. Prefer structured error classification over string matching.
-73. Timeout and budget settings are explicit and validated.
-74. Repeated lookup paths use real indexes.
-75. Every implementation slice requires the relevant unit, boundary/edge, integration, recovery/concurrency, security, UI, and public-example verification before completion.
-76. System/end-to-end tests are required where unit tests cannot prove an important cross-boundary contract.
-77. Edge-case coverage means all known and contract-relevant cases; do not claim exhaustive coverage of every conceivable future failure.
-78. Do not claim tests, builds, or verification that were not actually run.
-79. Update `docs/architecture.md` before structural code changes.
-80. Complete the active slice fully before implementing future slices or future generations.
+63. No empty catch blocks.
+64. Use one JSON serialization stack.
+65. Do not duplicate the same computation in multiple layers.
+66. Prefer structured error classification over string matching.
+67. Timeout and budget settings are explicit and validated.
+68. Repeated lookup paths use real indexes.
+69. Every implementation slice requires the relevant unit, boundary/edge, integration, recovery/concurrency, security, UI, and public-example verification before completion.
+70. System/end-to-end tests are required where unit tests cannot prove an important cross-boundary contract.
+71. Edge-case coverage means all known and contract-relevant cases; do not claim exhaustive coverage of every conceivable future failure.
+72. Do not claim tests, builds, or verification that were not actually run.
+73. Update `docs/architecture.md` before structural code changes.
+74. Complete the active slice fully before implementing future slices or future generations.
 
 ## Documentation source of truth
 
-81. `docs/architecture.md` is the architectural source of truth.
-82. `docs/Hive_Current_Status.md` is the only status record.
-83. `docs/Hive_Active_Work.md` is the only current implementation-slice tracker.
-84. `docs/roadmap.md` is the ordered implementation plan and must match the architecture's phase order.
-85. Keep these source-of-truth files synchronized.
-86. The README is explanatory and must not introduce architecture that conflicts with the source-of-truth files.
-87. Examples and tests are developed alongside the feature they demonstrate, not postponed to a final phase.
-88. Complete public examples should include copyable API usage and expected result where meaningful.
-89. Do not silently broaden a slice because a later phase is mentioned in the architecture.
-90. When adding or removing an AGENTS rule, renumber the whole list and verify that there are no duplicate or skipped numbers.
+75. `docs/architecture.md` is the architectural source of truth.
+76. `docs/Hive_Current_Status.md` is the only status record.
+77. `docs/Hive_Active_Work.md` is the only current implementation-slice tracker.
+78. `docs/roadmap.md` is the ordered implementation plan and must match the architecture's phase order.
+79. Keep these source-of-truth files synchronized.
+80. The README is explanatory and must not introduce architecture that conflicts with the source-of-truth files.
+81. Examples and tests are developed alongside the feature they demonstrate, not postponed to a final phase.
+82. Complete public examples should include copyable API usage and expected result where meaningful.
+83. Do not silently broaden a slice because a later phase is mentioned in the architecture.
+84. When adding or removing an AGENTS rule, renumber the whole list and verify that there are no duplicate or skipped numbers.
+
+85. Agent generation is selected explicitly at creation and must never be inferred from task complexity or changed automatically during runtime/reincarnation.
+86. Authorized creation may request any supported Agent generation, including CognitiveAgent, regardless of the creator's own generation; generation and Hive membership remain independent.
+87. A Hive sponsor is a relationship, not an implicit lifecycle owner. Sponsor runtime death, retirement, or deletion must not silently delete or retire the Hive or independent members.
+88. Swarm is derived/session state representing the selected Hive members actively collaborating on a bounded WorkItem, Question, or problem; Swarm is not a persistent resource or separate hierarchy layer.
+89. Workspace is the human-facing operational/control surface, not a cognitive authority. LLM mode uses explicit user model selection; Agentic mode uses Agent/Hive execution planning and displays the selected target.
+90. Host registration such as `ai.Register(this)` binds bounded application context to Hive/Workspace management; it does not by itself create an Agent, Hive, or automatic cross-form collaboration.
+91. V1 treats one submitted document as one WorkItem; batches are multiple WorkItems. WorkItem identity/lifecycle is independent from individual Execution and Runtime lifetimes.
+92. Every durable event carries an explicit event type and payload schema version; supported older payload versions must be upcastable without rewriting historical events.
+93. Dream processing is subject to applicable authorization, provider/model quota, token/cost budget, time budget, concurrency/parallelism, retrieval/work limits, and cancellation; offline status never bypasses governance.
+94. Workspace approval, notification, activity, and Agent/Hive topology views expose authoritative state through Hive.Management and never create hidden Agent/Hive behavior.
