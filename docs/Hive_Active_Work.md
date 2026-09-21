@@ -4,33 +4,38 @@ Last updated: 2026-09-21
 
 ## Active slice
 
-**0.1 — Solution & project scaffolding**
+**0.2 — Common infrastructure**
 
-This is the current implementation slice. Do not begin 0.2 or any later slice until 0.1 is complete and its verification has actually been performed.
+The 0.1 solution/project scaffolding is complete and has been verified locally by the developer. Do not begin 0.3 or any later slice until 0.2 is complete and its verification has actually been performed.
 
 ## Objective
 
-Create the complete initial .NET 10 solution structure and dependency direction documented by the architecture and roadmap.
+Implement the common platform infrastructure shared by every later Hive capability:
 
-The initial solution must contain:
+- stable identifiers and ID value types;
+- immutable common value objects;
+- typed errors/results;
+- IClock;
+- durable event envelope;
+- explicit event type and payload schema version;
+- correlation and causation IDs;
+- event payload upcasting compatibility boundary;
+- one JSON serialization stack.
 
-- `Hive.Core`;
-- `Hive.Agents`;
-- `Hive.Persistence`;
-- `Hive.Coordination`;
-- `Hive.Tools`;
-- `Hive.Providers.OpenAICompatible`;
-- `Hive.Management`;
-- `Hive.Host.WinForms`;
-- `Hive.Host.WinForms.UI`;
-- `Hive.Example.WinForms`;
-- `Hive.Tests`.
+## 0.1 completion record
 
-The projects are scaffolding only in this slice. Do not implement the V1 pipeline, Hive membership, Swarm, cognition, persistence schema, provider behavior, UI foundation, Example navigation, or test-running tools yet.
+The initial .NET 10 solution scaffold was merged into main and manually verified by the developer.
+
+- Build result: **PASS — developer reports full solution rebuild succeeds locally.**
+- Runtime result: **PASS — Hive.Example.WinForms is the startup project and launches successfully with the current empty placeholder form.**
+- Verification result: **PASS for the 0.1 scaffold boundary; all eleven projects are present in the solution and the solution participates in a successful full rebuild.**
+- Automated tests: **None in 0.1 by design.** The real xUnit test harness is a later Phase 0.5 slice.
+- Commit: 590ca87dfc1c4e1d99308394167ad29202317c69
+- Next slice: **0.2 — Common infrastructure**
 
 ## Dependency direction
 
-The initial project references must enforce these boundaries:
+The initial project references enforce these boundaries:
 
 ```
 Hive.Core
@@ -52,47 +57,36 @@ No core/platform project may depend on Example.WinForms.
 
 Additional constraints:
 
-- WinForms-specific types remain outside `Hive.Core`.
-- Provider transport remains outside `Hive.Core`.
-- The ReaLTaiizor package is **not introduced in 0.1**; it is added and verified in 0.6, and only `Hive.Host.WinForms.UI` may reference it.
-- `Hive.Example.WinForms` must not reference xUnit runner internals.
+- WinForms-specific types remain outside Hive.Core.
+- Provider transport remains outside Hive.Core.
+- The ReaLTaiizor package is **not introduced in 0.1**; it is added and verified in 0.6, and only Hive.Host.WinForms.UI may reference it.
+- Hive.Example.WinForms must not reference xUnit runner internals.
 - Do not create compatibility/legacy projects or duplicate architecture paths.
 
-## Files / projects for this slice
+## Out of scope for 0.2
 
-Create the solution and project files required for the eleven projects above, plus the minimum root/project metadata needed for a clean build.
+- identity/domain resources beyond shared ID/value infrastructure;
+- persistence schema or database migrations;
+- provider implementation;
+- Agent/Hive behavior;
+- UI foundation;
+- Example navigation;
+- test runner tooling;
+- V1 image/document pipeline;
+- CognitiveAgent/CognitiveHive;
+- automated end-to-end behavior.
 
-No feature implementation is required beyond the smallest valid project/assembly entry points.
-
-## Verification
+## 0.2 Verification
 
 The developer must manually verify:
 
-1. the complete solution restores/builds successfully with .NET 10;
-2. every expected project is present in the solution;
-3. forbidden project references are absent;
-4. `Hive.Core` has no WinForms/provider-transport dependency;
-5. `Hive.Example.WinForms` does not reference xUnit runner internals;
-6. the dependency direction matches `docs/architecture.md` and `docs/roadmap.md`;
-7. all eleven projects can participate in the solution build without placeholder dependency errors.
-
-No later slice may be marked active until these checks are complete.
-
-## Out of scope
-
-- ReaLTaiizor package integration;
-- Hive UI/theme/token implementation;
-- Example navigation shell;
-- `IHiveExample` implementation;
-- Example test runner;
-- V1 Workspace;
-- V1 image/document pipeline;
-- provider adapter implementation;
-- persistence/database schema;
-- Agent/Hive implementation;
-- Hive membership/Swarm;
-- CognitiveAgent/CognitiveHive;
-- automated end-to-end behavior beyond the scaffolding build.
+1. all common ID/value/error/result types compile and satisfy their invariants;
+2. event envelopes preserve event type, payload schema version, correlation ID, and causation ID;
+3. JSON serialization round-trips supported event payloads;
+4. older supported payload versions upcast to the current contract;
+5. unsupported future/incompatible payload versions are rejected cleanly;
+6. IClock allows deterministic tests and application time access without direct time coupling;
+7. no later project boundary or feature is pulled into the common infrastructure slice.
 
 ## Completion record
 
