@@ -36,9 +36,9 @@ internal sealed class HiveWindowHeader : Control
     private Color _closeHover;
     private Pen? _borderPen;
 
-    private readonly Font _titleFont = new("Segoe UI", 10f, FontStyle.Bold);
-    private readonly Font _subtitleFont = new("Segoe UI", 8f, FontStyle.Regular);
-    private readonly Font _buttonFont = new("Segoe UI Symbol", 12f, FontStyle.Regular);
+    private readonly Font _titleFont = new("Segoe UI Semibold", 10.5f, FontStyle.Bold);
+    private readonly Font _subtitleFont = new("Segoe UI", 8.25f, FontStyle.Regular);
+    private readonly Font _buttonFont = new("Segoe UI Symbol", 11.5f, FontStyle.Regular);
 
     public HiveWindowHeader()
     {
@@ -198,7 +198,7 @@ internal sealed class HiveWindowHeader : Control
         if (_borderPen is not null)
             e.Graphics.DrawLine(_borderPen, 0, Height - 1, Width - 1, Height - 1);
 
-        var textLeft = 18;
+        var textLeft = 20;
         var textWidth = Math.Max(
             80,
             Width - textLeft - GetButtonCount() * ButtonWidth - 18);
