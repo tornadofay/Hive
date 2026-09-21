@@ -21,11 +21,11 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
     private readonly Font _titleFont;
     private readonly Font _metaFont;
     private readonly Font _outputFont;
-    private bool _collapsed;
+    private bool _collapsed = true;
 
     public HiveExampleOutputView()
     {
-        Dock = DockStyle.Fill;
+        Dock = DockStyle.None;
         Margin = Padding.Empty;
         Padding = Padding.Empty;
 
@@ -62,11 +62,11 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _header.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
         _header.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Absolute, 84));
+            new ColumnStyle(SizeType.Absolute, 92));
         _header.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Absolute, 84));
+            new ColumnStyle(SizeType.Absolute, 92));
         _header.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Absolute, 84));
+            new ColumnStyle(SizeType.Absolute, 92));
 
         _titleLayout = new TableLayoutPanel
         {
@@ -115,34 +115,34 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Text = "Copy",
             Style = HiveButtonStyle.Secondary,
             Dock = DockStyle.Fill,
-            MinimumSize = new Size(72, 32),
-            Size = new Size(78, 32),
+            MinimumSize = new Size(80, 32),
+            Size = new Size(86, 32),
             Margin = new Padding(6, 0, 0, 0),
             Enabled = false
         };
         _copyButton.Click += (_, _) => Copy();
-
-        _toggleButton = new HiveButton
-        {
-            Text = "Hide",
-            Style = HiveButtonStyle.Secondary,
-            Dock = DockStyle.Fill,
-            MinimumSize = new Size(72, 32),
-            Size = new Size(78, 32),
-            Margin = new Padding(6, 0, 0, 0)
-        };
-        _toggleButton.Click += (_, _) => ToggleCollapsed();
 
         _clearButton = new HiveButton
         {
             Text = "Clear",
             Style = HiveButtonStyle.Secondary,
             Dock = DockStyle.Fill,
-            MinimumSize = new Size(72, 32),
-            Size = new Size(78, 32),
-            Margin = Padding.Empty
+            MinimumSize = new Size(80, 32),
+            Size = new Size(86, 32),
+            Margin = new Padding(6, 0, 0, 0)
         };
         _clearButton.Click += (_, _) => Clear();
+
+        _toggleButton = new HiveButton
+        {
+            Text = "Hide",
+            Style = HiveButtonStyle.Secondary,
+            Dock = DockStyle.Fill,
+            MinimumSize = new Size(80, 32),
+            Size = new Size(86, 32),
+            Margin = new Padding(6, 0, 0, 0)
+        };
+        _toggleButton.Click += (_, _) => ToggleCollapsed();
 
         _outputFrame = new Panel
         {
@@ -174,6 +174,10 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _root.Controls.Add(_outputFrame, 0, 1);
 
         Controls.Add(_root);
+
+        _outputFrame.Visible = false;
+        Visible = false;
+        UpdateActionState();
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -194,6 +198,8 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
 
     public event EventHandler? CollapseStateChanged;
 
+    public event EventHandler? OutputAvailabilityChanged;
+
     public void ToggleCollapsed() =>
         SetCollapsed(!_collapsed);
 
@@ -203,12 +209,9 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             return;
 
         _collapsed = collapsed;
-        _outputFrame.Visible = !_collapsed;
-        _root.RowStyles[1].Height = _collapsed ? 0f : 100f;
-        _root.RowStyles[1].SizeType = _collapsed
-            ? SizeType.Absolute
-            : SizeType.Percent;
-        _toggleButton.Text = _collapsed ? "Show" : "Hide";
+        Visible = !collapsed;
+        _outputFrame.Visible = !collapsed;
+        _toggleButton.Text = "Hide";
         CollapseStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -235,6 +238,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _output.SelectionStart = _output.TextLength;
         _output.ScrollToCaret();
         UpdateActionState();
+        OutputAvailabilityChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void Append(string value)
@@ -243,6 +247,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _output.SelectionStart = _output.TextLength;
         _output.ScrollToCaret();
         UpdateActionState();
+        OutputAvailabilityChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void Copy()
