@@ -39,6 +39,8 @@ public sealed record HiveVisualStates(
     public Color NavigationBackground { get; init; }
     public Color NavigationHover { get; init; }
     public Color NavigationPressed { get; init; }
+    public Color NavigationSelected { get; init; }
+    public Color NavigationSelectedText { get; init; }
     public Color NavigationText { get; init; }
     public Color NavigationBorder { get; init; }
     public Color Information { get; init; }
