@@ -22,6 +22,20 @@ Implement the common platform infrastructure shared by every later Hive capabili
 - event payload upcasting compatibility boundary;
 - one JSON serialization stack.
 
+## Implementation progress
+
+The first 0.2 implementation set is committed to `Hive.Core`:
+
+- common technical IDs: `EventId`, `CorrelationId`, `CausationId`;
+- typed `Error`, `Result`, and `Result<T>`;
+- `IClock` and `SystemClock`;
+- `EventType`, `EventPayloadVersion`, and `EventEnvelope`;
+- `IEventUpcaster`, `EventUpcasterRegistry`, and sequential version upcasting;
+- System.Text.Json event serialization with stable converters for common event values;
+- typed `EventSerializationException` for malformed/future/incompatible event payloads.
+
+Local 0.2 verification has not yet been performed here.
+
 ## 0.1 completion record
 
 The initial .NET 10 solution scaffold was merged into main and manually verified by the developer.
