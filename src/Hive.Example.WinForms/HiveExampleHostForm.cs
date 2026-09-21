@@ -194,10 +194,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     protected override void Dispose(bool disposing)
     {
         if (disposing)
-        {
             DisposeActiveView();
-            _outputView.Dispose();
-        }
 
         base.Dispose(disposing);
 
