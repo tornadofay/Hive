@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-21 (rev 13 — persistence bootstrap boundary)
+Last updated: 2026-09-21 (rev 14 — test harness boundary)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -166,6 +166,37 @@ The bootstrap schema contains only persistence infrastructure required at this p
 
 This prevents Phase 0.4 from prematurely freezing later aggregate schemas while still establishing a real Hive-owned database, migration history, compatibility protection, and indexed metadata foundation.
 
+---
+
+### 0.5 Test harness
+
+Phase 0.5 establishes reusable verification infrastructure without creating production abstractions that belong to later provider, Agent, or persistence slices.
+
+#### Test boundaries
+
+- `Hive.Tests` remains the authoritative automated test suite.
+- Test doubles live in `Hive.Tests` unless a later production contract explicitly requires a reusable public fake package.
+- No fake provider contract is added to `Hive.Core` or `Hive.Providers.OpenAICompatible` before the production provider boundary exists.
+- Unit tests must not require SQL Server, network access, provider credentials, MAF services, or the WinForms host.
+- Persistence integration tests are explicit boundary tests and may use the configured developer SQL Server/LocalDB database strategy.
+
+#### Fake clock
+
+`FakeClock` implements the existing `Hive.Core.IClock` contract. It starts at an explicitly supplied UTC instant and advances only through test-controlled operations. Tests therefore avoid sleeping or depending on wall-clock time for deterministic lifecycle/event assertions.
+
+#### Test-only fake provider
+
+`FakeProvider` is a deterministic test double owned by `Hive.Tests`. It records requests, returns configured responses, can produce configured failures, and honors cancellation without network access. Its request/response types are test-only and are not production provider contracts.
+
+#### Persistence test strategy
+
+Persistence integration tests use an explicit connection string stored in `Hive.Tests/HivePersistenceTestConfiguration.cs`, with the Hive test database names derived by each test. The tests create the database automatically when missing and may reuse a database only when the test explicitly resets the relevant schema. No environment variables or hidden machine-specific prerequisites are required.
+
+#### Event test conventions
+
+Event tests use fixed `DateTimeOffset` values, deterministic typed IDs, and explicit payload JSON. Serialization round-trips compare contract fields rather than incidental JSON property ordering. Upcast tests construct the exact older payload version and verify the normalized current contract.
+
+Test infrastructure is verification support only. It does not become a second runtime, provider, persistence, or orchestration architecture.
 ---
 
 ## 1. MAF Dependency Boundary
