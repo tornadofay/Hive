@@ -248,7 +248,7 @@ A representative example form in `Hive.Example.WinForms` exercises:
 - representative native WinForms controls such as labels, text input, check boxes, and panels;
 - disabled/focused/selected visual states where the control supports them.
 
-The example form is the manual UI verification surface for this phase. No UI automation framework is introduced.
+The example form is the manual UI verification surface for this phase. No UI automation framework is introduced. Its navigation and content areas must use standard WinForms layout containers rather than overlapping absolute child placement so the example remains readable at its supported window sizes.
 
 #### Replaceability contract
 
