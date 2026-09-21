@@ -83,10 +83,10 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 hiveButton.ApplyTheme(theme);
                 break;
 
+            case TabPage:
             case Panel:
             case UserControl:
             case GroupBox:
-            case TabPage:
                 control.BackColor = theme.Palette.Surface;
                 control.ForeColor = theme.Palette.Text;
                 break;
