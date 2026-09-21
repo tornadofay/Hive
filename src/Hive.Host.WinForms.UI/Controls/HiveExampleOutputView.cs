@@ -188,6 +188,8 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         {
             _output.Text = value ?? string.Empty;
             UpdateActionState();
+            if (_output.TextLength > 0)
+                OutputAvailabilityChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
