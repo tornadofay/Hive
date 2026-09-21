@@ -18,7 +18,8 @@ public sealed class HiveListView : ListView
         SetStyle(
             ControlStyles.UserPaint |
             ControlStyles.AllPaintingInWmPaint |
-            ControlStyles.OptimizedDoubleBuffer,
+            ControlStyles.OptimizedDoubleBuffer |
+            ControlStyles.ResizeRedraw,
             true);
 
         OwnerDraw = true;
