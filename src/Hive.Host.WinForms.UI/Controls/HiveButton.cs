@@ -124,8 +124,7 @@ public sealed class HiveButton : UserControl
                 throw new ArgumentOutOfRangeException();
         }
 
-        if (_style is HiveButtonStyle.Primary or HiveButtonStyle.Danger)
-            _renderer.HighEmphasis = true;
+        _renderer.HighEmphasis = HighEmphasis;
     }
 
     protected override void OnEnabledChanged(EventArgs e)
