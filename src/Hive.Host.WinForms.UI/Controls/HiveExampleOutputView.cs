@@ -36,7 +36,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         root.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
         root.RowStyles.Add(
-            new RowStyle(SizeType.Absolute, 34));
+            new RowStyle(SizeType.Absolute, 40));
         root.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
 
