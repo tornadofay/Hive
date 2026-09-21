@@ -4,13 +4,13 @@ Last updated: 2026-09-21
 
 ## Repository state
 
-The initial Phase 0.1 .NET 10 solution/project scaffold is implemented, merged into main, and locally verified by the developer. The current implementation slice is Phase 0.2 common infrastructure. The first 0.2 implementation set is committed to main, the compilation defect in `Result.cs` has been corrected, and focused 0.2 contract tests are now present; automated 0.2 test execution is still pending.
+Phase 0.1 and 0.2 are complete. The active implementation slice is Phase 0.3 Identity, WorkItem & Resource foundation. The 0.3 source contracts, tests, and public API example are committed to main; developer verification of the 0.3 suite is pending.
 
 ## Current phase
 
 Phase 0 — Foundations.
 
-**Active slice: 0.2 — Common infrastructure.**
+**Active slice: 0.3 — Identity, WorkItem & Resource foundation.**
 
 ## Architecture decisions now locked
 
@@ -50,14 +50,24 @@ Phase 0 — Foundations.
 - Developer manual testing is the current UI/application verification approach; no UI-automation framework is required by the architecture.
 - Authentication-provider selection is deferred until real multi-user requirements reach Phase 8.
 - Tests and examples are developed with each implementation slice; no unperformed verification is claimed.
+- Phase 0.3 identity/resource contracts use explicit typed identity, owner, scope, provenance, version, lifecycle, and WorkItem state. Scope matching is a structural boundary and does not itself grant authorization.
 
 ## Current implementation progress
 
-### Phase 0.2 — Common infrastructure
+### Phase 0.3 — Identity, WorkItem & Resource foundation
 
-The common infrastructure implementation is present in `Hive.Core`, including common technical IDs, typed errors/results, `IClock`, durable event envelope contracts, System.Text.Json serialization, sequential event-payload upcasting infrastructure, and the corrected `Result.cs` declaration.
+Implemented in `Hive.Core`:
 
-Focused 0.2 xUnit v3 contract tests are now present in `Hive.Tests`. The solution rebuild and application launch were reported successful by the developer after pulling the current main branch. Automated 0.2 test execution has not yet been performed and is therefore not recorded as passing.
+- eleven typed identity/value types: Deployment, Tenant, Principal, User, Session, Workspace, Agent, Hive, Runtime, Execution, and WorkItem;
+- ResourceKind inventory classification;
+- ResourceScope / ResourceAccessContext and explicit scope matching;
+- ResourceVersion, ResourceLifecycle, ResourceProvenance, ResourceReference;
+- immutable ResourceEnvelope<TIdentity> and identity snapshots;
+- WorkItem status/lifecycle/version transitions;
+- focused 0.3 contract tests;
+- copyable 0.3 public API example under `docs/examples`.
+
+0.3 automated verification is pending.
 
 ## Completed
 
@@ -67,20 +77,26 @@ Focused 0.2 xUnit v3 contract tests are now present in `Hive.Tests`. The solutio
 - Hive.Example.WinForms is the current developer startup project.
 - Developer reports a successful full-solution rebuild.
 - Developer reports the example application launches successfully with the current placeholder form.
-- No automated tests were required in this slice; the real test infrastructure remains a later Phase 0 capability.
+
+### Phase 0.2 — Common infrastructure
+
+- Common technical IDs, typed Error/Result contracts, IClock, durable event envelope contracts, event payload schema versioning, upcasting registry, and System.Text.Json serialization implemented.
+- Initial `Result.cs` compilation defect corrected.
+- Focused xUnit v3 contract tests added.
+- Developer rebuilt the solution and launched the application successfully.
+- Developer ran the complete test suite: **20 tests passed, 0 failed, 0 skipped in 1.3 seconds.**
+- 0.2 completion gate satisfied.
 
 ## Not started
 
-- Phase 0.3 Identity, WorkItem & Resource foundation.
 - Phase 0.4 Persistence bootstrap.
-- Phase 0.5 Test harness beyond the focused tests needed to verify 0.2.
+- Phase 0.5 Test harness beyond slice-specific tests already introduced.
 - Phase 0.6 WinForms UI/UX Foundation.
 - Phase 0.7 Example Host Shell.
 - Phase 0.8 Example Developer Test Tools.
 - Later implementation slices.
 - Database schema.
-- Automated tests beyond the current 0.2 contract suite.
 - WinForms management host.
 - Example application features.
 
-The 0.1 scaffold is locally verified; 0.2 remains active until its required automated verification is actually executed.
+0.3 remains active until its developer-run verification is completed.
