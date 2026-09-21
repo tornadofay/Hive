@@ -68,61 +68,12 @@ public sealed class HiveThemeManager : IHiveThemeManager
     {
         ArgumentNullException.ThrowIfNull(root);
 
-        var controls = new List<Control>();
-        CollectControls(root, controls);
-
-        var scrollPositions = controls
-            .OfType<ScrollableControl>()
-            .Where(control => control.AutoScroll)
-            .Select(control => new ScrollState(
-                control,
-                control.AutoScrollPosition))
-            .ToArray();
-
-        foreach (var control in controls)
-            control.SuspendLayout();
-
-        try
-        {
-            ApplyControl(root, Theme);
-        }
-        finally
-        {
-            // Resume children first. The root performs the single final layout pass,
-            // preventing theme changes from producing transient gaps or reflow artifacts.
-            for (var index = controls.Count - 1; index > 0; index--)
-                controls[index].ResumeLayout(false);
-
-            root.ResumeLayout(true);
-
-            foreach (var scrollState in scrollPositions)
-            {
-                var control = scrollState.Control;
-                if (control.IsDisposed || !control.IsHandleCreated)
-                    continue;
-
-                control.AutoScrollPosition = new Point(
-                    -scrollState.Position.X,
-                    -scrollState.Position.Y);
-            }
-        }
-
+        // Theme application must be paint-only. Changing visual state must not
+        // trigger a layout pass, move AutoScroll positions, or mutate control
+        // geometry. All sizing/layout belongs to control initialization/resizing.
+        ApplyControl(root, Theme);
         root.Invalidate(true);
     }
-
-    private static void CollectControls(
-        Control control,
-        ICollection<Control> controls)
-    {
-        controls.Add(control);
-
-        foreach (Control child in control.Controls)
-            CollectControls(child, controls);
-    }
-
-    private readonly record struct ScrollState(
-        ScrollableControl Control,
-        Point Position);
 
     private static void ApplyControl(
         Control control,
@@ -157,8 +108,6 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 break;
 
             case TextBoxBase textBox:
-                if (textBox.BorderStyle != BorderStyle.FixedSingle)
-                    textBox.BorderStyle = BorderStyle.FixedSingle;
                 SetBackColor(
                     textBox,
                     textBox.Enabled
@@ -172,8 +121,6 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 break;
 
             case ComboBox comboBox:
-                if (comboBox.FlatStyle != FlatStyle.Standard)
-                    comboBox.FlatStyle = FlatStyle.Standard;
                 SetBackColor(
                     comboBox,
                     comboBox.Enabled
@@ -187,8 +134,6 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 break;
 
             case ListBox listBox:
-                if (listBox.BorderStyle != BorderStyle.FixedSingle)
-                    listBox.BorderStyle = BorderStyle.FixedSingle;
                 SetBackColor(
                     listBox,
                     listBox.Enabled
@@ -202,8 +147,6 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 break;
 
             case NumericUpDown numericUpDown:
-                if (numericUpDown.BorderStyle != BorderStyle.FixedSingle)
-                    numericUpDown.BorderStyle = BorderStyle.FixedSingle;
                 SetBackColor(
                     numericUpDown,
                     numericUpDown.Enabled
@@ -217,8 +160,6 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 break;
 
             case DomainUpDown domainUpDown:
-                if (domainUpDown.BorderStyle != BorderStyle.FixedSingle)
-                    domainUpDown.BorderStyle = BorderStyle.FixedSingle;
                 SetBackColor(
                     domainUpDown,
                     domainUpDown.Enabled
@@ -331,21 +272,6 @@ public sealed class HiveThemeManager : IHiveThemeManager
     {
         grid.BackgroundColor = theme.Palette.WindowBackground;
         grid.GridColor = theme.Palette.Border;
-
-        if (grid.BorderStyle != BorderStyle.FixedSingle)
-            grid.BorderStyle = BorderStyle.FixedSingle;
-        if (grid.CellBorderStyle != DataGridViewCellBorderStyle.SingleHorizontal)
-            grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
-        if (grid.RowHeadersBorderStyle != DataGridViewHeaderBorderStyle.Raised)
-            grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Raised;
-        if (grid.ColumnHeadersBorderStyle != DataGridViewHeaderBorderStyle.Single)
-            grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
-        if (grid.ColumnHeadersHeight != 36)
-            grid.ColumnHeadersHeight = 36;
-        if (grid.RowTemplate.Height != 32)
-            grid.RowTemplate.Height = 32;
-        if (grid.EnableHeadersVisualStyles)
-            grid.EnableHeadersVisualStyles = false;
 
         grid.DefaultCellStyle.BackColor = theme.Palette.InputBackground;
         grid.DefaultCellStyle.ForeColor = theme.Palette.Text;
