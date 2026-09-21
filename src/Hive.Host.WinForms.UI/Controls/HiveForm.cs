@@ -12,6 +12,7 @@ public abstract class HiveForm : Form
     private readonly HiveWindowHeader _header;
     private readonly Panel _bodyPanel;
     private IHiveThemeManager _themeManager;
+    private Font _formFont;
     private Region? _windowRegion;
 
     protected HiveForm(
@@ -31,9 +32,10 @@ public abstract class HiveForm : Form
         Padding = new Padding(1);
         MinimumSize = minimumSize ?? new Size(640, 420);
         Size = initialSize ?? new Size(900, 600);
-        Font = new Font(
+        _formFont = new Font(
             _themeManager.Theme.Typography.FontFamily,
             _themeManager.Theme.Typography.BodySize);
+        Font = _formFont;
 
         _header = new HiveWindowHeader
         {
@@ -67,8 +69,6 @@ public abstract class HiveForm : Form
     public HiveThemeDefinition Theme => _themeManager.Theme;
 
     protected Panel BodyPanel => _bodyPanel;
-
-    protected HiveWindowHeader WindowHeader => _header;
 
     protected virtual int HeaderHeight => 54;
 
@@ -111,6 +111,7 @@ public abstract class HiveForm : Form
 
             _windowRegion?.Dispose();
             _windowRegion = null;
+            _formFont.Dispose();
         }
 
         base.Dispose(disposing);
@@ -122,9 +123,13 @@ public abstract class HiveForm : Form
 
         BackColor = theme.Palette.WindowBackground;
         ForeColor = theme.Palette.Text;
-        Font = new Font(
+        var nextFont = new Font(
             theme.Typography.FontFamily,
             theme.Typography.BodySize);
+        var previousFont = _formFont;
+        _formFont = nextFont;
+        Font = nextFont;
+        previousFont.Dispose();
 
         _bodyPanel.BackColor = theme.Palette.Surface;
         _bodyPanel.Padding = new Padding(theme.Spacing.Xl);
