@@ -158,6 +158,10 @@ public static class HiveMessageBox
                 allowMinimize: false,
                 allowHelp: false);
 
+            _iconFont = new Font(
+                _theme.Typography.FontFamily,
+                16f,
+                FontStyle.Bold);
             _icon = CreateIcon();
             _message = new Label
             {
@@ -298,11 +302,6 @@ public static class HiveMessageBox
         private Label CreateIcon()
         {
             var accent = GetAccentColor(Theme, _options.Type);
-            _iconFont = new Font(
-                Theme.Typography.FontFamily,
-                16f,
-                FontStyle.Bold);
-
             var icon = new Label
             {
                 AutoSize = false,
