@@ -472,10 +472,13 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private void OutputViewOnCollapseStateChanged(object? sender, EventArgs e)
     {
-        _outputRevealButton.Visible = _outputView.IsCollapsed;
+        _outputRevealButton.Visible =
+            _outputView.IsCollapsed &&
+            _outputView.OutputTextBox.TextLength > 0;
+
         if (!_outputView.IsCollapsed)
             _outputView.BringToFront();
-        else
+        else if (_outputRevealButton.Visible)
             _outputRevealButton.BringToFront();
     }
 
