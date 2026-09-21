@@ -223,6 +223,9 @@ Theme resolution is deterministic. `System` resolves from the Windows applicatio
 
 The theme manager is stateful but UI-only. Changing the mode raises one theme-change notification. Consumers reapply the effective theme to their attached control trees in response to that notification. The manager does not own application settings, persistence, Agent/Hive state, or host business data.
 
+The WinForms foundation is DPI-aware as a shared infrastructure concern, not a dialog-specific feature. The Example host opts into Per-Monitor-V2 DPI awareness through its executable project configuration, while Hive-owned forms use WinForms DPI auto-scaling and custom-painted Hive controls derive geometry, spacing, hit targets, and drawing metrics from the current control DPI. Runtime-created example controls must use the shared DPI scaling helper for fixed design values so they are not introduced at an unscaled 96-DPI size. Moving a window between monitors with different DPI must rescale the complete Hive-owned visual surface consistently.
+
+
 #### Hive-owned controls and window shell
 
 The foundation introduces only consumer-facing Hive contracts:
