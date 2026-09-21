@@ -11,7 +11,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
     private readonly HiveButton _clearButton;
     private readonly TextBox _output;
     private readonly Font _titleFont;
-    private HiveThemeDefinition? _theme;
+    private readonly Font _outputFont;
 
     public HiveExampleOutputView()
     {
@@ -23,6 +23,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             "Segoe UI Semibold",
             9.5f,
             FontStyle.Bold);
+        _outputFont = new Font("Consolas", 9f);
 
         var root = new TableLayoutPanel
         {
@@ -82,7 +83,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             ScrollBars = ScrollBars.Both,
             WordWrap = false,
             BorderStyle = BorderStyle.FixedSingle,
-            Font = new Font("Consolas", 9f),
+            Font = _outputFont,
             Margin = Padding.Empty,
             Padding = new Padding(8),
         };
@@ -145,7 +146,10 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
     protected override void Dispose(bool disposing)
     {
         if (disposing)
+        {
             _titleFont.Dispose();
+            _outputFont.Dispose();
+        }
 
         base.Dispose(disposing);
     }
