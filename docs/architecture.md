@@ -99,7 +99,7 @@ Scope matching is a structural boundary, not an implicit grant. The access conte
 | Scope | Required context |
 |---|---|
 | Global | Deployment + Principal |
-| Tenant | Deployment + Principal |
+| Tenant | Deployment + Tenant + Principal |
 | User | Deployment + Tenant + User + Principal |
 | Workspace | Deployment + Tenant + Workspace + Principal |
 | Agent | Deployment + Tenant + Agent + Principal |
