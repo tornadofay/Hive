@@ -565,6 +565,40 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         }
     }
 
+    private void UpdateFooterLayout()
+    {
+        var visible = _pagination.Visible;
+
+        _footerLayout.SuspendLayout();
+        try
+        {
+            _footerLayout.Controls.Clear();
+            _footerLayout.ColumnStyles.Clear();
+
+            if (visible)
+            {
+                _footerLayout.ColumnCount = 2;
+                _footerLayout.ColumnStyles.Add(
+                    new ColumnStyle(SizeType.Percent, 100f));
+                _footerLayout.ColumnStyles.Add(
+                    new ColumnStyle(SizeType.Absolute, PaginationWidth));
+                _footerLayout.Controls.Add(_statusLabel, 0, 0);
+                _footerLayout.Controls.Add(_pagination, 1, 0);
+            }
+            else
+            {
+                _footerLayout.ColumnCount = 1;
+                _footerLayout.ColumnStyles.Add(
+                    new ColumnStyle(SizeType.Percent, 100f));
+                _footerLayout.Controls.Add(_statusLabel, 0, 0);
+            }
+        }
+        finally
+        {
+            _footerLayout.ResumeLayout(true);
+        }
+    }
+
     private void UpdateToolbarLayout()
     {
         var compact = ClientSize.Width > 0 && ClientSize.Width < 860;
@@ -593,17 +627,31 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
             if (compact)
             {
-                _pageLayout.ActionBarHeight = 88;
-                _actionLayout.ColumnCount = 1;
-                _actionLayout.RowCount = 2;
-                _actionLayout.ColumnStyles.Add(
-                    new ColumnStyle(SizeType.Percent, 100f));
-                _actionLayout.RowStyles.Add(
-                    new RowStyle(SizeType.Absolute, 40f));
-                _actionLayout.RowStyles.Add(
-                    new RowStyle(SizeType.Absolute, 44f));
-                _actionLayout.Controls.Add(_searchPanel, 0, 0);
-                _actionLayout.Controls.Add(_actionButtons, 0, 1);
+                if (_searchBox.Visible)
+                {
+                    _pageLayout.ActionBarHeight = 88;
+                    _actionLayout.ColumnCount = 1;
+                    _actionLayout.RowCount = 2;
+                    _actionLayout.ColumnStyles.Add(
+                        new ColumnStyle(SizeType.Percent, 100f));
+                    _actionLayout.RowStyles.Add(
+                        new RowStyle(SizeType.Absolute, 40f));
+                    _actionLayout.RowStyles.Add(
+                        new RowStyle(SizeType.Absolute, 44f));
+                    _actionLayout.Controls.Add(_searchPanel, 0, 0);
+                    _actionLayout.Controls.Add(_actionButtons, 0, 1);
+                }
+                else
+                {
+                    _pageLayout.ActionBarHeight = ActionBarHeight;
+                    _actionLayout.ColumnCount = 1;
+                    _actionLayout.RowCount = 1;
+                    _actionLayout.ColumnStyles.Add(
+                        new ColumnStyle(SizeType.Percent, 100f));
+                    _actionLayout.RowStyles.Add(
+                        new RowStyle(SizeType.Percent, 100f));
+                    _actionLayout.Controls.Add(_actionButtons, 0, 0);
+                }
             }
             else
             {
