@@ -32,6 +32,12 @@ public sealed class HiveListPageLayout : UserControl
             Padding = Padding.Empty
         };
         _layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        _layout.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, _headerHeight));
+        _layout.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, _actionBarHeight));
+        _layout.RowStyles.Add(
+            new RowStyle(SizeType.Percent, 100f));
 
         _headerPanel = CreateSurfacePanel(
             new Padding(12, 4, 12, 4));
