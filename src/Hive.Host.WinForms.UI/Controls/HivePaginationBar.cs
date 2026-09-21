@@ -122,16 +122,6 @@ public sealed class HivePaginationBar : UserControl
         set => _pageLabel.Text = value ?? string.Empty;
     }
 
-    public void ApplyTheme(HiveThemeDefinition theme)
-    {
-        ArgumentNullException.ThrowIfNull(theme);
-
-        BackColor = theme.Palette.Surface;
-        _pageLabel.ForeColor = theme.Palette.MutedText;
-        _previousButton.ApplyTheme(theme, HiveButtonStyle.Secondary);
-        _nextButton.ApplyTheme(theme, HiveButtonStyle.Secondary);
-    }
-
     protected override void OnDpiChanged(DpiChangedEventArgs e)
     {
         base.OnDpiChanged(e);
