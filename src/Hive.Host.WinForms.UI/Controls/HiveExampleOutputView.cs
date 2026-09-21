@@ -97,7 +97,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public string Text
+    public string OutputText
     {
         get => _output.Text;
         set => _output.Text = value ?? string.Empty;
