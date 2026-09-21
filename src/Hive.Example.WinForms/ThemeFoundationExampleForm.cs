@@ -361,12 +361,12 @@ internal sealed class ThemeFoundationExampleForm : HiveForm
     private void UpdateThemeState() =>
         _themeState.Text = $"Selected: {_themeManager.Mode}\r\nEffective: {_themeManager.Theme.Mode}";
 
-    private static Label CreateBodyLabel(string? text = null) =>
+    private Label CreateBodyLabel(string? text = null) =>
         new()
         {
             AutoSize = true,
             Text = text ?? string.Empty,
-            MaximumSize = new Size(700, 120),
-            Margin = new Padding(0, 0, 0, 12)
+            MaximumSize = Scale(new Size(700, 120)),
+            Margin = Scale(new Padding(0, 0, 0, 12))
         };
 }
