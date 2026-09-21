@@ -136,7 +136,6 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
     {
         ArgumentNullException.ThrowIfNull(theme);
 
-        _theme = theme;
         BackColor = theme.Palette.ElevatedSurface;
         _title.ForeColor = theme.Palette.Text;
         _output.BackColor = theme.Palette.InputBackground;
