@@ -34,21 +34,22 @@ internal sealed class ControlsCrudExampleView : UserControl
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
         Padding = Padding.Empty;
-        AutoScroll = true;
+        AutoScroll = false;
 
         var root = new TableLayoutPanel
         {
-            Dock = DockStyle.Top,
+            Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 3,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
-            AutoSize = true
+            AutoSize = false,
+            AutoScroll = true
         };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
 
         _description = new Label
         {
@@ -119,8 +120,7 @@ internal sealed class ControlsCrudExampleView : UserControl
 
         _crud = new HiveCrudPage<CrudExampleItem>
         {
-            Dock = DockStyle.Top,
-            Width = 860,
+            Dock = DockStyle.Fill,
             Height = 480,
             MinimumSize = new Size(420, 420),
             Margin = new Padding(0, 18, 0, 12),
@@ -155,9 +155,7 @@ internal sealed class ControlsCrudExampleView : UserControl
 
         Controls.Add(root);
 
-        SizeChanged += (_, _) => UpdateCrudWidth();
         _themeManager.Apply(this);
-        UpdateCrudWidth();
         _ = _crud.RefreshAsync();
     }
 
@@ -167,13 +165,6 @@ internal sealed class ControlsCrudExampleView : UserControl
             _crud.OperationFailed -= CrudOperationFailed;
 
         base.Dispose(disposing);
-    }
-
-    private void UpdateCrudWidth()
-    {
-        var availableWidth = ClientSize.Width - 18;
-        if (availableWidth > 0)
-            _crud.Width = Math.Max(420, availableWidth);
     }
 
     private Task<IReadOnlyList<CrudExampleItem>> LoadItemsAsync(
