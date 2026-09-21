@@ -187,9 +187,6 @@ internal sealed partial class ThemeFoundationExampleForm
             BodyPanel.Padding = new Padding(28);
             BodyPanel.Controls.Add(_editorLayout);
             ThemeManager.Apply(_editorLayout);
-
-            AcceptButton = save;
-            CancelButton = cancel;
         }
 
         public CrudExampleItem Item { get; private set; }
