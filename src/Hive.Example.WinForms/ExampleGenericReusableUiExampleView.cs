@@ -5,8 +5,9 @@ using Hive.Host.WinForms.UI.Controls;
 
 namespace Hive.Example.WinForms;
 
-internal sealed class ExampleGenericReusableUiExampleView : HiveExampleTestSurface
+internal sealed class ExampleGenericReusableUiExampleView : UserControl
 {
+    private readonly HiveExampleTestSurface _surface;
     private readonly IHiveExampleOutput _output;
 
     public ExampleGenericReusableUiExampleView(
@@ -17,11 +18,19 @@ internal sealed class ExampleGenericReusableUiExampleView : HiveExampleTestSurfa
         _output = services.GetExampleOutput();
 
         Dock = DockStyle.Fill;
+        Margin = Padding.Empty;
+        Padding = Padding.Empty;
 
-        InputText =
+        _surface = new HiveExampleTestSurface
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty
+        };
+
+        _surface.InputText =
             "Demonstrate the reusable Hive Example UI surface.";
 
-        CodeSnippet = """
+        _surface.CodeSnippet = """
 var example = new HiveExampleTestSurface
 {
     InputText = "test value",
@@ -44,21 +53,23 @@ example.ConfigureRun(
     owner);
 """;
 
-        SetInformation(
+        _surface.SetInformation(
             "This is the standard reusable Example UI surface used by ordinary Hive developer examples. It centralizes the repeated Run/Copy actions, editable input, C# reproduction snippet, status handling, description, expected result, cancellation, and exception presentation.",
             "The example-specific view only supplies its test data and test logic. The common UI and execution behavior remain in Hive.Host.WinForms.UI.",
             "Example architecture",
             "Specialized examples such as Theme, Controls & CRUD, and Dialogs can keep their own custom layouts.");
 
-        ConfigureRun(
+        _surface.ConfigureRun(
             RunDemoAsync,
             _output,
             this);
+
+        Controls.Add(_surface);
     }
 
     private async Task RunDemoAsync(CancellationToken cancellationToken)
     {
-        var input = RequireInput(InputText);
+        var input = HiveExampleTestSurface.RequireInput(_surface.InputText);
 
         cancellationToken.ThrowIfCancellationRequested();
 
