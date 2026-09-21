@@ -73,7 +73,14 @@ public sealed class HiveListView : ListView
                     TextFormatFlags.EndEllipsis |
                     TextFormatFlags.NoPrefix;
 
-        flags |= e.Header.TextAlign switch
+        var header = e.Header;
+        if (header is null)
+        {
+            e.DrawDefault = true;
+            return;
+        }
+
+        flags |= header.TextAlign switch
         {
             HorizontalAlignment.Right => TextFormatFlags.Right,
             HorizontalAlignment.Center => TextFormatFlags.HorizontalCenter,
@@ -82,7 +89,7 @@ public sealed class HiveListView : ListView
 
         TextRenderer.DrawText(
             e.Graphics,
-            e.Header.Text,
+            header.Text,
             _headerFont ?? Font,
             Rectangle.Inflate(e.Bounds, -10, 0),
             theme.Palette.Text,
@@ -98,8 +105,15 @@ public sealed class HiveListView : ListView
             return;
         }
 
-        var selected = e.Item.Selected;
-        var hovered = e.Item.Index == _hoverIndex && !selected;
+        var item = e.Item;
+        if (item is null)
+        {
+            e.DrawDefault = true;
+            return;
+        }
+
+        var selected = item.Selected;
+        var hovered = item.Index == _hoverIndex && !selected;
         var row = new Rectangle(
             1,
             e.Bounds.Top,
@@ -135,7 +149,15 @@ public sealed class HiveListView : ListView
                     TextFormatFlags.EndEllipsis |
                     TextFormatFlags.NoPrefix;
 
-        flags |= e.Header.TextAlign switch
+        var header = e.Header;
+        var subItem = e.SubItem;
+        if (header is null || subItem is null)
+        {
+            e.DrawDefault = true;
+            return;
+        }
+
+        flags |= header.TextAlign switch
         {
             HorizontalAlignment.Right => TextFormatFlags.Right,
             HorizontalAlignment.Center => TextFormatFlags.HorizontalCenter,
@@ -144,7 +166,7 @@ public sealed class HiveListView : ListView
 
         TextRenderer.DrawText(
             e.Graphics,
-            e.SubItem.Text,
+            subItem.Text,
             Font,
             Rectangle.Inflate(e.Bounds, -10, 0),
             color,
@@ -155,7 +177,7 @@ public sealed class HiveListView : ListView
     {
         base.OnMouseMove(e);
 
-        var item = GetItemAt(e.Location);
+        var item = GetItemAt(e.X, e.Y);
         var next = item?.Index ?? -1;
         if (_hoverIndex == next)
             return;
