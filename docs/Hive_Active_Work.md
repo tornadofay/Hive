@@ -24,7 +24,7 @@ Implement the common platform infrastructure shared by every later Hive capabili
 
 ## Implementation progress
 
-The first 0.2 implementation set is committed to `Hive.Core`:
+The 0.2 implementation set is committed to `Hive.Core`:
 
 - common technical IDs: `EventId`, `CorrelationId`, `CausationId`;
 - typed `Error`, `Result`, and `Result<T>`;
@@ -34,16 +34,29 @@ The first 0.2 implementation set is committed to `Hive.Core`:
 - System.Text.Json event serialization with stable converters for common event values;
 - typed `EventSerializationException` for malformed/future/incompatible event payloads.
 
-Local 0.2 verification has not yet been performed here.
+The `Result` implementation was corrected after the initial compilation failure: the invalid record-constructor-body syntax was replaced with an explicit constructor while preserving the public contract.
+
+The `Hive.Tests` project now contains focused 0.2 contract tests for:
+
+- identifier validation and round-tripping;
+- Error / Result invariants;
+- deterministic IClock usage;
+- EventEnvelope invariants;
+- JSON envelope/payload round-tripping;
+- malformed and future schema rejection;
+- sequential event upcasting;
+- duplicate, missing, and non-sequential upcaster handling.
+
+Current automated-test execution remains pending. No test-pass claim is recorded yet.
 
 ## 0.1 completion record
 
 The initial .NET 10 solution scaffold was merged into main and manually verified by the developer.
 
-- Build result: **PASS — developer reports full solution rebuild succeeds locally.**
-- Runtime result: **PASS — Hive.Example.WinForms is the startup project and launches successfully with the current empty placeholder form.**
+- Build result: **PASS — developer reports full solution rebuild succeeds locally after pulling the current main branch.**
+- Runtime result: **PASS — developer reports the solution runs successfully after the rebuild.**
 - Verification result: **PASS for the 0.1 scaffold boundary; all eleven projects are present in the solution and the solution participates in a successful full rebuild.**
-- Automated tests: **None in 0.1 by design.** The real xUnit test harness is a later Phase 0.5 slice.
+- Automated tests: **Not executed for 0.1 by design.**
 - Commit: 590ca87dfc1c4e1d99308394167ad29202317c69
 - Next slice: **0.2 — Common infrastructure**
 
@@ -85,22 +98,26 @@ Additional constraints:
 - Agent/Hive behavior;
 - UI foundation;
 - Example navigation;
-- test runner tooling;
+- provider/database/fake-host test infrastructure belonging to later slices;
 - V1 image/document pipeline;
 - CognitiveAgent/CognitiveHive;
 - automated end-to-end behavior.
 
 ## 0.2 Verification
 
-The developer must manually verify:
+The current verification record is:
 
-1. all common ID/value/error/result types compile and satisfy their invariants;
-2. event envelopes preserve event type, payload schema version, correlation ID, and causation ID;
-3. JSON serialization round-trips supported event payloads;
-4. older supported payload versions upcast to the current contract;
-5. unsupported future/incompatible payload versions are rejected cleanly;
-6. IClock allows deterministic tests and application time access without direct time coupling;
-7. no later project boundary or feature is pulled into the common infrastructure slice.
+1. **Developer-reported full-solution rebuild: PASS.**
+2. **Developer-reported application launch: PASS.**
+3. 0.2 contract-test suite has been added to `Hive.Tests`.
+4. Automated execution of the 0.2 suite has **not yet been performed here**, so 0.2 is not marked complete.
+5. The required 0.2 checks cover:
+   - common ID/value/error/result invariants;
+   - event envelope preservation;
+   - JSON serialization round-trip;
+   - supported older-event payload upcasting;
+   - rejection of unsupported future/incompatible payload versions;
+   - deterministic clock injection.
 
 ## Completion record
 
