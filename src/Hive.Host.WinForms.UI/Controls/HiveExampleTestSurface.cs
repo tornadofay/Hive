@@ -17,9 +17,14 @@ public sealed class HiveExampleTestSurface : UserControl
     private readonly Label _inputTitle;
     private readonly Label _codeTitle;
     private readonly Font _sectionFont;
+    private readonly Font _inputFont;
+    private readonly Font _codeFont;
     private HiveThemeDefinition? _theme;
     private CancellationTokenSource? _runCancellation;
     private bool _busy;
+    private Func<CancellationToken, Task>? _runAction;
+    private IHiveExampleOutput? _output;
+    private IWin32Window? _owner;
 
     public HiveExampleTestSurface()
     {
@@ -31,6 +36,8 @@ public sealed class HiveExampleTestSurface : UserControl
             "Segoe UI Semibold",
             9f,
             FontStyle.Bold);
+        _inputFont = new Font("Consolas", 9f);
+        _codeFont = new Font("Consolas", 9f);
 
         var root = new TableLayoutPanel
         {
@@ -64,6 +71,19 @@ public sealed class HiveExampleTestSurface : UserControl
             Width = 126,
             Height = 36,
             Margin = Padding.Empty
+        };
+        _runButton.Click += async (_, _) =>
+        {
+            if (_runAction is null)
+            {
+                SetStatus("No example is configured.");
+                return;
+            }
+
+            await RunAsync(
+                _runAction,
+                _output,
+                _owner);
         };
 
         _copyButton = new HiveButton
@@ -117,7 +137,7 @@ public sealed class HiveExampleTestSurface : UserControl
             ScrollBars = ScrollBars.Both,
             WordWrap = false,
             BorderStyle = BorderStyle.FixedSingle,
-            Font = new Font("Consolas", 9f),
+            Font = _inputFont,
             Margin = new Padding(0, 0, 6, 0),
             Padding = new Padding(8)
         };
@@ -130,7 +150,7 @@ public sealed class HiveExampleTestSurface : UserControl
             ScrollBars = ScrollBars.Both,
             WordWrap = false,
             BorderStyle = BorderStyle.FixedSingle,
-            Font = new Font("Consolas", 9f),
+            Font = _codeFont,
             Margin = new Padding(6, 0, 0, 0),
             Padding = new Padding(8)
         };
@@ -202,6 +222,19 @@ public sealed class HiveExampleTestSurface : UserControl
 
     public void SetStatus(string text) =>
         _status.Text = text ?? string.Empty;
+
+    public void ConfigureRun(
+        Func<CancellationToken, Task> action,
+        IHiveExampleOutput? output = null,
+        IWin32Window? owner = null)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        _runAction = action;
+        _output = output;
+        _owner = owner;
+        SetStatus("Ready");
+    }
 
     public void Cancel()
     {
@@ -283,6 +316,9 @@ public sealed class HiveExampleTestSurface : UserControl
         {
             _runCancellation?.Cancel();
             _runCancellation?.Dispose();
+            _sectionFont.Dispose();
+            _inputFont.Dispose();
+            _codeFont.Dispose();
         }
 
         base.Dispose(disposing);
