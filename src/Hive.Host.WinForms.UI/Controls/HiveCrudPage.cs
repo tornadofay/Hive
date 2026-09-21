@@ -34,7 +34,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private const int FooterHeight = 42;
     private const int ActionButtonWidth = 84;
     private const int ActionBarActionsWidth = 380;
-    private const int PaginationWidth = 230;
+    private const int PaginationWidth = 300;
     private const int DefaultPageSize = 25;
 
     private readonly HiveListPageLayout _pageLayout;
