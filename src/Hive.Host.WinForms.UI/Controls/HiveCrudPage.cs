@@ -35,6 +35,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private const int ActionButtonWidth = 92;
     private const int CompactActionButtonWidth = 84;
     private const int ActionButtonSpacing = 8;
+    private const int InitialInitialActionBarActionsWidth =
+        (ActionButtonWidth + ActionButtonSpacing) * 4;
     private const int PaginationWidth = 260;
     private const int DefaultPageSize = 25;
 
