@@ -1,5 +1,4 @@
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Theme;
@@ -163,13 +162,7 @@ internal sealed class HiveWindowHeader : Control
         if (bounds.Width <= 0 || bounds.Height <= 0)
             return;
 
-        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-        using var background = new LinearGradientBrush(
-            bounds,
-            _background1,
-            _background2,
-            90f);
-
+        using var background = new SolidBrush(_background1);
         e.Graphics.FillRectangle(background, bounds);
 
         if (_borderPen is not null)
