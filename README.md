@@ -80,9 +80,37 @@ These mechanisms become cognitive only when a CognitiveAgent can autonomously in
 
 A base Agent may sponsor a persistent Hive when a problem requires multiple specialties. The Agent remains an Agent; the Hive becomes a separate managed collective.
 
-A Hive manages membership and may create or reuse missing specialist Agents when authorized. A **Swarm** is the active work session over that persistent Hive. When the work is complete, the Swarm ends and the Hive may become Dormant without deleting its members or accumulated state.
+A Hive manages membership and may create or reuse specialist Agents of authorized generations. A **Swarm is not another persistent layer**: it is simply the selected Hive members currently collaborating on a bounded problem. When the collaboration ends, the Swarm ceases to be active; the Hive and its Agents remain.
 
-A member Agent inside a Hive normally requests missing specialties from the parent Hive rather than creating child Hives itself. This keeps population authority with the Hive while allowing a solo Agent to create or reactivate specialist Hives when needed.
+A member Agent inside a Hive normally requests missing specialties from the parent Hive rather than creating child Hives itself. A solo Agent may sponsor a persistent Hive when it needs multiple specialties. Hive sponsorship does not own the Hive's lifetime.
+
+## Workspace
+
+`Hive.Workspace` is the human-facing operational surface over `Hive.Management`.
+
+LLM mode behaves like a normal chat: the user can choose the execution target/model and upload files. Agentic mode chats with an Agent or Hive; the Agent/Hive selects execution targets through the normal capability/policy planner and the Workspace shows the selected target.
+
+The Workspace can display:
+
+- active Agents and their specializations;
+- Hive organization and current collaborating Swarm members;
+- WorkItems and activity;
+- Questions and notifications;
+- pending approvals;
+- execution/provider information;
+- registered host contexts.
+
+A business application can register a host context with a bounded API such as:
+
+```csharp
+ai.Register(this);
+```
+
+Registration may bind or reuse a specialized Agent. It does not automatically create an Agent or Hive, and multiple open forms do not automatically become a Hive merely because they are visible at the same time.
+
+## V1 work-unit semantics
+
+One submitted document is one WorkItem. A batch is multiple WorkItems. WorkItem identity and lifecycle are independent of individual runtime/execution lifetimes.
 
 ## Cognitive lifecycle (later generation)
 
@@ -155,6 +183,9 @@ A generic host-integration framework is deliberately later.
 - **Dream results remain simulations/predictions and are never silently treated as actual experience**
 - **Questions are first-class, specialty-aware cognitive objects rather than repeated prompt text**
 - **CognitiveHive adds collective cognition without replacing or owning member cognition**
+- **Swarm is a non-persistent view of the currently collaborating Hive members**
+- **Agent generation is explicit at creation; it is never inferred automatically from task complexity**
+- **Dream/background processing remains subject to applicable budgets, quotas, concurrency, authorization, and cancellation**
 - **No runtime type promotion/demotion**
 - **Provider-neutral and capability-aware execution planning**
 - **One shared OpenAI-compatible provider transport**
