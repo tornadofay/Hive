@@ -11,8 +11,6 @@ internal sealed class HiveBorderPanel : Panel
 
     private HiveThemeDefinition? _theme;
     private int _cornerRadius = DefaultCornerRadius;
-    private GraphicsPath? _regionPath;
-
     public HiveBorderPanel()
     {
         SetStyle(
@@ -94,8 +92,7 @@ internal sealed class HiveBorderPanel : Panel
         if (disposing)
         {
             Region = null;
-            _regionPath?.Dispose();
-            _regionPath = null;
+            
         }
 
         base.Dispose(disposing);
@@ -116,10 +113,6 @@ internal sealed class HiveBorderPanel : Panel
                 ClientSize.Width,
                 ClientSize.Height),
             _cornerRadius);
-
-        _regionPath?.Dispose();
-        _regionPath = new GraphicsPath();
-        _regionPath.AddPath(path, false);
 
         Region = new Region(path);
     }
