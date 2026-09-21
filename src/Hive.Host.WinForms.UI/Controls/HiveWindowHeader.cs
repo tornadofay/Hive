@@ -35,6 +35,10 @@ internal sealed class HiveWindowHeader : Control
     private Color _buttonPressed;
     private Color _closeHover;
     private Pen? _borderPen;
+    private SolidBrush? _backgroundBrush;
+    private SolidBrush? _buttonHoverBrush;
+    private SolidBrush? _buttonPressedBrush;
+    private SolidBrush? _closeHoverBrush;
 
     private readonly Font _titleFont = new("Segoe UI Semibold", 10.5f, FontStyle.Bold);
     private readonly Font _subtitleFont = new("Segoe UI", 8.25f, FontStyle.Regular);
@@ -181,6 +185,16 @@ internal sealed class HiveWindowHeader : Control
 
         _borderPen?.Dispose();
         _borderPen = new Pen(theme.Palette.Border);
+
+        _backgroundBrush?.Dispose();
+        _backgroundBrush = new SolidBrush(_background1);
+        _buttonHoverBrush?.Dispose();
+        _buttonHoverBrush = new SolidBrush(_buttonHover);
+        _buttonPressedBrush?.Dispose();
+        _buttonPressedBrush = new SolidBrush(_buttonPressed);
+        _closeHoverBrush?.Dispose();
+        _closeHoverBrush = new SolidBrush(_closeHover);
+
         Invalidate();
     }
 
@@ -192,8 +206,8 @@ internal sealed class HiveWindowHeader : Control
         if (bounds.Width <= 0 || bounds.Height <= 0)
             return;
 
-        using var background = new SolidBrush(_background1);
-        e.Graphics.FillRectangle(background, bounds);
+        if (_backgroundBrush is not null)
+            e.Graphics.FillRectangle(_backgroundBrush, bounds);
 
         if (_borderPen is not null)
             e.Graphics.DrawLine(_borderPen, 0, Height - 1, Width - 1, Height - 1);
@@ -391,6 +405,10 @@ internal sealed class HiveWindowHeader : Control
             _subtitleFont.Dispose();
             _buttonFont.Dispose();
             _borderPen?.Dispose();
+            _backgroundBrush?.Dispose();
+            _buttonHoverBrush?.Dispose();
+            _buttonPressedBrush?.Dispose();
+            _closeHoverBrush?.Dispose();
         }
     }
 
@@ -416,14 +434,14 @@ internal sealed class HiveWindowHeader : Control
 
         if (hovered || pressed)
         {
-            var fill = command == WindowCommandClose
-                ? _closeHover
+            var brush = command == WindowCommandClose
+                ? _closeHoverBrush
                 : pressed
-                    ? _buttonPressed
-                    : _buttonHover;
+                    ? _buttonPressedBrush
+                    : _buttonHoverBrush;
 
-            using var brush = new SolidBrush(fill);
-            graphics.FillRectangle(brush, rect);
+            if (brush is not null)
+                graphics.FillRectangle(brush, rect);
         }
 
         TextRenderer.DrawText(
