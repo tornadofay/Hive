@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Hive.Tests;
 
-public sealed class HivePersistenceDatabaseFixture : IDisposable
+public sealed class HivePersistenceDatabaseFixture
 {
     public HivePersistenceDatabaseFixture()
     {
@@ -36,23 +36,9 @@ public sealed class HivePersistenceDatabaseFixture : IDisposable
         command.ExecuteNonQuery();
     }
 
-    public void Dispose()
-    {
-    }
-
     private SqlConnection CreateMasterOrDatabaseConnection()
     {
         return new SqlConnection(Options.ConnectionString);
-    }
-
-    private SqlConnection CreateMasterConnection()
-    {
-        var builder = new SqlConnectionStringBuilder(Options.ConnectionString)
-        {
-            InitialCatalog = "master"
-        };
-
-        return new SqlConnection(builder.ConnectionString);
     }
 
 }
