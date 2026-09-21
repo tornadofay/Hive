@@ -37,7 +37,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private const int PaginationWidth = 300;
     private const int DefaultPageSize = 25;
 
-    private readonly HivePage _pageLayout;
+    private readonly HiveListPageLayout _pageLayout;
+    private readonly Label _titleLabel;
+    private readonly Label _descriptionLabel;
     private readonly Label _searchLabel;
     private readonly TextBox _searchBox;
     private readonly TableLayoutPanel _actionLayout;
@@ -51,6 +53,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private readonly ListView _list;
     private readonly Label _emptyStateLabel;
     private readonly HivePaginationBar _pagination;
+    private readonly Font _titleFont;
+    private readonly Font _descriptionFont;
     private readonly Font _searchLabelFont;
     private readonly Font _emptyStateFont;
     private readonly List<HiveCrudColumn<TItem>> _columns = new();
@@ -72,16 +76,41 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         Margin = Padding.Empty;
         Padding = Padding.Empty;
 
-        _pageLayout = new HivePage
+        _pageLayout = new HiveListPageLayout
         {
             Dock = DockStyle.Fill,
             HeaderHeight = HeaderHeight,
-            ActionBarHeight = ActionBarHeight,
-            Title = "Items"
+            ActionBarHeight = ActionBarHeight
         };
 
+        _titleFont = new Font("Segoe UI Semibold", 15f, FontStyle.Bold);
+        _descriptionFont = new Font("Segoe UI", 8.9f);
         _searchLabelFont = new Font("Segoe UI Semibold", 8.8f, FontStyle.Bold);
         _emptyStateFont = new Font("Segoe UI", 9.5f);
+
+        _titleLabel = new Label
+        {
+            AutoSize = true,
+            Dock = DockStyle.Top,
+            Font = _titleFont,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            Text = "Items",
+            TabIndex = 0
+        };
+
+        _descriptionLabel = new Label
+        {
+            AutoSize = false,
+            Dock = DockStyle.Fill,
+            Font = _descriptionFont,
+            Margin = new Padding(0, 4, 0, 0),
+            Padding = Padding.Empty
+        };
+
+        _pageLayout.HeaderPanel.Padding = new Padding(12, 4, 12, 4);
+        _pageLayout.HeaderPanel.Controls.Add(_descriptionLabel);
+        _pageLayout.HeaderPanel.Controls.Add(_titleLabel);
 
         _actionLayout = new TableLayoutPanel
         {
@@ -254,7 +283,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
     public event EventHandler<HiveCrudOperationFailedEventArgs>? OperationFailed;
 
-    public HivePage PageLayout => _pageLayout;
+    public HiveListPageLayout PageLayout => _pageLayout;
 
     public ListView ListView => _list;
 
@@ -397,15 +426,15 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string Title
     {
-        get => _pageLayout.Title;
-        set => _pageLayout.Title = value ?? string.Empty;
+        get => _titleLabel.Text;
+        set => _titleLabel.Text = value ?? string.Empty;
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string Description
     {
-        get => _pageLayout.Description;
-        set => _pageLayout.Description = value ?? string.Empty;
+        get => _descriptionLabel.Text;
+        set => _descriptionLabel.Text = value ?? string.Empty;
     }
 
     public IReadOnlyList<HiveCrudColumn<TItem>> Columns => _columns;
@@ -502,6 +531,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         if (disposing)
         {
             _operationCancellation?.Dispose();
+            _titleFont.Dispose();
+            _descriptionFont.Dispose();
             _searchLabelFont.Dispose();
             _emptyStateFont.Dispose();
         }
