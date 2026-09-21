@@ -169,7 +169,22 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 NavigationText = ColorTranslator.FromHtml("#F3F0FF"),
                 NavigationBorder = effectiveMode == HiveThemeMode.Dark
                     ? ColorTranslator.FromHtml("#3C315F")
-                    : ColorTranslator.FromHtml("#5E4A92")
+                    : ColorTranslator.FromHtml("#5E4A92"),
+                Information = effectiveMode == HiveThemeMode.Dark
+                    ? ColorTranslator.FromHtml("#78A9FF")
+                    : ColorTranslator.FromHtml("#2563EB"),
+                Success = effectiveMode == HiveThemeMode.Dark
+                    ? ColorTranslator.FromHtml("#6CCB91")
+                    : ColorTranslator.FromHtml("#169E57"),
+                Warning = effectiveMode == HiveThemeMode.Dark
+                    ? ColorTranslator.FromHtml("#E8AC3E")
+                    : ColorTranslator.FromHtml("#C78806"),
+                Error = effectiveMode == HiveThemeMode.Dark
+                    ? ColorTranslator.FromHtml("#EC6A6A")
+                    : ColorTranslator.FromHtml("#CF3E3E"),
+                Question = effectiveMode == HiveThemeMode.Dark
+                    ? ColorTranslator.FromHtml("#8E93F0")
+                    : ColorTranslator.FromHtml("#5E63D3")
             });
     }
 
