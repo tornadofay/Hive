@@ -6,7 +6,7 @@ namespace Hive.Host.WinForms.UI.Controls;
 
 public sealed class HiveListView : ListView
 {
-    private const int RowHeight = 36;
+    private const int RowHeight = 34;
 
     private HiveThemeDefinition? _theme;
     private int _hoverIndex = -1;
@@ -307,15 +307,17 @@ public sealed class HiveListView : ListView
     {
         var family = theme.Typography.FontFamily;
 
+        var size = theme.Typography.SectionSize;
+
         if (_headerFont is not null &&
             string.Equals(_headerFont.FontFamily.Name, family, StringComparison.Ordinal) &&
-            Math.Abs(_headerFont.Size - 8.8f) <= 0.01f)
+            Math.Abs(_headerFont.Size - size) <= 0.01f)
         {
             return;
         }
 
         _headerFont?.Dispose();
-        _headerFont = new Font(family, 8.8f, FontStyle.Bold);
+        _headerFont = new Font(family, size, FontStyle.Bold);
     }
 
     protected override void Dispose(bool disposing)
