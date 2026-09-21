@@ -68,18 +68,61 @@ public sealed class HiveThemeManager : IHiveThemeManager
     {
         ArgumentNullException.ThrowIfNull(root);
 
-        root.SuspendLayout();
+        var controls = new List<Control>();
+        CollectControls(root, controls);
+
+        var scrollPositions = controls
+            .OfType<ScrollableControl>()
+            .Where(control => control.AutoScroll)
+            .Select(control => new ScrollState(
+                control,
+                control.AutoScrollPosition))
+            .ToArray();
+
+        foreach (var control in controls)
+            control.SuspendLayout();
+
         try
         {
             ApplyControl(root, Theme);
         }
         finally
         {
-            root.ResumeLayout(false);
+            // Resume children first. The root performs the single final layout pass,
+            // preventing theme changes from producing transient gaps or reflow artifacts.
+            for (var index = controls.Count - 1; index >= 0; index--)
+                controls[index].ResumeLayout(false);
+
+            root.ResumeLayout(true);
+
+            foreach (var scrollState in scrollPositions)
+            {
+                var control = scrollState.Control;
+                if (control.IsDisposed || !control.IsHandleCreated)
+                    continue;
+
+                control.AutoScrollPosition = new Point(
+                    -scrollState.Position.X,
+                    -scrollState.Position.Y);
+            }
         }
 
-        root.Invalidate();
+        root.Invalidate(true);
     }
+
+    private static void CollectControls(
+        Control control,
+        ICollection<Control> controls)
+    {
+        controls.Add(control);
+
+        foreach (Control child in control.Controls)
+            CollectControls(child, controls);
+    }
+
+    private readonly record struct ScrollState(
+        ScrollableControl Control,
+        Point Position);
 
     private static void ApplyControl(
         Control control,
