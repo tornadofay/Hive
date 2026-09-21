@@ -35,6 +35,7 @@ public abstract class HiveForm : Form
         IHiveThemeManager? themeManager = null)
     {
         _themeManager = themeManager ?? new HiveThemeManager();
+        Text = title;
 
         FormBorderStyle = FormBorderStyle.None;
         StartPosition = FormStartPosition.CenterParent;
