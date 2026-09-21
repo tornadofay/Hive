@@ -325,6 +325,26 @@ internal sealed class ControlsCrudExampleView : UserControl
 
         public CrudExampleItem Item { get; private set; }
 
+        protected override bool ProcessCmdKey(
+            ref Message message,
+            Keys keyData)
+        {
+            if (keyData == Keys.Enter)
+            {
+                Save();
+                return true;
+            }
+
+            if (keyData == Keys.Escape)
+            {
+                DialogResult = DialogResult.Cancel;
+                Close();
+                return true;
+            }
+
+            return base.ProcessCmdKey(ref message, keyData);
+        }
+
         private void Save()
         {
             if (string.IsNullOrWhiteSpace(_name.Text))
