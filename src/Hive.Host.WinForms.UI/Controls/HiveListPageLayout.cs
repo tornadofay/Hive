@@ -33,9 +33,12 @@ public sealed class HiveListPageLayout : UserControl
         };
         _layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
-        _headerPanel = CreateSurfacePanel();
-        _actionBarPanel = CreateSurfacePanel();
-        _contentPanel = CreateSurfacePanel();
+        _headerPanel = CreateSurfacePanel(
+            new Padding(12, 4, 12, 4));
+        _actionBarPanel = CreateSurfacePanel(
+            new Padding(12, 4, 12, 4));
+        _contentPanel = CreateSurfacePanel(
+            new Padding(12, 8, 12, 8));
 
         _layout.Controls.Add(_headerPanel, 0, 0);
         _layout.Controls.Add(_actionBarPanel, 0, 1);
@@ -119,12 +122,12 @@ public sealed class HiveListPageLayout : UserControl
         _layout.RowStyles[2].Height = 100f;
     }
 
-    private static Panel CreateSurfacePanel() =>
+    private static Panel CreateSurfacePanel(Padding padding) =>
         new()
         {
             Dock = DockStyle.Fill,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = padding
         };
 
     private static void ApplySurface(Control root, HiveThemeDefinition theme)
