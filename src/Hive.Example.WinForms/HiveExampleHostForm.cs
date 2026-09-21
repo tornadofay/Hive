@@ -317,7 +317,7 @@ internal sealed class HiveExampleHostForm : HiveForm
         }
         finally
         {
-            _viewHost.ResumeLayout(false);
+            _viewHost.ResumeLayout(true);
         }
 
         _themeManager.Apply(nextView);
