@@ -26,8 +26,9 @@ internal sealed partial class ThemeFoundationExampleView
         var crud = new HiveCrudPage<CrudExampleItem>
         {
             Dock = DockStyle.Top,
-            Width = 820,
-            Height = 460,
+            Width = 780,
+            Height = 452,
+            MinimumSize = new Size(520, 420),
             Margin = new Padding(0, 18, 0, 12),
             Title = "Generic CRUD composition",
             Description = "Hive provides the reusable page workflow and interaction model; the consuming feature provides its data, rules, and editor.",
@@ -55,6 +56,12 @@ internal sealed partial class ThemeFoundationExampleView
         crud.OperationFailed += CrudOperationFailed;
 
         _controlsPage.Controls.Add(crud);
+        _controlsPage.Resize += (_, _) =>
+        {
+            var availableWidth = _controlsPage.ClientSize.Width - 12;
+            if (availableWidth > 0)
+                crud.Width = Math.Max(520, availableWidth);
+        };
         _themeManager.Apply(crud);
 
         _ = crud.RefreshAsync();
@@ -141,7 +148,7 @@ internal sealed partial class ThemeFoundationExampleView
             IHiveThemeManager themeManager)
             : base(
                 existing is null ? "Add example item" : "Edit example item",
-                "The editor remains consumer-owned; Hive supplies the shared field composition and interaction rhythm.",
+                "The editor remains consumer-owned; Hive supplies the shared field rhythm and action alignment.",
                 new Size(760, 500),
                 new Size(640, 420),
                 themeManager)
