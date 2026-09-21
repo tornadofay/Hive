@@ -19,6 +19,8 @@ public sealed class HiveEditorLayout : UserControl
     private readonly Panel _footerSeparator;
     private readonly Font _descriptionFont;
     private readonly Font _titleFont;
+    private readonly List<Label> _descriptionLabels = new();
+    private readonly List<Label> _titleLabels = new();
     private int _labelColumnWidth = DefaultLabelColumnWidth;
     private bool _layoutInitialized;
 
@@ -137,6 +139,12 @@ public sealed class HiveEditorLayout : UserControl
         _footer.BackColor = theme.Palette.ElevatedSurface;
         _footerSeparator.BackColor = theme.Palette.Border;
 
+        foreach (var label in _titleLabels)
+            label.ForeColor = theme.Palette.Text;
+
+        foreach (var label in _descriptionLabels)
+            label.ForeColor = theme.Palette.MutedText;
+
         Invalidate(true);
     }
 
@@ -164,6 +172,8 @@ public sealed class HiveEditorLayout : UserControl
         _fields.Controls.Clear();
         _fields.RowStyles.Clear();
         _fields.RowCount = 0;
+        _descriptionLabels.Clear();
+        _titleLabels.Clear();
     }
 
     public void AddField(
@@ -252,7 +262,8 @@ public sealed class HiveEditorLayout : UserControl
             Dock = DockStyle.Fill,
             Font = _descriptionFont,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            AutoEllipsis = true
         };
 
         var titleLabel = new Label
@@ -264,6 +275,9 @@ public sealed class HiveEditorLayout : UserControl
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
+
+        _descriptionLabels.Add(descriptionLabel);
+        _titleLabels.Add(titleLabel);
 
         panel.Controls.Add(descriptionLabel);
         panel.Controls.Add(titleLabel);
