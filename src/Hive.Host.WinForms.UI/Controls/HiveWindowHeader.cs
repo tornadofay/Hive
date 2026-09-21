@@ -141,15 +141,13 @@ internal sealed class HiveWindowHeader : Control
     {
         ArgumentNullException.ThrowIfNull(theme);
 
-        _background1 = theme.VisualStates.NavigationBackground;
-        _background2 = theme.Mode == HiveThemeMode.Dark
-            ? ColorTranslator.FromHtml("#2E434F")
-            : ColorTranslator.FromHtml("#3A5360");
-        _foreground = theme.VisualStates.NavigationText;
-        _subtitleForeground = Color.FromArgb(210, _foreground);
-        _buttonHover = Color.FromArgb(54, Color.White);
-        _buttonPressed = Color.FromArgb(82, Color.White);
-        _closeHover = Color.FromArgb(204, 72, 72);
+        _background1 = theme.Palette.ElevatedSurface;
+        _background2 = theme.Palette.Surface;
+        _foreground = theme.Palette.Text;
+        _subtitleForeground = theme.Palette.MutedText;
+        _buttonHover = theme.VisualStates.HoverBackground;
+        _buttonPressed = theme.VisualStates.PressedBackground;
+        _closeHover = theme.VisualStates.Error;
         Invalidate();
     }
 
