@@ -2,7 +2,7 @@ using System;
 
 namespace Hive.Host.WinForms.UI.Controls;
 
-public sealed record HiveCrudColumn<TItem>
+public sealed record HiveCrudColumn<TItem> where TItem : class
 {
     public HiveCrudColumn(
         string header,
