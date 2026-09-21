@@ -785,18 +785,32 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         if (state.Count == 0 || IsDisposed || !IsHandleCreated)
             return;
 
-        BeginInvoke(new MethodInvoker(() =>
+        try
         {
-            foreach (var (control, position) in state)
+            BeginInvoke(new MethodInvoker(() =>
             {
-                if (control.IsDisposed || !control.IsHandleCreated)
-                    continue;
+                if (IsDisposed || Disposing)
+                    return;
 
-                control.AutoScrollPosition = new Point(
-                    -position.X,
-                    -position.Y);
-            }
-        }));
+                foreach (var (control, position) in state)
+                {
+                    if (control.IsDisposed || control.Disposing || !control.IsHandleCreated)
+                        continue;
+
+                    control.AutoScrollPosition = new Point(
+                        -position.X,
+                        -position.Y);
+                }
+            }));
+        }
+        catch (ObjectDisposedException)
+        {
+            // The owning UI has already started closing; there is no state to restore.
+        }
+        catch (InvalidOperationException) when (!IsHandleCreated || IsDisposed)
+        {
+            // The control handle disappeared between the guard and BeginInvoke.
+        }
     }
 
     private async Task DeleteAsync()
