@@ -435,5 +435,9 @@ public sealed class HiveThemeManager : IHiveThemeManager
         {
             return HiveThemeMode.Light;
         }
+        catch (System.IO.IOException)
+        {
+            return HiveThemeMode.Light;
+        }
     }
 }
