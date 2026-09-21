@@ -9,13 +9,15 @@ namespace Hive.Host.WinForms.UI.Controls;
 public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
 {
     private const int HeaderHeight = 48;
-    private const int ActionWidth = 84;
+    private const int ActionWidth = 88;
+    private const int ActionGap = 8;
     private const int SurfaceRadius = 8;
 
     private readonly HiveBorderPanel _surface;
     private readonly TableLayoutPanel _root;
     private readonly TableLayoutPanel _header;
     private readonly TableLayoutPanel _titleLayout;
+    private readonly FlowLayoutPanel _actions;
     private readonly Label _title;
     private readonly Label _meta;
     private readonly HiveButton _copyButton;
@@ -67,7 +69,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _header = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 4,
+            ColumnCount = 2,
             RowCount = 1,
             Margin = Padding.Empty,
             Padding = new Padding(10, 7, 10, 7),
@@ -75,11 +77,9 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _header.ColumnStyles.Add(
             new ColumnStyle(SizeType.Percent, 100f));
         _header.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Absolute, ActionWidth));
-        _header.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Absolute, ActionWidth));
-        _header.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Absolute, ActionWidth));
+            new ColumnStyle(
+                SizeType.Absolute,
+                (ActionWidth * 3) + (ActionGap * 2)));
 
         _titleLayout = new TableLayoutPanel
         {
@@ -123,6 +123,16 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _titleLayout.Controls.Add(_title, 0, 0);
         _titleLayout.Controls.Add(_meta, 0, 1);
 
+        _actions = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            AutoSize = false,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+
         _copyButton = CreateActionButton("Copy");
         _clearButton = CreateActionButton("Clear");
         _toggleButton = CreateActionButton("Hide");
@@ -130,6 +140,10 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _copyButton.Click += (_, _) => Copy();
         _clearButton.Click += (_, _) => Clear();
         _toggleButton.Click += (_, _) => ToggleCollapsed();
+
+        _actions.Controls.Add(_copyButton);
+        _actions.Controls.Add(_clearButton);
+        _actions.Controls.Add(_toggleButton);
 
         _outputFrame = new Panel
         {
@@ -154,9 +168,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _outputFrame.Controls.Add(_output);
 
         _header.Controls.Add(_titleLayout, 0, 0);
-        _header.Controls.Add(_copyButton, 1, 0);
-        _header.Controls.Add(_clearButton, 2, 0);
-        _header.Controls.Add(_toggleButton, 3, 0);
+        _header.Controls.Add(_actions, 1, 0);
 
         _root.Controls.Add(_header, 0, 0);
         _root.Controls.Add(_outputFrame, 0, 1);
@@ -257,9 +269,9 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         {
             Text = text,
             Style = HiveButtonStyle.Secondary,
-            Dock = DockStyle.Fill,
-            Margin = new Padding(4, 0, 0, 0),
-            MinimumSize = new Size(ActionWidth - 8, 34),
+            Width = ActionWidth,
+            Height = 34,
+            Margin = new Padding(ActionGap / 2, 0, ActionGap / 2, 0),
             AccessibleRole = AccessibleRole.PushButton,
             TabStop = true
         };
