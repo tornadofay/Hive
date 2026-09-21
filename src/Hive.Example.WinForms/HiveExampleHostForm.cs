@@ -296,23 +296,19 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private void SelectFirstExample()
     {
-        TreeNode? firstExample = null;
-
         foreach (TreeNode category in _navigation.Nodes)
         {
-            firstExample = FindFirstExampleNode(category);
-            if (firstExample is not null)
-                break;
-        }
+            var firstExample = FindFirstExampleNode(category);
+            if (firstExample?.Tag is not IHiveExample example)
+                continue;
 
-        if (firstExample is null)
+            // Initialize the main view directly, then leave the navigation compact
+            // with its Overview category visible as the startup context.
+            ShowExample(example);
+            _navigation.CollapseAll();
+            _navigation.SelectedNode = category;
             return;
-
-        _navigation.SelectedNode = firstExample;
-
-        // Selecting a nested node can cause WinForms to reveal its ancestors.
-        // Collapse again so startup always honors the closed-tree design.
-        _navigation.CollapseAll();
+        }
     }
 
     private static TreeNode? FindFirstExampleNode(TreeNode parent)
