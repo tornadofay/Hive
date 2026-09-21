@@ -9,6 +9,7 @@ namespace Hive.Host.WinForms.UI.Controls;
 public sealed class HiveExampleTestSurface : UserControl
 {
     private readonly FlowLayoutPanel _actions;
+    private readonly TableLayoutPanel _root;
     private readonly TableLayoutPanel _workspace;
     private readonly HiveButton _runButton;
     private readonly HiveButton _copyButton;
@@ -52,7 +53,7 @@ public sealed class HiveExampleTestSurface : UserControl
         _detailsFont = new Font("Segoe UI", 9f);
         _noteFont = new Font("Segoe UI", 8.6f);
 
-        var root = new TableLayoutPanel
+        _root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
@@ -66,10 +67,10 @@ public sealed class HiveExampleTestSurface : UserControl
             new RowStyle(SizeType.Absolute, 44));
         root.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
-        root.RowStyles.Add(
-            new RowStyle(SizeType.Absolute, 112));
-        root.RowStyles.Add(
-            new RowStyle(SizeType.Absolute, 44));
+        _root.RowStyles.Add(
+            new RowStyle(SizeType.AutoSize));
+        _root.RowStyles.Add(
+            new RowStyle(SizeType.AutoSize));
 
         _actions = new FlowLayoutPanel
         {
@@ -200,7 +201,7 @@ public sealed class HiveExampleTestSurface : UserControl
         _details = new Label
         {
             Dock = DockStyle.Fill,
-            AutoSize = false,
+            AutoSize = true,
             Text = string.Empty,
             Font = _detailsFont,
             Padding = new Padding(1, 7, 20, 4),
@@ -212,7 +213,7 @@ public sealed class HiveExampleTestSurface : UserControl
         _note = new Label
         {
             Dock = DockStyle.Fill,
-            AutoSize = false,
+            AutoSize = true,
             Text = string.Empty,
             Font = _noteFont,
             Padding = new Padding(1, 4, 20, 5),
@@ -221,19 +222,21 @@ public sealed class HiveExampleTestSurface : UserControl
             AutoEllipsis = false
         };
 
-        root.Controls.Add(_actions, 0, 0);
-        root.Controls.Add(_workspace, 0, 1);
-        root.Controls.Add(_details, 0, 2);
-        root.Controls.Add(_note, 0, 3);
-        Controls.Add(root);
+        _root.Controls.Add(_actions, 0, 0);
+        _root.Controls.Add(_workspace, 0, 1);
+        _root.Controls.Add(_details, 0, 2);
+        _root.Controls.Add(_note, 0, 3);
+        Controls.Add(_root);
 
         UpdateWorkspaceLayout();
+        UpdateInformationLayout();
     }
 
     protected override void OnResize(EventArgs e)
     {
         base.OnResize(e);
         UpdateWorkspaceLayout();
+        UpdateInformationLayout();
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -600,6 +603,18 @@ public sealed class HiveExampleTestSurface : UserControl
         }
     }
 
+    private void UpdateInformationLayout()
+    {
+        var width = Math.Max(1, ClientSize.Width - 4);
+        var maximumSize = new Size(width, 0);
+
+        if (_details.MaximumSize != maximumSize)
+            _details.MaximumSize = maximumSize;
+
+        if (_note.MaximumSize != maximumSize)
+            _note.MaximumSize = maximumSize;
+    }
+
     private void UpdateDetails()
     {
         var expected = string.IsNullOrWhiteSpace(_expectedResult)
@@ -613,6 +628,8 @@ public sealed class HiveExampleTestSurface : UserControl
                 ? string.Empty
                 : "Description" + Environment.NewLine + _description) +
             expected;
+
+        UpdateInformationLayout();
     }
 
     private void UpdateNote()
@@ -622,6 +639,8 @@ public sealed class HiveExampleTestSurface : UserControl
             : string.IsNullOrWhiteSpace(_noteText)
                 ? _noteTitle
                 : _noteTitle + ": " + _noteText;
+
+        UpdateInformationLayout();
     }
 
     private IHiveThemeManager? FindHiveThemeManager()
