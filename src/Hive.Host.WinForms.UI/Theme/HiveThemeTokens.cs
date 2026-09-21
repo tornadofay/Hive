@@ -34,7 +34,14 @@ public sealed record HiveVisualStates(
     Color PressedBackground,
     Color FocusedBorder,
     Color DisabledBorder,
-    Color DisabledText);
+    Color DisabledText)
+{
+    public Color NavigationBackground { get; init; }
+    public Color NavigationHover { get; init; }
+    public Color NavigationPressed { get; init; }
+    public Color NavigationText { get; init; }
+    public Color NavigationBorder { get; init; }
+}
 
 public sealed record HiveThemeDefinition(
     HiveThemeMode Mode,
