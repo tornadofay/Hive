@@ -99,7 +99,6 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             ScrollBars = ScrollBars.Both,
             WordWrap = false,
             BorderStyle = BorderStyle.FixedSingle,
-            DetectUrls = false,
             Font = _outputFont,
             Margin = Padding.Empty,
             Padding = new Padding(8),
