@@ -8,7 +8,7 @@ namespace Hive.Host.WinForms.UI.Controls;
 public abstract class HiveForm : Form
 {
     private const int HeaderHeight = 56;
-    private const int CornerRadius = 12;
+    private const int CornerRadius = 10;
 
     private readonly HiveWindowHeader _header;
     private readonly Panel _bodyPanel;
@@ -32,7 +32,7 @@ public abstract class HiveForm : Form
         DoubleBuffered = true;
         KeyPreview = true;
         AutoScaleMode = AutoScaleMode.Dpi;
-        Padding = new Padding(1);
+        Padding = new Padding(2);
         MinimumSize = minimumSize ?? new Size(640, 420);
         Size = initialSize ?? new Size(900, 600);
         _formFont = new Font(
