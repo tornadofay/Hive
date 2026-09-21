@@ -271,7 +271,7 @@ Hive/
 
 **Phase 0 — Foundations.**
 
-The repository is currently documentation/architecture only. Implementation status is recorded only in `docs/Hive_Current_Status.md`.
+The solution, core contracts, identity/resource foundation, and persistence bootstrap implementation are in the repository. Phase 0.4 SQL Server/LocalDB verification is currently pending. Authoritative status is recorded only in `docs/Hive_Current_Status.md`.
 
 See [Architecture](docs/architecture.md) and [Roadmap](docs/roadmap.md).
 
