@@ -23,7 +23,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
     private readonly Font _navigationTitleFont;
     private readonly Font _navigationDescriptionFont;
     private readonly Font _pageTitleFont;
-    private readonly Panel _bodyPanel;
+    private readonly TableLayoutPanel _bodyPanel;
 
     private HiveButton? _selectedNavigationButton;
 
@@ -36,20 +36,29 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         Margin = Padding.Empty;
         Padding = Padding.Empty;
 
-        _bodyPanel = new Panel
+        _bodyPanel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            Padding = Padding.Empty
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            BackColor = SystemColors.Window
         };
+        _bodyPanel.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Absolute, 184f));
+        _bodyPanel.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Percent, 100f));
 
         _navigation = new FlowLayoutPanel
         {
-            Dock = DockStyle.Left,
-            Width = 184,
+            Dock = DockStyle.Fill,
             Padding = new Padding(14, 16, 12, 12),
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
             AutoScroll = true,
+            AutoSize = false,
+            MinimumSize = new Size(184, 0),
             Margin = Padding.Empty
         };
 
@@ -111,7 +120,9 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         _pageBody = new Panel
         {
             Dock = DockStyle.Fill,
+            AutoSize = false,
             AutoScroll = false,
+            MinimumSize = Size.Empty,
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
@@ -144,8 +155,8 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
         _contentLayout.Controls.Add(_pageBody, 0, 2);
 
         _content.Controls.Add(_contentLayout);
-        _bodyPanel.Controls.Add(_content);
-        _bodyPanel.Controls.Add(_navigation);
+        _bodyPanel.Controls.Add(_navigation, 0, 0);
+        _bodyPanel.Controls.Add(_content, 1, 0);
 
         _navigation.Controls.Add(_navigationTitle);
         _navigation.Controls.Add(_navigationDescription);
@@ -201,6 +212,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
 
     private void ApplyExampleTheme(HiveThemeDefinition theme)
     {
+        _bodyPanel.BackColor = theme.Palette.Surface;
         _navigation.BackColor = theme.VisualStates.NavigationBackground;
         _navigationTitle.ForeColor = theme.VisualStates.NavigationText;
         _navigationDescription.ForeColor = theme.Palette.MutedText;
@@ -258,6 +270,7 @@ internal sealed partial class ThemeFoundationExampleView : UserControl
             WrapContents = false,
             AutoSize = false,
             AutoScroll = true,
+            MinimumSize = Size.Empty,
             Margin = Padding.Empty,
             Padding = new Padding(0, 2, 12, 2),
             Visible = false
