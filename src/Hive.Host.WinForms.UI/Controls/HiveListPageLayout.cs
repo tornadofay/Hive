@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Theme;
+using System.ComponentModel;
 
 namespace Hive.Host.WinForms.UI.Controls;
 
@@ -52,6 +53,7 @@ public sealed class HiveListPageLayout : UserControl
 
     public Panel ContentPanel => _contentPanel;
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int HeaderHeight
     {
         get => _headerHeight;
@@ -66,6 +68,7 @@ public sealed class HiveListPageLayout : UserControl
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int ActionBarHeight
     {
         get => _actionBarHeight;

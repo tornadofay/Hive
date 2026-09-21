@@ -1,6 +1,7 @@
+using Hive.Host.WinForms.UI.Theme;
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
-using Hive.Host.WinForms.UI.Theme;
 
 namespace Hive.Host.WinForms.UI.Controls;
 
@@ -74,6 +75,7 @@ public sealed class HivePaginationBar : UserControl
 
     public event EventHandler? NextRequested;
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int PageNumber
     {
         get => _pageNumber;
@@ -90,6 +92,7 @@ public sealed class HivePaginationBar : UserControl
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool CanGoPrevious
     {
         get => _canGoPrevious;
@@ -103,6 +106,7 @@ public sealed class HivePaginationBar : UserControl
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool CanGoNext
     {
         get => _canGoNext;
@@ -116,6 +120,7 @@ public sealed class HivePaginationBar : UserControl
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string PageText
     {
         get => _pageLabel.Text;
