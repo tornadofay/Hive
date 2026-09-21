@@ -184,8 +184,8 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 editorLayout.ApplyTheme(theme);
                 break;
 
-            case HiveListPageLayout listPageLayout:
-                listPageLayout.ApplyTheme(theme);
+            case HivePage page:
+                page.ApplyTheme(theme);
                 break;
 
             case HivePaginationBar paginationBar:
