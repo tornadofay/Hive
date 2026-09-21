@@ -150,7 +150,7 @@ public static class HiveMessageBox
             FormBorderStyle = FormBorderStyle.None;
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
-            BodyPanel.Padding = new Padding(_theme.Spacing.Lg);
+            SetBodyPadding(new Padding(_theme.Spacing.Lg));
 
             ConfigureHeader(
                 allowMove: true,
