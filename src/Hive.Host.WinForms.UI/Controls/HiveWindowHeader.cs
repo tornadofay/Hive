@@ -348,23 +348,77 @@ internal sealed class HiveWindowHeader : Control
         if (point.Y < 0 || point.Y >= Height)
             return WindowCommandNone;
 
-        var x = Width - ButtonWidth;
-
-        if (_allowClose && point.X >= x)
-            return WindowCommandClose;
-
-        x -= ButtonWidth;
-        if (_allowMinimize && point.X >= x)
-            return WindowCommandMinimize;
-
-        if (_allowHelp)
+        foreach (var command in GetVisibleCommands())
         {
-            x -= ButtonWidth;
-            if (point.X >= x)
-                return WindowCommandHelp;
+            if (GetCommandBounds(command).Contains(point))
+                return command;
         }
 
         return WindowCommandNone;
+    }
+
+    private void DrawCommandButton(
+        Graphics graphics,
+        int command,
+        bool visible,
+        string glyph,
+        int order)
+    {
+        if (!visible)
+            return;
+
+        var rect = GetCommandBounds(command);
+        var hovered = _hoveredCommand == command;
+        var pressed = _pressedCommand == command;
+
+        if (hovered || pressed)
+        {
+            var fill = command == WindowCommandClose
+                ? _closeHover
+                : pressed
+                    ? _buttonPressed
+                    : _buttonHover;
+
+            using var brush = new SolidBrush(fill);
+            graphics.FillRectangle(brush, rect);
+        }
+
+        TextRenderer.DrawText(
+            graphics,
+            glyph,
+            _buttonFont,
+            rect,
+            _foreground,
+            TextFormatFlags.HorizontalCenter |
+            TextFormatFlags.VerticalCenter |
+            TextFormatFlags.NoPadding);
+    }
+
+    private IReadOnlyList<int> GetVisibleCommands()
+    {
+        var commands = new List<int>(3);
+
+        if (_allowHelp)
+            commands.Add(WindowCommandHelp);
+        if (_allowMinimize)
+            commands.Add(WindowCommandMinimize);
+        if (_allowClose)
+            commands.Add(WindowCommandClose);
+
+        return commands;
+    }
+
+    private Rectangle GetCommandBounds(int command)
+    {
+        var visible = GetVisibleCommands();
+        var index = visible.IndexOf(command);
+        return index < 0
+            ? Rectangle.Empty
+            : new Rectangle(
+                Width - ButtonWidth * (index + 1),
+                0,
+                ButtonWidth,
+                Height);
     }
 
     private static void BeginWindowMove()
