@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-21 (rev 12 — base mechanisms, fixed generations, Workspace, V1 work items, dynamic Hives, and non-persistent Swarms)
+Last updated: 2026-09-21 (rev 13 — persistence bootstrap boundary)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -109,6 +109,61 @@ Scope matching is a structural boundary, not an implicit grant. The access conte
 Scope matching does not itself grant authorization. Later management/security slices add resource-specific permissions and policy; they consume this explicit identity/scope boundary instead of replacing it.
 
 `WorkItem` is the durable unit of user-visible work. Its identity is independent from Runtime and Execution identities. A WorkItem transition returns a new immutable state with the same WorkItem identity and a higher resource version; provenance and scope are preserved. One submitted document remains one WorkItem, while a batch is multiple independent WorkItems.
+
+---
+
+### 0.2 Persistence bootstrap
+
+Phase 0.4 establishes the Hive-owned SQL Server persistence boundary without putting database dependencies into Hive.Core or the host application.
+
+#### Ownership and dependency boundary
+
+- Hive.Persistence owns all SQL Server connectivity, database bootstrap, migration execution, schema-version checks, and persistence-specific exceptions/results.
+- Hive.Core remains dependency-light and has no SQL client, DbUp, or database connection-string dependency.
+- Hive.Persistence may reference Hive.Core contracts, but Core never references Persistence.
+- Hive's database is a separate database owned by Hive. It is never used as a gateway to the host application's business database.
+- Hosts provide database configuration; credentials are not written to the repository, migration scripts, logs, or Hive database metadata.
+
+#### Database technology
+
+- SQL Server is the only V1 persistence engine.
+- SQL Server LocalDB is the supported local-development deployment of the same SQL Server boundary; it is not a separate persistence provider.
+- Microsoft.Data.SqlClient is used for SQL Server connectivity.
+- DbUp SQL Server support is used for ordered schema migrations rather than hand-written migration orchestration.
+- DbUp migrations are embedded SQL resources in Hive.Persistence, numbered in execution order, and executed transactionally per migration script.
+
+The implementation currently pins dbup-sqlserver 7.2.0 and Microsoft.Data.SqlClient 7.1.0. The first is the current stable DbUp SQL Server package and the second is the current stable Microsoft SQL client at the time this slice is implemented. citeturn544673view0turn598125search0
+
+#### Schema version and migration journal
+
+Hive maintains two separate pieces of migration metadata:
+
+1. DbUp's migration journal records which migration scripts completed successfully.
+2. A Hive-owned singleton schema-version row records the current logical Hive database schema version.
+
+The schema-version row is updated inside the same migration transaction as the schema change it describes. A failed migration therefore cannot advance the Hive schema version. A clean database has no Hive schema-version row until the first migration completes successfully.
+
+The code has one supported CurrentSchemaVersion. Before running DbUp, Hive reads the stored logical schema version when present. A stored version greater than the code's supported version is an incompatible future schema and migration/execution is rejected before normal application use. Older supported versions are passed to DbUp for forward migration.
+
+The DbUp journal and schema-version metadata use explicit primary/unique indexes for deterministic lookup. Domain-table indexes are added with the domain persistence slice that introduces each table rather than being guessed during this bootstrap phase.
+
+#### Migration failure and compatibility semantics
+
+Migration execution must be deterministic:
+
+- clean database → ordered migrations → current schema;
+- current database → no-op migration run;
+- failed migration → failing script is not journaled and the logical schema version remains at the previous successful version;
+- stored future schema version → typed incompatible-schema failure before normal migration proceeds;
+- malformed or unavailable migration configuration → typed configuration/persistence failure rather than partial-success reporting.
+
+A migration runner exposes the outcome as structured Hive.Persistence state instead of requiring callers to parse DbUp log strings.
+
+#### Initial schema boundary
+
+The bootstrap schema contains only persistence infrastructure required at this phase: Hive schema metadata and the DbUp journal. Agent, Hive, WorkItem, event-log, snapshot, outbox, provider, and other domain tables are introduced by the slices that own their persistence semantics.
+
+This prevents Phase 0.4 from prematurely freezing later aggregate schemas while still establishing a real Hive-owned database, migration history, compatibility protection, and indexed metadata foundation.
 
 ---
 
