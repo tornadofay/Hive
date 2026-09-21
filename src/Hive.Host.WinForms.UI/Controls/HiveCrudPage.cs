@@ -294,6 +294,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _pagination.PageNumber = 1;
         UpdateActionState();
         UpdateToolbarLayout();
+        UpdateFooterLayout();
         UpdateEmptyState(0);
         UpdateStatusSummary();
     }
@@ -374,6 +375,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         {
             _searchBox.Visible = value;
             _searchLabel.Visible = value;
+            _searchPanel.Visible = value;
+            UpdateToolbarLayout();
         }
     }
 
@@ -435,7 +438,14 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     public bool ShowPagination
     {
         get => _pagination.Visible;
-        set => _pagination.Visible = value;
+        set
+        {
+            if (_pagination.Visible == value)
+                return;
+
+            _pagination.Visible = value;
+            UpdateFooterLayout();
+        }
     }
 
     public HivePaginationBar PaginationBar => _pagination;
