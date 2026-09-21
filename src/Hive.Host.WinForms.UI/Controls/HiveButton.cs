@@ -78,53 +78,60 @@ public sealed class HiveButton : UserControl
     {
         ArgumentNullException.ThrowIfNull(theme);
 
+        var background = theme.Palette.ElevatedSurface;
+        var foreground = theme.Palette.Text;
+        var useAccentColor = false;
+        var highEmphasis = false;
+        var depth = 0;
+
         switch (_style)
         {
             case HiveButtonStyle.Primary:
-                _renderer.BackColor = theme.Palette.Accent;
-                _renderer.ForeColor = theme.Palette.AccentForeground;
-                _renderer.UseAccentColor = true;
-                _renderer.HighEmphasis = true;
-                _renderer.Depth = 1;
+                background = theme.Palette.Accent;
+                foreground = theme.Palette.AccentForeground;
+                useAccentColor = true;
+                highEmphasis = true;
+                depth = 1;
                 break;
 
             case HiveButtonStyle.Secondary:
-                _renderer.BackColor = theme.Palette.ElevatedSurface;
-                _renderer.ForeColor = theme.Palette.Text;
-                _renderer.UseAccentColor = false;
-                _renderer.HighEmphasis = false;
-                _renderer.Depth = 0;
                 break;
 
             case HiveButtonStyle.Navigation:
-                _renderer.BackColor = theme.VisualStates.NavigationBackground;
-                _renderer.ForeColor = theme.VisualStates.NavigationText;
-                _renderer.UseAccentColor = false;
-                _renderer.HighEmphasis = false;
-                _renderer.Depth = 0;
+                background = theme.VisualStates.NavigationBackground;
+                foreground = theme.VisualStates.NavigationText;
                 break;
 
             case HiveButtonStyle.NavigationSelected:
-                _renderer.BackColor = theme.VisualStates.NavigationSelected;
-                _renderer.ForeColor = theme.VisualStates.NavigationSelectedText;
-                _renderer.UseAccentColor = false;
-                _renderer.HighEmphasis = false;
-                _renderer.Depth = 0;
+                background = theme.VisualStates.NavigationSelected;
+                foreground = theme.VisualStates.NavigationSelectedText;
                 break;
 
             case HiveButtonStyle.Danger:
-                _renderer.BackColor = theme.VisualStates.Error;
-                _renderer.ForeColor = theme.Palette.AccentForeground;
-                _renderer.UseAccentColor = false;
-                _renderer.HighEmphasis = true;
-                _renderer.Depth = 0;
+                background = theme.VisualStates.Error;
+                foreground = theme.Palette.AccentForeground;
+                highEmphasis = true;
                 break;
 
             default:
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException(nameof(Style), _style, null);
         }
 
-        _renderer.HighEmphasis = HighEmphasis;
+        if (!Enabled)
+        {
+            background = theme.Palette.DisabledBackground;
+            foreground = theme.Palette.DisabledText;
+            useAccentColor = false;
+            highEmphasis = false;
+            depth = 0;
+        }
+
+        _renderer.BackColor = background;
+        _renderer.ForeColor = foreground;
+        _renderer.UseAccentColor = useAccentColor;
+        _renderer.HighEmphasis = highEmphasis;
+        _renderer.Depth = depth;
+        _renderer.HighEmphasis = HighEmphasis && Enabled;
     }
 
     protected override void OnEnabledChanged(EventArgs e)
