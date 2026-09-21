@@ -63,6 +63,53 @@ Tenant
 
 Not every deployment must use every level.
 
+
+### 0.1 Identity and resource foundation
+
+The Phase 0.3 identity/resource contract establishes stable typed identities without creating domain-specific persistence or authorization services prematurely.
+
+The common resource identity set is:
+
+- `DeploymentId`
+- `TenantId`
+- `PrincipalId`
+- `UserId`
+- `SessionId`
+- `WorkspaceId`
+- `AgentId`
+- `HiveId`
+- `RuntimeId`
+- `ExecutionId`
+- `WorkItemId`
+
+Each identity is immutable, strongly typed, and non-empty. Identities are references, not mutable state objects.
+
+Every Hive-owned persistent resource is represented through an immutable `ResourceEnvelope<TIdentity>` containing:
+
+- resource identity;
+- explicit owner (`PrincipalId`);
+- explicit canonical scope (`Global`, `Tenant`, `User`, `Workspace`, `Agent`, `Runtime`, or `Execution`);
+- positive resource version;
+- provenance (creator principal, creation time, correlation/causation identifiers, and optional source resource reference);
+- lifecycle metadata;
+- immutable metadata values.
+
+Scope matching is a structural boundary, not an implicit grant. The access context must always contain a `PrincipalId`; missing required identity components fail closed. The scope matrix is:
+
+| Scope | Required context |
+|---|---|
+| Global | Deployment + Principal |
+| Tenant | Deployment + Principal |
+| User | Deployment + Tenant + User + Principal |
+| Workspace | Deployment + Tenant + Workspace + Principal |
+| Agent | Deployment + Tenant + Agent + Principal |
+| Runtime | Deployment + Tenant + Agent + Runtime + Principal |
+| Execution | Deployment + Tenant + Agent + Runtime + Execution + Principal |
+
+Scope matching does not itself grant authorization. Later management/security slices add resource-specific permissions and policy; they consume this explicit identity/scope boundary instead of replacing it.
+
+`WorkItem` is the durable unit of user-visible work. Its identity is independent from Runtime and Execution identities. A WorkItem transition returns a new immutable state with the same WorkItem identity and a higher resource version; provenance and scope are preserved. One submitted document remains one WorkItem, while a batch is multiple independent WorkItems.
+
 ---
 
 ## 1. MAF Dependency Boundary
