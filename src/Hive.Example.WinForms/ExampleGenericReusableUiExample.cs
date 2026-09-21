@@ -1,6 +1,4 @@
 using System.Windows.Forms;
-using Hive.Host.WinForms.UI.Theme;
-
 namespace Hive.Example.WinForms;
 
 internal sealed class ExampleGenericReusableUiExample : IHiveExample
