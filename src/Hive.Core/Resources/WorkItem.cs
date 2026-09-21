@@ -64,21 +64,27 @@ public sealed class WorkItem
         if (next == Status)
             return this;
 
+        if (Resource.Lifecycle.Status == ResourceLifecycleStatus.Retired)
+        {
+            throw new InvalidOperationException(
+                $"Retired WorkItem '{Id}' cannot change status.");
+        }
+
+        if (Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        {
+            throw new InvalidOperationException(
+                $"WorkItem '{Id}' cannot change status while resource lifecycle is '{Resource.Lifecycle.Status}'.");
+        }
+
         if (IsTerminal)
         {
             throw new InvalidOperationException(
                 $"Terminal WorkItem '{Id}' cannot transition from '{Status}'.");
         }
 
-        var resource = new ResourceEnvelope<WorkItemId>(
-            ResourceKind.WorkItem,
-            Id,
-            Resource.Owner,
-            Resource.Scope,
-            Resource.Version.Next(),
-            Resource.Provenance,
-            Resource.Lifecycle,
-            Resource.Metadata);
+        var resource = Resource.TransitionLifecycle(
+            ResourceLifecycleStatus.Active,
+            changedAtUtc);
 
         return new WorkItem(resource, next);
     }
