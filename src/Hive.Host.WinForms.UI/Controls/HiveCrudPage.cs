@@ -609,9 +609,10 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         var handler = OperationFailed;
         if (handler is null)
         {
-            System.Diagnostics.Debug.WriteLine(
-                exception.ToString());
-            return;
+            System.Diagnostics.Debug.WriteLine(exception.ToString());
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo
+                .Capture(exception)
+                .Throw();
         }
 
         handler(
