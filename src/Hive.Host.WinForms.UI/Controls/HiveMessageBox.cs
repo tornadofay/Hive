@@ -704,9 +704,10 @@ public static class HiveMessageBox
             {
                 Clipboard.SetText(_details.Text);
             }
-            catch (ExternalException)
+            catch (ExternalException exception)
             {
-                // Clipboard ownership can temporarily prevent writes.
+                System.Diagnostics.Debug.WriteLine(
+                    $"HiveMessageBox clipboard copy failed: {exception}");
             }
         }
 
@@ -901,7 +902,7 @@ public static class HiveMessageBox
             {
                 _backgroundBrush = new SolidBrush(palette.Accent);
                 _hoverBrush = new SolidBrush(palette.AccentHover);
-                _pressedBrush = new SolidBrush(palette.Border);
+                _pressedBrush = new SolidBrush(theme.VisualStates.PressedBackground);
                 _textBrush = new SolidBrush(palette.AccentForeground);
             }
             else
