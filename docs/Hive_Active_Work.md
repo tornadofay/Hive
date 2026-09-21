@@ -47,7 +47,8 @@ The pass covers:
 - added themed lightweight ListView rendering for CRUD selection/hover/disabled states;
 - refined the shared palette, visual-state tokens, button hierarchy, window header, editor rhythm, CRUD density, pagination, and message-dialog presentation;
 - made the permanent Example host behave as a normal desktop window and improved compact-window resizing;
-- converted the existing 0.6 UI foundation surface from a top-level form into a discoverable UserControl example;
+- split the UI foundation into separate discoverable Theme, Controls & CRUD, and Dialogs examples under UI → Foundation, removing the duplicate in-view section navigation;
+- converted the existing 0.6 UI foundation surface from a top-level form into discoverable UserControl examples;
 - updated Program to launch HiveExampleHostForm;
 - removed the legacy 0.6 top-level form path.
 
