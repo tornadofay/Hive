@@ -71,7 +71,7 @@ The initial foundation includes:
 - a replaceable seam around the third-party rendering dependency.
 - reusable data-page composition primitives: a header/action/content list layout and an optional pagination bar;
 - `HiveCrudPage<TItem>` for generic Add/Edit/Delete/Refresh UI orchestration over consumer-supplied callbacks;
-- reusable editor-layout composition for repeated labeled-field and action-footer patterns;
+- reusable editor-layout composition for repeated labeled-field and action-footer patterns; `HiveEditorLayout` supplies presentation only and does not own field semantics or validation;
 - domain pages keep their own schemas, columns, filters, validation, authorization, specialized editors, and persistence behavior.
 
 Do not create a complete replacement control toolkit or wrap every WinForms control merely to rename it. The selected library is an implementation detail behind `Hive.Host.WinForms.UI`.
