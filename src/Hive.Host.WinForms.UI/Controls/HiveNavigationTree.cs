@@ -16,6 +16,15 @@ public sealed class HiveNavigationTree : TreeView
     private Font? _categoryFont;
     private Font? _groupFont;
     private Font? _itemFont;
+    private SolidBrush? _backgroundBrush;
+    private SolidBrush? _hoverBrush;
+    private SolidBrush? _selectedBrush;
+    private SolidBrush? _disabledBrush;
+    private SolidBrush? _accentBrush;
+    private Pen? _glyphPen;
+    private Pen? _selectedGlyphPen;
+    private Pen? _disabledGlyphPen;
+    private Pen? _focusPen;
 
     public HiveNavigationTree()
     {
@@ -51,6 +60,7 @@ public sealed class HiveNavigationTree : TreeView
             ForeColor = theme.VisualStates.NavigationText;
 
         EnsureFonts(theme);
+        RebuildPaintResources(theme);
 
         // Theme changes repaint the existing native tree only. Do not reassign
         // selection or TopNode here: those assignments can cause the native TreeView
@@ -78,23 +88,21 @@ public sealed class HiveNavigationTree : TreeView
             Math.Max(0, ClientSize.Width - RowHorizontalPadding * 2),
             Math.Max(1, e.Bounds.Height - RowVerticalPadding * 2));
 
-        using (var background = new SolidBrush(
-                   !Enabled
-                       ? theme.Palette.DisabledBackground
-                       : selected
-                           ? theme.VisualStates.NavigationSelected
-                           : hovered
-                               ? theme.VisualStates.NavigationHover
-                               : theme.VisualStates.NavigationBackground))
-        {
-            e.Graphics.FillRectangle(background, row);
-        }
+        var background = !Enabled
+            ? _disabledBrush
+            : selected
+                ? _selectedBrush
+                : hovered
+                    ? _hoverBrush
+                    : _backgroundBrush;
 
-        if (selected && Enabled)
+        if (background is not null)
+            e.Graphics.FillRectangle(background, row);
+
+        if (selected && Enabled && _accentBrush is not null)
         {
-            using var accent = new SolidBrush(theme.Palette.Accent);
             e.Graphics.FillRectangle(
-                accent,
+                _accentBrush,
                 row.Left,
                 row.Top + 6,
                 3,
@@ -126,17 +134,14 @@ public sealed class HiveNavigationTree : TreeView
                 0,
                 (row.Height - glyphSize) / 2);
 
-            using var glyphPen = new Pen(
-                !Enabled
-                    ? theme.Palette.DisabledText
-                    : selected
-                        ? theme.VisualStates.NavigationSelectedText
-                        : theme.VisualStates.NavigationText,
-                1.5f)
-            {
-                StartCap = LineCap.Round,
-                EndCap = LineCap.Round
-            };
+            var glyphPen = !Enabled
+                ? _disabledGlyphPen
+                : selected
+                    ? _selectedGlyphPen
+                    : _glyphPen;
+
+            if (glyphPen is null)
+                return;
 
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
@@ -182,12 +187,11 @@ public sealed class HiveNavigationTree : TreeView
             TextFormatFlags.EndEllipsis |
             TextFormatFlags.NoPrefix);
 
-        if (Enabled && focused && selected)
+        if (Enabled && focused && selected && _focusPen is not null)
         {
-            using var focusPen = new Pen(theme.Palette.Accent, 1f);
             var focusRectangle = Rectangle.Inflate(row, -1, -1);
             using var path = CreateRoundedPath(focusRectangle, 6);
-            e.Graphics.DrawPath(focusPen, path);
+            e.Graphics.DrawPath(_focusPen, path);
         }
     }
 
@@ -271,7 +275,61 @@ public sealed class HiveNavigationTree : TreeView
             _categoryFont?.Dispose();
             _groupFont?.Dispose();
             _itemFont?.Dispose();
+            DisposePaintResources();
         }
+    }
+
+    private void RebuildPaintResources(HiveThemeDefinition theme)
+    {
+        DisposePaintResources();
+
+        _backgroundBrush = new SolidBrush(
+            theme.VisualStates.NavigationBackground);
+        _hoverBrush = new SolidBrush(
+            theme.VisualStates.NavigationHover);
+        _selectedBrush = new SolidBrush(
+            theme.VisualStates.NavigationSelected);
+        _disabledBrush = new SolidBrush(
+            theme.Palette.DisabledBackground);
+        _accentBrush = new SolidBrush(theme.Palette.Accent);
+
+        _glyphPen = CreateGlyphPen(theme.VisualStates.NavigationText);
+        _selectedGlyphPen =
+            CreateGlyphPen(theme.VisualStates.NavigationSelectedText);
+        _disabledGlyphPen = CreateGlyphPen(theme.Palette.DisabledText);
+        _focusPen = new Pen(theme.Palette.Accent, 1f);
+    }
+
+    private static Pen CreateGlyphPen(Color color)
+    {
+        return new Pen(color, 1.5f)
+        {
+            StartCap = LineCap.Round,
+            EndCap = LineCap.Round
+        };
+    }
+
+    private void DisposePaintResources()
+    {
+        _backgroundBrush?.Dispose();
+        _hoverBrush?.Dispose();
+        _selectedBrush?.Dispose();
+        _disabledBrush?.Dispose();
+        _accentBrush?.Dispose();
+        _glyphPen?.Dispose();
+        _selectedGlyphPen?.Dispose();
+        _disabledGlyphPen?.Dispose();
+        _focusPen?.Dispose();
+
+        _backgroundBrush = null;
+        _hoverBrush = null;
+        _selectedBrush = null;
+        _disabledBrush = null;
+        _accentBrush = null;
+        _glyphPen = null;
+        _selectedGlyphPen = null;
+        _disabledGlyphPen = null;
+        _focusPen = null;
     }
 
     private Rectangle GetRowBounds(TreeNode node)
