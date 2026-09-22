@@ -40,6 +40,16 @@ The 1.3 implementation is present in the repository at this checkpoint:
 
 Agent-run build/tests/manual verification are not authorized. The implementation therefore remains pending the developer verification gate below.
 
+## Developer verification attempt
+
+The developer manually ran the Example successfully and executed the broader Hive.Tests suite:
+
+- Example: completed successfully with the local fake HTTP endpoint, model/response data, and structured output.
+- Automated tests: **80 tests, 78 passed, 2 failed, 0 skipped in 2.5 seconds**.
+- Failure 1: caller cancellation surfaced as `TaskCanceledException`; the test requires the adapter contract to expose an exact `OperationCanceledException`.
+- Failure 2: the transport-failure test used an unused loopback port and surfaced `Timeout` instead of the intended transport-failure classification, making the test dependent on local socket timing.
+- Both failures are corrected in the current implementation/test checkpoint. The 1.3 completion gate remains pending until the developer reruns the focused and broader tests after these corrections.
+
 ## Architecture / dependency boundary
 
 ```text
