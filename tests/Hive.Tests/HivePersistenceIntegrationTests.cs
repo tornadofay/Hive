@@ -59,6 +59,11 @@ public sealed class HivePersistenceIntegrationTests
         Assert.True(await IndexExistsAsync(options, "IX_HiveWorkItems_OwnerScope", "HiveWorkItems"));
         Assert.True(await IndexExistsAsync(options, "IX_HiveWorkItems_OwnerStatus", "HiveWorkItems"));
         Assert.True(await IndexExistsAsync(options, "PK_HiveWorkItemAttachments", "HiveWorkItemAttachments"));
+        Assert.True(
+            await ColumnExistsAsync(
+                options,
+                "HiveProviderAccounts",
+                "CredentialSecretId"));
     }
 
     [Fact]
@@ -163,6 +168,34 @@ public sealed class HivePersistenceIntegrationTests
         command.Parameters.AddWithValue("@SchemaVersion", version);
 
         Assert.Equal(1, await command.ExecuteNonQueryAsync());
+    }
+
+    private static async Task<bool> ColumnExistsAsync(
+        HiveDatabaseOptions options,
+        string tableName,
+        string columnName)
+    {
+        await using var connection = new SqlConnection(options.ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT CASE
+                WHEN EXISTS
+                (
+                    SELECT 1
+                    FROM sys.columns
+                    WHERE [object_id] = OBJECT_ID(@TableName)
+                      AND [name] = @ColumnName
+                )
+                THEN 1
+                ELSE 0
+            END;
+            """;
+        command.Parameters.AddWithValue("@ColumnName", columnName);
+        command.Parameters.AddWithValue("@TableName", $"dbo.{tableName}");
+
+        return Convert.ToInt32(await command.ExecuteScalarAsync()) == 1;
     }
 
     private static async Task<bool> IndexExistsAsync(
