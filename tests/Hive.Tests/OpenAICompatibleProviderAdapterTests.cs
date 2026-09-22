@@ -303,7 +303,7 @@ public sealed class OpenAICompatibleProviderAdapterTests
         Assert.Equal("Bearer", server.AuthorizationScheme);
         Assert.Equal("test-key", server.AuthorizationParameter);
         Assert.Contains(
-            ""model":"test-model"",
+            "\"model\":\"test-model\"",
             server.RequestBody,
             StringComparison.Ordinal);
         Assert.Contains(

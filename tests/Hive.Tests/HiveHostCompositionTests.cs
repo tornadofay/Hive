@@ -25,7 +25,7 @@ public sealed class HiveHostCompositionTests
         Assert.True(result.IsSuccess, result.Error?.Message);
         Assert.NotNull(composition.Current);
         Assert.Equal(
-            @"(localdb)MSSQLLocalDB",
+            @"(localdb)\MSSQLLocalDB",
             composition.Current!.PersistenceConfiguration.ServerName);
         Assert.Equal(
             "Hive",
@@ -105,15 +105,16 @@ public sealed class HiveHostCompositionTests
     public async Task InvalidSavedConfiguration_DoesNotFallBackToLocalDevelopment()
     {
         using var settings = TemporarySettingsFile.Create();
+        var store = new JsonHiveConfigurationStore(settings.Path);
         await File.WriteAllTextAsync(
             settings.Path,
             "{ \"backend\": \"SqlServer\", \"serverName\": ");
 
         using var composition = new HiveHostComposition(
-            new JsonHiveConfigurationStore(settings.Path),
+            store,
             new SqlHiveHostServiceGraphFactory(
                 new UnavailableHiveBootstrapCredentialStore(),
-                store);
+                store));
 
         var result = await composition.InitializeAsync();
 
