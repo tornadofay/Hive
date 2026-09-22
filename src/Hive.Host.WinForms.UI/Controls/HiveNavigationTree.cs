@@ -111,12 +111,11 @@ public sealed class HiveNavigationTree : TreeView
                 Math.Max(8, row.Height - 12));
         }
 
-        var font = e.Node.Level switch
-        {
-            0 => _categoryFont ?? Font,
-            1 => _groupFont ?? Font,
-            _ => _itemFont ?? Font
-        };
+        var font = e.Node.Level == 0
+            ? _categoryFont ?? Font
+            : e.Node.Nodes.Count > 0
+                ? _groupFont ?? Font
+                : _itemFont ?? Font;
 
         var textColor = !Enabled
             ? theme.Palette.DisabledText

@@ -6,9 +6,12 @@ internal sealed class EventPersistenceExample : IHiveExample
 
     public string Subcategory => "Events";
 
+    public IReadOnlyList<string> AdditionalNavigationPath =>
+        ["Event Persistence"];
+
     public int Order => 10;
 
-    public string Title => "Event Log / Snapshot / Outbox";
+    public string Title => "Event Log + Snapshot + Outbox";
 
     public UserControl CreateView(IServiceProvider services)
     {

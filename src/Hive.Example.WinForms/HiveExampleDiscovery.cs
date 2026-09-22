@@ -21,7 +21,10 @@ internal static class HiveExampleDiscovery
             }
 
             if (Activator.CreateInstance(type, nonPublic: true) is IHiveExample example)
+            {
+                ValidateExample(example, type);
                 examples.Add(example);
+            }
         }
 
         examples.Sort(static (left, right) =>
@@ -30,24 +33,42 @@ internal static class HiveExampleDiscovery
             if (order != 0)
                 return order;
 
-            var category = StringComparer.OrdinalIgnoreCase.Compare(
-                left.Category,
-                right.Category);
-
-            if (category != 0)
-                return category;
-
-            var subcategory = StringComparer.OrdinalIgnoreCase.Compare(
-                left.Subcategory,
-                right.Subcategory);
-
-            return subcategory != 0
-                ? subcategory
-                : StringComparer.OrdinalIgnoreCase.Compare(
-                    left.Title,
-                    right.Title);
+            var path = ComparePaths(left.NavigationPath, right.NavigationPath);
+            return path != 0
+                ? path
+                : StringComparer.OrdinalIgnoreCase.Compare(left.Title, right.Title);
         });
 
         return examples.ToArray();
+    }
+
+    private static void ValidateExample(IHiveExample example, Type exampleType)
+    {
+        if (example.NavigationPath.Count == 0 ||
+            example.NavigationPath.Any(static segment => string.IsNullOrWhiteSpace(segment)))
+        {
+            throw new InvalidOperationException(
+                $"Example '{exampleType.FullName}' must define a non-empty navigation path with no empty segments.");
+        }
+
+        if (string.IsNullOrWhiteSpace(example.Title))
+        {
+            throw new InvalidOperationException(
+                $"Example '{exampleType.FullName}' must define a non-empty Title.");
+        }
+    }
+
+    private static int ComparePaths(IReadOnlyList<string> left, IReadOnlyList<string> right)
+    {
+        var count = Math.Min(left.Count, right.Count);
+
+        for (var index = 0; index < count; index++)
+        {
+            var comparison = StringComparer.OrdinalIgnoreCase.Compare(left[index], right[index]);
+            if (comparison != 0)
+                return comparison;
+        }
+
+        return left.Count.CompareTo(right.Count);
     }
 }

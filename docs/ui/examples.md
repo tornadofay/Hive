@@ -7,6 +7,7 @@ internal sealed class ProviderExample : IHiveExample
 {
     public string Category => "Providers";
     public string Subcategory => "Provider Platform";
+
     public int Order => 10;
     public string Title => "Provider / ProviderAccount / ExecutionTarget";
 
@@ -28,12 +29,13 @@ No central registration. The host builds:
 ```text
 Category
 └─ Subcategory
-   └─ Example Title
+   └─ Additional navigation groups (optional)
+      └─ Example Title
 ```
 
 ## Tree placement
 
-`Category` and `Subcategory` are the actual TreeView node text.
+`Category` and `Subcategory` define the base path. `AdditionalNavigationPath` adds any deeper grouping levels; `Title` is always the selectable leaf.
 
 Current branches:
 - `UI → Foundation`
@@ -41,13 +43,14 @@ Current branches:
 - `Providers → Provider Platform`
 - `Providers → Target Selection`
 - `Providers → Provider Transport`
-- `Persistence → Events`
+- `Persistence → Events → Event Persistence`
 
 For a new Example:
 1. Reuse the existing Category/Subcategory that matches the capability.
-2. Use the exact existing spelling/casing so the Example appears under that branch.
-3. Create a new Category/Subcategory only when no existing branch fits.
-4. Do not edit `HiveExampleHostForm`; changing these two properties is enough.
+2. Add `AdditionalNavigationPath` when a capability needs its own independently expandable group.
+3. Use exact existing spelling/casing for existing groups.
+4. Create additional groups only when they improve organization.
+5. Do not edit `HiveExampleHostForm`; it builds every path automatically.
 
 Examples:
 - UI control/theme/dialog/CRUD example → `UI / Foundation`
@@ -56,9 +59,25 @@ Examples:
 - Provider/ProviderAccount/ExecutionTarget example → `Providers / Provider Platform`
 - Capability-aware execution target selection example → `Providers / Target Selection`
 - OpenAI-compatible provider transport example → `Providers / Provider Transport`
-- Durable event log/snapshot/outbox example → `Persistence / Events`
+- Durable event log/snapshot/outbox example → `Persistence / Events / Event Persistence`
 
-`Order` controls ordering within the discovered examples. Title is the leaf text.
+Future examples can create independent branches without changing the host:
+
+```text
+Persistence
+└─ Events
+   ├─ Event Persistence
+   │  └─ Event Log + Snapshot + Outbox
+   ├─ Event Log
+   │  ├─ Append / Read
+   │  └─ Concurrency
+   ├─ Snapshots
+   │  └─ ...
+   └─ Outbox
+      └─ ...
+```
+
+`Order` controls deterministic example ordering. `Title` is the selectable leaf text.
 
 ## Shared services
 
@@ -115,7 +134,7 @@ Do not call internal production helpers, mutate persistence tables directly, byp
 ## Handoff
 
 ```text
-Example to run: <Category / Subcategory / Example title> — Hive.Example.WinForms
+Example to run: <Category / Subcategory / additional path / Example title> — Hive.Example.WinForms
 Tests to run: <focused test class/file>; broader-suite requirement if applicable
 ```
 

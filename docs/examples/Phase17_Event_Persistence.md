@@ -2,7 +2,7 @@
 
 The Phase 1.7 public persistence boundary is exposed through Hive.Persistence.
 
-Example Host path: Persistence / Events / Event Log / Snapshot / Outbox
+Example Host path: Persistence / Events / Event Persistence / Event Log + Snapshot + Outbox
 
 ```csharp
 var options = HiveDatabaseOptions.LocalDevelopment(

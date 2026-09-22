@@ -482,7 +482,7 @@ internal sealed class HiveExampleHostForm : HiveForm
 
             _viewTitle.Text = example.Title;
             _viewSubtitle.Text =
-                $"{example.Category} / {example.Subcategory}";
+                string.Join(" / ", example.NavigationPath);
 
             _outputView.Clear();
             _outputView.SetCollapsed(true);
