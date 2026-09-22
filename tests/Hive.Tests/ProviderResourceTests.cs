@@ -147,10 +147,9 @@ public sealed class ProviderResourceTests
     }
 
     [Fact]
-    public void ResourceAccessContext_RequiresMatchingOwnerAndScope()
+    public void ResourceScope_MatchesScopeAndDoesNotImplyOwnership()
     {
         var principal = PrincipalId.New();
-        var otherPrincipal = PrincipalId.New();
         var tenant = TenantId.New();
         var otherTenant = TenantId.New();
 
@@ -174,12 +173,13 @@ public sealed class ProviderResourceTests
                     otherTenant,
                     principal)));
 
-        Assert.False(
+        // Ownership is enforced by the authoritative resource store, not by ResourceScope.Matches().
+        Assert.True(
             resource.Scope.Matches(
                 new ResourceAccessContext(
                     DeploymentId.New(),
                     tenant,
-                    otherPrincipal)));
+                    PrincipalId.New())));
     }
 
     private static Provider CreateProvider(
