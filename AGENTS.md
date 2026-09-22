@@ -63,7 +63,7 @@ An agent must follow this constitution before changing code, tests, configuratio
 43. Agent generation is selected explicitly at creation; do not infer or perform runtime promotion/demotion.
 44. Hive state remains separate from the host application's business database. Host business/domain state stays host-owned.
 45. Discovery or observation never grants authorization to mutate or invoke host controls.
-46. `Hive.Host.WinForms.UI` is the boundary for Hive-owned WinForms presentation infrastructure and the third-party rendering implementation selected by the architecture. Consuming projects must use Hive-owned contracts instead of directly depending on the rendering library.
+46. `Hive.Host.WinForms.UI` is the boundary for Hive-owned WinForms presentation infrastructure and for any third-party rendering implementation selected by the architecture. Before adding, removing, or relying on a renderer, inspect the actual project references and reconcile implementation/documentation differences deliberately. Consuming projects must use Hive-owned contracts instead of directly depending on the rendering library.
 47. Do not create Hive-prefixed wrappers for ordinary WinForms controls unless Hive needs a real consumer-facing behavior or contract beyond the framework control.
 48. Tests must not become production architecture. Test doubles and test helpers stay in `Hive.Tests` unless a production contract explicitly requires a reusable implementation.
 
@@ -122,7 +122,7 @@ An agent must follow this constitution before changing code, tests, configuratio
 87. User-facing WinForms behavior requires developer/manual verification where the active slice changes UI behavior. No separate UI-automation framework is required unless a later architecture decision introduces one.
 88. Publicly meaningful APIs should have a copyable example and expected result where the active feature benefits from one.
 89. Verification claims are evidence-based. Distinguish clearly between inspected/reasoned, compiled, automated-tested, integration-tested, manually verified, and not verified.
-90. Never claim a build, test, manual action, integration call, performance measurement, or release check that was not actually performed.
+90. Do not run builds, automated tests, or long-running/external integration checks merely as a reflex. Run them when the task explicitly authorizes execution or the repository workflow for the requested action requires the agent to execute them; otherwise inspect and report them as unperformed. Never claim a build, test, manual action, integration call, performance measurement, or release check that was not actually performed.
 
 ## 11. Example Host rules
 
