@@ -291,8 +291,11 @@ public sealed class HiveNavigationTree : TreeView
         if (_hoverNode is null)
             return;
 
+        var previousNode = _hoverNode;
         _hoverNode = null;
-        Invalidate();
+
+        if (previousNode is not null)
+            Invalidate(GetRowBounds(previousNode));
     }
 
     protected override void Dispose(bool disposing)
