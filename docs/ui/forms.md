@@ -204,6 +204,8 @@ private async void RefreshClicked(object? sender, EventArgs e)
 
 The actual application/management operation should remain outside the UI control where the architecture places it.
 
+For operations that require cancellation, timeout, provider access, persistence, or other external work, keep that work in the owning application/management service and let the UI await it rather than creating background threads solely to keep the form responsive.
+
 ## Dialogs and destructive actions
 
 Use HiveMessageBox for Hive dialogs.
