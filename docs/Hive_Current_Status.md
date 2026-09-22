@@ -78,6 +78,16 @@ Developer verification:
 - The 1.2 completion gate is satisfied.
 
 
+### Phase 1.4 — Capability-aware Execution Target Selection
+
+Complete and verified.
+
+Developer verification:
+- Hive.Example.WinForms `Providers / Target Selection / Capability-aware Execution Target Selection` completed successfully.
+- Full `Hive.Tests` execution: **95 tests passed, 0 failed, 0 skipped in 2.9 seconds**.
+- The initial xUnit `Assert.Single(...Where(...))` analyzer errors were corrected before the successful rerun.
+- The 1.4 completion gate is satisfied.
+
 ### Phase 1.3 — OpenAI-compatible Provider Adapter
 
 Complete and verified.
@@ -165,8 +175,8 @@ Implemented so far:
 
 ## Not started
 
-- Phase 1.5 and later Phase 1 implementation slices.
-- Phase 1.4 implementation is present; developer verification is pending.
+- Phase 1.6 and later Phase 1 implementation slices.
+- Phase 1.5 is now the active implementation slice and implementation is not yet verified.
 - Later phases.
 
-Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.3 are complete and verified; Phase 1.4 is active.
+Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.4 are complete and verified; Phase 1.5 is active.
