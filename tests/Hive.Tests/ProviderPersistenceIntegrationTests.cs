@@ -163,6 +163,63 @@ public sealed class ProviderPersistenceIntegrationTests
     }
 
     [Fact]
+    public async Task ProviderAccount_CredentialSecretReference_PersistsAndUpdates()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ProviderCredentialRef");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var store = new SqlProviderResourceStore(database.Options);
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var provider = CreateProvider(principal, tenant);
+        Assert.True(
+            (await store.CreateProviderAsync(provider, context)).IsSuccess);
+
+        var firstSecret = new SecretReference(SecretId.New());
+        var account = CreateProviderAccount(
+            provider.Id,
+            principal,
+            tenant).WithCredentialSecret(firstSecret);
+
+        var created = await store.CreateProviderAccountAsync(
+            account,
+            context);
+
+        Assert.True(created.IsSuccess, created.Error?.Message);
+        Assert.Equal(firstSecret, created.Value!.CredentialSecret);
+
+        var loaded = await store.GetProviderAccountAsync(
+            account.Id,
+            context);
+
+        Assert.True(loaded.IsSuccess, loaded.Error?.Message);
+        Assert.Equal(firstSecret, loaded.Value!.CredentialSecret);
+
+        var secondSecret = new SecretReference(SecretId.New());
+        var updated = await store.UpdateProviderAccountAsync(
+            loaded.Value.WithCredentialSecret(secondSecret),
+            context);
+
+        Assert.True(updated.IsSuccess, updated.Error?.Message);
+        Assert.Equal(secondSecret, updated.Value!.CredentialSecret);
+
+        var reloaded = await store.GetProviderAccountAsync(
+            account.Id,
+            context);
+
+        Assert.True(reloaded.IsSuccess, reloaded.Error?.Message);
+        Assert.Equal(secondSecret, reloaded.Value!.CredentialSecret);
+    }
+
+    [Fact]
     public async Task MalformedCapabilityState_IsRejectedWithoutReturningCorruptDomainState()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ProviderMalformed");
