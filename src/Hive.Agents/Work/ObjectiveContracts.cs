@@ -42,7 +42,7 @@ public sealed record ObjectiveUpdate
                 nameof(dependencies));
         }
 
-        Dependencies = copy;
+        Dependencies = Array.AsReadOnly(copy);
     }
 
     public string CompletionCriteria { get; }
@@ -190,7 +190,7 @@ public sealed class Objective
         CompletionCriteria = completionCriteria;
         Priority = priority;
         DeadlineUtc = deadlineUtc;
-        Dependencies = dependencies;
+        Dependencies = Array.AsReadOnly(dependencies.ToArray());
         WorkItemBinding = workItemBinding;
         Status = status;
     }
