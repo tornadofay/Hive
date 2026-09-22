@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Hive.Core;
 
 namespace Hive.Providers.OpenAICompatible;
 
