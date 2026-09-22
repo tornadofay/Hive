@@ -58,7 +58,8 @@ Before implementation:
 2. Read docs/Hive_Current_Status.md and docs/Hive_Active_Work.md.
 3. Read the relevant slice in docs/roadmap.md.
 4. Read the relevant architecture sections in docs/architecture.md. Read the full architecture document when the change crosses projects, public APIs, persistence, orchestration, lifecycle, security, or durable state.
-5. Inspect the affected project files, project references, source code, tests, examples, configuration, and package references.
+5. For any UI or Example Host work, read docs/ui/README.md and the relevant docs/ui controls/forms/examples guide before inspecting UI internals.
+6. Inspect the affected project files, project references, source code, tests, examples, configuration, and package references.
 6. Inspect the repository state available to the agent and preserve unrelated developer work.
 7. Establish the current checkpoint from repository evidence.
 8. If docs/Hive_Active_Work.md names an active slice, continue that slice. Do not select a later slice merely because it is the next item in the roadmap.
@@ -161,6 +162,7 @@ Do not build a second workflow/orchestration engine merely to reproduce framewor
 - Do not leak renderer implementation details into consuming projects.
 - Do not wrap ordinary WinForms controls merely to rename them. Create a Hive-owned control only when Hive needs a real consumer-facing behavior, styling contract, or capability.
 - UI consumers must preserve theme state, selection/focus state, responsive behavior, resource ownership, and thread affinity.
+- Use docs/ui/README.md and its focused guides as the practical consumer/usage reference for existing Hive controls, forms, layouts, themes, and Example Host conventions.
 
 ### Persistence and host boundaries
 
@@ -356,6 +358,7 @@ Update documentation only when the implementation changes the state that documen
 - docs/roadmap.md — implementation order and slice definitions.
 - docs/Hive_Current_Status.md — actual status, completion, and performed verification only.
 - docs/examples/ — public usage/reference examples.
+- docs/ui/ — practical consumer/usage guidance for Hive.Host.WinForms.UI and Hive.Example.WinForms.
 - README.md — material project-facing direction or public usage changes.
 
 An explicit repository-governance or documentation-reconciliation task is allowed to update the owning source-of-truth document even when the feature roadmap is elsewhere. Such work must remain limited to the inconsistency or governance requirement being corrected.
@@ -450,6 +453,7 @@ Keep detailed knowledge out of this file:
 - current execution scope → docs/Hive_Active_Work.md;
 - project status and performed verification → docs/Hive_Current_Status.md;
 - detailed public API usage → source/API documentation and docs/examples/;
+- practical Hive WinForms UI and Example Host usage → docs/ui/;
 - project overview → README.md;
 - test implementation details → Hive.Tests and the relevant test/documentation boundary.
 
