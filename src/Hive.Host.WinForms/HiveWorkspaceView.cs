@@ -24,6 +24,7 @@ public sealed class HiveWorkspaceView : UserControl
 
     private WorkItem? _selectedWorkItem;
     private CancellationTokenSource? _operationCts;
+    private bool _suppressSelectionChanged;
 
     public HiveWorkspaceView(
         IHiveManagementFacade management,
@@ -111,6 +112,7 @@ public sealed class HiveWorkspaceView : UserControl
             return;
         }
 
+        _suppressSelectionChanged = true;
         _workItems.BeginUpdate();
         try
         {
@@ -133,6 +135,7 @@ public sealed class HiveWorkspaceView : UserControl
         finally
         {
             _workItems.EndUpdate();
+            _suppressSelectionChanged = false;
         }
 
         _selectedWorkItem = FindPreviouslySelected(
@@ -302,6 +305,9 @@ public sealed class HiveWorkspaceView : UserControl
 
     private async Task SelectCurrentWorkItemAsync()
     {
+        if (_suppressSelectionChanged)
+            return;
+
         var item = _workItems.SelectedItems.Count == 0
             ? null
             : _workItems.SelectedItems[0].Tag as WorkItem;
@@ -458,16 +464,26 @@ public sealed class HiveWorkspaceView : UserControl
 
     private void SelectWorkItem(WorkItemId id)
     {
-        foreach (ListViewItem item in _workItems.Items)
+        _suppressSelectionChanged = true;
+        try
         {
-            if (item.Tag is WorkItem workItem &&
-                workItem.Id == id)
+            foreach (ListViewItem item in _workItems.Items)
             {
-                item.Selected = true;
-                item.Focused = true;
-                item.EnsureVisible();
-                break;
+                if (item.Tag is WorkItem workItem &&
+                    workItem.Id == id)
+                {
+                    item.Selected = true;
+                    item.Focused = true;
+                    item.EnsureVisible();
+                    _selectedWorkItem = workItem;
+                    UpdateDetails();
+                    break;
+                }
             }
+        }
+        finally
+        {
+            _suppressSelectionChanged = false;
         }
     }
 
