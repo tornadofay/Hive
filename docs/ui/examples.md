@@ -45,6 +45,7 @@ Current branches:
 - `Providers → Provider Transport`
 - `Management → Facade`
 - `Workspace → WorkItem Operations`
+- `Settings → Configuration`
 - `Persistence → Events → Event Persistence`
 - `Persistence → Events → Outbox Poller`
 
