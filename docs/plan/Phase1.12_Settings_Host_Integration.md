@@ -86,13 +86,14 @@ The first Phase 1.12 Settings implementation already exists and is verification-
 
 The current authorized sub-stage is:
 
-**1.12-A — Host Configuration and Runtime Composition**
+**1.12-C — Real Settings Management**
 
-Only implement 1.12-A and supporting contracts required to make 1.12-A complete.
+1.12-A — Host Configuration and Runtime Composition is complete and verified.
+1.12-B — Bootstrap Credential Boundary is complete and verified.
 
-1.12-A may define and consume the bootstrap-credential abstraction required by host composition, but it does not implement the concrete DPAPI storage mechanism; that implementation belongs to 1.12-B.
+Only implement 1.12-C and supporting contracts required to make 1.12-C complete.
 
-Do not implement later 1.12 UI/resource/example work in the same run unless it is a direct dependency of 1.12-A.
+1.12-C must build on the authoritative Management/Core contracts and the completed host/bootstrap boundaries. Do not implement later Settings UI migration, runtime recomposition, configured-host Example, or final verification/closure work in the same run unless it is a direct dependency of 1.12-C.
 
 Tests and examples are not a final-phase activity: each sub-stage adds the focused automated coverage and externally usable Example work required by the capability it actually introduces. 1.12-H is the final coverage consolidation/audit, not permission to defer all testing until then.
 
