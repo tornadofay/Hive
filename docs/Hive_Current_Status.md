@@ -165,7 +165,8 @@ Implemented so far:
 
 ## Not started
 
-- Phase 1.4 and later Phase 1 implementation slices.
+- Phase 1.5 and later Phase 1 implementation slices.
+- Phase 1.4 implementation is present; developer verification is pending.
 - Later phases.
 
 Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.3 are complete and verified; Phase 1.4 is active.
