@@ -465,7 +465,7 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
                 """
                 DELETE FROM [dbo].[HiveEventOutbox]
                 WHERE [EventId] = @EventId AND [LeaseId] = @LeaseId;
-                """");
+                """);
             command.Parameters.Add(GuidParameter("@EventId", workItem.Entry.Envelope.EventId.Value));
             command.Parameters.Add(GuidParameter("@LeaseId", workItem.LeaseId));
 
