@@ -46,6 +46,18 @@ The 1.1 implementation is present in the repository at this checkpoint:
 
 Agent-run build/tests/manual verification are not authorized. The implementation therefore remains pending the developer verification gate below.
 
+### Developer verification attempt — 2026-09-22
+
+The developer executed the Example Host and the full Hive.Tests suite after the compiler fixes. The reported result was **62 tests: 59 passed, 3 failed**.
+
+The three reported failures were traced to the repository implementation/tests:
+
+- ProviderResourceTests.ResourceAccessContext_RequiresMatchingOwnerAndScope: ResourceScope.Matches() was incorrectly being tested as an ownership check. Ownership is enforced by the authoritative resource store; the test now reflects that contract.
+- ProviderPersistenceIntegrationTests.ProviderGraph_CrudOwnershipScopeAndConcurrency_AreEnforced: a duplicate provider insert through the transactional store path was returned as External instead of Conflict; the transactional SQL constraint handling has been corrected.
+- HivePersistenceIntegrationTests.CleanAndRepeatMigration_IsIdempotentAndRecordsCurrentSchema: the index helper always queried HiveSchemaVersion, so provider-resource index assertions could not inspect their actual tables; the helper now accepts the target table.
+
+These corrections require developer re-verification. Slice 1.1 remains **pending** and must not be closed until the focused tests, broader Hive.Tests run, and required Example/manual checks pass and are reported.
+
 ## Verification
 
 Required for completion of 1.1:
