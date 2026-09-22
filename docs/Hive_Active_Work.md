@@ -74,6 +74,18 @@ Before coding, inspect:
 
 Prefer composition over new domain models. Hive.Management should orchestrate existing owners rather than duplicate their state or persistence rules.
 
+## Implementation handoff
+
+Implemented in the active slice:
+- public IHiveManagementFacade / HiveManagementFacade covering Provider, ProviderAccount, ExecutionTarget, and AgentDefinition CRUD;
+- Management-boundary validation for deployment/principal identity, resource kind/version/lifecycle, ownership, and scope;
+- existing Provider persistence reused unchanged as the authoritative persistence owner for Provider/ProviderAccount/ExecutionTarget;
+- durable AgentDefinition identity/resource binding, SQL persistence store, migration, ownership/scope checks, optimistic concurrency, and retirement;
+- focused facade/persistence tests covering normal CRUD, validation, owner/scope isolation, concurrency, and retirement;
+- public Example Host scenario consuming the Management facade through the Example Host service boundary.
+
+docs/Hive_Current_Status.md remains unchanged because this implementation has not been verified.
+
 ## Verification handoff
 
 Example to run: Management / Facade / Hive.Management CRUD Facade — Hive.Example.WinForms
