@@ -10,6 +10,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
+    private readonly string _applicationName;
     private readonly HiveEditorLayout _editor;
     private readonly TextBox _serverTextBox;
     private readonly TextBox _portTextBox;
@@ -33,11 +34,15 @@ internal sealed class HivePersistenceSettingsView : UserControl
     public HivePersistenceSettingsView(
         IHiveManagementFacade management,
         ResourceAccessContext accessContext,
-        IHiveThemeManager themeManager)
+        IHiveThemeManager themeManager,
+        string? applicationName = null)
     {
         _management = management ?? throw new ArgumentNullException(nameof(management));
         _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
         _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
+        _applicationName = string.IsNullOrWhiteSpace(applicationName)
+            ? HivePersistenceConfiguration.DefaultApplicationName
+            : applicationName.Trim();
 
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
@@ -190,7 +195,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         Controls.Add(_editor);
 
-        _databaseTextBox.Text = HivePersistenceConfiguration.DefaultDatabaseName;
+        _databaseTextBox.Text = HivePersistenceConfiguration.BuildDatabaseName(_applicationName);
 
         _themeManager.Apply(this);
         _authenticationComboBox.SelectedItem =
@@ -353,7 +358,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             HivePersistenceBackend.SqlServer,
             _serverTextBox.Text,
             resolvedPort,
-            HivePersistenceConfiguration.DefaultDatabaseName,
+            HivePersistenceConfiguration.BuildDatabaseName(_applicationName),
             authentication,
             authentication == HiveSqlAuthenticationMode.SqlPassword
                 ? _userNameTextBox.Text
@@ -434,7 +439,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _loadedConfiguration = configuration;
         _serverTextBox.Text = configuration.ServerName;
         _portTextBox.Text = configuration.Port?.ToString() ?? string.Empty;
-        _databaseTextBox.Text = HivePersistenceConfiguration.DefaultDatabaseName;
+        _databaseTextBox.Text = HivePersistenceConfiguration.BuildDatabaseName(_applicationName);
         _authenticationComboBox.SelectedItem = configuration.AuthenticationMode;
         _userNameTextBox.Text = configuration.UserName ?? string.Empty;
         _passwordTextBox.Clear();
