@@ -65,11 +65,11 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
 
         var contextError = ValidateAccessContext(accessContext);
         if (contextError is not null)
-            return Failure<HivePersistenceConfiguration>(contextError);
+            return Result<HivePersistenceConfiguration>.Failure(contextError);
 
         if (_configurationStore is null)
         {
-            return Failure<HivePersistenceConfiguration>(
+            return Result<HivePersistenceConfiguration>.Failure(
                 Error.Unsupported(
                     "hive.management.configuration-store-unavailable",
                     "Hive persistence configuration storage is not configured."));
