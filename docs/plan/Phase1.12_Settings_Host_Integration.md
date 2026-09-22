@@ -86,12 +86,13 @@ The first Phase 1.12 Settings implementation already exists and is verification-
 
 The current authorized sub-stage is:
 
-**1.12-C — Real Settings Management**
+**1.12-D — Settings UI on the Hive UI Foundation**
 
 1.12-A — Host Configuration and Runtime Composition is complete and verified.
 1.12-B — Bootstrap Credential Boundary is complete and verified.
+1.12-C — Real Settings Management is complete and verified.
 
-Only implement 1.12-C and supporting contracts required to make 1.12-C complete.
+Only implement 1.12-D and supporting contracts required to make 1.12-D complete.
 
 1.12-C must build on the authoritative Management/Core contracts and the completed host/bootstrap boundaries. Do not implement later Settings UI migration, runtime recomposition, configured-host Example, or final verification/closure work in the same run unless it is a direct dependency of 1.12-C.
 
