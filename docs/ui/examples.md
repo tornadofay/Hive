@@ -28,6 +28,8 @@ internal interface IHiveExample
 }
 ~~~
 
+`IHiveExample` is an Example Host composition contract, not part of Hive's external product API. A scenario is public-facing when the behavior demonstrated by the scenario is exposed through Hive's supported public contracts.
+
 A concrete Example must:
 
 - implement IHiveExample;
