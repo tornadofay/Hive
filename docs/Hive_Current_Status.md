@@ -14,7 +14,7 @@ Phase 0 — Foundations: **Complete**.
 
 ## Architecture decisions now locked
 
-- Phase 0 establishes a shared WinForms UI foundation using ReaLTaiizor as the selected third-party rendering layer behind Hive.Host.WinForms.UI; consuming forms do not reference ReaLTaiizor directly.
+- Phase 0 establishes a shared WinForms UI foundation using Hive-owned controls, native WinForms controls, and custom System.Drawing rendering behind Hive.Host.WinForms.UI; no third-party rendering dependency is currently used.
 - Hive owns its UI contract, theme modes, semantic design tokens, and Hive-specific controls where additional behavior/styling is needed; it does not wrap every WinForms control merely to rename it.
 - Hive.Example.WinForms is a first-class permanent developer-facing project from Phase 0, with scalable Category → Subcategory → Example navigation and external dotnet test developer tooling.
 - Hive is general-purpose; the real V1 forcing function is automating data entry from documents/images into the existing business application.
