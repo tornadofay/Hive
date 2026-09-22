@@ -14,6 +14,9 @@ public sealed record OpenAICompatibleMessage
 {
     public OpenAICompatibleMessage(OpenAICompatibleMessageRole role, string content)
     {
+        if (!Enum.IsDefined(role))
+            throw new ArgumentOutOfRangeException(nameof(role), role, "Message role is invalid.");
+
         if (string.IsNullOrWhiteSpace(content))
             throw new ArgumentException("Message content is required.", nameof(content));
 
