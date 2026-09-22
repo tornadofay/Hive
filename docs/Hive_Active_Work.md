@@ -4,94 +4,72 @@ Last updated: 2026-09-22
 
 ## Active slice
 
-**1.10 — Hive.Management Facade**
+**1.11 — V1 Workspace & WorkItem Operations**
 
-Phase 0 — Foundations and Phase 1.1 through Phase 1.9 are complete and verified.
+Phase 0 — Foundations and Phase 1.1 through Phase 1.10 are complete and verified.
 
-Phase 1.10 is the authorized active implementation slice.
+Phase 1.11 is the authorized active implementation slice.
 
 ## Objective
 
-Provide the application-facing `Hive.Management` CRUD facade for:
-
-- Providers;
-- ProviderAccounts;
-- ExecutionTargets;
-- AgentDefinitions.
-
-The facade must preserve the existing Core, Agents, Persistence, Provider, and Coordination ownership boundaries. WinForms hosts must consume Management rather than bypassing it.
+Implement the V1 operational Workspace over Hive.Management for image submission and governed business-app processing.
 
 ## Scope
 
-- CRUD operations for Providers;
-- CRUD operations for ProviderAccounts;
-- CRUD operations for ExecutionTargets;
-- CRUD operations for AgentDefinitions;
-- service-level validation;
-- authorization and ownership/scope enforcement;
-- persistence integration through the existing persistence boundaries;
-- reuse of existing resource contracts, provider contracts, AgentDefinition/AgentFactory contracts, Result/Error classification, and authorization owners.
+- submit/attach an image to a WorkItem;
+- view WorkItem status and activity;
+- view relevant execution/provider status;
+- receive WorkItem notifications;
+- view PendingApproval;
+- Approve / Reject the governed business-app write.
+
+The V1 Workspace works with a single Agent and does not require Hive membership or Swarm state.
 
 ## Verification gate
 
-Required for completion of 1.10:
+Required for completion of 1.11:
 
-1. Management services expose the required CRUD operations without leaking persistence implementation details;
-2. valid create/read/update/delete paths persist and return the expected resources;
-3. validation failures are returned as typed Hive errors;
-4. authorization, ownership, and scope failures are enforced in code;
-5. persistence integration uses the existing Hive.Persistence stores/boundaries;
-6. focused automated coverage exists for normal, invalid, authorization, scope, and persistence cases;
-7. a public Example Host scenario demonstrates the externally meaningful Management facade behavior;
-8. broader `Hive.Tests` execution.
-
-No verification claim is recorded until actual execution has been performed.
+1. image submission creates the correct WorkItem;
+2. WorkItem status and activity are visible through the Workspace;
+3. relevant execution/provider status is visible;
+4. PendingApproval state is visible;
+5. Approve / Reject changes the authoritative WorkItem state correctly;
+6. stale approval is rejected;
+7. the Workspace does not create hidden Hive/Swarm behavior;
+8. focused automated coverage exists for normal, invalid, authorization/stale, persistence, and approval paths;
+9. a public Example Host scenario demonstrates the externally meaningful Workspace behavior;
+10. broader `Hive.Tests` execution.
 
 ## Constraints
 
-- No Phase 1.11 or later implementation.
-- No Workspace, Settings, image-processing, business-app integration, or cognitive-generation work.
-- Do not move SQL or provider transport ownership into Hive.Management.
-- Do not bypass existing authorization/resource contracts.
-- Do not duplicate Provider, ProviderAccount, ExecutionTarget, Agent, or persistence state models merely to create facade DTOs unless the existing public contract requires them.
-- Host.WinForms remains a consumer boundary; it must not directly access Hive.Persistence for this slice.
-- Do not change the existing Provider/ProviderAccount/ExecutionTarget persistence contracts merely to make them fit the Management facade.
-- Do not add provider transport behavior to Hive.Management.
-- Preserve cancellation, typed errors, resource identity/scope, and existing lifecycle/version semantics.
+- No Phase 1.12 or later implementation.
+- No Hive membership, Swarm, multi-agent coordination, cognitive-generation, or configuration-portability work.
+- Preserve Hive.Management as the application-facing boundary.
+- Host business state remains host-owned.
+- Do not move SQL/database access into the Workspace UI layer.
+- Do not make image extraction or provider transport responsibilities part of Workspace.
+- Preserve WorkItem identity, lifecycle, provenance, authorization, cancellation, and concurrency semantics.
+- Do not introduce hidden Hive/Swarm behavior or require Hive membership for the V1 single-Agent Workspace.
 
 ## Implementation checkpoint
 
-Phase 1.10 implementation is present on main; required verification is still pending.
+Phase 1.11 implementation has not started.
 
 Before coding, inspect:
 
-- the existing provider resource store and contracts;
-- AgentDefinition and AgentFactory contracts;
-- existing authorization owners and resource-access checks;
-- the Hive.Management project/reference boundary;
-- existing Example Host patterns;
-- existing provider/agent persistence tests and fixtures.
-
-Prefer composition over new domain models. Hive.Management should orchestrate existing owners rather than duplicate their state or persistence rules.
-
-## Implementation handoff
-
-Implemented in the active slice:
-- public IHiveManagementFacade / HiveManagementFacade covering Provider, ProviderAccount, ExecutionTarget, and AgentDefinition CRUD;
-- Management-boundary validation for deployment/principal identity, resource kind/version/lifecycle, ownership, and scope;
-- existing Provider persistence reused unchanged as the authoritative persistence owner for Provider/ProviderAccount/ExecutionTarget;
-- durable AgentDefinition identity/resource binding, SQL persistence store, migration, ownership/scope checks, optimistic concurrency, and retirement;
-- focused facade/persistence tests covering normal CRUD, validation, owner/scope isolation, concurrency, and retirement;
-- public Example Host scenario consuming the Management facade through the Example Host service boundary.
-
-docs/Hive_Current_Status.md remains unchanged because this implementation has not been verified.
+- existing WorkItem contracts and lifecycle/provenance rules;
+- Hive.Management public boundary;
+- current Agent execution and lifecycle persistence;
+- approval/state-transition ownership;
+- image/input contracts already present;
+- Host.WinForms and Host.WinForms.UI boundaries;
+- Example Host patterns and `docs/ui/examples.md`;
+- existing WorkItem/execution/event/approval tests and fixtures.
 
 ## Verification handoff
 
-Example to run: Management / Facade / Hive.Management CRUD Facade — Hive.Example.WinForms
-
-Tests to run: `tests/Hive.Tests/HiveManagementFacadeTests.cs`; broader `Hive.Tests` execution is required by the 1.10 completion gate.
+No verification handoff yet; implementation has not started.
 
 ## Historical verification
 
-Completed-slice verification records are maintained under `docs/verification/`. Do not copy completed-slice history into this file.
+Phase 1.10 completion is recorded in `docs/verification/phase-1/1.10.md`.
