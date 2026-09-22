@@ -101,9 +101,9 @@ public sealed class HiveWorkspaceView : UserControl
 
     private async Task RefreshCoreAsync(CancellationToken token)
     {
-                var result = await _management.ListWorkItemsAsync(
-                    _accessContext,
-                    cancellationToken: token).ConfigureAwait(true);
+        var result = await _management.ListWorkItemsAsync(
+            _accessContext,
+            cancellationToken: token).ConfigureAwait(true);
 
         if (result.IsFailure)
         {
@@ -111,42 +111,46 @@ public sealed class HiveWorkspaceView : UserControl
             return;
         }
 
-                _workItems.BeginUpdate();
-                try
-                {
-                    _workItems.Items.Clear();
+        _workItems.BeginUpdate();
+        try
+        {
+            _workItems.Items.Clear();
 
-                    foreach (var item in result.Value!)
-                    {
-                        var attachment = item.Attachment is null
-                            ? "None"
-                            : $"{item.Attachment.FileName} ({FormatSize(item.Attachment.ContentLength)})";
+            foreach (var item in result.Value!)
+            {
+                var attachment = item.Attachment is null
+                    ? "None"
+                    : $"{item.Attachment.FileName} ({FormatSize(item.Attachment.ContentLength)})";
 
-                        var row = new ListViewItem(item.Id.ToString());
-                        row.SubItems.Add(item.Status.ToString());
-                        row.SubItems.Add(item.Resource.Version.ToString());
-                        row.SubItems.Add(attachment);
-                        row.Tag = item;
-                        _workItems.Items.Add(row);
-                    }
-                }
-                finally
-                {
-                    _workItems.EndUpdate();
-                }
+                var row = new ListViewItem(item.Id.ToString());
+                row.SubItems.Add(item.Status.ToString());
+                row.SubItems.Add(item.Resource.Version.ToString());
+                row.SubItems.Add(attachment);
+                row.Tag = item;
+                _workItems.Items.Add(row);
+            }
+        }
+        finally
+        {
+            _workItems.EndUpdate();
+        }
 
-                _selectedWorkItem = FindPreviouslySelected(
-                    result.Value!,
-                    _selectedWorkItem?.Id);
+        _selectedWorkItem = FindPreviouslySelected(
+            result.Value!,
+            _selectedWorkItem?.Id);
 
-                if (_selectedWorkItem is null)
-                    ClearDetails();
-                else
-                    await LoadActivityAsync(_selectedWorkItem, token).ConfigureAwait(true);
+        if (_selectedWorkItem is null)
+        {
+            ClearDetails();
+        }
+        else
+        {
+            await LoadActivityAsync(
+                _selectedWorkItem,
+                token).ConfigureAwait(true);
+        }
 
-                UpdateActionState();
-            },
-            cancellationToken);
+        UpdateActionState();
     }
 
     private async Task AddImageAsync()
