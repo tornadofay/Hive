@@ -864,7 +864,7 @@ internal sealed class HiveProviderSettingsView : UserControl
         if (_providerComboBox.SelectedItem is not Choice<Provider> choice ||
             choice.Value.Id != provider.Id)
         {
-            SelectComboValue(_providerComboBox, provider.Id);
+            SelectComboValue(_providerComboBox, provider.Id.Value);
         }
     }
 
@@ -881,7 +881,7 @@ internal sealed class HiveProviderSettingsView : UserControl
                 ? "Saved credential: not configured."
                 : "Saved credential: configured (material hidden).";
 
-        SelectComboValue(_accountComboBox, account.Id);
+        SelectComboValue(_accountComboBox, account.Id.Value);
     }
 
     private void SelectTarget(ExecutionTarget? target = null)
@@ -909,7 +909,7 @@ internal sealed class HiveProviderSettingsView : UserControl
         _modelTextBox.Text = target.Model ?? string.Empty;
         _deploymentTextBox.Text = target.Deployment ?? string.Empty;
 
-        SelectComboValue(_targetComboBox, target.Id);
+        SelectComboValue(_targetComboBox, target.Id.Value);
     }
 
     private void ResetSelectors()
