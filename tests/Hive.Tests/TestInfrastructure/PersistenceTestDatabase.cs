@@ -49,6 +49,9 @@ internal sealed class PersistenceTestDatabase
             IF OBJECT_ID(N'dbo.HiveEventLog', N'U') IS NOT NULL
                 DROP TABLE [dbo].[HiveEventLog];
 
+            IF OBJECT_ID(N'dbo.HiveAgentDefinitions', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveAgentDefinitions];
+
             IF OBJECT_ID(N'dbo.HiveSecrets', N'U') IS NOT NULL
                 DROP TABLE [dbo].[HiveSecrets];
 
