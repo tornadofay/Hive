@@ -36,6 +36,9 @@ public sealed class HivePersistenceIntegrationTests
 
         var storedVersion = await ReadSchemaVersionAsync(options);
         Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, storedVersion);
+        Assert.True(await TableExistsAsync(options, "HiveAgentDefinitions"));
+        Assert.True(await IndexExistsAsync(options, "UX_HiveAgentDefinitions_Owner_Key", "HiveAgentDefinitions"));
+        Assert.True(await IndexExistsAsync(options, "IX_HiveAgentDefinitions_OwnerScope", "HiveAgentDefinitions"));
         Assert.True(await IndexExistsAsync(options, "PK_HiveSchemaVersion", "HiveSchemaVersion"));
         Assert.True(await IndexExistsAsync(options, "UX_HiveSchemaVersion_SchemaVersion", "HiveSchemaVersion"));
         Assert.True(await IndexExistsAsync(options, "UX_HiveProviders_ProviderKey", "HiveProviders"));
