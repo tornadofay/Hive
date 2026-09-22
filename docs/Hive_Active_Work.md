@@ -87,10 +87,10 @@ No verification claim is recorded until it has actually been performed.
 
 ## Implementation checkpoint
 
-Phase 1.7 is complete and verified. Phase 1.8 implementation has not started.
+Phase 1.7 is complete and verified. Phase 1.8 implementation is present; developer verification is pending.
 
 ## Verification handoff
 
-Example to run: <exact Persistence / Events / ... outbox poller example path once implemented> — Hive.Example.WinForms
+Example to run: Persistence / Events / Outbox Poller / Transactional Outbox Poller — Hive.Example.WinForms
 
-Tests to run: <exact focused outbox poller test class/file>; broader Hive.Tests execution is required by the 1.8 completion gate.
+Tests to run: tests/Hive.Tests/EventOutboxPollerIntegrationTests.cs; broader Hive.Tests execution is required by the 1.8 completion gate.
