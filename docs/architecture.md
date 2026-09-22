@@ -436,6 +436,20 @@ These mechanisms are intentionally reusable by later CognitiveAgent implementati
 
 A mechanism becomes cognitive when the Agent can autonomously interpret and revise it as part of its own ongoing cognition—for example: forming/revising Goals, revising Beliefs, selecting and reconsidering Intentions, generating/choosing Questions, deciding what to Dream and why, interpreting simulation results, revising its self-model, or changing strategy from experience.
 
+### Base Agent creation/runtime contract
+
+Phase 1.5 establishes the first executable base Agent boundary without persistence or model execution:
+
+- `AgentDefinition` is immutable configuration containing the stable definition key/display name and explicitly selected `AgentGeneration`.
+- `AgentFactory` is the creation boundary. Creation requires a `ResourceAccessContext` with deployment and principal identity and passes through `IAgentCreationAuthorizer`.
+- The factory currently supports only `AgentGeneration.Base`. `AgentGeneration.Cognitive` is represented as a reserved later generation and is rejected until its owning phase supplies the concrete implementation.
+- An `Agent` receives one immutable generation at creation. There is no runtime promotion or demotion.
+- A base Agent creates independent `RuntimeInstance` incarnations. Each runtime receives a distinct `RuntimeId` while retaining the owning Agent identity and generation.
+- A RuntimeInstance may create `Execution` objects. Each Execution has its own `ExecutionId`, retains its Runtime/Agent ownership, and has an independent immutable lifecycle.
+- Runtime and Execution objects in this slice are in-memory runtime contracts. They do not add persistence, provider transport, MAF execution, cognitive state, or Management operations.
+- Runtime/Execution state transitions are fail-closed typed results; a stopped RuntimeInstance cannot start new Execution objects, and terminal Execution objects cannot transition again.
+- The factory does not contain cognitive-generation logic and does not infer generation from task complexity.
+
 ### Cognitive Kernel vs Cognitive Strategy
 
 Inside `CognitiveAgent` only:
