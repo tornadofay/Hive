@@ -267,7 +267,8 @@ Hive/
 │   ├── roadmap.md
 │   ├── Hive_Current_Status.md
 │   ├── Hive_Active_Work.md
-│   └── examples/
+│   ├── examples/
+│   └── ui/
 ├── src/
 │   ├── Hive.Core/
 │   ├── Hive.Agents/
@@ -283,7 +284,7 @@ Hive/
     └── Hive.Tests/
 ```
 
-The solution and project files are the implementation source for the actual project graph; the documentation files above define architecture, active scope, roadmap order, status, and public examples.
+The solution and project files are the implementation source for the actual project graph; the documentation files above define architecture, active scope, roadmap order, status, public examples, and practical WinForms UI/Example Host usage.
 
 ## Project status
 
