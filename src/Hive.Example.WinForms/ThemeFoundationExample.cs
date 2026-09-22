@@ -15,10 +15,7 @@ internal sealed class ThemeFoundationExample : IHiveExample
 
     public UserControl CreateView(IServiceProvider services)
     {
-        var themeManager = services.GetService(typeof(IHiveThemeManager))
-            as IHiveThemeManager
-            ?? throw new InvalidOperationException(
-                "The Example host did not provide IHiveThemeManager.");
+        var themeManager = services.GetThemeManager();
 
         return new ThemeFoundationExampleView(themeManager);
     }
