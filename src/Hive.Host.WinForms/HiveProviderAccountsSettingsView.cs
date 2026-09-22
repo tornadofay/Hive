@@ -16,6 +16,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
 
     private IReadOnlyList<Provider> _providers = Array.Empty<Provider>();
     private Provider? _selectedProvider;
+    private bool _loadingProviders;
 
     public HiveProviderAccountsSettingsView(
         IHiveManagementFacade management,
@@ -36,16 +37,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
             DropDownStyle = ComboBoxStyle.DropDownList,
             Margin = Padding.Empty
         };
-        _providerComboBox.SelectedIndexChanged += async (_, _) =>
-        {
-            _selectedProvider =
-                (_providerComboBox.SelectedItem as ProviderChoice)?.Value;
-
-            _page.AllowAdd = _selectedProvider is not null;
-
-            if (IsHandleCreated && !IsDisposed)
-                await _page.RefreshAsync().ConfigureAwait(true);
-        };
+        _providerComboBox.SelectedIndexChanged += ProviderComboBoxOnSelectedIndexChanged;
 
         _page = new HiveCrudPage<ProviderAccount>
         {
@@ -134,30 +126,60 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
 
         _providers = result.Value!;
 
-        _providerComboBox.BeginUpdate();
+        _loadingProviders = true;
         try
         {
-            _providerComboBox.Items.Clear();
+            _providerComboBox.BeginUpdate();
+            try
+            {
+                _providerComboBox.Items.Clear();
 
-            foreach (var provider in _providers)
-                _providerComboBox.Items.Add(new ProviderChoice(provider));
+                foreach (var provider in _providers)
+                    _providerComboBox.Items.Add(new ProviderChoice(provider));
 
-            var preferred = _providers
-                .FirstOrDefault(item => item.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active)
-                ?? _providers.FirstOrDefault();
+                var preferred = _providers
+                    .FirstOrDefault(item =>
+                        item.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active)
+                    ?? _providers.FirstOrDefault();
 
-            if (preferred is not null)
-                SelectProvider(preferred.Id);
+                if (preferred is not null)
+                    SelectProvider(preferred.Id);
+            }
+            finally
+            {
+                _providerComboBox.EndUpdate();
+            }
         }
         finally
         {
-            _providerComboBox.EndUpdate();
+            _loadingProviders = false;
         }
 
         if (_selectedProvider is null)
-            _page.SetStatus("Add a Provider first, then manage its accounts and credentials.");
+        {
+            _page.SetStatus(
+                "Add a Provider first, then manage its accounts and credentials.");
+        }
         else
+        {
             await _page.RefreshAsync(cancellationToken).ConfigureAwait(true);
+        }
+    }
+
+    private async void ProviderComboBoxOnSelectedIndexChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (_loadingProviders)
+            return;
+
+        _selectedProvider =
+            (_providerComboBox.SelectedItem as ProviderChoice)?.Value;
+
+        _page.AllowAdd = _selectedProvider is not null;
+
+        if (!IsDisposed)
+            await _page.RefreshAsync().ConfigureAwait(true);
     }
 
     private async Task<IReadOnlyList<ProviderAccount>> LoadAsync(
@@ -197,6 +219,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
         using var editor = new HiveProviderAccountEditorForm(
             account,
             _selectedProvider,
+            _accessContext,
             _themeManager);
 
         if (editor.ShowDialog(FindForm()) != DialogResult.OK ||
@@ -352,10 +375,6 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
         }
 
         base.Dispose(disposing);
-    }
-
-    private void ProviderComboBoxOnSelectedIndexChanged(object? sender, EventArgs e)
-    {
     }
 
     private sealed record ProviderChoice(Provider Value)
