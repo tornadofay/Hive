@@ -43,7 +43,7 @@ public sealed class WorkItemManagementTests
 
         Assert.True(stored.IsSuccess, stored.Error?.Message);
         Assert.Equal(content, stored.Value!.Content.ToArray());
-        Assert.Equal(created.Value.Attachment.Sha256, stored.Value.Metadata.Sha256);
+        Assert.Equal(created.Value!.Attachment!.Sha256, stored.Value!.Metadata.Sha256);
 
         var activity = await management.GetWorkItemActivityAsync(
             created.Value.Id,
