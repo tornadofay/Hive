@@ -179,6 +179,62 @@ public readonly record struct WorkItemId
     public override string ToString() => Value.ToString("D");
 }
 
+public readonly record struct ObjectiveId
+{
+    public ObjectiveId(Guid value) => Value = IdentityValue.Require(value, nameof(value));
+    public Guid Value { get; }
+    public static ObjectiveId New() => new(Guid.NewGuid());
+    public static ObjectiveId Parse(string value) => new(IdentityValue.Parse(value, nameof(value), nameof(ObjectiveId)));
+    public static bool TryParse(string? value, out ObjectiveId result)
+    {
+        if (IdentityValue.TryParse(value, out var parsed)) { result = new(parsed); return true; }
+        result = default; return false;
+    }
+    public override string ToString() => Value.ToString("D");
+}
+
+public readonly record struct MemoryId
+{
+    public MemoryId(Guid value) => Value = IdentityValue.Require(value, nameof(value));
+    public Guid Value { get; }
+    public static MemoryId New() => new(Guid.NewGuid());
+    public static MemoryId Parse(string value) => new(IdentityValue.Parse(value, nameof(value), nameof(MemoryId)));
+    public static bool TryParse(string? value, out MemoryId result)
+    {
+        if (IdentityValue.TryParse(value, out var parsed)) { result = new(parsed); return true; }
+        result = default; return false;
+    }
+    public override string ToString() => Value.ToString("D");
+}
+
+public readonly record struct QuestionId
+{
+    public QuestionId(Guid value) => Value = IdentityValue.Require(value, nameof(value));
+    public Guid Value { get; }
+    public static QuestionId New() => new(Guid.NewGuid());
+    public static QuestionId Parse(string value) => new(IdentityValue.Parse(value, nameof(value), nameof(QuestionId)));
+    public static bool TryParse(string? value, out QuestionId result)
+    {
+        if (IdentityValue.TryParse(value, out var parsed)) { result = new(parsed); return true; }
+        result = default; return false;
+    }
+    public override string ToString() => Value.ToString("D");
+}
+
+public readonly record struct DelegationId
+{
+    public DelegationId(Guid value) => Value = IdentityValue.Require(value, nameof(value));
+    public Guid Value { get; }
+    public static DelegationId New() => new(Guid.NewGuid());
+    public static DelegationId Parse(string value) => new(IdentityValue.Parse(value, nameof(value), nameof(DelegationId)));
+    public static bool TryParse(string? value, out DelegationId result)
+    {
+        if (IdentityValue.TryParse(value, out var parsed)) { result = new(parsed); return true; }
+        result = default; return false;
+    }
+    public override string ToString() => Value.ToString("D");
+}
+
 public enum ResourceKind
 {
     Deployment,
@@ -192,6 +248,9 @@ public enum ResourceKind
     Runtime,
     Execution,
     WorkItem,
+    Objective,
+    Memory,
+    Question,
     Provider,
     ProviderAccount,
     ExecutionTarget,
