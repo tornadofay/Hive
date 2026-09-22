@@ -28,6 +28,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
     private readonly Font _titleFont;
     private readonly Font _metaFont;
     private readonly Font _outputFont;
+    private int _lineCount;
     private bool _collapsed = true;
 
     public HiveExampleOutputView()
@@ -199,6 +200,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         set
         {
             _output.Text = value ?? string.Empty;
+            _lineCount = CountLines(_output.Text);
             UpdateActionState();
 
             if (_output.TextLength > 0)
@@ -246,6 +248,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             return;
 
         _output.Clear();
+        _lineCount = 0;
         UpdateActionState();
     }
 
@@ -263,6 +266,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Environment.NewLine +
             (value ?? string.Empty);
 
+        _lineCount = CountLines(_output.Text);
         _output.SelectionStart = _output.TextLength;
         _output.ScrollToCaret();
         UpdateActionState();
@@ -275,6 +279,9 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             return;
 
         _output.AppendText(value);
+        _lineCount = _output.TextLength == value.Length
+            ? CountLines(value)
+            : _lineCount + CountLineBreaks(value);
         _output.SelectionStart = _output.TextLength;
         _output.ScrollToCaret();
         UpdateActionState();
@@ -323,18 +330,31 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             return;
         }
 
-        var lineCount = 1;
-        for (var index = 0; index < _output.TextLength; index++)
-        {
-            if (_output.Text[index] == '\n')
-                lineCount++;
-        }
-
-        _meta.Text = lineCount == 1
+        _meta.Text = _lineCount == 1
             ? "1 line"
-            : $"{lineCount:N0} lines";
+            : $"{_lineCount:N0} lines";
 
         _clearButton.Enabled = true;
+    }
+
+    private static int CountLines(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return 0;
+
+        return CountLineBreaks(value) + 1;
+    }
+
+    private static int CountLineBreaks(string value)
+    {
+        var count = 0;
+        for (var index = 0; index < value.Length; index++)
+        {
+            if (value[index] == '\n')
+                count++;
+        }
+
+        return count;
     }
 
     internal void ApplyTheme(HiveThemeDefinition theme)
