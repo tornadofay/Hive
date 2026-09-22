@@ -33,7 +33,7 @@ public sealed class HiveHostComposition : IDisposable
 
         _configurationStore = configurationStore;
         _graphFactory = new SqlHiveHostServiceGraphFactory(
-            new UnavailableHiveBootstrapCredentialStore(),
+            new DpapiHiveBootstrapCredentialStore(),
             configurationStore);
     }
 
