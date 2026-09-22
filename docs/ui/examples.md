@@ -258,7 +258,9 @@ Before finishing a new capability:
 
 ## What not to change
 
-Do not edit HiveExampleHostForm merely to add a new Example.
+Do not edit `HiveExampleHostForm` merely to add a new Example. The discovery contract is intentionally designed so adding a scenario is self-contained.
+
+Change the Host only when the host/composition contract itself needs to change, such as a new shared Example service or a change to the Category → Subcategory → Example navigation model.
 
 The Host already:
 
