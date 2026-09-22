@@ -18,7 +18,7 @@ Hive.Management
 Normal host operations / execution
 \`\`\`
 
-Settings edits that state; the host consumes that same state.
+Settings edits authoritative state; the host consumes that same state.
 
 This remains **Phase 1.12** only. It does not authorize Phase 1.13 or later.
 
@@ -90,6 +90,8 @@ Only implement 1.12-A and supporting contracts required to make 1.12-A complete.
 
 Do not implement later 1.12 UI/resource/example work in the same run unless it is a direct dependency of 1.12-A.
 
+Tests and examples are not a final-phase activity: each sub-stage adds the focused automated coverage and externally usable Example work required by the capability it actually introduces. 1.12-H is the final coverage consolidation/audit, not permission to defer all testing until then.
+
 The ordered sub-stages are:
 
 1. 1.12-A — Host composition boundary
@@ -110,10 +112,10 @@ A sub-stage closes only after its required implementation, tests/examples/docs, 
 
 ## 2. Target Architecture
 
-The host must have one composition/lifetime boundary that owns the current Hive service graph.
+The host application layer must have one composition/lifetime boundary that owns the current Hive service graph. `Hive.Example.WinForms` consumes that boundary; it must not become the architectural owner of Hive runtime composition.
 
 \`\`\`
-configuration file / bootstrap configuration
+persisted Hive configuration + bootstrap credential boundary
               ↓
       host composition boundary
               ↓
@@ -121,7 +123,7 @@ configuration file / bootstrap configuration
               ↓
        HiveManagementFacade
               ↓
-          host services
+          host services / execution
 \`\`\`
 
 Settings uses the public configuration/Management boundaries rather than accessing SQL, provider transport, migrations, or secret material directly.
@@ -148,7 +150,7 @@ Never publish a partially constructed graph.
 
 Never destroy the currently usable graph merely because a replacement failed.
 
-On first startup, failure to construct the configured graph produces an explicit unavailable/unconfigured state rather than silently switching to a different saved configuration.
+On startup, failure to construct the configured graph produces an explicit unavailable/unconfigured state rather than silently switching to a different saved configuration or overwriting the saved configuration.
 
 ### Concurrency/lifetime rules
 
@@ -182,10 +184,12 @@ Important startup rule:
 - authentication mode;
 - bootstrap credential/reference;
 - encryption/trust policy;
-- database creation policy;
+- database creation policy when it affects the constructed persistence behavior;
 - command timeout when it is part of the constructed store options.
 
 Resource-only changes must not reconstruct the persistence graph.
+
+The persisted `create-database-if-missing` value is configuration state, not authorization for a connection test or ordinary startup composition to mutate the database. Phase 1.12 connection tests and composition remain non-destructive; database creation/schema initialization stays an explicit lifecycle operation.
 
 ---
 
@@ -221,6 +225,8 @@ The bootstrap secret must:
 
 The existing Hive resource Secret Store remains authoritative for ProviderAccount and other Hive-owned resource secrets.
 
+The bootstrap store belongs to the host/bootstrap infrastructure boundary. Settings may submit a new credential or replacement credential through a public application boundary, but it never reads raw bootstrap material back and never accesses the bootstrap store directly.
+
 ### 4.2 Do not reuse the Hive Secret reference for SQL bootstrap
 
 The current persistence configuration contains a secret reference used by the existing implementation.
@@ -228,6 +234,8 @@ The current persistence configuration contains a secret reference used by the ex
 That reference must **not** remain the mechanism for obtaining the SQL password once the bootstrap boundary is implemented.
 
 The implementation must introduce an intentional bootstrap credential reference/boundary and define its compatibility with the existing persisted configuration. Do not silently reinterpret an existing field with different semantics.
+
+The persisted configuration contains only the bootstrap credential reference/identifier and other non-secret connection settings. The bootstrap store contains the protected material. These are separate records with separate ownership and lifecycle.
 
 ### 4.3 AgentDefinition must have durable execution configuration
 
@@ -281,7 +289,9 @@ The AgentDefinition → ExecutionTarget relationship is a durable-schema contrac
 - stale/missing/unauthorized target handling;
 - concurrency/version tests.
 
-Existing AgentDefinitions must remain readable after migration. A null target is allowed only for legacy/unconfigured definitions; configured-host execution must reject an unusable configuration clearly.
+Existing AgentDefinitions must remain readable after migration. A null target is allowed for an unconfigured definition; a newly configured-host Agent requires a usable target reference. A target may be retired without deleting the AgentDefinition, but execution must reject that configuration clearly until it is repaired.
+
+Do not require a hard database foreign key if the existing resource lifecycle intentionally retains retired records; enforce the relationship through the Management boundary and use an index/constraint strategy compatible with that lifecycle.
 
 ---
 
@@ -289,7 +299,7 @@ Existing AgentDefinitions must remain readable after migration. A null target is
 
 ### Goal
 
-Remove hard-coded runtime persistence wiring from the normal Example Host composition path.
+Remove hard-coded runtime persistence wiring from the host application's normal composition path. The reusable composition/lifetime boundary belongs to the host layer; the Example Host consumes it.
 
 ### Current defect
 
@@ -318,6 +328,8 @@ Create one host-owned composition/lifetime boundary that:
 9. exposes the current graph/status to the host;
 10. replaces and disposes the previous graph only after the new graph is ready.
 
+The composition boundary must not require a UI form to perform service construction. Settings is a caller of the configuration boundary; it is not the owner of the service graph.
+
 ### Required failure states
 
 The composition boundary must distinguish at least:
@@ -338,11 +350,21 @@ The composition boundary must distinguish at least:
 
 The composition layer must preserve these distinctions. UI may translate them into user-friendly messages.
 
-### 1.12-A boundary test
+### 1.12-A exit gate
 
-This stage proves that the host can be composed from saved configuration without embedding \`LocalDevelopment()\` as permanent wiring.
+This stage proves, with focused automated coverage and code inspection, that the host can be composed from saved configuration without embedding \`LocalDevelopment()\` as permanent wiring.
 
-It does **not** yet implement the complete Settings editor, configured Agent example, or final UI migration.
+Required focus:
+
+- no-saved-config → LocalDevelopment default;
+- saved-config → configured database options;
+- invalid saved config does not fall back;
+- bootstrap-required config is rejected when bootstrap material is unavailable;
+- candidate graph construction is isolated from publication;
+- failed replacement preserves the current usable graph;
+- owned graph resources are disposed exactly once on successful replacement.
+
+It does **not** yet complete the Settings editor, configured Agent example, or final UI migration.
 
 ---
 
@@ -354,12 +376,12 @@ Implement the bootstrap credential mechanism required by 1.12-A.
 
 The bootstrap boundary must support the minimum lifecycle required by Settings and startup:
 
-- create/set;
+- set/create;
 - replace;
-- resolve;
-- delete when no longer referenced, if supported by the configuration lifecycle.
+- resolve internally for composition;
+- clear/remove only when the persisted configuration no longer references it and the boundary explicitly supports cleanup.
 
-Material is write-only from normal Settings usage and must never be exposed through ordinary configuration reads.
+Raw material may be supplied and resolved internally, but normal configuration reads expose only non-secret configuration and the bootstrap reference. Settings never receives the stored secret value back.
 
 ### Storage requirements
 
@@ -613,7 +635,7 @@ Every existing hard-coded \`HiveDatabaseOptions.LocalDevelopment()\` use must be
 
 ## 12. 1.12-H — Focused Automated Coverage
 
-Coverage must match the actual boundary implemented by each sub-stage.
+Coverage must match the actual boundary implemented by each sub-stage. The numbered sub-stage is a consolidation/audit point, not a reason to postpone tests until after UI work. Tests for 1.12-A and 1.12-B are written with those implementations; resource/UI integration tests are added with their owning sub-stages.
 
 ### Persistence/configuration
 
@@ -654,7 +676,8 @@ Coverage must match the actual boundary implemented by each sub-stage.
 - resource changes refresh without persistence reconstruction;
 - persistence changes recompose;
 - invalid replacement does not destroy the active graph;
-- selected Agent preservation/clearing rules.
+- selected Agent preservation/clearing rules;
+- Settings cannot read back raw bootstrap material.
 
 ### Security
 
@@ -738,6 +761,8 @@ The shared controls are the acceptance surface; do not solve these concerns agai
 
 ## 15. 1.12-K — Documentation and Closure
 
+Documentation changes required by a structural decision are made before the corresponding structural code change, in accordance with `AGENTS.md`. Final usage/verification documentation is updated when the owning sub-stage is complete.
+
 Update only the source-of-truth documents whose state changed.
 
 Required documentation updates include:
@@ -804,18 +829,28 @@ Phase 1.12 remains open until all are true:
 
 For any capability requiring an Example, the handoff must name the exact Example path and focused tests.
 
-Current Phase 1.12 verification path:
+### Current 1.12-A handoff
 
-**Example to run:**  
+**Example to run:** No new Example is required solely to establish the internal composition boundary. Do not use the existing Settings Example as a substitute for composition tests.
+
+**Focused tests:**
+- \`tests/Hive.Tests/HiveHostCompositionTests.cs\` — 1.12-A host composition boundary (create in this sub-stage).
+- existing \`HiveConfigurationTests.cs\` / \`HivePersistenceOptionsTests.cs\` — preserve relevant configuration/options coverage and extend only where the new composition contract requires it.
+
+**Inspection target:**
+- host composition/lifetime owner must not live in \`Hive.Example.WinForms\` as a one-off service graph;
+- no production runtime path may hard-code \`HiveDatabaseOptions.LocalDevelopment()\` after a saved configuration exists.
+
+### Final Phase 1.12 handoff
+
+**Example to run:**
 \`Settings / Configuration / Hive Settings / Provider & Persistence — Hive.Example.WinForms\`
 
-**Primary focused tests:**  
-- \`tests/Hive.Tests/HiveConfigurationTests.cs\`
-- \`tests/Hive.Tests/HivePersistenceOptionsTests.cs\`
-- \`tests/Hive.Tests/ProviderPersistenceIntegrationTests.cs\`
-- \`tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs\`
+**Configured-host scenario:** the host-level Settings command followed by the configured Agent operation specified in 1.12-I.
 
-The final Phase 1.12 gate additionally requires broader \`Hive.Tests\` execution and the configured-host manual scenario.
+**Focused tests:** the relevant 1.12 test classes/files produced by the sub-stages, plus the existing configuration/persistence/provider tests where still applicable.
+
+**Broader verification:** full \`Hive.Tests\` execution is required before Phase 1.12 closure.
 
 Never record a passing result unless it was actually executed.
 
