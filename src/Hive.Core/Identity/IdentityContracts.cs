@@ -268,5 +268,6 @@ public enum ResourceKind
     Provider,
     ProviderAccount,
     ExecutionTarget,
-    Secret
+    Secret,
+    AgentDefinition
 }
