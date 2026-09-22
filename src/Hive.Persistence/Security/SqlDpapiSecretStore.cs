@@ -742,15 +742,6 @@ public sealed class SqlDpapiSecretStore : ISecretStore
             Value = value.UtcDateTime
         };
 
-    private static void EnsureWindows()
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            throw new PlatformNotSupportedException(
-                "Hive DPAPI secret storage requires Windows.");
-        }
-    }
-
     private async Task<Result<T>> ExecuteAsync<T>(
         string resourceName,
         CancellationToken cancellationToken,
