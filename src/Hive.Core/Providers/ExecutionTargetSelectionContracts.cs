@@ -30,6 +30,13 @@ public sealed record CapabilityRequirement
         CapabilityKey capability,
         CapabilityRequirementKind kind)
     {
+        if (string.IsNullOrWhiteSpace(capability.Value))
+        {
+            throw new ArgumentException(
+                "Capability key is required.",
+                nameof(capability));
+        }
+
         if (!Enum.IsDefined(kind))
         {
             throw new ArgumentOutOfRangeException(
@@ -348,8 +355,14 @@ public static class ExecutionTargetSelector
             capability => capability.State);
 
         var reasons = new List<string>();
-        var qualifies = true;
+        var qualifies = target.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active;
         var score = 0;
+
+        if (!qualifies)
+        {
+            reasons.Add(
+                $"Execution target lifecycle is {target.Resource.Lifecycle.Status.ToString().ToLowerInvariant()}.");
+        }
 
         foreach (var requirement in requirements)
         {
