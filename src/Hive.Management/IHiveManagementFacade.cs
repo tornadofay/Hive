@@ -106,4 +106,49 @@ public interface IHiveManagementFacade
         AgentDefinitionId agentDefinitionId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
+
+    Task<Result<WorkItem>> CreateImageWorkItemAsync(
+        WorkItemImageSubmission submission,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<WorkItem>> GetWorkItemAsync(
+        WorkItemId workItemId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<WorkItem>>> ListWorkItemsAsync(
+        ResourceAccessContext accessContext,
+        bool includeRetired = false,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<WorkItemAttachmentContent>> GetWorkItemAttachmentAsync(
+        WorkItemId workItemId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<WorkItemActivity>>> GetWorkItemActivityAsync(
+        WorkItemId workItemId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<WorkItem>> RequestWorkItemApprovalAsync(
+        WorkItemId workItemId,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<WorkItem>> ApproveWorkItemAsync(
+        WorkItemId workItemId,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<WorkItem>> RejectWorkItemAsync(
+        WorkItemId workItemId,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        string reason,
+        CancellationToken cancellationToken = default);
+
 }
