@@ -85,11 +85,11 @@ public sealed class HiveConfigurationTests
                 filePath,
                 """
                 {
-                  "backend": "SqlServer",
+                  "backend": 0,
                   "serverName": "sql.example.test",
                   "port": 1433,
                   "databaseName": "HiveProduction",
-                  "authenticationMode": "SqlPassword",
+                  "authenticationMode": 1,
                   "userName": "hive-user",
                   "credentialSecretId": "11111111-1111-1111-1111-111111111111",
                   "encrypt": true,
