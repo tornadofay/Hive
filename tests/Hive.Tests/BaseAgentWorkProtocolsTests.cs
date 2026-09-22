@@ -234,7 +234,7 @@ public sealed class BaseAgentWorkProtocolsTests
     }
 
     [Fact]
-    public void QuestionTransport_AnswersWaitsAndRejectsTerminalTransition()
+    public async Task QuestionTransport_AnswersWaitsAndRejectsTerminalTransition()
     {
         var fixture = CreateRuntime();
         var question = fixture.Runtime.Work.Questions.Ask(
@@ -248,6 +248,7 @@ public sealed class BaseAgentWorkProtocolsTests
         Assert.True(question.IsSuccess, question.Error?.Message);
 
         var answered = fixture.Runtime.Work.Questions.Answer(
+            fixture.Context,
             question.Value!.Id,
             fixture.Agent.Id,
             fixture.Runtime.Id,
@@ -256,17 +257,18 @@ public sealed class BaseAgentWorkProtocolsTests
 
         Assert.True(answered.IsSuccess, answered.Error?.Message);
 
-        var waited = fixture.Runtime.Work.Questions.WaitAsync(
+        var waited = await fixture.Runtime.Work.Questions.WaitAsync(
             fixture.Context,
             fixture.Agent.Id,
             fixture.Runtime.Id,
-            question.Value.Id).GetAwaiter().GetResult();
+            question.Value.Id);
 
         Assert.True(waited.IsSuccess, waited.Error?.Message);
         Assert.Equal(QuestionStatus.Answered, waited.Value!.Status);
         Assert.Equal("Alice", waited.Value.Answer);
 
         var lateAnswer = fixture.Runtime.Work.Questions.Answer(
+            fixture.Context,
             question.Value.Id,
             fixture.Agent.Id,
             fixture.Runtime.Id,
@@ -280,7 +282,7 @@ public sealed class BaseAgentWorkProtocolsTests
     }
 
     [Fact]
-    public void QuestionTransport_TimeoutIsDeterministicAndCrossRuntimeWaitDoesNotLeak()
+    public async Task QuestionTransport_TimeoutIsDeterministicAndCrossRuntimeWaitDoesNotLeak()
     {
         var first = CreateRuntime();
         var second = CreateRuntime(
@@ -302,20 +304,20 @@ public sealed class BaseAgentWorkProtocolsTests
 
         Assert.Equal(1, first.Runtime.Work.Questions.ExpireDue());
 
-        var timedOut = first.Runtime.Work.Questions.WaitAsync(
+        var timedOut = await first.Runtime.Work.Questions.WaitAsync(
             first.Context,
             first.Agent.Id,
             first.Runtime.Id,
-            question.Value!.Id).GetAwaiter().GetResult();
+            question.Value!.Id);
 
         Assert.True(timedOut.IsSuccess, timedOut.Error?.Message);
         Assert.Equal(QuestionStatus.TimedOut, timedOut.Value!.Status);
 
-        var foreignWait = second.Runtime.Work.Questions.WaitAsync(
+        var foreignWait = await second.Runtime.Work.Questions.WaitAsync(
             second.Context,
             second.Agent.Id,
             second.Runtime.Id,
-            question.Value.Id).GetAwaiter().GetResult();
+            question.Value.Id);
 
         Assert.True(foreignWait.IsFailure);
         Assert.Equal(ErrorCategory.NotFound, foreignWait.Error!.Category);
