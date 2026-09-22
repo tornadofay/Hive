@@ -16,10 +16,12 @@ public sealed class WorkItem
 {
     private WorkItem(
         ResourceEnvelope<WorkItemId> resource,
-        WorkItemStatus status)
+        WorkItemStatus status,
+        WorkItemAttachmentMetadata? attachment)
     {
         Resource = resource;
         Status = status;
+        Attachment = attachment;
     }
 
     public ResourceEnvelope<WorkItemId> Resource { get; }
@@ -27,6 +29,8 @@ public sealed class WorkItem
     public WorkItemId Id => Resource.Identity;
 
     public WorkItemStatus Status { get; }
+
+    public WorkItemAttachmentMetadata? Attachment { get; }
 
     public bool IsTerminal =>
         Status is WorkItemStatus.Completed
@@ -40,7 +44,8 @@ public sealed class WorkItem
         ResourceScope scope,
         ResourceProvenance provenance,
         DateTimeOffset createdAtUtc,
-        IReadOnlyDictionary<string, string>? metadata = null)
+        IReadOnlyDictionary<string, string>? metadata = null,
+        WorkItemAttachmentMetadata? attachment = null)
     {
         var lifecycle = ResourceLifecycle.Active(createdAtUtc);
 
@@ -54,7 +59,27 @@ public sealed class WorkItem
             lifecycle,
             metadata);
 
-        return new WorkItem(resource, WorkItemStatus.Created);
+        return new WorkItem(resource, WorkItemStatus.Created, attachment);
+    }
+
+    public static WorkItem Restore(
+        ResourceEnvelope<WorkItemId> resource,
+        WorkItemStatus status,
+        WorkItemAttachmentMetadata? attachment = null)
+    {
+        ArgumentNullException.ThrowIfNull(resource);
+
+        if (resource.Kind != ResourceKind.WorkItem)
+        {
+            throw new ArgumentException(
+                "WorkItem resources must use ResourceKind.WorkItem.",
+                nameof(resource));
+        }
+
+        if (!Enum.IsDefined(status))
+            throw new ArgumentOutOfRangeException(nameof(status), status);
+
+        return new WorkItem(resource, status, attachment);
     }
 
     public WorkItem TransitionTo(
@@ -63,6 +88,9 @@ public sealed class WorkItem
     {
         if (next == Status)
             return this;
+
+        if (!Enum.IsDefined(next))
+            throw new ArgumentOutOfRangeException(nameof(next), next);
 
         if (Resource.Lifecycle.Status == ResourceLifecycleStatus.Retired)
         {
@@ -86,14 +114,15 @@ public sealed class WorkItem
             ResourceLifecycleStatus.Active,
             changedAtUtc);
 
-        return new WorkItem(resource, next);
+        return new WorkItem(resource, next, Attachment);
     }
 
     public WorkItem Suspend(DateTimeOffset changedAtUtc) =>
-        Status == WorkItemStatus.Created || Status == WorkItemStatus.Queued || Status == WorkItemStatus.Running
+        Status is WorkItemStatus.Created or WorkItemStatus.Queued or WorkItemStatus.Running
             ? new WorkItem(
                 Resource.TransitionLifecycle(ResourceLifecycleStatus.Suspended, changedAtUtc),
-                Status)
+                Status,
+                Attachment)
             : throw new InvalidOperationException(
                 $"WorkItem '{Id}' cannot be suspended while in status '{Status}'.");
 
@@ -101,12 +130,14 @@ public sealed class WorkItem
         Resource.Lifecycle.Status == ResourceLifecycleStatus.Suspended
             ? new WorkItem(
                 Resource.TransitionLifecycle(ResourceLifecycleStatus.Active, changedAtUtc),
-                Status)
+                Status,
+                Attachment)
             : throw new InvalidOperationException(
                 $"WorkItem '{Id}' is not suspended.");
 
     public WorkItem Retire(DateTimeOffset changedAtUtc) =>
         new WorkItem(
             Resource.TransitionLifecycle(ResourceLifecycleStatus.Retired, changedAtUtc),
-            Status);
+            Status,
+            Attachment);
 }
