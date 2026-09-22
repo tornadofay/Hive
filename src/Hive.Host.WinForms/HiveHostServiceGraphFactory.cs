@@ -19,14 +19,6 @@ public sealed class SqlHiveHostServiceGraphFactory :
     private readonly IHiveConfigurationStore _configurationStore;
 
     public SqlHiveHostServiceGraphFactory(
-        IHiveBootstrapCredentialStore bootstrapCredentials)
-        : this(
-            bootstrapCredentials,
-            new JsonHiveConfigurationStore())
-    {
-    }
-
-    public SqlHiveHostServiceGraphFactory(
         IHiveBootstrapCredentialStore bootstrapCredentials,
         IHiveConfigurationStore configurationStore)
     {

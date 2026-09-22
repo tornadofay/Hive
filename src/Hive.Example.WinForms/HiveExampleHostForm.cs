@@ -235,14 +235,18 @@ internal sealed class HiveExampleHostForm : HiveForm
         if (_composition is not null)
             return;
 
+        HiveHostComposition? candidateComposition = null;
+
         try
         {
-            var composition = new HiveHostComposition();
-            var result = await composition.InitializeAsync();
+            candidateComposition = new HiveHostComposition();
+            var result = await candidateComposition.InitializeAsync();
 
             if (result.IsFailure)
             {
-                composition.Dispose();
+                candidateComposition.Dispose();
+                candidateComposition = null;
+
                 _viewTitle.Text = "Hive host unavailable";
                 _viewSubtitle.Text = result.Error!.Message;
 
@@ -259,16 +263,19 @@ internal sealed class HiveExampleHostForm : HiveForm
                 return;
             }
 
-            _composition = composition;
+            _composition = candidateComposition;
+            candidateComposition = null;
+
             _services = new HiveExampleServices(
                 _themeManager,
                 _outputView,
-                result.Value!);
+                _composition.Current!);
 
             SelectFirstExample();
         }
         catch (Exception exception)
         {
+            candidateComposition?.Dispose();
             _viewTitle.Text = "Hive host unavailable";
             _viewSubtitle.Text = exception.Message;
 

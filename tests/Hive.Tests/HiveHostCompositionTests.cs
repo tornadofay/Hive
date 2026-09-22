@@ -112,7 +112,8 @@ public sealed class HiveHostCompositionTests
         using var composition = new HiveHostComposition(
             new JsonHiveConfigurationStore(settings.Path),
             new SqlHiveHostServiceGraphFactory(
-                new UnavailableHiveBootstrapCredentialStore()));
+                new UnavailableHiveBootstrapCredentialStore(),
+                store);
 
         var result = await composition.InitializeAsync();
 
