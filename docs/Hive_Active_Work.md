@@ -12,9 +12,9 @@ Phase 1.9 is now the authorized active slice.
 
 ## Objective
 
-Process committed, unhandled transactional outbox rows after the originating event transaction has committed.
+Connect a Base Agent to Microsoft Agent Framework and the existing Hive provider boundary for one request, with correlation and durable lifecycle events.
 
-The implementation must reuse the existing Hive.Persistence outbox records and event identity/version contracts. It must not become a distributed broker or duplicate MAF/workflow orchestration.
+The implementation must reuse the existing Agent/Runtime/Execution, ExecutionTarget, OpenAI-compatible provider, and Hive.Persistence event contracts. It must not become a second orchestration/workflow engine.
 
 ## Phase 1.7 completion
 
@@ -38,52 +38,49 @@ Developer verification:
 
 ## Architecture / dependency boundary
 
-The outbox poller remains below later execution and cognitive behavior:
-
 ```
-Hive.Core event contracts
-        │
-        ▼
-Hive.Persistence
-  ├─ event log
-  ├─ snapshots
-  ├─ transactional outbox
-  └─ outbox poller
-        │
-        ▼
-Later:
-  └─ first real Agent execution
+Hive.Core
+   │
+   ├── Hive.Agents
+   ├── Hive.Persistence
+   └── Hive.Providers.OpenAICompatible
+             │
+             ▼
+      Hive.Coordination
+        └─ AgentExecutionService
+             │
+             ▼
+        Microsoft Agent Framework
 ```
 
-The poller processes committed outbox work; it does not become a second orchestration/workflow engine.
+`Hive.Coordination` composes one execution request across the existing Hive Agent/runtime contracts, selected ExecutionTarget, provider adapter, and durable event store. It does not own SQL schema, provider transport, or workflow orchestration.
 
 ## Verification
 
-Required for completion of 1.8:
+Required for completion of 1.9:
 
-1. committed outbox entries can be discovered and processed;
-2. successful processing does not lose or corrupt the corresponding event identity/version;
-3. duplicate delivery is safe and idempotent;
-4. a crash/failure before processing completes leaves the outbox entry available for recovery;
-5. cancellation and retry boundaries are deterministic;
-6. processing failures are observable as typed results/errors rather than silently swallowed;
-7. focused automated coverage exists for normal, duplicate, failure/recovery, and concurrency cases;
-8. public Example Host verification demonstrates the externally usable poller behavior;
-9. broader `Hive.Tests` execution.
+1. a Base Agent can execute one request through MAF and the existing OpenAI-compatible provider boundary;
+2. execution start and terminal state are persisted to the Execution event stream;
+3. lifecycle events preserve one correlation identity and terminal causation;
+4. provider failures become typed Hive errors and persist a failed lifecycle event;
+5. caller cancellation becomes a typed cancelled result and persists a cancelled lifecycle event;
+6. focused automated coverage exists for success, provider failure, and cancellation;
+7. public Example Host verification demonstrates the end-to-end path against a local fake provider;
+8. broader `Hive.Tests` execution.
 
-No verification claim is recorded until it has actually been performed.
+No verification claim is recorded until actual execution has been performed.
 
 ## Constraints
 
-- No 1.9 MAF Agent execution integration.
+- No Phase 1.10 or later implementation.
 - No CognitiveAgent implementation or adaptive cognitive behavior.
 - No new cognitive Goals, Beliefs, Dreams, adaptive Question generation, or learning.
 - No Management settings/configuration UI.
-- No provider transport changes.
-- Reuse the existing durable event log, snapshot, outbox, event envelope/schema-version, Result/Error, and persistence contracts.
-- Keep the persistence boundary inside `Hive.Persistence`.
-- Do not add a second orchestration/workflow engine.
-- The outbox is not a distributed message broker.
+- No new provider transport implementation; reuse the existing OpenAI-compatible adapter.
+- No Agent generation promotion/demotion.
+- Reuse the existing Agent/Runtime/Execution, ExecutionTarget, event envelope/schema-version, Result/Error, and persistence contracts.
+- Keep SQL/persistence ownership inside `Hive.Persistence`.
+- Use MAF for the actual agent invocation; do not add a second workflow/orchestration engine.
 
 ## Phase 1.8 completion
 
@@ -95,15 +92,24 @@ Developer verification:
 - Full `Hive.Tests` execution: **124 tests passed, 0 failed, 0 skipped in 2.7 seconds**.
 - The 1.8 completion gate is satisfied.
 
-## 1.9 objective
+## Implementation checkpoint
 
-Connect a base Agent to MAF and the Hive provider boundary for one request, with correlation and durable lifecycle events.
+Phase 1.9 implementation is present; developer verification is pending.
 
-Do not implement later Phase 1 slices in this active slice.
+Implemented:
+- current MAF package boundary in `Hive.Coordination`;
+- `IChatClient` bridge over the existing OpenAI-compatible provider adapter;
+- Base Agent execution service with active-runtime/target-scope validation;
+- durable started/succeeded/failed/cancelled Execution lifecycle events;
+- correlation and terminal causation preservation;
+- focused integration tests for success, provider failure, and cancellation;
+- public Example Host scenario using a local fake provider.
+
+No verification claim is recorded yet.
 
 ## Verification handoff
 
-Example to run: <add the exact 1.9 Example Host path when its implementation exists> — Hive.Example.WinForms
+Example to run: Agents / Base Agent / First Real Agent Execution — Hive.Example.WinForms
 
-Tests to run: <add the exact 1.9 focused test file when its implementation exists>; broader Hive.Tests execution will be required by the 1.9 completion gate.
+Tests to run: tests/Hive.Tests/AgentExecutionIntegrationTests.cs; broader Hive.Tests execution is required by the 1.9 completion gate.
 
