@@ -4,7 +4,13 @@ Last updated: 2026-09-22
 
 ## Active slice
 
-**1.12 — HiveSettingsForm & Configuration Pages**
+**1.12 — Settings, Configuration, and Real Host Consumption**
+
+### Current sub-stage
+
+**1.12-A — Host Configuration and Runtime Composition**
+
+Detailed workload and ordering: `docs/plan/Phase1.12_Settings_Host_Integration.md`
 
 Phase 0 — Foundations and Phase 1.1 through Phase 1.11 are complete and verified.
 
@@ -12,16 +18,21 @@ Phase 1.12 is the authorized implementation slice.
 
 ## Objective
 
-Establish the first-class Hive Settings surface as a thin WinForms shell over Hive.Management, with Provider and Persistence configuration pages.
+Complete the first-class Hive Settings surface so saved configuration actually drives the host application's real persistence/resources/runtime consumption, following the HAgent configuration-consumption pattern while preserving Hive's stronger Management/resource boundaries.
 
 ## Scope
 
-- Provider configuration and connection-test flow through the Management/configuration boundary.
-- Persistence configuration through the Management boundary.
-- SQL Server / LocalDB settings with credentials referenced through Secret Store.
-- Non-destructive connectivity testing; database initialization/migration remains separate.
-- Persisted settings reload after application restart without plaintext password exposure.
-- Settings UI owns navigation/composition only; no direct SQL, provider transport, or migration implementation in WinForms.
+The complete Phase 1.12 program is subdivided into bounded sub-stages described in `docs/plan/Phase1.12_Settings_Host_Integration.md`:
+
+- host configuration/runtime composition;
+- persistence bootstrap credential boundary;
+- Provider/ProviderAccount/ExecutionTarget and AgentDefinition Settings management;
+- migration of Settings UI onto `Hive.Host.WinForms.UI` reusable navigation/list/editor controls;
+- Settings-driven reload/recomposition;
+- real Example Host consumption of configured state;
+- focused verification and documentation closure.
+
+Current sub-stage 1.12-A is limited to the host configuration/composition boundary and its required supporting contracts. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-A.
 
 ## Verification gate
 
@@ -43,7 +54,7 @@ Establish the first-class Hive Settings surface as a thin WinForms shell over Hi
 
 ## Implementation checkpoint
 
-Phase 1.12 implementation is present on `main`; verification is pending.
+The original Phase 1.12 Settings implementation is present on `main`; verification remains pending. The Settings-to-host consumption gap was identified against the HAgent reference implementation and is now the active 1.12 program. The implementation must proceed through the ordered sub-stages in the plan.
 
 Implemented in the active slice:
 
@@ -60,13 +71,16 @@ Implemented in the active slice:
 
 Before coding, inspect:
 
+- `docs/plan/Phase1.12_Settings_Host_Integration.md`;
 - current Management contracts and facade;
 - existing Secret Store and DPAPI persistence boundary;
 - HiveDatabaseOptions/migration/schema bootstrap;
 - Provider/ProviderAccount/ExecutionTarget resource contracts and persistence;
+- AgentDefinition and first-real-execution composition;
 - Host UI conventions and `docs/ui/examples.md`;
-- Example Host discovery/output pattern;
-- existing configuration/provider/persistence tests.
+- `Hive.Host.WinForms.UI` controls: `HiveNavigationTree`, `HiveListPageLayout`, `HiveListView`, `HiveCrudPage<TItem>`, and `HiveEditorLayout`;
+- Example Host discovery/service-composition/output pattern;
+- existing configuration/provider/persistence/execution tests.
 
 ## Verification handoff
 
