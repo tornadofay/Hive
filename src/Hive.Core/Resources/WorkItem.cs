@@ -77,7 +77,7 @@ public sealed class WorkItem
         }
 
         if (!Enum.IsDefined(status))
-            throw new ArgumentOutOfRangeException(nameof(status), status);
+            throw new ArgumentOutOfRangeException(nameof(status), (int)status);
 
         return new WorkItem(resource, status, attachment);
     }
@@ -90,7 +90,7 @@ public sealed class WorkItem
             return this;
 
         if (!Enum.IsDefined(next))
-            throw new ArgumentOutOfRangeException(nameof(next), next);
+            throw new ArgumentOutOfRangeException(nameof(next), (int)next);
 
         if (Resource.Lifecycle.Status == ResourceLifecycleStatus.Retired)
         {
