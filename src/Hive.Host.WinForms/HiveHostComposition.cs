@@ -1,3 +1,4 @@
+using System.Windows.Forms;
 using Hive.Core;
 using Hive.Management;
 
@@ -29,7 +30,8 @@ public sealed class HiveHostComposition : IDisposable
 
     public HiveHostComposition()
     {
-        var configurationStore = new JsonHiveConfigurationStore();
+        var configurationStore = new JsonHiveConfigurationStore(
+            applicationName: Application.ProductName);
 
         _configurationStore = configurationStore;
         _graphFactory = new SqlHiveHostServiceGraphFactory(
