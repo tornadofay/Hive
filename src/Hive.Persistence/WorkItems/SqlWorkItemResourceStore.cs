@@ -658,7 +658,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         var scopeKind = (ResourceScopeKind)reader.GetInt32(
             reader.GetOrdinal("ScopeKind"));
 
-        var scopeIdentity = reader.IsDBNull(reader.GetOrdinal("ScopeIdentity"))
+        Guid? scopeIdentity = reader.IsDBNull(reader.GetOrdinal("ScopeIdentity"))
             ? null
             : reader.GetGuid(reader.GetOrdinal("ScopeIdentity"));
 
@@ -694,7 +694,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
             throw new InvalidOperationException(
                 "Persisted WorkItem source state is invalid.");
 
-        var source = sourceKind is null
+        ResourceReference? source = sourceKind is null
             ? null
             : new ResourceReference(sourceKind.Value, sourceIdentity!.Value);
 
