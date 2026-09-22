@@ -210,6 +210,14 @@ Rules:
 
 Apply production engineering proportional to the active boundary.
 
+### Production implementation standard
+
+New production code must be implemented as production-ready code, not as a prototype, demonstration, happy-path-only implementation, temporary stub, or simplified version intended to be hardened later.
+
+The implementation must satisfy all requirements and applicable architectural invariants already known for the active slice, including validation, error handling, cancellation, concurrency, security, resource ownership, persistence consistency, and extensibility where applicable.
+
+Production quality does not require unnecessary abstraction. Use the simplest design that fully satisfies the production contract. Abstraction depth must be justified by a real architectural boundary, ownership boundary, substitution requirement, meaningful volatility, or testability need.
+
 ### Contracts and APIs
 
 - Preserve nullable contracts.
