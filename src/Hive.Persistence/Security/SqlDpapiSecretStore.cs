@@ -112,7 +112,13 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         if (validation is not null)
             return Result<Secret>.Failure(validation);
 
-        EnsureWindows();
+        if (!OperatingSystem.IsWindows())
+        {
+            return Result<Secret>.Failure(
+                Error.Unsupported(
+                    "hive.secret.dpapi-windows-only",
+                    "Hive DPAPI secret storage is supported only on Windows."));
+        }
 
         var encryptedValue = Protect(material);
 
@@ -196,7 +202,13 @@ public sealed class SqlDpapiSecretStore : ISecretStore
             throw new InvalidOperationException(
                 "Secret material was requested without loading the encrypted payload.");
 
-        EnsureWindows();
+        if (!OperatingSystem.IsWindows())
+        {
+            return Result<SecretReadResult>.Failure(
+                Error.Unsupported(
+                    "hive.secret.dpapi-windows-only",
+                    "Hive DPAPI secret storage is supported only on Windows."));
+        }
 
         byte[] plaintext;
 
@@ -292,7 +304,13 @@ public sealed class SqlDpapiSecretStore : ISecretStore
                     "The secret changed before replacement completed."));
         }
 
-        EnsureWindows();
+        if (!OperatingSystem.IsWindows())
+        {
+            return Result<Secret>.Failure(
+                Error.Unsupported(
+                    "hive.secret.dpapi-windows-only",
+                    "Hive DPAPI secret storage is supported only on Windows."));
+        }
 
         var nextVersion = current.Resource.Version.Next();
         var nextResource = new ResourceEnvelope<SecretId>(
@@ -594,6 +612,12 @@ public sealed class SqlDpapiSecretStore : ISecretStore
 
     private static byte[] Protect(SecretMaterial material)
     {
+        if (!OperatingSystem.IsWindows())
+        {
+            throw new PlatformNotSupportedException(
+                "Hive DPAPI secret storage requires Windows.");
+        }
+
         var plaintext = Encoding.UTF8.GetBytes(material.Reveal());
 
         try
@@ -699,7 +723,7 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         int size) =>
         new(name, SqlDbType.NVarChar, size)
         {
-            Value = value ?? DBNull.Value
+            Value = (object?)value ?? DBNull.Value
         };
 
     private static SqlParameter BinaryParameter(
@@ -768,6 +792,66 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         catch (Exception)
         {
             return Result<T>.Failure(
+                new Error(
+                    $"hive.{resourceName}.invalid-state",
+                    ErrorCategory.Internal,
+                    $"Persisted {resourceName} state could not be read or validated."));
+        }
+    }
+
+    private async Task<Result> ExecuteInTransactionAsync(
+        string resourceName,
+        CancellationToken cancellationToken,
+        Func<SqlConnection, SqlTransaction, Task<Result>> operation)
+    {
+        try
+        {
+            await using var connection = await OpenConnectionAsync(
+                cancellationToken).ConfigureAwait(false);
+
+            await using var transaction =
+                (SqlTransaction)await connection.BeginTransactionAsync(
+                    IsolationLevel.ReadCommitted,
+                    cancellationToken).ConfigureAwait(false);
+
+            var result = await operation(
+                connection,
+                transaction).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (SqlException exception) when (IsConstraintConflict(exception))
+        {
+            return Result.Failure(
+                Error.Conflict(
+                    $"hive.{resourceName}.duplicate",
+                    $"The {resourceName} identity or key already exists."));
+        }
+        catch (SqlException)
+        {
+            return Result.Failure(
+                new Error(
+                    $"hive.{resourceName}.sql-failure",
+                    ErrorCategory.External,
+                    $"SQL Server operation for the {resourceName} failed."));
+        }
+        catch (PlatformNotSupportedException)
+        {
+            return Result.Failure(
+                Error.Unsupported(
+                    "hive.secret.dpapi-windows-only",
+                    "Hive DPAPI secret storage is supported only on Windows."));
+        }
+        catch (Exception)
+        {
+            return Result.Failure(
                 new Error(
                     $"hive.{resourceName}.invalid-state",
                     ErrorCategory.Internal,
