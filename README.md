@@ -226,7 +226,7 @@ The foundation starts with Light / Dark / System modes and shared palette, typog
 
 `Hive.Example.WinForms` is a first-class developer-facing application, not a temporary demo. It uses the same UI foundation as the rest of Hive.
 
-Examples are organized as Category → Subcategory → Example through a left-side navigation surface and a replaceable content `UserControl`. Examples are auto-discovered through a small `IHiveExample` contract so adding an example does not require central shell wiring.
+Examples are organized by a scalable navigation path (Category → Subcategory → optional deeper groups → Example) through a left-side navigation surface and a replaceable content `UserControl`. Examples are auto-discovered through a small `IHiveExample` contract so adding an example does not require central shell wiring.
 
 The Example host also provides developer test tools that invoke `dotnet test` externally against `Hive.Tests` and stream results. The authoritative test suite remains `Hive.Tests`.
 
@@ -242,7 +242,7 @@ Important categories include:
 - capability matching;
 - execution planning;
 - immutable snapshots;
-- persistence and outbox;
+- persistence, snapshots, and transactional outbox;
 - provider failure/timeout behavior;
 - MAF integration;
 - approval/stale-intervention behavior;
@@ -290,7 +290,7 @@ The solution and project files are the implementation source for the actual proj
 
 **Phase 0 — Foundations: Complete.**
 
-The solution, core contracts, identity/resource foundation, persistence bootstrap, shared WinForms UI foundation, and permanent Example Host shell are established. **Phase 1.7 — Event Log, Snapshots & Transactional Outbox** is the current implementation slice; implementation is present and developer verification is pending. Phase 1.6 — Base Agent Work Protocols is complete and verified. Authoritative status is recorded only in `docs/Hive_Current_Status.md`.
+The solution, core contracts, identity/resource foundation, persistence bootstrap, shared WinForms UI foundation, and permanent Example Host shell are established. **Phase 1.8 — Outbox Poller** is the current implementation slice. Phase 1.7 — Event Log, Snapshots & Transactional Outbox is complete and verified. Authoritative status is recorded only in `docs/Hive_Current_Status.md`.
 
 See [Architecture](docs/architecture.md) and [Roadmap](docs/roadmap.md).
 
