@@ -4,7 +4,7 @@ Last updated: 2026-09-22
 
 ## Repository state
 
-Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 through Phase 1.5 are complete and verified; Phase 1.6 is now the active implementation slice.
+Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 through Phase 1.5 are complete and verified; Phase 1.6 is now the active implementation slice with implementation present and developer verification pending.
 
 ## Current phase
 
@@ -87,6 +87,22 @@ Developer verification:
 - Full `Hive.Tests` execution: **103 tests passed, 0 failed, 0 skipped in 2.3 seconds**.
 - Agent generation remained explicit at creation; two RuntimeInstance identities and their Execution state were isolated.
 - The 1.5 completion gate is satisfied.
+
+### Phase 1.6 — Base Agent Work Protocols
+
+Implementation is present; developer verification is pending.
+
+Implemented:
+- Objective lifecycle with immutable transitions and concurrency-aware ObjectiveStore;
+- WorkItem binding with resource-version capture and provenance;
+- Runtime-scoped in-memory memory storage/retrieval;
+- Question/Answer transport with ownership checks, asynchronous waiting, cancellation, and deterministic timeout processing;
+- deterministic Patience / Understanding Gate;
+- explicit delegation requests/channel with requester/delegate provenance and participant checks;
+- RuntimeWorkProtocols isolation across RuntimeInstance objects;
+- focused automated tests and a public Example Host scenario.
+
+No Phase 1.6 build, test, or manual Example verification result is recorded yet.
 
 ### Phase 1.4 — Capability-aware Execution Target Selection
 
@@ -189,4 +205,4 @@ Implemented so far:
 - Phase 1.6 is now the active implementation slice and implementation is not yet verified.
 - Later phases.
 
-Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.4 are complete and verified; Phase 1.5 is active.
+Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.5 are complete and verified. Phase 1.6 is active; implementation is present and developer verification is pending.
