@@ -76,6 +76,50 @@ public sealed class EventOutboxEntry
     public EventEnvelope Envelope { get; }
 }
 
+public sealed class EventOutboxWorkItem
+{
+    public EventOutboxWorkItem(
+        EventOutboxEntry entry,
+        Guid leaseId,
+        int attemptCount)
+    {
+        Entry = entry ?? throw new ArgumentNullException(nameof(entry));
+
+        if (leaseId == Guid.Empty)
+            throw new ArgumentException("Outbox lease identity is required.", nameof(leaseId));
+
+        if (attemptCount <= 0)
+            throw new ArgumentOutOfRangeException(nameof(attemptCount));
+
+        LeaseId = leaseId;
+        AttemptCount = attemptCount;
+    }
+
+    public EventOutboxEntry Entry { get; }
+
+    public Guid LeaseId { get; }
+
+    public int AttemptCount { get; }
+}
+
+public interface IEventOutboxPollerStore
+{
+    Task<Result<EventOutboxWorkItem?>> ClaimNextOutboxAsync(
+        TimeSpan leaseDuration,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> CompleteOutboxAsync(
+        EventOutboxWorkItem workItem,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IEventOutboxHandler
+{
+    Task<Result> HandleAsync(
+        EventOutboxEntry entry,
+        CancellationToken cancellationToken = default);
+}
+
 public sealed class EventAppendRequest
 {
     public EventAppendRequest(
