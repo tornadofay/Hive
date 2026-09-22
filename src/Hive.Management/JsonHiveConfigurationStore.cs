@@ -56,7 +56,7 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                         "The Hive settings file is empty."));
             }
 
-            if (document.CredentialSecretId is not null)
+            if (document.ExtensionData?.ContainsKey("credentialSecretId") == true)
             {
                 return Result<HivePersistenceConfiguration>.Failure(
                     Error.Validation(
@@ -156,7 +156,6 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
         HiveSqlAuthenticationMode AuthenticationMode,
         string? UserName,
         Guid? BootstrapCredentialId,
-        Guid? CredentialSecretId,
         bool Encrypt,
         bool TrustServerCertificate,
         bool CreateDatabaseIfMissing,
@@ -194,5 +193,8 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                 configuration.TrustServerCertificate,
                 configuration.CreateDatabaseIfMissing,
                 configuration.CommandTimeoutSeconds);
+
+        [System.Text.Json.Serialization.JsonExtensionData]
+        public Dictionary<string, JsonElement>? ExtensionData { get; init; }
     }
 }
