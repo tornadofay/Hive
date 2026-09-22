@@ -1161,7 +1161,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
     private static Error NotFound(
         string code,
         string message) =>
-        Error.NotFound(code, message);
+        new(code, ErrorCategory.NotFound, message);
 
     private static Error ToSqlError(SqlException exception) =>
         new(
