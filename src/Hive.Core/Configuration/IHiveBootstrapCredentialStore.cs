@@ -1,5 +1,3 @@
-using Hive.Core;
-
 namespace Hive.Core;
 
 public interface IHiveBootstrapCredentialStore
