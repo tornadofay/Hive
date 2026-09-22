@@ -9,11 +9,19 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
     private readonly IProviderResourceStore _providerResources;
     private readonly IAgentDefinitionResourceStore _agentDefinitions;
     private readonly IWorkItemResourceStore _workItems;
+    private readonly ISecretStore? _secrets;
+    private readonly IProviderConnectionTester? _providerConnectionTester;
+    private readonly IHiveConfigurationStore? _configurationStore;
+    private readonly IHivePersistenceConnectionTester? _persistenceConnectionTester;
 
     public HiveManagementFacade(
         IProviderResourceStore providerResources,
         IAgentDefinitionResourceStore agentDefinitions,
-        IWorkItemResourceStore workItems)
+        IWorkItemResourceStore workItems,
+        ISecretStore? secrets = null,
+        IProviderConnectionTester? providerConnectionTester = null,
+        IHiveConfigurationStore? configurationStore = null,
+        IHivePersistenceConnectionTester? persistenceConnectionTester = null)
     {
         _providerResources = providerResources
             ?? throw new ArgumentNullException(nameof(providerResources));
@@ -21,6 +29,343 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             ?? throw new ArgumentNullException(nameof(agentDefinitions));
         _workItems = workItems
             ?? throw new ArgumentNullException(nameof(workItems));
+        _secrets = secrets;
+        _providerConnectionTester = providerConnectionTester;
+        _configurationStore = configurationStore;
+        _persistenceConnectionTester = persistenceConnectionTester;
+    }
+
+    public async Task<Result<HivePersistenceConfiguration>> GetPersistenceConfigurationAsync(
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Failure<HivePersistenceConfiguration>(contextError);
+
+        if (_configurationStore is null)
+        {
+            return Failure<HivePersistenceConfiguration>(
+                Error.Unsupported(
+                    "hive.management.configuration-store-unavailable",
+                    "Hive persistence configuration storage is not configured."));
+        }
+
+        return await _configurationStore
+            .LoadPersistenceConfigurationAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<Result<HivePersistenceConfiguration>> SavePersistenceConfigurationAsync(
+        HivePersistenceConfiguration configuration,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Failure<HivePersistenceConfiguration>(contextError);
+
+        if (_configurationStore is null)
+        {
+            return Failure<HivePersistenceConfiguration>(
+                Error.Unsupported(
+                    "hive.management.configuration-store-unavailable",
+                    "Hive persistence configuration storage is not configured."));
+        }
+
+        return await _configurationStore
+            .SavePersistenceConfigurationAsync(
+                configuration,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<Result<HivePersistenceConnectionTest>> TestPersistenceConnectionAsync(
+        HivePersistenceConfiguration configuration,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Failure<HivePersistenceConnectionTest>(contextError);
+
+        if (_persistenceConnectionTester is null)
+        {
+            return Failure<HivePersistenceConnectionTest>(
+                Error.Unsupported(
+                    "hive.management.persistence-tester-unavailable",
+                    "Hive persistence connection testing is not configured."));
+        }
+
+        SecretMaterial? material = null;
+
+        try
+        {
+            if (configuration.AuthenticationMode == HiveSqlAuthenticationMode.SqlPassword)
+            {
+                if (configuration.CredentialSecret is null || _secrets is null)
+                {
+                    return Failure<HivePersistenceConnectionTest>(
+                        Error.Validation(
+                            "hive.management.persistence-credential-required",
+                            "SQL password authentication requires a configured Secret Store credential."));
+                }
+
+                var secret = await _secrets.GetAsync(
+                    configuration.CredentialSecret.Value.Id,
+                    accessContext,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (secret.IsFailure)
+                    return Failure<HivePersistenceConnectionTest>(secret.Error!);
+
+                material = secret.Value!.Material;
+            }
+
+            return await _persistenceConnectionTester
+                .TestAsync(
+                    configuration,
+                    material,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            material?.Dispose();
+        }
+    }
+
+    public Task<Result<Secret>> CreateSecretAsync(
+        string key,
+        string displayName,
+        SecretMaterial material,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(material);
+
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Failure<Secret>(contextError);
+
+        if (_secrets is null)
+        {
+            return Failure<Secret>(
+                Error.Unsupported(
+                    "hive.management.secret-store-unavailable",
+                    "The Hive Secret Store is not configured."));
+        }
+
+        if (accessContext.TenantId is null)
+        {
+            return Failure<Secret>(
+                Error.Validation(
+                    "hive.management.secret-tenant-required",
+                    "A tenant identity is required to create a Hive secret."));
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        Secret secret;
+
+        try
+        {
+            secret = new Secret(
+                new ResourceEnvelope<SecretId>(
+                    ResourceKind.Secret,
+                    SecretId.New(),
+                    accessContext.PrincipalId!.Value,
+                    ResourceScope.Tenant(accessContext.TenantId.Value),
+                    ResourceVersion.Initial,
+                    new ResourceProvenance(
+                        accessContext.PrincipalId.Value,
+                        now,
+                        CorrelationId.New()),
+                    ResourceLifecycle.Active(now)),
+                key,
+                displayName);
+        }
+        catch (ArgumentException exception)
+        {
+            return Failure<Secret>(
+                Error.Validation(
+                    "hive.management.secret-invalid",
+                    exception.Message));
+        }
+
+        return _secrets.CreateAsync(
+            secret,
+            material,
+            accessContext,
+            cancellationToken);
+    }
+
+    public Task<Result<Secret>> GetSecretDescriptorAsync(
+        SecretId secretId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Failure<Secret>(contextError);
+
+        if (secretId == default)
+        {
+            return Failure<Secret>(
+                Error.Validation(
+                    "hive.management.secret.identity-required",
+                    "The secret identity is required."));
+        }
+
+        if (_secrets is null)
+        {
+            return Failure<Secret>(
+                Error.Unsupported(
+                    "hive.management.secret-store-unavailable",
+                    "The Hive Secret Store is not configured."));
+        }
+
+        return _secrets.GetDescriptorAsync(
+            secretId,
+            accessContext,
+            cancellationToken);
+    }
+
+    public Task<Result<Secret>> ReplaceSecretAsync(
+        SecretId secretId,
+        SecretMaterial replacement,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(replacement);
+
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Failure<Secret>(contextError);
+
+        if (secretId == default)
+        {
+            return Failure<Secret>(
+                Error.Validation(
+                    "hive.management.secret.identity-required",
+                    "The secret identity is required."));
+        }
+
+        if (expectedVersion.Value <= 0)
+        {
+            return Failure<Secret>(
+                Error.Validation(
+                    "hive.management.secret.version-invalid",
+                    "A positive secret version is required."));
+        }
+
+        if (_secrets is null)
+        {
+            return Failure<Secret>(
+                Error.Unsupported(
+                    "hive.management.secret-store-unavailable",
+                    "The Hive Secret Store is not configured."));
+        }
+
+        return _secrets.ReplaceAsync(
+            secretId,
+            replacement,
+            accessContext,
+            expectedVersion,
+            cancellationToken);
+    }
+
+    public async Task<Result<ProviderConnectionTestResult>> TestExecutionTargetConnectionAsync(
+        ExecutionTargetId executionTargetId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Failure<ProviderConnectionTestResult>(contextError);
+
+        if (executionTargetId == default)
+        {
+            return Failure<ProviderConnectionTestResult>(
+                Error.Validation(
+                    "hive.management.execution-target.identity-required",
+                    "The execution target identity is required."));
+        }
+
+        if (_providerConnectionTester is null)
+        {
+            return Failure<ProviderConnectionTestResult>(
+                Error.Unsupported(
+                    "hive.management.provider-tester-unavailable",
+                    "Provider connection testing is not configured."));
+        }
+
+        var target = await _providerResources.GetExecutionTargetAsync(
+            executionTargetId,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (target.IsFailure)
+            return Failure<ProviderConnectionTestResult>(target.Error!);
+
+        var account = await _providerResources.GetProviderAccountAsync(
+            target.Value!.ProviderAccountId,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (account.IsFailure)
+            return Failure<ProviderConnectionTestResult>(account.Error!);
+
+        var provider = await _providerResources.GetProviderAsync(
+            target.Value.ProviderId,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (provider.IsFailure)
+            return Failure<ProviderConnectionTestResult>(provider.Error!);
+
+        SecretMaterial? material = null;
+
+        try
+        {
+            if (account.Value!.CredentialSecret is not null)
+            {
+                if (_secrets is null)
+                {
+                    return Failure<ProviderConnectionTestResult>(
+                        Error.Unsupported(
+                            "hive.management.secret-store-unavailable",
+                            "The provider account references a credential but the Secret Store is not configured."));
+                }
+
+                var secret = await _secrets.GetAsync(
+                    account.Value.CredentialSecret.Value.Id,
+                    accessContext,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (secret.IsFailure)
+                    return Failure<ProviderConnectionTestResult>(secret.Error!);
+
+                material = secret.Value!.Material;
+            }
+
+            return await _providerConnectionTester
+                .TestAsync(
+                    provider.Value!,
+                    account.Value!,
+                    target.Value,
+                    material,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            material?.Dispose();
+        }
     }
 
     public Task<Result<Provider>> CreateProviderAsync(
