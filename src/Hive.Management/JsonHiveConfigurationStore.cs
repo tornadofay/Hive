@@ -12,9 +12,16 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
     };
 
     private readonly string _filePath;
+    private readonly string _applicationName;
 
-    public JsonHiveConfigurationStore(string? filePath = null)
+    public JsonHiveConfigurationStore(
+        string? filePath = null,
+        string? applicationName = null)
     {
+        _applicationName = string.IsNullOrWhiteSpace(applicationName)
+            ? HivePersistenceConfiguration.DefaultApplicationName
+            : applicationName.Trim();
+
         _filePath = string.IsNullOrWhiteSpace(filePath)
             ? Path.Combine(
                 Environment.GetFolderPath(
@@ -32,7 +39,8 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
             if (!File.Exists(_filePath))
             {
                 return Result<HivePersistenceConfiguration>.Success(
-                    HivePersistenceConfiguration.LocalDevelopment());
+                    HivePersistenceConfiguration.LocalDevelopmentForApplication(
+                        _applicationName));
             }
 
             await using var stream = new FileStream(
