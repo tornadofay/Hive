@@ -41,7 +41,7 @@ public sealed class SqlHiveHostServiceGraphFactory :
             if (configuration.AuthenticationMode ==
                 HiveSqlAuthenticationMode.SqlPassword)
             {
-                if (configuration.CredentialSecret is null)
+                if (configuration.BootstrapCredential is null)
                 {
                     return Result<HiveHostServiceGraph>.Failure(
                         Error.Validation(
@@ -51,7 +51,7 @@ public sealed class SqlHiveHostServiceGraphFactory :
 
                 var resolved = await _bootstrapCredentials
                     .ResolveAsync(
-                        configuration.CredentialSecret.Value,
+                        configuration.BootstrapCredential.Value,
                         cancellationToken)
                     .ConfigureAwait(false);
 
