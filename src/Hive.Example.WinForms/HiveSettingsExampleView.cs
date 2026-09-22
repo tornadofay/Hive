@@ -208,3 +208,4 @@ internal sealed class HiveSettingsExampleView : UserControl
             _captureButton.Enabled = true;
         }
     }
+}
