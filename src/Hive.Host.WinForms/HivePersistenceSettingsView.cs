@@ -377,7 +377,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             {
                 credential = await SaveCredentialAsync(
                     _passwordTextBox.Text,
-                    credential,
+                    existing: null,
                     cancellationToken).ConfigureAwait(true);
 
                 configuration = new HivePersistenceConfiguration(
