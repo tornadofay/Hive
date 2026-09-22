@@ -58,6 +58,7 @@ public sealed class HiveConfigurationTests
 
             var json = await File.ReadAllTextAsync(filePath);
             Assert.Contains("bootstrapCredentialId", json, StringComparison.Ordinal);
+            Assert.DoesNotContain("credentialSecretId", json, StringComparison.Ordinal);
             Assert.Contains(secretId.Value.ToString(), json, StringComparison.Ordinal);
             Assert.DoesNotContain(
                 "hive-user-password",
