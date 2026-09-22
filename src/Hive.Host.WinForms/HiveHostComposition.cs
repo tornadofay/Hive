@@ -20,7 +20,7 @@ public sealed class HiveHostComposition : IDisposable
 {
     private readonly IHiveConfigurationStore _configurationStore;
     private readonly IHiveHostServiceGraphFactory _graphFactory;
-    private readonly SemaphoreSlim _reconfigurationGate = new();
+    private readonly SemaphoreSlim _reconfigurationGate = new(1, 1);
 
     private HiveHostServiceGraph? _current;
     private HiveHostCompositionStatus _status =

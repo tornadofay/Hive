@@ -1,6 +1,7 @@
 using Hive.Core;
 using Hive.Management;
 using Hive.Persistence;
+using Hive.Tests.TestInfrastructure;
 using Xunit;
 
 namespace Hive.Tests;
