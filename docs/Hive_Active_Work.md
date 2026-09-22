@@ -8,7 +8,7 @@ Last updated: 2026-09-22
 
 ### Current sub-stage
 
-**1.12-A — Host Configuration and Runtime Composition**
+**1.12-B — Bootstrap Credential Boundary**
 
 Detailed workload and ordering: `docs/plan/Phase1.12_Settings_Host_Integration.md`
 
@@ -31,7 +31,19 @@ The complete Phase 1.12 program is subdivided into bounded sub-stages described 
 - real Example Host consumption of configured state;
 - focused verification and documentation closure.
 
-Current sub-stage 1.12-A is limited to the host configuration/composition boundary and its required supporting contracts. It may define the bootstrap-credential contract required by composition, but the concrete DPAPI-backed bootstrap store belongs to 1.12-B. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-A.
+Current sub-stage 1.12-B implements the concrete bootstrap-credential boundary required by the completed 1.12-A composition contract. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-B.
+
+## Current 1.12-B verification gate
+
+1. Bootstrap credential storage is outside the target Hive database.
+2. Windows DPAPI uses user scope for stored bootstrap material.
+3. Bootstrap set/create, replace, resolve, and clear lifecycle operations are explicit and do not expose material through configuration reads.
+4. Bootstrap references are distinct from Hive database-backed Secret Store references.
+5. `hive-settings.json` contains only the bootstrap reference/identifier and never raw SQL password material.
+6. Missing, corrupt, undecryptable, and unsupported bootstrap material produce typed failures without secret leakage.
+7. Resolved `SecretMaterial` is deterministically disposed by its caller.
+8. Focused automated coverage exists for the bootstrap boundary.
+9. No configured-host Example or final Settings UI work is implemented in this sub-stage.
 
 ## Current 1.12-A verification gate
 
@@ -101,14 +113,14 @@ The previously existing Settings inspection Example produced an old-schema/local
 
 ## Verification handoff
 
-Current sub-stage: **1.12-A — Host Configuration and Runtime Composition**
+Current sub-stage: **1.12-B — Bootstrap Credential Boundary**
 
-Example to run: **None for 1.12-A.** The configured-host Example path belongs to the later host-level Settings/runtime-consumption stages and must follow the documented HAgent-style host configuration flow.
+Example to run: **None for 1.12-B.** This is host/bootstrap infrastructure; the real user-facing Settings and configured-host Example is deferred to the later Settings/runtime-consumption stages.
 
 Tests to run:
-- `tests/Hive.Tests/HiveHostCompositionTests.cs` — full 1.12-A composition/lifetime boundary coverage;
-- `tests/Hive.Tests/HiveConfigurationTests.cs` — relevant JSON configuration/default behavior;
-- `tests/Hive.Tests/HivePersistenceOptionsTests.cs` — relevant option mapping/validation;
+- `tests/Hive.Tests/HiveBootstrapCredentialStoreTests.cs` — focused bootstrap boundary coverage;
+- `tests/Hive.Tests/HiveConfigurationTests.cs` — configuration serialization and explicit legacy-reference rejection;
+- `tests/Hive.Tests/HiveHostCompositionTests.cs` — host composition remains green after bootstrap-boundary integration;
 - broader `Hive.Tests` execution remains required for final Phase 1.12 closure.
 
 Manual application verification is not recorded as complete for 1.12-A until the developer actually runs the host and exercises the current authorized behavior.
