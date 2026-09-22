@@ -102,7 +102,7 @@ Current Settings resource hierarchy:
 
 ```
 Providers
-├── Providers
+├── Provider Configuration
 ├── Accounts / Credentials
 └── Execution Targets
 Agents
