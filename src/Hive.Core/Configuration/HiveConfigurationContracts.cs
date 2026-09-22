@@ -38,6 +38,8 @@ public readonly record struct HiveBootstrapCredentialReference
 
 public sealed record HivePersistenceConfiguration
 {
+    public const string DefaultDatabaseName = "Hive";
+
     public HivePersistenceConfiguration(
         HivePersistenceBackend backend,
         string serverName,
@@ -132,7 +134,7 @@ public sealed record HivePersistenceConfiguration
     public int CommandTimeoutSeconds { get; }
 
     public static HivePersistenceConfiguration LocalDevelopment(
-        string databaseName = "Hive") =>
+        string databaseName = DefaultDatabaseName) =>
         new(
             HivePersistenceBackend.SqlServer,
             @"(localdb)\MSSQLLocalDB",
