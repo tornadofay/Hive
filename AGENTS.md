@@ -7,16 +7,15 @@ This file is the repository operating constitution. Keep it small. Detailed arch
 Use this authority order:
 
 1. `AGENTS.md` — agent workflow and repository rules.
-2. `docs/architecture.md` — architecture index, global intent, and ownership; detailed architecture under `docs/architecture/` is part of the same source of truth.
+2. `docs/architecture.md` plus the relevant `docs/architecture/*.md` detail documents — intended architecture and ownership.
 3. `docs/Hive_Active_Work.md` — only authorized current implementation slice and verification gate.
 4. `docs/roadmap.md` — ordered future work.
-5. Relevant `docs/architecture/*.md` detail documents — detailed architectural contracts for the affected boundaries.
-6. Source/project files — actual implementation.
-7. Tests — behavior actually exercised by tests.
-8. `docs/Hive_Current_Status.md` — current phase/status record only; it does not store verification history.
-9. `docs/verification/` — historical verification evidence only.
-10. `docs/examples/` and `docs/ui/` — practical usage guidance.
-11. `README.md` — project overview.
+5. Source/project files — actual implementation.
+6. Tests — behavior actually exercised by tests.
+7. `docs/Hive_Current_Status.md` — current phase/status record only; it does not store verification history.
+8. `docs/verification/` — historical verification evidence only.
+9. `docs/examples/` and `docs/ui/` — practical usage guidance.
+10. `README.md` — project overview.
 
 When sources conflict:
 - architecture governs intended structure;
@@ -139,7 +138,7 @@ Use `docs/ui/examples.md` for the exact Example Host pattern and tree placement.
 Final handoff for a capability requiring an Example MUST contain:
 
 ```text
-Example to run: <exact Category / Subcategory / Example title> — Hive.Example.WinForms
+Example to run: <exact Category / Subcategory / optional AdditionalNavigationPath / Example title> — Hive.Example.WinForms
 Tests to run: <exact focused test class/file>; broader-suite requirement if applicable
 ```
 
