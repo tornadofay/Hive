@@ -2,248 +2,286 @@
 
 ## Purpose
 
-Phase 1.12 currently has a first Settings surface, Provider/Persistence configuration, Secret Store integration, and connection tests. The remaining work is to make the configuration system behave like a real Hive application configuration system, following the proven HAgent model.
+Phase 1.12 turns Hive Settings into the **global Hive package configuration center** and makes the saved configuration actually drive the host application.
 
-The target is not merely a better Settings screen.
+The target is not a better Settings screen. The target is one authoritative configuration path:
 
-The target is:
+\`\`\`
+Saved Hive configuration
+        ↓
+Host composition boundary
+        ↓
+Configured Hive services
+        ↓
+Hive.Management
+        ↓
+Normal host operations / execution
+\`\`\`
 
-- Settings edits the same authoritative Hive state that the application uses.
-- Provider, ProviderAccount, ExecutionTarget, and AgentDefinition resources are real persisted configuration.
-- The host application is composed from the saved persistence configuration rather than hard-coded `LocalDevelopment()`.
-- The Example Host behaves like a normal Hive consumer.
-- The Example Host exposes Settings as a normal application capability.
-- Normal configured examples consume the configured Agent/Provider/ExecutionTarget state.
-- The configured runtime behavior itself proves that Settings works.
-- The Hive-owned WinForms UI foundation is reused instead of creating a second Settings-specific navigation/list toolkit.
+Settings edits that state; the host consumes that same state.
 
-This remains **Phase 1.12** work. It does not authorize Phase 1.13 or later.
+This remains **Phase 1.12** only. It does not authorize Phase 1.13 or later.
 
 ---
 
 ## 0. Global Package Configuration Principle
 
-Hive Settings is the **global Hive package configuration center**. It is not a Provider Settings screen, Persistence Settings screen, or a collection of unrelated administrative dialogs.
+Hive Settings is the permanent first-class configuration center for the Hive package.
 
-The Settings surface is a permanent first-class application boundary through which the configuration of the entire Hive package is managed as the corresponding capabilities become available.
+It is not:
+
+- a Provider Settings window;
+- a Persistence Settings window;
+- a collection of unrelated \`FooSettingsForm\` roots;
+- a configuration-inspection example.
 
 Conceptually:
 
-```text
-Hive Configuration
+\`\`\`
+Hive Settings
 ├── Overview
 ├── Providers
+│   ├── Providers
+│   ├── Provider Accounts
+│   └── Execution Targets
 ├── Agents
 ├── Persistence
 ├── Tools
 ├── Policy / permissions
 ├── Workspace / application behavior
 ├── Runtime / execution defaults
-├── cognition/resource configuration
-├── integration/host configuration
-├── diagnostics/configuration inspection
-└── other Hive-owned configuration domains
-```
+├── Cognition / resource configuration
+├── Integration / host configuration
+└── other Hive-owned durable configuration
+\`\`\`
 
-The exact pages are introduced with the phases that own their configuration contracts. A future page must be added to this global configuration center; it must not create a second top-level configuration mechanism.
+Only domains with an authoritative contract are implemented in the phase that owns them. Future durable Hive configuration extends this same center.
 
-### Configuration-center rules
+### Rules
 
-1. There is one canonical Hive Settings/Configuration entry point for the package.
-2. Configuration domains are owned by their respective platform contracts and services, but their user-facing configuration surface belongs under the global Settings center.
-3. Settings navigation is extensible and must use the reusable `Hive.Host.WinForms.UI` navigation foundation.
-4. A configuration page may be absent while the underlying capability does not yet have an authoritative configuration contract; the page is not a reason to invent configuration state early.
-5. A capability-specific dialog may still exist when it is an execution-time action rather than durable package configuration, but durable package configuration belongs in the global Settings center.
-6. The Example Host must expose the same global Settings experience a normal Hive WinForms application would consume.
-7. The global Settings center itself is not an Example scenario. The Example scenario demonstrates configured behavior using the resulting state.
-8. Adding future package configuration domains must extend this same center instead of creating parallel `FooSettingsForm` roots.
+1. One canonical Hive Settings entry point exists for the package.
+2. Durable package configuration belongs under that entry point.
+3. Domain ownership remains in Management/Core/Persistence/etc.; Settings is the application-facing configuration surface.
+4. The Settings shell must be extensible without creating parallel top-level settings forms.
+5. The Example Host exposes the same Settings experience a normal Hive WinForms application consumes.
+6. The Settings shell itself is infrastructure; Example scenarios prove behavior produced by configured state.
+7. Read-only diagnostics/configuration inspection may exist under Settings, but it is not a replacement for real configuration consumption.
 
-### Current Phase 1.12 domains
-
-Phase 1.12 establishes the first concrete global configuration domains that already have authoritative contracts:
+### Concrete Phase 1.12 domains
 
 - Providers;
-- ProviderAccounts and ExecutionTargets as Provider configuration subdomains;
+- Provider Accounts;
+- Execution Targets;
 - AgentDefinitions and their configured execution relationship;
 - Persistence;
-- the Settings shell/navigation infrastructure needed to host future Hive configuration domains.
-
-Later phases add their own domains under this same configuration center without changing the architectural ownership rule.
-
-## 1. Target Architecture
-
-The intended application flow is:
-
-```
-Saved Hive configuration
-        ↓
-Application composition root
-        ↓
-Configured Hive.Persistence services
-        ↓
-Hive.Management facade
-        ↓
-Host application features
-        ↓
-Actual configured Hive resources / execution
-```
-
-Settings is a management client over that same boundary:
-
-```
-Hive Settings UI
-        ↓
-IHiveManagementFacade
-        ↓
-Hive.Persistence / provider boundary
-        ↓
-authoritative persisted state
-```
-
-The Example Host follows the same model:
-
-```
-Hive.Example.WinForms
-        ↓
-public Hive contracts
-        ↓
-IHiveManagementFacade / configured execution services
-        ↓
-real persisted Providers / Accounts / Targets / Agents
-```
-
-There must not be a second Example-only configuration model.
+- the reusable Settings navigation/editor infrastructure.
 
 ---
 
-## 2. HAgent Pattern Being Reused
+## 1. Current Checkpoint and Authorized Scope
 
-HAgent establishes the desired behavioral pattern:
+The first Phase 1.12 Settings implementation already exists and is verification-pending.
 
-1. One real configuration surface manages Providers and Agents.
-2. Configuration uses the authoritative application store.
-3. The Example application has a normal Configuration entry.
-4. Closing configuration causes the host to reload its current configured resources.
-5. Normal Example operations resolve the configured Agent and its execution configuration before doing work.
-6. Storage configuration is real application configuration and can cause the host to recompose its runtime storage.
-7. A configuration-reading example can exist, but it is not the primary proof.
-8. Secrets remain outside ordinary configuration data and are never printed.
-9. UI is responsible for composition/presentation; storage, security, provider transport, and runtime composition remain outside the UI.
+The current authorized sub-stage is:
 
-Hive should reproduce these architectural behaviors using its stronger typed Management/resource boundaries.
+**1.12-A — Host Configuration and Runtime Composition**
+
+Only implement 1.12-A and supporting contracts required to make 1.12-A complete.
+
+Do not implement later 1.12 UI/resource/example work in the same run unless it is a direct dependency of 1.12-A.
+
+The ordered sub-stages are:
+
+1. 1.12-A — Host composition boundary
+2. 1.12-B — Bootstrap credential boundary
+3. 1.12-C — Management/settings resource editing
+4. 1.12-D — Settings UI migration to Hive UI foundation
+5. 1.12-E — Settings-driven reload/recomposition
+6. 1.12-F — Example Host configured consumption
+7. 1.12-G — Example classification
+8. 1.12-H — Focused automated coverage
+9. 1.12-I — Manual configured-host verification
+10. 1.12-J — Final UI/UX review
+11. 1.12-K — Documentation/status closure
+
+A sub-stage closes only after its required implementation, tests/examples/docs, and actual verification are complete.
 
 ---
 
-## 3. Hive Resource Model
+## 2. Target Architecture
 
-Hive already has explicit configuration resources:
+The host must have one composition/lifetime boundary that owns the current Hive service graph.
 
-```
-Provider
+\`\`\`
+configuration file / bootstrap configuration
+              ↓
+      host composition boundary
+              ↓
+      persistence-backed stores
+              ↓
+       HiveManagementFacade
+              ↓
+          host services
+\`\`\`
+
+Settings uses the public configuration/Management boundaries rather than accessing SQL, provider transport, migrations, or secret material directly.
+
+### Composition invariant
+
+A replacement service graph is built as a complete candidate before publication:
+
+\`\`\`
+current graph
     ↓
-ProviderAccount
+load + validate new configuration
     ↓
-ExecutionTarget
+resolve required bootstrap material
+    ↓
+construct candidate graph
+    ↓
+publish candidate
+    ↓
+dispose previous graph
+\`\`\`
 
+Never publish a partially constructed graph.
+
+Never destroy the currently usable graph merely because a replacement failed.
+
+On first startup, failure to construct the configured graph produces an explicit unavailable/unconfigured state rather than silently switching to a different saved configuration.
+
+### Concurrency/lifetime rules
+
+- Settings changes and startup composition use one serialized reconfiguration boundary.
+- Only the current published graph is used for new host operations.
+- Components owned by the graph are disposed exactly once when replaced.
+- Running executions retain their already-established effective configuration snapshot.
+- A later Settings change never mutates an execution already in progress.
+
+---
+
+## 3. Persistence Configuration Rules
+
+The persisted Hive configuration is bootstrap-readable without requiring the target Hive database to be open.
+
+Important startup rule:
+
+- **No saved configuration exists:** use typed \`LocalDevelopment()\` as the first-run default.
+- **Saved configuration exists:** load and validate it.
+- **Saved configuration is invalid/unusable:** fail clearly; do not silently fall back to \`LocalDevelopment()\`.
+- **Saved configuration requires a bootstrap credential that is missing:** fail clearly; do not fall back.
+- **Saved configuration points to an unavailable database:** preserve the saved configuration and expose the unavailable state; do not replace it with a different configuration.
+
+\`LocalDevelopment()\` is therefore a first-run default, not permanent runtime wiring.
+
+### Persistence changes that require recomposition
+
+- server/instance;
+- port;
+- database;
+- authentication mode;
+- bootstrap credential/reference;
+- encryption/trust policy;
+- database creation policy;
+- command timeout when it is part of the constructed store options.
+
+Resource-only changes must not reconstruct the persistence graph.
+
+---
+
+## 4. Critical Configuration Contract Corrections
+
+### 4.1 Bootstrap credential is not a Hive database Secret
+
+The current Hive Secret Store is SQL-backed.
+
+A SQL password is needed before that same SQL database can be opened.
+
+Therefore the SQL-password credential cannot depend on the database-backed Secret Store.
+
+Phase 1.12 must introduce a separate bootstrap-secret boundary:
+
+\`\`\`
+Bootstrap credential
+      ↓
+open Hive database
+      ↓
+Hive Secret Store
+      ↓
+Provider/account/resource secrets
+\`\`\`
+
+The bootstrap secret must:
+
+- live outside the target Hive database;
+- be protected with Windows DPAPI and user scope;
+- be available before Hive.Persistence is constructed;
+- be referenced by configuration rather than stored as plaintext;
+- never be emitted in JSON, diagnostics, Example output, or normal logs.
+
+The existing Hive resource Secret Store remains authoritative for ProviderAccount and other Hive-owned resource secrets.
+
+### 4.2 Do not reuse the Hive Secret reference for SQL bootstrap
+
+The current persistence configuration contains a secret reference used by the existing implementation.
+
+That reference must **not** remain the mechanism for obtaining the SQL password once the bootstrap boundary is implemented.
+
+The implementation must introduce an intentional bootstrap credential reference/boundary and define its compatibility with the existing persisted configuration. Do not silently reinterpret an existing field with different semantics.
+
+### 4.3 AgentDefinition must have durable execution configuration
+
+The current \`AgentDefinition\` stores identity/display/generation only, while execution currently receives an \`ExecutionTarget\` directly.
+
+That is insufficient for configured-host behavior.
+
+Phase 1.12 shall add a durable relationship from \`AgentDefinition\` to an existing \`ExecutionTarget\`.
+
+The first configured-host contract is intentionally simple:
+
+\`\`\`
 AgentDefinition
     ↓
-configured execution relationship
-```
+configured ExecutionTargetId (nullable for legacy/unconfigured definitions)
+    ↓
+Management resolves existing ExecutionTarget
+    ↓
+ExecutionTarget → ProviderAccount → Provider
+    ↓
+execution boundary
+\`\`\`
 
-Settings must preserve those relationships.
+The AgentDefinition must not duplicate:
 
-Provider settings must not collapse:
-
-- Provider identity;
-- ProviderAccount identity;
-- credential reference;
-- ExecutionTarget identity;
-- endpoint;
+- provider endpoint;
+- account identity;
+- credentials;
 - model/deployment;
-- capability state
+- capability state.
 
-into one UI-only object.
+The existing ExecutionTarget remains authoritative.
 
-Agent settings must operate on persisted `AgentDefinition` resources and their configured execution relationship. They must not manufacture hidden provider configuration outside Management.
+### Selection boundary
 
-Resource ownership, scope, version, lifecycle, concurrency, and authorization remain Management concerns.
+Do not add a second selection algorithm in WinForms.
 
----
+Phase 1.12 uses one explicit configured target reference. Advanced preferred/automatic target selection remains owned by the existing execution-target selection architecture and is outside this slice.
 
-## 3A. Current Agent Configuration Gap\n\nThe current AgentDefinition contract contains identity, display name, and generation, but no persisted execution-selection relationship. The current first-real-execution boundary instead receives an ExecutionTarget directly in AgentExecutionRequest.\n\nThat is insufficient for the target Settings behavior because an Agent selected by the host must carry durable configuration that identifies what it should use.\n\n### Required Phase 1.12 correction\n\nExtend the Agent configuration boundary so an AgentDefinition can persist its configured execution-target selection without duplicating Provider/ProviderAccount/ExecutionTarget data.\n\nThe configuration must reference an existing ExecutionTargetId (or an equivalent explicit selection contract) rather than storing:\n\n- provider endpoint;\n- provider key;\n- account credentials;\n- model/deployment;\n- capability state\n\ninside the AgentDefinition.\n\nThe existing ExecutionTarget remains authoritative for those details.\n\nThe configured-agent path therefore becomes:\n\n```text\nAgentDefinition\n    └── configured ExecutionTarget reference\n             ↓\n      Management loads target\n             ↓\n      existing target contains Provider/Account/Endpoint/Model\n             ↓\n      execution boundary receives the resolved target\n```\n\n### Selection boundary\n\nDo not build a second provider/model selection algorithm inside Settings.\n\nUse the existing execution-target identity/selection contracts as the foundation. For the first configured-host flow, an explicit configured target reference is sufficient. More advanced automatic/preferred selection remains owned by the existing execution-target selection architecture and must not be reimplemented in WinForms.\n\nIf the implementation needs a broader persisted selection policy than one target reference, that decision must remain in the Agent/Coordination contract and be documented before coding; it must not be hidden in UI state or metadata JSON.\n\n### Persistence implications\n\nAdding a durable AgentDefinition → ExecutionTarget relationship is a persistence contract change.\n\nThe implementation must therefore include:\n\n- an ordered migration;\n- an appropriate foreign-key/index strategy where compatible with the existing lifecycle model;\n- load/save/update behavior in SqlAgentDefinitionResourceStore;\n- Management validation that the referenced target belongs to the allowed access context;\n- stale/missing/retired target handling;\n- concurrency behavior;\n- focused tests.\n\nThis is still Phase 1.12 because it is required to make the new Settings configuration actually drive a configured Agent.\n\n## 4. WinForms UI Foundation Requirement
+A configured-host execution requires a usable target reference. Missing, unauthorized, retired, or otherwise unusable target references are explicit configuration/runtime failures.
 
-The Settings surface **must use the reusable controls already designed and owned by `Hive.Host.WinForms.UI`**.
+### Persistence implications
 
-Required controls/patterns:
+The AgentDefinition → ExecutionTarget relationship is a durable-schema contract change and requires:
 
-### Navigation
+- next ordered migration;
+- appropriate FK/index strategy compatible with existing lifecycle rules;
+- load/save/update support in the AgentDefinition persistence store;
+- Management validation across resource relationships;
+- explicit behavior for referenced target retirement/deletion;
+- stale/missing/unauthorized target handling;
+- concurrency/version tests.
 
-Use:
-
-```
-HiveNavigationTree
-```
-
-Settings must not implement its own owner-drawn `ListBox`, custom tree renderer, or parallel navigation mechanism.
-
-The Settings hierarchy should be represented as:
-
-```
-Settings
-├── Providers
-├── Agents
-└── Persistence
-```
-
-Additional sub-levels may be represented through the established tree/navigation model when they provide useful architectural grouping.
-
-The existing `HiveNavigationTree` theme behavior must be preserved, including selection state and scroll position during theme changes.
-
-### List / CRUD
-
-Use:
-
-```
-HiveListPageLayout
-HiveCrudPage<TItem>
-HiveListView
-```
-
-for list-oriented Settings surfaces.
-
-The existing Hive CRUD presentation standard remains authoritative:
-
-- header;
-- action bar;
-- list/content area;
-- search where useful;
-- predictable empty/no-match states;
-- keyboard-friendly selection;
-- Add/Edit/Delete/Refresh behavior;
-- compact record/status feedback;
-- responsive action layout.
-
-Do not create a second Settings-specific ListView renderer or another generic CRUD abstraction.
-
-### Editors
-
-Use:
-
-```
-HiveEditorLayout
-HiveButton
-HiveMessageBox
-```
-
-where the existing UI contracts fit.
-
-Domain-specific validation and field semantics remain in the Settings page/editor; the reusable controls remain presentation infrastructure.
-
-### Theme
-
-Use `IHiveThemeManager` and the same Light/Dark/System theme behavior as the rest of Hive.
-
-Settings must not own an independent color palette, typography system, selected-state implementation, or theme-change mechanism.
+Existing AgentDefinitions must remain readable after migration. A null target is allowed only for legacy/unconfigured definitions; configured-host execution must reject an unusable configuration clearly.
 
 ---
 
@@ -251,322 +289,276 @@ Settings must not own an independent color palette, typography system, selected-
 
 ### Goal
 
-Make saved `HivePersistenceConfiguration` actually control how the host constructs Hive.
+Remove hard-coded runtime persistence wiring from the normal Example Host composition path.
 
-### Current problem
+### Current defect
 
-The Example Host currently constructs:
+The Example Host currently constructs persistence using:
 
-```csharp
+\`\`\`csharp
 HiveDatabaseOptions.LocalDevelopment()
-```
+\`\`\`
 
-inside its service composition.
+inside service composition.
 
-That means the new persistence Settings can save a different configuration while the running application continues to use the hard-coded default.
+That means Settings can save another configuration while the running host still uses the hard-coded default.
 
-That must be removed from the normal runtime composition path.
+### Required implementation
 
-### Required work
+Create one host-owned composition/lifetime boundary that:
 
-Create one application-composition path that:
+1. loads the persisted Hive persistence configuration;
+2. applies the first-run \`LocalDevelopment()\` default only when no configuration exists;
+3. validates the selected configuration;
+4. depends on an explicit bootstrap-credential abstraction for SQL-password cases;
+5. creates \`HiveDatabaseOptions.FromConfiguration(...)\` or the existing equivalent;
+6. constructs the configured persistence-backed stores;
+7. constructs the Management facade and other host-owned services from that graph;
+8. publishes the complete graph atomically;
+9. exposes the current graph/status to the host;
+10. replaces and disposes the previous graph only after the new graph is ready.
 
-1. loads the saved persistence configuration;
-2. falls back to typed `LocalDevelopment()` only when no saved configuration exists;
-3. resolves the persistence bootstrap credential before Hive DB access;
-4. creates `HiveDatabaseOptions.FromConfiguration(...)`;
-5. constructs the configured Persistence stores;
-6. constructs `IHiveManagementFacade` from those stores and provider boundaries;
-7. exposes the configured Management/runtime services to the host;
-8. disposes/replaces the old persistence-backed services when configuration changes.
+### Required failure states
 
-`LocalDevelopment()` remains the first-run default, not a permanent runtime wiring shortcut.
+The composition boundary must distinguish at least:
 
-### Failure boundaries
-
-The composition layer must distinguish:
-
-- invalid configuration;
-- missing bootstrap credential;
-- database/server unavailable;
+- configuration missing;
+- configuration invalid;
+- bootstrap credential missing;
+- server/database unavailable;
 - database missing;
-- schema not initialized;
+- Hive schema missing/uninitialized;
 - schema requires migration;
-- future/unsupported schema;
-- invalid provider configuration;
-- missing selected Agent;
-- unavailable ExecutionTarget;
-- missing provider credential;
+- unsupported/future schema;
+- configured Management/resource graph unavailable;
+- selected Agent missing/unusable;
+- selected ExecutionTarget missing/unusable;
+- provider credential unavailable;
 - provider connection failure.
 
-UI may translate these into user-friendly messages, but must not merge them into a single generic implementation failure.
+The composition layer must preserve these distinctions. UI may translate them into user-friendly messages.
+
+### 1.12-A boundary test
+
+This stage proves that the host can be composed from saved configuration without embedding \`LocalDevelopment()\` as permanent wiring.
+
+It does **not** yet implement the complete Settings editor, configured Agent example, or final UI migration.
 
 ---
 
 ## 6. 1.12-B — Bootstrap Credential Boundary
 
-### Problem
+Implement the bootstrap credential mechanism required by 1.12-A.
 
-Hive's current Secret Store is SQL-backed.
+### Contract requirements
 
-A SQL password is required to establish the database connection that is needed to access that Secret Store.
+The bootstrap boundary must support the minimum lifecycle required by Settings and startup:
 
-Therefore:
+- create/set;
+- replace;
+- resolve;
+- delete when no longer referenced, if supported by the configuration lifecycle.
 
-```
-SQL password
-   → needed to open Hive DB
-   → needed to open Hive Secret Store
-   → cannot retrieve SQL password from that DB first
-```
+Material is write-only from normal Settings usage and must never be exposed through ordinary configuration reads.
 
-This is a circular bootstrap dependency.
+### Storage requirements
 
-### Required solution
+- Windows DPAPI;
+- user scope;
+- file/system storage outside the target Hive DB;
+- no plaintext credential in \`hive-settings.json\`;
+- no credential in Example output or diagnostics;
+- deterministic disposal of secret material.
 
-Introduce a separate bootstrap-secret boundary for the persistence connection credential.
+### Integration rule
 
-The bootstrap credential must:
+The bootstrap boundary is available before Hive.Persistence is constructed.
 
-- live outside the target Hive database;
-- use Windows DPAPI protection;
-- be user-scoped;
-- never be written as plaintext into `hive-settings.json`;
-- be available before Hive.Persistence is constructed;
-- expose only the minimum API required by the application composition root;
-- never appear in diagnostics, Example output, or normal configuration serialization.
-
-This should follow the architectural idea already used by HAgent's file-backed protected secret storage.
-
-### Separation of responsibilities
-
-There are therefore two secret classes:
-
-**Bootstrap secret**
-
-Used to open Hive persistence.
-
-**Hive resource secret**
-
-Used after Hive persistence is open, for ProviderAccount credentials and other Hive-owned secrets.
-
-The existing `SqlDpapiSecretStore` remains authoritative for Hive-owned durable resources. The bootstrap secret must not be stuffed into `HiveSecrets` before the database exists.
+Do not store the bootstrap SQL password inside the Hive database-backed Secret Store.
 
 ---
 
-## 7. 1.12-C — Real Settings Management Surface
+## 7. 1.12-C — Real Settings Management
 
-### Target navigation
+Once the composition/bootstrap prerequisites exist, complete the authoritative Settings management surface.
 
-```
-Settings
-├── Providers
-│   ├── Provider list
-│   ├── Provider editor
-│   ├── ProviderAccount management
-│   └── ExecutionTarget management
-├── Agents
-│   └── AgentDefinition list/editor
-└── Persistence
-    └── SQL Server / LocalDB settings
-```
+### Providers
 
-An Overview page is optional only if it adds real application value; it must not exist merely to display counts that are not otherwise useful.
+Manage:
 
-### Provider surface
+- Provider records;
+- ProviderAccounts;
+- credential references;
+- ExecutionTargets;
+- supported connection tests.
 
-The Provider area must allow a normal host administrator/user to:
+The UI must preserve the actual Provider → Account → Target relationship.
 
-- view Providers;
-- create/edit/retire Providers according to Management lifecycle rules;
-- view ProviderAccounts for a Provider;
-- create/edit/retire ProviderAccounts;
-- associate credential references;
-- view ExecutionTargets for an Account;
-- create/edit/retire ExecutionTargets;
-- execute the supported connection test through Management;
-- see connection/test state without revealing credentials.
+### Agents
 
-The page should present the actual resource relationships rather than flattening all three resource types into unrelated lists.
+Manage:
 
-### Agent surface
+- AgentDefinitions;
+- display/key/generation;
+- explicit configured ExecutionTarget reference;
+- lifecycle/version/concurrency semantics;
+- clear configured/unconfigured state.
 
-The Agent area must:
+Agents must not create hidden Provider/Account/Target records.
 
-- list AgentDefinitions;
-- create/edit/retire AgentDefinitions;
-- show configured execution selection clearly;
-- allow selection of valid existing execution resources;
-- preserve Management authorization, version, lifecycle, and concurrency behavior;
-- expose effective configuration that is meaningful to a host consumer.
+### Persistence
 
-An Agent must not silently create provider/account/target records merely because an editor needs a selection.
+Manage:
 
-### Persistence surface
-
-The Persistence area must continue to support:
-
-- SQL Server;
-- SQL Server LocalDB through the same SQL Server boundary;
-- Windows Integrated authentication;
-- SQL password authentication;
+- SQL Server / LocalDB;
 - server/instance;
 - port;
 - database;
-- encryption settings;
-- trust-server-certificate policy;
+- Windows Integrated / SQL Password;
+- encryption/trust policy;
 - create-database-if-missing policy;
 - command timeout;
 - bootstrap credential reference.
 
-The connection test remains non-destructive:
+Persistence connection testing remains non-destructive:
 
 - no database creation;
 - no migration;
 - no schema mutation;
-- explicit database/schema state.
+- explicit database state;
+- explicit Hive schema state.
 
-Schema initialization/migration remains a separate lifecycle operation.
+Settings does not execute migrations.
 
 ---
 
-## 8. 1.12-D — Refactor Settings UI onto Hive UI Controls
+## 8. 1.12-D — Settings UI on the Hive UI Foundation
 
-The existing Settings implementation currently uses a custom Settings navigation `ListBox` and page-local layout/list patterns.
+Replace the current Settings-specific navigation/list presentation with the existing reusable UI foundation.
 
-Replace that implementation with the existing Hive UI foundation.
+### Required controls
 
-### Required direction
+Navigation:
 
-```
-HiveSettingsView
-    ↓
+\`\`\`
 HiveNavigationTree
-    ↓
-replaceable Settings page
+\`\`\`
 
-Provider page
-    ↓
+List/CRUD pages:
+
+\`\`\`
 HiveListPageLayout
-    ↓
-HiveCrudPage<TItem> / HiveListView
-    ↓
-domain editor
+HiveCrudPage<TItem>
+HiveListView
+\`\`\`
 
-Agent page
-    ↓
-HiveListPageLayout
-    ↓
-HiveCrudPage<TItem> / HiveListView
-    ↓
-domain editor
+Editors/actions:
 
-Persistence page
-    ↓
+\`\`\`
 HiveEditorLayout
-```
+HiveButton
+HiveMessageBox
+\`\`\`
 
-Do not copy or reimplement the behavior already provided by:
+Theme:
 
-- `HiveNavigationTree`;
-- `HiveListView`;
-- `HiveListPageLayout`;
-- `HiveCrudPage<TItem>`;
-- `HiveEditorLayout`.
+\`\`\`
+IHiveThemeManager
+\`\`\`
 
-If an existing control lacks a genuinely required behavior, extend the reusable UI control only when the behavior belongs to the reusable UI boundary. Do not add a one-off Settings-only renderer.
+Do not reintroduce:
+
+- owner-drawn Settings \`ListBox\` navigation;
+- Settings-specific ListView renderers;
+- duplicate CRUD abstractions;
+- duplicate theme/state logic.
+
+The Settings hierarchy should use the established tree/navigation behavior and preserve selection/top-node/scroll position across theme changes.
 
 ---
 
-## 9. 1.12-E — Settings as Real Application State
+## 9. 1.12-E — Settings-Driven Runtime State
 
-Settings must edit the same persisted state used by the rest of the host.
+Settings changes must become application state, not saved-but-ignored data.
 
-Required behavior:
+Required flow:
 
-1. Open Settings.
-2. Load current persisted Providers, Accounts, Targets, Agents, and Persistence configuration.
-3. Change configuration.
-4. Save through Management.
-5. Close Settings.
-6. Host reloads/recomposes the affected state.
-7. Subsequent normal operations use the new state.
-
-There must be no "Settings saved" state that the running application ignores.
+\`\`\`
+Open Settings
+   ↓
+edit authoritative configuration
+   ↓
+save
+   ↓
+host detects affected change
+   ↓
+recompose or refresh as required
+   ↓
+close/return to normal host UI
+   ↓
+next operation uses new state
+\`\`\`
 
 ### Change classes
 
-**Persistence-boundary changes**
+**Persistence-boundary change**
 
-Examples:
+Recompose the persistence graph.
 
-- server;
-- port;
-- database;
-- authentication mode;
-- bootstrap credential;
-- encryption/connection security.
+**Provider/ProviderAccount/ExecutionTarget/AgentDefinition change**
 
-These require persistence service recomposition/reopen.
+Refresh authoritative Management/resource state without rebuilding persistence.
 
-**Resource changes**
+### Safe apply behavior
 
-Examples:
+If a new persistence graph cannot be constructed:
 
-- Provider;
-- ProviderAccount;
-- ExecutionTarget;
-- AgentDefinition.
+- do not publish it;
+- do not dispose a still-usable current graph;
+- report the typed failure;
+- keep the saved configuration available for retry/startup.
 
-These only require state refresh from Management; they must not cause unnecessary reconstruction of the entire persistence stack.
-
-### Running executions
-
-A running execution uses its already-established effective configuration snapshot.
-
-Settings changes affect subsequent work, not an execution that has already captured its effective configuration.
+A later successful apply may replace the current graph.
 
 ---
 
 ## 10. 1.12-F — Example Host as a Real Consumer
 
-The Example Host must behave like an ordinary application.
+The Example Host must behave like an ordinary Hive WinForms application.
 
 ### Host-level Settings
 
-Provide a normal application Settings/Configuration entry in the Example Host shell.
+Expose a normal application Settings/Configuration command from the host shell.
 
-It must not require the user to navigate to a special Settings Example just to configure Hive.
+A user must not navigate to a special Settings Example merely to configure Hive.
 
-The Settings Example may still exist as a public API/verification scenario for inspecting the configuration boundary, but it is secondary to the host configuration experience. The global Settings center itself is host infrastructure, not a leaf Example.
+The existing Settings Example may remain as a direct public-API/configuration-boundary example, but it is secondary.
 
-### Example startup
+### Startup
 
-At startup the Example Host must:
+The host must:
 
-1. load persisted Hive persistence configuration;
-2. compose the configured Management/runtime services;
-3. load Providers and AgentDefinitions;
-4. populate the configured Agent selection UI;
-5. report a useful status when configuration cannot be loaded.
+1. load saved Hive persistence configuration;
+2. compose the configured service graph;
+3. load Providers and AgentDefinitions when Management is available;
+4. populate configured Agent selection;
+5. expose useful unavailable/unconfigured status when composition cannot complete.
 
 ### After Settings closes
 
 The host must:
 
-1. detect persistence configuration changes;
-2. recompose persistence-backed services when required;
-3. reload Providers/AgentDefinitions;
-4. preserve the selected Agent when it still exists;
-5. clear/revalidate the selection when it no longer exists or is unusable.
+1. detect affected configuration changes;
+2. recompose persistence when required;
+3. refresh resources when only resource configuration changed;
+4. preserve the selected Agent when still valid;
+5. clear/revalidate selection when missing, retired, or unusable.
 
-### Normal examples
+### Real configured flow
 
-Examples that require configured execution should use the selected persisted AgentDefinition and its configured execution resources through public Hive APIs.
+The final configured-host path is:
 
-The intended flow is:
-
-```
+\`\`\`
 Settings
   ↓
 Provider
@@ -575,259 +567,274 @@ ProviderAccount + credential
   ↓
 ExecutionTarget
   ↓
-AgentDefinition
+AgentDefinition + target reference
   ↓
 close Settings
   ↓
 select configured Agent
   ↓
-run normal Agent scenario
+run normal public-API operation
   ↓
-Hive uses configured target
-```
+Hive resolves the configured target
+\`\`\`
 
-The successful configured operation is part of Settings verification.
+A successful configured operation, not a configuration dump, is the primary proof that Settings works.
 
 ---
 
 ## 11. 1.12-G — Example Classification
 
-Do not blindly convert every existing Example into configuration-dependent behavior.
-
-Keep two categories.
+Do not make every example configuration-dependent.
 
 ### Isolated contract examples
 
-Used to demonstrate deterministic low-level behavior.
+These may use:
 
-They may:
+- fakes;
+- deterministic local infrastructure;
+- temporary/example resources;
+- LocalDevelopment when it is intrinsic to the example purpose.
 
-- use local fake provider infrastructure;
-- create temporary resources;
-- use dedicated example databases;
-- avoid external credentials.
-
-They prove a specific contract, not host configuration.
+They prove a specific contract.
 
 ### Configured-host examples
 
-Used to prove that Hive configuration drives real application behavior.
+These:
 
-They should:
+- consume persisted Providers/Accounts/Targets/Agents;
+- use the selected configured Agent;
+- use public Hive APIs;
+- fail clearly when configuration is absent/unusable;
+- demonstrate that Settings changes affect later host behavior.
 
-- read persisted Providers/Accounts/Targets/Agents;
-- select a configured Agent;
-- run through public Hive boundaries;
-- expose meaningful configured-resource output;
-- fail clearly when required configuration is absent.
-
-The strongest Settings proof is the second category.
-
-Existing examples that hard-code `HiveDatabaseOptions.LocalDevelopment()` must be reviewed and classified. They should only be changed when the example's purpose requires actual host configuration.
+Every existing hard-coded \`HiveDatabaseOptions.LocalDevelopment()\` use must be reviewed and explicitly classified. Change it only when the example is intended to prove configured-host behavior.
 
 ---
 
-## 12. 1.12-H — Tests
+## 12. 1.12-H — Focused Automated Coverage
 
-Focused automated tests must cover the configuration/composition boundary.
+Coverage must match the actual boundary implemented by each sub-stage.
 
-### Persistence configuration
+### Persistence/configuration
 
-- default configuration behavior;
-- save/load round-trip;
-- invalid configuration;
-- no plaintext credential serialization;
-- bootstrap credential storage/retrieval;
-- missing bootstrap credential;
-- `FromConfiguration` behavior for each supported authentication mode.
+- no saved configuration → LocalDevelopment default;
+- saved configuration round-trip;
+- invalid saved configuration is not silently replaced;
+- authentication-mode validation;
+- bootstrap reference serialization;
+- no plaintext bootstrap credential;
+- bootstrap missing/failure cases;
+- \`FromConfiguration\` option mapping.
 
 ### Composition
 
-- configured Persistence stores are built from saved configuration;
-- LocalDevelopment is only the default path;
-- configured database information is propagated to the composition boundary;
-- unavailable persistence produces typed failure;
-- replacing persistence configuration does not retain stale stores;
-- owned persistence services are disposed when replaced.
+- saved configuration constructs the intended persistence options;
+- LocalDevelopment is only the no-saved-config default;
+- configured candidate graph is complete before publication;
+- failed replacement preserves the usable current graph;
+- replaced owned components are disposed;
+- concurrent reconfiguration is serialized;
+- current graph/status remains deterministic.
 
-### Management/resource configuration
+### Resource relationships
 
 - Provider CRUD;
 - ProviderAccount CRUD;
 - ExecutionTarget CRUD;
 - AgentDefinition CRUD;
-- ownership/scope enforcement;
-- lifecycle/retirement;
-- version/concurrency rules;
-- invalid relationships;
-- missing referenced resources.
+- AgentDefinition target persistence;
+- relationship ownership/scope;
+- lifecycle/retirement behavior;
+- missing/retired/unauthorized target handling;
+- version/concurrency behavior.
 
 ### Settings integration
 
-- Settings save is visible through the next Management read;
-- Provider/Agent lists reload after Settings changes;
-- persistence changes trigger recomposition;
-- resource-only changes do not unnecessarily rebuild persistence;
-- selected Agent is preserved when valid;
-- selected Agent is cleared when retired/missing/disabled where required.
+- saved Settings state is visible on subsequent Management reads;
+- resource changes refresh without persistence reconstruction;
+- persistence changes recompose;
+- invalid replacement does not destroy the active graph;
+- selected Agent preservation/clearing rules.
 
 ### Security
 
 - bootstrap credential absent from JSON;
-- bootstrap credential absent from diagnostics;
-- Hive resource credential absent from normal output;
-- Secret Store material is only resolved at the necessary boundary;
+- bootstrap credential absent from diagnostics/output;
+- Hive resource secrets absent from ordinary output;
+- secret material disposed after use;
 - no password appears in Example output.
 
-### Connection tests
+### Connection/provider boundaries
 
 - non-destructive persistence connection test;
-- database-state classification;
-- schema-state classification;
+- database/schema state classification;
 - provider connection-test boundary;
-- cancellation and transport failure cases appropriate to the implementation.
+- cancellation/failure classification appropriate to the implemented boundary.
 
 ---
 
-## 13. 1.12-I — Example Verification
-
-The Example Host must provide an externally meaningful configured flow.
+## 13. 1.12-I — Manual Configured-Host Verification
 
 Primary manual scenario:
 
-```
-Settings
- → configure Persistence
- → configure Provider
- → configure ProviderAccount
- → configure credential
- → configure ExecutionTarget
- → configure AgentDefinition
- → close Settings
- → select Agent
- → run configured Agent example
-```
+\`\`\`
+Example Host
+  → Settings
+  → configure Persistence
+  → configure Provider
+  → configure ProviderAccount
+  → configure credential
+  → configure ExecutionTarget
+  → configure AgentDefinition
+  → close Settings
+  → select Agent
+  → run configured Agent example
+\`\`\`
 
-Developer must verify:
+Developer verification must establish:
 
-- saved persistence settings are actually used;
+- saved persistence configuration is actually consumed;
+- the host no longer relies on hard-coded LocalDevelopment wiring;
 - Providers reload;
 - AgentDefinitions reload;
-- selected Agent reflects saved state;
-- configured ExecutionTarget is the one used by the normal operation;
-- changing the configured target changes later operations;
-- disabling/retiring the selected resource is handled clearly;
-- missing configuration produces actionable failure;
-- no secret material appears in Example output.
+- the selected Agent reflects persisted state;
+- the configured ExecutionTarget is actually used;
+- changing the configured target affects later operations;
+- invalid/missing/retired configuration is surfaced clearly;
+- no secret material appears in Example output;
+- persistence changes recompose correctly;
+- resource-only changes do not rebuild persistence.
 
-The existing Settings Example can remain for direct configuration-contract inspection, but `Capture configuration` alone does not establish completion.
+The existing “Capture configuration” example is supplemental and does not establish completion.
 
 ---
 
-## 14. 1.12-J — UI/UX Review Requirements
+## 14. 1.12-J — Final UI/UX Review
 
-Because Settings is a permanent application surface, it must use the same desktop UI standards as the rest of Hive.
+Settings is a permanent application surface and must match the shared Hive desktop UI contract.
 
 Review:
 
-- Settings navigation hierarchy;
-- Category/group/leaf clarity;
+- navigation hierarchy;
+- category/group clarity;
 - header/action/content rhythm;
 - typography;
 - density;
 - resizing;
 - editor spacing;
-- ListView column sizing;
-- empty/loading/error states;
-- Add/Edit/Delete presentation;
+- ListView columns;
+- empty/no-match/loading/error states;
+- Add/Edit/Delete behavior;
 - selected/hover/disabled states;
 - Light/Dark/System;
-- preservation of TreeView selection and scroll position on theme changes;
-- correct disposal of replaced pages/editors;
-- no duplicate renderers or theme logic;
-- no layout jumps when switching pages or theme.
+- TreeView selection/scroll preservation on theme changes;
+- page/editor disposal;
+- no duplicate renderer/theme logic;
+- no layout jumps when switching pages or themes.
 
-Use the existing `HiveNavigationTree` behavior specifically to preserve navigation state.
-
-Use `HiveCrudPage<TItem>` and `HiveListView` specifically to avoid reintroducing the UI problems already solved by the shared foundation.
+The shared controls are the acceptance surface; do not solve these concerns again inside Settings.
 
 ---
 
-## 15. 1.12-K — Documentation
+## 15. 1.12-K — Documentation and Closure
 
-Before structural implementation changes:
+Update only the source-of-truth documents whose state changed.
 
-- update `docs/architecture.md` with the host configuration/composition boundary and bootstrap-secret distinction;
-- update `docs/ui/forms.md` with the final Settings page/control composition;
-- update `docs/ui/examples.md` with the configured-host Example usage and exact navigation path;
-- keep `docs/Hive_Active_Work.md` synchronized with the current 1.12 sub-stage and verification gate.
+Required documentation updates include:
 
-Do not mark `docs/Hive_Current_Status.md` complete until the user has actually verified the required flow.
+- \`docs/architecture.md\` for final host composition/bootstrap/resource-relationship boundaries;
+- \`docs/ui/forms.md\` for final Settings page/control composition;
+- \`docs/ui/examples.md\` for configured-host usage and exact Example navigation;
+- \`docs/Hive_Active_Work.md\` for the current sub-stage and verification gate.
 
-Create the Phase 1 verification record only after actual verification.
+Do not mark \`docs/Hive_Current_Status.md\` complete until actual verification is performed.
+
+Create historical verification records only from real results.
 
 ---
 
 ## 16. Explicit Non-Goals
 
-This workload does not implement:
+Phase 1.12 does not implement:
 
-- Phase 1.13 Image Input / Host Context;
-- Business-App Integration;
-- Vision Routing;
-- Structured Extraction;
-- Business-App Write Tool;
+- Phase 1.13+;
+- business-app integration;
+- vision routing;
+- structured extraction;
+- business-app write tools;
 - the full MAF sequential V1 pipeline;
 - configuration import/export/portability;
 - multi-user authentication;
 - future cognitive generations;
 - a second orchestration engine;
-- a second WinForms control toolkit.
+- a second persistence system;
+- a second secret system;
+- a second WinForms UI toolkit.
 
 ---
 
-## 17. Completion Gate
+## 17. Phase 1.12 Completion Gate
 
-Phase 1.12 remains open until all of the following are true:
+Phase 1.12 remains open until all are true:
 
-1. Saved persistence configuration controls the actual host persistence boundary.
-2. SQL-password bootstrap credentials can be resolved without accessing the target Hive database first.
-3. Settings uses `Hive.Host.WinForms.UI` controls, especially `HiveNavigationTree`, `HiveListPageLayout`, `HiveCrudPage<TItem>`, and `HiveListView` where applicable.
-4. Provider, ProviderAccount, ExecutionTarget, and AgentDefinition configuration is authoritative Management state.
-5. Settings has no direct SQL/provider transport/migration logic.
-6. The Example Host has a normal Settings entry.
-7. The Example Host loads Providers and Agents from the configured persistence boundary.
-8. A configured Agent can be selected and used by a normal Example operation.
-9. Changing Settings changes subsequent application behavior.
-10. Persistence changes cause correct service recomposition; resource changes cause refresh without unnecessary persistence reconstruction.
-11. Running executions retain their existing effective configuration snapshot.
-12. Bootstrap credentials and Hive resource credentials never appear in plaintext configuration or diagnostics.
-13. Focused tests cover the new boundaries.
-14. The required Example scenario exists and uses public Hive APIs.
-15. Manual developer verification succeeds.
-16. Broader `Hive.Tests` verification succeeds.
-17. `Hive_Active_Work.md` and status documentation reflect actual verification results.
+1. Hive Settings is the global package configuration center.
+2. Saved persistence configuration controls the actual host persistence boundary.
+3. SQL-password bootstrap credentials can be resolved before target-database access.
+4. Bootstrap credentials and Hive resource credentials are separated correctly.
+5. Provider, ProviderAccount, ExecutionTarget, and AgentDefinition state is authoritative Management state.
+6. AgentDefinition has a durable configured ExecutionTarget relationship without duplicating target data.
+7. Settings uses the reusable Hive UI foundation.
+8. Settings performs no direct SQL/provider transport/migration work.
+9. The Example Host exposes normal host-level Settings.
+10. The Example Host loads Providers and Agents from configured state.
+11. A configured Agent is used by a normal public-API operation.
+12. Settings changes affect subsequent behavior.
+13. Persistence changes trigger safe service recomposition.
+14. Resource-only changes refresh without unnecessary persistence reconstruction.
+15. Running executions keep their existing effective configuration snapshot.
+16. Focused tests cover configuration, composition, security, and resource relationships.
+17. Required Example scenarios exist and use public Hive APIs.
+18. Manual configured-host verification succeeds.
+19. Broader \`Hive.Tests\` verification succeeds.
+20. Active Work/status/verification documentation reflects only actual results.
 
 ---
 
-## 18. Implementation Order
+## 18. Verification Handoff
 
-The implementation should be performed as separate bounded sub-stages so each change remains reviewable:
+For any capability requiring an Example, the handoff must name the exact Example path and focused tests.
 
-1. **1.12-A — Host configuration/composition boundary**
-2. **1.12-B — Bootstrap credential boundary**
-3. **1.12-C — Settings Management surface/resource editing**
-4. **1.12-D — Settings UI migration to Hive UI foundation**
-5. **1.12-E — Settings-driven runtime state/reload**
-6. **1.12-F — Example Host configured-consumer integration**
-7. **1.12-G — Example classification and configured examples**
-8. **1.12-H — Focused automated coverage**
-9. **1.12-I — Manual configured-host verification**
-10. **1.12-J — Final UI/UX review**
-11. **1.12-K — Documentation/status closure**
+Current Phase 1.12 verification path:
 
-A sub-stage is not complete merely because source code exists. Use the repository's verification gate and user-provided runtime results before closing the corresponding work.
+**Example to run:**  
+\`Settings / Configuration / Hive Settings / Provider & Persistence — Hive.Example.WinForms\`
+
+**Primary focused tests:**  
+- \`tests/Hive.Tests/HiveConfigurationTests.cs\`
+- \`tests/Hive.Tests/HivePersistenceOptionsTests.cs\`
+- \`tests/Hive.Tests/ProviderPersistenceIntegrationTests.cs\`
+- \`tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs\`
+
+The final Phase 1.12 gate additionally requires broader \`Hive.Tests\` execution and the configured-host manual scenario.
+
+Never record a passing result unless it was actually executed.
+
+---
 
 ## 19. Guiding Rule
 
-**Settings must configure Hive, not merely display Hive configuration. The same authoritative state edited by Settings must drive the host application's subsequent behavior, and the Example Host must prove that through normal public APIs.**
+**Hive Settings is the global Hive package configuration center. Settings must configure Hive, not merely display Hive configuration. The same authoritative state edited by Settings must drive subsequent host behavior, and the Example Host must prove that through normal public APIs.**
+
+The key architectural rule is:
+
+\`\`\`
+configure once
+    ↓
+persist once
+    ↓
+compose from the persisted state
+    ↓
+consume the same authoritative state
+\`\`\`
+
+No parallel configuration model, no hidden UI-only state, and no hard-coded runtime bypass.
