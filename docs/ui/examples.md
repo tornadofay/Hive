@@ -38,6 +38,7 @@ Category
 Current branches:
 - `UI → Foundation`
 - `Providers → Provider Platform`
+- `Providers → Target Selection`
 - `Providers → Provider Transport`
 
 For a new Example:
@@ -49,6 +50,7 @@ For a new Example:
 Examples:
 - UI control/theme/dialog/CRUD example → `UI / Foundation`
 - Provider/ProviderAccount/ExecutionTarget example → `Providers / Provider Platform`
+- Capability-aware execution target selection example → `Providers / Target Selection`
 - OpenAI-compatible provider transport example → `Providers / Provider Transport`
 
 `Order` controls ordering within the discovered examples. Title is the leaf text.
