@@ -138,8 +138,9 @@ public sealed class DpapiHiveBootstrapCredentialStore :
         if (!File.Exists(path))
         {
             return Result<SecretMaterial>.Failure(
-                Error.NotFound(
+                new Error(
                     "hive.host.bootstrap-credential-not-found",
+                    ErrorCategory.NotFound,
                     "The referenced Hive bootstrap credential was not found."));
         }
 
