@@ -101,7 +101,7 @@ Implemented in the active slice:
 - 1.12-D adds an Agents Settings page using `HiveCrudPage<AgentDefinition>`, `HiveListView`, and `HiveListPageLayout` through the `Hive.Host.WinForms.UI` foundation.
 - Agent editing uses `HiveEditorLayout` and the public `IHiveManagementFacade` for create/update/delete operations.
 - Agent execution-target choices are loaded through the authoritative Provider → ProviderAccount → ExecutionTarget Management hierarchy; retired targets remain visible and are rejected by the existing Management validation boundary.
-- 1.12-D organizes the Settings navigation as Providers → Providers, Accounts / Credentials, and Execution Targets; plus Agents and Persistence.
+- 1.12-D organizes the Settings navigation as Providers → Provider Configuration, Accounts / Credentials, and Execution Targets; plus Agents and Persistence.
 - 1.12-D adds `Overview / Getting Started / Example Configuration` as the normal Example Host entry point to the real Hive Settings center.
 - The configuration example explains that Provider Accounts are credential/resource records rather than provider login screens, that Execution Targets contain concrete model/endpoint configuration, and that future Settings domains appear only when their authoritative contracts exist.
 - The Example Host now supplies a deterministic development ResourceAccessContext for its Settings surface so configured resources remain addressable across Example Host restarts.
