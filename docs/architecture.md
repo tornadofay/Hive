@@ -450,6 +450,25 @@ Phase 1.5 establishes the first executable base Agent boundary without persisten
 - Runtime/Execution state transitions are fail-closed typed results; a stopped RuntimeInstance cannot start new Execution objects, and terminal Execution objects cannot transition again.
 - The factory does not contain cognitive-generation logic and does not infer generation from task complexity.
 
+### Base Agent Work Protocol boundary
+
+Phase 1.6 makes the base Agent's work mechanisms explicit without introducing cognitive strategy or a workflow engine.
+
+The runtime-owned protocol surface is RuntimeWorkProtocols. Each RuntimeInstance receives one independent protocol bundle, and stopping a runtime preserves that runtime's immutable protocol state for inspection/recovery; a different RuntimeInstance receives a different bundle.
+
+The bundle provides:
+
+- **Objectives** — explicit work targets with immutable identity, Runtime ownership, lifecycle (Active, Completed, Cancelled), updateable completion criteria/priority/deadline/dependencies, and optional WorkItemBinding. Completion and cancellation are explicit state transitions; the protocol never infers or revises objectives autonomously.
+- **WorkItem binding** — binds a base Agent runtime to the existing Core WorkItem identity and captures the WorkItem resource version plus a provenance source reference. Binding requires the caller's Agent/Runtime access context to match the runtime boundary and the WorkItem owner/scope; binding does not grant additional authorization.
+- **Memory** — IAgentMemoryStore is a replaceable storage boundary. Phase 1.6 supplies an in-memory implementation only. Entries are Runtime-scoped ResourceEnvelope<MemoryId> records and are append-oriented; retrieval is explicitly scoped to the owning RuntimeInstance and access context, so one runtime cannot silently retrieve another runtime's entries.
+- **Questions** — IQuestionTransport provides first-class Runtime-scoped Questions with ownership, timeout deadline, Answer/Cancel/Timeout transitions, and asynchronous waiting. Timeout is deterministic through the existing IClock plus explicit ExpireDue() processing; no second scheduler/workflow engine is introduced. A responder may answer a question without becoming its owner, while only the owning RuntimeInstance may wait/cancel it.
+- **Patience / Understanding Gate** — IUnderstandingGate evaluates explicit required-information keys and optional confirmation requirements. It returns a deterministic Satisfied or Blocked result with missing information; it does not generate questions, infer missing facts, or make cognitive decisions.
+- **Delegation** — IDelegationChannel carries explicit work requests between Agent runtimes with requester/delegate identity, optional WorkItem source, and ResourceProvenance. The Phase 1.6 in-memory implementation stores requests but does not schedule, execute, retry, or otherwise orchestrate delegated work.
+
+Phase 1.6 adds typed protocol identities for ObjectiveId, MemoryId, QuestionId, and transient DelegationId. Objective, Memory, and Question use the existing Core resource envelope/scope/provenance model and remain in-memory in this slice. Their durable event/snapshot/outbox representation belongs to later persistence slices.
+
+The base work-protocol APIs are additive to Agent and RuntimeInstance; they do not alter the Agent generation contract and do not create CognitiveAgent behavior. Cognitive generations may later build adaptive interpretation and revision over these same stable mechanisms.
+
 ### Cognitive Kernel vs Cognitive Strategy
 
 Inside `CognitiveAgent` only:
