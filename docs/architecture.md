@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-22 (rev 29 — modular architecture index)
+Last updated: 2026-09-22 (rev 30 — modular architecture index and documentation consistency audit)
 
 
 
@@ -47,6 +47,7 @@ All files under `docs/architecture/` are part of the same architecture source of
 - For changes crossing projects, public APIs, persistence, orchestration, lifecycle, security, or durable state: read this file and all relevant detailed architecture documents before coding.
 
 - Do not create a second architecture source. New detailed architectural material belongs in the appropriate file under `docs/architecture/`.
+- Global architectural invariants in this index apply across all domains. A detail document owns only the contracts within its declared scope and must not contradict those global invariants.
 
 
 
@@ -156,7 +157,7 @@ Hive is built for production real-world applications. The default coding standar
 
 
 
-## 14. Testing & Production Readiness
+## Testing & Production Readiness
 
 Every implementation slice has a completion gate.
 
@@ -181,7 +182,7 @@ No verification claim is valid unless the test or manual verification was actual
 
 
 
-## 15. Core Solution Layout
+## Core Solution Layout
 
 ```
 Hive.Core
@@ -225,7 +226,7 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 
 
 
-## 16. Non-Negotiable Architectural Rules
+## Non-Negotiable Architectural Rules
 
 1. Hive is general-purpose, but V1 build order is determined by the real data-entry forcing function.
 2. Use MAF where MAF already owns the required mechanism.
@@ -290,7 +291,7 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 
 
 
-## 17. Roadmap Summary
+## Roadmap Summary
 
 - **Phase 0 — Foundations**
 - **Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1)**
@@ -307,7 +308,7 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 
 
 
-## 18. Deferred Decisions
+## Deferred Decisions
 
 1. Which authentication provider should Phase 8 support when real multi-user requirements arrive (for example local accounts, Microsoft/Entra, Google, or a company IdP)?
 2. Whether a future automated UI-testing tool is warranted after real UI test-maintenance needs appear. This is not required for current development because the developer performs manual testing.
