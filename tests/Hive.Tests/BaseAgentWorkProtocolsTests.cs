@@ -324,54 +324,6 @@ public sealed class BaseAgentWorkProtocolsTests
     }
 
     [Fact]
-    public void QuestionTransport_SharedTransportAllowsAuthorizedCrossRuntimeResponder()
-    {
-        var questions = new QuestionTransport();
-        var first = CreateRuntime(questions: questions);
-        var second = CreateRuntime(
-            first.DeploymentId,
-            first.TenantId,
-            first.Context.PrincipalId!.Value,
-            questions: questions);
-
-        var question = first.Runtime.Work.Questions.Ask(
-            first.Context,
-            first.Agent.Id,
-            first.Runtime.Id,
-            "Can the delegate confirm the invoice?",
-            TimeSpan.FromMinutes(5),
-            first.Clock.UtcNow);
-
-        Assert.True(question.IsSuccess, question.Error?.Message);
-
-        var answered = second.Runtime.Work.Questions.Answer(
-            second.Context,
-            question.Value!.Id,
-            second.Agent.Id,
-            second.Runtime.Id,
-            "Confirmed.",
-            second.Clock.UtcNow.AddMinutes(1));
-
-        Assert.True(answered.IsSuccess, answered.Error?.Message);
-        Assert.Equal(QuestionStatus.Answered, answered.Value!.Status);
-        Assert.Equal(second.Agent.Id, answered.Value.AnsweredByAgentId);
-        Assert.Equal(second.Runtime.Id, answered.Value.AnsweredByRuntimeId);
-
-        var invalidResponder = second.Runtime.Work.Questions.Answer(
-            first.Context,
-            question.Value.Id,
-            second.Agent.Id,
-            second.Runtime.Id,
-            "Should be rejected.",
-            second.Clock.UtcNow.AddMinutes(2));
-
-        Assert.True(invalidResponder.IsFailure);
-        Assert.Equal(
-            "hive.agent.protocol.runtime-mismatch",
-            invalidResponder.Error!.Code);
-    }
-
-    [Fact]
     public void UnderstandingGate_BlocksUntilMinimumInformationAndConfirmationExist()
     {
         var gate = new UnderstandingGate();
@@ -512,7 +464,6 @@ public sealed class BaseAgentWorkProtocolsTests
         DeploymentId? deploymentId = null,
         TenantId? tenantId = null,
         PrincipalId? principalId = null,
-        IQuestionTransport? questions = null,
         IDelegationChannel? delegation = null)
     {
         var deployment = deploymentId ?? DeploymentId.New();
@@ -536,7 +487,6 @@ public sealed class BaseAgentWorkProtocolsTests
         var runtime = agentResult.Value!.CreateRuntimeInstance(
             now,
             clock,
-            questions,
             delegation);
 
         var runtimeContext = new ResourceAccessContext(
