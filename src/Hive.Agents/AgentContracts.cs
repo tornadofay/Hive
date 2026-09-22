@@ -1,6 +1,6 @@
-namespace Hive.Agents;
-
 using Hive.Core;
+
+namespace Hive.Agents;
 
 public enum AgentGeneration
 {
