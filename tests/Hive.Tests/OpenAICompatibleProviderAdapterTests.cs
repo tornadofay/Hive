@@ -134,7 +134,7 @@ public sealed class OpenAICompatibleProviderAdapterTests
     public async Task CompleteChatAsync_MapsTransportFailure_WithoutLeakingCredential()
     {
         await using var server = new LocalFakeHttpServer(
-            _ => LocalFakeHttpResponse.CloseConnection());
+            _ => LocalFakeHttpResponse.AbruptClose());
         using var credential = SecretMaterial.Create("secret-key");
         using var client = new HttpClient();
 
@@ -522,7 +522,7 @@ public sealed class OpenAICompatibleProviderAdapterTests
         public static LocalFakeHttpResponse Waiting() =>
             new(HttpStatusCode.OK, string.Empty, true, false);
 
-        public static LocalFakeHttpResponse CloseConnection() =>
+        public static LocalFakeHttpResponse AbruptClose() =>
             new(HttpStatusCode.OK, string.Empty, false, true);
     }
 }
