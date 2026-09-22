@@ -133,16 +133,16 @@ public sealed class OpenAICompatibleProviderAdapterTests
     [Fact]
     public async Task CompleteChatAsync_MapsTransportFailure_WithoutLeakingCredential()
     {
-        var endpoint = GetUnusedPort();
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.CloseConnection());
         using var credential = SecretMaterial.Create("secret-key");
         using var client = new HttpClient();
 
-        var adapter = new OpenAICompatibleProviderAdapter(
+        var adapter = CreateAdapter(
+            server,
             client,
-            new OpenAICompatibleProviderOptions(
-                new Uri($"http://127.0.0.1:{endpoint}/v1/"),
-                credential,
-                TimeSpan.FromSeconds(1)));
+            credential,
+            TimeSpan.FromSeconds(2));
 
         var result = await adapter.CompleteChatAsync(CreateRequest());
 
@@ -288,15 +288,6 @@ public sealed class OpenAICompatibleProviderAdapterTests
                 credential,
                 timeout ?? TimeSpan.FromSeconds(2)));
 
-    private static int GetUnusedPort()
-    {
-        var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        listener.Stop();
-        return port;
-    }
-
     private sealed class LocalFakeHttpServer : IAsyncDisposable
     {
         private readonly TcpListener _listener;
@@ -364,6 +355,9 @@ public sealed class OpenAICompatibleProviderAdapterTests
                 AuthorizationParameter = request.AuthorizationParameter;
 
                 var response = _handler(request);
+
+                if (response.CloseConnection)
+                    return;
 
                 if (response.WaitForCancellation)
                 {
@@ -517,14 +511,18 @@ public sealed class OpenAICompatibleProviderAdapterTests
     private sealed record LocalFakeHttpResponse(
         HttpStatusCode StatusCode,
         string Body,
-        bool WaitForCancellation)
+        bool WaitForCancellation,
+        bool CloseConnection)
     {
         public static LocalFakeHttpResponse Json(
             string body,
             HttpStatusCode statusCode = HttpStatusCode.OK) =>
-            new(statusCode, body, false);
+            new(statusCode, body, false, false);
 
         public static LocalFakeHttpResponse Waiting() =>
-            new(HttpStatusCode.OK, string.Empty, true);
+            new(HttpStatusCode.OK, string.Empty, true, false);
+
+        public static LocalFakeHttpResponse CloseConnection() =>
+            new(HttpStatusCode.OK, string.Empty, false, true);
     }
 }
