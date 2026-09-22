@@ -11,6 +11,7 @@ public sealed class HiveSettingsView : UserControl
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
+    private readonly string _applicationName;
     private readonly HiveNavigationTree _navigation;
     private readonly Panel _content;
     private readonly Label _title;
@@ -27,11 +28,15 @@ public sealed class HiveSettingsView : UserControl
     public HiveSettingsView(
         IHiveManagementFacade management,
         ResourceAccessContext accessContext,
-        IHiveThemeManager themeManager)
+        IHiveThemeManager themeManager,
+        string? applicationName = null)
     {
         _management = management ?? throw new ArgumentNullException(nameof(management));
         _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
         _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
+        _applicationName = string.IsNullOrWhiteSpace(applicationName)
+            ? HivePersistenceConfiguration.DefaultApplicationName
+            : applicationName.Trim();
 
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
@@ -171,7 +176,8 @@ public sealed class HiveSettingsView : UserControl
             _persistenceView ??= new HivePersistenceSettingsView(
                 _management,
                 _accessContext,
-                _themeManager);
+                _themeManager,
+                _applicationName);
 
             await _persistenceView.InitializeAsync(
                 _initializationCts.Token).ConfigureAwait(true);
@@ -250,7 +256,8 @@ public sealed class HiveSettingsView : UserControl
                 new HivePersistenceSettingsView(
                     _management,
                     _accessContext,
-                    _themeManager),
+                    _themeManager,
+                    _applicationName),
 
             _ => throw new InvalidOperationException(
                 $"Unknown Settings page '{page.Key}'.")
