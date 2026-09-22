@@ -58,9 +58,9 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                 var attachment = new WorkItemAttachmentMetadata(
                     submission.FileName,
                     submission.MediaType,
-                    submission.Content.LongLength,
+                    submission.Content.Length,
                     Convert.ToHexString(
-                        SHA256.HashData(submission.Content))
+                        SHA256.HashData(submission.Content.Span))
                         .ToLowerInvariant());
 
                 var workItem = WorkItem.Create(
@@ -619,7 +619,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         command.Parameters.Add(
             new SqlParameter("@Content", SqlDbType.VarBinary, -1)
             {
-                Value = submission.Content
+                Value = submission.Content.ToArray()
             });
         command.Parameters.Add(
             DateTimeParameter("@CreatedAtUtc", createdAtUtc));
