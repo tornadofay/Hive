@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-22 (rev 25 — Base Agent work protocol boundary)
+Last updated: 2026-09-22 (rev 26 — Durable event persistence boundary)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -736,6 +736,21 @@ Intervention never bypasses authorization, capability, budget, or host validatio
 Hive uses append-oriented event history with durable snapshots as recovery aids.
 
 Every durable event carries an explicit event type and **payload schema version**. Event readers/upcasters must be able to translate supported older payload versions to the current contract without rewriting historical events. Database schema versioning and event-payload versioning are separate concerns.
+
+Phase 1.7 establishes the durable persistence primitive inside `Hive.Persistence`:
+
+- an event stream is identified by an existing `ResourceReference`;
+- each stream has an explicit positive sequence/version;
+- events remain immutable and append-only;
+- snapshots store the latest reconstructed state for a stream and its snapshot payload schema version;
+- an outbox row is created from the same event that caused the durable state change;
+- the event, optional snapshot replacement, and corresponding outbox row commit in one SQL transaction;
+- an optimistic expected-version check prevents two writers from silently appending the same stream version;
+- unique event and stream-version constraints protect duplicate writes at the database boundary.
+
+The durable event store remains generic. It does not own Agent execution, workflow scheduling, polling, provider transport, or management policy.
+
+Snapshot reconstruction is a separate deterministic contract over `EventEnvelope` values. A registered reducer handles a known event type and current payload schema; older supported payloads are normalized through the existing Core upcaster registry before reduction. Historical events are never rewritten during upcasting or folding.
 
 When deferred follow-up work is required:
 
