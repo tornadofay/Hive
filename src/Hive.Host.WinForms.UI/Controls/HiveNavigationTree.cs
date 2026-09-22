@@ -25,6 +25,8 @@ public sealed class HiveNavigationTree : TreeView
     private Pen? _selectedGlyphPen;
     private Pen? _disabledGlyphPen;
     private Pen? _focusPen;
+    private GraphicsPath? _focusPath;
+    private Rectangle _focusPathBounds;
 
     public HiveNavigationTree()
     {
@@ -190,21 +192,44 @@ public sealed class HiveNavigationTree : TreeView
         if (Enabled && focused && selected && _focusPen is not null)
         {
             var focusRectangle = Rectangle.Inflate(row, -1, -1);
-            using var path = CreateRoundedPath(focusRectangle, 6);
-            e.Graphics.DrawPath(_focusPen, path);
+
+            if (_focusPath is null || _focusPathBounds != focusRectangle)
+            {
+                _focusPath?.Dispose();
+                _focusPath = CreateRoundedPath(focusRectangle, 6);
+                _focusPathBounds = focusRectangle;
+            }
+
+            e.Graphics.DrawPath(_focusPen, _focusPath);
         }
+    }
+
+    protected override void OnResize(EventArgs e)
+    {
+        base.OnResize(e);
+
+        _focusPath?.Dispose();
+        _focusPath = null;
+        _focusPathBounds = Rectangle.Empty;
     }
 
     protected override void OnAfterSelect(TreeViewEventArgs e)
     {
         base.OnAfterSelect(e);
 
+        _focusPath?.Dispose();
+        _focusPath = null;
+        _focusPathBounds = Rectangle.Empty;
         Invalidate();
     }
 
     protected override void OnAfterExpand(TreeViewEventArgs e)
     {
         base.OnAfterExpand(e);
+
+        _focusPath?.Dispose();
+        _focusPath = null;
+        _focusPathBounds = Rectangle.Empty;
 
         if (e.Node is TreeNode node)
             Invalidate(node.Bounds);
@@ -275,6 +300,8 @@ public sealed class HiveNavigationTree : TreeView
             _categoryFont?.Dispose();
             _groupFont?.Dispose();
             _itemFont?.Dispose();
+            _focusPath?.Dispose();
+            _focusPath = null;
             DisposePaintResources();
         }
     }
@@ -320,6 +347,9 @@ public sealed class HiveNavigationTree : TreeView
         _selectedGlyphPen?.Dispose();
         _disabledGlyphPen?.Dispose();
         _focusPen?.Dispose();
+        _focusPath?.Dispose();
+        _focusPath = null;
+        _focusPathBounds = Rectangle.Empty;
 
         _backgroundBrush = null;
         _hoverBrush = null;
