@@ -282,7 +282,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
             if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 return Result<WorkItemAttachmentContent>.Failure(
-                    Error.NotFound(
+                    NotFound(
                         "hive.work-item.attachment-not-found",
                         "The requested WorkItem attachment does not exist."));
             }
@@ -329,10 +329,11 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
             ResourceKind.WorkItem,
             workItemId.Value);
 
-        return (await _eventStore.ReadEventsAsync(
+        var events = await _eventStore.ReadEventsAsync(
             stream,
-            cancellationToken: cancellationToken).ConfigureAwait(false)) is var events &&
-            events.IsSuccess
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        return events.IsSuccess
             ? Result<IReadOnlyList<EventEnvelope>>.Success(
                 events.Value!.Select(static item => item.Envelope).ToArray())
             : Result<IReadOnlyList<EventEnvelope>>.Failure(events.Error!);
@@ -789,7 +790,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
             new EventType(eventType),
             new EventPayloadVersion(1),
             workItem.Resource.Provenance.CorrelationId,
-            new CausationId(workItem.Resource.Provenance.CorrelationId.Value),
+            null,
             new
             {
                 workItemId = workItem.Id.Value,
@@ -877,11 +878,12 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                 "@CausationId",
                 resource.Provenance.CausationId?.Value));
         command.Parameters.Add(
-            IntParameter(
-                "@SourceKind",
-                resource.Provenance.Source is null
+            new SqlParameter("@SourceKind", SqlDbType.Int)
+            {
+                Value = resource.Provenance.Source is null
                     ? DBNull.Value
-                    : (int)resource.Provenance.Source.Value.Kind));
+                    : (object)(int)resource.Provenance.Source.Value.Kind
+            });
         command.Parameters.Add(
             GuidParameter(
                 "@SourceIdentity",
