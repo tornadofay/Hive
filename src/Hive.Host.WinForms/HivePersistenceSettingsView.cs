@@ -150,7 +150,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _editor.AddField(
             "SQL password",
-            "Never stored in the settings file. It is kept in Hive Secret Store and the settings file keeps only its secret identity.",
+            "Never stored in the settings file. It is protected by the Windows user-scoped DPAPI bootstrap store; the settings file keeps only its bootstrap reference.",
             passwordPanel,
             86);
 
@@ -219,6 +219,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private async Task SaveAsync(CancellationToken cancellationToken)
     {
         HivePersistenceConfiguration? configuration;
+        var previousBootstrapReference = _loadedConfiguration?.BootstrapCredential;
 
         try
         {
@@ -240,11 +241,43 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         if (result.IsFailure)
         {
+            if (configuration.BootstrapCredential is { } createdReference &&
+                createdReference != previousBootstrapReference)
+            {
+                await _management
+                    .RemoveBootstrapCredentialAsync(
+                        createdReference,
+                        _accessContext,
+                        cancellationToken)
+                    .ConfigureAwait(true);
+            }
+
             SetStatus(result.Error!.Message, isError: true);
             return;
         }
 
         _loadedConfiguration = result.Value!;
+        if (previousBootstrapReference is { } previousReference &&
+            previousReference != _loadedConfiguration.BootstrapCredential)
+        {
+            var cleanup = await _management
+                .RemoveBootstrapCredentialAsync(
+                    previousReference,
+                    _accessContext,
+                    cancellationToken)
+                .ConfigureAwait(true);
+
+            if (cleanup.IsFailure)
+            {
+                _passwordTextBox.Clear();
+                UpdateCredentialStatus(_loadedConfiguration);
+                SetStatus(
+                    "Persistence configuration saved, but the previous bootstrap credential could not be removed.",
+                    isError: true);
+                return;
+            }
+        }
+
         _passwordTextBox.Clear();
         UpdateCredentialStatus(_loadedConfiguration);
         SetStatus(
@@ -309,7 +342,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         SecretReference? credential =
             authentication == HiveSqlAuthenticationMode.SqlPassword
-                ? _loadedConfiguration?.CredentialSecret
+                ? _loadedConfiguration?.BootstrapCredential
                 : null;
 
         var configuration = new HivePersistenceConfiguration(
@@ -371,53 +404,25 @@ internal sealed class HivePersistenceSettingsView : UserControl
         return configuration;
     }
 
-    private async Task<SecretReference> SaveCredentialAsync(
+    private async Task<HiveBootstrapCredentialReference> SaveCredentialAsync(
         string password,
-        SecretReference? existing,
+        HiveBootstrapCredentialReference? existing,
         CancellationToken cancellationToken)
     {
         using var material = SecretMaterial.Create(password);
 
-        if (existing is null)
-        {
-            var created = await _management
-                .CreateSecretAsync(
-                    $"hive-settings-sql-password-{Guid.NewGuid():N}",
-                    "Hive SQL Server password",
-                    material,
-                    _accessContext,
-                    cancellationToken)
-                .ConfigureAwait(true);
-
-            if (created.IsFailure)
-                throw new InvalidOperationException(created.Error!.Message);
-
-            return new SecretReference(created.Value!.Id);
-        }
-
-        var descriptor = await _management
-            .GetSecretDescriptorAsync(
-                existing.Value.Id,
-                _accessContext,
-                cancellationToken)
-            .ConfigureAwait(true);
-
-        if (descriptor.IsFailure)
-            throw new InvalidOperationException(descriptor.Error!.Message);
-
-        var replaced = await _management
-            .ReplaceSecretAsync(
-                existing.Value.Id,
+        var result = await _management
+            .SaveBootstrapCredentialAsync(
                 material,
-                descriptor.Value!.Resource.Version,
+                existing,
                 _accessContext,
                 cancellationToken)
             .ConfigureAwait(true);
 
-        if (replaced.IsFailure)
-            throw new InvalidOperationException(replaced.Error!.Message);
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error!.Message);
 
-        return existing.Value;
+        return result.Value;
     }
 
     private void ApplyConfiguration(HivePersistenceConfiguration configuration)
@@ -454,7 +459,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             _passwordTextBox.Clear();
         }
 
-        if (sqlPassword && _loadedConfiguration?.CredentialSecret is not null)
+        if (sqlPassword && _loadedConfiguration?.BootstrapCredential is not null)
             _credentialStatus.Text = "Saved credential: configured (material hidden).";
         else
             _credentialStatus.Text = sqlPassword
@@ -465,7 +470,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private void UpdateCredentialStatus(HivePersistenceConfiguration configuration)
     {
         _credentialStatus.Text =
-            configuration.CredentialSecret is null
+            configuration.BootstrapCredential is null
                 ? "Saved credential: not configured."
                 : "Saved credential: configured (material hidden).";
     }
