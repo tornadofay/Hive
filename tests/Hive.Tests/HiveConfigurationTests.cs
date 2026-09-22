@@ -71,6 +71,112 @@ public sealed class HiveConfigurationTests
     }
 
     [Fact]
+    public async Task Management_TestExecutionTargetConnection_LoadsProviderGraphAndInvokesTester()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ManagementProviderConnection");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var tester = new RecordingProviderConnectionTester();
+        var facade = new HiveManagementFacade(
+            new SqlProviderResourceStore(database.Options),
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            providerConnectionTester: tester);
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        var now = DateTimeOffset.UtcNow;
+        var provider = new Provider(
+            new ResourceEnvelope<ProviderId>(
+                ResourceKind.Provider,
+                ProviderId.New(),
+                context.PrincipalId!.Value,
+                ResourceScope.Tenant(context.TenantId!.Value),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    context.PrincipalId.Value,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            "management-connection-provider",
+            "Management Connection Provider",
+            "openai-compatible");
+
+        var providerCreated = await facade.CreateProviderAsync(
+            provider,
+            context);
+        Assert.True(providerCreated.IsSuccess, providerCreated.Error?.Message);
+
+        var account = new ProviderAccount(
+            new ResourceEnvelope<ProviderAccountId>(
+                ResourceKind.ProviderAccount,
+                ProviderAccountId.New(),
+                context.PrincipalId.Value,
+                ResourceScope.Tenant(context.TenantId.Value),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    context.PrincipalId.Value,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            provider.Id,
+            "management-connection-account",
+            "Management Connection Account");
+
+        var accountCreated = await facade.CreateProviderAccountAsync(
+            account,
+            context);
+        Assert.True(accountCreated.IsSuccess, accountCreated.Error?.Message);
+
+        var target = new ExecutionTarget(
+            new ResourceEnvelope<ExecutionTargetId>(
+                ResourceKind.ExecutionTarget,
+                ExecutionTargetId.New(),
+                context.PrincipalId.Value,
+                ResourceScope.Tenant(context.TenantId.Value),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    context.PrincipalId.Value,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            provider.Id,
+            account.Id,
+            "management-connection-target",
+            "Management Connection Target",
+            new Uri("https://example.test/v1"),
+            "example-model",
+            null,
+            [
+                new CapabilityStateEntry(
+                    new CapabilityKey("text.generate"),
+                    CapabilityState.Supported)
+            ]);
+
+        var targetCreated = await facade.CreateExecutionTargetAsync(
+            target,
+            context);
+        Assert.True(targetCreated.IsSuccess, targetCreated.Error?.Message);
+
+        var result = await facade.TestExecutionTargetConnectionAsync(
+            target.Id,
+            context);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.True(tester.Called);
+        Assert.Equal(provider.Id, tester.ProviderId);
+        Assert.Equal(account.Id, tester.AccountId);
+        Assert.Equal(target.Id, tester.TargetId);
+        Assert.Null(tester.Credential);
+    }
+
+    [Fact]
     public async Task Management_TestPersistenceConnection_UsesNonDestructiveTester()
     {
         var filePath = Path.Combine(
@@ -115,6 +221,43 @@ public sealed class HiveConfigurationTests
         {
             if (File.Exists(filePath))
                 File.Delete(filePath);
+        }
+    }
+
+    private sealed class RecordingProviderConnectionTester
+        : IProviderConnectionTester
+    {
+        public bool Called { get; private set; }
+
+        public ProviderId ProviderId { get; private set; }
+
+        public ProviderAccountId AccountId { get; private set; }
+
+        public ExecutionTargetId TargetId { get; private set; }
+
+        public SecretMaterial? Credential { get; private set; }
+
+        public Task<Result<ProviderConnectionTestResult>> TestAsync(
+            Provider provider,
+            ProviderAccount account,
+            ExecutionTarget target,
+            SecretMaterial? credential,
+            CancellationToken cancellationToken = default)
+        {
+            Called = true;
+            ProviderId = provider.Id;
+            AccountId = account.Id;
+            TargetId = target.Id;
+            Credential = credential;
+
+            return Task.FromResult(
+                Result<ProviderConnectionTestResult>.Success(
+                    new ProviderConnectionTestResult(
+                        provider.Key,
+                        target.Key,
+                        target.Model ?? target.Deployment ?? string.Empty,
+                        TimeSpan.FromMilliseconds(1),
+                        "Fake provider connection test.")));
         }
     }
 
