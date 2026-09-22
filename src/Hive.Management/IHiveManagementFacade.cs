@@ -14,6 +14,17 @@ public interface IHiveManagementFacade
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
 
+    Task<Result<HiveBootstrapCredentialReference>> SaveBootstrapCredentialAsync(
+        SecretMaterial material,
+        HiveBootstrapCredentialReference? existingReference,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> RemoveBootstrapCredentialAsync(
+        HiveBootstrapCredentialReference reference,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
     Task<Result<HivePersistenceConnectionTest>> TestPersistenceConnectionAsync(
         HivePersistenceConfiguration configuration,
         ResourceAccessContext accessContext,
