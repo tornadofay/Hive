@@ -1,41 +1,31 @@
-# Hive Forms — API Quick Reference
+# Hive Forms — API
 
-## Standard form
-
-Use HiveForm:
+## HiveForm
 
 ```csharp
-public sealed class ProviderEditorForm : HiveForm
+public sealed class MyForm : HiveForm
 {
-    public ProviderEditorForm()
-        : base(
-            "Provider",
-            "Create or edit a provider",
-            new Size(900, 620),
-            new Size(760, 520))
+    public MyForm()
+        : base("Title", "Subtitle", new Size(900, 600), new Size(760, 520))
     {
-        var layout = new HiveEditorLayout();
-        var name = new TextBox();
-
-        layout.AddField("Name", "Provider display name.", name);
-
-        var save = layout.AddActionButton(
-            "Save",
-            HiveButtonStyle.Primary);
-
-        save.Click += async (_, _) => await SaveAsync();
-
-        BodyPanel.Controls.Add(layout);
+        BuildUi();
         ThemeManager.Apply(BodyPanel);
     }
 }
 ```
 
-Do not recreate Hive window/header/theme infrastructure.
+Use `BodyPanel` for form content.
+
+Useful members:
+- `ConfigureHeader(...)`
+- `SetHeaderText(...)`
+- `SetBodyPadding(...)`
+- `SetThemeManager(...)`
+- `ThemeManager`
+- `Theme`
+- `OnThemeChanged(...)`
 
 ## List page
-
-Preferred composition:
 
 ```text
 HiveForm
@@ -46,11 +36,9 @@ HiveForm
           └─ ContentPanel
 ```
 
-For generic CRUD, put HiveCrudPage<TItem> in the page content.
+Use `HiveCrudPage<TItem>` inside the content when generic CRUD behavior is needed.
 
 ## Editor page
-
-Preferred composition:
 
 ```text
 HiveForm
@@ -58,83 +46,39 @@ HiveForm
       └─ HiveEditorLayout
 ```
 
-Use:
-- AddField(...)
-- AddActionButton(...)
-
-Use the layout's scrolling and responsive label sizing.
+Use `AddField(...)` and `AddActionButton(...)`.
 
 ## Theme
-
-Public contract:
 
 ```csharp
 IHiveThemeManager
 ```
 
-Useful members:
-- Mode
-- Theme
-- ThemeChanged
-- SetMode(...)
-- Apply(Control)
+Members: `Mode`, `Theme`, `ThemeChanged`, `SetMode(...)`, `Apply(Control)`.
 
-Modes:
-- Light
-- Dark
-- System
+Modes: `Light`, `Dark`, `System`.
 
-After creating feature controls in a derived form:
+Apply after creating a derived form's content:
 
 ```csharp
 ThemeManager.Apply(BodyPanel);
 ```
 
-For a dynamic view:
+Apply a dynamic view before showing it:
 
 ```csharp
-ThemeManager.Apply(view);
-```
-
-Do not create a feature-local theme manager.
-
-## Dynamic views
-
-Use this order:
-
-```csharp
-var view = CreateView();
-Configure(view);
 ThemeManager.Apply(view);
 host.Controls.Add(view);
 ```
 
-The owner that replaces a dynamic child is responsible for disposing the previous child.
+Use the shared theme manager; do not create a feature-local one.
 
 ## Layout
 
-Use normal WinForms:
-- Dock
-- Anchor
-- TableLayoutPanel
-- FlowLayoutPanel
+Use normal WinForms `Dock`, `Anchor`, `TableLayoutPanel`, and `FlowLayoutPanel`.
 
-Do not introduce a custom DPI/layout system for a normal form.
+## Ownership
 
-## UI work
+The owner of a dynamic child is responsible for disposing/replacing it.
 
-Keep event handlers thin. Call Management/application services from the owning feature.
-
-Do not put SQL, provider transport, or authorization rules into reusable UI controls.
-
-Use async application APIs for database/network/provider work and pass cancellation tokens when the owning contract supports them.
-
-## Dialogs
-
-Use HiveMessageBox for Hive dialogs.
-
-For destructive operations use a Danger action and confirmation.
-
-## Verification
-
-When the active slice requires manual UI verification, check the affected behavior in Light/Dark/System themes, resize, keyboard/focus states, and CRUD/dialog states as applicable.
+Do not put SQL, provider transport, or domain rules in reusable UI controls.
