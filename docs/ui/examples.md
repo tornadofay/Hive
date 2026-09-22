@@ -120,7 +120,16 @@ The current Example Host supplies shared services through IServiceProvider, incl
 - IHiveThemeManager;
 - IHiveExampleOutput.
 
-Consume these through the established Example Host service contract. Do not access HiveExampleHostForm private fields or create a second global service locator.
+Use the existing Example Host extension methods:
+
+~~~csharp
+var themeManager = services.GetThemeManager();
+var output = services.GetExampleOutput();
+~~~
+
+These methods validate the service boundary and fail clearly when a required Example service is unavailable.
+
+Do not access HiveExampleHostForm private fields or create a second global service locator.
 
 When adding a new host-wide shared service, first determine whether it truly belongs in the Example Host composition boundary. Do not add feature-specific services globally.
 
