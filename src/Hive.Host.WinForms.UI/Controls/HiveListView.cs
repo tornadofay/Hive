@@ -72,11 +72,19 @@ public sealed class HiveListView : ListView
 
         _theme = theme;
 
-        if (BackColor != theme.Palette.InputBackground)
-            BackColor = theme.Palette.InputBackground;
+        var listBackground = Enabled
+            ? theme.Palette.InputBackground
+            : theme.VisualStates.DisabledListBackground;
 
-        if (ForeColor != theme.Palette.Text)
-            ForeColor = theme.Palette.Text;
+        if (BackColor != listBackground)
+            BackColor = listBackground;
+
+        var listForeground = Enabled
+            ? theme.Palette.Text
+            : theme.Palette.DisabledText;
+
+        if (ForeColor != listForeground)
+            ForeColor = listForeground;
 
         EnsureHeaderFont(theme);
         RebuildPaintResources(theme);
@@ -335,12 +343,14 @@ public sealed class HiveListView : ListView
         DisposePaintResources();
 
         _headerBackgroundBrush = new SolidBrush(theme.Palette.ElevatedSurface);
-        _headerDisabledBrush = new SolidBrush(theme.Palette.DisabledBackground);
+        _headerDisabledBrush = new SolidBrush(
+            theme.VisualStates.DisabledListBackground);
         _rowInputBrush = new SolidBrush(theme.Palette.InputBackground);
         _rowSurfaceBrush = new SolidBrush(theme.Palette.Surface);
         _rowHoverBrush = new SolidBrush(theme.VisualStates.HoverBackground);
         _rowSelectionBrush = new SolidBrush(theme.Palette.Selection);
-        _rowDisabledBrush = new SolidBrush(theme.Palette.DisabledBackground);
+        _rowDisabledBrush = new SolidBrush(
+            theme.VisualStates.DisabledListBackground);
         _accentBrush = new SolidBrush(theme.Palette.Accent);
 
         _borderPen = new Pen(theme.Palette.Border);
