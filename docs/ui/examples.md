@@ -51,6 +51,7 @@ For a new Example:
 Examples:
 - UI control/theme/dialog/CRUD example → `UI / Foundation`
 - Base Agent / AgentFactory example → `Agents / Base Agent`
+- Base Agent work protocols example → `Agents / Base Agent`
 - Provider/ProviderAccount/ExecutionTarget example → `Providers / Provider Platform`
 - Capability-aware execution target selection example → `Providers / Target Selection`
 - OpenAI-compatible provider transport example → `Providers / Provider Transport`
