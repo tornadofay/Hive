@@ -77,9 +77,9 @@ public enum RuntimeInstanceStatus
     Stopped
 }
 
-public sealed class Agent
+public class Agent
 {
-    internal Agent(
+    protected internal Agent(
         AgentId id,
         AgentDefinition definition,
         DateTimeOffset createdAtUtc)
