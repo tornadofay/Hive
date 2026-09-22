@@ -258,14 +258,32 @@ No test coverage or verification claim is made until the corresponding test or m
 
 ```
 Hive/
+├── AGENTS.md
+├── Directory.Build.props
+├── Hive.sln
+├── README.md
 ├── docs/
 │   ├── architecture.md
 │   ├── roadmap.md
 │   ├── Hive_Current_Status.md
-│   └── Hive_Active_Work.md
-├── AGENTS.md
-└── README.md
+│   ├── Hive_Active_Work.md
+│   └── examples/
+├── src/
+│   ├── Hive.Core/
+│   ├── Hive.Agents/
+│   ├── Hive.Persistence/
+│   ├── Hive.Coordination/
+│   ├── Hive.Tools/
+│   ├── Hive.Providers.OpenAICompatible/
+│   ├── Hive.Management/
+│   ├── Hive.Host.WinForms/
+│   ├── Hive.Host.WinForms.UI/
+│   └── Hive.Example.WinForms/
+└── tests/
+    └── Hive.Tests/
 ```
+
+The solution and project files are the implementation source for the actual project graph; the documentation files above define architecture, active scope, roadmap order, status, and public examples.
 
 ## Project status
 
