@@ -212,6 +212,7 @@ internal sealed class BaseAgentWorkProtocolsExampleView : UserControl
         EnsureSuccess(question, "Question creation");
 
         var answered = firstRuntime.Work.Questions.Answer(
+            firstContext,
             question.Value!.Id,
             agent.Id,
             firstRuntime.Id,
