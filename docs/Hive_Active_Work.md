@@ -8,7 +8,7 @@ Last updated: 2026-09-22
 
 ### Current sub-stage
 
-**1.12-C — Real Settings Management**
+**1.12-D — Settings UI on the Hive UI Foundation**
 
 Detailed workload and ordering: `docs/plan/Phase1.12_Settings_Host_Integration.md`
 
@@ -31,7 +31,7 @@ The complete Phase 1.12 program is subdivided into bounded sub-stages described 
 - real Example Host consumption of configured state;
 - focused verification and documentation closure.
 
-1.12-A and 1.12-B are complete and verified. Current sub-stage 1.12-C implements the authoritative Settings resource-management surface. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-C.
+1.12-A, 1.12-B, and 1.12-C are complete and verified. Current sub-stage 1.12-D migrates the Settings UI onto the reusable Hive UI foundation. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-D.
 
 ## Completed 1.12-B verification gate
 
@@ -121,30 +121,41 @@ Developer-reported local verification before starting 1.12-B: the full `Hive.Tes
 
 Developer-reported local verification after 1.12-B: the full `Hive.Tests` suite completed with **158/158 passed, 0 failed, 0 skipped** on 2026-09-22. This run verifies the completed 1.12-B bootstrap credential changes together with the existing suite.
 
-1.12-C implementation is committed but has **not yet been executed by the developer**. No C verification result is recorded until the focused Management tests and broader `Hive.Tests` suite are actually run.
+1.12-C implementation is committed and developer-verified. The full `Hive.Tests` suite completed with **159/159 passed, 0 failed, 0 skipped** on 2026-09-22.
 
 The previously existing Settings inspection Example produced an old-schema/local-database error and was not an acceptable configured-host verification scenario; that obsolete Example has been removed.
 
+## Completed 1.12-C verification gate
+
+1. AgentDefinition carries an optional durable `ConfiguredExecutionTargetId` reference without duplicating ExecutionTarget state.
+2. Schema migration 009 adds the AgentDefinition → ExecutionTarget foreign key and lookup index.
+3. SQL AgentDefinition persistence saves and reloads the configured target reference.
+4. Management validates target existence, access, and retirement before AgentDefinition create/update.
+5. Focused Management coverage covers round-trip, clearing, missing-target rejection, unauthorized-target rejection, and retired-target rejection.
+6. Migration integration coverage verifies the schema version 9 migration and the new AgentDefinition target column/index.
+7. Developer full-suite verification completed with **159/159 passed, 0 failed, 0 skipped** on 2026-09-22.
+
 ## Verification handoff
 
-Current sub-stage: **1.12-C — Real Settings Management**
+Current sub-stage: **1.12-D — Settings UI on the Hive UI Foundation**
 
-Example to run: **None solely for 1.12-C until the resource-management surface is complete.** The configured-host Example remains deferred to 1.12-F.
+Example to run: **None solely for 1.12-D infrastructure/UI migration until the Settings UI surface is complete.** The configured-host Example remains deferred to 1.12-F.
 
-1.12-C implementation checkpoint:
-- `src/Hive.Agents/AgentContracts.cs` — optional configured ExecutionTarget reference on AgentDefinition;
-- `src/Hive.Persistence/Migrations/Scripts/009_AgentDefinitionExecutionTarget.sql` — durable FK/index migration;
-- `src/Hive.Persistence/Agents/SqlAgentDefinitionResourceStore.cs` — target-reference persistence and round-trip;
-- `src/Hive.Management/HiveManagementFacade.cs` — target existence/access/retirement validation;
-- `tests/Hive.Tests/HiveManagementFacadeTests.cs` — focused configured-target coverage.
+1.12-D scope:
+- migrate Settings navigation to `HiveNavigationTree`;
+- migrate list/CRUD presentation to `HiveListPageLayout`, `HiveCrudPage<TItem>`, and `HiveListView`;
+- migrate editors/actions to `HiveEditorLayout`, `HiveButton`, and `HiveMessageBox` where applicable;
+- use `IHiveThemeManager` and existing shared theme/state behavior;
+- remove Settings-specific navigation/list renderers and duplicate CRUD/theme logic;
+- preserve navigation selection/top-node/scroll state across theme changes.
 
 Tests to run:
-- `tests/Hive.Tests/HiveManagementFacadeTests.cs` — 1.12-C Management and configured-Agent target binding;
+- the focused Settings UI/form tests affected by the migration;
 - broader `Hive.Tests` execution after the focused run.
 
-Previous verified result before C: full `Hive.Tests` **158/158 passed, 0 failed, 0 skipped** on 2026-09-22. That result does not verify the new C implementation.
+Previous verified C result: full `Hive.Tests` **159/159 passed, 0 failed, 0 skipped** on 2026-09-22.
 
-Manual application verification is not recorded as complete for 1.12-A until the developer actually runs the host and exercises the current authorized behavior.
+Manual application verification remains required for the UI stages when their acceptance surface is reached.
 
 ## Historical verification
 
