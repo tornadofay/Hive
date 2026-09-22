@@ -94,6 +94,8 @@ The Example Host may include a **Settings → Configuration** example to demonst
 
 The global Settings center is the single user-facing entry point for durable Hive package configuration. Future configuration examples belong under the existing Settings branch while the actual Settings UI remains the host-level configuration surface.
 
+Configured-host Examples must consume the host's current Hive service graph; they must not construct a competing `HiveManagementFacade`/persistence graph or hard-code `HiveDatabaseOptions.LocalDevelopment()` when saved configuration exists.
+
 ## Shared services
 
 ```csharp
