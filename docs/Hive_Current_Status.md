@@ -129,7 +129,7 @@ Implemented:
 
 ### Phase 1.8 — Outbox Poller
 
-Active implementation slice.
+Implementation is present; developer verification is pending.
 
 Objective:
 - process committed, unhandled transactional outbox rows after the originating transaction has committed;
@@ -137,9 +137,15 @@ Objective:
 - make duplicate delivery safe and idempotent;
 - keep the poller as a persistence/application delivery boundary, not a distributed broker or second orchestration engine.
 
-Verification target:
-- focused automated coverage for normal processing, duplicate delivery, failure/recovery, cancellation/concurrency, plus broader `Hive.Tests`;
-- matching public Example Host scenario.
+Implemented:
+- lease-based outbox claiming with atomic SQL locking;
+- handler delivery outside the database transaction;
+- success acknowledgement removes the outbox row only when the claim is still owned;
+- failed/canceled delivery remains recoverable after lease expiry;
+- idempotent EventId delivery contract;
+- focused integration tests and a public Example Host scenario.
+
+Developer verification: pending.
  
 ### Phase 1.4 — Capability-aware Execution Target Selection
 
