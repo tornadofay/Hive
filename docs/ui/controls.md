@@ -194,9 +194,11 @@ var page = new HiveCrudPage<ProviderListItem>
 page.SetColumns(
     new HiveCrudColumn<ProviderListItem>(
         "Name",
+        220,
         item => item.Name),
     new HiveCrudColumn<ProviderListItem>(
         "Kind",
+        180,
         item => item.Kind));
 
 page.LoadItemsAsync = LoadProvidersAsync;
@@ -205,9 +207,9 @@ page.DeleteItemAsync = DeleteProviderAsync;
 page.GetItemDisplayName = item => item.Name;
 ~~~
 
-Call RefreshAsync() after LoadItemsAsync is configured.
+await page.RefreshAsync();
 
-Use the current HiveCrudColumn<TItem> source contract for exact column construction as that API evolves.
+`HiveCrudColumn<TItem>` requires a header, a positive display width, and a value selector. Use the actual public constructor rather than bypassing the column contract.
 
 Do not put SQL, management authorization, or domain validation into HiveCrudPage<TItem>.
 
