@@ -68,6 +68,8 @@ Examples:
 - V1 Workspace / WorkItem operations example → `Workspace / WorkItem Operations`
 - Durable event log/snapshot/outbox example → `Persistence / Events / Event Persistence`
 
+The host-level Hive Settings entry is introduced through the Overview / Getting Started configuration example. The example explains the configuration model and opens the real Settings window; it is not a fake configuration-inspection surface.
+
 Future examples can create independent branches without changing the host:
 
 ```text
@@ -90,9 +92,28 @@ Persistence
 
 The global Hive Settings surface is host infrastructure, not a replacement for individual Examples.
 
-The Example Host may include a **Settings → Configuration** example to demonstrate the public configuration boundary and configured-state behavior, but normal Examples should consume the configured Hive state the same way a real application does.
+The Example Host exposes the real Settings center through:
 
-The global Settings center is the single user-facing entry point for durable Hive package configuration. Future configuration examples belong under the existing Settings branch while the actual Settings UI remains the host-level configuration surface.
+**Overview / Getting Started / Example Configuration**
+
+That leaf explains the configuration model and opens the host-level Settings window. It does not create a second configuration model or replace Settings with an Example.
+
+Current Settings resource hierarchy:
+
+```
+Providers
+├── Providers
+├── Accounts / Credentials
+└── Execution Targets
+Agents
+Persistence
+```
+
+Providers, Provider Accounts, and Execution Targets are durable Management resources. Accounts / Credentials are not provider login screens; they identify the credential resource used by one or more execution targets. Persistence is a single global configuration editor rather than a CRUD collection.
+
+Future durable configuration such as Tools, Policy / Permissions, Runtime / Execution Defaults, Cognition, Knowledge, Skills, and Memory extends the same Settings center only after its authoritative contract exists.
+
+The Example Host must consume the same configured Hive state a real host would consume. It must not construct a competing Hive management/persistence graph or hard-code `HiveDatabaseOptions.LocalDevelopment()` when saved configuration exists.
 
 Configured-host Examples must consume the host's current Hive service graph; they must not construct a competing `HiveManagementFacade`/persistence graph or hard-code `HiveDatabaseOptions.LocalDevelopment()` when saved configuration exists.
 
