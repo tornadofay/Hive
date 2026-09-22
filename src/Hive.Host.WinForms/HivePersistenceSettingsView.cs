@@ -194,6 +194,10 @@ internal sealed class HivePersistenceSettingsView : UserControl
         UpdateAuthenticationState();
     }
 
+    public Task InitializeAsync(
+        CancellationToken cancellationToken = default) =>
+        LoadAsync(cancellationToken);
+
     private async Task LoadAsync(CancellationToken cancellationToken)
     {
         var result = await _management
