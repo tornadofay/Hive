@@ -4,113 +4,92 @@ Last updated: 2026-09-22
 
 ## Active slice
 
-**1.4 — Capability-aware Execution Target Selection**
+**1.5 — Base Agent & AgentFactory**
 
-Phase 0 — Foundations, Phase 1.1 — Provider / ProviderAccount / ExecutionTarget, Phase 1.2 — Secret Store, and Phase 1.3 — OpenAI-compatible Provider Adapter are complete and verified.
+Phase 0 — Foundations and Phase 1.1 through Phase 1.4 are complete and verified.
 
-Do not introduce 1.5 or later Phase 1 slices until 1.4 is complete.
+Do not introduce 1.6 or later Phase 1 slices until 1.5 is complete.
 
 ## Objective
 
-Establish capability-aware selection over the existing ExecutionTarget contract:
+Implement the base Agent creation/runtime boundary and factory without pulling in cognitive-generation behavior:
 
-- filter execution targets against explicit capability requirements;
-- honor Supported / Unsupported / Unknown capability evidence;
-- distinguish Required, Preferred, Optional, and Forbidden requirements;
-- support Auto, Preferred, and Fixed selection modes;
-- keep capability matching independent of provider identity;
-- keep cost policy separate from capability requirements;
-- return explainable selection diagnostics for accepted, rejected, and unavailable targets;
-- fail deterministically when no target qualifies or a fixed target cannot satisfy requirements.
+- stable Agent base contract;
+- AgentDefinition;
+- isolated RuntimeInstance;
+- Execution;
+- AgentFactory.Create<TAgent>();
+- explicit generation selection at creation;
+- authorization/policy boundary for generation creation;
+- no runtime promotion or demotion;
+- multiple runtimes created from one definition remain isolated;
+- factory design must not require CognitiveAgent types or cognitive-state mechanisms.
 
-This slice consumes the established Provider / ProviderAccount / ExecutionTarget / capability contracts and the completed OpenAI-compatible transport boundary. It does not add Agent execution, MAF execution integration, Management settings UI, or planner behavior beyond the capability-aware target-selection boundary required here.
+This slice must build on the existing identity, resource, error/result, provider, selection, persistence, and MAF-oriented architecture rather than introduce parallel representations.
 
-## Phase 1.3 completion
+## Phase 1.4 completion
 
-Phase 1.3 — OpenAI-compatible Provider Adapter is complete and verified.
+Phase 1.4 — Capability-aware Execution Target Selection is complete and verified.
 
 Developer verification:
-- Hive.Example.WinForms `Providers / Provider Transport / OpenAI-compatible Provider Adapter` completed successfully against the local fake HTTP endpoint, including normal and structured-output responses.
-- Full `Hive.Tests` execution: **80 tests passed, 0 failed, 0 skipped in 1.6 seconds**.
-- The 1.3 completion gate is satisfied.
+- Hive.Example.WinForms `Providers / Target Selection / Capability-aware Execution Target Selection` completed successfully.
+- Full `Hive.Tests` execution: **95 tests passed, 0 failed, 0 skipped in 2.9 seconds**.
+- The initial xUnit `Assert.Single(...Where(...))` analyzer errors were corrected before the successful rerun.
+- The 1.4 completion gate is satisfied.
 
 ## Architecture / dependency boundary
 
-The selection boundary remains provider-neutral:
+The base Agent boundary remains separate from later CognitiveAgent functionality:
 
 ```text
-Provider / ProviderAccount / ExecutionTarget
-        ↓
-Capability evidence + Requirements + Selection mode + Cost policy
-        ↓
-Capability-aware target selection
-        ↓
-Selected ExecutionTarget + explainable diagnostics
-        ↓
-future Agent / MAF execution
+AgentDefinition
+      ↓
+AgentFactory.Create<TAgent>()
+      ↓
+Agent
+      ├─ RuntimeInstance A
+      │    └─ Execution
+      └─ RuntimeInstance B
+           └─ Execution
+
+Later:
+CognitiveAgent : Agent
 ```
 
-Selection must not embed vendor-specific transport behavior. The existing OpenAI-compatible adapter remains the transport implementation for compatible targets; capability-aware selection decides whether a configured target qualifies.
+Generation is selected explicitly at creation and is immutable for the Agent instance. AgentFactory must not inspect task complexity and silently create or promote a CognitiveAgent.
 
 ## Verification
 
-Required for completion of 1.4:
+Required for completion of 1.5:
 
-1. supported capability satisfies a Required requirement;
-2. Unsupported capability is excluded from a Required requirement;
-3. Unknown capability is excluded from a Required requirement;
-4. Preferred / Optional / Forbidden requirements behave according to the contract;
-5. Auto / Preferred / Fixed selection modes are deterministic and distinct;
-6. no qualifying target returns the required typed failure/diagnostics;
-7. a Fixed target that cannot satisfy requirements is rejected;
-8. selection diagnostics explain qualifying and rejected targets without leaking secrets;
-9. selection remains independent of provider transport implementation;
-10. focused automated test coverage exists for normal, invalid, and boundary cases;
-11. broader `Hive.Tests` execution;
-12. public Example Host verification if the externally usable selection surface requires an example under the slice gate.
+1. normal AgentDefinition and AgentFactory creation;
+2. multiple RuntimeInstance objects from one definition are isolated;
+3. Execution identity/lifecycle is distinct from runtime identity;
+4. explicit generation selection is preserved;
+5. unauthorized generation creation is rejected;
+6. factory does not require cognitive types;
+7. malformed definitions/invalid creation inputs fail closed with typed errors;
+8. focused automated coverage exists for normal, invalid, authorization, and isolation cases;
+9. broader `Hive.Tests` execution;
+10. public Example Host verification for the externally usable Agent/factory capability.
 
 No verification claim is recorded until it has actually been performed.
 
 ## Constraints
 
-- No 1.5 or later AgentFactory/Agent implementation.
-- No MAF execution integration.
+- No 1.6 or later Base Agent Work Protocols.
+- No CognitiveAgent implementation or runtime promotion/demotion.
+- No cognitive Goals, Beliefs, Dreams, adaptive Questions, or learning behavior.
+- No MAF execution integration unless a concrete 1.5 contract requires a MAF-owned mechanism.
 - No Management settings/configuration UI.
-- No new provider-specific adapters.
-- No ProviderAccount credential-persistence changes.
+- No provider transport changes.
 - No changes to the SQL Server/DPAPI persistence boundary.
-- Preserve the existing Provider / ProviderAccount / ExecutionTarget and capability contracts unless the active requirement proves a contract gap.
-- Do not introduce cost selection as a substitute for capability matching; cost remains a separate policy input.
-- Do not add a general-purpose workflow/orchestration engine.
-
-## Implementation checkpoint
-
-The 1.4 implementation is present in the repository at this checkpoint:
-
-- `Hive.Core` exposes capability requirements, selection modes, separate cost-policy input, explainable selection diagnostics, and `ExecutionTargetSelector`.
-- Required capabilities accept only `Supported`; Forbidden capabilities accept only explicitly `Unsupported`; missing capability evidence is `Unknown`.
-- Preferred and Optional requirements influence deterministic ranking without becoming hard filters.
-- Auto selects the highest-scoring qualifying target; Preferred honors a qualifying preferred target before fallback; Fixed never falls back.
-- Inactive execution targets are rejected during selection.
-- Selection diagnostics expose only target identity/key/name, score, status, and policy reasons; they do not expose endpoint or credential material.
-- `Hive.Tests/ExecutionTargetSelectionTests.cs` contains focused coverage for capability states, requirement kinds, selection modes, lifecycle rejection, deterministic selection, failures, diagnostics, and cost-policy separation.
-- `Hive.Example.WinForms` contains `Providers / Target Selection / Capability-aware Execution Target Selection`.
-- `docs/examples/Phase14_Capability_Aware_Execution_Target_Selection.md` documents the public API and selection rules.
-
-## Developer verification attempt
-
-The developer manually ran the Example Host scenario successfully:
-
-- Example output completed successfully with Auto, Preferred, and Fixed selection behavior and capability diagnostics.
-- The initial test run did not compile because three tests used `Assert.Single(...Where(...))`, which violates the repository's xUnit analyzer rule requiring the predicate overload.
-- All three assertions have now been corrected to `Assert.Single(collection, predicate)`.
-- The focused and broader automated suites remain pending developer rerun after this correction.
-
-Developer verification is therefore still pending for the 1.4 completion gate.
-Implementation Agent-run builds/tests/manual verification remain unauthorized.
+- Preserve existing identity/resource contracts and explicit generation boundaries.
+- Keep runtime/execution state isolated between RuntimeInstance objects.
+- Do not add a second orchestration engine.
 
 ## Verification handoff
 
-Example to run: Providers / Target Selection / Capability-aware Execution Target Selection — Hive.Example.WinForms (net10.0-windows).
+Example to run: <exact 1.5 Example Host path once the authorized example is implemented> — Hive.Example.WinForms
 
-Tests to run: tests/Hive.Tests/ExecutionTargetSelectionTests.cs; broader Hive.Tests execution is required by the 1.4 completion gate.
+Tests to run: <exact 1.5 focused test class/file once implemented>; broader Hive.Tests execution is required by the 1.5 completion gate.
