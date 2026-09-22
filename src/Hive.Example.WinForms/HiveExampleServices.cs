@@ -2,6 +2,7 @@ using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 using Hive.Management;
 using Hive.Persistence;
+using Hive.Providers.OpenAICompatible;
 
 namespace Hive.Example.WinForms;
 
@@ -20,13 +21,16 @@ internal sealed class HiveExampleServices : IServiceProvider
 
         _themeManager = themeManager;
         _output = output;
+        var databaseOptions = HiveDatabaseOptions.LocalDevelopment();
+
         _management = new HiveManagementFacade(
-            new SqlProviderResourceStore(
-                HiveDatabaseOptions.LocalDevelopment()),
-            new SqlAgentDefinitionResourceStore(
-                HiveDatabaseOptions.LocalDevelopment()),
-            new SqlWorkItemResourceStore(
-                HiveDatabaseOptions.LocalDevelopment()));
+            new SqlProviderResourceStore(databaseOptions),
+            new SqlAgentDefinitionResourceStore(databaseOptions),
+            new SqlWorkItemResourceStore(databaseOptions),
+            new SqlDpapiSecretStore(databaseOptions),
+            new OpenAICompatibleProviderConnectionTester(),
+            new JsonHiveConfigurationStore(),
+            new HivePersistenceConnectionTester());
     }
 
     public object? GetService(Type serviceType)
