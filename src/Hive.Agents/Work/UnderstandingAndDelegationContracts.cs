@@ -28,9 +28,10 @@ public sealed record UnderstandingGatePolicy
             normalized.Add(value.Trim());
         }
 
-        RequiredInformation = normalized
-            .OrderBy(static value => value, StringComparer.Ordinal)
-            .ToArray();
+        RequiredInformation = Array.AsReadOnly(
+            normalized
+                .OrderBy(static value => value, StringComparer.Ordinal)
+                .ToArray());
 
         ConfirmationRequired = confirmationRequired;
     }
