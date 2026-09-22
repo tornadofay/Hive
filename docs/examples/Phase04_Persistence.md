@@ -28,13 +28,13 @@ Console.WriteLine(
 Expected first-run result:
 
 ```text
-Migration status: Applied; schema: 2; scripts applied: 2
+Migration status: Applied; schema: 3; scripts applied: 3
 ```
 
 Expected subsequent-run result:
 
 ```text
-Migration status: AlreadyCurrent; schema: 2; scripts applied: 0
+Migration status: AlreadyCurrent; schema: 3; scripts applied: 0
 ```
 
 For local development without an explicit server connection string, use:
