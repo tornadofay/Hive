@@ -100,7 +100,6 @@ public class Agent
     public RuntimeInstance CreateRuntimeInstance(
         DateTimeOffset? createdAtUtc = null,
         IClock? clock = null,
-        IQuestionTransport? questions = null,
         IDelegationChannel? delegation = null)
     {
         return RuntimeInstance.Create(
@@ -108,7 +107,6 @@ public class Agent
             Generation,
             createdAtUtc ?? DateTimeOffset.UtcNow,
             clock,
-            questions,
             delegation);
     }
 }
@@ -195,7 +193,6 @@ public sealed class RuntimeInstance
         AgentGeneration generation,
         DateTimeOffset createdAtUtc,
         IClock? clock,
-        IQuestionTransport? questions,
         IDelegationChannel? delegation)
     {
         var runtimeId = RuntimeId.New();
