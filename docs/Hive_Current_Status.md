@@ -4,13 +4,13 @@ Last updated: 2026-09-22
 
 ## Repository state
 
-Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 is now the active implementation slice.
+Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 is complete and verified; Phase 1.2 is now the active implementation slice.
 
 ## Current phase
 
 Phase 0 — Foundations: **Complete**.
 
-**Active slice: 1.1 — Provider / ProviderAccount / ExecutionTarget.**
+**Active slice: 1.2 — Secret Store.**
 
 ## Architecture decisions now locked
 
@@ -61,7 +61,16 @@ Phase 0 — Foundations: **Complete**.
 
 ### Phase 1.1 — Provider / ProviderAccount / ExecutionTarget
 
-Active. Phase 1 has started at 1.1. No implementation or verification completion is recorded yet; work must remain within the documented 1.1 slice.
+Complete and verified.
+
+Developer verification:
+- Hive.Example.WinForms Provider Platform scenario completed successfully, including migration/schema 2, Provider/ProviderAccount/ExecutionTarget CRUD, capability-state display, ownership/scope failures, and retirement.
+- Full Hive.Tests execution: **62 tests passed, 0 failed, 0 skipped in 1.6 seconds**.
+- The final 1.1 corrections were re-tested successfully; the 1.1 completion gate is satisfied.
+
+### Phase 1.2 — Secret Store
+
+Active. The public Secret Store contract, DPAPI-backed SQL Server implementation, schema 3, focused tests, and matching Example scenario are implemented and awaiting developer verification.
 
 
 ### Phase 0 closure — Foundations
@@ -142,7 +151,7 @@ Implemented so far:
 
 ## Not started
 
-- Phase 1.2 and later Phase 1 implementation slices.
+- Phase 1.3 and later Phase 1 implementation slices.
 - Later phases.
 
-Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed; Phase 1.1 is active.
+Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 is complete and verified; Phase 1.2 is active.
