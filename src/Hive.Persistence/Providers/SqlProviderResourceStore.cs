@@ -1810,6 +1810,13 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                     $"hive.{resourceName.Replace(' ', '-')}.duplicate",
                     $"The {resourceName} identity or key already exists."));
         }
+        catch (SqlException exception) when (IsConstraintConflict(exception))
+        {
+            return Result<T>.Failure(
+                Conflict(
+                    $"hive.{resourceName.Replace(' ', '-')}.duplicate",
+                    $"The {resourceName} identity or key already exists."));
+        }
         catch (SqlException exception)
         {
             return Result<T>.Failure(
