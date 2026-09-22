@@ -11,9 +11,9 @@ internal sealed class ExampleConfigurationExampleView : UserControl
     private readonly IHiveThemeManager _themeManager;
     private readonly Label _title;
     private readonly Label _intro;
-    private readonly Label _providerFlow;
-    private readonly Label _settingsFlow;
-    private readonly Label _futureText;
+    private readonly TableLayoutPanel _providerFlow;
+    private readonly TableLayoutPanel _settingsFlow;
+    private readonly TableLayoutPanel _futureText;
     private readonly HiveButton _openSettingsButton;
     private readonly Font _titleFont;
     private readonly Font _sectionFont;
