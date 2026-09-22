@@ -59,8 +59,8 @@ public sealed class ExecutionTargetSelectionTests
         Assert.Equal("supported", result.Value!.SelectedTarget.Key);
 
         var rejected = Assert.Single(
-            result.Value.Diagnostics.Where(
-                diagnostic => diagnostic.TargetKey == "unsupported"));
+            result.Value.Diagnostics,
+            diagnostic => diagnostic.TargetKey == "unsupported");
 
         Assert.Equal(
             ExecutionTargetSelectionDiagnosticStatus.Rejected,
@@ -98,8 +98,8 @@ public sealed class ExecutionTargetSelectionTests
         Assert.Equal("clean", result.Value!.SelectedTarget.Key);
 
         var unknown = Assert.Single(
-            result.Value.Diagnostics.Where(
-                diagnostic => diagnostic.TargetKey == "unknown"));
+            result.Value.Diagnostics,
+            diagnostic => diagnostic.TargetKey == "unknown");
 
         Assert.Equal(
             ExecutionTargetSelectionDiagnosticStatus.Rejected,
@@ -314,8 +314,8 @@ public sealed class ExecutionTargetSelectionTests
         Assert.Equal("active", result.Value!.SelectedTarget.Key);
 
         var retiredDiagnostic = Assert.Single(
-            result.Value.Diagnostics.Where(
-                diagnostic => diagnostic.TargetKey == "retired"));
+            result.Value.Diagnostics,
+            diagnostic => diagnostic.TargetKey == "retired");
 
         Assert.Equal(
             ExecutionTargetSelectionDiagnosticStatus.Rejected,
