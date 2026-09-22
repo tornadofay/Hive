@@ -102,7 +102,7 @@ public sealed class Question
             null);
     }
 
-    internal Result<Question> Answer(
+    internal Result<Question> ApplyAnswer(
         AgentId responderAgentId,
         RuntimeId responderRuntimeId,
         string answer,
@@ -384,7 +384,7 @@ public sealed class QuestionTransport : IQuestionTransport
                         "Only the Question's owning RuntimeInstance may answer it."));
             }
 
-            var result = question.Answer(
+            var result = question.ApplyAnswer(
                 responderAgentId,
                 responderRuntimeId,
                 answer,
