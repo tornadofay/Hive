@@ -5,7 +5,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Hive.Persistence;
 
-public sealed class SqlEventPersistenceStore : IEventPersistenceStore
+public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOutboxPollerStore
 {
     private readonly HiveDatabaseOptions _options;
     private readonly JsonEventSerializer _serializer;
@@ -361,6 +361,136 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore
                     "hive.event.outbox-read",
                     ErrorCategory.Internal,
                     $"The outbox read failed: {exception.Message}"));
+        }
+    }
+
+    public async Task<Result<EventOutboxWorkItem?>> ClaimNextOutboxAsync(
+        TimeSpan leaseDuration,
+        CancellationToken cancellationToken = default)
+    {
+        if (leaseDuration <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(leaseDuration));
+
+        var leaseId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+        var expiresAt = now.Add(leaseDuration);
+
+        try
+        {
+            await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+            await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken).ConfigureAwait(false);
+
+            await using var command = CreateCommand(
+                connection,
+                """
+                ;WITH [NextOutbox] AS
+                (
+                    SELECT TOP (1) [EventId]
+                    FROM [dbo].[HiveEventOutbox] WITH (UPDLOCK, READPAST, READCOMMITTEDLOCK, ROWLOCK)
+                    WHERE [LeaseId] IS NULL OR [LeaseExpiresAtUtc] <= @NowUtc
+                    ORDER BY [CreatedAtUtc], [EventId]
+                )
+                UPDATE [outbox]
+                SET [LeaseId] = @LeaseId,
+                    [LeaseExpiresAtUtc] = @LeaseExpiresAtUtc,
+                    [AttemptCount] = [AttemptCount] + 1
+                OUTPUT
+                    inserted.[StreamKind], inserted.[StreamIdentity], inserted.[StreamVersion],
+                    inserted.[EventId], inserted.[OccurredAtUtc], inserted.[EventType],
+                    inserted.[PayloadSchemaVersion], inserted.[CorrelationId], inserted.[CausationId],
+                    inserted.[PayloadJson], inserted.[AttemptCount]
+                FROM [dbo].[HiveEventOutbox] AS [outbox]
+                INNER JOIN [NextOutbox] ON [NextOutbox].[EventId] = [outbox].[EventId];
+                """,
+                transaction);
+
+            command.Parameters.Add(DateTimeParameter("@NowUtc", now));
+            command.Parameters.Add(GuidParameter("@LeaseId", leaseId));
+            command.Parameters.Add(DateTimeParameter("@LeaseExpiresAtUtc", expiresAt));
+
+            EventOutboxWorkItem? workItem = null;
+            await using (var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+            {
+                if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    var stream = ReadStreamReference(reader);
+                    var envelope = ReadEnvelope(reader);
+                    var entry = new EventOutboxEntry(
+                        stream,
+                        new ResourceVersion(reader.GetInt64(reader.GetOrdinal("StreamVersion"))),
+                        envelope);
+                    workItem = new EventOutboxWorkItem(
+                        entry,
+                        leaseId,
+                        reader.GetInt32(reader.GetOrdinal("AttemptCount")));
+                }
+            }
+
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return Result<EventOutboxWorkItem?>.Success(workItem);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (EventSerializationException exception)
+        {
+            return Result<EventOutboxWorkItem?>.Failure(exception.Error);
+        }
+        catch (SqlException)
+        {
+            return Result<EventOutboxWorkItem?>.Failure(new Error(
+                "hive.outbox.claim-sql", ErrorCategory.External,
+                "The outbox claim failed at the SQL Server boundary."));
+        }
+        catch (Exception exception)
+        {
+            return Result<EventOutboxWorkItem?>.Failure(new Error(
+                "hive.outbox.claim", ErrorCategory.Internal,
+                $"The outbox claim failed: {exception.Message}"));
+        }
+    }
+
+    public async Task<Result> CompleteOutboxAsync(
+        EventOutboxWorkItem workItem,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(workItem);
+
+        try
+        {
+            await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+            await using var command = CreateCommand(
+                connection,
+                """
+                DELETE FROM [dbo].[HiveEventOutbox]
+                WHERE [EventId] = @EventId AND [LeaseId] = @LeaseId;
+                """");
+            command.Parameters.Add(GuidParameter("@EventId", workItem.Entry.Envelope.EventId.Value));
+            command.Parameters.Add(GuidParameter("@LeaseId", workItem.LeaseId));
+
+            var affected = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            return affected == 1
+                ? Result.Success()
+                : Result.Failure(Error.Concurrency(
+                    "hive.outbox.lease-lost",
+                    "The outbox lease was lost before the delivery could be acknowledged."));
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (SqlException)
+        {
+            return Result.Failure(new Error(
+                "hive.outbox.complete-sql", ErrorCategory.External,
+                "The outbox completion failed at the SQL Server boundary."));
+        }
+        catch (Exception exception)
+        {
+            return Result.Failure(new Error(
+                "hive.outbox.complete", ErrorCategory.Internal,
+                $"The outbox completion failed: {exception.Message}"));
         }
     }
 
