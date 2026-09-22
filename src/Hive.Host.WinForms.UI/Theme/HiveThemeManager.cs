@@ -36,7 +36,7 @@ public sealed class HiveThemeManager : IHiveThemeManager
         ColorTranslator.FromHtml("#3876C6"),
         ColorTranslator.FromHtml("#FFFFFF"),
         ColorTranslator.FromHtml("#12181F"),
-        ColorTranslator.FromHtml("#222831"),
+        ColorTranslator.FromHtml("#1A2027"),
         ColorTranslator.FromHtml("#A5AFBA"),
         ColorTranslator.FromHtml("#24466F"));
 
