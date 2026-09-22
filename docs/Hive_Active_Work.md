@@ -102,10 +102,15 @@ Implemented in the active slice:
 - Agent editing uses `HiveEditorLayout` and the public `IHiveManagementFacade` for create/update/delete operations.
 - Agent execution-target choices are loaded through the authoritative Provider → ProviderAccount → ExecutionTarget Management hierarchy; retired targets remain visible and are rejected by the existing Management validation boundary.
 - 1.12-D organizes the Settings navigation as Providers → Provider Configuration, Accounts / Credentials, and Execution Targets; plus Agents and Persistence.
+- 1.12-D implements Provider Configuration, Accounts / Credentials, Execution Targets, and Agents as separate CRUD resource pages using `HiveCrudPage<TItem>` and `HiveEditorLayout`; the former combined Provider settings editor is removed.
+- Accounts / Credentials are scoped by Provider, and Execution Targets are scoped by Provider Account, matching the Management resource hierarchy.
+- Persistence remains a single global configuration editor because it represents one persisted configuration document rather than a CRUD resource collection.
+- Persistence Server / instance uses an editable ComboBox for the current/session-known values while still accepting manually entered server names; no fake SQL Server discovery list is introduced.
 - 1.12-D adds `Overview / Getting Started / Example Configuration` as the normal Example Host entry point to the real Hive Settings center.
 - The configuration example explains that Provider Accounts are credential/resource records rather than provider login screens, that Execution Targets contain concrete model/endpoint configuration, and that future Settings domains appear only when their authoritative contracts exist.
 - The Example Host now supplies a deterministic development ResourceAccessContext for its Settings surface so configured resources remain addressable across Example Host restarts.
 - The Settings shell subtitle/description now identifies it as the global Hive package configuration center.
+- The old combined `HiveProviderSettingsView` was deleted rather than retained as a compatibility UI layer; Provider, ProviderAccount, and ExecutionTarget now have independent Settings pages and editor dialogs.
 
 Before coding, inspect:
 
