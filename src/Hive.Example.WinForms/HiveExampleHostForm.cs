@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Reflection;
 using System.Windows.Forms;
+using Hive.Core;
 using Hive.Host.WinForms;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
@@ -38,6 +39,11 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private HiveExampleServices? _services;
     private HiveHostComposition? _composition;
+    private static readonly ResourceAccessContext ExampleSettingsAccessContext =
+        new(
+            DeploymentId.Parse("6b6f1b2d-b28b-4bb8-92ef-9d9c7ce4c8f1"),
+            TenantId.Parse("5cebf5a3-91cb-40be-9ee4-4b7c5d6cf7c4"),
+            PrincipalId.Parse("d4f126bb-f5b5-47a7-bd1c-e4d6aa4b0a31"));
     private UserControl? _activeView;
     private bool _responsiveLayoutReady;
     private Rectangle _lastOutputViewBounds;
@@ -587,6 +593,27 @@ internal sealed class HiveExampleHostForm : HiveForm
 
         if (_outputView.IsCollapsed)
             _outputView.SetCollapsed(false);
+    }
+
+    internal void OpenHiveSettings()
+    {
+        var graph = _composition?.Current;
+        if (graph is null || graph.IsDisposed)
+        {
+            HiveMessageBox.ShowError(
+                this,
+                "Hive host services are not initialized. Open Settings after the host finishes loading.",
+                "Hive Settings",
+                _themeManager);
+            return;
+        }
+
+        using var form = new HiveSettingsForm(
+            graph.Management,
+            ExampleSettingsAccessContext,
+            _themeManager);
+
+        form.ShowDialog(this);
     }
 
     private void DisposeActiveView()
