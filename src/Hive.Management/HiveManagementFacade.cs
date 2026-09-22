@@ -749,10 +749,12 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         CancellationToken cancellationToken)
     {
         if (definition is null)
-            return Failure<AgentDefinition>(
+        {
+            return Result<AgentDefinition>.Failure(
                 Error.Validation(
                     "hive.management.agent-definition.resource-required",
                     "An agent definition is required."));
+        }
 
         var validation = ValidateResource(
             definition.Resource,
@@ -762,7 +764,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             isCreate);
 
         if (validation is not null)
-            return Failure<AgentDefinition>(validation);
+            return Result<AgentDefinition>.Failure(validation);
 
         var targetValidation = await ValidateConfiguredExecutionTargetAsync(
             definition.ConfiguredExecutionTargetId,
