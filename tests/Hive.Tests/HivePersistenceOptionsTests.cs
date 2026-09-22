@@ -22,6 +22,75 @@ public sealed class HivePersistenceOptionsTests
     }
 
     [Fact]
+    public void FromConfiguration_BuildsLocalDevelopmentOptions()
+    {
+        var configuration = HivePersistenceConfiguration.LocalDevelopment("Hive_Config");
+
+        var options = HiveDatabaseOptions.FromConfiguration(configuration);
+
+        Assert.Equal(@"(localdb)\MSSQLLocalDB", options.ServerName);
+        Assert.Equal("Hive_Config", options.DatabaseName);
+        Assert.True(options.CreateDatabaseIfMissing);
+
+        var builder = new SqlConnectionStringBuilder(options.ConnectionString);
+        Assert.True(builder.IntegratedSecurity);
+        Assert.False(builder.Encrypt);
+        Assert.True(builder.TrustServerCertificate);
+    }
+
+    [Fact]
+    public void FromConfiguration_RequiresCredentialForSqlPassword()
+    {
+        var configuration = new HivePersistenceConfiguration(
+            HivePersistenceBackend.SqlServer,
+            "sql.example.test",
+            1433,
+            "Hive",
+            HiveSqlAuthenticationMode.SqlPassword,
+            "hive-user",
+            new SecretReference(SecretId.New()),
+            encrypt: true,
+            trustServerCertificate: false,
+            createDatabaseIfMissing: false);
+
+        Assert.Throws<ArgumentException>(
+            () => HiveDatabaseOptions.FromConfiguration(configuration));
+    }
+
+    [Fact]
+    public void FromConfiguration_UsesSecretMaterialWithoutEmbeddingItInPublicOptionsMetadata()
+    {
+        var configuration = new HivePersistenceConfiguration(
+            HivePersistenceBackend.SqlServer,
+            "sql.example.test",
+            1433,
+            "Hive",
+            HiveSqlAuthenticationMode.SqlPassword,
+            "hive-user",
+            new SecretReference(SecretId.New()),
+            encrypt: true,
+            trustServerCertificate: false,
+            createDatabaseIfMissing: false);
+
+        using var material = SecretMaterial.Create("super-secret");
+
+        var options = HiveDatabaseOptions.FromConfiguration(
+            configuration,
+            material);
+
+        var builder = new SqlConnectionStringBuilder(options.ConnectionString);
+
+        Assert.Equal("hive-user", builder.UserID);
+        Assert.Equal("super-secret", builder.Password);
+        Assert.True(builder.Encrypt);
+        Assert.False(builder.TrustServerCertificate);
+        Assert.DoesNotContain(
+            "super-secret",
+            options.ToString(),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ConnectionStringOptions_CreateDatabaseByDefault()
     {
         var options = new HiveDatabaseOptions(
