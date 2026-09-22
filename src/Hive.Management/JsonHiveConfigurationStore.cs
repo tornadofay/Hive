@@ -188,7 +188,6 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                 configuration.AuthenticationMode,
                 configuration.UserName,
                 configuration.BootstrapCredential?.Id.Value,
-                null,
                 configuration.Encrypt,
                 configuration.TrustServerCertificate,
                 configuration.CreateDatabaseIfMissing,
