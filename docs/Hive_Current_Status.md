@@ -1,16 +1,16 @@
 # Hive — Current Status
 
-Last updated: 2026-09-21
+Last updated: 2026-09-22
 
 ## Repository state
 
-Phase 0.1 through 0.5 are complete. The active implementation slice is Phase 0.7 first-class Example Host UI/UX polish. The 0.6 WinForms UI/UX foundation is the shared base being polished and exercised through the permanent Example host.
+Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 is now the active implementation slice.
 
 ## Current phase
 
-Phase 0 — Foundations.
+Phase 0 — Foundations: **Complete**.
 
-**Active slice: 0.7 — First-Class Example Host Shell.**
+**Active slice: 1.1 — Provider / ProviderAccount / ExecutionTarget.**
 
 ## Architecture decisions now locked
 
@@ -51,17 +51,22 @@ Phase 0 — Foundations.
 - Reusable WinForms data-page composition remains a presentation boundary: HiveListPageLayout and HivePaginationBar are generic UI primitives, HiveCrudPage<TItem> adds generic CRUD interaction orchestration without domain or persistence knowledge, and HiveEditorLayout provides reusable labeled-field/action-footer composition. The reusable CRUD page also provides consistent search presentation, loading/empty/no-match states, keyboard interaction, contextual actions, and compact count/status feedback. Feature-specific columns, filtering semantics, validation, specialized editors, authorization, and persistence remain outside Hive. `ListView` is the lightweight default list surface, while `DataGridView` remains available for richer tabular cases.
 - Example UI is separately centralized for the developer-facing test harness: HiveExampleTestSurface is the reusable standard Example page surface for the repeated HAgent-style Run/copy actions, editable input, copyable C# reproduction snippet, description, expected-result, note, status, cancellation, and exception handling; HiveExampleOutputView is one persistent global bottom output pane shared by examples through IServiceProvider, with Show/Hide and Clear behavior. This is optional composition; specialized examples such as CRUD and dialog demonstrations are free to keep their own UI.
 - WinForms DPI scaling is delegated to the .NET 10/WinForms platform; Hive does not maintain a custom DPI helper or manual DPI scaling layer.
-- The 0.6 UI foundation is now the shared rendering/composition layer. The active Example application work is Phase 0.7: a first-class Category → Subcategory → Example shell with replaceable right-side views.
-- The active 0.7 pass is a production UI/UX polish pass: desktop hierarchy, spacing, typography, density, navigation state preservation, theme states, CRUD/dialog presentation, resize behavior, and lightweight UI implementation are all in scope before the shell is accepted.
+- The 0.6 UI foundation is now the shared rendering/composition layer for later WinForms features.
+- Phase 0.7 established the permanent Category → Subcategory → Example Example Host shell and completed the final production UI/UX polish of the shared WinForms foundation and Example host. The developer has accepted the slice; no further Phase 0 UI work is active.
 - Authentication-provider selection is deferred until real multi-user requirements reach Phase 8.
 - Tests and examples are developed with each implementation slice; no unperformed verification is claimed.
 - Phase 0.3 identity/resource contracts use explicit typed identity, owner, scope, provenance, version, lifecycle, and WorkItem state. Scope matching is a structural boundary and does not itself grant authorization.
 
 ## Current implementation progress
 
-### Phase 0.7 — First-Class Example Host Shell
+### Phase 1.1 — Provider / ProviderAccount / ExecutionTarget
 
-Active. The Example host and shared UI polish implementation are in place. The remaining acceptance is developer manual verification of visual quality, theme state preservation, resizing, interaction states, CRUD presentation, dialogs, and desktop-window behavior.
+Active. Phase 1 has started at 1.1. No implementation or verification completion is recorded yet; work must remain within the documented 1.1 slice.
+
+
+### Phase 0 closure — Foundations
+
+Complete. Phase 0.7 was the final active slice and is accepted after the developer's final UI/UX review. No 0.8 slice remains.
 
 
 ### Phase 0.3 — Identity, WorkItem & Resource foundation
@@ -137,10 +142,7 @@ Implemented so far:
 
 ## Not started
 
-- Phase 0.8 Example Developer Test Tools.
-- Phase 0.8 Example Developer Test Tools.
-- Later implementation slices.
-- WinForms management host.
-- Example application features.
+- Phase 1.2 and later Phase 1 implementation slices.
+- Later phases.
 
-0.5 is complete and verified. 0.6 was accepted after developer manual interaction with the Example UI. 0.7 is now active and awaiting implementation.
+Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed; Phase 1.1 is active.
