@@ -110,9 +110,18 @@ Implemented:
 
 ### Phase 1.7 — Event Log, Snapshots & Transactional Outbox
 
-Active implementation slice.
+Implementation is present; developer verification is pending.
 
-No Phase 1.7 implementation or verification result is recorded yet.
+Implemented:
+- durable SQL event log keyed by ResourceReference and per-stream ResourceVersion;
+- versioned JSON snapshots with atomic replacement;
+- transactional outbox rows linked to the triggering event;
+- serializable expected-version concurrency protection;
+- deterministic EventSnapshotFolder reduction with existing event upcaster support;
+- schema migration from version 3 to version 4;
+- focused unit/integration tests and a public Example Host scenario.
+
+No Phase 1.7 build, test, or manual Example verification result is recorded yet.
 
 ### Phase 1.4 — Capability-aware Execution Target Selection
 

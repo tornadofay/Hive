@@ -43,6 +43,9 @@ public sealed record Error
     public static Error Conflict(string code, string message) =>
         new(code, ErrorCategory.Conflict, message);
 
+    public static Error Concurrency(string code, string message) =>
+        new(code, ErrorCategory.Concurrency, message);
+
     public static Error Unsupported(string code, string message) =>
         new(code, ErrorCategory.Unsupported, message);
 

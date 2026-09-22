@@ -82,6 +82,20 @@ No verification claim is recorded until it has actually been performed.
 
 ## Implementation checkpoint
 
-1.7 implementation has not started in this slice.
+The authorized 1.7 implementation is present:
+- durable SQL event log keyed by ResourceReference and per-stream ResourceVersion;
+- versioned JSON snapshots with atomic replacement;
+- transactional outbox rows linked to the triggering event;
+- serializable expected-version concurrency boundary;
+- deterministic EventSnapshotFolder reducer contract with existing event upcasting;
+- migration to schema version 4;
+- focused unit/integration coverage;
+- public Example Host scenario under Persistence / Events.
 
-The only completed work recorded while closing 1.6 is the developer verification above. No 1.7 implementation or verification result is claimed yet.
+Developer verification is still pending. No build, test, or manual Example result is recorded here yet.
+
+## Verification handoff
+
+Example to run: Persistence / Events / Event Log / Snapshot / Outbox — Hive.Example.WinForms
+
+Tests to run: tests/Hive.Tests/EventPersistenceIntegrationTests.cs and tests/Hive.Tests/EventSnapshotFolderTests.cs; broader Hive.Tests execution is required by the 1.7 completion gate.

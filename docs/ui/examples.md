@@ -41,6 +41,7 @@ Current branches:
 - `Providers → Provider Platform`
 - `Providers → Target Selection`
 - `Providers → Provider Transport`
+- `Persistence → Events`
 
 For a new Example:
 1. Reuse the existing Category/Subcategory that matches the capability.
@@ -55,6 +56,7 @@ Examples:
 - Provider/ProviderAccount/ExecutionTarget example → `Providers / Provider Platform`
 - Capability-aware execution target selection example → `Providers / Target Selection`
 - OpenAI-compatible provider transport example → `Providers / Provider Transport`
+- Durable event log/snapshot/outbox example → `Persistence / Events`
 
 `Order` controls ordering within the discovered examples. Title is the leaf text.
 

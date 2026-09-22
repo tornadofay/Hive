@@ -37,6 +37,18 @@ internal sealed class PersistenceTestDatabase
 
         using var command = connection.CreateCommand();
         command.CommandText = """
+            IF OBJECT_ID(N'dbo.TR_HiveEventLog_RollbackProbe', N'TR') IS NOT NULL
+                DROP TRIGGER [dbo].[TR_HiveEventLog_RollbackProbe];
+
+            IF OBJECT_ID(N'dbo.HiveEventOutbox', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveEventOutbox];
+
+            IF OBJECT_ID(N'dbo.HiveEventSnapshots', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveEventSnapshots];
+
+            IF OBJECT_ID(N'dbo.HiveEventLog', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveEventLog];
+
             IF OBJECT_ID(N'dbo.HiveSecrets', N'U') IS NOT NULL
                 DROP TABLE [dbo].[HiveSecrets];
 
