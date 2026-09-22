@@ -164,9 +164,33 @@ The V1 Workspace works with a single Agent and does not require Hive membership 
 
 Verify: image submission creates the correct WorkItem, status/activity are visible, approval state is visible, Approve/Reject changes the authoritative WorkItem state correctly, stale approval is rejected, and the Workspace does not create hidden Hive/Swarm behavior.
 
-## 1.12 — HiveSettingsForm & Providers Page
-Objective: thin WinForms shell, shared configuration context, provider/account setup and connection test.
-Verify: management logic remains outside the form; developer manually verifies the UI flow.
+## 1.12 — HiveSettingsForm & Configuration Pages
+Objective: establish the first-class Hive Settings surface as a thin WinForms shell over Hive.Management, with explicit Provider and Persistence configuration pages.
+
+Provider configuration:
+- provider/account setup and provider connection test through the management/configuration boundary;
+- no provider transport or persistence implementation in the WinForms shell.
+
+Persistence configuration:
+- typed Hive persistence configuration exposed through the Management boundary;
+- V1 SQL Server configuration including server/instance, port, authentication metadata, database identity, and required connection-security options;
+- SQL Server LocalDB represented as the same SQL Server persistence boundary for local development;
+- database credentials referenced through the Secret Store rather than stored as plaintext configuration;
+- non-destructive connection test that only verifies connectivity and does not create the database or apply migrations;
+- separate database/schema status and explicit initialization/migration lifecycle;
+- saved persistence settings survive application restart without exposing the password in ordinary configuration or diagnostics.
+
+The Settings shell owns navigation/composition only. Persistence pages must not construct `SqlConnection`, execute SQL directly, or duplicate Hive.Persistence migration/bootstrap rules.
+
+Depends on: 1.2 Secret Store and the existing Hive.Persistence SQL Server boundary.
+
+Verify:
+- management logic remains outside the WinForms shell;
+- persistence configuration can be saved, reloaded, and validated through the public Management contract;
+- connection-test success/failure is reported without schema side effects;
+- database/schema status is distinct from connection success;
+- credentials are not persisted in plaintext or exposed in diagnostics;
+- developer manually verifies the Provider and Persistence UI flows.
 
 ## 1.13 — Image Input & WinForms Host Context
 Objective: establish image as the first V1 input and define the concrete WinForms host-context boundary. The host integration must support broad Form/control discovery across Forms, UserControls, custom/inherited controls, Panels, GroupBoxes, other containers, nested controls, and relevant runtime/data-source context.
