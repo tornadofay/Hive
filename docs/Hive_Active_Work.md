@@ -4,107 +4,87 @@ Last updated: 2026-09-22
 
 ## Active slice
 
-**1.3 — OpenAI-compatible Provider Adapter**
+**1.4 — Capability-aware Execution Target Selection**
 
-Phase 0 — Foundations, Phase 1.1 — Provider / ProviderAccount / ExecutionTarget, and Phase 1.2 — Secret Store are complete and verified.
+Phase 0 — Foundations, Phase 1.1 — Provider / ProviderAccount / ExecutionTarget, Phase 1.2 — Secret Store, and Phase 1.3 — OpenAI-compatible Provider Adapter are complete and verified.
 
-Do not introduce 1.4 or later Phase 1 slices until 1.3 is complete.
+Do not introduce 1.5 or later Phase 1 slices until 1.4 is complete.
 
 ## Objective
 
-Establish one shared OpenAI-compatible provider transport boundary for compatible hosted and local targets:
+Establish capability-aware selection over the existing ExecutionTarget contract:
 
-- one provider adapter parametrized by endpoint and credentials;
-- public request/response contracts independent of any vendor-specific SDK;
-- structured output support without provider-specific transport implementations;
-- deterministic typed mapping for authentication failure, rate limiting, timeout, cancellation, transport failure, malformed responses, and invalid structured output;
-- cancellation-aware HTTP execution with a bounded request/response timeout;
-- local fake-server integration coverage without real vendor credentials;
-- matching public Hive.Example.WinForms scenario.
+- filter execution targets against explicit capability requirements;
+- honor Supported / Unsupported / Unknown capability evidence;
+- distinguish Required, Preferred, Optional, and Forbidden requirements;
+- support Auto, Preferred, and Fixed selection modes;
+- keep capability matching independent of provider identity;
+- keep cost policy separate from capability requirements;
+- return explainable selection diagnostics for accepted, rejected, and unavailable targets;
+- fail deterministically when no target qualifies or a fixed target cannot satisfy requirements.
 
-This slice consumes the established Provider / ProviderAccount / ExecutionTarget and Secret Store contracts where useful, but it does not add ProviderAccount credential wiring, execution-target selection/planning, Management settings UI, or agent execution.
+This slice consumes the established Provider / ProviderAccount / ExecutionTarget / capability contracts and the completed OpenAI-compatible transport boundary. It does not add Agent execution, MAF execution integration, Management settings UI, or planner behavior beyond the capability-aware target-selection boundary required here.
 
-## Implementation checkpoint
+## Phase 1.3 completion
 
-The 1.3 implementation is present in the repository at this checkpoint:
+Phase 1.3 — OpenAI-compatible Provider Adapter is complete and verified.
 
-- `Hive.Providers.OpenAICompatible` now exposes the OpenAI-compatible request/message/structured-output/options contracts and `OpenAICompatibleProviderAdapter`.
-- The adapter sends OpenAI-compatible `POST <base-uri>/chat/completions` requests with optional Bearer credentials supplied as `SecretMaterial`.
-- Structured output uses the OpenAI-compatible JSON-schema response format and returns cloned `JsonElement` content only after successful JSON parsing.
-- Timeout applies across both response-header and response-body reads; caller cancellation remains an `OperationCanceledException`.
-- HTTP authentication, rate-limit, timeout, transport, and malformed-response failures map to typed Hive errors without including credential material.
-- `Hive.Tests/OpenAICompatibleProviderAdapterTests.cs` contains local loopback fake-server coverage for the required transport/error/structured-output cases plus contract boundary validation.
-- `Hive.Example.WinForms` contains `Providers / Provider Transport / OpenAI-compatible Provider Adapter`, which exercises the public adapter against a local loopback endpoint.
-- `docs/examples/Phase13_OpenAI_Compatible_Provider_Adapter.md` documents the public API.
-- `docs/ui/examples.md` records the new Example tree branch.
-
-Agent-run build/tests/manual verification are not authorized. The implementation therefore remains pending the developer verification gate below.
-
-## Developer verification attempt
-
-The developer manually ran the Example successfully and executed the broader Hive.Tests suite:
-
-- Example: completed successfully with the local fake HTTP endpoint, model/response data, and structured output.
-- Automated tests: **80 tests, 78 passed, 2 failed, 0 skipped in 2.5 seconds**.
-- Failure 1: caller cancellation surfaced as `TaskCanceledException`; the test requires the adapter contract to expose an exact `OperationCanceledException`.
-- Failure 2: the transport-failure test used an unused loopback port and surfaced `Timeout` instead of the intended transport-failure classification, making the test dependent on local socket timing.
-- Both failures are corrected in the current implementation/test checkpoint. The 1.3 completion gate remains pending until the developer reruns the focused and broader tests after these corrections.
+Developer verification:
+- Hive.Example.WinForms `Providers / Provider Transport / OpenAI-compatible Provider Adapter` completed successfully against the local fake HTTP endpoint, including normal and structured-output responses.
+- Full `Hive.Tests` execution: **80 tests passed, 0 failed, 0 skipped in 1.6 seconds**.
+- The 1.3 completion gate is satisfied.
 
 ## Architecture / dependency boundary
 
+The selection boundary remains provider-neutral:
+
 ```text
-Hive.Core
-   ↑
-Hive.Providers.OpenAICompatible
-   ↑
-future execution/planning / Agents / Management consumers
-
-Hive.Persistence
-   └─ owns Secret Store persistence
-
-OpenAI-compatible adapter
-   └─ receives already-resolved credential material
-      and never persists it
-
-Example.WinForms
-   └─ exercises the public adapter contract against a local fake endpoint
+Provider / ProviderAccount / ExecutionTarget
+        ↓
+Capability evidence + Requirements + Selection mode + Cost policy
+        ↓
+Capability-aware target selection
+        ↓
+Selected ExecutionTarget + explainable diagnostics
+        ↓
+future Agent / MAF execution
 ```
 
-The adapter remains independently usable and vendor-neutral. Later Management/execution code may resolve a ProviderAccount + SecretReference and pass resolved `SecretMaterial` into the transport boundary; that wiring is outside 1.3.
+Selection must not embed vendor-specific transport behavior. The existing OpenAI-compatible adapter remains the transport implementation for compatible targets; capability-aware selection decides whether a configured target qualifies.
 
 ## Verification
 
-Required for completion of 1.3:
+Required for completion of 1.4:
 
-1. public adapter contract normal/invalid/boundary tests;
-2. local fake-server success path;
-3. malformed response mapping;
-4. timeout and cancellation behavior;
-5. authentication failure mapping;
-6. rate-limit mapping;
-7. transport/network failure mapping;
-8. structured-output success and malformed structured-output failure;
-9. credential redaction/no secret leakage in errors or Example output;
-10. public Example Host verification;
+1. supported capability satisfies a Required requirement;
+2. Unsupported capability is excluded from a Required requirement;
+3. Unknown capability is excluded from a Required requirement;
+4. Preferred / Optional / Forbidden requirements behave according to the contract;
+5. Auto / Preferred / Fixed selection modes are deterministic and distinct;
+6. no qualifying target returns the required typed failure/diagnostics;
+7. a Fixed target that cannot satisfy requirements is rejected;
+8. selection diagnostics explain qualifying and rejected targets without leaking secrets;
+9. selection remains independent of provider transport implementation;
+10. focused automated test coverage exists for normal, invalid, and boundary cases;
 11. broader `Hive.Tests` execution;
-12. manual Example verification of the local fake-server provider scenario.
+12. public Example Host verification if the externally usable selection surface requires an example under the slice gate.
 
 No verification claim is recorded until it has actually been performed.
 
 ## Constraints
 
-- No real vendor credentials or uncontrolled external provider calls.
-- No provider-specific transport classes.
-- No ProviderAccount credential persistence/wiring.
-- No capability-aware selection/planning.
-- No Agent/MAF execution integration.
+- No 1.5 or later AgentFactory/Agent implementation.
+- No MAF execution integration.
 - No Management settings/configuration UI.
+- No new provider-specific adapters.
+- No ProviderAccount credential-persistence changes.
 - No changes to the SQL Server/DPAPI persistence boundary.
-- Preserve existing Core dependency direction and public provider-resource contracts.
-- Do not add a dependency merely to implement straightforward HTTP/JSON transport because the .NET 10 framework capabilities are sufficient.
+- Preserve the existing Provider / ProviderAccount / ExecutionTarget and capability contracts unless the active requirement proves a contract gap.
+- Do not introduce cost selection as a substitute for capability matching; cost remains a separate policy input.
+- Do not add a general-purpose workflow/orchestration engine.
 
 ## Verification handoff
 
-Example to run: Providers / Provider Transport / OpenAI-compatible Provider Adapter — Hive.Example.WinForms (net10.0-windows).
+Example to run: <exact 1.4 Example Host path once the authorized example is implemented> — Hive.Example.WinForms
 
-Tests to run: tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs; broader Hive.Tests execution is required by the 1.3 completion gate.
+Tests to run: <exact 1.4 focused test class/file once implemented>; broader Hive.Tests execution is required by the 1.4 completion gate.
