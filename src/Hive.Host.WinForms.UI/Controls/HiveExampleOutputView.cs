@@ -278,10 +278,11 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         if (string.IsNullOrEmpty(value))
             return;
 
+        var hadOutput = _output.TextLength > 0;
         _output.AppendText(value);
-        _lineCount = _output.TextLength == value.Length
-            ? CountLines(value)
-            : _lineCount + CountLineBreaks(value);
+        _lineCount = hadOutput
+            ? _lineCount + CountLineBreaks(value)
+            : CountLines(value);
         _output.SelectionStart = _output.TextLength;
         _output.ScrollToCaret();
         UpdateActionState();
