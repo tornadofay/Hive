@@ -307,7 +307,10 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 ? value
                 : HiveSqlAuthenticationMode.WindowsIntegrated;
 
-        SecretReference? credential = _loadedConfiguration?.CredentialSecret;
+        SecretReference? credential =
+            authentication == HiveSqlAuthenticationMode.SqlPassword
+                ? _loadedConfiguration?.CredentialSecret
+                : null;
 
         if (authentication == HiveSqlAuthenticationMode.SqlPassword &&
             !string.IsNullOrWhiteSpace(_passwordTextBox.Text))
@@ -324,6 +327,13 @@ internal sealed class HivePersistenceSettingsView : UserControl
                     credential,
                     cancellationToken).ConfigureAwait(true);
             }
+        }
+
+        if (authentication == HiveSqlAuthenticationMode.SqlPassword &&
+            credential is null)
+        {
+            throw new ArgumentException(
+                "SQL password authentication requires a saved credential. Enter a password and save the settings first.");
         }
 
         return new HivePersistenceConfiguration(
