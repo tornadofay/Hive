@@ -169,7 +169,7 @@ internal sealed class EventPersistenceExampleView : UserControl
             Stream: {stream.Kind}/{stream.Identity}
             Event 1: {firstAppend.Value!.Event.Envelope.EventId}; version={firstAppend.Value.Event.StreamVersion}
             Event 2: {secondAppend.Value!.Event.Envelope.EventId}; version={secondAppend.Value.Event.StreamVersion}
-            Stored event count: {events.Value.Count}
+            Stored event count: {events.Value!.Count}
             Snapshot version: {snapshot.Value!.Version}; count={snapshot.Value.State.GetProperty("count").GetInt32()}
             Outbox event: {outbox.Value!.Envelope.EventId}; type={outbox.Value.Envelope.EventType}
             Deterministic fold count: {folded.Value!.Count}
