@@ -65,6 +65,64 @@ public sealed class HiveDatabaseOptions
             commandTimeoutSeconds);
     }
 
+
+    public static HiveDatabaseOptions FromConfiguration(
+        HivePersistenceConfiguration configuration,
+        SecretMaterial? credential = null)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        if (configuration.Backend != HivePersistenceBackend.SqlServer)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(configuration),
+                "Only SQL Server persistence is supported in V1.");
+        }
+
+        var builder = new SqlConnectionStringBuilder
+        {
+            DataSource = configuration.Port is null
+                ? configuration.ServerName
+                : $"{configuration.ServerName},{configuration.Port.Value}",
+            InitialCatalog = configuration.DatabaseName,
+            ApplicationName = "Hive",
+            Encrypt = configuration.Encrypt,
+            TrustServerCertificate = configuration.TrustServerCertificate,
+            PersistSecurityInfo = false,
+            ConnectTimeout = 30
+        };
+
+        switch (configuration.AuthenticationMode)
+        {
+            case HiveSqlAuthenticationMode.WindowsIntegrated:
+                builder.IntegratedSecurity = true;
+                break;
+
+            case HiveSqlAuthenticationMode.SqlPassword:
+                if (credential is null)
+                {
+                    throw new ArgumentException(
+                        "A SQL password credential is required.",
+                        nameof(credential));
+                }
+
+                builder.IntegratedSecurity = false;
+                builder.UserID = configuration.UserName!;
+                builder.Password = credential.Reveal();
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(
+                    nameof(configuration),
+                    "SQL authentication mode is invalid.");
+        }
+
+        return new HiveDatabaseOptions(
+            builder.ConnectionString,
+            configuration.CreateDatabaseIfMissing,
+            configuration.CommandTimeoutSeconds);
+    }
+
     public override string ToString() =>
         $"SQL Server={ServerName}; Database={DatabaseName}; CreateIfMissing={CreateDatabaseIfMissing}; TimeoutSeconds={CommandTimeoutSeconds}";
 }
