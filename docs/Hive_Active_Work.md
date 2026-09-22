@@ -162,3 +162,8 @@ Verification required:
 Previous verified D predecessor result: full `Hive.Tests` **159/159 passed, 0 failed, 0 skipped** on 2026-09-22.
 
 Do not close 1.12-D until the required developer verification is actually performed and recorded.
+
+
+## Historical verification
+
+Phase 1.11 completion is recorded in `docs/verification/phase-1/1.11.md`.
