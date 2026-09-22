@@ -1,3 +1,4 @@
+using Hive.Core;
 using Microsoft.Data.SqlClient;
 
 namespace Hive.Persistence;
