@@ -1,13 +1,11 @@
-# Hive.Example.WinForms — API Quick Reference
+# Hive.Example.WinForms — API
 
-Examples demonstrate public Hive APIs. They are not a second test framework.
+Examples use public Hive APIs and are discovered automatically.
 
 ## Add an Example
 
-Normal pattern:
-
 ```csharp
-internal sealed class ProviderResourceExample : IHiveExample
+internal sealed class ProviderExample : IHiveExample
 {
     public string Category => "Providers";
     public string Subcategory => "Provider Platform";
@@ -17,60 +15,44 @@ internal sealed class ProviderResourceExample : IHiveExample
     public UserControl CreateView(IServiceProvider services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        return new ProviderResourceExampleView(services);
+        return new ProviderExampleView(services);
     }
 }
 ```
 
+Requirements:
+- concrete `IHiveExample`;
+- parameterless constructor;
+- return a `UserControl`.
+
 No central registration is required.
 
-Discovery uses the Example Host assembly and requires:
-- concrete type;
-- IHiveExample;
-- parameterless constructor.
-
-Sorted by Order, Category, Subcategory, Title.
-
-## View
-
-Put the scenario in a focused UserControl.
-
-Typical choice:
-
-```text
-Example view
-  └─ HiveExampleTestSurface
-       └─ shared Example output
-```
-
-Use native WinForms controls when sufficient.
+Navigation is `Category → Subcategory → Example`.
 
 ## Shared services
 
-Use:
-
 ```csharp
-var themeManager = services.GetThemeManager();
+var theme = services.GetThemeManager();
 var output = services.GetExampleOutput();
 ```
 
-Available shared services:
-- IHiveThemeManager
-- IHiveExampleOutput
+Available services:
+- `IHiveThemeManager`
+- `IHiveExampleOutput`
 
-Do not access HiveExampleHostForm internals.
+## Example view
 
-## Example test surface
+For an interactive scenario:
 
 ```csharp
 var surface = new HiveExampleTestSurface
 {
-    RunButtonText = "Run provider CRUD"
+    RunButtonText = "Run example"
 };
 
 surface.SetInformation(
-    "Creates and reads the resource through the public API.",
-    "The expected resource state is shown in Output.");
+    "What this demonstrates.",
+    "What should happen.");
 
 surface.CodeSnippet = """
 // Public API reproduction
@@ -82,9 +64,7 @@ surface.ConfigureRun(
     FindForm());
 ```
 
-The run action must call the real API and honor its cancellation token.
-
-On failure, let the shared surface handle the exception unless the scenario has a specific reason to map it differently.
+The run action must call the real public API and use its cancellation token.
 
 ## Output
 
@@ -93,33 +73,29 @@ output.Write("Provider", $"Id: {provider.Id}");
 output.Append($"{Environment.NewLine}Version: {provider.Version}");
 ```
 
-`Write` replaces current output. `Append` adds text.
+`Write` replaces output. `Append` adds text.
 
-Never output secrets, credentials, or access tokens.
+Never output secrets or credentials.
 
 ## Theme
 
-The Host themes the created view before showing it.
-
-For a dynamically created child subtree:
+The Host themes the selected view. For additional dynamic controls:
 
 ```csharp
-services.GetThemeManager().Apply(child);
+theme.Apply(childControl);
 ```
 
 Do not create another theme manager.
 
 ## Public API rule
 
-Examples must use the same public contracts intended for real consumers.
-
 Do not:
 - call internal production helpers;
 - mutate persistence tables directly;
-- bypass Management for management behavior;
+- bypass Management for management operations;
 - use Hive.Tests types as application shortcuts.
 
-## Required Example/Test handoff
+## Required handoff
 
 For every new meaningful externally usable capability:
 
@@ -128,12 +104,8 @@ Example to run: <Category / Subcategory / Example title> — Hive.Example.WinFor
 Tests to run: <focused test class/file>; broader-suite requirement if applicable
 ```
 
-Keep the exact path in docs/Hive_Active_Work.md while verification is pending.
+Keep the exact path in `docs/Hive_Active_Work.md` while verification is pending.
 
-## Do not edit the Host for a normal Example
+## Host registration
 
-Adding an Example normally means adding:
-- the IHiveExample class;
-- the scenario UserControl.
-
-Do not modify HiveExampleHostForm unless the discovery, navigation, shared services, or active-view composition contract itself changes.
+Do not edit `HiveExampleHostForm` for a normal Example. Add the `IHiveExample` class and its view.
