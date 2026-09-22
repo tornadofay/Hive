@@ -1,8 +1,6 @@
-# Hive.Example.WinForms — API
+# Hive.Example.WinForms — Agent Reference
 
-Examples use public Hive APIs and are discovered automatically.
-
-## Add an Example
+## Example class
 
 ```csharp
 internal sealed class ProviderExample : IHiveExample
@@ -25,9 +23,7 @@ Requirements:
 - parameterless constructor;
 - return a `UserControl`.
 
-No central registration is required.
-
-Navigation is `Category → Subcategory → Example`.
+No central registration. Navigation: `Category → Subcategory → Example`.
 
 ## Shared services
 
@@ -36,13 +32,11 @@ var theme = services.GetThemeManager();
 var output = services.GetExampleOutput();
 ```
 
-Available services:
+Services:
 - `IHiveThemeManager`
 - `IHiveExampleOutput`
 
 ## Example view
-
-For an interactive scenario:
 
 ```csharp
 var surface = new HiveExampleTestSurface
@@ -50,21 +44,14 @@ var surface = new HiveExampleTestSurface
     RunButtonText = "Run example"
 };
 
-surface.SetInformation(
-    "What this demonstrates.",
-    "What should happen.");
-
+surface.SetInformation("Description", "Expected result");
 surface.CodeSnippet = """
-// Public API reproduction
+// public API
 """;
-
-surface.ConfigureRun(
-    RunScenarioAsync,
-    output,
-    FindForm());
+surface.ConfigureRun(RunScenarioAsync, output, FindForm());
 ```
 
-The run action must call the real public API and use its cancellation token.
+Run the real public API and honor the cancellation token.
 
 ## Output
 
@@ -73,39 +60,26 @@ output.Write("Provider", $"Id: {provider.Id}");
 output.Append($"{Environment.NewLine}Version: {provider.Version}");
 ```
 
-`Write` replaces output. `Append` adds text.
+`Write` replaces output; `Append` adds text.
 
 Never output secrets or credentials.
 
 ## Theme
 
-The Host themes the selected view. For additional dynamic controls:
-
+Host themes the selected view. For additional dynamic controls:
 ```csharp
 theme.Apply(childControl);
 ```
 
-Do not create another theme manager.
+## Public API
 
-## Public API rule
+Do not call internal production helpers, mutate persistence tables directly, bypass Management for management operations, or use Hive.Tests types as application shortcuts.
 
-Do not:
-- call internal production helpers;
-- mutate persistence tables directly;
-- bypass Management for management operations;
-- use Hive.Tests types as application shortcuts.
-
-## Required handoff
-
-For every new meaningful externally usable capability:
+## Handoff
 
 ```text
 Example to run: <Category / Subcategory / Example title> — Hive.Example.WinForms
 Tests to run: <focused test class/file>; broader-suite requirement if applicable
 ```
 
-Keep the exact path in `docs/Hive_Active_Work.md` while verification is pending.
-
-## Host registration
-
-Do not edit `HiveExampleHostForm` for a normal Example. Add the `IHiveExample` class and its view.
+Keep the exact Example path in `docs/Hive_Active_Work.md` while verification is pending.
