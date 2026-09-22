@@ -250,7 +250,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         if (workItem.Value!.Attachment is null)
         {
             return Result<WorkItemAttachmentContent>.Failure(
-                Error.NotFound(
+                NotFound(
                     "hive.work-item.attachment-not-found",
                     "The requested WorkItem has no attachment."));
         }
