@@ -69,7 +69,7 @@ No core/platform project may depend on Example.WinForms.
 ## Constraints
 
 - WinForms-specific types remain outside Hive.Core.
-- ReaLTaiizor remains exclusively inside Hive.Host.WinForms.UI.
+- Hive-owned WinForms UI implementation remains exclusively inside Hive.Host.WinForms.UI; consuming projects use the Hive-owned UI contracts.
 - Hive.Example.WinForms remains a permanent developer-facing project and does not become an alternate test runner.
 - Use Microsoft Agent Framework wherever it already owns the required behavior.
 - Do not duplicate existing identity, resource, persistence, orchestration, or UI contracts.
