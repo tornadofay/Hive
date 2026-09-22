@@ -37,6 +37,15 @@ internal sealed class PersistenceTestDatabase
 
         using var command = connection.CreateCommand();
         command.CommandText = """
+            IF OBJECT_ID(N'dbo.HiveExecutionTargets', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveExecutionTargets];
+
+            IF OBJECT_ID(N'dbo.HiveProviderAccounts', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveProviderAccounts];
+
+            IF OBJECT_ID(N'dbo.HiveProviders', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveProviders];
+
             IF OBJECT_ID(N'dbo.HiveMigrationJournal', N'U') IS NOT NULL
                 DROP TABLE [dbo].[HiveMigrationJournal];
 

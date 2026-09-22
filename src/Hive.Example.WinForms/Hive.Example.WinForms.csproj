@@ -11,6 +11,7 @@
     <ProjectReference Include="../Hive.Core/Hive.Core.csproj" />
     <ProjectReference Include="../Hive.Agents/Hive.Agents.csproj" />
     <ProjectReference Include="../Hive.Management/Hive.Management.csproj" />
+    <ProjectReference Include="../Hive.Persistence/Hive.Persistence.csproj" />
     <ProjectReference Include="../Hive.Host.WinForms/Hive.Host.WinForms.csproj" />
     <ProjectReference Include="../Hive.Host.WinForms.UI/Hive.Host.WinForms.UI.csproj" />
   </ItemGroup>

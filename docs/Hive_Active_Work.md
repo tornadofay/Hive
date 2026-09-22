@@ -33,6 +33,19 @@ The implementation must preserve the existing Phase 0 dependency direction, shar
 - Keep WinForms presentation separate from management/domain logic; Phase 1 UI consumes the management contracts rather than owning them.
 - Preserve the existing shared WinForms foundation in Hive.Host.WinForms.UI and Hive.Example.WinForms; do not reopen Phase 0 UI work unless a concrete Phase 1 requirement exposes a defect in an established contract.
 
+## Implementation checkpoint — verification pending
+
+The 1.1 implementation is present in the repository at this checkpoint:
+
+- Hive.Core exposes typed Provider / ProviderAccount / ExecutionTarget resources and three-state capability contracts.
+- Hive.Persistence exposes CRUD persistence contracts and the SQL Server implementation with optimistic resource-version checks, ownership/scope enforcement, soft-retirement, and indexed lookup paths.
+- Persistence schema version is now 2 and adds the provider resource tables and indexes.
+- Hive.Tests contains focused provider contract and provider persistence integration scenarios.
+- Hive.Example.WinForms contains the matching Provider Platform example using the public persistence contracts.
+- No provider transport implementation, secret-store implementation, capability-aware planner, or Management facade has been introduced; those remain later slices.
+
+Agent-run build/tests/manual verification are not authorized. The implementation therefore remains pending the developer verification gate below.
+
 ## Verification
 
 Required for completion of 1.1:
@@ -75,3 +88,12 @@ No core/platform project may depend on Example.WinForms.
 - Do not duplicate existing identity, resource, persistence, orchestration, or UI contracts.
 - Complete 1.1 before starting 1.2 or later Phase 1 slices.
 - Do not start Phase 2 or any cognitive-generation work during this slice.
+
+
+## Verification handoff
+
+Example to run: Providers / Provider Platform / Provider / ProviderAccount / ExecutionTarget — Hive.Example.WinForms (net10.0-windows).
+
+Tests to run: tests/Hive.Tests/ProviderResourceTests.cs and tests/Hive.Tests/ProviderPersistenceIntegrationTests.cs; broader Hive.Tests execution is required by the 1.1 completion gate.
+
+Required manual checks include the Example Host provider scenario, the CRUD output, ownership/scope failures, capability-state display, and normal/repeat migration behavior. Record only the developer's actual results before closing this slice.

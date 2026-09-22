@@ -191,5 +191,8 @@ public enum ResourceKind
     Hive,
     Runtime,
     Execution,
-    WorkItem
+    WorkItem,
+    Provider,
+    ProviderAccount,
+    ExecutionTarget
 }
