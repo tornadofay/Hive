@@ -53,7 +53,19 @@ Required for completion of 1.11:
 
 ## Implementation checkpoint
 
-Phase 1.11 implementation has not started.
+Phase 1.11 implementation is present on main; verification is pending.
+
+Implemented in the active slice:
+
+- immutable V1 image-submission contracts and WorkItem attachment metadata;
+- durable indexed WorkItem current-state persistence with ownership/scope enforcement;
+- immutable attachment binary persistence bound to one WorkItem;
+- transactional WorkItem event/snapshot/outbox persistence using the existing event store boundary;
+- Management CRUD/operational facade methods for image submission, read/list, attachment retrieval, activity, approval request, Approve, and Reject;
+- optimistic version checks and typed stale-approval failures;
+- public Host.WinForms Workspace surface consuming only Hive.Management;
+- public Example Host scenario with a deterministic sample-image creation path;
+- focused WorkItem management/persistence coverage and migration/schema coverage.
 
 Before coding, inspect:
 
@@ -68,7 +80,11 @@ Before coding, inspect:
 
 ## Verification handoff
 
-No verification handoff yet; implementation has not started.
+Example to run: Workspace / WorkItem Operations / V1 Workspace & WorkItem Operations — Hive.Example.WinForms
+
+Tests to run: `tests/Hive.Tests/WorkItemManagementTests.cs`; broader `Hive.Tests` execution is required by the 1.11 completion gate.
+
+Manual Workspace checks should cover image submission, WorkItem status/activity, PendingApproval, Approve, Reject, stale-version handling, and the absence of direct persistence access from the Workspace view.
 
 ## Historical verification
 
