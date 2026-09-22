@@ -32,7 +32,7 @@ public sealed class EventPersistenceIntegrationTests
 
         Assert.True(firstAppend.IsSuccess, firstAppend.Error?.Message);
         Assert.Equal(ResourceVersion.Initial, firstAppend.Value!.Event.StreamVersion);
-        Assert.Equal(firstEvent.EventId, firstAppend.Value.Outbox.Envelope.EventId);
+        Assert.Equal(firstEvent.EventId, firstAppend.Value!.Outbox.Envelope.EventId);
 
         var events = await store.ReadEventsAsync(stream);
         Assert.True(events.IsSuccess, events.Error?.Message);
@@ -61,7 +61,7 @@ public sealed class EventPersistenceIntegrationTests
         var secondAppend = await store.AppendAsync(
             new EventAppendRequest(
                 stream,
-                firstAppend.Value.Event.StreamVersion,
+                firstAppend.Value!.Event.StreamVersion,
                 secondEvent,
                 CreateSnapshot(
                     stream,
@@ -82,7 +82,7 @@ public sealed class EventPersistenceIntegrationTests
 
         Assert.True(remaining.IsSuccess, remaining.Error?.Message);
         Assert.Single(remaining.Value!);
-        Assert.Equal(secondEvent.EventId, remaining.Value[0].Envelope.EventId);
+        Assert.Equal(secondEvent.EventId, remaining.Value![0].Envelope.EventId);
     }
 
     [Fact]
