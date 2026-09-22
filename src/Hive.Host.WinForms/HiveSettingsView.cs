@@ -86,7 +86,7 @@ public sealed class HiveSettingsView : UserControl
         var providersNode = new TreeNode("Providers");
         providersNode.Nodes.Add(
             CreatePageNode(
-                "Providers",
+                "Provider Configuration",
                 "Provider identity, transport, endpoint defaults, and connection testing.",
                 SettingsPageKey.Providers));
         providersNode.Nodes.Add(
