@@ -11,7 +11,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
     private readonly HiveEditorLayout _editor;
-    private readonly ComboBox _serverComboBox;
+    private readonly TextBox _serverTextBox;
     private readonly TextBox _portTextBox;
     private readonly TextBox _databaseTextBox;
     private readonly ComboBox _authenticationComboBox;
@@ -44,13 +44,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _editor = new HiveEditorLayout();
 
-        _serverComboBox = new ComboBox
-        {
-            Height = 32,
-            DropDownStyle = ComboBoxStyle.DropDown,
-            AutoCompleteMode = AutoCompleteMode.SuggestAppend,
-            AutoCompleteSource = AutoCompleteSource.ListItems
-        };
+        _serverTextBox = CreateTextBox();
         _portTextBox = CreateTextBox();
         _databaseTextBox = CreateTextBox();
         _authenticationComboBox = new ComboBox
@@ -119,17 +113,19 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _editor.AddField(
             "Server / instance",
-            "SQL Server host or instance name. Keep the port in the separate Port field.",
-            _serverComboBox);
+            "Enter any SQL Server host or instance name. This may be a local server, named instance, remote host, IP address, or online SQL Server. Keep the port in the separate Port field.",
+            _serverTextBox);
 
         _editor.AddField(
             "Port",
             "Optional TCP port. Leave empty for the server default.",
             _portTextBox);
 
+        _databaseTextBox.ReadOnly = true;
+        _databaseTextBox.BackColor = SystemColors.Control;
         _editor.AddField(
             "Database",
-            "Hive-owned SQL Server database name.",
+            "Assigned automatically by Hive. The Settings UI does not allow changing the Hive database name.",
             _databaseTextBox);
 
         _editor.AddField(
@@ -193,6 +189,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
             72);
 
         Controls.Add(_editor);
+
+        _databaseTextBox.Text = HivePersistenceConfiguration.DefaultDatabaseName;
 
         _themeManager.Apply(this);
         _authenticationComboBox.SelectedItem =
@@ -353,9 +351,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         var configuration = new HivePersistenceConfiguration(
             HivePersistenceBackend.SqlServer,
-            _serverComboBox.Text,
+            _serverTextBox.Text,
             resolvedPort,
-            _databaseTextBox.Text,
+            HivePersistenceConfiguration.DefaultDatabaseName,
             authentication,
             authentication == HiveSqlAuthenticationMode.SqlPassword
                 ? _userNameTextBox.Text
@@ -434,10 +432,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private void ApplyConfiguration(HivePersistenceConfiguration configuration)
     {
         _loadedConfiguration = configuration;
-        _serverComboBox.Text = configuration.ServerName;
-        RememberServer(configuration.ServerName);
+        _serverTextBox.Text = configuration.ServerName;
         _portTextBox.Text = configuration.Port?.ToString() ?? string.Empty;
-        _databaseTextBox.Text = configuration.DatabaseName;
+        _databaseTextBox.Text = HivePersistenceConfiguration.DefaultDatabaseName;
         _authenticationComboBox.SelectedItem = configuration.AuthenticationMode;
         _userNameTextBox.Text = configuration.UserName ?? string.Empty;
         _passwordTextBox.Clear();
@@ -530,23 +527,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
     private void RememberServer(string? server)
     {
-        var value = server?.Trim();
-
-        if (string.IsNullOrWhiteSpace(value))
-            return;
-
-        for (var index = 0; index < _serverComboBox.Items.Count; index++)
-        {
-            if (string.Equals(
-                    Convert.ToString(_serverComboBox.Items[index]),
-                    value,
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-        }
-
-        _serverComboBox.Items.Add(value);
+        // Intentionally no-op. Server / instance is a free-form value so Hive
+        // can target local, remote, named-instance, and online SQL Server hosts.
     }
 
     private static TextBox CreateTextBox() =>
