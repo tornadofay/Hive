@@ -13,8 +13,14 @@ public sealed record AgentDefinition
     public AgentDefinition(
         string key,
         string displayName,
-        AgentGeneration generation = AgentGeneration.Base)
-        : this(null, key, displayName, generation)
+        AgentGeneration generation = AgentGeneration.Base,
+        ExecutionTargetId? configuredExecutionTargetId = null)
+        : this(
+            null,
+            key,
+            displayName,
+            generation,
+            configuredExecutionTargetId)
     {
     }
 
@@ -22,7 +28,8 @@ public sealed record AgentDefinition
         ResourceEnvelope<AgentDefinitionId>? resource,
         string key,
         string displayName,
-        AgentGeneration generation = AgentGeneration.Base)
+        AgentGeneration generation = AgentGeneration.Base,
+        ExecutionTargetId? configuredExecutionTargetId = null)
     {
         if (resource is not null && resource.Kind != ResourceKind.AgentDefinition)
         {
@@ -44,6 +51,7 @@ public sealed record AgentDefinition
 
         Resource = resource;
         Generation = generation;
+        ConfiguredExecutionTargetId = configuredExecutionTargetId;
     }
 
     public ResourceEnvelope<AgentDefinitionId>? Resource { get; }
@@ -56,15 +64,41 @@ public sealed record AgentDefinition
 
     public AgentGeneration Generation { get; }
 
+    public ExecutionTargetId? ConfiguredExecutionTargetId { get; }
+
     public AgentDefinition WithDisplayName(string displayName) =>
-        new(Resource, Key, displayName, Generation);
+        new(
+            Resource,
+            Key,
+            displayName,
+            Generation,
+            ConfiguredExecutionTargetId);
 
     public AgentDefinition WithGeneration(AgentGeneration generation) =>
-        new(Resource, Key, DisplayName, generation);
+        new(
+            Resource,
+            Key,
+            DisplayName,
+            generation,
+            ConfiguredExecutionTargetId);
+
+    public AgentDefinition WithConfiguredExecutionTarget(
+        ExecutionTargetId? executionTargetId) =>
+        new(
+            Resource,
+            Key,
+            DisplayName,
+            Generation,
+            executionTargetId);
 
     public AgentDefinition WithResource(
         ResourceEnvelope<AgentDefinitionId> resource) =>
-        new(resource, Key, DisplayName, Generation);
+        new(
+            resource,
+            Key,
+            DisplayName,
+            Generation,
+            ConfiguredExecutionTargetId);
 
     private static string RequireText(string value, string name, int maxLength)
     {
