@@ -240,7 +240,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                 if (accessError is not null)
                     return Result<AgentDefinition>.Failure(accessError);
 
-                if (definition.Resource.Version != current.Resource!.Version)
+                if (resource.Version != current.Resource!.Version)
                 {
                     return Result<AgentDefinition>.Failure(
                         Error.Concurrency(
