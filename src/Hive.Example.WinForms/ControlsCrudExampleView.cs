@@ -133,7 +133,7 @@ internal sealed class ControlsCrudExampleView : UserControl
         {
             Dock = DockStyle.Fill,
             Height = 480,
-            MinimumSize = new Size(420, 420),
+            MinimumSize = new Size(520, 420),
             Margin = new Padding(0, 18, 0, 12),
             Title = "Generic CRUD composition",
             Description = "Reusable list, search, actions, pagination, selection, keyboard interaction, and editor workflow.",
