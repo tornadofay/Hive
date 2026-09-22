@@ -8,7 +8,7 @@ Last updated: 2026-09-22
 
 Phase 0 — Foundations and Phase 1.1 through Phase 1.11 are complete and verified.
 
-Phase 1.12 is the next authorized implementation slice.
+Phase 1.12 is the authorized implementation slice.
 
 ## Objective
 
@@ -32,6 +32,7 @@ Establish the first-class Hive Settings surface as a thin WinForms shell over Hi
 5. Credentials are not persisted in plaintext or exposed in diagnostics.
 6. Developer manually verifies Provider and Persistence UI flows.
 7. Focused automated coverage exists for configuration validation/persistence and security-sensitive behavior.
+8. Broader `Hive.Tests` execution.
 
 ## Constraints
 
@@ -40,10 +41,55 @@ Establish the first-class Hive Settings surface as a thin WinForms shell over Hi
 - Do not duplicate provider transport, secret storage, SQL connection/migration, or bootstrap logic in the Settings UI.
 - Use the existing Example Host pattern for the public example required by the slice.
 
-## Handoff
+## Implementation checkpoint
 
-Example: add the authorized Settings example under the appropriate existing Example Host branch using `docs/ui/examples.md`.
+Phase 1.12 implementation is present on `main`; verification is pending.
 
-Tests: add/run the focused configuration tests required by the slice, then run broader `Hive.Tests` before closure.
+Implemented in the active slice:
 
-Read before coding: the 1.12 roadmap section, relevant `docs/architecture.md` configuration/persistence sections, current Management contracts, Secret Store, Persistence bootstrap/configuration code, Host UI conventions, and Example Host guidance.
+- typed SQL Server/LocalDB persistence configuration contracts;
+- Management save/load boundary backed by an atomic JSON settings file containing only non-secret fields plus Secret Store identity;
+- non-destructive SQL Server persistence connection test reporting database and Hive schema state separately;
+- ProviderAccount credential Secret Store reference support;
+- Management-mediated provider connection-test boundary and OpenAI-compatible concrete tester;
+- first-class public WinForms Settings shell with Provider and Persistence pages;
+- Provider setup for Provider, ProviderAccount, ExecutionTarget, credential references, and provider connection testing;
+- Persistence settings for server/port/database/authentication/security/initialization policy/timeout;
+- public Example Host scenario with copyable, redacted persistence configuration/test output;
+- focused configuration, persistence-option, provider-credential-reference, and provider connection-test coverage.
+
+Before coding, inspect:
+
+- current Management contracts and facade;
+- existing Secret Store and DPAPI persistence boundary;
+- HiveDatabaseOptions/migration/schema bootstrap;
+- Provider/ProviderAccount/ExecutionTarget resource contracts and persistence;
+- Host UI conventions and `docs/ui/examples.md`;
+- Example Host discovery/output pattern;
+- existing configuration/provider/persistence tests.
+
+## Verification handoff
+
+Example to run: **Settings / Configuration / Hive Settings / Provider & Persistence — Hive.Example.WinForms**
+
+Tests to run:
+- `tests/Hive.Tests/HiveConfigurationTests.cs`
+- `tests/Hive.Tests/HivePersistenceOptionsTests.cs`
+- `tests/Hive.Tests/ProviderPersistenceIntegrationTests.cs`
+- `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
+- broader `Hive.Tests` execution is required by the 1.12 completion gate.
+
+Manual Settings checks should cover:
+
+- Persistence Load/Save/reload.
+- SQL Server authentication selection and credential redaction.
+- non-destructive persistence connection test with database/schema state.
+- Provider → ProviderAccount → ExecutionTarget setup.
+- provider credential storage through Secret Store.
+- provider connection test.
+- absence of SQL/transport access from WinForms Settings.
+- Example Host output contains no credential material.
+
+## Historical verification
+
+Phase 1.11 completion is recorded in `docs/verification/phase-1/1.11.md`.
