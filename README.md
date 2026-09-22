@@ -218,7 +218,7 @@ Later areas are added when their owning phase lands: Hive Membership, Governance
 
 Hive's WinForms surfaces share a common UI foundation established in Phase 0.
 
-ReaLTaiizor is the selected third-party rendering layer. It is isolated behind `Hive.Host.WinForms.UI`; consuming forms do not reference the third-party library directly. Hive owns the theme contract, semantic design tokens, and Hive-specific controls where additional behavior or styling is required.
+Hive's WinForms UI foundation is implemented through Hive-owned controls, native WinForms controls, and custom System.Drawing rendering. The implementation is isolated behind `Hive.Host.WinForms.UI`; consuming forms use Hive-owned theme and control contracts rather than a third-party renderer.
 
 The foundation starts with Light / Dark / System modes and shared palette, typography, spacing, and visual-state rules. Standard WinForms controls remain valid when their native behavior is sufficient; Hive does not wrap every control merely to rename it.
 
