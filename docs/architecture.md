@@ -1007,7 +1007,7 @@ The Example host may provide a developer test panel that invokes `dotnet test` a
 
 The Example host is a first-class project from repository scaffolding onward, grows with Hive, and uses the same Hive UI foundation as all other WinForms surfaces.
 
-### 13.4 Settings and Host Runtime Configuration Boundary
+### 13.3 Settings and Host Runtime Configuration Boundary
 
 Hive Settings is an application-management surface over the same authoritative state consumed by host applications. It is not a separate test configuration model.
 
@@ -1111,13 +1111,13 @@ Running executions use their already-established effective configuration snapsho
 
 The Example Host is the first concrete application-level consumer of this boundary. It must expose normal host Settings and must use the configured Provider/Account/Target/Agent state in normal public-API examples. A dedicated configuration-inspection example is supplemental and does not replace configured runtime consumption.
 
-### 13.3 UI Foundation Scope Boundary
+### 13.4 UI Foundation Scope Boundary
 
 The UI foundation is infrastructure, not a mechanism for pulling future platform capabilities into Phase 0. It must not require Hive membership, Swarm, CognitiveAgent, CognitiveHive, Dreams, Questions, or other later-generation behavior.
 
 Phase 1 and later features consume the shared UI foundation instead of creating parallel form/control systems.
 
-### 13.4 UI Design and Responsiveness Contract
+### 13.5 UI Design and Responsiveness Contract
 
 The shared WinForms UI foundation is held to application-grade desktop UI standards rather than demonstration-oriented styling. Shared presentation contracts cover hierarchy, spacing, typography, visual density, navigation states, semantic colors, focus/hover/pressed/disabled states, dialog presentation, CRUD presentation, and resize behavior.
 
