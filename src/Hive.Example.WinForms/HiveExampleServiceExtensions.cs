@@ -1,5 +1,6 @@
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
+using Hive.Management;
 
 namespace Hive.Example.WinForms;
 
@@ -12,6 +13,10 @@ internal static class HiveExampleServiceExtensions
     public static IHiveExampleOutput GetExampleOutput(
         this IServiceProvider services) =>
         GetRequired<IHiveExampleOutput>(services);
+
+    public static IHiveManagementFacade GetManagementFacade(
+        this IServiceProvider services) =>
+        GetRequired<IHiveManagementFacade>(services);
 
     private static T GetRequired<T>(IServiceProvider services)
         where T : class
