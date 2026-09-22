@@ -5,10 +5,11 @@ This directory is the practical consumer guide for Hive's WinForms UI foundation
 
 ## Authority
 
-- docs/architecture.md defines the intended UI architecture and boundaries.
-- This directory defines normal consumer and usage conventions for existing UI contracts and the Example Host development workflow.
-- Source code remains authoritative for the actual implemented API surface. When documentation disagrees with source, reconcile the documentation rather than inventing an API.
-- AGENTS.md defines the required AI-agent workflow and must still be followed.
+- `AGENTS.md` defines the agent workflow and repository-wide engineering rules.
+- `docs/architecture.md` defines the intended UI architecture and boundaries.
+- `docs/ui/` is the practical consumer/development guide for existing UI contracts and the Example Host workflow.
+- Source code is authoritative for the actual implemented API surface. When this guide and source disagree, follow the source evidence, then correct the documentation.
+- This guide is not a second UI architecture document and must not invent contracts that do not exist in code.
 
 ## Read this before UI work
 
