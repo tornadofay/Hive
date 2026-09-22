@@ -1,0 +1,44 @@
+using System.Drawing;
+using Hive.Core;
+using Hive.Host.WinForms.UI.Controls;
+using Hive.Host.WinForms.UI.Theme;
+using Hive.Management;
+
+namespace Hive.Host.WinForms;
+
+public sealed class HiveSettingsForm : HiveForm
+{
+    public HiveSettingsForm(
+        IHiveManagementFacade management,
+        ResourceAccessContext accessContext,
+        IHiveThemeManager themeManager)
+        : base(
+            "Hive Settings",
+            "Provider and Persistence configuration",
+            new Size(1120, 780),
+            new Size(880, 620),
+            themeManager)
+    {
+        ArgumentNullException.ThrowIfNull(management);
+        ArgumentNullException.ThrowIfNull(accessContext);
+        ArgumentNullException.ThrowIfNull(themeManager);
+
+        ConfigureHeader(
+            allowMove: true,
+            allowClose: true,
+            allowMinimize: false,
+            allowMaximize: true,
+            allowHelp: false,
+            allowThemeToggle: true);
+
+        SetBodyPadding(new Padding(12));
+
+        var view = new HiveSettingsView(
+            management,
+            accessContext,
+            themeManager);
+
+        view.Dock = DockStyle.Fill;
+        BodyPanel.Controls.Add(view);
+    }
+}
