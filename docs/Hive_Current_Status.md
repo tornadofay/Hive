@@ -80,9 +80,13 @@ Developer verification:
 
 ### Phase 1.5 — Base Agent & AgentFactory
 
-Implementation is present; developer verification is pending.
+Complete and verified.
 
-Implemented in `Hive.Agents`: `AgentDefinition`, `Agent`, `RuntimeInstance`, `Execution`, creation authorization boundary, and `AgentFactory.Create<TAgent>()`. Runtime and execution state are in-memory only; no persistence, provider transport, MAF execution, or cognitive-generation behavior was added.
+Developer verification:
+- Hive.Example.WinForms `Agents / Base Agent / AgentFactory / Runtime Isolation` completed successfully.
+- Full `Hive.Tests` execution: **103 tests passed, 0 failed, 0 skipped in 2.3 seconds**.
+- Agent generation remained explicit at creation; two RuntimeInstance identities and their Execution state were isolated.
+- The 1.5 completion gate is satisfied.
 
 ### Phase 1.4 — Capability-aware Execution Target Selection
 
