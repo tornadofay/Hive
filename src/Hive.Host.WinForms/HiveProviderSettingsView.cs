@@ -5,6 +5,13 @@ using Hive.Management;
 
 namespace Hive.Host.WinForms;
 
+internal enum HiveProviderSettingsSection
+{
+    Providers,
+    AccountsAndCredentials,
+    ExecutionTargets
+}
+
 internal sealed class HiveProviderSettingsView : UserControl
 {
     private readonly IHiveManagementFacade _management;
@@ -261,6 +268,31 @@ internal sealed class HiveProviderSettingsView : UserControl
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default) =>
         await RefreshAsync(cancellationToken).ConfigureAwait(true);
+
+    public void FocusSection(HiveProviderSettingsSection section)
+    {
+        var control = section switch
+        {
+            HiveProviderSettingsSection.Providers => _providerComboBox,
+            HiveProviderSettingsSection.AccountsAndCredentials => _accountComboBox,
+            HiveProviderSettingsSection.ExecutionTargets => _targetComboBox,
+            _ => throw new ArgumentOutOfRangeException(nameof(section), section, null)
+        };
+
+        if (IsDisposed)
+            return;
+
+        BeginInvoke(
+            new Action(
+                () =>
+                {
+                    if (IsDisposed)
+                        return;
+
+                    _editor.FieldsPanel.ScrollControlIntoView(control);
+                    control.Focus();
+                }));
+    }
 
     private async Task RefreshAsync(CancellationToken cancellationToken)
     {
