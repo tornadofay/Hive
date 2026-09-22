@@ -57,6 +57,8 @@ Hive Settings
 
 Only domains with an authoritative contract are implemented in the phase that owns them. Future durable Hive configuration extends this same center.
 
+A UI page is therefore a consumer of an existing configuration contract, not the owner that creates one. Settings must not invent durable state merely because a category appears in the global navigation.
+
 ### Rules
 
 1. One canonical Hive Settings entry point exists for the package.
