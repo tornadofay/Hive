@@ -21,6 +21,20 @@ public enum HiveDatabaseState
     FutureSchema
 }
 
+public readonly record struct HiveBootstrapCredentialReference(SecretId Id)
+{
+    public HiveBootstrapCredentialReference(SecretId id)
+        : this()
+    {
+        if (id.Value == Guid.Empty)
+            throw new ArgumentException(
+                "A bootstrap credential reference must contain a valid secret identity.",
+                nameof(id));
+
+        Id = id;
+    }
+}
+
 public sealed record HivePersistenceConfiguration
 {
     public HivePersistenceConfiguration(
@@ -30,7 +44,7 @@ public sealed record HivePersistenceConfiguration
         string databaseName,
         HiveSqlAuthenticationMode authenticationMode,
         string? userName,
-        SecretReference? credentialSecret,
+        HiveBootstrapCredentialReference? bootstrapCredential,
         bool encrypt,
         bool trustServerCertificate,
         bool createDatabaseIfMissing,
@@ -87,7 +101,7 @@ public sealed record HivePersistenceConfiguration
         DatabaseName = databaseName.Trim();
         AuthenticationMode = authenticationMode;
         UserName = string.IsNullOrWhiteSpace(userName) ? null : userName.Trim();
-        CredentialSecret = credentialSecret;
+        BootstrapCredential = bootstrapCredential;
         Encrypt = encrypt;
         TrustServerCertificate = trustServerCertificate;
         CreateDatabaseIfMissing = createDatabaseIfMissing;
@@ -106,7 +120,7 @@ public sealed record HivePersistenceConfiguration
 
     public string? UserName { get; }
 
-    public SecretReference? CredentialSecret { get; }
+    public HiveBootstrapCredentialReference? BootstrapCredential { get; }
 
     public bool Encrypt { get; }
 
