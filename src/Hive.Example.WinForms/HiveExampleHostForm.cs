@@ -38,6 +38,8 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private UserControl? _activeView;
     private bool _responsiveLayoutReady;
+    private Rectangle _lastOutputViewBounds;
+    private Rectangle _lastOutputRevealButtonBounds;
 
     public HiveExampleHostForm()
         : base(
@@ -242,7 +244,6 @@ internal sealed class HiveExampleHostForm : HiveForm
             _navigation.AfterSelect -= NavigationAfterSelect;
             _outputView.CollapseStateChanged -= OutputViewOnCollapseStateChanged;
             _outputView.OutputAvailabilityChanged -= OutputViewOnOutputAvailabilityChanged;
-            _outputRevealButton.Dispose();
             DisposeActiveView();
         }
 
@@ -314,7 +315,7 @@ internal sealed class HiveExampleHostForm : HiveForm
 
         var overlayHeight = Math.Max(0, outputHeight);
 
-        _outputView.Bounds = new Rectangle(
+        var outputBounds = new Rectangle(
             OutputOverlayMargin,
             Math.Max(
                 OutputOverlayMargin,
@@ -324,7 +325,13 @@ internal sealed class HiveExampleHostForm : HiveForm
             overlayWidth,
             overlayHeight);
 
-        _outputRevealButton.Bounds = new Rectangle(
+        if (outputBounds != _lastOutputViewBounds)
+        {
+            _outputView.Bounds = outputBounds;
+            _lastOutputViewBounds = outputBounds;
+        }
+
+        var revealButtonBounds = new Rectangle(
             Math.Max(
                 OutputOverlayMargin,
                 _viewHost.ClientSize.Width -
@@ -337,6 +344,12 @@ internal sealed class HiveExampleHostForm : HiveForm
                 OutputButtonMargin),
             OutputButtonWidth,
             OutputButtonHeight);
+
+        if (revealButtonBounds != _lastOutputRevealButtonBounds)
+        {
+            _outputRevealButton.Bounds = revealButtonBounds;
+            _lastOutputRevealButtonBounds = revealButtonBounds;
+        }
     }
 
     private void BuildNavigation()
@@ -494,8 +507,10 @@ internal sealed class HiveExampleHostForm : HiveForm
         if (_outputView.OutputTextBox.TextLength == 0)
             return;
 
-        _outputView.SetCollapsed(false);
-        _outputView.BringToFront();
+        // Streaming output can raise this event for every append. Only change
+        // visibility/z-order when the pane is actually transitioning to visible.
+        if (_outputView.IsCollapsed)
+            _outputView.SetCollapsed(false);
     }
 
     private void DisposeActiveView()
