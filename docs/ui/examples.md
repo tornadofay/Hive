@@ -86,6 +86,14 @@ Persistence
 
 `Order` controls deterministic example ordering. `Title` is the selectable leaf text.
 
+## Settings as package configuration
+
+The global Hive Settings surface is host infrastructure, not a replacement for individual Examples.
+
+The Example Host may include a **Settings → Configuration** example to demonstrate the public configuration boundary and configured-state behavior, but normal Examples should consume the configured Hive state the same way a real application does.
+
+The global Settings center is the single user-facing entry point for durable Hive package configuration. Future configuration examples belong under the existing Settings branch while the actual Settings UI remains the host-level configuration surface.
+
 ## Shared services
 
 ```csharp
