@@ -1095,22 +1095,24 @@ current service graph
     ↓
 validate/load new settings
     ↓
-resolve bootstrap credential
+resolve bootstrap credential through its application-facing contract
     ↓
-construct new persistence-backed stores
+construct complete candidate persistence-backed stores
     ↓
 construct new Management facade
     ↓
-publish new graph
+publish candidate graph
     ↓
 dispose old graph
 ```
+
+The concrete bootstrap-secret storage mechanism is an infrastructure implementation behind that contract. The composition boundary must not depend on DPAPI/file details. A failed candidate build must leave the currently published graph intact.
 
 Provider/ProviderAccount/ExecutionTarget/AgentDefinition changes do not require persistence graph reconstruction. They require authoritative Management reads and host state refresh.
 
 Running executions use their already-established effective configuration snapshot; later Settings changes do not silently alter an execution already in progress.
 
-The Example Host is the first concrete application-level consumer of this boundary. It must expose normal host Settings and must use the configured Provider/Account/Target/Agent state in normal public-API examples. A dedicated configuration-inspection example is supplemental and does not replace configured runtime consumption.
+The Example Host is the first concrete application-level consumer of this boundary. It must expose normal host Settings and must use the configured Provider/Account/Target/Agent state in normal public-API examples. It may not construct a competing Hive service graph or bypass the host composition boundary. A dedicated configuration-inspection example is supplemental and does not replace configured runtime consumption.
 
 ### 13.4 UI Foundation Scope Boundary
 
