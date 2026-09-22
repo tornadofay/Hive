@@ -634,6 +634,28 @@ Later areas are added only when their owning phase lands:
 
 ---
 
+
+### 5.1 V1 WorkItem aggregate and Workspace operations
+
+For Phase 1.11, `WorkItem` is the authoritative durable user-visible aggregate. Its durable state is persisted as an event stream with a current snapshot, so status transitions, approval transitions, optimistic concurrency, activity, and outbox work share one transaction.
+
+The V1 application-facing Management contract exposes:
+
+- create an image-backed WorkItem;
+- read/list WorkItems within the caller's ownership/scope;
+- read WorkItem activity/notifications from the WorkItem event stream;
+- read the submitted attachment content through the Management boundary;
+- request `PendingApproval`;
+- Approve or Reject a pending WorkItem using the expected resource version.
+
+Approval operations are compare-and-set operations against the expected WorkItem version. A stale intervention request returns a typed concurrency error and never applies to a newer WorkItem state. Approve is valid only from `PendingApproval` and transitions to `Completed`; Reject is valid only from `PendingApproval` and transitions to `Rejected`.
+
+The V1 image attachment is immutable input data owned by Hive and bound to exactly one WorkItem. Attachment metadata is part of the WorkItem snapshot; binary content is stored in a dedicated Hive.Persistence table. Creation persists the attachment and WorkItem-created event/snapshot/outbox in the same SQL transaction. Attachment content is bounded and is never exposed through persistence-specific types.
+
+Workspace is a host-facing presentation surface over `Hive.Management`. It does not access `Hive.Persistence`, does not perform SQL, and does not infer or execute business-application writes. In Phase 1.11, execution/provider status is displayed as the currently known WorkItem execution state; actual image-to-extraction-to-write execution is delivered by later V1 pipeline slices.
+
+The generic event store therefore gains only two reusable persistence capabilities needed by this aggregate boundary: listing current snapshots for a resource kind and participating in an existing SQL transaction for an aggregate-specific state change. WorkItem-specific attachment rules remain in the WorkItem persistence owner.
+
 ## 6. Generic Resource Model
 
 All Hive-owned persistent resources share a common identity/ownership envelope:
