@@ -13,6 +13,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
     private readonly IProviderConnectionTester? _providerConnectionTester;
     private readonly IHiveConfigurationStore? _configurationStore;
     private readonly IHivePersistenceConnectionTester? _persistenceConnectionTester;
+    private readonly IHiveBootstrapCredentialStore? _bootstrapCredentials;
 
     public HiveManagementFacade(
         IProviderResourceStore providerResources,
@@ -21,7 +22,8 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         ISecretStore? secrets = null,
         IProviderConnectionTester? providerConnectionTester = null,
         IHiveConfigurationStore? configurationStore = null,
-        IHivePersistenceConnectionTester? persistenceConnectionTester = null)
+        IHivePersistenceConnectionTester? persistenceConnectionTester = null,
+        IHiveBootstrapCredentialStore? bootstrapCredentials = null)
     {
         _providerResources = providerResources
             ?? throw new ArgumentNullException(nameof(providerResources));
@@ -33,6 +35,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         _providerConnectionTester = providerConnectionTester;
         _configurationStore = configurationStore;
         _persistenceConnectionTester = persistenceConnectionTester;
+        _bootstrapCredentials = bootstrapCredentials;
     }
 
     public async Task<Result<HivePersistenceConfiguration>> GetPersistenceConfigurationAsync(
@@ -82,6 +85,78 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             .ConfigureAwait(false);
     }
 
+    public async Task<Result<HiveBootstrapCredentialReference>> SaveBootstrapCredentialAsync(
+        SecretMaterial material,
+        HiveBootstrapCredentialReference? existingReference,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(material);
+
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Result<HiveBootstrapCredentialReference>.Failure(contextError);
+
+        if (_bootstrapCredentials is null)
+        {
+            return Result<HiveBootstrapCredentialReference>.Failure(
+                Error.Unsupported(
+                    "hive.management.bootstrap-credential-store-unavailable",
+                    "The Hive bootstrap credential store is not configured."));
+        }
+
+        var reference = existingReference ??
+            new HiveBootstrapCredentialReference(SecretId.New());
+
+        var result = await _bootstrapCredentials
+            .SetAsync(reference, material, cancellationToken)
+            .ConfigureAwait(false);
+
+        return result.IsSuccess
+            ? Result<HiveBootstrapCredentialReference>.Success(reference)
+            : Result<HiveBootstrapCredentialReference>.Failure(result.Error!);
+    }
+
+    public async Task<Result> RemoveBootstrapCredentialAsync(
+        HiveBootstrapCredentialReference reference,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Result.Failure(contextError);
+
+        if (_bootstrapCredentials is null)
+        {
+            return Result.Failure(
+                Error.Unsupported(
+                    "hive.management.bootstrap-credential-store-unavailable",
+                    "The Hive bootstrap credential store is not configured."));
+        }
+
+        if (_configurationStore is not null)
+        {
+            var configuration = await _configurationStore
+                .LoadPersistenceConfigurationAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (configuration.IsFailure)
+                return Result.Failure(configuration.Error!);
+
+            if (configuration.Value!.BootstrapCredential == reference)
+            {
+                return Result.Failure(
+                    Error.Validation(
+                        "hive.management.bootstrap-credential-still-referenced",
+                        "The bootstrap credential cannot be removed while persistence configuration still references it."));
+            }
+        }
+
+        return await _bootstrapCredentials
+            .ClearAsync(reference, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public async Task<Result<HivePersistenceConnectionTest>> TestPersistenceConnectionAsync(
         HivePersistenceConfiguration configuration,
         ResourceAccessContext accessContext,
@@ -107,23 +182,24 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         {
             if (configuration.AuthenticationMode == HiveSqlAuthenticationMode.SqlPassword)
             {
-                if (configuration.CredentialSecret is null || _secrets is null)
+                if (configuration.BootstrapCredential is null || _bootstrapCredentials is null)
                 {
                     return Result<HivePersistenceConnectionTest>.Failure(
                         Error.Validation(
-                            "hive.management.persistence-credential-required",
-                            "SQL password authentication requires a configured Secret Store credential."));
+                            "hive.management.persistence-bootstrap-credential-required",
+                            "SQL password authentication requires a configured bootstrap credential."));
                 }
 
-                var secret = await _secrets.GetAsync(
-                    configuration.CredentialSecret.Value.Id,
-                    accessContext,
-                    cancellationToken).ConfigureAwait(false);
+                var secret = await _bootstrapCredentials
+                    .ResolveAsync(
+                        configuration.BootstrapCredential.Value,
+                        cancellationToken)
+                    .ConfigureAwait(false);
 
                 if (secret.IsFailure)
                     return Result<HivePersistenceConnectionTest>.Failure(secret.Error!);
 
-                material = secret.Value!.Material;
+                material = secret.Value!;
             }
 
             return await _persistenceConnectionTester
