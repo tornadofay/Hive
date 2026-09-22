@@ -21,10 +21,9 @@ public enum HiveDatabaseState
     FutureSchema
 }
 
-public readonly record struct HiveBootstrapCredentialReference(SecretId Id)
+public readonly record struct HiveBootstrapCredentialReference
 {
     public HiveBootstrapCredentialReference(SecretId id)
-        : this()
     {
         if (id.Value == Guid.Empty)
             throw new ArgumentException(
@@ -33,6 +32,8 @@ public readonly record struct HiveBootstrapCredentialReference(SecretId Id)
 
         Id = id;
     }
+
+    public SecretId Id { get; }
 }
 
 public sealed record HivePersistenceConfiguration
