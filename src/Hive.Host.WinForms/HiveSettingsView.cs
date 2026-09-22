@@ -242,9 +242,13 @@ public sealed class HiveSettingsView : UserControl
 
         using var descriptionBrush = new SolidBrush(theme.Palette.MutedText);
 
+        using var descriptionFont = new Font(
+            Font.FontFamily,
+            8f);
+
         e.Graphics.DrawString(
             page.Description,
-            new Font(Font.FontFamily, 8f),
+            descriptionFont,
             descriptionBrush,
             e.Bounds.Left + 12,
             e.Bounds.Top + 22);
