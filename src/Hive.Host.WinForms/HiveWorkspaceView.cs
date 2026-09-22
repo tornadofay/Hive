@@ -574,10 +574,34 @@ public sealed class HiveWorkspaceView : UserControl
             Orientation = Orientation.Vertical,
             SplitterWidth = 6,
             FixedPanel = FixedPanel.Panel2,
-            Panel2MinSize = 300
+            Panel2MinSize = 0
         };
         split.Panel1.Controls.Add(_workItems);
         split.Panel2.Controls.Add(BuildDetailsPanel());
+
+        split.SizeChanged += (_, _) =>
+        {
+            var availableWidth = split.ClientSize.Width;
+            if (availableWidth <= 0)
+                return;
+
+            var desiredPanel2MinSize = Math.Min(
+                300,
+                Math.Max(0, availableWidth - split.Panel1MinSize - split.SplitterWidth));
+
+            var desiredSplitterDistance = Math.Max(
+                split.Panel1MinSize,
+                availableWidth - desiredPanel2MinSize - split.SplitterWidth);
+
+            if (split.Panel2MinSize < desiredPanel2MinSize
+                && split.SplitterDistance > desiredSplitterDistance)
+            {
+                split.SplitterDistance = desiredSplitterDistance;
+            }
+
+            split.Panel2MinSize = desiredPanel2MinSize;
+            split.SplitterDistance = desiredSplitterDistance;
+        };
 
         var activityHeader = new Label
         {
