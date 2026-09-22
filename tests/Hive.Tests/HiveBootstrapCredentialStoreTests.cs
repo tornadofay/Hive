@@ -170,6 +170,20 @@ public sealed class HiveBootstrapCredentialStoreTests
                 saveConfiguration.IsSuccess,
                 saveConfiguration.Error?.Message);
 
+            var settingsJson = await File.ReadAllTextAsync(configurationPath);
+            Assert.Contains(
+                reference.Id.Value.ToString(),
+                settingsJson,
+                StringComparison.Ordinal);
+            Assert.DoesNotContain(
+                "management-secret",
+                settingsJson,
+                StringComparison.Ordinal);
+            Assert.DoesNotContain(
+                "credentialSecretId",
+                settingsJson,
+                StringComparison.Ordinal);
+
             var protectedDelete =
                 await management.RemoveBootstrapCredentialAsync(
                     reference,
