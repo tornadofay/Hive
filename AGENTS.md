@@ -70,7 +70,7 @@ Before changing the repository, an agent must follow this constitution and then 
 50. `Hive.Host.WinForms.UI` owns Hive's WinForms presentation implementation and custom rendering. The current renderer is native WinForms plus custom `System.Drawing`; do not add a third-party renderer without an explicit architecture decision.
 51. Consuming WinForms projects use Hive-owned UI contracts and controls. Do not leak renderer implementation details across that boundary.
 52. Do not create Hive-prefixed wrappers for ordinary WinForms controls unless Hive needs a real consumer-facing contract or behavior beyond the framework control.
-53. Direct project references do not by themselves prove that architecture is being bypassed. Inspect actual type usage before changing references. When modifying the Host.WinForms dependency graph, reconcile it with the documented Management boundary rather than silently normalizing it.
+53. `Hive.Host.WinForms` must not directly reference `Hive.Core` or `Hive.Agents`. Management/domain behavior flows through `Hive.Management`; presentation infrastructure flows through `Hive.Host.WinForms.UI`. Do not add a direct lower-layer project reference unless the architecture is explicitly changed first.
 
 ## 6. Dependency and technology policy
 
