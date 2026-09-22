@@ -305,7 +305,11 @@ Provider/ProviderAccount/ExecutionTarget/AgentDefinition changes do not require 
 
 Running executions use their already-established effective configuration snapshot; later Settings changes do not silently alter an execution already in progress.
 
-The Example Host is the first concrete application-level consumer of this boundary. It must expose normal host Settings and must use the configured Provider/Account/Target/Agent state in normal public-API examples. It may not construct a competing Hive service graph or bypass the host composition boundary. A dedicated configuration-inspection example is supplemental and does not replace configured runtime consumption.
+The Example Host is the first concrete application-level consumer of this boundary. It exposes the real Hive Settings center through the Overview → Getting Started → Example Configuration leaf, whose primary action opens the host-level Settings window. The Settings UI uses the reusable Hive.Host.WinForms.UI foundation.
+
+The Settings resource hierarchy exposes Providers with advanced Accounts / Credentials and Execution Targets beneath them, plus Agents and Persistence. Provider Accounts are durable credential/resource records, not user login screens. Execution Targets contain concrete endpoint/model/deployment/capability configuration and remain the authoritative target referenced by AgentDefinition.
+
+It must use the configured Provider/Account/Target/Agent state in normal public-API examples. It may not construct a competing Hive service graph or bypass the host composition boundary. The configuration example explains this model but is not a substitute for the real Settings surface or configured runtime consumption.
 
 ### 13.4 UI Foundation Scope Boundary
 
