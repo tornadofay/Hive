@@ -16,10 +16,7 @@ internal sealed class OverviewExample : IHiveExample
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        var themeManager = services.GetService(typeof(Hive.Host.WinForms.UI.Theme.IHiveThemeManager))
-            as Hive.Host.WinForms.UI.Theme.IHiveThemeManager
-            ?? throw new InvalidOperationException(
-                "The Example host did not provide IHiveThemeManager.");
+        var themeManager = services.GetThemeManager();
 
         return new OverviewExampleView(themeManager);
     }
