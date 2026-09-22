@@ -99,7 +99,7 @@ public sealed class AgentExecutionService
                             "hive.agent.execution.model-required",
                             ErrorCategory.Validation,
                             "The selected execution target does not define a model or deployment."),
-                        cancellationToken)
+                        CancellationToken.None)
                     .ConfigureAwait(false);
             }
 
@@ -115,7 +115,6 @@ public sealed class AgentExecutionService
                 model);
 
             var mafAgent = chatClient.AsAIAgent(
-                instructions: request.Agent.Definition.DisplayName,
                 name: request.Agent.Definition.Key,
                 description: request.Agent.Definition.DisplayName);
 
@@ -140,7 +139,7 @@ public sealed class AgentExecutionService
                             "hive.agent.execution.empty-response",
                             ErrorCategory.Serialization,
                             "The provider returned no usable agent response text."),
-                        cancellationToken)
+                        CancellationToken.None)
                     .ConfigureAwait(false);
             }
 
