@@ -271,6 +271,61 @@ public sealed class ExecutionTargetSelectionTests
         Assert.Equal("alpha", result.Value!.SelectedTarget.Key);
     }
 
+
+
+    [Fact]
+    public void Select_RejectsRetiredTargets()
+    {
+        var retired = CreateTarget("retired", [
+            Capability("text.generate", CapabilityState.Supported)
+        ]);
+
+        retired = new ExecutionTarget(
+            new ResourceEnvelope<ExecutionTargetId>(
+                retired.Resource.Kind,
+                retired.Id,
+                retired.Resource.Owner,
+                retired.Resource.Scope,
+                retired.Resource.Version,
+                retired.Resource.Provenance,
+                retired.Resource.Lifecycle.TransitionTo(
+                    ResourceLifecycleStatus.Retired,
+                    DateTimeOffset.UtcNow),
+                retired.Resource.Metadata),
+            retired.ProviderId,
+            retired.ProviderAccountId,
+            retired.Key,
+            retired.DisplayName,
+            retired.Endpoint,
+            retired.Model,
+            retired.Deployment,
+            retired.Capabilities);
+
+        var active = CreateTarget("active", [
+            Capability("text.generate", CapabilityState.Supported)
+        ]);
+
+        var result = ExecutionTargetSelector.Select(
+            new ExecutionTargetSelectionRequest(
+                [retired, active],
+                [Requirement("text.generate", CapabilityRequirementKind.Required)]));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("active", result.Value!.SelectedTarget.Key);
+
+        var retiredDiagnostic = Assert.Single(
+            result.Value.Diagnostics.Where(
+                diagnostic => diagnostic.TargetKey == "retired"));
+
+        Assert.Equal(
+            ExecutionTargetSelectionDiagnosticStatus.Rejected,
+            retiredDiagnostic.Status);
+        Assert.Contains(
+            "lifecycle is retired",
+            string.Join(" ", retiredDiagnostic.Reasons),
+            StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public void Select_DoesNotExposeEndpointOrAccountInDiagnostics()
     {
