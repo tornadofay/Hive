@@ -290,7 +290,7 @@ The solution and project files are the implementation source for the actual proj
 
 **Phase 0 — Foundations: Complete.**
 
-The solution, core contracts, identity/resource foundation, persistence bootstrap, shared WinForms UI foundation, and permanent Example Host shell are established. **Phase 1.1 — Provider / ProviderAccount / ExecutionTarget** is the current implementation slice. Authoritative status is recorded only in `docs/Hive_Current_Status.md`.
+The solution, core contracts, identity/resource foundation, persistence bootstrap, shared WinForms UI foundation, and permanent Example Host shell are established. **Phase 1.6 — Base Agent Work Protocols** is the current implementation slice; implementation is present and developer verification is pending. Authoritative status is recorded only in `docs/Hive_Current_Status.md`.
 
 See [Architecture](docs/architecture.md) and [Roadmap](docs/roadmap.md).
 
