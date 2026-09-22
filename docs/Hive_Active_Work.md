@@ -56,7 +56,7 @@ Final Phase 1.12 verification additionally requires the full Settings flow, conf
 
 ## Implementation checkpoint
 
-The original Phase 1.12 Settings implementation is present on `main`; verification remains pending. The Settings-to-host consumption gap was identified against the HAgent reference implementation and is now the active 1.12 program. The implementation must proceed through the ordered sub-stages in the plan.
+The original Phase 1.12 Settings implementation is present on `main`; 1.12-A automated verification is now recorded, while manual host acceptance and later Phase 1.12 Settings/runtime-consumption work remain open. The Settings-to-host consumption gap was identified against the HAgent reference implementation and is now the active 1.12 program. The implementation must proceed through the ordered sub-stages in the plan.
 
 Implemented in the active slice:
 
@@ -92,6 +92,12 @@ Before coding, inspect:
 - Example Host discovery/service-composition/output pattern;
 - host-layer composition/lifetime ownership, candidate publication, replacement, and disposal semantics;
 - existing configuration/provider/persistence/execution tests.
+
+## Verification evidence
+
+Developer-reported local verification: the full `Hive.Tests` suite completed with **153/153 passed, 0 failed, 0 skipped** on 2026-09-22. The run included the focused 1.12-A composition tests.
+
+The previously existing Settings inspection Example produced an old-schema/local-database error and was not an acceptable configured-host verification scenario; that obsolete Example has been removed. No valid manual configured-host acceptance has been recorded for 1.12-A.
 
 ## Verification handoff
 
