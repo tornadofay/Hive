@@ -210,7 +210,7 @@ Host consumption:
 
 The Settings shell owns navigation/composition only. Persistence pages must not construct `SqlConnection`, execute SQL directly, or duplicate Hive.Persistence migration/bootstrap rules.
 
-Depends on: 1.2 Secret Store, the existing Hive.Persistence SQL Server boundary, the existing Management facade, and the Phase 0 Hive.Host.WinForms.UI foundation.
+Depends on: the existing 1.2 Hive resource Secret Store, the existing Hive.Persistence SQL Server boundary, the existing Management facade, and the Phase 0 Hive.Host.WinForms.UI foundation. Phase 1.12-B introduces the separate bootstrap-credential infrastructure required for SQL-password startup access.
 
 Verify:
 - global Settings is reachable as the normal package configuration center;
