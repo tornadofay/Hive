@@ -4,13 +4,13 @@ Last updated: 2026-09-22
 
 ## Repository state
 
-Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 and Phase 1.2 are complete and verified; Phase 1.3 is now the active implementation slice.
+Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 through Phase 1.3 are complete and verified; Phase 1.4 is now the active implementation slice.
 
 ## Current phase
 
 Phase 0 — Foundations: **Complete**.
 
-**Active slice: 1.3 — OpenAI-compatible Provider Adapter.**
+**Active slice: 1.4 — Capability-aware Execution Target Selection.**
 
 ## Architecture decisions now locked
 
@@ -77,6 +77,15 @@ Developer verification:
 - Full Hive.Tests execution: **67 tests passed, 0 failed, 0 skipped in 1.8 seconds**.
 - The 1.2 completion gate is satisfied.
 
+
+### Phase 1.3 — OpenAI-compatible Provider Adapter
+
+Complete and verified.
+
+Developer verification:
+- Hive.Example.WinForms `Providers / Provider Transport / OpenAI-compatible Provider Adapter` completed successfully against the local fake HTTP endpoint, including normal and structured-output responses.
+- Full `Hive.Tests` execution: **80 tests passed, 0 failed, 0 skipped in 1.6 seconds**.
+- The 1.3 completion gate is satisfied.
 
 ### Phase 0 closure — Foundations
 
@@ -159,4 +168,4 @@ Implemented so far:
 - Phase 1.4 and later Phase 1 implementation slices.
 - Later phases.
 
-Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 and Phase 1.2 are complete and verified; Phase 1.3 is active.
+Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.3 are complete and verified; Phase 1.4 is active.
