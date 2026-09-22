@@ -183,10 +183,13 @@ Persistence configuration:
 - typed Hive persistence configuration exposed through the Management boundary;
 - V1 SQL Server configuration including server/instance, port, authentication metadata, database identity, and required connection-security options;
 - SQL Server LocalDB represented as the same SQL Server persistence boundary for local development;
-- database credentials referenced through a bootstrap Secret Store boundary rather than stored as plaintext configuration;
+- Hive resource credentials use the database-backed Secret Store once Hive.Persistence is available;
+- SQL-password bootstrap credentials use a separate user-scoped DPAPI-protected bootstrap boundary outside the target Hive database and are referenced rather than stored as plaintext;
 - non-destructive connection test that only verifies connectivity and does not create the database or apply migrations;
 - separate database/schema status and explicit initialization/migration lifecycle;
-- saved persistence settings survive application restart without exposing the password in ordinary configuration or diagnostics.
+- saved persistence settings survive application restart without exposing the bootstrap password in ordinary configuration or diagnostics;
+- only absence of saved configuration permits the typed `LocalDevelopment()` first-run default; invalid/unavailable saved configuration does not silently fall back;
+- persisted `createDatabaseIfMissing` configuration does not make connection tests or ordinary startup composition perform database/schema mutation.
 
 Agent configuration:
 - AgentDefinition configuration may reference existing ExecutionTargets;
@@ -198,6 +201,7 @@ Settings UI:
 - no parallel Settings-specific navigation/list renderer or theme system.
 
 Host consumption:
+- the host application composition boundary owns the current persistence-backed service graph; `Hive.Example.WinForms` is a consumer of that boundary, not its architectural owner;
 - the Example Host and future WinForms applications consume the same persisted configuration edited by Settings;
 - Persistence changes recompose the persistence-backed service graph;
 - resource configuration changes refresh authoritative Management state without unnecessary persistence reconstruction;
