@@ -68,12 +68,11 @@ Implemented in the active slice:
 - first-class public WinForms Settings shell with Provider and Persistence pages;
 - Provider setup for Provider, ProviderAccount, ExecutionTarget, credential references, and provider connection testing;
 - Persistence settings for server/port/database/authentication/security/initialization policy/timeout;
-- public Example Host scenario with copyable, redacted persistence configuration/test output;
 - focused configuration, persistence-option, provider-credential-reference, and provider connection-test coverage;
 - host-owned `HiveHostComposition` and `HiveHostServiceGraph` boundaries with first-run configuration loading, persisted configuration consumption, explicit bootstrap-credential injection, serialized candidate construction/publication, failed-replacement preservation, and idempotent graph disposal;
 - the published Management facade uses the same authoritative configuration-store instance as the composition boundary;
 - `Hive.Example.WinForms` now consumes the host-owned service graph instead of constructing a competing persistence/Management graph;
-- the existing `HiveSettingsExample` remains only a supplemental configuration-inspection scenario; it is not the configured-host acceptance path and is not a substitute for host-level Settings behavior;
+- the former `HiveSettingsExample` configuration-inspection scenario was removed because it was not the real host configuration flow and was not an acceptance surface for 1.12-A;
 - focused `HiveHostCompositionTests` coverage for first-run defaults, saved configuration consumption, shared configuration state, invalid configuration, bootstrap-credential failure, failed replacement, disposal, and serialized recomposition;
 - `Hive.Tests` now targets the Windows desktop target required to reference the host composition project.
 
@@ -98,7 +97,7 @@ Before coding, inspect:
 
 Current sub-stage: **1.12-A — Host Configuration and Runtime Composition**
 
-Example to run: **None for 1.12-A.** Do not use the current `Settings / Configuration / Hive Settings / Provider & Persistence` inspection example as the acceptance scenario. The real configured-host Example path belongs to the later host-level Settings/runtime-consumption stages and must follow the documented HAgent-style host configuration flow.
+Example to run: **None for 1.12-A.** The configured-host Example path belongs to the later host-level Settings/runtime-consumption stages and must follow the documented HAgent-style host configuration flow.
 
 Tests to run:
 - `tests/Hive.Tests/HiveHostCompositionTests.cs` — full 1.12-A composition/lifetime boundary coverage;
