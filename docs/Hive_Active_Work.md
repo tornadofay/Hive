@@ -75,6 +75,9 @@ Implemented in the active slice:
 Before coding, inspect:
 
 - `docs/plan/Phase1.12_Settings_Host_Integration.md`;
+- `docs/architecture/v1-host-and-management.md`;
+- `docs/architecture/execution-and-persistence.md`;
+- `docs/architecture/foundations.md` where persistence/bootstrap/UI foundation boundaries are involved;
 - current Management contracts and facade;
 - existing Secret Store and DPAPI persistence boundary;
 - HiveDatabaseOptions/migration/schema bootstrap;
