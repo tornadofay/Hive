@@ -18,7 +18,7 @@ Phase 1.12 is the authorized implementation slice.
 
 ## Objective
 
-Complete the first-class Hive Settings surface so saved configuration actually drives the host application's real persistence/resources/runtime consumption, following the HAgent configuration-consumption pattern while preserving Hive's stronger Management/resource boundaries.
+Establish Hive Settings as the permanent global Hive package configuration center, then make the configured state actually drive the host application's persistence/resources/runtime consumption. Phase 1.12 establishes the first concrete domains; later Hive capabilities extend this same configuration center rather than creating parallel settings roots.
 
 ## Scope
 
@@ -50,7 +50,7 @@ Current sub-stage 1.12-A is limited to the host configuration/composition bounda
 - Do not implement Phase 1.13 or later.
 - Preserve existing Hive.Management and Hive.Persistence boundaries.
 - Do not duplicate provider transport, secret storage, SQL connection/migration, or bootstrap logic in the Settings UI.
-- Use the existing Example Host pattern for the public example required by the slice.
+- Use the existing Example Host pattern for the public example required by the slice. The global Settings center itself is host/application infrastructure; its Examples demonstrate configured behavior rather than replacing the Settings center.
 
 ## Implementation checkpoint
 
