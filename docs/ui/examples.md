@@ -37,14 +37,14 @@ A concrete Example must:
 - have a parameterless constructor;
 - return a non-null UserControl from CreateView(IServiceProvider).
 
-The discovery code scans the Example assembly and sorts examples by:
+The discovery code scans the Example Host assembly at startup and creates concrete types that implement `IHiveExample` and expose a parameterless constructor. Examples are sorted by:
 
-1. Order;
-2. Category;
-3. Subcategory;
-4. Title.
+1. `Order`;
+2. `Category`;
+3. `Subcategory`;
+4. `Title`.
 
-Do not manually register a new Example in HiveExampleHostForm.
+Do not manually register a new Example in `HiveExampleHostForm`.
 
 ## Example navigation
 
