@@ -41,11 +41,11 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
     {
         var contextError = ValidateAccessContext(accessContext);
         if (contextError is not null)
-            return Failure<HivePersistenceConfiguration>(contextError);
+            return Result<HivePersistenceConfiguration>.Failure(contextError);
 
         if (_configurationStore is null)
         {
-            return Failure<HivePersistenceConfiguration>(
+            return Result<HivePersistenceConfiguration>.Failure(
                 Error.Unsupported(
                     "hive.management.configuration-store-unavailable",
                     "Hive persistence configuration storage is not configured."));
@@ -91,11 +91,11 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
 
         var contextError = ValidateAccessContext(accessContext);
         if (contextError is not null)
-            return Failure<HivePersistenceConnectionTest>(contextError);
+            return Result<HivePersistenceConnectionTest>.Failure(contextError);
 
         if (_persistenceConnectionTester is null)
         {
-            return Failure<HivePersistenceConnectionTest>(
+            return Result<HivePersistenceConnectionTest>.Failure(
                 Error.Unsupported(
                     "hive.management.persistence-tester-unavailable",
                     "Hive persistence connection testing is not configured."));
@@ -109,7 +109,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             {
                 if (configuration.CredentialSecret is null || _secrets is null)
                 {
-                    return Failure<HivePersistenceConnectionTest>(
+                    return Result<HivePersistenceConnectionTest>.Failure(
                         Error.Validation(
                             "hive.management.persistence-credential-required",
                             "SQL password authentication requires a configured Secret Store credential."));
@@ -121,7 +121,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                     cancellationToken).ConfigureAwait(false);
 
                 if (secret.IsFailure)
-                    return Failure<HivePersistenceConnectionTest>(secret.Error!);
+                    return Result<HivePersistenceConnectionTest>.Failure(secret.Error!);
 
                 material = secret.Value!.Material;
             }
@@ -286,11 +286,11 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
     {
         var contextError = ValidateAccessContext(accessContext);
         if (contextError is not null)
-            return Failure<ProviderConnectionTestResult>(contextError);
+            return Result<ProviderConnectionTestResult>.Failure(contextError);
 
         if (executionTargetId == default)
         {
-            return Failure<ProviderConnectionTestResult>(
+            return Result<ProviderConnectionTestResult>.Failure(
                 Error.Validation(
                     "hive.management.execution-target.identity-required",
                     "The execution target identity is required."));
@@ -298,7 +298,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
 
         if (_providerConnectionTester is null)
         {
-            return Failure<ProviderConnectionTestResult>(
+            return Result<ProviderConnectionTestResult>.Failure(
                 Error.Unsupported(
                     "hive.management.provider-tester-unavailable",
                     "Provider connection testing is not configured."));
@@ -310,7 +310,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             cancellationToken).ConfigureAwait(false);
 
         if (target.IsFailure)
-            return Failure<ProviderConnectionTestResult>(target.Error!);
+            return Result<ProviderConnectionTestResult>.Failure(target.Error!);
 
         var account = await _providerResources.GetProviderAccountAsync(
             target.Value!.ProviderAccountId,
@@ -318,7 +318,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             cancellationToken).ConfigureAwait(false);
 
         if (account.IsFailure)
-            return Failure<ProviderConnectionTestResult>(account.Error!);
+            return Result<ProviderConnectionTestResult>.Failure(account.Error!);
 
         var provider = await _providerResources.GetProviderAsync(
             target.Value.ProviderId,
@@ -326,7 +326,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             cancellationToken).ConfigureAwait(false);
 
         if (provider.IsFailure)
-            return Failure<ProviderConnectionTestResult>(provider.Error!);
+            return Result<ProviderConnectionTestResult>.Failure(provider.Error!);
 
         SecretMaterial? material = null;
 
@@ -336,7 +336,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             {
                 if (_secrets is null)
                 {
-                    return Failure<ProviderConnectionTestResult>(
+                    return Result<ProviderConnectionTestResult>.Failure(
                         Error.Unsupported(
                             "hive.management.secret-store-unavailable",
                             "The provider account references a credential but the Secret Store is not configured."));
@@ -348,7 +348,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                     cancellationToken).ConfigureAwait(false);
 
                 if (secret.IsFailure)
-                    return Failure<ProviderConnectionTestResult>(secret.Error!);
+                    return Result<ProviderConnectionTestResult>.Failure(secret.Error!);
 
                 material = secret.Value!.Material;
             }
