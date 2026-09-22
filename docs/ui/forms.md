@@ -70,4 +70,8 @@ var form = new HiveSettingsForm(
 form.ShowDialog(owner);
 ```
 
-`HiveSettingsForm` owns window/header composition only. `HiveSettingsView` owns global Settings navigation and page composition. Provider, Agent, and Persistence configuration pages call the appropriate public Management/application boundaries. Settings pages do not construct or own the host Hive service graph; host composition/lifetime remains outside the UI. Future durable Hive configuration domains extend this same Settings center rather than creating parallel top-level settings forms.
+`HiveSettingsForm` owns window/header composition only. `HiveSettingsView` owns global Settings navigation and page composition. Provider, ProviderAccount, ExecutionTarget, and AgentDefinition are resource domains and therefore use dedicated CRUD pages with separate HiveEditorLayout-based editor dialogs. The Provider Account and Execution Target pages are scoped by their parent resources so the hierarchy is explicit instead of collapsing unrelated resources into one editor. Persistence is different: it is one global configuration document, so its leaf uses a dedicated editor rather than CRUD.
+
+Settings pages call the appropriate public Management/application boundaries. Settings pages do not construct or own the host Hive service graph; host composition/lifetime remains outside the UI. Future durable Hive configuration domains extend this same Settings center rather than creating parallel top-level settings forms.
+
+The Persistence Server / instance field is an editable ComboBox so the current server and previously used values during the session can be selected while arbitrary valid server/instance names can still be entered. Hive currently has no authoritative server-discovery/catalog contract, so the UI must not invent a list of SQL Server instances.
