@@ -561,6 +561,8 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
 
         AddWorkItemStateParameters(command, updated);
         command.Parameters.Add(
+            BigIntParameter("@NewVersion", updated.Resource.Version.Value));
+        command.Parameters.Add(
             GuidParameter("@WorkItemId", updated.Id.Value));
         command.Parameters.Add(
             BigIntParameter("@ExpectedVersion", current.Resource.Version.Value));
