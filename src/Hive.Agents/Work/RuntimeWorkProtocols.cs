@@ -7,16 +7,18 @@ public sealed class RuntimeWorkProtocols
     public RuntimeWorkProtocols(
         AgentId agentId,
         RuntimeId runtimeId,
-        IClock? clock = null)
+        IClock? clock = null,
+        IQuestionTransport? questions = null,
+        IDelegationChannel? delegation = null)
     {
         AgentId = agentId;
         RuntimeId = runtimeId;
 
         Objectives = new ObjectiveStore();
         Memory = new AgentMemoryStore();
-        Questions = new QuestionTransport(clock);
+        Questions = questions ?? new QuestionTransport(clock);
         UnderstandingGate = new UnderstandingGate();
-        Delegation = new InMemoryDelegationChannel();
+        Delegation = delegation ?? new InMemoryDelegationChannel();
     }
 
     public AgentId AgentId { get; }
