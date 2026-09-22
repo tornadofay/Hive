@@ -219,6 +219,100 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     [Fact]
+    public async Task ConnectionTester_SendsMinimalRequestAndReturnsResult()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                """{"id":"test","model":"verified-model","choices":[{"message":{"role":"assistant","content":"OK"}}]}"""));
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var now = DateTimeOffset.UtcNow;
+
+        var provider = new Provider(
+            new ResourceEnvelope<ProviderId>(
+                ResourceKind.Provider,
+                ProviderId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            "test-provider",
+            "Test Provider",
+            "openai-compatible");
+
+        var account = new ProviderAccount(
+            new ResourceEnvelope<ProviderAccountId>(
+                ResourceKind.ProviderAccount,
+                ProviderAccountId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            provider.Id,
+            "test-account",
+            "Test Account");
+
+        var target = new ExecutionTarget(
+            new ResourceEnvelope<ExecutionTargetId>(
+                ResourceKind.ExecutionTarget,
+                ExecutionTargetId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            provider.Id,
+            account.Id,
+            "test-target",
+            "Test Target",
+            server.BaseUri,
+            "test-model",
+            null,
+            [
+                new CapabilityStateEntry(
+                    new CapabilityKey("text.generate"),
+                    CapabilityState.Supported)
+            ]);
+
+        using var credential = SecretMaterial.Create("test-key");
+
+        var result = await new OpenAICompatibleProviderConnectionTester()
+            .TestAsync(
+                provider,
+                account,
+                target,
+                credential);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal("test-provider", result.Value!.ProviderKey);
+        Assert.Equal("test-target", result.Value.ExecutionTargetKey);
+        Assert.Equal("verified-model", result.Value.Model);
+        Assert.True(result.Value.Duration >= TimeSpan.Zero);
+        Assert.Equal("Bearer", server.AuthorizationScheme);
+        Assert.Equal("test-key", server.AuthorizationParameter);
+        Assert.Contains(
+            ""model":"test-model"",
+            server.RequestBody,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "Reply with OK.",
+            server.RequestBody,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Contracts_RejectInvalidModelAndMessages()
     {
         Assert.Throws<ArgumentException>(
