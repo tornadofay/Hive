@@ -298,6 +298,9 @@ internal sealed class HiveProviderSettingsView : UserControl
                     provider => provider.Id == _selectedProvider.Id)
                     ?? _providers[0]);
 
+        await ProviderSelectionChangedAsync(
+            cancellationToken).ConfigureAwait(true);
+
         SetStatus(
             $"{_providers.Count} provider(s) loaded.",
             isError: false);
