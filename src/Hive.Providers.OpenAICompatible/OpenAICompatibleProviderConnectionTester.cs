@@ -44,7 +44,7 @@ public sealed class OpenAICompatibleProviderConnectionTester : IProviderConnecti
             Timeout = TestTimeout
         };
 
-        using var options = new OpenAICompatibleProviderOptions(
+        var options = new OpenAICompatibleProviderOptions(
             target.Endpoint,
             credential,
             TestTimeout);
