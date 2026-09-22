@@ -39,7 +39,7 @@ public sealed class HiveConfigurationTests
                 "HiveProduction",
                 HiveSqlAuthenticationMode.SqlPassword,
                 "hive-user",
-                new SecretReference(secretId),
+                new HiveBootstrapCredentialReference(secretId),
                 encrypt: true,
                 trustServerCertificate: false,
                 createDatabaseIfMissing: false,
