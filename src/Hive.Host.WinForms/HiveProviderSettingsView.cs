@@ -282,6 +282,21 @@ internal sealed class HiveProviderSettingsView : UserControl
         if (IsDisposed)
             return;
 
+        if (!IsHandleCreated)
+        {
+            HandleCreated += OnHandleCreated;
+
+            void OnHandleCreated(object? sender, EventArgs args)
+            {
+                HandleCreated -= OnHandleCreated;
+
+                if (!IsDisposed)
+                    FocusSection(section);
+            }
+
+            return;
+        }
+
         BeginInvoke(
             new Action(
                 () =>
