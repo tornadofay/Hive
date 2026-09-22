@@ -13,6 +13,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
         [DefinitionKey],
         [DisplayName],
         [Generation],
+        [ConfiguredExecutionTargetId],
         [OwnerPrincipalId],
         [ScopeKind],
         [ScopeIdentity],
@@ -73,6 +74,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                         @DefinitionKey,
                         @DisplayName,
                         @Generation,
+                        @ConfiguredExecutionTargetId,
                         @OwnerPrincipalId,
                         @ScopeKind,
                         @ScopeIdentity,
@@ -281,7 +283,8 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                     updatedResource,
                     current.Key,
                     definition.DisplayName,
-                    definition.Generation);
+                    definition.Generation,
+                    definition.ConfiguredExecutionTargetId);
 
                 await UpdateRowAsync(
                     connection,
@@ -393,6 +396,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
             SET
                 [DisplayName] = @DisplayName,
                 [Generation] = @Generation,
+                [ConfiguredExecutionTargetId] = @ConfiguredExecutionTargetId,
                 [ResourceVersion] = @NewVersion,
                 [MetadataJson] = @MetadataJson
             WHERE [AgentDefinitionId] = @AgentDefinitionId
@@ -410,6 +414,10 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
             IntParameter(
                 "@Generation",
                 (int)updated.Generation));
+        command.Parameters.Add(
+            GuidParameter(
+                "@ConfiguredExecutionTargetId",
+                updated.ConfiguredExecutionTargetId?.Value));
         command.Parameters.Add(
             BigIntParameter(
                 "@NewVersion",
@@ -497,7 +505,11 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
             resource,
             reader.GetString(reader.GetOrdinal("DefinitionKey")),
             reader.GetString(reader.GetOrdinal("DisplayName")),
-            generation);
+            generation,
+            reader.IsDBNull(reader.GetOrdinal("ConfiguredExecutionTargetId"))
+                ? null
+                : new ExecutionTargetId(
+                    reader.GetGuid(reader.GetOrdinal("ConfiguredExecutionTargetId"))));
     }
 
     private static ResourceEnvelope<TIdentity> ReadResourceEnvelope<TIdentity>(
@@ -807,6 +819,10 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
             IntParameter(
                 "@Generation",
                 (int)definition.Generation));
+        command.Parameters.Add(
+            GuidParameter(
+                "@ConfiguredExecutionTargetId",
+                definition.ConfiguredExecutionTargetId?.Value));
         AddResourceParameters(command, resource);
     }
 
