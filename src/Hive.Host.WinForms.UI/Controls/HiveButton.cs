@@ -207,8 +207,7 @@ public sealed class HiveButton : UserControl
         var theme = _theme;
         if (theme is null)
         {
-            using var fallbackBrush = new SolidBrush(SystemColors.Control);
-            e.Graphics.FillPath(fallbackBrush, _path);
+            e.Graphics.FillPath(SystemBrushes.Control, _path);
             DrawText(e.Graphics, SystemColors.ControlText);
             return;
         }
