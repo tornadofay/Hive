@@ -443,7 +443,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         var theme = _themeManager.Theme;
         _statusLabel.ForeColor = isError
-            ? theme.Palette.Error
+            ? theme.VisualStates.Error
             : theme.Palette.MutedText;
     }
 
