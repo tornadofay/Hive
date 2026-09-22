@@ -39,6 +39,7 @@ public readonly record struct HiveBootstrapCredentialReference
 public sealed record HivePersistenceConfiguration
 {
     public const string DefaultApplicationName = "Hive";
+    public const string DefaultDatabaseName = "Hive";
 
     public HivePersistenceConfiguration(
         HivePersistenceBackend backend,
