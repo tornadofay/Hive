@@ -182,7 +182,7 @@ Update only the source-of-truth document whose state changed:
 - `docs/architecture.md` — intended architecture/ownership/contracts.
 - `docs/Hive_Active_Work.md` — current scope/checkpoint/verification gate.
 - `docs/roadmap.md` — ordered implementation plan.
-- `docs/Hive_Current_Status.md` — actual status only.
+- `docs/Hive_Current_Status.md` — actual status only; link to historical verification rather than copying it here.
 - `docs/verification/` — historical records of verification actually performed.
 - `docs/ui/` — concise UI/Example API usage.
 - `docs/examples/` — public usage/reference examples.
