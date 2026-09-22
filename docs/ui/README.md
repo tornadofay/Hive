@@ -24,9 +24,11 @@ Do not start by rebuilding Hive's UI rules from control internals.
 
 ## Documents
 
-- controls.md — consumer-facing Hive controls and when to use them.
-- forms.md — HiveForm, page composition, layout, theming, lifecycle, and responsiveness.
-- examples.md — how to implement, organize, discover, and manually verify a new Hive.Example.WinForms example.
+- `controls.md` — consumer-facing Hive controls and when to use them.
+- `forms.md` — HiveForm, page composition, layout, theming, lifecycle, and responsiveness.
+- `examples.md` — how to implement, organize, discover, and manually verify a new Hive.Example.WinForms example.
+
+Read `examples.md` whenever a feature adds or changes an Example Host scenario, and read `controls.md` / `forms.md` whenever a feature adds or changes WinForms UI.
 
 ## Core rule
 
