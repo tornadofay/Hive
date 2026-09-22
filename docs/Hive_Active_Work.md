@@ -83,8 +83,24 @@ No verification claim is recorded until it has actually been performed.
 - Do not introduce cost selection as a substitute for capability matching; cost remains a separate policy input.
 - Do not add a general-purpose workflow/orchestration engine.
 
+## Implementation checkpoint
+
+The 1.4 implementation is present in the repository at this checkpoint:
+
+- `Hive.Core` exposes capability requirements, selection modes, separate cost-policy input, explainable selection diagnostics, and `ExecutionTargetSelector`.
+- Required capabilities accept only `Supported`; Forbidden capabilities accept only explicitly `Unsupported`; missing capability evidence is `Unknown`.
+- Preferred and Optional requirements influence deterministic ranking without becoming hard filters.
+- Auto selects the highest-scoring qualifying target; Preferred honors a qualifying preferred target before fallback; Fixed never falls back.
+- Inactive execution targets are rejected during selection.
+- Selection diagnostics expose only target identity/key/name, score, status, and policy reasons; they do not expose endpoint or credential material.
+- `Hive.Tests/ExecutionTargetSelectionTests.cs` contains focused coverage for capability states, requirement kinds, selection modes, lifecycle rejection, deterministic selection, failures, diagnostics, and cost-policy separation.
+- `Hive.Example.WinForms` contains `Providers / Target Selection / Capability-aware Execution Target Selection`.
+- `docs/examples/Phase14_Capability_Aware_Execution_Target_Selection.md` documents the public API and selection rules.
+
+Developer verification is pending. Agent-run builds/tests/manual verification remain unauthorized.
+
 ## Verification handoff
 
-Example to run: <exact 1.4 Example Host path once the authorized example is implemented> — Hive.Example.WinForms
+Example to run: Providers / Target Selection / Capability-aware Execution Target Selection — Hive.Example.WinForms (net10.0-windows).
 
-Tests to run: <exact 1.4 focused test class/file once implemented>; broader Hive.Tests execution is required by the 1.4 completion gate.
+Tests to run: tests/Hive.Tests/ExecutionTargetSelectionTests.cs; broader Hive.Tests execution is required by the 1.4 completion gate.
