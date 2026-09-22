@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-22 (rev 27 — Settings-driven host configuration boundary)
+Last updated: 2026-09-22 (rev 28 — Global Settings, host composition, and bootstrap credential boundary)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -124,7 +124,7 @@ Phase 0.4 establishes the Hive-owned SQL Server persistence boundary without put
 - Hive's database is a separate database owned by Hive. It is never used as a gateway to the host application's business database.
 - Persistence configuration is a first-class Hive platform configuration domain, not incidental host wiring.
 - Hosts may provide initial/bootstrap persistence configuration, but the long-term authoritative configuration surface is Hive's own typed persistence-configuration contract and management/settings boundary.
-- Credentials are not written to the repository, migration scripts, logs, or Hive database metadata. Database passwords belong to the Secret Store boundary and are referenced by secret identity rather than persisted as plaintext connection data.
+- Credentials are not written to the repository, migration scripts, logs, or Hive database metadata. Hive resource credentials belong to the database-backed Secret Store boundary once Hive.Persistence is available. The SQL bootstrap credential is a separate user-scoped DPAPI-protected bootstrap-secret boundary outside the target Hive database and is referenced by persisted configuration rather than stored as plaintext.
 - `HiveDatabaseOptions` enables database creation by default. Passing `createDatabaseIfMissing: false` is an explicit opt-out when the host requires pre-provisioned databases.
 
 #### Database technology
@@ -1009,7 +1009,7 @@ The Example host is a first-class project from repository scaffolding onward, gr
 
 ### 13.3 Settings and Host Runtime Configuration Boundary
 
-Hive Settings is an application-management surface over the same authoritative state consumed by host applications. It is not a separate test configuration model.
+Hive Settings is the **global Hive package configuration center** and the permanent first-class user-facing configuration surface for durable Hive-owned package configuration. It is an application-management surface over the same authoritative state consumed by host applications, not a separate test configuration model or a collection of parallel settings roots.
 
 The intended configuration path is:
 
