@@ -8,7 +8,7 @@ Last updated: 2026-09-22
 
 ### Current sub-stage
 
-**1.12-B — Bootstrap Credential Boundary**
+**1.12-C — Real Settings Management**
 
 Detailed workload and ordering: `docs/plan/Phase1.12_Settings_Host_Integration.md`
 
@@ -31,9 +31,9 @@ The complete Phase 1.12 program is subdivided into bounded sub-stages described 
 - real Example Host consumption of configured state;
 - focused verification and documentation closure.
 
-Current sub-stage 1.12-B implements the concrete bootstrap-credential boundary required by the completed 1.12-A composition contract. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-B.
+1.12-A and 1.12-B are complete and verified. Current sub-stage 1.12-C implements the authoritative Settings resource-management surface. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-C.
 
-## Current 1.12-B verification gate
+## Completed 1.12-B verification gate
 
 1. Bootstrap credential storage is outside the target Hive database.
 2. Windows DPAPI uses user scope for stored bootstrap material.
@@ -45,7 +45,7 @@ Current sub-stage 1.12-B implements the concrete bootstrap-credential boundary r
 8. Focused automated coverage exists for the bootstrap boundary.
 9. No configured-host Example or final Settings UI work is implemented in this sub-stage.
 
-## Current 1.12-A verification gate
+## Completed 1.12-A verification gate
 
 1. The host-layer composition boundary, not `Hive.Example.WinForms`, owns the current Hive service graph.
 2. No saved persistence configuration uses the typed `LocalDevelopment()` first-run default.
@@ -68,7 +68,7 @@ Final Phase 1.12 verification additionally requires the full Settings flow, conf
 
 ## Implementation checkpoint
 
-The original Phase 1.12 Settings implementation is present on `main`; 1.12-A automated verification is now recorded, while manual host acceptance and later Phase 1.12 Settings/runtime-consumption work remain open. The Settings-to-host consumption gap was identified against the HAgent reference implementation and is now the active 1.12 program. The implementation must proceed through the ordered sub-stages in the plan.
+The original Phase 1.12 Settings implementation and the 1.12-A/1.12-B infrastructure slices are present on `main`; 1.12-A and 1.12-B automated verification are recorded, while manual host acceptance and later Phase 1.12 Settings/runtime-consumption work remain open. The Settings-to-host consumption gap was identified against the HAgent reference implementation and is now the active 1.12 program. The implementation must proceed through the ordered sub-stages in the plan.
 
 Implemented in the active slice:
 
@@ -114,22 +114,24 @@ Before coding, inspect:
 
 Developer-reported local verification before starting 1.12-B: the full `Hive.Tests` suite completed with **153/153 passed, 0 failed, 0 skipped** on 2026-09-22. The run included the focused 1.12-A composition tests.
 
-1.12-B implementation changes have not yet been executed by the developer. No verification result is recorded for the new DPAPI/bootstrap boundary yet.
+Developer-reported local verification after 1.12-B: the full `Hive.Tests` suite completed with **158/158 passed, 0 failed, 0 skipped** on 2026-09-22. This run verifies the completed 1.12-B bootstrap credential changes together with the existing suite.
 
 The previously existing Settings inspection Example produced an old-schema/local-database error and was not an acceptable configured-host verification scenario; that obsolete Example has been removed.
 
 ## Verification handoff
 
-Current sub-stage: **1.12-B — Bootstrap Credential Boundary**
+Current sub-stage: **1.12-C — Real Settings Management**
 
-Example to run: **None for 1.12-B.** This is host/bootstrap infrastructure; the real user-facing Settings and configured-host Example is deferred to the later Settings/runtime-consumption stages.
+Example to run: **None solely for 1.12-C until the resource-management surface is complete.** The configured-host Example remains deferred to 1.12-F.
 
-Tests to run:
-- `tests/Hive.Tests/HiveBootstrapCredentialStoreTests.cs` — focused bootstrap boundary coverage;
-- `tests/Hive.Tests/HiveConfigurationTests.cs` — configuration serialization, bootstrap persistence, and explicit legacy-reference rejection;
+Previous 1.12-B verification:
+- `tests/Hive.Tests/HiveBootstrapCredentialStoreTests.cs` — bootstrap boundary coverage;
+- `tests/Hive.Tests/HiveConfigurationTests.cs` — configuration serialization and explicit legacy-reference rejection;
 - `tests/Hive.Tests/HivePersistenceOptionsTests.cs` — configuration-to-SQL option mapping;
-- `tests/Hive.Tests/HiveHostCompositionTests.cs` — host composition remains green after bootstrap-boundary integration;
-- broader `Hive.Tests` execution remains required for final Phase 1.12 closure.
+- `tests/Hive.Tests/HiveHostCompositionTests.cs` — host composition after bootstrap-boundary integration;
+- broader `Hive.Tests` execution: **158/158 passed, 0 failed, 0 skipped**.
+
+Next 1.12-C work is limited to authoritative Provider, ProviderAccount, ExecutionTarget, and AgentDefinition Settings management plus its focused automated coverage.
 
 Manual application verification is not recorded as complete for 1.12-A until the developer actually runs the host and exercises the current authorized behavior.
 
