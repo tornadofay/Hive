@@ -1,0 +1,319 @@
+using System.Drawing;
+using Hive.Core;
+using Hive.Host.WinForms.UI.Controls;
+using Hive.Host.WinForms.UI.Theme;
+using Hive.Management;
+
+namespace Hive.Host.WinForms;
+
+internal sealed class HiveExecutionTargetEditorForm : HiveForm
+{
+    private readonly ExecutionTarget? _existing;
+    private readonly Provider _provider;
+    private readonly ProviderAccount _account;
+    private readonly IHiveManagementFacade _management;
+    private readonly ResourceAccessContext _accessContext;
+    private readonly TextBox _providerTextBox;
+    private readonly TextBox _accountTextBox;
+    private readonly TextBox _keyTextBox;
+    private readonly TextBox _nameTextBox;
+    private readonly TextBox _endpointTextBox;
+    private readonly TextBox _modelTextBox;
+    private readonly TextBox _deploymentTextBox;
+    private readonly TextBox _capabilitiesTextBox;
+    private readonly Label _testStatus;
+    private readonly HiveButton _testButton;
+
+    public HiveExecutionTargetEditorForm(
+        ExecutionTarget? target,
+        Provider provider,
+        ProviderAccount account,
+        IHiveManagementFacade management,
+        ResourceAccessContext accessContext,
+        IHiveThemeManager themeManager)
+        : base(
+            target is null ? "New Execution Target" : "Edit Execution Target",
+            "Concrete endpoint, model/deployment, capabilities, and connection target",
+            new Size(820, 720),
+            new Size(700, 600),
+            themeManager)
+    {
+        _existing = target;
+        _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+        _account = account ?? throw new ArgumentNullException(nameof(account));
+        _management = management ?? throw new ArgumentNullException(nameof(management));
+        _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
+
+        ConfigureHeader(
+            allowMove: true,
+            allowClose: true,
+            allowMinimize: false,
+            allowMaximize: false,
+            allowHelp: false,
+            allowThemeToggle: true);
+
+        SetBodyPadding(new Padding(20));
+
+        var editor = new HiveEditorLayout();
+
+        _providerTextBox = CreateReadOnlyTextBox(_provider.DisplayName);
+        _accountTextBox = CreateReadOnlyTextBox(_account.DisplayName);
+        _keyTextBox = CreateTextBox();
+        _nameTextBox = CreateTextBox();
+        _endpointTextBox = CreateTextBox();
+        _modelTextBox = CreateTextBox();
+        _deploymentTextBox = CreateTextBox();
+        _capabilitiesTextBox = new TextBox
+        {
+            Multiline = true,
+            ScrollBars = ScrollBars.Vertical,
+            Dock = DockStyle.Fill,
+            BorderStyle = BorderStyle.FixedSingle,
+            Height = 100
+        };
+        _testStatus = new Label
+        {
+            AutoSize = false,
+            Dock = DockStyle.Bottom,
+            Height = 22
+        };
+
+        _keyTextBox.Text = target?.Key ?? string.Empty;
+        _nameTextBox.Text = target?.DisplayName ?? string.Empty;
+        _endpointTextBox.Text = target?.Endpoint.ToString() ?? string.Empty;
+        _modelTextBox.Text = target?.Model ?? string.Empty;
+        _deploymentTextBox.Text = target?.Deployment ?? string.Empty;
+        _capabilitiesTextBox.Text = FormatCapabilities(
+            target?.Capabilities ?? Array.Empty<CapabilityStateEntry>());
+
+        if (target is not null)
+        {
+            _keyTextBox.ReadOnly = true;
+            _keyTextBox.BackColor = themeManager.Theme.Palette.DisabledBackground;
+            _keyTextBox.ForeColor = themeManager.Theme.Palette.DisabledText;
+        }
+
+        editor.AddField(
+            "Provider",
+            "Owning Provider resource. Parent ownership is fixed after target creation.",
+            _providerTextBox);
+
+        editor.AddField(
+            "Provider Account",
+            "Owning ProviderAccount and credential boundary.",
+            _accountTextBox);
+
+        editor.AddField(
+            "Key",
+            "Stable ExecutionTarget identity. It cannot be changed after creation.",
+            _keyTextBox);
+
+        editor.AddField(
+            "Display name",
+            "Human-readable execution target name.",
+            _nameTextBox);
+
+        editor.AddField(
+            "Endpoint",
+            "Absolute HTTP/HTTPS URI. Credentials must never be embedded in the URI.",
+            _endpointTextBox);
+
+        editor.AddField(
+            "Model",
+            "Model identifier. Either Model or Deployment must be supplied.",
+            _modelTextBox);
+
+        editor.AddField(
+            "Deployment",
+            "Optional deployment identifier for providers that use deployments.",
+            _deploymentTextBox);
+
+        editor.AddField(
+            "Capabilities",
+            "One entry per line using capability=Supported, capability=Unsupported, or capability=Unknown.",
+            _capabilitiesTextBox,
+            118);
+
+        _testButton = editor.AddActionButton(
+            "Test connection",
+            HiveButtonStyle.Secondary,
+            124);
+        _testButton.Visible = target is not null;
+        _testButton.Click += async (_, _) => await TestConnectionAsync();
+
+        _testStatus.Text = target is null
+            ? "Save the target before testing its connection."
+            : "Connection test not run.";
+
+        var cancel = editor.AddActionButton(
+            "Cancel",
+            HiveButtonStyle.Secondary,
+            96);
+        var save = editor.AddActionButton(
+            target is null ? "Create" : "Save",
+            HiveButtonStyle.Primary,
+            96);
+
+        cancel.Click += (_, _) =>
+        {
+            DialogResult = DialogResult.Cancel;
+            Close();
+        };
+        save.Click += (_, _) => Save();
+
+        editor.AddField(
+            "Test status",
+            "Tests run through Hive.Management using this target and its referenced credential.",
+            _testStatus,
+            62);
+
+        Controls.Add(editor);
+        ThemeManager.Apply(BodyPanel);
+    }
+
+    public ExecutionTarget? Definition { get; private set; }
+
+    private async Task TestConnectionAsync()
+    {
+        if (_existing is null)
+            return;
+
+        _testButton.Enabled = false;
+        try
+        {
+            var result = await _management
+                .TestExecutionTargetConnectionAsync(
+                    _existing.Id,
+                    _accessContext)
+                .ConfigureAwait(true);
+
+            if (result.IsFailure)
+            {
+                _testStatus.Text = $"Connection test failed: {result.Error!.Message}";
+                return;
+            }
+
+            _testStatus.Text = "Connection test succeeded.";
+        }
+        catch (Exception exception)
+        {
+            _testStatus.Text = $"Connection test failed: {exception.Message}";
+        }
+        finally
+        {
+            _testButton.Enabled = true;
+        }
+    }
+
+    private void Save()
+    {
+        try
+        {
+            var key = _keyTextBox.Text.Trim();
+            var name = _nameTextBox.Text.Trim();
+
+            if (!Uri.TryCreate(_endpointTextBox.Text.Trim(), UriKind.Absolute, out var endpoint))
+                throw new InvalidOperationException(
+                    "Endpoint must be an absolute HTTP or HTTPS URI.");
+
+            var capabilities = ParseCapabilities(_capabilitiesTextBox.Text);
+
+            Definition = _existing is null
+                ? new ExecutionTarget(
+                    HiveSettingsResourceFactory.CreateEnvelope(
+                        ResourceKind.ExecutionTarget,
+                        ExecutionTargetId.New(),
+                        _accessContext),
+                    _provider.Id,
+                    _account.Id,
+                    key,
+                    name,
+                    endpoint,
+                    NormalizeOptional(_modelTextBox.Text),
+                    NormalizeOptional(_deploymentTextBox.Text),
+                    capabilities)
+                : _existing
+                    .WithDisplayName(name)
+                    .WithEndpoint(endpoint)
+                    .WithModel(NormalizeOptional(_modelTextBox.Text))
+                    .WithDeployment(NormalizeOptional(_deploymentTextBox.Text))
+                    .WithCapabilities(capabilities);
+
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+        catch (Exception exception)
+        {
+            HiveMessageBox.ShowError(this, exception.Message);
+        }
+    }
+
+    private static IReadOnlyList<CapabilityStateEntry> ParseCapabilities(
+        string text)
+    {
+        var entries = new List<CapabilityStateEntry>();
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var rawLine in text.Split(
+                     new[] { '\r', '\n' },
+                     StringSplitOptions.RemoveEmptyEntries))
+        {
+            var line = rawLine.Trim();
+            var separator = line.IndexOf('=');
+
+            if (separator <= 0 || separator == line.Length - 1)
+                throw new InvalidOperationException(
+                    $"Invalid capability entry '{line}'. Use capability=State.");
+
+            var keyText = line[..separator].Trim();
+            var stateText = line[(separator + 1)..].Trim();
+
+            if (!Enum.TryParse<CapabilityState>(
+                    stateText,
+                    ignoreCase: true,
+                    out var state))
+            {
+                throw new InvalidOperationException(
+                    $"Invalid capability state '{stateText}'. Use Supported, Unsupported, or Unknown.");
+            }
+
+            var capability = new CapabilityKey(keyText);
+
+            if (!keys.Add(capability.Value))
+                throw new InvalidOperationException(
+                    $"Capability '{capability.Value}' is listed more than once.");
+
+            entries.Add(new CapabilityStateEntry(capability, state));
+        }
+
+        return entries;
+    }
+
+    private static string FormatCapabilities(
+        IReadOnlyList<CapabilityStateEntry> capabilities) =>
+        string.Join(
+            Environment.NewLine,
+            capabilities.Select(
+                item => $"{item.Capability.Value}={item.State}"));
+
+    private static string? NormalizeOptional(string text) =>
+        string.IsNullOrWhiteSpace(text)
+            ? null
+            : text.Trim();
+
+    private static TextBox CreateTextBox() =>
+        new()
+        {
+            Dock = DockStyle.Fill,
+            Height = 32,
+            BorderStyle = BorderStyle.FixedSingle
+        };
+
+    private static TextBox CreateReadOnlyTextBox(string value)
+    {
+        var box = CreateTextBox();
+        box.Text = value;
+        box.ReadOnly = true;
+        return box;
+    }
+}
