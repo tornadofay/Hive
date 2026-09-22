@@ -85,6 +85,7 @@ internal sealed class HiveAgentSettingsView : UserControl
         var providers = await _management
             .ListProvidersAsync(
                 _accessContext,
+                includeRetired: true,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(true);
 
@@ -101,6 +102,7 @@ internal sealed class HiveAgentSettingsView : UserControl
                 .ListProviderAccountsAsync(
                     provider.Id,
                     _accessContext,
+                    includeRetired: true,
                     cancellationToken: cancellationToken)
                 .ConfigureAwait(true);
 
@@ -115,6 +117,7 @@ internal sealed class HiveAgentSettingsView : UserControl
                     .ListExecutionTargetsAsync(
                         account.Id,
                         _accessContext,
+                        includeRetired: true,
                         cancellationToken: cancellationToken)
                     .ConfigureAwait(true);
 
