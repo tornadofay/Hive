@@ -53,8 +53,16 @@ public sealed record AgentDefinition
     }
 }
 
-public sealed record AgentCreationContext(
-    ResourceAccessContext AccessContext);
+public sealed record AgentCreationContext
+{
+    public AgentCreationContext(ResourceAccessContext accessContext)
+    {
+        AccessContext = accessContext
+            ?? throw new ArgumentNullException(nameof(accessContext));
+    }
+
+    public ResourceAccessContext AccessContext { get; }
+}
 
 public interface IAgentCreationAuthorizer
 {
