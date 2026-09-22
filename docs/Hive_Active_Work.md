@@ -96,6 +96,6 @@ Developer verification is still pending. No build, test, or manual Example resul
 
 ## Verification handoff
 
-Example to run: Persistence / Events / Event Log / Snapshot / Outbox — Hive.Example.WinForms
+Example to run: Persistence / Events / Event Persistence / Event Log + Snapshot + Outbox — Hive.Example.WinForms
 
 Tests to run: tests/Hive.Tests/EventPersistenceIntegrationTests.cs and tests/Hive.Tests/EventSnapshotFolderTests.cs; broader Hive.Tests execution is required by the 1.7 completion gate.
