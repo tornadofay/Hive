@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -187,6 +188,8 @@ public sealed class OpenAICompatibleProviderAdapterTests
             result.Value.StructuredContent.Value
                 .GetProperty("name")
                 .GetString());
+        Assert.Contains("\"response_format\":{", server.RequestBody, StringComparison.Ordinal);
+        Assert.Contains("\"name\":\"person\"", server.RequestBody, StringComparison.Ordinal);
     }
 
     [Fact]
