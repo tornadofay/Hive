@@ -107,7 +107,7 @@ internal sealed class OpenAICompatibleProviderExampleView : UserControl
             Model: {result.Value.Model}
             Response ID: {result.Value.Id ?? "(none)"}
             Assistant content: {result.Value.Content}
-            Structured name: {structured.Value.GetProperty("name").GetString()}
+            Structured name: {structured.GetProperty("name").GetString()}
             Authentication: none
             Vendor SDK: none
             """);
