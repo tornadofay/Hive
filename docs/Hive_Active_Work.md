@@ -4,11 +4,11 @@ Last updated: 2026-09-22
 
 ## Active slice
 
-**1.8 — Outbox Poller**
+**1.9 — First Real Agent Execution**
 
-Phase 0 — Foundations and Phase 1.1 through Phase 1.7 are complete and verified.
+Phase 0 — Foundations and Phase 1.1 through Phase 1.8 are complete and verified.
 
-Do not introduce 1.9 or later Phase 1 slices until 1.8 is complete.
+Phase 1.9 is now the authorized active slice.
 
 ## Objective
 
@@ -85,12 +85,25 @@ No verification claim is recorded until it has actually been performed.
 - Do not add a second orchestration/workflow engine.
 - The outbox is not a distributed message broker.
 
-## Implementation checkpoint
+## Phase 1.8 completion
 
-Phase 1.7 is complete and verified. Phase 1.8 implementation is present; developer verification is pending.
+Phase 1.8 — Outbox Poller is complete and verified.
+
+Developer verification:
+- Hive.Example.WinForms `Persistence / Events / Outbox Poller / Transactional Outbox Poller` completed successfully.
+- Example output confirmed simulated first-delivery failure, retained lease, successful retry, preserved event identity, one idempotent side effect, no remaining outbox row, and migration schema 5.
+- Full `Hive.Tests` execution: **124 tests passed, 0 failed, 0 skipped in 2.7 seconds**.
+- The 1.8 completion gate is satisfied.
+
+## 1.9 objective
+
+Connect a base Agent to MAF and the Hive provider boundary for one request, with correlation and durable lifecycle events.
+
+Do not implement later Phase 1 slices in this active slice.
 
 ## Verification handoff
 
-Example to run: Persistence / Events / Outbox Poller / Transactional Outbox Poller — Hive.Example.WinForms
+Example to run: <add the exact 1.9 Example Host path when its implementation exists> — Hive.Example.WinForms
 
-Tests to run: tests/Hive.Tests/EventOutboxPollerIntegrationTests.cs; broader Hive.Tests execution is required by the 1.8 completion gate.
+Tests to run: <add the exact 1.9 focused test file when its implementation exists>; broader Hive.Tests execution will be required by the 1.9 completion gate.
+
