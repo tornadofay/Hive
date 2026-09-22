@@ -1220,6 +1220,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
             UPDATE [dbo].[HiveProviderAccounts]
             SET [DisplayName] = @DisplayName,
                 [ExternalAccountId] = @ExternalAccountId,
+                [CredentialSecretId] = @CredentialSecretId,
                 [ResourceVersion] = @NewVersion,
                 [MetadataJson] = @MetadataJson
             WHERE [ProviderAccountId] = @ProviderAccountId
