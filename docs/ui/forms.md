@@ -56,3 +56,18 @@ Use normal WinForms:
 The owner of a dynamically replaced child disposes the previous child.
 
 UI controls should consume application/Management APIs; do not put SQL or provider transport into reusable UI controls.
+
+## Settings form
+
+`HiveSettingsForm` is the application-window shell for the first-class Hive Settings surface:
+
+```csharp
+var form = new HiveSettingsForm(
+    management,
+    accessContext,
+    themeManager);
+
+form.ShowDialog(owner);
+```
+
+`HiveSettingsForm` owns window/header composition only. `HiveSettingsView` owns Settings navigation and page composition; Provider and Persistence pages call only `IHiveManagementFacade`.
