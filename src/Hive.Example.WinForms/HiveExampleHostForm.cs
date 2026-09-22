@@ -354,42 +354,53 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private void BuildNavigation()
     {
-        TreeNode? currentCategory = null;
-        TreeNode? currentSubcategory = null;
-
-        foreach (var example in _examples)
+        _navigation.BeginUpdate();
+        try
         {
-            if (currentCategory is null ||
-                !string.Equals(
-                    currentCategory.Text,
-                    example.Category,
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                currentCategory = new TreeNode(example.Category);
-                _navigation.Nodes.Add(currentCategory);
-                currentSubcategory = null;
-            }
+            _navigation.Nodes.Clear();
 
-            if (currentSubcategory is null ||
-                !string.Equals(
-                    currentSubcategory.Text,
-                    example.Subcategory,
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                currentSubcategory = new TreeNode(example.Subcategory);
-                currentCategory.Nodes.Add(currentSubcategory);
-            }
+            var categoryNodes =
+                new Dictionary<string, TreeNode>(StringComparer.OrdinalIgnoreCase);
+            var subcategoryNodes =
+                new Dictionary<string, TreeNode>(StringComparer.OrdinalIgnoreCase);
 
-            currentSubcategory.Nodes.Add(
-                new TreeNode(example.Title)
+            foreach (var example in _examples)
+            {
+                if (!categoryNodes.TryGetValue(
+                        example.Category,
+                        out var categoryNode))
                 {
-                    Tag = example
-                });
+                    categoryNode = new TreeNode(example.Category);
+                    categoryNodes.Add(example.Category, categoryNode);
+                    _navigation.Nodes.Add(categoryNode);
+                }
+
+                var subcategoryKey =
+                    example.Category + "\u001f" + example.Subcategory;
+
+                if (!subcategoryNodes.TryGetValue(
+                        subcategoryKey,
+                        out var subcategoryNode))
+                {
+                    subcategoryNode = new TreeNode(example.Subcategory);
+                    subcategoryNodes.Add(subcategoryKey, subcategoryNode);
+                    categoryNode.Nodes.Add(subcategoryNode);
+                }
+
+                subcategoryNode.Nodes.Add(
+                    new TreeNode(example.Title)
+                    {
+                        Tag = example
+                    });
+            }
+
+            _navigation.CollapseAll();
         }
-
-        _navigation.CollapseAll();
+        finally
+        {
+            _navigation.EndUpdate();
+        }
     }
-
     private void SelectFirstExample()
     {
         foreach (TreeNode category in _navigation.Nodes)
