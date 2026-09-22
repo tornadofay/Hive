@@ -31,6 +31,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
         [AccountKey],
         [DisplayName],
         [ExternalAccountId],
+        [CredentialSecretId],
         [OwnerPrincipalId],
         [ScopeKind],
         [ScopeIdentity],
@@ -527,7 +528,8 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                     current.ProviderId,
                     current.Key,
                     account.DisplayName,
-                    account.ExternalAccountId);
+                    account.ExternalAccountId,
+                    account.CredentialSecret);
 
                 await UpdateProviderAccountRowAsync(
                     connection,
@@ -948,7 +950,8 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                     current.ProviderId,
                     current.Key,
                     current.DisplayName,
-                    current.ExternalAccountId);
+                    current.ExternalAccountId,
+                    current.CredentialSecret);
 
                 await UpdateRetiredAsync(
                     connection,
@@ -1083,6 +1086,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                 @AccountKey,
                 @DisplayName,
                 @ExternalAccountId,
+                @CredentialSecretId,
                 @OwnerPrincipalId,
                 @ScopeKind,
                 @ScopeIdentity,
@@ -1235,6 +1239,10 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                 SqlDbType.NVarChar,
                 200,
                 updated.ExternalAccountId));
+        command.Parameters.Add(
+            GuidParameter(
+                "@CredentialSecretId",
+                updated.CredentialSecret?.Id.Value));
         command.Parameters.Add(
             SqlParameter(
                 "@NewVersion",
@@ -1500,7 +1508,12 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
             reader.GetString(reader.GetOrdinal("DisplayName")),
             reader.IsDBNull(reader.GetOrdinal("ExternalAccountId"))
                 ? null
-                : reader.GetString(reader.GetOrdinal("ExternalAccountId")));
+                : reader.GetString(reader.GetOrdinal("ExternalAccountId")),
+            reader.IsDBNull(reader.GetOrdinal("CredentialSecretId"))
+                ? null
+                : new SecretReference(
+                    new SecretId(
+                        reader.GetGuid(reader.GetOrdinal("CredentialSecretId")))));
 
     private static ExecutionTarget ReadExecutionTarget(SqlDataReader reader) =>
         new(
@@ -1967,6 +1980,10 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                 SqlDbType.NVarChar,
                 200,
                 account.ExternalAccountId));
+        command.Parameters.Add(
+            GuidParameter(
+                "@CredentialSecretId",
+                account.CredentialSecret?.Id.Value));
     }
 
     private static void AddExecutionTargetParameters(
