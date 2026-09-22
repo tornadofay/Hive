@@ -454,7 +454,7 @@ Phase 1.5 establishes the first executable base Agent boundary without persisten
 
 Phase 1.6 makes the base Agent's work mechanisms explicit without introducing cognitive strategy or a workflow engine.
 
-The runtime-owned protocol surface is RuntimeWorkProtocols. Each RuntimeInstance receives one independent protocol bundle, and stopping a runtime preserves that runtime's immutable protocol state for inspection/recovery; a different RuntimeInstance receives a different bundle.
+The runtime-owned protocol surface is RuntimeWorkProtocols. Each RuntimeInstance receives one independent protocol bundle, and stopping a runtime preserves that runtime's protocol state for inspection/recovery; a different RuntimeInstance receives a different bundle.
 
 The bundle provides:
 
