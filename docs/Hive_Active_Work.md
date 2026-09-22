@@ -4,76 +4,75 @@ Last updated: 2026-09-22
 
 ## Active slice
 
-**1.1 — Provider / ProviderAccount / ExecutionTarget**
+**1.2 — Secret Store**
 
-Phase 0 — Foundations is officially complete. Slice 0.8 was removed from the roadmap before Phase 0 closure because it is no longer needed.
+Phase 0 — Foundations is officially complete, and Phase 1.1 — Provider / ProviderAccount / ExecutionTarget is complete and verified.
 
-Do not reopen Phase 0 or introduce work from later Phase 1 slices until 1.1 is complete.
+Do not introduce later Phase 1 slices until 1.2 is complete.
 
 ## Objective
 
-Establish the first V1 provider-management boundary:
+Establish the platform Secret Store boundary required by the architecture:
 
-- concrete Provider resources;
-- ProviderAccount ownership and scope;
-- ExecutionTarget resources;
-- three-state capability representation;
-- persistence for these resources;
-- CRUD-oriented management contracts that later Management UI surfaces can consume.
+- DPAPI-backed encrypted secret persistence on Windows;
+- a public \`ISecretStore\` contract;
+- redacted secret material and diagnostics;
+- secure replacement with optimistic version protection;
+- hard deletion of encrypted secret rows;
+- ownership and scope enforcement at the authoritative Secret Store boundary.
 
-The implementation must preserve the existing Phase 0 dependency direction, shared UI foundation, typed identity/resource contracts, persistence boundary, and MAF-first architecture.
+The implementation must preserve the existing Core/Persistence dependency direction, SQL Server persistence boundary, typed identity/resource contracts, and MAF-first architecture.
 
-## 1.1 implementation scope
+## 1.2 implementation scope
 
-- Define the Provider / ProviderAccount / ExecutionTarget contracts required by the roadmap and architecture.
-- Reuse the existing identity, ownership, scope, lifecycle, version, provenance, error, and persistence infrastructure rather than introducing parallel representations.
-- Represent capability support explicitly as Supported / Unsupported / Unknown.
-- Establish the persistence boundary and indexed lookup paths required by the contracts.
-- Keep provider transport behavior out of Hive.Core and behind the existing provider boundary.
-- Keep WinForms presentation separate from management/domain logic; Phase 1 UI consumes the management contracts rather than owning them.
-- Preserve the existing shared WinForms foundation in Hive.Host.WinForms.UI and Hive.Example.WinForms; do not reopen Phase 0 UI work unless a concrete Phase 1 requirement exposes a defect in an established contract.
+- Add typed \`SecretId\` identity and \`Secret\` resource contracts.
+- Represent secret material separately from the resource envelope so the value is never part of ordinary resource metadata.
+- Provide \`SecretMaterial\` with explicit lifetime, redacted \`ToString()\`, size validation, and disposal.
+- Add the public \`ISecretStore\` persistence boundary.
+- Implement \`SqlDpapiSecretStore\` using Windows DPAPI with \`DataProtectionScope.CurrentUser\`.
+- Persist only encrypted secret bytes in Hive's SQL Server database.
+- Enforce resource ownership and scope on create/read/replace/delete.
+- Replace in place under the same Secret identity while incrementing \`ResourceVersion\`; stale replacement attempts return \`Concurrency\`.
+- Physically delete secret rows so deletion does not retain the encrypted credential as an ordinary retired resource.
+- Map duplicate SQL identities to \`Conflict\`, malformed/decrypt failures to typed internal errors, and unsupported non-Windows execution to \`Unsupported\`.
+- Add the SQL migration and indexes required by the store.
+- Add focused contract and persistence tests.
+- Add the mandatory Hive.Example.WinForms public scenario.
+- Do not implement provider transport, ProviderAccount credential wiring, Management settings UI, external vaults, or later provider-selection/planning behavior in this slice.
 
 ## Implementation checkpoint — verification pending
 
-The 1.1 implementation is present in the repository at this checkpoint:
+The 1.2 implementation is present in the repository at this checkpoint:
 
-- Hive.Core exposes typed Provider / ProviderAccount / ExecutionTarget resources and three-state capability contracts.
-- Hive.Persistence exposes CRUD persistence contracts and the SQL Server implementation with optimistic resource-version checks, ownership/scope enforcement, soft-retirement, and indexed lookup paths.
-- Persistence schema version is now 2 and adds the provider resource tables and indexes.
-- Hive.Tests contains focused provider contract and provider persistence integration scenarios.
-- Hive.Example.WinForms contains the matching Provider Platform example using the public persistence contracts.
-- No provider transport implementation, secret-store implementation, capability-aware planner, or Management facade has been introduced; those remain later slices.
+- \`Hive.Core\` exposes \`SecretId\`, \`Secret\`, \`SecretReference\`, and \`SecretMaterial\`.
+- \`Hive.Persistence\` exposes \`ISecretStore\` and \`SqlDpapiSecretStore\`.
+- SQL schema version is now 3 and adds \`HiveSecrets\` plus owner/scope and key indexes.
+- Secret values are protected with Windows DPAPI before SQL persistence and are not returned through resource metadata.
+- Replacement uses resource-version concurrency and deletion physically removes the stored row.
+- \`Hive.Tests\` contains secret contract and persistence integration scenarios.
+- \`Hive.Example.WinForms\` contains the matching DPAPI Secret Store example.
+- \`docs/examples/Phase12_Secret_Store.md\` documents the public API.
 
 Agent-run build/tests/manual verification are not authorized. The implementation therefore remains pending the developer verification gate below.
 
-### Developer verification attempt — 2026-09-22
-
-The developer executed the Example Host and the full Hive.Tests suite after the compiler fixes. The reported result was **62 tests: 59 passed, 3 failed**.
-
-The three reported failures were traced to the repository implementation/tests:
-
-- ProviderResourceTests.ResourceAccessContext_RequiresMatchingOwnerAndScope: ResourceScope.Matches() was incorrectly being tested as an ownership check. Ownership is enforced by the authoritative resource store; the test now reflects that contract.
-- ProviderPersistenceIntegrationTests.ProviderGraph_CrudOwnershipScopeAndConcurrency_AreEnforced: a duplicate provider insert through the transactional store path was returned as External instead of Conflict; the transactional SQL constraint handling has been corrected.
-- HivePersistenceIntegrationTests.CleanAndRepeatMigration_IsIdempotentAndRecordsCurrentSchema: the index helper always queried HiveSchemaVersion, so provider-resource index assertions could not inspect their actual tables; the helper now accepts the target table.
-
-These corrections require developer re-verification. Slice 1.1 remains **pending** and must not be closed until the focused tests, broader Hive.Tests run, and required Example/manual checks pass and are reported.
-
 ## Verification
 
-Required for completion of 1.1:
+Required for completion of 1.2:
 
-1. normal, invalid, and boundary provider/resource contract tests;
-2. ownership and scope validation;
-3. duplicate-identity and malformed-state cases;
-4. persistence integration coverage for create/read/update/delete behavior and relevant indexes;
-5. public/API example verification where the new externally meaningful contracts require it;
-6. developer verification of any user-facing UI introduced by this slice.
+1. normal, invalid, and boundary Secret/SecretMaterial contract tests;
+2. encryption-at-rest verification against the SQL persistence boundary;
+3. ownership and scope enforcement;
+4. duplicate identity and malformed encrypted-state cases;
+5. replacement/version concurrency and hard-deletion behavior;
+6. public API Example verification;
+7. broader \`Hive.Tests\` execution;
+8. manual Example Host verification of the secret-store scenario and absence of secret material in output.
 
 No verification claim is recorded until it has actually been performed.
 
 ## Dependency direction
 
-```text
+\`\`\`text
 Hive.Core
    ↑
 Agents / Persistence / Tools / Providers
@@ -89,23 +88,22 @@ Tests → projects under test
 
 Coordination may depend on Core + Agents + MAF contracts where required.
 No core/platform project may depend on Example.WinForms.
-```
+\`\`\`
 
 ## Constraints
 
-- WinForms-specific types remain outside Hive.Core.
-- Hive-owned WinForms UI implementation remains exclusively inside Hive.Host.WinForms.UI; consuming projects use the Hive-owned UI contracts.
-- Hive.Example.WinForms remains a permanent developer-facing project and does not become an alternate test runner.
-- Use Microsoft Agent Framework wherever it already owns the required behavior.
-- Do not duplicate existing identity, resource, persistence, orchestration, or UI contracts.
-- Complete 1.1 before starting 1.2 or later Phase 1 slices.
-- Do not start Phase 2 or any cognitive-generation work during this slice.
-
+- Hive.Core remains dependency-light and must not reference SQL Server or DPAPI.
+- DPAPI implementation remains inside Hive.Persistence.
+- Secret material must never be persisted as plaintext, placed in resource metadata, emitted in diagnostics, or shown by the Example output.
+- Use \`DataProtectionScope.CurrentUser\`; do not introduce machine-wide key sharing or an external vault in this slice.
+- Do not add provider transport or credential networking.
+- Do not start 1.3 or later Phase 1 slices during 1.2.
+- Preserve the existing SQL Server/LocalDB persistence strategy.
 
 ## Verification handoff
 
-Example to run: Providers / Provider Platform / Provider / ProviderAccount / ExecutionTarget — Hive.Example.WinForms (net10.0-windows).
+Example to run: Providers / Security / DPAPI Secret Store — Hive.Example.WinForms (net10.0-windows).
 
-Tests to run: tests/Hive.Tests/ProviderResourceTests.cs and tests/Hive.Tests/ProviderPersistenceIntegrationTests.cs; broader Hive.Tests execution is required by the 1.1 completion gate.
+Tests to run: tests/Hive.Tests/SecretResourceTests.cs and tests/Hive.Tests/SecretPersistenceIntegrationTests.cs; broader Hive.Tests execution is required by the 1.2 completion gate.
 
-Required manual checks include the Example Host provider scenario, the CRUD output, ownership/scope failures, capability-state display, and normal/repeat migration behavior. Record only the developer's actual results before closing this slice.
+Required manual checks include the Example Host secret-store scenario, redaction/output behavior, ownership/scope failures, replacement version, deletion/Post-delete NotFound, and repeat migration behavior.
