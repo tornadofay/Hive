@@ -4,21 +4,27 @@ Last updated: 2026-09-22
 
 ## Active slice
 
-**1.7 — Event Log, Snapshots & Transactional Outbox**
+**1.8 — Outbox Poller**
 
-Phase 0 — Foundations and Phase 1.1 through Phase 1.6 are complete and verified.
+Phase 0 — Foundations and Phase 1.1 through Phase 1.7 are complete and verified.
 
-Do not introduce 1.8 or later Phase 1 slices until 1.7 is complete.
+Do not introduce 1.9 or later Phase 1 slices until 1.8 is complete.
 
 ## Objective
 
-Add the durable event/snapshot/outbox boundary required by the roadmap:
+Process committed, unhandled transactional outbox rows after the originating event transaction has committed.
 
-- append-only event log;
-- deterministic snapshot fold/reconstruction for supported base events;
-- atomic event + snapshot + transactional outbox persistence.
+The implementation must reuse the existing Hive.Persistence outbox records and event identity/version contracts. It must not become a distributed broker or duplicate MAF/workflow orchestration.
 
-The implementation must reuse the existing event envelope/schema-version contracts, resource/version/provenance boundaries, and Hive.Persistence transaction infrastructure rather than introduce parallel representations.
+## Phase 1.7 completion
+
+Phase 1.7 — Event Log, Snapshots & Transactional Outbox is complete and verified.
+
+Developer verification:
+- Hive.Example.WinForms `Persistence / Events / Event Persistence / Event Log + Snapshot + Outbox` completed successfully.
+- The Example Host demonstrated two committed event versions, snapshot version 2, corresponding outbox data, deterministic fold count 5, and schema version 4.
+- Full `Hive.Tests` execution: **120 tests passed, 0 failed, 0 skipped in 3.5 seconds**.
+- The 1.7 completion gate is satisfied.
 
 ## Phase 1.6 completion
 
@@ -32,70 +38,59 @@ Developer verification:
 
 ## Architecture / dependency boundary
 
-The durable event boundary remains below later execution and cognitive behavior:
+The outbox poller remains below later execution and cognitive behavior:
 
-```text
+```
 Hive.Core event contracts
         │
         ▼
 Hive.Persistence
-  ├─ append-only event log
-  ├─ snapshot fold
-  └─ transactional outbox
-
+  ├─ event log
+  ├─ snapshots
+  ├─ transactional outbox
+  └─ outbox poller
+        │
+        ▼
 Later:
-  ├─ outbox processing
   └─ first real Agent execution
 ```
 
-Event persistence records state transitions; it does not become a second orchestration engine.
+The poller processes committed outbox work; it does not become a second orchestration/workflow engine.
 
 ## Verification
 
-Required for completion of 1.7:
+Required for completion of 1.8:
 
-1. append-only event records preserve event type and payload schema version;
-2. supported base events can be folded into deterministic snapshots;
-3. event + snapshot + outbox persistence commits atomically;
-4. rollback leaves neither the event nor its corresponding outbox record;
-5. replay of supported base events is deterministic;
-6. invalid serialization/schema cases return typed failures without partial durable state;
-7. concurrent operations preserve the existing resource/version invariants;
-8. focused automated coverage exists for normal, invalid, rollback, replay, and concurrency cases;
-9. public Example Host verification demonstrates the externally usable durable event boundary;
-10. broader `Hive.Tests` execution.
+1. committed outbox entries can be discovered and processed;
+2. successful processing does not lose or corrupt the corresponding event identity/version;
+3. duplicate delivery is safe and idempotent;
+4. a crash/failure before processing completes leaves the outbox entry available for recovery;
+5. cancellation and retry boundaries are deterministic;
+6. processing failures are observable as typed results/errors rather than silently swallowed;
+7. focused automated coverage exists for normal, duplicate, failure/recovery, and concurrency cases;
+8. public Example Host verification demonstrates the externally usable poller behavior;
+9. broader `Hive.Tests` execution.
 
 No verification claim is recorded until it has actually been performed.
 
 ## Constraints
 
-- No 1.8 or later outbox poller implementation.
 - No 1.9 MAF Agent execution integration.
 - No CognitiveAgent implementation or adaptive cognitive behavior.
 - No new cognitive Goals, Beliefs, Dreams, adaptive Question generation, or learning.
 - No Management settings/configuration UI.
 - No provider transport changes.
-- Reuse existing event envelope/schema-version, resource/version/provenance, Result/Error, and persistence contracts.
+- Reuse the existing durable event log, snapshot, outbox, event envelope/schema-version, Result/Error, and persistence contracts.
 - Keep the persistence boundary inside `Hive.Persistence`.
 - Do not add a second orchestration/workflow engine.
-- Preserve transactional semantics and deterministic replay boundaries.
+- The outbox is not a distributed message broker.
 
 ## Implementation checkpoint
 
-The authorized 1.7 implementation is present:
-- durable SQL event log keyed by ResourceReference and per-stream ResourceVersion;
-- versioned JSON snapshots with atomic replacement;
-- transactional outbox rows linked to the triggering event;
-- serializable expected-version concurrency boundary;
-- deterministic EventSnapshotFolder reducer contract with existing event upcasting;
-- migration to schema version 4;
-- focused unit/integration coverage;
-- public Example Host scenario under Persistence / Events.
-
-Developer verification is still pending. No build, test, or manual Example result is recorded here yet.
+Phase 1.7 is complete and verified. Phase 1.8 implementation has not started.
 
 ## Verification handoff
 
-Example to run: Persistence / Events / Event Persistence / Event Log + Snapshot + Outbox — Hive.Example.WinForms
+Example to run: <exact Persistence / Events / ... outbox poller example path once implemented> — Hive.Example.WinForms
 
-Tests to run: tests/Hive.Tests/EventPersistenceIntegrationTests.cs and tests/Hive.Tests/EventSnapshotFolderTests.cs; broader Hive.Tests execution is required by the 1.7 completion gate.
+Tests to run: <exact focused outbox poller test class/file>; broader Hive.Tests execution is required by the 1.8 completion gate.
