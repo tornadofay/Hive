@@ -13,7 +13,6 @@ Last updated: 2026-09-22
 Detailed workload and ordering: `docs/plan/Phase1.12_Settings_Host_Integration.md`
 
 Phase 0 — Foundations and Phase 1.1 through Phase 1.11 are complete and verified.
-
 Phase 1.12 is the authorized implementation slice.
 
 ## Objective
@@ -70,7 +69,12 @@ Implemented in the active slice:
 - Provider setup for Provider, ProviderAccount, ExecutionTarget, credential references, and provider connection testing;
 - Persistence settings for server/port/database/authentication/security/initialization policy/timeout;
 - public Example Host scenario with copyable, redacted persistence configuration/test output;
-- focused configuration, persistence-option, provider-credential-reference, and provider connection-test coverage.
+- focused configuration, persistence-option, provider-credential-reference, and provider connection-test coverage;
+- host-owned `HiveHostComposition` and `HiveHostServiceGraph` boundaries with first-run configuration loading, persisted configuration consumption, explicit bootstrap-credential injection, serialized candidate construction/publication, failed-replacement preservation, and idempotent graph disposal;
+- the published Management facade uses the same authoritative configuration-store instance as the composition boundary;
+- `Hive.Example.WinForms` now consumes the host-owned service graph instead of constructing a competing persistence/Management graph;
+- focused `HiveHostCompositionTests` coverage for first-run defaults, saved configuration consumption, shared configuration state, invalid configuration, bootstrap-credential failure, failed replacement, disposal, and serialized recomposition;
+- `Hive.Tests` now targets the Windows desktop target required to reference the host composition project.
 
 Before coding, inspect:
 
@@ -93,16 +97,16 @@ Before coding, inspect:
 
 Current sub-stage: **1.12-A — Host Configuration and Runtime Composition**
 
-Example to run: **No new Example is required solely for 1.12-A.** The existing Settings Example is not a substitute for the composition-boundary tests.
+Example to run: **No new Example is required solely for 1.12-A.** The existing Settings Example now consumes the host-owned service graph but is not a substitute for the composition-boundary tests.
 
 Tests to run:
-- `tests/Hive.Tests/HiveHostCompositionTests.cs` — create/extend for the 1.12-A host composition boundary;
-- `tests/Hive.Tests/HiveConfigurationTests.cs` — relevant configuration/default behavior;
+- `tests/Hive.Tests/HiveHostCompositionTests.cs` — full 1.12-A composition/lifetime boundary coverage;
+- `tests/Hive.Tests/HiveConfigurationTests.cs` — relevant JSON configuration/default behavior;
 - `tests/Hive.Tests/HivePersistenceOptionsTests.cs` — relevant option mapping/validation;
 - broader `Hive.Tests` execution remains required for final Phase 1.12 closure.
 
 Manual application verification is not recorded as complete for 1.12-A until the developer actually runs the host and exercises the current authorized behavior.
- 
+
 ## Historical verification
 
 Phase 1.11 completion is recorded in `docs/verification/phase-1/1.11.md`.

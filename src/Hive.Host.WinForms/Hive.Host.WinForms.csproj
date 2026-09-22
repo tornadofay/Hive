@@ -9,6 +9,8 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../Hive.Management/Hive.Management.csproj" />
+    <ProjectReference Include="../Hive.Persistence/Hive.Persistence.csproj" />
+    <ProjectReference Include="../Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj" />
     <ProjectReference Include="../Hive.Host.WinForms.UI/Hive.Host.WinForms.UI.csproj" />
   </ItemGroup>
 </Project>

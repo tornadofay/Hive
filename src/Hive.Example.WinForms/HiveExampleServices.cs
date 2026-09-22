@@ -1,8 +1,7 @@
+using Hive.Host.WinForms;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 using Hive.Management;
-using Hive.Persistence;
-using Hive.Providers.OpenAICompatible;
 
 namespace Hive.Example.WinForms;
 
@@ -14,23 +13,16 @@ internal sealed class HiveExampleServices : IServiceProvider
 
     public HiveExampleServices(
         IHiveThemeManager themeManager,
-        IHiveExampleOutput output)
+        IHiveExampleOutput output,
+        HiveHostServiceGraph graph)
     {
         ArgumentNullException.ThrowIfNull(themeManager);
         ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(graph);
 
         _themeManager = themeManager;
         _output = output;
-        var databaseOptions = HiveDatabaseOptions.LocalDevelopment();
-
-        _management = new HiveManagementFacade(
-            new SqlProviderResourceStore(databaseOptions),
-            new SqlAgentDefinitionResourceStore(databaseOptions),
-            new SqlWorkItemResourceStore(databaseOptions),
-            new SqlDpapiSecretStore(databaseOptions),
-            new OpenAICompatibleProviderConnectionTester(),
-            new JsonHiveConfigurationStore(),
-            new HivePersistenceConnectionTester());
+        _management = graph.Management;
     }
 
     public object? GetService(Type serviceType)

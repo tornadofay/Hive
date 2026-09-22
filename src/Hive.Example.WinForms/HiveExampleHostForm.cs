@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Reflection;
 using System.Windows.Forms;
+using Hive.Host.WinForms;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 
@@ -17,7 +18,6 @@ internal sealed class HiveExampleHostForm : HiveForm
     private const int OutputButtonMargin = 12;
 
     private readonly IHiveThemeManager _themeManager;
-    private readonly HiveExampleServices _services;
     private readonly IReadOnlyList<IHiveExample> _examples;
     private readonly Panel _navigationSurface;
     private readonly Panel _navigationSeparator;
@@ -36,6 +36,8 @@ internal sealed class HiveExampleHostForm : HiveForm
     private readonly Font _viewTitleFont;
     private readonly Font _viewSubtitleFont;
 
+    private HiveExampleServices? _services;
+    private HiveHostComposition? _composition;
     private UserControl? _activeView;
     private bool _responsiveLayoutReady;
     private Rectangle _lastOutputViewBounds;
@@ -74,9 +76,6 @@ internal sealed class HiveExampleHostForm : HiveForm
         _outputView.CollapseStateChanged += OutputViewOnCollapseStateChanged;
         _outputView.OutputAvailabilityChanged += OutputViewOnOutputAvailabilityChanged;
 
-        _services = new HiveExampleServices(
-            _themeManager,
-            _outputView);
         _examples = HiveExampleDiscovery.Discover(
             Assembly.GetExecutingAssembly());
 
@@ -227,7 +226,62 @@ internal sealed class HiveExampleHostForm : HiveForm
         UpdateResponsiveLayout();
         UpdateOutputOverlayBounds();
         OutputViewOnCollapseStateChanged(_outputView, EventArgs.Empty);
-        SelectFirstExample();
+    }
+
+    protected override async void OnLoad(EventArgs e)
+    {
+        base.OnLoad(e);
+
+        if (_composition is not null)
+            return;
+
+        try
+        {
+            var composition = new HiveHostComposition();
+            var result = await composition.InitializeAsync();
+
+            if (result.IsFailure)
+            {
+                composition.Dispose();
+                _viewTitle.Text = "Hive host unavailable";
+                _viewSubtitle.Text = result.Error!.Message;
+
+                HiveMessageBox.Show(
+                    this,
+                    new HiveMessageOptions(
+                        "Hive host initialization failed",
+                        result.Error.Message,
+                        HiveMessageType.Error,
+                        MessageBoxButtons.OK,
+                        result.Error.Code,
+                        DetailsExpanded: true));
+
+                return;
+            }
+
+            _composition = composition;
+            _services = new HiveExampleServices(
+                _themeManager,
+                _outputView,
+                result.Value!);
+
+            SelectFirstExample();
+        }
+        catch (Exception exception)
+        {
+            _viewTitle.Text = "Hive host unavailable";
+            _viewSubtitle.Text = exception.Message;
+
+            HiveMessageBox.Show(
+                this,
+                new HiveMessageOptions(
+                    "Hive host initialization failed",
+                    "The Example Host could not construct the current Hive service graph.",
+                    HiveMessageType.Error,
+                    MessageBoxButtons.OK,
+                    exception.ToString(),
+                    DetailsExpanded: true));
+        }
     }
 
     protected override void OnResize(EventArgs e)
@@ -245,6 +299,9 @@ internal sealed class HiveExampleHostForm : HiveForm
             _outputView.CollapseStateChanged -= OutputViewOnCollapseStateChanged;
             _outputView.OutputAvailabilityChanged -= OutputViewOnOutputAvailabilityChanged;
             DisposeActiveView();
+            _composition?.Dispose();
+            _composition = null;
+            _services = null;
         }
 
         base.Dispose(disposing);
@@ -288,9 +345,6 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private void UpdateOutputOverlayBounds()
     {
-        // WinForms may raise OnResize while the base HiveForm constructor is
-        // still constructing this derived form. Do not access overlay controls
-        // until the Example Host layout has been initialized.
         if (!_responsiveLayoutReady ||
             _viewHost.ClientSize.Width <= 0 ||
             _viewHost.ClientSize.Height <= 0)
@@ -376,7 +430,7 @@ internal sealed class HiveExampleHostForm : HiveForm
                 }
 
                 var subcategoryKey =
-                    example.Category + "\u001f" + example.Subcategory;
+                    example.Category + "" + example.Subcategory;
 
                 if (!subcategoryNodes.TryGetValue(
                         subcategoryKey,
@@ -401,6 +455,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             _navigation.EndUpdate();
         }
     }
+
     private void SelectFirstExample()
     {
         foreach (TreeNode category in _navigation.Nodes)
@@ -444,13 +499,20 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private void NavigationAfterSelect(object? sender, TreeViewEventArgs e)
     {
+        if (_services is null)
+            return;
+
         if (e.Node?.Tag is IHiveExample example)
             ShowExample(example);
     }
 
     private void ShowExample(IHiveExample example)
     {
-        var nextView = example.CreateView(_services);
+        var services = _services
+            ?? throw new InvalidOperationException(
+                "Hive Example services are not initialized.");
+
+        var nextView = example.CreateView(services);
         ArgumentNullException.ThrowIfNull(nextView);
 
         nextView.Dock = DockStyle.Fill;
@@ -459,8 +521,6 @@ internal sealed class HiveExampleHostForm : HiveForm
         {
             var previousView = _activeView;
 
-            // Theme the new view before it enters the visible host surface so
-            // switching examples never exposes an unthemed frame.
             _themeManager.Apply(nextView);
 
             _viewHost.SuspendLayout();
@@ -518,8 +578,6 @@ internal sealed class HiveExampleHostForm : HiveForm
         if (_outputView.OutputTextBox.TextLength == 0)
             return;
 
-        // Streaming output can raise this event for every append. Only change
-        // visibility/z-order when the pane is actually transitioning to visible.
         if (_outputView.IsCollapsed)
             _outputView.SetCollapsed(false);
     }
