@@ -34,7 +34,7 @@ public sealed class EventSnapshotFolderTests
             EventTestData.Timestamp.AddMinutes(1),
             eventType,
             new EventPayloadVersion(2),
-            EventTestData.CorrelationId,
+            CorrelationId.New(),
             new CausationId(first.EventId.Value),
             new IncrementV2(3));
 
@@ -58,7 +58,7 @@ public sealed class EventSnapshotFolderTests
             EventTestData.Timestamp,
             new EventType("unsupported.event"),
             new EventPayloadVersion(1),
-            EventTestData.CorrelationId,
+            CorrelationId.New(),
             null,
             new { value = 1 });
 
@@ -88,7 +88,7 @@ public sealed class EventSnapshotFolderTests
             EventTestData.Timestamp,
             eventType,
             new EventPayloadVersion(3),
-            EventTestData.CorrelationId,
+            CorrelationId.New(),
             null,
             new { amount = 1 });
 
