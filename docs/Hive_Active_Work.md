@@ -32,7 +32,7 @@ The complete Phase 1.12 program is subdivided into bounded sub-stages described 
 - real Example Host consumption of configured state;
 - focused verification and documentation closure.
 
-Current sub-stage 1.12-A is limited to the host configuration/composition boundary and its required supporting contracts. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-A.
+Current sub-stage 1.12-A is limited to the host configuration/composition boundary and its required supporting contracts. It may define the bootstrap-credential contract required by composition, but the concrete DPAPI-backed bootstrap store belongs to 1.12-B. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-A.
 
 ## Current 1.12-A verification gate
 
