@@ -1089,6 +1089,8 @@ Hive.Core
    ↑
 Agents / Persistence / Tools / Providers
    ↑
+Coordination
+   ↑
 Management
    ↑
 Host.WinForms
@@ -1098,9 +1100,9 @@ Host.WinForms.UI
 Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contracts
 ```
 
-Coordination may depend on Core + Agents + MAF.
+`Hive.Coordination` is the execution-composition boundary. It may reference `Hive.Agents`, `Hive.Persistence`, approved provider adapters, and Microsoft Agent Framework to assemble one execution path. It must not own SQL schema/persistence implementation, provider transport implementation, or a second orchestration engine.
 
-Host.WinForms never bypasses Hive.Management.
+`Hive.Management` may consume Coordination execution services in later application-facing slices. Host.WinForms never bypasses Hive.Management.
 
 `Hive.Example.WinForms` is created during Phase 0 and remains a first-class developer-facing project; its test tools are not a substitute for `Hive.Tests`.
 
