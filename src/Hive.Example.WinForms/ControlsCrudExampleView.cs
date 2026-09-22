@@ -34,7 +34,7 @@ internal sealed class ControlsCrudExampleView : UserControl
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
         Padding = Padding.Empty;
-        AutoScroll = true;
+        AutoScroll = false;
 
         var root = new TableLayoutPanel
         {
@@ -143,15 +143,15 @@ internal sealed class ControlsCrudExampleView : UserControl
         _crud.SetColumns(
             new HiveCrudColumn<CrudExampleItem>(
                 "Name",
-                320,
+                280,
                 item => item.Name),
             new HiveCrudColumn<CrudExampleItem>(
                 "Type",
-                150,
+                120,
                 item => item.Type),
             new HiveCrudColumn<CrudExampleItem>(
                 "Status",
-                120,
+                110,
                 item => item.Status));
 
         _crud.LoadItemsAsync = LoadItemsAsync;
