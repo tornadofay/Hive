@@ -57,12 +57,54 @@ public sealed class HiveConfigurationTests
             Assert.Equal(configuration, loaded.Value);
 
             var json = await File.ReadAllTextAsync(filePath);
-            Assert.Contains("credentialSecretId", json, StringComparison.Ordinal);
+            Assert.Contains("bootstrapCredentialId", json, StringComparison.Ordinal);
             Assert.Contains(secretId.Value.ToString(), json, StringComparison.Ordinal);
             Assert.DoesNotContain(
                 "hive-user-password",
                 json,
                 StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+        }
+    }
+
+    [Fact]
+    public async Task Management_LoadLegacyCredentialReference_RejectsSilentReinterpretation()
+    {
+        var filePath = Path.Combine(
+            Path.GetTempPath(),
+            $"hive-settings-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            await File.WriteAllTextAsync(
+                filePath,
+                """
+                {
+                  "backend": "SqlServer",
+                  "serverName": "sql.example.test",
+                  "port": 1433,
+                  "databaseName": "HiveProduction",
+                  "authenticationMode": "SqlPassword",
+                  "userName": "hive-user",
+                  "credentialSecretId": "11111111-1111-1111-1111-111111111111",
+                  "encrypt": true,
+                  "trustServerCertificate": false,
+                  "createDatabaseIfMissing": false,
+                  "commandTimeoutSeconds": 45
+                }
+                """);
+
+            var result = await new JsonHiveConfigurationStore(filePath)
+                .LoadPersistenceConfigurationAsync();
+
+            Assert.True(result.IsFailure);
+            Assert.Equal(
+                "hive.management.legacy-bootstrap-credential-reference",
+                result.Error!.Code);
         }
         finally
         {
