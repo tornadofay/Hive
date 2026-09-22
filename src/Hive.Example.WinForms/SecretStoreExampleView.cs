@@ -227,6 +227,17 @@ internal sealed class SecretStoreExampleView : UserControl
         }
     }
 
+    private static void EnsureSuccess(
+        Result result,
+        string operation)
+    {
+        if (result.IsFailure)
+        {
+            throw new InvalidOperationException(
+                $"{operation} failed: {result.Error?.Code} [{result.Error?.Category}] {result.Error?.Message}");
+        }
+    }
+
     private static void EnsureSuccess<T>(
         Result<T> result,
         string operation)
