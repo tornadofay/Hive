@@ -202,6 +202,7 @@ Settings UI:
 
 Host consumption:
 - the host application composition boundary owns the current persistence-backed service graph; `Hive.Example.WinForms` is a consumer of that boundary, not its architectural owner;
+- the composition boundary depends on a stable bootstrap-credential contract; the concrete DPAPI-backed storage mechanism is introduced by the bootstrap sub-stage and remains replaceable behind that contract;
 - the Example Host and future WinForms applications consume the same persisted configuration edited by Settings;
 - Persistence changes recompose the persistence-backed service graph;
 - resource configuration changes refresh authoritative Management state without unnecessary persistence reconstruction;
