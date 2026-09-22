@@ -16,7 +16,7 @@ Phase 0 — Foundations: **Complete**.
 
 - Phase 0 establishes a shared WinForms UI foundation using Hive-owned controls, native WinForms controls, and custom System.Drawing rendering behind Hive.Host.WinForms.UI; no third-party rendering dependency is currently used.
 - Hive owns its UI contract, theme modes, semantic design tokens, and Hive-specific controls where additional behavior/styling is needed; it does not wrap every WinForms control merely to rename it.
-- Hive.Example.WinForms is a first-class permanent developer-facing project from Phase 0, with scalable Category → Subcategory → Example navigation and external dotnet test developer tooling.
+- Hive.Example.WinForms is a first-class permanent developer-facing project from Phase 0, with scalable Category → Subcategory → optional deeper navigation groups → Example navigation and external dotnet test developer tooling.
 - Hive is general-purpose; the real V1 forcing function is automating data entry from documents/images into the existing business application.
 - The V1 pipeline is not Hive's permanent definition; it determines implementation order.
 - Agent and Hive are stable base types.
@@ -244,7 +244,7 @@ Implemented so far:
 
 ## Not started
 
-- Phase 1.8 and later Phase 1 implementation slices.
+- Phase 1.9 and later Phase 1 implementation slices.
 - Later phases.
 
-Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.5 are complete and verified. Phase 1.6 is active; implementation is present and developer verification is pending.
+Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.7 are complete and verified. Phase 1.8 is active; implementation is present and developer verification is pending.
