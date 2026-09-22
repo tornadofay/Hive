@@ -11,7 +11,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
     private readonly HiveEditorLayout _editor;
-    private readonly TextBox _serverTextBox;
+    private readonly ComboBox _serverComboBox;
     private readonly TextBox _portTextBox;
     private readonly TextBox _databaseTextBox;
     private readonly ComboBox _authenticationComboBox;
@@ -44,7 +44,13 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _editor = new HiveEditorLayout();
 
-        _serverTextBox = CreateTextBox();
+        _serverComboBox = new ComboBox
+        {
+            Height = 32,
+            DropDownStyle = ComboBoxStyle.DropDown,
+            AutoCompleteMode = AutoCompleteMode.SuggestAppend,
+            AutoCompleteSource = AutoCompleteSource.ListItems
+        };
         _portTextBox = CreateTextBox();
         _databaseTextBox = CreateTextBox();
         _authenticationComboBox = new ComboBox
@@ -114,7 +120,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _editor.AddField(
             "Server / instance",
             "SQL Server host or instance name. Keep the port in the separate Port field.",
-            _serverTextBox);
+            _serverComboBox);
 
         _editor.AddField(
             "Port",
@@ -347,7 +353,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         var configuration = new HivePersistenceConfiguration(
             HivePersistenceBackend.SqlServer,
-            _serverTextBox.Text,
+            _serverComboBox.Text,
             resolvedPort,
             _databaseTextBox.Text,
             authentication,
@@ -428,7 +434,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private void ApplyConfiguration(HivePersistenceConfiguration configuration)
     {
         _loadedConfiguration = configuration;
-        _serverTextBox.Text = configuration.ServerName;
+        _serverComboBox.Text = configuration.ServerName;
+        RememberServer(configuration.ServerName);
         _portTextBox.Text = configuration.Port?.ToString() ?? string.Empty;
         _databaseTextBox.Text = configuration.DatabaseName;
         _authenticationComboBox.SelectedItem = configuration.AuthenticationMode;
@@ -519,6 +526,27 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _loadButton.Enabled = !busy;
         _saveButton.Enabled = !busy;
         _testButton.Enabled = !busy;
+    }
+
+    private void RememberServer(string? server)
+    {
+        var value = server?.Trim();
+
+        if (string.IsNullOrWhiteSpace(value))
+            return;
+
+        for (var index = 0; index < _serverComboBox.Items.Count; index++)
+        {
+            if (string.Equals(
+                    Convert.ToString(_serverComboBox.Items[index]),
+                    value,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+        }
+
+        _serverComboBox.Items.Add(value);
     }
 
     private static TextBox CreateTextBox() =>
