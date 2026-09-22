@@ -769,7 +769,7 @@ internal sealed class HiveProviderSettingsView : UserControl
                 : _externalAccountTextBox.Text);
     }
 
-    private static ExecutionTarget CreateTarget(
+    private ExecutionTarget CreateTarget(
         Provider provider,
         ProviderAccount account)
     {
@@ -789,11 +789,17 @@ internal sealed class HiveProviderSettingsView : UserControl
                 ResourceLifecycle.Active(now)),
             provider.Id,
             account.Id,
-            string.Empty,
-            string.Empty,
-            new Uri("https://example.invalid/v1", UriKind.Absolute),
-            "model",
-            null,
+            _targetKeyTextBox.Text,
+            _targetNameTextBox.Text,
+            new Uri(
+                _endpointTextBox.Text.Trim(),
+                UriKind.Absolute),
+            string.IsNullOrWhiteSpace(_modelTextBox.Text)
+                ? null
+                : _modelTextBox.Text,
+            string.IsNullOrWhiteSpace(_deploymentTextBox.Text)
+                ? null
+                : _deploymentTextBox.Text,
             [
                 new CapabilityStateEntry(
                     new CapabilityKey("text.generate"),
@@ -807,6 +813,7 @@ internal sealed class HiveProviderSettingsView : UserControl
         _selectedAccount = null;
         _selectedTarget = null;
 
+        _providerKeyTextBox.ReadOnly = false;
         _providerKeyTextBox.Text = "openai-compatible";
         _providerNameTextBox.Text = "OpenAI-compatible provider";
         _transportTextBox.Text = "openai-compatible";
@@ -823,6 +830,7 @@ internal sealed class HiveProviderSettingsView : UserControl
         _selectedAccount = null;
         _selectedTarget = null;
 
+        _accountKeyTextBox.ReadOnly = false;
         _accountKeyTextBox.Text = "default";
         _accountNameTextBox.Text = "Default account";
         _externalAccountTextBox.Clear();
@@ -837,6 +845,7 @@ internal sealed class HiveProviderSettingsView : UserControl
     private void NewTarget()
     {
         _selectedTarget = null;
+        _targetKeyTextBox.ReadOnly = false;
         _targetKeyTextBox.Text = "default";
         _targetNameTextBox.Text = "Default target";
         _endpointTextBox.Text = "https://example.invalid/v1";
@@ -848,6 +857,7 @@ internal sealed class HiveProviderSettingsView : UserControl
     {
         _selectedProvider = provider;
         _providerKeyTextBox.Text = provider.Key;
+        _providerKeyTextBox.ReadOnly = true;
         _providerNameTextBox.Text = provider.DisplayName;
         _transportTextBox.Text = provider.TransportKind;
 
@@ -862,6 +872,7 @@ internal sealed class HiveProviderSettingsView : UserControl
     {
         _selectedAccount = account;
         _accountKeyTextBox.Text = account.Key;
+        _accountKeyTextBox.ReadOnly = true;
         _accountNameTextBox.Text = account.DisplayName;
         _externalAccountTextBox.Text = account.ExternalAccountId ?? string.Empty;
         _credentialTextBox.Clear();
@@ -892,6 +903,7 @@ internal sealed class HiveProviderSettingsView : UserControl
         }
 
         _targetKeyTextBox.Text = target.Key;
+        _targetKeyTextBox.ReadOnly = true;
         _targetNameTextBox.Text = target.DisplayName;
         _endpointTextBox.Text = target.Endpoint.AbsoluteUri;
         _modelTextBox.Text = target.Model ?? string.Empty;
