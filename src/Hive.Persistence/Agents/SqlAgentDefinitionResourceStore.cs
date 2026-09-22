@@ -275,7 +275,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                     current.Resource.Version.Next(),
                     current.Resource.Provenance,
                     current.Resource.Lifecycle,
-                    definition.Resource.Metadata);
+                    resource.Metadata);
 
                 var updated = new AgentDefinition(
                     updatedResource,
