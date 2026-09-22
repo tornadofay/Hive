@@ -34,65 +34,24 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
                     IsolationLevel.Serializable,
                     cancellationToken).ConfigureAwait(false);
 
-            var currentVersion = await ReadCurrentVersionAsync(
+            var result = await AppendInTransactionAsync(
                 connection,
                 transaction,
-                request.Stream,
+                request,
                 cancellationToken).ConfigureAwait(false);
 
-            var expectedVersion = request.ExpectedVersion?.Value ?? 0;
-
-            if (currentVersion != expectedVersion)
+            if (result.IsSuccess)
+            {
+                await transaction.CommitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            else
             {
                 await transaction.RollbackAsync(cancellationToken)
                     .ConfigureAwait(false);
-
-                return Result<EventAppendResult>.Failure(
-                    Error.Concurrency(
-                        "hive.event.stream-version",
-                        $"The event stream is at version {currentVersion}, but version {expectedVersion} was expected."));
             }
 
-            await InsertEventAsync(
-                connection,
-                transaction,
-                request,
-                cancellationToken).ConfigureAwait(false);
-
-            if (request.Snapshot is not null)
-            {
-                await UpsertSnapshotAsync(
-                    connection,
-                    transaction,
-                    request.Snapshot,
-                    currentVersion,
-                    cancellationToken).ConfigureAwait(false);
-            }
-
-            await InsertOutboxAsync(
-                connection,
-                transaction,
-                request,
-                cancellationToken).ConfigureAwait(false);
-
-            await transaction.CommitAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            var persistedEvent = new PersistedEvent(
-                request.Stream,
-                request.StreamVersion,
-                request.Envelope);
-
-            var outbox = new EventOutboxEntry(
-                request.Stream,
-                request.StreamVersion,
-                request.Envelope);
-
-            return Result<EventAppendResult>.Success(
-                new EventAppendResult(
-                    persistedEvent,
-                    request.Snapshot,
-                    outbox));
+            return result;
         }
         catch (OperationCanceledException)
         {
@@ -287,6 +246,91 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
                     "hive.event.snapshot-read",
                     ErrorCategory.Internal,
                     $"The snapshot read failed: {exception.Message}"));
+        }
+    }
+
+    public async Task<Result<IReadOnlyList<EventSnapshot>>> ListSnapshotsAsync(
+        ResourceKind streamKind,
+        CancellationToken cancellationToken = default)
+    {
+        if (!Enum.IsDefined(streamKind))
+            throw new ArgumentOutOfRangeException(nameof(streamKind), streamKind);
+
+        try
+        {
+            await using var connection = await OpenConnectionAsync(
+                cancellationToken).ConfigureAwait(false);
+
+            await using var command = CreateCommand(
+                connection,
+                """
+                SELECT
+                    [StreamKind],
+                    [StreamIdentity],
+                    [SnapshotVersion],
+                    [PayloadSchemaVersion],
+                    [StateJson]
+                FROM [dbo].[HiveEventSnapshots]
+                WHERE [StreamKind] = @StreamKind
+                ORDER BY [StreamIdentity];
+                """);
+
+            command.Parameters.Add(
+                IntParameter("@StreamKind", (int)streamKind));
+
+            var snapshots = new List<EventSnapshot>();
+
+            await using var reader = await command.ExecuteReaderAsync(
+                cancellationToken).ConfigureAwait(false);
+
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                var stream = ReadStreamReference(reader);
+                var version = new ResourceVersion(
+                    reader.GetInt64(reader.GetOrdinal("SnapshotVersion")));
+                var payloadSchemaVersion = new EventPayloadVersion(
+                    reader.GetInt32(reader.GetOrdinal("PayloadSchemaVersion")));
+
+                using var document = JsonDocument.Parse(
+                    reader.GetString(reader.GetOrdinal("StateJson")));
+
+                snapshots.Add(
+                    new EventSnapshot(
+                        stream,
+                        version,
+                        payloadSchemaVersion,
+                        document.RootElement));
+            }
+
+            return Result<IReadOnlyList<EventSnapshot>>.Success(snapshots);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (JsonException exception)
+        {
+            return Result<IReadOnlyList<EventSnapshot>>.Failure(
+                new Error(
+                    "hive.event.snapshot-invalid",
+                    ErrorCategory.Serialization,
+                    $"The stored snapshot JSON is invalid: {exception.Message}"));
+        }
+        catch (SqlException)
+        {
+            return Result<IReadOnlyList<EventSnapshot>>.Failure(
+                new Error(
+                    "hive.event.sql",
+                    ErrorCategory.External,
+                    "The snapshot listing failed at the SQL Server boundary."));
+        }
+        catch (Exception exception)
+        {
+            return Result<IReadOnlyList<EventSnapshot>>.Failure(
+                new Error(
+                    "hive.event.snapshot-list",
+                    ErrorCategory.Internal,
+                    $"The snapshot listing failed: {exception.Message}"));
         }
     }
 
@@ -492,6 +536,72 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
                 "hive.outbox.complete", ErrorCategory.Internal,
                 $"The outbox completion failed: {exception.Message}"));
         }
+    }
+
+    internal async Task<Result<EventAppendResult>> AppendInTransactionAsync(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        EventAppendRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentNullException.ThrowIfNull(transaction);
+        ArgumentNullException.ThrowIfNull(request);
+        ValidateStream(request.Stream);
+
+        var currentVersion = await ReadCurrentVersionAsync(
+            connection,
+            transaction,
+            request.Stream,
+            cancellationToken).ConfigureAwait(false);
+
+        var expectedVersion = request.ExpectedVersion?.Value ?? 0;
+
+        if (currentVersion != expectedVersion)
+        {
+            return Result<EventAppendResult>.Failure(
+                Error.Concurrency(
+                    "hive.event.stream-version",
+                    $"The event stream is at version {currentVersion}, but version {expectedVersion} was expected."));
+        }
+
+        await InsertEventAsync(
+            connection,
+            transaction,
+            request,
+            cancellationToken).ConfigureAwait(false);
+
+        if (request.Snapshot is not null)
+        {
+            await UpsertSnapshotAsync(
+                connection,
+                transaction,
+                request.Snapshot,
+                currentVersion,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        await InsertOutboxAsync(
+            connection,
+            transaction,
+            request,
+            cancellationToken).ConfigureAwait(false);
+
+        var persistedEvent = new PersistedEvent(
+            request.Stream,
+            request.StreamVersion,
+            request.Envelope);
+
+        var outbox = new EventOutboxEntry(
+            request.Stream,
+            request.StreamVersion,
+            request.Envelope);
+
+        return Result<EventAppendResult>.Success(
+            new EventAppendResult(
+                persistedEvent,
+                request.Snapshot,
+                outbox));
     }
 
     private async Task<long> ReadCurrentVersionAsync(
