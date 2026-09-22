@@ -41,8 +41,8 @@ Conceptually:
 Hive Settings
 ├── Overview
 ├── Providers
-│   ├── Providers
-│   ├── Provider Accounts
+│   ├── Provider Configuration
+│   ├── Accounts / Credentials
 │   └── Execution Targets
 ├── Agents
 ├── Persistence
