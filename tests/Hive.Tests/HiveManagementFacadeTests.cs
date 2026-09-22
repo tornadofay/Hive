@@ -186,7 +186,7 @@ public sealed class HiveManagementFacadeTests
         Assert.True(retired.IsSuccess, retired.Error?.Message);
 
         var updateRetired = await facade.UpdateProviderAsync(
-            created.Value!.WithDisplayName("Should Fail"),
+            retired.Value!.WithDisplayName("Should Fail"),
             context);
 
         Assert.True(updateRetired.IsFailure);
