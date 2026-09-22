@@ -109,7 +109,7 @@ Agents
 Persistence
 ```
 
-Providers, Provider Accounts, and Execution Targets are durable Management resources. Accounts / Credentials are not provider login screens; they identify the credential resource used by one or more execution targets. Persistence is a single global configuration editor rather than a CRUD collection.
+Provider Configuration, Accounts / Credentials, and Execution Targets are separate CRUD Settings pages because their Management contracts are separate resources. Accounts / Credentials are not provider login screens; they identify durable credential/resource records used by execution targets. Execution Targets own the concrete endpoint/model/deployment/capability configuration used for execution. Agents are also a separate CRUD page that references an ExecutionTarget. Persistence is different: it is a single global configuration editor rather than a CRUD collection.
 
 Future durable configuration such as Tools, Policy / Permissions, Runtime / Execution Defaults, Cognition, Knowledge, Skills, and Memory extends the same Settings center only after its authoritative contract exists.
 
