@@ -235,9 +235,11 @@ The bootstrap credential:
 
 - is stored outside the target Hive database;
 - is protected with Windows DPAPI/user scope;
-- is referenced by persistence configuration rather than stored as plaintext;
+- is referenced by the dedicated `HiveBootstrapCredentialReference` rather than the Hive resource `SecretReference` type;
 - is available before Hive.Persistence is constructed;
 - is never emitted in ordinary configuration, diagnostics, or Example output.
+
+The bootstrap application boundary supports set/create, replacement, resolution for host composition, and removal only when the persisted persistence configuration no longer references the credential. Raw material is supplied only through `SecretMaterial`; normal configuration reads expose only the bootstrap reference.
 
 After Hive.Persistence is available, Hive-owned resource credentials continue to use the authoritative Hive Secret Store. These two concerns must not be conflated.
 
