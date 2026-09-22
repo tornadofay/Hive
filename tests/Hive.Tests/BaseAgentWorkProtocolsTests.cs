@@ -30,7 +30,7 @@ public sealed class BaseAgentWorkProtocolsTests
         var objective = created.Value!;
         Assert.Equal(ObjectiveStatus.Active, objective.Status);
         Assert.Equal(ResourceScopeKind.Runtime, objective.Resource.Scope.Kind);
-        Assert.Equal(fixture.Runtime.Id.Value, objective.Resource.Scope.Identity);
+        Assert.Equal(fixture.Runtime.Id.Value, objective.Resource.Scope.Identity!.Value);
         Assert.Equal(ResourceVersion.Initial, objective.Resource.Version);
 
         var update = objective.Resource.Version;
@@ -203,7 +203,7 @@ public sealed class BaseAgentWorkProtocolsTests
             first.Clock.UtcNow);
 
         Assert.True(stored.IsSuccess, stored.Error?.Message);
-        Assert.Equal(first.Runtime.Id.Value, stored.Value!.Resource.Scope.Identity);
+        Assert.Equal(first.Runtime.Id.Value, stored.Value!.Resource.Scope.Identity!.Value);
 
         var firstRead = first.Runtime.Work.Memory.Retrieve(
             first.Context,
