@@ -89,7 +89,7 @@ public sealed class AgentExecutionIntegrationTests
             succeeded.Envelope.CorrelationId);
         Assert.Equal(
             started.Envelope.EventId.Value,
-            succeeded.Envelope.CausationId!.Value);
+            succeeded.Envelope.CausationId!.Value.Value);
         Assert.Equal(
             result.Value.StartedEventId,
             started.Envelope.EventId);
@@ -158,7 +158,7 @@ public sealed class AgentExecutionIntegrationTests
             events.Value[1].Envelope.EventType.Value);
         Assert.Equal(
             events.Value[0].Envelope.EventId.Value,
-            events.Value[1].Envelope.CausationId!.Value);
+            events.Value[1].Envelope.CausationId!.Value.Value);
     }
 
     [Fact]
@@ -289,7 +289,7 @@ public sealed class AgentExecutionIntegrationTests
         var events = await store.ReadEventsAsync(
             new ResourceReference(
                 ResourceKind.Execution,
-                executionId));
+                executionId.Value));
 
         Assert.True(events.IsSuccess, events.Error?.Message);
         Assert.Equal(2, events.Value!.Count);
