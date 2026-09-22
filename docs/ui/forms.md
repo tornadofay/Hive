@@ -1,49 +1,26 @@
-# Hive Forms — API
-
-## HiveForm
-
-```csharp
-public sealed class MyForm : HiveForm
-{
-    public MyForm()
-        : base("Title", "Subtitle", new Size(900, 600), new Size(760, 520))
-    {
-        BuildUi();
-        ThemeManager.Apply(BodyPanel);
-    }
-}
-```
-
-Use `BodyPanel` for form content.
-
-Useful members:
-- `ConfigureHeader(...)`
-- `SetHeaderText(...)`
-- `SetBodyPadding(...)`
-- `SetThemeManager(...)`
-- `ThemeManager`
-- `Theme`
-- `OnThemeChanged(...)`
+# Hive Forms — Agent Reference
 
 ## List page
 
 ```text
 HiveForm
-  └─ BodyPanel
-      └─ HiveListPageLayout
-          ├─ HeaderPanel
-          ├─ ActionBarPanel
-          └─ ContentPanel
+└─ BodyPanel
+   └─ HiveListPageLayout
+      ├─ HeaderPanel
+      ├─ ActionBarPanel
+      └─ ContentPanel
 ```
 
-Use `HiveCrudPage<TItem>` inside the content when generic CRUD behavior is needed.
+Use `HiveCrudPage<TItem>` inside ContentPanel for generic CRUD.
 
 ## Editor page
 
 ```text
 HiveForm
-  └─ BodyPanel
-      └─ HiveEditorLayout
+└─ BodyPanel
+   └─ HiveEditorLayout
+      ├─ FieldsPanel
+      └─ FooterPanel
 ```
 
 Use `AddField(...)` and `AddActionButton(...)`.
@@ -58,27 +35,24 @@ Members: `Mode`, `Theme`, `ThemeChanged`, `SetMode(...)`, `Apply(Control)`.
 
 Modes: `Light`, `Dark`, `System`.
 
-Apply after creating a derived form's content:
-
+After constructing form content:
 ```csharp
 ThemeManager.Apply(BodyPanel);
 ```
 
-Apply a dynamic view before showing it:
-
+Before showing a dynamically created view:
 ```csharp
 ThemeManager.Apply(view);
 host.Controls.Add(view);
 ```
 
-Use the shared theme manager; do not create a feature-local one.
-
 ## Layout
 
-Use normal WinForms `Dock`, `Anchor`, `TableLayoutPanel`, and `FlowLayoutPanel`.
+Use normal WinForms:
+`Dock`, `Anchor`, `TableLayoutPanel`, `FlowLayoutPanel`.
 
 ## Ownership
 
-The owner of a dynamic child is responsible for disposing/replacing it.
+The owner of a dynamically replaced child disposes the previous child.
 
-Do not put SQL, provider transport, or domain rules in reusable UI controls.
+UI controls should consume application/Management APIs; do not put SQL or provider transport into reusable UI controls.
