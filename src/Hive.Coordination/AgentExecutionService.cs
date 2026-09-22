@@ -242,10 +242,9 @@ public sealed class AgentExecutionService
         if (!request.Target.Resource.Scope.Matches(request.AccessContext))
         {
             return Result.Failure(
-                new Error(
-                    "hive.agent.execution.target-forbidden",
-                    ErrorCategory.Forbidden,
-                    "The selected execution target is outside the caller's authorized scope."));
+                Error.Validation(
+                    "hive.agent.execution.target-context-mismatch",
+                    "The selected execution target scope does not match the supplied execution context."));
         }
 
         return Result.Success();
