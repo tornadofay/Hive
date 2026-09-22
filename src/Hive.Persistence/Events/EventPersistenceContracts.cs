@@ -214,6 +214,10 @@ public interface IEventPersistenceStore
         ResourceReference stream,
         CancellationToken cancellationToken = default);
 
+    Task<Result<IReadOnlyList<EventSnapshot>>> ListSnapshotsAsync(
+        ResourceKind streamKind,
+        CancellationToken cancellationToken = default);
+
     Task<Result<EventOutboxEntry?>> GetOutboxAsync(
         EventId eventId,
         CancellationToken cancellationToken = default);
