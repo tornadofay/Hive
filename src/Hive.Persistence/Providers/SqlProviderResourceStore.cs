@@ -1344,15 +1344,16 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
             throw new ConcurrencyException();
     }
 
-    private async Task UpdateRetiredAsync(
+    private async Task UpdateRetiredAsync<TIdentity>(
         SqlConnection connection,
         SqlTransaction transaction,
         string tableName,
         string identityColumn,
         Guid resourceId,
-        ResourceEnvelope<ProviderId> retiredResource,
+        ResourceEnvelope<TIdentity> retiredResource,
         ResourceVersion expectedVersion,
         CancellationToken cancellationToken)
+        where TIdentity : struct
     {
         var identity = resourceId;
 
@@ -1540,7 +1541,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
         var scopeKind = (ResourceScopeKind)reader.GetInt32(
             reader.GetOrdinal("ScopeKind"));
 
-        var scopeIdentity = reader.IsDBNull(
+        Guid? scopeIdentity = reader.IsDBNull(
             reader.GetOrdinal("ScopeIdentity"))
             ? null
             : reader.GetGuid(reader.GetOrdinal("ScopeIdentity"));
@@ -1838,9 +1839,10 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
             await using var connection = await OpenConnectionAsync(
                 cancellationToken).ConfigureAwait(false);
 
-            await using var transaction = await connection.BeginTransactionAsync(
-                IsolationLevel.ReadCommitted,
-                cancellationToken).ConfigureAwait(false);
+            await using var transaction =
+                (SqlTransaction)await connection.BeginTransactionAsync(
+                    IsolationLevel.ReadCommitted,
+                    cancellationToken).ConfigureAwait(false);
 
             var result = await operation(
                 connection,
@@ -2103,6 +2105,15 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
             Value = value ?? DBNull.Value
         };
 
+    private static SqlParameter SqlParameter(
+        string name,
+        SqlDbType type,
+        object? value) =>
+        new(name, type)
+        {
+            Value = value ?? DBNull.Value
+        };
+
     private static void AddAccessParameters(
         SqlCommand command,
         ResourceAccessContext accessContext)
@@ -2114,27 +2125,27 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
         command.Parameters.Add(
             GuidParameter(
                 "@TenantId",
-                accessContext.TenantId?.Value.Value));
+                accessContext.TenantId?.Value));
         command.Parameters.Add(
             GuidParameter(
                 "@UserId",
-                accessContext.UserId?.Value.Value));
+                accessContext.UserId?.Value));
         command.Parameters.Add(
             GuidParameter(
                 "@WorkspaceId",
-                accessContext.WorkspaceId?.Value.Value));
+                accessContext.WorkspaceId?.Value));
         command.Parameters.Add(
             GuidParameter(
                 "@AgentId",
-                accessContext.AgentId?.Value.Value));
+                accessContext.AgentId?.Value));
         command.Parameters.Add(
             GuidParameter(
                 "@RuntimeId",
-                accessContext.RuntimeId?.Value.Value));
+                accessContext.RuntimeId?.Value));
         command.Parameters.Add(
             GuidParameter(
                 "@ExecutionId",
-                accessContext.ExecutionId?.Value.Value));
+                accessContext.ExecutionId?.Value));
         command.Parameters.Add(
             IntParameter(
                 "@GlobalScope",
