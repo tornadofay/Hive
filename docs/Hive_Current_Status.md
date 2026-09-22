@@ -4,13 +4,13 @@ Last updated: 2026-09-22
 
 ## Repository state
 
-Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 through Phase 1.5 are complete and verified; Phase 1.6 is now the active implementation slice with implementation present and developer verification pending.
+Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 through Phase 1.6 are complete and verified; Phase 1.7 is now the active implementation slice.
 
 ## Current phase
 
 Phase 0 — Foundations: **Complete**.
 
-**Active slice: 1.6 — Base Agent Work Protocols.**
+**Active slice: 1.7 — Event Log, Snapshots & Transactional Outbox.**
 
 ## Architecture decisions now locked
 
@@ -90,7 +90,13 @@ Developer verification:
 
 ### Phase 1.6 — Base Agent Work Protocols
 
-Implementation is present; developer verification is pending.
+Complete and verified.
+
+Developer verification:
+- Hive.Example.WinForms `Agents / Base Agent / Base Agent Work Protocols` completed successfully.
+- Full `Hive.Tests` execution: **112 tests passed, 0 failed, 0 skipped in 3 seconds**.
+- The Example exercised Objective lifecycle, WorkItem binding/provenance, runtime-scoped memory, Question/Answer transport, deterministic timeout, Patience / Understanding Gate, delegation, and stopped-runtime state preservation.
+- The 1.6 completion gate is satisfied.
 
 Implemented:
 - Objective lifecycle with immutable transitions and concurrency-aware ObjectiveStore;
@@ -102,7 +108,11 @@ Implemented:
 - RuntimeWorkProtocols isolation across RuntimeInstance objects;
 - focused automated tests and a public Example Host scenario.
 
-No Phase 1.6 build, test, or manual Example verification result is recorded yet.
+### Phase 1.7 — Event Log, Snapshots & Transactional Outbox
+
+Active implementation slice.
+
+No Phase 1.7 implementation or verification result is recorded yet.
 
 ### Phase 1.4 — Capability-aware Execution Target Selection
 
@@ -201,8 +211,7 @@ Implemented so far:
 
 ## Not started
 
-- Phase 1.7 and later Phase 1 implementation slices.
-- Phase 1.6 is now the active implementation slice and implementation is not yet verified.
+- Phase 1.8 and later Phase 1 implementation slices.
 - Later phases.
 
 Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.5 are complete and verified. Phase 1.6 is active; implementation is present and developer verification is pending.
