@@ -103,7 +103,7 @@ var answer = runtime.Work.Questions.Answer(
     DateTimeOffset.UtcNow);
 ```
 
-Questions have `Waiting`, `Answered`, `TimedOut`, and `Cancelled` states. Only the owning RuntimeInstance may wait for or cancel its Question. A responder is separately identified and authenticated through its own Runtime access context. An explicitly shared Question transport may therefore support cross-runtime responders without making sharing implicit.
+Questions have `Waiting`, `Answered`, `TimedOut`, and `Cancelled` states. Only the owning RuntimeInstance may wait for or cancel its Question. A responder is separately identified and authenticated through its own Runtime access context. Question transport remains runtime-owned in Phase 1.6; cross-runtime collaboration uses the explicit Delegation channel.
 
 Waiting is asynchronous and cancellation-aware. Timeout processing is deterministic: the transport receives an `IClock`, and the owner explicitly calls `ExpireDue()` to complete Questions whose deadlines have passed. This keeps Phase 1.6 free of a second scheduler/workflow engine.
 
