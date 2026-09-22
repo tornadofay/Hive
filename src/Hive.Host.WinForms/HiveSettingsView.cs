@@ -81,22 +81,40 @@ public sealed class HiveSettingsView : UserControl
         };
         _navigation.AfterSelect += NavigationAfterSelect;
 
-        var navigationRoot = new TreeNode("Configuration");
-        navigationRoot.Nodes.Add(
+        var navigationRoot = new TreeNode("Hive Settings");
+
+        var providersNode = new TreeNode("Providers");
+        providersNode.Nodes.Add(
             CreatePageNode(
                 "Providers",
-                "Providers, accounts, targets, credentials, and connection tests."));
+                "Provider identity, transport, endpoint defaults, and connection testing.",
+                SettingsPageKey.Providers));
+        providersNode.Nodes.Add(
+            CreatePageNode(
+                "Accounts / Credentials",
+                "Advanced provider credential/account management. No provider login is required.",
+                SettingsPageKey.ProviderAccounts));
+        providersNode.Nodes.Add(
+            CreatePageNode(
+                "Execution Targets",
+                "Advanced model/deployment endpoints and capability-aware execution targets.",
+                SettingsPageKey.ExecutionTargets));
+
+        navigationRoot.Nodes.Add(providersNode);
         navigationRoot.Nodes.Add(
             CreatePageNode(
                 "Agents",
-                "AgentDefinitions and configured execution targets."));
+                "AgentDefinitions and their configured execution target references.",
+                SettingsPageKey.Agents));
         navigationRoot.Nodes.Add(
             CreatePageNode(
                 "Persistence",
-                "SQL Server / LocalDB configuration and database/schema state."));
+                "SQL Server / LocalDB configuration and database/schema state.",
+                SettingsPageKey.Persistence));
 
         _navigation.Nodes.Add(navigationRoot);
         navigationRoot.Expand();
+        providersNode.Expand();
 
         _content = new Panel
         {
@@ -114,7 +132,7 @@ public sealed class HiveSettingsView : UserControl
 
         _themeManager.Apply(this);
 
-        _navigation.SelectedNode = navigationRoot.Nodes[0];
+        _navigation.SelectedNode = providersNode.Nodes[0];
         Load += async (_, _) => await InitializeAsync();
     }
 
@@ -200,7 +218,9 @@ public sealed class HiveSettingsView : UserControl
     {
         Control control = page.Key switch
         {
-            SettingsPageKey.Providers => _providerView ??=
+            SettingsPageKey.Providers or
+            SettingsPageKey.ProviderAccounts or
+            SettingsPageKey.ExecutionTargets => _providerView ??=
                 new HiveProviderSettingsView(
                     _management,
                     _accessContext,
@@ -235,20 +255,24 @@ public sealed class HiveSettingsView : UserControl
         }
 
         _themeManager.Apply(control);
+
+        if (control is HiveProviderSettingsView providerView)
+        {
+            providerView.FocusSection(
+                page.Key switch
+                {
+                    SettingsPageKey.ProviderAccounts => HiveProviderSettingsSection.AccountsAndCredentials,
+                    SettingsPageKey.ExecutionTargets => HiveProviderSettingsSection.ExecutionTargets,
+                    _ => HiveProviderSettingsSection.Providers
+                });
+        }
     }
 
     private static TreeNode CreatePageNode(
         string name,
-        string description)
+        string description,
+        SettingsPageKey key)
     {
-        var key = name switch
-        {
-            "Providers" => SettingsPageKey.Providers,
-            "Agents" => SettingsPageKey.Agents,
-            "Persistence" => SettingsPageKey.Persistence,
-            _ => throw new ArgumentOutOfRangeException(nameof(name), name, null)
-        };
-
         return new TreeNode(name)
         {
             Tag = new SettingsPage(key, name, description)
@@ -258,6 +282,8 @@ public sealed class HiveSettingsView : UserControl
     private enum SettingsPageKey
     {
         Providers,
+        ProviderAccounts,
+        ExecutionTargets,
         Agents,
         Persistence
     }
