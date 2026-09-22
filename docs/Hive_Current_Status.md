@@ -59,64 +59,200 @@ Phase 0 — Foundations: **Complete**.
 
 ## Current implementation progress
 
-### Phase 1.1 — Provider / ProviderAccount / ExecutionTarget
+### Phase 0 — Foundations
+
+#### Phase 0.1 — Solution & project scaffolding
+
+Complete and verified.
+
+Implemented:
+- Eleven-project .NET 10 solution scaffold created and merged into main.
+- Hive.Example.WinForms is the current developer startup project.
+
+Developer verification:
+- Successful full-solution rebuild.
+- Hive.Example.WinForms launches successfully with the current placeholder form.
+
+#### Phase 0.2 — Common infrastructure
+
+Complete and verified.
+
+Implemented:
+- Common technical IDs;
+- typed Error/Result contracts;
+- IClock;
+- durable event envelope contracts;
+- event payload schema versioning;
+- upcasting registry;
+- System.Text.Json serialization;
+- focused xUnit contract tests.
+
+Developer verification:
+- Initial `Result.cs` compilation defect was corrected.
+- Full `Hive.Tests`: **20 tests passed, 0 failed, 0 skipped in 1.3 seconds**.
+- Developer rebuilt the solution and launched the application successfully.
+
+#### Phase 0.3 — Identity, WorkItem & Resource foundation
+
+Complete and verified.
+
+Implemented in `Hive.Core`:
+- eleven typed identity/value types: Deployment, Tenant, Principal, User, Session, Workspace, Agent, Hive, Runtime, Execution, and WorkItem;
+- ResourceKind inventory classification;
+- ResourceScope / ResourceAccessContext and explicit scope matching;
+- ResourceVersion, ResourceLifecycle, ResourceProvenance, ResourceReference;
+- immutable ResourceEnvelope<TIdentity> and identity snapshots;
+- WorkItem status/lifecycle/version transitions;
+- focused 0.3 contract tests;
+- copyable 0.3 public API example under `docs/examples`.
+
+Developer verification:
+- **36 tests passed, 0 failed, 0 skipped in 1.5 seconds**.
+- Full-solution rebuild and application launch were also reported successful.
+
+#### Phase 0.4 — Persistence bootstrap
+
+Complete and verified.
+
+Implemented in `Hive.Persistence`:
+- SQL Server/LocalDB database configuration with automatic database creation enabled by default;
+- DbUp SQL Server 7.2.0 migration runner;
+- Microsoft.Data.SqlClient 7.1.0;
+- Hive-owned schema-version tracking and DbUp journal configuration;
+- future-schema compatibility rejection;
+- transaction-per-script migration execution;
+- bootstrap metadata schema with primary/unique indexes;
+- persistence option tests and SQL integration tests;
+- public example under `docs/examples/Phase04_Persistence.md`.
+
+Developer verification:
+- **44 tests passed, 0 failed, 0 skipped in 3.3 seconds**.
+- Persistence integration tests executed successfully against the developer SQL Server instance and created the Hive test databases.
+
+#### Phase 0.5 — Test harness
+
+Complete and verified.
+
+Implemented:
+- reusable FakeClock;
+- deterministic test-only FakeProvider;
+- centralized PersistenceTestDatabase helper;
+- deterministic EventTestData factory;
+- existing clock/event tests migrated to the shared helpers;
+- focused tests for clock, provider, and event test infrastructure;
+- no new production provider abstraction introduced.
+
+Developer verification:
+- **52 tests passed, 0 failed, 0 skipped in 1.6 seconds**.
+- The normal Visual Studio Hive.Tests workflow completed successfully.
+
+#### Phase 0.6 — WinForms UI/UX Foundation
+
+Complete and accepted.
+
+Scope established:
+- Light / Dark / System theme modes;
+- Hive-owned palette, typography, spacing, and common visual-state tokens;
+- HiveForm;
+- HiveButton;
+- HiveMessageBox;
+- native WinForms controls and custom System.Drawing rendering owned by Hive.Host.WinForms.UI;
+- reusable data-page and editor-layout presentation primitives;
+- HiveCrudPage<TItem> and HivePaginationBar;
+- production UI/UX standards for hierarchy, spacing, typography, density, states, dialogs, CRUD presentation, and resize behavior.
+
+Developer verification:
+- Accepted through developer UI interaction.
+- The foundation became the shared rendering/composition layer for later WinForms features.
+
+#### Phase 0.7 — First-Class Example Host Shell
+
+Complete and verified.
+
+Implemented:
+- permanent Category → Subcategory → optional deeper navigation groups → Example shell;
+- left-side scalable navigation and right-side replaceable UserControl views;
+- designated example assembly discovery through the public example contract;
+- shared Example Host UI/test surface and global output pane.
+
+Developer verification:
+- Phase 0.7 was accepted after the developer's final UI/UX review.
+- No further Phase 0 UI work is active.
+
+Phase 0.8 was removed before Phase 0 closure because it is no longer needed.
+
+### Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1)
+
+#### Phase 1.1 — Provider / ProviderAccount / ExecutionTarget
 
 Complete and verified.
 
 Developer verification:
 - Hive.Example.WinForms Provider Platform scenario completed successfully, including migration/schema 2, Provider/ProviderAccount/ExecutionTarget CRUD, capability-state display, ownership/scope failures, and retirement.
-- Full Hive.Tests execution: **62 tests passed, 0 failed, 0 skipped in 1.6 seconds**.
+- Full Hive.Tests: **62 tests passed, 0 failed, 0 skipped in 1.6 seconds**.
 - The final 1.1 corrections were re-tested successfully; the 1.1 completion gate is satisfied.
 
-### Phase 1.2 — Secret Store
+#### Phase 1.2 — Secret Store
 
 Complete and verified.
 
 Developer verification:
 - Hive.Example.WinForms DPAPI Secret Store scenario completed successfully: schema 3, secret creation/version 1, redaction, ownership/scope rejection, replacement/version 2, hard deletion, and post-delete NotFound.
-- Full Hive.Tests execution: **67 tests passed, 0 failed, 0 skipped in 1.8 seconds**.
+- Full Hive.Tests: **67 tests passed, 0 failed, 0 skipped in 1.8 seconds**.
 - The 1.2 completion gate is satisfied.
 
+#### Phase 1.3 — OpenAI-compatible Provider Adapter
 
-### Phase 1.5 — Base Agent & AgentFactory
+Complete and verified.
+
+Developer verification:
+- Hive.Example.WinForms `Providers / Provider Transport / OpenAI-compatible Provider Adapter` completed successfully against the local fake HTTP endpoint, including normal and structured-output responses.
+- Full Hive.Tests: **80 tests passed, 0 failed, 0 skipped in 1.6 seconds**.
+- The 1.3 completion gate is satisfied.
+
+#### Phase 1.4 — Capability-aware Execution Target Selection
+
+Complete and verified.
+
+Developer verification:
+- Hive.Example.WinForms `Providers / Target Selection / Capability-aware Execution Target Selection` completed successfully.
+- Full Hive.Tests: **95 tests passed, 0 failed, 0 skipped in 2.9 seconds**.
+- The initial xUnit `Assert.Single(...Where(...))` analyzer errors were corrected before the successful rerun.
+- The 1.4 completion gate is satisfied.
+
+#### Phase 1.5 — Base Agent & AgentFactory
 
 Complete and verified.
 
 Developer verification:
 - Hive.Example.WinForms `Agents / Base Agent / AgentFactory / Runtime Isolation` completed successfully.
-- Full `Hive.Tests` execution: **103 tests passed, 0 failed, 0 skipped in 2.3 seconds**.
+- Full Hive.Tests: **103 tests passed, 0 failed, 0 skipped in 2.3 seconds**.
 - Agent generation remained explicit at creation; two RuntimeInstance identities and their Execution state were isolated.
 - The 1.5 completion gate is satisfied.
 
-### Phase 1.6 — Base Agent Work Protocols
+#### Phase 1.6 — Base Agent Work Protocols
 
 Complete and verified.
-
-Developer verification:
-- Hive.Example.WinForms `Agents / Base Agent / Base Agent Work Protocols` completed successfully.
-- Full `Hive.Tests` execution: **112 tests passed, 0 failed, 0 skipped in 3 seconds**.
-- The Example exercised Objective lifecycle, WorkItem binding/provenance, runtime-scoped memory, Question/Answer transport, deterministic timeout, Patience / Understanding Gate, delegation, and stopped-runtime state preservation.
-- The 1.6 completion gate is satisfied.
 
 Implemented:
 - Objective lifecycle with immutable transitions and concurrency-aware ObjectiveStore;
 - WorkItem binding with resource-version capture and provenance;
-- Runtime-scoped in-memory memory storage/retrieval;
+- runtime-scoped in-memory memory storage/retrieval;
 - Question/Answer transport with ownership checks, asynchronous waiting, cancellation, and deterministic timeout processing;
 - deterministic Patience / Understanding Gate;
 - explicit delegation requests/channel with requester/delegate provenance and participant checks;
 - RuntimeWorkProtocols isolation across RuntimeInstance objects;
 - focused automated tests and a public Example Host scenario.
 
-### Phase 1.7 — Event Log, Snapshots & Transactional Outbox
+Developer verification:
+- Hive.Example.WinForms `Agents / Base Agent / Base Agent Work Protocols` completed successfully.
+- Full Hive.Tests: **112 tests passed, 0 failed, 0 skipped in 3 seconds**.
+- Objective lifecycle, WorkItem binding/provenance, runtime-scoped memory, Question/Answer transport, deterministic Understanding Gate, delegation, and RuntimeInstance isolation were exercised successfully by the Example and focused/full automated tests.
+- The 1.6 completion gate is satisfied.
+
+#### Phase 1.7 — Event Log, Snapshots & Transactional Outbox
 
 Complete and verified.
-
-Developer verification:
-- Hive.Example.WinForms `Persistence / Events / Event Persistence / Event Log + Snapshot + Outbox` completed successfully.
-- Example output demonstrated two committed event versions, snapshot version 2, outbox event linkage, deterministic fold count 5, and schema version 4.
-- Full `Hive.Tests` execution: **120 tests passed, 0 failed, 0 skipped in 3.5 seconds**.
-- The 1.7 completion gate is satisfied.
 
 Implemented:
 - durable SQL event log keyed by ResourceReference and per-stream ResourceVersion;
@@ -127,15 +263,15 @@ Implemented:
 - schema migration from version 3 to version 4;
 - focused unit/integration tests and a public Example Host scenario.
 
-### Phase 1.8 — Outbox Poller
+Developer verification:
+- Hive.Example.WinForms `Persistence / Events / Event Persistence / Event Log + Snapshot + Outbox` completed successfully.
+- Example output demonstrated two committed event versions, snapshot version 2, outbox event linkage, deterministic fold count 5, and schema version 4.
+- Full Hive.Tests: **120 tests passed, 0 failed, 0 skipped in 3.5 seconds**.
+- The 1.7 completion gate is satisfied.
+
+#### Phase 1.8 — Outbox Poller
 
 Complete and verified.
-
-Developer verification:
-- Hive.Example.WinForms `Persistence / Events / Outbox Poller / Transactional Outbox Poller` completed successfully.
-- Example output confirmed simulated first-delivery failure, retained lease, successful retry, preserved event identity, one idempotent side effect, no remaining outbox row, and migration schema 5.
-- Full `Hive.Tests` execution: **124 tests passed, 0 failed, 0 skipped in 2.7 seconds**.
-- The 1.8 completion gate is satisfied.
 
 Implemented:
 - lease-based outbox claiming with atomic SQL locking;
@@ -145,7 +281,14 @@ Implemented:
 - idempotent EventId delivery contract;
 - focused integration tests and a public Example Host scenario;
 - schema migration 5 for outbox lease/attempt state.
- ### Phase 1.9 — First Real Agent Execution
+
+Developer verification:
+- Hive.Example.WinForms `Persistence / Events / Outbox Poller / Transactional Outbox Poller` completed successfully.
+- Example output confirmed simulated first-delivery failure, retained lease, successful retry, preserved event identity, one idempotent side effect, no remaining outbox row, and migration schema 5.
+- Full Hive.Tests: **124 tests passed, 0 failed, 0 skipped in 2.7 seconds**.
+- The 1.8 completion gate is satisfied.
+
+#### Phase 1.9 — First Real Agent Execution
 
 Complete and verified.
 
@@ -165,108 +308,21 @@ Implemented:
 Developer verification:
 - Hive.Example.WinForms `Agents / Base Agent / First Real Agent Execution` completed successfully against the local fake provider at 2026-09-22 08:33:41.
 - The example reported a successful Base Agent execution, two lifecycle events, correlation/causation values, no provider credentials, local fake HTTP endpoint, no MAF workflow/orchestration, and schema version 5 already current.
-- Full `Hive.Tests`: **128 tests passed, 0 failed, 0 skipped in 4.6 seconds**.
+- Full Hive.Tests: **128 tests passed, 0 failed, 0 skipped in 4.6 seconds**.
 - The 1.9 completion gate is satisfied.
 
-### Phase 1.4 — Capability-aware Execution Target Selection
+#### Phase 1.10 — Hive.Management Facade
 
-Complete and verified.
+Active implementation slice; implementation has not started.
 
-Developer verification:
-- Hive.Example.WinForms `Providers / Target Selection / Capability-aware Execution Target Selection` completed successfully.
-- Full `Hive.Tests` execution: **95 tests passed, 0 failed, 0 skipped in 2.9 seconds**.
-- The initial xUnit `Assert.Single(...Where(...))` analyzer errors were corrected before the successful rerun.
-- The 1.4 completion gate is satisfied.
+Objective:
+- CRUD facade for Providers, ProviderAccounts, ExecutionTargets, and AgentDefinitions.
 
-### Phase 1.3 — OpenAI-compatible Provider Adapter
+The next implementation must preserve the existing Core, Agents, Persistence, Provider, and Coordination ownership boundaries and make Hive.Management the application-facing service boundary for these operations.
 
-Complete and verified.
+## Current handoff
 
-Developer verification:
-- Hive.Example.WinForms `Providers / Provider Transport / OpenAI-compatible Provider Adapter` completed successfully against the local fake HTTP endpoint, including normal and structured-output responses.
-- Full `Hive.Tests` execution: **80 tests passed, 0 failed, 0 skipped in 1.6 seconds**.
-- The 1.3 completion gate is satisfied.
-
-### Phase 0 closure — Foundations
-
-Complete. Phase 0.7 was the final active slice and is accepted after the developer's final UI/UX review. No 0.8 slice remains.
-
-
-### Phase 0.3 — Identity, WorkItem & Resource foundation
-
-Implemented in `Hive.Core`:
-
-- eleven typed identity/value types: Deployment, Tenant, Principal, User, Session, Workspace, Agent, Hive, Runtime, Execution, and WorkItem;
-- ResourceKind inventory classification;
-- ResourceScope / ResourceAccessContext and explicit scope matching;
-- ResourceVersion, ResourceLifecycle, ResourceProvenance, ResourceReference;
-- immutable ResourceEnvelope<TIdentity> and identity snapshots;
-- WorkItem status/lifecycle/version transitions;
-- focused 0.3 contract tests;
-- copyable 0.3 public API example under `docs/examples`.
-
-Developer verification: **36 tests passed, 0 failed, 0 skipped in 1.5 seconds.** Full-solution rebuild and application launch were also reported successful.
-
-### Phase 0.4 — Persistence bootstrap
-
-Completed in Hive.Persistence:
-- SQL Server/LocalDB database configuration with automatic database creation enabled by default;
-- DbUp SQL Server 7.2.0 migration runner;
-- Microsoft.Data.SqlClient 7.1.0;
-- Hive-owned schema-version tracking and DbUp journal configuration;
-- future-schema compatibility rejection;
-- transaction-per-script migration execution;
-- bootstrap metadata schema with primary/unique indexes;
-- persistence option tests and SQL integration tests;
-- public example under docs/examples/Phase04_Persistence.md.
-
-Developer verification: **44 tests passed, 0 failed, 0 skipped in 3.3 seconds.** The persistence integration tests executed successfully against the developer SQL Server instance and created the Hive test databases.
-
-### Phase 0.5 — Test harness
-
-Complete. The reusable test-harness infrastructure is implemented and verified.
-
-Developer verification: **52 tests passed, 0 failed, 0 skipped in 1.6 seconds.** The normal Visual Studio Hive.Tests workflow completed successfully.
-
-Implemented so far:
-- reusable FakeClock;
-- deterministic test-only FakeProvider;
-- centralized PersistenceTestDatabase helper;
-- deterministic EventTestData factory;
-- existing clock/event tests migrated to the shared helpers;
-- focused tests for clock, provider, and event test infrastructure;
-- no new production provider abstraction introduced.
-
-## Completed
-
-### Phase 0.3 — Identity, WorkItem & Resource foundation
-
-- Implemented the typed identity/resource foundation in `Hive.Core`.
-- Added focused 0.3 tests and the public API example.
-- Developer ran the complete suite: **36 tests passed, 0 failed, 0 skipped in 1.5 seconds.**
-- Developer reports the full solution rebuilds successfully and the application launches successfully.
-- 0.3 completion gate satisfied.
-
-### Phase 0.1 — Solution & project scaffolding
-
-- Eleven-project .NET 10 solution scaffold created and merged into main.
-- Hive.Example.WinForms is the current developer startup project.
-- Developer reports a successful full-solution rebuild.
-- Developer reports the example application launches successfully with the current placeholder form.
-
-### Phase 0.2 — Common infrastructure
-
-- Common technical IDs, typed Error/Result contracts, IClock, durable event envelope contracts, event payload schema versioning, upcasting registry, and System.Text.Json serialization implemented.
-- Initial `Result.cs` compilation defect corrected.
-- Focused xUnit contract tests added.
-- Developer rebuilt the solution and launched the application successfully.
-- Developer ran the complete test suite: **20 tests passed, 0 failed, 0 skipped in 1.3 seconds.**
-- 0.2 completion gate satisfied.
-
-## Not started
-
-- Phase 1.10 is active.
-- Phase 1.11 and later Phase 1 implementation slices.
-- Later phases.
-
-Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.9 are complete and verified. Phase 1.10 is active.
+- Phase 0 — Foundations: **Complete**.
+- Phase 1.1 through Phase 1.9: **Complete and verified**.
+- Phase 1.10 — Hive.Management Facade: **Active; not yet implemented**.
+- No Phase 1.11 or later implementation has started.
