@@ -14,7 +14,7 @@ public sealed class HiveSettingsForm : HiveForm
         IHiveThemeManager themeManager)
         : base(
             "Hive Settings",
-            "Provider and Persistence configuration",
+            "Global Hive package configuration",
             new Size(1120, 780),
             new Size(880, 620),
             themeManager)
