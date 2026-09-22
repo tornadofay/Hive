@@ -49,6 +49,7 @@ public sealed record HiveVisualStates(
     public Color NavigationSelectedText { get; init; }
     public Color NavigationText { get; init; }
     public Color NavigationBorder { get; init; }
+    public Color DisabledListBackground { get; init; }
     public Color Information { get; init; }
     public Color Success { get; init; }
     public Color Warning { get; init; }
