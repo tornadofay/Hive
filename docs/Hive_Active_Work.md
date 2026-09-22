@@ -88,8 +88,26 @@ No verification claim is recorded until it has actually been performed.
 - Keep runtime/execution state isolated between RuntimeInstance objects.
 - Do not add a second orchestration engine.
 
+
+## Implementation checkpoint
+
+The 1.5 implementation is present in the repository at this checkpoint:
+
+- `Hive.Agents` exposes `AgentDefinition`, `Agent`, `RuntimeInstance`, `Execution`, `IAgentCreationAuthorizer`, and `AgentFactory.Create<TAgent>()` for the base generation.
+- Agent generation is explicitly stored in `AgentDefinition` and copied to the created Agent/runtime/execution objects; the factory does not infer or promote generations.
+- Creation requires deployment and principal identity and passes through the injected authorization boundary.
+- The current factory supports `AgentGeneration.Base`; the later `Cognitive` generation is rejected as unsupported rather than silently promoted.
+- Runtime instances receive distinct identities and execution state is isolated per runtime.
+- Runtime/Execution lifecycle transitions return typed failures for invalid transitions.
+- `tests/Hive.Tests/AgentFactoryTests.cs` covers normal creation, malformed identity/definition, authorization denial, generation rejection, runtime isolation, stopped-runtime behavior, and terminal execution transitions.
+- `Hive.Example.WinForms` contains `Agents / Base Agent / AgentFactory / Runtime Isolation`.
+- `docs/examples/Phase15_Base_Agent_AgentFactory.md` documents the public API and slice boundary.
+- `docs/architecture.md` records the Base Agent creation/runtime contract.
+
+Developer verification is pending. Agent-run builds/tests/manual verification remain unauthorized.
+
 ## Verification handoff
 
-Example to run: <exact 1.5 Example Host path once the authorized example is implemented> — Hive.Example.WinForms
+Example to run: Agents / Base Agent / AgentFactory / Runtime Isolation — Hive.Example.WinForms (net10.0-windows).
 
-Tests to run: <exact 1.5 focused test class/file once implemented>; broader Hive.Tests execution is required by the 1.5 completion gate.
+Tests to run: tests/Hive.Tests/AgentFactoryTests.cs; broader Hive.Tests execution is required by the 1.5 completion gate.
