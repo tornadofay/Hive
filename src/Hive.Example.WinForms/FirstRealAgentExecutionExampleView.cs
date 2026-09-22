@@ -262,15 +262,10 @@ internal sealed class FirstRealAgentExecutionExampleView : UserControl
 
                 var bodyBytes = Encoding.UTF8.GetBytes(body);
                 var headers = Encoding.ASCII.GetBytes(
-                    "HTTP/1.1 200 OK
-" +
-                    "Content-Type: application/json
-" +
-                    $"Content-Length: {bodyBytes.Length}
-" +
-                    "Connection: close
-
-");
+                    "HTTP/1.1 200 OK\r\n" +
+                    "Content-Type: application/json\r\n" +
+                    $"Content-Length: {bodyBytes.Length}\r\n" +
+                    "Connection: close\r\n\r\n");
 
                 await stream.WriteAsync(
                     headers,
