@@ -97,7 +97,17 @@ The 1.4 implementation is present in the repository at this checkpoint:
 - `Hive.Example.WinForms` contains `Providers / Target Selection / Capability-aware Execution Target Selection`.
 - `docs/examples/Phase14_Capability_Aware_Execution_Target_Selection.md` documents the public API and selection rules.
 
-Developer verification is pending. Agent-run builds/tests/manual verification remain unauthorized.
+## Developer verification attempt
+
+The developer manually ran the Example Host scenario successfully:
+
+- Example output completed successfully with Auto, Preferred, and Fixed selection behavior and capability diagnostics.
+- The initial test run did not compile because three tests used `Assert.Single(...Where(...))`, which violates the repository's xUnit analyzer rule requiring the predicate overload.
+- All three assertions have now been corrected to `Assert.Single(collection, predicate)`.
+- The focused and broader automated suites remain pending developer rerun after this correction.
+
+Developer verification is therefore still pending for the 1.4 completion gate.
+Implementation Agent-run builds/tests/manual verification remain unauthorized.
 
 ## Verification handoff
 
