@@ -57,6 +57,7 @@ public sealed class HiveDatabaseOptions
             InitialCatalog = databaseName.Trim(),
             IntegratedSecurity = true,
             TrustServerCertificate = true,
+            ConnectRetryCount = 0,
             ApplicationName = "Hive"
         };
 
@@ -90,7 +91,8 @@ public sealed class HiveDatabaseOptions
             Encrypt = configuration.Encrypt,
             TrustServerCertificate = configuration.TrustServerCertificate,
             PersistSecurityInfo = false,
-            ConnectTimeout = 30
+            ConnectTimeout = 30,
+            ConnectRetryCount = 0
         };
 
         switch (configuration.AuthenticationMode)
