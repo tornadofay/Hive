@@ -320,12 +320,10 @@ internal sealed class FirstRealAgentExecutionExampleView : UserControl
         {
             for (var index = 0; index <= length - 4; index++)
             {
-                if (bytes[index] == (byte)'' &&
-                    bytes[index + 1] == (byte)'
-' &&
-                    bytes[index + 2] == (byte)'' &&
-                    bytes[index + 3] == (byte)'
-')
+                if (bytes[index] == 13 &&
+                    bytes[index + 1] == 10 &&
+                    bytes[index + 2] == 13 &&
+                    bytes[index + 3] == 10)
                 {
                     return index;
                 }
