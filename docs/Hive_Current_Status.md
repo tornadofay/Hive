@@ -78,6 +78,12 @@ Developer verification:
 - The 1.2 completion gate is satisfied.
 
 
+### Phase 1.5 — Base Agent & AgentFactory
+
+Implementation is present; developer verification is pending.
+
+Implemented in `Hive.Agents`: `AgentDefinition`, `Agent`, `RuntimeInstance`, `Execution`, creation authorization boundary, and `AgentFactory.Create<TAgent>()`. Runtime and execution state are in-memory only; no persistence, provider transport, MAF execution, or cognitive-generation behavior was added.
+
 ### Phase 1.4 — Capability-aware Execution Target Selection
 
 Complete and verified.
