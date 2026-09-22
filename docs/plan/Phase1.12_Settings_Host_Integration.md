@@ -88,6 +88,8 @@ The current authorized sub-stage is:
 
 Only implement 1.12-A and supporting contracts required to make 1.12-A complete.
 
+1.12-A may define and consume the bootstrap-credential abstraction required by host composition, but it does not implement the concrete DPAPI storage mechanism; that implementation belongs to 1.12-B.
+
 Do not implement later 1.12 UI/resource/example work in the same run unless it is a direct dependency of 1.12-A.
 
 Tests and examples are not a final-phase activity: each sub-stage adds the focused automated coverage and externally usable Example work required by the capability it actually introduces. 1.12-H is the final coverage consolidation/audit, not permission to defer all testing until then.
@@ -352,7 +354,7 @@ The composition layer must preserve these distinctions. UI may translate them in
 
 ### 1.12-A exit gate
 
-This stage proves, with focused automated coverage and code inspection, that the host can be composed from saved configuration without embedding \`LocalDevelopment()\` as permanent wiring.
+This stage proves, with focused automated coverage and code inspection, that the host has one composition/lifetime boundary and can consume the persisted configuration through the bootstrap-credential abstraction without embedding \`LocalDevelopment()\` as permanent wiring. The concrete DPAPI-backed bootstrap store is completed in 1.12-B; 1.12-A depends only on its stable application-facing contract.
 
 Required focus:
 
@@ -395,6 +397,8 @@ Raw material may be supplied and resolved internally, but normal configuration r
 ### Integration rule
 
 The bootstrap boundary is available before Hive.Persistence is constructed.
+
+The host composition boundary depends only on the bootstrap-credential contract. Its concrete storage implementation remains replaceable behind that contract.
 
 Do not store the bootstrap SQL password inside the Hive database-backed Secret Store.
 
