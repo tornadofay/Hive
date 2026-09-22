@@ -112,7 +112,7 @@ public sealed class WorkItemImageSubmission
 
     public string MediaType { get; }
 
-    public byte[] Content { get; }
+    public ReadOnlyMemory<byte> Content { get; }
 }
 
 public sealed class WorkItemAttachmentContent
@@ -135,5 +135,5 @@ public sealed class WorkItemAttachmentContent
 
     public WorkItemAttachmentMetadata Metadata { get; }
 
-    public byte[] Content { get; }
+    public ReadOnlyMemory<byte> Content { get; }
 }
