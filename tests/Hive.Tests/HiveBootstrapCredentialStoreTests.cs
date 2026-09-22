@@ -254,8 +254,9 @@ public sealed class HiveBootstrapCredentialStoreTests
                     ? Result<SecretMaterial>.Success(
                         SecretMaterial.Create(value))
                     : Result<SecretMaterial>.Failure(
-                        Error.NotFound(
+                        new Error(
                             "hive.host.bootstrap-credential-not-found",
+                            ErrorCategory.NotFound,
                             "The referenced bootstrap credential was not found.")));
         }
 
