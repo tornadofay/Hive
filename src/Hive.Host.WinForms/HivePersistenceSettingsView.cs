@@ -312,31 +312,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 ? _loadedConfiguration?.CredentialSecret
                 : null;
 
-        if (authentication == HiveSqlAuthenticationMode.SqlPassword &&
-            !string.IsNullOrWhiteSpace(_passwordTextBox.Text))
-        {
-            if (!persistCredential)
-            {
-                credential ??= throw new ArgumentException(
-                    "A saved SQL password credential is required for a non-destructive connection test.");
-            }
-            else
-            {
-                credential = await SaveCredentialAsync(
-                    _passwordTextBox.Text,
-                    credential,
-                    cancellationToken).ConfigureAwait(true);
-            }
-        }
-
-        if (authentication == HiveSqlAuthenticationMode.SqlPassword &&
-            credential is null)
-        {
-            throw new ArgumentException(
-                "SQL password authentication requires a saved credential. Enter a password and save the settings first.");
-        }
-
-        return new HivePersistenceConfiguration(
+        var configuration = new HivePersistenceConfiguration(
             HivePersistenceBackend.SqlServer,
             _serverTextBox.Text,
             resolvedPort,
@@ -350,6 +326,49 @@ internal sealed class HivePersistenceSettingsView : UserControl
             _trustServerCertificateCheckBox.Checked,
             _createDatabaseCheckBox.Checked,
             timeout);
+
+        if (authentication != HiveSqlAuthenticationMode.SqlPassword)
+            return configuration;
+
+        if (!string.IsNullOrWhiteSpace(_passwordTextBox.Text))
+        {
+            if (!persistCredential)
+            {
+                if (credential is null)
+                {
+                    throw new ArgumentException(
+                        "A saved SQL password credential is required for a non-destructive connection test.");
+                }
+            }
+            else
+            {
+                credential = await SaveCredentialAsync(
+                    _passwordTextBox.Text,
+                    credential,
+                    cancellationToken).ConfigureAwait(true);
+
+                configuration = new HivePersistenceConfiguration(
+                    configuration.Backend,
+                    configuration.ServerName,
+                    configuration.Port,
+                    configuration.DatabaseName,
+                    configuration.AuthenticationMode,
+                    configuration.UserName,
+                    credential,
+                    configuration.Encrypt,
+                    configuration.TrustServerCertificate,
+                    configuration.CreateDatabaseIfMissing,
+                    configuration.CommandTimeoutSeconds);
+            }
+        }
+
+        if (credential is null)
+        {
+            throw new ArgumentException(
+                "SQL password authentication requires a saved credential. Enter a password and save the settings first.");
+        }
+
+        return configuration;
     }
 
     private async Task<SecretReference> SaveCredentialAsync(
