@@ -98,12 +98,14 @@ public class Agent
     public DateTimeOffset CreatedAtUtc { get; }
 
     public RuntimeInstance CreateRuntimeInstance(
-        DateTimeOffset? createdAtUtc = null)
+        DateTimeOffset? createdAtUtc = null,
+        IClock? clock = null)
     {
         return RuntimeInstance.Create(
             Id,
             Generation,
-            createdAtUtc ?? DateTimeOffset.UtcNow);
+            createdAtUtc ?? DateTimeOffset.UtcNow,
+            clock);
     }
 }
 
@@ -115,7 +117,8 @@ public sealed class RuntimeInstance
         AgentGeneration generation,
         RuntimeInstanceStatus status,
         DateTimeOffset createdAtUtc,
-        DateTimeOffset? stoppedAtUtc)
+        DateTimeOffset? stoppedAtUtc,
+        RuntimeWorkProtocols workProtocols)
     {
         Id = id;
         AgentId = agentId;
@@ -123,6 +126,7 @@ public sealed class RuntimeInstance
         Status = status;
         CreatedAtUtc = createdAtUtc.ToUniversalTime();
         StoppedAtUtc = stoppedAtUtc?.ToUniversalTime();
+        Work = workProtocols ?? throw new ArgumentNullException(nameof(workProtocols));
     }
 
     public RuntimeId Id { get; }
@@ -136,6 +140,8 @@ public sealed class RuntimeInstance
     public DateTimeOffset CreatedAtUtc { get; }
 
     public DateTimeOffset? StoppedAtUtc { get; }
+
+    public RuntimeWorkProtocols Work { get; }
 
     public Result<Execution> StartExecution(
         DateTimeOffset? startedAtUtc = null)
@@ -176,20 +182,27 @@ public sealed class RuntimeInstance
                 Generation,
                 RuntimeInstanceStatus.Stopped,
                 CreatedAtUtc,
-                stopped));
+                stopped,
+                Work));
     }
 
     internal static RuntimeInstance Create(
         AgentId agentId,
         AgentGeneration generation,
-        DateTimeOffset createdAtUtc) =>
-        new(
-            RuntimeId.New(),
+        DateTimeOffset createdAtUtc,
+        IClock? clock)
+    {
+        var runtimeId = RuntimeId.New();
+
+        return new RuntimeInstance(
+            runtimeId,
             agentId,
             generation,
             RuntimeInstanceStatus.Active,
             createdAtUtc,
-            null);
+            null,
+            new RuntimeWorkProtocols(agentId, runtimeId, clock));
+    }
 }
 
 public enum ExecutionStatus
