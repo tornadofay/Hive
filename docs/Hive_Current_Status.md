@@ -4,13 +4,13 @@ Last updated: 2026-09-22
 
 ## Repository state
 
-Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 through Phase 1.6 are complete and verified; Phase 1.7 is now the active implementation slice.
+Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 through Phase 1.7 are complete and verified; Phase 1.8 is now the active implementation slice.
 
 ## Current phase
 
 Phase 0 — Foundations: **Complete**.
 
-**Active slice: 1.7 — Event Log, Snapshots & Transactional Outbox.**
+**Active slice: 1.8 — Outbox Poller.**
 
 ## Architecture decisions now locked
 
@@ -110,7 +110,13 @@ Implemented:
 
 ### Phase 1.7 — Event Log, Snapshots & Transactional Outbox
 
-Implementation is present; developer verification is pending.
+Complete and verified.
+
+Developer verification:
+- Hive.Example.WinForms `Persistence / Events / Event Persistence / Event Log + Snapshot + Outbox` completed successfully.
+- Example output demonstrated two committed event versions, snapshot version 2, outbox event linkage, deterministic fold count 5, and schema version 4.
+- Full `Hive.Tests` execution: **120 tests passed, 0 failed, 0 skipped in 3.5 seconds**.
+- The 1.7 completion gate is satisfied.
 
 Implemented:
 - durable SQL event log keyed by ResourceReference and per-stream ResourceVersion;
@@ -121,8 +127,20 @@ Implemented:
 - schema migration from version 3 to version 4;
 - focused unit/integration tests and a public Example Host scenario.
 
-No Phase 1.7 build, test, or manual Example verification result is recorded yet.
+### Phase 1.8 — Outbox Poller
 
+Active implementation slice.
+
+Objective:
+- process committed, unhandled transactional outbox rows after the originating transaction has committed;
+- preserve event identity/version and safe recovery boundaries;
+- make duplicate delivery safe and idempotent;
+- keep the poller as a persistence/application delivery boundary, not a distributed broker or second orchestration engine.
+
+Verification target:
+- focused automated coverage for normal processing, duplicate delivery, failure/recovery, cancellation/concurrency, plus broader `Hive.Tests`;
+- matching public Example Host scenario.
+ 
 ### Phase 1.4 — Capability-aware Execution Target Selection
 
 Complete and verified.
