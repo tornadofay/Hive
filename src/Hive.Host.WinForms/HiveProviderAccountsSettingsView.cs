@@ -142,6 +142,8 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
                         item.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active)
                     ?? _providers.FirstOrDefault();
 
+                _selectedProvider = preferred;
+
                 if (preferred is not null)
                     SelectProvider(preferred.Id);
             }
