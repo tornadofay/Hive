@@ -34,16 +34,19 @@ The complete Phase 1.12 program is subdivided into bounded sub-stages described 
 
 Current sub-stage 1.12-A is limited to the host configuration/composition boundary and its required supporting contracts. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-A.
 
-## Verification gate
+## Current 1.12-A verification gate
 
-1. Management logic remains outside the WinForms shell.
-2. Persistence configuration can be saved, reloaded, and validated through the public Management contract.
-3. Connection-test success/failure is reported without schema side effects.
-4. Database/schema status is distinct from connection success.
-5. Credentials are not persisted in plaintext or exposed in diagnostics.
-6. Developer manually verifies Provider and Persistence UI flows.
-7. Focused automated coverage exists for configuration validation/persistence and security-sensitive behavior.
-8. Broader `Hive.Tests` execution.
+1. The host-layer composition boundary, not `Hive.Example.WinForms`, owns the current Hive service graph.
+2. No saved persistence configuration uses the typed `LocalDevelopment()` first-run default.
+3. A saved persistence configuration is loaded and validated without silent fallback when invalid/unavailable.
+4. SQL-password composition depends on the separate bootstrap-credential boundary rather than the database-backed Hive Secret Store.
+5. Candidate service graphs are fully constructed before publication.
+6. A failed replacement preserves the currently usable graph.
+7. Successfully replaced graph resources are disposed exactly once.
+8. Focused automated coverage exists for the 1.12-A composition boundary.
+9. No Phase 1.12 UI/resource/example sub-stage is marked complete by this handoff.
+
+Final Phase 1.12 verification additionally requires the full Settings flow, configured Agent operation, focused tests for all introduced boundaries, manual developer verification, and broader `Hive.Tests` execution.
 
 ## Constraints
 
@@ -84,26 +87,18 @@ Before coding, inspect:
 
 ## Verification handoff
 
-Example to run: **Settings / Configuration / Hive Settings / Provider & Persistence — Hive.Example.WinForms**
+Current sub-stage: **1.12-A — Host Configuration and Runtime Composition**
+
+Example to run: **No new Example is required solely for 1.12-A.** The existing Settings Example is not a substitute for the composition-boundary tests.
 
 Tests to run:
-- `tests/Hive.Tests/HiveConfigurationTests.cs`
-- `tests/Hive.Tests/HivePersistenceOptionsTests.cs`
-- `tests/Hive.Tests/ProviderPersistenceIntegrationTests.cs`
-- `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
-- broader `Hive.Tests` execution is required by the 1.12 completion gate.
+- `tests/Hive.Tests/HiveHostCompositionTests.cs` — create/extend for the 1.12-A host composition boundary;
+- `tests/Hive.Tests/HiveConfigurationTests.cs` — relevant configuration/default behavior;
+- `tests/Hive.Tests/HivePersistenceOptionsTests.cs` — relevant option mapping/validation;
+- broader `Hive.Tests` execution remains required for final Phase 1.12 closure.
 
-Manual Settings checks should cover:
-
-- Persistence Load/Save/reload.
-- SQL Server authentication selection and credential redaction.
-- non-destructive persistence connection test with database/schema state.
-- Provider → ProviderAccount → ExecutionTarget setup.
-- provider credential storage through Secret Store.
-- provider connection test.
-- absence of SQL/transport access from WinForms Settings.
-- Example Host output contains no credential material.
-
+Manual application verification is not recorded as complete for 1.12-A until the developer actually runs the host and exercises the current authorized behavior.
+ 
 ## Historical verification
 
 Phase 1.11 completion is recorded in `docs/verification/phase-1/1.11.md`.
