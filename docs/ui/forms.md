@@ -74,4 +74,4 @@ form.ShowDialog(owner);
 
 Settings pages call the appropriate public Management/application boundaries. Settings pages do not construct or own the host Hive service graph; host composition/lifetime remains outside the UI. Future durable Hive configuration domains extend this same Settings center rather than creating parallel top-level settings forms.
 
-The Persistence Server / instance field is an editable ComboBox so the current server and previously used values during the session can be selected while arbitrary valid server/instance names can still be entered. Hive currently has no authoritative server-discovery/catalog contract, so the UI must not invent a list of SQL Server instances.
+The Persistence Server / instance field is a normal free-form text box. It accepts local servers, named instances, remote hosts, IP addresses, and online SQL Server targets. Hive currently has no authoritative server-discovery/catalog contract, so the UI does not attempt to enumerate installed SQL Server instances. The Database field is read-only and assigned automatically to Hive's package database name.
