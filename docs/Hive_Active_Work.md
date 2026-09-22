@@ -101,6 +101,10 @@ Implemented in the active slice:
 - 1.12-D adds an Agents Settings page using `HiveCrudPage<AgentDefinition>`, `HiveListView`, and `HiveListPageLayout` through the `Hive.Host.WinForms.UI` foundation.
 - Agent editing uses `HiveEditorLayout` and the public `IHiveManagementFacade` for create/update/delete operations.
 - Agent execution-target choices are loaded through the authoritative Provider → ProviderAccount → ExecutionTarget Management hierarchy; retired targets remain visible and are rejected by the existing Management validation boundary.
+- 1.12-D organizes the Settings navigation as Providers → Providers, Accounts / Credentials, and Execution Targets; plus Agents and Persistence.
+- 1.12-D adds `Overview / Getting Started / Example Configuration` as the normal Example Host entry point to the real Hive Settings center.
+- The configuration example explains that Provider Accounts are credential/resource records rather than provider login screens, that Execution Targets contain concrete model/endpoint configuration, and that future Settings domains appear only when their authoritative contracts exist.
+- The Example Host now supplies a deterministic development ResourceAccessContext for its Settings surface so configured resources remain addressable across Example Host restarts.
 - The Settings shell subtitle/description now identifies it as the global Hive package configuration center.
 
 Before coding, inspect:
@@ -144,7 +148,7 @@ The previously existing Settings inspection Example produced an old-schema/local
 
 Current sub-stage: **1.12-D — Settings UI on the Hive UI Foundation**
 
-Example to run: **None solely for 1.12-D infrastructure/UI migration.** The configured-host Example remains deferred to 1.12-F.
+Example to run: **Overview / Getting Started / Example Configuration — Hive.Example.WinForms** during the D UI acceptance pass; the leaf opens the real Hive Settings center. The configured-host execution Example remains deferred to 1.12-F.
 
 1.12-D implementation checkpoint:
 - `src/Hive.Host.WinForms/HiveSettingsView.cs` — HiveNavigationTree Settings navigation and Agents page integration;
