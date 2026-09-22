@@ -102,8 +102,17 @@ public sealed class OpenAICompatibleProviderAdapter
             try
             {
                 responseJson = await response.Content
-                    .ReadAsStringAsync(cancellationToken)
+                    .ReadAsStringAsync(timeoutCts.Token)
                     .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+                when (!cancellationToken.IsCancellationRequested)
+            {
+                return Result<OpenAICompatibleChatResponse>.Failure(
+                    new Error(
+                        "hive.provider.openai-compatible.timeout",
+                        ErrorCategory.Timeout,
+                        "The provider response timed out."));
             }
             catch (OperationCanceledException)
             {
