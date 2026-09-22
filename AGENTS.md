@@ -61,16 +61,32 @@ Before implementation:
 5. Inspect the affected project files, project references, source code, tests, examples, configuration, and package references.
 6. Inspect the repository state available to the agent and preserve unrelated developer work.
 7. Establish the current checkpoint from repository evidence.
-8. Classify intended work as:
+8. If docs/Hive_Active_Work.md names an active slice, continue that slice. Do not select a later slice merely because it is the next item in the roadmap.
+9. If the active slice is actually closed, determine the next authorized slice from the roadmap and update Active Work before implementation.
+10. Classify intended work as:
    - required change;
    - necessary supporting change;
    - optional improvement;
    - future work.
-9. Only required and necessary supporting changes may enter the active implementation.
-10. Before editing, identify the smallest correct change that satisfies the active requirement.
+11. Only required and necessary supporting changes may enter the active implementation.
+12. Before editing, identify the smallest correct change that satisfies the active requirement.
+
+### Slice execution and handoff
+
+A normal implementation slice follows this lifecycle:
+
+1. **Implement** the complete behavior required by the active slice, not a temporary or knowingly incomplete substitute.
+2. **Test** by adding/updating the contract-relevant automated tests required by the slice.
+3. **Example** by adding/updating the public/developer-facing example when the slice introduces an externally meaningful contract or the active work requires one.
+4. **Review** the final change against the active slice, architecture, persistence, concurrency, security, compatibility, documentation, and unintended side effects.
+5. **Handoff** the repository in a runnable verification state for developer execution when agent-run verification is not authorized.
+6. **Do not close the slice merely because implementation is finished.** Required verification remains open until the authorized build/tests/manual verification are actually performed.
+7. When the developer supplies verification results, reconcile those results with the repository and then update the owning status/active-work documents. Record only results actually reported or independently executed.
+8. Close the active slice and advance to the next slice only after the implementation, required tests/examples, documentation, and verification gate are satisfied.
+
+Whenever implementation changes the active slice's scope, constraints, dependencies, required tests/examples, verification state, handoff state, or completion state, update docs/Hive_Active_Work.md in the same logical change. Do not leave Active Work describing an earlier repository state.
 
 Do not begin implementation merely because the task wording suggests a design. Verify the current repository first.
-
 ## 4. Scope and change control
 
 The default rule is:
