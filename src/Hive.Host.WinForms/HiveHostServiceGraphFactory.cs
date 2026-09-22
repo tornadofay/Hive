@@ -96,7 +96,8 @@ public sealed class SqlHiveHostServiceGraphFactory :
                 new SqlDpapiSecretStore(options),
                 new OpenAICompatibleProviderConnectionTester(),
                 _configurationStore,
-                new HivePersistenceConnectionTester());
+                new HivePersistenceConnectionTester(),
+                _bootstrapCredentials);
 
             return Result<HiveHostServiceGraph>.Success(
                 new HiveHostServiceGraph(
