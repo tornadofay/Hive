@@ -1,6 +1,7 @@
 using System.Data;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Hive.Core;
 using Microsoft.Data.SqlClient;
 
@@ -209,8 +210,9 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         catch (CryptographicException)
         {
             return Result<SecretReadResult>.Failure(
-                Error.Internal(
+                new Error(
                     "hive.secret.decrypt-failed",
+                    ErrorCategory.Internal,
                     "The stored secret could not be decrypted for the current Windows user."));
         }
 
@@ -226,8 +228,9 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         catch (DecoderFallbackException)
         {
             return Result<SecretReadResult>.Failure(
-                Error.Internal(
+                new Error(
                     "hive.secret.invalid-state",
+                    ErrorCategory.Internal,
                     "The stored secret contains invalid encrypted state."));
         }
         finally
@@ -284,9 +287,8 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         if (current.Resource.Version != expectedVersion)
         {
             return Result<Secret>.Failure(
-                Error(
+                Concurrency(
                     "hive.secret.stale-version",
-                    ErrorCategory.Concurrency,
                     "The secret changed before replacement completed."));
         }
 
@@ -338,9 +340,8 @@ public sealed class SqlDpapiSecretStore : ISecretStore
             if (affected != 1)
             {
                 return Result<Secret>.Failure(
-                    Error(
+                    Concurrency(
                         "hive.secret.concurrent-update",
-                        ErrorCategory.Concurrency,
                         "The secret changed before replacement completed."));
             }
 
@@ -393,7 +394,7 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         return affected == 1
             ? Result.Success()
             : Result.Failure(
-                Error.NotFound(
+                NotFound(
                     "hive.secret.not-found",
                     "The secret was not found."));
     }
@@ -470,7 +471,7 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
             return Result<LoadedSecret>.Failure(
-                Error.NotFound(
+                NotFound(
                     "hive.secret.not-found",
                     "The secret was not found."));
         }
@@ -510,13 +511,13 @@ public sealed class SqlDpapiSecretStore : ISecretStore
                 ResourceKind.Secret,
                 new SecretId(reader.GetGuid(0)),
                 new PrincipalId(reader.GetGuid(4)),
-                new ResourceScope(
+                ReadScope(
                     (ResourceScopeKind)reader.GetInt32(5),
                     reader.IsDBNull(6) ? null : reader.GetGuid(6)),
                 new ResourceVersion(reader.GetInt64(7)),
                 new ResourceProvenance(
                     new PrincipalId(reader.GetGuid(8)),
-                    reader.GetDateTime(9),
+                    ReadUtcDateTime(reader, 9),
                     new CorrelationId(reader.GetGuid(10)),
                     reader.IsDBNull(11)
                         ? null
@@ -752,8 +753,9 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         catch (SqlException)
         {
             return Result<T>.Failure(
-                Error.External(
+                new Error(
                     $"hive.{resourceName}.sql-failure",
+                    ErrorCategory.External,
                     $"SQL Server operation for the {resourceName} failed."));
         }
         catch (PlatformNotSupportedException)
@@ -766,8 +768,9 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         catch (Exception)
         {
             return Result<T>.Failure(
-                Error.Internal(
+                new Error(
                     $"hive.{resourceName}.invalid-state",
+                    ErrorCategory.Internal,
                     $"Persisted {resourceName} state could not be read or validated."));
         }
     }
@@ -810,8 +813,9 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         catch (SqlException)
         {
             return Result<T>.Failure(
-                Error.External(
+                new Error(
                     $"hive.{resourceName}.sql-failure",
+                    ErrorCategory.External,
                     $"SQL Server operation for the {resourceName} failed."));
         }
         catch (PlatformNotSupportedException)
@@ -824,8 +828,9 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         catch (Exception)
         {
             return Result<T>.Failure(
-                Error.Internal(
+                new Error(
                     $"hive.{resourceName}.invalid-state",
+                    ErrorCategory.Internal,
                     $"Persisted {resourceName} state could not be read or validated."));
         }
     }
@@ -850,11 +855,40 @@ public sealed class SqlDpapiSecretStore : ISecretStore
     private static bool IsConstraintConflict(SqlException exception) =>
         exception.Number is 2601 or 2627;
 
-    private static Error Error(
-        string code,
-        ErrorCategory category,
-        string message) =>
-        new(code, category, message);
+    private static ResourceScope ReadScope(
+        ResourceScopeKind kind,
+        Guid? identity) =>
+        kind switch
+        {
+            ResourceScopeKind.Global => ResourceScope.Global(),
+            ResourceScopeKind.Tenant when identity is Guid tenantId =>
+                ResourceScope.Tenant(new TenantId(tenantId)),
+            ResourceScopeKind.User when identity is Guid userId =>
+                ResourceScope.User(new UserId(userId)),
+            ResourceScopeKind.Workspace when identity is Guid workspaceId =>
+                ResourceScope.Workspace(new WorkspaceId(workspaceId)),
+            ResourceScopeKind.Agent when identity is Guid agentId =>
+                ResourceScope.Agent(new AgentId(agentId)),
+            ResourceScopeKind.Runtime when identity is Guid runtimeId =>
+                ResourceScope.Runtime(new RuntimeId(runtimeId)),
+            ResourceScopeKind.Execution when identity is Guid executionId =>
+                ResourceScope.Execution(new ExecutionId(executionId)),
+            _ => throw new InvalidOperationException(
+                "Persisted secret scope is invalid.")
+        };
+
+    private static DateTimeOffset ReadUtcDateTime(
+        SqlDataReader reader,
+        int ordinal) =>
+        new(DateTime.SpecifyKind(
+            reader.GetDateTime(ordinal),
+            DateTimeKind.Utc));
+
+    private static Error NotFound(string code, string message) =>
+        new(code, ErrorCategory.NotFound, message);
+
+    private static Error Concurrency(string code, string message) =>
+        new(code, ErrorCategory.Concurrency, message);
 
     private static Error Forbidden(string code, string message) =>
         new(code, ErrorCategory.Forbidden, message);
