@@ -95,17 +95,21 @@ public sealed class HiveWorkspaceView : UserControl
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
         await RunOperationAsync(
-            async token =>
-            {
+            RefreshCoreAsync,
+            cancellationToken);
+    }
+
+    private async Task RefreshCoreAsync(CancellationToken token)
+    {
                 var result = await _management.ListWorkItemsAsync(
                     _accessContext,
                     cancellationToken: token).ConfigureAwait(true);
 
-                if (result.IsFailure)
-                {
-                    ShowError(result.Error!);
-                    return;
-                }
+        if (result.IsFailure)
+        {
+            ShowError(result.Error!);
+            return;
+        }
 
                 _workItems.BeginUpdate();
                 try
@@ -189,7 +193,7 @@ public sealed class HiveWorkspaceView : UserControl
                     return;
                 }
 
-                await RefreshAsync(token).ConfigureAwait(true);
+                await RefreshCoreAsync(token).ConfigureAwait(true);
                 SelectWorkItem(result.Value!.Id);
             });
     }
@@ -280,11 +284,11 @@ public sealed class HiveWorkspaceView : UserControl
         if (result.IsFailure)
         {
             ShowError(result.Error!);
-            await RefreshAsync(cancellationToken).ConfigureAwait(true);
+            await RefreshCoreAsync(cancellationToken).ConfigureAwait(true);
             return;
         }
 
-        await RefreshAsync(cancellationToken).ConfigureAwait(true);
+        await RefreshCoreAsync(cancellationToken).ConfigureAwait(true);
         HiveMessageBox.ShowSuccess(
             FindForm(),
             $"{successTitle}.",
@@ -426,6 +430,9 @@ public sealed class HiveWorkspaceView : UserControl
     {
         _refreshButton.Enabled = !busy;
         _addImageButton.Enabled = !busy;
+        _requestApprovalButton.Enabled = !busy && _requestApprovalButton.Enabled;
+        _approveButton.Enabled = !busy && _approveButton.Enabled;
+        _rejectButton.Enabled = !busy && _rejectButton.Enabled;
 
         if (busy)
             Cursor = Cursors.WaitCursor;
@@ -645,19 +652,19 @@ public sealed class HiveWorkspaceView : UserControl
             MaxLength = 2000
         };
 
-        var ok = new HiveButton
+        var ok = new Button
         {
             Text = "Reject",
-            Style = HiveButtonStyle.Danger,
             DialogResult = DialogResult.OK,
+            AutoSize = true,
             Width = 110
         };
 
-        var cancel = new HiveButton
+        var cancel = new Button
         {
             Text = "Cancel",
-            Style = HiveButtonStyle.Secondary,
             DialogResult = DialogResult.Cancel,
+            AutoSize = true,
             Width = 110
         };
 
