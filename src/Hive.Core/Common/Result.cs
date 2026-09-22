@@ -45,6 +45,12 @@ public sealed record Error
 
     public static Error Unsupported(string code, string message) =>
         new(code, ErrorCategory.Unsupported, message);
+
+    public static Error Timeout(string code, string message) =>
+        new(code, ErrorCategory.Timeout, message);
+
+    public static Error Cancelled(string code, string message) =>
+        new(code, ErrorCategory.Cancelled, message);
 }
 
 public readonly record struct Result
