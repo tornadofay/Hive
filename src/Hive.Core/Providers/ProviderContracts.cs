@@ -117,7 +117,8 @@ public sealed record ProviderAccount
         ProviderId providerId,
         string key,
         string displayName,
-        string? externalAccountId = null)
+        string? externalAccountId = null,
+        SecretReference? credentialSecret = null)
     {
         ArgumentNullException.ThrowIfNull(resource);
 
@@ -138,6 +139,7 @@ public sealed record ProviderAccount
         ExternalAccountId = string.IsNullOrWhiteSpace(externalAccountId)
             ? null
             : RequireText(externalAccountId, nameof(externalAccountId), 200);
+        CredentialSecret = credentialSecret;
 
         Resource = resource;
         ProviderId = providerId;
@@ -155,11 +157,34 @@ public sealed record ProviderAccount
 
     public string? ExternalAccountId { get; }
 
+    public SecretReference? CredentialSecret { get; }
+
     public ProviderAccount WithDisplayName(string displayName) =>
-        new(Resource, ProviderId, Key, displayName, ExternalAccountId);
+        new(
+            Resource,
+            ProviderId,
+            Key,
+            displayName,
+            ExternalAccountId,
+            CredentialSecret);
 
     public ProviderAccount WithExternalAccountId(string? externalAccountId) =>
-        new(Resource, ProviderId, Key, DisplayName, externalAccountId);
+        new(
+            Resource,
+            ProviderId,
+            Key,
+            DisplayName,
+            externalAccountId,
+            CredentialSecret);
+
+    public ProviderAccount WithCredentialSecret(SecretReference? credentialSecret) =>
+        new(
+            Resource,
+            ProviderId,
+            Key,
+            DisplayName,
+            ExternalAccountId,
+            credentialSecret);
 
     private static string RequireText(string value, string name, int maxLength)
     {
