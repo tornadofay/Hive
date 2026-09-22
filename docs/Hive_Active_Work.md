@@ -18,33 +18,27 @@ Establish one shared OpenAI-compatible provider transport boundary for compatibl
 - public request/response contracts independent of any vendor-specific SDK;
 - structured output support without provider-specific transport implementations;
 - deterministic typed mapping for authentication failure, rate limiting, timeout, cancellation, transport failure, malformed responses, and invalid structured output;
-- cancellation-aware HTTP execution with bounded request timeout;
-- fake-server integration coverage without real vendor credentials;
-- matching public `Hive.Example.WinForms` scenario.
+- cancellation-aware HTTP execution with a bounded request/response timeout;
+- local fake-server integration coverage without real vendor credentials;
+- matching public Hive.Example.WinForms scenario.
 
-This slice consumes the already-established Provider / ProviderAccount / ExecutionTarget and Secret Store contracts where useful, but it does not add ProviderAccount credential wiring, execution-target selection/planning, Management settings UI, or agent execution.
+This slice consumes the established Provider / ProviderAccount / ExecutionTarget and Secret Store contracts where useful, but it does not add ProviderAccount credential wiring, execution-target selection/planning, Management settings UI, or agent execution.
 
-## 1.3 implementation scope
+## Implementation checkpoint
 
-- Implement the production OpenAI-compatible transport adapter inside `Hive.Providers.OpenAICompatible`.
-- Define the smallest public adapter/request/response/error contract needed by callers.
-- Use an injected/configurable `HttpClient` boundary so transport behavior is testable and replaceable.
-- Accept endpoint/base URL and credential material without persisting or logging the credential.
-- Support the standard OpenAI-compatible chat-completions request path for a selected model/deployment and optional system/user messages.
-- Support an optional JSON structured-output request contract and return parsed structured JSON only when the provider response is valid.
-- Normalize compatible provider HTTP/transport failures into Hive typed `ErrorCategory` results:
-  - authentication/authorization → `Unauthorized`;
-  - rate limit → `External` with stable provider-rate-limit error code;
-  - timeout → `Timeout`;
-  - cancellation → propagate `OperationCanceledException`;
-  - transport/network failure → `External`;
-  - malformed response or invalid structured output → `Serialization`.
-- Preserve provider response details only where safe; never expose authorization headers, API keys, or secret material in errors or diagnostics.
-- Keep the adapter vendor-neutral: provider-specific credentials and endpoints remain configuration; do not add separate Groq/OpenRouter/Cloudflare/Cerebras/NVIDIA/Google transport implementations.
-- Add focused contract tests and local fake-server integration tests covering success, malformed response, timeout, cancellation, authentication failure, rate limit, transport failure, and structured-output failure.
-- Add the mandatory Example Host public scenario using a local fake HTTP endpoint; do not require a real provider account.
-- Add short `docs/examples/Phase13_OpenAI_Compatible_Provider_Adapter.md` usage documentation.
-- Do not implement 1.4 capability-aware target selection, 1.9 Agent execution, ProviderAccount secret-reference wiring, Management configuration, Workspace, or later slices.
+The 1.3 implementation is present in the repository at this checkpoint:
+
+- `Hive.Providers.OpenAICompatible` now exposes the OpenAI-compatible request/message/structured-output/options contracts and `OpenAICompatibleProviderAdapter`.
+- The adapter sends OpenAI-compatible `POST <base-uri>/chat/completions` requests with optional Bearer credentials supplied as `SecretMaterial`.
+- Structured output uses the OpenAI-compatible JSON-schema response format and returns cloned `JsonElement` content only after successful JSON parsing.
+- Timeout applies across both response-header and response-body reads; caller cancellation remains an `OperationCanceledException`.
+- HTTP authentication, rate-limit, timeout, transport, and malformed-response failures map to typed Hive errors without including credential material.
+- `Hive.Tests/OpenAICompatibleProviderAdapterTests.cs` contains local loopback fake-server coverage for the required transport/error/structured-output cases plus contract boundary validation.
+- `Hive.Example.WinForms` contains `Providers / Provider Transport / OpenAI-compatible Provider Adapter`, which exercises the public adapter against a local loopback endpoint.
+- `docs/examples/Phase13_OpenAI_Compatible_Provider_Adapter.md` documents the public API.
+- `docs/ui/examples.md` records the new Example tree branch.
+
+Agent-run build/tests/manual verification are not authorized. The implementation therefore remains pending the developer verification gate below.
 
 ## Architecture / dependency boundary
 
@@ -66,7 +60,7 @@ Example.WinForms
    └─ exercises the public adapter contract against a local fake endpoint
 ```
 
-The adapter must remain independently usable and replaceable. Later Management/execution code may resolve a ProviderAccount + SecretReference and pass resolved `SecretMaterial` into the transport boundary; that wiring is intentionally outside 1.3.
+The adapter remains independently usable and vendor-neutral. Later Management/execution code may resolve a ProviderAccount + SecretReference and pass resolved `SecretMaterial` into the transport boundary; that wiring is outside 1.3.
 
 ## Verification
 
@@ -97,7 +91,7 @@ No verification claim is recorded until it has actually been performed.
 - No Management settings/configuration UI.
 - No changes to the SQL Server/DPAPI persistence boundary.
 - Preserve existing Core dependency direction and public provider-resource contracts.
-- Do not add a dependency merely to implement straightforward HTTP/JSON transport if the .NET 10 framework capabilities are sufficient.
+- Do not add a dependency merely to implement straightforward HTTP/JSON transport because the .NET 10 framework capabilities are sufficient.
 
 ## Verification handoff
 
