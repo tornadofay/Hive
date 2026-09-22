@@ -194,5 +194,6 @@ public enum ResourceKind
     WorkItem,
     Provider,
     ProviderAccount,
-    ExecutionTarget
+    ExecutionTarget,
+    Secret
 }
