@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Hive.Core/Hive.Core.csproj" />
+    <ProjectReference Include="../Hive.Agents/Hive.Agents.csproj" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Migrations/Scripts/*.sql" />
