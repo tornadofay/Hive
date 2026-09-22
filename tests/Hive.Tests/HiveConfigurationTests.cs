@@ -9,6 +9,15 @@ namespace Hive.Tests;
 public sealed class HiveConfigurationTests
 {
     [Fact]
+    public void BuildDatabaseName_UsesHiveApplicationPrefix()
+    {
+        Assert.Equal(
+            "Hive-Hive.Example.WinForms",
+            HivePersistenceConfiguration.BuildDatabaseName(
+                "Hive.Example.WinForms"));
+    }
+
+    [Fact]
     public async Task Management_SaveLoadPersistenceConfiguration_RoundTripsWithoutSecretMaterial()
     {
         var filePath = Path.Combine(
