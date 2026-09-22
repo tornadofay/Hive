@@ -1,6 +1,6 @@
 # Hive — Architecture (source of truth)
 
-Last updated: 2026-09-22 (rev 26 — Durable event persistence boundary)
+Last updated: 2026-09-22 (rev 27 — Settings-driven host configuration boundary)
 
 Status lives only in `Hive_Current_Status.md`. Current work slice lives only in `Hive_Active_Work.md`. The ordered implementation plan lives in `roadmap.md`. This file does not restate implementation status.
 
@@ -1006,6 +1006,110 @@ Only designated example assemblies are scanned. Adding an example should require
 The Example host may provide a developer test panel that invokes `dotnet test` as an external process against `Hive.Tests`. The Example host must not become an xUnit runner and must not embed xUnit runner internals. Example self-checks may provide immediate feedback but are not authoritative test results.
 
 The Example host is a first-class project from repository scaffolding onward, grows with Hive, and uses the same Hive UI foundation as all other WinForms surfaces.
+
+### 13.4 Settings and Host Runtime Configuration Boundary
+
+Hive Settings is an application-management surface over the same authoritative state consumed by host applications. It is not a separate test configuration model.
+
+The intended configuration path is:
+
+```text
+Persisted Hive configuration
+        ↓
+Application composition root
+        ↓
+Configured Hive.Persistence services
+        ↓
+IHiveManagementFacade
+        ↓
+Host features / execution
+```
+
+Settings uses the same public Management boundary:
+
+```text
+Hive.Host.WinForms
+        ↓
+IHiveManagementFacade
+```
+
+The Settings UI must not construct SQL connections, execute provider transport, run migrations, or read raw secret material.
+
+#### Persistence bootstrap credential
+
+The Hive database-backed Secret Store cannot supply the SQL password needed to open that same database. Therefore SQL-password persistence configuration requires a separate bootstrap-secret boundary.
+
+The bootstrap credential:
+
+- is stored outside the target Hive database;
+- is protected with Windows DPAPI/user scope;
+- is referenced by persistence configuration rather than stored as plaintext;
+- is available before Hive.Persistence is constructed;
+- is never emitted in ordinary configuration, diagnostics, or Example output.
+
+After Hive.Persistence is available, Hive-owned resource credentials continue to use the authoritative Hive Secret Store. These two concerns must not be conflated.
+
+#### Agent execution configuration
+
+AgentDefinition configuration may reference an existing ExecutionTarget without duplicating provider/account/endpoint/model data. The ExecutionTarget remains the authoritative source of concrete execution details.
+
+The first configured-host flow may use one explicit configured target reference. More advanced target selection remains owned by the existing execution-target selection architecture.
+
+A configured Agent is therefore actual durable application configuration:
+
+```text
+AgentDefinition
+    ↓ configured ExecutionTarget reference
+Management resolves target
+    ↓
+ExecutionTarget → ProviderAccount → Provider
+    ↓
+execution boundary
+```
+
+A missing, unauthorized, retired, or otherwise unusable referenced target is a configuration/runtime boundary failure, not a UI-only state.
+
+#### Settings UI foundation
+
+Hive.Host.WinForms.UI owns the reusable Settings presentation primitives. Settings must use the established Hive UI foundation rather than introducing another navigation/list system.
+
+For the first-class Settings surface:
+
+- HiveNavigationTree is the navigation control;
+- HiveListPageLayout provides list-page composition;
+- HiveCrudPage<TItem> and HiveListView provide reusable list/CRUD presentation where their contracts fit;
+- HiveEditorLayout provides repeated editor field/action composition;
+- IHiveThemeManager remains the only theme authority.
+
+Settings pages remain domain-owned for field semantics, validation, authorization, and Management operations. The reusable controls remain presentation infrastructure only.
+
+#### Host recomposition
+
+Changing Persistence configuration changes the persistence dependency graph and therefore requires host/application recomposition rather than mutating the existing Management facade.
+
+The safe lifecycle is:
+
+```text
+current service graph
+    ↓
+validate/load new settings
+    ↓
+resolve bootstrap credential
+    ↓
+construct new persistence-backed stores
+    ↓
+construct new Management facade
+    ↓
+publish new graph
+    ↓
+dispose old graph
+```
+
+Provider/ProviderAccount/ExecutionTarget/AgentDefinition changes do not require persistence graph reconstruction. They require authoritative Management reads and host state refresh.
+
+Running executions use their already-established effective configuration snapshot; later Settings changes do not silently alter an execution already in progress.
+
+The Example Host is the first concrete application-level consumer of this boundary. It must expose normal host Settings and must use the configured Provider/Account/Target/Agent state in normal public-API examples. A dedicated configuration-inspection example is supplemental and does not replace configured runtime consumption.
 
 ### 13.3 UI Foundation Scope Boundary
 
