@@ -4,11 +4,10 @@ namespace Hive.Agents;
 
 public sealed class RuntimeWorkProtocols
 {
-    public RuntimeWorkProtocols(
+    internal RuntimeWorkProtocols(
         AgentId agentId,
         RuntimeId runtimeId,
         IClock? clock = null,
-        IQuestionTransport? questions = null,
         IDelegationChannel? delegation = null)
     {
         AgentId = agentId;
@@ -16,7 +15,7 @@ public sealed class RuntimeWorkProtocols
 
         Objectives = new ObjectiveStore();
         Memory = new AgentMemoryStore();
-        Questions = questions ?? new QuestionTransport(clock);
+        Questions = new QuestionTransport(clock);
         UnderstandingGate = new UnderstandingGate();
         Delegation = delegation ?? new InMemoryDelegationChannel();
     }
