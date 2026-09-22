@@ -16,7 +16,9 @@ public sealed class WorkItemManagementTests
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
         Assert.True(migration.IsSuccess, migration.Error?.Message);
-        Assert.Equal(7, migration.Value!.CurrentSchemaVersion);
+        Assert.Equal(
+            HiveDatabaseSchema.CurrentSchemaVersion,
+            migration.Value!.CurrentSchemaVersion);
 
         var management = CreateFacade(database.Options);
         var context = CreateContext();
