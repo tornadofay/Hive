@@ -1,51 +1,28 @@
-# Hive WinForms UI — API Quick Reference
+# Hive WinForms Controls — API
 
 Source code is authoritative for exact signatures.
 
 ## HiveForm
 
-Derive feature forms from HiveForm:
-
 ```csharp
-public sealed class ProviderForm : HiveForm
+public sealed class MyForm : HiveForm
 {
-    public ProviderForm()
-        : base(
-            "Providers",
-            "Manage providers",
-            new Size(1120, 720),
-            new Size(900, 600))
+    public MyForm()
+        : base("Title", "Subtitle", new Size(900, 600), new Size(760, 520))
     {
-        BuildUi();
+        BodyPanel.Controls.Add(content);
         ThemeManager.Apply(BodyPanel);
     }
 }
 ```
 
-Constructor:
-```csharp
-HiveForm(
-    string title,
-    string subtitle = "",
-    Size? initialSize = null,
-    Size? minimumSize = null,
-    IHiveThemeManager? themeManager = null)
-```
-
-Useful members:
-- protected BodyPanel
-- ThemeManager
-- Theme
-- ConfigureHeader(...)
-- SetHeaderText(...)
-- SetBodyPadding(...)
-- SetThemeManager(...)
-- OnThemeChanged(...)
+Members:
+`BodyPanel`, `ThemeManager`, `Theme`, `ConfigureHeader(...)`, `SetHeaderText(...)`, `SetBodyPadding(...)`, `SetThemeManager(...)`, `OnThemeChanged(...)`.
 
 ## HiveButton
 
 ```csharp
-var save = new HiveButton
+new HiveButton
 {
     Text = "Save",
     Style = HiveButtonStyle.Primary,
@@ -54,64 +31,49 @@ var save = new HiveButton
 };
 ```
 
-Styles:
-- Primary
-- Secondary
-- Navigation
-- NavigationSelected
-- Danger
-
-Use native Button when it already satisfies the requirement.
+Styles: `Primary`, `Secondary`, `Navigation`, `NavigationSelected`, `Danger`.
 
 ## HiveMessageBox
 
 ```csharp
 HiveMessageBox.ShowInformation(this, "Saved.");
-HiveMessageBox.ShowWarning(this, "Invalid input.");
+HiveMessageBox.ShowWarning(this, "Check the input.");
 HiveMessageBox.ShowError(this, "Operation failed.");
-var result = HiveMessageBox.ShowQuestion(this, "Delete item?", "Delete");
+var result = HiveMessageBox.ShowQuestion(this, "Delete?", "Delete");
 ```
 
-For technical details:
+Custom details:
 ```csharp
 HiveMessageBox.Show(
     this,
     new HiveMessageOptions(
-        "Operation failed",
-        "The operation could not be completed.",
+        "Failed",
+        "Operation failed.",
         HiveMessageType.Error,
         MessageBoxButtons.OK,
         details));
 ```
 
-Do not put secrets in Details.
+Do not put secrets in `Details`.
 
 ## HiveListPageLayout
 
 ```csharp
 var layout = new HiveListPageLayout();
-layout.HeaderPanel.Controls.Add(...);
-layout.ActionBarPanel.Controls.Add(...);
+layout.HeaderPanel.Controls.Add(header);
+layout.ActionBarPanel.Controls.Add(actions);
 layout.SetContent(content);
 ```
 
-Members:
-- HeaderPanel
-- ActionBarPanel
-- ContentPanel
-- HeaderHeight
-- ActionBarHeight
-- SetContent(Control)
+Members: `HeaderPanel`, `ActionBarPanel`, `ContentPanel`, `HeaderHeight`, `ActionBarHeight`, `SetContent(Control)`.
 
 ## HiveCrudPage<TItem>
 
-Use for generic list CRUD UI:
-
 ```csharp
-var page = new HiveCrudPage<ProviderItem>
+var page = new HiveCrudPage<Item>
 {
-    Title = "Providers",
-    Description = "Configured providers",
+    Title = "Items",
+    Description = "Configured items",
     PageSize = 25,
     AllowAdd = true,
     AllowEdit = true,
@@ -121,8 +83,8 @@ var page = new HiveCrudPage<ProviderItem>
 };
 
 page.SetColumns(
-    new HiveCrudColumn<ProviderItem>("Name", 220, x => x.Name),
-    new HiveCrudColumn<ProviderItem>("Kind", 160, x => x.Kind));
+    new HiveCrudColumn<Item>("Name", 220, x => x.Name),
+    new HiveCrudColumn<Item>("Kind", 160, x => x.Kind));
 
 page.LoadItemsAsync = LoadAsync;
 page.EditItemAsync = EditAsync;
@@ -132,68 +94,47 @@ page.GetItemDisplayName = x => x.Name;
 await page.RefreshAsync();
 ```
 
-`HiveCrudColumn<TItem>` constructor:
+`HiveCrudColumn<TItem>`:
 ```csharp
 (string header, int width, Func<TItem, string?> valueSelector)
 ```
 
-Important:
-- search is case-insensitive and client-side;
-- paging is over the loaded item snapshot;
-- EditItemAsync(null, ...) means Add;
-- returning a non-null edited item reloads the list;
-- Delete uses built-in confirmation;
-- subscribe to OperationFailed when the feature must handle failures itself.
+Key behavior:
+- search is case-insensitive over loaded items;
+- paging is client-side over the loaded snapshot;
+- `EditItemAsync(null, ...)` means Add;
+- non-null edit result reloads the list;
+- Delete uses confirmation;
+- `OperationFailed` lets the feature handle operation errors.
 
 ## HiveEditorLayout
 
 ```csharp
 var layout = new HiveEditorLayout();
-layout.AddField("Name", "Provider display name.", textBox);
+layout.AddField("Name", "Provider name.", textBox);
 
-var save = layout.AddActionButton(
-    "Save",
-    HiveButtonStyle.Primary,
-    104);
+var save = layout.AddActionButton("Save", HiveButtonStyle.Primary);
 ```
 
-Members:
-- FieldsPanel
-- FooterPanel
-- LabelColumnWidth
-- ClearFields()
-- AddField(...)
-- AddActionButton(...)
-
-The layout owns the added editor control.
+Members: `FieldsPanel`, `FooterPanel`, `LabelColumnWidth`, `ClearFields()`, `AddField(...)`, `AddActionButton(...)`.
 
 ## HivePaginationBar
 
-Properties:
-- PageNumber
-- CanGoPrevious
-- CanGoNext
-- PageText
+Properties: `PageNumber`, `CanGoPrevious`, `CanGoNext`, `PageText`.
 
-Events:
-- PreviousRequested
-- NextRequested
+Events: `PreviousRequested`, `NextRequested`.
 
 It does not load data.
 
 ## HiveNavigationTree
 
-Use for the current Example Host hierarchical navigation. Do not rebuild selection/scroll state on theme change.
+Use for the Example Host's hierarchical navigation.
 
 ## HiveListView
 
-Use for lightweight native multi-column ListView screens.
-
-Use DataGridView when richer grid behavior is required.
+Use for lightweight multi-column ListView screens. Use DataGridView for richer grid behavior.
 
 ## HiveExampleTestSurface
-
-Use for interactive Example scenarios:
 
 ```csharp
 surface.SetInformation(
@@ -201,7 +142,7 @@ surface.SetInformation(
     "Expected result.");
 
 surface.CodeSnippet = """
-// Public API example
+// Public API reproduction
 """;
 
 surface.ConfigureRun(
@@ -211,20 +152,7 @@ surface.ConfigureRun(
 ```
 
 Useful members:
-- InputText
-- CodeSnippet
-- RunButtonText
-- Description
-- ExpectedResult
-- NoteTitle
-- NoteText
-- SetInformation(...)
-- SetStatus(...)
-- ConfigureRun(...)
-- Cancel()
-- RunAsync(...)
-
-The action must execute the real API.
+`InputText`, `CodeSnippet`, `RunButtonText`, `Description`, `ExpectedResult`, `NoteTitle`, `NoteText`, `SetInformation(...)`, `SetStatus(...)`, `ConfigureRun(...)`, `Cancel()`, `RunAsync(...)`.
 
 ## IHiveExampleOutput
 
@@ -236,5 +164,3 @@ public interface IHiveExampleOutput
     void Append(string value);
 }
 ```
-
-Use the Example Host supplied implementation; do not create another global output surface.
