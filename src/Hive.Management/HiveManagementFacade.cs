@@ -425,27 +425,42 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         if (events.IsFailure)
             return Result<IReadOnlyList<WorkItemActivity>>.Failure(events.Error!);
 
-        var activities = new List<WorkItemActivity>(events.Value!.Count);
-
-        foreach (var envelope in events.Value)
+        try
         {
-            var version = ReadVersion(envelope);
-            var status = ReadStatus(envelope);
-            var reason = ReadString(envelope, "reason");
+            var activities = new List<WorkItemActivity>(events.Value!.Count);
 
-            activities.Add(
-                new WorkItemActivity(
-                    envelope.EventId,
-                    envelope.OccurredAtUtc,
-                    version,
-                    envelope.EventType.Value,
-                    status,
-                    ActivityMessage(envelope.EventType.Value, reason),
-                    envelope.CorrelationId,
-                    envelope.CausationId));
+            foreach (var envelope in events.Value)
+            {
+                var version = ReadVersion(envelope);
+                var status = ReadStatus(envelope);
+                var reason = ReadString(envelope, "reason");
+
+                activities.Add(
+                    new WorkItemActivity(
+                        envelope.EventId,
+                        envelope.OccurredAtUtc,
+                        version,
+                        envelope.EventType.Value,
+                        status,
+                        ActivityMessage(envelope.EventType.Value, reason),
+                        envelope.CorrelationId,
+                        envelope.CausationId));
+            }
+
+            return Result<IReadOnlyList<WorkItemActivity>>.Success(activities);
         }
-
-        return Result<IReadOnlyList<WorkItemActivity>>.Success(activities);
+        catch (EventSerializationException exception)
+        {
+            return Result<IReadOnlyList<WorkItemActivity>>.Failure(exception.Error);
+        }
+        catch (Exception exception)
+        {
+            return Result<IReadOnlyList<WorkItemActivity>>.Failure(
+                new Error(
+                    "hive.management.work-item.activity-invalid",
+                    ErrorCategory.Serialization,
+                    $"WorkItem activity could not be reconstructed: {exception.Message}"));
+        }
     }
 
     public Task<Result<WorkItem>> RequestWorkItemApprovalAsync(
