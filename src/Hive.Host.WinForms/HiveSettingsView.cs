@@ -17,7 +17,9 @@ public sealed class HiveSettingsView : UserControl
     private readonly Label _description;
     private readonly Font _titleFont;
 
-    private HiveProviderSettingsView? _providerView;
+    private HiveProviderConfigurationView? _providerConfigurationView;
+    private HiveProviderAccountsSettingsView? _providerAccountsView;
+    private HiveExecutionTargetsSettingsView? _executionTargetsView;
     private HiveAgentSettingsView? _agentView;
     private HivePersistenceSettingsView? _persistenceView;
     private CancellationTokenSource? _initializationCts;
@@ -55,7 +57,7 @@ public sealed class HiveSettingsView : UserControl
             Dock = DockStyle.Top,
             Height = 42,
             Text =
-                "Global Hive package configuration. Settings pages use Hive.Management; database, secret, provider, and execution implementation details remain outside the UI.",
+                "Global Hive package configuration. Each leaf owns one configuration domain; resource domains use CRUD and global settings use dedicated editors.",
             Margin = new Padding(0, 4, 0, 12),
             Padding = Padding.Empty,
             AutoEllipsis = true
@@ -87,29 +89,29 @@ public sealed class HiveSettingsView : UserControl
         providersNode.Nodes.Add(
             CreatePageNode(
                 "Provider Configuration",
-                "Provider identity, transport, endpoint defaults, and connection testing.",
-                SettingsPageKey.Providers));
+                "CRUD for Provider resource identity and transport configuration.",
+                SettingsPageKey.ProviderConfiguration));
         providersNode.Nodes.Add(
             CreatePageNode(
                 "Accounts / Credentials",
-                "Advanced provider credential/account management. No provider login is required.",
+                "CRUD for durable ProviderAccount resources and their Secret Store credential references.",
                 SettingsPageKey.ProviderAccounts));
         providersNode.Nodes.Add(
             CreatePageNode(
                 "Execution Targets",
-                "Advanced model/deployment endpoints and capability-aware execution targets.",
+                "CRUD for concrete endpoint/model/deployment targets and capability declarations.",
                 SettingsPageKey.ExecutionTargets));
 
         navigationRoot.Nodes.Add(providersNode);
         navigationRoot.Nodes.Add(
             CreatePageNode(
                 "Agents",
-                "AgentDefinitions and their configured execution target references.",
+                "CRUD for AgentDefinitions and their configured ExecutionTarget references.",
                 SettingsPageKey.Agents));
         navigationRoot.Nodes.Add(
             CreatePageNode(
                 "Persistence",
-                "SQL Server / LocalDB configuration and database/schema state.",
+                "One global SQL Server / LocalDB configuration editor and connection test.",
                 SettingsPageKey.Persistence));
 
         _navigation.Nodes.Add(navigationRoot);
@@ -146,39 +148,39 @@ public sealed class HiveSettingsView : UserControl
 
         try
         {
-            if (_providerView is null)
-            {
-                _providerView = new HiveProviderSettingsView(
-                    _management,
-                    _accessContext,
-                    _themeManager);
-                _themeManager.Apply(_providerView);
-            }
+            _providerConfigurationView ??= new HiveProviderConfigurationView(
+                _management,
+                _accessContext,
+                _themeManager);
 
-            if (_agentView is null)
-            {
-                _agentView = new HiveAgentSettingsView(
-                    _management,
-                    _accessContext,
-                    _themeManager);
-                _themeManager.Apply(_agentView);
-            }
+            _providerAccountsView ??= new HiveProviderAccountsSettingsView(
+                _management,
+                _accessContext,
+                _themeManager);
 
-            if (_persistenceView is null)
-            {
-                _persistenceView = new HivePersistenceSettingsView(
-                    _management,
-                    _accessContext,
-                    _themeManager);
-                _themeManager.Apply(_persistenceView);
-            }
+            _executionTargetsView ??= new HiveExecutionTargetsSettingsView(
+                _management,
+                _accessContext,
+                _themeManager);
+
+            _agentView ??= new HiveAgentSettingsView(
+                _management,
+                _accessContext,
+                _themeManager);
+
+            _persistenceView ??= new HivePersistenceSettingsView(
+                _management,
+                _accessContext,
+                _themeManager);
 
             await _persistenceView.InitializeAsync(
                 _initializationCts.Token).ConfigureAwait(true);
-
-            await _providerView.InitializeAsync(
+            await _providerConfigurationView.InitializeAsync(
                 _initializationCts.Token).ConfigureAwait(true);
-
+            await _providerAccountsView.InitializeAsync(
+                _initializationCts.Token).ConfigureAwait(true);
+            await _executionTargetsView.InitializeAsync(
+                _initializationCts.Token).ConfigureAwait(true);
             await _agentView.InitializeAsync(
                 _initializationCts.Token).ConfigureAwait(true);
         }
@@ -195,7 +197,9 @@ public sealed class HiveSettingsView : UserControl
             _navigation.AfterSelect -= NavigationAfterSelect;
             _initializationCts?.Cancel();
             _initializationCts?.Dispose();
-            _providerView?.Dispose();
+            _providerConfigurationView?.Dispose();
+            _providerAccountsView?.Dispose();
+            _executionTargetsView?.Dispose();
             _agentView?.Dispose();
             _persistenceView?.Dispose();
             _titleFont.Dispose();
@@ -218,10 +222,20 @@ public sealed class HiveSettingsView : UserControl
     {
         Control control = page.Key switch
         {
-            SettingsPageKey.Providers or
-            SettingsPageKey.ProviderAccounts or
-            SettingsPageKey.ExecutionTargets => _providerView ??=
-                new HiveProviderSettingsView(
+            SettingsPageKey.ProviderConfiguration => _providerConfigurationView ??=
+                new HiveProviderConfigurationView(
+                    _management,
+                    _accessContext,
+                    _themeManager),
+
+            SettingsPageKey.ProviderAccounts => _providerAccountsView ??=
+                new HiveProviderAccountsSettingsView(
+                    _management,
+                    _accessContext,
+                    _themeManager),
+
+            SettingsPageKey.ExecutionTargets => _executionTargetsView ??=
+                new HiveExecutionTargetsSettingsView(
                     _management,
                     _accessContext,
                     _themeManager),
@@ -255,17 +269,6 @@ public sealed class HiveSettingsView : UserControl
         }
 
         _themeManager.Apply(control);
-
-        if (control is HiveProviderSettingsView providerView)
-        {
-            providerView.FocusSection(
-                page.Key switch
-                {
-                    SettingsPageKey.ProviderAccounts => HiveProviderSettingsSection.AccountsAndCredentials,
-                    SettingsPageKey.ExecutionTargets => HiveProviderSettingsSection.ExecutionTargets,
-                    _ => HiveProviderSettingsSection.Providers
-                });
-        }
     }
 
     private static TreeNode CreatePageNode(
@@ -281,7 +284,7 @@ public sealed class HiveSettingsView : UserControl
 
     private enum SettingsPageKey
     {
-        Providers,
+        ProviderConfiguration,
         ProviderAccounts,
         ExecutionTargets,
         Agents,
