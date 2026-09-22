@@ -12,7 +12,7 @@ An agent must follow this constitution before changing code, tests, configuratio
 4. `Hive.Tests` is the authoritative automated test project and uses xUnit.
 5. Hive persistence currently uses SQL Server, with LocalDB as the supported local-development form of the same SQL Server boundary. Persistence implementation belongs to `Hive.Persistence`.
 6. `Hive.Example.WinForms` is a permanent developer-facing application and visual/public-API example host, not a production test runner.
-7. No CI/CD or release pipeline is currently defined in the repository. Do not claim CI verification or invent a release process. CI/CD is a later roadmap concern.
+7. CI/CD and release automation are introduced when the repository reaches an actual release/operational need. Until such infrastructure exists, do not claim CI verification or invent a pipeline; when release work begins, add the release process as an explicit repository contract and document it.
 8. No separate deployment/packaging contract is currently defined. Do not introduce deployment architecture unless the active slice or an explicit request requires it.
 
 ## 2. Source-of-truth hierarchy
