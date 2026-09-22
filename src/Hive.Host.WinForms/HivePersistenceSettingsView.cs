@@ -244,7 +244,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             return;
         }
 
-        _loadedConfiguration = result.Value;
+        _loadedConfiguration = result.Value!;
         _passwordTextBox.Clear();
         UpdateCredentialStatus(_loadedConfiguration);
         SetStatus(
