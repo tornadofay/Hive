@@ -37,7 +37,7 @@ public sealed class EventPersistenceIntegrationTests
         var events = await store.ReadEventsAsync(stream);
         Assert.True(events.IsSuccess, events.Error?.Message);
         Assert.Single(events.Value!);
-        Assert.Equal(firstEvent.EventId, events.Value[0].Envelope.EventId);
+        Assert.Equal(firstEvent.EventId, events.Value![0].Envelope.EventId);
         Assert.Equal(firstEvent.EventType, events.Value[0].Envelope.EventType);
         Assert.Equal(firstEvent.PayloadSchemaVersion, events.Value[0].Envelope.PayloadSchemaVersion);
         Assert.Equal(1, events.Value[0].StreamVersion.Value);
