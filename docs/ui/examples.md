@@ -64,7 +64,7 @@ Do not create a new top-level category simply because the implementation is in a
 
 ## Implementing a new Example
 
-Typical pattern:
+Typical pattern, matching the current Example Host organization:
 
 ~~~csharp
 internal sealed class ProviderResourceExample : IHiveExample
@@ -73,17 +73,21 @@ internal sealed class ProviderResourceExample : IHiveExample
 
     public string Subcategory => "Provider Platform";
 
+    public int Order => 10;
+
     public string Title =>
         "Provider / ProviderAccount / ExecutionTarget";
 
-    public int Order => 10;
-
     public UserControl CreateView(IServiceProvider services)
     {
+        ArgumentNullException.ThrowIfNull(services);
+
         return new ProviderResourceExampleView(services);
     }
 }
 ~~~
+
+Keep the discovery class small. The real scenario belongs in the returned UserControl/view. The current repository uses this `internal sealed class ... : IHiveExample` pattern for its existing examples.
 
 The discovery class should remain a small metadata/creation shell. Put non-trivial scenario UI and behavior in a focused UserControl/view.
 
