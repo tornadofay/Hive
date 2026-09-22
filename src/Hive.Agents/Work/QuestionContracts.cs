@@ -374,6 +374,16 @@ public sealed class QuestionTransport : IQuestionTransport
                         "The requested Question does not exist in this RuntimeInstance."));
             }
 
+            if (question.AskedByAgentId != responderAgentId ||
+                question.AskedByRuntimeId != responderRuntimeId)
+            {
+                return Result<Question>.Failure(
+                    new Error(
+                        "hive.agent.question.responder-mismatch",
+                        ErrorCategory.Forbidden,
+                        "Only the Question's owning RuntimeInstance may answer it."));
+            }
+
             var result = question.Answer(
                 responderAgentId,
                 responderRuntimeId,
