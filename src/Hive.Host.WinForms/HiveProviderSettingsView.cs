@@ -50,6 +50,7 @@ internal sealed class HiveProviderSettingsView : UserControl
     private ProviderAccount? _selectedAccount;
     private ExecutionTarget? _selectedTarget;
     private CancellationTokenSource? _operationCts;
+    private bool _suppressSelectionChanged;
 
     public HiveProviderSettingsView(
         IHiveManagementFacade management,
@@ -137,11 +138,26 @@ internal sealed class HiveProviderSettingsView : UserControl
             await RunOperationAsync(TestConnectionAsync);
 
         _providerComboBox.SelectedIndexChanged += async (_, _) =>
+        {
+            if (_suppressSelectionChanged)
+                return;
+
             await RunOperationAsync(ProviderSelectionChangedAsync);
+        };
         _accountComboBox.SelectedIndexChanged += async (_, _) =>
+        {
+            if (_suppressSelectionChanged)
+                return;
+
             await RunOperationAsync(AccountSelectionChangedAsync);
+        };
         _targetComboBox.SelectedIndexChanged += (_, _) =>
+        {
+            if (_suppressSelectionChanged)
+                return;
+
             SelectTarget();
+        };
 
         _editor.AddField(
             "Provider",
@@ -909,25 +925,33 @@ internal sealed class HiveProviderSettingsView : UserControl
             TextAlign = ContentAlignment.MiddleLeft
         };
 
-    private static void RebuildCombo<T>(
+    private void RebuildCombo<T>(
         ComboBox comboBox,
         IReadOnlyList<T> values,
         Func<T, object> createItem)
     {
-        comboBox.BeginUpdate();
+        _suppressSelectionChanged = true;
         try
         {
-            comboBox.Items.Clear();
-            foreach (var value in values)
-                comboBox.Items.Add(createItem(value));
+            comboBox.BeginUpdate();
+            try
+            {
+                comboBox.Items.Clear();
+                foreach (var value in values)
+                    comboBox.Items.Add(createItem(value));
+            }
+            finally
+            {
+                comboBox.EndUpdate();
+            }
         }
         finally
         {
-            comboBox.EndUpdate();
+            _suppressSelectionChanged = false;
         }
     }
 
-    private static void SelectComboValue<T>(
+    private void SelectComboValue(
         ComboBox comboBox,
         Guid id)
     {
@@ -945,7 +969,16 @@ internal sealed class HiveProviderSettingsView : UserControl
 
             if (itemId == id)
             {
-                comboBox.SelectedIndex = index;
+                _suppressSelectionChanged = true;
+                try
+                {
+                    comboBox.SelectedIndex = index;
+                }
+                finally
+                {
+                    _suppressSelectionChanged = false;
+                }
+
                 return;
             }
         }
@@ -955,7 +988,7 @@ internal sealed class HiveProviderSettingsView : UserControl
     {
         _statusLabel.Text = text;
         _statusLabel.ForeColor = isError
-            ? _themeManager.Theme.Palette.Error
+            ? _themeManager.Theme.VisualStates.Error
             : _themeManager.Theme.Palette.MutedText;
     }
 
