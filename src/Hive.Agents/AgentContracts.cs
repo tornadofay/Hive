@@ -208,7 +208,6 @@ public sealed class RuntimeInstance
                 agentId,
                 runtimeId,
                 clock,
-                questions,
                 delegation));
     }
 }
