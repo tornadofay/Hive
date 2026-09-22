@@ -1,29 +1,21 @@
-# Hive WinForms UI — Agent API Guide
+# Hive WinForms UI — Agent Reference
 
-Use these files as quick API references. They are intentionally short.
+Short usage reference only. Source is authoritative.
 
-- `controls.md` — UI control APIs.
-- `forms.md` — HiveForm, layout, and theme usage.
-- `examples.md` — Example Host API and example creation.
+- `controls.md`: control APIs.
+- `forms.md`: common form composition.
+- `examples.md`: Example Host API.
 
-Source code is authoritative for exact signatures.
+Use an existing Hive control before creating a new one.
 
-## Rules
-
-Use the smallest existing Hive UI API that fits.
-
-Use native WinForms controls when no Hive-specific behavior is required.
-
-After a derived HiveForm creates its body controls:
-
+After composing controls in a derived `HiveForm`:
 ```csharp
 ThemeManager.Apply(BodyPanel);
 ```
 
 For a dynamic view:
-
 ```csharp
 ThemeManager.Apply(view);
 ```
 
-Every new meaningful externally usable capability also needs a matching Example and focused Hive.Tests coverage. See `examples.md`.
+New externally usable capabilities require a matching Example and focused `Hive.Tests` coverage.
