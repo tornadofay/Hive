@@ -162,6 +162,75 @@ public sealed class AgentExecutionIntegrationTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_TargetScopeMismatchFailsBeforeExecution()
+    {
+        var database = await PrepareDatabase("Hive_Test_AgentExecutionScope");
+        var store = new SqlEventPersistenceStore(database.Options);
+
+        await using var server = new LocalAgentServer(
+            HttpStatusCode.OK,
+            """{"id":"chatcmpl-scope","model":"test-model","choices":[{"message":{"role":"assistant","content":"should not run"}}]}""");
+
+        using var httpClient = new HttpClient();
+        var service = new AgentExecutionService(
+            store,
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var principal = PrincipalId.New();
+        var accessTenant = TenantId.New();
+        var targetTenant = TenantId.New();
+
+        var accessContext = new ResourceAccessContext(
+            DeploymentId.New(),
+            accessTenant,
+            principal);
+
+        var agent = CreateAgent(accessContext);
+        var runtime = agent.CreateRuntimeInstance();
+        var target = CreateTarget(
+            server.BaseUri,
+            principal,
+            targetTenant);
+
+        var result = await service.ExecuteAsync(
+            new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                accessContext,
+                "This must be rejected."));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.agent.execution.target-context-mismatch",
+            result.Error!.Code);
+        Assert.Equal(
+            ErrorCategory.Validation,
+            result.Error.Category);
+        Assert.False(
+            server.RequestObserved.Task.IsCompletedSuccessfully);
+
+        await using var connection = new Microsoft.Data.SqlClient.SqlConnection(
+            database.Options.ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM [dbo].[HiveEventLog]
+            WHERE [EventType] = @EventType;
+            """;
+        command.Parameters.AddWithValue(
+            "@EventType",
+            "agent.execution.started");
+
+        Assert.Equal(
+            0,
+            Convert.ToInt32(await command.ExecuteScalarAsync()));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_Cancellation_PersistsCancelledLifecycle()
     {
         var database = await PrepareDatabase("Hive_Test_AgentExecutionCancellation");
