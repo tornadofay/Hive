@@ -103,7 +103,7 @@ public sealed class AgentExecutionService
                     .ConfigureAwait(false);
             }
 
-            using var adapter = new OpenAICompatibleProviderAdapter(
+            var adapter = new OpenAICompatibleProviderAdapter(
                 _httpClient,
                 new OpenAICompatibleProviderOptions(
                     request.Target.Endpoint,
@@ -156,7 +156,7 @@ public sealed class AgentExecutionService
                     correlationId,
                     startedEvent,
                     responseText,
-                    response.Messages.LastOrDefault()?.MessageId,
+                    null,
                     CancellationToken.None)
                 .ConfigureAwait(false);
         }
@@ -243,8 +243,9 @@ public sealed class AgentExecutionService
         if (!request.Target.Resource.Scope.Matches(request.AccessContext))
         {
             return Result.Failure(
-                Error.Forbidden(
+                new Error(
                     "hive.agent.execution.target-forbidden",
+                    ErrorCategory.Forbidden,
                     "The selected execution target is outside the caller's authorized scope."));
         }
 
