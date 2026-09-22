@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Windows.Forms;
 using Hive.Core;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
@@ -36,7 +37,8 @@ public sealed class HiveSettingsForm : HiveForm
         var view = new HiveSettingsView(
             management,
             accessContext,
-            themeManager);
+            themeManager,
+            Application.ProductName);
 
         view.Dock = DockStyle.Fill;
         BodyPanel.Controls.Add(view);
