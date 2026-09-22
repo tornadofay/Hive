@@ -81,7 +81,7 @@ internal sealed class EventOutboxPollerExampleView : UserControl
 
     private sealed class ExampleHandler : IEventOutboxHandler
     {
-        private readonly HashSet<Guid> _seenEvents = [];
+        private readonly HashSet<EventId> _seenEvents = [];
         private bool _failFirstDelivery = true;
         public int SideEffectCount { get; private set; }
 
