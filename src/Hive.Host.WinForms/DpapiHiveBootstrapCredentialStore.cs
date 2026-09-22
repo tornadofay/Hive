@@ -182,6 +182,14 @@ public sealed class DpapiHiveBootstrapCredentialStore :
                     ErrorCategory.Internal,
                     "The referenced Hive bootstrap credential contains invalid encrypted state."));
         }
+        catch (ArgumentException)
+        {
+            return Result<SecretMaterial>.Failure(
+                new Error(
+                    "hive.host.bootstrap-credential-invalid-state",
+                    ErrorCategory.Internal,
+                    "The referenced Hive bootstrap credential contains invalid secret material."));
+        }
         catch (Exception exception)
         {
             return Result<SecretMaterial>.Failure(
