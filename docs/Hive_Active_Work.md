@@ -88,8 +88,21 @@ No verification claim is recorded until it has actually been performed.
 - Keep protocol state isolated by explicit Agent/Runtime ownership.
 - Do not add a second orchestration/workflow engine.
 
+## Implementation checkpoint
+
+Implementation is present for the authorized 1.6 mechanisms:
+- Objective lifecycle and WorkItem binding/provenance;
+- runtime-scoped in-memory memory storage/retrieval;
+- Question/Answer transport with deterministic timeout processing;
+- deterministic Patience / Understanding Gate;
+- explicit delegation channel with requester/delegate provenance;
+- RuntimeWorkProtocols isolation across RuntimeInstance objects;
+- focused tests and Example Host scenario.
+
+Developer verification is still pending. No build/test/manual verification result is recorded here.
+
 ## Verification handoff
 
-Example to run: <exact 1.6 Example Host path once the authorized example is implemented> — Hive.Example.WinForms
+Example to run: Agents / Base Agent / Base Agent Work Protocols — Hive.Example.WinForms
 
-Tests to run: <exact 1.6 focused test class/file once implemented>; broader Hive.Tests execution is required by the 1.6 completion gate.
+Tests to run: tests/Hive.Tests/BaseAgentWorkProtocolsTests.cs; broader Hive.Tests execution is required by the 1.6 completion gate.
