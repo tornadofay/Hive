@@ -295,12 +295,17 @@ internal sealed class HiveExampleHostForm : HiveForm
             _viewHost.ClientSize.Height <= 0)
             return;
 
+        var availableHeight =
+            Math.Max(
+                0,
+                _viewHost.ClientSize.Height -
+                (OutputOverlayMargin * 2));
+
         var outputHeight = Math.Min(
             OutputExpandedHeight,
             Math.Max(
                 120,
-                _viewHost.ClientSize.Height -
-                (OutputOverlayMargin * 2)));
+                (int)Math.Round(availableHeight * 0.46)));
 
         var overlayWidth = Math.Max(
             0,
