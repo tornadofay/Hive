@@ -72,19 +72,7 @@ public sealed class HiveListView : ListView
 
         _theme = theme;
 
-        var listBackground = Enabled
-            ? theme.Palette.InputBackground
-            : theme.VisualStates.DisabledListBackground;
-
-        if (BackColor != listBackground)
-            BackColor = listBackground;
-
-        var listForeground = Enabled
-            ? theme.Palette.Text
-            : theme.Palette.DisabledText;
-
-        if (ForeColor != listForeground)
-            ForeColor = listForeground;
+        ApplySurfaceTheme(theme);
 
         EnsureHeaderFont(theme);
         RebuildPaintResources(theme);
@@ -103,6 +91,10 @@ public sealed class HiveListView : ListView
         base.OnEnabledChanged(e);
 
         _hoverIndex = -1;
+
+        if (_theme is not null)
+            ApplySurfaceTheme(_theme);
+
         Invalidate();
     }
 
@@ -311,6 +303,26 @@ public sealed class HiveListView : ListView
 
         if (previous >= 0 && previous < Items.Count)
             Invalidate(GetItemRect(previous));
+    }
+
+    private void ApplySurfaceTheme(HiveThemeDefinition theme)
+    {
+        // The list viewport is workspace, not an input. Rows provide their own
+        // input/surface hierarchy, while the empty area remains aligned with the
+        // surrounding CRUD content surface.
+        var background = Enabled
+            ? theme.Palette.Surface
+            : theme.VisualStates.DisabledListBackground;
+
+        var foreground = Enabled
+            ? theme.Palette.Text
+            : theme.Palette.DisabledText;
+
+        if (BackColor != background)
+            BackColor = background;
+
+        if (ForeColor != foreground)
+            ForeColor = foreground;
     }
 
     private void FillLastColumn()
