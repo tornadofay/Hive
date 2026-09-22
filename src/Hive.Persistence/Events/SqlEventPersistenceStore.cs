@@ -254,7 +254,7 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
         CancellationToken cancellationToken = default)
     {
         if (!Enum.IsDefined(streamKind))
-            throw new ArgumentOutOfRangeException(nameof(streamKind), streamKind);
+            throw new ArgumentOutOfRangeException(nameof(streamKind));
 
         try
         {
