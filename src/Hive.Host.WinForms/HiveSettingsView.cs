@@ -14,6 +14,7 @@ public sealed class HiveSettingsView : UserControl
     private readonly Panel _content;
     private readonly Label _title;
     private readonly Label _description;
+    private readonly Font _titleFont;
 
     private HiveProviderSettingsView? _providerView;
     private HivePersistenceSettingsView? _persistenceView;
@@ -32,12 +33,17 @@ public sealed class HiveSettingsView : UserControl
         Margin = Padding.Empty;
         Padding = new Padding(16);
 
+        _titleFont = new Font(
+            "Segoe UI Semibold",
+            15f,
+            FontStyle.Bold);
+
         _title = new Label
         {
             Text = "Settings",
             Dock = DockStyle.Top,
             Height = 32,
-            Font = new Font("Segoe UI Semibold", 15f, FontStyle.Bold),
+            Font = _titleFont,
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
@@ -148,6 +154,9 @@ public sealed class HiveSettingsView : UserControl
         {
             _initializationCts?.Cancel();
             _initializationCts?.Dispose();
+            _providerView?.Dispose();
+            _persistenceView?.Dispose();
+            _titleFont.Dispose();
         }
 
         base.Dispose(disposing);
