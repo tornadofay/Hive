@@ -77,12 +77,22 @@ A normal implementation slice follows this lifecycle:
 
 1. **Implement** the complete behavior required by the active slice, not a temporary or knowingly incomplete substitute.
 2. **Test** by adding/updating the contract-relevant automated tests required by the slice.
-3. **Example** by adding/updating the public/developer-facing example when the slice introduces an externally meaningful contract or the active work requires one.
+3. **Example** by adding/updating the matching public/developer-facing example for every new meaningful capability that is externally usable. The Example must exercise the capability through Hive's public APIs.
 4. **Review** the final change against the active slice, architecture, persistence, concurrency, security, compatibility, documentation, and unintended side effects.
 5. **Handoff** the repository in a runnable verification state for developer execution when agent-run verification is not authorized.
 6. **Do not close the slice merely because implementation is finished.** Required verification remains open until the authorized build/tests/manual verification are actually performed.
 7. When the developer supplies verification results, reconcile those results with the repository and then update the owning status/active-work documents. Record only results actually reported or independently executed.
 8. Close the active slice and advance to the next slice only after the implementation, required tests/examples, documentation, and verification gate are satisfied.
+
+### Mandatory Example and test handoff
+
+- Every new meaningful capability must have corresponding verification in **Hive.Tests**.
+- Every new meaningful capability that is externally usable must also have a corresponding **Hive.Example.WinForms** scenario in the same implementation run.
+- The Example must exercise the capability through public APIs and be independently understandable and reproducible.
+- A new-capability implementation run is incomplete if the required Example scenario does not exist. Do not move to verification handoff or declare the checkpoint complete until it exists.
+- The final handoff MUST contain an exact `Example to run:` line naming the Example UI path/title and supported target(s), whenever a capability requires an Example.
+- The final handoff MUST contain an exact `Tests to run:` line naming the focused test class/file and stating whether broader test execution is required by the active slice.
+- When verification is pending, `docs/Hive_Active_Work.md` MUST preserve the exact Example UI path/title and focused test class/file needed for the developer to execute the checkpoint without rediscovering them.
 
 Whenever implementation changes the active slice's scope, constraints, dependencies, required tests/examples, verification state, handoff state, or completion state, update docs/Hive_Active_Work.md in the same logical change. Do not leave Active Work describing an earlier repository state.
 
@@ -278,6 +288,7 @@ When working in the Example Host:
 - Specialized CRUD, dialogs, and theme examples may retain feature-specific presentation.
 - Generic CRUD UI orchestration remains domain-neutral: consuming features own schema, validation, authorization, persistence, and specialized editors.
 - Examples demonstrate public platform contracts, not private shortcuts.
+- Every new meaningful externally usable capability must have its corresponding Example scenario in this host during the same implementation run.
 - Do not embed xUnit runner internals in the Example Host.
 - Static code inspection is not evidence that a new example was manually verified as visible/usable.
 
@@ -297,7 +308,7 @@ Test requirements are determined by the active slice and affected boundary. As a
 - provider/network failures using fakes or controlled local infrastructure;
 - compatibility and upcasting;
 - security-sensitive behavior;
-- public API examples where the new contract is externally meaningful.
+- public API Example scenarios for every new meaningful capability that is externally usable; these are mandatory matching verification alongside Hive.Tests.
 
 Persistence integration tests use the repository's SQL Server/LocalDB strategy. Provider tests must not use real vendor credentials or uncontrolled vendor accounts.
 
