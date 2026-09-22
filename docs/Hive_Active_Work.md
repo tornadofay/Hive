@@ -86,6 +86,11 @@ Implemented in the active slice:
 - password replacement creates a new bootstrap reference first, publishes the new persistence configuration, and removes the old reference only after the configuration save succeeds;
 - focused `HiveBootstrapCredentialStoreTests` coverage for DPAPI round-trip, replacement, clear, corruption handling, and Management reference lifecycle;
 - focused configuration, persistence-option, provider-credential-reference, and provider connection-test coverage;
+- 1.12-C AgentDefinition configuration now carries an optional durable `ConfiguredExecutionTargetId` reference without duplicating Provider/ProviderAccount/ExecutionTarget state;
+- ordered schema migration 009 adds the AgentDefinition → ExecutionTarget foreign key and lookup index;
+- `SqlAgentDefinitionResourceStore` persists and reloads the configured ExecutionTarget reference;
+- `HiveManagementFacade` validates configured target existence, access, and lifecycle before creating or updating an AgentDefinition;
+- focused 1.12-C Management tests cover configured-target round-trip, clearing, missing-target rejection, unauthorized-target rejection, and retired-target rejection;
 - host-owned `HiveHostComposition` and `HiveHostServiceGraph` boundaries with first-run configuration loading, persisted configuration consumption, explicit bootstrap-credential injection, serialized candidate construction/publication, failed-replacement preservation, and idempotent graph disposal;
 - the published Management facade uses the same authoritative configuration-store instance as the composition boundary;
 - `Hive.Example.WinForms` now consumes the host-owned service graph instead of constructing a competing persistence/Management graph;
@@ -116,6 +121,8 @@ Developer-reported local verification before starting 1.12-B: the full `Hive.Tes
 
 Developer-reported local verification after 1.12-B: the full `Hive.Tests` suite completed with **158/158 passed, 0 failed, 0 skipped** on 2026-09-22. This run verifies the completed 1.12-B bootstrap credential changes together with the existing suite.
 
+1.12-C implementation is committed but has **not yet been executed by the developer**. No C verification result is recorded until the focused Management tests and broader `Hive.Tests` suite are actually run.
+
 The previously existing Settings inspection Example produced an old-schema/local-database error and was not an acceptable configured-host verification scenario; that obsolete Example has been removed.
 
 ## Verification handoff
@@ -124,14 +131,18 @@ Current sub-stage: **1.12-C — Real Settings Management**
 
 Example to run: **None solely for 1.12-C until the resource-management surface is complete.** The configured-host Example remains deferred to 1.12-F.
 
-Previous 1.12-B verification:
-- `tests/Hive.Tests/HiveBootstrapCredentialStoreTests.cs` — bootstrap boundary coverage;
-- `tests/Hive.Tests/HiveConfigurationTests.cs` — configuration serialization and explicit legacy-reference rejection;
-- `tests/Hive.Tests/HivePersistenceOptionsTests.cs` — configuration-to-SQL option mapping;
-- `tests/Hive.Tests/HiveHostCompositionTests.cs` — host composition after bootstrap-boundary integration;
-- broader `Hive.Tests` execution: **158/158 passed, 0 failed, 0 skipped**.
+1.12-C implementation checkpoint:
+- `src/Hive.Agents/AgentContracts.cs` — optional configured ExecutionTarget reference on AgentDefinition;
+- `src/Hive.Persistence/Migrations/Scripts/009_AgentDefinitionExecutionTarget.sql` — durable FK/index migration;
+- `src/Hive.Persistence/Agents/SqlAgentDefinitionResourceStore.cs` — target-reference persistence and round-trip;
+- `src/Hive.Management/HiveManagementFacade.cs` — target existence/access/retirement validation;
+- `tests/Hive.Tests/HiveManagementFacadeTests.cs` — focused configured-target coverage.
 
-Next 1.12-C work is limited to authoritative Provider, ProviderAccount, ExecutionTarget, and AgentDefinition Settings management plus its focused automated coverage.
+Tests to run:
+- `tests/Hive.Tests/HiveManagementFacadeTests.cs` — 1.12-C Management and configured-Agent target binding;
+- broader `Hive.Tests` execution after the focused run.
+
+Previous verified result before C: full `Hive.Tests` **158/158 passed, 0 failed, 0 skipped** on 2026-09-22. That result does not verify the new C implementation.
 
 Manual application verification is not recorded as complete for 1.12-A until the developer actually runs the host and exercises the current authorized behavior.
 
