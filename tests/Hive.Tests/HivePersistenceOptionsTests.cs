@@ -48,7 +48,7 @@ public sealed class HivePersistenceOptionsTests
             "Hive",
             HiveSqlAuthenticationMode.SqlPassword,
             "hive-user",
-            new SecretReference(SecretId.New()),
+            new HiveBootstrapCredentialReference(SecretId.New()),
             encrypt: true,
             trustServerCertificate: false,
             createDatabaseIfMissing: false);
@@ -67,7 +67,7 @@ public sealed class HivePersistenceOptionsTests
             "Hive",
             HiveSqlAuthenticationMode.SqlPassword,
             "hive-user",
-            new SecretReference(SecretId.New()),
+            new HiveBootstrapCredentialReference(SecretId.New()),
             encrypt: true,
             trustServerCertificate: false,
             createDatabaseIfMissing: false);
