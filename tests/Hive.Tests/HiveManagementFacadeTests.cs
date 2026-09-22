@@ -162,6 +162,17 @@ public sealed class HiveManagementFacadeTests
         Assert.True(scopeMismatch.IsFailure);
         Assert.Equal(ErrorCategory.Forbidden, scopeMismatch.Error!.Category);
 
+        var current = await facade.GetProviderAsync(
+            provider.Id,
+            context);
+        Assert.True(current.IsSuccess, current.Error?.Message);
+
+        var firstUpdate = await facade.UpdateProviderAsync(
+            current.Value!.WithDisplayName("Current"),
+            context);
+        Assert.True(firstUpdate.IsSuccess, firstUpdate.Error?.Message);
+        Assert.Equal(2, firstUpdate.Value!.Resource.Version.Value);
+
         var stale = await facade.UpdateProviderAsync(
             provider.WithDisplayName("Stale"),
             context);
