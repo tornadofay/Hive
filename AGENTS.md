@@ -7,15 +7,16 @@ This file is the repository operating constitution. Keep it small. Detailed arch
 Use this authority order:
 
 1. `AGENTS.md` — agent workflow and repository rules.
-2. `docs/architecture.md` — intended architecture and ownership.
+2. `docs/architecture.md` — architecture index, global intent, and ownership; detailed architecture under `docs/architecture/` is part of the same source of truth.
 3. `docs/Hive_Active_Work.md` — only authorized current implementation slice and verification gate.
 4. `docs/roadmap.md` — ordered future work.
-5. Source/project files — actual implementation.
-6. Tests — behavior actually exercised by tests.
-7. `docs/Hive_Current_Status.md` — current phase/status record only; it does not store verification history.
-8. `docs/verification/` — historical verification evidence only.
-9. `docs/examples/` and `docs/ui/` — practical usage guidance.
-10. `README.md` — project overview.
+5. Relevant `docs/architecture/*.md` detail documents — detailed architectural contracts for the affected boundaries.
+6. Source/project files — actual implementation.
+7. Tests — behavior actually exercised by tests.
+8. `docs/Hive_Current_Status.md` — current phase/status record only; it does not store verification history.
+9. `docs/verification/` — historical verification evidence only.
+10. `docs/examples/` and `docs/ui/` — practical usage guidance.
+11. `README.md` — project overview.
 
 When sources conflict:
 - architecture governs intended structure;
@@ -33,7 +34,7 @@ Read:
 2. `docs/Hive_Current_Status.md`;
 3. `docs/Hive_Active_Work.md`;
 4. the relevant `docs/roadmap.md` slice;
-5. the relevant `docs/architecture.md` sections.
+5. the relevant `docs/architecture.md` sections and corresponding `docs/architecture/*.md` detail documents.
 
 For UI/Example work, also read the relevant `docs/ui/` guide.
 
