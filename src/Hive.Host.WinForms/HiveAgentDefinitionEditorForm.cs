@@ -54,7 +54,8 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
             Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDownList
         };
-        _generationComboBox.Items.AddRange(Enum.GetValues<AgentGeneration>());
+        foreach (var generation in Enum.GetValues<AgentGeneration>())
+            _generationComboBox.Items.Add(generation);
 
         _targetComboBox = new ComboBox
         {
