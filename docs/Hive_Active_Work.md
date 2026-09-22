@@ -73,13 +73,17 @@ The original Phase 1.12 Settings implementation is present on `main`; 1.12-A aut
 Implemented in the active slice:
 
 - typed SQL Server/LocalDB persistence configuration contracts;
-- Management save/load boundary backed by an atomic JSON settings file containing only non-secret persistence fields plus the current credential reference; the active implementation still uses the pre-bootstrap Secret Store reference and must be migrated to the dedicated bootstrap-credential boundary before Phase 1.12 closure;
+- Management save/load boundary backed by an atomic JSON settings file containing only non-secret persistence fields plus the dedicated bootstrap credential reference; legacy `credentialSecretId` settings are rejected explicitly rather than silently reinterpreted;
 - non-destructive SQL Server persistence connection test reporting database and Hive schema state separately;
 - ProviderAccount credential Secret Store reference support;
 - Management-mediated provider connection-test boundary and OpenAI-compatible concrete tester;
 - first-class public WinForms Settings shell with Provider and Persistence pages;
 - Provider setup for Provider, ProviderAccount, ExecutionTarget, credential references, and provider connection testing;
 - Persistence settings for server/port/database/authentication/security/initialization policy/timeout;
+- dedicated `HiveBootstrapCredentialReference`, host DPAPI implementation, and Management set/remove boundary for SQL-password bootstrap material;
+- persistence connection testing now resolves SQL passwords through the bootstrap boundary rather than the database-backed Hive Secret Store;
+- Hive Persistence Settings now submits SQL password material through Management and persists only the bootstrap reference;
+- focused `HiveBootstrapCredentialStoreTests` coverage for DPAPI round-trip, replacement, clear, corruption handling, and Management reference lifecycle;
 - focused configuration, persistence-option, provider-credential-reference, and provider connection-test coverage;
 - host-owned `HiveHostComposition` and `HiveHostServiceGraph` boundaries with first-run configuration loading, persisted configuration consumption, explicit bootstrap-credential injection, serialized candidate construction/publication, failed-replacement preservation, and idempotent graph disposal;
 - the published Management facade uses the same authoritative configuration-store instance as the composition boundary;
@@ -107,9 +111,11 @@ Before coding, inspect:
 
 ## Verification evidence
 
-Developer-reported local verification: the full `Hive.Tests` suite completed with **153/153 passed, 0 failed, 0 skipped** on 2026-09-22. The run included the focused 1.12-A composition tests.
+Developer-reported local verification before starting 1.12-B: the full `Hive.Tests` suite completed with **153/153 passed, 0 failed, 0 skipped** on 2026-09-22. The run included the focused 1.12-A composition tests.
 
-The previously existing Settings inspection Example produced an old-schema/local-database error and was not an acceptable configured-host verification scenario; that obsolete Example has been removed. No valid manual configured-host acceptance has been recorded for 1.12-A.
+1.12-B implementation changes have not yet been executed by the developer. No verification result is recorded for the new DPAPI/bootstrap boundary yet.
+
+The previously existing Settings inspection Example produced an old-schema/local-database error and was not an acceptable configured-host verification scenario; that obsolete Example has been removed.
 
 ## Verification handoff
 
@@ -119,7 +125,8 @@ Example to run: **None for 1.12-B.** This is host/bootstrap infrastructure; the 
 
 Tests to run:
 - `tests/Hive.Tests/HiveBootstrapCredentialStoreTests.cs` — focused bootstrap boundary coverage;
-- `tests/Hive.Tests/HiveConfigurationTests.cs` — configuration serialization and explicit legacy-reference rejection;
+- `tests/Hive.Tests/HiveConfigurationTests.cs` — configuration serialization, bootstrap persistence, and explicit legacy-reference rejection;
+- `tests/Hive.Tests/HivePersistenceOptionsTests.cs` — configuration-to-SQL option mapping;
 - `tests/Hive.Tests/HiveHostCompositionTests.cs` — host composition remains green after bootstrap-boundary integration;
 - broader `Hive.Tests` execution remains required for final Phase 1.12 closure.
 
