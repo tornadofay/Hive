@@ -4,13 +4,13 @@ Last updated: 2026-09-22
 
 ## Repository state
 
-Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 is complete and verified; Phase 1.2 is now the active implementation slice.
+Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 and Phase 1.2 are complete and verified; Phase 1.3 is now the active implementation slice.
 
 ## Current phase
 
 Phase 0 — Foundations: **Complete**.
 
-**Active slice: 1.2 — Secret Store.**
+**Active slice: 1.3 — OpenAI-compatible Provider Adapter.**
 
 ## Architecture decisions now locked
 
@@ -70,7 +70,12 @@ Developer verification:
 
 ### Phase 1.2 — Secret Store
 
-Active. The public Secret Store contract, DPAPI-backed SQL Server implementation, schema 3, focused tests, and matching Example scenario are implemented and awaiting developer verification.
+Complete and verified.
+
+Developer verification:
+- Hive.Example.WinForms DPAPI Secret Store scenario completed successfully: schema 3, secret creation/version 1, redaction, ownership/scope rejection, replacement/version 2, hard deletion, and post-delete NotFound.
+- Full Hive.Tests execution: **67 tests passed, 0 failed, 0 skipped in 1.8 seconds**.
+- The 1.2 completion gate is satisfied.
 
 
 ### Phase 0 closure — Foundations
@@ -151,7 +156,7 @@ Implemented so far:
 
 ## Not started
 
-- Phase 1.3 and later Phase 1 implementation slices.
+- Phase 1.4 and later Phase 1 implementation slices.
 - Later phases.
 
-Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 is complete and verified; Phase 1.2 is active.
+Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 and Phase 1.2 are complete and verified; Phase 1.3 is active.
