@@ -59,7 +59,7 @@ UI controls should consume application/Management APIs; do not put SQL or provid
 
 ## Settings form
 
-`HiveSettingsForm` is the application-window shell for the first-class Hive Settings surface:
+`HiveSettingsForm` is the application-window shell for the **global Hive package configuration center**. It is the single Settings entry point for durable Hive-owned package configuration; individual domains appear as pages inside it as their contracts become available:
 
 ```csharp
 var form = new HiveSettingsForm(
@@ -70,4 +70,4 @@ var form = new HiveSettingsForm(
 form.ShowDialog(owner);
 ```
 
-`HiveSettingsForm` owns window/header composition only. `HiveSettingsView` owns Settings navigation and page composition; Provider and Persistence pages call only `IHiveManagementFacade`.
+`HiveSettingsForm` owns window/header composition only. `HiveSettingsView` owns global Settings navigation and page composition. Provider, Agent, and Persistence configuration pages call the appropriate public Management/application boundaries. Future durable Hive configuration domains extend this same Settings center rather than creating parallel top-level settings forms.
