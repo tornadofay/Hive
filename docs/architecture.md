@@ -122,7 +122,9 @@ Phase 0.4 establishes the Hive-owned SQL Server persistence boundary without put
 - Hive.Core remains dependency-light and has no SQL client, DbUp, or database connection-string dependency.
 - Hive.Persistence may reference Hive.Core contracts, but Core never references Persistence.
 - Hive's database is a separate database owned by Hive. It is never used as a gateway to the host application's business database.
-- Hosts provide database configuration; credentials are not written to the repository, migration scripts, logs, or Hive database metadata.
+- Persistence configuration is a first-class Hive platform configuration domain, not incidental host wiring.
+- Hosts may provide initial/bootstrap persistence configuration, but the long-term authoritative configuration surface is Hive's own typed persistence-configuration contract and management/settings boundary.
+- Credentials are not written to the repository, migration scripts, logs, or Hive database metadata. Database passwords belong to the Secret Store boundary and are referenced by secret identity rather than persisted as plaintext connection data.
 - `HiveDatabaseOptions` enables database creation by default. Passing `createDatabaseIfMissing: false` is an explicit opt-out when the host requires pre-provisioned databases.
 
 #### Database technology
@@ -132,6 +134,32 @@ Phase 0.4 establishes the Hive-owned SQL Server persistence boundary without put
 - Microsoft.Data.SqlClient is used for SQL Server connectivity.
 - DbUp SQL Server support is used for ordered schema migrations rather than hand-written migration orchestration.
 - DbUp migrations are embedded SQL resources in Hive.Persistence, numbered in execution order, and executed transactionally per migration script.
+
+#### First-class persistence configuration
+Hive's persistence configuration is a product/platform configuration domain with the same separation of concerns as Provider configuration.
+
+The authoritative configuration contract must represent, at minimum:
+- selected persistence backend;
+- SQL Server server/instance endpoint and port;
+- authentication mode and non-secret login metadata;
+- Hive database identity/name policy;
+- SQL connection security options required by the supported deployment;
+- secret identity for credential material rather than the credential itself;
+- database creation/migration policy where exposed by the platform.
+
+V1 has one persistence engine: SQL Server. LocalDB is a SQL Server deployment form for local development, not a second provider.
+
+The configuration surface is intentionally separated from the low-level connection implementation:
+- `Hive.Management` owns the management/configuration contract exposed to hosts and Settings UI;
+- `Hive.Persistence` owns connection construction, database bootstrap, migration, schema inspection, and persistence-specific failures/results;
+- WinForms configuration pages consume the Management contract and must not construct `SqlConnection` or embed SQL Server persistence rules;
+- the persistence configuration page provides a non-destructive connection test and reports database/schema status separately from connection success;
+- connection testing must not implicitly create a database or apply migrations;
+- database initialization and schema migration remain explicit lifecycle operations in Hive.Persistence.
+
+Running executions must use an immutable effective persistence configuration snapshot where a runtime operation depends on persistence settings, so later configuration edits cannot silently change an already-running operation.
+
+The persistence configuration model must remain the single authoritative configuration model. Future configuration import/export must serialize that same contract rather than introduce a second database-configuration format.
 
 The implementation currently pins dbup-sqlserver 7.2.0 and Microsoft.Data.SqlClient 7.1.0. The first is the current stable DbUp SQL Server package and the second is the current stable Microsoft SQL client at the time this slice is implemented. citeturn544673view0turn598125search0
 
@@ -309,7 +337,7 @@ Phase 0.6 establishes visual infrastructure only. It does not introduce Hive mem
 - Hive-owned durable state, event history, snapshots, and outbox semantics;
 - cognitive lifecycle, Dream, and Question semantics for the cognitive generations;
 - host application integration;
-- WinForms management facade and configuration surface;
+- WinForms management facade and configuration surface, including first-class Provider and Persistence configuration;
 - human intervention beyond MAF's lower-level request mechanics;
 - Hive membership, roles, governance patterns, and collective cognition;
 - Hive-specific budgets, safety, diagnostics, and audit.
@@ -833,6 +861,7 @@ Possible contents include:
 - Knowledge / Wiki;
 - Memory configuration;
 - Learning configuration;
+- Persistence configuration (with credential material handled through the Secret Store/export policy rather than a second persistence-configuration model);
 - Tools;
 - permissions/policies;
 - runtime defaults.
