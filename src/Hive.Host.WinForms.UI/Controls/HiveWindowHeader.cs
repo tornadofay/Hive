@@ -293,13 +293,19 @@ internal sealed class HiveWindowHeader : Control
     protected override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
-        var previousCommand = _hoveredCommand;
+        var previousHoveredCommand = _hoveredCommand;
+        var previousPressedCommand = _pressedCommand;
+
         _hoveredCommand = WindowCommandNone;
         _pressedCommand = WindowCommandNone;
         Cursor = Cursors.Default;
 
-        if (previousCommand != WindowCommandNone)
-            Invalidate(GetCommandBounds(previousCommand));
+        if (previousHoveredCommand != WindowCommandNone)
+            Invalidate(GetCommandBounds(previousHoveredCommand));
+
+        if (previousPressedCommand != WindowCommandNone &&
+            previousPressedCommand != previousHoveredCommand)
+            Invalidate(GetCommandBounds(previousPressedCommand));
     }
 
     protected override void OnDoubleClick(EventArgs e)
