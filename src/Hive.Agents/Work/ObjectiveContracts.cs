@@ -557,7 +557,7 @@ public sealed class ObjectiveStore
         return _objectives.TryUpdate(
             objectiveId,
             updated.Value!,
-            current.Value)
+            current.Value!)
             ? updated
             : Result<Objective>.Failure(
                 new Error(
