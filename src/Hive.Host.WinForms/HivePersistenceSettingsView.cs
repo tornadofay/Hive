@@ -525,12 +525,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _testButton.Enabled = !busy;
     }
 
-    private void RememberServer(string? server)
-    {
-        // Intentionally no-op. Server / instance is a free-form value so Hive
-        // can target local, remote, named-instance, and online SQL Server hosts.
-    }
-
     private static TextBox CreateTextBox() =>
         new()
         {
