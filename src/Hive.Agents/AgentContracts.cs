@@ -14,7 +14,23 @@ public sealed record AgentDefinition
         string key,
         string displayName,
         AgentGeneration generation = AgentGeneration.Base)
+        : this(null, key, displayName, generation)
     {
+    }
+
+    public AgentDefinition(
+        ResourceEnvelope<AgentDefinitionId>? resource,
+        string key,
+        string displayName,
+        AgentGeneration generation = AgentGeneration.Base)
+    {
+        if (resource is not null && resource.Kind != ResourceKind.AgentDefinition)
+        {
+            throw new ArgumentException(
+                "Agent definition resources must use ResourceKind.AgentDefinition.",
+                nameof(resource));
+        }
+
         Key = RequireText(key, nameof(key), 100);
         DisplayName = RequireText(displayName, nameof(displayName), 200);
 
@@ -26,14 +42,29 @@ public sealed record AgentDefinition
                 "Agent generation is invalid.");
         }
 
+        Resource = resource;
         Generation = generation;
     }
+
+    public ResourceEnvelope<AgentDefinitionId>? Resource { get; }
+
+    public AgentDefinitionId Id => Resource?.Identity ?? default;
 
     public string Key { get; }
 
     public string DisplayName { get; }
 
     public AgentGeneration Generation { get; }
+
+    public AgentDefinition WithDisplayName(string displayName) =>
+        new(Resource, Key, displayName, Generation);
+
+    public AgentDefinition WithGeneration(AgentGeneration generation) =>
+        new(Resource, Key, DisplayName, generation);
+
+    public AgentDefinition WithResource(
+        ResourceEnvelope<AgentDefinitionId> resource) =>
+        new(resource, Key, DisplayName, Generation);
 
     private static string RequireText(string value, string name, int maxLength)
     {
