@@ -340,7 +340,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 ? value
                 : HiveSqlAuthenticationMode.WindowsIntegrated;
 
-        SecretReference? credential =
+        HiveBootstrapCredentialReference? credential =
             authentication == HiveSqlAuthenticationMode.SqlPassword
                 ? _loadedConfiguration?.BootstrapCredential
                 : null;
