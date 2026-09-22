@@ -5,6 +5,44 @@ namespace Hive.Management;
 
 public interface IHiveManagementFacade
 {
+    Task<Result<HivePersistenceConfiguration>> GetPersistenceConfigurationAsync(
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<HivePersistenceConfiguration>> SavePersistenceConfigurationAsync(
+        HivePersistenceConfiguration configuration,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<HivePersistenceConnectionTest>> TestPersistenceConnectionAsync(
+        HivePersistenceConfiguration configuration,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<Secret>> CreateSecretAsync(
+        string key,
+        string displayName,
+        SecretMaterial material,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<Secret>> GetSecretDescriptorAsync(
+        SecretId secretId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<Secret>> ReplaceSecretAsync(
+        SecretId secretId,
+        SecretMaterial replacement,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<ProviderConnectionTestResult>> TestExecutionTargetConnectionAsync(
+        ExecutionTargetId executionTargetId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
     Task<Result<Provider>> CreateProviderAsync(
         Provider provider,
         ResourceAccessContext accessContext,
