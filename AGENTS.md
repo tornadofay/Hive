@@ -98,6 +98,9 @@ When a broader improvement is discovered:
 
 A supporting change is permitted only when the active requirement cannot be implemented correctly without it.
 
+Repository-governance work is a bounded exception to feature-slice scope: an explicit task to modify AGENTS.md, reconcile a source-of-truth document, or correct repository governance may change those governance/documentation files even when a different feature slice is active. It must not be used as permission to modify unrelated production code.
+
+
 ## 5. Architecture and dependency protection
 
 Preserve the responsibility boundaries in docs/architecture.md.
@@ -319,6 +322,8 @@ Update documentation only when the implementation changes the state that documen
 - docs/Hive_Current_Status.md — actual status, completion, and performed verification only.
 - docs/examples/ — public usage/reference examples.
 - README.md — material project-facing direction or public usage changes.
+
+An explicit repository-governance or documentation-reconciliation task is allowed to update the owning source-of-truth document even when the feature roadmap is elsewhere. Such work must remain limited to the inconsistency or governance requirement being corrected.
 
 Rules:
 
