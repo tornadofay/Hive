@@ -4,13 +4,13 @@ Last updated: 2026-09-22
 
 ## Repository state
 
-Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 through Phase 1.8 are complete and verified; Phase 1.9 is now the active implementation slice.
+Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 through Phase 1.9 are complete and verified; Phase 1.10 is now the active implementation slice.
 
 ## Current phase
 
 Phase 0 — Foundations: **Complete**.
 
-**Active slice: 1.9 — First Real Agent Execution.**
+**Active slice: 1.10 — Hive.Management Facade.**
 
 ## Architecture decisions now locked
 
@@ -147,7 +147,7 @@ Implemented:
 - schema migration 5 for outbox lease/attempt state.
  ### Phase 1.9 — First Real Agent Execution
 
-Implementation is present; developer verification is pending.
+Complete and verified.
 
 Objective:
 - connect a Base Agent to Microsoft Agent Framework for one request;
@@ -162,8 +162,11 @@ Implemented:
 - durable `agent.execution.started`, `agent.execution.succeeded`, `agent.execution.failed`, and `agent.execution.cancelled` events;
 - focused integration tests and a public Example Host scenario.
 
-Developer verification: pending.
-
+Developer verification:
+- Hive.Example.WinForms `Agents / Base Agent / First Real Agent Execution` completed successfully against the local fake provider at 2026-09-22 08:33:41.
+- The example reported a successful Base Agent execution, two lifecycle events, correlation/causation values, no provider credentials, local fake HTTP endpoint, no MAF workflow/orchestration, and schema version 5 already current.
+- Full `Hive.Tests`: **128 tests passed, 0 failed, 0 skipped in 4.6 seconds**.
+- The 1.9 completion gate is satisfied.
 
 ### Phase 1.4 — Capability-aware Execution Target Selection
 
@@ -262,8 +265,8 @@ Implemented so far:
 
 ## Not started
 
-- Phase 1.9 is active.
-- Phase 1.10 and later Phase 1 implementation slices.
+- Phase 1.10 is active.
+- Phase 1.11 and later Phase 1 implementation slices.
 - Later phases.
 
-Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.8 are complete and verified. Phase 1.9 is active.
+Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.9 are complete and verified. Phase 1.10 is active.

@@ -4,17 +4,64 @@ Last updated: 2026-09-22
 
 ## Active slice
 
-**1.9 — First Real Agent Execution**
+**1.10 — Hive.Management Facade**
 
-Phase 0 — Foundations and Phase 1.1 through Phase 1.8 are complete and verified.
+Phase 0 — Foundations and Phase 1.1 through Phase 1.9 are complete and verified.
 
-Phase 1.9 is now the authorized active slice.
+Phase 1.10 is now the authorized active slice.
 
 ## Objective
 
-Connect a Base Agent to Microsoft Agent Framework and the existing Hive provider boundary for one request, with correlation and durable lifecycle events.
+Provide the application-facing `Hive.Management` CRUD facade for Providers, ProviderAccounts, ExecutionTargets, and AgentDefinitions.
 
-The implementation must reuse the existing Agent/Runtime/Execution, ExecutionTarget, OpenAI-compatible provider, and Hive.Persistence event contracts. It must not become a second orchestration/workflow engine.
+The facade must preserve existing Core, Agents, Persistence, Provider, and Coordination ownership boundaries. WinForms hosts must consume Management rather than bypassing it.
+
+## Scope
+
+- CRUD operations for Providers;
+- CRUD operations for ProviderAccounts;
+- CRUD operations for ExecutionTargets;
+- CRUD operations for AgentDefinitions;
+- service-level validation;
+- authorization and ownership/scope enforcement;
+- persistence integration through the existing persistence boundaries;
+- reuse existing resource contracts, provider contracts, AgentFactory/definition contracts, Result/Error classification, and authorization owners.
+
+## Verification
+
+Required for completion of 1.10:
+
+1. management services expose the required CRUD operations without leaking persistence implementation details;
+2. valid create/read/update/delete paths persist and return the expected resources;
+3. validation failures are returned as typed Hive errors;
+4. authorization, ownership, and scope failures are enforced in code;
+5. persistence integration uses the existing Hive.Persistence stores/boundaries;
+6. focused automated coverage exists for normal, invalid, authorization, scope, and persistence cases;
+7. a public Example Host scenario demonstrates the externally meaningful Management facade behavior;
+8. broader `Hive.Tests` execution.
+
+No verification claim is recorded until actual execution has been performed.
+
+## Constraints
+
+- No Phase 1.11 or later implementation.
+- No Workspace, Settings, image-processing, business-app integration, or cognitive-generation work.
+- Do not move SQL or provider transport ownership into Hive.Management.
+- Do not bypass existing authorization/resource contracts.
+- Do not duplicate Provider, Agent, or persistence state models merely to create facade DTOs unless the existing public contract requires them.
+- Host.WinForms remains a consumer boundary; it must not directly access Hive.Persistence for this slice.
+
+## Implementation checkpoint
+
+Phase 1.10 has not been implemented yet.
+
+Before coding, inspect the existing resource stores, Provider/ProviderAccount/ExecutionTarget contracts, AgentDefinition/AgentFactory contracts, authorization owners, and existing public example patterns.
+
+## Verification handoff
+
+Example to run: <exact Category / Subcategory / Example title> — Hive.Example.WinForms
+
+Tests to run: <exact focused test class/file>; broader Hive.Tests execution is required by the 1.10 completion gate.
 
 ## Phase 1.7 completion
 
