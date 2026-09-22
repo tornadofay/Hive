@@ -277,20 +277,29 @@ internal sealed class HiveWindowHeader : Control
         if (_hoveredCommand == command)
             return;
 
+        var previousCommand = _hoveredCommand;
         _hoveredCommand = command;
         Cursor = command == WindowCommandNone
             ? Cursors.Default
             : Cursors.Hand;
-        Invalidate();
+
+        if (previousCommand != WindowCommandNone)
+            Invalidate(GetCommandBounds(previousCommand));
+
+        if (command != WindowCommandNone)
+            Invalidate(GetCommandBounds(command));
     }
 
     protected override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
+        var previousCommand = _hoveredCommand;
         _hoveredCommand = WindowCommandNone;
         _pressedCommand = WindowCommandNone;
         Cursor = Cursors.Default;
-        Invalidate();
+
+        if (previousCommand != WindowCommandNone)
+            Invalidate(GetCommandBounds(previousCommand));
     }
 
     protected override void OnDoubleClick(EventArgs e)
@@ -322,7 +331,7 @@ internal sealed class HiveWindowHeader : Control
         if (command != WindowCommandNone)
         {
             _pressedCommand = command;
-            Invalidate();
+            Invalidate(GetCommandBounds(command));
             return;
         }
 
@@ -339,7 +348,9 @@ internal sealed class HiveWindowHeader : Control
 
         var command = _pressedCommand;
         _pressedCommand = WindowCommandNone;
-        Invalidate();
+
+        if (command != WindowCommandNone)
+            Invalidate(GetCommandBounds(command));
 
         if (command == WindowCommandNone || command != HitTestCommand(e.Location))
             return;
@@ -390,8 +401,9 @@ internal sealed class HiveWindowHeader : Control
 
         if (!Capture && _pressedCommand != WindowCommandNone)
         {
+            var command = _pressedCommand;
             _pressedCommand = WindowCommandNone;
-            Invalidate();
+            Invalidate(GetCommandBounds(command));
         }
     }
 
