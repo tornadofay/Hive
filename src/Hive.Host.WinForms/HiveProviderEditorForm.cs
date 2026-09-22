@@ -1,0 +1,158 @@
+using System.Drawing;
+using Hive.Core;
+using Hive.Host.WinForms.UI.Controls;
+using Hive.Host.WinForms.UI.Theme;
+
+namespace Hive.Host.WinForms;
+
+internal sealed class HiveProviderEditorForm : HiveForm
+{
+    private readonly Provider? _existing;
+    private readonly ResourceAccessContext _accessContext;
+    private readonly TextBox _keyTextBox;
+    private readonly TextBox _nameTextBox;
+    private readonly ComboBox _transportComboBox;
+    private readonly HiveButton _saveButton;
+    private readonly HiveButton _cancelButton;
+
+    public HiveProviderEditorForm(
+        Provider? provider,
+        ResourceAccessContext accessContext,
+        IHiveThemeManager themeManager)
+        : base(
+            provider is null ? "New Provider" : "Edit Provider",
+            "Provider resource identity and transport configuration",
+            new Size(700, 440),
+            new Size(600, 380),
+            themeManager)
+    {
+        _existing = provider;
+        _accessContext = accessContext
+            ?? throw new ArgumentNullException(nameof(accessContext));
+
+        ConfigureHeader(
+            allowMove: true,
+            allowClose: true,
+            allowMinimize: false,
+            allowMaximize: false,
+            allowHelp: false,
+            allowThemeToggle: true);
+
+        SetBodyPadding(new Padding(20));
+
+        var editor = new HiveEditorLayout();
+
+        _keyTextBox = CreateTextBox();
+        _nameTextBox = CreateTextBox();
+        _transportComboBox = new ComboBox
+        {
+            Dock = DockStyle.Fill,
+            DropDownStyle = ComboBoxStyle.DropDown,
+            AutoCompleteMode = AutoCompleteMode.SuggestAppend,
+            AutoCompleteSource = AutoCompleteSource.ListItems
+        };
+
+        if (_existing is not null)
+        {
+            _transportComboBox.Items.Add(_existing.TransportKind);
+            _transportComboBox.Text = _existing.TransportKind;
+        }
+        else
+        {
+            _transportComboBox.Items.Add("openai-compatible");
+            _transportComboBox.Text = "openai-compatible";
+        }
+
+        _keyTextBox.Text = _existing?.Key ?? string.Empty;
+        _nameTextBox.Text = _existing?.DisplayName ?? string.Empty;
+
+        if (_existing is not null)
+        {
+            _keyTextBox.ReadOnly = true;
+            _keyTextBox.BackColor = themeManager.Theme.Palette.DisabledBackground;
+            _keyTextBox.ForeColor = themeManager.Theme.Palette.DisabledText;
+        }
+
+        editor.AddField(
+            "Key",
+            "Stable Provider resource identity. It cannot be changed after creation.",
+            _keyTextBox);
+
+        editor.AddField(
+            "Display name",
+            "Human-readable provider name shown throughout Hive Settings.",
+            _nameTextBox);
+
+        editor.AddField(
+            "Transport",
+            "Transport kind consumed by the provider integration boundary, for example openai-compatible.",
+            _transportComboBox,
+            62);
+
+        _cancelButton = editor.AddActionButton(
+            "Cancel",
+            HiveButtonStyle.Secondary,
+            96);
+
+        _saveButton = editor.AddActionButton(
+            provider is null ? "Create" : "Save",
+            HiveButtonStyle.Primary,
+            96);
+
+        _cancelButton.Click += (_, _) =>
+        {
+            DialogResult = DialogResult.Cancel;
+            Close();
+        };
+
+        _saveButton.Click += (_, _) => Save();
+
+        Controls.Add(editor);
+        ThemeManager.Apply(BodyPanel);
+    }
+
+    public Provider? Definition { get; private set; }
+
+    private void Save()
+    {
+        try
+        {
+            var key = _keyTextBox.Text.Trim();
+            var name = _nameTextBox.Text.Trim();
+            var transport = _transportComboBox.Text.Trim();
+
+            if (_existing is null)
+            {
+                Definition = new Provider(
+                    HiveSettingsResourceFactory.CreateEnvelope(
+                        ResourceKind.Provider,
+                        ProviderId.New(),
+                        _accessContext),
+                    key,
+                    name,
+                    transport);
+            }
+            else
+            {
+                Definition = _existing
+                    .WithDisplayName(name)
+                    .WithTransportKind(transport);
+            }
+
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+        catch (Exception exception)
+        {
+            HiveMessageBox.ShowError(this, exception.Message);
+        }
+    }
+
+    private static TextBox CreateTextBox() =>
+        new()
+        {
+            Dock = DockStyle.Fill,
+            Height = 32,
+            BorderStyle = BorderStyle.FixedSingle
+        };
+}
