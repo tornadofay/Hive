@@ -80,7 +80,7 @@ public sealed class HiveDatabaseMigrator
                     new Error(
                         "hive.persistence.migration-failed",
                         ErrorCategory.External,
-                        "Hive database migration failed."));
+                        $"Hive database migration failed: {upgradeResult.Error?.Message ?? "DbUp did not provide a migration error message."}"));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -114,13 +114,13 @@ public sealed class HiveDatabaseMigrator
         {
             throw;
         }
-        catch (Exception )
+        catch (Exception exception)
         {
             return Result<HiveDatabaseMigrationOutcome>.Failure(
                 new Error(
                     "hive.persistence.migration-unexpected",
                     ErrorCategory.External,
-                    "Hive database migration failed unexpectedly."));
+                    $"Hive database migration failed unexpectedly: {exception.Message}"));
         }
     }
 }
