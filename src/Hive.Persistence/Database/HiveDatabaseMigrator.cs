@@ -26,11 +26,22 @@ public sealed class HiveDatabaseMigrator
         _schemaVersionStore = schemaVersionStore ?? new HiveDatabaseSchemaVersionStore();
     }
 
-    public async Task<Result<HiveDatabaseMigrationOutcome>> MigrateAsync(
+    public Task<Result<HiveDatabaseMigrationOutcome>> MigrateAsync(
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        // DbUp's SQL Server migration surface is synchronous. Run the complete
+        // migration on a worker thread so callers such as WinForms never block
+        // their UI thread while a database connection is opening or failing.
+        return Task.Run(
+            () => MigrateCoreAsync(cancellationToken),
+            cancellationToken);
+    }
+
+    private async Task<Result<HiveDatabaseMigrationOutcome>> MigrateCoreAsync(
+        CancellationToken cancellationToken)
+    {
         try
         {
             if (_options.CreateDatabaseIfMissing)
