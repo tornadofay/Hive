@@ -44,6 +44,7 @@ Current branches:
 - `Providers → Target Selection`
 - `Providers → Provider Transport`
 - `Persistence → Events → Event Persistence`
+- `Persistence → Events → Outbox Poller`
 
 For a new Example:
 1. Reuse the existing Category/Subcategory that matches the capability.
