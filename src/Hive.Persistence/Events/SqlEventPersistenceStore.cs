@@ -105,7 +105,7 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore
                     "hive.event.duplicate",
                     "The event could not be persisted because a unique event or stream-version constraint was violated."));
         }
-        catch (SqlException exception)
+        catch (SqlException)
         {
             return Result<EventAppendResult>.Failure(
                 new Error(
@@ -165,7 +165,7 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore
             command.Parameters.Add(
                 BigIntParameter(
                     "@AfterVersion",
-                    afterVersion?.Value.Value ?? 0));
+                    afterVersion?.Value ?? 0));
 
             var events = new List<PersistedEvent>();
 
@@ -598,11 +598,13 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore
                 "@OccurredAtUtc",
                 request.Envelope.OccurredAtUtc));
         command.Parameters.Add(
-            SqlParameter(
+            new SqlParameter(
                 "@EventType",
                 SqlDbType.NVarChar,
-                200,
-                request.Envelope.EventType.Value));
+                200)
+            {
+                Value = request.Envelope.EventType.Value
+            });
         command.Parameters.Add(
             IntParameter(
                 "@PayloadSchemaVersion",
@@ -621,13 +623,15 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore
                     "@CausationId",
                     request.Envelope.CausationId.Value.Value));
         command.Parameters.Add(
-            SqlParameter(
+            new SqlParameter(
                 "@PayloadJson",
                 SqlDbType.NVarChar,
-                -1,
-                JsonSerializer.Serialize(
+                -1)
+            {
+                Value = JsonSerializer.Serialize(
                     request.Envelope.Payload,
-                    _serializer.Options)));
+                    _serializer.Options)
+            });
     }
 
     private static void AddSnapshotParameters(
@@ -644,11 +648,13 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore
                 "@PayloadSchemaVersion",
                 snapshot.PayloadSchemaVersion.Value));
         command.Parameters.Add(
-            SqlParameter(
+            new SqlParameter(
                 "@StateJson",
                 SqlDbType.NVarChar,
-                -1,
-                snapshot.State.GetRawText()));
+                -1)
+            {
+                Value = snapshot.State.GetRawText()
+            });
     }
 
     private static void AddStreamParameters(
