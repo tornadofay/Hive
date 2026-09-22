@@ -307,7 +307,20 @@ Running executions use their already-established effective configuration snapsho
 
 The Example Host is the first concrete application-level consumer of this boundary. It exposes the real Hive Settings center through the Overview → Getting Started → Example Configuration leaf, whose primary action opens the host-level Settings window. The Settings UI uses the reusable Hive.Host.WinForms.UI foundation.
 
-The Settings resource hierarchy exposes Providers with advanced Accounts / Credentials and Execution Targets beneath them, plus Agents and Persistence. Provider Accounts are durable credential/resource records, not user login screens. Execution Targets contain concrete endpoint/model/deployment/capability configuration and remain the authoritative target referenced by AgentDefinition.
+The Settings resource hierarchy exposes Providers with three distinct resource-management leaves beneath them, plus Agents and Persistence:
+
+```text
+Providers
+├── Provider Configuration      → Provider CRUD
+├── Accounts / Credentials     → ProviderAccount CRUD, scoped by Provider
+└── Execution Targets          → ExecutionTarget CRUD, scoped by Provider + ProviderAccount
+Agents                          → AgentDefinition CRUD
+Persistence                    → one global configuration editor
+```
+
+Provider is the durable provider identity/transport resource. ProviderAccount is a durable credential/resource record, not a provider login screen. ExecutionTarget is the concrete endpoint/model/deployment/capability resource and remains the authoritative target referenced by AgentDefinition. These domains must not be collapsed into one combined form when separate Management CRUD contracts already exist.
+
+Persistence is not a resource collection. It edits one global HivePersistenceConfiguration, so its leaf is intentionally an editor rather than a CRUD page. Its Server / instance control may provide selection/history for values already known by the host, but Hive does not currently define an authoritative SQL Server discovery/catalog contract and the Settings UI must not fabricate one.
 
 It must use the configured Provider/Account/Target/Agent state in normal public-API examples. It may not construct a competing Hive service graph or bypass the host composition boundary. The configuration example explains this model but is not a substitute for the real Settings surface or configured runtime consumption.
 
