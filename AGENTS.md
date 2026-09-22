@@ -63,7 +63,7 @@ An agent must follow this constitution before changing code, tests, configuratio
 43. Agent generation is selected explicitly at creation; do not infer or perform runtime promotion/demotion.
 44. Hive state remains separate from the host application's business database. Host business/domain state stays host-owned.
 45. Discovery or observation never grants authorization to mutate or invoke host controls.
-46. `Hive.Host.WinForms.UI` is the boundary for Hive-owned WinForms presentation infrastructure and for any third-party rendering implementation selected by the architecture. Before adding, removing, or relying on a renderer, inspect the actual project references and reconcile implementation/documentation differences deliberately. Consuming projects must use Hive-owned contracts instead of directly depending on the rendering library.
+46. `Hive.Host.WinForms.UI` is the boundary for Hive-owned WinForms presentation infrastructure and custom rendering. The current implementation uses native WinForms controls and custom System.Drawing rendering; do not introduce a third-party renderer unless the active architecture explicitly changes that decision. Consuming projects use Hive-owned UI contracts.
 47. Do not create Hive-prefixed wrappers for ordinary WinForms controls unless Hive needs a real consumer-facing behavior or contract beyond the framework control.
 48. Tests must not become production architecture. Test doubles and test helpers stay in `Hive.Tests` unless a production contract explicitly requires a reusable implementation.
 
