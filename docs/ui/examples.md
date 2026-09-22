@@ -43,6 +43,7 @@ Current branches:
 - `Providers → Provider Platform`
 - `Providers → Target Selection`
 - `Providers → Provider Transport`
+- `Management → Facade`
 - `Persistence → Events → Event Persistence`
 - `Persistence → Events → Outbox Poller`
 
@@ -61,6 +62,7 @@ Examples:
 - Provider/ProviderAccount/ExecutionTarget example → `Providers / Provider Platform`
 - Capability-aware execution target selection example → `Providers / Target Selection`
 - OpenAI-compatible provider transport example → `Providers / Provider Transport`
+- Hive.Management CRUD facade example → `Management / Facade`
 - Durable event log/snapshot/outbox example → `Persistence / Events / Event Persistence`
 
 Future examples can create independent branches without changing the host:
