@@ -24,6 +24,8 @@ internal sealed class HiveExampleServices : IServiceProvider
             new SqlProviderResourceStore(
                 HiveDatabaseOptions.LocalDevelopment()),
             new SqlAgentDefinitionResourceStore(
+                HiveDatabaseOptions.LocalDevelopment()),
+            new SqlWorkItemResourceStore(
                 HiveDatabaseOptions.LocalDevelopment()));
     }
 
