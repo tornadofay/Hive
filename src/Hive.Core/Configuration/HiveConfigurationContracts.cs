@@ -38,7 +38,7 @@ public readonly record struct HiveBootstrapCredentialReference
 
 public sealed record HivePersistenceConfiguration
 {
-    public const string DefaultDatabaseName = "Hive";
+    public const string DefaultApplicationName = "Hive";
 
     public HivePersistenceConfiguration(
         HivePersistenceBackend backend,
@@ -146,6 +146,43 @@ public sealed record HivePersistenceConfiguration
             encrypt: false,
             trustServerCertificate: true,
             createDatabaseIfMissing: true);
+
+    public static HivePersistenceConfiguration LocalDevelopmentForApplication(
+        string? applicationName) =>
+        LocalDevelopment(BuildDatabaseName(applicationName));
+
+    public static string BuildDatabaseName(string? applicationName)
+    {
+        var value = string.IsNullOrWhiteSpace(applicationName)
+            ? DefaultApplicationName
+            : applicationName.Trim();
+
+        Span<char> buffer = stackalloc char[value.Length];
+        var count = 0;
+
+        foreach (var character in value)
+        {
+            buffer[count++] =
+                char.IsLetterOrDigit(character) ||
+                character is '-' or '_' or '.' or ' '
+                    ? character
+                    : '-';
+        }
+
+        var normalized = new string(buffer[..count]).Trim();
+
+        if (string.IsNullOrWhiteSpace(normalized))
+            normalized = DefaultApplicationName;
+
+        const string prefix = "Hive-";
+        const int maxDatabaseNameLength = 128;
+        var maximumApplicationLength = maxDatabaseNameLength - prefix.Length;
+
+        if (normalized.Length > maximumApplicationLength)
+            normalized = normalized[..maximumApplicationLength].TrimEnd();
+
+        return prefix + normalized;
+    }
 }
 
 public sealed record HivePersistenceConnectionTest(
