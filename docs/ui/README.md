@@ -1,28 +1,20 @@
-# Hive WinForms UI — Agent Quick Reference
+# Hive WinForms UI — Agent API Guide
 
-Use this directory only for practical API usage. Architecture and repository rules remain in AGENTS.md and docs/architecture.md. Source code is the final authority.
+Use these files as quick API references. They are intentionally short.
 
-## Before UI work
+- `controls.md` — UI control APIs.
+- `forms.md` — HiveForm, layout, and theme usage.
+- `examples.md` — Example Host API and example creation.
 
-Read:
-1. AGENTS.md
-2. relevant docs/architecture.md section
-3. the relevant guide below
+Source code is authoritative for exact signatures.
 
-Guides:
-- controls.md — existing UI controls and APIs.
-- forms.md — HiveForm, layout, theme, and lifecycle.
-- examples.md — how to add a Hive.Example.WinForms scenario.
+## Rules
 
-## Basic rule
+Use the smallest existing Hive UI API that fits.
 
-Reuse the smallest existing Hive UI API that fits. Use native WinForms controls when no Hive-specific contract is required.
+Use native WinForms controls when no Hive-specific behavior is required.
 
-Do not create a Hive wrapper only to rename a native control.
-
-## Theme rule
-
-HiveForm applies its theme during base construction. Controls added by the derived form afterward may need:
+After a derived HiveForm creates its body controls:
 
 ```csharp
 ThemeManager.Apply(BodyPanel);
@@ -34,13 +26,4 @@ For a dynamic view:
 ThemeManager.Apply(view);
 ```
 
-Use the shared theme manager; do not create a second one.
-
-## Example rule
-
-Every new meaningful externally usable capability needs:
-- focused Hive.Tests coverage;
-- a matching Hive.Example.WinForms scenario;
-- exact `Example to run:` and `Tests to run:` handoff lines.
-
-Read examples.md for the implementation pattern.
+Every new meaningful externally usable capability also needs a matching Example and focused Hive.Tests coverage. See `examples.md`.
