@@ -70,4 +70,4 @@ var form = new HiveSettingsForm(
 form.ShowDialog(owner);
 ```
 
-`HiveSettingsForm` owns window/header composition only. `HiveSettingsView` owns global Settings navigation and page composition. Provider, Agent, and Persistence configuration pages call the appropriate public Management/application boundaries. Future durable Hive configuration domains extend this same Settings center rather than creating parallel top-level settings forms.
+`HiveSettingsForm` owns window/header composition only. `HiveSettingsView` owns global Settings navigation and page composition. Provider, Agent, and Persistence configuration pages call the appropriate public Management/application boundaries. Settings pages do not construct or own the host Hive service graph; host composition/lifetime remains outside the UI. Future durable Hive configuration domains extend this same Settings center rather than creating parallel top-level settings forms.
