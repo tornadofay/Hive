@@ -36,14 +36,14 @@ public sealed class HivePersistenceIntegrationTests
 
         var storedVersion = await ReadSchemaVersionAsync(options);
         Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, storedVersion);
-        Assert.True(await IndexExistsAsync(options, "PK_HiveSchemaVersion"));
-        Assert.True(await IndexExistsAsync(options, "UX_HiveSchemaVersion_SchemaVersion"));
-        Assert.True(await IndexExistsAsync(options, "UX_HiveProviders_ProviderKey"));
-        Assert.True(await IndexExistsAsync(options, "UX_HiveProviderAccounts_Provider_Key"));
-        Assert.True(await IndexExistsAsync(options, "UX_HiveExecutionTargets_ProviderAccount_Key"));
-        Assert.True(await IndexExistsAsync(options, "IX_HiveProviders_OwnerScope"));
-        Assert.True(await IndexExistsAsync(options, "IX_HiveProviderAccounts_OwnerScope"));
-        Assert.True(await IndexExistsAsync(options, "IX_HiveExecutionTargets_OwnerScope"));
+        Assert.True(await IndexExistsAsync(options, "PK_HiveSchemaVersion", "HiveSchemaVersion"));
+        Assert.True(await IndexExistsAsync(options, "UX_HiveSchemaVersion_SchemaVersion", "HiveSchemaVersion"));
+        Assert.True(await IndexExistsAsync(options, "UX_HiveProviders_ProviderKey", "HiveProviders"));
+        Assert.True(await IndexExistsAsync(options, "UX_HiveProviderAccounts_Provider_Key", "HiveProviderAccounts"));
+        Assert.True(await IndexExistsAsync(options, "UX_HiveExecutionTargets_ProviderAccount_Key", "HiveExecutionTargets"));
+        Assert.True(await IndexExistsAsync(options, "IX_HiveProviders_OwnerScope", "HiveProviders"));
+        Assert.True(await IndexExistsAsync(options, "IX_HiveProviderAccounts_OwnerScope", "HiveProviderAccounts"));
+        Assert.True(await IndexExistsAsync(options, "IX_HiveExecutionTargets_OwnerScope", "HiveExecutionTargets"));
     }
 
     [Fact]
@@ -152,7 +152,8 @@ public sealed class HivePersistenceIntegrationTests
 
     private static async Task<bool> IndexExistsAsync(
         HiveDatabaseOptions options,
-        string indexName)
+        string indexName,
+        string tableName)
     {
         await using var connection = new SqlConnection(options.ConnectionString);
         await connection.OpenAsync();
@@ -172,6 +173,7 @@ public sealed class HivePersistenceIntegrationTests
             END;
             """;
         command.Parameters.AddWithValue("@IndexName", indexName);
+        command.Parameters.AddWithValue("@TableName", $"dbo.{tableName}");
 
         return Convert.ToInt32(await command.ExecuteScalarAsync()) == 1;
     }
