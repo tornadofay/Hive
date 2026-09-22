@@ -9,6 +9,7 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
 {
     private readonly ProviderAccount? _existing;
     private readonly Provider _provider;
+    private readonly ResourceAccessContext _accessContext;
     private readonly TextBox _providerTextBox;
     private readonly TextBox _keyTextBox;
     private readonly TextBox _nameTextBox;
@@ -19,6 +20,7 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
     public HiveProviderAccountEditorForm(
         ProviderAccount? account,
         Provider provider,
+        ResourceAccessContext accessContext,
         IHiveThemeManager themeManager)
         : base(
             account is null ? "New Provider Account" : "Edit Provider Account",
@@ -29,6 +31,7 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
     {
         _existing = account;
         _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+        _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
 
         ConfigureHeader(
             allowMove: true,
@@ -151,10 +154,7 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
                     HiveSettingsResourceFactory.CreateEnvelope(
                         ResourceKind.ProviderAccount,
                         ProviderAccountId.New(),
-                        _provider is null
-                            ? throw new InvalidOperationException("Provider is required.")
-                            : new ResourceAccessContext(
-                                TenantId: null)),
+                        _accessContext),
                     _provider.Id,
                     key,
                     name,
