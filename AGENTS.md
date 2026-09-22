@@ -12,9 +12,10 @@ Use this authority order:
 4. `docs/roadmap.md` — ordered future work.
 5. Source/project files — actual implementation.
 6. Tests — behavior actually exercised by tests.
-7. `docs/Hive_Current_Status.md` — recorded status/history only.
-8. `docs/examples/` and `docs/ui/` — practical usage guidance.
-9. `README.md` — project overview.
+7. `docs/Hive_Current_Status.md` — current phase/status record only.
+8. `docs/verification/` — historical verification evidence only.
+9. `docs/examples/` and `docs/ui/` — practical usage guidance.
+10. `README.md` — project overview.
 
 When sources conflict:
 - architecture governs intended structure;
