@@ -21,6 +21,55 @@ This remains **Phase 1.12** work. It does not authorize Phase 1.13 or later.
 
 ---
 
+## 0. Global Package Configuration Principle
+
+Hive Settings is the **global Hive package configuration center**. It is not a Provider Settings screen, Persistence Settings screen, or a collection of unrelated administrative dialogs.
+
+The Settings surface is a permanent first-class application boundary through which the configuration of the entire Hive package is managed as the corresponding capabilities become available.
+
+Conceptually:
+
+```text
+Hive Configuration
+├── Overview
+├── Providers
+├── Agents
+├── Persistence
+├── Tools
+├── Policy / permissions
+├── Workspace / application behavior
+├── Runtime / execution defaults
+├── cognition/resource configuration
+├── integration/host configuration
+├── diagnostics/configuration inspection
+└── other Hive-owned configuration domains
+```
+
+The exact pages are introduced with the phases that own their configuration contracts. A future page must be added to this global configuration center; it must not create a second top-level configuration mechanism.
+
+### Configuration-center rules
+
+1. There is one canonical Hive Settings/Configuration entry point for the package.
+2. Configuration domains are owned by their respective platform contracts and services, but their user-facing configuration surface belongs under the global Settings center.
+3. Settings navigation is extensible and must use the reusable `Hive.Host.WinForms.UI` navigation foundation.
+4. A configuration page may be absent while the underlying capability does not yet have an authoritative configuration contract; the page is not a reason to invent configuration state early.
+5. A capability-specific dialog may still exist when it is an execution-time action rather than durable package configuration, but durable package configuration belongs in the global Settings center.
+6. The Example Host must expose the same global Settings experience a normal Hive WinForms application would consume.
+7. The global Settings center itself is not an Example scenario. The Example scenario demonstrates configured behavior using the resulting state.
+8. Adding future package configuration domains must extend this same center instead of creating parallel `FooSettingsForm` roots.
+
+### Current Phase 1.12 domains
+
+Phase 1.12 establishes the first concrete global configuration domains that already have authoritative contracts:
+
+- Providers;
+- ProviderAccounts and ExecutionTargets as Provider configuration subdomains;
+- AgentDefinitions and their configured execution relationship;
+- Persistence;
+- the Settings shell/navigation infrastructure needed to host future Hive configuration domains.
+
+Later phases add their own domains under this same configuration center without changing the architectural ownership rule.
+
 ## 1. Target Architecture
 
 The intended application flow is:
@@ -489,7 +538,7 @@ Provide a normal application Settings/Configuration entry in the Example Host sh
 
 It must not require the user to navigate to a special Settings Example just to configure Hive.
 
-The Settings Example may still exist as a public API/verification scenario, but it should be secondary to the host configuration experience.
+The Settings Example may still exist as a public API/verification scenario for inspecting the configuration boundary, but it is secondary to the host configuration experience. The global Settings center itself is host infrastructure, not a leaf Example.
 
 ### Example startup
 
