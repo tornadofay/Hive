@@ -80,7 +80,9 @@ public sealed class OpenAICompatibleProviderAdapter
         }
         catch (OperationCanceledException)
         {
-            throw;
+            throw new OperationCanceledException(
+                "The provider request was cancelled by the caller.",
+                cancellationToken);
         }
         catch (HttpRequestException)
         {
@@ -116,7 +118,9 @@ public sealed class OpenAICompatibleProviderAdapter
             }
             catch (OperationCanceledException)
             {
-                throw;
+                throw new OperationCanceledException(
+                    "The provider response read was cancelled by the caller.",
+                    cancellationToken);
             }
             catch (HttpRequestException)
             {
