@@ -203,7 +203,8 @@ public sealed class AgentExecutionIntegrationTests
                 "Cancel this request."),
             cancellation.Token);
 
-        await server.RequestObserved.Task;
+        await server.RequestObserved.Task.WaitAsync(
+            TimeSpan.FromSeconds(5));
         cancellation.Cancel();
 
         var result = await executionTask;
