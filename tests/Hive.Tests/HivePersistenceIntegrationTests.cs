@@ -64,6 +64,16 @@ public sealed class HivePersistenceIntegrationTests
                 options,
                 "HiveProviderAccounts",
                 "CredentialSecretId"));
+        Assert.True(
+            await ColumnExistsAsync(
+                options,
+                "HiveAgentDefinitions",
+                "ConfiguredExecutionTargetId"));
+        Assert.True(
+            await IndexExistsAsync(
+                options,
+                "IX_HiveAgentDefinitions_ConfiguredExecutionTarget",
+                "HiveAgentDefinitions"));
     }
 
     [Fact]
