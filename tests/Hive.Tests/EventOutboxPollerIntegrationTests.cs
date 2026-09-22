@@ -150,7 +150,7 @@ public sealed class EventOutboxPollerIntegrationTests
 
         public RecordingHandler(TimeSpan delay = default) => _delay = delay;
 
-        public List<Guid> EventIds { get; } = [];
+        public List<EventId> EventIds { get; } = [];
 
         public async Task<Result> HandleAsync(EventOutboxEntry entry, CancellationToken cancellationToken = default)
         {
@@ -164,7 +164,7 @@ public sealed class EventOutboxPollerIntegrationTests
 
     private sealed class FailAfterSideEffectHandler : IEventOutboxHandler
     {
-        private readonly HashSet<Guid> _seen = [];
+        private readonly HashSet<EventId> _seen = [];
         private bool _failFirst = true;
         public int SideEffectCount { get; private set; }
 
