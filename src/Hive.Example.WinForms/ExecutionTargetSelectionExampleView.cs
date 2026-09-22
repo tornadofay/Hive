@@ -1,5 +1,6 @@
 using Hive.Core;
 using Hive.Host.WinForms.UI.Controls;
+using Hive.Host.WinForms.UI.Theme;
 
 namespace Hive.Example.WinForms;
 
