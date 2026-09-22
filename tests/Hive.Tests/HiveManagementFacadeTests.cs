@@ -260,7 +260,8 @@ public sealed class HiveManagementFacadeTests
         HiveDatabaseOptions options) =>
         new(
             new SqlProviderResourceStore(options),
-            new SqlAgentDefinitionResourceStore(options));
+            new SqlAgentDefinitionResourceStore(options),
+            new SqlWorkItemResourceStore(options));
 
     private static ResourceAccessContext CreateContext() =>
         new(
