@@ -50,10 +50,11 @@ public sealed class WorkItemManagementTests
             context);
 
         Assert.True(activity.IsSuccess, activity.Error?.Message);
-        Assert.Single(activity.Value!);
-        Assert.Equal("work-item.created", activity.Value[0].EventType);
-        Assert.Equal(WorkItemStatus.Created, activity.Value[0].Status);
-        Assert.Equal(ResourceVersion.Initial, activity.Value[0].Version);
+        var activities = activity.Value!;
+        Assert.Single(activities);
+        Assert.Equal("work-item.created", activities[0].EventType);
+        Assert.Equal(WorkItemStatus.Created, activities[0].Status);
+        Assert.Equal(ResourceVersion.Initial, activities[0].Version);
     }
 
     [Fact]
