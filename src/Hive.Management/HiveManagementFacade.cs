@@ -687,22 +687,12 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
     public Task<Result<AgentDefinition>> CreateAgentDefinitionAsync(
         AgentDefinition definition,
         ResourceAccessContext accessContext,
-        CancellationToken cancellationToken = default)
-    {
-        if (definition is null)
-            return Failure<AgentDefinition>("agent definition", "resource-required");
-
-        return Execute(
-            definition.Resource,
-            ResourceKind.AgentDefinition,
+        CancellationToken cancellationToken = default) =>
+        SaveAgentDefinitionAsync(
+            definition,
             accessContext,
-            "agent definition",
             isCreate: true,
-            () => _agentDefinitions.CreateAgentDefinitionAsync(
-                definition,
-                accessContext,
-                cancellationToken));
-    }
+            cancellationToken);
 
     public Task<Result<AgentDefinition>> GetAgentDefinitionAsync(
         AgentDefinitionId agentDefinitionId,
@@ -732,22 +722,12 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
     public Task<Result<AgentDefinition>> UpdateAgentDefinitionAsync(
         AgentDefinition definition,
         ResourceAccessContext accessContext,
-        CancellationToken cancellationToken = default)
-    {
-        if (definition is null)
-            return Failure<AgentDefinition>("agent definition", "resource-required");
-
-        return Execute(
-            definition.Resource,
-            ResourceKind.AgentDefinition,
+        CancellationToken cancellationToken = default) =>
+        SaveAgentDefinitionAsync(
+            definition,
             accessContext,
-            "agent definition",
             isCreate: false,
-            () => _agentDefinitions.UpdateAgentDefinitionAsync(
-                definition,
-                accessContext,
-                cancellationToken));
-    }
+            cancellationToken);
 
     public Task<Result<AgentDefinition>> DeleteAgentDefinitionAsync(
         AgentDefinitionId agentDefinitionId,
@@ -761,6 +741,82 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                 agentDefinitionId,
                 accessContext,
                 cancellationToken));
+
+    private async Task<Result<AgentDefinition>> SaveAgentDefinitionAsync(
+        AgentDefinition definition,
+        ResourceAccessContext accessContext,
+        bool isCreate,
+        CancellationToken cancellationToken)
+    {
+        if (definition is null)
+            return Failure<AgentDefinition>(
+                Error.Validation(
+                    "hive.management.agent-definition.resource-required",
+                    "An agent definition is required."));
+
+        var validation = ValidateResource(
+            definition.Resource,
+            ResourceKind.AgentDefinition,
+            accessContext,
+            "agent definition",
+            isCreate);
+
+        if (validation is not null)
+            return Failure<AgentDefinition>(validation);
+
+        var targetValidation = await ValidateConfiguredExecutionTargetAsync(
+            definition.ConfiguredExecutionTargetId,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (targetValidation.IsFailure)
+            return Result<AgentDefinition>.Failure(targetValidation.Error!);
+
+        return isCreate
+            ? await _agentDefinitions.CreateAgentDefinitionAsync(
+                definition,
+                accessContext,
+                cancellationToken).ConfigureAwait(false)
+            : await _agentDefinitions.UpdateAgentDefinitionAsync(
+                definition,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<Result> ValidateConfiguredExecutionTargetAsync(
+        ExecutionTargetId? executionTargetId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken)
+    {
+        if (executionTargetId is null)
+            return Result.Success();
+
+        if (executionTargetId.Value == default)
+        {
+            return Result.Failure(
+                Error.Validation(
+                    "hive.management.agent-definition.execution-target-invalid",
+                    "A configured execution target reference must contain a valid target identity."));
+        }
+
+        var target = await _providerResources.GetExecutionTargetAsync(
+            executionTargetId.Value,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (target.IsFailure)
+            return Result.Failure(target.Error!);
+
+        if (target.Value!.Resource?.Lifecycle.Status == ResourceLifecycleStatus.Retired)
+        {
+            return Result.Failure(
+                Error.Conflict(
+                    "hive.management.agent-definition.execution-target-retired",
+                    "A retired execution target cannot be configured for an AgentDefinition."));
+        }
+
+        return Result.Success();
+    }
 
     public Task<Result<WorkItem>> CreateImageWorkItemAsync(
         WorkItemImageSubmission submission,
