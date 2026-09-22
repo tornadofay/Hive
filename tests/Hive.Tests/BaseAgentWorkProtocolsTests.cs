@@ -359,15 +359,18 @@ public sealed class BaseAgentWorkProtocolsTests
     [Fact]
     public void DelegationChannel_PreservesProvenanceAndLimitsReadsToParticipants()
     {
-        var first = CreateRuntime();
+        var delegation = new InMemoryDelegationChannel();
+        var first = CreateRuntime(delegation: delegation);
         var second = CreateRuntime(
             first.DeploymentId,
             first.TenantId,
-            first.Context.PrincipalId!.Value);
+            first.Context.PrincipalId!.Value,
+            delegation: delegation);
         var outsider = CreateRuntime(
             first.DeploymentId,
             first.TenantId,
-            PrincipalId.New());
+            PrincipalId.New(),
+            delegation: delegation);
 
         var workItem = CreateWorkItem(first);
         var request = DelegationRequest.Create(
@@ -458,7 +461,9 @@ public sealed class BaseAgentWorkProtocolsTests
     private static RuntimeFixture CreateRuntime(
         DeploymentId? deploymentId = null,
         TenantId? tenantId = null,
-        PrincipalId? principalId = null)
+        PrincipalId? principalId = null,
+        IQuestionTransport? questions = null,
+        IDelegationChannel? delegation = null)
     {
         var deployment = deploymentId ?? DeploymentId.New();
         var tenant = tenantId ?? TenantId.New();
@@ -480,7 +485,9 @@ public sealed class BaseAgentWorkProtocolsTests
 
         var runtime = agentResult.Value!.CreateRuntimeInstance(
             now,
-            clock);
+            clock,
+            questions,
+            delegation);
 
         var runtimeContext = new ResourceAccessContext(
             deployment,
