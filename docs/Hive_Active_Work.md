@@ -62,7 +62,7 @@ The original Phase 1.12 Settings implementation is present on `main`; verificati
 Implemented in the active slice:
 
 - typed SQL Server/LocalDB persistence configuration contracts;
-- Management save/load boundary backed by an atomic JSON settings file containing only non-secret fields plus Secret Store identity;
+- Management save/load boundary backed by an atomic JSON settings file containing only non-secret persistence fields plus the current credential reference; the active implementation still uses the pre-bootstrap Secret Store reference and must be migrated to the dedicated bootstrap-credential boundary before Phase 1.12 closure;
 - non-destructive SQL Server persistence connection test reporting database and Hive schema state separately;
 - ProviderAccount credential Secret Store reference support;
 - Management-mediated provider connection-test boundary and OpenAI-compatible concrete tester;
@@ -83,6 +83,7 @@ Before coding, inspect:
 - Host UI conventions and `docs/ui/examples.md`;
 - `Hive.Host.WinForms.UI` controls: `HiveNavigationTree`, `HiveListPageLayout`, `HiveListView`, `HiveCrudPage<TItem>`, and `HiveEditorLayout`;
 - Example Host discovery/service-composition/output pattern;
+- host-layer composition/lifetime ownership, candidate publication, replacement, and disposal semantics;
 - existing configuration/provider/persistence/execution tests.
 
 ## Verification handoff
