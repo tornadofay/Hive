@@ -123,6 +123,20 @@ public readonly record struct AgentId
     public override string ToString() => Value.ToString("D");
 }
 
+public readonly record struct AgentDefinitionId
+{
+    public AgentDefinitionId(Guid value) => Value = IdentityValue.Require(value, nameof(value));
+    public Guid Value { get; }
+    public static AgentDefinitionId New() => new(Guid.NewGuid());
+    public static AgentDefinitionId Parse(string value) => new(IdentityValue.Parse(value, nameof(value), nameof(AgentDefinitionId)));
+    public static bool TryParse(string? value, out AgentDefinitionId result)
+    {
+        if (IdentityValue.TryParse(value, out var parsed)) { result = new(parsed); return true; }
+        result = default; return false;
+    }
+    public override string ToString() => Value.ToString("D");
+}
+
 public readonly record struct HiveId
 {
     public HiveId(Guid value) => Value = IdentityValue.Require(value, nameof(value));
