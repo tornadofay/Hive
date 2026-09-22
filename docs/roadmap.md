@@ -37,9 +37,9 @@ Objective: create the complete initial solution structure:
 - `Hive.Example.WinForms`;
 - `Hive.Tests`.
 
-Establish the dependency direction from the beginning. `Hive.Host.WinForms.UI` owns the ReaLTaiizor dependency, `Hive.Host.WinForms` consumes the UI foundation, and `Hive.Example.WinForms` consumes public platform contracts plus the WinForms/UI layers. No core/platform project may depend on the Example host.
+Establish the dependency direction from the beginning. `Hive.Host.WinForms.UI` owns the Hive WinForms presentation implementation, `Hive.Host.WinForms` consumes the UI foundation, and `Hive.Example.WinForms` consumes public platform contracts plus the WinForms/UI layers. No core/platform project may depend on the Example host.
 
-Verify: solution builds; forbidden references are absent; the UI project boundary for ReaLTaiizor is reserved for 0.6; the Example host is isolated from test-framework internals.
+Verify: solution builds; forbidden references are absent; the Hive UI implementation remains behind `Hive.Host.WinForms.UI`; the Example host is isolated from test-framework internals.
 
 ## 0.2 — Common infrastructure
 Objective: IDs, immutable value objects, typed errors/results, `IClock`, event envelope with event type and payload schema version, correlation/causation IDs, event upcasting compatibility boundary, and one JSON serialization stack.
@@ -59,7 +59,7 @@ Objective: xUnit scaffolding, fake provider infrastructure, fake clock, test-dat
 Verify: baseline tests pass and automated tests make no real vendor/network calls.
 
 ## 0.6 — WinForms UI/UX Foundation
-Objective: establish the shared WinForms visual foundation used by Hive.Host.WinForms and Hive.Example.WinForms. ReaLTaiizor is the selected third-party rendering layer. Hive owns the theme contract, semantic design tokens, and any Hive-specific wrappers; application forms do not reference ReaLTaiizor directly.
+Objective: establish the shared WinForms visual foundation used by Hive.Host.WinForms and Hive.Example.WinForms. Hive owns the theme contract, semantic design tokens, and the small set of Hive-specific controls required by consumers. The current implementation uses native WinForms controls and custom System.Drawing rendering; application forms consume Hive-owned contracts.
 
 The initial foundation includes:
 - Light / Dark / System theme modes;
@@ -77,7 +77,7 @@ The initial foundation includes:
 
 Do not create a complete replacement control toolkit or wrap every WinForms control merely to rename it. The selected library is an implementation detail behind `Hive.Host.WinForms.UI`.
 
-Verify: a representative sample form renders in Light and Dark modes, shared styling is consistent, no consuming form references ReaLTaiizor directly, and the UI layer can replace the rendering dependency without changing consumer-facing Hive UI contracts. Pin the exact ReaLTaiizor package version during implementation.
+Verify: a representative sample form renders in Light and Dark modes, shared styling is consistent, consuming forms use only Hive-owned UI contracts, and the UI implementation can evolve without changing consumer-facing Hive UI contracts.
 
 ## 0.7 — First-Class Example Host Shell
 Objective: make `Hive.Example.WinForms` a permanent developer-facing application rather than a temporary demonstration.
