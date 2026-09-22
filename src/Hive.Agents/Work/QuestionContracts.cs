@@ -347,12 +347,21 @@ public sealed class QuestionTransport : IQuestionTransport
     }
 
     public Result<Question> Answer(
+        ResourceAccessContext responderContext,
         QuestionId questionId,
         AgentId responderAgentId,
         RuntimeId responderRuntimeId,
         string answer,
         DateTimeOffset answeredAtUtc)
     {
+        var ownership = RuntimeProtocolGuard.Validate(
+            responderContext,
+            responderAgentId,
+            responderRuntimeId);
+
+        if (ownership.IsFailure)
+            return Result<Question>.Failure(ownership.Error!);
+
         lock (_sync)
         {
             if (!_questions.TryGetValue(questionId, out var question))
