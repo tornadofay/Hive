@@ -146,7 +146,7 @@ public sealed class AgentExecutionIntegrationTests
         var events = await store.ReadEventsAsync(
             new ResourceReference(
                 ResourceKind.Execution,
-                executionId));
+                executionId.Value));
 
         Assert.True(events.IsSuccess, events.Error?.Message);
         Assert.Equal(2, events.Value!.Count);
