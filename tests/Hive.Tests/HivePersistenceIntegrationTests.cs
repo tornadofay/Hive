@@ -165,7 +165,7 @@ public sealed class HivePersistenceIntegrationTests
                 (
                     SELECT 1
                     FROM sys.indexes
-                    WHERE [object_id] = OBJECT_ID(N'dbo.HiveSchemaVersion')
+                    WHERE [object_id] = OBJECT_ID(@TableName)
                       AND [name] = @IndexName
                 )
                 THEN 1
