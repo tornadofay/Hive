@@ -56,6 +56,14 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                         "The Hive settings file is empty."));
             }
 
+            if (document.CredentialSecretId is not null)
+            {
+                return Result<HivePersistenceConfiguration>.Failure(
+                    Error.Validation(
+                        "hive.management.legacy-bootstrap-credential-reference",
+                        "The Hive settings file contains a legacy database Secret Store credential reference. Reconfigure SQL password authentication so it uses the bootstrap credential boundary."));
+            }
+
             return Result<HivePersistenceConfiguration>.Success(
                 document.ToConfiguration());
         }
@@ -147,6 +155,7 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
         string DatabaseName,
         HiveSqlAuthenticationMode AuthenticationMode,
         string? UserName,
+        Guid? BootstrapCredentialId,
         Guid? CredentialSecretId,
         bool Encrypt,
         bool TrustServerCertificate,
@@ -161,10 +170,10 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                 DatabaseName,
                 AuthenticationMode,
                 UserName,
-                CredentialSecretId is null
+                BootstrapCredentialId is null
                     ? null
-                    : new SecretReference(
-                        new SecretId(CredentialSecretId.Value)),
+                    : new HiveBootstrapCredentialReference(
+                        new SecretId(BootstrapCredentialId.Value)),
                 Encrypt,
                 TrustServerCertificate,
                 CreateDatabaseIfMissing,
@@ -179,7 +188,8 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                 configuration.DatabaseName,
                 configuration.AuthenticationMode,
                 configuration.UserName,
-                configuration.CredentialSecret?.Id.Value,
+                configuration.BootstrapCredential?.Id.Value,
+                null,
                 configuration.Encrypt,
                 configuration.TrustServerCertificate,
                 configuration.CreateDatabaseIfMissing,
