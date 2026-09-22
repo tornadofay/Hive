@@ -201,6 +201,8 @@ The Example host is a first-class project from repository scaffolding onward, gr
 
 Hive Settings is the **global Hive package configuration center** and the permanent first-class user-facing configuration surface for durable Hive-owned package configuration. It is an application-management surface over the same authoritative state consumed by host applications, not a separate test configuration model or a collection of parallel settings roots.
 
+Future durable Hive configuration domains extend this same Settings center only after their owning contract exists. A Settings page must not invent a storage model, policy boundary, or runtime service solely to populate the UI.
+
 The intended configuration path is:
 
 ```text
