@@ -23,7 +23,33 @@ Requirements:
 - parameterless constructor;
 - return a `UserControl`.
 
-No central registration. Navigation: `Category → Subcategory → Example`.
+No central registration. The host builds:
+
+```text
+Category
+└─ Subcategory
+   └─ Example Title
+```
+
+## Tree placement
+
+`Category` and `Subcategory` are the actual TreeView node text.
+
+Current branches:
+- `UI → Foundation`
+- `Providers → Provider Platform`
+
+For a new Example:
+1. Reuse the existing Category/Subcategory that matches the capability.
+2. Use the exact existing spelling/casing so the Example appears under that branch.
+3. Create a new Category/Subcategory only when no existing branch fits.
+4. Do not edit `HiveExampleHostForm`; changing these two properties is enough.
+
+Examples:
+- UI control/theme/dialog/CRUD example → `UI / Foundation`
+- Provider/ProviderAccount/ExecutionTarget example → `Providers / Provider Platform`
+
+`Order` controls ordering within the discovered examples. Title is the leaf text.
 
 ## Shared services
 
@@ -66,7 +92,9 @@ Never output secrets or credentials.
 
 ## Theme
 
-Host themes the selected view. For additional dynamic controls:
+The host themes the selected view.
+
+For additional dynamic controls:
 ```csharp
 theme.Apply(childControl);
 ```
