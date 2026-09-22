@@ -144,7 +144,8 @@ The authoritative configuration contract must represent, at minimum:
 - authentication mode and non-secret login metadata;
 - Hive database identity/name policy;
 - SQL connection security options required by the supported deployment;
-- secret identity for credential material rather than the credential itself;
+- Hive resource secret identity for resource credentials once Hive.Persistence is available;
+- a separate bootstrap credential reference for SQL-password startup access, with protected material stored outside the Hive database;
 - database creation/migration policy where exposed by the platform.
 
 V1 has one persistence engine: SQL Server. LocalDB is a SQL Server deployment form for local development, not a second provider.
