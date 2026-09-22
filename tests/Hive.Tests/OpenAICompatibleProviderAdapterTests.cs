@@ -215,6 +215,55 @@ public sealed class OpenAICompatibleProviderAdapterTests
         Assert.Equal(ErrorCategory.Serialization, result.Error!.Category);
     }
 
+    [Fact]
+    public void Contracts_RejectInvalidModelAndMessages()
+    {
+        Assert.Throws<ArgumentException>(
+            () => new OpenAICompatibleChatRequest(
+                " ",
+                [new OpenAICompatibleMessage(
+                    OpenAICompatibleMessageRole.User,
+                    "test")]));
+
+        Assert.Throws<ArgumentException>(
+            () => new OpenAICompatibleChatRequest(
+                "model",
+                []));
+
+        Assert.Throws<ArgumentException>(
+            () => new OpenAICompatibleMessage(
+                OpenAICompatibleMessageRole.User,
+                new string('x', 64 * 1024 + 1)));
+    }
+
+    [Fact]
+    public void Options_RejectInvalidEndpointAndTimeout()
+    {
+        Assert.Throws<ArgumentException>(
+            () => new OpenAICompatibleProviderOptions(
+                new Uri("ftp://example.test/v1/")));
+
+        Assert.Throws<ArgumentException>(
+            () => new OpenAICompatibleProviderOptions(
+                new Uri("https://user:password@example.test/v1/")));
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new OpenAICompatibleProviderOptions(
+                new Uri("https://example.test/v1/"),
+                timeout: TimeSpan.Zero));
+    }
+
+    [Fact]
+    public void StructuredOutput_RequiresObjectSchema()
+    {
+        using var document = System.Text.Json.JsonDocument.Parse("[]");
+
+        Assert.Throws<ArgumentException>(
+            () => new OpenAICompatibleStructuredOutput(
+                "test",
+                document.RootElement));
+    }
+
     private static OpenAICompatibleChatRequest CreateRequest() =>
         new(
             "test-model",
