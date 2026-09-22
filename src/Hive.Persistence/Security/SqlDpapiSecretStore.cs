@@ -524,7 +524,7 @@ public sealed class SqlDpapiSecretStore : ISecretStore
                         : new CausationId(reader.GetGuid(11))),
                 new ResourceLifecycle(
                     (ResourceLifecycleStatus)reader.GetInt32(12),
-                    reader.GetDateTime(13)),
+                    ReadUtcDateTime(reader, 13)),
                 metadata),
             reader.GetString(1),
             reader.GetString(2));
