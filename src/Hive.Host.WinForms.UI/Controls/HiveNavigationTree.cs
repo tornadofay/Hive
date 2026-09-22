@@ -239,6 +239,10 @@ public sealed class HiveNavigationTree : TreeView
     {
         base.OnAfterCollapse(e);
 
+        _focusPath?.Dispose();
+        _focusPath = null;
+        _focusPathBounds = Rectangle.Empty;
+
         if (e.Node is TreeNode node)
             Invalidate(node.Bounds);
     }
@@ -300,8 +304,6 @@ public sealed class HiveNavigationTree : TreeView
             _categoryFont?.Dispose();
             _groupFont?.Dispose();
             _itemFont?.Dispose();
-            _focusPath?.Dispose();
-            _focusPath = null;
             DisposePaintResources();
         }
     }
