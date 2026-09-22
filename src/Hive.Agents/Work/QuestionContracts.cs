@@ -216,6 +216,7 @@ public interface IQuestionTransport
         CancellationToken cancellationToken = default);
 
     Result<Question> Answer(
+        ResourceAccessContext responderContext,
         QuestionId questionId,
         AgentId responderAgentId,
         RuntimeId responderRuntimeId,
