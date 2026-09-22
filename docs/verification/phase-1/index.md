@@ -12,3 +12,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [1.8 — Outbox Poller](1.8.md)
 - [1.9 — First Real Agent Execution](1.9.md)
 - [1.10 — Hive.Management Facade](1.10.md)
+- [1.11 — V1 Workspace & WorkItem Operations](1.11.md)
