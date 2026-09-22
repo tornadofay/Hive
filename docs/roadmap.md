@@ -68,14 +68,14 @@ The initial foundation includes:
 - HiveButton with Primary / Secondary / Navigation styles;
 - HiveMessageBox with semantic message types and optional technical details;
 - Hive-specific controls only where Hive needs behavior or styling beyond ordinary WinForms controls;
-- a replaceable seam around the third-party rendering dependency.
+- native WinForms controls and custom `System.Drawing` rendering owned by `Hive.Host.WinForms.UI`;
 - reusable data-page composition primitives: a header/action/content list layout and an optional pagination bar;
 - `HiveCrudPage<TItem>` for generic Add/Edit/Delete/Refresh UI orchestration over consumer-supplied callbacks, including compact toolbar layout and an integrated `HivePaginationBar` footer;
 - the CRUD presentation standard: clear title/description hierarchy, optional search, primary Add action separated from contextual Edit/Delete actions, predictable loading/empty/no-match states, keyboard-friendly list interaction, and compact record-count/status feedback;
 - reusable editor-layout composition for repeated labeled-field and action-footer patterns; `HiveEditorLayout` supplies presentation only and does not own field semantics or validation, while standardizing field rhythm and action-footer alignment;
 - domain pages keep their own schemas, columns, filters, validation, authorization, specialized editors, and persistence behavior.
 
-Do not create a complete replacement control toolkit or wrap every WinForms control merely to rename it. The selected library is an implementation detail behind `Hive.Host.WinForms.UI`.
+Do not create a complete replacement control toolkit or wrap every WinForms control merely to rename it. Keep rendering implementation details inside `Hive.Host.WinForms.UI` so consuming forms depend only on Hive-owned UI contracts. A different renderer may be introduced later only through an explicit architectural decision.
 
 Verify: a representative sample form renders in Light and Dark modes, shared styling is consistent, consuming forms use only Hive-owned UI contracts, and the UI implementation can evolve without changing consumer-facing Hive UI contracts.
 
