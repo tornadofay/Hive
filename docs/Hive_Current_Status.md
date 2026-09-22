@@ -4,13 +4,13 @@ Last updated: 2026-09-22
 
 ## Repository state
 
-Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 through Phase 1.4 are complete and verified; Phase 1.5 is now the active implementation slice.
+Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 through Phase 1.5 are complete and verified; Phase 1.6 is now the active implementation slice.
 
 ## Current phase
 
 Phase 0 — Foundations: **Complete**.
 
-**Active slice: 1.5 — Base Agent & AgentFactory.**
+**Active slice: 1.6 — Base Agent Work Protocols.**
 
 ## Architecture decisions now locked
 
@@ -181,8 +181,8 @@ Implemented so far:
 
 ## Not started
 
-- Phase 1.6 and later Phase 1 implementation slices.
-- Phase 1.5 is now the active implementation slice and implementation is not yet verified.
+- Phase 1.7 and later Phase 1 implementation slices.
+- Phase 1.6 is now the active implementation slice and implementation is not yet verified.
 - Later phases.
 
 Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.4 are complete and verified; Phase 1.5 is active.
