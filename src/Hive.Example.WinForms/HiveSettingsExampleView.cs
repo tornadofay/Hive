@@ -103,11 +103,6 @@ internal sealed class HiveSettingsExampleView : UserControl
             }
 
             var value = configuration.Value!;
-            var test = await _management
-                .TestPersistenceConnectionAsync(
-                    value,
-                    _context);
-
             var output = $"""
             Persistence backend: {value.Backend}
             Server / instance: {value.ServerName}
@@ -122,11 +117,76 @@ internal sealed class HiveSettingsExampleView : UserControl
             Command timeout: {value.CommandTimeoutSeconds}s
             """;
 
+            var providers = await _management
+                .ListProvidersAsync(_context);
+
+            output += Environment.NewLine + Environment.NewLine +
+                "Providers:";
+
+            if (providers.IsFailure)
+            {
+                output += Environment.NewLine +
+                    $"  ERROR: {providers.Error!.Message}";
+            }
+            else
+            {
+                foreach (var provider in providers.Value!)
+                {
+                    output += Environment.NewLine +
+                        $"  Provider: {provider.DisplayName} [{provider.Key}] | Transport={provider.TransportKind}";
+
+                    var accounts = await _management
+                        .ListProviderAccountsAsync(
+                            provider.Id,
+                            _context);
+
+                    if (accounts.IsFailure)
+                    {
+                        output += Environment.NewLine +
+                            $"    Accounts: ERROR: {accounts.Error!.Message}";
+                        continue;
+                    }
+
+                    foreach (var account in accounts.Value!)
+                    {
+                        output += Environment.NewLine +
+                            $"    Account: {account.DisplayName} [{account.Key}] | " +
+                            $"CredentialReference={account.CredentialSecret is not null}";
+
+                        var targets = await _management
+                            .ListExecutionTargetsAsync(
+                                account.Id,
+                                _context);
+
+                        if (targets.IsFailure)
+                        {
+                            output += Environment.NewLine +
+                                $"      Targets: ERROR: {targets.Error!.Message}";
+                            continue;
+                        }
+
+                        foreach (var target in targets.Value!)
+                        {
+                            output += Environment.NewLine +
+                                $"      Target: {target.DisplayName} [{target.Key}] | " +
+                                $"Endpoint={target.Endpoint.AbsoluteUri} | " +
+                                $"Model={target.Model ?? "(none)"} | " +
+                                $"Deployment={target.Deployment ?? "(none)"}";
+                        }
+                    }
+                }
+            }
+
+            var test = await _management
+                .TestPersistenceConnectionAsync(
+                    value,
+                    _context);
+
             if (test.IsSuccess)
             {
                 output += Environment.NewLine + Environment.NewLine +
                     $"""
-                    Connection test: succeeded
+                    Persistence connection test: succeeded
                     Database state: {test.Value!.DatabaseState}
                     Current schema: {test.Value.CurrentSchemaVersion?.ToString() ?? "none"}
                     Supported schema: {test.Value.SupportedSchemaVersion}
@@ -136,11 +196,11 @@ internal sealed class HiveSettingsExampleView : UserControl
             else
             {
                 output += Environment.NewLine + Environment.NewLine +
-                    $"Connection test: failed — {test.Error!.Message}";
+                    $"Persistence connection test: failed — {test.Error!.Message}";
             }
 
             _output.Write(
-                "Hive Settings / Persistence",
+                "Hive Settings / Provider & Persistence",
                 output);
         }
         finally
@@ -148,4 +208,3 @@ internal sealed class HiveSettingsExampleView : UserControl
             _captureButton.Enabled = true;
         }
     }
-}
