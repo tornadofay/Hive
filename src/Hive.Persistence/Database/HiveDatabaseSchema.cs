@@ -2,7 +2,7 @@ namespace Hive.Persistence;
 
 public static class HiveDatabaseSchema
 {
-    public const int CurrentSchemaVersion = 6;
+    public const int CurrentSchemaVersion = 7;
     public const int MinimumSupportedSchemaVersion = 1;
 
     public const byte SchemaRowId = 1;
