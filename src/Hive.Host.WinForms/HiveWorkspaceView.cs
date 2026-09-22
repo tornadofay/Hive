@@ -202,6 +202,13 @@ public sealed class HiveWorkspaceView : UserControl
 
                 await RefreshCoreAsync(token).ConfigureAwait(true);
                 SelectWorkItem(result.Value!.Id);
+
+                if (_selectedWorkItem is not null)
+                {
+                    await LoadActivityAsync(
+                        _selectedWorkItem,
+                        token).ConfigureAwait(true);
+                }
             });
     }
 
