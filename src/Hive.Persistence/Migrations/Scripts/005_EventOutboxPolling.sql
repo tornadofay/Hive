@@ -1,11 +1,23 @@
 ALTER TABLE [dbo].[HiveEventOutbox]
 ADD
-    [AttemptCount] INT NOT NULL CONSTRAINT [DF_HiveEventOutbox_AttemptCount] DEFAULT (0),
+    [AttemptCount] INT NULL,
     [LeaseId] UNIQUEIDENTIFIER NULL,
     [LeaseExpiresAtUtc] DATETIME2(7) NULL;
 
+UPDATE [dbo].[HiveEventOutbox]
+SET [AttemptCount] = 0
+WHERE [AttemptCount] IS NULL;
+
 ALTER TABLE [dbo].[HiveEventOutbox]
-ADD CONSTRAINT [CK_HiveEventOutbox_AttemptCount] CHECK ([AttemptCount] >= 0);
+ALTER COLUMN [AttemptCount] INT NOT NULL;
+
+ALTER TABLE [dbo].[HiveEventOutbox]
+ADD CONSTRAINT [DF_HiveEventOutbox_AttemptCount]
+DEFAULT (0) FOR [AttemptCount];
+
+ALTER TABLE [dbo].[HiveEventOutbox]
+ADD CONSTRAINT [CK_HiveEventOutbox_AttemptCount]
+CHECK ([AttemptCount] >= 0);
 
 ALTER TABLE [dbo].[HiveEventOutbox]
 ADD CONSTRAINT [CK_HiveEventOutbox_LeaseState]
