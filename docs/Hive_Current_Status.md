@@ -4,13 +4,13 @@ Last updated: 2026-09-22
 
 ## Repository state
 
-Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 through Phase 1.7 are complete and verified; Phase 1.8 is now the active implementation slice.
+Phase 0 — Foundations is complete. Slices 0.1 through 0.5 were completed and verified, 0.6 was accepted through developer UI interaction, and 0.7 was completed and accepted as the final Example Host/UI polish slice. Slice 0.8 was removed before Phase 0 closure because it is no longer needed. Phase 1.1 through Phase 1.8 are complete and verified; Phase 1.9 is now the active implementation slice.
 
 ## Current phase
 
 Phase 0 — Foundations: **Complete**.
 
-**Active slice: 1.8 — Outbox Poller.**
+**Active slice: 1.9 — First Real Agent Execution.**
 
 ## Architecture decisions now locked
 
@@ -129,13 +129,13 @@ Implemented:
 
 ### Phase 1.8 — Outbox Poller
 
-Implementation is present; developer verification is pending.
+Complete and verified.
 
-Objective:
-- process committed, unhandled transactional outbox rows after the originating transaction has committed;
-- preserve event identity/version and safe recovery boundaries;
-- make duplicate delivery safe and idempotent;
-- keep the poller as a persistence/application delivery boundary, not a distributed broker or second orchestration engine.
+Developer verification:
+- Hive.Example.WinForms `Persistence / Events / Outbox Poller / Transactional Outbox Poller` completed successfully.
+- Example output confirmed simulated first-delivery failure, retained lease, successful retry, preserved event identity, one idempotent side effect, no remaining outbox row, and migration schema 5.
+- Full `Hive.Tests` execution: **124 tests passed, 0 failed, 0 skipped in 2.7 seconds**.
+- The 1.8 completion gate is satisfied.
 
 Implemented:
 - lease-based outbox claiming with atomic SQL locking;
@@ -143,9 +143,8 @@ Implemented:
 - success acknowledgement removes the outbox row only when the claim is still owned;
 - failed/canceled delivery remains recoverable after lease expiry;
 - idempotent EventId delivery contract;
-- focused integration tests and a public Example Host scenario.
-
-Developer verification: pending.
+- focused integration tests and a public Example Host scenario;
+- schema migration 5 for outbox lease/attempt state.
  
 ### Phase 1.4 — Capability-aware Execution Target Selection
 
@@ -244,7 +243,8 @@ Implemented so far:
 
 ## Not started
 
-- Phase 1.9 and later Phase 1 implementation slices.
+- Phase 1.9 is active.
+- Phase 1.10 and later Phase 1 implementation slices.
 - Later phases.
 
-Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.7 are complete and verified. Phase 1.8 is active; implementation is present and developer verification is pending.
+Phase 0.1 through 0.5 are complete and verified. Phase 0.6 was accepted after developer manual interaction with the Example UI. Phase 0.7 is complete and accepted. Phase 0 is officially closed. Phase 1.1 through Phase 1.8 are complete and verified. Phase 1.9 is active.
