@@ -404,6 +404,9 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 NavigationBorder = dark
                     ? ColorTranslator.FromHtml("#2A3541")
                     : ColorTranslator.FromHtml("#D8DEE8"),
+                DisabledListBackground = dark
+                    ? ColorTranslator.FromHtml("#11171E")
+                    : palette.DisabledBackground,
                 Information = dark
                     ? ColorTranslator.FromHtml("#76B0FF")
                     : ColorTranslator.FromHtml("#2563EB"),
