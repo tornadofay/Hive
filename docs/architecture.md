@@ -365,6 +365,10 @@ Hive must never build a second workflow/orchestration engine merely because Hive
 | Cost policy | `FreeOnly` / `FreePreferred` / `NoRestriction` | Cost is separate from capability |
 | Secrets | Encrypted at rest through `ISecretStore`; redacted elsewhere | No unnecessary external vault architecture |
 
+`ProviderAccount` stores only an optional `SecretReference` for provider credential material. Provider connection tests resolve that reference through `Hive.Management` and `ISecretStore`; provider credentials are never stored in ProviderAccount fields, configuration files, diagnostics, or provider-test output.
+
+The Phase 1.12 Settings boundary uses one typed persistence configuration contract containing SQL Server endpoint/port, database identity, authentication mode, non-secret login metadata, optional Secret Store credential reference, connection-security flags, database-initialization policy, and command timeout. `Hive.Management` exposes save/load and connection-test operations. The connection-test boundary must inspect server/database/schema state without creating the database or applying migrations. WinForms settings pages consume only these Management operations.
+
 Current V1 provider configurations include compatible hosted/local targets such as Groq, OpenRouter, Cloudflare, Cerebras, NVIDIA, Google, and local OpenAI-compatible servers. The adapter contract remains vendor-neutral; adding another compatible provider should normally require configuration, not another transport implementation.
 
 Deferred until a measured requirement exists: Temporal, Dapr, PostgreSQL/pgvector, Elasticsearch/OpenSearch, Akka.NET, Orleans, DiskANN, a custom Hive workflow engine, and a separate external secrets-vault architecture.
