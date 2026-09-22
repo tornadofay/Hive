@@ -82,16 +82,50 @@ internal sealed class HiveAgentSettingsView : UserControl
     private async Task<IReadOnlyList<AgentDefinition>> LoadAsync(
         CancellationToken cancellationToken)
     {
-        var targets = await _management
-            .ListExecutionTargetsAsync(
+        var providers = await _management
+            .ListProvidersAsync(
                 _accessContext,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(true);
 
-        if (targets.IsFailure)
-            throw new InvalidOperationException(targets.Error!.Message);
+        if (providers.IsFailure)
+            throw new InvalidOperationException(providers.Error!.Message);
 
-        _targets = targets.Value!;
+        var targets = new List<ExecutionTarget>();
+
+        foreach (var provider in providers.Value!)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var accounts = await _management
+                .ListProviderAccountsAsync(
+                    provider.Id,
+                    _accessContext,
+                    cancellationToken: cancellationToken)
+                .ConfigureAwait(true);
+
+            if (accounts.IsFailure)
+                throw new InvalidOperationException(accounts.Error!.Message);
+
+            foreach (var account in accounts.Value!)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var accountTargets = await _management
+                    .ListExecutionTargetsAsync(
+                        account.Id,
+                        _accessContext,
+                        cancellationToken: cancellationToken)
+                    .ConfigureAwait(true);
+
+                if (accountTargets.IsFailure)
+                    throw new InvalidOperationException(accountTargets.Error!.Message);
+
+                targets.AddRange(accountTargets.Value!);
+            }
+        }
+
+        _targets = targets;
 
         var agents = await _management
             .ListAgentDefinitionsAsync(
