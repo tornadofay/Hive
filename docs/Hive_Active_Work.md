@@ -1,73 +1,54 @@
 # Hive — Active Work
 
-Last updated: 2026-09-21
+Last updated: 2026-09-22
 
 ## Active slice
 
-**0.7 — First-Class Example Host Shell**
+**1.1 — Provider / ProviderAccount / ExecutionTarget**
 
-Phase 0.6 was accepted after the developer exercised the shared UI foundation in the real Example application, including CRUD editing/deletion, pagination, editor interaction, and error/failure presentation. The implementation now proceeds to the documented 0.7 shell; do not begin Phase 0.8 or later slices.
+Phase 0 — Foundations is officially complete. Slice 0.8 was removed from the roadmap before Phase 0 closure because it is no longer needed.
+
+Do not reopen Phase 0 or introduce work from later Phase 1 slices until 1.1 is complete.
 
 ## Objective
 
-Turn Hive.Example.WinForms into a permanent developer-facing host with scalable Category → Subcategory → Example navigation and one replaceable right-side UserControl view.
+Establish the first V1 provider-management boundary:
 
-The shell must discover IHiveExample implementations without a central manual registration list, own navigation/view lifetime, and consume only Hive-owned UI contracts.
+- concrete Provider resources;
+- ProviderAccount ownership and scope;
+- ExecutionTarget resources;
+- three-state capability representation;
+- persistence for these resources;
+- CRUD-oriented management contracts that later Management UI surfaces can consume.
 
-## 0.7 implementation scope
+The implementation must preserve the existing Phase 0 dependency direction, shared UI foundation, typed identity/resource contracts, persistence boundary, and MAF-first architecture.
 
-The active 0.7 pass is now a full production UI/UX polish pass over the shared WinForms foundation and Example host. It is intentionally limited to presentation, interaction quality, responsiveness, state handling, theme consistency, and UI-code performance. No later platform functionality is introduced.
+## 1.1 implementation scope
 
-The pass covers:
-- professional desktop layout, spacing, hierarchy, typography, and visual density;
-- Category → Subcategory → Example navigation and stable selection/scroll/focus state;
-- Light / Dark / System themes and semantic visual states;
-- CRUD list, search, actions, pagination, empty/loading/error states, and editor presentation;
-- dialogs and technical-error presentation;
-- resize behavior and compact supported dimensions;
-- consistent native/Hive control styling;
-- disposal, nullability, allocation, layout, painting, and traversal discipline on UI paths.
-
-- add the IHiveExample discovery contract;
-- discover examples from the designated Example assembly;
-- build a left-side Category → Subcategory → Example tree;
-- replace the active right-side view without stacking or overlapping pages;
-- dispose the previous example view deterministically;
-- provide the shared Example services through IServiceProvider;
-- keep the existing 0.6 UI foundation as the first discoverable example;
-- preserve Light / Dark / System theme behavior through the shared IHiveThemeManager;
-- no feature-specific platform functionality is added to the shell.
-
-## Implementation progress
-
-- added IHiveExample and the Example-side service provider contract;
-- added reflection discovery for internal IHiveExample implementations in the designated Example assembly;
-- added the first-class HiveExampleHostForm with Category → Subcategory → Example navigation and a replaceable right-side view;
-- added themed navigation rendering with explicit selected/hover/focus states and preservation of selection/scroll during theme changes;
-- added themed lightweight ListView rendering for CRUD selection/hover/disabled states;
-- refined the shared palette, visual-state tokens, button hierarchy, window header, editor rhythm, CRUD density, pagination, and message-dialog presentation;
-- added a reusable standard Example test surface that centralizes the repeated HAgent-style example UI: Run/copy actions, busy/status state, editable test input, copyable C# reproduction snippet, description, expected-result, note, cancellation, and exception handling;
-- added one persistent global Example output surface exposed to every example through the Example service provider, implemented as a collapsible bottom pane with Clear/Show/Hide behavior; specialized examples may use it or keep their own UI;
-- made the permanent Example host behave as a normal desktop window and improved compact-window resizing;
-- split the UI foundation into separate discoverable Theme, Controls & CRUD, and Dialogs examples under UI → Foundation, removing the duplicate in-view section navigation;
-- converted the existing 0.6 UI foundation surface from a top-level form into discoverable UserControl examples;
-- updated Program to launch HiveExampleHostForm;
-- removed the legacy 0.6 top-level form path.
+- Define the Provider / ProviderAccount / ExecutionTarget contracts required by the roadmap and architecture.
+- Reuse the existing identity, ownership, scope, lifecycle, version, provenance, error, and persistence infrastructure rather than introducing parallel representations.
+- Represent capability support explicitly as Supported / Unsupported / Unknown.
+- Establish the persistence boundary and indexed lookup paths required by the contracts.
+- Keep provider transport behavior out of Hive.Core and behind the existing provider boundary.
+- Keep WinForms presentation separate from management/domain logic; Phase 1 UI consumes the management contracts rather than owning them.
+- Preserve the existing shared WinForms foundation in Hive.Host.WinForms.UI and Hive.Example.WinForms; do not reopen Phase 0 UI work unless a concrete Phase 1 requirement exposes a defect in an established contract.
 
 ## Verification
 
-1. adding an IHiveExample implementation makes it appear without editing shell registration code;
-2. category/subcategory/example navigation selects exactly one active view;
-3. switching examples disposes the previous view and does not accumulate controls;
-4. the shell remains usable with multiple examples;
-5. Light / Dark / System theme changes continue to propagate to the active example;
-6. the full solution builds and Hive.Example.WinForms launches normally.
+Required for completion of 1.1:
 
-Implementation is complete for the current UI polish pass. Automated UI verification is intentionally not introduced; developer manual verification is still required for theme-state preservation, resizing, interaction states, CRUD, dialogs, and overall visual acceptance.
+1. normal, invalid, and boundary provider/resource contract tests;
+2. ownership and scope validation;
+3. duplicate-identity and malformed-state cases;
+4. persistence integration coverage for create/read/update/delete behavior and relevant indexes;
+5. public/API example verification where the new externally meaningful contracts require it;
+6. developer verification of any user-facing UI introduced by this slice.
+
+No verification claim is recorded until it has actually been performed.
 
 ## Dependency direction
 
-```
+```text
 Hive.Core
    ↑
 Agents / Persistence / Tools / Providers
@@ -89,7 +70,8 @@ No core/platform project may depend on Example.WinForms.
 
 - WinForms-specific types remain outside Hive.Core.
 - ReaLTaiizor remains exclusively inside Hive.Host.WinForms.UI.
-- Hive.Example.WinForms does not reference xUnit runner internals.
-- The shell must not become an alternate test runner.
-- No central manual example registration table.
-- Do not start Phase 0.8 until 0.7 is complete and manually verified.
+- Hive.Example.WinForms remains a permanent developer-facing project and does not become an alternate test runner.
+- Use Microsoft Agent Framework wherever it already owns the required behavior.
+- Do not duplicate existing identity, resource, persistence, orchestration, or UI contracts.
+- Complete 1.1 before starting 1.2 or later Phase 1 slices.
+- Do not start Phase 2 or any cognitive-generation work during this slice.
