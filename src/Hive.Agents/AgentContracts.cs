@@ -99,13 +99,17 @@ public class Agent
 
     public RuntimeInstance CreateRuntimeInstance(
         DateTimeOffset? createdAtUtc = null,
-        IClock? clock = null)
+        IClock? clock = null,
+        IQuestionTransport? questions = null,
+        IDelegationChannel? delegation = null)
     {
         return RuntimeInstance.Create(
             Id,
             Generation,
             createdAtUtc ?? DateTimeOffset.UtcNow,
-            clock);
+            clock,
+            questions,
+            delegation);
     }
 }
 
@@ -190,7 +194,9 @@ public sealed class RuntimeInstance
         AgentId agentId,
         AgentGeneration generation,
         DateTimeOffset createdAtUtc,
-        IClock? clock)
+        IClock? clock,
+        IQuestionTransport? questions,
+        IDelegationChannel? delegation)
     {
         var runtimeId = RuntimeId.New();
 
@@ -201,7 +207,12 @@ public sealed class RuntimeInstance
             RuntimeInstanceStatus.Active,
             createdAtUtc,
             null,
-            new RuntimeWorkProtocols(agentId, runtimeId, clock));
+            new RuntimeWorkProtocols(
+                agentId,
+                runtimeId,
+                clock,
+                questions,
+                delegation));
     }
 }
 
