@@ -771,7 +771,10 @@ Update only the source-of-truth documents whose state changed.
 
 Required documentation updates include:
 
-- \`docs/architecture.md\` for final host composition/bootstrap/resource-relationship boundaries;
+- \`docs/architecture.md\` only when global architectural intent/indexing changes;
+- \`docs/architecture/v1-host-and-management.md\` for host composition, Settings, Example Host, and Management boundary changes;
+- \`docs/architecture/execution-and-persistence.md\` for persistence, execution, resource, or durable-state changes;
+- \`docs/architecture/foundations.md\` when persistence/bootstrap/UI foundation contracts change;
 - \`docs/ui/forms.md\` for final Settings page/control composition;
 - \`docs/ui/examples.md\` for configured-host usage and exact Example navigation;
 - \`docs/Hive_Active_Work.md\` for the current sub-stage and verification gate.
