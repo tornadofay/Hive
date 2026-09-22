@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="dbup-sqlserver" Version="7.2.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.12" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Hive.Core/Hive.Core.csproj" />
