@@ -145,7 +145,26 @@ Implemented:
 - idempotent EventId delivery contract;
 - focused integration tests and a public Example Host scenario;
 - schema migration 5 for outbox lease/attempt state.
- 
+ ### Phase 1.9 — First Real Agent Execution
+
+Implementation is present; developer verification is pending.
+
+Objective:
+- connect a Base Agent to Microsoft Agent Framework for one request;
+- use the existing selected ExecutionTarget and OpenAI-compatible provider boundary;
+- persist correlated Execution lifecycle events for start and terminal state.
+
+Implemented:
+- `Hive.Coordination.AgentExecutionService`;
+- Microsoft Agent Framework 1.22.0 composition boundary;
+- `OpenAICompatibleChatClient` implementing Microsoft.Extensions.AI `IChatClient`;
+- active runtime and target-scope validation;
+- durable `agent.execution.started`, `agent.execution.succeeded`, `agent.execution.failed`, and `agent.execution.cancelled` events;
+- focused integration tests and a public Example Host scenario.
+
+Developer verification: pending.
+
+
 ### Phase 1.4 — Capability-aware Execution Target Selection
 
 Complete and verified.
