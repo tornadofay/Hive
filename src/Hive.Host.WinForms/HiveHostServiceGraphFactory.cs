@@ -89,6 +89,16 @@ public sealed class SqlHiveHostServiceGraphFactory :
                         exception.Message));
             }
 
+            var migration = await new HiveDatabaseMigrator(options)
+                .MigrateAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (migration.IsFailure)
+            {
+                return Result<HiveHostServiceGraph>.Failure(
+                    migration.Error!);
+            }
+
             var management = new HiveManagementFacade(
                 new SqlProviderResourceStore(options),
                 new SqlAgentDefinitionResourceStore(options),
