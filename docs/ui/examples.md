@@ -1,21 +1,21 @@
-
 # Hive.Example.WinForms Development Guide
 
 ## Purpose
 
-Hive.Example.WinForms is Hive's permanent developer-facing public-API example and verification host.
+Hive.Example.WinForms is Hive's permanent developer-facing public-API example and manual-verification host.
 
 It exists to:
 
-1. demonstrate how consumers use Hive public APIs;
-2. provide reproducible manual verification scenarios;
-3. reduce developer and AI friction while building Hive.
+1. demonstrate supported Hive public APIs;
+2. provide reproducible developer scenarios;
+3. give the developer an explicit manual verification target;
+4. reduce developer and AI friction while building Hive.
 
-An Example is not a prototype implementation of the feature itself. It is a thin, reproducible consumer of the real public capability.
+An Example is not a prototype implementation of the feature itself. It is a thin consumer of the real capability.
 
-## Example contract
+## Example Host contract
 
-The current Example Host discovers implementations of this internal contract:
+The current Example Host uses this internal composition contract:
 
 ~~~csharp
 internal interface IHiveExample
@@ -28,25 +28,34 @@ internal interface IHiveExample
 }
 ~~~
 
-`IHiveExample` is an Example Host composition contract, not part of Hive's external product API. A scenario is public-facing when the behavior demonstrated by the scenario is exposed through Hive's supported public contracts.
+IHiveExample is internal to Hive.Example.WinForms. It is not part of Hive's external product API.
 
-A concrete Example must:
+The public-facing part of an Example is the Hive capability demonstrated by its view, not the IHiveExample interface itself.
+
+## Discovery rules
+
+HiveExampleDiscovery.Discover(Assembly assembly) scans the supplied assembly and considers concrete types that:
 
 - implement IHiveExample;
-- not be abstract;
-- have a parameterless constructor;
-- return a non-null UserControl from CreateView(IServiceProvider).
+- are not abstract;
+- are not interfaces;
+- expose a parameterless constructor;
+- can be instantiated by the Example Host.
 
-The discovery code scans the Example Host assembly at startup and creates concrete types that implement `IHiveExample` and expose a parameterless constructor. Examples are sorted by:
+The current Example Host supplies Assembly.GetExecutingAssembly(), so the normal implementation location is Hive.Example.WinForms itself.
 
-1. `Order`;
-2. `Category`;
-3. `Subcategory`;
-4. `Title`.
+Discovery is deterministic. Examples are sorted by:
 
-Do not manually register a new Example in `HiveExampleHostForm`.
+1. Order;
+2. Category;
+3. Subcategory;
+4. Title.
 
-## Example navigation
+Do not manually register an Example in HiveExampleHostForm.
+
+Adding an Example should normally mean adding the Example composition class and its view, not editing central navigation code.
+
+## Example metadata and navigation
 
 The host displays:
 
@@ -56,15 +65,26 @@ Category
        └── Example
 ~~~
 
-Choose Category and Subcategory according to the architecture/capability being demonstrated, not merely the implementation class or namespace.
+Choose Category and Subcategory according to the capability/architecture being demonstrated.
 
-Related scenarios should share a stable category/subcategory.
+Related examples should share stable navigation names. Do not create a new top-level category merely because the implementation happens to live in another project.
 
-Do not create a new top-level category simply because the implementation is in a different project.
+The current host collapses the navigation after rebuilding it, then expands the parents of the selected example when it chooses the first scenario.
 
-## Implementing a new Example
+## Typical Example file organization
 
-Typical pattern, matching the current Example Host organization:
+The current repository commonly uses a pair of files:
+
+~~~text
+ProvidersExample.cs
+ProvidersExampleView.cs
+~~~
+
+The names do not need to be identical in every feature, but keep the metadata/discovery class separate from non-trivial scenario UI and behavior.
+
+## Example metadata class
+
+Use the current internal sealed pattern:
 
 ~~~csharp
 internal sealed class ProviderResourceExample : IHiveExample
@@ -87,24 +107,22 @@ internal sealed class ProviderResourceExample : IHiveExample
 }
 ~~~
 
-Keep the discovery class small. The real scenario belongs in the returned UserControl/view. The current repository uses this `internal sealed class ... : IHiveExample` pattern for its existing examples.
+Keep this class small. It should primarily provide metadata and construct the scenario view.
 
-The discovery class should remain a small metadata/creation shell. Put non-trivial scenario UI and behavior in a focused UserControl/view.
+The scenario view owns the actual UI and example behavior.
 
-Do not create a giant IHiveExample class containing all UI, service orchestration, validation, and output handling.
+## Example view
 
-## Example View
-
-The returned UserControl is the actual scenario.
+The returned UserControl is the real scenario surface.
 
 Prefer:
 
-- native WinForms controls when sufficient;
+- native WinForms controls when they are sufficient;
 - Hive shared controls/layouts when they match the scenario;
-- HiveExampleTestSurface for interactive deterministic test scenarios;
-- IHiveExampleOutput for scenario output.
+- HiveExampleTestSurface for reproducible interactive scenarios;
+- IHiveExampleOutput for shared output.
 
-Typical structure:
+Typical composition:
 
 ~~~text
 Example View
@@ -115,29 +133,99 @@ Example View
 └── shared Output
 ~~~
 
-The scenario should state what it demonstrates and what the developer should expect to observe.
+Meaningful scenarios should tell the developer:
+
+- what capability is being demonstrated;
+- what setup is required;
+- what the expected result is;
+- what failure/cancellation behavior looks like when relevant.
+
+## Theme application for Example views
+
+Example Host code creates and themes the next view before it becomes visible:
+
+~~~csharp
+var nextView = example.CreateView(_services);
+ArgumentNullException.ThrowIfNull(nextView);
+
+_themeManager.Apply(nextView);
+_viewHost.Controls.Add(nextView);
+~~~
+
+Feature Example views should therefore compose their child controls normally.
+
+When a view creates additional detached/dynamic child controls after the host has already themed the view, apply the same shared IHiveThemeManager to that new subtree.
+
+Do not create a private theme manager just for one Example.
 
 ## Shared Example services
 
-The current Example Host supplies shared services through IServiceProvider, including:
+The current Example Host supplies:
 
 - IHiveThemeManager;
 - IHiveExampleOutput.
 
-Use the existing Example Host extension methods:
+Use the existing typed extensions:
 
 ~~~csharp
 var themeManager = services.GetThemeManager();
 var output = services.GetExampleOutput();
 ~~~
 
-These methods validate the service boundary and fail clearly when a required Example service is unavailable.
+These extensions validate the service boundary and throw clearly when the requested service is unavailable.
 
-Do not access HiveExampleHostForm private fields or create a second global service locator.
+Do not:
 
-When adding a new host-wide shared service, first determine whether it truly belongs in the Example Host composition boundary. Do not add feature-specific services globally.
+- reach into HiveExampleHostForm private fields;
+- call the concrete output view directly when the interface is sufficient;
+- create another global service locator;
+- put feature-specific dependencies into the shared host service container unless they are genuinely host-wide.
 
-## Example output
+## Example execution surface
+
+For meaningful interactive scenarios, prefer HiveExampleTestSurface.
+
+Configure:
+
+~~~csharp
+surface.SetInformation(
+    "What this example demonstrates.",
+    "What the developer should observe.",
+    "Optional note title",
+    "Optional note text");
+
+surface.InputText = "Optional reproducible input";
+
+surface.CodeSnippet = """
+// Focused public-API reproduction
+""";
+
+surface.ConfigureRun(
+    RunScenarioAsync,
+    output,
+    owner);
+~~~
+
+The run action must call the real public Hive API.
+
+Do not replace the real operation with a fake status change such as "Completed" without executing the capability.
+
+## Failure and cancellation
+
+HiveExampleTestSurface provides a standard interactive lifecycle:
+
+- the Run button becomes Cancel while busy;
+- Cancel requests cancellation through the operation token;
+- OperationCanceledException is presented as Cancelled when it corresponds to the active cancellation;
+- other exceptions are marked as Failed;
+- exception details are written to the supplied output when one is configured;
+- a Hive error dialog is shown when a suitable owning window is available.
+
+The scenario itself should still use proper cancellation-aware public APIs.
+
+Do not catch every exception in the scenario merely to keep the Example visually green.
+
+## Output contract
 
 Use IHiveExampleOutput:
 
@@ -161,56 +249,43 @@ output.Append(
     $"{Environment.NewLine}Provider version: {provider.Version}");
 ~~~
 
-Never print secrets or credentials. Keep output useful and safe.
+HiveExampleOutputView currently:
 
-## Reproducible interactive scenarios
+- replaces the output on Write;
+- prepends a local timestamp on Write;
+- appends raw text on Append;
+- supports Clear;
+- supports Copy;
+- can be collapsed/expanded;
+- reports output availability and collapse-state changes.
 
-For a meaningful scenario, prefer HiveExampleTestSurface.
-
-Configure:
-
-- Description;
-- ExpectedResult;
-- optional NoteTitle/NoteText;
-- input;
-- C# reproduction snippet;
-- cancellation-aware run action.
-
-The run action must call the real public API.
-
-Do not implement a fake success path that only changes the status label.
-
-## Failure and cancellation
-
-Examples are verification surfaces, so meaningful failure cases should remain visible.
-
-Use HiveExampleTestSurface.RunAsync or equivalent shared behavior when applicable so:
-
-- cancellation is supported;
-- failures are shown;
-- technical details can be written to output;
-- busy state is visible;
-- controls are disabled appropriately.
-
-Do not swallow exceptions merely to keep the Example looking successful.
+Never print secrets, credentials, access tokens, or unnecessary sensitive provider/business data.
 
 ## Public API rule
 
-Examples must use the same public contracts an external consumer is expected to use.
+Examples must use the same supported public contracts that a real consumer host is expected to use.
 
 Do not:
 
-- call internal production helpers merely for convenience;
+- call private/internal production helpers merely for convenience;
 - directly mutate persistence tables;
 - bypass Hive.Management for management behavior;
-- create a private duplicate of a production service;
-- use Hive.Tests test-only types as the application implementation.
+- build a private duplicate of a production service;
+- use Hive.Tests types as production integration shortcuts.
 
-Persistence integration tests remain the responsibility of Hive.Tests. The Example should demonstrate the corresponding public capability when the active slice defines it as externally usable.
+When the active slice defines a new public persistence/management capability, the Example should normally demonstrate the corresponding public path. Hive.Tests remains responsible for persistence isolation, malformed-state coverage, concurrency coverage, and other automated contract checks.
+
+## Code snippet quality
+
+The code snippet shown by HiveExampleTestSurface should be useful for reproduction.
+
+For a major public capability, prefer a complete, copyable public-API example that matches the real scenario. For a small UI-only example, a focused excerpt can be sufficient when the surrounding setup is obvious.
+
+Do not write a snippet that claims to reproduce a capability while calling an internal helper or omitting the decisive public operation.
 
 ## Testing relationship
 
-For every new meaningful externally usable capability:
+For each new meaningful externally usable capability:
 
 ~~~text
 Focused automated tests
@@ -218,70 +293,83 @@ Focused automated tests
 Matching Example scenario
 ~~~
 
-Automated tests verify deterministic contracts/boundaries.
+Automated tests prove deterministic contracts and boundaries.
 
-The Example verifies the externally usable public API path and gives the developer an explicit manual verification target.
+The Example proves that the supported public API can be exercised through the intended developer-facing surface and gives the developer an explicit manual verification target.
 
 The Example does not replace Hive.Tests.
 
-## Example handoff
+## Exact handoff
 
-Every new meaningful capability that requires an Example must produce:
+Every new meaningful externally usable capability that requires an Example must produce:
 
 ~~~text
-Example to run: <exact Category / Subcategory / Example path> — Hive.Example.WinForms
+Example to run: <exact Category / Subcategory / Example title> — Hive.Example.WinForms
 Tests to run: <exact focused test class/file>; broader-suite requirement if applicable
 ~~~
 
 When verification is pending, docs/Hive_Active_Work.md must preserve the same exact Example path and focused test target.
 
-Do not write only "Run the Example." The checkpoint must tell the developer exactly what to select.
+Do not write only "Run the Example."
 
-## Manual verification expectations
+The handoff must identify the exact navigation path/title so the developer does not have to rediscover the scenario.
 
-For an externally usable capability, manually verify the Example when the active slice requires it.
+## Manual verification checklist
 
-Depending on the capability, verify:
+When the active slice requires manual Example verification, verify the applicable items:
 
-- scenario loads without exception;
-- setup is understandable;
-- expected result is visible;
-- failure behavior is visible and safe;
-- cancellation works where applicable;
+- the Example Host starts and the scenario can be selected;
+- the scenario creates/loads without an unhandled construction exception;
+- the explanation and expected result are understandable;
+- Run / Cancel behaves correctly;
+- failure is visible and safe;
+- cancellation is honored where supported;
 - output is useful and secret-safe;
-- the scenario uses the correct public API;
-- light/dark theme remains usable;
-- resize/layout remains usable.
+- the scenario uses the intended public Hive API;
+- Light / Dark / System themes remain usable;
+- resizing does not break the view;
+- dynamic view replacement does not leave disposed controls or stale handlers.
+
+Static inspection of an Example class is not evidence that the scenario was manually verified.
 
 ## Adding an Example checklist
 
-Before finishing a new capability:
+Before handing off a new capability:
 
 - implement the real production capability;
-- add/update focused Hive.Tests coverage;
+- add/update the focused Hive.Tests coverage;
 - add the matching IHiveExample implementation;
-- classify it with the correct Category/Subcategory;
+- choose the correct Category/Subcategory;
+- keep the metadata class small;
 - return a focused UserControl;
-- use the shared UI/output/testing primitives where appropriate;
-- ensure the scenario uses public Hive APIs;
-- provide a clear expected result;
-- provide the exact Example path in the handoff;
-- provide the exact focused test target in the handoff;
-- update docs/Hive_Active_Work.md when the verification checkpoint requires it.
+- use shared Hive UI/output/testing primitives where appropriate;
+- configure a clear expected result;
+- use public Hive APIs;
+- provide a useful reproduction snippet for major capabilities;
+- preserve failure/cancellation visibility;
+- document the exact Example path in Hive_Active_Work.md while verification is pending;
+- provide the exact Example/Test handoff lines.
 
 ## What not to change
 
-Do not edit `HiveExampleHostForm` merely to add a new Example. The discovery contract is intentionally designed so adding a scenario is self-contained.
+Do not edit HiveExampleHostForm merely to add a new Example.
 
-Change the Host only when the host/composition contract itself needs to change, such as a new shared Example service or a change to the Category → Subcategory → Example navigation model.
+The current host already:
 
-The Host already:
-
-- discovers examples from its assembly;
+- discovers IHiveExample implementations from its own assembly;
 - builds Category → Subcategory → Example navigation;
 - creates one active UserControl at a time;
-- themes the newly selected view;
-- owns active-view lifetime;
-- owns shared output.
+- applies the shared theme to the new view before it is shown;
+- disposes the previous active view;
+- supplies the shared Example services;
+- owns shared output presentation.
 
-Change the Host only when the host/composition contract itself needs to change.
+Change the host only when the host/composition contract itself needs to change, such as:
+
+- a genuinely new shared Example service;
+- a change to the discovery contract;
+- a change to navigation composition;
+- a change to active-view ownership/lifecycle;
+- a change to shared output behavior.
+
+A feature-specific Example should not force a host-wide change when the existing composition contract is sufficient.
