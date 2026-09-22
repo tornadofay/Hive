@@ -40,6 +40,12 @@ internal sealed class PersistenceTestDatabase
             IF OBJECT_ID(N'dbo.TR_HiveEventLog_RollbackProbe', N'TR') IS NOT NULL
                 DROP TRIGGER [dbo].[TR_HiveEventLog_RollbackProbe];
 
+            IF OBJECT_ID(N'dbo.HiveWorkItemAttachments', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveWorkItemAttachments];
+
+            IF OBJECT_ID(N'dbo.HiveWorkItems', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveWorkItems];
+
             IF OBJECT_ID(N'dbo.HiveEventOutbox', N'U') IS NOT NULL
                 DROP TABLE [dbo].[HiveEventOutbox];
 
