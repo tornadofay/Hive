@@ -109,7 +109,7 @@ No verification claim is recorded yet.
 
 Developer verification attempt on 2026-09-22:
 - Hive.Example.WinForms `Agents / Base Agent / First Real Agent Execution` completed successfully against the local fake provider: execution succeeded, two lifecycle events were observed, correlation/causation were preserved, and schema version 5 was applied.
-- The focused `Hive.Tests` target did not compile because five assertions in `AgentExecutionIntegrationTests.cs` passed typed `CausationId` / `ExecutionId` values where underlying `Guid` values are required. Those test-only type errors are corrected in this change; automated verification remains pending.
+- The focused `Hive.Tests` target did not compile because typed `CausationId` / `ExecutionId` values were passed where the test APIs required underlying `Guid` values. The remaining cancellation assertion was identified during developer re-test and is corrected by this change; automated verification remains pending.
 
 ## Verification handoff
 

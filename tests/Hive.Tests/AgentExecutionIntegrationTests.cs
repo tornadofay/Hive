@@ -301,7 +301,7 @@ public sealed class AgentExecutionIntegrationTests
             events.Value[1].Envelope.EventType.Value);
         Assert.Equal(
             events.Value[0].Envelope.EventId.Value,
-            events.Value[1].Envelope.CausationId!.Value);
+            events.Value[1].Envelope.CausationId!.Value.Value);
     }
 
     private static async Task<ExecutionId> ReadLatestExecutionIdAsync(
