@@ -61,7 +61,7 @@ No verification claim is recorded until actual execution has been performed.
 
 ## Implementation checkpoint
 
-Phase 1.10 has not been implemented yet.
+Phase 1.10 implementation is present on main; required verification is still pending.
 
 Before coding, inspect:
 
