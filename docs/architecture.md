@@ -202,12 +202,12 @@ Test infrastructure is verification support only. It does not become a second ru
 
 Phase 0.6 establishes the shared WinForms visual foundation used by `Hive.Host.WinForms` and `Hive.Example.WinForms`. The rendering dependency is an implementation detail of `Hive.Host.WinForms.UI`.
 
-#### Rendering dependency boundary
+#### UI implementation boundary
 
-- `Hive.Host.WinForms.UI` is the only Hive project permitted to reference ReaLTaiizor.
-- ReaLTaiizor is pinned to version `3.8.2.1` for this slice. 
-- Consuming forms and platform services reference Hive-owned UI contracts only; they do not reference ReaLTaiizor namespaces or controls directly.
-- Hive-specific controls that use ReaLTaiizor do so behind composition/adaptation boundaries so the underlying rendering library can be replaced without changing consuming-form contracts.
+- `Hive.Host.WinForms.UI` owns Hive's WinForms presentation implementation.
+- The current controls use native WinForms behavior and custom System.Drawing rendering; no third-party rendering dependency is currently used.
+- Consuming forms and platform services reference Hive-owned UI contracts and do not depend on a renderer implementation detail.
+- A future renderer may be introduced only through this boundary after an explicit architectural decision; it must not leak into consuming projects.
 
 #### Theme contract
 
@@ -248,7 +248,7 @@ WinForms DPI behavior is delegated to the .NET 10 / WinForms platform rather tha
 The foundation introduces only consumer-facing Hive contracts:
 
 - `HiveForm` provides the shared rounded, borderless application-window shell, custom header, window movement, and theme-aware body surface.
-- `HiveButton` provides a Hive-owned button surface with Primary, Secondary, and Navigation styles while hiding the ReaLTaiizor implementation detail.
+- `HiveButton` provides a Hive-owned button surface with Primary, Secondary, Navigation, selected, and semantic danger states while keeping its rendering implementation internal to `Hive.Host.WinForms.UI`.
 - `HiveMessageBox` provides a Hive-owned semantic dialog with Information, Success, Warning, Error, and Question variants, standard `DialogResult` semantics, optional technical details, and copy support. It uses a compact dialog-specific shell rather than the full `HiveForm` application header: rounded surface, thin semantic accent bar, semantic circular icon, clear caption/message hierarchy, optional details panel, and right-aligned action buttons.
 - `HiveForm` provides the reusable borderless rounded application-window shell and body surface.
 - The custom application header supports title, subtitle, close, optional minimize/help actions, and window movement with a compact visual hierarchy similar to the established HAgent WinForms visual language.
@@ -273,7 +273,7 @@ The example form is the manual UI verification surface for this phase. No UI aut
 
 #### Replaceability contract
 
-The public consumer surface consists only of Hive-owned theme contracts and the small Hive-specific controls introduced by this phase. The representative example must compile without a ReaLTaiizor namespace/import. Replacing ReaLTaiizor later must therefore be limited to `Hive.Host.WinForms.UI` and must not require unrelated form changes.
+The public consumer surface consists only of Hive-owned theme contracts and the small Hive-specific controls introduced by this phase. Consuming forms must remain independent of the UI rendering implementation, so future rendering changes remain isolated to `Hive.Host.WinForms.UI`.
 
 #### Scope boundary
 
@@ -864,7 +864,7 @@ The V1 example should demonstrate the document-to-business-app pipeline using th
 
 The WinForms visual foundation is a platform-level host concern and is established in Phase 0 so later forms do not independently invent themes, controls, message boxes, spacing, or visual states.
 
-Hive uses **ReaLTaiizor** as the selected third-party rendering layer. ReaLTaiizor remains behind `Hive.Host.WinForms.UI`; consuming forms and platform services do not reference it directly. The selected package version is pinned when the UI foundation is implemented.
+Hive uses a Hive-owned WinForms UI foundation. The current implementation uses native WinForms controls and custom System.Drawing rendering behind `Hive.Host.WinForms.UI`; no third-party rendering package is part of the current solution.
 
 Hive owns the consumer-facing UI contracts and design vocabulary:
 
