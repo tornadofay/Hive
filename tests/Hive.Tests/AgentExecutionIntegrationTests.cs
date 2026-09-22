@@ -140,9 +140,8 @@ public sealed class AgentExecutionIntegrationTests
         Assert.NotNull(result.Error);
         Assert.Equal(ErrorCategory.External, result.Error.Category);
 
-        var executionId = server.ExecutionIdFromRequest.IsCompleted
-            ? server.ExecutionIdFromRequest.Result
-            : throw new InvalidOperationException("The fake provider did not receive the request.");
+        var executionId = await ReadLatestExecutionIdAsync(
+            database.Options);
 
         var events = await store.ReadEventsAsync(
             new ResourceReference(
@@ -214,9 +213,8 @@ public sealed class AgentExecutionIntegrationTests
             ErrorCategory.Cancelled,
             result.Error!.Category);
 
-        var executionId = server.ExecutionIdFromRequest.IsCompleted
-            ? server.ExecutionIdFromRequest.Result
-            : throw new InvalidOperationException("The fake provider did not receive the request.");
+        var executionId = await ReadLatestExecutionIdAsync(
+            database.Options);
 
         var events = await store.ReadEventsAsync(
             new ResourceReference(
@@ -234,6 +232,34 @@ public sealed class AgentExecutionIntegrationTests
         Assert.Equal(
             events.Value[0].Envelope.EventId.Value,
             events.Value[1].Envelope.CausationId!.Value);
+    }
+
+    private static async Task<ExecutionId> ReadLatestExecutionIdAsync(
+        HiveDatabaseOptions options)
+    {
+        await using var connection = new Microsoft.Data.SqlClient.SqlConnection(
+            options.ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT TOP (1) [StreamIdentity]
+            FROM [dbo].[HiveEventLog]
+            WHERE [StreamKind] = @StreamKind
+              AND [EventType] = @EventType
+            ORDER BY [OccurredAtUtc] DESC, [EventId] DESC;
+            """;
+        command.Parameters.AddWithValue(
+            "@StreamKind",
+            (int)ResourceKind.Execution);
+        command.Parameters.AddWithValue(
+            "@EventType",
+            "agent.execution.started");
+
+        var value = await command.ExecuteScalarAsync();
+
+        Assert.NotNull(value);
+        return new ExecutionId((Guid)value!);
     }
 
     private static Agent CreateAgent(
@@ -333,9 +359,6 @@ public sealed class AgentExecutionIntegrationTests
         public TaskCompletionSource<bool> RequestObserved { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        public TaskCompletionSource<Guid> ExecutionIdFromRequest { get; } =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-
         public async ValueTask DisposeAsync()
         {
             _stop.Cancel();
@@ -374,9 +397,6 @@ public sealed class AgentExecutionIntegrationTests
                     _stop.Token).ConfigureAwait(false);
 
                 RequestObserved.TrySetResult(true);
-
-                if (request.ExecutionId is Guid executionId)
-                    ExecutionIdFromRequest.TrySetResult(executionId);
 
                 if (_waitForResponse)
                 {
@@ -483,34 +503,7 @@ public sealed class AgentExecutionIntegrationTests
                     headerEnd + 4,
                     contentLength);
 
-            Guid? executionId = null;
-
-            try
-            {
-                using var document =
-                    System.Text.Json.JsonDocument.Parse(body);
-
-                if (document.RootElement.TryGetProperty(
-                        "messages",
-                        out var messages) &&
-                    messages.ValueKind == System.Text.Json.JsonValueKind.Array)
-                {
-                    var first = messages[0];
-
-                    if (first.TryGetProperty(
-                            "content",
-                            out var content) &&
-                        content.ValueKind == System.Text.Json.JsonValueKind.String)
-                    {
-                        executionId = null;
-                    }
-                }
-            }
-            catch (System.Text.Json.JsonException)
-            {
-            }
-
-            return new ParsedRequest(body, executionId);
+            return new ParsedRequest(body);
         }
 
         private static int FindHeaderEnd(
@@ -532,7 +525,6 @@ public sealed class AgentExecutionIntegrationTests
         }
 
         private sealed record ParsedRequest(
-            string Body,
-            Guid? ExecutionId);
+            string Body);
     }
 }
