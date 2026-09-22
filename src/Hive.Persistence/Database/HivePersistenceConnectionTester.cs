@@ -98,7 +98,7 @@ public sealed class HivePersistenceConnectionTester : IHivePersistenceConnection
                 .ExecuteScalarAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            var schemaVersion = schemaValue is null or DBNull
+            int? schemaVersion = schemaValue is null or DBNull
                 ? null
                 : Convert.ToInt32(schemaValue);
 
