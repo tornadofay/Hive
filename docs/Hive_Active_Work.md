@@ -97,6 +97,11 @@ Implemented in the active slice:
 - the former `HiveSettingsExample` configuration-inspection scenario was removed because it was not the real host configuration flow and was not an acceptance surface for 1.12-A;
 - focused `HiveHostCompositionTests` coverage for first-run defaults, saved configuration consumption, shared configuration state, invalid configuration, bootstrap-credential failure, failed replacement, disposal, and serialized recomposition;
 - `Hive.Tests` now targets the Windows desktop target required to reference the host composition project.
+- 1.12-D replaces Settings' custom owner-drawn `ListBox` navigation with `HiveNavigationTree`, preserving the existing shared theme/state model.
+- 1.12-D adds an Agents Settings page using `HiveCrudPage<AgentDefinition>`, `HiveListView`, and `HiveListPageLayout` through the `Hive.Host.WinForms.UI` foundation.
+- Agent editing uses `HiveEditorLayout` and the public `IHiveManagementFacade` for create/update/delete operations.
+- Agent execution-target choices are loaded through the authoritative Provider → ProviderAccount → ExecutionTarget Management hierarchy; retired targets remain visible and are rejected by the existing Management validation boundary.
+- The Settings shell subtitle/description now identifies it as the global Hive package configuration center.
 
 Before coding, inspect:
 
@@ -139,24 +144,21 @@ The previously existing Settings inspection Example produced an old-schema/local
 
 Current sub-stage: **1.12-D — Settings UI on the Hive UI Foundation**
 
-Example to run: **None solely for 1.12-D infrastructure/UI migration until the Settings UI surface is complete.** The configured-host Example remains deferred to 1.12-F.
+Example to run: **None solely for 1.12-D infrastructure/UI migration.** The configured-host Example remains deferred to 1.12-F.
 
-1.12-D scope:
-- migrate Settings navigation to `HiveNavigationTree`;
-- migrate list/CRUD presentation to `HiveListPageLayout`, `HiveCrudPage<TItem>`, and `HiveListView`;
-- migrate editors/actions to `HiveEditorLayout`, `HiveButton`, and `HiveMessageBox` where applicable;
-- use `IHiveThemeManager` and existing shared theme/state behavior;
-- remove Settings-specific navigation/list renderers and duplicate CRUD/theme logic;
-- preserve navigation selection/top-node/scroll state across theme changes.
+1.12-D implementation checkpoint:
+- `src/Hive.Host.WinForms/HiveSettingsView.cs` — HiveNavigationTree Settings navigation and Agents page integration;
+- `src/Hive.Host.WinForms/HiveAgentSettingsView.cs` — AgentDefinition CRUD page using Hive UI foundation controls;
+- `src/Hive.Host.WinForms/HiveAgentDefinitionEditorForm.cs` — AgentDefinition editor using HiveEditorLayout;
+- `src/Hive.Host.WinForms/HiveSettingsForm.cs` — global Settings shell wording.
 
-Tests to run:
-- the focused Settings UI/form tests affected by the migration;
-- broader `Hive.Tests` execution after the focused run.
+Verification required:
+- run the full `Hive.Tests` suite;
+- manually run the host-level Settings surface and verify Providers, Agents, and Persistence navigation;
+- verify Light/Dark/System theme changes preserve Settings navigation selection and do not jump/replace the selected page;
+- verify Agent Add/Edit/Delete and configured ExecutionTarget selection through the normal Settings UI;
+- verify Provider and Persistence pages retain their existing Management-backed behavior after navigation migration.
 
-Previous verified C result: full `Hive.Tests` **159/159 passed, 0 failed, 0 skipped** on 2026-09-22.
+Previous verified D predecessor result: full `Hive.Tests` **159/159 passed, 0 failed, 0 skipped** on 2026-09-22.
 
-Manual application verification remains required for the UI stages when their acceptance surface is reached.
-
-## Historical verification
-
-Phase 1.11 completion is recorded in `docs/verification/phase-1/1.11.md`.
+Do not close 1.12-D until the required developer verification is actually performed and recorded.
