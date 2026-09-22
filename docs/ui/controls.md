@@ -1,6 +1,6 @@
-# Hive WinForms Controls — API
+# Hive WinForms Controls — Agent Reference
 
-Source code is authoritative for exact signatures.
+Source is authoritative for exact signatures.
 
 ## HiveForm
 
@@ -10,14 +10,13 @@ public sealed class MyForm : HiveForm
     public MyForm()
         : base("Title", "Subtitle", new Size(900, 600), new Size(760, 520))
     {
-        BodyPanel.Controls.Add(content);
+        BuildUi();
         ThemeManager.Apply(BodyPanel);
     }
 }
 ```
 
-Members:
-`BodyPanel`, `ThemeManager`, `Theme`, `ConfigureHeader(...)`, `SetHeaderText(...)`, `SetBodyPadding(...)`, `SetThemeManager(...)`, `OnThemeChanged(...)`.
+Use: `BodyPanel`, `ThemeManager`, `Theme`, `ConfigureHeader(...)`, `SetHeaderText(...)`, `SetBodyPadding(...)`, `SetThemeManager(...)`, `OnThemeChanged(...)`.
 
 ## HiveButton
 
@@ -25,9 +24,7 @@ Members:
 new HiveButton
 {
     Text = "Save",
-    Style = HiveButtonStyle.Primary,
-    Width = 104,
-    Height = 36
+    Style = HiveButtonStyle.Primary
 };
 ```
 
@@ -37,12 +34,11 @@ Styles: `Primary`, `Secondary`, `Navigation`, `NavigationSelected`, `Danger`.
 
 ```csharp
 HiveMessageBox.ShowInformation(this, "Saved.");
-HiveMessageBox.ShowWarning(this, "Check the input.");
-HiveMessageBox.ShowError(this, "Operation failed.");
+HiveMessageBox.ShowError(this, "Failed.");
 var result = HiveMessageBox.ShowQuestion(this, "Delete?", "Delete");
 ```
 
-Custom details:
+Custom:
 ```csharp
 HiveMessageBox.Show(
     this,
@@ -53,8 +49,6 @@ HiveMessageBox.Show(
         MessageBoxButtons.OK,
         details));
 ```
-
-Do not put secrets in `Details`.
 
 ## HiveListPageLayout
 
@@ -73,7 +67,6 @@ Members: `HeaderPanel`, `ActionBarPanel`, `ContentPanel`, `HeaderHeight`, `Actio
 var page = new HiveCrudPage<Item>
 {
     Title = "Items",
-    Description = "Configured items",
     PageSize = 25,
     AllowAdd = true,
     AllowEdit = true,
@@ -94,25 +87,27 @@ page.GetItemDisplayName = x => x.Name;
 await page.RefreshAsync();
 ```
 
-`HiveCrudColumn<TItem>`:
+Column constructor:
 ```csharp
-(string header, int width, Func<TItem, string?> valueSelector)
+HiveCrudColumn<TItem>(
+    string header,
+    int width,
+    Func<TItem, string?> valueSelector)
 ```
 
-Key behavior:
-- search is case-insensitive over loaded items;
-- paging is client-side over the loaded snapshot;
-- `EditItemAsync(null, ...)` means Add;
-- non-null edit result reloads the list;
-- Delete uses confirmation;
-- `OperationFailed` lets the feature handle operation errors.
+Facts:
+- search = case-insensitive, loaded items only;
+- paging = client-side;
+- `EditItemAsync(null, ...)` = Add;
+- non-null edit result reloads;
+- Delete confirms;
+- `OperationFailed` exposes operation failures.
 
 ## HiveEditorLayout
 
 ```csharp
 var layout = new HiveEditorLayout();
 layout.AddField("Name", "Provider name.", textBox);
-
 var save = layout.AddActionButton("Save", HiveButtonStyle.Primary);
 ```
 
@@ -124,43 +119,30 @@ Properties: `PageNumber`, `CanGoPrevious`, `CanGoNext`, `PageText`.
 
 Events: `PreviousRequested`, `NextRequested`.
 
-It does not load data.
-
 ## HiveNavigationTree
 
-Use for the Example Host's hierarchical navigation.
+Use for Example Host hierarchical navigation.
 
 ## HiveListView
 
-Use for lightweight multi-column ListView screens. Use DataGridView for richer grid behavior.
+Use for lightweight multi-column ListView. Use DataGridView for richer grid behavior.
 
 ## HiveExampleTestSurface
 
 ```csharp
-surface.SetInformation(
-    "What this demonstrates.",
-    "Expected result.");
-
+surface.SetInformation("Description", "Expected result");
 surface.CodeSnippet = """
-// Public API reproduction
+// public API
 """;
-
-surface.ConfigureRun(
-    RunScenarioAsync,
-    output,
-    owner);
+surface.ConfigureRun(RunScenarioAsync, output, owner);
 ```
 
-Useful members:
-`InputText`, `CodeSnippet`, `RunButtonText`, `Description`, `ExpectedResult`, `NoteTitle`, `NoteText`, `SetInformation(...)`, `SetStatus(...)`, `ConfigureRun(...)`, `Cancel()`, `RunAsync(...)`.
+Members: `InputText`, `CodeSnippet`, `RunButtonText`, `Description`, `ExpectedResult`, `NoteTitle`, `NoteText`, `SetInformation(...)`, `SetStatus(...)`, `ConfigureRun(...)`, `Cancel()`, `RunAsync(...)`.
 
 ## IHiveExampleOutput
 
 ```csharp
-public interface IHiveExampleOutput
-{
-    void Clear();
-    void Write(string title, string value);
-    void Append(string value);
-}
+void Clear();
+void Write(string title, string value);
+void Append(string value);
 ```
