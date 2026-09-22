@@ -320,7 +320,7 @@ Persistence                    → one global configuration editor
 
 Provider is the durable provider identity/transport resource. ProviderAccount is a durable credential/resource record, not a provider login screen. ExecutionTarget is the concrete endpoint/model/deployment/capability resource and remains the authoritative target referenced by AgentDefinition. These domains must not be collapsed into one combined form when separate Management CRUD contracts already exist.
 
-Persistence is not a resource collection. It edits one global HivePersistenceConfiguration, so its leaf is intentionally an editor rather than a CRUD page. Its Server / instance control may provide selection/history for values already known by the host, but Hive does not currently define an authoritative SQL Server discovery/catalog contract and the Settings UI must not fabricate one.
+Persistence is not a resource collection. It edits one global HivePersistenceConfiguration, so its leaf is intentionally an editor rather than a CRUD page. Its Server / instance control is a free-form text field. It accepts local servers, named instances, remote hosts, IP addresses, and online SQL Server targets. Hive does not currently define an authoritative SQL Server discovery/catalog contract, so the Settings UI does not enumerate installed SQL Server instances. The Database value is Hive-owned and assigned automatically by the Settings surface.
 
 It must use the configured Provider/Account/Target/Agent state in normal public-API examples. It may not construct a competing Hive service graph or bypass the host composition boundary. The configuration example explains this model but is not a substitute for the real Settings surface or configured runtime consumption.
 
