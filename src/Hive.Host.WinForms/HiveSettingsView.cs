@@ -65,10 +65,10 @@ public sealed class HiveSettingsView : UserControl
         _description = new Label
         {
             Dock = DockStyle.Top,
-            Height = 42,
+            Height = 34,
             Text =
-                "Global Hive package configuration. Each leaf owns one configuration domain; resource domains use CRUD and global settings use dedicated editors.",
-            Margin = new Padding(0, 4, 0, 12),
+                "Global Hive package configuration for providers, accounts, execution targets, agents, and persistence.",
+            Margin = new Padding(0, 4, 0, 10),
             Padding = Padding.Empty,
             AutoEllipsis = true
         };
@@ -81,7 +81,7 @@ public sealed class HiveSettingsView : UserControl
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 212));
+        body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 224));
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
         _navigation = new HiveNavigationTree
@@ -130,7 +130,7 @@ public sealed class HiveSettingsView : UserControl
         _content = new Panel
         {
             Dock = DockStyle.Fill,
-            Padding = new Padding(16, 0, 0, 0),
+            Padding = new Padding(18, 0, 0, 0),
             AccessibleName = "Settings content"
         };
 
