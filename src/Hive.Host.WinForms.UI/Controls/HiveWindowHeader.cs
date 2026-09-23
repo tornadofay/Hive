@@ -199,7 +199,39 @@ internal sealed class HiveWindowHeader : Control
         _closeHoverBrush?.Dispose();
         _closeHoverBrush = new SolidBrush(_closeHover);
 
+        ApplyTypography(theme);
         Invalidate();
+    }
+
+    private void ApplyTypography(HiveThemeDefinition theme)
+    {
+        var family = theme.Typography.FontFamily;
+        var titleSize = theme.Typography.BodySize + 1.25f;
+        var subtitleSize = theme.Typography.SmallSize;
+
+        var titleMatches =
+            string.Equals(_titleFont.FontFamily.Name, family, StringComparison.Ordinal) &&
+            Math.Abs(_titleFont.Size - titleSize) <= 0.01f &&
+            _titleFont.Style == FontStyle.Bold;
+
+        var subtitleMatches =
+            string.Equals(_subtitleFont.FontFamily.Name, family, StringComparison.Ordinal) &&
+            Math.Abs(_subtitleFont.Size - subtitleSize) <= 0.01f &&
+            _subtitleFont.Style == FontStyle.Regular;
+
+        if (!titleMatches)
+        {
+            var next = new Font(family, titleSize, FontStyle.Bold);
+            _titleFont.Dispose();
+            _titleFont = next;
+        }
+
+        if (!subtitleMatches)
+        {
+            var next = new Font(family, subtitleSize);
+            _subtitleFont.Dispose();
+            _subtitleFont = next;
+        }
     }
 
     protected override void OnPaint(PaintEventArgs e)
