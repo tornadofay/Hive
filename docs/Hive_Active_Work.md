@@ -266,6 +266,9 @@ Completed in the current UI/UX polish pass:
 - The shared HiveButton now implements WinForms IButtonControl so the editor dialogs can use the standard AcceptButton/CancelButton contract without replacing the Hive button surface.
 - Focused HiveButton coverage was added for the dialog-action contract and enabled/disabled PerformClick behavior.
 - Existing shared Hive UI controls remain the presentation boundary; no parallel renderer, CRUD abstraction, theme system, or configuration workflow was introduced.
+- Additional static polish pass: `HiveEditorLayout` field-label typography now follows shared theme typography tokens and refreshes safely when the theme changes, avoiding Settings/editor-specific font drift.
+- Additional static polish pass: shared theme application now treats `ReadOnly` text boxes as disabled/read-only presentation, preserving the intended visual distinction across Light/Dark/System instead of overwriting it with normal input colors.
+- The additional pass remains presentation-only; no Management, persistence, provider, CRUD behavior, or host architecture was changed.
 
 Manual J review remains required before closing the sub-stage. No UI launch/build was performed by the assistant.
 ## Verification handoff
@@ -296,11 +299,13 @@ Developer also confirmed the final Settings UI review is visually and behavioral
 The current pass continues within 1.12-J for an additional static UI/UX production-polish review requested by the developer; do not widen beyond the final UI/UX scope.
 
 Verification for the new review pass:
-- No new build/test/UI launch is authorized or performed by the assistant.
-- Existing developer verification remains **174/174 passed, 0 failed, 0 skipped** on .NET 10.0.1.
-- Developer manual review is reported complete for the prior checkpoint; any additional source changes from this pass require another developer review before 1.12-J closure.
+- No build/test/application launch/UI launch was performed by the assistant.
+- Existing developer verification before this additional source pass remains **174/174 passed, 0 failed, 0 skipped** on .NET 10.0.1.
+- Developer manually confirmed the preceding checkpoint looked great; the additional source changes in this pass require another developer UI review.
+- Required next automated verification: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`.
+- Required manual review: repeat the exact Example Host Settings surface and specifically recheck editor typography, read-only/disabled field contrast, Light/Dark/System transitions, resizing, and CRUD/editor states.
 
-Do not close 1.12-J until any code changes from this additional pass are manually reviewed and the final checkpoint is reported verified.
+Do not close 1.12-J until the additional code changes are manually reviewed and the final checkpoint is reported verified.
 
 ## Historical verification
 
