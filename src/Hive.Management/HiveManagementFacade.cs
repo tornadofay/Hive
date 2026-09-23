@@ -215,6 +215,74 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         }
     }
 
+    public async Task<Result> InitializePersistenceAsync(
+        HivePersistenceConfiguration configuration,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Result.Failure(contextError);
+
+        SecretMaterial? material = null;
+
+        try
+        {
+            if (configuration.AuthenticationMode == HiveSqlAuthenticationMode.SqlPassword)
+            {
+                if (configuration.BootstrapCredential is null ||
+                    _bootstrapCredentials is null)
+                {
+                    return Result.Failure(
+                        Error.Validation(
+                            "hive.management.persistence-bootstrap-credential-required",
+                            "SQL password authentication requires a configured bootstrap credential."));
+                }
+
+                var secret = await _bootstrapCredentials
+                    .ResolveAsync(
+                        configuration.BootstrapCredential.Value,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (secret.IsFailure)
+                    return Result.Failure(secret.Error!);
+
+                material = secret.Value!;
+            }
+
+            HiveDatabaseOptions options;
+
+            try
+            {
+                options = HiveDatabaseOptions.FromConfiguration(
+                    configuration,
+                    material);
+            }
+            catch (ArgumentException exception)
+            {
+                return Result.Failure(
+                    Error.Validation(
+                        "hive.management.persistence-configuration-invalid",
+                        exception.Message));
+            }
+
+            var migration = await new HiveDatabaseMigrator(options)
+                .MigrateAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return migration.IsSuccess
+                ? Result.Success()
+                : Result.Failure(migration.Error!);
+        }
+        finally
+        {
+            material?.Dispose();
+        }
+    }
+
     public Task<Result<Secret>> CreateSecretAsync(
         string key,
         string displayName,
