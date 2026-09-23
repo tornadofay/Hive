@@ -111,6 +111,8 @@ Implemented in the active slice:
 - The configuration example explains that Provider Accounts are credential/resource records rather than provider login screens, that Execution Targets contain concrete model/endpoint configuration, and that future Settings domains appear only when their authoritative contracts exist.
 - The Example Host now supplies a deterministic development ResourceAccessContext for its Settings surface so configured resources remain addressable across Example Host restarts.
 - The Settings shell subtitle/description now identifies it as the global Hive package configuration center.
+- Settings initializes the Persistence page independently and lazy-loads database-backed resource pages when the user navigates to them, so an unavailable configured Hive database cannot prevent the global Persistence configuration surface from opening.
+
 - The old combined `HiveProviderSettingsView` was deleted rather than retained as a compatibility UI layer; Provider, ProviderAccount, and ExecutionTarget now have independent Settings pages and editor dialogs.
 
 Before coding, inspect:
