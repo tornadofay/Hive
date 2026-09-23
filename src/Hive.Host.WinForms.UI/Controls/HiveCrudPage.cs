@@ -730,8 +730,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         }
 
         var next = new Font(family, size, style);
-        current.Dispose();
+        var previous = current;
         current = next;
+        previous.Dispose();
     }
 
     protected override void Dispose(bool disposing)
