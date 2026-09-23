@@ -329,28 +329,28 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         if (result.IsFailure)
         {
-            var message = $"Connection test failed: {result.Error!.Message}";
-            SetStatus(message, isError: true);
+            var failureMessage = $"Connection test failed: {result.Error!.Message}";
+            SetStatus(failureMessage, isError: true);
 
             HiveMessageBox.ShowError(
                 FindForm(),
-                message,
+                failureMessage,
                 "Hive Persistence");
             return;
         }
 
         var value = result.Value!;
-        var message =
+        var successMessage =
             $"{value.Message} " +
             $"Database state: {value.DatabaseState}. " +
             $"Schema: {value.CurrentSchemaVersion?.ToString() ?? "not initialized"} " +
             $"(supported {value.SupportedSchemaVersion}).";
 
-        SetStatus(message, isError: false);
+        SetStatus(successMessage, isError: false);
 
         HiveMessageBox.ShowInformation(
             FindForm(),
-            message,
+            successMessage,
             "Hive Persistence");
     }
 
