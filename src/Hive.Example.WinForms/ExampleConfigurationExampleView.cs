@@ -15,9 +15,9 @@ internal sealed class ExampleConfigurationExampleView : UserControl
     private readonly TableLayoutPanel _settingsFlow;
     private readonly TableLayoutPanel _futureText;
     private readonly HiveButton _openSettingsButton;
-    private readonly Font _titleFont;
-    private readonly Font _sectionFont;
-    private readonly Font _bodyFont;
+    private Font _titleFont;
+    private Font _sectionFont;
+    private Font _bodyFont;
 
     public ExampleConfigurationExampleView(
         IHiveThemeManager themeManager)
@@ -29,9 +29,10 @@ internal sealed class ExampleConfigurationExampleView : UserControl
         AutoScroll = true;
         Padding = new Padding(2, 2, 2, 18);
 
-        _titleFont = new Font("Segoe UI Semibold", 19f, FontStyle.Bold);
-        _sectionFont = new Font("Segoe UI Semibold", 10.5f, FontStyle.Bold);
-        _bodyFont = new Font("Segoe UI", 9.25f);
+        var family = themeManager.Theme.Typography.FontFamily;
+        _titleFont = new Font(family, 19f, FontStyle.Bold);
+        _sectionFont = new Font(family, 10.5f, FontStyle.Bold);
+        _bodyFont = new Font(family, 9.25f);
 
         _title = new Label
         {
@@ -173,8 +174,49 @@ internal sealed class ExampleConfigurationExampleView : UserControl
     private void ThemeManagerOnChanged(object? sender, EventArgs e) =>
         ApplyTheme(_themeManager.Theme);
 
+    private void ApplyTypography(HiveThemeDefinition theme)
+    {
+        var family = theme.Typography.FontFamily;
+
+        if (string.Equals(
+                _bodyFont.FontFamily.Name,
+                family,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var previousTitle = _titleFont;
+        var previousSection = _sectionFont;
+        var previousBody = _bodyFont;
+
+        _titleFont = new Font(family, 19f, FontStyle.Bold);
+        _sectionFont = new Font(family, 10.5f, FontStyle.Bold);
+        _bodyFont = new Font(family, 9.25f);
+
+        _title.Font = _titleFont;
+        _intro.Font = _bodyFont;
+
+        foreach (var section in new[] { _providerFlow, _settingsFlow, _futureText })
+        {
+            if (section.Controls.Count == 2)
+            {
+                section.Controls[0].Font = _sectionFont;
+
+                if (section.Controls[1] is Label body)
+                    body.Font = _bodyFont;
+            }
+        }
+
+        previousTitle.Dispose();
+        previousSection.Dispose();
+        previousBody.Dispose();
+    }
+
     private void ApplyTheme(HiveThemeDefinition theme)
     {
+        ApplyTypography(theme);
+
         BackColor = theme.Palette.Surface;
         _title.ForeColor = theme.Palette.Text;
         _intro.ForeColor = theme.Palette.MutedText;
