@@ -414,7 +414,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
     {
         _page.SetStatus(e.Exception.Message);
 
-        HiveMessageBox.ShowError(
+        HiveUiErrorReporter.Report(
             FindForm(),
             e.Exception,
             "Execution Target operation failed",
