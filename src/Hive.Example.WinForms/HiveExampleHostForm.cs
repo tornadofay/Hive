@@ -31,6 +31,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     private readonly Label _configuredAgentLabel;
     private readonly ComboBox _configuredAgentSelector;
     private readonly Panel _viewHost;
+    private readonly Panel _outputHost;
     private readonly TableLayoutPanel _contentLayout;
     private readonly TableLayoutPanel _shell;
     private readonly HiveExampleOutputView _outputView;
@@ -52,7 +53,6 @@ internal sealed class HiveExampleHostForm : HiveForm
     private IHiveExample? _activeExample;
     private bool _responsiveLayoutReady;
     private bool _loadingConfiguredAgents;
-    private Rectangle _lastOutputViewBounds;
     private Rectangle _lastOutputRevealButtonBounds;
 
     public HiveExampleHostForm()
@@ -185,7 +185,7 @@ internal sealed class HiveExampleHostForm : HiveForm
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 4,
+            RowCount = 5,
             Margin = Padding.Empty,
             Padding = new Padding(24, 18, 24, 20)
         };
@@ -193,6 +193,7 @@ internal sealed class HiveExampleHostForm : HiveForm
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        _contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
 
         _viewTitle = new Label
         {
@@ -259,7 +260,16 @@ internal sealed class HiveExampleHostForm : HiveForm
             Padding = Padding.Empty,
             AccessibleName = "Example content"
         };
-        _viewHost.Resize += (_, _) => UpdateOutputOverlayBounds();
+        _viewHost.Resize += (_, _) => UpdateOutputRevealButtonBounds();
+
+        _outputHost = new Panel
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            Visible = false,
+            AccessibleName = "Example output"
+        };
 
         _contentLayout.Controls.Add(_viewTitle, 0, 0);
         _contentLayout.Controls.Add(_viewSubtitle, 0, 1);
@@ -274,16 +284,15 @@ internal sealed class HiveExampleHostForm : HiveForm
         BodyPanel.Controls.Add(_shell);
 
         _viewHost.Controls.Add(_outputRevealButton);
-        _viewHost.Controls.Add(_outputView);
-        _outputView.BringToFront();
-        _outputRevealButton.BringToFront();
+        _outputHost.Controls.Add(_outputView);
 
         BuildNavigation();
         _themeManager.Apply(BodyPanel);
         OnThemeChanged(_themeManager.Theme);
         _responsiveLayoutReady = true;
         UpdateResponsiveLayout();
-        UpdateOutputOverlayBounds();
+        UpdateOutputLayout();
+        UpdateOutputRevealButtonBounds();
         OutputViewOnCollapseStateChanged(_outputView, EventArgs.Empty);
     }
 
@@ -353,7 +362,8 @@ internal sealed class HiveExampleHostForm : HiveForm
     {
         base.OnResize(e);
         UpdateResponsiveLayout();
-        UpdateOutputOverlayBounds();
+        UpdateOutputLayout();
+        UpdateOutputRevealButtonBounds();
     }
 
     protected override void Dispose(bool disposing)
@@ -412,46 +422,39 @@ internal sealed class HiveExampleHostForm : HiveForm
         _shell.ColumnStyles[0].Width = width;
     }
 
-    private void UpdateOutputOverlayBounds()
+    private void UpdateOutputLayout()
     {
         if (!_responsiveLayoutReady ||
-            _viewHost.ClientSize.Width <= 0 ||
-            _viewHost.ClientSize.Height <= 0)
+            _contentLayout.RowStyles.Count < 5 ||
+            _contentLayout.ClientSize.Height <= 0)
+        {
             return;
+        }
 
-        var availableHeight =
-            Math.Max(
-                0,
-                _viewHost.ClientSize.Height -
-                (OutputOverlayMargin * 2));
+        if (_outputView.IsCollapsed)
+        {
+            _outputHost.Visible = false;
+            _contentLayout.RowStyles[4].Height = 0;
+            return;
+        }
 
         var outputHeight = Math.Min(
             OutputExpandedHeight,
             Math.Max(
-                120,
-                (int)Math.Round(availableHeight * 0.46)));
+                140,
+                (int)Math.Round(_contentLayout.ClientSize.Height * 0.34)));
 
-        var overlayWidth = Math.Max(
-            0,
-            _viewHost.ClientSize.Width -
-            (OutputOverlayMargin * 2));
+        _outputHost.Visible = true;
+        _contentLayout.RowStyles[4].Height = outputHeight;
+    }
 
-        var overlayHeight = Math.Max(0, outputHeight);
-
-        var outputBounds = new Rectangle(
-            OutputOverlayMargin,
-            Math.Max(
-                OutputOverlayMargin,
-                _viewHost.ClientSize.Height -
-                overlayHeight -
-                OutputOverlayMargin),
-            overlayWidth,
-            overlayHeight);
-
-        if (outputBounds != _lastOutputViewBounds)
+    private void UpdateOutputRevealButtonBounds()
+    {
+        if (!_responsiveLayoutReady ||
+            _viewHost.ClientSize.Width <= 0 ||
+            _viewHost.ClientSize.Height <= 0)
         {
-            _outputView.Bounds = outputBounds;
-            _lastOutputViewBounds = outputBounds;
+            return;
         }
 
         var revealButtonBounds = new Rectangle(
@@ -652,9 +655,8 @@ internal sealed class HiveExampleHostForm : HiveForm
                 _themeManager);
         }
 
-        _outputView.BringToFront();
-        _outputRevealButton.BringToFront();
-        UpdateOutputOverlayBounds();
+        UpdateOutputLayout();
+        UpdateOutputRevealButtonBounds();
     }
 
     private void OutputViewOnCollapseStateChanged(object? sender, EventArgs e)
@@ -663,10 +665,8 @@ internal sealed class HiveExampleHostForm : HiveForm
             _outputView.IsCollapsed &&
             _outputView.OutputTextBox.TextLength > 0;
 
-        if (!_outputView.IsCollapsed)
-            _outputView.BringToFront();
-        else if (_outputRevealButton.Visible)
-            _outputRevealButton.BringToFront();
+        UpdateOutputLayout();
+        UpdateOutputRevealButtonBounds();
     }
 
     private void OutputViewOnOutputAvailabilityChanged(object? sender, EventArgs e)
