@@ -227,6 +227,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
     private async Task SaveAsync(CancellationToken cancellationToken)
     {
+        SetStatus("Saving persistence configuration...", isError: false);
+
         HivePersistenceConfiguration? configuration;
         var previousBootstrapReference = _loadedConfiguration?.BootstrapCredential;
 
@@ -290,12 +292,19 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _passwordTextBox.Clear();
         UpdateCredentialStatus(_loadedConfiguration);
         SetStatus(
-            "Persistence configuration saved. Database/schema state was not changed.",
+            "Persistence configuration saved successfully. Database/schema state was not changed.",
             isError: false);
+
+        HiveMessageBox.ShowInformation(
+            FindForm(),
+            $"Persistence settings saved. Database: {_loadedConfiguration.DatabaseName}",
+            "Hive Persistence");
     }
 
     private async Task TestAsync(CancellationToken cancellationToken)
     {
+        SetStatus("Testing SQL Server connection...", isError: false);
+
         HivePersistenceConfiguration configuration;
 
         try
@@ -320,16 +329,29 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         if (result.IsFailure)
         {
-            SetStatus(
-                $"Connection test failed: {result.Error!.Message}",
-                isError: true);
+            var message = $"Connection test failed: {result.Error!.Message}";
+            SetStatus(message, isError: true);
+
+            HiveMessageBox.ShowError(
+                FindForm(),
+                message,
+                "Hive Persistence");
             return;
         }
 
         var value = result.Value!;
-        SetStatus(
-            $"{value.Message} Schema={value.CurrentSchemaVersion?.ToString() ?? "none"}; supported={value.SupportedSchemaVersion}.",
-            isError: false);
+        var message =
+            $"{value.Message} " +
+            $"Database state: {value.DatabaseState}. " +
+            $"Schema: {value.CurrentSchemaVersion?.ToString() ?? "not initialized"} " +
+            $"(supported {value.SupportedSchemaVersion}).";
+
+        SetStatus(message, isError: false);
+
+        HiveMessageBox.ShowInformation(
+            FindForm(),
+            message,
+            "Hive Persistence");
     }
 
     private async Task<HivePersistenceConfiguration> BuildConfigurationAsync(
@@ -468,20 +490,29 @@ internal sealed class HivePersistenceSettingsView : UserControl
             _passwordTextBox.Clear();
         }
 
-        if (sqlPassword && _loadedConfiguration?.BootstrapCredential is not null)
+        if (!sqlPassword)
+        {
+            _credentialStatus.Text =
+                "Credential not used — Windows integrated authentication.";
+        }
+        else if (_loadedConfiguration?.BootstrapCredential is not null)
+        {
             _credentialStatus.Text = "Saved credential: configured (material hidden).";
+        }
         else
-            _credentialStatus.Text = sqlPassword
-                ? "Saved credential: not configured."
-                : "Credential not used.";
+        {
+            _credentialStatus.Text = "Saved credential: not configured.";
+        }
     }
 
     private void UpdateCredentialStatus(HivePersistenceConfiguration configuration)
     {
         _credentialStatus.Text =
-            configuration.BootstrapCredential is null
-                ? "Saved credential: not configured."
-                : "Saved credential: configured (material hidden).";
+            configuration.AuthenticationMode == HiveSqlAuthenticationMode.WindowsIntegrated
+                ? "Credential not used — Windows integrated authentication."
+                : configuration.BootstrapCredential is null
+                    ? "Saved credential: not configured."
+                    : "Saved credential: configured (material hidden).";
     }
 
     private void SetStatus(string text, bool isError)
