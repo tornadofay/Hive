@@ -10,16 +10,19 @@ internal sealed class HiveProviderConfigurationView : UserControl
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
+    private readonly IHiveExampleOutput? _output;
     private readonly HiveCrudPage<Provider> _page;
 
     public HiveProviderConfigurationView(
         IHiveManagementFacade management,
         ResourceAccessContext accessContext,
-        IHiveThemeManager themeManager)
+        IHiveThemeManager themeManager,
+        IHiveExampleOutput? output = null)
     {
         _management = management ?? throw new ArgumentNullException(nameof(management));
         _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
         _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
+        _output = output;
 
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
@@ -87,7 +90,8 @@ internal sealed class HiveProviderConfigurationView : UserControl
         using var editor = new HiveProviderEditorForm(
             provider,
             _accessContext,
-            _themeManager);
+            _themeManager,
+            _output);
 
         if (editor.ShowDialog(FindForm()) != DialogResult.OK ||
             editor.Definition is null)
@@ -134,7 +138,11 @@ internal sealed class HiveProviderConfigurationView : UserControl
 
         HiveMessageBox.ShowError(
             FindForm(),
-            e.Exception.Message);
+            e.Exception,
+            "Provider operation failed",
+            "The provider operation could not be completed.",
+            _output,
+            _themeManager);
     }
 
     protected override void Dispose(bool disposing)
