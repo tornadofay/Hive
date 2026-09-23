@@ -151,9 +151,12 @@ public sealed record ResourceLifecycle
 
     public ResourceLifecycle TransitionTo(ResourceLifecycleStatus next, DateTimeOffset changedAtUtc)
     {
-        if (Status == ResourceLifecycleStatus.Retired && next != ResourceLifecycleStatus.Retired)
+        if (Status == ResourceLifecycleStatus.Retired &&
+            next != ResourceLifecycleStatus.Retired &&
+            next != ResourceLifecycleStatus.Active)
         {
-            throw new InvalidOperationException("A retired resource cannot become active or suspended.");
+            throw new InvalidOperationException(
+                "A retired resource can only remain retired or become active.");
         }
 
         return new(next, changedAtUtc);
