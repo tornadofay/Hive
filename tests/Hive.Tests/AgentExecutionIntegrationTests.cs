@@ -4,6 +4,7 @@ using System.Text;
 using Hive.Agents;
 using Hive.Coordination;
 using Hive.Core;
+using Hive.Management;
 using Hive.Persistence;
 using Hive.Tests.TestInfrastructure;
 using Xunit;
@@ -12,6 +13,169 @@ namespace Hive.Tests;
 
 public sealed class AgentExecutionIntegrationTests
 {
+    [Fact]
+    public async Task ExecuteConfiguredAgentAsync_UsesPersistedTargetAndRefreshesAfterTargetChange()
+    {
+        var database = await PrepareDatabase("Hive_Test_ConfiguredAgentExecution");
+
+        await using var firstServer = new LocalAgentServer(
+            HttpStatusCode.OK,
+            """{"id":"chatcmpl-configured-first","model":"configured-first","choices":[{"message":{"role":"assistant","content":"Configured target one."}}]}""");
+
+        await using var secondServer = new LocalAgentServer(
+            HttpStatusCode.OK,
+            """{"id":"chatcmpl-configured-second","model":"configured-second","choices":[{"message":{"role":"assistant","content":"Configured target two."}}]}""");
+
+        var eventStore = new SqlEventPersistenceStore(database.Options);
+        var secretStore = new SqlDpapiSecretStore(database.Options);
+        using var httpClient = new HttpClient();
+        var executionService = new AgentExecutionService(
+            eventStore,
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var facade = new HiveManagementFacade(
+            new SqlProviderResourceStore(database.Options),
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            secretStore,
+            agentExecution: executionService);
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        var provider = CreateConfiguredProvider(context);
+        var providerResult = await facade.CreateProviderAsync(provider, context);
+        Assert.True(providerResult.IsSuccess, providerResult.Error?.Message);
+
+        var secretResult = await facade.CreateSecretAsync(
+            "configured-agent-key",
+            "Configured Agent Key",
+            SecretMaterial.Create("test-api-key"),
+            context);
+        Assert.True(secretResult.IsSuccess, secretResult.Error?.Message);
+
+        var account = CreateConfiguredAccount(
+            provider.Id,
+            secretResult.Value!.Id,
+            context);
+        var accountResult = await facade.CreateProviderAccountAsync(account, context);
+        Assert.True(accountResult.IsSuccess, accountResult.Error?.Message);
+
+        var firstTarget = CreateConfiguredTarget(
+            provider.Id,
+            account.Id,
+            firstServer.BaseUri,
+            "configured-first",
+            context);
+        var firstTargetResult = await facade.CreateExecutionTargetAsync(
+            firstTarget,
+            context);
+        Assert.True(firstTargetResult.IsSuccess, firstTargetResult.Error?.Message);
+
+        var secondTarget = CreateConfiguredTarget(
+            provider.Id,
+            account.Id,
+            secondServer.BaseUri,
+            "configured-second",
+            context);
+        var secondTargetResult = await facade.CreateExecutionTargetAsync(
+            secondTarget,
+            context);
+        Assert.True(secondTargetResult.IsSuccess, secondTargetResult.Error?.Message);
+
+        var definition = CreateConfiguredAgentDefinition(
+            firstTarget.Id,
+            context);
+        var definitionResult = await facade.CreateAgentDefinitionAsync(
+            definition,
+            context);
+        Assert.True(definitionResult.IsSuccess, definitionResult.Error?.Message);
+
+        var firstExecution = await facade.ExecuteConfiguredAgentAsync(
+            definition.Id,
+            context,
+            "Use configured target one.");
+
+        Assert.True(firstExecution.IsSuccess, firstExecution.Error?.Message);
+        Assert.Equal(firstTarget.Id, firstExecution.Value!.TargetId);
+        Assert.Equal(
+            "Configured target one.",
+            firstExecution.Value.ResponseText);
+        Assert.True(firstServer.RequestObserved.Task.IsCompletedSuccessfully);
+        Assert.False(secondServer.RequestObserved.Task.IsCompletedSuccessfully);
+
+        var updatedDefinition = definitionResult.Value!
+            .WithConfiguredExecutionTarget(secondTarget.Id);
+
+        var updateResult = await facade.UpdateAgentDefinitionAsync(
+            updatedDefinition,
+            context);
+
+        Assert.True(updateResult.IsSuccess, updateResult.Error?.Message);
+
+        var secondExecution = await facade.ExecuteConfiguredAgentAsync(
+            definition.Id,
+            context,
+            "Use configured target two.");
+
+        Assert.True(secondExecution.IsSuccess, secondExecution.Error?.Message);
+        Assert.Equal(secondTarget.Id, secondExecution.Value!.TargetId);
+        Assert.Equal(
+            "Configured target two.",
+            secondExecution.Value.ResponseText);
+        Assert.True(secondServer.RequestObserved.Task.IsCompletedSuccessfully);
+    }
+
+    [Fact]
+    public async Task ExecuteConfiguredAgentAsync_RejectsUnconfiguredAgent()
+    {
+        var database = await PrepareDatabase("Hive_Test_UnconfiguredAgentExecution");
+        var eventStore = new SqlEventPersistenceStore(database.Options);
+
+        using var httpClient = new HttpClient();
+        var executionService = new AgentExecutionService(
+            eventStore,
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var facade = new HiveManagementFacade(
+            new SqlProviderResourceStore(database.Options),
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            agentExecution: executionService);
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        var definition = CreateConfiguredAgentDefinition(
+            null,
+            context);
+
+        var created = await facade.CreateAgentDefinitionAsync(
+            definition,
+            context);
+
+        Assert.True(created.IsSuccess, created.Error?.Message);
+
+        var result = await facade.ExecuteConfiguredAgentAsync(
+            created.Value!.Id,
+            context,
+            "This must be rejected.");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.management.agent-definition.execution-target-required",
+            result.Error!.Code);
+        Assert.Equal(
+            ErrorCategory.Validation,
+            result.Error.Category);
+    }
+
     [Fact]
     public async Task ExecuteAsync_CompletesAndPersistsCorrelatedLifecycle()
     {
@@ -330,6 +494,112 @@ public sealed class AgentExecutionIntegrationTests
 
         Assert.NotNull(value);
         return new ExecutionId((Guid)value!);
+    }
+
+    private static Provider CreateConfiguredProvider(
+        ResourceAccessContext context)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        return new Provider(
+            new ResourceEnvelope<ProviderId>(
+                ResourceKind.Provider,
+                ProviderId.New(),
+                context.PrincipalId!.Value,
+                ResourceScope.Tenant(context.TenantId!.Value),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    context.PrincipalId.Value,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            "configured-provider",
+            "Configured Provider",
+            "openai-compatible");
+    }
+
+    private static ProviderAccount CreateConfiguredAccount(
+        ProviderId providerId,
+        SecretId secretId,
+        ResourceAccessContext context)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        return new ProviderAccount(
+            new ResourceEnvelope<ProviderAccountId>(
+                ResourceKind.ProviderAccount,
+                ProviderAccountId.New(),
+                context.PrincipalId!.Value,
+                ResourceScope.Tenant(context.TenantId!.Value),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    context.PrincipalId.Value,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            providerId,
+            "configured-account",
+            "Configured Account",
+            credentialSecret: new SecretReference(secretId));
+    }
+
+    private static ExecutionTarget CreateConfiguredTarget(
+        ProviderId providerId,
+        ProviderAccountId accountId,
+        Uri endpoint,
+        string model,
+        ResourceAccessContext context)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        return new ExecutionTarget(
+            new ResourceEnvelope<ExecutionTargetId>(
+                ResourceKind.ExecutionTarget,
+                ExecutionTargetId.New(),
+                context.PrincipalId!.Value,
+                ResourceScope.Tenant(context.TenantId!.Value),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    context.PrincipalId.Value,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            providerId,
+            accountId,
+            $"configured-target-{model}",
+            $"Configured {model}",
+            endpoint,
+            model,
+            null,
+            [
+                new CapabilityStateEntry(
+                    new CapabilityKey("text.generate"),
+                    CapabilityState.Supported)
+            ]);
+    }
+
+    private static AgentDefinition CreateConfiguredAgentDefinition(
+        ExecutionTargetId? targetId,
+        ResourceAccessContext context)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        return new AgentDefinition(
+            new ResourceEnvelope<AgentDefinitionId>(
+                ResourceKind.AgentDefinition,
+                AgentDefinitionId.New(),
+                context.PrincipalId!.Value,
+                ResourceScope.Tenant(context.TenantId!.Value),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    context.PrincipalId.Value,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            "configured-agent",
+            "Configured Agent",
+            AgentGeneration.Base,
+            targetId);
     }
 
     private static Agent CreateAgent(
