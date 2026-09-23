@@ -105,7 +105,8 @@ Implemented in the active slice:
 - 1.12-D implements Provider Configuration, Accounts / Credentials, Execution Targets, and Agents as separate CRUD resource pages using `HiveCrudPage<TItem>` and `HiveEditorLayout`; the former combined Provider settings editor is removed.
 - Accounts / Credentials are scoped by Provider, and Execution Targets are scoped by Provider Account, matching the Management resource hierarchy.
 - Persistence remains a single global configuration editor because it represents one persisted configuration document rather than a CRUD resource collection.
-- Persistence Server / instance uses an editable ComboBox for the current/session-known values while still accepting manually entered server names; no fake SQL Server discovery list is introduced.
+- Persistence Server / instance uses a free-form text field; Hive does not enumerate installed SQL Server instances. The database name is generated automatically as Hive-[Host-App-Name].
+- Persistence Server / instance previously used an editable ComboBox for current/session-known values; this design was removed because Hive must support arbitrary local, remote, named-instance, and online SQL Server targets.lues while still accepting manually entered server names; no fake SQL Server discovery list is introduced.
 - 1.12-D adds `Overview / Getting Started / Example Configuration` as the normal Example Host entry point to the real Hive Settings center.
 - The configuration example explains that Provider Accounts are credential/resource records rather than provider login screens, that Execution Targets contain concrete model/endpoint configuration, and that future Settings domains appear only when their authoritative contracts exist.
 - The Example Host now supplies a deterministic development ResourceAccessContext for its Settings surface so configured resources remain addressable across Example Host restarts.
