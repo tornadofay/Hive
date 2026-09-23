@@ -95,6 +95,62 @@ public sealed class HiveManagementFacadeTests
     }
 
     [Fact]
+    public async Task RetiredAgentDefinitionKey_CanBeReusedByNewActiveDefinition()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ManagementAgentKeyReuse");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var facade = CreateFacade(database.Options);
+        var context = CreateContext();
+
+        var original = await facade.CreateAgentDefinitionAsync(
+            CreateAgentDefinition(context, key: "reusable-agent"),
+            context);
+
+        Assert.True(original.IsSuccess, original.Error?.Message);
+
+        var retired = await facade.DeleteAgentDefinitionAsync(
+            original.Value!.Id,
+            context);
+
+        Assert.True(retired.IsSuccess, retired.Error?.Message);
+        Assert.Equal(
+            ResourceLifecycleStatus.Retired,
+            retired.Value!.Resource!.Lifecycle.Status);
+
+        var replacement = await facade.CreateAgentDefinitionAsync(
+            CreateAgentDefinition(context, key: "reusable-agent"),
+            context);
+
+        Assert.True(replacement.IsSuccess, replacement.Error?.Message);
+        Assert.NotEqual(original.Value.Id, replacement.Value!.Id);
+        Assert.Equal("reusable-agent", replacement.Value.Key);
+        Assert.Equal(
+            ResourceLifecycleStatus.Active,
+            replacement.Value.Resource!.Lifecycle.Status);
+
+        var all = await facade.ListAgentDefinitionsAsync(
+            context,
+            includeRetired: true);
+
+        Assert.True(all.IsSuccess, all.Error?.Message);
+        Assert.Equal(2, all.Value!.Count);
+        Assert.Contains(
+            all.Value,
+            definition =>
+                definition.Id == original.Value.Id &&
+                definition.Resource!.Lifecycle.Status == ResourceLifecycleStatus.Retired);
+        Assert.Contains(
+            all.Value,
+            definition =>
+                definition.Id == replacement.Value.Id &&
+                definition.Resource!.Lifecycle.Status == ResourceLifecycleStatus.Active);
+    }
+
+    [Fact]
     public async Task MultipleAgentDefinitions_CanShareExecutionTarget()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ManagementSharedTarget");
