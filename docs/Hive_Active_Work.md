@@ -262,7 +262,7 @@ Completed in the current UI/UX polish pass:
 - Provider, ProviderAccount, ExecutionTarget, and AgentDefinition editor dialogs now use standard Enter-to-save and Escape-to-cancel keyboard behavior.
 - Persistence and all Settings editor actions are ordered consistently with the shared right-to-left footer so the primary Create/Save action is the rightmost action, with secondary/contextual actions to its left.
 - Provider Account filtering uses the concise Provider label while retaining the explicit Select a Provider placeholder.
-- Settings introductory copy and navigation width were refined for faster scanning and clearer hierarchy without changing the Settings model or navigation structure.
+- Settings introductory copy, navigation width, and title typography were refined for faster scanning and clearer hierarchy while following the shared theme typography.
 - The shared HiveButton now implements WinForms IButtonControl so the editor dialogs can use the standard AcceptButton/CancelButton contract without replacing the Hive button surface.
 - Focused HiveButton coverage was added for the dialog-action contract and enabled/disabled PerformClick behavior.
 - Existing shared Hive UI controls remain the presentation boundary; no parallel renderer, CRUD abstraction, theme system, or configuration workflow was introduced.
