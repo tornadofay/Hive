@@ -11,6 +11,7 @@ public sealed class HiveSettingsView : UserControl
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
+    private readonly IHiveExampleOutput? _output;
     private readonly string _applicationName;
     private readonly HiveNavigationTree _navigation;
     private readonly Panel _content;
@@ -31,11 +32,13 @@ public sealed class HiveSettingsView : UserControl
         IHiveManagementFacade management,
         ResourceAccessContext accessContext,
         IHiveThemeManager themeManager,
-        string? applicationName = null)
+        string? applicationName = null,
+        IHiveExampleOutput? output = null)
     {
         _management = management ?? throw new ArgumentNullException(nameof(management));
         _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
         _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
+        _output = output;
         _applicationName = string.IsNullOrWhiteSpace(applicationName)
             ? HivePersistenceConfiguration.DefaultApplicationName
             : applicationName.Trim();
@@ -156,7 +159,8 @@ public sealed class HiveSettingsView : UserControl
         _providerConfigurationView ??= new HiveProviderConfigurationView(
             _management,
             _accessContext,
-            _themeManager);
+            _themeManager,
+            _output);
 
         _providerAccountsView ??= new HiveProviderAccountsSettingsView(
             _management,
@@ -177,7 +181,8 @@ public sealed class HiveSettingsView : UserControl
             _management,
             _accessContext,
             _themeManager,
-            _applicationName);
+            _applicationName,
+            _output);
 
         // Persistence configuration is file/bootstrap-backed and must remain
         // usable even when the currently configured Hive SQL database is
@@ -256,10 +261,13 @@ public sealed class HiveSettingsView : UserControl
         {
             if (!IsDisposed && !Disposing)
             {
-                HiveMessageBox.ShowError(
+                HiveUiErrorReporter.Report(
                     FindForm(),
-                    exception.Message,
-                    "Hive Settings");
+                    exception,
+                    "Hive Settings",
+                    "The selected Settings page could not be initialized.",
+                    _output,
+                    _themeManager);
             }
         }
         finally
