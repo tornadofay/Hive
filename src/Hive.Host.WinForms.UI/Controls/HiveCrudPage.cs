@@ -686,8 +686,6 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _descriptionFont.Dispose();
             _searchLabelFont.Dispose();
             _emptyStateFont.Dispose();
-            _statusFilterLabel.Dispose();
-            _statusFilterBox.Dispose();
         }
     }
 
