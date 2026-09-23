@@ -206,7 +206,7 @@ internal sealed class HiveWindowHeader : Control
     private void ApplyTypography(HiveThemeDefinition theme)
     {
         var family = theme.Typography.FontFamily;
-        var titleSize = theme.Typography.BodySize + 1.25f;
+        var titleSize = theme.Typography.HeadingSize;
         var subtitleSize = theme.Typography.SmallSize;
 
         var titleMatches =
