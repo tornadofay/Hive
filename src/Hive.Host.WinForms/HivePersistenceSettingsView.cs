@@ -221,6 +221,13 @@ internal sealed class HivePersistenceSettingsView : UserControl
         if (result.IsFailure)
         {
             SetStatus(result.Error!.Message, isError: true);
+
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                result.Error!.Message,
+                "Hive Persistence",
+                _output,
+                _themeManager);
             return;
         }
 
@@ -243,6 +250,14 @@ internal sealed class HivePersistenceSettingsView : UserControl
         catch (ArgumentException exception)
         {
             SetStatus(exception.Message, isError: true);
+
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                exception,
+                "Hive Persistence",
+                "The persistence configuration is invalid.",
+                _output,
+                _themeManager);
             return;
         }
 
@@ -267,6 +282,13 @@ internal sealed class HivePersistenceSettingsView : UserControl
             }
 
             SetStatus(result.Error!.Message, isError: true);
+
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                result.Error!.Message,
+                "Hive Persistence",
+                _output,
+                _themeManager);
             return;
         }
 
@@ -285,9 +307,17 @@ internal sealed class HivePersistenceSettingsView : UserControl
             {
                 _passwordTextBox.Clear();
                 UpdateCredentialStatus(_loadedConfiguration);
-                SetStatus(
-                    "Persistence configuration saved, but the previous bootstrap credential could not be removed.",
-                    isError: true);
+                const string message =
+                    "Persistence configuration saved, but the previous bootstrap credential could not be removed.";
+
+                SetStatus(message, isError: true);
+
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    message,
+                    "Hive Persistence",
+                    _output,
+                    _themeManager);
                 return;
             }
         }
@@ -320,6 +350,14 @@ internal sealed class HivePersistenceSettingsView : UserControl
         catch (ArgumentException exception)
         {
             SetStatus(exception.Message, isError: true);
+
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                exception,
+                "Hive Persistence",
+                "The persistence configuration is invalid.",
+                _output,
+                _themeManager);
             return;
         }
 
@@ -335,10 +373,12 @@ internal sealed class HivePersistenceSettingsView : UserControl
             var failureMessage = $"Connection test failed: {result.Error!.Message}";
             SetStatus(failureMessage, isError: true);
 
-            HiveMessageBox.ShowError(
+            HiveUiErrorReporter.Report(
                 FindForm(),
                 failureMessage,
-                "Hive Persistence");
+                "Hive Persistence",
+                _output,
+                _themeManager);
             return;
         }
 
