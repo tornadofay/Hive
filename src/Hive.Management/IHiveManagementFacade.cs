@@ -85,6 +85,11 @@ public interface IHiveManagementFacade
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
 
+    Task<Result<Provider>> ReactivateProviderAsync(
+        ProviderId providerId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
     Task<Result<ProviderAccount>> CreateProviderAccountAsync(
         ProviderAccount account,
         ResourceAccessContext accessContext,
@@ -107,6 +112,11 @@ public interface IHiveManagementFacade
         CancellationToken cancellationToken = default);
 
     Task<Result<ProviderAccount>> DeleteProviderAccountAsync(
+        ProviderAccountId providerAccountId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<ProviderAccount>> ReactivateProviderAccountAsync(
         ProviderAccountId providerAccountId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
@@ -137,6 +147,11 @@ public interface IHiveManagementFacade
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
 
+    Task<Result<ExecutionTarget>> ReactivateExecutionTargetAsync(
+        ExecutionTargetId executionTargetId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
     Task<Result<AgentDefinition>> CreateAgentDefinitionAsync(
         AgentDefinition definition,
         ResourceAccessContext accessContext,
@@ -158,6 +173,11 @@ public interface IHiveManagementFacade
         CancellationToken cancellationToken = default);
 
     Task<Result<AgentDefinition>> DeleteAgentDefinitionAsync(
+        AgentDefinitionId agentDefinitionId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<AgentDefinition>> ReactivateAgentDefinitionAsync(
         AgentDefinitionId agentDefinitionId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
