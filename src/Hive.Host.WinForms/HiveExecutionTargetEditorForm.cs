@@ -13,6 +13,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
     private readonly ProviderAccount _account;
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
+    private readonly IHiveExampleOutput? _output;
     private readonly TextBox _providerTextBox;
     private readonly TextBox _accountTextBox;
     private readonly TextBox _keyTextBox;
@@ -30,7 +31,8 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         ProviderAccount account,
         IHiveManagementFacade management,
         ResourceAccessContext accessContext,
-        IHiveThemeManager themeManager)
+        IHiveThemeManager themeManager,
+        IHiveExampleOutput? output = null)
         : base(
             target is null ? "New Execution Target" : "Edit Execution Target",
             "Concrete endpoint, model/deployment, capabilities, and connection target",
@@ -43,6 +45,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         _account = account ?? throw new ArgumentNullException(nameof(account));
         _management = management ?? throw new ArgumentNullException(nameof(management));
         _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
+        _output = output;
 
         ConfigureHeader(
             allowMove: true,
@@ -189,7 +192,14 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
             if (result.IsFailure)
             {
-                _testStatus.Text = $"Connection test failed: {result.Error!.Message}";
+                var message = $"Connection test failed: {result.Error!.Message}";
+                _testStatus.Text = message;
+                HiveUiErrorReporter.Report(
+                    this,
+                    message,
+                    "Execution Target",
+                    _output,
+                    ThemeManager);
                 return;
             }
 
@@ -198,6 +208,13 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         catch (Exception exception)
         {
             _testStatus.Text = $"Connection test failed: {exception.Message}";
+            HiveUiErrorReporter.Report(
+                this,
+                exception,
+                "Execution Target",
+                "The execution-target connection test failed.",
+                _output,
+                ThemeManager);
         }
         finally
         {
@@ -244,7 +261,13 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         }
         catch (Exception exception)
         {
-            HiveMessageBox.ShowError(this, exception.Message);
+            HiveUiErrorReporter.Report(
+                this,
+                exception,
+                "Execution Target",
+                "The Execution Target could not be saved.",
+                _output,
+                ThemeManager);
         }
     }
 
