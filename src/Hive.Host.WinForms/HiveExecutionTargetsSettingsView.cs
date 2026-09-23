@@ -178,10 +178,26 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         if (_loadingFilters)
             return;
 
-        _selectedProvider =
-            (_providerComboBox.SelectedItem as ProviderChoice)?.Value;
+        try
+        {
+            _selectedProvider =
+                (_providerComboBox.SelectedItem as ProviderChoice)?.Value;
 
-        await LoadAccountsForProviderAsync().ConfigureAwait(true);
+            await LoadAccountsForProviderAsync().ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+        {
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                exception,
+                "Execution Targets",
+                "Execution Target accounts could not be loaded.",
+                _output,
+                _themeManager);
+        }
     }
 
     private async void AccountComboBoxOnSelectedIndexChanged(
@@ -191,13 +207,29 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         if (_loadingFilters)
             return;
 
-        _selectedAccount =
-            (_accountComboBox.SelectedItem as AccountChoice)?.Value;
+        try
+        {
+            _selectedAccount =
+                (_accountComboBox.SelectedItem as AccountChoice)?.Value;
 
-        _page.AllowAdd = _selectedAccount is not null;
+            _page.AllowAdd = _selectedAccount is not null;
 
-        if (!IsDisposed)
-            await _page.RefreshAsync().ConfigureAwait(true);
+            if (!IsDisposed)
+                await _page.RefreshAsync().ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+        {
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                exception,
+                "Execution Targets",
+                "Execution Targets could not be refreshed.",
+                _output,
+                _themeManager);
+        }
     }
 
     private async Task LoadAccountsForProviderAsync(
