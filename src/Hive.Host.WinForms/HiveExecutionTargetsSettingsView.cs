@@ -71,11 +71,20 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
             new HiveCrudColumn<ExecutionTarget>(
                 "Lifecycle",
                 120,
-                item => item.Resource.Lifecycle.Status.ToString()));
+                item => HiveLifecyclePresentation.Format(
+                    item.Resource.Lifecycle.Status),
+                item => HiveLifecyclePresentation.Color(
+                    item.Resource.Lifecycle.Status,
+                    _themeManager)));
 
         _page.LoadItemsAsync = LoadAsync;
         _page.EditItemAsync = EditAsync;
         _page.DeleteItemAsync = DeleteAsync;
+        _page.ActivateItemAsync = ActivateAsync;
+        _page.StatusSelector = item => item.Resource.Lifecycle.Status.ToString();
+        _page.CanEditItem = item => HiveLifecyclePresentation.IsActive(item.Resource);
+        _page.CanDeleteItem = item => HiveLifecyclePresentation.IsActive(item.Resource);
+        _page.CanActivateItem = item => HiveLifecyclePresentation.IsRetired(item.Resource);
         _page.GetItemDisplayName = item => $"{item.DisplayName} [{item.Key}]";
 
         _page.OperationFailed += PageOperationFailed;
@@ -380,6 +389,21 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
 
         foreach (var provider in _providers)
             _providerComboBox.Items.Add(new ProviderChoice(provider));
+    }
+
+    private async Task ActivateAsync(
+        ExecutionTarget target,
+        CancellationToken cancellationToken)
+    {
+        var result = await _management
+            .ReactivateExecutionTargetAsync(
+                target.Id,
+                _accessContext,
+                cancellationToken)
+            .ConfigureAwait(true);
+
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error!.Message);
     }
 
     private void PageOperationFailed(
