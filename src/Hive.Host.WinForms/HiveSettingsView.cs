@@ -49,7 +49,7 @@ public sealed class HiveSettingsView : UserControl
 
         _titleFont = new Font(
             themeManager.Theme.Typography.FontFamily,
-            15f,
+            themeManager.Theme.Typography.TitleSize,
             FontStyle.Bold);
 
         _title = new Label
