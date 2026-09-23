@@ -407,28 +407,18 @@ public sealed class HiveExampleTestSurface : UserControl
         }
         catch (Exception exception)
         {
-            output?.Write(
-                "EXCEPTION",
-                exception.ToString());
-
             SetStatus("Failed.");
 
             var window = owner ?? FindForm();
-            if (window is not null)
-            {
-                HiveMessageBox.Show(
-                    window,
-                    new HiveMessageOptions(
-                        "Example failed",
-                        "The example could not be completed.",
-                        HiveMessageType.Error,
-                        MessageBoxButtons.OK,
-                        exception.ToString(),
-                        DetailsExpanded: true),
-                    _theme is null
-                        ? null
-                        : FindHiveThemeManager());
-            }
+            HiveUiErrorReporter.Report(
+                window,
+                exception,
+                "Example failed",
+                "The example could not be completed.",
+                output,
+                _theme is null
+                    ? null
+                    : FindHiveThemeManager());
         }
         finally
         {
