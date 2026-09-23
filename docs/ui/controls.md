@@ -50,6 +50,22 @@ HiveMessageBox.Show(
         details));
 ```
 
+## HiveUiErrorReporter
+
+Use for unexpected user-visible failures:
+
+```csharp
+HiveUiErrorReporter.Report(
+    this,
+    exception,
+    "Operation failed",
+    "The operation could not be completed.",
+    output,
+    themeManager);
+```
+
+It writes technical exception details to the Output panel when an `IHiveExampleOutput` sink is available and shows a themed error MessageBox with expandable details. Never pass secrets or credential material.
+
 ## HiveListPageLayout
 
 ```csharp
