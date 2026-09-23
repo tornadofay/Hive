@@ -517,17 +517,28 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private void ShowExample(IHiveExample example)
     {
-        var services = _services
-            ?? throw new InvalidOperationException(
-                "Hive Example services are not initialized.");
+        var services = _services;
 
-        var nextView = example.CreateView(services);
-        ArgumentNullException.ThrowIfNull(nextView);
+        if (services is null)
+        {
+            HiveUiErrorReporter.Report(
+                this,
+                "Hive Example services are not initialized.",
+                "Example Host",
+                _outputView,
+                _themeManager);
+            return;
+        }
 
-        nextView.Dock = DockStyle.Fill;
+        UserControl? nextView = null;
 
         try
         {
+            nextView = example.CreateView(services);
+            ArgumentNullException.ThrowIfNull(nextView);
+
+            nextView.Dock = DockStyle.Fill;
+
             var previousView = _activeView;
 
             _themeManager.Apply(nextView);
@@ -558,10 +569,13 @@ internal sealed class HiveExampleHostForm : HiveForm
         }
         catch (Exception exception)
         {
-            if (_viewHost.Controls.Contains(nextView))
-                _viewHost.Controls.Remove(nextView);
+            if (nextView is not null)
+            {
+                if (_viewHost.Controls.Contains(nextView))
+                    _viewHost.Controls.Remove(nextView);
 
-            nextView.Dispose();
+                nextView.Dispose();
+            }
 
             HiveUiErrorReporter.Report(
                 this,
