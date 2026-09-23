@@ -4,7 +4,25 @@ Last updated: 2026-09-23
 
 ## Active slice
 
-**None — Phase 1.13 complete and verified**
+**UI/UX Production Polish — user-authorized maintenance pass**
+
+This is a UI/UX maintenance pass requested directly by the user. It does not advance the roadmap, reopen Phase 1.13, or authorize Phase 1.14 or later.
+
+### Scope
+
+- shared Hive WinForms UI controls, themes, layouts, state presentation, dialogs, navigation, CRUD/editor patterns, and Example Host presentation;
+- production-quality spacing, hierarchy, readability, state clarity, responsive behavior, and theme consistency;
+- preserve all existing product behavior and Management/application contracts;
+- no new product capabilities, business-logic changes, provider/database behavior, or roadmap-slice implementation;
+- verification remains pending until the user performs the explicitly requested manual UI/build/test checks.
+
+### Verification handoff
+
+Do not run builds/tests/application launches in this maintenance pass. After implementation, stop for user verification and record only the actual results returned by the user.
+
+## Roadmap state
+
+**None — Phase 1.13 complete and verified; Phase 1.14 remains inactive.**
 
 ### Closed slice
 
