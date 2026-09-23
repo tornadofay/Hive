@@ -10,6 +10,7 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
 {
     private readonly AgentDefinition? _existing;
     private readonly IReadOnlyList<ExecutionTarget> _targets;
+    private readonly ResourceAccessContext _accessContext;
     private readonly IHiveExampleOutput? _output;
     private readonly TextBox _keyTextBox;
     private readonly TextBox _displayNameTextBox;
@@ -21,6 +22,7 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
     public HiveAgentDefinitionEditorForm(
         AgentDefinition? definition,
         IReadOnlyList<ExecutionTarget> targets,
+        ResourceAccessContext accessContext,
         IHiveThemeManager themeManager,
         IHiveExampleOutput? output = null)
         : base(
@@ -31,6 +33,7 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
             themeManager)
     {
         ArgumentNullException.ThrowIfNull(targets);
+        _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
         ArgumentNullException.ThrowIfNull(themeManager);
 
         _existing = definition;
@@ -156,6 +159,10 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
 
             Definition = _existing is null
                 ? new AgentDefinition(
+                    HiveSettingsResourceFactory.CreateEnvelope(
+                        ResourceKind.AgentDefinition,
+                        AgentDefinitionId.New(),
+                        _accessContext),
                     key,
                     displayName,
                     generation,
