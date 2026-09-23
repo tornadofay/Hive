@@ -61,6 +61,7 @@ Examples:
 - Base Agent / AgentFactory example → `Agents / Base Agent`
 - Base Agent work protocols example → `Agents / Base Agent`
 - First real MAF-backed Base Agent execution example → `Agents / Base Agent`
+- Configured-host Agent execution example → `Agents / Base Agent`; uses the Example Host's selected persisted `AgentDefinition` and `IHiveManagementFacade.ExecuteConfiguredAgentAsync`, not a private database or synthetic execution target.
 - Provider/ProviderAccount/ExecutionTarget example → `Providers / Provider Platform`
 - Capability-aware execution target selection example → `Providers / Target Selection`
 - OpenAI-compatible provider transport example → `Providers / Provider Transport`
