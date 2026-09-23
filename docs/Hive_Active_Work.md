@@ -112,6 +112,7 @@ Implemented in the active slice:
 - The Example Host now supplies a deterministic development ResourceAccessContext for its Settings surface so configured resources remain addressable across Example Host restarts.
 - The Settings shell subtitle/description now identifies it as the global Hive package configuration center.
 - Settings initializes the Persistence page independently and lazy-loads database-backed resource pages when the user navigates to them, so an unavailable configured Hive database cannot prevent the global Persistence configuration surface from opening.
+- Persistence Test Connection remains non-destructive: it reports `DatabaseNotFound` when the target database is absent. The current Settings UI records `createDatabaseIfMissing` as initialization policy, but an explicit Management/application initialization operation that creates the database and applies migrations is not yet part of the D slice; Save and Test must not create or migrate the database.
 
 - The old combined `HiveProviderSettingsView` was deleted rather than retained as a compatibility UI layer; Provider, ProviderAccount, and ExecutionTarget now have independent Settings pages and editor dialogs.
 
