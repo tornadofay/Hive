@@ -18,6 +18,14 @@ internal static class HiveExampleServiceExtensions
         this IServiceProvider services) =>
         GetRequired<IHiveManagementFacade>(services);
 
+    public static ResourceAccessContext GetExampleAccessContext(
+        this IServiceProvider services) =>
+        GetRequired<ResourceAccessContext>(services);
+
+    public static HiveExampleServices GetHiveExampleServices(
+        this IServiceProvider services) =>
+        GetRequired<HiveExampleServices>(services);
+
     private static T GetRequired<T>(IServiceProvider services)
         where T : class
     {
