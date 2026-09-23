@@ -52,9 +52,25 @@ Required inspection sources:
 - existing WorkItem image contracts and Management facade;
 - current Host.WinForms and Example Host composition/lifetime boundaries.
 
+## Implementation checkpoint
+
+Implemented:
+- `HiveWinFormsHostContext` with explicit Form registration and deterministic bounded discovery;
+- immutable control/binding metadata snapshots with registration/capture provenance;
+- configurable maximum depth, maximum node count, and text-length bound;
+- cooperative cancellation and explicit UI-thread requirement;
+- duplicate/cycle detection and typed discovery-limit failures instead of silent truncation;
+- password/control-text redaction for WinForms password fields;
+- no raw Control references or mutation/action methods in the discovered snapshot contract;
+- checked-in SVG image fixture and deterministic `WorkItemImageSubmission` validation;
+- public Example Host scenario demonstrating both image input validation and WinForms host-context discovery.
+
+Verification target:
+**Host / WinForms Integration / Image Input & WinForms Host Context — Hive.Example.WinForms**
+
 ## Verification handoff
 
-Example to run: `<to be established by the implementation>` — Hive.Example.WinForms
-Tests to run: focused 1.13 host-context/image-input tests; broader `dotnet test tests/Hive.Tests/Hive.Tests.csproj` as required by the slice.
+Example to run: `Host / WinForms Integration / Image Input & WinForms Host Context` — Hive.Example.WinForms
+Tests to run: `tests/Hive.Tests/HiveWinFormsHostContextTests.cs`; broader `dotnet test tests/Hive.Tests/Hive.Tests.csproj` as required by the slice.
 
 Do not close 1.13-A until the required automated verification and manual Example Host verification are actually reported.
