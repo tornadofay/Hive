@@ -111,7 +111,7 @@ Implemented in the active slice:
 - The Example Host now supplies a deterministic development ResourceAccessContext for its Settings surface so configured resources remain addressable across Example Host restarts.
 - The Settings shell subtitle/description now identifies it as the global Hive package configuration center.
 - Settings initializes the Persistence page independently and lazy-loads database-backed resource pages when the user navigates to them, so an unavailable configured Hive database cannot prevent the global Persistence configuration surface from opening.
-- Persistence Test Connection remains non-destructive: it reports `DatabaseNotFound` when the target database is absent. The current Settings UI records `createDatabaseIfMissing` as initialization policy, but an explicit Management/application initialization operation that creates the database and applies migrations is not yet part of the D slice; Save and Test must not create or migrate the database.
+- Persistence Test Connection remains non-destructive: it reports `DatabaseNotFound` when the target database is absent. The Settings UI records `createDatabaseIfMissing` as initialization policy, and the explicit Management/Application `InitializePersistenceAsync` operation now creates the database when allowed and applies ordered Hive migrations. Save and Test remain non-destructive and never create or migrate the database.
 
 - The old combined `HiveProviderSettingsView` was deleted rather than retained as a compatibility UI layer; Provider, ProviderAccount, and ExecutionTarget now have independent Settings pages and editor dialogs.
 
@@ -167,7 +167,7 @@ The previously existing Settings inspection Example produced an old-schema/local
 
 Current sub-stage: **1.12-E — Settings-Driven Runtime State**
 
-Example to run: **Overview / Getting Started / Example Configuration — Hive.Example.WinForms** during the D UI acceptance pass; the leaf opens the real Hive Settings center. The configured-host execution Example remains deferred to 1.12-F.
+Example to run: **Overview / Getting Started / Example Configuration — Hive.Example.WinForms** for the 1.12-E host apply/initialization verification. The configured-host execution Example remains deferred to 1.12-F.
 
 1.12-E implementation checkpoint:
 - `src/Hive.Host.WinForms/HiveHostComposition.cs` — apply persisted configuration only when it differs from the published persistence snapshot;
