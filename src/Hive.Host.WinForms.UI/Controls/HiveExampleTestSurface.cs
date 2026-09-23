@@ -20,11 +20,11 @@ public sealed class HiveExampleTestSurface : UserControl
     private readonly Label _codeTitle;
     private readonly Label _details;
     private readonly Label _note;
-    private readonly Font _sectionFont;
-    private readonly Font _inputFont;
-    private readonly Font _codeFont;
-    private readonly Font _detailsFont;
-    private readonly Font _noteFont;
+    private Font _sectionFont;
+    private Font _inputFont;
+    private Font _codeFont;
+    private Font _detailsFont;
+    private Font _noteFont;
     private HiveThemeDefinition? _theme;
     private CancellationTokenSource? _runCancellation;
     private bool _busy;
@@ -44,14 +44,15 @@ public sealed class HiveExampleTestSurface : UserControl
         Margin = Padding.Empty;
         Padding = Padding.Empty;
 
+        var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
         _sectionFont = new Font(
-            "Segoe UI Semibold",
-            9f,
+            fallbackFont.FontFamily,
+            fallbackFont.Size,
             FontStyle.Bold);
-        _inputFont = new Font("Consolas", 9f);
-        _codeFont = new Font("Consolas", 9f);
-        _detailsFont = new Font("Segoe UI", 9f);
-        _noteFont = new Font("Segoe UI", 8.6f);
+        _inputFont = new Font("Consolas", fallbackFont.Size);
+        _codeFont = new Font("Consolas", fallbackFont.Size);
+        _detailsFont = new Font(fallbackFont.FontFamily, fallbackFont.Size);
+        _noteFont = new Font(fallbackFont.FontFamily, Math.Max(8f, fallbackFont.Size - 0.75f));
 
         _root = new TableLayoutPanel
         {
@@ -470,6 +471,63 @@ public sealed class HiveExampleTestSurface : UserControl
         _input.ForeColor = theme.Palette.Text;
         _code.BackColor = theme.Palette.InputBackground;
         _code.ForeColor = theme.Palette.Text;
+
+        var previousSection = ReplaceFontIfNeeded(
+            ref _sectionFont,
+            theme.Typography.FontFamily,
+            theme.Typography.SectionSize,
+            FontStyle.Bold);
+        var previousInput = ReplaceFontIfNeeded(
+            ref _inputFont,
+            "Consolas",
+            theme.Typography.MonospaceSize,
+            FontStyle.Regular);
+        var previousCode = ReplaceFontIfNeeded(
+            ref _codeFont,
+            "Consolas",
+            theme.Typography.MonospaceSize,
+            FontStyle.Regular);
+        var previousDetails = ReplaceFontIfNeeded(
+            ref _detailsFont,
+            theme.Typography.FontFamily,
+            theme.Typography.BodySize,
+            FontStyle.Regular);
+        var previousNote = ReplaceFontIfNeeded(
+            ref _noteFont,
+            theme.Typography.FontFamily,
+            theme.Typography.SmallSize,
+            FontStyle.Regular);
+
+        _inputTitle.Font = _sectionFont;
+        _codeTitle.Font = _sectionFont;
+        _input.Font = _inputFont;
+        _code.Font = _codeFont;
+        _details.Font = _detailsFont;
+        _note.Font = _noteFont;
+
+        previousSection?.Dispose();
+        previousInput?.Dispose();
+        previousCode?.Dispose();
+        previousDetails?.Dispose();
+        previousNote?.Dispose();
+    }
+
+    private static Font? ReplaceFontIfNeeded(
+        ref Font current,
+        string family,
+        float size,
+        FontStyle style)
+    {
+        if (string.Equals(current.FontFamily.Name, family, StringComparison.Ordinal) &&
+            Math.Abs(current.Size - size) <= 0.01f &&
+            current.Style == style)
+        {
+            return null;
+        }
+
+        var previous = current;
+        current = new Font(family, size, style);
+        return previous;
     }
 
     private void UpdateWorkspaceLayout()
