@@ -161,6 +161,12 @@ public interface IHiveManagementFacade
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
 
+    Task<Result<AgentExecutionResult>> ExecuteConfiguredAgentAsync(
+        AgentDefinitionId agentDefinitionId,
+        ResourceAccessContext accessContext,
+        string userMessage,
+        CancellationToken cancellationToken = default);
+
     Task<Result<WorkItem>> CreateImageWorkItemAsync(
         WorkItemImageSubmission submission,
         ResourceAccessContext accessContext,
