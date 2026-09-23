@@ -255,6 +255,16 @@ The final manual UI/UX review must cover:
 - absence of duplicate renderer/theme logic;
 - absence of layout jumps when switching pages or themes.
 
+## 1.12-J implementation checkpoint
+
+Completed in the current UI/UX polish pass:
+- Persistence read-only Database field now uses the same theme-aware disabled/read-only visual treatment as the other immutable fields.
+- Provider, ProviderAccount, ExecutionTarget, and AgentDefinition editor dialogs now use standard Enter-to-save and Escape-to-cancel keyboard behavior.
+- Persistence actions are ordered consistently with the shared right-to-left editor footer so the primary Save action is the rightmost action.
+- Provider Account filtering uses the concise Provider label while retaining the explicit Select a Provider placeholder.
+- Existing shared Hive UI controls remain the presentation boundary; no parallel renderer, CRUD abstraction, theme system, or configuration workflow was introduced.
+
+Manual J review remains required before closing the sub-stage. No UI launch/build/test was performed during this polish pass.
 ## Verification handoff
 
 Current sub-stage: **1.12-J — Final UI/UX Review**
