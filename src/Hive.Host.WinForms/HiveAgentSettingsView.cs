@@ -46,7 +46,7 @@ internal sealed class HiveAgentSettingsView : UserControl
 
         _page.SetColumns(
             new HiveCrudColumn<AgentDefinition>(
-                "Key",
+                "Resource key",
                 190,
                 item => item.Key),
             new HiveCrudColumn<AgentDefinition>(
