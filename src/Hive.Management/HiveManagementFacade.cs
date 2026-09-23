@@ -853,18 +853,59 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                 accessContext,
                 cancellationToken));
 
-    public Task<Result<AgentDefinition>> ReactivateAgentDefinitionAsync(
+    public async Task<Result<AgentDefinition>> ReactivateAgentDefinitionAsync(
         AgentDefinitionId agentDefinitionId,
         ResourceAccessContext accessContext,
-        CancellationToken cancellationToken = default) =>
-        Delete(
-            agentDefinitionId == default,
-            accessContext,
-            "agent definition",
-            () => _agentDefinitions.ReactivateAgentDefinitionAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Result<AgentDefinition>.Failure(contextError);
+
+        if (agentDefinitionId == default)
+        {
+            return Result<AgentDefinition>.Failure(
+                Error.Validation(
+                    "hive.management.agent-definition.identity-required",
+                    "The agent definition identity is required."));
+        }
+
+        var current = await _agentDefinitions
+            .GetAgentDefinitionAsync(
                 agentDefinitionId,
                 accessContext,
-                cancellationToken));
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (current.IsFailure)
+            return Result<AgentDefinition>.Failure(current.Error!);
+
+        if (current.Value!.Resource!.Lifecycle.Status == ResourceLifecycleStatus.Active)
+            return current;
+
+        if (current.Value.Resource.Lifecycle.Status != ResourceLifecycleStatus.Retired)
+        {
+            return Result<AgentDefinition>.Failure(
+                Error.Conflict(
+                    "hive.management.agent-definition.lifecycle-invalid",
+                    "Only a retired AgentDefinition can be reactivated."));
+        }
+
+        var targetValidation = await ValidateConfiguredExecutionTargetAsync(
+            current.Value.ConfiguredExecutionTargetId,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (targetValidation.IsFailure)
+            return Result<AgentDefinition>.Failure(targetValidation.Error!);
+
+        return await _agentDefinitions
+            .ReactivateAgentDefinitionAsync(
+                agentDefinitionId,
+                accessContext,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
 
     private async Task<Result<AgentDefinition>> SaveAgentDefinitionAsync(
         AgentDefinition definition,
