@@ -273,6 +273,7 @@ Completed in the current UI/UX polish pass:
 - Additional shared-UI polish: CRUD page typography, the custom window header, pagination, and the themed MessageBox now derive their type scale/family from the shared Hive theme rather than isolated hard-coded presentation fonts.
 - Additional Example Host polish: the shared Example Output and Example Test Surface now follow the same theme typography tokens for headings, metadata, body text, and code/detail surfaces while preserving monospace code presentation.
 - Font replacement paths update control references before disposing previous font resources to avoid stale-font/GDI lifetime issues.
+- Follow-up compile correction: `HiveMessageBox` typography fields are now mutable so shared theme typography can safely replace them at runtime; no dialog behavior changed.
 - These changes remain presentation-only and do not alter CRUD, example execution, Management, persistence, provider, or host architecture behavior.
 
 Manual J review remains required before closing the sub-stage. No UI launch/build was performed by the assistant.
