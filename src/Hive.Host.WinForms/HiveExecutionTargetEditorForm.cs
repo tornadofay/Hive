@@ -170,7 +170,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             _testStatus,
             62);
 
-        Controls.Add(editor);
+        BodyPanel.Controls.Add(editor);
         ThemeManager.Apply(BodyPanel);
     }
 
