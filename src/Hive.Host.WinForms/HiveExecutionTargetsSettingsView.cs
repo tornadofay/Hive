@@ -140,7 +140,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         var result = await _management
             .ListProvidersAsync(
                 _accessContext,
-                includeRetired: true,
+                includeRetired: false,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(true);
 
@@ -252,7 +252,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
                     .ListProviderAccountsAsync(
                         _selectedProvider.Id,
                         _accessContext,
-                        includeRetired: true,
+                        includeRetired: false,
                         cancellationToken: cancellationToken)
                     .ConfigureAwait(true);
 
