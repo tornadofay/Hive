@@ -8,7 +8,7 @@ Last updated: 2026-09-23
 
 ### Current sub-stage
 
-**1.12-J — Final UI/UX Review**
+**1.12-K — Documentation and Closure**
 
 Detailed workload and ordering: `docs/plan/Phase1.12_Settings_Host_Integration.md`
 
@@ -31,7 +31,7 @@ The complete Phase 1.12 program is subdivided into bounded sub-stages described 
 - real Example Host consumption of configured state;
 - focused verification and documentation closure.
 
-1.12-A through 1.12-I are complete and verified/accepted. Current sub-stage 1.12-J is the final Settings UI/UX review. Do not implement 1.12-K or later work in this run.
+1.12-A through 1.12-I are complete and verified/accepted. 1.12-J — Final UI/UX Review is complete and verified. Current sub-stage 1.12-K is documentation and closure. Do not implement Phase 1.13 or later work in this run.
 
 ## Completed 1.12-B verification gate
 
@@ -281,10 +281,15 @@ Completed in the current UI/UX polish pass:
 - Additional static polish: the MessageBox question icon now derives its font family and scale from the active Hive theme instead of a hard-coded font, preserving consistent typography across themes.
 - Additional static polish: enabled read-only text boxes now use the elevated surface and muted text treatment, while actually disabled fields retain the disabled palette, making immutable and unavailable fields visually distinct.
 - These latest changes remain presentation-only and do not alter CRUD operations, Management boundaries, provider behavior, persistence behavior, or host architecture.
-Manual J review remains required before closing the sub-stage. No UI launch/build was performed by the assistant.
+1.12-J verification is complete:
+- Developer manually reviewed the real Example Host Settings surface and confirmed the final UI looks and behaves correctly across the requested desktop UI/UX criteria.
+- Developer reran the full `Hive.Tests` suite on .NET 10.0.1: **174/174 passed, 0 failed, 0 skipped** on 2026-09-23.
+- The latest verification covers the final UI polish changes recorded above; no additional UI changes are pending in 1.12-J.
+- The assistant did not build, run tests, or launch the application.
+
 ## Verification handoff
 
-Current sub-stage: **1.12-J — Final UI/UX Review**
+Current sub-stage: **1.12-K — Documentation and Closure**
 
 Example/host surface to review:
 **Overview / Getting Started / Example Configuration — Hive.Example.WinForms**, followed by:
