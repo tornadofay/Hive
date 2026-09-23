@@ -172,7 +172,9 @@ Example to run: **Overview / Getting Started / Example Configuration — Hive.Ex
 1.12-E implementation checkpoint:
 - `src/Hive.Host.WinForms/HiveHostComposition.cs` — apply persisted configuration only when it differs from the published persistence snapshot;
 - `src/Hive.Example.WinForms/HiveExampleHostForm.cs` — apply Settings changes when the global Settings dialog closes and refresh the active Example against the current host graph;
-- `tests/Hive.Tests/HiveHostCompositionTests.cs` — focused unchanged/changed/failed Settings-apply behavior.
+- `src/Hive.Management/HiveManagementFacade.cs` / `IHiveManagementFacade` — explicit Hive persistence initialization boundary;
+- `src/Hive.Host.WinForms/HivePersistenceSettingsView.cs` — explicit Initialize Hive action; Save and Test remain non-destructive;
+- `tests/Hive.Tests/HiveHostCompositionTests.cs` and `HiveConfigurationTests.cs` — focused settings-apply and explicit initialization coverage.
 
 Verification required:
 - verify persistence changes are applied through a newly constructed service graph;
