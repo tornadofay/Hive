@@ -60,6 +60,11 @@ public interface IProviderResourceStore
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
 
+    Task<Result<ProviderAccount>> ReactivateProviderAccountAsync(
+        ProviderAccountId providerAccountId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
     Task<Result<ExecutionTarget>> CreateExecutionTargetAsync(
         ExecutionTarget target,
         ResourceAccessContext accessContext,
