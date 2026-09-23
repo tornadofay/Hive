@@ -312,6 +312,24 @@ internal sealed class OverviewExampleView : UserControl
                 "The Overview page card body could not be found.");
     }
 
+    private void OpenRepository()
+    {
+        try
+        {
+            Process.Start(
+                new ProcessStartInfo
+                {
+                    FileName = RepositoryUrl,
+                    UseShellExecute = true
+                });
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Could not open Hive repository: {exception}");
+        }
+    }
+
     private void ThemeManagerOnChanged(object? sender, EventArgs e)
     {
         ApplyTheme(_themeManager.Theme);
