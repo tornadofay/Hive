@@ -59,13 +59,18 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
         var editor = new HiveEditorLayout();
 
-        _providerTextBox = CreateReadOnlyTextBox(_provider.DisplayName);
-        _accountTextBox = CreateReadOnlyTextBox(_account.DisplayName);
+        _providerTextBox = CreateReadOnlyTextBox(_provider.DisplayName, themeManager);
+        _accountTextBox = CreateReadOnlyTextBox(_account.DisplayName, themeManager);
         _keyTextBox = CreateTextBox();
+        _keyTextBox.PlaceholderText = "e.g. llama-production";
         _nameTextBox = CreateTextBox();
+        _nameTextBox.PlaceholderText = "e.g. Production Llama";
         _endpointTextBox = CreateTextBox();
+        _endpointTextBox.PlaceholderText = "https://api.example.com/v1";
         _modelTextBox = CreateTextBox();
+        _modelTextBox.PlaceholderText = "e.g. meta/llama-3.3-70b-instruct";
         _deploymentTextBox = CreateTextBox();
+        _deploymentTextBox.PlaceholderText = "Optional deployment name";
         _capabilitiesTextBox = new TextBox
         {
             Multiline = true,
@@ -91,24 +96,22 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
         if (target is not null)
         {
-            _keyTextBox.ReadOnly = true;
-            _keyTextBox.BackColor = themeManager.Theme.Palette.DisabledBackground;
-            _keyTextBox.ForeColor = themeManager.Theme.Palette.DisabledText;
+            SetReadOnlyVisualState(_keyTextBox, themeManager);
         }
 
         editor.AddField(
             "Provider",
-            "Owning Provider resource. Parent ownership is fixed after target creation.",
+            "Fixed parent Provider selected by the Settings page. This relationship is read-only.",
             _providerTextBox);
 
         editor.AddField(
             "Provider Account",
-            "Owning ProviderAccount and credential boundary.",
+            "Fixed credential/account boundary selected by the Settings page. This relationship is read-only.",
             _accountTextBox);
 
         editor.AddField(
-            "Key",
-            "Stable ExecutionTarget identity. It cannot be changed after creation.",
+            "Resource key",
+            "Stable internal Execution Target identifier. This is NOT an API key. It becomes read-only after creation.",
             _keyTextBox);
 
         editor.AddField(
@@ -118,7 +121,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
         editor.AddField(
             "Endpoint",
-            "Absolute HTTP/HTTPS URI. Credentials must never be embedded in the URI.",
+            "The actual provider API endpoint. Enter an absolute HTTP/HTTPS URI; credentials must never be embedded in it.",
             _endpointTextBox);
 
         editor.AddField(
@@ -332,11 +335,24 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             BorderStyle = BorderStyle.FixedSingle
         };
 
-    private static TextBox CreateReadOnlyTextBox(string value)
+    private static TextBox CreateReadOnlyTextBox(
+        string value,
+        IHiveThemeManager themeManager)
     {
         var box = CreateTextBox();
         box.Text = value;
-        box.ReadOnly = true;
+        SetReadOnlyVisualState(box, themeManager);
         return box;
+    }
+
+    private static void SetReadOnlyVisualState(
+        TextBox textBox,
+        IHiveThemeManager themeManager)
+    {
+        textBox.ReadOnly = true;
+        textBox.TabStop = false;
+        textBox.Cursor = Cursors.Arrow;
+        textBox.BackColor = themeManager.Theme.Palette.DisabledBackground;
+        textBox.ForeColor = themeManager.Theme.Palette.DisabledText;
     }
 }
