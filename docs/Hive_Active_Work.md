@@ -175,29 +175,38 @@ The previously existing Settings inspection Example produced an old-schema/local
 8. User manually confirmed Settings-error Output remains available after the Settings form closes.
 9. Full `Hive.Tests` developer verification completed with **164/164 passed, 0 failed, 0 skipped** on 2026-09-23 using .NET 10.0.1.
 
+## 1.12-F implementation checkpoint
+
+- The Example Host now creates its `HiveExampleServices` from the current host-owned `HiveHostServiceGraph` and exposes the deterministic host `ResourceAccessContext` to configured-host examples.
+- Startup loads persisted Providers and AgentDefinitions through the current Management facade and populates a host-level Configured Agent selector; the selector is refreshed after Settings apply and preserves the prior AgentDefinition when it remains valid.
+- `IHiveManagementFacade.ExecuteConfiguredAgentAsync` is the configured Agent application boundary. It resolves the persisted AgentDefinition → ExecutionTarget → ProviderAccount → Provider relationship, resolves an optional ProviderAccount Secret Store credential through the existing Management/Persistence boundary, creates the current Base Agent/runtime, and delegates actual provider/MAF execution to `Hive.Coordination.AgentExecutionService`.
+- The configured execution path does not create a competing service graph, database, provider target, credential store, or orchestration implementation. Existing isolated execution examples remain isolated contracts; this new example is the configured-host acceptance surface.
+- Added `Agents / Base Agent / Configured Agent Execution` as the public Example Host scenario. Its output reports the resolved resource identities and execution result without emitting credential material.
+- Added focused integration coverage for configured execution through the persisted resource graph, including target switching between two real local test endpoints and explicit rejection of an AgentDefinition with no configured target.
+- The existing `First Real Agent Execution` example remains a local deterministic contract example and is intentionally not repurposed as the configured-host acceptance scenario.
 ## Verification handoff
 
 Current sub-stage: **1.12-F — Example Host as a Real Consumer**
 
 Configured-host target:
-**Overview / Getting Started / Example Configuration — Hive.Example.WinForms**, followed by the normal host-level Settings flow and a configured Agent operation.
+**Overview / Getting Started / Example Configuration — Hive.Example.WinForms**, followed by the normal host-level Settings flow, host-level Configured Agent selection, and `Agents / Base Agent / Configured Agent Execution`.
 
-1.12-F implementation checkpoint:
-- Example Host startup/current graph consumption;
-- configured Provider / ProviderAccount / ExecutionTarget / AgentDefinition reads through the host graph;
-- configured Agent selection and normal public-API execution;
-- explicit handling for missing/unusable configured Agent or ExecutionTarget;
-- host refresh after Settings changes without competing service graphs.
+Tests to run:
+- `tests/Hive.Tests/AgentExecutionIntegrationTests.cs` — configured Agent execution and persisted target-switching coverage;
+- `tests/Hive.Tests/HiveManagementFacadeTests.cs` — preserve existing Management CRUD/relationship coverage;
+- broader `Hive.Tests` execution after the focused tests.
 
 Verification required:
 - configure one Provider, ProviderAccount, credential, ExecutionTarget, and AgentDefinition;
-- verify the Example Host reloads those persisted resources;
-- verify a configured Agent operation actually uses the configured ExecutionTarget;
-- verify changing the Agent's configured target affects the next operation;
-- verify missing/retired/unusable configuration is reported clearly;
-- verify no provider credentials or bootstrap secrets appear in Output.
+- verify the Example Host reloads the persisted Provider and AgentDefinition state into the host-owned service graph;
+- verify the Configured Agent selector shows the configured Agent and remains stable across a Settings save/apply when that Agent remains valid;
+- verify a configured Agent operation uses the persisted ExecutionTarget and produces the expected local/provider response;
+- change the AgentDefinition's configured ExecutionTarget, close/apply Settings, and verify the next operation uses the new target;
+- verify missing, retired, or otherwise unusable configured Agent/ExecutionTarget state is surfaced clearly;
+- verify no Provider credential or bootstrap SQL credential appears in Example Output, MessageBox details, or normal diagnostics;
+- verify the configured-host example does not create or depend on `HiveDatabaseOptions.LocalDevelopment()`.
 
-1.12-E is closed by this handoff. Final UI/UX polish remains deferred to 1.12-J.
+1.12-F implementation and focused tests are now present on `main`, but the sub-stage remains open until developer build/test/manual verification is actually performed. 1.12-E is closed by this handoff. Final UI/UX polish remains deferred to 1.12-J.
 
 ## Historical verification
 
