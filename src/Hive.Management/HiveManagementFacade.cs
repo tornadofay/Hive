@@ -1,4 +1,5 @@
 using Hive.Agents;
+using Hive.Coordination;
 using Hive.Core;
 using Hive.Persistence;
 
@@ -14,6 +15,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
     private readonly IHiveConfigurationStore? _configurationStore;
     private readonly IHivePersistenceConnectionTester? _persistenceConnectionTester;
     private readonly IHiveBootstrapCredentialStore? _bootstrapCredentials;
+    private readonly AgentExecutionService? _agentExecution;
 
     public HiveManagementFacade(
         IProviderResourceStore providerResources,
@@ -23,7 +25,8 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         IProviderConnectionTester? providerConnectionTester = null,
         IHiveConfigurationStore? configurationStore = null,
         IHivePersistenceConnectionTester? persistenceConnectionTester = null,
-        IHiveBootstrapCredentialStore? bootstrapCredentials = null)
+        IHiveBootstrapCredentialStore? bootstrapCredentials = null,
+        AgentExecutionService? agentExecution = null)
     {
         _providerResources = providerResources
             ?? throw new ArgumentNullException(nameof(providerResources));
@@ -36,6 +39,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         _configurationStore = configurationStore;
         _persistenceConnectionTester = persistenceConnectionTester;
         _bootstrapCredentials = bootstrapCredentials;
+        _agentExecution = agentExecution;
     }
 
     public async Task<Result<HivePersistenceConfiguration>> GetPersistenceConfigurationAsync(
@@ -886,6 +890,153 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         }
 
         return Result.Success();
+    }
+
+    public async Task<Result<AgentExecutionResult>> ExecuteConfiguredAgentAsync(
+        AgentDefinitionId agentDefinitionId,
+        ResourceAccessContext accessContext,
+        string userMessage,
+        CancellationToken cancellationToken = default)
+    {
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Result<AgentExecutionResult>.Failure(contextError);
+
+        if (agentDefinitionId == default)
+        {
+            return Result<AgentExecutionResult>.Failure(
+                Error.Validation(
+                    "hive.management.agent-definition.identity-required",
+                    "An AgentDefinition identity is required."));
+        }
+
+        if (string.IsNullOrWhiteSpace(userMessage))
+        {
+            return Result<AgentExecutionResult>.Failure(
+                Error.Validation(
+                    "hive.management.agent-execution.message-required",
+                    "An Agent execution message is required."));
+        }
+
+        if (_agentExecution is null)
+        {
+            return Result<AgentExecutionResult>.Failure(
+                Error.Unsupported(
+                    "hive.management.agent-execution-unavailable",
+                    "Configured Agent execution is not available in the current host service graph."));
+        }
+
+        var definition = await _agentDefinitions
+            .GetAgentDefinitionAsync(
+                agentDefinitionId,
+                accessContext,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (definition.IsFailure)
+            return Result<AgentExecutionResult>.Failure(definition.Error!);
+
+        if (definition.Value!.ConfiguredExecutionTargetId is null)
+        {
+            return Result<AgentExecutionResult>.Failure(
+                Error.Validation(
+                    "hive.management.agent-definition.execution-target-required",
+                    $"AgentDefinition '{definition.Value.Id}' does not have a configured ExecutionTarget."));
+        }
+
+        var target = await _providerResources
+            .GetExecutionTargetAsync(
+                definition.Value.ConfiguredExecutionTargetId.Value,
+                accessContext,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (target.IsFailure)
+            return Result<AgentExecutionResult>.Failure(target.Error!);
+
+        var provider = await _providerResources
+            .GetProviderAsync(
+                target.Value!.ProviderId,
+                accessContext,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (provider.IsFailure)
+            return Result<AgentExecutionResult>.Failure(provider.Error!);
+
+        var account = await _providerResources
+            .GetProviderAccountAsync(
+                target.Value.ProviderAccountId,
+                accessContext,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (account.IsFailure)
+            return Result<AgentExecutionResult>.Failure(account.Error!);
+
+        if (account.Value!.ProviderId != provider.Value!.Id)
+        {
+            return Result<AgentExecutionResult>.Failure(
+                Error.Conflict(
+                    "hive.management.execution-target-provider-mismatch",
+                    "The configured ExecutionTarget references a ProviderAccount owned by a different Provider."));
+        }
+
+        SecretMaterial? credential = null;
+
+        try
+        {
+            if (account.Value.CredentialSecret is not null)
+            {
+                if (_secrets is null)
+                {
+                    return Result<AgentExecutionResult>.Failure(
+                        Error.Unsupported(
+                            "hive.management.secret-store-unavailable",
+                            "The Hive Secret Store is not configured."));
+                }
+
+                var secret = await _secrets
+                    .GetAsync(
+                        account.Value.CredentialSecret.Value.Id,
+                        accessContext,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (secret.IsFailure)
+                    return Result<AgentExecutionResult>.Failure(secret.Error!);
+
+                credential = secret.Value!.Material;
+            }
+
+            var agentResult = new AgentFactory(
+                    new AllowBaseAgentCreationAuthorizer())
+                .Create<Agent>(
+                    definition.Value,
+                    new AgentCreationContext(accessContext));
+
+            if (agentResult.IsFailure)
+                return Result<AgentExecutionResult>.Failure(agentResult.Error!);
+
+            var agent = agentResult.Value!;
+            var runtime = agent.CreateRuntimeInstance();
+
+            return await _agentExecution
+                .ExecuteAsync(
+                    new AgentExecutionRequest(
+                        agent,
+                        runtime,
+                        target.Value,
+                        accessContext,
+                        userMessage,
+                        credential),
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            credential?.Dispose();
+        }
     }
 
     public Task<Result<WorkItem>> CreateImageWorkItemAsync(
