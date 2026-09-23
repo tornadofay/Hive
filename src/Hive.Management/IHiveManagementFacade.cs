@@ -1,4 +1,5 @@
 using Hive.Agents;
+using Hive.Coordination;
 using Hive.Core;
 
 namespace Hive.Management;
