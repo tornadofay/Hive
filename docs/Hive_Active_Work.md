@@ -8,7 +8,7 @@ Last updated: 2026-09-23
 
 ### Current sub-stage
 
-**1.12-D — Settings UI on the Hive UI Foundation**
+**1.12-E — Settings-Driven Runtime State**
 
 Detailed workload and ordering: `docs/plan/Phase1.12_Settings_Host_Integration.md`
 
@@ -31,7 +31,7 @@ The complete Phase 1.12 program is subdivided into bounded sub-stages described 
 - real Example Host consumption of configured state;
 - focused verification and documentation closure.
 
-1.12-A, 1.12-B, and 1.12-C are complete and verified. Current sub-stage 1.12-D migrates the Settings UI onto the reusable Hive UI foundation. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-D.
+1.12-A, 1.12-B, 1.12-C, and 1.12-D are complete and verified/accepted. Current sub-stage 1.12-E makes saved Settings changes affect the running host state through the existing composition boundary. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-E.
 
 ## Completed 1.12-B verification gate
 
@@ -154,26 +154,35 @@ The previously existing Settings inspection Example produced an old-schema/local
 6. Migration integration coverage verifies the schema version 9 migration and the new AgentDefinition target column/index.
 7. Developer full-suite verification completed with **159/159 passed, 0 failed, 0 skipped** on 2026-09-22.
 
+## Completed 1.12-D verification gate
+
+1. Settings navigation uses the reusable `HiveNavigationTree` foundation rather than the former Settings-specific owner-drawn navigation.
+2. Provider, ProviderAccount, ExecutionTarget, and AgentDefinition pages use the reusable CRUD/list/editor foundation.
+3. The global Settings center exposes the Provider hierarchy, Agents, and Persistence pages through the documented navigation structure.
+4. The Example Host exposes the real Settings center through the Overview / Getting Started / Example Configuration path.
+5. Developer accepted the current Settings UI as good enough to proceed; final UI/UX polish remains intentionally deferred to 1.12-J.
+6. Developer full-suite verification completed with **160/160 passed, 0 failed, 0 skipped** on 2026-09-23 using .NET 10.0.1.
+
 ## Verification handoff
 
-Current sub-stage: **1.12-D — Settings UI on the Hive UI Foundation**
+Current sub-stage: **1.12-E — Settings-Driven Runtime State**
 
 Example to run: **Overview / Getting Started / Example Configuration — Hive.Example.WinForms** during the D UI acceptance pass; the leaf opens the real Hive Settings center. The configured-host execution Example remains deferred to 1.12-F.
 
-1.12-D implementation checkpoint:
-- `src/Hive.Host.WinForms/HiveSettingsView.cs` — HiveNavigationTree Settings navigation and Agents page integration;
-- `src/Hive.Host.WinForms/HiveAgentSettingsView.cs` — AgentDefinition CRUD page using Hive UI foundation controls;
-- `src/Hive.Host.WinForms/HiveAgentDefinitionEditorForm.cs` — AgentDefinition editor using HiveEditorLayout;
-- `src/Hive.Host.WinForms/HiveSettingsForm.cs` — global Settings shell wording.
+1.12-E implementation checkpoint:
+- `src/Hive.Host.WinForms/HiveHostComposition.cs` — apply persisted configuration only when it differs from the published persistence snapshot;
+- `src/Hive.Example.WinForms/HiveExampleHostForm.cs` — apply Settings changes when the global Settings dialog closes and refresh the active Example against the current host graph;
+- `tests/Hive.Tests/HiveHostCompositionTests.cs` — focused unchanged/changed/failed Settings-apply behavior.
 
 Verification required:
-- run the full `Hive.Tests` suite;
-- manually run the host-level Settings surface and verify Providers, Agents, and Persistence navigation;
-- verify Light/Dark/System theme changes preserve Settings navigation selection and do not jump/replace the selected page;
-- verify Agent Add/Edit/Delete and configured ExecutionTarget selection through the normal Settings UI;
-- verify Provider and Persistence pages retain their existing Management-backed behavior after navigation migration.
+- verify persistence changes are applied through a newly constructed service graph;
+- verify an invalid replacement preserves the currently usable graph;
+- verify resource-only Settings changes do not reconstruct the persistence graph;
+- verify the active Example is refreshed after Settings closes and uses the current Management graph;
+- run the focused host-composition tests;
+- broader `Hive.Tests` execution remains required at the end of Phase 1.12.
 
-Latest developer-reported automated result: full `Hive.Tests` **160/160 passed, 0 failed, 0 skipped** on 2026-09-23 using .NET 10.0.1. This verifies the current automated suite only; the required manual D Settings/UI acceptance remains open.
+The previous developer-reported full-suite result remains **160/160 passed, 0 failed, 0 skipped** on 2026-09-23 using .NET 10.0.1.
 
 Do not close 1.12-D until the required developer verification is actually performed and recorded.
 
