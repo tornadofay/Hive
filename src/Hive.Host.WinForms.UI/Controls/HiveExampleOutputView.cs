@@ -314,8 +314,13 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         }
         catch (ExternalException exception)
         {
-            System.Diagnostics.Debug.WriteLine(
-                $"HiveExampleOutputView clipboard copy failed: {exception}");
+            Write("EXCEPTION", exception.ToString());
+
+            HiveMessageBox.ShowError(
+                FindForm(),
+                "The output could not be copied to the clipboard.",
+                "Output",
+                null);
         }
     }
 
