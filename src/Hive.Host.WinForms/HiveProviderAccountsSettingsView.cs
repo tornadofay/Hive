@@ -57,7 +57,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
         };
 
         _page.SetColumns(
-            new HiveCrudColumn<ProviderAccount>("Key", 180, item => item.Key),
+            new HiveCrudColumn<ProviderAccount>("Resource key", 180, item => item.Key),
             new HiveCrudColumn<ProviderAccount>("Name", 220, item => item.DisplayName),
             new HiveCrudColumn<ProviderAccount>(
                 "External account",
@@ -101,7 +101,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
         };
         filter.Controls.Add(new Label
         {
-            Text = "Provider",
+            Text = "Provider — select one",
             AutoSize = true,
             Margin = new Padding(0, 7, 8, 0)
         });
@@ -140,15 +140,9 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
                 foreach (var provider in _providers)
                     _providerComboBox.Items.Add(new ProviderChoice(provider));
 
-                var preferred = _providers
-                    .FirstOrDefault(item =>
-                        item.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active)
-                    ?? _providers.FirstOrDefault();
-
-                _selectedProvider = preferred;
-
-                if (preferred is not null)
-                    SelectProvider(preferred.Id);
+                _providerComboBox.SelectedIndex = -1;
+                _providerComboBox.Text = "Select a Provider...";
+                _selectedProvider = null;
             }
             finally
             {
@@ -160,15 +154,13 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
             _loadingProviders = false;
         }
 
-        if (_selectedProvider is null)
-        {
-            _page.SetStatus(
-                "Add a Provider first, then manage its accounts and credentials.");
-        }
-        else
-        {
-            await _page.RefreshAsync(cancellationToken).ConfigureAwait(true);
-        }
+        _page.AllowAdd = false;
+        _page.SetStatus(
+            _selectedProvider is null
+                ? "Select a Provider to manage its accounts and credentials."
+                : "Select a Provider to manage its accounts and credentials.");
+
+        await _page.RefreshAsync(cancellationToken).ConfigureAwait(true);
     }
 
     private async void ProviderComboBoxOnSelectedIndexChanged(
@@ -184,6 +176,9 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
                 (_providerComboBox.SelectedItem as ProviderChoice)?.Value;
 
             _page.AllowAdd = _selectedProvider is not null;
+
+            if (_selectedProvider is null)
+                _providerComboBox.Text = "Select a Provider...";
 
             if (!IsDisposed)
                 await _page.RefreshAsync().ConfigureAwait(true);
@@ -362,19 +357,6 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
 
         if (result.IsFailure)
             throw new InvalidOperationException(result.Error!.Message);
-    }
-
-    private void SelectProvider(ProviderId providerId)
-    {
-        for (var index = 0; index < _providerComboBox.Items.Count; index++)
-        {
-            if (_providerComboBox.Items[index] is ProviderChoice choice &&
-                choice.Value.Id == providerId)
-            {
-                _providerComboBox.SelectedIndex = index;
-                return;
-            }
-        }
     }
 
     private void PageOperationFailed(
