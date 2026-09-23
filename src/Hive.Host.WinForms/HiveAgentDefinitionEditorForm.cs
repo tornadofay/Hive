@@ -10,6 +10,7 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
 {
     private readonly AgentDefinition? _existing;
     private readonly IReadOnlyList<ExecutionTarget> _targets;
+    private readonly IHiveExampleOutput? _output;
     private readonly TextBox _keyTextBox;
     private readonly TextBox _displayNameTextBox;
     private readonly ComboBox _generationComboBox;
@@ -20,7 +21,8 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
     public HiveAgentDefinitionEditorForm(
         AgentDefinition? definition,
         IReadOnlyList<ExecutionTarget> targets,
-        IHiveThemeManager themeManager)
+        IHiveThemeManager themeManager,
+        IHiveExampleOutput? output = null)
         : base(
             definition is null ? "New Agent" : "Edit Agent",
             "Agent definition and configured execution target",
@@ -33,6 +35,7 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
 
         _existing = definition;
         _targets = targets;
+        _output = output;
 
         ConfigureHeader(
             allowMove: true,
@@ -169,7 +172,13 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
         }
         catch (Exception exception)
         {
-            HiveMessageBox.ShowError(this, exception.Message);
+            HiveUiErrorReporter.Report(
+                this,
+                exception,
+                "Agent",
+                "The Agent could not be saved.",
+                _output,
+                ThemeManager);
         }
     }
 
