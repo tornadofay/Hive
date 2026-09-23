@@ -440,7 +440,8 @@ public sealed class HiveWinFormsHostContext : IDisposable
     private string? GetSafeText(Control control)
     {
         if (control is TextBox passwordBox &&
-            passwordBox.UseSystemPasswordChar)
+            (passwordBox.UseSystemPasswordChar ||
+             passwordBox.PasswordChar != '\\0'))
         {
             return "[redacted]";
         }
