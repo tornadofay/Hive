@@ -183,6 +183,7 @@ The previously existing Settings inspection Example produced an old-schema/local
 - The configured execution path does not create a competing service graph, database, provider target, credential store, or orchestration implementation. Existing isolated execution examples remain isolated contracts; this new example is the configured-host acceptance surface.
 - Added `Agents / Base Agent / Configured Agent Execution` as the public Example Host scenario. Its output reports the resolved resource identities and execution result without emitting credential material.
 - Settings filter selectors now load only active Providers and ProviderAccounts; retired resources remain available in the CRUD management views but cannot be selected for new filtering/configuration operations.
+- Settings resource pages now refresh their Management-backed state when revisited within the same Settings form, so newly created Providers, ProviderAccounts, and ExecutionTargets are immediately available to dependent Settings pages such as AgentDefinition editing.
 - Added focused integration coverage for configured execution through the persisted resource graph, including target switching between two real local test endpoints and explicit rejection of an AgentDefinition with no configured target.
 - The existing `First Real Agent Execution` example remains a local deterministic contract example and is intentionally not repurposed as the configured-host acceptance scenario.
 ## Verification handoff
