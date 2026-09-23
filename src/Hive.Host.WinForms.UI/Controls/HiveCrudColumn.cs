@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 
 namespace Hive.Host.WinForms.UI.Controls;
 
@@ -7,7 +8,8 @@ public sealed record HiveCrudColumn<TItem> where TItem : class
     public HiveCrudColumn(
         string header,
         int width,
-        Func<TItem, string?> valueSelector)
+        Func<TItem, string?> valueSelector,
+        Func<TItem, Color?>? foregroundColorSelector = null)
     {
         if (string.IsNullOrWhiteSpace(header))
             throw new ArgumentException("Column header is required.", nameof(header));
@@ -18,6 +20,7 @@ public sealed record HiveCrudColumn<TItem> where TItem : class
         Header = header;
         Width = width;
         ValueSelector = valueSelector;
+        ForegroundColorSelector = foregroundColorSelector;
     }
 
     public string Header { get; }
@@ -25,4 +28,6 @@ public sealed record HiveCrudColumn<TItem> where TItem : class
     public int Width { get; }
 
     public Func<TItem, string?> ValueSelector { get; }
+
+    public Func<TItem, Color?>? ForegroundColorSelector { get; }
 }
