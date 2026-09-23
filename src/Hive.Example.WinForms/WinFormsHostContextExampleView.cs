@@ -86,7 +86,7 @@ internal sealed class WinFormsHostContextExampleView : UserControl
             Margin = Padding.Empty
         };
 
-        _discoverButton.Click += async (_, _) => await DiscoverAsync();
+        _discoverButton.Click += DiscoverButtonClick;
         _imageButton.Click += ValidateImageFixture;
 
         actions.Controls.Add(_discoverButton);
@@ -128,8 +128,8 @@ internal sealed class WinFormsHostContextExampleView : UserControl
         base.Dispose(disposing);
     }
 
-    private EventHandler DiscoverButtonClick =>
-        async (_, _) => await DiscoverAsync();
+    private async void DiscoverButtonClick(object? sender, EventArgs e) =>
+        await DiscoverAsync();
 
     private async Task DiscoverAsync()
     {
