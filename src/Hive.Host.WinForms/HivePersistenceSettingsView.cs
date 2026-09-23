@@ -684,8 +684,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
         textBox.ReadOnly = true;
         textBox.TabStop = false;
         textBox.Cursor = Cursors.Arrow;
-        textBox.BackColor = themeManager.Theme.Palette.DisabledBackground;
-        textBox.ForeColor = themeManager.Theme.Palette.DisabledText;
+        textBox.BackColor = themeManager.Theme.Palette.ElevatedSurface;
+        textBox.ForeColor = themeManager.Theme.Palette.MutedText;
     }
 
     private static Label CreateStatusLabel() =>
