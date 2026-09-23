@@ -90,4 +90,9 @@ public interface IProviderResourceStore
         ExecutionTargetId executionTargetId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
+
+    Task<Result<ExecutionTarget>> ReactivateExecutionTargetAsync(
+        ExecutionTargetId executionTargetId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
 }
