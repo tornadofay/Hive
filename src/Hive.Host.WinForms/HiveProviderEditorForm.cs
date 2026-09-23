@@ -9,6 +9,7 @@ internal sealed class HiveProviderEditorForm : HiveForm
 {
     private readonly Provider? _existing;
     private readonly ResourceAccessContext _accessContext;
+    private readonly IHiveExampleOutput? _output;
     private readonly TextBox _keyTextBox;
     private readonly TextBox _nameTextBox;
     private readonly ComboBox _transportComboBox;
@@ -18,7 +19,8 @@ internal sealed class HiveProviderEditorForm : HiveForm
     public HiveProviderEditorForm(
         Provider? provider,
         ResourceAccessContext accessContext,
-        IHiveThemeManager themeManager)
+        IHiveThemeManager themeManager,
+        IHiveExampleOutput? output = null)
         : base(
             provider is null ? "New Provider" : "Edit Provider",
             "Provider resource identity and transport configuration",
@@ -29,6 +31,7 @@ internal sealed class HiveProviderEditorForm : HiveForm
         _existing = provider;
         _accessContext = accessContext
             ?? throw new ArgumentNullException(nameof(accessContext));
+        _output = output;
 
         ConfigureHeader(
             allowMove: true,
@@ -144,7 +147,13 @@ internal sealed class HiveProviderEditorForm : HiveForm
         }
         catch (Exception exception)
         {
-            HiveMessageBox.ShowError(this, exception.Message);
+            HiveUiErrorReporter.Report(
+                this,
+                exception,
+                "Provider",
+                "The Provider could not be saved.",
+                _output,
+                ThemeManager);
         }
     }
 
