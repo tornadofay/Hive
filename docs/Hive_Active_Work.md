@@ -262,9 +262,11 @@ Completed in the current UI/UX polish pass:
 - Provider, ProviderAccount, ExecutionTarget, and AgentDefinition editor dialogs now use standard Enter-to-save and Escape-to-cancel keyboard behavior.
 - Persistence actions are ordered consistently with the shared right-to-left editor footer so the primary Save action is the rightmost action.
 - Provider Account filtering uses the concise Provider label while retaining the explicit Select a Provider placeholder.
+- The shared HiveButton now implements WinForms IButtonControl so the editor dialogs can use the standard AcceptButton/CancelButton contract without replacing the Hive button surface.
+- Focused HiveButton coverage was added for the dialog-action contract and enabled/disabled PerformClick behavior.
 - Existing shared Hive UI controls remain the presentation boundary; no parallel renderer, CRUD abstraction, theme system, or configuration workflow was introduced.
 
-Manual J review remains required before closing the sub-stage. No UI launch/build/test was performed during this polish pass.
+Manual J review remains required before closing the sub-stage. No UI launch/build/test was performed after the latest HiveButton change.
 ## Verification handoff
 
 Current sub-stage: **1.12-J — Final UI/UX Review**
@@ -284,10 +286,13 @@ Manual UI review:
 8. Close Settings and reopen it; confirm navigation and page state remain visually coherent.
 9. Re-run the configured Agent operation after Settings changes to ensure the final UI review does not regress the already verified configured-host path.
 
-Automated verification already complete for the current pre-review state:
-- **171/171 passed, 0 failed, 0 skipped**.
+The previously recorded automated verification completed **171/171 passed, 0 failed, 0 skipped** on 2026-09-23, but that run predates the later HiveButton dialog-action fix and the new HiveButton-focused tests. Do not treat it as verification of the current `main` checkpoint.
 
-Do not close 1.12-J until the manual UI review is actually performed and reported.
+Verification required for the current checkpoint:
+- `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — this covers the full authoritative test suite, including `HiveButtonTests`.
+- Manual Example Host review at the exact surface below.
+
+Do not close 1.12-J until the current checkpoint has actually been verified and the manual UI review is reported.
 
 ## Historical verification
 
