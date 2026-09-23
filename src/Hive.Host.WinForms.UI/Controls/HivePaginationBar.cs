@@ -10,14 +10,15 @@ public sealed class HivePaginationBar : UserControl
     private readonly HiveButton _previousButton;
     private readonly HiveButton _nextButton;
     private readonly Label _pageLabel;
-    private readonly Font _pageFont;
+    private Font _pageFont;
     private int _pageNumber = 1;
     private bool _canGoPrevious;
     private bool _canGoNext;
 
     public HivePaginationBar()
     {
-        _pageFont = new Font("Segoe UI", 8.8f);
+        var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+        _pageFont = new Font(fallbackFont.FontFamily, fallbackFont.Size);
         Height = 42;
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
@@ -143,6 +144,18 @@ public sealed class HivePaginationBar : UserControl
     internal void ApplyTheme(HiveThemeDefinition theme)
     {
         ArgumentNullException.ThrowIfNull(theme);
+
+        var family = theme.Typography.FontFamily;
+        var size = theme.Typography.BodySize;
+
+        if (!string.Equals(_pageFont.FontFamily.Name, family, StringComparison.Ordinal) ||
+            Math.Abs(_pageFont.Size - size) > 0.01f)
+        {
+            var next = new Font(family, size);
+            _pageFont.Dispose();
+            _pageFont = next;
+            _pageLabel.Font = _pageFont;
+        }
 
         BackColor = theme.Palette.Surface;
         _pageLabel.ForeColor = theme.Palette.MutedText;
