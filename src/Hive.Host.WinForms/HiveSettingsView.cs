@@ -311,7 +311,7 @@ public sealed class HiveSettingsView : UserControl
         try
         {
             ShowSelectedPage(page);
-            await InitializePageAsync(
+            await RefreshPageOnNavigationAsync(
                 page.Key,
                 CancellationToken.None).ConfigureAwait(true);
         }
@@ -324,6 +324,59 @@ public sealed class HiveSettingsView : UserControl
                 "The selected Settings page could not be displayed.",
                 _output,
                 _themeManager);
+        }
+    }
+
+    private async Task RefreshPageOnNavigationAsync(
+        SettingsPageKey key,
+        CancellationToken cancellationToken)
+    {
+        if (IsDisposed)
+            return;
+
+        if (!_initializedPages.Contains(key))
+        {
+            await InitializePageAsync(
+                key,
+                cancellationToken).ConfigureAwait(true);
+            return;
+        }
+
+        switch (key)
+        {
+            case SettingsPageKey.ProviderConfiguration:
+                await _providerConfigurationView!
+                    .InitializeAsync(cancellationToken)
+                    .ConfigureAwait(true);
+                break;
+
+            case SettingsPageKey.ProviderAccounts:
+                await _providerAccountsView!
+                    .InitializeAsync(cancellationToken)
+                    .ConfigureAwait(true);
+                break;
+
+            case SettingsPageKey.ExecutionTargets:
+                await _executionTargetsView!
+                    .InitializeAsync(cancellationToken)
+                    .ConfigureAwait(true);
+                break;
+
+            case SettingsPageKey.Agents:
+                await _agentView!
+                    .InitializeAsync(cancellationToken)
+                    .ConfigureAwait(true);
+                break;
+
+            case SettingsPageKey.Persistence:
+                // Persistence is an editor and should not be reinitialized
+                // on every navigation because that would overwrite unsaved
+                // local edits.
+                break;
+
+            default:
+                throw new InvalidOperationException(
+                    $"Unknown Settings page '{key}'.");
         }
     }
 
