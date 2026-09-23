@@ -173,7 +173,7 @@ Verification required:
 - verify Agent Add/Edit/Delete and configured ExecutionTarget selection through the normal Settings UI;
 - verify Provider and Persistence pages retain their existing Management-backed behavior after navigation migration.
 
-Previous verified D predecessor result: full `Hive.Tests` **159/159 passed, 0 failed, 0 skipped** on 2026-09-22.
+Latest developer-reported automated result: full `Hive.Tests` **160/160 passed, 0 failed, 0 skipped** on 2026-09-23 using .NET 10.0.1. This verifies the current automated suite only; the required manual D Settings/UI acceptance remains open.
 
 Do not close 1.12-D until the required developer verification is actually performed and recorded.
 
