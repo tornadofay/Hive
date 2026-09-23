@@ -89,6 +89,9 @@ public sealed class HiveWinFormsHostRegistration : IDisposable
 
     internal Form Root { get; }
 
+    internal HiveWinFormsHostContext Owner =>
+        _owner;
+
     internal bool IsDisposed =>
         Volatile.Read(ref _disposed) != 0;
 
@@ -109,6 +112,11 @@ public sealed class HiveWinFormsHostRegistration : IDisposable
 
         _owner.Unregister(this);
         GC.SuppressFinalize(this);
+    }
+
+    internal void MarkDisposedByOwner()
+    {
+        Interlocked.Exchange(ref _disposed, 1);
     }
 }
 
@@ -161,7 +169,7 @@ public sealed class HiveWinFormsHostContext : IDisposable
         return registration;
     }
 
-    public async Task<Result<HiveWinFormsHostContextSnapshot>> CaptureAsync(
+    public Task<Result<HiveWinFormsHostContextSnapshot>> CaptureAsync(
         HiveWinFormsHostRegistration registration,
         CancellationToken cancellationToken = default)
     {
@@ -172,8 +180,9 @@ public sealed class HiveWinFormsHostContext : IDisposable
         if (!ReferenceEquals(registration.Owner, this))
         {
             return Result<HiveWinFormsHostContextSnapshot>.Failure(
-                Error.Forbidden(
+                new Error(
                     "hive.host.context.registration-forbidden",
+                    ErrorCategory.Forbidden,
                     "The supplied host-context registration belongs to another context."));
         }
 
@@ -202,8 +211,30 @@ public sealed class HiveWinFormsHostContext : IDisposable
                     "WinForms host-context discovery must run on the UI thread."));
         }
 
-        return Result<HiveWinFormsHostContextSnapshot>.Success(
-            CaptureCore(registration, cancellationToken));
+        try
+        {
+            return Task.FromResult(
+                Result<HiveWinFormsHostContextSnapshot>.Success(
+                    CaptureCore(registration, cancellationToken)));
+        }
+        catch (HiveWinFormsHostContextLimitException exception)
+        {
+            return Task.FromResult(
+                Result<HiveWinFormsHostContextSnapshot>.Failure(
+                    new Error(
+                        exception.Code,
+                        ErrorCategory.Validation,
+                        exception.Message)));
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Task.FromResult(
+                Result<HiveWinFormsHostContextSnapshot>.Failure(
+                    new Error(
+                        "hive.host.context.capture-failed",
+                        ErrorCategory.Conflict,
+                        $"WinForms host-context discovery could not be completed: {exception.Message}")));
+        }
     }
 
     public async Task<Result<IReadOnlyList<HiveWinFormsHostContextSnapshot>>> CaptureAsync(
@@ -471,20 +502,4 @@ public sealed class HiveWinFormsHostContextLimitException : Exception
     }
 
     public string Code { get; }
-}
-
-internal static class HiveWinFormsHostRegistrationExtensions
-{
-    public static Guid RegistrationOwnerToken(
-        this HiveWinFormsHostRegistration registration) =>
-        registration.RegistrationId;
-}
-
-internal static class HiveWinFormsHostRegistrationInternals
-{
-    public static void MarkDisposedByOwner(
-        this HiveWinFormsHostRegistration registration)
-    {
-        registration.MarkDisposed();
-    }
 }
