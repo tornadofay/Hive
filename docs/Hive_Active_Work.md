@@ -52,8 +52,6 @@ Required inspection sources:
 - existing WorkItem image contracts and Management facade;
 - current Host.WinForms and Example Host composition/lifetime boundaries.
 
-## Implementation checkpoint
-
 Implemented:
 - `HiveWinFormsHostContext` with explicit Form registration and deterministic bounded discovery;
 - immutable control/binding metadata snapshots with registration/capture provenance;
