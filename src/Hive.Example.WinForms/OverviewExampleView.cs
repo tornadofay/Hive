@@ -22,12 +22,12 @@ internal sealed class OverviewExampleView : UserControl
     private readonly IHiveThemeManager _themeManager;
     private readonly Label _hostText;
     private readonly Label _uiText;
-    private readonly Font _eyebrowFont;
-    private readonly Font _titleFont;
-    private readonly Font _sectionFont;
-    private readonly Font _bodyFont;
-    private readonly Font _cardTitleFont;
-    private readonly Font _linkFont;
+    private Font _eyebrowFont;
+    private Font _titleFont;
+    private Font _sectionFont;
+    private Font _bodyFont;
+    private Font _cardTitleFont;
+    private Font _linkFont;
 
     public OverviewExampleView(IHiveThemeManager themeManager)
     {
@@ -40,12 +40,13 @@ internal sealed class OverviewExampleView : UserControl
         Padding = Padding.Empty;
         AutoScroll = true;
 
-        _eyebrowFont = new Font("Segoe UI Semibold", 9f, FontStyle.Bold);
-        _titleFont = new Font("Segoe UI Semibold", 22f, FontStyle.Bold);
-        _sectionFont = new Font("Segoe UI Semibold", 11f, FontStyle.Bold);
-        _bodyFont = new Font("Segoe UI", 9.25f);
-        _cardTitleFont = new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
-        _linkFont = new Font("Segoe UI Semibold", 9.25f, FontStyle.Underline);
+        var family = themeManager.Theme.Typography.FontFamily;
+        _eyebrowFont = new Font(family, 9f, FontStyle.Bold);
+        _titleFont = new Font(family, 22f, FontStyle.Bold);
+        _sectionFont = new Font(family, 11f, FontStyle.Bold);
+        _bodyFont = new Font(family, 9.25f);
+        _cardTitleFont = new Font(family, 9.5f, FontStyle.Bold);
+        _linkFont = new Font(family, 9.25f, FontStyle.Underline);
 
         var root = new TableLayoutPanel
         {
@@ -316,6 +317,69 @@ internal sealed class OverviewExampleView : UserControl
         ApplyTheme(_themeManager.Theme);
     }
 
+    private void ApplyTypography(HiveThemeDefinition theme)
+    {
+        var family = theme.Typography.FontFamily;
+
+        if (string.Equals(
+                _bodyFont.FontFamily.Name,
+                family,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _eyebrowFont = ReplaceFont(_eyebrowFont, family, 9f, FontStyle.Bold);
+        _titleFont = ReplaceFont(_titleFont, family, 22f, FontStyle.Bold);
+        _sectionFont = ReplaceFont(_sectionFont, family, 11f, FontStyle.Bold);
+        _bodyFont = ReplaceFont(_bodyFont, family, 9.25f, FontStyle.Regular);
+        _cardTitleFont = ReplaceFont(_cardTitleFont, family, 9.5f, FontStyle.Bold);
+        _linkFont = ReplaceFont(_linkFont, family, 9.25f, FontStyle.Underline);
+
+        _eyebrow.Font = _eyebrowFont;
+        _title.Font = _titleFont;
+        _intro.Font = _bodyFont;
+        _repositoryLink.Font = _linkFont;
+
+        foreach (Control control in _cards.Controls)
+        {
+            foreach (Control child in EnumerateChildren(control))
+            {
+                if (child is Label label)
+                {
+                    label.Font = Math.Abs(label.Font.Size - 9.5f) <= 0.01f
+                        ? _cardTitleFont
+                        : label.Font.Style == FontStyle.Bold &&
+                          Math.Abs(label.Font.Size - 11f) <= 0.01f
+                            ? _sectionFont
+                            : _bodyFont;
+                }
+            }
+        }
+    }
+
+    private static Font ReplaceFont(
+        Font current,
+        string family,
+        float size,
+        FontStyle style)
+    {
+        var next = new Font(family, size, style);
+        current.Dispose();
+        return next;
+    }
+
+    private static IEnumerable<Control> EnumerateChildren(Control root)
+    {
+        foreach (Control child in root.Controls)
+        {
+            yield return child;
+
+            foreach (var descendant in EnumerateChildren(child))
+                yield return descendant;
+        }
+    }
+
     private void OpenRepository()
     {
         try
@@ -336,6 +400,8 @@ internal sealed class OverviewExampleView : UserControl
 
     internal void ApplyTheme(HiveThemeDefinition theme)
     {
+        ApplyTypography(theme);
+
         BackColor = theme.Palette.Surface;
         _hero.BackColor = theme.Palette.ElevatedSurface;
         _cards.BackColor = theme.Palette.Surface;
