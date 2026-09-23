@@ -16,7 +16,7 @@ public sealed class HiveButtonTests
 
         form.AcceptButton = button;
         Assert.Same(button, form.AcceptButton);
-        Assert.Equal(DialogResult.OK, button.DialogResult);
+        Assert.Equal(DialogResult.None, button.DialogResult);
 
         form.CancelButton = button;
         Assert.Same(button, form.CancelButton);
