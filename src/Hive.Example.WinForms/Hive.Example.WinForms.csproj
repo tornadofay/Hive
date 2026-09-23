@@ -8,6 +8,9 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Fixtures/Phase13Sample.svg" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../Hive.Core/Hive.Core.csproj" />
     <ProjectReference Include="../Hive.Agents/Hive.Agents.csproj" />
     <ProjectReference Include="../Hive.Coordination/Hive.Coordination.csproj" />
