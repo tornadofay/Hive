@@ -31,7 +31,7 @@ internal sealed class HiveProviderConfigurationView : UserControl
         {
             Title = "Provider Configuration",
             Description =
-                "Define Hive Provider resources and their transport kinds. Credentials and execution endpoints belong to the child resource domains.",
+                "Define Provider identity and transport only. API keys belong to Accounts / Credentials; API endpoints and models belong to Execution Targets.",
             PageSize = 25,
             AllowAdd = true,
             AllowEdit = true,
