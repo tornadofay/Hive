@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Reflection;
 using System.Windows.Forms;
+using Hive.Agents;
 using Hive.Core;
 using Hive.Host.WinForms;
 using Hive.Host.WinForms.UI.Controls;
@@ -27,6 +28,8 @@ internal sealed class HiveExampleHostForm : HiveForm
     private readonly Label _navigationDescription;
     private readonly Label _viewTitle;
     private readonly Label _viewSubtitle;
+    private readonly Label _configuredAgentLabel;
+    private readonly ComboBox _configuredAgentSelector;
     private readonly Panel _viewHost;
     private readonly TableLayoutPanel _contentLayout;
     private readonly TableLayoutPanel _shell;
@@ -47,6 +50,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     private UserControl? _activeView;
     private IHiveExample? _activeExample;
     private bool _responsiveLayoutReady;
+    private bool _loadingConfiguredAgents;
     private Rectangle _lastOutputViewBounds;
     private Rectangle _lastOutputRevealButtonBounds;
 
@@ -176,12 +180,13 @@ internal sealed class HiveExampleHostForm : HiveForm
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 3,
+            RowCount = 4,
             Margin = Padding.Empty,
             Padding = new Padding(24, 18, 24, 20)
         };
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _contentLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
         _contentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
 
         _viewTitle = new Label
@@ -201,6 +206,47 @@ internal sealed class HiveExampleHostForm : HiveForm
             Padding = Padding.Empty
         };
 
+        _configuredAgentLabel = new Label
+        {
+            Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI Semibold", 9f, FontStyle.Bold),
+            Margin = new Padding(0, 0, 10, 0),
+            Padding = Padding.Empty,
+            Text = "Configured Agent",
+            TextAlign = ContentAlignment.MiddleLeft,
+            AccessibleName = "Configured Agent label"
+        };
+
+        _configuredAgentSelector = new ComboBox
+        {
+            Anchor = AnchorStyles.Left | AnchorStyles.Right,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 420,
+            Margin = Padding.Empty,
+            FormattingEnabled = true,
+            Enabled = false,
+            AccessibleName = "Configured Agent selector",
+            AccessibleDescription =
+                "Select the persisted AgentDefinition used by configured-host examples."
+        };
+        _configuredAgentSelector.SelectedIndexChanged += ConfiguredAgentSelectorOnSelectedIndexChanged;
+
+        var configuredAgentLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = new Padding(0, 0, 0, 8),
+            Padding = Padding.Empty
+        };
+        configuredAgentLayout.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Absolute, 132));
+        configuredAgentLayout.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Percent, 100f));
+        configuredAgentLayout.Controls.Add(_configuredAgentLabel, 0, 0);
+        configuredAgentLayout.Controls.Add(_configuredAgentSelector, 1, 0);
+
         _viewHost = new Panel
         {
             Dock = DockStyle.Fill,
@@ -212,7 +258,8 @@ internal sealed class HiveExampleHostForm : HiveForm
 
         _contentLayout.Controls.Add(_viewTitle, 0, 0);
         _contentLayout.Controls.Add(_viewSubtitle, 0, 1);
-        _contentLayout.Controls.Add(_viewHost, 0, 2);
+        _contentLayout.Controls.Add(configuredAgentLayout, 0, 2);
+        _contentLayout.Controls.Add(_viewHost, 0, 3);
 
         _shell.Controls.Add(_navigationSurface, 0, 0);
         _shell.Controls.Add(_navigationSeparator, 1, 0);
@@ -274,7 +321,10 @@ internal sealed class HiveExampleHostForm : HiveForm
             _services = new HiveExampleServices(
                 _themeManager,
                 _outputView,
-                _composition.Current!);
+                _composition.Current!,
+                ExampleSettingsAccessContext);
+
+            await RefreshConfiguredStateAsync();
 
             SelectFirstExample();
         }
@@ -308,6 +358,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             _navigation.AfterSelect -= NavigationAfterSelect;
             _outputView.CollapseStateChanged -= OutputViewOnCollapseStateChanged;
             _outputView.OutputAvailabilityChanged -= OutputViewOnOutputAvailabilityChanged;
+            _configuredAgentSelector.SelectedIndexChanged -= ConfiguredAgentSelectorOnSelectedIndexChanged;
             DisposeActiveView();
             _composition?.Dispose();
             _composition = null;
@@ -333,6 +384,8 @@ internal sealed class HiveExampleHostForm : HiveForm
         _navigationDescription.ForeColor = theme.Palette.MutedText;
         _viewTitle.ForeColor = theme.Palette.Text;
         _viewSubtitle.ForeColor = theme.Palette.MutedText;
+        _configuredAgentLabel.ForeColor = theme.Palette.Text;
+        _themeManager.Apply(_configuredAgentSelector);
         _viewHost.BackColor = theme.Palette.Surface;
     }
 
@@ -639,6 +692,8 @@ internal sealed class HiveExampleHostForm : HiveForm
 
         try
         {
+            var preferredAgentId = _services.SelectedAgentDefinition?.Id;
+
             using var form = new HiveSettingsForm(
                 graph.Management,
                 ExampleSettingsAccessContext,
@@ -667,7 +722,10 @@ internal sealed class HiveExampleHostForm : HiveForm
             _services = new HiveExampleServices(
                 _themeManager,
                 _outputView,
-                currentGraph);
+                currentGraph,
+                ExampleSettingsAccessContext);
+
+            await RefreshConfiguredStateAsync(preferredAgentId);
 
             if (_activeExample is not null)
                 ShowExample(
@@ -683,6 +741,117 @@ internal sealed class HiveExampleHostForm : HiveForm
                 "The Hive Settings changes could not be applied to the running host.",
                 _outputView,
                 _themeManager);
+        }
+    }
+
+    private void ConfiguredAgentSelectorOnSelectedIndexChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (_loadingConfiguredAgents || _services is null)
+            return;
+
+        _services.SetSelectedAgentDefinition(
+            _configuredAgentSelector.SelectedItem as AgentDefinition);
+    }
+
+    private async Task RefreshConfiguredStateAsync(
+        AgentDefinitionId? preferredAgentId = null)
+    {
+        var services = _services;
+        var composition = _composition;
+
+        if (services is null ||
+            composition?.Current is not { IsDisposed: false } graph)
+            return;
+
+        _loadingConfiguredAgents = true;
+
+        try
+        {
+            var providers = await graph.Management
+                .ListProvidersAsync(
+                    services.AccessContext,
+                    cancellationToken: default)
+                .ConfigureAwait(true);
+
+            if (providers.IsFailure)
+            {
+                _configuredAgentSelector.Items.Clear();
+                _configuredAgentSelector.Enabled = false;
+                services.SetSelectedAgentDefinition(null);
+                _configuredAgentLabel.Text =
+                    "Configured Agent — resources unavailable";
+
+                HiveUiErrorReporter.Report(
+                    this,
+                    providers.Error!.Message,
+                    "Configured Hive resources",
+                    "The host could not load the persisted Provider configuration.",
+                    _outputView,
+                    _themeManager);
+                return;
+            }
+
+            var agents = await graph.Management
+                .ListAgentDefinitionsAsync(
+                    services.AccessContext,
+                    cancellationToken: default)
+                .ConfigureAwait(true);
+
+            if (agents.IsFailure)
+            {
+                _configuredAgentSelector.Items.Clear();
+                _configuredAgentSelector.Enabled = false;
+                services.SetSelectedAgentDefinition(null);
+                _configuredAgentLabel.Text =
+                    "Configured Agent — resources unavailable";
+
+                HiveUiErrorReporter.Report(
+                    this,
+                    agents.Error!.Message,
+                    "Configured Hive resources",
+                    "The host could not load the persisted AgentDefinition configuration.",
+                    _outputView,
+                    _themeManager);
+                return;
+            }
+
+            var definitions = agents.Value!;
+            var selected =
+                preferredAgentId is AgentDefinitionId requested
+                    ? definitions.FirstOrDefault(
+                        definition => definition.Id == requested)
+                    : null;
+
+            selected ??= definitions.FirstOrDefault();
+
+            _configuredAgentSelector.BeginUpdate();
+            try
+            {
+                _configuredAgentSelector.Items.Clear();
+
+                foreach (var definition in definitions)
+                    _configuredAgentSelector.Items.Add(definition);
+
+                if (selected is not null)
+                    _configuredAgentSelector.SelectedItem = selected;
+            }
+            finally
+            {
+                _configuredAgentSelector.EndUpdate();
+            }
+
+            _configuredAgentSelector.Enabled = definitions.Count > 0;
+            services.SetSelectedAgentDefinition(selected);
+            _configuredAgentLabel.Text =
+                definitions.Count == 0
+                    ? "Configured Agent — none configured"
+                    : $"Configured Agent ({definitions.Count:N0})";
+        }
+        finally
+        {
+            _loadingConfiguredAgents = false;
         }
     }
 
