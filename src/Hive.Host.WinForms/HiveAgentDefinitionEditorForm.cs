@@ -137,6 +137,9 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
         };
         _saveButton.Click += (_, _) => Save();
 
+        AcceptButton = _saveButton;
+        CancelButton = _cancelButton;
+
         BodyPanel.Controls.Add(editor);
         ThemeManager.Apply(BodyPanel);
     }
