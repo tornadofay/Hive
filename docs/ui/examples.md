@@ -102,6 +102,7 @@ Examples are classified by the dependency model they prove:
 | **Configured-host** | `Agents / Base Agent / Configured Agent Execution` — consumes the persisted Provider → ProviderAccount → ExecutionTarget → AgentDefinition graph from the host service graph and must not create a competing persistence/configuration path. |
 | **Isolated contract** | `Workspace / WorkItem Operations`; `Management / Facade`; `Agents / Base Agent / First Real Agent Execution`; `Providers / Security / DPAPI Secret Store`; `Providers / Provider Platform`; `Persistence / Events / Event Persistence`; `Persistence / Events / Outbox Poller` — these intentionally use deterministic/example resources or `HiveDatabaseOptions.LocalDevelopment()` where that local database is intrinsic to the contract being demonstrated. |
 | **Host configuration surface** | `Overview / Getting Started / Example Configuration` — opens the real global Hive Settings surface; it is infrastructure guidance, not an isolated database example and not a competing configuration model. |
+| **Host integration** | `Host / WinForms Integration / Image Input & WinForms Host Context` — uses deterministic local fixtures to prove the concrete WinForms host-context contract and image submission boundary without requiring a real provider account. |
 
 The current `HiveDatabaseOptions.LocalDevelopment()` uses were reviewed during Phase 1.12-G and intentionally remain isolated. They are not evidence that configured-host examples may bypass the host service graph.
 ## Settings as package configuration
