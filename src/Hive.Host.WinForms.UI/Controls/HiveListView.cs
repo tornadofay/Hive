@@ -184,65 +184,60 @@ public sealed class HiveListView : ListView
         var selected = item.Selected;
         var hovered = item.Index == _hoverIndex && !selected;
 
-        // Draw the whole row from the first column only. ListView can issue an
-        // extra DrawItem notification while hovering; keeping the row background
-        // here prevents that native repaint from covering custom text.
-        if (e.ColumnIndex == 0)
+        // Paint every visible sub-item cell. Painting the row only from column 0
+        // leaves horizontally scrolled columns dependent on the native repaint path,
+        // which can expose stale pixels at the right side of the list.
+        var cell = e.Bounds;
+
+        var background = !Enabled
+            ? _rowDisabledBrush
+            : selected
+                ? _rowSelectionBrush
+                : hovered
+                    ? _rowHoverBrush
+                    : item.Index % 2 == 0
+                        ? _rowInputBrush
+                        : _rowSurfaceBrush;
+
+        if (background is not null)
+            e.Graphics.FillRectangle(background, cell);
+
+        if (_borderPen is not null)
         {
-            var row = new Rectangle(
-                0,
-                e.Bounds.Top,
-                ClientSize.Width,
-                e.Bounds.Height);
+            e.Graphics.DrawLine(
+                _borderPen,
+                cell.Left,
+                cell.Bottom - 1,
+                cell.Right - 1,
+                cell.Bottom - 1);
+        }
 
-            var background = !Enabled
-                ? _rowDisabledBrush
-                : selected
-                    ? _rowSelectionBrush
-                    : hovered
-                        ? _rowHoverBrush
-                        : item.Index % 2 == 0
-                            ? _rowInputBrush
-                            : _rowSurfaceBrush;
+        if (e.ColumnIndex == 0 && selected && Enabled && _accentBrush is not null)
+        {
+            e.Graphics.FillRectangle(
+                _accentBrush,
+                cell.Left,
+                cell.Top + 5,
+                3,
+                Math.Max(8, cell.Height - 10));
+        }
 
-            if (background is not null)
-                e.Graphics.FillRectangle(background, row);
-
-            if (_borderPen is not null)
-            {
-                e.Graphics.DrawLine(
-                    _borderPen,
-                    row.Left,
-                    row.Bottom - 1,
-                    row.Right - 1,
-                    row.Bottom - 1);
-            }
-
-            if (selected && Enabled && _accentBrush is not null)
-            {
-                e.Graphics.FillRectangle(
-                    _accentBrush,
-                    row.Left,
-                    row.Top + 5,
-                    3,
-                    Math.Max(8, row.Height - 10));
-            }
-
-            if (selected && Focused && Enabled && _focusPen is not null)
-            {
-                var focus = Rectangle.Inflate(row, -1, -1);
-                e.Graphics.DrawRectangle(
-                    _focusPen,
-                    focus.Left,
-                    focus.Top,
-                    Math.Max(0, focus.Width - 1),
-                    Math.Max(0, focus.Height - 1));
-            }
+        if (e.ColumnIndex == 0 && selected && Focused && Enabled && _focusPen is not null)
+        {
+            var focus = Rectangle.Inflate(cell, -1, -1);
+            e.Graphics.DrawRectangle(
+                _focusPen,
+                focus.Left,
+                focus.Top,
+                Math.Max(0, focus.Width - 1),
+                Math.Max(0, focus.Height - 1));
         }
 
         var color = !Enabled
             ? theme.Palette.DisabledText
-            : theme.Palette.Text;
+            : e.SubItem is { ForeColor.IsEmpty: false }
+                ? e.SubItem.ForeColor
+                : theme.Palette.Text;
 
         var flags = TextFormatFlags.VerticalCenter |
                     TextFormatFlags.EndEllipsis |
