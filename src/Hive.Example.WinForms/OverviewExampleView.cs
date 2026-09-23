@@ -329,73 +329,62 @@ internal sealed class OverviewExampleView : UserControl
             return;
         }
 
-        _eyebrowFont = ReplaceFont(_eyebrowFont, family, 9f, FontStyle.Bold);
-        _titleFont = ReplaceFont(_titleFont, family, 22f, FontStyle.Bold);
-        _sectionFont = ReplaceFont(_sectionFont, family, 11f, FontStyle.Bold);
-        _bodyFont = ReplaceFont(_bodyFont, family, 9.25f, FontStyle.Regular);
-        _cardTitleFont = ReplaceFont(_cardTitleFont, family, 9.5f, FontStyle.Bold);
-        _linkFont = ReplaceFont(_linkFont, family, 9.25f, FontStyle.Underline);
+        var previousEyebrow = _eyebrowFont;
+        var previousTitle = _titleFont;
+        var previousSection = _sectionFont;
+        var previousBody = _bodyFont;
+        var previousCardTitle = _cardTitleFont;
+        var previousLink = _linkFont;
+
+        _eyebrowFont = new Font(family, 9f, FontStyle.Bold);
+        _titleFont = new Font(family, 22f, FontStyle.Bold);
+        _sectionFont = new Font(family, 11f, FontStyle.Bold);
+        _bodyFont = new Font(family, 9.25f);
+        _cardTitleFont = new Font(family, 9.5f, FontStyle.Bold);
+        _linkFont = new Font(family, 9.25f, FontStyle.Underline);
 
         _eyebrow.Font = _eyebrowFont;
         _title.Font = _titleFont;
         _intro.Font = _bodyFont;
         _repositoryLink.Font = _linkFont;
+        _projectText.Font = _bodyFont;
+        _hostText.Font = _bodyFont;
+        _uiText.Font = _bodyFont;
 
-        foreach (Control control in _cards.Controls)
+        foreach (Control card in _cards.Controls)
         {
-            foreach (Control child in EnumerateChildren(control))
+            if (card is not Panel panel)
+                continue;
+
+            foreach (Control child in panel.Controls)
             {
                 if (child is Label label)
-                {
-                    label.Font = Math.Abs(label.Font.Size - 9.5f) <= 0.01f
-                        ? _cardTitleFont
-                        : label.Font.Style == FontStyle.Bold &&
-                          Math.Abs(label.Font.Size - 11f) <= 0.01f
-                            ? _sectionFont
-                            : _bodyFont;
-                }
+                    label.Font = label.Dock == DockStyle.Fill
+                        ? _bodyFont
+                        : _cardTitleFont;
             }
         }
-    }
 
-    private static Font ReplaceFont(
-        Font current,
-        string family,
-        float size,
-        FontStyle style)
-    {
-        var next = new Font(family, size, style);
-        current.Dispose();
-        return next;
-    }
-
-    private static IEnumerable<Control> EnumerateChildren(Control root)
-    {
-        foreach (Control child in root.Controls)
+        foreach (var section in new[]
+                 {
+                     _navigationSection,
+                     _architectureSection,
+                     _projectSection
+                 })
         {
-            yield return child;
+            if (section.Controls.Count == 2)
+            {
+                section.Controls[0].Font = _sectionFont;
+                section.Controls[1].Font = _bodyFont;
+            }
+        }
 
-            foreach (var descendant in EnumerateChildren(child))
-                yield return descendant;
-        }
-    }
-
-    private void OpenRepository()
-    {
-        try
-        {
-            Process.Start(
-                new ProcessStartInfo
-                {
-                    FileName = RepositoryUrl,
-                    UseShellExecute = true
-                });
-        }
-        catch (Exception exception)
-        {
-            System.Diagnostics.Debug.WriteLine(
-                $"Could not open Hive repository: {exception}");
-        }
+        previousEyebrow.Dispose();
+        previousTitle.Dispose();
+        previousSection.Dispose();
+        previousBody.Dispose();
+        previousCardTitle.Dispose();
+        previousLink.Dispose();
     }
 
     internal void ApplyTheme(HiveThemeDefinition theme)
