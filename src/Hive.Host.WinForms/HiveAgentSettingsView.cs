@@ -64,11 +64,31 @@ internal sealed class HiveAgentSettingsView : UserControl
             new HiveCrudColumn<AgentDefinition>(
                 "Lifecycle",
                 110,
-                item => item.Resource?.Lifecycle.Status.ToString() ?? "Unpersisted"));
+                item => item.Resource is null
+                    ? "● Unpersisted"
+                    : HiveLifecyclePresentation.Format(
+                        item.Resource.Lifecycle.Status),
+                item => item.Resource is null
+                    ? null
+                    : HiveLifecyclePresentation.Color(
+                        item.Resource.Lifecycle.Status,
+                        _themeManager)));
 
         _page.LoadItemsAsync = LoadAsync;
         _page.EditItemAsync = EditAsync;
         _page.DeleteItemAsync = DeleteAsync;
+        _page.ActivateItemAsync = ActivateAsync;
+        _page.StatusSelector = item =>
+            item.Resource?.Lifecycle.Status.ToString() ?? "Unpersisted";
+        _page.CanEditItem = item =>
+            item.Resource is not null &&
+            HiveLifecyclePresentation.IsActive(item.Resource);
+        _page.CanDeleteItem = item =>
+            item.Resource is not null &&
+            HiveLifecyclePresentation.IsActive(item.Resource);
+        _page.CanActivateItem = item =>
+            item.Resource is not null &&
+            HiveLifecyclePresentation.IsRetired(item.Resource);
         _page.GetItemDisplayName = item =>
             $"{item.DisplayName} [{item.Key}]";
 
@@ -189,6 +209,21 @@ internal sealed class HiveAgentSettingsView : UserControl
     {
         var result = await _management
             .DeleteAgentDefinitionAsync(
+                definition.Id,
+                _accessContext,
+                cancellationToken)
+            .ConfigureAwait(true);
+
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error!.Message);
+    }
+
+    private async Task ActivateAsync(
+        AgentDefinition definition,
+        CancellationToken cancellationToken)
+    {
+        var result = await _management
+            .ReactivateAgentDefinitionAsync(
                 definition.Id,
                 _accessContext,
                 cancellationToken)
