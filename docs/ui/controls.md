@@ -127,7 +127,7 @@ layout.AddField("Name", "Provider name.", textBox);
 var save = layout.AddActionButton("Save", HiveButtonStyle.Primary);
 ```
 
-Members: `FieldsPanel`, `FooterPanel`, `LabelColumnWidth`, `ClearFields()`, `AddField(...)`, `AddActionButton(...)`.
+Members: `FieldsPanel`, `FooterPanel`, `LabelColumnWidth`, `ClearFields()`, `AddField(...)`, `AddActionButton(...)`. Field descriptions use the shared tooltip when their visible text is ellipsized.
 
 ## HivePaginationBar
 
