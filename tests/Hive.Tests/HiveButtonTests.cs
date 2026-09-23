@@ -15,15 +15,14 @@ public sealed class HiveButtonTests
         Assert.IsAssignableFrom<IButtonControl>(button);
 
         form.AcceptButton = button;
-        form.CancelButton = button;
-
         Assert.Same(button, form.AcceptButton);
+        Assert.Equal(DialogResult.OK, button.DialogResult);
+
+        form.CancelButton = button;
         Assert.Same(button, form.CancelButton);
+        Assert.Equal(DialogResult.Cancel, button.DialogResult);
 
         var control = (IButtonControl)button;
-
-        Assert.Equal(DialogResult.None, control.DialogResult);
-
         control.DialogResult = DialogResult.OK;
 
         Assert.Equal(DialogResult.OK, control.DialogResult);
