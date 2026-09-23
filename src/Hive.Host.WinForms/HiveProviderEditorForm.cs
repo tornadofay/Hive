@@ -110,7 +110,7 @@ internal sealed class HiveProviderEditorForm : HiveForm
 
         _saveButton.Click += (_, _) => Save();
 
-        Controls.Add(editor);
+        BodyPanel.Controls.Add(editor);
         ThemeManager.Apply(BodyPanel);
     }
 
