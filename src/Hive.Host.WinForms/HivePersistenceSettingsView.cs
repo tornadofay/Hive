@@ -10,6 +10,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
+    private readonly IHiveExampleOutput? _output;
     private readonly string _applicationName;
     private readonly HiveEditorLayout _editor;
     private readonly TextBox _serverTextBox;
@@ -35,11 +36,13 @@ internal sealed class HivePersistenceSettingsView : UserControl
         IHiveManagementFacade management,
         ResourceAccessContext accessContext,
         IHiveThemeManager themeManager,
-        string? applicationName = null)
+        string? applicationName = null,
+        IHiveExampleOutput? output = null)
     {
         _management = management ?? throw new ArgumentNullException(nameof(management));
         _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
         _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
+        _output = output;
         _applicationName = string.IsNullOrWhiteSpace(applicationName)
             ? HivePersistenceConfiguration.DefaultApplicationName
             : applicationName.Trim();
@@ -545,6 +548,14 @@ internal sealed class HivePersistenceSettingsView : UserControl
         catch (Exception exception)
         {
             SetStatus(exception.Message, isError: true);
+
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                exception,
+                "Hive Persistence",
+                "The persistence operation could not be completed.",
+                _output,
+                _themeManager);
         }
         finally
         {
