@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Last updated: 2026-09-22
+Last updated: 2026-09-23
 
 ## Active slice
 
@@ -106,7 +106,6 @@ Implemented in the active slice:
 - Accounts / Credentials are scoped by Provider, and Execution Targets are scoped by Provider Account, matching the Management resource hierarchy.
 - Persistence remains a single global configuration editor because it represents one persisted configuration document rather than a CRUD resource collection.
 - Persistence Server / instance uses a free-form text field; Hive does not enumerate installed SQL Server instances. The database name is generated automatically as Hive-[Host-App-Name].
-- Persistence Server / instance previously used an editable ComboBox for current/session-known values; this design was removed because Hive must support arbitrary local, remote, named-instance, and online SQL Server targets.lues while still accepting manually entered server names; no fake SQL Server discovery list is introduced.
 - 1.12-D adds `Overview / Getting Started / Example Configuration` as the normal Example Host entry point to the real Hive Settings center.
 - The configuration example explains that Provider Accounts are credential/resource records rather than provider login screens, that Execution Targets contain concrete model/endpoint configuration, and that future Settings domains appear only when their authoritative contracts exist.
 - The Example Host now supplies a deterministic development ResourceAccessContext for its Settings surface so configured resources remain addressable across Example Host restarts.
@@ -115,6 +114,8 @@ Implemented in the active slice:
 - Persistence Test Connection remains non-destructive: it reports `DatabaseNotFound` when the target database is absent. The current Settings UI records `createDatabaseIfMissing` as initialization policy, but an explicit Management/application initialization operation that creates the database and applies migrations is not yet part of the D slice; Save and Test must not create or migrate the database.
 
 - The old combined `HiveProviderSettingsView` was deleted rather than retained as a compatibility UI layer; Provider, ProviderAccount, and ExecutionTarget now have independent Settings pages and editor dialogs.
+
+- User-visible UI errors in the existing Example Host and Settings UI now use the shared `HiveUiErrorReporter`: MessageBox plus technical Output-panel diagnostics when the Example Output sink is available; secrets are never written to either surface.
 
 Before coding, inspect:
 
