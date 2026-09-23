@@ -131,6 +131,9 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
         };
         save.Click += (_, _) => Save();
 
+        AcceptButton = save;
+        CancelButton = cancel;
+
         BodyPanel.Controls.Add(editor);
         ThemeManager.Apply(BodyPanel);
     }
