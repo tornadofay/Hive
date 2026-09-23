@@ -694,22 +694,22 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         var typography = hiveForm.Theme.Typography;
         var family = typography.FontFamily;
 
-        ReplaceFontIfNeeded(
+        var previousTitle = ReplaceFontIfNeeded(
             ref _titleFont,
             family,
             typography.TitleSize,
             FontStyle.Bold);
-        ReplaceFontIfNeeded(
+        var previousDescription = ReplaceFontIfNeeded(
             ref _descriptionFont,
             family,
             typography.SmallSize,
             FontStyle.Regular);
-        ReplaceFontIfNeeded(
+        var previousSearchLabel = ReplaceFontIfNeeded(
             ref _searchLabelFont,
             family,
             typography.SectionSize,
             FontStyle.Bold);
-        ReplaceFontIfNeeded(
+        var previousEmptyState = ReplaceFontIfNeeded(
             ref _emptyStateFont,
             family,
             typography.BodySize,
@@ -720,9 +720,14 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _searchLabel.Font = _searchLabelFont;
         _statusFilterLabel.Font = _searchLabelFont;
         _emptyStateLabel.Font = _emptyStateFont;
+
+        previousTitle?.Dispose();
+        previousDescription?.Dispose();
+        previousSearchLabel?.Dispose();
+        previousEmptyState?.Dispose();
     }
 
-    private static void ReplaceFontIfNeeded(
+    private static Font? ReplaceFontIfNeeded(
         ref Font current,
         string family,
         float size,
@@ -732,13 +737,12 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Math.Abs(current.Size - size) <= 0.01f &&
             current.Style == style)
         {
-            return;
+            return null;
         }
 
-        var next = new Font(family, size, style);
         var previous = current;
-        current = next;
-        previous.Dispose();
+        current = new Font(family, size, style);
+        return previous;
     }
 
     protected override void Dispose(bool disposing)
