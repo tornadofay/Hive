@@ -276,21 +276,14 @@ public sealed class HiveEditorLayout : UserControl
         if (descriptionMatches && titleMatches)
             return;
 
-        var nextDescription = descriptionMatches
-            ? null
-            : new Font(family, descriptionSize);
-        var nextTitle = titleMatches
-            ? null
-            : new Font(family, titleSize, FontStyle.Bold);
+        var nextDescription = new Font(family, descriptionSize);
+        var nextTitle = new Font(family, titleSize, FontStyle.Bold);
 
         var previousDescription = _descriptionFont;
         var previousTitle = _titleFont;
 
-        if (nextDescription is not null)
-            _descriptionFont = nextDescription;
-
-        if (nextTitle is not null)
-            _titleFont = nextTitle;
+        _descriptionFont = nextDescription;
+        _titleFont = nextTitle;
 
         previousDescription.Dispose();
         previousTitle.Dispose();
