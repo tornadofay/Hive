@@ -224,8 +224,21 @@ Verify:
 - developer manually verifies the complete configured-host flow.
 
 ## 1.13 — Image Input & WinForms Host Context
-Objective: establish image as the first V1 input and define the concrete WinForms host-context boundary. The host integration must support broad Form/control discovery across Forms, UserControls, custom/inherited controls, Panels, GroupBoxes, other containers, nested controls, and relevant runtime/data-source context.
-Verify: checked-in image fixture, bounded/cycle-safe/cancellation-aware host discovery, correct context/provenance exposure, and no implied control-action authority.
+Objective: establish image as the first V1 input boundary and define the concrete WinForms host-context discovery contract.
+
+Current WinForms boundary:
+- `HiveWinFormsHostContext.Register(Form)` explicitly registers a host root;
+- discovery returns immutable metadata snapshots rather than raw `Control` references;
+- discovery covers Form, UserControl, custom/inherited controls, Panels, GroupBoxes, other containers, nested descendants, and relevant binding/data-source metadata;
+- traversal is deterministic, bounded by configurable depth/node/text limits, cancellation-aware, and duplicate-reference safe;
+- password control text is redacted;
+- provenance records the registered resource access identity plus registration/capture identifiers;
+- discovery grants no click/edit/invoke/mutation authority.
+
+Image proof uses a checked-in deterministic fixture and the existing `WorkItemImageSubmission` contract; no duplicate image persistence/storage boundary is introduced.
+
+Verify: focused host-context/image-fixture tests, bounded/cancellation/ownership coverage, and manual Example Host verification through:
+`Host / WinForms Integration / Image Input & WinForms Host Context`.
 
 ## 1.14 — Dual Business-App Integration Contract
 Type: architecture/contract implementation slice.
