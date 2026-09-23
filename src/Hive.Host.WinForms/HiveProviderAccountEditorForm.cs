@@ -10,6 +10,7 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
     private readonly ProviderAccount? _existing;
     private readonly Provider _provider;
     private readonly ResourceAccessContext _accessContext;
+    private readonly IHiveExampleOutput? _output;
     private readonly TextBox _providerTextBox;
     private readonly TextBox _keyTextBox;
     private readonly TextBox _nameTextBox;
@@ -21,7 +22,8 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
         ProviderAccount? account,
         Provider provider,
         ResourceAccessContext accessContext,
-        IHiveThemeManager themeManager)
+        IHiveThemeManager themeManager,
+        IHiveExampleOutput? output = null)
         : base(
             account is null ? "New Provider Account" : "Edit Provider Account",
             "Durable provider credential/resource record",
@@ -32,6 +34,7 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
         _existing = account;
         _provider = provider ?? throw new ArgumentNullException(nameof(provider));
         _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
+        _output = output;
 
         ConfigureHeader(
             allowMove: true,
@@ -168,7 +171,13 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
         }
         catch (Exception exception)
         {
-            HiveMessageBox.ShowError(this, exception.Message);
+            HiveUiErrorReporter.Report(
+                this,
+                exception,
+                "Provider Account",
+                "The Provider Account could not be saved.",
+                _output,
+                ThemeManager);
         }
     }
 
