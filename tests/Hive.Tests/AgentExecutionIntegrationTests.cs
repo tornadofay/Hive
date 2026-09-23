@@ -50,10 +50,12 @@ public sealed class AgentExecutionIntegrationTests
         var providerResult = await facade.CreateProviderAsync(provider, context);
         Assert.True(providerResult.IsSuccess, providerResult.Error?.Message);
 
+        using var credentialMaterial = SecretMaterial.Create("test-api-key");
+
         var secretResult = await facade.CreateSecretAsync(
             "configured-agent-key",
             "Configured Agent Key",
-            SecretMaterial.Create("test-api-key"),
+            credentialMaterial,
             context);
         Assert.True(secretResult.IsSuccess, secretResult.Error?.Message);
 
