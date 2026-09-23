@@ -95,13 +95,24 @@ internal sealed class HiveExampleHostForm : HiveForm
             throw new InvalidOperationException(
                 "No IHiveExample implementations were discovered in the Example assembly.");
 
-        _navigationTitleFont = new Font("Segoe UI Semibold", 10f, FontStyle.Bold);
-        _navigationDescriptionFont = new Font("Segoe UI", 8.4f);
-        _viewTitleFont = new Font("Segoe UI Semibold", 16f, FontStyle.Bold);
-        _viewSubtitleFont = new Font("Segoe UI", 8.9f);
+        var typography = themeManager.Theme.Typography;
+        _navigationTitleFont = new Font(
+            typography.FontFamily,
+            typography.SectionSize,
+            FontStyle.Bold);
+        _navigationDescriptionFont = new Font(
+            typography.FontFamily,
+            typography.SmallSize);
+        _viewTitleFont = new Font(
+            typography.FontFamily,
+            typography.TitleSize,
+            FontStyle.Bold);
+        _viewSubtitleFont = new Font(
+            typography.FontFamily,
+            typography.SmallSize);
         _configuredAgentLabelFont = new Font(
-            "Segoe UI Semibold",
-            9f,
+            typography.FontFamily,
+            typography.SectionSize,
             FontStyle.Bold);
 
         _shell = new TableLayoutPanel
