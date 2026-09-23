@@ -131,6 +131,21 @@ public sealed class HiveWinFormsHostContextTests
     }
 
     [Fact]
+    public void Phase13ImageFixture_CreatesValidImageSubmission()
+    {
+        var content = ReadFixture();
+
+        var submission = new WorkItemImageSubmission(
+            "Phase13Sample.svg",
+            "image/svg+xml",
+            content);
+
+        Assert.True(submission.Content.Length > 0);
+        Assert.Equal("image/svg+xml", submission.MediaType);
+        Assert.Equal(content.Length, submission.Content.Length);
+    }
+
+    [Fact]
     public void Register_RequiresDeploymentAndPrincipal()
     {
         Assert.Throws<ArgumentException>(() =>
@@ -201,6 +216,24 @@ public sealed class HiveWinFormsHostContextTests
         form.Controls.Add(secondPanel);
 
         return form;
+    }
+
+    private static byte[] ReadFixture()
+    {
+        var assembly = typeof(HiveWinFormsHostContextTests).Assembly;
+        var resourceName = assembly
+            .GetManifestResourceNames()
+            .First(name => name.EndsWith(
+                "Fixtures.Phase13Sample.svg",
+                StringComparison.Ordinal));
+
+        using var stream = assembly.GetManifestResourceStream(resourceName)
+            ?? throw new InvalidOperationException(
+                "The Phase 1.13 image fixture could not be loaded.");
+
+        using var memory = new MemoryStream();
+        stream.CopyTo(memory);
+        return memory.ToArray();
     }
 
     private static ResourceAccessContext CreateAccessContext() =>
