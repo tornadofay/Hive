@@ -63,6 +63,12 @@ public sealed class HiveHostComposition : IDisposable
         CancellationToken cancellationToken = default) =>
         ComposeAsync(cancellationToken);
 
+    public Task<Result<HiveHostServiceGraph>> ApplyPersistedConfigurationAsync(
+        CancellationToken cancellationToken = default) =>
+        ComposeAsync(
+            cancellationToken,
+            skipWhenUnchanged: true);
+
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
@@ -92,7 +98,8 @@ public sealed class HiveHostComposition : IDisposable
     }
 
     private async Task<Result<HiveHostServiceGraph>> ComposeAsync(
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool skipWhenUnchanged = false)
     {
         ThrowIfDisposed();
 
@@ -112,6 +119,19 @@ public sealed class HiveHostComposition : IDisposable
 
                 return Result<HiveHostServiceGraph>.Failure(
                     configuration.Error!);
+            }
+
+            var current = Volatile.Read(ref _current);
+
+            if (skipWhenUnchanged &&
+                current is not null &&
+                current.PersistenceConfiguration == configuration.Value)
+            {
+                _status = new HiveHostCompositionStatus(
+                    HiveHostCompositionState.Ready,
+                    null);
+
+                return Result<HiveHostServiceGraph>.Success(current);
             }
 
             var candidate = await _graphFactory
