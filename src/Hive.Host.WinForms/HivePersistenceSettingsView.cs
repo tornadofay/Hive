@@ -135,8 +135,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             "Optional TCP port. Leave empty for the server default.",
             _portTextBox);
 
-        _databaseTextBox.ReadOnly = true;
-        _databaseTextBox.BackColor = SystemColors.Control;
+        SetReadOnlyVisualState(_databaseTextBox, themeManager);
         _editor.AddField(
             "Database",
             "Assigned automatically by Hive. The Settings UI does not allow changing the Hive database name.",
@@ -676,6 +675,18 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Height = 32,
             BorderStyle = BorderStyle.FixedSingle
         };
+
+
+    private static void SetReadOnlyVisualState(
+        TextBox textBox,
+        IHiveThemeManager themeManager)
+    {
+        textBox.ReadOnly = true;
+        textBox.TabStop = false;
+        textBox.Cursor = Cursors.Arrow;
+        textBox.BackColor = themeManager.Theme.Palette.DisabledBackground;
+        textBox.ForeColor = themeManager.Theme.Palette.DisabledText;
+    }
 
     private static Label CreateStatusLabel() =>
         new()
