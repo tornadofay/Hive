@@ -24,8 +24,10 @@ Do not run builds/tests/application launches in this maintenance pass. After imp
 
 Implemented in this maintenance pass:
 - CRUD toolbar breakpoint now derives from the visible search/filter/action requirements instead of a fixed width;
+- compact CRUD toolbars wrap visible actions into additional rows and allow the search field to contract only when the available width requires it;
 - Example Host output remains a floating overlay on the active example; expanding it does not reserve layout space.
 - Example Host shell typography now uses the shared Hive theme typography tokens;
+- Overview, Example Configuration, and Theme Foundation custom typography now derives its font family from the shared Hive theme tokens;
 - Provider, ProviderAccount, ExecutionTarget, AgentDefinition, and Persistence read-only fields use the shared read-only theme surface/text treatment;
 - Workspace rejection uses the existing HiveForm/HiveEditorLayout/HiveButton UI pattern instead of a separate native dialog style;
 - HiveEditorLayout exposes full field descriptions through shared tooltips when descriptions are truncated.
@@ -36,8 +38,10 @@ No business logic, Management contract, persistence behavior, provider behavior,
 
 Example Host checks:
 - UI / Foundation / Theme — switch Light, Dark, and System modes and check typography, contrast, focus, and selected button state;
-- UI / Foundation / Controls & CRUD — resize through wide and narrow desktop widths; verify search/status filter/action layout, selection, Enter/Delete behavior, empty state, paging, and no clipped controls;
+- UI / Foundation / Controls & CRUD — resize through wide, compact, and very narrow desktop widths; verify search/status filter/action layout, wrapped actions, selection, Enter/Delete behavior, empty state, paging, and no clipped controls;
 - UI / Foundation / Dialogs — verify Information/Success/Warning/Error/Question dialogs and keyboard action focus;
+- Example Host / Overview / Getting Started / Example Configuration / Theme Foundation — switch Light and Dark modes and confirm headings, section labels, and body text retain the shared theme typography family and intended hierarchy;
+- Workspace / WorkItem Operations — confirm Workspace section labels use the same themed typography family as the surrounding surface;
 - Host / WinForms Integration / Image Input & WinForms Host Context — run the existing image/host-context example and expand the shared output; verify the output pane floats over the lower part of the active example without changing the example's reserved layout space;
 - Workspace / WorkItem Operations — for a PendingApproval WorkItem, open Reject and verify the themed Hive editor dialog, multiline reason field, Cancel, Reject, and empty-reason behavior;
 - Overview / Getting Started / Example Configuration — open the real Hive Settings surface and inspect Provider, Account/Credential, Execution Target, Agent, and Persistence editors in both themes; confirm read-only keys/database are visually distinct and resizing does not clip the form.
