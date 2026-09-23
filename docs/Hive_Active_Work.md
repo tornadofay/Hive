@@ -219,6 +219,9 @@ Verification required:
 - verify a configured Agent operation uses the persisted ExecutionTarget and produces the expected local/provider response;
 - change the AgentDefinition's configured ExecutionTarget, close/apply Settings, and verify the next operation uses the new target;
 - verify missing, retired, or otherwise unusable configured Agent/ExecutionTarget state is surfaced clearly;
+- verify retired Provider, ProviderAccount, ExecutionTarget, and AgentDefinition records can be filtered separately from active records, and Activate reactivates a retired record while preserving its identity;
+- verify reactivation is dependency-ordered: Provider before Account, Account before ExecutionTarget, and a configured Agent only when its configured ExecutionTarget is usable;
+- verify horizontal scrolling across CRUD list columns no longer produces paint artifacts;
 - verify no Provider credential or bootstrap SQL credential appears in Example Output, MessageBox details, or normal diagnostics;
 - verify the configured-host example does not create or depend on `HiveDatabaseOptions.LocalDevelopment()`.
 
