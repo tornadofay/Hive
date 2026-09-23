@@ -26,12 +26,14 @@ public sealed class HiveEditorLayout : UserControl
 
     public HiveEditorLayout()
     {
+        var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+
         _descriptionFont = new Font(
-            SystemFonts.MessageBoxFont.FontFamily,
-            SystemFonts.MessageBoxFont.Size);
+            fallbackFont.FontFamily,
+            fallbackFont.Size);
         _titleFont = new Font(
-            SystemFonts.MessageBoxFont.FontFamily,
-            SystemFonts.MessageBoxFont.Size,
+            fallbackFont.FontFamily,
+            fallbackFont.Size,
             FontStyle.Bold);
 
         Dock = DockStyle.Fill;
