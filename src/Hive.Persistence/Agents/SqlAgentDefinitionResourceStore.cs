@@ -511,7 +511,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
             throw new ConcurrencyException();
     }
 
-    private async Task UpdateRetiredAsync(
+    private async Task UpdateLifecycleAsync(
         SqlConnection connection,
         SqlTransaction transaction,
         AgentDefinition retired,
