@@ -750,7 +750,7 @@ public sealed class HiveManagementFacadeTests
                     now,
                     CorrelationId.New()),
                 ResourceLifecycle.Active(now)),
-            "base-agent",
+            key,
             "Base Agent",
             AgentGeneration.Base,
             configuredExecutionTargetId);

@@ -75,7 +75,9 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
                     item.Resource.Lifecycle.Status),
                 item => HiveLifecyclePresentation.Color(
                     item.Resource.Lifecycle.Status,
-                    _themeManager)));
+                    _themeManager))
+
+            );
 
         _page.LoadItemsAsync = LoadAsync;
         _page.EditItemAsync = EditAsync;

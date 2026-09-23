@@ -24,7 +24,7 @@ public sealed class HivePersistenceIntegrationTests
         Assert.Equal(HiveDatabaseMigrationStatus.Applied, first.Value.Status);
         Assert.Equal(0, first.Value.PreviousSchemaVersion);
         Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, first.Value.CurrentSchemaVersion);
-        Assert.Equal(9, first.Value.AppliedMigrationCount);
+        Assert.Equal(11, first.Value.AppliedMigrationCount);
 
         var second = await migrator.MigrateAsync(CancellationToken.None);
         Assert.True(second.IsSuccess, second.Error is null ? "Repeat migration failed without an error." : $"Repeat migration failed: {second.Error.Code} [{second.Error.Category}] {second.Error.Message}");
@@ -37,7 +37,8 @@ public sealed class HivePersistenceIntegrationTests
         var storedVersion = await ReadSchemaVersionAsync(options);
         Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, storedVersion);
         Assert.True(await TableExistsAsync(options, "HiveAgentDefinitions"));
-        Assert.True(await IndexExistsAsync(options, "UX_HiveAgentDefinitions_Owner_Key", "HiveAgentDefinitions"));
+        Assert.False(await IndexExistsAsync(options, "UX_HiveAgentDefinitions_Owner_Key", "HiveAgentDefinitions"));
+        Assert.True(await IndexExistsAsync(options, "UX_HiveAgentDefinitions_Owner_ActiveKey", "HiveAgentDefinitions"));
         Assert.True(await IndexExistsAsync(options, "IX_HiveAgentDefinitions_OwnerScope", "HiveAgentDefinitions"));
         Assert.True(await IndexExistsAsync(options, "PK_HiveSchemaVersion", "HiveSchemaVersion"));
         Assert.True(await IndexExistsAsync(options, "UX_HiveSchemaVersion_SchemaVersion", "HiveSchemaVersion"));

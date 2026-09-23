@@ -165,7 +165,7 @@ public sealed class ResourceFoundationTests
     }
 
     [Fact]
-    public void ResourceLifecycle_StopsReactivationAfterRetirement()
+    public void ResourceLifecycle_AllowsReactivationAfterRetirementAndBlocksSuspension()
     {
         var now = DateTimeOffset.UtcNow;
         var lifecycle = ResourceLifecycle.Active(now)
@@ -174,8 +174,13 @@ public sealed class ResourceFoundationTests
 
         Assert.Equal(ResourceLifecycleStatus.Retired, lifecycle.Status);
 
+        var reactivated = lifecycle.TransitionTo(
+            ResourceLifecycleStatus.Active,
+            now.AddMinutes(3));
+
+        Assert.Equal(ResourceLifecycleStatus.Active, reactivated.Status);
         Assert.Throws<InvalidOperationException>(() =>
-            lifecycle.TransitionTo(ResourceLifecycleStatus.Active, now.AddMinutes(3)));
+            lifecycle.TransitionTo(ResourceLifecycleStatus.Suspended, now.AddMinutes(4)));
     }
 
     [Fact]
