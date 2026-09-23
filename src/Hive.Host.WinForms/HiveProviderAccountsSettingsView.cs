@@ -383,7 +383,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
     {
         _page.SetStatus(e.Exception.Message);
 
-        HiveMessageBox.ShowError(
+        HiveUiErrorReporter.Report(
             FindForm(),
             e.Exception,
             "Provider Account operation failed",
