@@ -79,6 +79,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private Func<TItem, bool>? _canActivateItem;
     private Func<TItem, CancellationToken, Task>? _activateItemAsync;
     private Func<TItem, string?>? _statusSelector;
+    private bool _updatingStatusFilter;
     private CancellationTokenSource? _operationCancellation;
     private string _searchText = string.Empty;
     private const string AllStatusFilter = "All";
@@ -220,6 +221,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _addButton = CreateActionButton("Add", HiveButtonStyle.Primary);
         _editButton = CreateActionButton("Edit", HiveButtonStyle.Secondary);
         _activateButton = CreateActionButton("Activate", HiveButtonStyle.Secondary);
+        _activateButton.Visible = false;
         _deleteButton = CreateActionButton("Delete", HiveButtonStyle.Danger);
         _refreshButton = CreateActionButton("Refresh", HiveButtonStyle.Secondary);
 
@@ -757,6 +759,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
             _addButton.Width = actionButtonWidth;
             _editButton.Width = actionButtonWidth;
+            _activateButton.Width = actionButtonWidth;
             _deleteButton.Width = actionButtonWidth;
             _refreshButton.Width = actionButtonWidth;
 
@@ -863,7 +866,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
     private void StatusFilterBoxOnSelectedIndexChanged(object? sender, EventArgs e)
     {
-        if (_statusSelector is null)
+        if (_statusSelector is null || _updatingStatusFilter)
             return;
 
         _pagination.PageNumber = 1;
@@ -884,6 +887,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             .OrderBy(static value => value, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        _updatingStatusFilter = true;
         _statusFilterBox.BeginUpdate();
         try
         {
@@ -903,6 +907,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         finally
         {
             _statusFilterBox.EndUpdate();
+            _updatingStatusFilter = false;
         }
     }
 
@@ -1177,6 +1182,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _busy = busy;
         _list.Enabled = !busy;
         _searchBox.Enabled = !busy;
+        _statusFilterBox.Enabled = !busy;
 
         if (FindForm() is HiveForm hiveForm)
         {
