@@ -147,9 +147,12 @@ public sealed class HiveSettingsView : UserControl
         CancellationToken cancellationToken = default)
     {
         _initializationCts?.Cancel();
-        _initializationCts?.Dispose();
-        _initializationCts = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken);
+
+        var initializationCts =
+            CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken);
+
+        _initializationCts = initializationCts;
 
         try
         {
@@ -179,20 +182,29 @@ public sealed class HiveSettingsView : UserControl
                 _themeManager,
                 _applicationName);
 
+            var token = initializationCts.Token;
+
             await _persistenceView.InitializeAsync(
-                _initializationCts.Token).ConfigureAwait(true);
+                token).ConfigureAwait(true);
             await _providerConfigurationView.InitializeAsync(
-                _initializationCts.Token).ConfigureAwait(true);
+                token).ConfigureAwait(true);
             await _providerAccountsView.InitializeAsync(
-                _initializationCts.Token).ConfigureAwait(true);
+                token).ConfigureAwait(true);
             await _executionTargetsView.InitializeAsync(
-                _initializationCts.Token).ConfigureAwait(true);
+                token).ConfigureAwait(true);
             await _agentView.InitializeAsync(
-                _initializationCts.Token).ConfigureAwait(true);
+                token).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
-            when (_initializationCts.IsCancellationRequested)
+            when (initializationCts.IsCancellationRequested)
         {
+        }
+        finally
+        {
+            if (ReferenceEquals(_initializationCts, initializationCts))
+                _initializationCts = null;
+
+            initializationCts.Dispose();
         }
     }
 
@@ -201,8 +213,11 @@ public sealed class HiveSettingsView : UserControl
         if (disposing)
         {
             _navigation.AfterSelect -= NavigationAfterSelect;
-            _initializationCts?.Cancel();
-            _initializationCts?.Dispose();
+
+            var initializationCts = _initializationCts;
+            _initializationCts = null;
+            initializationCts?.Cancel();
+
             _providerConfigurationView?.Dispose();
             _providerAccountsView?.Dispose();
             _executionTargetsView?.Dispose();
