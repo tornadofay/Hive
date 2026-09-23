@@ -173,6 +173,9 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             _testStatus,
             62);
 
+        AcceptButton = save;
+        CancelButton = cancel;
+
         BodyPanel.Controls.Add(editor);
         ThemeManager.Apply(BodyPanel);
     }
