@@ -50,7 +50,9 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
         var editor = new HiveEditorLayout();
 
         _keyTextBox = CreateTextBox();
+        _keyTextBox.PlaceholderText = "e.g. support-agent";
         _displayNameTextBox = CreateTextBox();
+        _displayNameTextBox.PlaceholderText = "e.g. Customer Support Agent";
 
         _generationComboBox = new ComboBox
         {
@@ -92,16 +94,12 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
 
         if (definition is not null)
         {
-            _keyTextBox.ReadOnly = true;
-            _keyTextBox.BackColor =
-                themeManager.Theme.Palette.DisabledBackground;
-            _keyTextBox.ForeColor =
-                themeManager.Theme.Palette.DisabledText;
+            SetReadOnlyVisualState(_keyTextBox, themeManager);
         }
 
         editor.AddField(
-            "Key",
-            "Stable AgentDefinition key. It cannot be changed after creation.",
+            "Resource key",
+            "Stable internal AgentDefinition identifier. It becomes read-only after creation.",
             _keyTextBox);
 
         editor.AddField(
@@ -209,6 +207,17 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
             Height = 32,
             BorderStyle = BorderStyle.FixedSingle
         };
+
+    private static void SetReadOnlyVisualState(
+        TextBox textBox,
+        IHiveThemeManager themeManager)
+    {
+        textBox.ReadOnly = true;
+        textBox.TabStop = false;
+        textBox.Cursor = Cursors.Arrow;
+        textBox.BackColor = themeManager.Theme.Palette.DisabledBackground;
+        textBox.ForeColor = themeManager.Theme.Palette.DisabledText;
+    }
 
     private sealed record TargetChoice(
         ExecutionTargetId? Id,
