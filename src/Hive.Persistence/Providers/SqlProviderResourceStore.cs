@@ -1183,7 +1183,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                     current.DisplayName,
                     current.TransportKind);
 
-                await UpdateLifecycleAsync
+                await UpdateLifecycleAsync(
                     connection,
                     transaction,
                     "HiveProviders",
@@ -1242,7 +1242,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                     current.ExternalAccountId,
                     current.CredentialSecret);
 
-                await UpdateLifecycleAsync
+                await UpdateLifecycleAsync(
                     connection,
                     transaction,
                     "HiveProviderAccounts",
@@ -1304,7 +1304,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                     current.Deployment,
                     current.Capabilities);
 
-                await UpdateLifecycleAsync
+                await UpdateLifecycleAsync(
                     connection,
                     transaction,
                     "HiveExecutionTargets",
