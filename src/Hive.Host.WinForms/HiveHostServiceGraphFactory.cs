@@ -1,3 +1,4 @@
+using Hive.Coordination;
 using Hive.Core;
 using Hive.Management;
 using Hive.Persistence;
@@ -15,6 +16,8 @@ public interface IHiveHostServiceGraphFactory
 public sealed class SqlHiveHostServiceGraphFactory :
     IHiveHostServiceGraphFactory
 {
+    private static readonly HttpClient SharedHttpClient = new();
+
     private readonly IHiveBootstrapCredentialStore _bootstrapCredentials;
     private readonly IHiveConfigurationStore _configurationStore;
 
@@ -89,15 +92,22 @@ public sealed class SqlHiveHostServiceGraphFactory :
                         exception.Message));
             }
 
+            var secretStore = new SqlDpapiSecretStore(options);
+            var eventStore = new SqlEventPersistenceStore(options);
+            var agentExecution = new AgentExecutionService(
+                eventStore,
+                SharedHttpClient);
+
             var management = new HiveManagementFacade(
                 new SqlProviderResourceStore(options),
                 new SqlAgentDefinitionResourceStore(options),
                 new SqlWorkItemResourceStore(options),
-                new SqlDpapiSecretStore(options),
+                secretStore,
                 new OpenAICompatibleProviderConnectionTester(),
                 _configurationStore,
                 new HivePersistenceConnectionTester(),
-                _bootstrapCredentials);
+                _bootstrapCredentials,
+                agentExecution);
 
             return Result<HiveHostServiceGraph>.Success(
                 new HiveHostServiceGraph(
