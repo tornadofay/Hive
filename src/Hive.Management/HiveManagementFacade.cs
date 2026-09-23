@@ -594,6 +594,19 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                 accessContext,
                 cancellationToken));
 
+    public Task<Result<Provider>> ReactivateProviderAsync(
+        ProviderId providerId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) =>
+        Delete(
+            providerId == default,
+            accessContext,
+            "provider",
+            () => _providerResources.ReactivateProviderAsync(
+                providerId,
+                accessContext,
+                cancellationToken));
+
     public Task<Result<ProviderAccount>> CreateProviderAccountAsync(
         ProviderAccount account,
         ResourceAccessContext accessContext,
@@ -671,6 +684,19 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             accessContext,
             "provider account",
             () => _providerResources.DeleteProviderAccountAsync(
+                providerAccountId,
+                accessContext,
+                cancellationToken));
+
+    public Task<Result<ProviderAccount>> ReactivateProviderAccountAsync(
+        ProviderAccountId providerAccountId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) =>
+        Delete(
+            providerAccountId == default,
+            accessContext,
+            "provider account",
+            () => _providerResources.ReactivateProviderAccountAsync(
                 providerAccountId,
                 accessContext,
                 cancellationToken));
@@ -756,6 +782,19 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                 accessContext,
                 cancellationToken));
 
+    public Task<Result<ExecutionTarget>> ReactivateExecutionTargetAsync(
+        ExecutionTargetId executionTargetId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) =>
+        Delete(
+            executionTargetId == default,
+            accessContext,
+            "execution target",
+            () => _providerResources.ReactivateExecutionTargetAsync(
+                executionTargetId,
+                accessContext,
+                cancellationToken));
+
     public Task<Result<AgentDefinition>> CreateAgentDefinitionAsync(
         AgentDefinition definition,
         ResourceAccessContext accessContext,
@@ -810,6 +849,19 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             accessContext,
             "agent definition",
             () => _agentDefinitions.DeleteAgentDefinitionAsync(
+                agentDefinitionId,
+                accessContext,
+                cancellationToken));
+
+    public Task<Result<AgentDefinition>> ReactivateAgentDefinitionAsync(
+        AgentDefinitionId agentDefinitionId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) =>
+        Delete(
+            agentDefinitionId == default,
+            accessContext,
+            "agent definition",
+            () => _agentDefinitions.ReactivateAgentDefinitionAsync(
                 agentDefinitionId,
                 accessContext,
                 cancellationToken));
