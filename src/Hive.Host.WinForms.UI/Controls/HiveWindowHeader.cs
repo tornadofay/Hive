@@ -40,12 +40,16 @@ internal sealed class HiveWindowHeader : Control
     private SolidBrush? _buttonPressedBrush;
     private SolidBrush? _closeHoverBrush;
 
-    private readonly Font _titleFont = new("Segoe UI Semibold", 10.5f, FontStyle.Bold);
-    private readonly Font _subtitleFont = new("Segoe UI", 8.25f, FontStyle.Regular);
+    private Font _titleFont;
+    private Font _subtitleFont;
     private readonly Font _buttonFont = new("Segoe UI Symbol", 11.5f, FontStyle.Regular);
 
     public HiveWindowHeader()
     {
+        var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+        _titleFont = new Font(fallbackFont.FontFamily, 10.5f, FontStyle.Bold);
+        _subtitleFont = new Font(fallbackFont.FontFamily, 8.25f);
+
         SetStyle(
             ControlStyles.UserPaint |
             ControlStyles.AllPaintingInWmPaint |
