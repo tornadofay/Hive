@@ -276,6 +276,11 @@ Completed in the current UI/UX polish pass:
 - Follow-up compile correction: `HiveMessageBox` typography fields are now mutable so shared theme typography can safely replace them at runtime; no dialog behavior changed.
 - These changes remain presentation-only and do not alter CRUD, example execution, Management, persistence, provider, or host architecture behavior.
 
+- Additional static polish: `HiveButton` and themed MessageBox action buttons now explicitly repaint on focus gain/loss so keyboard focus styling is reliable without changing click behavior or dialog semantics.
+- Additional static polish: the custom window header now uses the shared `HeadingSize` token for its primary title, keeping form-level hierarchy aligned with the rest of the Hive typography scale.
+- Additional static polish: the MessageBox question icon now derives its font family and scale from the active Hive theme instead of a hard-coded font, preserving consistent typography across themes.
+- Additional static polish: enabled read-only text boxes now use the elevated surface and muted text treatment, while actually disabled fields retain the disabled palette, making immutable and unavailable fields visually distinct.
+- These latest changes remain presentation-only and do not alter CRUD operations, Management boundaries, provider behavior, persistence behavior, or host architecture.
 Manual J review remains required before closing the sub-stage. No UI launch/build was performed by the assistant.
 ## Verification handoff
 
