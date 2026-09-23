@@ -8,7 +8,7 @@ Last updated: 2026-09-23
 
 ### Current sub-stage
 
-**1.12-E — Settings-Driven Runtime State**
+**1.12-F — Example Host as a Real Consumer**
 
 Detailed workload and ordering: `docs/plan/Phase1.12_Settings_Host_Integration.md`
 
@@ -31,7 +31,7 @@ The complete Phase 1.12 program is subdivided into bounded sub-stages described 
 - real Example Host consumption of configured state;
 - focused verification and documentation closure.
 
-1.12-A, 1.12-B, 1.12-C, and 1.12-D are complete and verified/accepted. Current sub-stage 1.12-E makes saved Settings changes affect the running host state through the existing composition boundary. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-E.
+1.12-A through 1.12-E are complete and verified/accepted. Current sub-stage 1.12-F makes the Example Host consume configured Providers, Accounts, ExecutionTargets, and AgentDefinitions through the real host composition and public APIs. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-F.
 
 ## Completed 1.12-B verification gate
 
@@ -163,31 +163,41 @@ The previously existing Settings inspection Example produced an old-schema/local
 5. Developer accepted the current Settings UI as good enough to proceed; final UI/UX polish remains intentionally deferred to 1.12-J.
 6. Developer full-suite verification completed with **160/160 passed, 0 failed, 0 skipped** on 2026-09-23 using .NET 10.0.1.
 
+## Completed 1.12-E verification gate
+
+1. Persistence Settings edits are persisted through the authoritative Management configuration boundary.
+2. The host applies persisted configuration after the Settings dialog closes through the host-owned composition boundary.
+3. Unchanged persistence configuration keeps the current graph instead of reconstructing it.
+4. Changed persistence configuration creates and publishes a complete replacement graph; failed replacement preserves the current graph.
+5. The Example Host refreshes the active Example against the current published Management graph after Settings closes.
+6. Hive database/schema initialization is an explicit `Initialize Hive` operation; Save, Test, and normal Settings navigation remain non-destructive.
+7. User manually confirmed the configured database Settings flow works and the surrounding Settings behavior is correct.
+8. User manually confirmed Settings-error Output remains available after the Settings form closes.
+9. Full `Hive.Tests` developer verification completed with **164/164 passed, 0 failed, 0 skipped** on 2026-09-23 using .NET 10.0.1.
+
 ## Verification handoff
 
-Current sub-stage: **1.12-E — Settings-Driven Runtime State**
+Current sub-stage: **1.12-F — Example Host as a Real Consumer**
 
-Example to run: **Overview / Getting Started / Example Configuration — Hive.Example.WinForms** for the 1.12-E host apply/initialization verification. The configured-host execution Example remains deferred to 1.12-F.
+Configured-host target:
+**Overview / Getting Started / Example Configuration — Hive.Example.WinForms**, followed by the normal host-level Settings flow and a configured Agent operation.
 
-1.12-E implementation checkpoint:
-- `src/Hive.Host.WinForms/HiveHostComposition.cs` — apply persisted configuration only when it differs from the published persistence snapshot;
-- `src/Hive.Example.WinForms/HiveExampleHostForm.cs` — apply Settings changes when the global Settings dialog closes and refresh the active Example against the current host graph;
-- `src/Hive.Management/HiveManagementFacade.cs` / `IHiveManagementFacade` — explicit Hive persistence initialization boundary;
-- `src/Hive.Host.WinForms/HivePersistenceSettingsView.cs` — explicit Initialize Hive action; Save and Test remain non-destructive;
-- `tests/Hive.Tests/HiveHostCompositionTests.cs` and `HiveConfigurationTests.cs` — focused settings-apply and explicit initialization coverage.
+1.12-F implementation checkpoint:
+- Example Host startup/current graph consumption;
+- configured Provider / ProviderAccount / ExecutionTarget / AgentDefinition reads through the host graph;
+- configured Agent selection and normal public-API execution;
+- explicit handling for missing/unusable configured Agent or ExecutionTarget;
+- host refresh after Settings changes without competing service graphs.
 
 Verification required:
-- verify persistence changes are applied through a newly constructed service graph;
-- verify an invalid replacement preserves the currently usable graph;
-- verify resource-only Settings changes do not reconstruct the persistence graph;
-- verify the active Example is refreshed after Settings closes and uses the current Management graph;
-- run the focused host-composition tests;
-- broader `Hive.Tests` execution remains required at the end of Phase 1.12.
+- configure one Provider, ProviderAccount, credential, ExecutionTarget, and AgentDefinition;
+- verify the Example Host reloads those persisted resources;
+- verify a configured Agent operation actually uses the configured ExecutionTarget;
+- verify changing the Agent's configured target affects the next operation;
+- verify missing/retired/unusable configuration is reported clearly;
+- verify no provider credentials or bootstrap secrets appear in Output.
 
-The previous developer-reported full-suite result remains **160/160 passed, 0 failed, 0 skipped** on 2026-09-23 using .NET 10.0.1.
-
-1.12-D is closed by this handoff. Do not close 1.12-E until its runtime-apply implementation and required verification are actually performed and recorded.
-
+1.12-E is closed by this handoff. Final UI/UX polish remains deferred to 1.12-J.
 
 ## Historical verification
 
