@@ -263,6 +263,8 @@ execution boundary
 
 A missing, unauthorized, retired, or otherwise unusable referenced target is a configuration/runtime boundary failure, not a UI-only state.
 
+For the first configured-host Agent operation, the application-facing Management facade may consume the existing Hive.Coordination.AgentExecutionService rather than duplicating execution mechanics in the host or Example project. The Management operation resolves the persisted AgentDefinition, its configured ExecutionTarget, the authoritative Provider and ProviderAccount relationship, and the optional ProviderAccount Secret Store credential through their existing Management/Persistence boundaries, then submits one immutable execution request to the Coordination execution service. It must not copy provider credentials or target configuration into host state. The configured operation resolves the AgentDefinition and target afresh for each request, so a later Settings change affects subsequent executions while an already-running execution keeps its established target/configuration snapshot.
+
 #### Settings UI foundation
 
 Hive.Host.WinForms.UI owns the reusable Settings presentation primitives. Settings must use the established Hive UI foundation rather than introducing another navigation/list system.
