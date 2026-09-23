@@ -179,36 +179,40 @@ public sealed class HiveWinFormsHostContext : IDisposable
 
         if (!ReferenceEquals(registration.Owner, this))
         {
-            return Result<HiveWinFormsHostContextSnapshot>.Failure(
-                new Error(
-                    "hive.host.context.registration-forbidden",
-                    ErrorCategory.Forbidden,
-                    "The supplied host-context registration belongs to another context."));
+            return Task.FromResult(
+                Result<HiveWinFormsHostContextSnapshot>.Failure(
+                    new Error(
+                        "hive.host.context.registration-forbidden",
+                        ErrorCategory.Forbidden,
+                        "The supplied host-context registration belongs to another context.")));
         }
 
         if (registration.IsDisposed)
         {
-            return Result<HiveWinFormsHostContextSnapshot>.Failure(
-                Error.Conflict(
-                    "hive.host.context.registration-disposed",
-                    "The host-context registration has already been disposed."));
+            return Task.FromResult(
+                Result<HiveWinFormsHostContextSnapshot>.Failure(
+                    Error.Conflict(
+                        "hive.host.context.registration-disposed",
+                        "The host-context registration has already been disposed.")));
         }
 
         var root = registration.Root;
         if (root.IsDisposed || root.Disposing)
         {
-            return Result<HiveWinFormsHostContextSnapshot>.Failure(
-                Error.Conflict(
-                    "hive.host.context.root-disposed",
-                    "The registered WinForms root is no longer available."));
+            return Task.FromResult(
+                Result<HiveWinFormsHostContextSnapshot>.Failure(
+                    Error.Conflict(
+                        "hive.host.context.root-disposed",
+                        "The registered WinForms root is no longer available.")));
         }
 
         if (root.InvokeRequired)
         {
-            return Result<HiveWinFormsHostContextSnapshot>.Failure(
-                Error.Validation(
-                    "hive.host.context.ui-thread-required",
-                    "WinForms host-context discovery must run on the UI thread."));
+            return Task.FromResult(
+                Result<HiveWinFormsHostContextSnapshot>.Failure(
+                    Error.Validation(
+                        "hive.host.context.ui-thread-required",
+                        "WinForms host-context discovery must run on the UI thread.")));
         }
 
         try
@@ -441,7 +445,7 @@ public sealed class HiveWinFormsHostContext : IDisposable
     {
         if (control is TextBox passwordBox &&
             (passwordBox.UseSystemPasswordChar ||
-             passwordBox.PasswordChar != '\\0'))
+             passwordBox.PasswordChar != '\0'))
         {
             return "[redacted]";
         }
