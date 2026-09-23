@@ -1642,7 +1642,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
             throw new ConcurrencyException();
     }
 
-    private async Task UpdateRetiredAsync<TIdentity>(
+    private async Task UpdateLifecycleAsync<TIdentity>(
         SqlConnection connection,
         SqlTransaction transaction,
         string tableName,
