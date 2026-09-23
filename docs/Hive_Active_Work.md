@@ -6,9 +6,9 @@ Last updated: 2026-09-23
 
 **1.13 — Image Input & WinForms Host Context**
 
-### Current sub-stage
+### Current slice
 
-**1.13-A — WinForms Host Context Discovery**
+**1.13 — Image Input & WinForms Host Context**
 
 Phase 1.12 is complete and verified. Phase 1.13 is the authorized implementation slice.
 
@@ -71,4 +71,4 @@ Verification target:
 Example to run: `Host / WinForms Integration / Image Input & WinForms Host Context` — Hive.Example.WinForms
 Tests to run: `tests/Hive.Tests/HiveWinFormsHostContextTests.cs`; broader `dotnet test tests/Hive.Tests/Hive.Tests.csproj` as required by the slice.
 
-Do not close 1.13-A until the required automated verification and manual Example Host verification are actually reported.
+Do not close Phase 1.13 until the required automated verification and manual Example Host verification are actually reported.
