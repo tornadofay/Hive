@@ -63,10 +63,10 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private readonly ListView _list;
     private readonly Label _emptyStateLabel;
     private readonly HivePaginationBar _pagination;
-    private readonly Font _titleFont;
-    private readonly Font _descriptionFont;
-    private readonly Font _searchLabelFont;
-    private readonly Font _emptyStateFont;
+    private Font _titleFont;
+    private Font _descriptionFont;
+    private Font _searchLabelFont;
+    private Font _emptyStateFont;
     private readonly List<HiveCrudColumn<TItem>> _columns = new();
 
     private IReadOnlyList<TItem> _items = Array.Empty<TItem>();
@@ -100,10 +100,11 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             ActionBarHeight = ActionBarHeight
         };
 
-        _titleFont = new Font("Segoe UI Semibold", 15f, FontStyle.Bold);
-        _descriptionFont = new Font("Segoe UI", 8.9f);
-        _searchLabelFont = new Font("Segoe UI Semibold", 8.8f, FontStyle.Bold);
-        _emptyStateFont = new Font("Segoe UI", 9.5f);
+        var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+        _titleFont = new Font(fallbackFont.FontFamily, 15f, FontStyle.Bold);
+        _descriptionFont = new Font(fallbackFont.FontFamily, 8.9f);
+        _searchLabelFont = new Font(fallbackFont.FontFamily, 8.8f, FontStyle.Bold);
+        _emptyStateFont = new Font(fallbackFont.FontFamily, 9.5f);
 
         _titleLabel = new Label
         {
@@ -665,6 +666,72 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     {
         base.OnResize(e);
         UpdateToolbarLayout();
+    }
+
+    protected override void OnParentChanged(EventArgs e)
+    {
+        base.OnParentChanged(e);
+        ApplyThemeTypography();
+    }
+
+    protected override void OnFontChanged(EventArgs e)
+    {
+        base.OnFontChanged(e);
+        ApplyThemeTypography();
+    }
+
+    private void ApplyThemeTypography()
+    {
+        if (FindForm() is not HiveForm hiveForm)
+            return;
+
+        var typography = hiveForm.Theme.Typography;
+        var family = typography.FontFamily;
+
+        ReplaceFontIfNeeded(
+            ref _titleFont,
+            family,
+            typography.TitleSize,
+            FontStyle.Bold);
+        ReplaceFontIfNeeded(
+            ref _descriptionFont,
+            family,
+            typography.SmallSize,
+            FontStyle.Regular);
+        ReplaceFontIfNeeded(
+            ref _searchLabelFont,
+            family,
+            typography.SectionSize,
+            FontStyle.Bold);
+        ReplaceFontIfNeeded(
+            ref _emptyStateFont,
+            family,
+            typography.BodySize,
+            FontStyle.Regular);
+
+        _titleLabel.Font = _titleFont;
+        _descriptionLabel.Font = _descriptionFont;
+        _searchLabel.Font = _searchLabelFont;
+        _statusFilterLabel.Font = _searchLabelFont;
+        _emptyStateLabel.Font = _emptyStateFont;
+    }
+
+    private static void ReplaceFontIfNeeded(
+        ref Font current,
+        string family,
+        float size,
+        FontStyle style)
+    {
+        if (string.Equals(current.FontFamily.Name, family, StringComparison.Ordinal) &&
+            Math.Abs(current.Size - size) <= 0.01f &&
+            current.Style == style)
+        {
+            return;
+        }
+
+        var next = new Font(family, size, style);
+        current.Dispose();
+        current = next;
     }
 
     protected override void Dispose(bool disposing)
