@@ -8,7 +8,7 @@ Last updated: 2026-09-23
 
 ### Current sub-stage
 
-**1.12-F — Example Host as a Real Consumer**
+**1.12-H — Focused Automated Coverage**
 
 Detailed workload and ordering: `docs/plan/Phase1.12_Settings_Host_Integration.md`
 
@@ -200,9 +200,32 @@ The previously existing Settings inspection Example produced an old-schema/local
 - Added regression coverage for dependency-ordered reactivation and for the expected active-key conflict when attempting to reactivate an older retired AgentDefinition after its key has been reused by a new active definition.
 - The shared CRUD ListView owner-draw path now paints every visible sub-item cell, removing the previous column-0-only row painting path that caused artifacts when horizontally scrolling to later columns.
 
+## Completed 1.12-F verification gate
+
+1. Developer verified the configured-host acceptance flow through the normal Example Host Settings/service-graph path.
+2. Developer reran the full `Hive.Tests` suite on .NET 10.0.1: **170/170 passed, 0 failed, 0 skipped** on 2026-09-23.
+3. Lifecycle verification and the active-only AgentDefinition key-reuse regression are included in that clean run.
+4. The configured-host negative case for a retired ExecutionTarget was manually verified earlier and produced the expected typed refusal without credential output.
+5. The Settings CRUD lifecycle column is now the first column before Resource key across Provider, ProviderAccount, ExecutionTarget, and AgentDefinition pages.
+
+## Completed 1.12-G classification gate
+
+1. Reviewed every `HiveDatabaseOptions.LocalDevelopment()` occurrence in `Hive.Example.WinForms`.
+2. The existing uses are intentionally classified as isolated contract examples because they create deterministic/example resources or exercise a persistence boundary directly.
+3. The configured-host Agent example is classified separately and consumes the current host-owned service graph and persisted configured resources.
+4. The Overview / Getting Started / Example Configuration entry is classified as the real host Settings surface, not a configuration-inspection substitute.
+5. The classification and LocalDevelopment rule are documented in `docs/ui/examples.md`.
+
 ## Verification handoff
 
-Current sub-stage: **1.12-F — Example Host as a Real Consumer**
+Current sub-stage: **1.12-H — Focused Automated Coverage**
+
+1.12-H audit targets:
+- persistence/configuration edge cases from the 1.12 plan;
+- host composition/replacement/concurrency coverage;
+- Provider/ProviderAccount/ExecutionTarget/AgentDefinition relationship, lifecycle, authorization, and concurrency coverage;
+- Settings integration and configured-host selection/revalidation behavior;
+- focused regression coverage for the latest lifecycle/reactivation and AgentDefinition key-reuse changes.
 
 Configured-host target:
 **Overview / Getting Started / Example Configuration — Hive.Example.WinForms**, followed by the normal host-level Settings flow, host-level Configured Agent selection, and `Agents / Base Agent / Configured Agent Execution`.
@@ -225,7 +248,7 @@ Verification required:
 - verify no Provider credential or bootstrap SQL credential appears in Example Output, MessageBox details, or normal diagnostics;
 - verify the configured-host example does not create or depend on `HiveDatabaseOptions.LocalDevelopment()`.
 
-1.12-F implementation and focused tests are now present on `main`, but the sub-stage remains open until developer build/test/manual verification is actually performed. 1.12-E is closed by this handoff. Final UI/UX polish remains deferred to 1.12-J.
+1.12-F implementation and focused tests are present on `main` and the developer has completed the required broader verification. 1.12-F is closed. 1.12-G is also closed by the classification review documented above. 1.12-H is now the active coverage audit. Final UI/UX polish remains deferred to 1.12-J.
 
 ## Historical verification
 
