@@ -73,7 +73,7 @@ internal sealed class HiveAgentSettingsView : UserControl
             new HiveCrudColumn<AgentDefinition>(
                 "Execution target",
                 260,
-                GetTargetDisplay),
+                GetTargetDisplay)
             );
 
         _page.LoadItemsAsync = LoadAsync;

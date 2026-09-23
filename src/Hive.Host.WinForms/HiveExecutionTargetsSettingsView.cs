@@ -76,7 +76,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
             new HiveCrudColumn<ExecutionTarget>(
                 "Capabilities",
                 140,
-                item => item.Capabilities.Count.ToString()),
+                item => item.Capabilities.Count.ToString())
             );
 
         _page.LoadItemsAsync = LoadAsync;

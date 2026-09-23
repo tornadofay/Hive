@@ -75,7 +75,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
             new HiveCrudColumn<ProviderAccount>(
                 "Credential",
                 150,
-                item => item.CredentialSecret is null ? "Not configured" : "Configured"),
+                item => item.CredentialSecret is null ? "Not configured" : "Configured")
             );
 
         _page.LoadItemsAsync = LoadAsync;
