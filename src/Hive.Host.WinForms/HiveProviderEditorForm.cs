@@ -92,14 +92,14 @@ internal sealed class HiveProviderEditorForm : HiveForm
             _transportComboBox,
             62);
 
-        _cancelButton = editor.AddActionButton(
-            "Cancel",
-            HiveButtonStyle.Secondary,
-            96);
-
         _saveButton = editor.AddActionButton(
             provider is null ? "Create" : "Save",
             HiveButtonStyle.Primary,
+            96);
+
+        _cancelButton = editor.AddActionButton(
+            "Cancel",
+            HiveButtonStyle.Secondary,
             96);
 
         _cancelButton.Click += (_, _) =>
