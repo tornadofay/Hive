@@ -29,4 +29,9 @@ public interface IAgentDefinitionResourceStore
         AgentDefinitionId agentDefinitionId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
+
+    Task<Result<AgentDefinition>> ReactivateAgentDefinitionAsync(
+        AgentDefinitionId agentDefinitionId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
 }
