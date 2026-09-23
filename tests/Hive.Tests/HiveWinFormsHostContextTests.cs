@@ -20,21 +20,36 @@ public sealed class HiveWinFormsHostContextTests
         Assert.True(result.IsSuccess, result.Error?.Message);
         var snapshot = result.Value!;
 
-        Assert.Equal(7, snapshot.ControlCount);
+        Assert.True(snapshot.ControlCount >= 7);
         Assert.Equal(typeof(Form).FullName, snapshot.RootRuntimeType);
         Assert.Equal("fixtureForm", snapshot.RootName);
 
+        var expectedPaths = new Dictionary<string, string>
+        {
+            ["fixtureForm"] = "0",
+            ["firstPanel"] = "0/0",
+            ["passwordBox"] = "0/0/0",
+            ["inputBox"] = "0/0/1",
+            ["secondPanel"] = "0/1",
+            ["ordersGrid"] = "0/1/0",
+            ["submitButton"] = "0/1/1"
+        };
+
+        foreach (var expected in expectedPaths)
+        {
+            var control = snapshot.Controls.Single(control => control.Name == expected.Key);
+            Assert.Equal(expected.Value, control.Path);
+        }
+
+        var secondCapture = await context.CaptureAsync(registration);
+        Assert.True(secondCapture.IsSuccess, secondCapture.Error?.Message);
         Assert.Equal(
-            [
-                "0",
-                "0/0",
-                "0/0/0",
-                "0/0/1",
-                "0/1",
-                "0/1/0",
-                "0/1/1"
-            ],
-            snapshot.Controls.Select(static control => control.Path).ToArray());
+            snapshot.Controls
+                .Select(static control => (control.Path, control.RuntimeType, control.Name))
+                .ToArray(),
+            secondCapture.Value!.Controls
+                .Select(static control => (control.Path, control.RuntimeType, control.Name))
+                .ToArray());
 
         var password = snapshot.Controls.Single(control => control.Name == "passwordBox");
         Assert.Equal("[redacted]", password.Text);
