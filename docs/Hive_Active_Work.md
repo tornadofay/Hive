@@ -186,6 +186,7 @@ The previously existing Settings inspection Example produced an old-schema/local
 - Settings resource pages now refresh their Management-backed state when revisited within the same Settings form, so newly created Providers, ProviderAccounts, and ExecutionTargets are immediately available to dependent Settings pages such as AgentDefinition editing.
 - AgentDefinition creation now constructs the required Hive resource envelope/identity before crossing the Management create boundary; editing an existing AgentDefinition continues to preserve its persisted resource identity.
 - Configured Example views can now resolve `HiveExampleServices` through the Example Host service-provider boundary; the configured Agent execution example no longer fails during view creation.
+- Updated the `Hive.Tests` Visual Studio xUnit adapter from 3.1.4 to 3.1.5 after the developer observed duplicate test-runner metadata-cache failures during the full 166-test run. A clean post-update run is still required before recording a clean automated verification result.
 - Added focused integration coverage for configured execution through the persisted resource graph, including target switching between two real local test endpoints and explicit rejection of an AgentDefinition with no configured target.
 - The existing `First Real Agent Execution` example remains a local deterministic contract example and is intentionally not repurposed as the configured-host acceptance scenario.
 ## Verification handoff
