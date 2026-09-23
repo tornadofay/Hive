@@ -215,10 +215,10 @@ public static class HiveMessageBox
         private readonly HiveMessageButton _secondaryButton;
         private readonly HiveMessageButton _tertiaryButton;
 
-        private readonly Font _titleFont;
-        private readonly Font _messageFont;
-        private readonly Font _detailsFont;
-        private readonly Font _buttonFont;
+        private Font _titleFont;
+        private Font _messageFont;
+        private Font _detailsFont;
+        private Font _buttonFont;
 
         private HiveThemeDefinition _theme;
         private GraphicsPath? _windowPath;
