@@ -289,8 +289,10 @@ Manual UI review:
 
 The previously recorded automated verification completed **171/171 passed, 0 failed, 0 skipped** on 2026-09-23, but that run predates the later HiveButton dialog-action fix and the new HiveButton-focused tests. Do not treat it as verification of the current `main` checkpoint.
 
+Latest developer verification result for the current checkpoint (reported, not executed by the assistant): **174 tests run, 173 passed, 1 failed, 0 skipped** on .NET 10.0.1. The sole failure was `HiveButtonTests.HiveButton_ImplementsWinFormsDialogActionContract`; the assertion incorrectly expected `DialogResult.None` after assigning the button as the form CancelButton. The test has been corrected to assert the actual WinForms `Cancel` dialog result.
+
 Verification required for the current checkpoint:
-- `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — this covers the full authoritative test suite, including `HiveButtonTests`.
+- Re-run `dotnet test tests/Hive.Tests/Hive.Tests.csproj` after pulling commit `eed15d2d99f3681ad85ff4d77d1adac9712c539f`.
 - Manual Example Host review at the exact surface below.
 
 Do not close 1.12-J until the current checkpoint has actually been verified and the manual UI review is reported.
