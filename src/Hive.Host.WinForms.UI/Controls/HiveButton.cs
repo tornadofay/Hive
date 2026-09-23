@@ -16,7 +16,7 @@ public enum HiveButtonStyle
     Danger
 }
 
-public sealed class HiveButton : UserControl
+public sealed class HiveButton : UserControl, IButtonControl
 {
     private const int CornerRadius = 8;
     private const int BorderWidth = 1;
@@ -55,6 +55,24 @@ public sealed class HiveButton : UserControl
         TabStop = true;
         AccessibleRole = AccessibleRole.PushButton;
         Text = "Button";
+    }
+
+    [Browsable(false)]
+    [DefaultValue(DialogResult.None)]
+    public DialogResult DialogResult { get; set; }
+
+    public void NotifyDefault(bool value)
+    {
+        Invalidate();
+    }
+
+    public void PerformClick()
+    {
+        if (!Enabled)
+            return;
+
+        Focus();
+        OnClick(EventArgs.Empty);
     }
 
     [Browsable(true)]
