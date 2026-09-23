@@ -584,22 +584,22 @@ public static class HiveMessageBox
             var buttonSize = _theme.Typography.SectionSize + 0.45f;
             var detailsSize = _theme.Typography.MonospaceSize + 0.2f;
 
-            ReplaceFontIfNeeded(
+            var previousTitle = ReplaceFontIfNeeded(
                 ref _titleFont,
                 family,
                 titleSize,
                 FontStyle.Bold);
-            ReplaceFontIfNeeded(
+            var previousMessage = ReplaceFontIfNeeded(
                 ref _messageFont,
                 family,
                 messageSize,
                 FontStyle.Regular);
-            ReplaceFontIfNeeded(
+            var previousDetails = ReplaceFontIfNeeded(
                 ref _detailsFont,
                 "Consolas",
                 detailsSize,
                 FontStyle.Regular);
-            ReplaceFontIfNeeded(
+            var previousButton = ReplaceFontIfNeeded(
                 ref _buttonFont,
                 family,
                 buttonSize,
@@ -613,9 +613,14 @@ public static class HiveMessageBox
                 if (control is HiveMessageButton button)
                     button.Font = _buttonFont;
             }
+
+            previousTitle?.Dispose();
+            previousMessage?.Dispose();
+            previousDetails?.Dispose();
+            previousButton?.Dispose();
         }
 
-        private static void ReplaceFontIfNeeded(
+        private static Font? ReplaceFontIfNeeded(
             ref Font current,
             string family,
             float size,
@@ -625,13 +630,12 @@ public static class HiveMessageBox
                 Math.Abs(current.Size - size) <= 0.01f &&
                 current.Style == style)
             {
-                return;
+                return null;
             }
 
-            var next = new Font(family, size, style);
             var previous = current;
-            current = next;
-            previous.Dispose();
+            current = new Font(family, size, style);
+            return previous;
         }
 
         private void ApplyButtons()
