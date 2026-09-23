@@ -626,13 +626,26 @@ internal sealed class HiveExampleHostForm : HiveForm
             return;
         }
 
-        using var form = new HiveSettingsForm(
-            graph.Management,
-            ExampleSettingsAccessContext,
-            _themeManager,
-            _outputView);
+        try
+        {
+            using var form = new HiveSettingsForm(
+                graph.Management,
+                ExampleSettingsAccessContext,
+                _themeManager,
+                _outputView);
 
-        form.ShowDialog(this);
+            form.ShowDialog(this);
+        }
+        catch (Exception exception)
+        {
+            HiveUiErrorReporter.Report(
+                this,
+                exception,
+                "Hive Settings",
+                "The Hive Settings window could not be opened.",
+                _outputView,
+                _themeManager);
+        }
     }
 
     private void DisposeActiveView()
