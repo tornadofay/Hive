@@ -698,7 +698,11 @@ internal sealed class HiveExampleHostForm : HiveForm
 
         try
         {
-            var preferredAgentId = _services.SelectedAgentDefinition?.Id;
+            var services = _services
+                ?? throw new InvalidOperationException(
+                    "Hive Example services are not initialized.");
+
+            var preferredAgentId = services.SelectedAgentDefinition?.Id;
 
             using var form = new HiveSettingsForm(
                 graph.Management,
@@ -791,9 +795,8 @@ internal sealed class HiveExampleHostForm : HiveForm
 
                 HiveUiErrorReporter.Report(
                     this,
-                    providers.Error!.Message,
+                    $"The host could not load the persisted Provider configuration. {providers.Error!.Message}",
                     "Configured Hive resources",
-                    "The host could not load the persisted Provider configuration.",
                     _outputView,
                     _themeManager);
                 return;
@@ -815,9 +818,8 @@ internal sealed class HiveExampleHostForm : HiveForm
 
                 HiveUiErrorReporter.Report(
                     this,
-                    agents.Error!.Message,
+                    $"The host could not load the persisted AgentDefinition configuration. {agents.Error!.Message}",
                     "Configured Hive resources",
-                    "The host could not load the persisted AgentDefinition configuration.",
                     _outputView,
                     _themeManager);
                 return;
