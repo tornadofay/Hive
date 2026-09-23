@@ -136,7 +136,7 @@ internal sealed class HiveProviderConfigurationView : UserControl
     {
         _page.SetStatus(e.Exception.Message);
 
-        HiveMessageBox.ShowError(
+        HiveUiErrorReporter.Report(
             FindForm(),
             e.Exception,
             "Provider operation failed",
