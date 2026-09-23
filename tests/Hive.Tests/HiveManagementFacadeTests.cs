@@ -95,6 +95,51 @@ public sealed class HiveManagementFacadeTests
     }
 
     [Fact]
+    public async Task MultipleAgentDefinitions_CanShareExecutionTarget()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ManagementSharedTarget");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var facade = CreateFacade(database.Options);
+        var context = CreateContext();
+
+        var provider = CreateProvider(context);
+        var providerResult = await facade.CreateProviderAsync(provider, context);
+        Assert.True(providerResult.IsSuccess, providerResult.Error?.Message);
+
+        var account = CreateProviderAccount(provider.Id, context);
+        var accountResult = await facade.CreateProviderAccountAsync(account, context);
+        Assert.True(accountResult.IsSuccess, accountResult.Error?.Message);
+
+        var target = CreateExecutionTarget(provider.Id, account.Id, context);
+        var targetResult = await facade.CreateExecutionTargetAsync(target, context);
+        Assert.True(targetResult.IsSuccess, targetResult.Error?.Message);
+
+        var first = await facade.CreateAgentDefinitionAsync(
+            CreateAgentDefinition(context, target.Id, "shared-target-agent-one"),
+            context);
+        Assert.True(first.IsSuccess, first.Error?.Message);
+
+        var second = await facade.CreateAgentDefinitionAsync(
+            CreateAgentDefinition(context, target.Id, "shared-target-agent-two"),
+            context);
+        Assert.True(second.IsSuccess, second.Error?.Message);
+
+        var updatedSecond = await facade.UpdateAgentDefinitionAsync(
+            second.Value!.WithDisplayName("Updated Shared Target Agent"),
+            context);
+
+        Assert.True(updatedSecond.IsSuccess, updatedSecond.Error?.Message);
+        Assert.Equal(target.Id, updatedSecond.Value!.ConfiguredExecutionTargetId);
+        Assert.Equal(
+            "Updated Shared Target Agent",
+            updatedSecond.Value.DisplayName);
+    }
+
+    [Fact]
     public async Task Facade_RejectsMissingIdentityResourceAndDefaultIdBeforePersistence()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ManagementValidation");
@@ -472,7 +517,8 @@ public sealed class HiveManagementFacadeTests
 
     private static AgentDefinition CreateAgentDefinition(
         ResourceAccessContext context,
-        ExecutionTargetId? configuredExecutionTargetId = null)
+        ExecutionTargetId? configuredExecutionTargetId = null,
+        string key = "base-agent")
     {
         var now = DateTimeOffset.UtcNow;
 
