@@ -13,7 +13,7 @@ internal sealed class ThemeFoundationExampleView : UserControl
     private readonly Panel _preview;
     private readonly Label _previewTitle;
     private readonly Label _previewText;
-    private readonly Font _previewTitleFont;
+    private Font _previewTitleFont;
     private readonly HiveButton _lightButton;
     private readonly HiveButton _darkButton;
     private readonly HiveButton _systemButton;
@@ -24,7 +24,7 @@ internal sealed class ThemeFoundationExampleView : UserControl
 
         _themeManager = themeManager;
         _previewTitleFont = new Font(
-            "Segoe UI Semibold",
+            themeManager.Theme.Typography.FontFamily,
             11f,
             FontStyle.Bold);
 
@@ -186,9 +186,28 @@ internal sealed class ThemeFoundationExampleView : UserControl
         UpdateThemeState();
     }
 
+    private void ApplyTypography(HiveThemeDefinition theme)
+    {
+        var family = theme.Typography.FontFamily;
+
+        if (string.Equals(
+                _previewTitleFont.FontFamily.Name,
+                family,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var previous = _previewTitleFont;
+        _previewTitleFont = new Font(family, 11f, FontStyle.Bold);
+        _previewTitle.Font = _previewTitleFont;
+        previous.Dispose();
+    }
+
     private void ApplyTheme()
     {
         var theme = _themeManager.Theme;
+        ApplyTypography(theme);
 
         BackColor = theme.Palette.Surface;
         ForeColor = theme.Palette.Text;
