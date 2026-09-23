@@ -1029,7 +1029,15 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         if (definition.IsFailure)
             return Result<AgentExecutionResult>.Failure(definition.Error!);
 
-        if (definition.Value!.ConfiguredExecutionTargetId is null)
+        if (definition.Value!.Resource!.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        {
+            return Result<AgentExecutionResult>.Failure(
+                Error.Unsupported(
+                    "hive.management.agent-execution.agent-definition-inactive",
+                    "The configured AgentDefinition is not active."));
+        }
+
+        if (definition.Value.ConfiguredExecutionTargetId is null)
         {
             return Result<AgentExecutionResult>.Failure(
                 Error.Validation(
@@ -1047,15 +1055,31 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         if (target.IsFailure)
             return Result<AgentExecutionResult>.Failure(target.Error!);
 
+        if (target.Value!.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        {
+            return Result<AgentExecutionResult>.Failure(
+                Error.Unsupported(
+                    "hive.management.agent-execution.execution-target-inactive",
+                    "The configured ExecutionTarget is not active."));
+        }
+
         var provider = await _providerResources
             .GetProviderAsync(
-                target.Value!.ProviderId,
+                target.Value.ProviderId,
                 accessContext,
                 cancellationToken)
             .ConfigureAwait(false);
 
         if (provider.IsFailure)
             return Result<AgentExecutionResult>.Failure(provider.Error!);
+
+        if (provider.Value!.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        {
+            return Result<AgentExecutionResult>.Failure(
+                Error.Unsupported(
+                    "hive.management.agent-execution.provider-inactive",
+                    "The configured Provider is not active."));
+        }
 
         var account = await _providerResources
             .GetProviderAccountAsync(
@@ -1067,7 +1091,15 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         if (account.IsFailure)
             return Result<AgentExecutionResult>.Failure(account.Error!);
 
-        if (account.Value!.ProviderId != provider.Value!.Id)
+        if (account.Value!.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        {
+            return Result<AgentExecutionResult>.Failure(
+                Error.Unsupported(
+                    "hive.management.agent-execution.provider-account-inactive",
+                    "The configured ProviderAccount is not active."));
+        }
+
+        if (account.Value.ProviderId != provider.Value.Id)
         {
             return Result<AgentExecutionResult>.Failure(
                 Error.Conflict(
