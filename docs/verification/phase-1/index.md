@@ -16,3 +16,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [1.12-C — Real Settings Management](1.12-C.md)
 
 - [1.12 — Settings, Configuration, and Real Host Consumption](1.12.md)
+- [1.13 — Image Input & WinForms Host Context](1.13.md)
