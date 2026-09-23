@@ -48,11 +48,15 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
 
         var editor = new HiveEditorLayout();
 
-        _providerTextBox = CreateReadOnlyTextBox(_provider.DisplayName);
+        _providerTextBox = CreateReadOnlyTextBox(_provider.DisplayName, themeManager);
         _keyTextBox = CreateTextBox();
+        _keyTextBox.PlaceholderText = "e.g. personal";
         _nameTextBox = CreateTextBox();
+        _nameTextBox.PlaceholderText = "e.g. Personal OpenRouter";
         _externalAccountTextBox = CreateTextBox();
+        _externalAccountTextBox.PlaceholderText = "Optional vendor/project/account ID";
         _credentialTextBox = CreateTextBox();
+        _credentialTextBox.PlaceholderText = "Paste API key / token here";
         _credentialTextBox.UseSystemPasswordChar = true;
         _credentialStatus = new Label
         {
@@ -72,19 +76,17 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
 
         if (account is not null)
         {
-            _keyTextBox.ReadOnly = true;
-            _keyTextBox.BackColor = themeManager.Theme.Palette.DisabledBackground;
-            _keyTextBox.ForeColor = themeManager.Theme.Palette.DisabledText;
+            SetReadOnlyVisualState(_keyTextBox, themeManager);
         }
 
         editor.AddField(
             "Provider",
-            "Owning Provider resource. Provider ownership is fixed after account creation.",
+            "Fixed parent Provider. This relationship cannot be changed after account creation.",
             _providerTextBox);
 
         editor.AddField(
-            "Key",
-            "Stable ProviderAccount identity. It cannot be changed after creation.",
+            "Resource key",
+            "Stable internal Provider Account identifier. This is NOT an API key. It becomes read-only after creation.",
             _keyTextBox);
 
         editor.AddField(
@@ -108,8 +110,8 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
         credentialPanel.Controls.Add(_credentialStatus);
 
         editor.AddField(
-            "API credential",
-            "Stored in Hive Secret Store. The secret material is never persisted on ProviderAccount itself and is never displayed after save.",
+            "API key / credential",
+            "This is the actual secret used for provider access. Stored in Hive Secret Store and never displayed after save. Leave blank while editing to keep the existing credential.",
             credentialPanel,
             86);
 
@@ -189,11 +191,24 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
             BorderStyle = BorderStyle.FixedSingle
         };
 
-    private static TextBox CreateReadOnlyTextBox(string value)
+    private static TextBox CreateReadOnlyTextBox(
+        string value,
+        IHiveThemeManager themeManager)
     {
         var box = CreateTextBox();
         box.Text = value;
-        box.ReadOnly = true;
+        SetReadOnlyVisualState(box, themeManager);
         return box;
+    }
+
+    private static void SetReadOnlyVisualState(
+        TextBox textBox,
+        IHiveThemeManager themeManager)
+    {
+        textBox.ReadOnly = true;
+        textBox.TabStop = false;
+        textBox.Cursor = Cursors.Arrow;
+        textBox.BackColor = themeManager.Theme.Palette.DisabledBackground;
+        textBox.ForeColor = themeManager.Theme.Palette.DisabledText;
     }
 }
