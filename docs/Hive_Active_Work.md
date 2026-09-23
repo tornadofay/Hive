@@ -269,6 +269,7 @@ Completed in the current UI/UX polish pass:
 - Additional static polish pass: `HiveEditorLayout` field-label typography now follows shared theme typography tokens and refreshes safely when the theme changes, avoiding Settings/editor-specific font drift.
 - Additional static polish pass: shared theme application now treats `ReadOnly` text boxes as disabled/read-only presentation, preserving the intended visual distinction across Light/Dark/System instead of overwriting it with normal input colors.
 - The additional pass remains presentation-only; no Management, persistence, provider, CRUD behavior, or host architecture was changed.
+- Follow-up compile correction: `HiveEditorLayout` now uses a non-null system-font fallback for its initial typography resources, eliminating the nullable dereference without changing the visual contract.
 
 Manual J review remains required before closing the sub-stage. No UI launch/build was performed by the assistant.
 ## Verification handoff
