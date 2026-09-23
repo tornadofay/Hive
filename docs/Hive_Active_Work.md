@@ -193,6 +193,13 @@ The previously existing Settings inspection Example produced an old-schema/local
 - Follow-up verification found the concrete cause of same-key recreation: AgentDefinition retirement preserves the old row, while the original unfiltered owner/key unique index also covered retired rows. Migration 011 replaces it with an active-only filtered unique index, schema advances to 11, and regression coverage verifies a retired AgentDefinition key can be reused by a new active definition.
 - Added focused integration coverage for configured execution through the persisted resource graph, including target switching between two real local test endpoints and explicit rejection of an AgentDefinition with no configured target.
 - The existing `First Real Agent Execution` example remains a local deterministic contract example and is intentionally not repurposed as the configured-host acceptance scenario.
+- Manual configured-host negative verification was performed: an AgentDefinition pointing at a retired ExecutionTarget produced `hive.agent.execution.target-inactive [Unsupported]` and the operation was refused without provider credential output.
+- Resource lifecycle management is now explicit: retired Provider, ProviderAccount, ExecutionTarget, and AgentDefinition records remain visible in CRUD management views, active/retired filtering is available, retired rows expose an Activate action, and retired rows no longer present misleading Edit/Delete affordances.
+- Lifecycle status cells now use semantic visual identity (`● Active`/green, `● Retired`/red, with Suspended mapped to warning), while active-only Provider/ProviderAccount selectors remain unchanged.
+- Reactivation is implemented through the Management/Persistence boundaries with dependency checks: ProviderAccount requires an active Provider, ExecutionTarget requires active Provider and ProviderAccount parents, and a retired AgentDefinition requires its configured ExecutionTarget to be usable before reactivation.
+- Added regression coverage for dependency-ordered reactivation and for the expected active-key conflict when attempting to reactivate an older retired AgentDefinition after its key has been reused by a new active definition.
+- The shared CRUD ListView owner-draw path now paints every visible sub-item cell, removing the previous column-0-only row painting path that caused artifacts when horizontally scrolling to later columns.
+
 ## Verification handoff
 
 Current sub-stage: **1.12-F — Example Host as a Real Consumer**
