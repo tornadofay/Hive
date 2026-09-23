@@ -4,13 +4,13 @@ Last updated: 2026-09-23
 
 ## Active slice
 
+**None — Phase 1.13 complete and verified**
+
+### Closed slice
+
 **1.13 — Image Input & WinForms Host Context**
 
-### Current slice
-
-**1.13 — Image Input & WinForms Host Context**
-
-Phase 1.12 is complete and verified. Phase 1.13 is the authorized implementation slice.
+Phase 1.13 is complete and verified. No later implementation slice is active or authorized in this run.
 
 ## Objective
 
@@ -63,12 +63,12 @@ Implemented:
 - checked-in SVG image fixture and deterministic `WorkItemImageSubmission` validation;
 - public Example Host scenario demonstrating both image input validation and WinForms host-context discovery.
 
-Verification target:
-**Host / WinForms Integration / Image Input & WinForms Host Context — Hive.Example.WinForms**
+## Verification result
 
-## Verification handoff
+Example: `Host / WinForms Integration / Image Input & WinForms Host Context` — Hive.Example.WinForms
 
-Example to run: `Host / WinForms Integration / Image Input & WinForms Host Context` — Hive.Example.WinForms
-Tests to run: `tests/Hive.Tests/HiveWinFormsHostContextTests.cs`; broader `dotnet test tests/Hive.Tests/Hive.Tests.csproj` as required by the slice.
+Manual result: discovered 7 controls from `System.Windows.Forms.Form`; accepted `Phase13Sample.svg` as a valid `image/svg+xml` submission with 404 bytes.
 
-Do not close Phase 1.13 until the required automated verification and manual Example Host verification are actually reported.
+Automated result: `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — 182 passed, 0 failed, 0 skipped.
+
+Phase 1.13 is closed. See [verification/phase-1/1.13.md](verification/phase-1/1.13.md). The next roadmap slice remains inactive until explicitly authorized.
