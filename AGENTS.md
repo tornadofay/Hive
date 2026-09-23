@@ -154,6 +154,9 @@ For UI/Example changes:
 - use native WinForms when no Hive-specific contract is needed;
 - do not create Hive wrappers merely to rename native controls;
 - preserve theme, focus/selection, responsiveness, thread affinity, and resource ownership;
+- user-visible UI errors/failures must be reported through `HiveMessageBox` and, when an `IHiveExampleOutput` sink is available, the active Output panel;
+- unexpected exceptions should include technical details in the MessageBox details section and Output panel while never exposing secrets;
+- cancellation and expected validation feedback are not treated as unexpected exceptions;
 - do not put SQL, provider transport, or authorization policy into reusable UI controls.
 
 Manual UI correctness is established only by actual developer/manual verification when required by the active slice.
