@@ -611,7 +611,7 @@ public static class HiveMessageBox
             foreach (Control control in _footer.Controls)
             {
                 if (control is HiveMessageButton button)
-                    button.SetFont(_buttonFont);
+                    button.Font = _buttonFont;
             }
         }
 
@@ -629,8 +629,9 @@ public static class HiveMessageBox
             }
 
             var next = new Font(family, size, style);
-            current.Dispose();
+            var previous = current;
             current = next;
+            previous.Dispose();
         }
 
         private void ApplyButtons()
