@@ -184,7 +184,7 @@ Verification required:
 
 The previous developer-reported full-suite result remains **160/160 passed, 0 failed, 0 skipped** on 2026-09-23 using .NET 10.0.1.
 
-Do not close 1.12-D until the required developer verification is actually performed and recorded.
+1.12-D is closed by this handoff. Do not close 1.12-E until its runtime-apply implementation and required verification are actually performed and recorded.
 
 
 ## Historical verification
