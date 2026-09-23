@@ -45,6 +45,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             TenantId.Parse("5cebf5a3-91cb-40be-9ee4-4b7c5d6cf7c4"),
             PrincipalId.Parse("d4f126bb-f5b5-47a7-bd1c-e4d6aa4b0a31"));
     private UserControl? _activeView;
+    private IHiveExample? _activeExample;
     private bool _responsiveLayoutReady;
     private Rectangle _lastOutputViewBounds;
     private Rectangle _lastOutputRevealButtonBounds;
@@ -560,6 +561,7 @@ internal sealed class HiveExampleHostForm : HiveForm
                 _viewHost.ResumeLayout(true);
             }
 
+            _activeExample = example;
             _viewTitle.Text = example.Title;
             _viewSubtitle.Text =
                 string.Join(" / ", example.NavigationPath);
@@ -612,10 +614,14 @@ internal sealed class HiveExampleHostForm : HiveForm
             _outputView.SetCollapsed(false);
     }
 
-    internal void OpenHiveSettings()
+    internal async void OpenHiveSettings()
     {
-        var graph = _composition?.Current;
-        if (graph is null || graph.IsDisposed)
+        var composition = _composition;
+        var graph = composition?.Current;
+
+        if (composition is null ||
+            graph is null ||
+            graph.IsDisposed)
         {
             HiveUiErrorReporter.Report(
                 this,
@@ -635,6 +641,35 @@ internal sealed class HiveExampleHostForm : HiveForm
                 _outputView);
 
             form.ShowDialog(this);
+
+            var apply = await composition
+                .ApplyPersistedConfigurationAsync()
+                .ConfigureAwait(true);
+
+            if (apply.IsFailure)
+            {
+                HiveUiErrorReporter.Report(
+                    this,
+                    apply.Error!.Message,
+                    "Hive Settings",
+                    _outputView,
+                    _themeManager);
+                return;
+            }
+
+            var currentGraph = apply.Value!;
+
+            _services = new HiveExampleServices(
+                _themeManager,
+                _outputView,
+                currentGraph);
+
+            if (_activeExample is not null)
+                ShowExample(_activeExample);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception exception)
         {
@@ -642,7 +677,7 @@ internal sealed class HiveExampleHostForm : HiveForm
                 this,
                 exception,
                 "Hive Settings",
-                "The Hive Settings window could not be opened.",
+                "The Hive Settings changes could not be applied to the running host.",
                 _outputView,
                 _themeManager);
         }
@@ -652,6 +687,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     {
         var activeView = _activeView;
         _activeView = null;
+        _activeExample = null;
 
         if (activeView is null)
             return;
