@@ -26,6 +26,16 @@ The common resource identity set is:
 
 Each identity is immutable, strongly typed, and non-empty. Identities are references, not mutable state objects.
 
+### Lifecycle semantics
+
+Hive-owned resources use the lifecycle states Active, Suspended, and Retired. Retirement is a durable lifecycle transition that preserves the resource identity and historical record; it is not a physical delete.
+
+Retired resources may be explicitly reactivated to Active through the owning Management boundary. Reactivation is versioned like every other lifecycle transition and preserves the resource identity, ownership, scope, provenance, and metadata. A retired resource may not transition directly to Suspended.
+
+Reactivation of a resource with dependencies must validate those dependencies again at the Management/persistence boundary. A ProviderAccount requires an active Provider; an ExecutionTarget requires active Provider and ProviderAccount parents. Reactivation is therefore not equivalent to bypassing normal create/update validation. Durable uniqueness rules apply to the reactivated active record, so a key conflict with another active resource is surfaced as a conflict rather than silently replaced.
+
+The UI should keep retired records discoverable for repair/history workflows, while active-only selectors used for new configuration continue to exclude retired resources. Lifecycle actions are explicit and visually distinguishable from ordinary CRUD operations.
+
 Every Hive-owned persistent resource is represented through an immutable `ResourceEnvelope<TIdentity>` containing:
 
 - resource identity;
