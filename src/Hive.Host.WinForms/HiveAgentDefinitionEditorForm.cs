@@ -121,13 +121,13 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
             _targetComboBox,
             72);
 
-        _cancelButton = editor.AddActionButton(
-            "Cancel",
-            HiveButtonStyle.Secondary,
-            96);
         _saveButton = editor.AddActionButton(
             definition is null ? "Create" : "Save",
             HiveButtonStyle.Primary,
+            96);
+        _cancelButton = editor.AddActionButton(
+            "Cancel",
+            HiveButtonStyle.Secondary,
             96);
 
         _cancelButton.Click += (_, _) =>
