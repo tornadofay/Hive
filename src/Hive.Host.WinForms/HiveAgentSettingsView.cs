@@ -154,6 +154,7 @@ internal sealed class HiveAgentSettingsView : UserControl
         using var editor = new HiveAgentDefinitionEditorForm(
             definition,
             _targets,
+            _accessContext,
             _themeManager,
             _output);
 
