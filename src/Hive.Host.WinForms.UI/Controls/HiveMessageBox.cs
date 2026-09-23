@@ -262,10 +262,11 @@ public static class HiveMessageBox
             AccessibleRole = AccessibleRole.Dialog;
             KeyPreview = true;
 
-            _titleFont = new Font("Segoe UI Semibold", 14.5f, FontStyle.Bold);
-            _messageFont = new Font("Segoe UI", 10.5f);
+            var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+            _titleFont = new Font(fallbackFont.FontFamily, 14.5f, FontStyle.Bold);
+            _messageFont = new Font(fallbackFont.FontFamily, 10.5f);
             _detailsFont = new Font("Consolas", 9.2f);
-            _buttonFont = new Font("Segoe UI Semibold", 9.7f, FontStyle.Bold);
+            _buttonFont = new Font(fallbackFont.FontFamily, 9.7f, FontStyle.Bold);
 
             _root = new TableLayoutPanel
             {
@@ -565,12 +566,71 @@ public static class HiveMessageBox
                 _theme,
                 GetAccentColor(_theme, _options.Type));
 
+            ApplyTypography();
+
             _footer.BackColor = _theme.Palette.Surface;
 
             _primaryButton.ApplyTheme(_theme, HiveMessageButtonKind.Primary);
             _secondaryButton.ApplyTheme(_theme, HiveMessageButtonKind.Secondary);
             _tertiaryButton.ApplyTheme(_theme, HiveMessageButtonKind.Secondary);
             _copyButton.ApplyTheme(_theme, HiveMessageButtonKind.Secondary);
+        }
+
+        private void ApplyTypography()
+        {
+            var family = _theme.Typography.FontFamily;
+            var titleSize = _theme.Typography.TitleSize - 1.5f;
+            var messageSize = _theme.Typography.BodySize + 1.25f;
+            var buttonSize = _theme.Typography.SectionSize + 0.45f;
+            var detailsSize = _theme.Typography.MonospaceSize + 0.2f;
+
+            ReplaceFontIfNeeded(
+                ref _titleFont,
+                family,
+                titleSize,
+                FontStyle.Bold);
+            ReplaceFontIfNeeded(
+                ref _messageFont,
+                family,
+                messageSize,
+                FontStyle.Regular);
+            ReplaceFontIfNeeded(
+                ref _detailsFont,
+                "Consolas",
+                detailsSize,
+                FontStyle.Regular);
+            ReplaceFontIfNeeded(
+                ref _buttonFont,
+                family,
+                buttonSize,
+                FontStyle.Bold);
+
+            _title.Font = _titleFont;
+            _message.Font = _messageFont;
+            _details.Font = _detailsFont;
+            foreach (Control control in _footer.Controls)
+            {
+                if (control is HiveMessageButton button)
+                    button.SetFont(_buttonFont);
+            }
+        }
+
+        private static void ReplaceFontIfNeeded(
+            ref Font current,
+            string family,
+            float size,
+            FontStyle style)
+        {
+            if (string.Equals(current.FontFamily.Name, family, StringComparison.Ordinal) &&
+                Math.Abs(current.Size - size) <= 0.01f &&
+                current.Style == style)
+            {
+                return;
+            }
+
+            var next = new Font(family, size, style);
+            current.Dispose();
+            current = next;
         }
 
         private void ApplyButtons()
