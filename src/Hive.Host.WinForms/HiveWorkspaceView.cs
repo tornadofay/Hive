@@ -676,70 +676,84 @@ public sealed class HiveWorkspaceView : UserControl
 
     private string? PromptRejectionReason()
     {
-        using var dialog = new Form
-        {
-            Text = "Reject WorkItem",
-            FormBorderStyle = FormBorderStyle.FixedDialog,
-            MinimizeBox = false,
-            MaximizeBox = false,
-            StartPosition = FormStartPosition.CenterParent,
-            ClientSize = new Size(520, 240),
-            ShowInTaskbar = false
-        };
-
-        var label = new Label
-        {
-            Dock = DockStyle.Top,
-            Height = 40,
-            Text = "Enter the reason for rejection:",
-            Padding = new Padding(0, 8, 0, 0)
-        };
-
-        var textBox = new TextBox
-        {
-            Dock = DockStyle.Fill,
-            Multiline = true,
-            ScrollBars = ScrollBars.Vertical,
-            MaxLength = 2000
-        };
-
-        var ok = new Button
-        {
-            Text = "Reject",
-            DialogResult = DialogResult.OK,
-            AutoSize = true,
-            Width = 110
-        };
-
-        var cancel = new Button
-        {
-            Text = "Cancel",
-            DialogResult = DialogResult.Cancel,
-            AutoSize = true,
-            Width = 110
-        };
-
-        var buttons = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Bottom,
-            Height = 50,
-            FlowDirection = FlowDirection.RightToLeft,
-            Padding = new Padding(0, 8, 0, 0)
-        };
-        buttons.Controls.Add(cancel);
-        buttons.Controls.Add(ok);
-
-        dialog.Controls.Add(textBox);
-        dialog.Controls.Add(label);
-        dialog.Controls.Add(buttons);
-        dialog.AcceptButton = ok;
-        dialog.CancelButton = cancel;
-
-        _themeManager.Apply(dialog);
+        using var dialog = new HiveRejectionReasonDialog(_themeManager);
 
         return dialog.ShowDialog(FindForm()) == DialogResult.OK
-            ? textBox.Text.Trim()
+            ? dialog.Reason
             : null;
+    }
+
+    private sealed class HiveRejectionReasonDialog : HiveForm
+    {
+        private readonly TextBox _reasonTextBox;
+
+        public HiveRejectionReasonDialog(IHiveThemeManager themeManager)
+            : base(
+                "Reject WorkItem",
+                "Provide the reason recorded with this rejection.",
+                new Size(620, 430),
+                new Size(520, 360),
+                themeManager)
+        {
+            ConfigureHeader(
+                allowMove: true,
+                allowClose: true,
+                allowMinimize: false,
+                allowMaximize: false,
+                allowHelp: false,
+                allowThemeToggle: true);
+
+            SetBodyPadding(new Padding(20));
+
+            var editor = new HiveEditorLayout();
+            _reasonTextBox = new TextBox
+            {
+                Multiline = true,
+                ScrollBars = ScrollBars.Vertical,
+                MaxLength = 2000,
+                Dock = DockStyle.Fill,
+                BorderStyle = BorderStyle.FixedSingle,
+                AcceptsReturn = true
+            };
+
+            editor.AddField(
+                "Reason",
+                "This text is stored as the rejection reason. Leaving it empty preserves the existing behavior and submits an empty reason.",
+                _reasonTextBox,
+                150);
+
+            var rejectButton = editor.AddActionButton(
+                "Reject",
+                HiveButtonStyle.Danger,
+                96);
+            var cancelButton = editor.AddActionButton(
+                "Cancel",
+                HiveButtonStyle.Secondary,
+                96);
+
+            rejectButton.Click += (_, _) =>
+            {
+                Reason = _reasonTextBox.Text.Trim();
+                DialogResult = DialogResult.OK;
+                Close();
+            };
+
+            cancelButton.Click += (_, _) =>
+            {
+                DialogResult = DialogResult.Cancel;
+                Close();
+            };
+
+            AcceptButton = rejectButton;
+            CancelButton = cancelButton;
+
+            BodyPanel.Controls.Add(editor);
+            ThemeManager.Apply(BodyPanel);
+
+            _reasonTextBox.Select();
+        }
+
+        public string Reason { get; private set; } = string.Empty;
     }
 
     private static string? GetMediaType(string path) =>
