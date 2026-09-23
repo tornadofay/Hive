@@ -23,7 +23,9 @@ public sealed class HiveSettingsView : UserControl
     private HiveExecutionTargetsSettingsView? _executionTargetsView;
     private HiveAgentSettingsView? _agentView;
     private HivePersistenceSettingsView? _persistenceView;
-    private CancellationTokenSource? _initializationCts;
+    private CancellationTokenSource? _lifetimeCts;
+    private readonly HashSet<SettingsPageKey> _initializedPages = new();
+    private readonly HashSet<SettingsPageKey> _initializingPages = new();
 
     public HiveSettingsView(
         IHiveManagementFacade management,
@@ -86,7 +88,6 @@ public sealed class HiveSettingsView : UserControl
             AccessibleDescription =
                 "Navigate Hive package configuration by Providers, Agents, and Persistence."
         };
-        _navigation.AfterSelect += NavigationAfterSelect;
 
         var navigationRoot = new TreeNode("Hive Settings");
 
@@ -140,71 +141,132 @@ public sealed class HiveSettingsView : UserControl
         _themeManager.Apply(this);
 
         _navigation.SelectedNode = providersNode.Nodes[0];
+        _navigation.AfterSelect += NavigationAfterSelect;
         Load += async (_, _) => await InitializeAsync();
     }
 
     public async Task InitializeAsync(
         CancellationToken cancellationToken = default)
     {
-        _initializationCts?.Cancel();
+        if (IsDisposed)
+            return;
 
-        var initializationCts =
-            CancellationTokenSource.CreateLinkedTokenSource(
-                cancellationToken);
+        _lifetimeCts ??= new CancellationTokenSource();
 
-        _initializationCts = initializationCts;
+        _providerConfigurationView ??= new HiveProviderConfigurationView(
+            _management,
+            _accessContext,
+            _themeManager);
+
+        _providerAccountsView ??= new HiveProviderAccountsSettingsView(
+            _management,
+            _accessContext,
+            _themeManager);
+
+        _executionTargetsView ??= new HiveExecutionTargetsSettingsView(
+            _management,
+            _accessContext,
+            _themeManager);
+
+        _agentView ??= new HiveAgentSettingsView(
+            _management,
+            _accessContext,
+            _themeManager);
+
+        _persistenceView ??= new HivePersistenceSettingsView(
+            _management,
+            _accessContext,
+            _themeManager,
+            _applicationName);
+
+        // Persistence configuration is file/bootstrap-backed and must remain
+        // usable even when the currently configured Hive SQL database is
+        // unavailable. Database-backed resource pages initialize lazily when
+        // the user navigates to them.
+        await InitializePageAsync(
+            SettingsPageKey.Persistence,
+            cancellationToken).ConfigureAwait(true);
+    }
+
+    private async Task InitializePageAsync(
+        SettingsPageKey key,
+        CancellationToken cancellationToken)
+    {
+        if (_initializedPages.Contains(key) ||
+            _initializingPages.Contains(key) ||
+            IsDisposed)
+        {
+            return;
+        }
+
+        if (_lifetimeCts is null)
+            throw new InvalidOperationException(
+                "Settings initialization has not started.");
+
+        _initializingPages.Add(key);
+
+        using var operationCts = CancellationTokenSource.CreateLinkedTokenSource(
+            _lifetimeCts.Token,
+            cancellationToken);
 
         try
         {
-            _providerConfigurationView ??= new HiveProviderConfigurationView(
-                _management,
-                _accessContext,
-                _themeManager);
+            switch (key)
+            {
+                case SettingsPageKey.ProviderConfiguration:
+                    await _providerConfigurationView!
+                        .InitializeAsync(operationCts.Token)
+                        .ConfigureAwait(true);
+                    break;
 
-            _providerAccountsView ??= new HiveProviderAccountsSettingsView(
-                _management,
-                _accessContext,
-                _themeManager);
+                case SettingsPageKey.ProviderAccounts:
+                    await _providerAccountsView!
+                        .InitializeAsync(operationCts.Token)
+                        .ConfigureAwait(true);
+                    break;
 
-            _executionTargetsView ??= new HiveExecutionTargetsSettingsView(
-                _management,
-                _accessContext,
-                _themeManager);
+                case SettingsPageKey.ExecutionTargets:
+                    await _executionTargetsView!
+                        .InitializeAsync(operationCts.Token)
+                        .ConfigureAwait(true);
+                    break;
 
-            _agentView ??= new HiveAgentSettingsView(
-                _management,
-                _accessContext,
-                _themeManager);
+                case SettingsPageKey.Agents:
+                    await _agentView!
+                        .InitializeAsync(operationCts.Token)
+                        .ConfigureAwait(true);
+                    break;
 
-            _persistenceView ??= new HivePersistenceSettingsView(
-                _management,
-                _accessContext,
-                _themeManager,
-                _applicationName);
+                case SettingsPageKey.Persistence:
+                    await _persistenceView!
+                        .InitializeAsync(operationCts.Token)
+                        .ConfigureAwait(true);
+                    break;
 
-            var token = initializationCts.Token;
+                default:
+                    throw new InvalidOperationException(
+                        $"Unknown Settings page '{key}'.");
+            }
 
-            await _persistenceView.InitializeAsync(
-                token).ConfigureAwait(true);
-            await _providerConfigurationView.InitializeAsync(
-                token).ConfigureAwait(true);
-            await _providerAccountsView.InitializeAsync(
-                token).ConfigureAwait(true);
-            await _executionTargetsView.InitializeAsync(
-                token).ConfigureAwait(true);
-            await _agentView.InitializeAsync(
-                token).ConfigureAwait(true);
+            _initializedPages.Add(key);
         }
         catch (OperationCanceledException)
-            when (initializationCts.IsCancellationRequested)
+            when (operationCts.IsCancellationRequested)
         {
+        }
+        catch (Exception exception)
+        {
+            if (!IsDisposed && !Disposing)
+            {
+                HiveMessageBox.ShowError(
+                    FindForm(),
+                    exception.Message,
+                    "Hive Settings");
+            }
         }
         finally
         {
-            if (ReferenceEquals(_initializationCts, initializationCts))
-                _initializationCts = null;
-
-            initializationCts.Dispose();
+            _initializingPages.Remove(key);
         }
     }
 
@@ -214,9 +276,10 @@ public sealed class HiveSettingsView : UserControl
         {
             _navigation.AfterSelect -= NavigationAfterSelect;
 
-            var initializationCts = _initializationCts;
-            _initializationCts = null;
-            initializationCts?.Cancel();
+            var lifetimeCts = _lifetimeCts;
+            _lifetimeCts = null;
+            lifetimeCts?.Cancel();
+            lifetimeCts?.Dispose();
 
             _providerConfigurationView?.Dispose();
             _providerAccountsView?.Dispose();
@@ -229,7 +292,7 @@ public sealed class HiveSettingsView : UserControl
         base.Dispose(disposing);
     }
 
-    private void NavigationAfterSelect(
+    private async void NavigationAfterSelect(
         object? sender,
         TreeViewEventArgs e)
     {
@@ -237,6 +300,9 @@ public sealed class HiveSettingsView : UserControl
             return;
 
         ShowSelectedPage(page);
+        await InitializePageAsync(
+            page.Key,
+            CancellationToken.None).ConfigureAwait(true);
     }
 
     private void ShowSelectedPage(SettingsPage page)
