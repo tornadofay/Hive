@@ -39,6 +39,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     private readonly Font _navigationDescriptionFont;
     private readonly Font _viewTitleFont;
     private readonly Font _viewSubtitleFont;
+    private readonly Font _configuredAgentLabelFont;
 
     private HiveExampleServices? _services;
     private HiveHostComposition? _composition;
@@ -98,6 +99,10 @@ internal sealed class HiveExampleHostForm : HiveForm
         _navigationDescriptionFont = new Font("Segoe UI", 8.4f);
         _viewTitleFont = new Font("Segoe UI Semibold", 16f, FontStyle.Bold);
         _viewSubtitleFont = new Font("Segoe UI", 8.9f);
+        _configuredAgentLabelFont = new Font(
+            "Segoe UI Semibold",
+            9f,
+            FontStyle.Bold);
 
         _shell = new TableLayoutPanel
         {
@@ -209,7 +214,7 @@ internal sealed class HiveExampleHostForm : HiveForm
         _configuredAgentLabel = new Label
         {
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI Semibold", 9f, FontStyle.Bold),
+            Font = _configuredAgentLabelFont,
             Margin = new Padding(0, 0, 10, 0),
             Padding = Padding.Empty,
             Text = "Configured Agent",
@@ -373,6 +378,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             _navigationDescriptionFont.Dispose();
             _viewTitleFont.Dispose();
             _viewSubtitleFont.Dispose();
+            _configuredAgentLabelFont.Dispose();
         }
     }
 
