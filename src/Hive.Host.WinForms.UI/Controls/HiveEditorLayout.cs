@@ -287,14 +287,14 @@ public sealed class HiveEditorLayout : UserControl
         _descriptionFont = nextDescription;
         _titleFont = nextTitle;
 
-        previousDescription.Dispose();
-        previousTitle.Dispose();
-
         foreach (var label in _titleLabels)
             label.Font = _titleFont;
 
         foreach (var label in _descriptionLabels)
             label.Font = _descriptionFont;
+
+        previousDescription.Dispose();
+        previousTitle.Dispose();
     }
 
     private Panel CreateLabelPanel(
