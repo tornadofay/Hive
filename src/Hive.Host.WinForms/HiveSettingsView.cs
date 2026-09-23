@@ -114,11 +114,11 @@ public sealed class HiveSettingsView : UserControl
                 "Agents",
                 "CRUD for AgentDefinitions and their configured ExecutionTarget references.",
                 SettingsPageKey.Agents));
-        navigationRoot.Nodes.Add(
-            CreatePageNode(
-                "Persistence",
-                "One global SQL Server / LocalDB configuration editor and connection test.",
-                SettingsPageKey.Persistence));
+        var persistenceNode = CreatePageNode(
+            "Persistence",
+            "One global SQL Server / LocalDB configuration editor and connection test.",
+            SettingsPageKey.Persistence);
+        navigationRoot.Nodes.Add(persistenceNode);
 
         _navigation.Nodes.Add(navigationRoot);
         navigationRoot.Expand();
@@ -140,8 +140,8 @@ public sealed class HiveSettingsView : UserControl
 
         _themeManager.Apply(this);
 
-        _navigation.SelectedNode = providersNode.Nodes[0];
         _navigation.AfterSelect += NavigationAfterSelect;
+        _navigation.SelectedNode = persistenceNode;
         Load += async (_, _) => await InitializeAsync();
     }
 
@@ -199,14 +199,12 @@ public sealed class HiveSettingsView : UserControl
             return;
         }
 
-        if (_lifetimeCts is null)
-            throw new InvalidOperationException(
-                "Settings initialization has not started.");
+        var lifetimeCts = _lifetimeCts ??= new CancellationTokenSource();
 
         _initializingPages.Add(key);
 
         using var operationCts = CancellationTokenSource.CreateLinkedTokenSource(
-            _lifetimeCts.Token,
+            lifetimeCts.Token,
             cancellationToken);
 
         try
