@@ -347,7 +347,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                     current.DisplayName,
                     current.Generation);
 
-                await UpdateRetiredAsync(
+                await UpdateLifecycleAsync(
                     connection,
                     transaction,
                     retired,
@@ -355,6 +355,76 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                     cancellationToken).ConfigureAwait(false);
 
                 return Result<AgentDefinition>.Success(retired);
+            });
+
+    public Task<Result<AgentDefinition>> ReactivateAgentDefinitionAsync(
+        AgentDefinitionId agentDefinitionId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) =>
+        ExecuteInTransactionAsync(
+            "agent definition",
+            cancellationToken,
+            async (connection, transaction) =>
+            {
+                ValidateAccessContext(accessContext);
+
+                if (agentDefinitionId == default)
+                {
+                    return Result<AgentDefinition>.Failure(
+                        Error.Validation(
+                            "hive.agent-definition.identity-required",
+                            "AgentDefinition identity is required."));
+                }
+
+                var current = await LoadDefinitionAsync(
+                    connection,
+                    transaction,
+                    agentDefinitionId,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (current is null)
+                {
+                    return Result<AgentDefinition>.Failure(
+                        NotFound(
+                            "hive.agent-definition.not-found",
+                            "The requested AgentDefinition does not exist."));
+                }
+
+                var accessError = ValidateAccess(
+                    current.Resource!,
+                    accessContext);
+
+                if (accessError is not null)
+                    return Result<AgentDefinition>.Failure(accessError);
+
+                if (current.Resource!.Lifecycle.Status == ResourceLifecycleStatus.Active)
+                    return Result<AgentDefinition>.Success(current);
+
+                if (current.Resource.Lifecycle.Status != ResourceLifecycleStatus.Retired)
+                {
+                    return Result<AgentDefinition>.Failure(
+                        Error.Conflict(
+                            "hive.agent-definition.lifecycle-invalid",
+                            "Only a retired AgentDefinition can be reactivated."));
+                }
+
+                var active = new AgentDefinition(
+                    current.Resource.TransitionLifecycle(
+                        ResourceLifecycleStatus.Active,
+                        DateTimeOffset.UtcNow),
+                    current.Key,
+                    current.DisplayName,
+                    current.Generation,
+                    current.ConfiguredExecutionTargetId);
+
+                await UpdateLifecycleAsync(
+                    connection,
+                    transaction,
+                    active,
+                    current.Resource.Version,
+                    cancellationToken).ConfigureAwait(false);
+
+                return Result<AgentDefinition>.Success(active);
             });
 
     private async Task<AgentDefinition?> LoadDefinitionAsync(
