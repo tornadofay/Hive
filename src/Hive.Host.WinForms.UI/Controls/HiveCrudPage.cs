@@ -803,7 +803,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
     private void UpdateToolbarLayout()
     {
-        var compact = ClientSize.Width > 0 && ClientSize.Width < 860;
+        var compact = ClientSize.Width > 0 &&
+                      ClientSize.Width < GetWideToolbarMinimumWidth();
         var expectedRows = compact && _searchBox.Visible ? 2 : 1;
         var expectedColumns = compact ? 1 : 2;
         var actionWidth = GetVisibleActionBarWidth(compact);
@@ -922,6 +923,35 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
         if (_searchBox.Width != targetWidth)
             _searchBox.Width = targetWidth;
+    }
+
+    private int GetWideToolbarMinimumWidth()
+    {
+        var requiredWidth = GetVisibleActionBarWidth(compact: false) + 24;
+
+        if (!_searchPanel.Visible)
+            return requiredWidth;
+
+        requiredWidth +=
+            _searchLabel.Width +
+            _searchLabel.Margin.Left +
+            _searchLabel.Margin.Right +
+            MinimumSearchWidth +
+            _searchPanel.Padding.Left +
+            _searchPanel.Padding.Right;
+
+        if (_statusFilterLabel.Visible)
+        {
+            requiredWidth +=
+                _statusFilterLabel.Width +
+                _statusFilterLabel.Margin.Left +
+                _statusFilterLabel.Margin.Right +
+                _statusFilterBox.Width +
+                _statusFilterBox.Margin.Left +
+                _statusFilterBox.Margin.Right;
+        }
+
+        return requiredWidth;
     }
 
     private int GetVisibleActionBarWidth(bool compact)
