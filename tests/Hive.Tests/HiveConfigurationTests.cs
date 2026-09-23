@@ -18,6 +18,52 @@ public sealed class HiveConfigurationTests
     }
 
     [Fact]
+    public async Task Management_InitializePersistence_CreatesAndMigratesHiveDatabase()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ManagementInitialization");
+        database.Reset();
+
+        var facade = new HiveManagementFacade(
+            new SqlProviderResourceStore(database.Options),
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options));
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        var configuration = new HivePersistenceConfiguration(
+            HivePersistenceBackend.SqlServer,
+            database.Options.ServerName,
+            null,
+            database.Options.DatabaseName,
+            HiveSqlAuthenticationMode.WindowsIntegrated,
+            null,
+            null,
+            encrypt: false,
+            trustServerCertificate: true,
+            createDatabaseIfMissing: true);
+
+        var result = await facade.InitializePersistenceAsync(
+            configuration,
+            context);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var state = await new HivePersistenceConnectionTester()
+            .TestAsync(
+                configuration,
+                credential: null);
+
+        Assert.True(state.IsSuccess, state.Error?.Message);
+        Assert.Equal(HiveDatabaseState.Current, state.Value!.DatabaseState);
+        Assert.Equal(
+            HiveDatabaseSchema.CurrentSchemaVersion,
+            state.Value.CurrentSchemaVersion);
+    }
+
+    [Fact]
     public async Task Management_SaveLoadPersistenceConfiguration_RoundTripsWithoutSecretMaterial()
     {
         var filePath = Path.Combine(
