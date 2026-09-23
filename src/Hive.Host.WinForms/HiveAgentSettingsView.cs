@@ -46,6 +46,19 @@ internal sealed class HiveAgentSettingsView : UserControl
 
         _page.SetColumns(
             new HiveCrudColumn<AgentDefinition>(
+                "Lifecycle",
+                110,
+                item => item.Resource is null
+                    ? "● Unpersisted"
+                    : HiveLifecyclePresentation.Format(
+                        item.Resource.Lifecycle.Status),
+                item => item.Resource is null
+                    ? null
+                    : HiveLifecyclePresentation.Color(
+                        item.Resource.Lifecycle.Status,
+                        _themeManager)),
+
+            new HiveCrudColumn<AgentDefinition>(
                 "Resource key",
                 190,
                 item => item.Key),
@@ -61,19 +74,6 @@ internal sealed class HiveAgentSettingsView : UserControl
                 "Execution target",
                 260,
                 GetTargetDisplay),
-            new HiveCrudColumn<AgentDefinition>(
-                "Lifecycle",
-                110,
-                item => item.Resource is null
-                    ? "● Unpersisted"
-                    : HiveLifecyclePresentation.Format(
-                        item.Resource.Lifecycle.Status),
-                item => item.Resource is null
-                    ? null
-                    : HiveLifecyclePresentation.Color(
-                        item.Resource.Lifecycle.Status,
-                        _themeManager))
-
             );
 
         _page.LoadItemsAsync = LoadAsync;

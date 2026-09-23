@@ -57,6 +57,15 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
         };
 
         _page.SetColumns(
+            new HiveCrudColumn<ProviderAccount>(
+                "Lifecycle",
+                120,
+                item => HiveLifecyclePresentation.Format(
+                    item.Resource.Lifecycle.Status),
+                item => HiveLifecyclePresentation.Color(
+                    item.Resource.Lifecycle.Status,
+                    _themeManager)),
+
             new HiveCrudColumn<ProviderAccount>("Resource key", 180, item => item.Key),
             new HiveCrudColumn<ProviderAccount>("Name", 220, item => item.DisplayName),
             new HiveCrudColumn<ProviderAccount>(
@@ -67,15 +76,6 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
                 "Credential",
                 150,
                 item => item.CredentialSecret is null ? "Not configured" : "Configured"),
-            new HiveCrudColumn<ProviderAccount>(
-                "Lifecycle",
-                120,
-                item => HiveLifecyclePresentation.Format(
-                    item.Resource.Lifecycle.Status),
-                item => HiveLifecyclePresentation.Color(
-                    item.Resource.Lifecycle.Status,
-                    _themeManager))
-
             );
 
         _page.LoadItemsAsync = LoadAsync;

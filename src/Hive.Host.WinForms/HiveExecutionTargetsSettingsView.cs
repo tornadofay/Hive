@@ -57,6 +57,15 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         };
 
         _page.SetColumns(
+            new HiveCrudColumn<ExecutionTarget>(
+                "Lifecycle",
+                120,
+                item => HiveLifecyclePresentation.Format(
+                    item.Resource.Lifecycle.Status),
+                item => HiveLifecyclePresentation.Color(
+                    item.Resource.Lifecycle.Status,
+                    _themeManager)),
+
             new HiveCrudColumn<ExecutionTarget>("Resource key", 170, item => item.Key),
             new HiveCrudColumn<ExecutionTarget>("Name", 220, item => item.DisplayName),
             new HiveCrudColumn<ExecutionTarget>("Endpoint", 300, item => item.Endpoint.ToString()),
@@ -68,15 +77,6 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
                 "Capabilities",
                 140,
                 item => item.Capabilities.Count.ToString()),
-            new HiveCrudColumn<ExecutionTarget>(
-                "Lifecycle",
-                120,
-                item => HiveLifecyclePresentation.Format(
-                    item.Resource.Lifecycle.Status),
-                item => HiveLifecyclePresentation.Color(
-                    item.Resource.Lifecycle.Status,
-                    _themeManager))
-
             );
 
         _page.LoadItemsAsync = LoadAsync;

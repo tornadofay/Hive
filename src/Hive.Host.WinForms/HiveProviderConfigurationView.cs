@@ -42,9 +42,6 @@ internal sealed class HiveProviderConfigurationView : UserControl
         };
 
         _page.SetColumns(
-            new HiveCrudColumn<Provider>("Resource key", 180, item => item.Key),
-            new HiveCrudColumn<Provider>("Name", 240, item => item.DisplayName),
-            new HiveCrudColumn<Provider>("Transport", 190, item => item.TransportKind),
             new HiveCrudColumn<Provider>(
                 "Lifecycle",
                 120,
@@ -52,8 +49,11 @@ internal sealed class HiveProviderConfigurationView : UserControl
                     item.Resource.Lifecycle.Status),
                 item => HiveLifecyclePresentation.Color(
                     item.Resource.Lifecycle.Status,
-                    _themeManager))
+                    _themeManager)),
 
+            new HiveCrudColumn<Provider>("Resource key", 180, item => item.Key),
+            new HiveCrudColumn<Provider>("Name", 240, item => item.DisplayName),
+            new HiveCrudColumn<Provider>("Transport", 190, item => item.TransportKind),
             );
 
         _page.LoadItemsAsync = LoadAsync;
