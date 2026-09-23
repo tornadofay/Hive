@@ -48,11 +48,20 @@ internal sealed class HiveProviderConfigurationView : UserControl
             new HiveCrudColumn<Provider>(
                 "Lifecycle",
                 120,
-                item => item.Resource.Lifecycle.Status.ToString()));
+                item => HiveLifecyclePresentation.Format(
+                    item.Resource.Lifecycle.Status),
+                item => HiveLifecyclePresentation.Color(
+                    item.Resource.Lifecycle.Status,
+                    _themeManager)));
 
         _page.LoadItemsAsync = LoadAsync;
         _page.EditItemAsync = EditAsync;
         _page.DeleteItemAsync = DeleteAsync;
+        _page.ActivateItemAsync = ActivateAsync;
+        _page.StatusSelector = item => item.Resource.Lifecycle.Status.ToString();
+        _page.CanEditItem = item => HiveLifecyclePresentation.IsActive(item.Resource);
+        _page.CanDeleteItem = item => HiveLifecyclePresentation.IsActive(item.Resource);
+        _page.CanActivateItem = item => HiveLifecyclePresentation.IsRetired(item.Resource);
         _page.GetItemDisplayName = item => $"{item.DisplayName} [{item.Key}]";
 
         _page.OperationFailed += PageOperationFailed;
@@ -121,6 +130,21 @@ internal sealed class HiveProviderConfigurationView : UserControl
     {
         var result = await _management
             .DeleteProviderAsync(
+                provider.Id,
+                _accessContext,
+                cancellationToken)
+            .ConfigureAwait(true);
+
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error!.Message);
+    }
+
+    private async Task ActivateAsync(
+        Provider provider,
+        CancellationToken cancellationToken)
+    {
+        var result = await _management
+            .ReactivateProviderAsync(
                 provider.Id,
                 _accessContext,
                 cancellationToken)
