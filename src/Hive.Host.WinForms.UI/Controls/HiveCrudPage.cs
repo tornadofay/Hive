@@ -86,6 +86,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private int _pageSize = DefaultPageSize;
     private bool _busy;
     private bool _compactToolbar = false;
+    private bool _typographyReady;
 
     public HiveCrudPage()
     {
@@ -346,6 +347,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         UpdateFooterLayout();
         UpdateEmptyState(0);
         UpdateStatusSummary();
+        _typographyReady = true;
+        ApplyThemeTypography();
     }
 
     public event EventHandler<HiveCrudOperationFailedEventArgs>? OperationFailed;
@@ -682,8 +685,11 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
     private void ApplyThemeTypography()
     {
-        if (FindForm() is not HiveForm hiveForm)
+        if (!_typographyReady ||
+            FindForm() is not HiveForm hiveForm)
+        {
             return;
+        }
 
         var typography = hiveForm.Theme.Typography;
         var family = typography.FontFamily;
