@@ -8,7 +8,7 @@ Last updated: 2026-09-23
 
 ### Current sub-stage
 
-**1.12-H — Focused Automated Coverage**
+**1.12-I — Manual Configured-Host Verification**
 
 Detailed workload and ordering: `docs/plan/Phase1.12_Settings_Host_Integration.md`
 
@@ -216,16 +216,17 @@ The previously existing Settings inspection Example produced an old-schema/local
 4. The Overview / Getting Started / Example Configuration entry is classified as the real host Settings surface, not a configuration-inspection substitute.
 5. The classification and LocalDevelopment rule are documented in `docs/ui/examples.md`.
 
+## Completed 1.12-H verification gate
+
+1. The existing focused test suite covers the applicable 1.12 persistence/configuration, bootstrap, host-composition, replacement/concurrency, resource relationship, lifecycle, authorization, concurrency, configured-execution, target-switching, migration, and AgentDefinition key-reuse boundaries.
+2. The lifecycle/reactivation regressions added during 1.12-F are covered by focused Management and ResourceFoundation tests.
+3. The active-only AgentDefinition key-reuse migration is covered by migration integration assertions and the retired-key regression test.
+4. The full developer run completed with **170/170 passed, 0 failed, 0 skipped** on 2026-09-23, so the consolidated 1.12 automated verification gate is clean.
+5. The Settings selected-Agent preservation/clearing behavior remains manual UI verification; no separate UI-automation framework is required by the architecture.
+
 ## Verification handoff
 
-Current sub-stage: **1.12-H — Focused Automated Coverage**
-
-1.12-H audit targets:
-- persistence/configuration edge cases from the 1.12 plan;
-- host composition/replacement/concurrency coverage;
-- Provider/ProviderAccount/ExecutionTarget/AgentDefinition relationship, lifecycle, authorization, and concurrency coverage;
-- Settings integration and configured-host selection/revalidation behavior;
-- focused regression coverage for the latest lifecycle/reactivation and AgentDefinition key-reuse changes.
+Current sub-stage: **1.12-I — Manual Configured-Host Verification**
 
 Configured-host target:
 **Overview / Getting Started / Example Configuration — Hive.Example.WinForms**, followed by the normal host-level Settings flow, host-level Configured Agent selection, and `Agents / Base Agent / Configured Agent Execution`.
