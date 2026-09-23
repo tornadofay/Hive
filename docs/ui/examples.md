@@ -46,6 +46,7 @@ Current branches:
 - `Management → Facade`
 - `Workspace → WorkItem Operations`
 - `Settings → Configuration`
+- `Host → WinForms Integration`
 - `Persistence → Events → Event Persistence`
 - `Persistence → Events → Outbox Poller`
 
@@ -68,6 +69,9 @@ Examples:
 - Hive.Management CRUD facade example → `Management / Facade`
 - V1 Workspace / WorkItem operations example → `Workspace / WorkItem Operations`
 - Durable event log/snapshot/outbox example → `Persistence / Events / Event Persistence`
+- Image input and WinForms host-context discovery example → `Host / WinForms Integration`
+
+The Phase 1.13 WinForms host-context example uses a deterministic fixture Form and the checked-in image fixture so it does not require a real business application or real provider account. Discovery returns read-only metadata snapshots; it never grants control-action authority.
 
 The host-level Hive Settings entry is introduced through the Overview / Getting Started configuration example. The example explains the configuration model and opens the real Settings window; it is not a fake configuration-inspection surface.
 
