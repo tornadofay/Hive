@@ -112,7 +112,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
         };
         filter.Controls.Add(new Label
         {
-            Text = "Provider — select one",
+            Text = "Provider",
             AutoSize = true,
             Margin = new Padding(0, 7, 8, 0)
         });
