@@ -270,6 +270,10 @@ Completed in the current UI/UX polish pass:
 - Additional static polish pass: shared theme application now treats `ReadOnly` text boxes as disabled/read-only presentation, preserving the intended visual distinction across Light/Dark/System instead of overwriting it with normal input colors.
 - The additional pass remains presentation-only; no Management, persistence, provider, CRUD behavior, or host architecture was changed.
 - Follow-up compile correction: `HiveEditorLayout` now uses a non-null system-font fallback for its initial typography resources, eliminating the nullable dereference without changing the visual contract.
+- Additional shared-UI polish: CRUD page typography, the custom window header, pagination, and the themed MessageBox now derive their type scale/family from the shared Hive theme rather than isolated hard-coded presentation fonts.
+- Additional Example Host polish: the shared Example Output and Example Test Surface now follow the same theme typography tokens for headings, metadata, body text, and code/detail surfaces while preserving monospace code presentation.
+- Font replacement paths update control references before disposing previous font resources to avoid stale-font/GDI lifetime issues.
+- These changes remain presentation-only and do not alter CRUD, example execution, Management, persistence, provider, or host architecture behavior.
 
 Manual J review remains required before closing the sub-stage. No UI launch/build was performed by the assistant.
 ## Verification handoff
@@ -304,7 +308,7 @@ Verification for the new review pass:
 - Existing developer verification before this additional source pass remains **174/174 passed, 0 failed, 0 skipped** on .NET 10.0.1.
 - Developer manually confirmed the preceding checkpoint looked great; the additional source changes in this pass require another developer UI review.
 - Required next automated verification: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`.
-- Required manual review: repeat the exact Example Host Settings surface and specifically recheck editor typography, read-only/disabled field contrast, Light/Dark/System transitions, resizing, and CRUD/editor states.
+- Required manual review: repeat the exact Example Host Settings surface and recheck editor typography, shared header/pagination/dialog typography, Example Output/Test Surface typography, read-only/disabled field contrast, Light/Dark/System transitions, resizing, and CRUD/editor states.
 
 Do not close 1.12-J until the additional code changes are manually reviewed and the final checkpoint is reported verified.
 
