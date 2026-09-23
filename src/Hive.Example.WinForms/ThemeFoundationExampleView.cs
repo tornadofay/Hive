@@ -181,8 +181,7 @@ internal sealed class ThemeFoundationExampleView : UserControl
 
     private void ThemeManagerOnChanged(object? sender, EventArgs e)
     {
-        // HiveThemeManager already applies the theme recursively to this view.
-        // This handler only updates state that is specific to this example.
+        ApplyTypography(_themeManager.Theme);
         UpdateThemeState();
     }
 
