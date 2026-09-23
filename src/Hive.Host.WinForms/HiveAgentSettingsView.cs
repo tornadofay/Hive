@@ -154,7 +154,8 @@ internal sealed class HiveAgentSettingsView : UserControl
         using var editor = new HiveAgentDefinitionEditorForm(
             definition,
             _targets,
-            _themeManager);
+            _themeManager,
+            _output);
 
         var owner = FindForm();
         var result = editor.ShowDialog(owner);
@@ -220,9 +221,13 @@ internal sealed class HiveAgentSettingsView : UserControl
         var message = e.Exception.Message;
 
         _page.SetStatus(message);
-        HiveMessageBox.ShowError(
+        HiveUiErrorReporter.Report(
             FindForm(),
-            message);
+            e.Exception,
+            "Agent operation failed",
+            "The Agent operation could not be completed.",
+            _output,
+            _themeManager);
     }
 
     protected override void Dispose(bool disposing)
