@@ -28,6 +28,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly HiveButton _loadButton;
     private readonly HiveButton _saveButton;
     private readonly HiveButton _testButton;
+    private readonly HiveButton _initializeButton;
 
     private CancellationTokenSource? _operationCts;
     private HivePersistenceConfiguration? _loadedConfiguration;
@@ -114,10 +115,15 @@ internal sealed class HivePersistenceSettingsView : UserControl
             "Test connection",
             HiveButtonStyle.Secondary,
             132);
+        _initializeButton = _editor.AddActionButton(
+            "Initialize Hive",
+            HiveButtonStyle.Secondary,
+            122);
 
         _loadButton.Click += async (_, _) => await RunOperationAsync(LoadAsync);
         _saveButton.Click += async (_, _) => await RunOperationAsync(SaveAsync);
         _testButton.Click += async (_, _) => await RunOperationAsync(TestAsync);
+        _initializeButton.Click += async (_, _) => await RunOperationAsync(InitializeDatabaseAsync);
 
         _editor.AddField(
             "Server / instance",
@@ -181,7 +187,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _editor.AddField(
             "Initialization",
-            "This option is consumed only when Hive database initialization/migration is explicitly requested; connection testing never creates a database.",
+            "This option is consumed only when Hive initialization is explicitly requested. Save and Test never create a database or apply migrations.",
             _createDatabaseCheckBox,
             72);
 
@@ -331,6 +337,57 @@ internal sealed class HivePersistenceSettingsView : UserControl
         HiveMessageBox.ShowInformation(
             FindForm(),
             $"Persistence settings saved. Database: {_loadedConfiguration.DatabaseName}",
+            "Hive Persistence");
+    }
+
+    private async Task InitializeDatabaseAsync(
+        CancellationToken cancellationToken)
+    {
+        var configuration = _loadedConfiguration;
+
+        if (configuration is null)
+        {
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                "No persistence configuration is loaded. Save or load the Settings configuration before initializing Hive.",
+                "Hive Persistence",
+                _output,
+                _themeManager);
+            return;
+        }
+
+        SetStatus(
+            "Initializing the Hive database and applying schema migrations...",
+            isError: false);
+
+        var result = await _management
+            .InitializePersistenceAsync(
+                configuration,
+                _accessContext,
+                cancellationToken)
+            .ConfigureAwait(true);
+
+        if (result.IsFailure)
+        {
+            SetStatus(result.Error!.Message, isError: true);
+
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                result.Error!.Message,
+                "Hive Persistence",
+                _output,
+                _themeManager);
+            return;
+        }
+
+        const string message =
+            "Hive database initialization completed successfully. The database is now ready for normal Hive operations.";
+
+        SetStatus(message, isError: false);
+
+        HiveMessageBox.ShowInformation(
+            FindForm(),
+            message,
             "Hive Persistence");
     }
 
@@ -610,6 +667,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _loadButton.Enabled = !busy;
         _saveButton.Enabled = !busy;
         _testButton.Enabled = !busy;
+        _initializeButton.Enabled = !busy;
     }
 
     private static TextBox CreateTextBox() =>
