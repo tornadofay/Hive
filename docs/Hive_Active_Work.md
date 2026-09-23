@@ -31,7 +31,7 @@ The complete Phase 1.12 program is subdivided into bounded sub-stages described 
 - real Example Host consumption of configured state;
 - focused verification and documentation closure.
 
-1.12-A through 1.12-E are complete and verified/accepted. Current sub-stage 1.12-F makes the Example Host consume configured Providers, Accounts, ExecutionTargets, and AgentDefinitions through the real host composition and public APIs. Do not implement later 1.12 sub-stages in the same run unless a dependency is required to complete 1.12-F.
+1.12-A through 1.12-H are complete and verified/accepted. Current sub-stage 1.12-I is the manual configured-host verification gate. Do not implement 1.12-J or later work in this run.
 
 ## Completed 1.12-B verification gate
 
@@ -224,6 +224,13 @@ The previously existing Settings inspection Example produced an old-schema/local
 4. The full developer run completed with **170/170 passed, 0 failed, 0 skipped** on 2026-09-23, so the consolidated 1.12 automated verification gate is clean.
 5. The Settings selected-Agent preservation/clearing behavior remains manual UI verification; no separate UI-automation framework is required by the architecture.
 
+## Current 1.12-I verification findings
+
+1. Developer manually confirmed the configured-host persistence/resource reload path, configured target switching, and selected-Agent preservation behavior.
+2. During the retired-configuration check, a configured Agent was able to execute while its persisted ProviderAccount was retired.
+3. Source inspection traced the gap to HiveManagementFacade.ExecuteConfiguredAgentAsync: the path validated the target lifecycle only inside AgentExecutionService, after resolving the ProviderAccount credential, and did not validate the AgentDefinition, Provider, or ProviderAccount lifecycle states.
+4. Main now rejects an inactive AgentDefinition, ExecutionTarget, Provider, or ProviderAccount before provider credential resolution. A focused regression covers retired ProviderAccount execution.
+5. The previous developer-reported 170/170 full-suite run predates this fix. Focused and broader verification are pending for the current two-commit state.
 ## Verification handoff
 
 Current sub-stage: **1.12-I — Manual Configured-Host Verification**
@@ -249,7 +256,7 @@ Verification required:
 - verify no Provider credential or bootstrap SQL credential appears in Example Output, MessageBox details, or normal diagnostics;
 - verify the configured-host example does not create or depend on `HiveDatabaseOptions.LocalDevelopment()`.
 
-1.12-F implementation and focused tests are present on `main` and the developer has completed the required broader verification. 1.12-F is closed. 1.12-G is also closed by the classification review documented above. 1.12-H is now the active coverage audit. Final UI/UX polish remains deferred to 1.12-J.
+1.12-F, 1.12-G, and 1.12-H are closed by their respective implementation, classification, and automated-coverage gates. 1.12-I remains open until the manual configured-host lifecycle checks are reverified after the latest execution-lifecycle fix. Final UI/UX polish remains deferred to 1.12-J.
 
 ## Historical verification
 
