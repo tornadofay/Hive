@@ -108,14 +108,15 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 break;
 
             case TextBoxBase textBox:
+                var editable = textBox.Enabled && !textBox.ReadOnly;
                 SetBackColor(
                     textBox,
-                    textBox.Enabled
+                    editable
                         ? theme.Palette.InputBackground
                         : theme.Palette.DisabledBackground);
                 SetForeColor(
                     textBox,
-                    textBox.Enabled
+                    editable
                         ? theme.Palette.Text
                         : theme.Palette.DisabledText);
                 break;
