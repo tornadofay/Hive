@@ -224,39 +224,27 @@ The previously existing Settings inspection Example produced an old-schema/local
 4. The full developer run completed with **170/170 passed, 0 failed, 0 skipped** on 2026-09-23, so the consolidated 1.12 automated verification gate is clean.
 5. The Settings selected-Agent preservation/clearing behavior remains manual UI verification; no separate UI-automation framework is required by the architecture.
 
-## Current 1.12-I verification findings
+## Completed 1.12-I manual verification
 
-1. Developer manually confirmed the configured-host persistence/resource reload path, configured target switching, and selected-Agent preservation behavior.
-2. During the retired-configuration check, a configured Agent was able to execute while its persisted ProviderAccount was retired.
-3. Source inspection traced the gap to HiveManagementFacade.ExecuteConfiguredAgentAsync: the path validated the target lifecycle only inside AgentExecutionService, after resolving the ProviderAccount credential, and did not validate the AgentDefinition, Provider, or ProviderAccount lifecycle states.
-4. Main now rejects an inactive AgentDefinition, ExecutionTarget, Provider, or ProviderAccount before provider credential resolution. A focused regression covers retired ProviderAccount execution.
-5. The previous developer-reported 170/170 full-suite run predates this fix. Focused and broader verification are pending for the current two-commit state.
+1. Developer confirmed the host reloads persisted Provider and AgentDefinition state after returning from Settings.
+2. Developer confirmed a changed configured ExecutionTarget is used by the next Configured Agent execution.
+3. Developer confirmed the selected Agent is preserved across Settings Apply when it remains valid.
+4. Developer confirmed invalid/inactive configured state is surfaced: a retired ProviderAccount was initially found executing, the lifecycle gap was fixed, and the corrected retired-account behavior was then confirmed.
+5. Developer confirmed dependency-ordered reactivation: Provider → ProviderAccount → ExecutionTarget → AgentDefinition.
+6. Developer confirmed provider credentials and bootstrap SQL credentials are not displayed in Configured Agent output.
+7. Developer confirmed resource-only Settings changes are reflected by the Configured Agent operation after Settings closes without restarting the application.
+8. The previous 170/170 full-suite result predates the latest inactive-resource execution fix. Current post-fix focused and broader test execution remains required before Phase 1.12 verification can be closed.
+
 ## Verification handoff
 
-Current sub-stage: **1.12-I — Manual Configured-Host Verification**
-
-Configured-host target:
-**Overview / Getting Started / Example Configuration — Hive.Example.WinForms**, followed by the normal host-level Settings flow, host-level Configured Agent selection, and `Agents / Base Agent / Configured Agent Execution`.
+Current post-fix verification: rerun the focused Agent execution tests and then the broader `Hive.Tests` suite.
 
 Tests to run:
-- `tests/Hive.Tests/AgentExecutionIntegrationTests.cs` — configured Agent execution and persisted target-switching coverage;
-- `tests/Hive.Tests/HiveManagementFacadeTests.cs` — preserve existing Management CRUD/relationship coverage;
-- broader `Hive.Tests` execution after the focused tests.
+- `tests/Hive.Tests/AgentExecutionIntegrationTests.cs` — configured Agent execution, target switching, and inactive ProviderAccount rejection;
+- `tests/Hive.Tests/HiveManagementFacadeTests.cs` — existing Management CRUD/relationship/lifecycle coverage;
+- broader `Hive.Tests` execution.
 
-Verification required:
-- configure one Provider, ProviderAccount, credential, ExecutionTarget, and AgentDefinition;
-- verify the Example Host reloads the persisted Provider and AgentDefinition state into the host-owned service graph;
-- verify the Configured Agent selector shows the configured Agent and remains stable across a Settings save/apply when that Agent remains valid;
-- verify a configured Agent operation uses the persisted ExecutionTarget and produces the expected local/provider response;
-- change the AgentDefinition's configured ExecutionTarget, close/apply Settings, and verify the next operation uses the new target;
-- verify missing, retired, or otherwise unusable configured Agent/ExecutionTarget state is surfaced clearly;
-- verify retired Provider, ProviderAccount, ExecutionTarget, and AgentDefinition records can be filtered separately from active records, and Activate reactivates a retired record while preserving its identity;
-- verify reactivation is dependency-ordered: Provider before Account, Account before ExecutionTarget, and a configured Agent only when its configured ExecutionTarget is usable;
-- verify horizontal scrolling across CRUD list columns no longer produces paint artifacts;
-- verify no Provider credential or bootstrap SQL credential appears in Example Output, MessageBox details, or normal diagnostics;
-- verify the configured-host example does not create or depend on `HiveDatabaseOptions.LocalDevelopment()`.
-
-1.12-F, 1.12-G, and 1.12-H are closed by their respective implementation, classification, and automated-coverage gates. 1.12-I remains open until the manual configured-host lifecycle checks are reverified after the latest execution-lifecycle fix. Final UI/UX polish remains deferred to 1.12-J.
+The manual 1.12-I configured-host verification is complete. Do not close the overall Phase 1.12 verification gate until the current post-fix automated results are recorded.
 
 ## Historical verification
 
