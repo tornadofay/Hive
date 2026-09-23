@@ -155,10 +155,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
         }
 
         _page.AllowAdd = false;
-        _page.SetStatus(
-            _selectedProvider is null
-                ? "Select a Provider to manage its accounts and credentials."
-                : "Select a Provider to manage its accounts and credentials.");
+        _page.SetStatus("Select a Provider to manage its accounts and credentials.");
 
         await _page.RefreshAsync(cancellationToken).ConfigureAwait(true);
     }
