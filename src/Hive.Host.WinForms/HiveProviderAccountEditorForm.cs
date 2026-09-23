@@ -115,13 +115,13 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
             credentialPanel,
             86);
 
-        var cancel = editor.AddActionButton(
-            "Cancel",
-            HiveButtonStyle.Secondary,
-            96);
         var save = editor.AddActionButton(
             account is null ? "Create" : "Save",
             HiveButtonStyle.Primary,
+            96);
+        var cancel = editor.AddActionButton(
+            "Cancel",
+            HiveButtonStyle.Secondary,
             96);
 
         cancel.Click += (_, _) =>
