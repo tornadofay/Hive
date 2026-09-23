@@ -26,7 +26,9 @@ public sealed class HiveEditorLayout : UserControl
 
     public HiveEditorLayout()
     {
-        _descriptionFont = SystemFonts.MessageBoxFont;
+        _descriptionFont = new Font(
+            SystemFonts.MessageBoxFont.FontFamily,
+            SystemFonts.MessageBoxFont.Size);
         _titleFont = new Font(
             SystemFonts.MessageBoxFont.FontFamily,
             SystemFonts.MessageBoxFont.Size,
