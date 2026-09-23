@@ -4,11 +4,15 @@ Last updated: 2026-09-23
 
 ## Active slice
 
-**1.12 — Settings, Configuration, and Real Host Consumption**
+**1.13 — Image Input & WinForms Host Context**
 
 ### Current sub-stage
 
-**1.12-K — Documentation and Closure**
+**1.13-A — WinForms Host Context Discovery**
+
+Detailed workload and ordering: `docs/roadmap.md`
+
+Phase 1.12 is complete and verified. Phase 1.13 is the authorized implementation slice.
 
 Detailed workload and ordering: `docs/plan/Phase1.12_Settings_Host_Integration.md`
 
@@ -17,21 +21,39 @@ Phase 1.12 is the authorized implementation slice.
 
 ## Objective
 
-Establish Hive Settings as the permanent global Hive package configuration center, then make the configured state actually drive the host application's persistence/resources/runtime consumption. Phase 1.12 establishes the first concrete domains; later Hive capabilities extend this same configuration center rather than creating parallel settings roots.
+Establish image as the first V1 input boundary and provide the concrete WinForms host-context discovery contract needed by later bounded UI integration.
 
 ## Scope
 
-The complete Phase 1.12 program is subdivided into bounded sub-stages described in `docs/plan/Phase1.12_Settings_Host_Integration.md`:
+- checked-in image fixture usable by deterministic tests/examples;
+- bounded WinForms root registration/discovery;
+- Form/UserControl/custom Control/container/nested descendant discovery;
+- relevant read-only structural/runtime context;
+- cycle-safe and bounded traversal;
+- cancellation-aware traversal;
+- explicit provenance for discovered host context;
+- no control mutation/action authority;
+- focused automated coverage and a public Example Host scenario.
 
-- host configuration/runtime composition;
-- persistence bootstrap credential boundary;
-- Provider/ProviderAccount/ExecutionTarget and AgentDefinition Settings management;
-- migration of Settings UI onto `Hive.Host.WinForms.UI` reusable navigation/list/editor controls;
-- Settings-driven reload/recomposition;
-- real Example Host consumption of configured state;
-- focused verification and documentation closure.
+Do not implement Phase 1.14 or later work in this run.
 
-1.12-A through 1.12-I are complete and verified/accepted. 1.12-J — Final UI/UX Review is complete and verified. Current sub-stage 1.12-K is documentation and closure. Do not implement Phase 1.13 or later work in this run.
+## Implementation checkpoint
+
+The existing WorkItem image submission/storage contract is already authoritative and must not be duplicated. This slice adds the missing concrete WinForms host-context boundary over native WinForms controls.
+
+Before coding, inspect:
+- `docs/architecture/v1-host-and-management.md`;
+- `docs/architecture/foundations.md`;
+- `docs/roadmap.md` 1.13;
+- `docs/ui/examples.md`;
+- existing WorkItem image contracts and Management facade;
+- current Host.WinForms and Example Host composition/lifetime boundaries.
+
+## Verification handoff
+
+Example to run: <to be established by the implementation> — Hive.Example.WinForms
+Tests to run: focused 1.13 host-context/image-input tests; broader `tests/Hive.Tests/Hive.Tests.csproj` as required by the slice.
+
 
 ## Completed 1.12-B verification gate
 
