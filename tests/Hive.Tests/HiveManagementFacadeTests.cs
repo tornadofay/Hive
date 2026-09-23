@@ -151,6 +151,166 @@ public sealed class HiveManagementFacadeTests
     }
 
     [Fact]
+    public async Task RetiredResources_CanBeReactivatedOnlyAfterDependenciesAreActive()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ManagementReactivation");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var facade = CreateFacade(database.Options);
+        var context = CreateContext();
+
+        var provider = await facade.CreateProviderAsync(
+            CreateProvider(context),
+            context);
+        Assert.True(provider.IsSuccess, provider.Error?.Message);
+
+        var account = await facade.CreateProviderAccountAsync(
+            CreateProviderAccount(provider.Value!.Id, context),
+            context);
+        Assert.True(account.IsSuccess, account.Error?.Message);
+
+        var target = await facade.CreateExecutionTargetAsync(
+            CreateExecutionTarget(provider.Value.Id, account.Value!.Id, context),
+            context);
+        Assert.True(target.IsSuccess, target.Error?.Message);
+
+        var agent = await facade.CreateAgentDefinitionAsync(
+            CreateAgentDefinition(context, target.Value!.Id, "reactivation-agent"),
+            context);
+        Assert.True(agent.IsSuccess, agent.Error?.Message);
+
+        var retiredProvider = await facade.DeleteProviderAsync(
+            provider.Value.Id,
+            context);
+        Assert.True(retiredProvider.IsSuccess, retiredProvider.Error?.Message);
+        Assert.Equal(2, retiredProvider.Value!.Resource!.Version.Value);
+
+        var retiredAccount = await facade.DeleteProviderAccountAsync(
+            account.Value.Id,
+            context);
+        Assert.True(retiredAccount.IsSuccess, retiredAccount.Error?.Message);
+        Assert.Equal(2, retiredAccount.Value!.Resource!.Version.Value);
+
+        var retiredTarget = await facade.DeleteExecutionTargetAsync(
+            target.Value.Id,
+            context);
+        Assert.True(retiredTarget.IsSuccess, retiredTarget.Error?.Message);
+        Assert.Equal(2, retiredTarget.Value!.Resource!.Version.Value);
+
+        var retiredAgent = await facade.DeleteAgentDefinitionAsync(
+            agent.Value!.Id,
+            context);
+        Assert.True(retiredAgent.IsSuccess, retiredAgent.Error?.Message);
+        Assert.Equal(2, retiredAgent.Value!.Resource!.Version.Value);
+
+        var blockedAccount = await facade.ReactivateProviderAccountAsync(
+            account.Value.Id,
+            context);
+        Assert.True(blockedAccount.IsFailure);
+        Assert.Equal(
+            "hive.provider-account.provider-inactive",
+            blockedAccount.Error!.Code);
+
+        var blockedTarget = await facade.ReactivateExecutionTargetAsync(
+            target.Value.Id,
+            context);
+        Assert.True(blockedTarget.IsFailure);
+        Assert.Equal(
+            "hive.execution-target.provider-inactive",
+            blockedTarget.Error!.Code);
+
+        var blockedAgent = await facade.ReactivateAgentDefinitionAsync(
+            agent.Value.Id,
+            context);
+        Assert.True(blockedAgent.IsFailure);
+        Assert.Equal(
+            "hive.management.agent-definition.execution-target-retired",
+            blockedAgent.Error!.Code);
+
+        var activeProvider = await facade.ReactivateProviderAsync(
+            provider.Value.Id,
+            context);
+        Assert.True(activeProvider.IsSuccess, activeProvider.Error?.Message);
+        Assert.Equal(provider.Value.Id, activeProvider.Value!.Id);
+        Assert.Equal(
+            ResourceLifecycleStatus.Active,
+            activeProvider.Value.Resource!.Lifecycle.Status);
+        Assert.Equal(3, activeProvider.Value.Resource.Version.Value);
+
+        var activeAccount = await facade.ReactivateProviderAccountAsync(
+            account.Value.Id,
+            context);
+        Assert.True(activeAccount.IsSuccess, activeAccount.Error?.Message);
+        Assert.Equal(account.Value.Id, activeAccount.Value!.Id);
+        Assert.Equal(
+            ResourceLifecycleStatus.Active,
+            activeAccount.Value.Resource!.Lifecycle.Status);
+        Assert.Equal(3, activeAccount.Value.Resource.Version.Value);
+
+        var activeTarget = await facade.ReactivateExecutionTargetAsync(
+            target.Value.Id,
+            context);
+        Assert.True(activeTarget.IsSuccess, activeTarget.Error?.Message);
+        Assert.Equal(target.Value.Id, activeTarget.Value!.Id);
+        Assert.Equal(
+            ResourceLifecycleStatus.Active,
+            activeTarget.Value.Resource.Lifecycle.Status);
+        Assert.Equal(3, activeTarget.Value.Resource.Version.Value);
+
+        var activeAgent = await facade.ReactivateAgentDefinitionAsync(
+            agent.Value.Id,
+            context);
+        Assert.True(activeAgent.IsSuccess, activeAgent.Error?.Message);
+        Assert.Equal(agent.Value.Id, activeAgent.Value!.Id);
+        Assert.Equal(
+            ResourceLifecycleStatus.Active,
+            activeAgent.Value.Resource!.Lifecycle.Status);
+        Assert.Equal(3, activeAgent.Value.Resource.Version.Value);
+        Assert.Equal(
+            target.Value.Id,
+            activeAgent.Value.ConfiguredExecutionTargetId);
+    }
+
+    [Fact]
+    public async Task ReactivatingRetiredAgentDefinition_ReportsActiveKeyConflict()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ManagementReactivationKeyConflict");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var facade = CreateFacade(database.Options);
+        var context = CreateContext();
+
+        var original = await facade.CreateAgentDefinitionAsync(
+            CreateAgentDefinition(context, key: "reactivation-conflict"),
+            context);
+        Assert.True(original.IsSuccess, original.Error?.Message);
+
+        var retired = await facade.DeleteAgentDefinitionAsync(
+            original.Value!.Id,
+            context);
+        Assert.True(retired.IsSuccess, retired.Error?.Message);
+
+        var replacement = await facade.CreateAgentDefinitionAsync(
+            CreateAgentDefinition(context, key: "reactivation-conflict"),
+            context);
+        Assert.True(replacement.IsSuccess, replacement.Error?.Message);
+
+        var reactivated = await facade.ReactivateAgentDefinitionAsync(
+            original.Value.Id,
+            context);
+
+        Assert.True(reactivated.IsFailure);
+        Assert.Equal(ErrorCategory.Conflict, reactivated.Error!.Category);
+        Assert.Equal("hive.agent-definition.duplicate", reactivated.Error.Code);
+    }
+
+    [Fact]
     public async Task MultipleAgentDefinitions_CanShareExecutionTarget()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ManagementSharedTarget");
