@@ -267,7 +267,7 @@ Completed in the current UI/UX polish pass:
 - Focused HiveButton coverage was added for the dialog-action contract and enabled/disabled PerformClick behavior.
 - Existing shared Hive UI controls remain the presentation boundary; no parallel renderer, CRUD abstraction, theme system, or configuration workflow was introduced.
 
-Manual J review remains required before closing the sub-stage. No UI launch/build/test was performed after the latest HiveButton change.
+Manual J review remains required before closing the sub-stage. No UI launch/build was performed by the assistant.
 ## Verification handoff
 
 Current sub-stage: **1.12-J — Final UI/UX Review**
@@ -289,10 +289,10 @@ Manual UI review:
 
 The previously recorded automated verification completed **171/171 passed, 0 failed, 0 skipped** on 2026-09-23, but that run predates the later HiveButton dialog-action fix and the new HiveButton-focused tests. Do not treat it as verification of the current `main` checkpoint.
 
-Latest developer verification result for the current checkpoint (reported, not executed by the assistant): **174 tests run, 173 passed, 1 failed, 0 skipped** on .NET 10.0.1. The sole failure was `HiveButtonTests.HiveButton_ImplementsWinFormsDialogActionContract`; the assertion incorrectly expected `DialogResult.None` after assigning the button as the form CancelButton. The test has been corrected to assert the actual WinForms `Cancel` dialog result.
+Latest developer verification result for the current checkpoint (reported, not executed by the assistant): **174 tests run, 173 passed, 1 failed, 0 skipped** on .NET 10.0.1. The first failure showed that assigning the button as the form CancelButton changes its dialog result to `Cancel`; that test assertion was corrected. The next developer run showed the complementary WinForms behavior: assigning the button as AcceptButton leaves its dialog result at `None`, so the test expectation for `OK` was also corrected. No production HiveButton behavior was changed.
 
 Verification required for the current checkpoint:
-- Re-run `dotnet test tests/Hive.Tests/Hive.Tests.csproj` after pulling commit `eed15d2d99f3681ad85ff4d77d1adac9712c539f`.
+- Re-run `dotnet test tests/Hive.Tests/Hive.Tests.csproj` after pulling commit `3ca8a6bcc2c21c1dec9258f33a1f4a8a04121b4e`.
 - Manual Example Host review at the exact surface below.
 
 Do not close 1.12-J until the current checkpoint has actually been verified and the manual UI review is reported.
