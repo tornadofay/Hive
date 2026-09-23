@@ -223,7 +223,7 @@ public sealed class HiveHostCompositionTests
         Assert.Equal(
             secondConfiguration,
             composition.Current!.PersistenceConfiguration);
-        Assert.False(firstGraph.IsDisposed);
+        Assert.True(firstGraph.IsDisposed);
     }
 
     [Fact]
