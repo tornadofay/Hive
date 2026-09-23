@@ -179,6 +179,105 @@ public sealed class AgentExecutionIntegrationTests
     }
 
     [Fact]
+    public async Task ExecuteConfiguredAgentAsync_RejectsInactiveProviderAccount()
+    {
+        var database = await PrepareDatabase("Hive_Test_InactiveProviderAccountExecution");
+        var eventStore = new SqlEventPersistenceStore(database.Options);
+        var secretStore = new SqlDpapiSecretStore(database.Options);
+
+        using var httpClient = new HttpClient();
+        var executionService = new AgentExecutionService(
+            eventStore,
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var facade = new HiveManagementFacade(
+            new SqlProviderResourceStore(database.Options),
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            secretStore,
+            agentExecution: executionService);
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        var provider = CreateConfiguredProvider(context);
+        var providerResult = await facade.CreateProviderAsync(
+            provider,
+            context);
+
+        Assert.True(providerResult.IsSuccess, providerResult.Error?.Message);
+
+        using var credentialMaterial = SecretMaterial.Create("test-api-key");
+
+        var secretResult = await facade.CreateSecretAsync(
+            "inactive-account-agent-key",
+            "Inactive Account Agent Key",
+            credentialMaterial,
+            context);
+
+        Assert.True(secretResult.IsSuccess, secretResult.Error?.Message);
+
+        var account = CreateConfiguredAccount(
+            provider.Id,
+            secretResult.Value!.Id,
+            context);
+
+        var accountResult = await facade.CreateProviderAccountAsync(
+            account,
+            context);
+
+        Assert.True(accountResult.IsSuccess, accountResult.Error?.Message);
+
+        var target = CreateConfiguredTarget(
+            provider.Id,
+            account.Id,
+            new Uri("https://example.invalid/v1"),
+            "inactive-account-model",
+            context);
+
+        var targetResult = await facade.CreateExecutionTargetAsync(
+            target,
+            context);
+
+        Assert.True(targetResult.IsSuccess, targetResult.Error?.Message);
+
+        var definition = CreateConfiguredAgentDefinition(
+            target.Id,
+            context);
+
+        var definitionResult = await facade.CreateAgentDefinitionAsync(
+            definition,
+            context);
+
+        Assert.True(definitionResult.IsSuccess, definitionResult.Error?.Message);
+
+        var retiredAccount = await facade.DeleteProviderAccountAsync(
+            account.Id,
+            context);
+
+        Assert.True(retiredAccount.IsSuccess, retiredAccount.Error?.Message);
+        Assert.Equal(
+            ResourceLifecycleStatus.Retired,
+            retiredAccount.Value!.Resource!.Lifecycle.Status);
+
+        var result = await facade.ExecuteConfiguredAgentAsync(
+            definition.Id,
+            context,
+            "This must be rejected.");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.management.agent-execution.provider-account-inactive",
+            result.Error!.Code);
+        Assert.Equal(
+            ErrorCategory.Unsupported,
+            result.Error.Category);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_CompletesAndPersistsCorrelatedLifecycle()
     {
         var database = await PrepareDatabase("Hive_Test_AgentExecution");
