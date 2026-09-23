@@ -667,10 +667,6 @@ internal sealed class HiveExampleHostForm : HiveForm
             if (_activeExample is not null)
                 ShowExample(_activeExample);
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
         catch (Exception exception)
         {
             HiveUiErrorReporter.Report(
