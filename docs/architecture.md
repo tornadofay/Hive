@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-22 (rev 30 — modular architecture index and documentation consistency audit)
+Last updated: 2026-09-23 (rev 31 — Phase 1.13 WinForms host-context boundary)
 
 
 
