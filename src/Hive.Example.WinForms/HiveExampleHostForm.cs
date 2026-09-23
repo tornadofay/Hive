@@ -256,15 +256,13 @@ internal sealed class HiveExampleHostForm : HiveForm
                 _viewTitle.Text = "Hive host unavailable";
                 _viewSubtitle.Text = result.Error!.Message;
 
-                HiveMessageBox.Show(
+                HiveUiErrorReporter.Report(
                     this,
-                    new HiveMessageOptions(
-                        "Hive host initialization failed",
-                        result.Error.Message,
-                        HiveMessageType.Error,
-                        MessageBoxButtons.OK,
-                        result.Error.Code,
-                        DetailsExpanded: true));
+                    new InvalidOperationException(result.Error.Message),
+                    "Hive host initialization failed",
+                    "The Example Host could not initialize the current Hive service graph.",
+                    _outputView,
+                    _themeManager);
 
                 return;
             }
@@ -285,15 +283,13 @@ internal sealed class HiveExampleHostForm : HiveForm
             _viewTitle.Text = "Hive host unavailable";
             _viewSubtitle.Text = exception.Message;
 
-            HiveMessageBox.Show(
+            HiveUiErrorReporter.Report(
                 this,
-                new HiveMessageOptions(
-                    "Hive host initialization failed",
-                    "The Example Host could not construct the current Hive service graph.",
-                    HiveMessageType.Error,
-                    MessageBoxButtons.OK,
-                    exception.ToString(),
-                    DetailsExpanded: true));
+                exception,
+                "Hive host initialization failed",
+                "The Example Host could not construct the current Hive service graph.",
+                _outputView,
+                _themeManager);
         }
     }
 
@@ -560,13 +556,20 @@ internal sealed class HiveExampleHostForm : HiveForm
             _outputView.Clear();
             _outputView.SetCollapsed(true);
         }
-        catch
+        catch (Exception exception)
         {
             if (_viewHost.Controls.Contains(nextView))
                 _viewHost.Controls.Remove(nextView);
 
             nextView.Dispose();
-            throw;
+
+            HiveUiErrorReporter.Report(
+                this,
+                exception,
+                "Example failed to open",
+                $"The example '{example.Title}' could not be opened.",
+                _outputView,
+                _themeManager);
         }
 
         _outputView.BringToFront();
@@ -600,10 +603,11 @@ internal sealed class HiveExampleHostForm : HiveForm
         var graph = _composition?.Current;
         if (graph is null || graph.IsDisposed)
         {
-            HiveMessageBox.ShowError(
+            HiveUiErrorReporter.Report(
                 this,
                 "Hive host services are not initialized. Open Settings after the host finishes loading.",
                 "Hive Settings",
+                _outputView,
                 _themeManager);
             return;
         }
@@ -611,7 +615,8 @@ internal sealed class HiveExampleHostForm : HiveForm
         using var form = new HiveSettingsForm(
             graph.Management,
             ExampleSettingsAccessContext,
-            _themeManager);
+            _themeManager,
+            _outputView);
 
         form.ShowDialog(this);
     }
