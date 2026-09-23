@@ -286,6 +286,7 @@ internal sealed class HiveExampleHostForm : HiveForm
         _contentLayout.Controls.Add(_viewSubtitle, 0, 1);
         _contentLayout.Controls.Add(configuredAgentLayout, 0, 2);
         _contentLayout.Controls.Add(_viewHost, 0, 3);
+        _contentLayout.Controls.Add(_outputHost, 0, 4);
 
         _shell.Controls.Add(_navigationSurface, 0, 0);
         _shell.Controls.Add(_navigationSeparator, 1, 0);
