@@ -808,10 +808,18 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         var expectedRows = compact && _searchBox.Visible ? 2 : 1;
         var expectedColumns = compact ? 1 : 2;
         var actionWidth = GetVisibleActionBarWidth(compact);
+        var compactActionRows = compact
+            ? GetCompactActionRowCount()
+            : 1;
+        var expectedActionBarHeight = compact
+            ? (_searchBox.Visible ? 44 : 0) + (compactActionRows * 44)
+            : ActionBarHeight;
 
         if (_compactToolbar == compact &&
             _actionLayout.ColumnCount == expectedColumns &&
             _actionLayout.RowCount == expectedRows &&
+            _actionButtons.WrapContents == compact &&
+            _pageLayout.ActionBarHeight == expectedActionBarHeight &&
             (compact ||
              _actionLayout.ColumnStyles.Count < 2 ||
              Math.Abs(_actionLayout.ColumnStyles[1].Width - actionWidth) < 0.1f))
@@ -840,31 +848,35 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _deleteButton.Width = actionButtonWidth;
             _refreshButton.Width = actionButtonWidth;
 
+            _actionButtons.WrapContents = compact;
+            _searchLabel.Visible = _searchBox.Visible && !compact;
+
             if (compact)
             {
+                _pageLayout.ActionBarHeight = expectedActionBarHeight;
+                _actionLayout.ColumnCount = 1;
+
                 if (_searchBox.Visible)
                 {
-                    _pageLayout.ActionBarHeight = 88;
-                    _actionLayout.ColumnCount = 1;
                     _actionLayout.RowCount = 2;
                     _actionLayout.ColumnStyles.Add(
                         new ColumnStyle(SizeType.Percent, 100f));
                     _actionLayout.RowStyles.Add(
-                        new RowStyle(SizeType.Absolute, 40f));
-                    _actionLayout.RowStyles.Add(
                         new RowStyle(SizeType.Absolute, 44f));
+                    _actionLayout.RowStyles.Add(
+                        new RowStyle(
+                            SizeType.Absolute,
+                            compactActionRows * 44f));
                     _actionLayout.Controls.Add(_searchPanel, 0, 0);
                     _actionLayout.Controls.Add(_actionButtons, 0, 1);
                 }
                 else
                 {
-                    _pageLayout.ActionBarHeight = ActionBarHeight;
-                    _actionLayout.ColumnCount = 1;
                     _actionLayout.RowCount = 1;
                     _actionLayout.ColumnStyles.Add(
                         new ColumnStyle(SizeType.Percent, 100f));
                     _actionLayout.RowStyles.Add(
-                        new RowStyle(SizeType.Percent, 100f));
+                        new RowStyle(SizeType.Absolute, compactActionRows * 44f));
                     _actionLayout.Controls.Add(_actionButtons, 0, 0);
                 }
             }
@@ -891,6 +903,34 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         UpdateSearchBoxWidth();
     }
 
+    private int GetCompactActionRowCount()
+    {
+        var visibleCount =
+            (_addButton.Visible ? 1 : 0) +
+            (_editButton.Visible ? 1 : 0) +
+            (_activateButton.Visible ? 1 : 0) +
+            (_deleteButton.Visible ? 1 : 0) +
+            (_refreshButton.Visible ? 1 : 0);
+
+        if (visibleCount == 0)
+            return 1;
+
+        var availableWidth = Math.Max(
+            1,
+            ClientSize.Width -
+            _actionButtons.Padding.Left -
+            _actionButtons.Padding.Right);
+
+        var buttonWidth =
+            CompactActionButtonWidth + ActionButtonSpacing;
+
+        return Math.Max(
+            1,
+            (int)Math.Ceiling(
+                visibleCount * buttonWidth /
+                (double)availableWidth));
+    }
+
     private void UpdateSearchBoxWidth()
     {
         if (!_searchPanel.Visible ||
@@ -900,10 +940,15 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         var availableWidth =
             _searchPanel.ClientSize.Width -
             _searchPanel.Padding.Left -
-            _searchPanel.Padding.Right -
-            _searchLabel.Width -
-            _searchLabel.Margin.Left -
-            _searchLabel.Margin.Right;
+            _searchPanel.Padding.Right;
+
+        if (_searchLabel.Visible)
+        {
+            availableWidth -=
+                _searchLabel.Width +
+                _searchLabel.Margin.Left +
+                _searchLabel.Margin.Right;
+        }
 
         if (_statusFilterLabel.Visible)
         {
@@ -916,10 +961,13 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                 _statusFilterBox.Margin.Right;
         }
 
-        var targetWidth = Math.Clamp(
-            availableWidth,
-            MinimumSearchWidth,
-            MaximumSearchWidth);
+        var minimumWidth = _compactToolbar
+            ? 112
+            : MinimumSearchWidth;
+
+        var targetWidth = availableWidth >= minimumWidth
+            ? Math.Min(availableWidth, MaximumSearchWidth)
+            : Math.Max(0, availableWidth);
 
         if (_searchBox.Width != targetWidth)
             _searchBox.Width = targetWidth;
