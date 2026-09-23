@@ -838,6 +838,25 @@ Phase 1.12 remains open until all are true:
 
 ## 18. Verification Handoff
 
+### Completed Phase 1.12 handoff
+
+**Example surface verified:**
+`Overview / Getting Started / Example Configuration` followed by the real Settings surface:
+`Settings / Configuration / Hive Settings / Provider & Persistence` — `Hive.Example.WinForms`.
+
+**Configured-host scenario verified:** the normal host-level Settings flow followed by the configured Agent operation.
+
+**Broader verification:** developer reran `dotnet test tests/Hive.Tests/Hive.Tests.csproj` on .NET 10.0.1 with **174/174 passed, 0 failed, 0 skipped** on 2026-09-23.
+
+**Manual UI/UX verification:** developer confirmed the final Settings UI/UX review across navigation, hierarchy, typography, density, resizing, CRUD/editor states, dialogs, themes, selection/scroll preservation, empty/error/unavailable states, and disposal behavior.
+
+**Historical record:** `docs/verification/phase-1/1.12.md`.
+
+Phase 1.12 is complete. Phase 1.13 is the next roadmap slice.
+
+---
+
+
 For any capability requiring an Example, the handoff must name the exact Example path and focused tests.
 
 ### Current 1.12-A handoff
