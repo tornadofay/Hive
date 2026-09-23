@@ -42,7 +42,7 @@ internal sealed class HiveProviderConfigurationView : UserControl
         };
 
         _page.SetColumns(
-            new HiveCrudColumn<Provider>("Key", 180, item => item.Key),
+            new HiveCrudColumn<Provider>("Resource key", 180, item => item.Key),
             new HiveCrudColumn<Provider>("Name", 240, item => item.DisplayName),
             new HiveCrudColumn<Provider>("Transport", 190, item => item.TransportKind),
             new HiveCrudColumn<Provider>(
