@@ -46,7 +46,9 @@ internal sealed class HiveProviderEditorForm : HiveForm
         var editor = new HiveEditorLayout();
 
         _keyTextBox = CreateTextBox();
+        _keyTextBox.PlaceholderText = "e.g. openrouter";
         _nameTextBox = CreateTextBox();
+        _nameTextBox.PlaceholderText = "e.g. OpenRouter";
         _transportComboBox = new ComboBox
         {
             Dock = DockStyle.Fill,
@@ -71,14 +73,12 @@ internal sealed class HiveProviderEditorForm : HiveForm
 
         if (_existing is not null)
         {
-            _keyTextBox.ReadOnly = true;
-            _keyTextBox.BackColor = themeManager.Theme.Palette.DisabledBackground;
-            _keyTextBox.ForeColor = themeManager.Theme.Palette.DisabledText;
+            SetReadOnlyVisualState(_keyTextBox, themeManager);
         }
 
         editor.AddField(
-            "Key",
-            "Stable Provider resource identity. It cannot be changed after creation.",
+            "Resource key",
+            "Stable internal Provider identifier. This is NOT an API key or credential. It becomes read-only after creation.",
             _keyTextBox);
 
         editor.AddField(
@@ -164,4 +164,15 @@ internal sealed class HiveProviderEditorForm : HiveForm
             Height = 32,
             BorderStyle = BorderStyle.FixedSingle
         };
+
+    private static void SetReadOnlyVisualState(
+        TextBox textBox,
+        IHiveThemeManager themeManager)
+    {
+        textBox.ReadOnly = true;
+        textBox.TabStop = false;
+        textBox.Cursor = Cursors.Arrow;
+        textBox.BackColor = themeManager.Theme.Palette.DisabledBackground;
+        textBox.ForeColor = themeManager.Theme.Palette.DisabledText;
+    }
 }
