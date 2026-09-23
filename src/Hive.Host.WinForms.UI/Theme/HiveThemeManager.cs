@@ -109,16 +109,21 @@ public sealed class HiveThemeManager : IHiveThemeManager
 
             case TextBoxBase textBox:
                 var editable = textBox.Enabled && !textBox.ReadOnly;
+                var readOnly = textBox.Enabled && textBox.ReadOnly;
                 SetBackColor(
                     textBox,
-                    editable
-                        ? theme.Palette.InputBackground
-                        : theme.Palette.DisabledBackground);
+                    !textBox.Enabled
+                        ? theme.Palette.DisabledBackground
+                        : readOnly
+                            ? theme.Palette.ElevatedSurface
+                            : theme.Palette.InputBackground);
                 SetForeColor(
                     textBox,
-                    editable
-                        ? theme.Palette.Text
-                        : theme.Palette.DisabledText);
+                    !textBox.Enabled
+                        ? theme.Palette.DisabledText
+                        : readOnly
+                            ? theme.Palette.MutedText
+                            : theme.Palette.Text);
                 break;
 
             case ComboBox comboBox:
