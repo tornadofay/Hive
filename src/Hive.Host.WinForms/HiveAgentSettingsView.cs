@@ -11,6 +11,7 @@ internal sealed class HiveAgentSettingsView : UserControl
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
+    private readonly IHiveExampleOutput? _output;
     private readonly HiveCrudPage<AgentDefinition> _page;
 
     private IReadOnlyList<ExecutionTarget> _targets = Array.Empty<ExecutionTarget>();
@@ -18,11 +19,13 @@ internal sealed class HiveAgentSettingsView : UserControl
     public HiveAgentSettingsView(
         IHiveManagementFacade management,
         ResourceAccessContext accessContext,
-        IHiveThemeManager themeManager)
+        IHiveThemeManager themeManager,
+        IHiveExampleOutput? output = null)
     {
         _management = management ?? throw new ArgumentNullException(nameof(management));
         _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
         _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
+        _output = output;
 
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
