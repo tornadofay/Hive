@@ -152,9 +152,10 @@ public sealed class HivePaginationBar : UserControl
             Math.Abs(_pageFont.Size - size) > 0.01f)
         {
             var next = new Font(family, size);
-            _pageFont.Dispose();
+            var previous = _pageFont;
             _pageFont = next;
             _pageLabel.Font = _pageFont;
+            previous.Dispose();
         }
 
         BackColor = theme.Palette.Surface;
