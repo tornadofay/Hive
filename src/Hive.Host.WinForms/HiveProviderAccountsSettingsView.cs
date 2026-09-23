@@ -70,11 +70,20 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
             new HiveCrudColumn<ProviderAccount>(
                 "Lifecycle",
                 120,
-                item => item.Resource.Lifecycle.Status.ToString()));
+                item => HiveLifecyclePresentation.Format(
+                    item.Resource.Lifecycle.Status),
+                item => HiveLifecyclePresentation.Color(
+                    item.Resource.Lifecycle.Status,
+                    _themeManager)));
 
         _page.LoadItemsAsync = LoadAsync;
         _page.EditItemAsync = EditAsync;
         _page.DeleteItemAsync = DeleteAsync;
+        _page.ActivateItemAsync = ActivateAsync;
+        _page.StatusSelector = item => item.Resource.Lifecycle.Status.ToString();
+        _page.CanEditItem = item => HiveLifecyclePresentation.IsActive(item.Resource);
+        _page.CanDeleteItem = item => HiveLifecyclePresentation.IsActive(item.Resource);
+        _page.CanActivateItem = item => HiveLifecyclePresentation.IsRetired(item.Resource);
         _page.GetItemDisplayName = item => $"{item.DisplayName} [{item.Key}]";
 
         _page.OperationFailed += PageOperationFailed;
@@ -347,6 +356,21 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
     {
         var result = await _management
             .DeleteProviderAccountAsync(
+                account.Id,
+                _accessContext,
+                cancellationToken)
+            .ConfigureAwait(true);
+
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error!.Message);
+    }
+
+    private async Task ActivateAsync(
+        ProviderAccount account,
+        CancellationToken cancellationToken)
+    {
+        var result = await _management
+            .ReactivateProviderAccountAsync(
                 account.Id,
                 _accessContext,
                 cancellationToken)
