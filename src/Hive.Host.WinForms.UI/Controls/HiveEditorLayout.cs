@@ -21,6 +21,7 @@ public sealed class HiveEditorLayout : UserControl
     private Font _titleFont;
     private readonly List<Label> _descriptionLabels = new();
     private readonly List<Label> _titleLabels = new();
+    private readonly ToolTip _descriptionToolTip;
     private int _labelColumnWidth = DefaultLabelColumnWidth;
     private bool _layoutInitialized;
 
@@ -35,6 +36,14 @@ public sealed class HiveEditorLayout : UserControl
             fallbackFont.FontFamily,
             fallbackFont.Size,
             FontStyle.Bold);
+
+        _descriptionToolTip = new ToolTip
+        {
+            AutoPopDelay = 8000,
+            InitialDelay = 500,
+            ReshowDelay = 200,
+            ShowAlways = false
+        };
 
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
@@ -131,6 +140,7 @@ public sealed class HiveEditorLayout : UserControl
 
         if (disposing)
         {
+            _descriptionToolTip.Dispose();
             _descriptionFont.Dispose();
             _titleFont.Dispose();
         }
@@ -330,6 +340,9 @@ public sealed class HiveEditorLayout : UserControl
 
         _descriptionLabels.Add(descriptionLabel);
         _titleLabels.Add(titleLabel);
+
+        if (!string.IsNullOrWhiteSpace(description))
+            _descriptionToolTip.SetToolTip(descriptionLabel, description);
 
         panel.Controls.Add(descriptionLabel);
         panel.Controls.Add(titleLabel);
