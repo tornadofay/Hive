@@ -516,7 +516,9 @@ internal sealed class HiveExampleHostForm : HiveForm
             ShowExample(example);
     }
 
-    private void ShowExample(IHiveExample example)
+    private void ShowExample(
+        IHiveExample example,
+        bool resetOutput = true)
     {
         var services = _services;
 
@@ -566,8 +568,11 @@ internal sealed class HiveExampleHostForm : HiveForm
             _viewSubtitle.Text =
                 string.Join(" / ", example.NavigationPath);
 
-            _outputView.Clear();
-            _outputView.SetCollapsed(true);
+            if (resetOutput)
+            {
+                _outputView.Clear();
+                _outputView.SetCollapsed(true);
+            }
         }
         catch (Exception exception)
         {
@@ -665,7 +670,9 @@ internal sealed class HiveExampleHostForm : HiveForm
                 currentGraph);
 
             if (_activeExample is not null)
-                ShowExample(_activeExample);
+                ShowExample(
+                    _activeExample,
+                    resetOutput: false);
         }
         catch (Exception exception)
         {
