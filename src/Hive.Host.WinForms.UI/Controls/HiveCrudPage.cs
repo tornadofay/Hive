@@ -9,7 +9,8 @@ public enum HiveCrudOperation
 {
     Load,
     Edit,
-    Delete
+    Delete,
+    Activate
 }
 
 public sealed class HiveCrudOperationFailedEventArgs : EventArgs
@@ -47,6 +48,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private readonly Label _descriptionLabel;
     private readonly Label _searchLabel;
     private readonly TextBox _searchBox;
+    private readonly Label _statusFilterLabel;
+    private readonly ComboBox _statusFilterBox;
     private readonly TableLayoutPanel _actionLayout;
     private readonly FlowLayoutPanel _searchPanel;
     private readonly FlowLayoutPanel _actionButtons;
@@ -54,6 +57,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private readonly Label _statusLabel;
     private readonly HiveButton _addButton;
     private readonly HiveButton _editButton;
+    private readonly HiveButton _activateButton;
     private readonly HiveButton _deleteButton;
     private readonly HiveButton _refreshButton;
     private readonly ListView _list;
@@ -70,8 +74,14 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private Func<TItem?, CancellationToken, Task<TItem?>>? _editItemAsync;
     private Func<TItem, CancellationToken, Task>? _deleteItemAsync;
     private Func<TItem, string>? _getItemDisplayName;
+    private Func<TItem, bool>? _canEditItem;
+    private Func<TItem, bool>? _canDeleteItem;
+    private Func<TItem, bool>? _canActivateItem;
+    private Func<TItem, CancellationToken, Task>? _activateItemAsync;
+    private Func<TItem, string?>? _statusSelector;
     private CancellationTokenSource? _operationCancellation;
     private string _searchText = string.Empty;
+    private const string AllStatusFilter = "All";
     private int _pageSize = DefaultPageSize;
     private bool _busy;
     private bool _compactToolbar = false;
@@ -167,8 +177,35 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _searchBox.TextChanged += SearchBoxOnTextChanged;
         _searchBox.KeyDown += SearchBoxOnKeyDown;
 
+        _statusFilterLabel = new Label
+        {
+            AutoSize = false,
+            Font = _searchLabelFont,
+            Text = "Status",
+            TextAlign = ContentAlignment.MiddleLeft,
+            Width = 48,
+            Height = 32,
+            Margin = new Padding(16, 0, 6, 0),
+            Padding = Padding.Empty,
+            Visible = false
+        };
+
+        _statusFilterBox = new ComboBox
+        {
+            Width = 132,
+            Height = 32,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Margin = Padding.Empty,
+            Visible = false,
+            AccessibleName = "Status filter",
+            AccessibleDescription = "Filter the current list by resource lifecycle status."
+        };
+        _statusFilterBox.SelectedIndexChanged += StatusFilterBoxOnSelectedIndexChanged;
+
         _searchPanel.Controls.Add(_searchLabel);
         _searchPanel.Controls.Add(_searchBox);
+        _searchPanel.Controls.Add(_statusFilterLabel);
+        _searchPanel.Controls.Add(_statusFilterBox);
 
         _actionButtons = new FlowLayoutPanel
         {
@@ -182,6 +219,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
         _addButton = CreateActionButton("Add", HiveButtonStyle.Primary);
         _editButton = CreateActionButton("Edit", HiveButtonStyle.Secondary);
+        _activateButton = CreateActionButton("Activate", HiveButtonStyle.Secondary);
         _deleteButton = CreateActionButton("Delete", HiveButtonStyle.Danger);
         _refreshButton = CreateActionButton("Refresh", HiveButtonStyle.Secondary);
 
@@ -189,6 +227,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _addButton.AccessibleDescription = "Create a new item.";
         _editButton.AccessibleName = "Edit selected item";
         _editButton.AccessibleDescription = "Edit the currently selected item.";
+        _activateButton.AccessibleName = "Activate selected item";
+        _activateButton.AccessibleDescription = "Reactivate the currently selected retired item.";
         _deleteButton.AccessibleName = "Delete selected item";
         _deleteButton.AccessibleDescription = "Delete the currently selected item.";
         _refreshButton.AccessibleName = "Refresh items";
@@ -196,11 +236,13 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
         _addButton.Click += async (_, _) => await EditAsync(null);
         _editButton.Click += async (_, _) => await EditAsync(SelectedItem);
+        _activateButton.Click += async (_, _) => await ActivateAsync(SelectedItem);
         _deleteButton.Click += async (_, _) => await DeleteAsync();
         _refreshButton.Click += async (_, _) => await RefreshAsync();
 
         _actionButtons.Controls.Add(_addButton);
         _actionButtons.Controls.Add(_editButton);
+        _actionButtons.Controls.Add(_activateButton);
         _actionButtons.Controls.Add(_deleteButton);
         _actionButtons.Controls.Add(_refreshButton);
 
@@ -514,6 +556,73 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         set => _getItemDisplayName = value;
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Func<TItem, bool>? CanEditItem
+    {
+        get => _canEditItem;
+        set
+        {
+            _canEditItem = value;
+            UpdateActionState();
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Func<TItem, bool>? CanDeleteItem
+    {
+        get => _canDeleteItem;
+        set
+        {
+            _canDeleteItem = value;
+            UpdateActionState();
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Func<TItem, bool>? CanActivateItem
+    {
+        get => _canActivateItem;
+        set
+        {
+            _canActivateItem = value;
+            UpdateActionState();
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Func<TItem, CancellationToken, Task>? ActivateItemAsync
+    {
+        get => _activateItemAsync;
+        set
+        {
+            _activateItemAsync = value;
+            _activateButton.Visible = value is not null;
+            UpdateToolbarLayout();
+            UpdateActionState();
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Func<TItem, string?>? StatusSelector
+    {
+        get => _statusSelector;
+        set
+        {
+            _statusSelector = value;
+            var visible = value is not null;
+            _statusFilterLabel.Visible = visible;
+            _statusFilterBox.Visible = visible;
+
+            if (visible)
+                RebuildStatusFilterOptions();
+            else
+                _statusFilterBox.Items.Clear();
+
+            UpdateSearchBoxWidth();
+            RebuildItems();
+        }
+    }
+
     public void SetColumns(IReadOnlyList<HiveCrudColumn<TItem>> columns)
     {
         ArgumentNullException.ThrowIfNull(columns);
@@ -559,7 +668,12 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     protected override void Dispose(bool disposing)
     {
         if (disposing)
+        {
             _operationCancellation?.Cancel();
+            _statusFilterBox.SelectedIndexChanged -= StatusFilterBoxOnSelectedIndexChanged;
+            _searchBox.TextChanged -= SearchBoxOnTextChanged;
+            _searchBox.KeyDown -= SearchBoxOnKeyDown;
+        }
 
         base.Dispose(disposing);
 
@@ -570,6 +684,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _descriptionFont.Dispose();
             _searchLabelFont.Dispose();
             _emptyStateFont.Dispose();
+            _statusFilterLabel.Dispose();
+            _statusFilterBox.Dispose();
         }
     }
 
@@ -709,6 +825,17 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _searchLabel.Margin.Left -
             _searchLabel.Margin.Right;
 
+        if (_statusFilterLabel.Visible)
+        {
+            availableWidth -=
+                _statusFilterLabel.Width +
+                _statusFilterLabel.Margin.Left +
+                _statusFilterLabel.Margin.Right +
+                _statusFilterBox.Width +
+                _statusFilterBox.Margin.Left +
+                _statusFilterBox.Margin.Right;
+        }
+
         var targetWidth = Math.Clamp(
             availableWidth,
             MinimumSearchWidth,
@@ -727,10 +854,69 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         var visibleCount =
             (_addButton.Visible ? 1 : 0) +
             (_editButton.Visible ? 1 : 0) +
+            (_activateButton.Visible ? 1 : 0) +
             (_deleteButton.Visible ? 1 : 0) +
             (_refreshButton.Visible ? 1 : 0);
 
         return visibleCount * (buttonWidth + ActionButtonSpacing);
+    }
+
+    private void StatusFilterBoxOnSelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (_statusSelector is null)
+            return;
+
+        _pagination.PageNumber = 1;
+        RebuildItems();
+    }
+
+    private void RebuildStatusFilterOptions()
+    {
+        if (_statusSelector is null)
+            return;
+
+        var previous = _statusFilterBox.SelectedItem as string;
+        var values = _items
+            .Select(_statusSelector)
+            .Where(static value => !string.IsNullOrWhiteSpace(value))
+            .Select(static value => value!.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(static value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        _statusFilterBox.BeginUpdate();
+        try
+        {
+            _statusFilterBox.Items.Clear();
+            _statusFilterBox.Items.Add(AllStatusFilter);
+
+            foreach (var value in values)
+                _statusFilterBox.Items.Add(value);
+
+            var selected = !string.IsNullOrWhiteSpace(previous) &&
+                           _statusFilterBox.Items.Contains(previous)
+                ? previous
+                : AllStatusFilter;
+
+            _statusFilterBox.SelectedItem = selected;
+        }
+        finally
+        {
+            _statusFilterBox.EndUpdate();
+        }
+    }
+
+    private bool MatchesStatusFilter(TItem item)
+    {
+        if (_statusSelector is null ||
+            _statusFilterBox.SelectedItem is not string selected ||
+            string.Equals(selected, AllStatusFilter, StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        var status = _statusSelector(item);
+        return string.Equals(status, selected, StringComparison.OrdinalIgnoreCase);
     }
 
     private void SearchBoxOnTextChanged(object? sender, EventArgs e)
@@ -779,6 +965,11 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             return;
 
         if (item is null && !_addButton.Visible)
+            return;
+
+        if (item is not null &&
+            _canEditItem is not null &&
+            !_canEditItem(item))
             return;
 
         var scrollState = CaptureScrollState();
@@ -855,6 +1046,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _busy)
             return;
 
+        if (_canDeleteItem is not null && !_canDeleteItem(item))
+            return;
+
         var displayName = _getItemDisplayName?.Invoke(item) ?? "item";
         var result = HiveMessageBox.ShowQuestion(
             FindForm(),
@@ -877,6 +1071,38 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             CancellationToken.None);
     }
 
+    private async Task ActivateAsync(TItem? item)
+    {
+        if (item is null ||
+            _activateItemAsync is null ||
+            _busy)
+            return;
+
+        if (_canActivateItem is not null && !_canActivateItem(item))
+            return;
+
+        var displayName = _getItemDisplayName?.Invoke(item) ?? "item";
+        var result = HiveMessageBox.ShowQuestion(
+            FindForm(),
+            $"Activate '{displayName}'?",
+            "Activate",
+            MessageBoxButtons.YesNo,
+            ThemeManager());
+
+        if (result != DialogResult.Yes)
+            return;
+
+        await ExecuteAsync(
+            HiveCrudOperation.Activate,
+            async token =>
+            {
+                SetStatus("Activating...");
+                await _activateItemAsync(item, token);
+                await LoadItemsCoreAsync(token);
+            },
+            CancellationToken.None);
+    }
+
     private async Task LoadItemsCoreAsync(CancellationToken cancellationToken)
     {
         if (_loadItemsAsync is null)
@@ -888,6 +1114,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _items = items ?? throw new InvalidOperationException(
             "LoadItemsAsync returned null.");
 
+        RebuildStatusFilterOptions();
         RebuildItems();
     }
 
@@ -968,10 +1195,19 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
     private void UpdateActionState()
     {
-        var hasSelection = SelectedItem is not null;
+        var item = SelectedItem;
+        var hasSelection = item is not null;
+        var canEdit = hasSelection &&
+            (_canEditItem?.Invoke(item!) ?? true);
+        var canDelete = hasSelection &&
+            (_canDeleteItem?.Invoke(item!) ?? true);
+        var canActivate = hasSelection &&
+            (_canActivateItem?.Invoke(item!) ?? true);
+
         _addButton.Enabled = !_busy && _editItemAsync is not null;
-        _editButton.Enabled = !_busy && hasSelection && _editItemAsync is not null;
-        _deleteButton.Enabled = !_busy && hasSelection && _deleteItemAsync is not null;
+        _editButton.Enabled = !_busy && canEdit && _editItemAsync is not null;
+        _activateButton.Enabled = !_busy && canActivate && _activateItemAsync is not null;
+        _deleteButton.Enabled = !_busy && canDelete && _deleteItemAsync is not null;
         _refreshButton.Enabled = !_busy && _loadItemsAsync is not null;
     }
 
@@ -1033,6 +1269,16 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                         Tag = item
                     };
 
+                    for (var index = 0; index < _columns.Count; index++)
+                    {
+                        var foreground = _columns[index]
+                            .ForegroundColorSelector?
+                            .Invoke(item);
+
+                        if (foreground.HasValue)
+                            listItem.SubItems[index].ForeColor = foreground.Value;
+                    }
+
                     _list.Items.Add(listItem);
 
                     if (previouslySelected is not null &&
@@ -1083,6 +1329,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
     private bool MatchesSearch(TItem item)
     {
+        if (!MatchesStatusFilter(item))
+            return false;
+
         if (string.IsNullOrWhiteSpace(_searchText))
             return true;
 
