@@ -17,8 +17,8 @@ public sealed class HiveEditorLayout : UserControl
     private readonly TableLayoutPanel _footerRoot;
     private readonly FlowLayoutPanel _footer;
     private readonly Panel _footerSeparator;
-    private readonly Font _descriptionFont;
-    private readonly Font _titleFont;
+    private Font _descriptionFont;
+    private Font _titleFont;
     private readonly List<Label> _descriptionLabels = new();
     private readonly List<Label> _titleLabels = new();
     private int _labelColumnWidth = DefaultLabelColumnWidth;
@@ -26,8 +26,11 @@ public sealed class HiveEditorLayout : UserControl
 
     public HiveEditorLayout()
     {
-        _descriptionFont = new Font("Segoe UI", 8.6f);
-        _titleFont = new Font("Segoe UI Semibold", 9.25f, FontStyle.Bold);
+        _descriptionFont = SystemFonts.MessageBoxFont;
+        _titleFont = new Font(
+            SystemFonts.MessageBoxFont.FontFamily,
+            SystemFonts.MessageBoxFont.Size,
+            FontStyle.Bold);
 
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
@@ -132,6 +135,8 @@ public sealed class HiveEditorLayout : UserControl
     internal void ApplyTheme(HiveThemeDefinition theme)
     {
         ArgumentNullException.ThrowIfNull(theme);
+
+        EnsureTypography(theme);
 
         _root.BackColor = theme.Palette.Surface;
         _fields.BackColor = theme.Palette.Surface;
@@ -243,6 +248,56 @@ public sealed class HiveEditorLayout : UserControl
         };
         _footer.Controls.Add(button);
         return button;
+    }
+
+    private void EnsureTypography(HiveThemeDefinition theme)
+    {
+        var family = theme.Typography.FontFamily;
+        var descriptionSize = theme.Typography.SmallSize;
+        var titleSize = theme.Typography.SectionSize;
+
+        var descriptionMatches =
+            string.Equals(
+                _descriptionFont.FontFamily.Name,
+                family,
+                StringComparison.Ordinal) &&
+            Math.Abs(_descriptionFont.Size - descriptionSize) <= 0.01f;
+
+        var titleMatches =
+            string.Equals(
+                _titleFont.FontFamily.Name,
+                family,
+                StringComparison.Ordinal) &&
+            Math.Abs(_titleFont.Size - titleSize) <= 0.01f &&
+            _titleFont.Style == FontStyle.Bold;
+
+        if (descriptionMatches && titleMatches)
+            return;
+
+        var nextDescription = descriptionMatches
+            ? null
+            : new Font(family, descriptionSize);
+        var nextTitle = titleMatches
+            ? null
+            : new Font(family, titleSize, FontStyle.Bold);
+
+        var previousDescription = _descriptionFont;
+        var previousTitle = _titleFont;
+
+        if (nextDescription is not null)
+            _descriptionFont = nextDescription;
+
+        if (nextTitle is not null)
+            _titleFont = nextTitle;
+
+        previousDescription.Dispose();
+        previousTitle.Dispose();
+
+        foreach (var label in _titleLabels)
+            label.Font = _titleFont;
+
+        foreach (var label in _descriptionLabels)
+            label.Font = _descriptionFont;
     }
 
     private Panel CreateLabelPanel(
