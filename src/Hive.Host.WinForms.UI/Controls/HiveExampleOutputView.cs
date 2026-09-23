@@ -25,9 +25,9 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
     private readonly HiveButton _toggleButton;
     private readonly Panel _outputFrame;
     private readonly TextBox _output;
-    private readonly Font _titleFont;
-    private readonly Font _metaFont;
-    private readonly Font _outputFont;
+    private Font _titleFont;
+    private Font _metaFont;
+    private Font _outputFont;
     private int _lineCount;
     private bool _collapsed = true;
 
@@ -37,12 +37,13 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         Margin = Padding.Empty;
         Padding = Padding.Empty;
 
+        var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
         _titleFont = new Font(
-            "Segoe UI Semibold",
-            9.5f,
+            fallbackFont.FontFamily,
+            fallbackFont.Size,
             FontStyle.Bold);
-        _metaFont = new Font("Segoe UI", 8.2f);
-        _outputFont = new Font("Consolas", 9f);
+        _metaFont = new Font(fallbackFont.FontFamily, fallbackFont.Size);
+        _outputFont = new Font("Consolas", fallbackFont.Size);
 
         _surface = new HiveBorderPanel
         {
@@ -374,6 +375,48 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _outputFrame.BackColor = theme.Palette.Border;
         _output.BackColor = theme.Palette.InputBackground;
         _output.ForeColor = theme.Palette.Text;
+
+        var previousTitle = ReplaceFontIfNeeded(
+            ref _titleFont,
+            theme.Typography.FontFamily,
+            theme.Typography.SectionSize,
+            FontStyle.Bold);
+        var previousMeta = ReplaceFontIfNeeded(
+            ref _metaFont,
+            theme.Typography.FontFamily,
+            theme.Typography.SmallSize,
+            FontStyle.Regular);
+        var previousOutput = ReplaceFontIfNeeded(
+            ref _outputFont,
+            "Consolas",
+            theme.Typography.MonospaceSize,
+            FontStyle.Regular);
+
+        _title.Font = _titleFont;
+        _meta.Font = _metaFont;
+        _output.Font = _outputFont;
+
+        previousTitle?.Dispose();
+        previousMeta?.Dispose();
+        previousOutput?.Dispose();
+    }
+
+    private static Font? ReplaceFontIfNeeded(
+        ref Font current,
+        string family,
+        float size,
+        FontStyle style)
+    {
+        if (string.Equals(current.FontFamily.Name, family, StringComparison.Ordinal) &&
+            Math.Abs(current.Size - size) <= 0.01f &&
+            current.Style == style)
+        {
+            return null;
+        }
+
+        var previous = current;
+        current = new Font(family, size, style);
+        return previous;
     }
 
     protected override void Dispose(bool disposing)
