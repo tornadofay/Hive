@@ -42,12 +42,14 @@ internal sealed class HiveExampleServices : IServiceProvider
     {
         ArgumentNullException.ThrowIfNull(serviceType);
 
-        return serviceType == typeof(IHiveThemeManager)
-            ? _themeManager
-            : serviceType == typeof(IHiveExampleOutput)
-                ? _output
-                : serviceType == typeof(IHiveManagementFacade)
-                    ? _management
-                    : null;
+        return serviceType == typeof(HiveExampleServices)
+            ? this
+            : serviceType == typeof(IHiveThemeManager)
+                ? _themeManager
+                : serviceType == typeof(IHiveExampleOutput)
+                    ? _output
+                    : serviceType == typeof(IHiveManagementFacade)
+                        ? _management
+                        : null;
     }
 }
