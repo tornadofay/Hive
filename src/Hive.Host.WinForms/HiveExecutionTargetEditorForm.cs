@@ -140,6 +140,14 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             _capabilitiesTextBox,
             118);
 
+        var save = editor.AddActionButton(
+            target is null ? "Create" : "Save",
+            HiveButtonStyle.Primary,
+            96);
+        var cancel = editor.AddActionButton(
+            "Cancel",
+            HiveButtonStyle.Secondary,
+            96);
         _testButton = editor.AddActionButton(
             "Test connection",
             HiveButtonStyle.Secondary,
@@ -150,15 +158,6 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         _testStatus.Text = target is null
             ? "Save the target before testing its connection."
             : "Connection test not run.";
-
-        var cancel = editor.AddActionButton(
-            "Cancel",
-            HiveButtonStyle.Secondary,
-            96);
-        var save = editor.AddActionButton(
-            target is null ? "Create" : "Save",
-            HiveButtonStyle.Primary,
-            96);
 
         cancel.Click += (_, _) =>
         {
