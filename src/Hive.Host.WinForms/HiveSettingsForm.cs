@@ -12,7 +12,8 @@ public sealed class HiveSettingsForm : HiveForm
     public HiveSettingsForm(
         IHiveManagementFacade management,
         ResourceAccessContext accessContext,
-        IHiveThemeManager themeManager)
+        IHiveThemeManager themeManager,
+        IHiveExampleOutput? output = null)
         : base(
             "Hive Settings",
             "Global Hive package configuration",
@@ -38,7 +39,8 @@ public sealed class HiveSettingsForm : HiveForm
             management,
             accessContext,
             themeManager,
-            Application.ProductName);
+            Application.ProductName,
+            output);
 
         view.Dock = DockStyle.Fill;
         BodyPanel.Controls.Add(view);
