@@ -665,12 +665,12 @@ public sealed class HiveWorkspaceView : UserControl
         return root;
     }
 
-    private static Label CreateSectionLabel(string text) =>
+    private Label CreateSectionLabel(string text) =>
         new()
         {
             Dock = DockStyle.Fill,
             Text = text,
-            Font = new Font(SystemFonts.DefaultFont, FontStyle.Bold),
+            Font = new Font(Font, FontStyle.Bold),
             TextAlign = ContentAlignment.BottomLeft
         };
 
