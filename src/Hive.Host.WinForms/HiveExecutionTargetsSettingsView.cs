@@ -57,7 +57,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         };
 
         _page.SetColumns(
-            new HiveCrudColumn<ExecutionTarget>("Key", 170, item => item.Key),
+            new HiveCrudColumn<ExecutionTarget>("Resource key", 170, item => item.Key),
             new HiveCrudColumn<ExecutionTarget>("Name", 220, item => item.DisplayName),
             new HiveCrudColumn<ExecutionTarget>("Endpoint", 300, item => item.Endpoint.ToString()),
             new HiveCrudColumn<ExecutionTarget>(
@@ -153,15 +153,9 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         try
         {
             PopulateProviders();
-
-            var preferred = _providers
-                .FirstOrDefault(item =>
-                    item.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active)
-                ?? _providers.FirstOrDefault();
-
-            _selectedProvider = preferred;
-            if (preferred is not null)
-                SelectProvider(preferred.Id);
+            _providerComboBox.SelectedIndex = -1;
+            _providerComboBox.Text = "Select a Provider...";
+            _selectedProvider = null;
         }
         finally
         {
@@ -245,9 +239,14 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
             try
             {
                 _accountComboBox.Items.Clear();
+                _accountComboBox.SelectedIndex = -1;
+                _accountComboBox.Text = "Select an Account...";
 
                 if (_selectedProvider is null)
+                {
+                    _accountComboBox.Text = "Select a Provider first...";
                     return;
+                }
 
                 var result = await _management
                     .ListProviderAccountsAsync(
@@ -265,15 +264,9 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
                 foreach (var account in _accounts)
                     _accountComboBox.Items.Add(new AccountChoice(account));
 
-                var preferred = _accounts
-                    .FirstOrDefault(item =>
-                        item.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active)
-                    ?? _accounts.FirstOrDefault();
-
-                _selectedAccount = preferred;
-
-                if (preferred is not null)
-                    SelectAccount(preferred.Id);
+                _accountComboBox.SelectedIndex = -1;
+                _accountComboBox.Text = "Select an Account...";
+                _selectedAccount = null;
             }
             finally
             {
@@ -288,9 +281,16 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         _page.AllowAdd = _selectedAccount is not null;
 
         if (_selectedAccount is null)
-            _page.SetStatus("Add a Provider Account first, then manage its execution targets.");
+        {
+            _page.SetStatus(
+                _selectedProvider is null
+                    ? "Select a Provider, then select a Provider Account to manage execution targets."
+                    : "Select a Provider Account to manage execution targets.");
+        }
         else
+        {
             await _page.RefreshAsync(cancellationToken).ConfigureAwait(true);
+        }
     }
 
     private async Task<IReadOnlyList<ExecutionTarget>> LoadAsync(
@@ -380,32 +380,6 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
 
         foreach (var provider in _providers)
             _providerComboBox.Items.Add(new ProviderChoice(provider));
-    }
-
-    private void SelectProvider(ProviderId providerId)
-    {
-        for (var index = 0; index < _providerComboBox.Items.Count; index++)
-        {
-            if (_providerComboBox.Items[index] is ProviderChoice choice &&
-                choice.Value.Id == providerId)
-            {
-                _providerComboBox.SelectedIndex = index;
-                return;
-            }
-        }
-    }
-
-    private void SelectAccount(ProviderAccountId accountId)
-    {
-        for (var index = 0; index < _accountComboBox.Items.Count; index++)
-        {
-            if (_accountComboBox.Items[index] is AccountChoice choice &&
-                choice.Value.Id == accountId)
-            {
-                _accountComboBox.SelectedIndex = index;
-                return;
-            }
-        }
     }
 
     private void PageOperationFailed(
