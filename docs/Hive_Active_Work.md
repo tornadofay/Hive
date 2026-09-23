@@ -8,7 +8,7 @@ Last updated: 2026-09-23
 
 ### Current sub-stage
 
-**1.12-I — Manual Configured-Host Verification**
+**1.12-J — Final UI/UX Review**
 
 Detailed workload and ordering: `docs/plan/Phase1.12_Settings_Host_Integration.md`
 
@@ -31,7 +31,7 @@ The complete Phase 1.12 program is subdivided into bounded sub-stages described 
 - real Example Host consumption of configured state;
 - focused verification and documentation closure.
 
-1.12-A through 1.12-H are complete and verified/accepted. Current sub-stage 1.12-I is the manual configured-host verification gate. Do not implement 1.12-J or later work in this run.
+1.12-A through 1.12-I are complete and verified/accepted. Current sub-stage 1.12-J is the final Settings UI/UX review. Do not implement 1.12-K or later work in this run.
 
 ## Completed 1.12-B verification gate
 
@@ -233,18 +233,51 @@ The previously existing Settings inspection Example produced an old-schema/local
 5. Developer confirmed dependency-ordered reactivation: Provider → ProviderAccount → ExecutionTarget → AgentDefinition.
 6. Developer confirmed provider credentials and bootstrap SQL credentials are not displayed in Configured Agent output.
 7. Developer confirmed resource-only Settings changes are reflected by the Configured Agent operation after Settings closes without restarting the application.
-8. The previous 170/170 full-suite result predates the latest inactive-resource execution fix. Current post-fix focused and broader test execution remains required before Phase 1.12 verification can be closed.
+8. Developer reran the broader Hive.Tests suite after the inactive-resource execution fix: **171/171 passed, 0 failed, 0 skipped** on 2026-09-23 using .NET 10.0.1.
+
+## 1.12-J review checkpoint
+
+Static review of the permanent Settings surface found the shared UI foundation is already carrying the required navigation, CRUD/list/editor, theme, selected/hover/disabled-state, resizing, and disposal responsibilities. The only concrete inconsistency found in this pass was the Persistence page's read-only Database field using a system color instead of Hive theme tokens; that was corrected on main.
+
+The final manual UI/UX review must cover:
+
+- navigation hierarchy and category/group clarity;
+- header/action/content rhythm;
+- typography and visual density;
+- resizing at the supported minimum and normal desktop size;
+- editor spacing and ListView column presentation;
+- empty/no-match/loading/error states;
+- Add/Edit/Delete/Activate behavior;
+- selected/hover/disabled states;
+- Light/Dark/System theme changes;
+- TreeView selection and scroll preservation across theme changes;
+- page/editor disposal;
+- absence of duplicate renderer/theme logic;
+- absence of layout jumps when switching pages or themes.
 
 ## Verification handoff
 
-Current post-fix verification: rerun the focused Agent execution tests and then the broader `Hive.Tests` suite.
+Current sub-stage: **1.12-J — Final UI/UX Review**
 
-Tests to run:
-- `tests/Hive.Tests/AgentExecutionIntegrationTests.cs` — configured Agent execution, target switching, and inactive ProviderAccount rejection;
-- `tests/Hive.Tests/HiveManagementFacadeTests.cs` — existing Management CRUD/relationship/lifecycle coverage;
-- broader `Hive.Tests` execution.
+Example/host surface to review:
+**Overview / Getting Started / Example Configuration — Hive.Example.WinForms**, followed by:
+**Settings / Configuration / Hive Settings / Provider & Persistence — Hive.Example.WinForms**
 
-The manual 1.12-I configured-host verification is complete. Do not close the overall Phase 1.12 verification gate until the current post-fix automated results are recorded.
+Manual UI review:
+1. Open the real host-level Hive Settings surface.
+2. Review Provider Configuration, Accounts / Credentials, Execution Targets, Agents, and Persistence at the normal desktop size and reduced supported size.
+3. Test Light → Dark → System while preserving the current navigation selection and visible page position.
+4. Exercise Add/Edit/Delete/Activate on the lifecycle-aware CRUD pages and verify disabled/read-only fields remain visually distinct.
+5. Exercise empty, search/no-match, loading, error, and unavailable-database states where applicable.
+6. Change pages repeatedly and confirm there are no layout jumps, stale selections, or disposal artifacts.
+7. Horizontally scroll the CRUD lists and confirm there are no repaint artifacts.
+8. Close Settings and reopen it; confirm navigation and page state remain visually coherent.
+9. Re-run the configured Agent operation after Settings changes to ensure the final UI review does not regress the already verified configured-host path.
+
+Automated verification already complete for the current pre-review state:
+- **171/171 passed, 0 failed, 0 skipped**.
+
+Do not close 1.12-J until the manual UI review is actually performed and reported.
 
 ## Historical verification
 
