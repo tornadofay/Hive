@@ -178,13 +178,29 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
         if (_loadingProviders)
             return;
 
-        _selectedProvider =
-            (_providerComboBox.SelectedItem as ProviderChoice)?.Value;
+        try
+        {
+            _selectedProvider =
+                (_providerComboBox.SelectedItem as ProviderChoice)?.Value;
 
-        _page.AllowAdd = _selectedProvider is not null;
+            _page.AllowAdd = _selectedProvider is not null;
 
-        if (!IsDisposed)
-            await _page.RefreshAsync().ConfigureAwait(true);
+            if (!IsDisposed)
+                await _page.RefreshAsync().ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+        {
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                exception,
+                "Provider Accounts",
+                "Provider accounts could not be refreshed.",
+                _output,
+                _themeManager);
+        }
     }
 
     private async Task<IReadOnlyList<ProviderAccount>> LoadAsync(
