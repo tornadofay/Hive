@@ -1,5 +1,6 @@
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Controls;
+using Xunit;
 
 namespace Hive.Tests;
 
