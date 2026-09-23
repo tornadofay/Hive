@@ -30,6 +30,11 @@ public interface IHiveManagementFacade
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
 
+    Task<Result> InitializePersistenceAsync(
+        HivePersistenceConfiguration configuration,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
     Task<Result<Secret>> CreateSecretAsync(
         string key,
         string displayName,
