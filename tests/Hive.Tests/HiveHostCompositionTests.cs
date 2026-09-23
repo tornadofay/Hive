@@ -13,7 +13,9 @@ public sealed class HiveHostCompositionTests
     public async Task NoSavedConfiguration_UsesLocalDevelopmentDefault()
     {
         using var settings = TemporarySettingsFile.Create();
-        var store = new JsonHiveConfigurationStore(settings.Path);
+        var store = new JsonHiveConfigurationStore(
+            settings.Path,
+            "Hive.Example.WinForms");
         using var composition = new HiveHostComposition(
             store,
             new SqlHiveHostServiceGraphFactory(
@@ -28,7 +30,7 @@ public sealed class HiveHostCompositionTests
             @"(localdb)\MSSQLLocalDB",
             composition.Current!.PersistenceConfiguration.ServerName);
         Assert.Equal(
-            "Hive",
+            "Hive-Hive.Example.WinForms",
             composition.Current.PersistenceConfiguration.DatabaseName);
         Assert.Equal(
             HiveHostCompositionState.Ready,
