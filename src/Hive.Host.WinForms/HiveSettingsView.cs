@@ -165,17 +165,20 @@ public sealed class HiveSettingsView : UserControl
         _providerAccountsView ??= new HiveProviderAccountsSettingsView(
             _management,
             _accessContext,
-            _themeManager);
+            _themeManager,
+            _output);
 
         _executionTargetsView ??= new HiveExecutionTargetsSettingsView(
             _management,
             _accessContext,
-            _themeManager);
+            _themeManager,
+            _output);
 
         _agentView ??= new HiveAgentSettingsView(
             _management,
             _accessContext,
-            _themeManager);
+            _themeManager,
+            _output);
 
         _persistenceView ??= new HivePersistenceSettingsView(
             _management,
@@ -305,10 +308,23 @@ public sealed class HiveSettingsView : UserControl
         if (e.Node?.Tag is not SettingsPage page)
             return;
 
-        ShowSelectedPage(page);
-        await InitializePageAsync(
-            page.Key,
-            CancellationToken.None).ConfigureAwait(true);
+        try
+        {
+            ShowSelectedPage(page);
+            await InitializePageAsync(
+                page.Key,
+                CancellationToken.None).ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                exception,
+                "Hive Settings",
+                "The selected Settings page could not be displayed.",
+                _output,
+                _themeManager);
+        }
     }
 
     private void ShowSelectedPage(SettingsPage page)
@@ -319,32 +335,37 @@ public sealed class HiveSettingsView : UserControl
                 new HiveProviderConfigurationView(
                     _management,
                     _accessContext,
-                    _themeManager),
+                    _themeManager,
+                    _output),
 
             SettingsPageKey.ProviderAccounts => _providerAccountsView ??=
                 new HiveProviderAccountsSettingsView(
                     _management,
                     _accessContext,
-                    _themeManager),
+                    _themeManager,
+                    _output),
 
             SettingsPageKey.ExecutionTargets => _executionTargetsView ??=
                 new HiveExecutionTargetsSettingsView(
                     _management,
                     _accessContext,
-                    _themeManager),
+                    _themeManager,
+                    _output),
 
             SettingsPageKey.Agents => _agentView ??=
                 new HiveAgentSettingsView(
                     _management,
                     _accessContext,
-                    _themeManager),
+                    _themeManager,
+                    _output),
 
             SettingsPageKey.Persistence => _persistenceView ??=
                 new HivePersistenceSettingsView(
                     _management,
                     _accessContext,
                     _themeManager,
-                    _applicationName),
+                    _applicationName,
+                    _output),
 
             _ => throw new InvalidOperationException(
                 $"Unknown Settings page '{page.Key}'.")
