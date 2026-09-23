@@ -169,6 +169,105 @@ public sealed class HiveHostCompositionTests
     }
 
     [Fact]
+    public async Task ApplyPersistedConfiguration_WhenConfigurationIsUnchanged_KeepsCurrentGraph()
+    {
+        var configuration = HivePersistenceConfiguration.LocalDevelopment(
+            "Hive_Composition_Apply_Unchanged");
+        var configurationStore = new InMemoryConfigurationStore(configuration);
+        var graph = CreateGraph(configuration);
+
+        using var composition = new HiveHostComposition(
+            configurationStore,
+            new ScriptedGraphFactory(
+                Result<HiveHostServiceGraph>.Success(graph)));
+
+        var initialization = await composition.InitializeAsync();
+        Assert.True(initialization.IsSuccess, initialization.Error?.Message);
+
+        var current = composition.Current;
+
+        var apply = await composition.ApplyPersistedConfigurationAsync();
+
+        Assert.True(apply.IsSuccess, apply.Error?.Message);
+        Assert.Same(current, composition.Current);
+        Assert.Same(current, apply.Value);
+        Assert.Equal(HiveHostCompositionState.Ready, composition.Status.State);
+    }
+
+    [Fact]
+    public async Task ApplyPersistedConfiguration_WhenPersistenceConfigurationChanges_ReplacesGraph()
+    {
+        var firstConfiguration = HivePersistenceConfiguration.LocalDevelopment(
+            "Hive_Composition_Apply_First");
+        var secondConfiguration = HivePersistenceConfiguration.LocalDevelopment(
+            "Hive_Composition_Apply_Second");
+        var configurationStore = new InMemoryConfigurationStore(firstConfiguration);
+        var firstGraph = CreateGraph(firstConfiguration);
+        var secondGraph = CreateGraph(secondConfiguration);
+
+        using var composition = new HiveHostComposition(
+            configurationStore,
+            new ScriptedGraphFactory(
+                Result<HiveHostServiceGraph>.Success(firstGraph),
+                Result<HiveHostServiceGraph>.Success(secondGraph)));
+
+        var initialization = await composition.InitializeAsync();
+        Assert.True(initialization.IsSuccess, initialization.Error?.Message);
+
+        configurationStore.Configuration = secondConfiguration;
+
+        var apply = await composition.ApplyPersistedConfigurationAsync();
+
+        Assert.True(apply.IsSuccess, apply.Error?.Message);
+        Assert.Same(secondGraph, composition.Current);
+        Assert.Equal(
+            secondConfiguration,
+            composition.Current!.PersistenceConfiguration);
+        Assert.False(firstGraph.IsDisposed);
+    }
+
+    [Fact]
+    public async Task ApplyPersistedConfiguration_WhenReplacementFails_PreservesCurrentGraph()
+    {
+        var firstConfiguration = HivePersistenceConfiguration.LocalDevelopment(
+            "Hive_Composition_Apply_Failure");
+        var secondConfiguration = HivePersistenceConfiguration.LocalDevelopment(
+            "Hive_Composition_Apply_Failure_New");
+        var configurationStore = new InMemoryConfigurationStore(firstConfiguration);
+        var firstGraph = CreateGraph(firstConfiguration);
+        var factory = new ScriptedGraphFactory(
+            Result<HiveHostServiceGraph>.Success(firstGraph),
+            Result<HiveHostServiceGraph>.Failure(
+                new Error(
+                    "hive.host.test-apply-failed",
+                    ErrorCategory.External,
+                    "Candidate graph construction failed.")));
+
+        using var composition = new HiveHostComposition(
+            configurationStore,
+            factory);
+
+        var initialization = await composition.InitializeAsync();
+        Assert.True(initialization.IsSuccess, initialization.Error?.Message);
+
+        configurationStore.Configuration = secondConfiguration;
+
+        var apply = await composition.ApplyPersistedConfigurationAsync();
+
+        Assert.True(apply.IsFailure);
+        Assert.Same(firstGraph, composition.Current);
+        Assert.Equal(
+            firstConfiguration,
+            composition.Current!.PersistenceConfiguration);
+        Assert.Equal(
+            HiveHostCompositionState.ReplacementFailed,
+            composition.Status.State);
+        Assert.Equal(
+            "hive.host.test-apply-failed",
+            composition.Status.LastError!.Code);
+    }
+
+    [Fact]
     public async Task FailedReplacement_PreservesCurrentGraph()
     {
         var configurationStore = new InMemoryConfigurationStore(
