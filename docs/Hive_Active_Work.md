@@ -20,6 +20,32 @@ This is a UI/UX maintenance pass requested directly by the user. It does not adv
 
 Do not run builds/tests/application launches in this maintenance pass. After implementation, stop for user verification and record only the actual results returned by the user.
 
+## Implementation checkpoint
+
+Implemented in this maintenance pass:
+- CRUD toolbar breakpoint now derives from the visible search/filter/action requirements instead of a fixed width;
+- Example Host output is a reserved bottom layout region rather than an overlay on the active example;
+- Example Host shell typography now uses the shared Hive theme typography tokens;
+- Provider, ProviderAccount, ExecutionTarget, AgentDefinition, and Persistence read-only fields use the shared read-only theme surface/text treatment;
+- Workspace rejection uses the existing HiveForm/HiveEditorLayout/HiveButton UI pattern instead of a separate native dialog style;
+- HiveEditorLayout exposes full field descriptions through shared tooltips when descriptions are truncated.
+
+No business logic, Management contract, persistence behavior, provider behavior, or roadmap capability was changed.
+
+## Verification handoff
+
+Example Host checks:
+- UI / Foundation / Theme — switch Light, Dark, and System modes and check typography, contrast, focus, and selected button state;
+- UI / Foundation / Controls & CRUD — resize through wide and narrow desktop widths; verify search/status filter/action layout, selection, Enter/Delete behavior, empty state, paging, and no clipped controls;
+- UI / Foundation / Dialogs — verify Information/Success/Warning/Error/Question dialogs and keyboard action focus;
+- Host / WinForms Integration / Image Input & WinForms Host Context — run the existing image/host-context example and expand the shared output; verify the output pane reserves space instead of covering the example;
+- Workspace / WorkItem Operations — for a PendingApproval WorkItem, open Reject and verify the themed Hive editor dialog, multiline reason field, Cancel, Reject, and empty-reason behavior;
+- Overview / Getting Started / Example Configuration — open the real Hive Settings surface and inspect Provider, Account/Credential, Execution Target, Agent, and Persistence editors in both themes; confirm read-only keys/database are visually distinct and resizing does not clip the form.
+
+Tests to run: dotnet test tests/Hive.Tests/Hive.Tests.csproj.
+
+Also perform the normal Example Host build/launch in Visual Studio or the existing repository workflow. No verification was run by this agent.
+
 ## Roadmap state
 
 **None — Phase 1.13 complete and verified; Phase 1.14 remains inactive.**
