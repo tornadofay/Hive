@@ -95,7 +95,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             throw new InvalidOperationException(
                 "No IHiveExample implementations were discovered in the Example assembly.");
 
-        var typography = themeManager.Theme.Typography;
+        var typography = _themeManager.Theme.Typography;
         _navigationTitleFont = new Font(
             typography.FontFamily,
             typography.SectionSize,
