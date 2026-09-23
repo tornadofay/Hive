@@ -120,7 +120,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
         var result = await _management
             .ListProvidersAsync(
                 _accessContext,
-                includeRetired: true,
+                includeRetired: false,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(true);
 
