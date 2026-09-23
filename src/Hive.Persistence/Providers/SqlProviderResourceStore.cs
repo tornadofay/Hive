@@ -288,6 +288,11 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) =>
         RetireProviderAsync(providerId, accessContext, cancellationToken);
+    public Task<Result<Provider>> ReactivateProviderAsync(
+        ProviderId providerId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) =>
+        ReactivateProviderInternalAsync(providerId, accessContext, cancellationToken);
 
     public Task<Result<ProviderAccount>> CreateProviderAccountAsync(
         ProviderAccount account,
@@ -546,6 +551,14 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) =>
         RetireProviderAccountAsync(
+            providerAccountId,
+            accessContext,
+            cancellationToken);
+    public Task<Result<ProviderAccount>> ReactivateProviderAccountAsync(
+        ProviderAccountId providerAccountId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) =>
+        ReactivateProviderAccountInternalAsync(
             providerAccountId,
             accessContext,
             cancellationToken);
@@ -849,6 +862,282 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
             executionTargetId,
             accessContext,
             cancellationToken);
+    public Task<Result<ExecutionTarget>> ReactivateExecutionTargetAsync(
+        ExecutionTargetId executionTargetId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) =>
+        ReactivateExecutionTargetInternalAsync(
+            executionTargetId,
+            accessContext,
+            cancellationToken);
+
+    private Task<Result<Provider>> ReactivateProviderInternalAsync(
+        ProviderId providerId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken) =>
+        ExecuteInTransactionAsync(
+            "provider",
+            cancellationToken,
+            async (connection, transaction) =>
+            {
+                ValidateAccessContext(accessContext);
+
+                var current = await LoadProviderAsync(
+                    connection,
+                    transaction,
+                    providerId,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (current is null)
+                    return Result<Provider>.Failure(
+                        NotFound(
+                            "hive.provider.not-found",
+                            "The requested provider does not exist."));
+
+                var accessError = ValidateAccess(
+                    current.Resource,
+                    accessContext,
+                    "provider");
+
+                if (accessError is not null)
+                    return Result<Provider>.Failure(accessError);
+
+                if (current.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active)
+                    return Result<Provider>.Success(current);
+
+                if (current.Resource.Lifecycle.Status != ResourceLifecycleStatus.Retired)
+                    return Result<Provider>.Failure(
+                        Conflict(
+                            "hive.provider.lifecycle-invalid",
+                            "Only a retired provider can be reactivated."));
+
+                var active = new Provider(
+                    current.Resource.TransitionLifecycle(
+                        ResourceLifecycleStatus.Active,
+                        DateTimeOffset.UtcNow),
+                    current.Key,
+                    current.DisplayName,
+                    current.TransportKind);
+
+                await UpdateLifecycleAsync(
+                    connection,
+                    transaction,
+                    "HiveProviders",
+                    "ProviderId",
+                    active.Id.Value,
+                    active.Resource,
+                    current.Resource.Version,
+                    cancellationToken).ConfigureAwait(false);
+
+                return Result<Provider>.Success(active);
+            });
+
+    private Task<Result<ProviderAccount>> ReactivateProviderAccountInternalAsync(
+        ProviderAccountId providerAccountId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken) =>
+        ExecuteInTransactionAsync(
+            "provider account",
+            cancellationToken,
+            async (connection, transaction) =>
+            {
+                ValidateAccessContext(accessContext);
+
+                var current = await LoadProviderAccountAsync(
+                    connection,
+                    transaction,
+                    providerAccountId,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (current is null)
+                    return Result<ProviderAccount>.Failure(
+                        NotFound(
+                            "hive.provider-account.not-found",
+                            "The requested provider account does not exist."));
+
+                var accessError = ValidateAccess(
+                    current.Resource,
+                    accessContext,
+                    "provider account");
+
+                if (accessError is not null)
+                    return Result<ProviderAccount>.Failure(accessError);
+
+                if (current.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active)
+                    return Result<ProviderAccount>.Success(current);
+
+                if (current.Resource.Lifecycle.Status != ResourceLifecycleStatus.Retired)
+                    return Result<ProviderAccount>.Failure(
+                        Conflict(
+                            "hive.provider-account.lifecycle-invalid",
+                            "Only a retired provider account can be reactivated."));
+
+                var provider = await LoadProviderAsync(
+                    connection,
+                    transaction,
+                    current.ProviderId,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (provider is null)
+                    return Result<ProviderAccount>.Failure(
+                        NotFound(
+                            "hive.provider.not-found",
+                            "The provider required by this account no longer exists."));
+
+                var providerAccessError = ValidateAccess(
+                    provider.Resource,
+                    accessContext,
+                    "provider");
+
+                if (providerAccessError is not null)
+                    return Result<ProviderAccount>.Failure(providerAccessError);
+
+                if (provider.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+                    return Result<ProviderAccount>.Failure(
+                        Conflict(
+                            "hive.provider-account.provider-inactive",
+                            "A provider account cannot be reactivated while its provider is not active."));
+
+                var active = new ProviderAccount(
+                    current.Resource.TransitionLifecycle(
+                        ResourceLifecycleStatus.Active,
+                        DateTimeOffset.UtcNow),
+                    current.ProviderId,
+                    current.Key,
+                    current.DisplayName,
+                    current.ExternalAccountId,
+                    current.CredentialSecret);
+
+                await UpdateLifecycleAsync(
+                    connection,
+                    transaction,
+                    "HiveProviderAccounts",
+                    "ProviderAccountId",
+                    active.Id.Value,
+                    active.Resource,
+                    current.Resource.Version,
+                    cancellationToken).ConfigureAwait(false);
+
+                return Result<ProviderAccount>.Success(active);
+            });
+
+    private Task<Result<ExecutionTarget>> ReactivateExecutionTargetInternalAsync(
+        ExecutionTargetId executionTargetId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken) =>
+        ExecuteInTransactionAsync(
+            "execution target",
+            cancellationToken,
+            async (connection, transaction) =>
+            {
+                ValidateAccessContext(accessContext);
+
+                var current = await LoadExecutionTargetAsync(
+                    connection,
+                    transaction,
+                    executionTargetId,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (current is null)
+                    return Result<ExecutionTarget>.Failure(
+                        NotFound(
+                            "hive.execution-target.not-found",
+                            "The requested execution target does not exist."));
+
+                var accessError = ValidateAccess(
+                    current.Resource,
+                    accessContext,
+                    "execution target");
+
+                if (accessError is not null)
+                    return Result<ExecutionTarget>.Failure(accessError);
+
+                if (current.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active)
+                    return Result<ExecutionTarget>.Success(current);
+
+                if (current.Resource.Lifecycle.Status != ResourceLifecycleStatus.Retired)
+                    return Result<ExecutionTarget>.Failure(
+                        Conflict(
+                            "hive.execution-target.lifecycle-invalid",
+                            "Only a retired execution target can be reactivated."));
+
+                var provider = await LoadProviderAsync(
+                    connection,
+                    transaction,
+                    current.ProviderId,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (provider is null)
+                    return Result<ExecutionTarget>.Failure(
+                        NotFound(
+                            "hive.provider.not-found",
+                            "The provider required by this execution target no longer exists."));
+
+                var providerAccessError = ValidateAccess(
+                    provider.Resource,
+                    accessContext,
+                    "provider");
+
+                if (providerAccessError is not null)
+                    return Result<ExecutionTarget>.Failure(providerAccessError);
+
+                if (provider.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+                    return Result<ExecutionTarget>.Failure(
+                        Conflict(
+                            "hive.execution-target.provider-inactive",
+                            "An execution target cannot be reactivated while its provider is not active."));
+
+                var account = await LoadProviderAccountAsync(
+                    connection,
+                    transaction,
+                    current.ProviderAccountId,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (account is null)
+                    return Result<ExecutionTarget>.Failure(
+                        NotFound(
+                            "hive.provider-account.not-found",
+                            "The provider account required by this execution target no longer exists."));
+
+                var accountAccessError = ValidateAccess(
+                    account.Resource,
+                    accessContext,
+                    "provider account");
+
+                if (accountAccessError is not null)
+                    return Result<ExecutionTarget>.Failure(accountAccessError);
+
+                if (account.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+                    return Result<ExecutionTarget>.Failure(
+                        Conflict(
+                            "hive.execution-target.account-inactive",
+                            "An execution target cannot be reactivated while its provider account is not active."));
+
+                var active = new ExecutionTarget(
+                    current.Resource.TransitionLifecycle(
+                        ResourceLifecycleStatus.Active,
+                        DateTimeOffset.UtcNow),
+                    current.ProviderId,
+                    current.ProviderAccountId,
+                    current.Key,
+                    current.DisplayName,
+                    current.Endpoint,
+                    current.Model,
+                    current.Deployment,
+                    current.Capabilities);
+
+                await UpdateLifecycleAsync(
+                    connection,
+                    transaction,
+                    "HiveExecutionTargets",
+                    "ExecutionTargetId",
+                    active.Id.Value,
+                    active.Resource,
+                    current.Resource.Version,
+                    cancellationToken).ConfigureAwait(false);
+
+                return Result<ExecutionTarget>.Success(active);
+            });
 
     private Task<Result<Provider>> RetireProviderAsync(
         ProviderId providerId,
@@ -894,7 +1183,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                     current.DisplayName,
                     current.TransportKind);
 
-                await UpdateRetiredAsync(
+                await UpdateLifecycleAsync
                     connection,
                     transaction,
                     "HiveProviders",
@@ -953,7 +1242,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                     current.ExternalAccountId,
                     current.CredentialSecret);
 
-                await UpdateRetiredAsync(
+                await UpdateLifecycleAsync
                     connection,
                     transaction,
                     "HiveProviderAccounts",
@@ -1015,7 +1304,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                     current.Deployment,
                     current.Capabilities);
 
-                await UpdateRetiredAsync(
+                await UpdateLifecycleAsync
                     connection,
                     transaction,
                     "HiveExecutionTargets",
@@ -1359,7 +1648,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
         string tableName,
         string identityColumn,
         Guid resourceId,
-        ResourceEnvelope<TIdentity> retiredResource,
+        ResourceEnvelope<TIdentity> updatedResource,
         ResourceVersion expectedVersion,
         CancellationToken cancellationToken)
         where TIdentity : struct
@@ -1382,15 +1671,15 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
             SqlParameter(
                 "@NewVersion",
                 SqlDbType.BigInt,
-                retiredResource.Version.Value));
+                updatedResource.Version.Value));
         command.Parameters.Add(
             IntParameter(
                 "@LifecycleStatus",
-                (int)retiredResource.Lifecycle.Status));
+                (int)updatedResource.Lifecycle.Status));
         command.Parameters.Add(
             DateTimeParameter(
                 "@LifecycleChangedAtUtc",
-                retiredResource.Lifecycle.ChangedAtUtc));
+                updatedResource.Lifecycle.ChangedAtUtc));
         command.Parameters.Add(GuidParameter("@ResourceId", identity));
         command.Parameters.Add(
             SqlParameter(
