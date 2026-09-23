@@ -47,6 +47,46 @@ API and UI integration may therefore be combined within one workflow—for examp
 Generic cross-host integration remains later. V1 proves the concrete WinForms boundary first, then later phases may generalize proven patterns to other host technologies.
 
 
+### 4.1.1 WinForms Host Context Contract
+
+Phase 1.13 establishes the concrete WinForms host-context discovery boundary before any UI action capability exists.
+
+The host-facing registration surface is intentionally small:
+
+```csharp
+using var registration = hostContext.Register(form);
+var snapshot = await hostContext.CaptureAsync(
+    registration,
+    cancellationToken);
+```
+
+The registration retains ownership of the explicitly registered root for the lifetime of the registration. Disposing the registration removes it from the host-context boundary; it does not close, dispose, or mutate the registered WinForms control tree.
+
+Discovery returns immutable metadata snapshots rather than raw `Control` references. A snapshot may describe:
+
+- root and descendant runtime type;
+- control name and accessibility text;
+- visible/enabled/read-only/focus state;
+- bounded screen-independent bounds and hierarchy path/depth;
+- relevant container/form/user-control classification;
+- bounded data-binding descriptors such as binding property, member, and data-source type.
+
+The discovery boundary must never expose a method that clicks, invokes, edits, sets properties, changes selection, or otherwise mutates a host control. Later action capabilities require a separate explicitly authorized contract.
+
+Traversal rules are contractual:
+
+- explicit registered roots only;
+- deterministic child ordering from the WinForms `Controls` collection;
+- maximum depth and maximum node count are configurable bounded limits;
+- cancellation is checked during traversal;
+- a visited-reference set prevents duplicate/cyclic traversal;
+- a bound breach is reported as a typed discovery limit failure rather than silently returning an apparently complete tree;
+- capture does not read arbitrary control state or invoke application code beyond the bounded metadata properties required by the contract.
+
+Registration and capture provenance contains the Hive resource access identity supplied by the host plus a registration/capture identifier and timestamp. Discovery therefore remains attributable to the host registration without granting that registration any authorization to mutate the application.
+
+
+
 
 ## 5. Workspace and Management Surface
 
