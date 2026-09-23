@@ -103,6 +103,14 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _statusLabel = CreateStatusLabel();
         _statusLabel.AutoEllipsis = true;
 
+        _initializeButton = _editor.AddActionButton(
+            "Initialize Hive",
+            HiveButtonStyle.Secondary,
+            122);
+        _testButton = _editor.AddActionButton(
+            "Test connection",
+            HiveButtonStyle.Secondary,
+            132);
         _loadButton = _editor.AddActionButton(
             "Load",
             HiveButtonStyle.Secondary,
@@ -111,14 +119,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
             "Save",
             HiveButtonStyle.Primary,
             96);
-        _testButton = _editor.AddActionButton(
-            "Test connection",
-            HiveButtonStyle.Secondary,
-            132);
-        _initializeButton = _editor.AddActionButton(
-            "Initialize Hive",
-            HiveButtonStyle.Secondary,
-            122);
 
         _loadButton.Click += async (_, _) => await RunOperationAsync(LoadAsync);
         _saveButton.Click += async (_, _) => await RunOperationAsync(SaveAsync);
