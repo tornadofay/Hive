@@ -14,3 +14,5 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [1.10 — Hive.Management Facade](1.10.md)
 - [1.11 — V1 Workspace & WorkItem Operations](1.11.md)
 - [1.12-C — Real Settings Management](1.12-C.md)
+
+- [1.12 — Settings, Configuration, and Real Host Consumption](1.12.md)
