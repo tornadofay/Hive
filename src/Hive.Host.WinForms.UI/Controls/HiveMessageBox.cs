@@ -1038,6 +1038,18 @@ public static class HiveMessageBox
             Invalidate();
         }
 
+        protected override void OnGotFocus(EventArgs e)
+        {
+            base.OnGotFocus(e);
+            Invalidate();
+        }
+
+        protected override void OnLostFocus(EventArgs e)
+        {
+            base.OnLostFocus(e);
+            Invalidate();
+        }
+
         protected override void OnMouseEnter(EventArgs e)
         {
             base.OnMouseEnter(e);
@@ -1238,8 +1250,8 @@ public static class HiveMessageBox
             };
 
             _questionFont = new Font(
-                "Segoe UI",
-                25f,
+                theme.Typography.FontFamily,
+                theme.Typography.TitleSize + 9f,
                 FontStyle.Bold);
 
             RebuildGeometry();
