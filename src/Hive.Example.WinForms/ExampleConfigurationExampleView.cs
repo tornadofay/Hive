@@ -113,10 +113,11 @@ internal sealed class ExampleConfigurationExampleView : UserControl
             return;
         }
 
-        HiveMessageBox.ShowError(
+        HiveUiErrorReporter.Report(
             FindForm(),
             "Hive Settings can only be opened from the Hive Example Host.",
             "Hive Settings",
+            null,
             _themeManager);
     }
 
