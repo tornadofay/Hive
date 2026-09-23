@@ -287,15 +287,20 @@ Manual UI review:
 8. Close Settings and reopen it; confirm navigation and page state remain visually coherent.
 9. Re-run the configured Agent operation after Settings changes to ensure the final UI review does not regress the already verified configured-host path.
 
-The previously recorded automated verification completed **171/171 passed, 0 failed, 0 skipped** on 2026-09-23, but that run predates the later HiveButton dialog-action fix and the new HiveButton-focused tests. Do not treat it as verification of the current `main` checkpoint.
+The previously recorded automated verification completed **171/171 passed, 0 failed, 0 skipped** on 2026-09-23, but that run predates the later HiveButton dialog-action fix and focused HiveButton tests.
 
-Latest developer verification result for the current checkpoint (reported, not executed by the assistant): **174 tests run, 173 passed, 1 failed, 0 skipped** on .NET 10.0.1. The first failure showed that assigning the button as the form CancelButton changes its dialog result to `Cancel`; that test assertion was corrected. The next developer run showed the complementary WinForms behavior: assigning the button as AcceptButton leaves its dialog result at `None`, so the test expectation for `OK` was also corrected. No production HiveButton behavior was changed.
+Developer then reran the current checkpoint on .NET 10.0.1 and reported **174 tests run, 174 passed, 0 failed, 0 skipped** on 2026-09-23. The corrected HiveButton coverage now matches the observed WinForms AcceptButton/CancelButton behavior. No production HiveButton behavior was changed by the test correction.
 
-Verification required for the current checkpoint:
-- Re-run `dotnet test tests/Hive.Tests/Hive.Tests.csproj` after pulling commit `3ca8a6bcc2c21c1dec9258f33a1f4a8a04121b4e`.
-- Manual Example Host review at the exact surface below.
+Developer also confirmed the final Settings UI review is visually and behaviorally satisfactory across the requested desktop UI criteria.
 
-Do not close 1.12-J until the current checkpoint has actually been verified and the manual UI review is reported.
+The current pass continues within 1.12-J for an additional static UI/UX production-polish review requested by the developer; do not widen beyond the final UI/UX scope.
+
+Verification for the new review pass:
+- No new build/test/UI launch is authorized or performed by the assistant.
+- Existing developer verification remains **174/174 passed, 0 failed, 0 skipped** on .NET 10.0.1.
+- Developer manual review is reported complete for the prior checkpoint; any additional source changes from this pass require another developer review before 1.12-J closure.
+
+Do not close 1.12-J until any code changes from this additional pass are manually reviewed and the final checkpoint is reported verified.
 
 ## Historical verification
 
