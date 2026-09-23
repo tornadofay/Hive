@@ -156,6 +156,7 @@ internal sealed class HiveAgentSettingsView : UserControl
         var agents = await _management
             .ListAgentDefinitionsAsync(
                 _accessContext,
+                includeRetired: true,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(true);
 
