@@ -175,7 +175,7 @@ Outcome evaluation must remain attributable to the objective/plan/method/decisio
 
 Risk/Fear/Confidence may affect strategy selection and escalation, but the Execution Planner and authorization boundaries remain authoritative for capability, target, policy, scope, budget, and permission decisions.
 
-Dreams and counterfactuals are evidence with a different epistemic status from actual experience. Their predicted outcomes may support a Learning Candidate but must never be replayed as observed events.
+Dreams and counterfactuals are evidence with a different epistemic status from actual experience. Their predicted outcomes may support a Learning Candidate but must never be replayed as observed events. The Dream request itself must already be authorized through the applicable policy/management boundary; Dream processing does not acquire new authority because the Agent runtime is inactive.
 
 Learning Candidates are persisted through their owning cognitive-resource/governance boundary; the execution store does not become a cognitive-learning engine. A future deterministic shortcut may be persisted as a governed Skill, Method, strategy rule, routing rule, or equivalent cognitive resource, but the promotion boundary must retain provenance/applicability and support later invalidation, revision, or retirement.
 
