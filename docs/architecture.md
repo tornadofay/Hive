@@ -81,7 +81,7 @@ authorization / approval when required
       ↓
 business-app write
       ↓
-operation receipt
+durable operation attempt / receipt
       ↓
 policy-governed verification / review / result
 ```
