@@ -121,6 +121,7 @@ public sealed class EventInfrastructureTests
         Assert.Equal(
             ErrorCategory.Serialization,
             exception.Error.Category);
+        Assert.DoesNotContain("simulated upcaster failure", exception.Error.Message, StringComparison.Ordinal);
         Assert.IsType<InvalidOperationException>(exception.InnerException);
     }
 
@@ -231,6 +232,13 @@ public sealed class EventInfrastructureTests
                 new EventPayloadVersion(2)));
 
         Assert.Equal("event.schema.future", exception.Error.Code);
+
+        var invalidVersion = Assert.Throws<EventSerializationException>(
+            () => serializer.DeserializePayload<CustomerCreated>(
+                envelope,
+                default));
+
+        Assert.Equal("event.schema.version-invalid", invalidVersion.Error.Code);
     }
 
     [Fact]
@@ -276,6 +284,32 @@ public sealed class EventInfrastructureTests
 
         Assert.Throws<InvalidOperationException>(
             () => registry.Register(new CustomerCreatedV1ToV2Upcaster(eventType)));
+    }
+
+    [Fact]
+    public void SnapshotFolder_ReducesFailuresWithoutLeakingExceptionText()
+    {
+        var registry = new EventStateReducerRegistry<int>();
+        var eventType = new EventType("customer.created");
+        registry.Register(new ThrowingReducer(eventType));
+
+        var serializer = new JsonEventSerializer();
+        var envelope = serializer.CreateEnvelope(
+            EventId.New(),
+            EventTestData.Timestamp,
+            eventType,
+            new EventPayloadVersion(1),
+            CorrelationId.New(),
+            null,
+            new CustomerCreated("Alice", 42));
+
+        var result = new EventSnapshotFolder<int>(
+            registry,
+            serializer).Fold(0, [envelope]);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("event.reducer.failed", result.Error!.Code);
+        Assert.DoesNotContain("secret payload", result.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -396,6 +430,24 @@ public sealed class EventInfrastructureTests
 
         public JsonElement Upcast(JsonElement payload) =>
             default;
+    }
+
+    private sealed class ThrowingReducer : IEventStateReducer<int>
+    {
+        public ThrowingReducer(EventType eventType)
+        {
+            EventType = eventType;
+        }
+
+        public EventType EventType { get; }
+
+        public EventPayloadVersion CurrentPayloadSchemaVersion => new(1);
+
+        public int Apply(
+            int state,
+            EventEnvelope envelope,
+            JsonElement payload) =>
+            throw new InvalidOperationException("secret payload");
     }
 
     private sealed class InvalidReducer : IEventStateReducer<int>
