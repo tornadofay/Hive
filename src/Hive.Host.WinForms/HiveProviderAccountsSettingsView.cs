@@ -37,8 +37,9 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
         {
             Width = 360,
             Height = 32,
+            IntegralHeight = false,
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Margin = Padding.Empty
+            Margin = new Padding(0, 4, 0, 4)
         };
         _providerComboBox.SelectedIndexChanged += ProviderComboBoxOnSelectedIndexChanged;
 
