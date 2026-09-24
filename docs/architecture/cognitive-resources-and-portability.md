@@ -57,7 +57,7 @@ The evaluation should preserve:
 - relevant cost, time, risk, and consequence data;
 - applicability conditions.
 
-Mistake and Success are therefore meaningful learning evidence, but the system does not equate them with raw execution status.
+Mistake and Success are therefore meaningful learning evidence, but the system does not equate them with raw execution status. Attribution remains separate: a Mistake identifies that the intended result was not achieved, while causal analysis determines whether the failure arose from the Agent's reasoning, a tool, a specialist, the environment, missing information, or another factor.
 
 ### 11.2 Learning from outcomes
 
