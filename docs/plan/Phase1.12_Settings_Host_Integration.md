@@ -22,7 +22,7 @@ Normal host operations / execution
 
 Settings edits authoritative state; the host consumes that same state.
 
-This remains **Phase 1.12** only. It does not authorize Phase 1.13 or later.
+This document covers Phase 1.12 only. It is historical and does not authorize Phase 1.13, the current UI/UX maintenance pass, or any later roadmap slice.
 
 ---
 
