@@ -139,7 +139,7 @@ The classifications are mutually exclusive for a single evaluation:
 
 - **Success** — all applicable success criteria were satisfied.
 - **Partial** — some but not all applicable criteria were satisfied, and the result is incomplete rather than wholly incorrect.
-- **Mistake** — the result is known to be incorrect or failed in a way that is not better classified as Partial.
+- **Mistake** — the result is known to be wrong relative to the intended objective or success criteria and is not better classified as Partial.
 - **Unknown** — available evidence cannot establish which substantive outcome occurred.
 
 Whether the Agent, a tool, a specialist, the environment, or another factor caused a Mistake is a separate attribution question and may remain uncertain.
