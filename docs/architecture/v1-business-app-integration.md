@@ -594,19 +594,6 @@ The affected host identities allow Hive to:
 
 When the host uses generated identity values, the host adapter is responsible for obtaining them through an authorized mechanism.
 
-### 12.3 Durable attempt and reconciliation boundary
-
-A non-transactional host call cannot rely on Hive and the host application sharing one database transaction. Therefore the implementation must establish a durable operation identity before the call and persist enough attempt state to determine, after an interruption, that a host call was in flight or may already have taken effect.
-
-Recovery must:
-
-1. load the durable attempt/receipt by the same logical `OperationId`;
-2. reconcile against any host-side idempotency/correlation evidence;
-3. reread authoritative host state when necessary;
-4. classify the disposition before deciding whether another mutation is safe.
-
-A second host mutation is never justified merely because the caller did not receive a response. Where the host supports idempotency, the same logical operation identity is reused. Where it does not, reconciliation must establish a safe retry condition first.
-
 ### 12.2 Receipt disposition and partial success
 
 A receipt records the durable disposition of the attempted host operation, not merely successful writes. It should distinguish at least:
@@ -622,6 +609,19 @@ Parent/child operations may partially succeed when the host boundary is not atom
 An unknown outcome must not automatically trigger a duplicate write. Recovery first attempts reconciliation through the operation identity and host-side state; a second mutation requires an explicit idempotent/reconciliation decision.
 
 Where the host can enforce idempotency, Hive should reuse the same logical operation identity on retry. Where the host cannot, the receipt and host-state reconciliation are the source of truth for deciding whether a retry is safe.
+
+### 12.3 Durable attempt and reconciliation boundary
+
+A non-transactional host call cannot rely on Hive and the host application sharing one database transaction. Therefore the implementation must establish a durable operation identity before the call and persist enough attempt state to determine, after an interruption, that a host call was in flight or may already have taken effect.
+
+Recovery must:
+
+1. load the durable attempt/receipt by the same logical `OperationId`;
+2. reconcile against any host-side idempotency/correlation evidence;
+3. reread authoritative host state when necessary;
+4. classify the disposition before deciding whether another mutation is safe.
+
+A second host mutation is never justified merely because the caller did not receive a response. Where the host supports idempotency, the same logical operation identity is reused. Where it does not, reconciliation must establish a safe retry condition first.
 
 ## 13. First-class post-write Review
 
