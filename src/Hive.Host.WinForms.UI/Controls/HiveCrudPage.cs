@@ -1216,7 +1216,10 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                     HiveStatusTone.Information);
                 var result = await _editItemAsync(item, token);
                 if (result is null)
+                {
+                    RebuildItems();
                     return;
+                }
 
                 await LoadItemsCoreAsync(token);
             },
