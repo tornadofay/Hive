@@ -10,7 +10,7 @@ This document is part of the authoritative architecture defined by `docs/archite
 
 The V1 forcing function is the complete pipeline from supported input sources to a governed business-app write. Image is the first implemented input boundary; additional input sources are additive V1 capabilities and must converge on the same structured-candidate and business-operation boundaries.
 
-A single input submission may produce one or multiple independent WorkItems. Each WorkItem retains its own lifecycle, provenance, authorization, operation receipt, and Review state. Submission/batch grouping is an operational navigation and notification concern and does not replace WorkItem identity.
+A single input submission may produce one or multiple independent WorkItems. Each WorkItem retains its own lifecycle, provenance, and authorization; when a business operation is performed, its operation receipt and any required Review state remain tied to that WorkItem. Submission/batch grouping is an operational navigation and notification concern and does not replace WorkItem identity.
 
 ```
 Input submission
@@ -117,7 +117,7 @@ Registration and capture provenance contains the Hive resource access identity s
 Phase 1.14 must establish Hive-owned, host-neutral public contracts for V1 host integration. The concrete WinForms implementation may adapt native WinForms controls, application-owned/custom controls, or another control/data implementation without making any host library a dependency of Hive's neutral contracts.
 
 
-The conceptual contract family covers:
+The Phase 1.14 contract family covers:
 
 - host registration/adapter ownership;
 - semantic control descriptors;
@@ -126,9 +126,9 @@ The conceptual contract family covers:
 - stable row identities;
 - lookup descriptors and bounded lookup operations;
 - bounded host interaction capabilities;
-- business-operation capabilities;
-- durable business-operation receipts;
-- post-write Review.
+- business-operation capability boundaries needed for API/UI composition.
+
+Durable business-operation receipts and first-class post-write Review are later V1 contracts owned by Phase 1.17; this document defines their target semantics without moving their implementation into Phase 1.14.
 
 
 The neutral contracts must not expose raw WinForms controls, concrete host-control interfaces, arbitrary host object handles, SQL connections/commands, unrestricted SQL/filter execution, credentials, or arbitrary reflection/invocation.
@@ -225,7 +225,7 @@ When API and UI are combined in one logical operation, one operation correlation
 ### 4.1.6 Business-operation receipt and post-write Review
 
 
-Every consequential host operation attempt produces a durable `BusinessOperationReceipt`/attempt record containing the WorkItem/operation identity, host/adapter identity, operation type, affected parent/child record identities when established, disposition/result state, and host correlation or concurrency evidence when available. The disposition distinguishes outcomes such as rejected before mutation, success, partial application, known no-side-effect failure, and unknown outcome requiring reconciliation.
+The Phase 1.17 business-operation boundary requires every consequential host operation attempt to produce a durable `BusinessOperationReceipt`/attempt record containing the WorkItem/operation identity, host/adapter identity, operation type, affected parent/child record identities when established, disposition/result state, and host correlation or concurrency evidence when available. The disposition distinguishes outcomes such as rejected before mutation, success, partial application, known no-side-effect failure, and unknown outcome requiring reconciliation.
 
 
 The receipt does not make Hive a copy of the host business database. The host application remains the source of truth.
@@ -284,7 +284,7 @@ Phase 7 remains the later generalization point for a second materially different
 For V1, Workspace is intentionally a small operational surface over Hive.Management. The complete V1 target surface is intended to support:
 
 - supported input submissions and any associated attachments bound to WorkItems;
-- batch submission that expands into independently tracked WorkItems;
+- submission/batch grouping that may produce multiple independently tracked WorkItems;
 - WorkItem status and execution/activity;
 - relevant execution/provider status;
 - WorkItem notifications;
@@ -365,7 +365,7 @@ In this Phase 1.11 boundary, `Completed` means the approval-only WorkItem intera
 
 The V1 image attachment is immutable input data owned by Hive and bound to exactly one WorkItem. Attachment metadata is part of the WorkItem snapshot; binary content is stored in a dedicated Hive.Persistence table. Creation persists the attachment and WorkItem-created event/snapshot/outbox in the same SQL transaction. Attachment content is bounded and is never exposed through persistence-specific types.
 
-Workspace is a host-facing presentation surface over `Hive.Management`. It does not access `Hive.Persistence`, does not perform SQL, and does not infer or execute business-application writes. In Phase 1.11, execution/provider status is displayed as the currently known WorkItem execution state; actual image-to-extraction-to-write execution is delivered by later V1 pipeline slices.
+Workspace is a host-facing presentation surface over `Hive.Management`. It does not access `Hive.Persistence`, does not perform SQL, and does not infer or execute business-application writes. In Phase 1.11, execution/provider status is displayed as the currently known WorkItem execution state; actual input-to-candidate-to-write execution is delivered by later V1 pipeline slices.
 
 The generic event store therefore gains only two reusable persistence capabilities needed by this aggregate boundary: listing current snapshots for a resource kind and participating in an existing SQL transaction for an aggregate-specific state change. WorkItem-specific attachment rules remain in the WorkItem persistence owner.
 
