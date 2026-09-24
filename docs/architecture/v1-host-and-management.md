@@ -21,11 +21,17 @@ typed candidate record
         ↓
 validation
         ↓
-write Tool
+business-operation proposal
         ↓
-PendingApproval
+authorization / PendingApproval when required
         ↓
 Approve / Reject
+        ↓
+write Tool / host operation
+        ↓
+business-operation receipt
+        ↓
+policy-governed Review / verification
         ↓
 business-app result
 ```
@@ -84,6 +90,164 @@ Traversal rules are contractual:
 - capture does not read arbitrary control state or invoke application code beyond the bounded metadata properties required by the contract.
 
 Registration and capture provenance contains the Hive resource access identity supplied by the host plus a registration/capture identifier and timestamp. Discovery therefore remains attributable to the host registration without granting that registration any authorization to mutate the application.
+
+### 4.1.2 Neutral Host Integration Extension Contract
+
+
+Phase 1.14 must establish Hive-owned, host-neutral public contracts for V1 host integration. The concrete WinForms implementation may adapt native WinForms controls, application-owned controls, HForms/HControls, or another control/data implementation without making any of those libraries dependencies of Hive's neutral contracts.
+
+
+The conceptual contract family covers:
+
+- host registration/adapter ownership;
+- semantic control descriptors;
+- data-source/data-surface descriptors;
+- field/column descriptors;
+- stable row identities;
+- lookup descriptors and bounded lookup operations;
+- bounded host interaction capabilities;
+- business-operation capabilities;
+- durable business-operation receipts;
+- post-write Review.
+
+
+The neutral contracts must not expose raw WinForms controls, HControl interfaces, arbitrary host object handles, SQL connections/commands, unrestricted SQL/filter execution, credentials, or arbitrary reflection/invocation.
+
+
+Detailed contract design is owned by [architecture/v1-business-app-integration.md](v1-business-app-integration.md).
+
+
+### 4.1.3 Controls, data surfaces, and host semantics
+
+
+Hive consumes a semantic projection of host controls rather than the complete host property bag.
+
+
+Useful semantics may include:
+
+- logical/control identity and path;
+- title/label metadata;
+- binding/property metadata;
+- data type and relevant field constraints;
+- required/read-only/computed state;
+- primary-key/identity metadata;
+- generation semantics;
+- supported UI capabilities;
+- bounded current value where reading is authorized.
+
+
+A bound grid or collection is represented as a data surface. It is not assumed to be a database table.
+
+
+Parent/child data is represented explicitly when the host supplies a semantic relationship:
+
+```text
+parent entity
+    ↓
+child collection
+    ↓
+parent-key → child-key relationship
+```
+
+
+HForms concepts such as `HDataBox`, `HActionBar`, `HDataGridView`, and `TableInfo` are adapter inputs rather than Hive contracts.
+
+
+### 4.1.4 Identity, lookup, and mutation boundaries
+
+
+For consequential row operations, stable identity is required. An explicit primary key or composite key is preferred. A hidden primary-key column is valid host behavior:
+
+```text
+IsPrimaryKey = true
+Visible = false
+```
+
+
+Visibility alone never establishes identity, and row index is never authoritative identity.
+
+
+Generated fields are host-owned outputs. Computed fields are readable but are not directly writable through generic field mutation.
+
+
+Lookup metadata is translated into a bounded lookup capability. Host filter expressions such as a legacy `FillFilterQuery` remain implementation metadata and are never exposed to the model as executable SQL.
+
+
+Host UI settings such as `AllowNew`, `AllowEdit`, `AllowDelete`, `AllowRead`, `AllowPermissionCheck`, or equivalent application switches describe host behavior; they never replace Hive authorization.
+
+
+UI operations such as `SetControlValue`, `EditGridRow`, or `InvokeHostAction` remain distinct from business operations such as `CreateInvoice` or `PostDocument`.
+
+
+### 4.1.5 API/UI composition
+
+
+V1 permits:
+
+```text
+API only
+UI only
+API + UI
+```
+
+
+The Agent does not receive an unrestricted architecture-level choice between these mechanisms. An authorized business/application capability defines the logical operation, and the host implementation provides the API-backed, UI-backed, or combined implementation.
+
+
+When API and UI are combined in one logical operation, one operation correlation identity covers the complete operation.
+
+
+### 4.1.6 Business-operation receipt and post-write Review
+
+
+A successful, partial, or otherwise attributable business-app write produces a durable `BusinessOperationReceipt` containing the WorkItem/operation identity, host/adapter identity, operation type, affected parent/child record identities, completion/result state, and host correlation or concurrency evidence when available.
+
+
+The receipt does not make Hive a copy of the host business database. The host application remains the source of truth.
+
+
+Approval and Review are separate:
+
+```text
+Approval = should Hive perform the proposed write?
+Review   = did the resulting host state contain the intended data correctly?
+```
+
+
+Review is a first-class, provenance-bearing WorkItem-linked object. It may be human, automated, or hybrid according to policy. Human review is the minimum V1 review mechanism when policy requires a correctness check.
+
+
+The normal path is:
+
+```text
+intended candidate
+    +
+write receipt
+    ↓
+authorized host read
+    ↓
+bounded comparison
+    ↓
+Review outcome
+```
+
+
+Review outcomes include `PendingReview`, `VerifiedCorrect`, and `VerifiedIncorrect`; unresolved operational states such as `VerificationUnavailable` or `Inconclusive` may be represented when verification cannot establish correctness.
+
+
+Hive persists only the minimum bounded evidence needed to explain and audit the review. It does not silently mirror host business state.
+
+
+### 4.1.7 V1 implementation boundary
+
+
+Phase 1.14 establishes the extension/adapter and interaction contracts. Phase 1.17 establishes the governed business write, durable operation receipt, and first-class Review lifecycle.
+
+
+Phase 1.15 and 1.16 remain concerned with vision routing and structured extraction/validation respectively. Parent/child candidate data is added only when the actual V1 operation requires it.
+
+
+Phase 7 remains the later generalization point for a second materially different host technology; Phase 1.14 must not become a universal UI automation framework.
 
 
 
