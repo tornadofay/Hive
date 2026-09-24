@@ -158,6 +158,7 @@ surface.ConfigureRun(RunScenarioAsync, output, owner);
 ```
 
 Members: `InputText`, `CodeSnippet`, `RunButtonText`, `Description`, `ExpectedResult`, `NoteTitle`, `NoteText`, `SetInformation(...)`, `SetStatus(...)`, `ConfigureRun(...)`, `Cancel()`, `RunAsync(...)`.
+- the Run action is disabled until `ConfigureRun(...)` supplies an executable action; it becomes the Cancel action while a run is active.
 
 ## IHiveExampleOutput
 
