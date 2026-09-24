@@ -332,7 +332,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Margin = Padding.Empty,
             Padding = new Padding(4, 0, 0, 0),
             AccessibleRole = AccessibleRole.StatusBar,
-            AccessibleName = "List status"
+            AccessibleName = "List status",
+            AutoEllipsis = true
         };
 
         _pagination = new HivePaginationBar
@@ -1424,6 +1425,12 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                 ? theme.Palette.DisabledBackground
                 : theme.Palette.InputBackground;
             _searchBox.ForeColor = busy
+                ? theme.Palette.DisabledText
+                : theme.Palette.Text;
+            _statusFilterBox.BackColor = busy
+                ? theme.Palette.DisabledBackground
+                : theme.Palette.InputBackground;
+            _statusFilterBox.ForeColor = busy
                 ? theme.Palette.DisabledText
                 : theme.Palette.Text;
         }
