@@ -153,7 +153,7 @@ Potential semantic fields include:
 - English/Arabic labels when the host exposes them;
 - bound field/property name;
 - data type and relevant size/precision metadata;
-- required/read-only/computed state;
+- required/read-only/computed state, including host-required-field validation semantics such as `RequiredField` when exposed;
 - primary-key/identity metadata;
 - generation semantics;
 - lookup metadata;
@@ -543,7 +543,9 @@ Hive does not authorize a raw control click merely because the model requested o
 
 ## 12. Business-operation receipt
 
-Every consequential operation attempt that is submitted to the host boundary must produce a durable receipt, including successful, rejected-before-mutation, partially applied, known-failed, and unknown outcomes.
+Every consequential operation attempt that is submitted to the host boundary must have a durable receipt/attempt record, including successful, rejected-before-mutation, partially applied, known-failed, and unknown outcomes.
+
+For a host boundary that is not transactionally coupled to Hive persistence, the logical operation identity and an initial durable attempt record must be persisted before submission whenever needed to make interruption/reconciliation safe. The final receipt disposition is then recorded after the host reports an outcome; a crash or transport break after submission but before a host response leaves the durable attempt in an unknown/reconcilable state.
 
 The receipt is not merely a success boolean and must not be replaced by the WorkItem status alone.
 
@@ -591,6 +593,19 @@ The affected host identities allow Hive to:
 - recover an interrupted workflow without blindly repeating a write.
 
 When the host uses generated identity values, the host adapter is responsible for obtaining them through an authorized mechanism.
+
+### 12.3 Durable attempt and reconciliation boundary
+
+A non-transactional host call cannot rely on Hive and the host application sharing one database transaction. Therefore the implementation must establish a durable operation identity before the call and persist enough attempt state to determine, after an interruption, that a host call was in flight or may already have taken effect.
+
+Recovery must:
+
+1. load the durable attempt/receipt by the same logical `OperationId`;
+2. reconcile against any host-side idempotency/correlation evidence;
+3. reread authoritative host state when necessary;
+4. classify the disposition before deciding whether another mutation is safe.
+
+A second host mutation is never justified merely because the caller did not receive a response. Where the host supports idempotency, the same logical operation identity is reused. Where it does not, reconciliation must establish a safe retry condition first.
 
 ### 12.2 Receipt disposition and partial success
 
