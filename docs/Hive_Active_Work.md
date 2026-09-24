@@ -40,21 +40,31 @@ The preceding UI/UX Production Polish maintenance pass was manually verified by 
 
 ## Implementation checkpoint
 
-Inspected and identified Core contract-hardening issues:
-- ResourceScope factory methods accept default typed identities;
-- ResourceLifecycle accepts invalid enum values;
-- ResourceReference accepts invalid ResourceKind values;
-- SecretReference accepts a default/empty SecretId;
-- ExecutionTargetSelectionRequest accepts default optional preferred/fixed target identities;
-- EventEnvelope accepts default required IDs and an undefined JsonElement payload;
-- event upcaster exceptions can escape without the serializer's structured EventSerializationException contract;
-- WorkItemAttachmentContent checks content length but not the recorded SHA-256 digest.
+Implemented the identified Core contract-hardening issues:
+- ResourceScope now treats default scopes as invalid, validates every non-global scope identity, and ResourceEnvelope rejects an invalid scope;
+- ResourceLifecycle rejects invalid enum values;
+- ResourceReference rejects invalid ResourceKind values and invalid provenance source references;
+- SecretReference validates explicit construction and ProviderAccount rejects malformed default references;
+- ExecutionTargetSelectionRequest rejects malformed optional preferred/fixed target identities;
+- EventEnvelope rejects missing required IDs, malformed causation identity, and undefined JSON payloads;
+- EventUpcasterRegistry converts unexpected custom-upcaster failures into structured EventSerializationException failures and rejects undefined upcaster payloads; SerializeEnvelope now rejects null input explicitly;
+- WorkItemAttachmentContent verifies content SHA-256 against recorded metadata in addition to content length;
+- focused regression coverage was added to ResourceFoundationTests, SecretResourceTests, ProviderResourceTests, ExecutionTargetSelectionTests, EventInfrastructureTests, and WorkItemFoundationTests;
+- validity markers remain internal implementation state so they do not become accidental JSON/public serialization fields;
+- no provider, persistence, orchestration, MAF, host, UI, dependency, or roadmap changes were introduced.
 
-No Core code has yet been changed in this slice.
+The implementation is complete pending execution verification.
 
 ## Verification handoff
 
-Execution is user-authorized for this backend maintenance pass. Verification must include the focused Core tests plus the broader Hive.Tests suite, and the affected Example Host only if the final public behavior proves externally meaningful.
+Verification is authorized but **not yet established in this environment**. A local repository checkout could not be created because outbound GitHub access from the execution environment failed at DNS resolution, and the current commit has no GitHub Actions workflow run available to inspect.
+
+Run:
+- dotnet build src/Hive.Core/Hive.Core.csproj;
+- dotnet test tests/Hive.Tests/Hive.Tests.csproj;
+- inspect the six affected Core test classes for the new regression cases and confirm the full suite remains green.
+
+No Example Host verification is required for this pass because the changes are Core contract hardening without externally visible UI or product behavior.
 
 ## Roadmap state
 
