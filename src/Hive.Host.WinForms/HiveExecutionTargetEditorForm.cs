@@ -24,6 +24,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
     private readonly TextBox _capabilitiesTextBox;
     private readonly Label _testStatus;
     private readonly HiveButton _testButton;
+    private HiveStatusTone _testStatusTone = HiveStatusTone.Neutral;
 
     public HiveExecutionTargetEditorForm(
         ExecutionTarget? target,
@@ -155,9 +156,11 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         _testButton.Visible = target is not null;
         _testButton.Click += async (_, _) => await TestConnectionAsync();
 
-        _testStatus.Text = target is null
-            ? "Save the target before testing its connection."
-            : "Connection test not run.";
+        SetTestStatus(
+            target is null
+                ? "Save the target before testing its connection."
+                : "Connection test not run.",
+            HiveStatusTone.Neutral);
 
         cancel.Click += (_, _) =>
         {
@@ -181,6 +184,28 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
     public ExecutionTarget? Definition { get; private set; }
 
+    protected override void OnThemeChanged(HiveThemeDefinition theme) =>
+        ApplyTestStatusVisual(theme);
+
+    private void SetTestStatus(string text, HiveStatusTone tone)
+    {
+        _testStatusTone = tone;
+        _testStatus.Text = text;
+        ApplyTestStatusVisual(_themeManager.Theme);
+    }
+
+    private void ApplyTestStatusVisual(HiveThemeDefinition theme)
+    {
+        _testStatus.ForeColor = _testStatusTone switch
+        {
+            HiveStatusTone.Information => theme.VisualStates.Information,
+            HiveStatusTone.Success => theme.VisualStates.Success,
+            HiveStatusTone.Warning => theme.VisualStates.Warning,
+            HiveStatusTone.Error => theme.VisualStates.Error,
+            _ => theme.Palette.MutedText
+        };
+    }
+
     private async Task TestConnectionAsync()
     {
         if (_existing is null)
@@ -198,7 +223,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             if (result.IsFailure)
             {
                 var message = $"Connection test failed: {result.Error!.Message}";
-                _testStatus.Text = message;
+                SetTestStatus(message, HiveStatusTone.Error);
                 HiveUiErrorReporter.Report(
                     this,
                     message,
@@ -208,11 +233,11 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
                 return;
             }
 
-            _testStatus.Text = "Connection test succeeded.";
+            SetTestStatus("Connection test succeeded.", HiveStatusTone.Success);
         }
         catch (Exception exception)
         {
-            _testStatus.Text = $"Connection test failed: {exception.Message}";
+            SetTestStatus($"Connection test failed: {exception.Message}", HiveStatusTone.Error);
             HiveUiErrorReporter.Report(
                 this,
                 exception,
