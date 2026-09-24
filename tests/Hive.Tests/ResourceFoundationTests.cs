@@ -288,7 +288,7 @@ public sealed class ResourceFoundationTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(
             () => new ResourceIdentitySnapshot<WorkItemId>(
-                default,
+                (ResourceKind)999,
                 WorkItemId.New(),
                 ResourceVersion.Initial));
 
