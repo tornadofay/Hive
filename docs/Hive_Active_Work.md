@@ -20,6 +20,16 @@ This is a temporary maintenance slice explicitly authorized by the user after th
 
 Required before closure: developer build/test verification of the affected `Hive.Tests` coverage, followed by the broader suite as appropriate. This slice remains open until actual verification is reported. No Example Host verification is required unless the implementation gains externally visible host/UI behavior.
 
+### Implementation checkpoint
+
+Implemented on `main` through commit `f00a3b99d66052910aa1d522df9660d534d9d660`:
+- `HiveDatabaseOptions.ConnectionString` is no longer public; credential-bearing connection access remains internal to `Hive.Persistence` and `Hive.Tests` receives test-only friend access;
+- Persistence SQL, unexpected-state, JSON-persistence, migration, connection-test, Agent/Provider/WorkItem, event/outbox, and outbox-handler failure paths no longer copy raw exception text into public `Error.Message` values;
+- `HivePersistenceError` centralizes technical exception redaction while preserving existing error codes/categories and the exception object remains transient rather than being stored in the returned `Error`;
+- focused regression coverage now checks the non-public connection-string boundary and verifies that technical exception details are excluded from public Persistence errors.
+
+Verification status: **not yet verified by build/test execution**. The developer must run the affected `Hive.Tests` coverage and then the broader suite as appropriate before this maintenance slice can close.
+
 ## Closed maintenance pass — Hive.Core Production Polish
 
 This was a focused backend contract-hardening pass requested directly by the user after completion of the preceding UI/UX maintenance pass. It did not advance the roadmap or authorize Phase 1.14 or later.
