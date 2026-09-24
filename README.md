@@ -156,7 +156,7 @@ Dreams are bounded simulations/analyses that can run against persisted state wit
 
 Questions are explicit cognitive work items. A Hive may route different Questions to Agents according to specialty so the members investigate different aspects of the same user objective; answers remain attributable and can feed collective reasoning.
 
-## V1 data-entry pipeline
+## Intended V1 data-entry pipeline
 
 ```
 Input submission
@@ -187,7 +187,7 @@ Spreadsheet → workbook/row mapping   → structured candidate
 
 Both paths converge on the common validation and business-operation boundary.
 
-The business-app write is a governed Tool invocation surface over an authorized host/business capability. Approval, host-write disposition, and post-write Review are separate lifecycle boundaries. Hive never treats its own database as a gateway to the host application's business database.
+The intended business-app write is a governed Tool invocation surface over an authorized host/business capability. Approval, host-write disposition, and post-write Review are separate lifecycle boundaries in the V1 architecture. Hive never treats its own database as a gateway to the host application's business database.
 
 V1 does not choose between API and UI as an architecture decision. Both integration paths are supported from the start, and the implementation may use either or both per operation according to the real application's capabilities and authorization policy.
 
