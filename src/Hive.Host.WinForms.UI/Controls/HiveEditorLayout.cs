@@ -300,6 +300,9 @@ public sealed class HiveEditorLayout : UserControl
         // height when AutoSize remains enabled, which can override the shared 32px
         // compact-editor contract during layout.
         editor.AutoSize = false;
+        if (editor is ComboBox comboBox)
+            comboBox.IntegralHeight = false;
+
         editor.Dock = DockStyle.Fill;
         editor.Margin = Padding.Empty;
         editor.Height = editorHeight;
