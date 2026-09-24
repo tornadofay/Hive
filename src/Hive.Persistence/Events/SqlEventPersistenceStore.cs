@@ -76,13 +76,13 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
         {
             return Result<EventAppendResult>.Failure(exception.Error);
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result<EventAppendResult>.Failure(
                 new Error(
                     "hive.event.persistence",
                     ErrorCategory.Internal,
-                    $"The durable event operation failed: {exception.Message}"));
+                    "The durable event operation failed."));
         }
     }
 
@@ -163,13 +163,13 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
                     ErrorCategory.External,
                     "The durable event read failed at the SQL Server boundary."));
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result<IReadOnlyList<PersistedEvent>>.Failure(
                 new Error(
                     "hive.event.read",
                     ErrorCategory.Internal,
-                    $"The durable event read failed: {exception.Message}"));
+                    "The durable event read failed."));
         }
     }
 
@@ -223,13 +223,13 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
         {
             throw;
         }
-        catch (JsonException exception)
+        catch (JsonException)
         {
             return Result<EventSnapshot?>.Failure(
                 new Error(
                     "hive.event.snapshot-invalid",
                     ErrorCategory.Serialization,
-                    $"The stored snapshot JSON is invalid: {exception.Message}"));
+                    "The stored snapshot JSON is invalid."));
         }
         catch (SqlException)
         {
@@ -239,13 +239,13 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
                     ErrorCategory.External,
                     "The snapshot read failed at the SQL Server boundary."));
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result<EventSnapshot?>.Failure(
                 new Error(
                     "hive.event.snapshot-read",
                     ErrorCategory.Internal,
-                    $"The snapshot read failed: {exception.Message}"));
+                    "The snapshot read failed."));
         }
     }
 
@@ -308,13 +308,13 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
         {
             throw;
         }
-        catch (JsonException exception)
+        catch (JsonException)
         {
             return Result<IReadOnlyList<EventSnapshot>>.Failure(
                 new Error(
                     "hive.event.snapshot-invalid",
                     ErrorCategory.Serialization,
-                    $"The stored snapshot JSON is invalid: {exception.Message}"));
+                    "The stored snapshot JSON is invalid."));
         }
         catch (SqlException)
         {
@@ -324,13 +324,13 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
                     ErrorCategory.External,
                     "The snapshot listing failed at the SQL Server boundary."));
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result<IReadOnlyList<EventSnapshot>>.Failure(
                 new Error(
                     "hive.event.snapshot-list",
                     ErrorCategory.Internal,
-                    $"The snapshot listing failed: {exception.Message}"));
+                    "The snapshot listing failed."));
         }
     }
 
@@ -398,13 +398,13 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
                     ErrorCategory.External,
                     "The outbox read failed at the SQL Server boundary."));
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result<EventOutboxEntry?>.Failure(
                 new Error(
                     "hive.event.outbox-read",
                     ErrorCategory.Internal,
-                    $"The outbox read failed: {exception.Message}"));
+                    "The outbox read failed."));
         }
     }
 
@@ -487,11 +487,11 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
                 "hive.outbox.claim-sql", ErrorCategory.External,
                 "The outbox claim failed at the SQL Server boundary."));
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result<EventOutboxWorkItem?>.Failure(new Error(
                 "hive.outbox.claim", ErrorCategory.Internal,
-                $"The outbox claim failed: {exception.Message}"));
+                "The outbox claim failed."));
         }
     }
 
@@ -530,11 +530,11 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
                 "hive.outbox.complete-sql", ErrorCategory.External,
                 "The outbox completion failed at the SQL Server boundary."));
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result.Failure(new Error(
                 "hive.outbox.complete", ErrorCategory.Internal,
-                $"The outbox completion failed: {exception.Message}"));
+                "The outbox completion failed."));
         }
     }
 
@@ -812,7 +812,7 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
                 new Error(
                     "event.payload.invalid",
                     ErrorCategory.Serialization,
-                    $"Stored event payload JSON is invalid: {exception.Message}"),
+                    "Stored event payload JSON is invalid."),
                 exception);
         }
     }
