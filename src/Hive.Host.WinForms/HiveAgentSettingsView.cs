@@ -259,7 +259,7 @@ internal sealed class HiveAgentSettingsView : UserControl
     {
         var message = e.Exception.Message;
 
-        _page.SetStatus(message);
+        _page.SetStatus(message, HiveStatusTone.Error);
         HiveUiErrorReporter.Report(
             FindForm(),
             e.Exception,
