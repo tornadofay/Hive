@@ -23,17 +23,20 @@ public enum HiveDatabaseState
 
 public readonly record struct HiveBootstrapCredentialReference
 {
+    private readonly bool _isValid;
+
     public HiveBootstrapCredentialReference(SecretId id)
     {
-        if (id.Value == Guid.Empty)
+        if (id == default)
             throw new ArgumentException(
                 "A bootstrap credential reference must contain a valid secret identity.",
                 nameof(id));
 
         Id = id;
+        _isValid = true;
     }
 
-    public SecretId Id { get; }
+    internal bool IsValid => _isValid;
 }
 
 public sealed record HivePersistenceConfiguration
@@ -94,6 +97,13 @@ public sealed record HivePersistenceConfiguration
             throw new ArgumentException(
                 "A SQL login name must not be supplied for Windows integrated authentication.",
                 nameof(userName));
+        }
+
+        if (bootstrapCredential is { } reference && !reference.IsValid)
+        {
+            throw new ArgumentException(
+                "Bootstrap credential reference must be valid when supplied.",
+                nameof(bootstrapCredential));
         }
 
         if (commandTimeoutSeconds <= 0)
