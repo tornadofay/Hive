@@ -881,7 +881,7 @@ The supplied grid/dialog source establishes:
 - `CellEndEdit` calls `Validate()` so current cell edits are committed into the bound data surface before the parent HDataBox save serializes child rows.
 - Grid add/edit button handling is gated to `GridEditMode.ByForm` and to the surrounding HDataBox New/Edit modes.
 - Add/edit/delete have explicit host veto hooks: `CheckBeforeAddGrid`, `CheckBeforeEditGrid`, and `CheckBeforeDeleteGrid`.
-- `ByForm` creates the configured `GridDialog`, links it through `RelatedHDGV), and selects Add/Edit dialog mode.
+- `ByForm` creates the configured `GridDialog`, links it through `RelatedHDGV`, and selects Add/Edit dialog mode.
 - `AddGrid` performs required/repeat validation through `CheckRequiredData()` and `CheckRepeatData()` before applying row data.
 - `RelatedHDGV.PerformGridDataChanged(...)` raises the host grid-data-change path, with post-add/post-edit/post-save extension hooks around it.
 - Delete ends the current edit, removes the selected row from `Dt`, and then raises the grid-data-change/after-delete hooks. This is an in-memory child-surface mutation; the surrounding HDataBox save remains the persistence/business boundary.
@@ -937,39 +937,6 @@ HDataBox / HDataGridView / HList / TableInfo
 `HActionBar : Control` is unfinished and is therefore not treated as an authoritative V1 action contract. It may become an adapter input only when its concrete production semantics exist and the adapter actually requires them.
 
 The adapter translates host lifecycle, parent/child relationships, field/column semantics, row identity, generated/computed behavior, lookup behavior, and bounded UI interaction. It must not make Hive understand HForms itself.
-
-### 17.8 HForms configuration is evidence, not a second Hive contract
-
-The supplied production HForms/HControls source establishes the host-side lifecycle and data-entry conventions that the V1 adapter must be able to translate.
-
-`HDataBox : UserControl` combines:
-
-- CRUD/action flags such as `AllowNew`, `AllowEdit`, `AllowDelete`, `AllowRead`, `AllowSearch`, `AllowExport`, `AllowPrint`, `AllowReport`, `AllowViewLog`;
-- permission/logging behavior such as `AllowPermissionCheck` and `AllowUserLogHandling`;
-- binding state such as `BindingControl`, `Bs`, and the loaded `DataSet`;
-- presentation/application metadata such as `TitleEn`, `TitleAr`, `LanguageType`, and `CodeType`;
-- reporting configuration that remains host-owned;
-- application/data conventions such as `VoidFieldName`, branch, and year handling.
-
-The adapter should project only semantics required for a Hive-authorized operation. Reporting, printing, code-generation conventions, logging implementation, and other application-specific metadata remain host-owned unless a concrete V1 capability requires them.
-
-The supplied `HDataBox` implementation is now sufficient evidence for the host lifecycle; it is not merely a property list. It establishes:
-
-- `MainTable` as the root `TableInfo` for the bound business record;
-- `TableInfo.PkName` as the current production HForms record key; in this host model the key is a single integer key, not a composite key;
-- `MainTable.ChildTable` as the authoritative child-table collection used by HDataBox;
-- child `HDataGridView`/`HList` association through matching `DataSourceName`;
-- parent-key propagation into child rows through `MainTable.PkName`;
-- host-side required/unique validation before save;
-- `CheckBeforeSave` as an explicit host veto/boundary before persistence;
-- `SaveRecord` as the save operation event, allowing the host application to own the actual persistence/business implementation;
-- `PerformAfterSave(ID)` as the post-save generated-record identity callback;
-- New/Edit lifecycle transitions followed by record reload;
-- `AllowPermissionCheck` branch/year conventions as host data-selection/write conventions, not Hive authorization.
-
-The implementation therefore proves that HDataBox is an orchestration/container around binding, validation, child-data preparation, save/update lifecycle, and host callbacks. Hive must adapt that lifecycle; it must not recreate it or interpret its host flags as Hive permission.
-
-The newer `HActionBar : Control` is unfinished and is not treated as an authoritative V1 action contract. Inspect it only if the future adapter needs a concrete HActionBar capability; the established HDataBox lifecycle does not depend on it.
 
 ## 18. Non-goals for V1
 
@@ -1029,7 +996,7 @@ The supplied production `HDataBox` source is sufficient evidence for the followi
 
 - parent/root record through `MainTable`;
 - child collections through `MainTable.ChildTable`;
-- child-control mapping through `DataSourceName`;
+- child-control mapping through matching `DataSourceName` on HDataGridView/HList;
 - parent-key propagation through `MainTable.PkName`;
 - child insert preparation excludes the child primary-key field so the host can provide/generated it;
 - required/unique host validation;
@@ -1037,30 +1004,24 @@ The supplied production `HDataBox` source is sufficient evidence for the followi
 - `SaveRecord` host save boundary;
 - `PerformAfterSave(ID)` generated-record identity callback;
 - New/Edit/None lifecycle and reload behavior;
-- host permission/logging flags as host behavior rather than Hive authorization.
+- host permission/logging flags as host behavior rather than Hive authorization;
+- HDataGridView/AddGrid child-grid editing lifecycle, ByForm workflow, and row-mutation hooks.
 
-### 20.1 HDataGridView and AddGrid production evidence
+### 20.1 Freeze evidence summary
 
-The supplied `HDataGridView` and `AddGrid` source establishes the concrete V1 child-grid interaction lifecycle:
+The detailed HDataGridView/AddGrid production behavior is documented in Section 17.3. The freeze gate therefore treats the following as established:
 
-- `HDataGridView` uses its bound `Dt` as the editable data surface and `ReadDataTable()` assigns that `DataTable` to the underlying `DataGridView.DataSource`.
-- `CellEndEdit` calls `Validate()` so edited cell values are committed back to the bound data surface before the surrounding HDataBox save lifecycle serializes child rows.
-- The grid's add/edit button handlers are active only for `GridEditMode.ByForm` and only while the surrounding HDataBox is in New or Edit mode.
-- Before add/edit, the host can veto through `CheckBeforeAddGrid` / `CheckBeforeEditGrid`; before delete, through `CheckBeforeDeleteGrid`.
-- `ByForm` opens the configured `GridDialog`, links it to the owning grid through `RelatedHDGV`, and marks it as Add or Edit mode.
-- `AddGrid` performs host-level required/repeat validation through `CheckRequiredData()` and `CheckRepeatData()` before applying add/edit data.
-- After the dialog applies the data, `RelatedHDGV.PerformGridDataChanged(...)` raises the host grid-data-changed path, followed by the relevant post-add/post-edit/post-save hooks.
-- Grid delete ends the current edit, removes the selected row from `Dt`, and then raises the grid-data-changed/after-delete hooks. This is an in-memory child-surface mutation; the surrounding HDataBox persistence lifecycle remains responsible for the eventual business write.
-- The supplied delete/edit handlers locate the selected row through `DataGridView.CurrentRow` and `row.Index`. These are positional UI addresses, not authoritative persisted identities. The adapter must resolve the row's actual key field from the bound data surface before a consequential operation.
-
-This confirms that HForms `ByForm` is a concrete input-dialog workflow around the grid's bound data surface, not merely descriptive metadata.
-
-`HList.ReadDataTable()` establishes a distinct list-selection pattern: it reads the child `DataTable`'s configured `DbFieldName` and checks matching list-item IDs. This is selection/state synchronization, not evidence that every HList is a CRUD data-entry surface.
+- DataTable-backed child-grid editing and cell synchronization;
+- ByForm dialog add/edit behavior;
+- add/edit/delete veto hooks and child required/repeat validation;
+- in-memory child-row mutation before the surrounding HDataBox save;
+- positional `CurrentRow`/`row.Index` selection as non-authoritative identity;
+- HForms single-integer-key identity through `TableInfo.PkName`.
 
 Before freezing the concrete Phase 1.14 adapter types, the remaining implementation-specific HForms/HControls contracts to inspect are:
 
 - exact `HControl`/`IHyperControl` semantic metadata and value access needed by the neutral descriptor;
-- exact `HDataGridView` column metadata plus the runtime mapping from a grid row to its persisted integer key; positional row index remains non-authoritative;
+- exact `HDataGridView` column metadata plus the runtime mapping from a grid row's bound data to its persisted integer key; positional row index remains non-authoritative;
 - exact generated/computed-column behavior and edit serialization for existing child rows where the supplied snippets do not expose the complete `PerformEditData` implementation;
 - exact lookup resolution behavior;
 - exact concurrency/version behavior where the host exposes it;
