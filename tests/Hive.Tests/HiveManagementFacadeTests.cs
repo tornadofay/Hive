@@ -556,6 +556,30 @@ public sealed class HiveManagementFacadeTests
         Assert.True(unauthorizedTarget.IsFailure);
         Assert.Equal(ErrorCategory.Forbidden, unauthorizedTarget.Error!.Category);
 
+        var retiredAccount = await facade.DeleteProviderAccountAsync(
+            account.Id,
+            context);
+
+        Assert.True(retiredAccount.IsSuccess, retiredAccount.Error?.Message);
+        Assert.Equal(
+            ResourceLifecycleStatus.Retired,
+            retiredAccount.Value!.Resource!.Lifecycle.Status);
+
+        var accountRetiredTarget = await facade.CreateAgentDefinitionAsync(
+            CreateAgentDefinition(
+                context,
+                target.Id,
+                key: "account-retired-agent"),
+            context);
+
+        Assert.True(accountRetiredTarget.IsFailure);
+        Assert.Equal(
+            ErrorCategory.Conflict,
+            accountRetiredTarget.Error!.Category);
+        Assert.Equal(
+            "hive.management.agent-definition.execution-target-account-inactive",
+            accountRetiredTarget.Error.Code);
+
         var retired = await facade.DeleteExecutionTargetAsync(
             target.Id,
             context);
