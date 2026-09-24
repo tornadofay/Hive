@@ -139,8 +139,15 @@ public sealed record ProviderAccount
         ExternalAccountId = string.IsNullOrWhiteSpace(externalAccountId)
             ? null
             : RequireText(externalAccountId, nameof(externalAccountId), 200);
-        CredentialSecret = credentialSecret;
 
+        if (credentialSecret is { } reference && !reference.IsValid)
+        {
+            throw new ArgumentException(
+                "Credential secret reference must contain a valid secret identity.",
+                nameof(credentialSecret));
+        }
+
+        CredentialSecret = credentialSecret;
         Resource = resource;
         ProviderId = providerId;
     }
