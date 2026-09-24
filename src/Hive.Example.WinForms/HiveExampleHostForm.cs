@@ -692,7 +692,12 @@ internal sealed class HiveExampleHostForm : HiveForm
     private void OutputViewOnOutputAvailabilityChanged(object? sender, EventArgs e)
     {
         if (_outputView.OutputTextBox.TextLength == 0)
+        {
+            // Clear the collapsed-state affordance when output is removed while
+            // the shared output view is already collapsed.
+            OutputViewOnCollapseStateChanged(_outputView, EventArgs.Empty);
             return;
+        }
 
         if (_outputView.IsCollapsed)
             _outputView.SetCollapsed(false);

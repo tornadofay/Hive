@@ -200,11 +200,16 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         get => _output.Text;
         set
         {
+            var hadOutput = _output.TextLength > 0;
+
             _output.Text = value ?? string.Empty;
             _lineCount = CountLines(_output.Text);
             UpdateActionState();
 
-            if (_output.TextLength > 0)
+            // Notify the host when output content changes and when availability
+            // changes to empty. The latter keeps collapsed-output affordances
+            // synchronized with the actual output state.
+            if (hadOutput || _output.TextLength > 0)
                 OutputAvailabilityChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -251,6 +256,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         _output.Clear();
         _lineCount = 0;
         UpdateActionState();
+        OutputAvailabilityChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void Write(

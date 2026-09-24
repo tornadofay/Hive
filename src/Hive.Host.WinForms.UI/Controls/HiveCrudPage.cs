@@ -1512,7 +1512,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _emptyStateLabel.Text =
             _items.Count == 0
                 ? "No items to display."
-                : "No items match the current search.";
+                : "No items match the current filters.";
     }
 
     private void UpdateStatusSummary()
