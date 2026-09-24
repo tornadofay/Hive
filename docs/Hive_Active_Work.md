@@ -40,6 +40,8 @@ Implemented in this maintenance pass:
 - the Example Host now vertically centers the Configured Agent selector within its toolbar row;
 - focused UI polish tests now cover shared editor sizing for compact single-line and full-height multiline editors;
 - HiveExampleTestSurface now disables "Copy code" when no reproduction snippet is present and uses distinct themed status tones for successful, warning/cancelled, and failed outcomes while keeping active/running status neutral;
+- HiveCrudPage now supports semantic status tones for information, success, warning, and error states; CRUD loading/cancellation/failure states use the existing theme semantics, and settings pages surface operation errors without changing their underlying behavior;
+- Workspace WorkItem status presentation now uses the existing theme Information/Success/Warning/Error states for lifecycle clarity and reapplies that presentation when the active theme changes;
 
 No business logic, Management contract, persistence behavior, provider behavior, or roadmap capability was changed.
 
