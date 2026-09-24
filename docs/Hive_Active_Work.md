@@ -6,9 +6,11 @@ Last updated: 2026-09-25
 
 **None — the Hive.Core Production Polish maintenance pass is closed; Phase 1.14 remains inactive.**
 
-The last completed maintenance slice is recorded below for handoff/history.
+The last completed maintenance slice is recorded below for handoff/history. No roadmap slice is currently authorized.
 
-This is a focused backend contract-hardening pass requested directly by the user after completion of the preceding UI/UX maintenance pass. It does not advance the roadmap or authorize Phase 1.14 or later.
+## Closed maintenance pass — Hive.Core Production Polish
+
+This was a focused backend contract-hardening pass requested directly by the user after completion of the preceding UI/UX maintenance pass. It did not advance the roadmap or authorize Phase 1.14 or later.
 
 ### Scope
 
@@ -43,7 +45,7 @@ This is a focused backend contract-hardening pass requested directly by the user
 
 The preceding UI/UX Production Polish maintenance pass was manually verified by the user on 2026-09-24: the solution compiled successfully and the Example Host and configuration/Settings flow ran successfully with no reported failures. Its automated test run was 193 passed, 0 failed, 0 skipped in 27.2 seconds. That maintenance slice is closed.
 
-## Implementation checkpoint
+## Closed-slice implementation checkpoint
 
 Implemented the identified Core contract-hardening issues:
 - ResourceScope now treats default scopes as invalid, validates every non-global scope identity, and ResourceEnvelope rejects an invalid scope;
