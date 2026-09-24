@@ -237,7 +237,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             Anchor = AnchorStyles.Left | AnchorStyles.Right,
             DropDownStyle = ComboBoxStyle.DropDownList,
             Width = 420,
-            Margin = Padding.Empty,
+            Margin = new Padding(0, 3, 0, 3),
             FormattingEnabled = true,
             Enabled = false,
             AccessibleName = "Configured Agent selector",
