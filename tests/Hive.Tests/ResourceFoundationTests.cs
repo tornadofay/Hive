@@ -271,4 +271,37 @@ public sealed class ResourceFoundationTests
         Assert.Throws<InvalidOperationException>(() => default(ResourceVersion).Next());
         Assert.Throws<InvalidOperationException>(() => new ResourceVersion(long.MaxValue).Next());
     }
+
+    [Fact]
+    public void ResourceProvenance_RejectsDefaultCausationId()
+    {
+        Assert.Throws<ArgumentException>(
+            () => new ResourceProvenance(
+                PrincipalId.New(),
+                DateTimeOffset.UtcNow,
+                CorrelationId.New(),
+                (CausationId?)default(CausationId)));
+    }
+
+    [Fact]
+    public void ResourceIdentitySnapshot_RejectsInvalidState()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new ResourceIdentitySnapshot<WorkItemId>(
+                default,
+                WorkItemId.New(),
+                ResourceVersion.Initial));
+
+        Assert.Throws<ArgumentException>(
+            () => new ResourceIdentitySnapshot<WorkItemId>(
+                ResourceKind.WorkItem,
+                default,
+                ResourceVersion.Initial));
+
+        Assert.Throws<ArgumentException>(
+            () => new ResourceIdentitySnapshot<WorkItemId>(
+                ResourceKind.WorkItem,
+                WorkItemId.New(),
+                default));
+    }
 }
