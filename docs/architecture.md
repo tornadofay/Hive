@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 40 — HDataGridView lifecycle evidence finalized)
+Last updated: 2026-09-24 (rev 41 — HForms integration contract review finalized)
 
 
 
@@ -302,6 +302,7 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 65. A write Tool is an authorized invocation surface for a business capability; the business operation's semantic contract remains owned by the host-integration/business-operation boundary, not by the Tool or the model.
 66. V1 vector storage uses SQL Server's native vector capability behind a replaceable `IVectorStore` where the selected SQL Server deployment supports it; deployments without the required vector capability must report `Unsupported` rather than silently substituting another vector database. Vector storage is not a reason to add a separate vector database, and semantic vector retrieval still requires an embedding/vectorization capability.
 67. A future lightweight/embedded Hive deployment may provide a first-class persistence backend behind the same Hive persistence/resource contracts; it must not fork the logical resource model, and a custom database engine is not assumed unless a measured requirement justifies building one.
+68. V1 WinForms integration may expose bounded semantics for application-owned/custom controls and data-bound grids, including related/child data, binding, column, lookup, and row-operation metadata; discovery or metadata never grants database or business authorization.
 
 ---
 
