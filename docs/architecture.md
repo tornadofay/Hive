@@ -299,6 +299,7 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 62. A business-operation receipt records the disposition and affected host identities of a consequential host operation; it does not make Hive a mirror of host business state.
 63. Approval and post-write Review are distinct lifecycle boundaries; Review uses authoritative host state and policy-governed verification.
 64. Hive.Management orchestrates authorized host/business operations through Core-defined integration ports; concrete host adapters are supplied by application composition and are never referenced back from Management.
+65. A write Tool is an authorized invocation surface for a business capability; the business operation's semantic contract remains owned by the host-integration/business-operation boundary, not by the Tool or the model.
 
 ---
 
