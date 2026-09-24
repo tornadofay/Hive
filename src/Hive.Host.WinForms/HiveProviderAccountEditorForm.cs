@@ -191,6 +191,7 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
         {
             Dock = DockStyle.Fill,
             Height = 32,
+            AutoSize = false,
             BorderStyle = BorderStyle.FixedSingle
         };
 
