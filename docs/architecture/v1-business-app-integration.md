@@ -633,7 +633,7 @@ Hybrid
 
 The minimum V1 implementation requirement is first-class human review after a governed business write when review policy requires it.
 
-Automated verification may perform a host-side read/compare before presenting a human task. A human may still be required for discrepancies or higher-risk operations.
+Automated verification may perform a host-side read/compare before presenting a human task. When human review is required, the reviewer should be able to open or navigate to the associated host record/editor through a bounded authorized host capability, inspect the authoritative host state, and record the review result/evidence. A human may still be required for discrepancies or higher-risk operations.
 
 ### 13.2 Review policy
 
