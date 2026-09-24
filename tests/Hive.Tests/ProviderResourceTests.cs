@@ -163,7 +163,7 @@ public sealed class ProviderResourceTests
                 ProviderId.New(),
                 "account",
                 "Account",
-                credentialSecret: default));
+                credentialSecret: (SecretReference?)default(SecretReference)));
     }
 
     [Fact]
