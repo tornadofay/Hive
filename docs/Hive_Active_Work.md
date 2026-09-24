@@ -4,9 +4,18 @@ Last updated: 2026-09-25
 
 ## Active slice
 
-**None — Hive.Persistence Production Baseline Hardening is closed. Phase 1.14 remains inactive.**
+**Authorized maintenance slice — Hive.Management / Hive.Persistence final backend audit. Phase 1.14 remains inactive.**
 
-This was a temporary maintenance slice explicitly authorized by the user after the prior Core production-polish closure. It did not advance the roadmap and did not authorize Phase 1.14 or any later roadmap work.
+This is a temporary maintenance slice explicitly authorized by the user for another production-grade revision of the Management/Persistence backend boundary. It does not advance the roadmap and does not authorize Phase 1.14 or any later roadmap work.
+
+### Scope
+
+- remove remaining raw exception text from public Management `Error` results;
+- reject undefined persisted WorkItem status values during activity reconstruction;
+- preserve the bootstrap credential invariant under concurrent configuration-save/removal operations within the Management facade;
+- add only focused regression coverage for these discovered defects;
+- re-audit `Hive.Persistence` boundaries without introducing unrelated persistence changes;
+- do not change SQL schema, migrations, provider transport, orchestration, MAF, host adapters, UI, dependencies, or roadmap phase authorization.
 
 ### Scope
 
