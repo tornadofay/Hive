@@ -192,7 +192,7 @@ Intervention never bypasses authorization, capability, budget, or host validatio
 
 ### Business-operation receipt
 
-A consequential host write produces a durable business-operation receipt when the host reports a successful, partial, or otherwise attributable result.
+A consequential host operation that crosses the host boundary produces a durable business-operation receipt/attempt record. For non-transactional host calls, the logical operation identity and initial attempt state are persisted before submission so an interruption cannot erase the only evidence that a mutation may have been in flight.
 
 The receipt records, as available:
 
@@ -209,7 +209,7 @@ The receipt is attribution and recovery state, not a copy of the host applicatio
 
 A generated host ID must be captured when the host can provide it. A hidden UI primary-key field is a valid host implementation mechanism, but visibility is never the source of identity semantics.
 
-An unknown write outcome after interruption must not automatically trigger a duplicate write. Recovery/reconciliation uses the receipt and host state to establish whether the operation already took effect.
+An unknown write outcome after interruption must not automatically trigger a duplicate write. Recovery first loads the durable attempt/receipt by logical operation identity, uses any host-side idempotency or correlation evidence, and rereads authoritative host state as needed to establish whether the operation already took effect. A retry is safe only after that reconciliation boundary permits it.
 
 ### First-class V1 Review
 
