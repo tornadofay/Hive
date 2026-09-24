@@ -246,7 +246,7 @@ Type: architecture/contract implementation slice.
 Objective: establish the neutral host-integration contracts and implement the first concrete WinForms adapter boundary without coupling Hive to HForms, HControls, or any other host-specific control/data framework.
 
 Scope:
-- host-neutral public extension contracts for host registration/adapter ownership, semantic controls, data surfaces, fields, stable row identities, lookups, bounded UI interaction, and business-operation capabilities;
+- host-neutral Core-defined ports/contracts for host registration/adapter ownership, semantic controls, data surfaces, fields, stable row identities, lookups, bounded UI interaction, and business-operation capabilities;
 - concrete bounded WinForms adapter implementation over native/custom WinForms controls;
 - support for application-owned/custom controls and HForms/HControls through adaptation rather than Hive dependencies;
 - semantic projection of host binding/data-source metadata rather than raw control/object exposure;
@@ -256,7 +256,7 @@ Scope:
 - bounded lookup operations; host filter expressions never become executable model input;
 - separation of UI interaction capabilities from business-operation semantics;
 - separate API, UI, and API+UI implementation paths behind one authorized logical operation;
-- authorization, provenance, cancellation, lifecycle/disposal, stale-state, and concurrency boundaries.
+- Management-owned authorization/orchestration through injected Core-defined host ports, plus provenance, cancellation, lifecycle/disposal, stale-state, and concurrency boundaries.
 
 Required investigation before freezing the concrete adapter contract:
 - actual HForms/HControls data-source and parent/child relationship mechanism;
