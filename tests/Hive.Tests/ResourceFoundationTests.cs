@@ -214,6 +214,13 @@ public sealed class ResourceFoundationTests
                 PrincipalId.New(),
                 now,
                 default));
+
+        Assert.Throws<ArgumentException>(() =>
+            new ResourceProvenance(
+                PrincipalId.New(),
+                now,
+                CorrelationId.New(),
+                source: default(ResourceReference)));
     }
 
     [Fact]
@@ -241,6 +248,7 @@ public sealed class ResourceFoundationTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new ResourceVersion(0));
         Assert.Throws<ArgumentOutOfRangeException>(() => new ResourceVersion(-1));
         Assert.Equal(2, ResourceVersion.Initial.Next().Value);
+        Assert.Throws<InvalidOperationException>(() => default(ResourceVersion).Next());
         Assert.Throws<InvalidOperationException>(() => new ResourceVersion(long.MaxValue).Next());
     }
 }
