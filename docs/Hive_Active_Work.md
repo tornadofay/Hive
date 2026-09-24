@@ -32,11 +32,11 @@ Developer verification is required before this maintenance slice can close. The 
 - configured AgentDefinition targets now require an active target, active ProviderAccount, active Provider, and consistent Provider relationship;
 - focused regression tests cover the newly discovered contracts.
 
-Verification status: **not yet verified by build/test execution for this revision**.
+Verification status: **not yet verified by build/test execution for this revision**. Latest code checkpoint: `c94a577f8a88aca3a8eb5aa7cf3a103a6c62655d`.
 
 ## Closed maintenance pass — Hive.Persistence Production Baseline Hardening
 
-### Scope
+### Closed maintenance-pass scope
 
 - remove public exposure of credential-bearing SQL connection strings from `HiveDatabaseOptions` while preserving Persistence-internal connectivity;
 - normalize Persistence-facing SQL/unexpected-error messages so raw exception text from SQL Server, DbUp, or persistence internals is not returned through public `Error` results;
@@ -61,9 +61,6 @@ Implemented on `main` through commit `e22c11a1740ff84a33d14478d9ff93df23c25b3c`:
 Verification status: **developer-verified**. The final implementation was verified with 218 passed, 0 failed, 0 skipped tests on 2026-09-25; the maintenance slice is closed.
 
 
-This maintenance pass is complete and verified. The final code checkpoint is `e22c11a1740ff84a33d14478d9ff93df23c25b3c`; the later documentation-only checkpoint is `a4ced845427efcc7bc0daad6696815ad0b47556d`.
-
-The final audit found no additional defect requiring code changes beyond the credential/error-boundary hardening and the subsequent catch-binding corrections. Phase 1.14 remains inactive.
 
 ## Closed maintenance pass — Hive.Core Production Polish
 
