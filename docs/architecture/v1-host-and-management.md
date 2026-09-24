@@ -38,7 +38,7 @@ policy-governed Review / verification
 business-app result
 ```
 
-The write remains a governed Tool. Hive's database is never a direct gateway to the host application's business database.
+The write remains a governed Tool invocation surface over an authorized host/business capability; the Tool is not the owner of the business-operation semantics. Hive's database is never a direct gateway to the host application's business database.
 
 ### 4.1 Dual Business-App Integration Contract
 
