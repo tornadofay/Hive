@@ -47,7 +47,7 @@ Verify: normal/invalid/boundary unit tests, JSON round-trip, older-event payload
 
 ## 0.3 — Identity, WorkItem & Resource foundation
 Objective: Deployment/Tenant/Principal/User/Session/Workspace/Agent/Hive/Runtime/Execution/WorkItem identity, Resource envelope, ownership, scope, provenance, lifecycle/version metadata.
-V1 work-unit rule: one submitted document is one WorkItem; a batch is multiple WorkItems.
+V1 work-unit rule: a WorkItem is the durable unit of user-visible work and represents one logical business operation when a business operation is required. A single input submission may produce one or multiple independent WorkItems. A submission/batch is an operational grouping, not a replacement for WorkItem identity, lifecycle, provenance, authorization, receipt, or review.
 Verify: scope matrix, missing-identity fail-closed cases, immutable identity snapshots, WorkItem lifecycle and provenance isolation.
 
 ## 0.4 — Persistence bootstrap
@@ -286,12 +286,27 @@ Verify:
 - registration/disposal/cancellation/lifecycle behavior;
 - provenance and operation correlation.
 
-## 1.15 — Vision Routing
-Objective: rasterize/prepare non-text-extractable pages and route them to a Vision-capable execution target.
-Verify: fixed scanned/image sample, unsupported-capability failure, bounded page/image handling.
+## 1.15 — Input Preparation & Routing
+Objective: prepare supported V1 input sources and route each source through the capability required to produce structured candidate data.
+
+Initial V1 input paths:
+
+```
+Image
+  → Vision-capable execution target
+  → structured candidate
+
+Spreadsheet
+  → workbook / worksheet / row parsing and mapping
+  → structured candidate
+```
+
+Input-specific processing must converge on the common structured-candidate boundary rather than creating separate downstream business-operation pipelines.
+
+Verify: image routing, spreadsheet workbook/worksheet/row handling, multiple WorkItems from one submission, bounded file/workbook/row processing, cancellation, input failure isolation, and unsupported-input handling.
 
 ## 1.16 — Structured Extraction & Validation
-Objective: structured-output extraction to typed candidate data with required-field/type/domain validation. When the target business operation requires it, candidate data may preserve an explicit parent record with nested child-row collections and their relationships; this does not create a generic relational-document framework.
+Objective: produce typed candidate business data from supported input capabilities and apply required-field, type, and domain validation. Vision-derived candidates and structured spreadsheet-derived candidates both enter this common candidate/validation boundary. When the target business operation requires it, candidate data may preserve an explicit parent record with nested child-row collections and their relationships; this does not create a generic relational-document framework.
 Verify: valid sample, missing fields, invalid types, malformed model output, parent/child candidate structure when required by the target operation, and rejection path.
 
 ## 1.17 — Business-App Write, Receipt & Review
@@ -308,6 +323,7 @@ Scope:
 - stable operation correlation/idempotency identity, reused on retry when the host supports idempotency;
 - unknown/partial write outcome handling that does not blindly duplicate a possibly completed operation;
 - first-class WorkItem-linked Review object;
+- each WorkItem has its own business-operation attempt/receipt and review state; submission/batch grouping does not combine independent WorkItems into one mutable operation;
 - review queue/list over WorkItems awaiting review;
 - bounded authorized action to open/navigate to the associated host record/editor for human review when the host supports it;
 - policy-governed review modes: Human, Automated, or Hybrid;
@@ -334,12 +350,12 @@ Verify:
 - review does not mutate the original candidate;
 - authorization and provenance remain enforced across write and review.
 ## 1.18 — MAF Sequential V1 Pipeline
-Objective: wire ingest → extract → validate → governed write → receipt → policy-governed verification/review as one MAF Sequential workflow, while keeping Hive-owned authorization, host integration, durable receipt, and Review semantics outside MAF's orchestration ownership.
+Objective: wire submission → WorkItem creation → input-specific preparation/routing → candidate extraction/mapping → validation → governed write → receipt → policy-governed verification/review as one MAF Sequential workflow, while keeping Hive-owned WorkItem identity, authorization, host integration, durable receipt, and Review semantics outside MAF's orchestration ownership. A submission/batch is not itself the correctness or execution unit.
 Verify: end-to-end fake-host path covering successful and rejected/failed branches plus developer manual verification with one controlled real sample when available.
 
 ## 1.19 — Full-Pipeline Crash/Resume
-Objective: prove event/outbox/recovery behavior across the complete V1 pipeline, including durable business-operation attempt/receipt persistence before non-transactional host submission, unknown write-outcome reconciliation, and Review recovery.
-Verify: process termination at several checkpoints, restart, resume or reconcile without duplicate terminal host mutation, and preserve the authoritative Review state.
+Objective: prove event/outbox/recovery behavior across the complete V1 pipeline, including durable business-operation attempt/receipt persistence before non-transactional host submission, unknown write-outcome reconciliation, independent WorkItem recovery within multi-item submissions, and Review recovery.
+Verify: process termination at several checkpoints, restart, resume or reconcile without duplicate terminal host mutation; already-terminal WorkItems are not processed again; failure of one WorkItem does not incorrectly fail unrelated WorkItems; completed WorkItems retain receipts; Review state survives restart; and recoverable WorkItems can resume/reconcile independently.
 
 ## 1.20 — Metrics, Budget Cap & OpenTelemetry
 Objective: request/success/failure/timeout counters, token/cost tracking, hard per-runtime budget, and console OpenTelemetry.
