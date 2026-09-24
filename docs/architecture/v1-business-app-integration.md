@@ -670,6 +670,10 @@ bounded comparison
 Review outcome
 ```
 
+Review is specifically host-operation correctness evidence. It is not the same semantic as CognitiveAgent Success or Mistake, which evaluate whether a CognitiveAgent's objective or success criteria were satisfied for cognitive learning.
+
+A completed Review may contribute evidence to a CognitiveAgent OutcomeEvaluation only through an explicit, provenance-bearing reconciliation path. A human correction recorded by Review is evidence with an attributable source; the Review state itself remains owned by the V1 host/work-operation boundary.
+
 Hive may store the minimum evidence required to explain and audit the review. It must not silently become a mirror of the host business database.
 
 ### 13.4 Review outcomes
