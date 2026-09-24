@@ -81,6 +81,7 @@ Phase 0.4 establishes the Hive-owned SQL Server persistence boundary without put
 - Persistence configuration is a first-class Hive platform configuration domain, not incidental host wiring.
 - Hosts may provide initial/bootstrap persistence configuration, but the long-term authoritative configuration surface is Hive's own typed persistence-configuration contract and management/settings boundary.
 - Credentials are not written to the repository, migration scripts, logs, or Hive database metadata. Hive resource credentials belong to the database-backed Secret Store boundary once Hive.Persistence is available. The SQL bootstrap credential is a separate user-scoped DPAPI-protected bootstrap-secret boundary outside the target Hive database and is referenced by persisted configuration rather than stored as plaintext.
+- `HiveDatabaseOptions` keeps any credential-bearing SQL connection string as Persistence-internal state; public callers receive only non-secret configuration/metadata contracts. Raw credential-bearing connection strings must not cross the public Hive.Persistence API boundary.
 - `HiveDatabaseOptions` enables database creation by default. Passing `createDatabaseIfMissing: false` is an explicit opt-out when the host requires pre-provisioned databases.
 
 #### Database technology
