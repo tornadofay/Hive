@@ -4,6 +4,7 @@ namespace Hive.Core;
 
 public readonly record struct EventType
 {
+    private const int MaxValueLength = 200;
     private readonly bool _isValid;
 
     public EventType(string value)
@@ -11,7 +12,14 @@ public readonly record struct EventType
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Event type is required.", nameof(value));
 
-        Value = value.Trim();
+        var normalized = value.Trim();
+
+        if (normalized.Length > MaxValueLength)
+            throw new ArgumentException(
+                $"Event type cannot exceed {MaxValueLength} characters.",
+                nameof(value));
+
+        Value = normalized;
         _isValid = true;
     }
 
