@@ -279,7 +279,6 @@ public sealed class EventInfrastructureTests
     }
 
     [Fact]
-    [Fact]
     public void ReducerRegistry_RejectsDefaultEventTypeOrVersion()
     {
         var registry = new EventStateReducerRegistry<int>();
@@ -296,6 +295,7 @@ public sealed class EventInfrastructureTests
                 default)));
     }
 
+    [Fact]
     public void UpcasterRegistry_RejectsNonSequentialRegistration()
     {
         var registry = new EventUpcasterRegistry();
