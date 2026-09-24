@@ -79,14 +79,14 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
         {
             throw;
         }
-        catch (JsonException exception)
+        catch (JsonException)
         {
             return Result<HivePersistenceConfiguration>.Failure(
                 Error.Validation(
                     "hive.management.configuration-invalid",
                     "The Hive settings file is invalid."));
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result<HivePersistenceConfiguration>.Failure(
                 new Error(
