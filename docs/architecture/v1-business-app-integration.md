@@ -1062,13 +1062,30 @@ The supplied production `HDataBox` source is sufficient evidence for the followi
 - New/Edit/None lifecycle and reload behavior;
 - host permission/logging flags as host behavior rather than Hive authorization.
 
+### 20.1 HDataGridView and AddGrid production evidence
+
+The supplied `HDataGridView` and `AddGrid` source now establishes the concrete V1 child-grid interaction lifecycle:
+
+- `HDataGridView` uses its bound `Dt` as the editable data surface and `ReadDataTable()` binds that `DataTable` directly to the underlying `DataGridView`.
+- `CellEndEdit` calls `Validate()` so edited cell values are committed back to the bound data surface before the surrounding HDataBox save lifecycle serializes the child rows.
+- The grid's add/edit button handlers are active only for `GridEditMode.ByForm` and only while the surrounding HDataBox is in New or Edit mode.
+- Before add/edit, the host can veto through `CheckBeforeAddGrid` / `CheckBeforeEditGrid`; before delete, through `CheckBeforeDeleteGrid`.
+- `ByForm` opens the configured `GridDialog`, linking the dialog back to the owning grid through `RelatedHDGV` and selecting Add/Edit dialog mode.
+- `AddGrid` performs host-level required/repeat validation through `CheckRequiredData()` and `CheckRepeatData()` before applying add/edit data.
+- After the dialog applies the data, `RelatedHDGV.PerformGridDataChanged(...)` refreshes the grid and the dialog exposes post-add/post-edit/post-save extension points.
+- Grid delete ends the current edit, removes the selected row from `Dt`, and then raises the grid-data-changed/after-delete hooks. This is an in-memory child-surface mutation; parent HDataBox persistence remains responsible for the eventual business write.
+
+This confirms that HForms `ByForm` is not merely descriptive metadata: it is a concrete input-dialog workflow around the grid's bound data surface.
+
+`HList.ReadDataTable()` also establishes a distinct list-selection pattern: it reads the child `DataTable`'s configured `DbFieldName` and checks matching list-item IDs. This is selection/state synchronization, not evidence that every HList is a CRUD data-entry surface.
 Before freezing the concrete Phase 1.14 adapter types, the remaining implementation-specific HForms/HControls contracts to inspect are:
 
 - exact `HControl`/`IHyperControl` semantic metadata and value access needed by the neutral descriptor;
-- exact `HDataGridView` row/column identity, generated/computed, add/remove/edit configuration, and editing lifecycle;
+- exact `HDataGridView` column metadata plus the existing row identity/key field representation used by the host when locating persisted child rows; positional row index remains non-authoritative;
+- exact generated/computed-column behavior and edit serialization for existing child rows where the supplied snippets do not expose the complete `PerformEditData` implementation;
 - exact lookup resolution behavior;
 - exact concurrency/version behavior where the host exposes it;
-- the concrete `HActionBar` contract only where the adapter needs to expose or invoke its actions.
+- the concrete `HActionBar` contract only where the adapter needs to expose or invoke its actions; it is still unfinished and is not treated as authoritative V1 evidence today.
 
 Do not recreate these mechanisms in Hive when the host already exposes an authoritative contract.
 
