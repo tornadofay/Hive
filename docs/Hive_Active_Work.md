@@ -44,12 +44,15 @@ Implemented the identified Core contract-hardening issues:
 - ResourceScope now treats default scopes as invalid, validates every non-global scope identity, and ResourceEnvelope rejects an invalid scope;
 - ResourceLifecycle rejects invalid enum values;
 - ResourceReference rejects invalid ResourceKind values and invalid provenance source references;
+- ResourceProvenance rejects malformed optional CausationId values; ResourceIdentitySnapshot validates kind, identity, and version invariants;
 - SecretReference validates explicit construction and ProviderAccount rejects malformed default references;
 - ExecutionTargetSelectionRequest rejects malformed optional preferred/fixed target identities;
 - EventEnvelope rejects missing required IDs, malformed causation identity, and undefined JSON payloads;
-- EventUpcasterRegistry converts unexpected custom-upcaster failures into structured EventSerializationException failures and rejects undefined upcaster payloads; SerializeEnvelope now rejects null input explicitly;
+- EventUpcasterRegistry converts unexpected custom-upcaster failures into structured EventSerializationException failures without copying exception text into the public error message, rejects undefined upcaster payloads, and validates the requested supported payload version; SerializeEnvelope now rejects null input explicitly;
+- EventSnapshotFolder keeps unexpected reducer exception text out of returned Error messages;
 - WorkItemAttachmentContent verifies content SHA-256 against recorded metadata in addition to content length;
-- focused regression coverage was added to ResourceFoundationTests, SecretResourceTests, ProviderResourceTests, ExecutionTargetSelectionTests, EventInfrastructureTests, and WorkItemFoundationTests;
+- HivePersistenceConfiguration rejects a bootstrap credential reference when Windows integrated authentication is selected;
+- focused regression coverage was added to ResourceFoundationTests, SecretResourceTests, ProviderResourceTests, ExecutionTargetSelectionTests, EventInfrastructureTests, WorkItemFoundationTests, and HiveConfigurationTests;
 - validity markers remain internal implementation state so they do not become accidental JSON/public serialization fields;
 - no provider, persistence, orchestration, MAF, host, UI, dependency, or roadmap changes were introduced.
 
@@ -62,7 +65,7 @@ Verification is authorized but **not yet established in this environment**. A lo
 Run:
 - dotnet build src/Hive.Core/Hive.Core.csproj;
 - dotnet test tests/Hive.Tests/Hive.Tests.csproj;
-- inspect the six affected Core test classes for the new regression cases and confirm the full suite remains green.
+- inspect the seven affected Core test classes for the new regression cases and confirm the full suite remains green.
 
 No Example Host verification is required for this pass because the changes are Core contract hardening without externally visible UI or product behavior.
 
