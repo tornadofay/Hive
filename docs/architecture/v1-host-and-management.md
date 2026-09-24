@@ -96,7 +96,7 @@ Registration and capture provenance contains the Hive resource access identity s
 ### 4.1.2 Neutral Host Integration Extension Contract
 
 
-Phase 1.14 must establish Hive-owned, host-neutral public contracts for V1 host integration. The concrete WinForms implementation may adapt native WinForms controls, application-owned controls, HForms/HControls, or another control/data implementation without making any of those libraries dependencies of Hive's neutral contracts.
+Phase 1.14 must establish Hive-owned, host-neutral public contracts for V1 host integration. The concrete WinForms implementation may adapt native WinForms controls, application-owned/custom controls, or another control/data implementation without making any host library a dependency of Hive's neutral contracts.
 
 
 The conceptual contract family covers:
@@ -141,30 +141,29 @@ Useful semantics may include:
 A bound grid or collection is represented as a data surface. It is not assumed to be a database table.
 
 
-The supplied production HForms implementation gives an explicit parent/child mapping rather than requiring visual inference:
+A real production WinForms host inspected for V1 provides explicit parent/child metadata rather than requiring visual inference.
+
+Conceptually:
 
 ```text
-HDataBox.MainTable
+root data surface
     ↓
-TableInfo.ChildTable[]
+explicit child-collection metadata
     ↓
-child TableInfo.TableName ↔ HDataGridView/HList.DataSourceName
+child data surface
     ↓
-parent MainTable.PkName → child foreign-key field
+parent identity → child foreign-key relationship
 ```
 
-The adapter should preserve this as a semantic parent/child relationship while keeping `TableInfo`, `DataSet`, `DataTable`, and HForms controls private to the adapter.
+The adapter preserves this as a semantic relationship. It does not expose host data containers, persistence objects, generated SQL, or private control types.
 
-
-HForms concepts such as `HDataBox`, `HDataGridView`, and `TableInfo` are adapter inputs rather than Hive contracts. `HActionBar` is currently unfinished and has no authoritative V1 contract in this architecture.
-
-The production `HDataBox`, `HDataGridView`, and `AddGrid` sources establish host lifecycle semantics: required/unique validation, `CheckBeforeSave`, `SaveRecord`, `PerformAfterSave(ID)`, New/Edit state transitions, parent/child binding, grid cell-to-`DataTable` synchronization, ByForm dialog editing, grid required/repeat validation, and child-row add/edit/delete hooks. Those are host business/application behavior to adapt, not Hive authorization or database contracts.
+The same host inspection establishes lifecycle semantics including required/unique validation, pre-save veto points, a host business/save boundary, post-save result handling, New/Edit state transitions, parent/child binding, bound child-data synchronization, editor-dialog workflows, grid-level validation, and child-row add/edit/delete hooks. These are host business/application behaviors to adapt, not Hive authorization or database contracts.
 
 
 ### 4.1.4 Identity, lookup, and mutation boundaries
 
 
-For consequential row operations, stable identity is required. The current HForms/TableInfo production model uses a single integer primary key identified by `PkName`; the neutral Hive contract remains broader so other hosts may use explicit composite or host-defined identities. A hidden primary-key column is valid host behavior:
+For consequential row operations, stable identity is required. The inspected V1 host exposes a single-key record identity in this particular surface, but the neutral Hive contract remains broader so other hosts may use explicit composite or host-defined identities. A hidden identity field is valid host behavior:
 
 ```text
 IsPrimaryKey = true
@@ -178,7 +177,7 @@ Visibility alone never establishes identity, and row index is never authoritativ
 Generated fields are host-owned outputs. Computed fields are readable but are not directly writable through generic field mutation.
 
 
-Lookup metadata is translated into a bounded lookup capability. Host filter expressions such as a legacy `FillFilterQuery` remain implementation metadata and are never exposed to the model as executable SQL.
+Lookup metadata is translated into a bounded lookup capability. Host-specific filter expressions remain implementation metadata and are never exposed to the model as executable SQL.
 
 
 Host UI settings such as `AllowNew`, `AllowEdit`, `AllowDelete`, `AllowRead`, `AllowPermissionCheck`, or equivalent application switches describe host behavior; they never replace Hive authorization.
