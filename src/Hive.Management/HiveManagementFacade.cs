@@ -190,9 +190,16 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                         "The bootstrap credential cannot be removed while persistence configuration still references it."));
             }
 
-            return await _bootstrapCredentials
+            var result = await _bootstrapCredentials
                 .ClearAsync(reference, cancellationToken)
                 .ConfigureAwait(false);
+
+            return result.IsSuccess
+                ? result
+                : Result.Failure(
+                    SanitizeTechnicalError(
+                        result.Error!,
+                        "The bootstrap credential could not be removed."));
         }
         finally
         {
@@ -240,7 +247,12 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                     .ConfigureAwait(false);
 
                 if (secret.IsFailure)
-                    return Result<HivePersistenceConnectionTest>.Failure(secret.Error!);
+                {
+                    return Result<HivePersistenceConnectionTest>.Failure(
+                        SanitizeTechnicalError(
+                            secret.Error!,
+                            "The bootstrap credential could not be resolved."));
+                }
 
                 material = secret.Value!;
             }
@@ -291,7 +303,12 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                     .ConfigureAwait(false);
 
                 if (secret.IsFailure)
-                    return Result.Failure(secret.Error!);
+                {
+                    return Result.Failure(
+                        SanitizeTechnicalError(
+                            secret.Error!,
+                            "The bootstrap credential could not be resolved."));
+                }
 
                 material = secret.Value!;
             }
@@ -1716,6 +1733,18 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                 : $"WorkItem rejected: {reason}",
             _ => eventType
         };
+
+    private static Error SanitizeTechnicalError(
+        Error error,
+        string safeMessage)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        ArgumentException.ThrowIfNullOrWhiteSpace(safeMessage);
+
+        return error.Category is ErrorCategory.External or ErrorCategory.Internal
+            ? new Error(error.Code, error.Category, safeMessage)
+            : error;
+    }
 
     private static Task<Result<T>> Failure<T>(
         string resourceName,
