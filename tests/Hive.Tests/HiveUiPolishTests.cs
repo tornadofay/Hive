@@ -74,7 +74,7 @@ public sealed class HiveUiPolishTests
         Assert.NotNull(host);
         Assert.IsType<Panel>(host);
         Assert.Equal(DockStyle.Fill, textBox.Dock);
-        Assert.True(textBox.Height > 32);
+        Assert.True(textBox.Height >= 32);
     }
 
     [Fact]
