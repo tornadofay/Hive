@@ -4,9 +4,28 @@ Last updated: 2026-09-25
 
 ## Active slice
 
-**None — current maintenance slice closed and Phase 1.14 remains inactive.**
+**Authorized maintenance slice — Hive.Management / Hive.Persistence final backend audit (revision). Phase 1.14 remains inactive.**
 
-No implementation slice is currently authorized. The next roadmap slice remains inactive until explicitly authorized.
+This is a temporary maintenance slice explicitly authorized by the user's revision request. It does not advance the roadmap and does not authorize Phase 1.14 or any later roadmap work.
+
+### Scope
+
+- audit the final Hive.Management / Hive.Persistence implementation for concrete production defects within existing contracts;
+- prevent completion of an outbox item after its lease has already expired, preserving stale-work protection;
+- ensure secret replacement plaintext buffers are zeroed on every exit path, including DPAPI protection failure;
+- inspect affected tests and add only focused regression coverage required by these changes;
+- re-audit authorization, ownership/scope, persistence transactions, cancellation, lifecycle, resource disposal, serialization, configuration, and provider failure boundaries without changing their established contracts unless a concrete defect requires it;
+- do not change SQL schema, migrations, provider transport, orchestration, MAF, host adapters, UI, dependencies, or roadmap phase authorization.
+
+### Verification gate
+
+Execution is not authorized by the revision request. This slice remains open until the developer reports the focused and broader `Hive.Tests` verification for this revision.
+
+### Implementation checkpoint
+
+Initial audit findings are recorded in implementation work; verification remains pending.
+
+Verification status: **not yet verified by build/test execution for this revision**.
 
 ## Closed maintenance pass — Hive.Management / Hive.Persistence Final Backend Audit
 
