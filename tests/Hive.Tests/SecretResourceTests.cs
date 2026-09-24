@@ -6,6 +6,16 @@ namespace Hive.Tests;
 public sealed class SecretResourceTests
 {
     [Fact]
+    public void SecretReference_RejectsDefaultAndTracksValidity()
+    {
+        Assert.Throws<ArgumentException>(() => new SecretReference(default));
+
+        Assert.False(default(SecretReference).IsValid);
+        Assert.True(new SecretReference(SecretId.New()).IsValid);
+    }
+
+
+    [Fact]
     public void SecretMaterial_IsRedactedAndDisposed()
     {
         using var material = SecretMaterial.Create("test-secret-value");
