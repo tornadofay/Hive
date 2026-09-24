@@ -302,7 +302,7 @@ Scope:
 - authorization before the consequential operation;
 - `PendingApproval` with existing Approve / Reject semantics when policy requires approval;
 - host business operation execution through API, UI, or API+UI implementation;
-- durable BusinessOperationReceipt/attempt record containing WorkItem/operation identity, host/adapter identity, parent identity, affected child identities, result state, and host correlation/concurrency evidence when available;
+- durable BusinessOperationReceipt/attempt record containing WorkItem/operation identity, host/adapter identity, pre-operation target identities, resulting host identities when changed, result state, and host correlation/concurrency evidence when available;
 - initial operation-attempt durability before submission when the host boundary is not transactionally coupled to Hive, so a crash after submission but before a host response remains reconcilable;
 - generated host IDs captured after creation;
 - stable operation correlation/idempotency identity, reused on retry when the host supports idempotency;
