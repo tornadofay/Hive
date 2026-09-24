@@ -395,7 +395,7 @@ Extend Workspace after Hive membership and Swarm contracts exist.
 
 Objective: add Agent/Hive organization and topology, active Swarm visibility, and Agentic mode where an Agent/Hive selects execution targets through the normal planner/policy boundary.
 
-General LLM mode with explicit model selection may be added here as a general Workspace capability; it is not part of V1 document processing.
+General LLM mode with explicit model selection may be added here as a general Workspace capability; it is not part of the V1 data-entry workflow.
 
 Verify: topology reflects authoritative Hive membership, Swarm views reflect derived active membership, Agentic mode displays the selected execution target, and Workspace does not create Hive/Swarm state merely by displaying it.
 
