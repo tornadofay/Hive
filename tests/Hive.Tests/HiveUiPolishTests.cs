@@ -71,8 +71,12 @@ public sealed class HiveUiPolishTests
         using var textBox = new TextBox();
         using var comboBox = new ComboBox();
 
+        layout.Size = new Size(800, 400);
         layout.AddField("Name", "Name.", textBox);
         layout.AddField("Type", "Type.", comboBox);
+        layout.CreateControl();
+        layout.PerformLayout();
+        layout.FieldsPanel.PerformLayout();
 
         var textHost = layout.FieldsPanel.GetControlFromPosition(1, 0);
         var comboHost = layout.FieldsPanel.GetControlFromPosition(1, 1);
