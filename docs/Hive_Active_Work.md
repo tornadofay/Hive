@@ -54,9 +54,9 @@ Implemented in this maintenance pass:
 
 ### Latest verification result
 
-User-run on 2026-09-24: `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — **192 tests, 192 passed, 0 failed, 0 skipped** in 24.4 seconds.
+User-run on 2026-09-24: `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — **193 tests, 193 passed, 0 failed, 0 skipped** in 27.2 seconds.
 
-This is the verified automated result immediately before the latest UI/UX audit changes. The latest audit adds further UI presentation/state-clarity changes and one focused regression test after that run; those changes have **not yet been verified by a test rerun**. The maintenance slice remains open pending the next test result and the existing manual UI verification.
+This is the verified automated result after the latest UI/UX audit changes, including the focused regression coverage added by that audit. The maintenance slice remains open pending the existing manual UI verification.
 
 ## Verification handoff
 
