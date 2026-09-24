@@ -86,6 +86,13 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                     "hive.management.configuration-invalid",
                     "The Hive settings file is invalid."));
         }
+        catch (ArgumentException)
+        {
+            return Result<HivePersistenceConfiguration>.Failure(
+                Error.Validation(
+                    "hive.management.configuration-invalid",
+                    "The Hive settings file contains invalid configuration values."));
+        }
         catch (Exception)
         {
             return Result<HivePersistenceConfiguration>.Failure(
