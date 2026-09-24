@@ -90,7 +90,7 @@ public sealed class EventSnapshotFolder<TState>
             {
                 return Result<TState>.Failure(exception.Error);
             }
-            catch (Exception exception)
+            catch (Exception)
             {
                 return Result<TState>.Failure(
                     new Error(
