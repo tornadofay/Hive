@@ -4,37 +4,38 @@ Last updated: 2026-09-25
 
 ## Active slice
 
-**Authorized maintenance slice — Hive.Management / Hive.Persistence final backend audit. Phase 1.14 remains inactive.**
+**None — current maintenance slice closed and Phase 1.14 remains inactive.**
 
-This is a temporary maintenance slice explicitly authorized by the user for another production-grade revision of the Management/Persistence backend boundary. It does not advance the roadmap and does not authorize Phase 1.14 or any later roadmap work.
+No implementation slice is currently authorized. The next roadmap slice remains inactive until explicitly authorized.
+
+## Closed maintenance pass — Hive.Management / Hive.Persistence Final Backend Audit
 
 ### Scope
 
-- remove remaining raw exception text from public Management `Error` results, including technical errors propagated from bootstrap credential storage and internal configured-agent execution;
+- remove raw exception text from public Management `Error` results, including technical errors propagated from bootstrap credential storage and internal configured-agent execution;
 - reject malformed persisted configuration values as typed configuration-validation failures;
 - reject undefined persisted WorkItem status values during activity reconstruction;
 - prevent bootstrap credential removal from racing with configuration saves through the owning Management facade;
 - reject configured AgentDefinition targets whose target, ProviderAccount, or Provider dependency is inactive/inconsistent;
 - preserve useful provider `External` failures while sanitizing unexpected `Internal` execution failures at the Management boundary;
-- add only focused regression coverage for these discovered defects;
-- re-audit `Hive.Persistence` boundaries without introducing unrelated persistence changes;
-- do not change SQL schema, migrations, provider transport, orchestration, MAF, host adapters, UI, dependencies, or roadmap phase authorization
-
-### Verification gate
-
-Developer verification is required before this maintenance slice can close. The previous 218-test result verifies the earlier Persistence-only checkpoint; it does not verify the current Management changes. This slice remains open until the developer reports the focused and broader `Hive.Tests` verification for this revision.
+- add focused regression coverage for these discovered defects;
+- re-audit Persistence boundaries without unrelated persistence changes.
 
 ### Implementation checkpoint
 
-- Management now redacts public persistence/configuration/secret/activity exception details;
-- persisted WorkItem activity rejects undefined status enum values instead of silently treating them as absent;
-- malformed persisted Hive settings values are classified as validation failures;
-- bootstrap credential set/save/remove mutations are serialized through the Management facade, and removal fails closed when configuration storage is unavailable;
-- configured AgentDefinition targets now require an active target, active ProviderAccount, active Provider, and consistent Provider relationship;
-- focused regression tests cover the newly discovered contracts.
+The maintenance implementation was completed on `main`. The final nullable-flow correction was committed as `3cdd0c93ab20e4f2aaf8d855c181b09f7c0b7211`; the final regression-test correction was committed as `2866aa495b03880487cb3f0a4b7d9224e69cdd75`.
 
-Verification status: **not yet verified by build/test execution for this revision**. Latest code checkpoint: `3cdd0c93ab20e4f2aaf8d855c181b09f7c0b7211`. Latest regression-test checkpoint: `2866aa495b03880487cb3f0a4b7d9224e69cdd75`.
+### Verification result
 
+The developer ran `dotnet test tests/Hive.Tests/Hive.Tests.csproj` on 2026-09-25:
+
+**225 tests passed, 0 failed, 0 skipped** in 22.6 seconds on .NET 10.0.1 using xUnit.net VSTest Adapter 3.1.5+1b188a7b0a.
+
+Verification archive: [hive-management-persistence-final-backend-audit-2026-09-25.md](verification/maintenance/hive-management-persistence-final-backend-audit-2026-09-25.md)
+
+No Example Host verification was required because this maintenance remained backend/internal and introduced no externally visible host/UI capability.
+
+The maintenance slice is closed. Phase 1.14 remains inactive.
 ## Closed maintenance pass — Hive.Persistence Production Baseline Hardening
 
 ### Closed maintenance-pass scope
