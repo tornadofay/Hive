@@ -9,6 +9,35 @@ namespace Hive.Tests;
 public sealed class HiveConfigurationTests
 {
     [Fact]
+    public void HiveBootstrapCredentialReference_RejectsDefaultIdentity()
+    {
+        Assert.Throws<ArgumentException>(
+            () => new HiveBootstrapCredentialReference(default));
+    }
+
+    [Fact]
+    public void HivePersistenceConfiguration_RejectsMalformedBootstrapReference()
+    {
+        var exception = Assert.Throws<ArgumentException>(
+            () => new HivePersistenceConfiguration(
+                HivePersistenceBackend.SqlServer,
+                "sql.example.test",
+                1433,
+                "HiveProduction",
+                HiveSqlAuthenticationMode.SqlPassword,
+                "hive-user",
+                (HiveBootstrapCredentialReference?)default(HiveBootstrapCredentialReference),
+                encrypt: true,
+                trustServerCertificate: false,
+                createDatabaseIfMissing: false));
+
+        Assert.Contains(
+            "Bootstrap credential reference",
+            exception.Message,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BuildDatabaseName_UsesHiveApplicationPrefix()
     {
         Assert.Equal(
