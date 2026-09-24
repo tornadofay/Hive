@@ -55,6 +55,18 @@ public sealed class HiveConfigurationTests
     }
 
     [Fact]
+    public void BuildDatabaseName_ProducesBoundedDatabaseName()
+    {
+        var result = HivePersistenceConfiguration.BuildDatabaseName(
+            new string('a', 10_000));
+
+        Assert.Equal(128, result.Length);
+        Assert.Equal(
+            "Hive-" + new string('a', 123),
+            result);
+    }
+
+    [Fact]
     public void BuildDatabaseName_UsesHiveApplicationPrefix()
     {
         Assert.Equal(
