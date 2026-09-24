@@ -160,7 +160,7 @@ internal sealed class HiveProviderConfigurationView : UserControl
         object? sender,
         HiveCrudOperationFailedEventArgs e)
     {
-        _page.SetStatus(e.Exception.Message);
+        _page.SetStatus(e.Exception.Message, HiveStatusTone.Error);
 
         HiveUiErrorReporter.Report(
             FindForm(),
