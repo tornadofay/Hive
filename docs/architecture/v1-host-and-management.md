@@ -283,7 +283,7 @@ Phase 7 remains the later generalization point for a second materially different
 
 For V1, Workspace is intentionally a small operational surface over Hive.Management. The complete V1 target surface is intended to support:
 
-- image submission/attachments bound to WorkItems;
+- supported input submissions and any associated attachments bound to WorkItems;
 - batch submission that expands into independently tracked WorkItems;
 - WorkItem status and execution/activity;
 - relevant execution/provider status;
