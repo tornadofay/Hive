@@ -30,7 +30,7 @@ Examples of host implementations may include:
 
 Hive must not make any application-specific control, data, UI, ORM, or business-layer type a platform dependency.
 
-The first concrete implementation remains the V1 WinForms boundary. Generic cross-host technology support remains Phase 7 work; the neutral contracts in this document exist so the V1 WinForms adapter itself is not vendor/control-library-specific.
+The first concrete host implementation remains the V1 WinForms boundary. Generic cross-host technology support remains Phase 7 work; the neutral contracts in this document exist so the V1 WinForms adapter itself is not vendor/control-library-specific.
 
 ## 2. Three distinct integration layers
 
@@ -89,7 +89,7 @@ CreateOrder
 PostDocument
 ```
 
-A business operation may be implemented through an API/service, a UI workflow, or a composition of both. The implementation mechanism must not redefine the business meaning.
+A planned business operation may be implemented through an API/service, a UI workflow, or a composition of both. The implementation mechanism must not redefine the business meaning.
 
 ## 3. Neutral public extension contracts
 
