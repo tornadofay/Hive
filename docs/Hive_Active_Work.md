@@ -23,7 +23,13 @@ Execution is not authorized by the revision request. This slice remains open unt
 
 ### Implementation checkpoint
 
-Initial audit findings are recorded in implementation work; verification remains pending.
+- `SqlEventPersistenceStore.CompleteOutboxAsync` now requires the current outbox lease to remain unexpired in addition to matching the lease identity; an expired lease returns `hive.outbox.lease-lost` and does not delete the row;
+- `SqlDpapiSecretStore.ReplaceCoreAsync` now delegates plaintext-to-DPAPI conversion to the existing `Protect` helper, which zeroes its plaintext buffer even when protection fails; the encrypted replacement buffer remains explicitly zeroed after persistence;
+- focused regression coverage now proves that an expired outbox lease cannot be completed and the durable outbox row remains available for recovery;
+- no schema/migration/provider/orchestration/MAF/host/UI/dependency changes were introduced.
+
+Code commits: `b48ae28a0b5fd90bd9d40ab4d7d8a5f990f9b701` (outbox lease), `a6b4ecd8b760de81c871230606be7f573cc8a322` (secret buffer cleanup).
+Regression-test commit: `b4039f96227d5958746c1494d83bab5cca0fb6df`.
 
 Verification status: **not yet verified by build/test execution for this revision**.
 
