@@ -146,7 +146,7 @@ public sealed class EventUpcasterRegistry : IEventUpcasterRegistry
                     new Error(
                         "event.schema.upcaster-failed",
                         ErrorCategory.Serialization,
-                        $"Upcaster for event '{eventType}' from version {current} to {current + 1} failed: {exception.Message}"),
+                        $"Upcaster for event '{eventType}' from version {current} to {current + 1} failed."),
                     exception);
             }
 
@@ -256,6 +256,15 @@ public sealed class JsonEventSerializer
         EventPayloadVersion supportedVersion)
     {
         ArgumentNullException.ThrowIfNull(envelope);
+
+        if (!supportedVersion.IsValid)
+        {
+            throw new EventSerializationException(
+                new Error(
+                    "event.schema.version-invalid",
+                    ErrorCategory.Serialization,
+                    "Supported event payload schema version is invalid."));
+        }
 
         if (envelope.PayloadSchemaVersion.Value > supportedVersion.Value)
         {
