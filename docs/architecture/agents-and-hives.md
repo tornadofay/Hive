@@ -155,6 +155,25 @@ Outcome evidence should preserve, as applicable:
 
 **Regret** is a counterfactual interpretation made after an outcome: given later knowledge, another available action appears preferable. Regret must not rewrite what the Agent actually knew at the original decision point.
 
+### Relationship to V1 Review
+
+Cognitive outcome evaluation and V1 post-write Review answer different questions.
+
+```
+V1 Review
+    ↓
+Was the resulting host/application state correct?
+```
+
+```
+Cognitive OutcomeEvaluation
+    ↓
+Did the CognitiveAgent satisfy its objective/success criteria,
+and what does that outcome mean for learning?
+```
+
+A Review may supply authoritative host-state evidence to OutcomeEvaluation, including human-corrected evidence, but the Review lifecycle/status remains a V1 work-operation concern. A Cognitive Success or Mistake must not be inferred merely from `VerifiedCorrect` or `VerifiedIncorrect` without evaluating the CognitiveAgent's own objective and evidence.
+
 ### Risk, Fear, and Confidence
 
 Risk, Fear, and Confidence are cognitive state used by Cognitive Strategy rather than authorization state.
