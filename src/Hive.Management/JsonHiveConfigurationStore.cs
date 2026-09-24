@@ -84,7 +84,7 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
             return Result<HivePersistenceConfiguration>.Failure(
                 Error.Validation(
                     "hive.management.configuration-invalid",
-                    $"The Hive settings file is invalid: {exception.Message}"));
+                    "The Hive settings file is invalid."));
         }
         catch (Exception exception)
         {
@@ -92,7 +92,7 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                 new Error(
                     "hive.management.configuration-read-failed",
                     ErrorCategory.External,
-                    $"Hive settings could not be read: {exception.Message}"));
+                    "Hive settings could not be read."));
         }
     }
 
@@ -152,7 +152,7 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                 new Error(
                     "hive.management.configuration-write-failed",
                     ErrorCategory.External,
-                    $"Hive settings could not be saved: {exception.Message}"));
+                    "Hive settings could not be saved."));
         }
     }
 
