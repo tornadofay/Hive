@@ -158,7 +158,7 @@ The adapter should preserve this as a semantic parent/child relationship while k
 
 HForms concepts such as `HDataBox`, `HActionBar`, `HDataGridView`, and `TableInfo` are adapter inputs rather than Hive contracts.
 
-The production `HDataBox` source also establishes host lifecycle semantics: required/unique validation, `CheckBeforeSave`, `SaveRecord`, `PerformAfterSave(ID)`, New/Edit state transitions, and authoritative record reload after save. Those are host business/application behavior to adapt, not Hive authorization or database contracts.
+The production `HDataBox`, `HDataGridView`, and `AddGrid` sources establish host lifecycle semantics: required/unique validation, `CheckBeforeSave`, `SaveRecord`, `PerformAfterSave(ID)`, New/Edit state transitions, parent/child binding, grid cell-to-`DataTable` synchronization, ByForm dialog editing, grid required/repeat validation, and child-row add/edit/delete hooks. Those are host business/application behavior to adapt, not Hive authorization or database contracts.
 
 
 ### 4.1.4 Identity, lookup, and mutation boundaries
