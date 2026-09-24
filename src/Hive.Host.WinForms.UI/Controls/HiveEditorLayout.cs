@@ -300,20 +300,26 @@ public sealed class HiveEditorLayout : UserControl
         // height when AutoSize remains enabled, which can override the shared 32px
         // compact-editor contract during layout.
         editor.AutoSize = false;
-        if (editor is ComboBox comboBox)
-            comboBox.IntegralHeight = false;
-
-        editor.Dock = DockStyle.Fill;
         editor.Margin = Padding.Empty;
 
-        if (editor.MinimumSize.Height < editorHeight)
+        if (editor is ComboBox comboBox)
         {
+            // Normal WinForms ComboBox styles use the native OS control for their
+            // edit-field height. Keep that native height and center the control in
+            // the shared compact slot rather than fighting the platform bounds.
+            comboBox.IntegralHeight = false;
+            comboBox.Dock = DockStyle.None;
+            comboBox.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        }
+        else
+        {
+            editor.Dock = DockStyle.Fill;
             editor.MinimumSize = new Size(
                 editor.MinimumSize.Width,
-                editorHeight);
+                Math.Max(editor.MinimumSize.Height, editorHeight));
+            editor.Height = editorHeight;
         }
 
-        editor.Height = editorHeight;
         compactHost.Controls.Add(editor, 0, 1);
         return compactHost;
     }
