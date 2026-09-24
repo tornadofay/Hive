@@ -164,7 +164,7 @@ The production `HDataBox`, `HDataGridView`, and `AddGrid` sources establish host
 ### 4.1.4 Identity, lookup, and mutation boundaries
 
 
-For consequential row operations, stable identity is required. An explicit primary key or composite key is preferred. A hidden primary-key column is valid host behavior:
+For consequential row operations, stable identity is required. The current HForms/TableInfo production model uses a single integer primary key identified by `PkName`; the neutral Hive contract remains broader so other hosts may use explicit composite or host-defined identities. A hidden primary-key column is valid host behavior:
 
 ```text
 IsPrimaryKey = true
