@@ -36,6 +36,8 @@ public readonly record struct HiveBootstrapCredentialReference
         _isValid = true;
     }
 
+    public SecretId Id { get; }
+
     internal bool IsValid => _isValid;
 }
 
