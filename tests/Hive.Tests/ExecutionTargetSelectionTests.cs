@@ -238,6 +238,26 @@ public sealed class ExecutionTargetSelectionTests
     }
 
     [Fact]
+    public void Contracts_RejectDefaultPreferredOrFixedTargetIdentities()
+    {
+        var target = CreateTarget("target", []);
+
+        Assert.Throws<ArgumentException>(
+            () => new ExecutionTargetSelectionRequest(
+                [target],
+                [],
+                ExecutionTargetSelectionMode.Preferred,
+                preferredTargetId: default));
+
+        Assert.Throws<ArgumentException>(
+            () => new ExecutionTargetSelectionRequest(
+                [target],
+                [],
+                ExecutionTargetSelectionMode.Fixed,
+                fixedTargetId: default));
+    }
+
+    [Fact]
     public void Contracts_RejectDuplicateTargetsAndConflictingRequirements()
     {
         var target = CreateTarget("target", []);
