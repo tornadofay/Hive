@@ -444,7 +444,7 @@ Bounded experience capture, provenance, expected-versus-observed results, outcom
 Define mutually exclusive outcome semantics for one evaluation:
 - Success = all applicable success criteria were actually satisfied;
 - Partial = some but not all applicable criteria were satisfied and the result is incomplete rather than wholly incorrect;
-- Mistake = the result is known to be incorrect or failed in a way that is not better classified as Partial;
+- Mistake = the result is known to be wrong relative to the intended objective or success criteria and is not better classified as Partial;
 - Unknown = available evidence cannot establish the substantive result.
 
 Technical execution failure is not automatically a Mistake. Technical execution success is not automatically a cognitive Success. Attribution of the failure or success remains a separate evidence problem and may involve the Agent, tools, specialists, the environment, or other factors.
