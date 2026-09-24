@@ -37,7 +37,7 @@ External
     supplied by an attributable external source
 ```
 
-An Experience describes what actually happened. An OutcomeEvaluation is a first-class cognitive evaluation that interprets that experience against the relevant objective or success criteria. Mistake and Success are first-class outcome interpretations produced by that boundary, not raw execution states.
+An Experience describes what actually happened. An OutcomeEvaluation is a first-class cognitive evaluation that interprets that experience against the relevant objective or success criteria and establishes a provenance-bearing outcome classification. Mistake and Success are first-class outcome concepts associated with that evaluation, not raw execution states; dedicated processors or persistence representations may be introduced when their lifecycle or ownership requires them.
 
 OutcomeEvaluation classifies a result into one mutually exclusive outcome for that evaluation:
 
