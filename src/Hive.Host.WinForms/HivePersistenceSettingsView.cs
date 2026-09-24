@@ -29,6 +29,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly HiveButton _saveButton;
     private readonly HiveButton _testButton;
     private readonly HiveButton _initializeButton;
+    private HiveStatusTone _statusTone = HiveStatusTone.Neutral;
 
     private CancellationTokenSource? _operationCts;
     private HivePersistenceConfiguration? _loadedConfiguration;
@@ -225,7 +226,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         if (result.IsFailure)
         {
-            SetStatus(result.Error!.Message, isError: true);
+            SetStatus(result.Error!.Message, HiveStatusTone.Error);
 
             HiveUiErrorReporter.Report(
                 FindForm(),
@@ -237,12 +238,12 @@ internal sealed class HivePersistenceSettingsView : UserControl
         }
 
         ApplyConfiguration(result.Value!);
-        SetStatus("Persistence configuration loaded.", isError: false);
+        SetStatus("Persistence configuration loaded.", HiveStatusTone.Success);
     }
 
     private async Task SaveAsync(CancellationToken cancellationToken)
     {
-        SetStatus("Saving persistence configuration...", isError: false);
+        SetStatus("Saving persistence configuration...", HiveStatusTone.Information);
 
         HivePersistenceConfiguration? configuration;
         var previousBootstrapReference = _loadedConfiguration?.BootstrapCredential;
@@ -254,7 +255,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         }
         catch (ArgumentException exception)
         {
-            SetStatus(exception.Message, isError: true);
+            SetStatus(exception.Message, HiveStatusTone.Error);
 
             HiveUiErrorReporter.Report(
                 FindForm(),
@@ -315,7 +316,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 const string message =
                     "Persistence configuration saved, but the previous bootstrap credential could not be removed.";
 
-                SetStatus(message, isError: true);
+                SetStatus(message, HiveStatusTone.Error);
 
                 HiveUiErrorReporter.Report(
                     FindForm(),
@@ -331,7 +332,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         UpdateCredentialStatus(_loadedConfiguration);
         SetStatus(
             "Persistence configuration saved successfully. Database/schema state was not changed.",
-            isError: false);
+            HiveStatusTone.Success);
 
         HiveMessageBox.ShowInformation(
             FindForm(),
@@ -357,7 +358,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         SetStatus(
             "Initializing the Hive database and applying schema migrations...",
-            isError: false);
+            HiveStatusTone.Information);
 
         var result = await _management
             .InitializePersistenceAsync(
@@ -382,7 +383,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         const string message =
             "Hive database initialization completed successfully. The database is now ready for normal Hive operations.";
 
-        SetStatus(message, isError: false);
+        SetStatus(message, HiveStatusTone.Success);
 
         HiveMessageBox.ShowInformation(
             FindForm(),
@@ -392,7 +393,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
     private async Task TestAsync(CancellationToken cancellationToken)
     {
-        SetStatus("Testing SQL Server connection...", isError: false);
+        SetStatus("Testing SQL Server connection...", HiveStatusTone.Information);
 
         HivePersistenceConfiguration configuration;
 
@@ -427,7 +428,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         if (result.IsFailure)
         {
             var failureMessage = $"Connection test failed: {result.Error!.Message}";
-            SetStatus(failureMessage, isError: true);
+            SetStatus(failureMessage, HiveStatusTone.Error);
 
             HiveUiErrorReporter.Report(
                 FindForm(),
@@ -445,7 +446,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             $"Schema: {value.CurrentSchemaVersion?.ToString() ?? "not initialized"} " +
             $"(supported {value.SupportedSchemaVersion}).";
 
-        SetStatus(successMessage, isError: false);
+        SetStatus(successMessage, HiveStatusTone.Success);
 
         HiveMessageBox.ShowInformation(
             FindForm(),
@@ -614,14 +615,34 @@ internal sealed class HivePersistenceSettingsView : UserControl
                     : "Saved credential: configured (material hidden).";
     }
 
-    private void SetStatus(string text, bool isError)
+    protected override void OnCreateControl()
     {
-        _statusLabel.Text = text;
+        base.OnCreateControl();
+        _themeManager.ThemeChanged += ThemeManagerOnChanged;
+        ApplyStatusVisual();
+    }
 
+    private void ThemeManagerOnChanged(object? sender, EventArgs e) =>
+        ApplyStatusVisual();
+
+    private void SetStatus(string text, HiveStatusTone tone)
+    {
+        _statusTone = tone;
+        _statusLabel.Text = text;
+        ApplyStatusVisual();
+    }
+
+    private void ApplyStatusVisual()
+    {
         var theme = _themeManager.Theme;
-        _statusLabel.ForeColor = isError
-            ? theme.VisualStates.Error
-            : theme.Palette.MutedText;
+        _statusLabel.ForeColor = _statusTone switch
+        {
+            HiveStatusTone.Information => theme.VisualStates.Information,
+            HiveStatusTone.Success => theme.VisualStates.Success,
+            HiveStatusTone.Warning => theme.VisualStates.Warning,
+            HiveStatusTone.Error => theme.VisualStates.Error,
+            _ => theme.Palette.MutedText
+        };
     }
 
     private async Task RunOperationAsync(
@@ -639,7 +660,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         }
         catch (OperationCanceledException) when (_operationCts.IsCancellationRequested)
         {
-            SetStatus("Operation cancelled.", isError: false);
+            SetStatus("Operation cancelled.", HiveStatusTone.Warning);
         }
         catch (Exception exception)
         {
@@ -700,6 +721,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     {
         if (disposing)
         {
+            _themeManager.ThemeChanged -= ThemeManagerOnChanged;
             _operationCts?.Cancel();
             _operationCts?.Dispose();
         }
