@@ -45,7 +45,7 @@ public readonly record struct ResourceScope
 
     public Guid? Identity { get; }
 
-    public bool IsValid => _isValid;
+    internal bool IsValid => _isValid;
 
     public static ResourceScope Global() => new(ResourceScopeKind.Global, null);
 
