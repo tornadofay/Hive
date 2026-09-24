@@ -301,6 +301,7 @@ public sealed class HiveEditorLayout : UserControl
         // compact-editor contract during layout.
         editor.AutoSize = false;
         editor.Dock = DockStyle.Fill;
+        editor.Margin = Padding.Empty;
         editor.Height = editorHeight;
         compactHost.Controls.Add(editor, 0, 1);
         return compactHost;
