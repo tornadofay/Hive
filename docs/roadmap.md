@@ -261,7 +261,7 @@ Scope:
 Required investigation before freezing the concrete adapter contract:
 - actual HForms/HControls data-source and parent/child relationship mechanism;
 - primary/composite-key representation and generated-ID behavior;
-- grid editing lifecycle and edit modes;
+- grid add/remove/edit configuration and editing lifecycle;
 - lookup implementation;
 - HDataBox/HActionBar permission/action semantics;
 - existing host validation and business-operation boundaries.
