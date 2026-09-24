@@ -142,7 +142,7 @@ The classifications are mutually exclusive for a single evaluation:
 - **Mistake** — the result is known to be wrong relative to the intended objective or success criteria and is not better classified as Partial.
 - **Unknown** — available evidence cannot establish which substantive outcome occurred.
 
-Whether the Agent, a tool, a specialist, the environment, or another factor caused a Mistake is a separate attribution question and may remain uncertain.
+Whether the Agent, a tool, a specialist, the environment, or another factor caused a Mistake is a separate attribution question and may remain uncertain. A Cognitive Success means the objective was achieved; it does not by itself establish that the chosen method or strategy was good, efficient, or generally reusable. Likewise, a Mistake does not by itself establish that the Agent's method caused the wrong result.
 
 A technical failure such as a timeout, unavailable provider, or cancelled transport is therefore not automatically a Mistake. Likewise, a technically successful execution is not automatically a cognitive Success: the produced result may still be wrong, incomplete, unsafe, or otherwise inconsistent with the objective.
 
@@ -151,6 +151,7 @@ Outcome evidence should preserve, as applicable:
 - expected result/success criteria;
 - observed result;
 - evaluation basis/evidence;
+- separate assessment of outcome correctness versus method/strategy quality;
 - Objective/Goal/Intention/Plan/Method/Decision references;
 - Questions and answers that affected the decision;
 - tool and specialist contributions;
@@ -226,7 +227,7 @@ counterfactual alternatives
   ↓
 predicted outcomes
   ↓
-candidate recovery strategy
+proposed recovery strategy / evidence
 ```
 
 An Optimization Dream can turn:
@@ -238,7 +239,7 @@ alternative methods
   ↓
 predicted cost/risk/quality
   ↓
-candidate optimization
+proposed optimization / evidence
 ```
 
 A Nightmare can turn:
@@ -250,7 +251,7 @@ adverse scenario generation
   ↓
 predicted failures
   ↓
-applicability boundary / new safeguard candidate
+applicability boundary / proposed safeguard evidence
 ```
 
 Dream outputs remain simulated evidence. They never become actual experience merely because the simulation predicts success or failure.
@@ -276,7 +277,9 @@ retry with revised strategy
 OR
 Dream / Question / Hive assistance
     ↓
-Learning Candidate
+learning evidence / proposal
+    ↓
+governed Learning Candidate
     ↓
 validation / reconciliation
     ↓
@@ -285,7 +288,7 @@ persistent cognitive adaptation
 future strategy
 ```
 
-Learning may reinforce a successful method, reduce confidence in a failed method, narrow a method's applicability, add a safeguard, change decomposition behavior, or learn that a deterministic procedure can replace a model call for a known class of situations. A Mistake may therefore lead to another real attempt with a revised method, while a Dream may be used first when the strategy judges that simulation is safer or more informative. These are governed adaptations, not direct model-output mutations.
+Learning may reinforce a successful method when the evidence supports that attribution, reduce support for an implicated method after a Mistake, narrow a method's applicability, add a safeguard, change decomposition behavior, or learn that a deterministic procedure can replace a model call for a known class of situations. A Mistake may therefore lead to another real attempt with a revised method, while a Dream may be used first when the strategy judges that simulation is safer or more informative. These are governed adaptations, not direct model-output mutations.
 
 A candidate lesson must retain whether its evidence came from actual experience, human correction, Question evidence, or simulation/Dream. Simulated evidence can support a candidate without being promoted into an actual event.
 
