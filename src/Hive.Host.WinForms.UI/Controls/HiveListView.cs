@@ -224,7 +224,7 @@ public sealed class HiveListView : ListView
 
         if (e.ColumnIndex == 0 && selected && Focused && Enabled && _focusPen is not null)
         {
-            var focus = Rectangle.Inflate(cell, -1, -1);
+            var focus = Rectangle.Inflate(e.Item.Bounds, -1, -1);
             e.Graphics.DrawRectangle(
                 _focusPen,
                 focus.Left,
