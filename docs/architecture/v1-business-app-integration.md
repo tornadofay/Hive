@@ -971,7 +971,7 @@ The supplied production HForms/HControls source establishes the host-side lifecy
 
 - CRUD/action flags such as `AllowNew`, `AllowEdit`, `AllowDelete`, `AllowRead`, `AllowSearch`, `AllowExport`, `AllowPrint`, `AllowReport`, `AllowViewLog`;
 - permission/logging behavior such as `AllowPermissionCheck` and `AllowUserLogHandling`;
-- binding state such as `BindingControl`, `Bs), and the loaded `DataSet`;
+- binding state such as `BindingControl`, `Bs`, and the loaded `DataSet`;
 - presentation/application metadata such as `TitleEn`, `TitleAr`, `LanguageType`, and `CodeType`;
 - reporting configuration that remains host-owned;
 - application/data conventions such as `VoidFieldName`, branch, and year handling.
@@ -980,7 +980,7 @@ The adapter should project only semantics required for a Hive-authorized operati
 
 The supplied `HDataBox` implementation is now sufficient evidence for the host lifecycle; it is not merely a property list. It establishes:
 
-- `MainTable` as the root `TableInfo) for the bound business record;
+- `MainTable` as the root `TableInfo` for the bound business record;
 - `MainTable.ChildTable` as the authoritative child-table collection used by HDataBox;
 - child `HDataGridView`/`HList` association through matching `DataSourceName`;
 - parent-key propagation into child rows through `MainTable.PkName`;
@@ -1054,7 +1054,7 @@ The supplied production `HDataBox` source is sufficient evidence for the followi
 - parent/root record through `MainTable`;
 - child collections through `MainTable.ChildTable`;
 - child-control mapping through `DataSourceName`;
-- parent-key propagation through `MainTable.PkName);
+- parent-key propagation through `MainTable.PkName`;
 - required/unique host validation;
 - `CheckBeforeSave` veto;
 - `SaveRecord` host save boundary;
