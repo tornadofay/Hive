@@ -64,25 +64,19 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
                     "hive.event.duplicate",
                     "The event could not be persisted because a unique event or stream-version constraint was violated."));
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
             return Result<EventAppendResult>.Failure(
-                new Error(
-                    "hive.event.sql",
-                    ErrorCategory.External,
-                    "The durable event operation failed at the SQL Server boundary."));
+                HivePersistenceError.External("hive.event.sql", "The durable event operation failed at the SQL Server boundary.", exception));
         }
         catch (EventSerializationException exception)
         {
             return Result<EventAppendResult>.Failure(exception.Error);
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<EventAppendResult>.Failure(
-                new Error(
-                    "hive.event.persistence",
-                    ErrorCategory.Internal,
-                    "The durable event operation failed."));
+                HivePersistenceError.Internal("hive.event.persistence", "The durable event operation failed.", exception));
         }
     }
 
@@ -155,21 +149,15 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
         {
             return Result<IReadOnlyList<PersistedEvent>>.Failure(exception.Error);
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
             return Result<IReadOnlyList<PersistedEvent>>.Failure(
-                new Error(
-                    "hive.event.sql",
-                    ErrorCategory.External,
-                    "The durable event read failed at the SQL Server boundary."));
+                HivePersistenceError.External("hive.event.sql", "The durable event read failed at the SQL Server boundary.", exception));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<IReadOnlyList<PersistedEvent>>.Failure(
-                new Error(
-                    "hive.event.read",
-                    ErrorCategory.Internal,
-                    "The durable event read failed."));
+                HivePersistenceError.Internal("hive.event.read", "The durable event read failed.", exception));
         }
     }
 
@@ -223,29 +211,23 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
         {
             throw;
         }
-        catch (JsonException)
+        catch (JsonException exception)
         {
             return Result<EventSnapshot?>.Failure(
-                new Error(
+                HivePersistenceError.Serialization(
                     "hive.event.snapshot-invalid",
-                    ErrorCategory.Serialization,
-                    "The stored snapshot JSON is invalid."));
+                    "The stored snapshot JSON is invalid.",
+                    exception));
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
             return Result<EventSnapshot?>.Failure(
-                new Error(
-                    "hive.event.sql",
-                    ErrorCategory.External,
-                    "The snapshot read failed at the SQL Server boundary."));
+                HivePersistenceError.External("hive.event.sql", "The snapshot read failed at the SQL Server boundary.", exception));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<EventSnapshot?>.Failure(
-                new Error(
-                    "hive.event.snapshot-read",
-                    ErrorCategory.Internal,
-                    "The snapshot read failed."));
+                HivePersistenceError.Internal("hive.event.snapshot-read", "The snapshot read failed.", exception));
         }
     }
 
@@ -308,29 +290,23 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
         {
             throw;
         }
-        catch (JsonException)
+        catch (JsonException exception)
         {
             return Result<IReadOnlyList<EventSnapshot>>.Failure(
-                new Error(
+                HivePersistenceError.Serialization(
                     "hive.event.snapshot-invalid",
-                    ErrorCategory.Serialization,
-                    "The stored snapshot JSON is invalid."));
+                    "The stored snapshot JSON is invalid.",
+                    exception));
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
             return Result<IReadOnlyList<EventSnapshot>>.Failure(
-                new Error(
-                    "hive.event.sql",
-                    ErrorCategory.External,
-                    "The snapshot listing failed at the SQL Server boundary."));
+                HivePersistenceError.External("hive.event.sql", "The snapshot listing failed at the SQL Server boundary.", exception));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<IReadOnlyList<EventSnapshot>>.Failure(
-                new Error(
-                    "hive.event.snapshot-list",
-                    ErrorCategory.Internal,
-                    "The snapshot listing failed."));
+                HivePersistenceError.Internal("hive.event.snapshot-list", "The snapshot listing failed.", exception));
         }
     }
 
@@ -390,21 +366,15 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
         {
             return Result<EventOutboxEntry?>.Failure(exception.Error);
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
             return Result<EventOutboxEntry?>.Failure(
-                new Error(
-                    "hive.event.sql",
-                    ErrorCategory.External,
-                    "The outbox read failed at the SQL Server boundary."));
+                HivePersistenceError.External("hive.event.sql", "The outbox read failed at the SQL Server boundary.", exception));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<EventOutboxEntry?>.Failure(
-                new Error(
-                    "hive.event.outbox-read",
-                    ErrorCategory.Internal,
-                    "The outbox read failed."));
+                HivePersistenceError.Internal("hive.event.outbox-read", "The outbox read failed.", exception));
         }
     }
 
@@ -481,17 +451,13 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
         {
             return Result<EventOutboxWorkItem?>.Failure(exception.Error);
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
-            return Result<EventOutboxWorkItem?>.Failure(new Error(
-                "hive.outbox.claim-sql", ErrorCategory.External,
-                "The outbox claim failed at the SQL Server boundary."));
+            return Result<EventOutboxWorkItem?>.Failure(HivePersistenceError.External("hive.outbox.claim-sql", "The outbox claim failed at the SQL Server boundary.", exception));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            return Result<EventOutboxWorkItem?>.Failure(new Error(
-                "hive.outbox.claim", ErrorCategory.Internal,
-                "The outbox claim failed."));
+            return Result<EventOutboxWorkItem?>.Failure(HivePersistenceError.Internal("hive.outbox.claim", "The outbox claim failed.", exception));
         }
     }
 
@@ -524,17 +490,13 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
         {
             throw;
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
-            return Result.Failure(new Error(
-                "hive.outbox.complete-sql", ErrorCategory.External,
-                "The outbox completion failed at the SQL Server boundary."));
+            return Result.Failure(HivePersistenceError.External("hive.outbox.complete-sql", "The outbox completion failed at the SQL Server boundary.", exception));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            return Result.Failure(new Error(
-                "hive.outbox.complete", ErrorCategory.Internal,
-                "The outbox completion failed."));
+            return Result.Failure(HivePersistenceError.Internal("hive.outbox.complete", "The outbox completion failed.", exception));
         }
     }
 
