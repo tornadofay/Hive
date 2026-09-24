@@ -6,6 +6,27 @@ namespace Hive.Tests;
 public sealed class WorkItemFoundationTests
 {
     [Fact]
+    public void WorkItemAttachmentContent_RejectsHashMismatchAndAcceptsMatchingContent()
+    {
+        var metadata = new WorkItemAttachmentMetadata(
+            "sample.png",
+            "image/png",
+            3,
+            "039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81");
+
+        var content = new byte[] { 1, 2, 3 };
+
+        var valid = new WorkItemAttachmentContent(metadata, content);
+
+        Assert.Equal(content, valid.Content.ToArray());
+
+        Assert.Throws<ArgumentException>(
+            () => new WorkItemAttachmentContent(
+                metadata,
+                new byte[] { 4, 5, 6 }));
+    }
+
+    [Fact]
     public void WorkItem_CreateEstablishesIndependentIdentityScopeAndProvenance()
     {
         var createdAt = new DateTimeOffset(2030, 1, 1, 10, 0, 0, TimeSpan.Zero);
