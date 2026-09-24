@@ -156,7 +156,7 @@ parent MainTable.PkName → child foreign-key field
 The adapter should preserve this as a semantic parent/child relationship while keeping `TableInfo`, `DataSet`, `DataTable`, and HForms controls private to the adapter.
 
 
-HForms concepts such as `HDataBox`, `HActionBar`, `HDataGridView`, and `TableInfo` are adapter inputs rather than Hive contracts.
+HForms concepts such as `HDataBox`, `HDataGridView`, and `TableInfo` are adapter inputs rather than Hive contracts. `HActionBar` is currently unfinished and has no authoritative V1 contract in this architecture.
 
 The production `HDataBox`, `HDataGridView`, and `AddGrid` sources establish host lifecycle semantics: required/unique validation, `CheckBeforeSave`, `SaveRecord`, `PerformAfterSave(ID)`, New/Edit state transitions, parent/child binding, grid cell-to-`DataTable` synchronization, ByForm dialog editing, grid required/repeat validation, and child-row add/edit/delete hooks. Those are host business/application behavior to adapt, not Hive authorization or database contracts.
 
