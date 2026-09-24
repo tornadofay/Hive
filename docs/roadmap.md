@@ -424,28 +424,65 @@ The base Agent and V1 pipeline continue working unchanged throughout this phase.
 Persistent cognitive identity binding, lifecycle, state versioning, recovery, and per-runtime concurrency ownership.
 
 ## 4.2 — Cognitive Strategy
-Replaceable strategy contract capable of deterministic decisions and explicit no-model paths.
+Replaceable strategy contract capable of deterministic decisions and explicit no-model paths, including adaptive interpretation of evaluated outcomes, contextual Risk/Fear/Confidence, reconsideration, and selection among direct execution, Questions, Hive assistance, Dreams, decomposition, and learned deterministic shortcuts.
+
+Verify: strategy decisions can consume cognitive evidence and Risk/Fear/Confidence without bypassing authorization, capability, scope, budget, or execution planning.
 
 ## 4.3 — Reasoning Requirement
 Provider-neutral reasoning requirements kept separate from concrete Execution Target planning.
 
 ## 4.4 — Persistent Cognitive State
-Beliefs, bounded workspace/attention, goals, intentions, plans, methods, self-model, impasses, and revision-safe transitions. Persistent state is independent of whether a runtime incarnation is currently active.
+Beliefs, bounded workspace/attention, goals, intentions, plans, methods, self-model, contextual Risk/Fear/Confidence state, impasses, and revision-safe transitions. Persistent state is independent of whether a runtime incarnation is currently active.
 
-## 4.5 — Experience & Cognitive Event History
-Bounded experience capture, provenance, actual outcomes, and replayable supported transitions. Actual observations/experiences remain distinguishable from simulated or predicted material.
+Risk, Fear, and Confidence are evidence-backed cognitive state rather than authorization or policy state. They may alter strategy and escalation behavior but never override authoritative enforcement.
+
+Verify: versioned cognitive-state transitions preserve context/provenance for Risk/Fear/Confidence and do not permit cognitive state to bypass deterministic safety, authorization, capability, scope, or budget checks.
+
+## 4.5 — Experience, Outcome Evaluation & Cognitive Event History
+Bounded experience capture, provenance, expected-versus-observed results, outcome evaluation, attribution/credit context, and replayable supported transitions. Actual observations/experiences remain distinguishable from simulated, predicted, counterfactual, human-corrected, and external evidence.
+
+Define explicit outcome semantics:
+- Success = applicable success criteria were actually satisfied;
+- Mistake = applicable success criteria were not satisfied in a way attributable/relevant to the Agent's decision, assumption, method, or strategy;
+- Partial = some but not all criteria were satisfied;
+- Unknown = available evidence cannot establish the result.
+
+Technical execution failure is not automatically a Mistake. Technical execution success is not automatically a cognitive Success.
+
+Verify: outcome evaluation preserves evidence and attribution; actual/simulated evidence remain distinguishable; technical failure/success cannot be silently mapped to cognitive learning labels; partial and unresolved outcomes remain representable.
 
 ## 4.6 — Death / Wake / Reincarnation Lifecycle
 Define death as complete termination of the current runtime/incarnation, preserve Agent identity and cognitive state, support inactive periods with no live runtime, and explicitly reconstruct a new runtime from durable state when the Agent wakes.
 
 ## 4.7 — Postmortem & Dream Processing
-Define bounded postmortem processing plus a Dream subsystem that can inspect history, generate hypothetical alternatives, run multiple simulations in parallel, compare predicted outcomes, and produce candidate cognitive-state updates without requiring the Agent runtime to remain alive. Dream processing is governed by applicable authorization, provider/model quota, token/cost budget, time budget, concurrency/parallelism limits, retrieval/work limits, and cancellation.
+Define bounded postmortem processing plus a Dream subsystem that can inspect history, generate hypothetical alternatives, run multiple simulations in parallel, compare predicted outcomes, and produce candidate cognitive-state updates without requiring the Agent runtime to remain alive.
+
+Dream purposes include:
+- Recovery — explore alternatives after a Mistake or unresolved outcome;
+- Optimization — search for cheaper, faster, safer, simpler, or more deterministic ways to reproduce a Success;
+- Nightmare / Stress-Test — actively search for plausible conditions under which an apparently successful method, plan, assumption, or strategy would fail;
+- Reconsideration — revisit prior decisions in light of later evidence;
+- Preparation — rehearse plausible future scenarios.
+
+Dream processing is governed by applicable authorization, provider/model quota, token/cost budget, time budget, concurrency/parallelism limits, retrieval/work limits, and cancellation.
+
+Dream evidence remains simulated/predicted evidence and cannot become actual experience. Counterfactual conclusions such as Regret must remain distinguishable from information actually available at the time of the original decision.
+
+Verify: failed outcome → Recovery candidate; successful outcome → Optimization candidate; successful outcome → Nightmare/Stress-Test candidate; Dream results remain simulated; Dream processing works while the Agent runtime is inactive; budgets/cancellation/concurrency are enforced.
 
 ## 4.8 — Questions
 Define first-class Questions with structured context, specialty, provenance, answer type, evidence requirements, status, and confidence/uncertainty where applicable. Support specialty-specific questions so different Agents can investigate different aspects of the same user objective.
 
+Questions may be selected or prioritized when outcome attribution is uncertain, risk remains high, evidence conflicts, or a missing fact materially changes the choice among competing strategies.
+
+Verify: unresolved Mistake/Success attribution can result in an evidence-seeking Question; redundant Questions remain avoidable when sufficient evidence already exists.
+
 ## 4.9 — Cognitive State Reconciliation
-Integrate human edits, Dream results, Question answers, experience, beliefs, goals, plans, and other candidate updates through versioning, provenance, authorization, validation, and concurrency boundaries before the next wake/reincarnation.
+Integrate human edits, actual experience, evaluated outcomes, Mistake/Success interpretations, Dream results, Question answers, beliefs, goals, plans, Risk/Fear/Confidence state, and other candidate updates through versioning, provenance, authorization, validation, and concurrency boundaries before the next wake/reincarnation.
+
+Conflicting evidence must remain attributable. Reconciliation may retain multiple hypotheses, uncertainty, or an unresolved Question instead of inventing a single authoritative explanation.
+
+Verify: concurrent human/Dream updates do not lose evidence; actual experience cannot be overwritten by simulated evidence; stale candidate updates are rejected or reconciled explicitly.
 
 ---
 
@@ -461,7 +498,32 @@ Versioned, permissioned knowledge resources and managed Wiki source.
 Versioned reusable procedures, dependencies, constraints, provenance, and assignments.
 
 ## 5.4 — Learning Candidates & Governance
-Experience → candidate → evidence/confidence → validation → approve/reject/promotion. No direct authoritative mutation from model output.
+Transform evaluated cognitive evidence into governed Learning Candidates.
+
+Evidence sources include:
+- successful outcomes;
+- Mistakes/failed outcomes;
+- Partial or mixed outcomes;
+- repeated outcome patterns;
+- human corrections;
+- Question answers;
+- Recovery Dreams;
+- Optimization Dreams;
+- Nightmare/Stress-Test Dreams.
+
+Each candidate preserves:
+- evidence type and actual/simulated origin;
+- provenance and attribution/credit context;
+- support/confidence;
+- applicability conditions;
+- proposed adaptation;
+- validation status.
+
+Promotion may change an appropriate Skill, method, applicability rule, memory/knowledge representation, or Cognitive Strategy routing according to explicit ownership rules.
+
+A candidate may learn that a deterministic procedure is preferable to another model call for a known class of situations, but promotion must remain governed. No direct authoritative mutation from model output or Dream output.
+
+Verify: positive, negative, partial, mixed, human-corrected, and simulated evidence; conflicting candidates; applicability boundaries; insufficient support; promotion/rejection concurrency.
 
 ---
 
@@ -477,7 +539,7 @@ Coordinate planning/reasoning across members without moving member cognition int
 Route Questions by Agent specialty, avoid semantically duplicate work where evidence already exists, and allow each Agent to retain its own Questions and answers.
 
 ## 6.4 — Cross-Agent Evidence & Synthesis
-Combine attributable answers, experiences, Dreams, observations, and other evidence into collective reasoning without erasing individual provenance.
+Combine attributable answers, experiences, evaluated outcomes, Mistakes, Successes, Dreams, observations, and other evidence into collective reasoning without erasing individual provenance or actual-versus-simulated evidence status.
 
 ## 6.5 — Collective Conflict & Consensus
 Bounded coordination, conflict resolution, disagreement handling, and consensus mechanisms.
@@ -585,3 +647,24 @@ Operations / replay
 ```
 
 The existence of a later architectural concept never makes it an implicit prerequisite for an earlier phase.
+
+The CognitiveAgent outcome/learning branch is intentionally contained within Phases 4–5:
+```
+actual experience
+    ↓
+outcome evaluation
+    ↓
+Mistake / Success / Partial / Unknown
+    ↓
+Risk/Fear/Confidence + attribution
+    ↓
+Question / Dream / Hive assistance
+    ↓
+Learning Candidate
+    ↓
+validation / reconciliation
+    ↓
+future strategy
+```
+
+This branch does not alter Base Agent execution semantics or make CognitiveAgent state a prerequisite for V1.
