@@ -8,7 +8,7 @@ This document is part of the authoritative architecture defined by `docs/archite
 
 ## 11. Cognitive Resources
 
-Advanced persistent cognitive resources are delivered after the cognitive lifecycle branch exists. Persistent resources must preserve the distinction between actual experience and simulated/dreamed outcomes.
+Advanced persistent cognitive resources are delivered after the cognitive lifecycle branch exists. Persistent resources must preserve the distinction between actual experience and simulated/dreamed outcomes and must preserve the evidence that led to adaptation.
 
 They include:
 
@@ -19,7 +19,100 @@ They include:
 - applicability/reliability state;
 - resource assignments and runtime overrides.
 
-Learning is not model-weight training. Model output produces evidence or a candidate; authoritative resource state changes only through Hive's validation, policy, authorization, and promotion boundaries.
+### 11.1 Cognitive evidence
+
+CognitiveAgent evidence distinguishes at least:
+
+```
+Actual
+    observed/executed in the real environment
+
+Simulated
+    produced by Dream, counterfactual analysis, or other bounded prediction
+
+Human-corrected
+    explicitly supplied or corrected by an authorized human
+
+External
+    supplied by an attributable external source
+```
+
+An Experience describes what actually happened. An OutcomeEvaluation interprets that experience against the relevant objective or success criteria.
+
+OutcomeEvaluation may classify the result as:
+
+- Success;
+- Mistake;
+- Partial;
+- Unknown / unresolved.
+
+The evaluation should preserve:
+
+- expected result/success criteria;
+- observed actual result;
+- evidence supporting the evaluation;
+- Objective/Goal/Intention/Plan/Method/Decision provenance;
+- attribution/credit context;
+- confidence and uncertainty;
+- relevant cost, time, risk, and consequence data;
+- applicability conditions.
+
+Mistake and Success are therefore meaningful learning evidence, but the system does not equate them with raw execution status.
+
+### 11.2 Learning from outcomes
+
+The learning path is:
+
+```
+actual experience
+      ↓
+outcome evaluation
+      ↓
+Mistake / Success / Partial / Unknown
+      ↓
+interpretation and attribution
+      ↓
+Learning Candidate
+      ↓
+validation / governance
+      ↓
+promoted cognitive resource or strategy adaptation
+```
+
+Both positive and negative evidence can produce Learning Candidates.
+
+Examples include:
+
+- repeated Success supporting a reusable method under stated conditions;
+- repeated Mistakes supporting a changed validation rule or decomposition strategy;
+- mixed outcomes narrowing the applicability conditions of a method;
+- human correction identifying an incorrect assumption;
+- Dream evidence suggesting an alternative method or exposing a hidden failure condition;
+- repeated evidence showing that a deterministic procedure can replace an unnecessary model call.
+
+A candidate must preserve its evidence and applicability rather than storing only a sentence such as "this works."
+
+### 11.3 Dream evidence and Nightmares
+
+Dream evidence may support Learning Candidates but never becomes actual Experience.
+
+A Recovery Dream explores alternatives after a Mistake.
+
+An Optimization Dream searches for a better way to reproduce a Success.
+
+A Nightmare/Stress-Test Dream attempts to falsify or weaken an apparently successful method by exploring adverse conditions.
+
+A successful Nightmare is not itself a real failure. It is simulated evidence that may produce an applicability boundary, safeguard, Question, or new candidate lesson.
+
+### 11.4 Risk, Fear, and Confidence state
+
+Risk, Fear, and Confidence belong to CognitiveAgent state and strategy, not to generic configuration resources.
+
+They should be contextual, versioned, and attributable to supporting evidence. They may influence decomposition, verification, specialist escalation, Question generation, Dream selection, and deterministic-vs-model-assisted routing.
+
+They must never be used as authorization state or as a substitute for explicit policy/capability checks.
+
+Learning is not model-weight training. Model output produces evidence or a candidate; authoritative cognitive/resource state changes only through Hive's validation, policy, authorization, reconciliation, and promotion boundaries.
 
 ---
 
