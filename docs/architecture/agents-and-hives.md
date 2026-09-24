@@ -109,11 +109,155 @@ The base work-protocol APIs are additive to Agent and RuntimeInstance; they do n
 Inside `CognitiveAgent` only:
 
 - **Cognitive Kernel** = durable cognitive substrate: identity binding, lifecycle, cognitive-state versioning, event history, recovery, concurrency ownership, and intervention boundaries.
-- **Cognitive Strategy** = replaceable adaptive reasoning process: belief revision, attention, goal formation/reconsideration, intention selection, planning, impasse handling, reflection, learning, Dream selection/interpretation, Question generation/selection, and deterministic-vs-reasoning routing.
+- **Cognitive Strategy** = replaceable adaptive reasoning process: belief revision, attention, goal formation/reconsideration, intention selection, planning, impasse handling, reflection, outcome interpretation, Mistake/Success attribution, Risk/Fear/Confidence revision, learning, Dream selection/interpretation, Question generation/selection, and deterministic-vs-reasoning routing.
 - **Reasoning Requirement** = what reasoning capability is required.
 - **Execution Planning** = where/how the requirement executes.
 
 A cognitive strategy may decide that no model call is necessary.
+
+### Cognitive outcomes: Mistake, Success, and Regret
+
+CognitiveAgent learning begins with an evaluated outcome, not with the raw transport result of an execution.
+
+An outcome evaluation compares the intended objective/success criteria with the observed result and the evidence available to establish whether the objective was actually achieved.
+
+The minimum semantic distinction is:
+
+```
+Execution
+    ↓
+technical result
+    ↓
+Cognitive outcome evaluation
+    ├── Success
+    ├── Mistake
+    ├── Partial
+    └── Unknown / unresolved
+```
+
+**Success** is an evaluated outcome in which the applicable success criteria were actually satisfied.
+
+**Mistake** is an evaluated outcome in which the applicable success criteria were not satisfied and the failure is relevant to the Agent's decision, assumption, method, or strategy.
+
+A technical failure such as a timeout, unavailable provider, or cancelled transport is therefore not automatically a Mistake. Likewise, a technically successful execution is not automatically a cognitive Success: the produced result may still be wrong, incomplete, unsafe, or otherwise inconsistent with the objective.
+
+Outcome evidence should preserve, as applicable:
+
+- expected result/success criteria;
+- observed result;
+- evaluation basis/evidence;
+- Objective/Goal/Intention/Plan/Method/Decision references;
+- Questions and answers that affected the decision;
+- tool and specialist contributions;
+- relevant environmental/external factors;
+- attribution/credit hypotheses;
+- evaluation confidence and unresolved uncertainty.
+
+**Regret** is a counterfactual interpretation made after an outcome: given later knowledge, another available action appears preferable. Regret must not rewrite what the Agent actually knew at the original decision point.
+
+### Risk, Fear, and Confidence
+
+Risk, Fear, and Confidence are cognitive state used by Cognitive Strategy rather than authorization state.
+
+**Risk** represents the Agent's contextual estimate of potential adverse consequence and/or uncertainty associated with an objective, plan, method, or decision.
+
+**Fear** represents the Agent's strategy-level response to perceived risk, consequence, and adverse experience. It is allowed to change how cautiously the Agent approaches a problem. For example, increasing Fear may cause the strategy to decompose a difficult objective, obtain more evidence, ask a Question, invoke a specialist through Hive, or run a Dream before acting.
+
+**Confidence** represents evidence-backed support for a belief, method, plan, or strategy under stated conditions. Confidence is contextual rather than global. Repeated success can increase confidence in a method without establishing that it is universally reliable.
+
+Risk/Fear/Confidence may influence:
+
+- direct versus decomposed problem solving;
+- deterministic versus model-assisted execution;
+- verification strength;
+- Question generation;
+- Hive/specialist escalation;
+- Dream selection;
+- willingness to optimize an already successful method.
+
+They never bypass capability checks, authorization, safety rules, budgets, host validation, or other authoritative enforcement.
+
+### Dream modes and Nightmare
+
+Dreams are first-class bounded simulations/analyses. Their purpose is part of the Dream's semantics and provenance.
+
+Supported purposes include:
+
+- **Recovery** — explore alternatives after a Mistake or unresolved outcome;
+- **Optimization** — search for cheaper, faster, safer, simpler, or more deterministic ways to reproduce a Success;
+- **Nightmare / Stress-Test** — actively search for plausible conditions that would break an apparently successful plan, method, assumption, or strategy;
+- **Reconsideration** — revisit goals, beliefs, plans, or decisions in light of new evidence;
+- **Preparation** — rehearse plausible future scenarios before wake/runtime execution.
+
+A Nightmare is therefore not a separate cognitive engine. It is a Dream mode whose objective is to find failure boundaries and hidden weaknesses in something the Agent currently considers successful or safe.
+
+A Recovery Dream can turn:
+
+```
+Mistake
+  ↓
+counterfactual alternatives
+  ↓
+predicted outcomes
+  ↓
+candidate recovery strategy
+```
+
+An Optimization Dream can turn:
+
+```
+Success
+  ↓
+alternative methods
+  ↓
+predicted cost/risk/quality
+  ↓
+candidate optimization
+```
+
+A Nightmare can turn:
+
+```
+Success
+  ↓
+adverse scenario generation
+  ↓
+predicted failures
+  ↓
+applicability boundary / new safeguard candidate
+```
+
+Dream outputs remain simulated evidence. They never become actual experience merely because the simulation predicts success or failure.
+
+### Adaptive learning loop
+
+The CognitiveAgent learning loop is:
+
+```
+actual attempt
+    ↓
+experience
+    ↓
+outcome evaluation
+    ↓
+Mistake / Success / Partial / Unknown
+    ↓
+interpretation, attribution, risk/confidence revision
+    ↓
+Dream / Question / Hive assistance where useful
+    ↓
+Learning Candidate
+    ↓
+validation / reconciliation
+    ↓
+persistent cognitive adaptation
+    ↓
+future strategy
+```
+
+Learning may reinforce a successful method, reduce confidence in a failed method, narrow a method's applicability, add a safeguard, change decomposition behavior, or learn that a deterministic procedure can replace a model call for a known class of situations. These are governed adaptations, not direct model-output mutations.
+
+A candidate lesson must retain whether its evidence came from actual experience, human correction, Question evidence, or simulation/Dream. Simulated evidence can support a candidate without being promoted into an actual event.
 
 ---
 
@@ -188,6 +332,8 @@ It adds:
 - typed impasses;
 - reconsideration;
 - experience/history;
+- evaluated outcomes including Mistake/Success interpretations;
+- contextual Risk/Fear/Confidence state;
 - governed death/postmortem/reincarnation.
 
 It remains compatible with the ordinary Agent execution boundary and MAF.
@@ -249,7 +395,8 @@ Dreams may:
 - explore plans or strategies before the next wake;
 - identify unresolved questions or candidate state changes.
 
-Dream output is never silently treated as an event that actually happened. Persistent records distinguish at least actual observations/experiences from simulations, hypotheses, predictions, and other non-observed results.
+Dream output is never silently treated as an event that actually happened. Persistent records distinguish at least actual observations/experiences from simulations, hypotheses, predictions, counterfactuals, stress-test results, and other non-observed evidence.
+A Dream records its purpose so recovery, optimization, and Nightmare/Stress-Test reasoning remain distinguishable.
 
 A Dream may produce candidate changes to goals, beliefs, plans, memories, self-model, skills, or other cognitive resources, but authoritative state changes remain subject to the same validation, ownership, authorization, provenance, and concurrency rules as other Hive-owned state.
 
