@@ -4,9 +4,9 @@ Last updated: 2026-09-25
 
 ## Active slice
 
-**Authorized maintenance slice — Hive.Persistence Production Baseline Hardening. Phase 1.14 remains inactive.**
+**None — Hive.Persistence Production Baseline Hardening is closed. Phase 1.14 remains inactive.**
 
-This is a temporary maintenance slice explicitly authorized by the user after the prior Core production-polish closure. It does not advance the roadmap and does not authorize Phase 1.14 or any later roadmap work.
+This was a temporary maintenance slice explicitly authorized by the user after the prior Core production-polish closure. It did not advance the roadmap and did not authorize Phase 1.14 or any later roadmap work.
 
 ### Scope
 
@@ -16,9 +16,11 @@ This is a temporary maintenance slice explicitly authorized by the user after th
 - add focused regression coverage for the public connection-string boundary and error-message redaction;
 - do not change SQL schema, migrations, provider transport, orchestration, MAF integration, host adapters, UI, dependencies, or roadmap phase authorization.
 
-### Verification gate
+### Verification result
 
-Required before closure: developer build/test verification of the affected `Hive.Tests` coverage, followed by the broader suite as appropriate. This slice remains open until actual verification is reported. No Example Host verification is required unless the implementation gains externally visible host/UI behavior.
+The developer verified the final implementation on 2026-09-25 with **218 tests passed, 0 failed, 0 skipped** in 25.3 seconds on .NET 10.0.1 using xUnit.net VSTest Adapter 3.1.5+1b188a7b0a. The verification archive is `docs/verification/maintenance/hive-persistence-production-baseline-hardening-2026-09-25.md`.
+
+No Example Host verification was required because the slice remained backend/internal and introduced no externally visible host/UI behavior.
 
 ### Implementation checkpoint
 
@@ -29,6 +31,12 @@ Implemented on `main` through commit `e22c11a1740ff84a33d14478d9ff93df23c25b3c`:
 - focused regression coverage now checks the non-public connection-string boundary and verifies that technical exception details are excluded from public Persistence errors.
 
 Verification status: **not yet verified by build/test execution**. The developer must run the affected `Hive.Tests` coverage and then the broader suite as appropriate before this maintenance slice can close.
+
+## Closed maintenance pass — Hive.Persistence Production Baseline Hardening
+
+This maintenance pass is complete and verified. The final code checkpoint is `e22c11a1740ff84a33d14478d9ff93df23c25b3c`; the later documentation-only checkpoint is `a4ced845427efcc7bc0daad6696815ad0b47556d`.
+
+The final audit found no additional defect requiring code changes beyond the credential/error-boundary hardening and the subsequent catch-binding corrections. Phase 1.14 remains inactive.
 
 ## Closed maintenance pass — Hive.Core Production Polish
 
