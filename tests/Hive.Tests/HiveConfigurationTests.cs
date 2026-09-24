@@ -76,6 +76,37 @@ public sealed class HiveConfigurationTests
     }
 
     [Fact]
+    public async Task JsonConfigurationStore_InvalidJson_DoesNotExposeParserDetails()
+    {
+        var filePath = Path.Combine(
+            Path.GetTempPath(),
+            $"hive-invalid-settings-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            await File.WriteAllTextAsync(
+                filePath,
+                "{ \"backend\": ");
+
+            var result = await new JsonHiveConfigurationStore(filePath)
+                .LoadPersistenceConfigurationAsync();
+
+            Assert.True(result.IsFailure);
+            Assert.Equal(
+                "hive.management.configuration-invalid",
+                result.Error!.Code);
+            Assert.Equal(
+                "The Hive settings file is invalid.",
+                result.Error.Message);
+        }
+        finally
+        {
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+        }
+    }
+
+    [Fact]
     public async Task Management_InitializePersistence_CreatesAndMigratesHiveDatabase()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ManagementInitialization");
