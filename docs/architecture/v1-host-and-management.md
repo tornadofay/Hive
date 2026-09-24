@@ -281,7 +281,7 @@ Phase 7 remains the later generalization point for a second materially different
 
 `Hive.Management` is the authoritative management facade. `Workspace` is the authoritative human-facing operational surface over that facade; host UI code does not bypass the facade for management or persistence operations.
 
-For V1, Workspace is intentionally a small operational surface over Hive.Management. The V1 target surface supports:
+For V1, Workspace is intentionally a small operational surface over Hive.Management. The complete V1 target surface is intended to support:
 
 - image submission/attachments bound to WorkItems;
 - batch submission that expands into independently tracked WorkItems;
@@ -308,7 +308,7 @@ For later modes:
 - In **LLM mode**, the user explicitly selects the model/execution target subject to normal capability and authorization policy, with a configured default available.
 - In **Agentic mode**, the Agent/Hive selects an execution target through the normal Execution Planner and policy boundary. The Workspace displays the selected target and relevant diagnostics, but the user is not required to choose the model for every Agent decision.
 
-Workspace is not a cognitive authority. It displays and controls authoritative Agent/Hive state; it does not invent Agent decisions or rewrite cognitive state outside the normal management/authorization contracts. It displays and controls authoritative Agent/Hive state; it does not invent Agent decisions or rewrite cognitive state outside the normal management/authorization contracts.
+Workspace is not a cognitive authority. It displays and controls authoritative Agent/Hive state; it does not invent Agent decisions or rewrite cognitive state outside the normal management/authorization contracts.
 
 A business application can register a host context through a bounded public API such as:
 
@@ -386,7 +386,7 @@ Every major public feature example should include:
 - complete copyable public-API snippet;
 - expected lifecycle/result.
 
-The V1 example should demonstrate the document-to-business-app pipeline using the same public boundaries available to real hosts.
+The V1 example should demonstrate the supported-input-to-business-app pipeline using the same public boundaries available to real hosts.
 
 ### 13.1 WinForms UI Foundation
 
