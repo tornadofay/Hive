@@ -474,10 +474,16 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
                 connection,
                 """
                 DELETE FROM [dbo].[HiveEventOutbox]
-                WHERE [EventId] = @EventId AND [LeaseId] = @LeaseId;
+                WHERE [EventId] = @EventId
+                  AND [LeaseId] = @LeaseId
+                  AND [LeaseExpiresAtUtc] > @NowUtc;
                 """);
             command.Parameters.Add(GuidParameter("@EventId", workItem.Entry.Envelope.EventId.Value));
             command.Parameters.Add(GuidParameter("@LeaseId", workItem.LeaseId));
+            command.Parameters.Add(
+                DateTimeParameter(
+                    "@NowUtc",
+                    DateTimeOffset.UtcNow));
 
             var affected = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             return affected == 1
