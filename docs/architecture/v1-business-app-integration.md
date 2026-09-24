@@ -93,9 +93,9 @@ A business operation may be implemented through an API/service, a UI workflow, o
 
 ## 3. Neutral public extension contracts
 
-Hive should ship public, host-neutral contracts for the concepts required by V1. The exact type/interface names are implementation decisions for Phase 1.14, but the responsibilities are fixed by this architecture.
+Hive should ship public, host-neutral contracts for the concepts required by V1. Contract ownership follows the roadmap phase that introduces each capability; later V1 phases may extend the neutral contract family without changing the host-neutral boundary.
 
-The public contract family must support at least:
+The Phase 1.14 public contract family must support at least:
 
 - a host integration registration/adapter boundary;
 - semantic control descriptors;
@@ -104,9 +104,9 @@ The public contract family must support at least:
 - stable row identities;
 - lookup descriptors and bounded lookup operations;
 - bounded interaction operations;
-- business-operation capabilities;
-- write receipts;
-- review records and review evidence.
+- business-operation capability boundaries needed for API/UI composition.
+
+Durable business-operation receipts and first-class Review records are owned by Phase 1.17. Their semantics are defined in Sections 12–13 so the earlier host-integration contracts do not have to be redesigned later.
 
 These contracts must not expose:
 
@@ -695,7 +695,7 @@ A review finding must preserve the discrepancy rather than silently rewriting th
 
 ## 14. End-to-end V1 data-entry lifecycle
 
-The completed architecture is:
+The intended V1 end-to-end architecture is:
 
 ```
 Input submission
@@ -720,7 +720,7 @@ Review policy
   ↓
 Automated verification and/or human review
   ↓
-result
+Review result
 ```
 
 This separates:
