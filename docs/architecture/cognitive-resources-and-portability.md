@@ -39,12 +39,12 @@ External
 
 An Experience describes what actually happened. An OutcomeEvaluation is a first-class cognitive evaluation that interprets that experience against the relevant objective or success criteria. Mistake and Success are first-class outcome interpretations produced by that boundary, not raw execution states.
 
-OutcomeEvaluation may classify the result as:
+OutcomeEvaluation classifies a result into one mutually exclusive outcome for that evaluation:
 
-- Success;
-- Mistake;
-- Partial;
-- Unknown / unresolved.
+- Success — all applicable success criteria were satisfied;
+- Partial — some but not all applicable criteria were satisfied and the result is incomplete rather than wholly incorrect;
+- Mistake — the result is known to be incorrect or failed in a way that is not better classified as Partial;
+- Unknown / unresolved — available evidence cannot establish the substantive outcome.
 
 The evaluation should preserve:
 
