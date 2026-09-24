@@ -282,6 +282,22 @@ public sealed class ResourceIdentitySnapshot<TIdentity>
         TIdentity identity,
         ResourceVersion version)
     {
+        if (!Enum.IsDefined(kind))
+            throw new ArgumentOutOfRangeException(
+                nameof(kind),
+                kind,
+                "Resource kind is invalid.");
+
+        if (EqualityComparer<TIdentity>.Default.Equals(identity, default))
+            throw new ArgumentException(
+                "Resource identity is required.",
+                nameof(identity));
+
+        if (!version.IsValid)
+            throw new ArgumentException(
+                "A valid positive resource version is required.",
+                nameof(version));
+
         Kind = kind;
         Identity = identity;
         Version = version;
