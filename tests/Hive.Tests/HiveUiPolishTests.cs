@@ -143,6 +143,51 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
+    public void HiveCrudPage_UsesNonAutosizingSearchAndCenteredStatusFilter()
+    {
+        using var page = new HiveCrudPage<TestItem>();
+
+        Assert.False(page.SearchBox.AutoSize);
+
+        page.StatusSelector = item => item.Name;
+
+        var statusFilter = page.ActionBarPanel
+            .Controls
+            .OfType<TableLayoutPanel>()
+            .SelectMany(static layout => layout.Controls.Cast<Control>())
+            .OfType<FlowLayoutPanel>()
+            .SelectMany(static flow => flow.Controls.Cast<Control>())
+            .OfType<ComboBox>()
+            .FirstOrDefault();
+
+        Assert.NotNull(statusFilter);
+        Assert.Equal(new Padding(0, 4, 0, 4), statusFilter!.Margin);
+        Assert.False(statusFilter.IntegralHeight);
+    }
+
+    [Fact]
+    public void HiveCrudPage_ReturnsStatusToNeutralAfterListRebuild()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        using var form = new TestHiveForm(themeManager);
+        using var page = new HiveCrudPage<TestItem>();
+
+        form.Body.Controls.Add(page);
+        themeManager.Apply(form.Body);
+
+        page.SetStatus("Operation failed.", HiveStatusTone.Error);
+        page.SetColumns(
+            new HiveCrudColumn<TestItem>(
+                "Name",
+                160,
+                item => item.Name));
+
+        Assert.Equal(
+            themeManager.Theme.Palette.MutedText,
+            page.StatusLabel.ForeColor);
+    }
+
+    [Fact]
     public async Task HiveCrudPage_UsesFilterLanguageWhenFilteredResultIsEmpty()
     {
         using var page = new HiveCrudPage<TestItem>();
