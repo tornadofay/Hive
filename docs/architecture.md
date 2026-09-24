@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 49 — cognitive outcome, risk, Dream, and learning semantics corrected)
+Last updated: 2026-09-24 (rev 50 — first-class cognitive boundaries and V1 Review separation clarified)
 
 
 
