@@ -428,9 +428,11 @@ Dreams may:
 Dream output is never silently treated as an event that actually happened. Persistent records distinguish at least actual observations/experiences from simulations, hypotheses, predictions, counterfactuals, stress-test results, and other non-observed evidence.
 A Dream records its purpose so recovery, optimization, and Nightmare/Stress-Test reasoning remain distinguishable.
 
-A Dream may produce candidate changes to goals, beliefs, plans, memories, self-model, skills, or other cognitive resources, but authoritative state changes remain subject to the same validation, ownership, authorization, provenance, and concurrency rules as other Hive-owned state.
+A Dream may produce a proposed cognitive update to goals, beliefs, plans, memories, self-model, or other state, but the proposal is not itself an authoritative state transition. Reconciliation, validation, ownership, authorization, provenance, and concurrency rules determine whether it is accepted.
 
-Dream processing is subject to applicable authorization, model/provider quota, token/cost budget, time budget, concurrency/parallelism limits, retrieval/work limits, and other resource-governance rules. Being offline or asleep never bypasses those limits.
+When a proposed Dream result concerns a Phase 5 resource such as a Skill or Learning Candidate, the Dream produces evidence/proposal input; the owning resource/governance boundary performs the later promotion. A Dream does not bypass the roadmap's resource-ownership boundary merely because it can run independently.
+
+Dream processing is subject to an explicitly authorized Dream request or durable policy trigger plus applicable model/provider quota, token/cost budget, time budget, concurrency/parallelism limits, retrieval/work limits, and other resource-governance rules. Being offline or asleep never bypasses those limits, and the absence of a live runtime does not create new authority.
 
 ### Questions
 
