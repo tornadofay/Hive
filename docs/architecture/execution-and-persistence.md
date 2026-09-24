@@ -153,7 +153,7 @@ Terminal execution state cannot be overwritten by a late provider result.
 
 ### V1 WorkItem semantics
 
-For V1, a **WorkItem is the durable unit of user-visible work** and represents one logical business operation when a business operation is required. A single input submission may produce one or multiple independent WorkItems. A related submission or batch is an operational grouping of WorkItems, not a replacement for their individual lifecycle and correctness boundaries.
+For V1, a **WorkItem is the durable unit of user-visible work** and represents one logical business operation when a business operation is required. A single input submission may produce one or multiple independent WorkItems. A related submission or batch is an operational grouping of WorkItems, not a replacement for their individual lifecycle, authorization, or correctness boundaries.
 
 A WorkItem may contain a parent business record and child-row collection when the host treats those changes as one logical operation. A WorkItem may require multiple executions or steps. A runtime incarnation is not inherently bound one-to-one to a WorkItem; a runtime may process multiple WorkItems according to its execution policy. Execution remains the concrete execution/lifecycle unit.
 
