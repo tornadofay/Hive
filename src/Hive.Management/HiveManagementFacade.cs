@@ -1253,7 +1253,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             var agent = agentResult.Value!;
             var runtime = agent.CreateRuntimeInstance();
 
-            return await _agentExecution
+            var result = await _agentExecution
                 .ExecuteAsync(
                     new AgentExecutionRequest(
                         agent,
@@ -1264,6 +1264,17 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                         credential),
                     cancellationToken)
                 .ConfigureAwait(false);
+
+            if (result.IsFailure &&
+                result.Error!.Category == ErrorCategory.Internal)
+            {
+                return Result<AgentExecutionResult>.Failure(
+                    SanitizeTechnicalError(
+                        result.Error,
+                        "The configured Agent execution failed unexpectedly."));
+            }
+
+            return result;
         }
         finally
         {
