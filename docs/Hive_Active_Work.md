@@ -47,13 +47,13 @@ No business logic, Management contract, persistence behavior, provider behavior,
 
 ### Latest verification result
 
-User-run on 2026-09-24: `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — **190 tests, 188 passed, 2 failed, 0 skipped**.
+User-run on 2026-09-24: `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — **190 tests, 189 passed, 1 failed, 0 skipped**.
 
-The two failures were investigated:
-- `HiveEditorLayout_KeepsSingleLineEditorsAtCompactHeight`: the test read control bounds before WinForms performed layout. The test now realizes the layout before asserting the intended 32px compact editor height.
-- `HiveCrudPage_UsesFilterLanguageWhenFilteredResultIsEmpty`: programmatic `SearchText` updated the textbox but could skip the filtered-list rebuild because the textbox change event observed the already-updated backing value. `HiveCrudPage` now performs the rebuild explicitly after synchronizing the textbox.
+The previously failing CRUD filter test now passes after the explicit `SearchText` rebuild fix.
 
-These fixes have **not yet been verified by a rerun**. The maintenance slice remains open pending the next test result and the existing manual UI verification.
+The remaining failure is `HiveEditorLayout_KeepsSingleLineEditorsAtCompactHeight`. The failing assertion is the single-line `TextBox`, which remained at its native 23px height even after explicit layout realization. The production cause was native single-line WinForms `AutoSize` overriding the shared 32px compact-editor height during layout. `HiveEditorLayout` now disables `AutoSize` for compact editors before applying the shared height.
+
+This latest production fix has **not yet been verified by a rerun**. The maintenance slice remains open pending the next test result and the existing manual UI verification.
 
 ## Verification handoff
 
