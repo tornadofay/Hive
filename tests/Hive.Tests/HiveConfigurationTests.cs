@@ -107,6 +107,80 @@ public sealed class HiveConfigurationTests
     }
 
     [Fact]
+    public async Task JsonConfigurationStore_InvalidConfigurationValues_AreValidationFailures()
+    {
+        var filePath = Path.Combine(
+            Path.GetTempPath(),
+            $"hive-invalid-settings-values-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            await File.WriteAllTextAsync(
+                filePath,
+                """
+                {
+                  "backend": 999,
+                  "serverName": "sql.example.test",
+                  "databaseName": "Hive",
+                  "authenticationMode": 0,
+                  "encrypt": true,
+                  "trustServerCertificate": false,
+                  "createDatabaseIfMissing": false,
+                  "commandTimeoutSeconds": 30
+                }
+                """);
+
+            var result = await new JsonHiveConfigurationStore(filePath)
+                .LoadPersistenceConfigurationAsync();
+
+            Assert.True(result.IsFailure);
+            Assert.Equal(
+                "hive.management.configuration-invalid",
+                result.Error!.Code);
+            Assert.Equal(ErrorCategory.Validation, result.Error.Category);
+            Assert.Equal(
+                "The Hive settings file contains invalid configuration values.",
+                result.Error.Message);
+        }
+        finally
+        {
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+        }
+    }
+
+    [Fact]
+    public async Task Management_CreateSecret_InvalidDefinition_DoesNotExposeConstructorDetails()
+    {
+        var options = HiveDatabaseOptions.LocalDevelopment();
+        var management = new HiveManagementFacade(
+            new SqlProviderResourceStore(options),
+            new SqlAgentDefinitionResourceStore(options),
+            new SqlWorkItemResourceStore(options),
+            secrets: new SqlDpapiSecretStore(options));
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        using var material = SecretMaterial.Create("valid-secret-material");
+
+        var result = await management.CreateSecretAsync(
+            new string('k', 101),
+            "Valid Secret",
+            material,
+            context);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("hive.management.secret-invalid", result.Error!.Code);
+        Assert.Equal(
+            ErrorCategory.Validation,
+            result.Error.Category);
+        Assert.Equal(
+            "The Hive secret definition is invalid.",
+            result.Error.Message);
+    }
+
+    [Fact]
     public async Task Management_InitializePersistence_CreatesAndMigratesHiveDatabase()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ManagementInitialization");
