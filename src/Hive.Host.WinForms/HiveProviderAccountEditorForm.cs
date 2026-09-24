@@ -99,15 +99,25 @@ internal sealed class HiveProviderAccountEditorForm : HiveForm
             "Optional vendor, project, subscription, or account identifier.",
             _externalAccountTextBox);
 
-        var credentialPanel = new Panel
+        var credentialPanel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        _credentialTextBox.Dock = DockStyle.Top;
-        _credentialTextBox.Height = 32;
-        credentialPanel.Controls.Add(_credentialTextBox);
-        credentialPanel.Controls.Add(_credentialStatus);
+        credentialPanel.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Percent, 100f));
+        credentialPanel.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, 38f));
+        credentialPanel.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, 22f));
+        _credentialTextBox.Dock = DockStyle.Fill;
+        _credentialStatus.Dock = DockStyle.Fill;
+        _credentialStatus.TextAlign = ContentAlignment.MiddleLeft;
+        credentialPanel.Controls.Add(_credentialTextBox, 0, 0);
+        credentialPanel.Controls.Add(_credentialStatus, 0, 1);
 
         editor.AddField(
             "API key / credential",
