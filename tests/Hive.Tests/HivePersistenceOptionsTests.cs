@@ -1,3 +1,4 @@
+using System.Reflection;
 using Hive.Core;
 using Hive.Persistence;
 using Microsoft.Data.SqlClient;
@@ -88,6 +89,24 @@ public sealed class HivePersistenceOptionsTests
             "super-secret",
             options.ToString(),
             StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ConnectionString_IsNotPubliclyExposed()
+    {
+        var publicProperty = typeof(HiveDatabaseOptions).GetProperty(
+            nameof(HiveDatabaseOptions.ConnectionString),
+            BindingFlags.Instance | BindingFlags.Public);
+
+        Assert.Null(publicProperty);
+
+        var internalProperty = typeof(HiveDatabaseOptions).GetProperty(
+            nameof(HiveDatabaseOptions.ConnectionString),
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.NotNull(internalProperty);
+        Assert.NotNull(internalProperty.GetMethod);
+        Assert.True(internalProperty.GetMethod!.IsAssembly);
     }
 
     [Fact]
