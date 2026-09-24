@@ -16,6 +16,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
     private readonly IHivePersistenceConnectionTester? _persistenceConnectionTester;
     private readonly IHiveBootstrapCredentialStore? _bootstrapCredentials;
     private readonly AgentExecutionService? _agentExecution;
+    private readonly SemaphoreSlim _bootstrapConfigurationMutationGate = new(1, 1);
 
     public HiveManagementFacade(
         IProviderResourceStore providerResources,
@@ -82,11 +83,22 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                     "Hive persistence configuration storage is not configured."));
         }
 
-        return await _configurationStore
-            .SavePersistenceConfigurationAsync(
-                configuration,
-                cancellationToken)
+        await _bootstrapConfigurationMutationGate
+            .WaitAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        try
+        {
+            return await _configurationStore
+                .SavePersistenceConfigurationAsync(
+                    configuration,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            _bootstrapConfigurationMutationGate.Release();
+        }
     }
 
     public async Task<Result<HiveBootstrapCredentialReference>> SaveBootstrapCredentialAsync(
@@ -109,16 +121,27 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                     "The Hive bootstrap credential store is not configured."));
         }
 
-        var reference = existingReference ??
-            new HiveBootstrapCredentialReference(SecretId.New());
-
-        var result = await _bootstrapCredentials
-            .SetAsync(reference, material, cancellationToken)
+        await _bootstrapConfigurationMutationGate
+            .WaitAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return result.IsSuccess
-            ? Result<HiveBootstrapCredentialReference>.Success(reference)
-            : Result<HiveBootstrapCredentialReference>.Failure(result.Error!);
+        try
+        {
+            var reference = existingReference ??
+            new HiveBootstrapCredentialReference(SecretId.New());
+
+            var result = await _bootstrapCredentials
+                .SetAsync(reference, material, cancellationToken)
+                .ConfigureAwait(false);
+
+            return result.IsSuccess
+                ? Result<HiveBootstrapCredentialReference>.Success(reference)
+                : Result<HiveBootstrapCredentialReference>.Failure(result.Error!);
+        }
+        finally
+        {
+            _bootstrapConfigurationMutationGate.Release();
+        }
     }
 
     public async Task<Result> RemoveBootstrapCredentialAsync(
@@ -138,7 +161,19 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                     "The Hive bootstrap credential store is not configured."));
         }
 
-        if (_configurationStore is not null)
+        if (_configurationStore is null)
+        {
+            return Result.Failure(
+                Error.Unsupported(
+                    "hive.management.configuration-store-unavailable",
+                    "Hive persistence configuration storage is required to safely remove a bootstrap credential."));
+        }
+
+        await _bootstrapConfigurationMutationGate
+            .WaitAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        try
         {
             var configuration = await _configurationStore
                 .LoadPersistenceConfigurationAsync(cancellationToken)
@@ -154,11 +189,15 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                         "hive.management.bootstrap-credential-still-referenced",
                         "The bootstrap credential cannot be removed while persistence configuration still references it."));
             }
-        }
 
-        return await _bootstrapCredentials
-            .ClearAsync(reference, cancellationToken)
-            .ConfigureAwait(false);
+            return await _bootstrapCredentials
+                .ClearAsync(reference, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            _bootstrapConfigurationMutationGate.Release();
+        }
     }
 
     public async Task<Result<HivePersistenceConnectionTest>> TestPersistenceConnectionAsync(
@@ -270,7 +309,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                 return Result.Failure(
                     Error.Validation(
                         "hive.management.persistence-configuration-invalid",
-                        exception.Message));
+                        "The Hive persistence configuration is invalid."));
             }
 
             var migration = await new HiveDatabaseMigrator(options)
@@ -341,7 +380,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             return Failure<Secret>(
                 Error.Validation(
                     "hive.management.secret-invalid",
-                    exception.Message));
+                    "The Hive secret definition is invalid."));
         }
 
         return _secrets.CreateAsync(
@@ -1282,7 +1321,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                 new Error(
                     "hive.management.work-item.activity-invalid",
                     ErrorCategory.Serialization,
-                    $"WorkItem activity could not be reconstructed: {exception.Message}"));
+                    "WorkItem activity could not be reconstructed."));
         }
     }
 
@@ -1589,7 +1628,8 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             Enum.TryParse<WorkItemStatus>(
                 property.GetString(),
                 true,
-                out var textStatus))
+                out var textStatus) &&
+            Enum.IsDefined(textStatus))
         {
             return textStatus;
         }
@@ -1601,7 +1641,10 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             return (WorkItemStatus)numericStatus;
         }
 
-        return null;
+        throw new EventSerializationException(
+            Error.Validation(
+                "hive.management.work-item.activity-invalid",
+                "A WorkItem activity event contains an invalid status value."));
     }
 
     private static string? ReadString(
