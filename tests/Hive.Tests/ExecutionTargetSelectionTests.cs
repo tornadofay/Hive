@@ -277,6 +277,28 @@ public sealed class ExecutionTargetSelectionTests
     }
 
     [Fact]
+    public void SelectionResult_RejectsTargetOutsideRequest()
+    {
+        var requestTarget = CreateTarget("request-target", []);
+        var otherTarget = CreateTarget("other-target", []);
+        var request = new ExecutionTargetSelectionRequest(
+            [requestTarget],
+            []);
+
+        var diagnostic = new ExecutionTargetSelectionDiagnostic(
+            requestTarget,
+            ExecutionTargetSelectionDiagnosticStatus.Qualified,
+            0,
+            ["Selected by test fixture."]);
+
+        Assert.Throws<ArgumentException>(
+            () => new ExecutionTargetSelectionResult(
+                otherTarget,
+                [diagnostic],
+                request));
+    }
+
+    [Fact]
     public void Select_IsDeterministicForEqualScores()
     {
         var first = CreateTarget("alpha", []);
