@@ -233,15 +233,8 @@ public sealed class HiveEditorLayout : UserControl
             0,
             row);
 
-        var editorHost = new Panel
-        {
-            Dock = DockStyle.Fill,
-            Padding = new Padding(0, 10, 0, 10),
-            Margin = Padding.Empty
-        };
+        var editorHost = CreateEditorHost(editor);
 
-        editor.Dock = DockStyle.Fill;
-        editorHost.Controls.Add(editor);
         _fields.Controls.Add(editorHost, 1, row);
     }
 
@@ -263,6 +256,64 @@ public sealed class HiveEditorLayout : UserControl
         _footer.Controls.Add(button);
         return button;
     }
+
+    private static Control CreateEditorHost(Control editor)
+    {
+        ArgumentNullException.ThrowIfNull(editor);
+
+        if (!IsCompactEditor(editor))
+        {
+            var host = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(0, 10, 0, 10),
+                Margin = Padding.Empty
+            };
+
+            editor.Dock = DockStyle.Fill;
+            host.Controls.Add(editor);
+            return host;
+        }
+
+        var editorHeight = Math.Max(
+            32,
+            editor.PreferredSize.Height);
+
+        var compactHost = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        compactHost.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Percent, 100f));
+        compactHost.RowStyles.Add(
+            new RowStyle(SizeType.Percent, 50f));
+        compactHost.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, editorHeight));
+        compactHost.RowStyles.Add(
+            new RowStyle(SizeType.Percent, 50f));
+
+        editor.Dock = DockStyle.Fill;
+        compactHost.Controls.Add(editor, 0, 1);
+        return compactHost;
+    }
+
+    private static bool IsCompactEditor(Control editor) =>
+        editor switch
+        {
+            TextBoxBase textBox => !textBox.Multiline,
+            ComboBox => true,
+            NumericUpDown => true,
+            DomainUpDown => true,
+            DateTimePicker => true,
+            CheckBox => true,
+            RadioButton => true,
+            LinkLabel => true,
+            _ => false
+        };
 
     private void EnsureTypography(HiveThemeDefinition theme)
     {
