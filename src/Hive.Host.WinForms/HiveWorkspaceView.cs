@@ -338,6 +338,7 @@ public sealed class HiveWorkspaceView : UserControl
         CancellationToken cancellationToken)
     {
         _statusLabel.Text = workItem.Status.ToString();
+        ApplyStatusVisual();
         _attachmentLabel.Text = workItem.Attachment is null
             ? "No attachment"
             : $"{workItem.Attachment.FileName} · {FormatSize(workItem.Attachment.ContentLength)} · {workItem.Attachment.MediaType}";
