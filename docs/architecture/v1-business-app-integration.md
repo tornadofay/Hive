@@ -109,7 +109,7 @@ The public contract family must support at least:
 These contracts must not expose:
 
 - WinForms `Control` types;
-- `IHyperControl` or HControls types;
+- concrete control-library interfaces or host-specific control types;
 - `DataTable`/ORM-specific types as required public contracts;
 - `SqlConnection`, SQL commands, or raw SQL expressions;
 - provider credentials;
@@ -887,41 +887,36 @@ Phase 7 later generalizes the proven host concepts to meaningfully different hos
 
 ## 20. Implementation freeze rule
 
-The supplied production `HDataBox`/`HDataGridView`/`AddGrid`/`TableInfo` source is sufficient evidence for the following host-level semantics and they should no longer be treated as open discovery questions:
+The inspected production host is sufficient evidence for the following host-level semantics and they should no longer be treated as open discovery questions:
 
-- parent/root record through `MainTable`;
-- child collections through `MainTable.ChildTable`;
-- child-control mapping through matching `DataSourceName` on HDataGridView/HList;
-- parent-key propagation through `MainTable.PkName`;
-- child insert preparation excludes the child primary-key field so the host can provide/generated it;
-- required/unique host validation;
-- `CheckBeforeSave` veto;
-- `SaveRecord` host save boundary;
-- `PerformAfterSave(ID)` generated-record identity callback;
-- New/Edit/None lifecycle and reload behavior;
-- host permission/logging flags as host behavior rather than Hive authorization;
-- HDataGridView/AddGrid child-grid editing lifecycle, ByForm workflow, and row-mutation hooks.
+- explicit parent/root and child-collection relationships;
+- parent-identity propagation into child rows where the host operation requires it;
+- host-owned required/unique validation and pre-save veto points;
+- the host business/save boundary and post-save result/reload behavior;
+- New/Edit and related host lifecycle behavior;
+- host permission/logging settings as host behavior rather than Hive authorization;
+- child data-surface editing and add/edit/delete lifecycle patterns.
 
 ### 20.1 Freeze evidence summary
 
-The detailed HDataGridView/AddGrid production behavior is documented in Section 17.3. The freeze gate therefore treats the following as established:
+The detailed host inspection establishes:
 
-- DataTable-backed child-grid editing and cell synchronization;
-- ByForm dialog add/edit behavior;
-- add/edit/delete veto hooks and child required/repeat validation;
-- in-memory child-row mutation before the surrounding HDataBox save;
-- positional `CurrentRow`/`row.Index` selection as non-authoritative identity;
-- HForms single-integer-key identity through `TableInfo.PkName`.
+- bound child-data editing and synchronization;
+- distinct direct-grid, same-form-control, and dedicated-editor interaction patterns;
+- host validation and veto points around consequential row changes;
+- in-memory child-row mutation before the surrounding business save;
+- positional row selection as non-authoritative identity;
+- a concrete single-key identity in the inspected V1 surface, without making that identity shape a Hive-wide requirement.
 
-Before freezing the concrete Phase 1.14 adapter types, the remaining implementation-specific HForms/HControls contracts to inspect are:
+Before freezing the concrete Phase 1.14 adapter types, the remaining implementation-specific adapter questions are:
 
-- exact `HControl`/`IHyperControl` semantic metadata and value access needed by the neutral descriptor;
-- exact `HDataGridView` column metadata plus the runtime mapping from a grid row's bound data to its persisted integer key; positional row index remains non-authoritative;
-- exact generated/computed-column behavior and edit serialization for existing child rows where the supplied snippets do not expose the complete `PerformEditData` implementation;
-- exact lookup resolution behavior;
+- exact neutral field/column metadata and value access needed by the adapter;
+- runtime mapping from a bound row to its stable persisted identity; row position remains non-authoritative;
+- exact generated/computed-field behavior and edit serialization for existing child rows where the complete host path is not yet established;
+- exact bounded lookup resolution behavior;
 - exact concurrency/version behavior where the host exposes it;
-- the concrete `HActionBar` contract only where the adapter needs to expose or invoke its actions; it is still unfinished and is not treated as authoritative V1 evidence today.
+- any host action surface the adapter must expose or invoke, only where its production semantics are established.
 
-Do not recreate these mechanisms in Hive when the host already exposes an authoritative contract.
+Do not recreate these host mechanisms in Hive when the host already exposes an authoritative contract.
 
 The goal is to adapt existing host semantics into Hive's neutral boundary, not to recreate the host's data-access or business framework.
