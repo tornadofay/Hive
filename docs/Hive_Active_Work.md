@@ -33,7 +33,7 @@ Developer verification is required before this maintenance slice can close. The 
 - configured AgentDefinition targets now require an active target, active ProviderAccount, active Provider, and consistent Provider relationship;
 - focused regression tests cover the newly discovered contracts.
 
-Verification status: **not yet verified by build/test execution for this revision**. Latest code checkpoint: `3cdd0c93ab20e4f2aaf8d855c181b09f7c0b7211`. Latest regression-test checkpoint: `85443f96a1ef29432b98863ca8e6c1a545d77fa4`.
+Verification status: **not yet verified by build/test execution for this revision**. Latest code checkpoint: `3cdd0c93ab20e4f2aaf8d855c181b09f7c0b7211`. Latest regression-test checkpoint: `2866aa495b03880487cb3f0a4b7d9224e69cdd75`.
 
 ## Closed maintenance pass — Hive.Persistence Production Baseline Hardening
 
