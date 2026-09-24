@@ -461,8 +461,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _pagination.PageNumber = 1;
             if (!string.Equals(_searchBox.Text, normalized, StringComparison.Ordinal))
                 _searchBox.Text = normalized;
-            else
-                RebuildItems();
+
+            RebuildItems();
         }
     }
 
