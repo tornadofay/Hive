@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Last updated: 2026-09-23
+Last updated: 2026-09-24
 
 ## Active slice
 
@@ -53,6 +53,14 @@ Also perform the normal Example Host build/launch in Visual Studio or the existi
 ## Roadmap state
 
 **None — Phase 1.13 complete and verified; Phase 1.14 remains inactive.**
+
+### Next-pass architecture preparation
+
+The documentation now defines the planned Phase 1.14 host-integration boundary and the planned Phase 1.17 business-write/Review lifecycle. This is documentation only; it does not authorize implementation of either phase.
+
+Phase 1.14 next-pass implementation must first inspect the actual HForms/HControls production contracts for data-source relationships, parent/child keys, row identity, generated IDs, grid edit modes, lookups, and host action semantics before freezing concrete Hive adapter types.
+
+Phase 1.14 is expected to use Hive-owned neutral public contracts with concrete host adapters. HForms/HControls are one adapter target, not a Hive platform dependency. Phase 1.17 is expected to persist a BusinessOperationReceipt containing affected host record identities and to provide first-class, policy-governed post-write Review separately from pre-write Approval.
 
 ### Closed slice
 
