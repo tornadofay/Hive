@@ -61,6 +61,8 @@ Implemented the identified Core contract-hardening issues:
 
 The implementation is complete pending execution verification.
 
+The developer's 2026-09-24 verification run on commit 74d92d8079786adff40d7806aa4c350fba55fb59 reported 211 tests with 210 passed, 1 failed, 0 skipped. The only failure was the new ResourceIdentitySnapshot invalid-state regression at ResourceFoundationTests.cs line 289 because the test used default(ResourceKind); ResourceKind.Deployment is the valid zero-valued enum member, so no exception is expected. The production ResourceIdentitySnapshot validation correctly uses Enum.IsDefined. The regression assertion has been corrected to use the undefined value (ResourceKind)999. Verification is pending after this test-only correction.
+
 ## Verification handoff
 
 Verification is authorized but **not yet established in this environment**. A local repository checkout could not be created because outbound GitHub access from the execution environment failed at DNS resolution, and the current commit has no GitHub Actions workflow run available to inspect.
