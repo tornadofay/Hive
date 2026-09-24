@@ -83,6 +83,20 @@ public sealed record ExecutionTargetSelectionRequest
                 "Execution target cost policy is invalid.");
         }
 
+        if (preferredTargetId is { } preferredTarget && preferredTarget == default)
+        {
+            throw new ArgumentException(
+                "Preferred target identity must be non-empty when supplied.",
+                nameof(preferredTargetId));
+        }
+
+        if (fixedTargetId is { } fixedTarget && fixedTarget == default)
+        {
+            throw new ArgumentException(
+                "Fixed target identity must be non-empty when supplied.",
+                nameof(fixedTargetId));
+        }
+
         if (targets.Count == 0)
             throw new ArgumentException("At least one execution target is required.", nameof(targets));
 
