@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 42 — host-integration contract and public-doc boundary finalized)
+Last updated: 2026-09-24 (rev 43 — host-integration, batch WorkItem, and Review workflow finalized)
 
 
 
