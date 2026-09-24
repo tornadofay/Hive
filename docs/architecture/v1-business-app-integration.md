@@ -4,9 +4,11 @@ This document is part of the authoritative architecture defined by `docs/archite
 
 ## 1. Purpose and boundary
 
-V1 automates data entry from an image into an existing business application. The business application's domain model, database, validation rules, transactions, and authoritative records remain owned by that application.
+V1 automates data entry from supported input sources into an existing business application. The business application's domain model, database, validation rules, transactions, and authoritative records remain owned by that application. Input interpretation and candidate generation are separate from business-operation execution.
 
 Hive therefore needs an integration boundary that can understand enough of a host application to perform a governed operation without becoming coupled to one control library, ORM, database schema, or UI framework.
+
+The business-operation boundary consumes a structured, validated proposal independently of how the candidate was produced. Candidates may originate from vision extraction, spreadsheet mapping, or another supported Hive capability. The host adapter therefore remains source-independent.
 
 The architectural direction is:
 
