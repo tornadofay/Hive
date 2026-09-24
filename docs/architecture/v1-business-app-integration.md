@@ -924,7 +924,44 @@ These are interaction modes, not authorization grants. The adapter exposes the b
 
 This establishes a host selection/state synchronization pattern. It is not evidence that every HList is a generic CRUD data-entry surface.
 
-### 17.7 HForms components remain adapter inputs
+### 17.7 Neutral projection of HControl and grid metadata
+
+The adapter should not expose the complete `IHyperControl` interface wholesale. Where needed by V1, the neutral projection may carry the host semantics represented by the supplied controls, including:
+
+```text
+ControlType
+DisplayName
+TitleEn / TitleAr
+
+DataSourceName
+DataSourceIndex
+PropertyName
+IsBinding
+UpdateMode
+
+DbFieldName
+DataType
+DataTypeLength
+DataTypePrecision
+DataTypeScale
+DataTypeSize
+
+IsPrimaryKey
+GenerationMode
+IsNullable
+IsConcurrencyToken
+
+IsSearchField
+IsRequired / RequiredField
+```
+
+Where the host control contract provides value access, the adapter may translate bounded `GetValue()` / `SetValue()` behavior without exposing raw control objects.
+
+The supplied HDataGridView column metadata similarly includes field/type/binding/search/required/repeat/property/title/computed semantics. These are useful semantic inputs to the adapter, not direct database commands.
+
+Grid configuration such as `AllowToAddRows`, `AllowToRemoveRows`, `EnableViewMode`, `ShowAdd`, `ShowEdit`, and `ShowDelete` describes configured host behavior. It never grants Hive authorization.
+
+### 17.8 HForms components remain adapter inputs
 
 The adapter relationship is:
 
