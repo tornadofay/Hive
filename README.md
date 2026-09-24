@@ -164,12 +164,18 @@ structured extraction
       ↓
 validation
       ↓
+business-operation proposal
+      ↓
+authorization / Approve / Reject when required
+      ↓
 governed business-app write
       ↓
-Approve / Reject
+durable operation attempt / receipt
+      ↓
+policy-governed verification / Review
 ```
 
-The business-app write is a governed Tool. Hive never treats its own database as a gateway to the host application's business database.
+The business-app write is a governed Tool invocation surface over an authorized host/business capability. Approval, host-write disposition, and post-write Review are separate lifecycle boundaries. Hive never treats its own database as a gateway to the host application's business database.
 
 V1 does not choose between API and UI as an architecture decision. Both integration paths are supported from the start, and the implementation may use either or both per operation according to the real application's capabilities and authorization policy.
 
@@ -208,7 +214,7 @@ Generic cross-host integration remains later; the initial UI discovery contract 
 
 V1 starts with:
 
-1. Providers / Models / Execution Targets
+1. Providers / Provider Accounts / Execution Targets
 2. Agents
 3. V1 WorkItems / Operational Workspace
 
@@ -290,7 +296,7 @@ The solution and project files are the implementation source for the actual proj
 
 **Phase 0 — Foundations: Complete.**
 
-The solution, core contracts, identity/resource foundation, persistence bootstrap, shared WinForms UI foundation, and permanent Example Host shell are established. **Phase 1.8 — Outbox Poller** is the current implementation slice. Phase 1.7 — Event Log, Snapshots & Transactional Outbox is complete and verified. Authoritative status is recorded only in `docs/Hive_Current_Status.md`.
+**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1): 1.1–1.13 complete and verified.** The current repository work is the user-authorized **UI/UX Production Polish maintenance pass**; no later roadmap slice is active. Authoritative current status and verification state remain in `docs/Hive_Current_Status.md` and `docs/Hive_Active_Work.md`.
 
 See [Architecture](docs/architecture.md) and [Roadmap](docs/roadmap.md).
 
