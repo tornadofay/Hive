@@ -91,7 +91,7 @@ public sealed class HiveDatabaseMigrator
                     new Error(
                         "hive.persistence.migration-failed",
                         ErrorCategory.External,
-                        "Hive database migration failed."DbUp did not provide a migration error message."}"));
+                        "Hive database migration failed. DbUp did not provide a migration error message."));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
