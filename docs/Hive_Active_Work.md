@@ -1,158 +1,122 @@
 # Hive — Active Work
 
-Last updated: 2026-09-24
+Last updated: 2026-09-25
 
 ## Active slice
 
-**Hive.Core Production Polish — user-authorized backend maintenance pass**
+**Phase 1.14 — Dual Business-App Integration Contract**
 
-This is a focused backend contract-hardening pass requested directly by the user after completion of the preceding UI/UX maintenance pass. It does not advance the roadmap or authorize Phase 1.14 or later.
+Phase 1.14 is now the authorized implementation slice. The preceding Hive.Core Production Polish maintenance pass is closed after developer verification of the final audit revision.
 
 ### Scope
 
-- src/Hive.Core public value objects, resource contracts, event contracts, selection contracts, WorkItem attachment contracts, and related Core tests;
-- correct invariant validation and nullable/public API behavior;
-- structured failure/serialization semantics where the current public contract is inconsistent;
-- attachment content integrity at the Core content boundary;
-- preserve existing public behavior except where the current implementation permits invalid or unsafe contract state;
-- no new product capability, provider transport, persistence implementation, orchestration engine, MAF replacement, host/UI work, dependency upgrade, or roadmap-slice implementation.
-
-### Explicitly in scope from the audit
-
-- reject malformed default typed identities in ResourceScope, SecretReference, and selection target references;
-- reject invalid enum/resource-kind values in ResourceLifecycle and ResourceReference;
-- strengthen EventEnvelope invariant validation, including required IDs and defined payload state;
-- preserve structured serialization failure behavior when custom event upcasters fail;
-- verify WorkItem attachment bytes against their recorded SHA-256 metadata at the Core content boundary;
-- add focused regression tests for each changed contract;
-- reject malformed optional resource causation identities and invalid ResourceIdentitySnapshot state;
-- reject bootstrap credential references when Windows integrated authentication is selected;
-- keep custom upcaster/reducer exception text out of public structured error messages and reject invalid requested event payload versions.
+- host-neutral Hive.Core public contracts for host registration/adapter ownership;
+- semantic control descriptors;
+- data-source/data-surface descriptors;
+- field/column metadata and bounded value access;
+- stable primary/composite/host-defined row identities;
+- explicit parent/child data-surface relationships where supplied by the host;
+- generated-field and computed-field semantics;
+- bounded lookup descriptors and lookup operations;
+- bounded host interaction capabilities separate from authorization;
+- business-operation capability boundaries sufficient for API-only, UI-only, and API+UI composition;
+- concrete bounded WinForms adapter implementation over native/custom WinForms controls;
+- application-owned/custom controls through adaptation, without Hive dependency on host libraries;
+- Management-owned authorization/orchestration through Core-defined ports;
+- provenance, operation correlation, cancellation, lifecycle/disposal, stale-state, and concurrency boundaries;
+- focused automated tests for every changed contract and adapter boundary;
+- public Example Host scenario proving the neutral contract and concrete WinForms adapter.
 
 ### Explicitly out of scope
 
-- changing the ownership model between Core, Management, Persistence, Providers, Agents, Coordination, or MAF;
-- redesigning mutable event registries or adding speculative synchronization/freeze abstractions;
-- changing SQL schema, migrations, persistence queries/indexes, provider transport, or host adapters;
-- adding future cognitive-generation behavior;
-- broad identifier/value-object refactoring merely to remove repeated code.
+- consequential business-app writes;
+- durable BusinessOperationReceipt / operation-attempt persistence;
+- first-class post-write Review;
+- input preparation/routing (Phase 1.15);
+- structured candidate extraction/validation (Phase 1.16);
+- MAF sequential pipeline composition (Phase 1.18);
+- generic cross-host technology support (Phase 7);
+- direct Hive access to host databases or SQL;
+- unrestricted reflection, arbitrary invocation, raw control handles, or model-driven authorization;
+- new provider, persistence, orchestration, cognitive-generation, or unrelated UI architecture.
 
-## Previous slice closure
+### Required architectural behavior
 
-The preceding UI/UX Production Polish maintenance pass was manually verified by the user on 2026-09-24: the solution compiled successfully and the Example Host and configuration/Settings flow ran successfully with no reported failures. Its automated test run was 193 passed, 0 failed, 0 skipped in 27.2 seconds. That maintenance slice is closed.
+The neutral contract must preserve the distinction between:
 
-## Implementation checkpoint
+- discovery versus interaction;
+- host capability versus Hive authorization;
+- UI interaction versus business-operation semantics;
+- positional row address versus stable row identity;
+- original/pre-operation identity versus resulting identity when a host key changes;
+- generated host outputs versus caller-supplied field values;
+- computed/read-only fields versus writable fields;
+- bounded lookup capability versus arbitrary host query execution;
+- API-only, UI-only, and API+UI implementations under one logical operation correlation.
 
-Implemented the identified Core contract-hardening issues:
-- ResourceScope now treats default scopes as invalid, validates every non-global scope identity, and ResourceEnvelope rejects an invalid scope;
-- ResourceLifecycle rejects invalid enum values;
-- ResourceReference rejects invalid ResourceKind values and invalid provenance source references;
-- ResourceProvenance rejects malformed optional CausationId values; ResourceIdentitySnapshot validates kind, identity, and version invariants;
-- SecretReference validates explicit construction and ProviderAccount rejects malformed default references;
-- ExecutionTargetSelectionRequest rejects malformed optional preferred/fixed target identities;
-- EventEnvelope rejects missing required IDs, malformed causation identity, and undefined JSON payloads;
-- EventUpcasterRegistry converts unexpected custom-upcaster failures into structured EventSerializationException failures without copying exception text into the public error message, rejects undefined upcaster payloads, and validates the requested supported payload version; SerializeEnvelope now rejects null input explicitly;
-- EventSnapshotFolder keeps unexpected reducer exception text out of returned Error messages and preserves OperationCanceledException instead of converting cancellation into an internal reducer failure;
-- WorkItemAttachmentContent verifies content SHA-256 against recorded metadata in addition to content length;
-- WorkItemAttachmentMetadata and WorkItemImageSubmission enforce the existing 200-character persistence boundary for image media types;
-- HivePersistenceConfiguration rejects a bootstrap credential reference when Windows integrated authentication is selected and BuildDatabaseName performs bounded normalization without input-sized stack allocation;
-- EventType enforces the existing 200-character persistence boundary;
-- ExecutionTargetSelectionResult rejects a selected target that is not represented by the selection request;
-- ResourceLifecycle validates transition enum values before lifecycle-state transition rules;
-- focused regression coverage was added/updated in ResourceFoundationTests, ExecutionTargetSelectionTests, EventInfrastructureTests, WorkItemFoundationTests, and HiveConfigurationTests, while the existing SecretResourceTests and ProviderResourceTests coverage remains in place;
-- validity markers remain internal implementation state so they do not become accidental JSON/public serialization fields;
-- no provider, persistence, orchestration, MAF, host, UI, dependency, schema, migration, or roadmap changes were introduced.
+Parent/child relationships must be represented from explicit host-provided relationship metadata rather than inferred from visual nesting, similar names, hidden fields, or filter text.
 
-The production-polish audit implementation is complete pending execution verification.
+### Prior slice closure — Hive.Core Production Polish
 
-The developer's 2026-09-24 verification run on commit 031c8e122c3d1937f23d75b3cb981b7f2637a4a8 reported 211 tests with 211 passed, 0 failed, 0 skipped in 24.7 seconds. That verification established the state before this subsequent audit revision; the newly changed implementation and added regression tests have not yet been executed.
+The Core maintenance pass was completed at commit **4af8a09533a222f75773dca2d5675373cdf1776a**.
 
-## Verification handoff
+The developer supplied the final verification result:
 
-The pre-audit revision was developer-verified on 2026-09-24 with **211 tests passed, 0 failed, 0 skipped** in 24.7 seconds. The current audit revision is **not verified** because no new build/test execution was authorized during this audit pass.
+- **216 tests run**
+- **216 passed**
+- **0 failed**
+- **0 skipped**
+- **26.4 seconds**
+- .NET 10.0.1 / xUnit.net VSTest Adapter 3.1.5
 
-Run:
-- dotnet build src/Hive.Core/Hive.Core.csproj;
-- dotnet test tests/Hive.Tests/Hive.Tests.csproj;
-- confirm the focused regression targets in ResourceFoundationTests.cs, EventInfrastructureTests.cs, ExecutionTargetSelectionTests.cs, WorkItemFoundationTests.cs, and HiveConfigurationTests.cs all pass within the full suite.
+This result verifies the final audit revision. The previous 211-test run was the pre-audit revision and is retained only as historical context.
 
-No Example Host verification is required for this pass because the changes remain Core contract hardening without externally visible UI or product behavior.
+The maintenance pass changed only Core contracts/tests plus its Active Work documentation. No later roadmap implementation was included.
 
-## Roadmap state
+### Phase 1.14 pre-implementation evidence
 
-**None — Phase 1.13 complete and verified; Phase 1.14 remains inactive.**
+Repository architecture establishes that:
 
-### Next-pass architecture preparation
+- pure host-integration semantics belong in Hive.Core;
+- concrete WinForms adaptation belongs in Hive.Host.WinForms;
+- Hive.Management owns application-facing orchestration and authorization;
+- Management must not reference the concrete WinForms adapter;
+- host business/domain state remains owned by the real host application;
+- host adapters may use live host objects internally, but those objects must not escape through neutral public contracts;
+- no new universal host framework is permitted merely to support the first V1 host.
 
-The documentation now defines the planned Phase 1.14 host-integration boundary and the planned Phase 1.17 business-write/Review lifecycle. This is documentation only; it does not authorize implementation of either phase.
+The repository's prior Phase 1.13 implementation already provides bounded WinForms root registration and immutable discovery snapshots. Phase 1.14 must extend the host boundary rather than duplicate that discovery system.
 
-The supplied production host source now establishes the host-side root/child relationship, parent-identity propagation, host-side validation and veto points, save/reload lifecycle, bound child-data editing, multiple edit-surface patterns, generated identity behavior, and child-row in-memory mutation before the parent/business save. These are no longer open semantic questions. Phase 1.14 next-pass implementation must still inspect the exact neutral field/column metadata and value-access behavior required by the adapter, runtime mapping from bound rows to stable identities, generated/computed-field serialization, complete existing-child edit serialization, lookup behavior, and host concurrency/version behavior. Any host action surface remains non-authoritative until its concrete production semantics are established. Direct grid editing, same-form supporting controls, and dedicated editor forms/dialogs are interaction patterns, not authorization grants.
+The documented production-host evidence establishes explicit parent/child data relationships, parent-identity propagation, host validation/veto points, save/reload boundaries, child-data editing, multiple UI edit-surface patterns, generated identities, and positional row selection. The remaining adapter implementation questions are limited to the neutral value/metadata contract, runtime row-identity mapping, generated/computed/edit serialization, bounded lookup execution, host concurrency/version evidence, and any concrete action surface actually required.
 
-Phase 1.14 is expected to use Hive.Core-defined neutral host-integration ports/contracts with concrete host adapters supplied by application composition. `Hive.Management` owns orchestration/authorization and must not reference the concrete WinForms adapter. The real application host is an adapter target, not a Hive platform dependency. Phase 1.17 is expected to persist a BusinessOperationReceipt/operation-attempt record containing operation disposition and affected host record identities, establish durable operation identity before non-transactional host submission, support safe reconciliation of unknown write outcomes, and provide first-class, policy-governed post-write Review separately from pre-write Approval.
+### Implementation checkpoint
 
-### Closed slice
+**Phase 1.14 has been activated in Active Work, but no Phase 1.14 code has been implemented in this handoff yet.**
 
-**1.13 — Image Input & WinForms Host Context**
+Starting repository checkpoint:
 
-Phase 1.13 is complete and verified. No later implementation slice is active or authorized in this run.
+`4af8a09533a222f75773dca2d5675373cdf1776a`
 
-## Objective
+### Verification handoff
 
-Establish image as the first V1 input boundary and provide the concrete WinForms host-context discovery contract needed by later bounded UI integration.
+Pending verification must use these exact targets:
 
-## Scope
+Example to run: `Host / WinForms Integration / Dual Business-App Integration` — Hive.Example.WinForms
 
-- checked-in image fixture usable by deterministic tests/examples;
-- bounded WinForms root registration/discovery;
-- Form/UserControl/custom Control/container/nested descendant discovery;
-- relevant read-only structural/runtime context;
-- cycle-safe and bounded traversal;
-- cancellation-aware traversal;
-- explicit provenance for discovered host context;
-- no control mutation/action authority;
-- focused automated coverage and a public Example Host scenario.
+Tests to run: the focused Phase 1.14 host-integration test file(s) covering Core neutral contracts and WinForms adapter behavior; then `dotnet test tests/Hive.Tests/Hive.Tests.csproj` for the broader suite.
 
-Do not implement Phase 1.14 or later work in this run.
+Manual checks must cover:
 
-## Architectural constraints
+- neutral contracts contain no WinForms/ORM/SQL/raw-host-object public dependency;
+- deterministic fixture adapter demonstrates native/custom control adaptation;
+- semantic field and data-surface metadata is exposed without raw control handles;
+- parent/child relationships are explicit;
+- hidden primary-key identity is available and row index is non-authoritative;
+- generated/computed fields have the correct read/write semantics;
+- direct-grid, same-form, and dedicated-editor capabilities remain distinct from authorization;
+- lookup queries are bounded and cannot execute arbitrary SQL/filters;
+- authorization denial is enforced in code even when host UI capabilities are exposed;
+- API-only, UI-only, and API+UI paths share one logical operation identity;
+- cancellation, disposal, stale-state, concurrency, and provenance behavior are deterministic.
 
-- Preserve Hive.Core host neutrality; WinForms-specific discovery belongs in the host integration boundary.
-- Do not create a second host context system or duplicate WorkItem image-storage contracts.
-- Discovery is contextual/read-oriented only. It never grants permission to click, edit, invoke, or mutate controls.
-- Traversal must remain bounded, cycle-safe, cancellation-aware, and deterministic.
-- Host registrations and discovered snapshots must have explicit ownership/disposal semantics.
-- Use the existing Example Host discovery/navigation pattern.
-- No database/provider transport is placed in reusable UI controls.
-
-## Implementation checkpoint
-
-The existing WorkItem image submission/storage contract is already authoritative and must not be duplicated. This slice adds the missing concrete WinForms host-context boundary over native WinForms controls.
-
-Required inspection sources:
-- `docs/architecture/v1-host-and-management.md`;
-- `docs/architecture/foundations.md`;
-- `docs/roadmap.md` 1.13;
-- `docs/ui/examples.md`;
-- existing WorkItem image contracts and Management facade;
-- current Host.WinForms and Example Host composition/lifetime boundaries.
-
-Implemented:
-- `HiveWinFormsHostContext` with explicit Form registration and deterministic bounded discovery;
-- immutable control/binding metadata snapshots with registration/capture provenance;
-- configurable maximum depth, maximum node count, and text-length bound;
-- cooperative cancellation and explicit UI-thread requirement;
-- duplicate/cycle detection and typed discovery-limit failures instead of silent truncation;
-- password/control-text redaction for WinForms password fields;
-- no raw Control references or mutation/action methods in the discovered snapshot contract;
-- checked-in SVG image fixture and deterministic `WorkItemImageSubmission` validation;
-- public Example Host scenario demonstrating both image input validation and WinForms host-context discovery.
-
-## Verification result
-
-Example: `Host / WinForms Integration / Image Input & WinForms Host Context` — Hive.Example.WinForms
-
-Manual result: discovered 7 controls from `System.Windows.Forms.Form`; accepted `Phase13Sample.svg` as a valid `image/svg+xml` submission with 404 bytes.
-
-Automated result: `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — 182 passed, 0 failed, 0 skipped.
-
-Phase 1.13 is closed. See [verification/phase-1/1.13.md](verification/phase-1/1.13.md). The next roadmap slice remains inactive until explicitly authorized.
+No Phase 1.14 verification has been performed in this handoff.
