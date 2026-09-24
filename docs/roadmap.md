@@ -243,12 +243,12 @@ Verify: focused host-context/image-fixture tests, bounded/cancellation/ownership
 ## 1.14 — Dual Business-App Integration Contract
 Type: architecture/contract implementation slice.
 
-Objective: establish the neutral host-integration contracts and implement the first concrete WinForms adapter boundary without coupling Hive to HForms, HControls, or any other host-specific control/data framework.
+Objective: establish the neutral host-integration contracts and implement the first concrete WinForms adapter boundary without coupling Hive to any host-specific control, data, UI, ORM, or business framework.
 
 Scope:
 - host-neutral Core-defined ports/contracts for host registration/adapter ownership, semantic controls, data surfaces, fields, stable row identities, lookups, bounded UI interaction, and business-operation capabilities;
 - concrete bounded WinForms adapter implementation over native/custom WinForms controls;
-- support for application-owned/custom controls and HForms/HControls through adaptation rather than Hive dependencies;
+- support for application-owned/custom controls through adaptation rather than Hive dependencies;
 - semantic projection of host binding/data-source metadata rather than raw control/object exposure;
 - explicit parent/child data-surface relationships where the host can provide them;
 - stable primary/composite/host-defined row identities; row index is positional only;
@@ -259,12 +259,11 @@ Scope:
 - Management-owned authorization/orchestration through injected Core-defined host ports, plus provenance, cancellation, lifecycle/disposal, stale-state, and concurrency boundaries.
 
 Production evidence now established before freezing the concrete adapter contract:
-- HDataBox/TableInfo explicitly associate the root record, child collections, and child controls; the current production TableInfo key is a single integer primary key;
-- HDataBox prepares parent-key propagation into child rows;
-- HDataBox establishes required/unique validation, CheckBeforeSave, SaveRecord, PerformAfterSave(ID), New/Edit lifecycle, and authoritative reload behavior;
-- HDataGridView binds its DataTable directly, synchronizes edited cells back to that data surface, and implements concrete ByForm add/edit/delete interaction through AddGrid dialogs and host veto/validation hooks;
-- child grid mutations remain in the host data surface until the surrounding HDataBox business save serializes them;
-- ByAlone, ByControls, and ByForm are host interaction modes rather than authorization grants.
+- the inspected V1 host explicitly associates the root record, child collections, and child data surfaces;
+- parent identity is propagated into child rows where the host operation requires it;
+- host-side required/unique validation, veto points, save boundaries, post-save result/reload behavior, and New/Edit lifecycle are application-owned;
+- the bound child data surface supports edit and row mutation patterns before the surrounding business save;
+- direct grid editing, same-form supporting controls, and dedicated editor forms/dialogs are distinct host interaction patterns rather than authorization grants;
 
 Remaining adapter-freeze investigation:
 - exact HControl/IHyperControl semantic metadata and value-access contract;
@@ -279,7 +278,7 @@ The adapter must translate these host semantics into Hive contracts and must not
 Verify:
 - neutral contract behavior with a fake host adapter;
 - native/custom WinForms discovery and bounded interaction;
-- HForms-compatible adapter mapping where the actual host contract has been inspected;
+- production adapter mapping for the real V1 host where its concrete contract has been inspected;
 - stable row identity, hidden primary-key, generated-field, computed-field, and stale-row cases;
 - lookup capability without arbitrary SQL execution;
 - authorization denial even when the host UI exposes an action;
