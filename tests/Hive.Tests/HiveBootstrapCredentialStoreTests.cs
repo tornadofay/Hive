@@ -309,6 +309,112 @@ public sealed class HiveBootstrapCredentialStoreTests
         Assert.True(bootstrapStore.Contains(reference));
     }
 
+    [Fact]
+    public async Task Management_PropagatedBootstrapTechnicalErrors_AreSanitized()
+    {
+        var configuration = HivePersistenceConfiguration.LocalDevelopment();
+        var management = new HiveManagementFacade(
+            new SqlProviderResourceStore(HiveDatabaseOptions.LocalDevelopment()),
+            new SqlAgentDefinitionResourceStore(HiveDatabaseOptions.LocalDevelopment()),
+            new SqlWorkItemResourceStore(HiveDatabaseOptions.LocalDevelopment()),
+            configurationStore: new BlockingConfigurationStore(configuration),
+            persistenceConnectionTester: new NoOpPersistenceConnectionTester(),
+            bootstrapCredentials: new LeakyBootstrapCredentialStore());
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var reference = new HiveBootstrapCredentialReference(SecretId.New());
+        using var material = SecretMaterial.Create("unused-material");
+
+        var save = await management.SaveBootstrapCredentialAsync(
+            material,
+            reference,
+            context);
+
+        Assert.True(save.IsFailure);
+        Assert.Equal("test.bootstrap.failure", save.Error!.Code);
+        Assert.Equal(ErrorCategory.External, save.Error.Category);
+        Assert.Equal(
+            "The bootstrap credential could not be stored.",
+            save.Error.Message);
+
+        var passwordConfiguration = new HivePersistenceConfiguration(
+            HivePersistenceBackend.SqlServer,
+            "sql.example.test",
+            1433,
+            "Hive",
+            HiveSqlAuthenticationMode.SqlPassword,
+            "hive-user",
+            reference,
+            encrypt: true,
+            trustServerCertificate: false,
+            createDatabaseIfMissing: false);
+
+        var initialize = await management.InitializePersistenceAsync(
+            passwordConfiguration,
+            context);
+
+        Assert.True(initialize.IsFailure);
+        Assert.Equal("test.bootstrap.failure", initialize.Error!.Code);
+        Assert.Equal(ErrorCategory.External, initialize.Error.Category);
+        Assert.Equal(
+            "The bootstrap credential could not be resolved.",
+            initialize.Error.Message);
+
+        var remove = await management.RemoveBootstrapCredentialAsync(
+            reference,
+            context);
+
+        Assert.True(remove.IsFailure);
+        Assert.Equal("test.bootstrap.failure", remove.Error!.Code);
+        Assert.Equal(ErrorCategory.External, remove.Error.Category);
+        Assert.Equal(
+            "The bootstrap credential could not be removed.",
+            remove.Error.Message);
+    }
+
+    private sealed class NoOpPersistenceConnectionTester : IHivePersistenceConnectionTester
+    {
+        public Task<Result<HivePersistenceConnectionTest>> TestAsync(
+            HivePersistenceConfiguration configuration,
+            SecretMaterial? credential,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(
+                Result<HivePersistenceConnectionTest>.Success(
+                    new HivePersistenceConnectionTest(
+                        true,
+                        HiveDatabaseState.Current,
+                        HiveDatabaseSchema.CurrentSchemaVersion,
+                        HiveDatabaseSchema.CurrentSchemaVersion,
+                        "Not expected to be called.")));
+    }
+
+    private sealed class LeakyBootstrapCredentialStore : IHiveBootstrapCredentialStore
+    {
+        private static Error Failure() =>
+            new(
+                "test.bootstrap.failure",
+                ErrorCategory.External,
+                "sensitive details must never reach the public boundary");
+
+        public Task<Result> SetAsync(
+            HiveBootstrapCredentialReference reference,
+            SecretMaterial material,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result.Failure(Failure()));
+
+        public Task<Result<SecretMaterial>> ResolveAsync(
+            HiveBootstrapCredentialReference reference,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result<SecretMaterial>.Failure(Failure()));
+
+        public Task<Result> ClearAsync(
+            HiveBootstrapCredentialReference reference,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result.Failure(Failure()));
+    }
+
     private sealed class BlockingConfigurationStore : IHiveConfigurationStore
     {
         private HivePersistenceConfiguration _configuration;
