@@ -268,7 +268,7 @@ Production evidence now established before freezing the concrete adapter contrac
 
 Remaining adapter-freeze investigation:
 - exact HControl/IHyperControl semantic metadata and value-access contract;
-- exact HDataGridView column metadata and persisted row-key representation; row position remains non-authoritative;
+- exact HDataGridView column metadata and runtime mapping from a grid row's bound data to its persisted integer key; row position remains non-authoritative;
 - exact generated/computed-column behavior and complete existing-child edit serialization;
 - exact lookup resolution behavior;
 - exact host concurrency/version behavior where available;
