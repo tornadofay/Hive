@@ -221,6 +221,125 @@ public sealed class HiveBootstrapCredentialStoreTests
         }
     }
 
+    [Fact]
+    public async Task Management_RemoveBootstrapCredential_RequiresConfigurationStore()
+    {
+        var options = HiveDatabaseOptions.LocalDevelopment();
+        var bootstrapStore = new InMemoryBootstrapCredentialStore();
+        var management = new HiveManagementFacade(
+            new SqlProviderResourceStore(options),
+            new SqlAgentDefinitionResourceStore(options),
+            new SqlWorkItemResourceStore(options),
+            bootstrapCredentials: bootstrapStore);
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var reference = new HiveBootstrapCredentialReference(SecretId.New());
+
+        var result = await management.RemoveBootstrapCredentialAsync(
+            reference,
+            context);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.management.configuration-store-unavailable",
+            result.Error!.Code);
+        Assert.False(bootstrapStore.Contains(reference));
+    }
+
+    [Fact]
+    public async Task Management_RemoveBootstrapCredential_SerializesAgainstConfigurationSave()
+    {
+        var configuration = HivePersistenceConfiguration.LocalDevelopment();
+        var configurationStore = new BlockingConfigurationStore(configuration);
+        var bootstrapStore = new InMemoryBootstrapCredentialStore();
+        var management = new HiveManagementFacade(
+            new SqlProviderResourceStore(HiveDatabaseOptions.LocalDevelopment()),
+            new SqlAgentDefinitionResourceStore(HiveDatabaseOptions.LocalDevelopment()),
+            new SqlWorkItemResourceStore(HiveDatabaseOptions.LocalDevelopment()),
+            configurationStore: configurationStore,
+            bootstrapCredentials: bootstrapStore);
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        using var material = SecretMaterial.Create("serialized-bootstrap-secret");
+
+        var savedCredential = await management.SaveBootstrapCredentialAsync(
+            material,
+            existingReference: null,
+            context);
+        Assert.True(savedCredential.IsSuccess, savedCredential.Error?.Message);
+        var reference = savedCredential.Value;
+
+        var passwordConfiguration = new HivePersistenceConfiguration(
+            HivePersistenceBackend.SqlServer,
+            "sql.example.test",
+            1433,
+            "Hive",
+            HiveSqlAuthenticationMode.SqlPassword,
+            "hive-user",
+            reference,
+            encrypt: true,
+            trustServerCertificate: false,
+            createDatabaseIfMissing: false);
+
+        var saveTask = management.SavePersistenceConfigurationAsync(
+            passwordConfiguration,
+            context);
+        await configurationStore.SaveStarted.Task;
+
+        var removeTask = management.RemoveBootstrapCredentialAsync(
+            reference,
+            context);
+        Assert.False(removeTask.IsCompleted);
+        Assert.True(bootstrapStore.Contains(reference));
+
+        configurationStore.SaveRelease.TrySetResult(true);
+
+        var saveResult = await saveTask;
+        Assert.True(saveResult.IsSuccess, saveResult.Error?.Message);
+
+        var removeResult = await removeTask;
+        Assert.True(removeResult.IsFailure);
+        Assert.Equal(
+            "hive.management.bootstrap-credential-still-referenced",
+            removeResult.Error!.Code);
+        Assert.True(bootstrapStore.Contains(reference));
+    }
+
+    private sealed class BlockingConfigurationStore : IHiveConfigurationStore
+    {
+        private HivePersistenceConfiguration _configuration;
+
+        public BlockingConfigurationStore(HivePersistenceConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
+        public TaskCompletionSource<bool> SaveStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource<bool> SaveRelease { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task<Result<HivePersistenceConfiguration>> LoadPersistenceConfigurationAsync(
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(
+                Result<HivePersistenceConfiguration>.Success(_configuration));
+
+        public async Task<Result<HivePersistenceConfiguration>> SavePersistenceConfigurationAsync(
+            HivePersistenceConfiguration configuration,
+            CancellationToken cancellationToken = default)
+        {
+            SaveStarted.TrySetResult(true);
+            await SaveRelease.Task.WaitAsync(cancellationToken);
+            _configuration = configuration;
+            return Result<HivePersistenceConfiguration>.Success(configuration);
+        }
+    }
+
     private sealed class InMemoryBootstrapCredentialStore :
         IHiveBootstrapCredentialStore
     {
