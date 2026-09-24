@@ -323,12 +323,7 @@ public sealed class SqlDpapiSecretStore : ISecretStore
             current.Resource.Lifecycle,
             current.Resource.Metadata);
 
-        var replacementBytes = Encoding.UTF8.GetBytes(
-            replacement.Reveal());
-        var encryptedValue = ProtectedData.Protect(
-            replacementBytes,
-            null,
-            DataProtectionScope.CurrentUser);
+        var encryptedValue = Protect(replacement);
 
         try
         {
@@ -371,7 +366,6 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         }
         finally
         {
-            CryptographicOperations.ZeroMemory(replacementBytes);
             CryptographicOperations.ZeroMemory(encryptedValue);
         }
     }
