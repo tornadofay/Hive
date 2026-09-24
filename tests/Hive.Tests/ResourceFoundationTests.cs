@@ -104,8 +104,8 @@ public sealed class ResourceFoundationTests
                 ResourceKind.Agent,
                 AgentId.New(),
                 principal,
+                ResourceScope.Global(),
                 default,
-                ResourceVersion.Initial,
                 new ResourceProvenance(
                     principal,
                     now,
