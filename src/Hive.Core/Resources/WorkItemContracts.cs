@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 namespace Hive.Core;
 
 public sealed record WorkItemAttachmentMetadata
@@ -127,6 +129,19 @@ public sealed class WorkItemAttachmentContent
         {
             throw new ArgumentException(
                 "Attachment content length does not match its metadata.",
+                nameof(content));
+        }
+
+        var actualSha256 = Convert.ToHexString(
+            SHA256.HashData(content.Span));
+
+        if (!string.Equals(
+                actualSha256,
+                metadata.Sha256,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException(
+                "Attachment content SHA-256 does not match its metadata.",
                 nameof(content));
         }
 
