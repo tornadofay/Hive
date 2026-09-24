@@ -50,6 +50,7 @@ No business logic, Management contract, persistence behavior, provider behavior,
 Example Host checks:
 - UI / Foundation / Theme — switch Light, Dark, and System modes and check typography, contrast, focus, and selected button state;
 - UI / Foundation / Controls & CRUD — resize through wide, compact, and very narrow desktop widths; verify search/status filter/action layout, wrapped actions, selection, Enter/Delete behavior, empty state, paging, and no clipped controls; when records exist but the search/status filter yields no matches, confirm the empty state says "No items match the current filters.";
+- UI / Foundation / Controls & CRUD — exercise loading, cancellation, and operation-failure states and confirm their status text uses the existing Information/Warning/Error theme tones in both Light and Dark modes; settings CRUD errors should remain visually distinct while the error dialog still provides details.
 - UI / Foundation / Dialogs — verify Information/Success/Warning/Error/Question dialogs and keyboard action focus;
 - Example Host / Overview / Getting Started / Example Configuration / Theme Foundation — switch Light and Dark modes and confirm headings, section labels, and body text retain the shared theme typography family and intended hierarchy;
 - Workspace / WorkItem Operations — confirm Workspace section labels use the same themed typography family as the surrounding surface;
