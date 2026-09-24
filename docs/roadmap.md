@@ -262,14 +262,17 @@ Production evidence now established before freezing the concrete adapter contrac
 - HDataBox/TableInfo explicitly associate the root record, child collections, and child controls;
 - HDataBox prepares parent-key propagation into child rows;
 - HDataBox establishes required/unique validation, CheckBeforeSave, SaveRecord, PerformAfterSave(ID), New/Edit lifecycle, and authoritative reload behavior;
+- HDataGridView binds its DataTable directly, synchronizes edited cells back to that data surface, and implements concrete ByForm add/edit/delete interaction through AddGrid dialogs and host veto/validation hooks;
+- child grid mutations remain in the host data surface until the surrounding HDataBox business save serializes them;
 - ByAlone, ByControls, and ByForm are host interaction modes rather than authorization grants.
 
 Remaining adapter-freeze investigation:
 - exact HControl/IHyperControl semantic metadata and value-access contract;
-- exact HDataGridView row/column identity, generated/computed fields, add/remove/edit configuration, and editing lifecycle;
+- exact HDataGridView column metadata and persisted row-key representation; row position remains non-authoritative;
+- exact generated/computed-column behavior and complete existing-child edit serialization;
 - exact lookup resolution behavior;
 - exact host concurrency/version behavior where available;
-- concrete HActionBar behavior only where the adapter must expose or invoke its actions.
+- concrete HActionBar behavior only where the adapter must expose or invoke its actions; HActionBar remains unfinished.
 
 The adapter must translate these host semantics into Hive contracts and must not recreate the host's database/business framework.
 
