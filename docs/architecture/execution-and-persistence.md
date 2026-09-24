@@ -166,12 +166,14 @@ Cognitive Strategy
           ├── Question
           ├── Dream
           ├── Hive/specialist escalation
-          └── Learning Candidate
+          └── learning evidence / proposal
+                            ↓
+                    governed Learning Candidate
 ```
 
 The execution boundary owns what the execution actually returned and its technical lifecycle. The cognitive OutcomeEvaluation boundary decides whether that evidence means the intended objective was achieved, what likely contributed to the result, and what adaptation should be considered. OutcomeEvaluation, Mistake, Success, Risk, Fear, Confidence, Dream, and Learning remain first-class cognitive semantics even when they share persistence or processing infrastructure.
 
-Outcome evaluation must remain attributable to the objective/plan/method/decision and preserve expected-versus-observed evidence. Technical failures must not be silently converted into Mistakes, and technical successes must not be silently converted into durable Success lessons.
+Outcome evaluation must remain attributable to the objective/plan/method/decision and preserve expected-versus-observed evidence. It should distinguish outcome correctness from method/strategy quality and causal attribution where the evidence permits. Technical failures must not be silently converted into Mistakes, and technical successes must not be silently converted into durable Success lessons.
 
 Risk/Fear/Confidence may affect strategy selection and escalation, but the Execution Planner and authorization boundaries remain authoritative for capability, target, policy, scope, budget, and permission decisions.
 
