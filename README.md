@@ -119,7 +119,11 @@ For V1, business-app integration supports **both API/service and bounded UI inte
 
 ## V1 work-unit semantics
 
-One submitted document is one WorkItem. A batch is multiple WorkItems. WorkItem identity and lifecycle are independent of individual runtime/execution lifetimes.
+One submitted source item is one WorkItem. A batch submission expands into multiple independent WorkItems rather than one aggregate WorkItem or execution. A folder of images is therefore a batch of image WorkItems. Each WorkItem has its own lifecycle, provenance, execution/review state, and terminal result.
+
+The first V1 input is image data. Additional input formats such as spreadsheets can be added as later ingestion capabilities without changing the WorkItem boundary; a workbook containing multiple sheets/rows may likewise expand into the appropriate set of WorkItems when that ingestion capability exists.
+
+WorkItem identity and lifecycle are independent of individual runtime/execution lifetimes.
 
 ## Cognitive lifecycle (later generation)
 
