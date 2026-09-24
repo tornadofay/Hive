@@ -298,6 +298,7 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 61. Consequential host row operations require stable row identity; row position is never authoritative identity.
 62. A business-operation receipt records the disposition and affected host identities of a consequential host operation; it does not make Hive a mirror of host business state.
 63. Approval and post-write Review are distinct lifecycle boundaries; Review uses authoritative host state and policy-governed verification.
+64. Hive.Management orchestrates authorized host/business operations through Core-defined integration ports; concrete host adapters are supplied by application composition and are never referenced back from Management.
 
 ---
 
