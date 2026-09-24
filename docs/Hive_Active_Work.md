@@ -60,7 +60,7 @@ The documentation now defines the planned Phase 1.14 host-integration boundary a
 
 Phase 1.14 next-pass implementation must first inspect the actual HForms/HControls production contracts for data-source relationships, parent/child keys, row identity, generated IDs, grid edit modes, lookups, and host action semantics before freezing concrete Hive adapter types.
 
-Phase 1.14 is expected to use Hive.Core-defined neutral host-integration ports/contracts with concrete host adapters supplied by application composition. `Hive.Management` owns orchestration/authorization and must not reference the concrete WinForms adapter; HForms/HControls are one adapter target, not a Hive platform dependency. Phase 1.17 is expected to persist a BusinessOperationReceipt containing operation disposition and affected host record identities, support safe reconciliation of unknown write outcomes, and provide first-class, policy-governed post-write Review separately from pre-write Approval.
+Phase 1.14 is expected to use Hive.Core-defined neutral host-integration ports/contracts with concrete host adapters supplied by application composition. `Hive.Management` owns orchestration/authorization and must not reference the concrete WinForms adapter; HForms/HControls are one adapter target, not a Hive platform dependency. Phase 1.17 is expected to persist a BusinessOperationReceipt/operation-attempt record containing operation disposition and affected host record identities, establish durable operation identity before non-transactional host submission, support safe reconciliation of unknown write outcomes, and provide first-class, policy-governed post-write Review separately from pre-write Approval.
 
 ### Closed slice
 
