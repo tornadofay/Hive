@@ -254,7 +254,7 @@ public sealed class ExecutionTargetSelectionTests
                 [target],
                 [],
                 ExecutionTargetSelectionMode.Fixed,
-                fixedTargetId: default));
+                fixedTargetId: (ExecutionTargetId?)default(ExecutionTargetId)));
     }
 
     [Fact]
