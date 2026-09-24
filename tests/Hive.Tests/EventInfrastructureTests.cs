@@ -72,6 +72,26 @@ public sealed class EventInfrastructureTests
             () => EventEnvelope.Create(
                 EventId.New(),
                 EventTestData.Timestamp,
+                default(EventType),
+                new EventPayloadVersion(1),
+                CorrelationId.New(),
+                null,
+                document.RootElement));
+
+        Assert.Throws<ArgumentException>(
+            () => EventEnvelope.Create(
+                EventId.New(),
+                EventTestData.Timestamp,
+                new EventType("customer.created"),
+                default(EventPayloadVersion),
+                CorrelationId.New(),
+                null,
+                document.RootElement));
+
+        Assert.Throws<ArgumentException>(
+            () => EventEnvelope.Create(
+                EventId.New(),
+                EventTestData.Timestamp,
                 new EventType("customer.created"),
                 new EventPayloadVersion(1),
                 CorrelationId.New(),
@@ -259,13 +279,43 @@ public sealed class EventInfrastructureTests
     }
 
     [Fact]
+    [Fact]
+    public void ReducerRegistry_RejectsDefaultEventTypeOrVersion()
+    {
+        var registry = new EventStateReducerRegistry<int>();
+        var validEventType = new EventType("customer.created");
+
+        Assert.Throws<ArgumentException>(
+            () => registry.Register(new InvalidReducer(
+                default,
+                new EventPayloadVersion(1))));
+
+        Assert.Throws<ArgumentException>(
+            () => registry.Register(new InvalidReducer(
+                validEventType,
+                default)));
+    }
+
     public void UpcasterRegistry_RejectsNonSequentialRegistration()
     {
         var registry = new EventUpcasterRegistry();
+        var eventType = new EventType("customer.created");
+
+        Assert.Throws<ArgumentException>(
+            () => registry.Register(new InvalidUpcaster(
+                default,
+                new EventPayloadVersion(1),
+                new EventPayloadVersion(2))));
+
+        Assert.Throws<ArgumentException>(
+            () => registry.Register(new InvalidUpcaster(
+                eventType,
+                default,
+                new EventPayloadVersion(1))));
 
         var exception = Assert.Throws<ArgumentException>(
             () => registry.Register(new InvalidUpcaster(
-                new EventType("customer.created"),
+                eventType,
                 new EventPayloadVersion(1),
                 new EventPayloadVersion(3))));
 
@@ -346,6 +396,27 @@ public sealed class EventInfrastructureTests
 
         public JsonElement Upcast(JsonElement payload) =>
             default;
+    }
+
+    private sealed class InvalidReducer : IEventStateReducer<int>
+    {
+        public InvalidReducer(
+            EventType eventType,
+            EventPayloadVersion currentVersion)
+        {
+            EventType = eventType;
+            CurrentPayloadSchemaVersion = currentVersion;
+        }
+
+        public EventType EventType { get; }
+
+        public EventPayloadVersion CurrentPayloadSchemaVersion { get; }
+
+        public int Apply(
+            int state,
+            EventEnvelope envelope,
+            JsonElement payload) =>
+            state;
     }
 
     private sealed class InvalidUpcaster : IEventUpcaster
