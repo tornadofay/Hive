@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 48 — cognitive outcome, risk, Dream, and learning semantics)
+Last updated: 2026-09-24 (rev 49 — cognitive outcome, risk, Dream, and learning semantics corrected)
 
 
 
@@ -296,25 +296,25 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 58. New lifecycle, Dream, Question, or collective-cognition behavior must remain additive to the generation that owns it and must not become an implicit prerequisite of the base Agent/Hive.
 59. CognitiveAgent outcome evaluation is distinct from technical execution status: an execution failure is not automatically a cognitive Mistake, and an execution success is not automatically a cognitive Success.
 60. A CognitiveAgent outcome evaluation preserves the relevant expected result or success criteria, observed actual result, evaluation evidence, provenance, and attribution/credit context.
-61. Mistake and Success are first-class cognitive outcome interpretations. A Mistake represents an evaluated failure to satisfy the applicable objective or success criteria; a Success represents an evaluated achievement of those criteria. Neither term is defined solely by transport or execution status.
+61. Mistake and Success are first-class cognitive outcome interpretations. A Mistake represents an evaluated outcome in which the applicable objective or success criteria were not satisfied; a Success represents an evaluated outcome in which those criteria were satisfied. Attribution of the cause is a separate question and may remain uncertain. Neither term is defined solely by transport or execution status.
 62. Cognitive Risk, Fear, and Confidence are first-class CognitiveAgent state used by Cognitive Strategy. They are contextual and evidence-backed, may change strategy, and never grant, remove, or bypass authorization, capability, safety, scope, budget, or host-policy enforcement.
 63. Dreams may be purpose-specific cognitive simulations, including Recovery, Optimization, Nightmare/Stress-Test, Reconsideration, and Preparation. Dream evidence remains simulated/predicted/hypothetical and is never recorded as actual experience.
 64. A Recovery Dream may explore alternatives after a Mistake. An Optimization Dream may search for a better way to reproduce a Success. A Nightmare/Stress-Test Dream may actively search for plausible conditions under which a successful strategy would fail.
 65. Counterfactual conclusions, including Regret, must remain distinguishable from observations and information that were actually available at the original decision point.
 66. Learning may use both positive and negative evidence, but a learned rule or strategy change must preserve applicability conditions, provenance, evidence type, confidence/support, and attribution rather than collapsing evidence into an unconditional rule.
-67. Repeated Success may increase support for a method under observed conditions without proving that the method is optimal or generally reliable; repeated Mistakes may increase caution without proving one cause when attribution remains uncertain.
+67. Repeated Success may increase support for a method under observed conditions and may reduce Fear when the evidence lowers estimated risk; repeated Mistakes may increase Fear or caution without proving one cause when attribution remains uncertain. Success does not by itself erase risk, and failure does not by itself prove the Agent was at fault.
 68. Cognitive adaptation may learn that a task can be solved deterministically or with fewer model calls; such optimization is a governed strategy/resource change, not an implicit runtime authorization or an automatic change to the base Agent generation.
-59. Pure V1 host-integration semantic contracts belong in Hive.Core; host-specific adapters belong outside Core.
-60. Host adapters translate or execute authorized capabilities; they never become the host application's database, business-logic, or authorization owner.
-61. Consequential host row operations require stable row identity for the operation; row position is never authoritative identity. A host key may be mutable, so an update must retain the authoritative pre-operation identity and applicable concurrency/version evidence when available.
-62. A business-operation receipt records the disposition and affected host identities of a consequential host operation, including the authoritative pre-operation target identity and resulting identity when a host key changes; it does not make Hive a mirror of host business state.
-63. Approval and post-write Review are distinct lifecycle boundaries; Review uses authoritative host state and policy-governed verification.
-64. Hive.Management orchestrates authorized host/business operations through Core-defined integration ports; concrete host adapters are supplied by application composition and are never referenced back from Management.
-65. A write Tool is an authorized invocation surface for a business capability; the business operation's semantic contract remains owned by the host-integration/business-operation boundary, not by the Tool or the model.
-66. V1 vector storage uses SQL Server's native vector capability behind a replaceable `IVectorStore` where the selected SQL Server deployment supports it; deployments without the required vector capability must report `Unsupported` rather than silently substituting another vector database. Vector storage is not a reason to add a separate vector database, and semantic vector retrieval still requires an embedding/vectorization capability.
-67. A future lightweight/embedded Hive deployment may provide a first-class persistence backend behind the same Hive persistence/resource contracts; it must not fork the logical resource model, and a custom database engine is not assumed unless a measured requirement justifies building one.
-68. V1 WinForms integration may expose bounded semantics for application-owned/custom controls and data-bound grids, including related/child data, binding, column, lookup, and row-operation metadata; discovery or metadata never grants database or business authorization.
-69. Public Hive architecture and usage documentation must describe host integration at the neutral contract/semantic level. Private host class names, source excerpts, source-specific event/property mappings, private business conventions, and other implementation details must not be promoted into public Hive contracts merely because an adapter uses them.
+69. Pure V1 host-integration semantic contracts belong in Hive.Core; host-specific adapters belong outside Core.
+70. Host adapters translate or execute authorized capabilities; they never become the host application's database, business-logic, or authorization owner.
+71. Consequential host row operations require stable row identity for the operation; row position is never authoritative identity. A host key may be mutable, so an update must retain the authoritative pre-operation identity and applicable concurrency/version evidence when available.
+72. A business-operation receipt records the disposition and affected host identities of a consequential host operation, including the authoritative pre-operation target identity and resulting identity when a host key changes; it does not make Hive a mirror of host business state.
+73. Approval and post-write Review are distinct lifecycle boundaries; Review uses authoritative host state and policy-governed verification.
+74. Hive.Management orchestrates authorized host/business operations through Core-defined integration ports; concrete host adapters are supplied by application composition and are never referenced back from Management.
+75. A write Tool is an authorized invocation surface for a business capability; the business operation's semantic contract remains owned by the host-integration/business-operation boundary, not by the Tool or the model.
+76. V1 vector storage uses SQL Server's native vector capability behind a replaceable `IVectorStore` where the selected SQL Server deployment supports it; deployments without the required vector capability must report `Unsupported` rather than silently substituting another vector database. Vector storage is not a reason to add a separate vector database, and semantic vector retrieval still requires an embedding/vectorization capability.
+77. A future lightweight/embedded Hive deployment may provide a first-class persistence backend behind the same Hive persistence/resource contracts; it must not fork the logical resource model, and a custom database engine is not assumed unless a measured requirement justifies building one.
+78. V1 WinForms integration may expose bounded semantics for application-owned/custom controls and data-bound grids, including related/child data, binding, column, lookup, and row-operation metadata; discovery or metadata never grants database or business authorization.
+79. Public Hive architecture and usage documentation must describe host integration at the neutral contract/semantic level. Private host class names, source excerpts, source-specific event/property mappings, private business conventions, and other implementation details must not be promoted into public Hive contracts merely because an adapter uses them.
 
 ---
 
