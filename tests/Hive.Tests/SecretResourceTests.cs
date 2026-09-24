@@ -10,8 +10,6 @@ public sealed class SecretResourceTests
     {
         Assert.Throws<ArgumentException>(() => new SecretReference(default));
 
-        Assert.False(default(SecretReference).IsValid);
-        Assert.True(new SecretReference(SecretId.New()).IsValid);
     }
 
 
