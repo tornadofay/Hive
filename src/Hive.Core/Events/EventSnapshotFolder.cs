@@ -96,7 +96,7 @@ public sealed class EventSnapshotFolder<TState>
                     new Error(
                         "event.reducer.failed",
                         ErrorCategory.Internal,
-                        $"Snapshot reducer for event '{envelope.EventType}' failed: {exception.Message}"));
+                        $"Snapshot reducer for event '{envelope.EventType}' failed."));
             }
         }
 
