@@ -22,6 +22,16 @@ public sealed class EventStateReducerRegistry<TState>
     {
         ArgumentNullException.ThrowIfNull(reducer);
 
+        if (!reducer.EventType.IsValid)
+            throw new ArgumentException(
+                "A valid event type is required.",
+                nameof(reducer));
+
+        if (!reducer.CurrentPayloadSchemaVersion.IsValid)
+            throw new ArgumentException(
+                "A valid current event payload schema version is required.",
+                nameof(reducer));
+
         if (!_reducers.TryAdd(reducer.EventType, reducer))
         {
             throw new InvalidOperationException(
