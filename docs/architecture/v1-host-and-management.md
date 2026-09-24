@@ -269,7 +269,7 @@ Hive persists only the minimum bounded evidence needed to explain and audit the 
 Phase 1.14 establishes the extension/adapter and interaction contracts. Phase 1.17 establishes the governed business write, durable operation receipt, and first-class Review lifecycle.
 
 
-Phase 1.15 and 1.16 remain concerned with vision routing and structured extraction/validation respectively. Parent/child candidate data is added only when the actual V1 operation requires it.
+Phase 1.15 and 1.16 establish input preparation/routing and structured candidate extraction/validation respectively. Vision is one possible input capability; structured spreadsheet input may bypass vision. Parent/child candidate data is added only when the actual V1 operation requires it.
 
 
 Phase 7 remains the later generalization point for a second materially different host technology; Phase 1.14 must not become a universal UI automation framework.
