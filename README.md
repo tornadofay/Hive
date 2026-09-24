@@ -308,7 +308,7 @@ The solution and project files are the implementation source for the actual proj
 
 **Phase 0 — Foundations: Complete.**
 
-**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1): 1.1–1.13 complete and verified.** The current repository work is the user-authorized **UI/UX Production Polish maintenance pass**; no later roadmap slice is active. Authoritative current status and verification state remain in `docs/Hive_Current_Status.md` and `docs/Hive_Active_Work.md`.
+**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1): 1.1–1.13 complete and verified.** The latest Hive.Core Production Polish maintenance pass is complete and verified; no later roadmap slice is currently active or authorized. Authoritative current status and implementation scope remain in `docs/Hive_Current_Status.md` and `docs/Hive_Active_Work.md`.
 
 See [Architecture](docs/architecture.md) and [Roadmap](docs/roadmap.md).
 
