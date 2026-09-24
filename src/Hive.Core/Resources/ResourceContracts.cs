@@ -192,6 +192,14 @@ public sealed record ResourceLifecycle
 
     public ResourceLifecycle TransitionTo(ResourceLifecycleStatus next, DateTimeOffset changedAtUtc)
     {
+        if (!Enum.IsDefined(next))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(next),
+                next,
+                "Resource lifecycle status is invalid.");
+        }
+
         if (Status == ResourceLifecycleStatus.Retired &&
             next != ResourceLifecycleStatus.Retired &&
             next != ResourceLifecycleStatus.Active)
