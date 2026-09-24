@@ -122,11 +122,11 @@ The concrete WinForms adapter may internally use the host APIs required to trans
 
 Pure host-integration semantics belong in `Hive.Core` because they must remain dependency-light, host-neutral, and usable by any host adapter. They may reference other pure Core contracts such as Hive identities and resource references, but they must not reference WinForms, HForms, UI controls, SQL providers, or MAF implementation types.
 
-Concrete WinForms adaptation belongs in `Hive.Host.WinForms`. Application-facing orchestration, authorization, and Management operations remain in `Hive.Management`; `Hive.Host.WinForms` must not bypass that boundary for management/application operations.
+Concrete WinForms adaptation belongs in `Hive.Host.WinForms`. `Hive.Management` owns application-facing orchestration and authorization and consumes the host-integration ports through dependency injection/composition. The ports are defined by the neutral Core contract so the dependency direction remains `Hive.Core → Hive.Management → Hive.Host.WinForms`; Management never references the concrete WinForms adapter. `Hive.Host.WinForms` must not bypass Management for management/application operations.
 
 A host-specific adapter may use live host objects internally when required to perform an authorized operation, but those objects must not escape through the neutral public contract. Database access remains owned by the host application's business/data layer; Hive does not execute host SQL merely because an adapter can identify a table or field.
 
-Do not add a new universal host framework merely to support the first V1 host. Create only the neutral contracts required by the actual V1 integration boundary.
+Do not add a new universal host framework merely to support the first V1 host. Create only the Core-level ports and neutral contracts required by the actual V1 integration boundary. Host implementations are supplied by the application composition root.
 
 ## 4. Semantic control model
 
