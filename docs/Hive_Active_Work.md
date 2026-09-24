@@ -4,7 +4,9 @@ Last updated: 2026-09-25
 
 ## Active slice
 
-**Hive.Core Production Polish — user-authorized backend maintenance pass**
+**None — the Hive.Core Production Polish maintenance pass is closed; Phase 1.14 remains inactive.**
+
+The last completed maintenance slice is recorded below for handoff/history.
 
 This is a focused backend contract-hardening pass requested directly by the user after completion of the preceding UI/UX maintenance pass. It does not advance the roadmap or authorize Phase 1.14 or later.
 
