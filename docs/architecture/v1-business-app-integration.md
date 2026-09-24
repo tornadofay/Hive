@@ -424,20 +424,33 @@ ByControls
 ByForm
 ```
 
-and action settings such as:
+and action/settings metadata such as:
 
 ```
 AllowNew
 AllowEdit
 AllowDelete
+AllowRead
 AllowSearch
+AllowExport
+AllowPrint
+AllowReport
+AllowPermissionCheck
+AllowUserLogHandling
+AllowViewLog
 ```
 
-These describe available or intended UI behavior.
+Grid-specific configuration can also expose behavior such as:
 
-The adapter must expose actual supported capabilities based on the current host state rather than assuming every grid supports direct cell/row mutation.
+```
+AllowToAddRows
+AllowToRemoveRows
+editable-column configuration
+```
 
-Examples:
+These values describe available, intended, or configured host UI behavior. They are not Hive authorization grants.
+
+The adapter must expose actual supported capabilities based on the current host state rather than assuming every grid supports direct cell/row mutation. For example, a grid may allow adding rows but require a surrounding editor for modification, or may expose only a subset of editable columns.
 
 ```
 ByAlone
@@ -451,6 +464,8 @@ ByForm
 ```
 
 The exact meaning is host-defined and is translated by the adapter.
+
+The host's edit-mode and action configuration must therefore be translated into bounded capability metadata and, where an operation is supported, a concrete host operation contract. It must never be treated as a permission bypass.
 
 ## 9. UI operations versus business operations
 
@@ -809,6 +824,23 @@ The model never receives:
 - raw host object handles when a semantic contract is sufficient;
 - arbitrary method invocation;
 - secret fields.
+
+### 16.1 HForms configuration is evidence, not a second Hive contract
+
+The production HForms/HControls evidence contains several categories of metadata that should not all become Hive-facing semantics.
+
+`HDataBox` combines:
+
+- CRUD/action flags such as `AllowNew`, `AllowEdit`, `AllowDelete`, `AllowRead`, `AllowSearch`, `AllowExport`, `AllowPrint`, `AllowReport`, `AllowViewLog`;
+- permission/logging behavior such as `AllowPermissionCheck` and `AllowUserLogHandling`;
+- binding state such as `BindingControl` and `Bs`;
+- presentation/application metadata such as `TitleEn`, `TitleAr`, `LanguageType`, and `CodeType`;
+- reporting configuration such as `PrintCopies`, `ReportFileName`, `ReportFormualNumberWordName`, `ReportMainCommandName`, `ReportNumberWordType`, `ReportSourceType`, and `ReportViewMode`;
+- application/data conventions such as `VoidFieldName`.
+
+The neutral adapter should extract only semantics required for a Hive-authorized operation. Binding/data-source information, relevant bilingual labels, field semantics, and actual capabilities may be projected when they are part of the V1 boundary. Reporting, printing, code conventions, and other implementation/application metadata remain host-owned unless a concrete V1 capability requires them.
+
+The production `HDataBox : UserControl` is evidence from the working host. The newer `HActionBar : Control` must not be treated as authoritative merely because it appears to provide a cleaner replacement; its actual production contract and lifecycle must be inspected before Phase 1.14 freezes the adapter. Likewise, `HDataGridView` row-add/remove and column-edit configuration are host behavior to adapt, not Hive authorization.
 
 ## 17. HForms-specific evidence without HForms coupling
 
