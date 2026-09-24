@@ -132,22 +132,32 @@ public sealed record ResourceAccessContext(
 
 public readonly record struct ResourceVersion
 {
+    private readonly bool _isValid;
+
     public ResourceVersion(long value)
     {
         if (value <= 0)
             throw new ArgumentOutOfRangeException(nameof(value), value, "Resource version must be greater than zero.");
 
         Value = value;
+        _isValid = true;
     }
 
     public long Value { get; }
 
+    internal bool IsValid => _isValid;
+
     public static ResourceVersion Initial => new(1);
 
-    public ResourceVersion Next() =>
-        Value == long.MaxValue
+    public ResourceVersion Next()
+    {
+        if (!_isValid)
+            throw new InvalidOperationException("Resource version is not initialized.");
+
+        return Value == long.MaxValue
             ? throw new InvalidOperationException("Resource version limit reached.")
             : new(Value + 1);
+    }
 
     public override string ToString() => Value.ToString();
 }
@@ -297,6 +307,11 @@ public sealed class ResourceEnvelope<TIdentity>
 
         if (EqualityComparer<TIdentity>.Default.Equals(identity, default))
             throw new ArgumentException("Resource identity is required.", nameof(identity));
+
+        if (!version.IsValid)
+            throw new ArgumentException(
+                "A valid positive resource version is required.",
+                nameof(version));
 
         if (owner == default)
             throw new ArgumentException("Resource owner is required.", nameof(owner));
