@@ -357,7 +357,7 @@ public sealed class HiveBootstrapCredentialStoreTests
 
         Assert.True(initialize.IsFailure);
         Assert.Equal("test.bootstrap.failure", initialize.Error!.Code);
-        Assert.Equal(ErrorCategory.External, initialize.Error.Category);
+        Assert.Equal(ErrorCategory.Internal, initialize.Error.Category);
         Assert.Equal(
             "The bootstrap credential could not be resolved.",
             initialize.Error.Message);
