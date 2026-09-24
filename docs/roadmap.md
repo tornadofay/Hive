@@ -292,8 +292,8 @@ Objective: rasterize/prepare non-text-extractable pages and route them to a Visi
 Verify: fixed scanned/image sample, unsupported-capability failure, bounded page/image handling.
 
 ## 1.16 — Structured Extraction & Validation
-Objective: structured-output extraction to typed candidate data with required-field/type/domain validation.
-Verify: valid sample, missing fields, invalid types, malformed model output, rejection path.
+Objective: structured-output extraction to typed candidate data with required-field/type/domain validation. When the target business operation requires it, candidate data may preserve an explicit parent record with nested child-row collections and their relationships; this does not create a generic relational-document framework.
+Verify: valid sample, missing fields, invalid types, malformed model output, parent/child candidate structure when required by the target operation, and rejection path.
 
 ## 1.17 — Business-App Write, Receipt & Review
 Objective: perform governed business-app writes through the authorized host operation boundary and close the loop with durable write attribution and post-write correctness review.
