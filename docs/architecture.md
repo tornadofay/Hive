@@ -296,7 +296,7 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 59. Pure V1 host-integration semantic contracts belong in Hive.Core; host-specific adapters belong outside Core.
 60. Host adapters translate or execute authorized capabilities; they never become the host application's database, business-logic, or authorization owner.
 61. Consequential host row operations require stable row identity for the operation; row position is never authoritative identity. A host key may be mutable, so an update must retain the authoritative pre-operation identity and applicable concurrency/version evidence when available.
-62. A business-operation receipt records the disposition and affected host identities of a consequential host operation; it does not make Hive a mirror of host business state.
+62. A business-operation receipt records the disposition and affected host identities of a consequential host operation, including the authoritative pre-operation target identity and resulting identity when a host key changes; it does not make Hive a mirror of host business state.
 63. Approval and post-write Review are distinct lifecycle boundaries; Review uses authoritative host state and policy-governed verification.
 64. Hive.Management orchestrates authorized host/business operations through Core-defined integration ports; concrete host adapters are supplied by application composition and are never referenced back from Management.
 65. A write Tool is an authorized invocation surface for a business capability; the business operation's semantic contract remains owned by the host-integration/business-operation boundary, not by the Tool or the model.
