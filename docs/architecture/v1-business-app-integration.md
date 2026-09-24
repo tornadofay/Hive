@@ -533,16 +533,17 @@ BusinessOperationProposal
 ├── identity/lookup references
 ├── intended changes
 ├── provenance
+├── idempotency/correlation identity
 └── expected host state/version where available
 ```
 
-The proposal is the object that reaches Hive authorization and, where policy requires it, the existing V1 Approval boundary.
+The proposal is the object that reaches Hive authorization and, where policy requires it, the existing V1 Approval boundary. Its logical `OperationId` remains stable across retries/reconciliation of the same intended operation; a retry does not create a new logical operation merely because execution is repeated.
 
 Hive does not authorize a raw control click merely because the model requested one.
 
 ## 12. Business-operation receipt
 
-A successful or partially successful host write must produce a durable receipt.
+Every consequential operation attempt that is submitted to the host boundary must produce a durable receipt, including successful, rejected-before-mutation, partially applied, known-failed, and unknown outcomes.
 
 The receipt is not merely a success boolean and must not be replaced by the WorkItem status alone.
 
