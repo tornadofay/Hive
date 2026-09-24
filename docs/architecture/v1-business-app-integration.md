@@ -698,11 +698,11 @@ A review finding must preserve the discrepancy rather than silently rewriting th
 The completed architecture is:
 
 ```
-Image
+Input submission
   ↓
-Extraction
+Input-specific preparation / routing
   ↓
-Typed candidate
+Structured candidate
   ↓
 Validation
   ↓
@@ -720,7 +720,7 @@ Review policy
   ↓
 Automated verification and/or human review
   ↓
-VerifiedCorrect / VerifiedIncorrect / unresolved
+result
 ```
 
 This separates:
