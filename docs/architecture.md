@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 39 — HDataBox integration evidence finalized)
+Last updated: 2026-09-24 (rev 40 — HDataGridView lifecycle evidence finalized)
 
 
 
