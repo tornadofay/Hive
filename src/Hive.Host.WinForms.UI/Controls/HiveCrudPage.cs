@@ -179,6 +179,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         {
             Width = 280,
             Height = 32,
+            AutoSize = false,
             BorderStyle = BorderStyle.FixedSingle,
             Margin = Padding.Empty,
             Padding = new Padding(8, 6, 8, 6),
@@ -208,8 +209,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         {
             Width = 132,
             Height = 32,
+            IntegralHeight = false,
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Margin = Padding.Empty,
+            Margin = new Padding(0, 4, 0, 4),
             Visible = false,
             AccessibleName = "Status filter",
             AccessibleDescription = "Filter the current list by resource lifecycle status."
@@ -1534,11 +1536,13 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                 ? "No pages"
                 : $"Page {_pagination.PageNumber} of {totalPages}";
 
+            _statusTone = HiveStatusTone.Neutral;
             _statusLabel.Text = BuildStatusText(
                 matchingCount,
                 visibleCount,
                 _pagination.PageNumber,
                 _pageSize);
+            ApplyStatusColor();
             UpdateEmptyState(matchingCount);
         }
         finally
