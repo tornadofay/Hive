@@ -300,6 +300,8 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 63. Approval and post-write Review are distinct lifecycle boundaries; Review uses authoritative host state and policy-governed verification.
 64. Hive.Management orchestrates authorized host/business operations through Core-defined integration ports; concrete host adapters are supplied by application composition and are never referenced back from Management.
 65. A write Tool is an authorized invocation surface for a business capability; the business operation's semantic contract remains owned by the host-integration/business-operation boundary, not by the Tool or the model.
+66. V1 vector storage uses SQL Server's native vector capability behind a replaceable `IVectorStore`; vector storage is not a reason to add a separate vector database, and semantic vector retrieval still requires an embedding/vectorization capability.
+67. A future lightweight/embedded Hive deployment may provide a first-class persistence backend behind the same Hive persistence/resource contracts; it must not fork the logical resource model, and a custom database engine is not assumed unless a measured requirement justifies building one.
 
 ---
 
@@ -327,4 +329,4 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 1. Which authentication provider should Phase 8 support when real multi-user requirements arrive (for example local accounts, Microsoft/Entra, Google, or a company IdP)?
 2. Whether a future automated UI-testing tool is warranted after real UI test-maintenance needs appear. This is not required for current development because the developer performs manual testing.
 
-The V1 integration mode is not a deferred decision: Hive explicitly supports both API/service and bounded WinForms UI integration. The first V1 input type is not a deferred decision: it is an image.
+The V1 integration mode is not a deferred decision: Hive explicitly supports both API/service and bounded WinForms UI integration. The first V1 input type is not a deferred decision: it is an image. V1 persistence remains SQL Server; a future embedded/local deployment profile is a portability/deployment concern, not a second V1 resource model.
