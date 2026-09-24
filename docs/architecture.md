@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 47 — V1 target-status and host/business boundary wording clarified)
+Last updated: 2026-09-24 (rev 48 — cognitive outcome, risk, Dream, and learning semantics)
 
 
 
@@ -100,6 +100,7 @@ Longer-term capabilities such as persistent individual cognition, offline Dream 
 6. A reusable Workspace/control surface over authoritative Hive state, approval, and post-write review.
 7. Production-oriented automated tests for normal paths, edge cases, concurrency, recovery, persistence, and security.
 8. Microsoft Agent Framework (MAF) wherever MAF already owns the required mechanism.
+9. CognitiveAgents learn from evaluated real outcomes and bounded simulated evidence: they can recover from mistakes, reinforce and optimize successes, stress-test apparently successful methods, and adapt future strategy without confusing simulation with experience.
 
 ### Logical ownership hierarchy
 
@@ -293,6 +294,16 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 56. Questions are first-class, provenance-bearing, specialization-aware cognitive objects; semantically duplicate questions should be avoided when existing evidence is sufficient.
 57. CognitiveAgents remain complete autonomous cognitive entities; CognitiveHive adds collective cognition without owning or replacing member cognition.
 58. New lifecycle, Dream, Question, or collective-cognition behavior must remain additive to the generation that owns it and must not become an implicit prerequisite of the base Agent/Hive.
+59. CognitiveAgent outcome evaluation is distinct from technical execution status: an execution failure is not automatically a cognitive Mistake, and an execution success is not automatically a cognitive Success.
+60. A CognitiveAgent outcome evaluation preserves the relevant expected result or success criteria, observed actual result, evaluation evidence, provenance, and attribution/credit context.
+61. Mistake and Success are first-class cognitive outcome interpretations. A Mistake represents an evaluated failure to satisfy the applicable objective or success criteria; a Success represents an evaluated achievement of those criteria. Neither term is defined solely by transport or execution status.
+62. Cognitive Risk, Fear, and Confidence are first-class CognitiveAgent state used by Cognitive Strategy. They are contextual and evidence-backed, may change strategy, and never grant, remove, or bypass authorization, capability, safety, scope, budget, or host-policy enforcement.
+63. Dreams may be purpose-specific cognitive simulations, including Recovery, Optimization, Nightmare/Stress-Test, Reconsideration, and Preparation. Dream evidence remains simulated/predicted/hypothetical and is never recorded as actual experience.
+64. A Recovery Dream may explore alternatives after a Mistake. An Optimization Dream may search for a better way to reproduce a Success. A Nightmare/Stress-Test Dream may actively search for plausible conditions under which a successful strategy would fail.
+65. Counterfactual conclusions, including Regret, must remain distinguishable from observations and information that were actually available at the original decision point.
+66. Learning may use both positive and negative evidence, but a learned rule or strategy change must preserve applicability conditions, provenance, evidence type, confidence/support, and attribution rather than collapsing evidence into an unconditional rule.
+67. Repeated Success may increase support for a method under observed conditions without proving that the method is optimal or generally reliable; repeated Mistakes may increase caution without proving one cause when attribution remains uncertain.
+68. Cognitive adaptation may learn that a task can be solved deterministically or with fewer model calls; such optimization is a governed strategy/resource change, not an implicit runtime authorization or an automatic change to the base Agent generation.
 59. Pure V1 host-integration semantic contracts belong in Hive.Core; host-specific adapters belong outside Core.
 60. Host adapters translate or execute authorized capabilities; they never become the host application's database, business-logic, or authorization owner.
 61. Consequential host row operations require stable row identity for the operation; row position is never authoritative identity. A host key may be mutable, so an update must retain the authoritative pre-operation identity and applicable concurrency/version evidence when available.
