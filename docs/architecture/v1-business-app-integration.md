@@ -22,11 +22,11 @@ Examples of host implementations may include:
 
 - native WinForms controls;
 - application-owned/custom WinForms controls;
-- HForms/HControls;
+- another application-owned/custom control or data framework;
 - another developer's control library;
 - another host integration implementation added later.
 
-Hive must not make HForms, HControls, `IHyperControl`, `HDataBox`, `HActionBar`, `TableInfo`, or any other application-specific type a platform dependency.
+Hive must not make any application-specific control, data, UI, ORM, or business-layer type a platform dependency.
 
 The first concrete implementation remains the V1 WinForms boundary. Generic cross-host technology support remains Phase 7 work; the neutral contracts in this document exist so the V1 WinForms adapter itself is not vendor/control-library-specific.
 
@@ -120,7 +120,7 @@ The concrete WinForms adapter may internally use the host APIs required to trans
 
 ### 3.1 Contract placement
 
-Pure host-integration semantics belong in `Hive.Core` because they must remain dependency-light, host-neutral, and usable by any host adapter. They may reference other pure Core contracts such as Hive identities and resource references, but they must not reference WinForms, HForms, UI controls, SQL providers, or MAF implementation types.
+Pure host-integration semantics belong in `Hive.Core` because they must remain dependency-light, host-neutral, and usable by any host adapter. They may reference other pure Core contracts such as Hive identities and resource references, but they must not reference WinForms, concrete UI controls, SQL providers, ORMs, host business types, or MAF implementation types.
 
 Concrete WinForms adaptation belongs in `Hive.Host.WinForms`. `Hive.Management` owns application-facing orchestration and authorization and consumes the host-integration ports through dependency injection/composition. The ports are defined by the neutral Core contract so the dependency direction remains `Hive.Core → Hive.Management → Hive.Host.WinForms`; Management never references the concrete WinForms adapter. `Hive.Host.WinForms` must not bypass Management for management/application operations.
 
@@ -260,39 +260,27 @@ Do not infer a relationship merely because:
 
 The host adapter may use its own relationship metadata to establish the semantic relationship.
 
-### 5.2 HForms/TableInfo mapping
+### 5.2 Established host-provided parent/child mapping
 
-The existing HForms pattern provides useful evidence for what the neutral contract must be able to represent.
+A real production host inspected for V1 establishes the pattern the neutral contract must represent without exposing the host application's implementation types.
 
 Conceptually:
 
-```
-TableInfo.MainTable
-        ↓
-root business/data entity
-
-TableInfo.PkName
-        ↓
-stable record identity
-
-TableInfo.ChildTable[]
-        ↓
-related child data sets
-
-TableInfo.DeleteType / VoidFieldName
-        ↓
-host-specific deletion semantics
-
-UseYear / UseBranch / related filters
-        ↓
-host-side data-selection/business context
+```text
+root data surface
+      ↓
+explicit child-collection metadata
+      ↓
+child data surface
+      ↓
+parent identity → child foreign-key relationship
 ```
 
-The adapter must translate those concepts into Hive semantics.
+The relationship is host-provided and authoritative for the adapter. It must not be inferred merely from visual nesting, similar names, hidden fields, or arbitrary database metadata.
 
-It must not expose `TableInfo` itself or its generated SQL methods.
+The adapter may translate host-provided relationship metadata into Hive's semantic parent/child data-surface contract. Host-specific deletion rules, filtering/partition context, data containers, and persistence helpers remain inside the adapter or host business layer.
 
-In particular, methods that generate `INSERT`, `UPDATE`, `DELETE`, or `SELECT` statements remain host implementation details. Hive does not receive an unrestricted SQL execution contract.
+For create operations, the host may propagate the parent identity into new child rows. For load and edit operations, the adapter may expose the resulting parent/child data surfaces without exposing the host's database objects, generated SQL, or binding containers.
 
 ## 6. Stable row identity
 
@@ -382,90 +370,49 @@ A lookup column is a semantic relationship, not an executable SQL expression.
 
 Conceptually:
 
-```
+```text
 Lookup
 ├── identity
-├── display field
-├── value field
+├── display value
+├── stored value
 └── bounded filtering/query capability
 ```
 
-HForms properties such as:
-
-```
-FillTableName
-FillDisplayFieldName
-FillValueFieldName
-FillFilterQuery
-```
-
-may be translated into that semantic model.
-
-`FillFilterQuery` must never be exposed to the model as executable SQL.
+A host may provide table/entity names, display/value field metadata, or a host-defined filter descriptor. Those details are adapter inputs and must be translated into a bounded lookup contract.
 
 The host adapter owns actual lookup execution and returns bounded options such as:
 
-```
+```text
 value = 42
 display = "Product A"
 ```
 
-The model can choose an option; it cannot execute arbitrary lookup SQL.
+The model can choose an option; it cannot execute arbitrary lookup SQL or arbitrary host queries.
 
-## 8. UI edit modes and operation capabilities
+## 8. UI edit surfaces and operation capabilities
 
-UI configuration may describe how the host expects data entry to happen.
+UI configuration may describe how the host expects data entry to happen. The neutral contract should preserve the semantic distinction without publishing private host-specific mode names.
 
-Examples include:
+Common host patterns include:
 
-```
-ByAlone
-ByControls
-ByForm
-```
+```text
+Direct grid editing
+    → the grid itself is the editing surface; configured cell/row add/edit/delete may be available
 
-and action/settings metadata such as:
+Same-form controls
+    → controls surrounding the grid perform add/edit/delete for the selected row
 
-```
-AllowNew
-AllowEdit
-AllowDelete
-AllowRead
-AllowSearch
-AllowExport
-AllowPrint
-AllowReport
-AllowPermissionCheck
-AllowUserLogHandling
-AllowViewLog
+Dedicated editor form/dialog
+    → a separate input surface performs add/edit/delete for the selected row
 ```
 
-Grid-specific configuration can also expose behavior such as:
+These are interaction patterns, not authorization grants.
 
-```
-AllowToAddRows
-AllowToRemoveRows
-editable-column configuration
-```
+Action/settings metadata may describe capabilities such as add, edit, delete, read, search, export, print, report, or view-only behavior. Grid configuration may separately describe whether rows/cells are editable or whether add/remove actions are exposed.
 
-These values describe available, intended, or configured host UI behavior. They are not Hive authorization grants.
+The adapter must expose the actual supported capability for the current host state rather than assuming that one edit pattern implies another. A host may allow row creation but require a dedicated editor for modification, or expose only a subset of editable fields.
 
-The adapter must expose actual supported capabilities based on the current host state rather than assuming every grid supports direct cell/row mutation. For example, a grid may allow adding rows but require a surrounding editor for modification, or may expose only a subset of editable columns.
-
-```
-ByAlone
-    → the grid itself is the editing surface; direct cell/row editing and configured add/delete may be available
-
-ByControls
-    → controls on the same form as the DataGridView perform add/edit/delete for the selected grid row
-
-ByForm
-    → an input dialog/form performs add/edit/delete for the selected grid row
-```
-
-The exact meaning is host-defined and is translated by the adapter.
-
-The host's edit-mode and action configuration must therefore be translated into bounded capability metadata and, where an operation is supported, a concrete host operation contract. It must never be treated as a permission bypass.
+Host interaction configuration never bypasses Hive authorization.
 
 ## 9. UI operations versus business operations
 
@@ -825,155 +772,66 @@ The model never receives:
 - arbitrary method invocation;
 - secret fields.
 
-## 17. HForms-specific evidence without HForms coupling
+## 17. Host-specific implementation evidence and public-document boundary
 
-The supplied production HForms source demonstrates why the neutral contract must be richer than ordinary `DataGridView` metadata while remaining independent of HForms.
+The V1 host-integration design was informed by inspection of a real production WinForms application with application-owned controls and bound parent/child data surfaces. That inspection establishes implementation evidence for the adapter; it does not establish a public Hive dependency.
 
-### 17.1 Host object relationships
+### 17.1 Established host semantics
 
-The HForms parent/child relationship is explicit; it is not inferred from visual nesting alone:
+The inspected host establishes these reusable semantic patterns:
 
-```text
-HDataBox.MainTable
-    ↓
-TableInfo.ChildTable[]
-    ↓
-child TableInfo.TableName ↔ HDataGridView/HList.DataSourceName
-    ↓
-parent MainTable.PkName → child foreign-key field
-```
+- an explicit root-to-child data relationship supplied by host metadata;
+- parent identity propagation into child rows during create;
+- host-owned required/unique validation and veto points before a save;
+- a host business/save boundary followed by an authoritative result or reload;
+- editable child collections that can be changed in the host data surface before the surrounding business save;
+- multiple UI edit-surface patterns, including direct grid editing, same-form supporting controls, and dedicated editor forms/dialogs;
+- host-generated record identity returned after creation;
+- positional row addresses that are insufficient as persisted identity;
+- selection lists that can synchronize selection state from bound data;
+- semantic field/column metadata for binding, type, key, generation, nullability, requiredness, computed values, and lookup behavior.
 
-When loading, HDataBox maps the matching child `DataTable` into the bound grid/list. When preparing an insert, HDataBox writes the parent primary-key value into the child foreign-key field.
+These semantics are useful adapter inputs. They are not Hive business logic, database contracts, or authorization grants.
 
-This establishes an authoritative host relationship that the adapter can translate into Hive's semantic parent/child data-surface contract. It does not justify exposing `TableInfo`, `DataSet`, `DataTable`, or HForms controls as Hive public API.
+### 17.2 Public documentation boundary
 
-### 17.2 HDataBox save lifecycle
+Public Hive documentation intentionally describes the neutral semantics and contracts, not the private implementation that happened to provide the evidence.
 
-The supplied production save path is:
+Do not publish:
 
-```text
-user Save
-   ↓
-binding/form validation
-   ↓
-required-field validation
-   ↓
-unique-field validation
-   ↓
-CheckBeforeSave veto
-   ↓
-SaveRecord host operation boundary
-   ↓
-PerformAfterSave(ID)
-   ↓
-authoritative record reload
-   ↓
-host logging
-```
+- private host class, interface, property, method, or event names;
+- source-code excerpts from a private host application;
+- host-specific field/control mappings that are not part of Hive's neutral contract;
+- private business conventions merely because an adapter currently uses them;
+- host-generated SQL or persistence implementation details.
 
-The exact persistence/business implementation behind `SaveRecord` remains host-owned. Hive therefore needs an authorized business-operation capability, not unrestricted access to HDataBox-generated SQL or persistence helpers.
-
-### 17.3 HDataGridView and AddGrid lifecycle
-
-The supplied grid/dialog source establishes:
-
-- `HDataGridView.Dt` is the editable child data surface and `ReadDataTable()` binds it directly as the underlying `DataGridView.DataSource`.
-- `CellEndEdit` calls `Validate()` so current cell edits are committed into the bound data surface before the parent HDataBox save serializes child rows.
-- Grid add/edit button handling is gated to `GridEditMode.ByForm` and to the surrounding HDataBox New/Edit modes.
-- Add/edit/delete have explicit host veto hooks: `CheckBeforeAddGrid`, `CheckBeforeEditGrid`, and `CheckBeforeDeleteGrid`.
-- `ByForm` creates the configured `GridDialog`, links it through `RelatedHDGV`, and selects Add/Edit dialog mode.
-- `AddGrid` performs required/repeat validation through `CheckRequiredData()` and `CheckRepeatData()` before applying row data.
-- `RelatedHDGV.PerformGridDataChanged(...)` raises the host grid-data-change path, with post-add/post-edit/post-save extension hooks around it.
-- Delete ends the current edit, removes the selected row from `Dt`, and then raises the grid-data-change/after-delete hooks. This is an in-memory child-surface mutation; the surrounding HDataBox save remains the persistence/business boundary.
-- The supplied edit/delete handlers address the selected grid row through `CurrentRow`/`row.Index`. Those are positional UI addresses, never authoritative persisted identity. The adapter must obtain the actual row key from the bound data surface before consequential row operations.
-
-### 17.4 HForms identity and generated values
-
-The current production `TableInfo` model uses a single integer primary key identified by `PkName`. The neutral Hive contract must not generalize that host fact into a requirement that every future host use integer or immutable keys.
-
-For this HForms host:
-
-- the parent key is `MainTable.PkName`;
-- child tables have their own `TableInfo.PkName`;
-- child insert preparation skips the child primary-key field so the host can provide/generate it;
-- `PerformAfterSave(ID)` exposes the resulting saved record identity after create;
-- row position remains positional and is not a persisted identity.
-
-A host may change a key value as part of an update only when its business contract permits that change. The adapter must retain the authoritative pre-operation identity when locating the record to update.
-
-### 17.5 HForms edit modes
-
-The supplied host semantics are:
+The intended relationship is:
 
 ```text
-ByAlone
-    → the grid itself is the editing surface; direct cell/row editing and configured add/delete may be available.
-
-ByControls
-    → controls on the same form as the DataGridView perform add/edit/delete for the selected grid row.
-
-ByForm
-    → an input dialog/form performs add/edit/delete for the selected grid row.
+private host source
+      ↓
+host adapter / design knowledge
+      ↓
+neutral Hive contract
+      ↓
+public Hive documentation
 ```
 
-These are interaction modes, not authorization grants. The adapter exposes the bounded capability actually supported by the current host state; Hive authorization remains separate.
+A future public adapter may document its own public integration contract when that contract is intentionally part of Hive's supported surface.
 
-### 17.6 HList selection synchronization
+### 17.3 Remaining adapter-fidelity questions
 
-`HList.ReadDataTable()` reads each child data row's configured `DbFieldName` and checks the matching list-item ID in the selection list.
+Before freezing concrete Phase 1.14 adapter types, the remaining host-specific questions are limited to the adapter implementation boundary:
 
-This establishes a host selection/state synchronization pattern. It is not evidence that every HList is a generic CRUD data-entry surface.
+- exact semantic value access required by the neutral descriptor;
+- exact field/column metadata and runtime mapping from a bound row to stable persisted identity;
+- generated/computed-field behavior during create and edit serialization;
+- complete existing-child edit serialization;
+- bounded lookup execution and result mapping;
+- host concurrency/version behavior;
+- any host action contract actually required by V1.
 
-### 17.7 Neutral projection of HControl and grid metadata
-
-The adapter should not expose the complete `IHyperControl` interface wholesale. Where needed by V1, the neutral projection may carry the host semantics represented by the supplied controls, including:
-
-```text
-ControlType
-DisplayName
-TitleEn / TitleAr
-
-DataSourceName
-DataSourceIndex
-PropertyName
-IsBinding
-UpdateMode
-
-DbFieldName
-DataType
-DataTypeLength
-DataTypePrecision
-DataTypeScale
-DataTypeSize
-
-IsPrimaryKey
-GenerationMode
-IsNullable
-IsConcurrencyToken
-
-IsSearchField
-IsRequired / RequiredField
-```
-
-Where the host control contract provides value access, the adapter may translate bounded `GetValue()` / `SetValue()` behavior without exposing raw control objects.
-
-The supplied HDataGridView column metadata similarly includes field/type/binding/search/required/repeat/property/title/computed semantics. These are useful semantic inputs to the adapter, not direct database commands.
-
-Grid configuration such as `AllowToAddRows`, `AllowToRemoveRows`, `EnableViewMode`, `ShowAdd`, `ShowEdit`, and `ShowDelete` describes configured host behavior. It never grants Hive authorization.
-
-### 17.8 HForms components remain adapter inputs
-
-The adapter relationship is:
-
-```text
-HDataBox / HDataGridView / HList / TableInfo
-                  ↓
-          Hive neutral semantics
-```
-
-`HActionBar : Control` is unfinished and is therefore not treated as an authoritative V1 action contract. It may become an adapter input only when its concrete production semantics exist and the adapter actually requires them.
-
-The adapter translates host lifecycle, parent/child relationships, field/column semantics, row identity, generated/computed behavior, lookup behavior, and bounded UI interaction. It must not make Hive understand HForms itself.
+These questions remain implementation inputs and must not be promoted into public Hive architecture merely because they were observed in one private host implementation.
 
 ## 18. Non-goals for V1
 
