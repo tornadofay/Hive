@@ -34,6 +34,98 @@ public sealed class EventInfrastructureTests
     }
 
     [Fact]
+    public void EventEnvelope_RejectsDefaultIdentityAndUndefinedPayload()
+    {
+        using var document = JsonDocument.Parse("""{"name":"Alice"}""");
+
+        Assert.Throws<ArgumentException>(
+            () => EventEnvelope.Create(
+                default,
+                EventTestData.Timestamp,
+                new EventType("customer.created"),
+                new EventPayloadVersion(1),
+                CorrelationId.New(),
+                null,
+                document.RootElement));
+
+        Assert.Throws<ArgumentException>(
+            () => EventEnvelope.Create(
+                EventId.New(),
+                EventTestData.Timestamp,
+                new EventType("customer.created"),
+                new EventPayloadVersion(1),
+                default,
+                null,
+                document.RootElement));
+
+        Assert.Throws<ArgumentException>(
+            () => EventEnvelope.Create(
+                EventId.New(),
+                EventTestData.Timestamp,
+                new EventType("customer.created"),
+                new EventPayloadVersion(1),
+                CorrelationId.New(),
+                default,
+                document.RootElement));
+
+        Assert.Throws<ArgumentException>(
+            () => EventEnvelope.Create(
+                EventId.New(),
+                EventTestData.Timestamp,
+                new EventType("customer.created"),
+                new EventPayloadVersion(1),
+                CorrelationId.New(),
+                null,
+                default(JsonElement)));
+    }
+
+    [Fact]
+    public void UpcasterRegistry_NormalizesUpcasterFailures()
+    {
+        var eventType = new EventType("customer.created");
+        var registry = new EventUpcasterRegistry();
+        registry.Register(new ThrowingUpcaster(eventType));
+
+        using var document = JsonDocument.Parse("""{"name":"Alice"}""");
+
+        var exception = Assert.Throws<EventSerializationException>(
+            () => registry.UpcastTo(
+                eventType,
+                new EventPayloadVersion(1),
+                new EventPayloadVersion(2),
+                document.RootElement));
+
+        Assert.Equal(
+            "event.schema.upcaster-failed",
+            exception.Error.Code);
+        Assert.Equal(
+            ErrorCategory.Serialization,
+            exception.Error.Category);
+        Assert.IsType<InvalidOperationException>(exception.InnerException);
+    }
+
+    [Fact]
+    public void UpcasterRegistry_RejectsUndefinedUpcasterPayload()
+    {
+        var eventType = new EventType("customer.created");
+        var registry = new EventUpcasterRegistry();
+        registry.Register(new UndefinedPayloadUpcaster(eventType));
+
+        using var document = JsonDocument.Parse("""{"name":"Alice"}""");
+
+        var exception = Assert.Throws<EventSerializationException>(
+            () => registry.UpcastTo(
+                eventType,
+                new EventPayloadVersion(1),
+                new EventPayloadVersion(2),
+                document.RootElement));
+
+        Assert.Equal(
+            "event.schema.upcaster-invalid-payload",
+            exception.Error.Code);
+    }
+
+    [Fact]
     public void EventPayloadVersion_RejectsNonPositiveValues()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new EventPayloadVersion(0));
@@ -220,6 +312,40 @@ public sealed class EventInfrastructureTests
             using var document = JsonDocument.Parse("""{"name":"Alice","kind":"customer","importance":42}""");
             return document.RootElement.Clone();
         }
+    }
+
+    private sealed class ThrowingUpcaster : IEventUpcaster
+    {
+        public ThrowingUpcaster(EventType eventType)
+        {
+            EventType = eventType;
+        }
+
+        public EventType EventType { get; }
+
+        public EventPayloadVersion FromVersion => new(1);
+
+        public EventPayloadVersion ToVersion => new(2);
+
+        public JsonElement Upcast(JsonElement payload) =>
+            throw new InvalidOperationException("simulated upcaster failure");
+    }
+
+    private sealed class UndefinedPayloadUpcaster : IEventUpcaster
+    {
+        public UndefinedPayloadUpcaster(EventType eventType)
+        {
+            EventType = eventType;
+        }
+
+        public EventType EventType { get; }
+
+        public EventPayloadVersion FromVersion => new(1);
+
+        public EventPayloadVersion ToVersion => new(2);
+
+        public JsonElement Upcast(JsonElement payload) =>
+            default;
     }
 
     private sealed class InvalidUpcaster : IEventUpcaster
