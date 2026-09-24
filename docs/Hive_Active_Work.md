@@ -51,7 +51,7 @@ User-run on 2026-09-24: `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — **1
 
 The previously failing CRUD filter test now passes after the explicit `SearchText` rebuild fix.
 
-The remaining failure is `HiveEditorLayout_KeepsSingleLineEditorsAtCompactHeight`. The previous production fix now brings the single-line `TextBox` to the intended 32px height. The remaining `ComboBox` measured 23px because native `IntegralHeight` behavior still constrained its laid-out height. `HiveEditorLayout` now disables `IntegralHeight` for compact combo boxes while retaining the shared 32px compact-editor contract.
+The remaining failure is `HiveEditorLayout_KeepsSingleLineEditorsAtCompactHeight`. The single-line `TextBox` now reaches the intended 32px height, but the `ComboBox` remained at 23px even after disabling native `IntegralHeight`. The compact-editor implementation now also enforces the resolved compact height through `MinimumSize.Height`, preventing native layout from shrinking a compact editor below the shared contract.
 
 This latest production fix has **not yet been verified by a rerun**. The maintenance slice remains open pending the next test result and the existing manual UI verification.
 
