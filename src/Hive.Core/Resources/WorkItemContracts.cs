@@ -20,8 +20,25 @@ public sealed record WorkItemAttachmentMetadata
                 nameof(fileName));
         }
 
-        if (string.IsNullOrWhiteSpace(mediaType) ||
-            !mediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(mediaType))
+        {
+            throw new ArgumentException(
+                "V1 WorkItem attachments must use an image media type.",
+                nameof(mediaType));
+        }
+
+        var normalizedMediaType = mediaType.Trim();
+
+        if (normalizedMediaType.Length > 200)
+        {
+            throw new ArgumentException(
+                "Attachment media type cannot exceed 200 characters.",
+                nameof(mediaType));
+        }
+
+        if (!normalizedMediaType.StartsWith(
+                "image/",
+                StringComparison.OrdinalIgnoreCase))
         {
             throw new ArgumentException(
                 "V1 WorkItem attachments must use an image media type.",
@@ -51,7 +68,7 @@ public sealed record WorkItemAttachmentMetadata
                 nameof(sha256));
 
         FileName = fileName;
-        MediaType = mediaType.Trim();
+        MediaType = normalizedMediaType;
         ContentLength = contentLength;
         Sha256 = sha256.ToLowerInvariant();
     }
@@ -84,8 +101,25 @@ public sealed class WorkItemImageSubmission
                 nameof(fileName));
         }
 
-        if (string.IsNullOrWhiteSpace(mediaType) ||
-            !mediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(mediaType))
+        {
+            throw new ArgumentException(
+                "Image submissions must use an image media type.",
+                nameof(mediaType));
+        }
+
+        var normalizedMediaType = mediaType.Trim();
+
+        if (normalizedMediaType.Length > 200)
+        {
+            throw new ArgumentException(
+                "Image submission media type cannot exceed 200 characters.",
+                nameof(mediaType));
+        }
+
+        if (!normalizedMediaType.StartsWith(
+                "image/",
+                StringComparison.OrdinalIgnoreCase))
         {
             throw new ArgumentException(
                 "Image submissions must use an image media type.",
@@ -106,7 +140,7 @@ public sealed class WorkItemImageSubmission
         }
 
         FileName = fileName;
-        MediaType = mediaType.Trim();
+        MediaType = normalizedMediaType;
         Content = content.ToArray();
     }
 
