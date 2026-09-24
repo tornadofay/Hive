@@ -212,6 +212,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             return;
 
         _testButton.Enabled = false;
+        SetTestStatus("Testing connection...", HiveStatusTone.Information);
         try
         {
             var result = await _management
