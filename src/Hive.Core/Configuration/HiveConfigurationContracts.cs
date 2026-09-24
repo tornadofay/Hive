@@ -108,6 +108,14 @@ public sealed record HivePersistenceConfiguration
                 nameof(bootstrapCredential));
         }
 
+        if (authenticationMode == HiveSqlAuthenticationMode.WindowsIntegrated &&
+            bootstrapCredential is not null)
+        {
+            throw new ArgumentException(
+                "A bootstrap credential must not be supplied for Windows integrated authentication.",
+                nameof(bootstrapCredential));
+        }
+
         if (commandTimeoutSeconds <= 0)
             throw new ArgumentOutOfRangeException(nameof(commandTimeoutSeconds));
 
