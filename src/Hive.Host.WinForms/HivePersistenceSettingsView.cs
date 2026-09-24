@@ -296,7 +296,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
                     .ConfigureAwait(true);
             }
 
-            SetStatus(result.Error!.Message, isError: true);
+            SetStatus(result.Error!.Message, HiveStatusTone.Error);
 
             HiveUiErrorReporter.Report(
                 FindForm(),
@@ -378,7 +378,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         if (result.IsFailure)
         {
-            SetStatus(result.Error!.Message, isError: true);
+            SetStatus(result.Error!.Message, HiveStatusTone.Error);
 
             HiveUiErrorReporter.Report(
                 FindForm(),
@@ -415,7 +415,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         }
         catch (ArgumentException exception)
         {
-            SetStatus(exception.Message, isError: true);
+            SetStatus(exception.Message, HiveStatusTone.Error);
 
             HiveUiErrorReporter.Report(
                 FindForm(),
@@ -666,7 +666,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         }
         catch (Exception exception)
         {
-            SetStatus(exception.Message, isError: true);
+            SetStatus(exception.Message, HiveStatusTone.Error);
 
             HiveUiErrorReporter.Report(
                 FindForm(),
