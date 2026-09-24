@@ -154,10 +154,16 @@ public sealed class EventInfrastructureTests
     }
 
     [Fact]
-    public void EventType_TrimsAndRejectsBlankValues()
+    public void EventType_TrimsRejectsBlankValuesAndHonorsPersistenceLength()
     {
         Assert.Equal("customer.created", new EventType("  customer.created  ").Value);
         Assert.Throws<ArgumentException>(() => new EventType(" "));
+
+        var maxLength = new EventType(new string('x', 200));
+        Assert.Equal(200, maxLength.Value.Length);
+
+        Assert.Throws<ArgumentException>(
+            () => new EventType(new string('x', 201)));
     }
 
     [Fact]
@@ -313,6 +319,29 @@ public sealed class EventInfrastructureTests
     }
 
     [Fact]
+    public void SnapshotFolder_PreservesReducerCancellation()
+    {
+        var registry = new EventStateReducerRegistry<int>();
+        var eventType = new EventType("customer.cancelled");
+        registry.Register(new CancellingReducer(eventType));
+
+        var serializer = new JsonEventSerializer();
+        var envelope = serializer.CreateEnvelope(
+            EventId.New(),
+            EventTestData.Timestamp,
+            eventType,
+            new EventPayloadVersion(1),
+            CorrelationId.New(),
+            null,
+            new CustomerCreated("Alice", 42));
+
+        Assert.Throws<OperationCanceledException>(
+            () => new EventSnapshotFolder<int>(
+                registry,
+                serializer).Fold(0, [envelope]));
+    }
+
+    [Fact]
     public void ReducerRegistry_RejectsDefaultEventTypeOrVersion()
     {
         var registry = new EventStateReducerRegistry<int>();
@@ -448,6 +477,24 @@ public sealed class EventInfrastructureTests
             EventEnvelope envelope,
             JsonElement payload) =>
             throw new InvalidOperationException("secret payload");
+    }
+
+    private sealed class CancellingReducer : IEventStateReducer<int>
+    {
+        public CancellingReducer(EventType eventType)
+        {
+            EventType = eventType;
+        }
+
+        public EventType EventType { get; }
+
+        public EventPayloadVersion CurrentPayloadSchemaVersion => new(1);
+
+        public int Apply(
+            int state,
+            EventEnvelope envelope,
+            JsonElement payload) =>
+            throw new OperationCanceledException();
     }
 
     private sealed class InvalidReducer : IEventStateReducer<int>
