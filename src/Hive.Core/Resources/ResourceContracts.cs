@@ -209,6 +209,11 @@ public sealed record ResourceProvenance
         if (correlationId == default)
             throw new ArgumentException("CorrelationId is required.", nameof(correlationId));
 
+        if (source is { } sourceReference && !sourceReference.IsValid)
+            throw new ArgumentException(
+                "Source resource reference must be valid when supplied.",
+                nameof(source));
+
         CreatedBy = createdBy;
         CreatedAtUtc = createdAtUtc.ToUniversalTime();
         CorrelationId = correlationId;
