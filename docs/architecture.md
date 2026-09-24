@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 46 — V1 phase-boundary and WorkItem lifecycle wording clarified)
+Last updated: 2026-09-24 (rev 47 — V1 target-status and host/business boundary wording clarified)
 
 
 
