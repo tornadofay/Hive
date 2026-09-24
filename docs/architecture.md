@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 34 — V1 host-adapter ports, operation receipts, and review reconciliation finalized)
+Last updated: 2026-09-24 (rev 35 — V1 host-operation lifecycle and durable attempt reconciliation clarified)
 
 
 
