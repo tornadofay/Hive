@@ -88,7 +88,7 @@ A member Agent inside a Hive normally requests missing specialties from the pare
 
 `Hive.Workspace` is the human-facing operational surface over `Hive.Management`.
 
-For **V1**, the Workspace is the operational surface for supported input submissions and their resulting WorkItems:
+For **V1**, the intended Workspace surface covers supported input submissions and their resulting WorkItems:
 
 - submit supported inputs and associated attachments;
 - track WorkItem status, activity, and relevant execution/provider state;
@@ -187,7 +187,7 @@ Spreadsheet → workbook/row mapping   → structured candidate
 
 Both paths converge on the common validation and business-operation boundary.
 
-The intended business-app write is a governed Tool invocation surface over an authorized host/business capability. Approval, host-write disposition, and post-write Review are separate lifecycle boundaries in the V1 architecture. Hive never treats its own database as a gateway to the host application's business database.
+The intended business-app write is a governed Tool invocation surface over an authorized host/business capability. The business-write, receipt, and post-write Review lifecycle belongs to later V1 pipeline phases; Approval remains a separate pre-write intervention when policy requires it. Hive never treats its own database as a gateway to the host application's business database.
 
 V1 does not choose between API and UI as an architecture decision. Both integration paths are supported from the start, and the implementation may use either or both per operation according to the real application's capabilities and authorization policy.
 
