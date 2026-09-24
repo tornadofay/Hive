@@ -2,7 +2,25 @@ using System.Text;
 
 namespace Hive.Core;
 
-public readonly record struct SecretReference(SecretId Id);
+public readonly record struct SecretReference
+{
+    private readonly bool _isValid;
+
+    public SecretReference(SecretId id)
+    {
+        if (id == default)
+            throw new ArgumentException(
+                "Secret identity is required.",
+                nameof(id));
+
+        Id = id;
+        _isValid = true;
+    }
+
+    public SecretId Id { get; }
+
+    public bool IsValid => _isValid;
+}
 
 public sealed class SecretMaterial : IDisposable
 {
