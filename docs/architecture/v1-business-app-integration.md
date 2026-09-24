@@ -825,7 +825,7 @@ The model never receives:
 - arbitrary method invocation;
 - secret fields.
 
-### 16.1 HForms configuration is evidence, not a second Hive contract
+### 17.1 HForms configuration is evidence, not a second Hive contract
 
 The production HForms/HControls evidence contains several categories of metadata that should not all become Hive-facing semantics.
 
