@@ -147,6 +147,26 @@ public sealed class ProviderResourceTests
     }
 
     [Fact]
+    public void ProviderAccount_RejectsInvalidCredentialSecretReference()
+    {
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var now = DateTimeOffset.UtcNow;
+
+        Assert.Throws<ArgumentException>(
+            () => new ProviderAccount(
+                CreateEnvelope(
+                    ResourceKind.ProviderAccount,
+                    ProviderAccountId.New(),
+                    principal,
+                    ResourceScope.Tenant(tenant)),
+                ProviderId.New(),
+                "account",
+                "Account",
+                credentialSecret: default));
+    }
+
+    [Fact]
     public void ResourceScope_MatchesScopeAndDoesNotImplyOwnership()
     {
         var principal = PrincipalId.New();
