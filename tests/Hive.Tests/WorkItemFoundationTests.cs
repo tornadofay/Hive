@@ -36,7 +36,7 @@ public sealed class WorkItemFoundationTests
             "sample.png",
             maxLengthMediaType,
             1,
-            "4bf5122f344554c53bde2ebb8cd2c7b3c0a7f7a7a0f1b2c3d4e5f60718293a4b5");
+            "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
 
         Assert.Equal(maxLengthMediaType, metadata.MediaType);
 
@@ -54,7 +54,7 @@ public sealed class WorkItemFoundationTests
                 "sample.png",
                 oversized,
                 1,
-                "4bf5122f344554c53bde2ebb8cd2c7b3c0a7f7a7a0f1b2c3d4e5f60718293a4b5"));
+                "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"));
 
         Assert.Throws<ArgumentException>(
             () => new WorkItemImageSubmission(
