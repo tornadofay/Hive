@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 33 — V1 host-adapter dependency inversion and write/review reconciliation)
+Last updated: 2026-09-24 (rev 34 — V1 host-adapter ports, operation receipts, and review reconciliation finalized)
 
 
 
