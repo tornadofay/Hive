@@ -160,11 +160,11 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         {
             throw;
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
             return Result<WorkItem>.Failure(ToSqlError(exception));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<WorkItem>.Failure(ToInvalidStateError(exception));
         }
@@ -224,11 +224,11 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         {
             throw;
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
             return Result<IReadOnlyList<WorkItem>>.Failure(ToSqlError(exception));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<IReadOnlyList<WorkItem>>.Failure(ToInvalidStateError(exception));
         }
@@ -302,11 +302,11 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         {
             throw;
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
             return Result<WorkItemAttachmentContent>.Failure(ToSqlError(exception));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<WorkItemAttachmentContent>.Failure(ToInvalidStateError(exception));
         }
