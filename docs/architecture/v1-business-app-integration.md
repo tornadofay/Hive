@@ -867,10 +867,12 @@ This architecture does not authorize:
     authorization/provenance
 
 1.15
-    vision routing
+    input preparation and routing
+    image → vision capability
+    spreadsheet → structured row mapping
 
 1.16
-    structured extraction and validation
+    structured candidate extraction and validation
     (parent/child candidate structure only where the V1 operation requires it)
 
 1.17
