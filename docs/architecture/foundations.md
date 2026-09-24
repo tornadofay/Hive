@@ -62,7 +62,7 @@ Scope matching is a structural boundary, not an implicit grant. The access conte
 
 Scope matching does not itself grant authorization. Later management/security slices add resource-specific permissions and policy; they consume this explicit identity/scope boundary instead of replacing it.
 
-`WorkItem` is the durable unit of user-visible work. Its identity is independent from Runtime and Execution identities. A WorkItem transition returns a new immutable state with the same WorkItem identity and a higher resource version; provenance and scope are preserved. When a business operation is required, one logical business operation is represented by one WorkItem, and that operation may require multiple executions or steps. A single input submission may produce one or multiple independent WorkItems. Related WorkItems may be grouped operationally as a submission or batch without replacing their independent identity, lifecycle, provenance, authorization, receipt, or review state.
+`WorkItem` is the durable unit of user-visible work. Its identity is independent from Runtime and Execution identities. A WorkItem transition returns a new immutable state with the same WorkItem identity and a higher resource version; provenance and scope are preserved. When a business operation is required, one logical business operation is represented by one WorkItem, and that operation may require multiple executions or steps. A single input submission may produce one or multiple independent WorkItems. Related WorkItems may be grouped operationally as a submission or batch without replacing their independent identity, lifecycle, provenance, authorization, or any applicable operation receipt or Review state.
 
 ---
 
