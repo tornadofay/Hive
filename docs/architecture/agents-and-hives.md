@@ -137,7 +137,7 @@ Cognitive outcome evaluation
 
 **Success** is an evaluated outcome in which the applicable success criteria were actually satisfied.
 
-**Mistake** is an evaluated outcome in which the applicable success criteria were not satisfied and the failure is relevant to the Agent's decision, assumption, method, or strategy.
+**Mistake** is an evaluated outcome in which the applicable success criteria were not satisfied. Whether the Agent, a tool, a specialist, the environment, or another factor caused the failure is a separate attribution question and may remain uncertain.
 
 A technical failure such as a timeout, unavailable provider, or cancelled transport is therefore not automatically a Mistake. Likewise, a technically successful execution is not automatically a cognitive Success: the produced result may still be wrong, incomplete, unsafe, or otherwise inconsistent with the objective.
 
@@ -161,7 +161,7 @@ Risk, Fear, and Confidence are cognitive state used by Cognitive Strategy rather
 
 **Risk** represents the Agent's contextual estimate of potential adverse consequence and/or uncertainty associated with an objective, plan, method, or decision.
 
-**Fear** represents the Agent's strategy-level response to perceived risk, consequence, and adverse experience. It is allowed to change how cautiously the Agent approaches a problem. For example, increasing Fear may cause the strategy to decompose a difficult objective, obtain more evidence, ask a Question, invoke a specialist through Hive, or run a Dream before acting.
+**Fear** represents the Agent's strategy-level response to perceived risk, consequence, and adverse experience. It is allowed to change how cautiously the Agent approaches a problem. For example, increasing Fear may cause the strategy to decompose a difficult objective, obtain more evidence, ask a Question, invoke a specialist through Hive, or run a Dream before acting. Repeated successful evidence under comparable conditions may reduce Fear when it lowers estimated risk, but success does not automatically erase known risk.
 
 **Confidence** represents evidence-backed support for a belief, method, plan, or strategy under stated conditions. Confidence is contextual rather than global. Repeated success can increase confidence in a method without establishing that it is universally reliable.
 
@@ -244,7 +244,9 @@ Mistake / Success / Partial / Unknown
     ↓
 interpretation, attribution, risk/confidence revision
     ↓
-Dream / Question / Hive assistance where useful
+retry with revised strategy
+OR
+Dream / Question / Hive assistance
     ↓
 Learning Candidate
     ↓
@@ -255,7 +257,7 @@ persistent cognitive adaptation
 future strategy
 ```
 
-Learning may reinforce a successful method, reduce confidence in a failed method, narrow a method's applicability, add a safeguard, change decomposition behavior, or learn that a deterministic procedure can replace a model call for a known class of situations. These are governed adaptations, not direct model-output mutations.
+Learning may reinforce a successful method, reduce confidence in a failed method, narrow a method's applicability, add a safeguard, change decomposition behavior, or learn that a deterministic procedure can replace a model call for a known class of situations. A Mistake may therefore lead to another real attempt with a revised method, while a Dream may be used first when the strategy judges that simulation is safer or more informative. These are governed adaptations, not direct model-output mutations.
 
 A candidate lesson must retain whether its evidence came from actual experience, human correction, Question evidence, or simulation/Dream. Simulated evidence can support a candidate without being promoted into an actual event.
 
