@@ -8,7 +8,7 @@ This document is part of the authoritative architecture defined by `docs/archite
 
 ## 4. V1 Input & Business-App Integration
 
-The V1 forcing function is the complete pipeline from supported input sources to a governed business-app write. Image is the first implemented input boundary; additional input sources are additive V1 capabilities and must converge on the same structured-candidate and business-operation boundaries.
+The V1 forcing function is the target pipeline from supported input sources to a governed business-app write. Image is the first implemented input boundary; additional input sources are additive V1 capabilities and must converge on the same structured-candidate and business-operation boundaries.
 
 A single input submission may produce one or multiple independent WorkItems. Each WorkItem retains its own lifecycle, provenance, and authorization; when a business operation is performed, its operation receipt and any required Review state remain tied to that WorkItem. Submission/batch grouping is an operational navigation and notification concern and does not replace WorkItem identity.
 
@@ -322,7 +322,7 @@ Registration binds host context to Workspace/Hive management and may reuse an ex
 
 After Phase 2 establishes Hive membership and Swarm state, the Workspace can display Agent/Hive organization and the current collaborating subset as a Swarm. The visual representation does not itself create a Hive or Swarm; durable creation and membership follow the Agent/Hive contracts.
 
-V1 management areas:
+The planned V1 management areas are:
 
 1. Workspace — V1 operational WorkItem/approval surface
 2. Providers / Models / Execution Targets
