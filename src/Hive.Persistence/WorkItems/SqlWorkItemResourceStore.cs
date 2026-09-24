@@ -1061,7 +1061,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         {
             throw;
         }
-        catch (SqlException) when (exception.Number is 2601 or 2627)
+        catch (SqlException exception) when (exception.Number is 2601 or 2627)
         {
             return Result<T>.Failure(
                 Error.Conflict(
@@ -1075,11 +1075,11 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                     "hive.work-item.concurrency",
                     "The WorkItem changed before the operation completed."));
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
             return Result<T>.Failure(ToSqlError(exception));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<T>.Failure(ToInvalidStateError(exception));
         }
@@ -1166,16 +1166,16 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         new(code, ErrorCategory.NotFound, message);
 
     private static Error ToSqlError(SqlException exception) =>
-        new(
+        HivePersistenceError.External(
             "hive.persistence.work-item.sql-failure",
-            ErrorCategory.External,
-            "SQL Server operation for the WorkItem failed.");
+            "SQL Server operation for the WorkItem failed.",
+            exception);
 
     private static Error ToInvalidStateError(Exception exception) =>
-        new(
+        HivePersistenceError.Internal(
             "hive.persistence.work-item.invalid-state",
-            ErrorCategory.Internal,
-            "Persisted WorkItem state could not be read or validated.");
+            "Persisted WorkItem state could not be read or validated.",
+            exception);
 
     private sealed class ConcurrencyException : Exception
     {
