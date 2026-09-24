@@ -101,6 +101,7 @@ Longer-term capabilities such as persistent individual cognition, offline Dream 
 7. Production-oriented automated tests for normal paths, edge cases, concurrency, recovery, persistence, and security.
 8. Microsoft Agent Framework (MAF) wherever MAF already owns the required mechanism.
 9. CognitiveAgents learn from evaluated real outcomes and bounded simulated evidence: they can recover from mistakes, reinforce and optimize successes, stress-test apparently successful methods, and adapt future strategy without confusing simulation with experience.
+10. First-class cognitive semantics require explicit contracts, ownership, provenance, lifecycle, and persistence meaning; they may share implementation mechanisms when responsibilities fit, or use separate components/subsystems when a real boundary justifies separation.
 
 ### Logical ownership hierarchy
 
@@ -315,6 +316,9 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 77. A future lightweight/embedded Hive deployment may provide a first-class persistence backend behind the same Hive persistence/resource contracts; it must not fork the logical resource model, and a custom database engine is not assumed unless a measured requirement justifies building one.
 78. V1 WinForms integration may expose bounded semantics for application-owned/custom controls and data-bound grids, including related/child data, binding, column, lookup, and row-operation metadata; discovery or metadata never grants database or business authorization.
 79. Public Hive architecture and usage documentation must describe host integration at the neutral contract/semantic level. Private host class names, source excerpts, source-specific event/property mappings, private business conventions, and other implementation details must not be promoted into public Hive contracts merely because an adapter uses them.
+80. V1 Review correctness and CognitiveAgent outcome evaluation are distinct semantics: Review verifies the correctness of a resulting host/business state for a WorkItem, while cognitive outcome evaluation determines whether a CognitiveAgent's objective or success criteria were satisfied for learning and strategy purposes. Neither substitutes for the other.
+81. Mistake, Success, Risk, Fear, Confidence, Dream, OutcomeEvaluation, and LearningCandidate are first-class cognitive concepts with explicit semantic boundaries. They may be implemented by shared infrastructure or separate components/subsystems when their lifecycle, persistence, processing, or replacement boundary warrants it; architecture must not prohibit separation merely for structural uniformity.
+82. Human review/correction may become cognitive evidence when explicitly authorized and attributed, but Review state itself remains owned by the V1 host/work-operation boundary and must not be silently reclassified as a cognitive outcome.
 
 ---
 
