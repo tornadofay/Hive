@@ -64,7 +64,7 @@ That workflow is **not Hive's definition** and not a product-specific architectu
 
 A single input submission may produce one or multiple WorkItems. A WorkItem is the durable unit of user-visible work and represents one logical business operation when a business operation is required. A logical operation may contain a parent record and child-row collection and may require multiple executions or steps. Related WorkItems may be grouped operationally as a submission or batch without replacing their independent identity, lifecycle, provenance, authorization, or any applicable operation receipt or Review state.
 
-The common V1 pipeline is:
+The intended common V1 pipeline is:
 
 ```
 Input submission
