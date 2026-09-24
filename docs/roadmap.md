@@ -424,9 +424,9 @@ The base Agent and V1 pipeline continue working unchanged throughout this phase.
 Persistent cognitive identity binding, lifecycle, state versioning, recovery, and per-runtime concurrency ownership.
 
 ## 4.2 — Cognitive Strategy
-Replaceable strategy contract capable of deterministic decisions and explicit no-model paths, including adaptive interpretation of evaluated outcomes, contextual Risk/Fear/Confidence, reconsideration, and selection among direct execution, Questions, Hive assistance, Dreams, decomposition, and learned deterministic shortcuts.
+Replaceable strategy contract capable of deterministic decisions and explicit no-model paths, including adaptive interpretation of evaluated outcomes, contextual Risk/Fear/Confidence, reconsideration, and selection among direct execution, Questions, Hive assistance, Dreams, decomposition, and previously governed strategy/resource adaptations. This slice defines the extension point for learned deterministic shortcuts but does not implement Learning Candidate promotion from later Phase 5 work.
 
-Verify: strategy decisions can consume cognitive evidence and Risk/Fear/Confidence without bypassing authorization, capability, scope, budget, or execution planning.
+Verify: strategy decisions can consume cognitive evidence and Risk/Fear/Confidence without bypassing authorization, capability, scope, budget, or execution planning; any promoted adaptation is consumed only through its owning governed contract.
 
 ## 4.3 — Reasoning Requirement
 Provider-neutral reasoning requirements kept separate from concrete Execution Target planning.
@@ -503,8 +503,8 @@ Versioned reusable procedures, dependencies, constraints, provenance, and assign
 Transform evaluated cognitive evidence into governed Learning Candidates through a first-class learning/governance boundary. The implementation may use a dedicated learning component or shared cognitive-resource infrastructure, but promotion remains explicit and governed.
 
 Evidence sources include:
-- successful outcomes;
-- Mistakes/failed outcomes;
+- evaluated Success outcomes;
+- evaluated Mistake outcomes;
 - Partial or mixed outcomes;
 - repeated outcome patterns;
 - human corrections;
@@ -526,7 +526,7 @@ Promotion may change an appropriate Skill, method, applicability rule, memory/kn
 
 A candidate may learn that a deterministic procedure is preferable to another model call for a known class of situations, but promotion must remain governed. The promoted shortcut must identify its applicability boundary and remain revocable/revisable when later evidence invalidates or narrows it. No direct authoritative mutation from model output or Dream output.
 
-Verify: positive, negative, partial, mixed, human-corrected, and simulated evidence; conflicting candidates; applicability boundaries; insufficient support; promotion/rejection concurrency; explicit adaptation target; and later invalidation/revision.
+Verify: positive, negative, partial, mixed, human-corrected, and simulated evidence; conflicting candidates; applicability boundaries; insufficient support; promotion/rejection concurrency; explicit adaptation target; later invalidation/revision; and strategy consumption of an already-governed adaptation.
 
 ---
 
