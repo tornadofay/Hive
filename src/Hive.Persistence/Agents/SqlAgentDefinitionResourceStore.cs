@@ -752,28 +752,28 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
         {
             throw;
         }
-        catch (SqlException) when (IsConstraintConflict(exception))
+        catch (SqlException exception) when (IsConstraintConflict(exception))
         {
             return Result<T>.Failure(
                 Error.Conflict(
                     $"hive.{resourceName.Replace(' ', '-')}.duplicate",
                     $"The {resourceName} identity or key already exists."));
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
             return Result<T>.Failure(
-                new Error(
+                HivePersistenceError.External(
                     $"hive.persistence.{resourceName.Replace(' ', '-')}.sql-failure",
-                    ErrorCategory.External,
-                    $"SQL Server operation for the {resourceName} failed."));
+                    $"SQL Server operation for the {resourceName} failed.",
+                    exception));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<T>.Failure(
-                new Error(
+                HivePersistenceError.Internal(
                     $"hive.persistence.{resourceName.Replace(' ', '-')}.invalid-state",
-                    ErrorCategory.Internal,
-                    $"Persisted {resourceName} state could not be read or validated."));
+                    $"Persisted {resourceName} state could not be read or validated.",
+                    exception));
         }
     }
 
