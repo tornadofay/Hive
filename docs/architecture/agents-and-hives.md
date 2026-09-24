@@ -109,7 +109,7 @@ The base work-protocol APIs are additive to Agent and RuntimeInstance; they do n
 Inside `CognitiveAgent` only:
 
 - **Cognitive Kernel** = durable cognitive substrate: identity binding, lifecycle, cognitive-state versioning, event history, recovery, concurrency ownership, and intervention boundaries.
-- **Cognitive Strategy** = replaceable adaptive reasoning process: belief revision, attention, goal formation/reconsideration, intention selection, planning, impasse handling, reflection, outcome interpretation, Mistake/Success attribution, Risk/Fear/Confidence revision, learning, Dream selection/interpretation, Question generation/selection, and deterministic-vs-reasoning routing. Strategy may consume a previously promoted deterministic shortcut, but the promotion and governance of that shortcut belong to the Learning/Resource boundary rather than being implicitly created by strategy execution.
+- **Cognitive Strategy** = replaceable adaptive reasoning process: belief revision, attention, goal formation/reconsideration, intention selection, planning, impasse handling, reflection, outcome interpretation, Mistake/Success attribution, Risk/Fear/Confidence revision, learning interpretation and application of governed adaptations, Dream selection/interpretation, Question generation/selection, and deterministic-vs-reasoning routing. Strategy may consume a previously promoted deterministic shortcut, but promotion and governance of that shortcut belong to the Learning/Resource boundary rather than being implicitly created by strategy execution.
 - **Reasoning Requirement** = what reasoning capability is required.
 - **Execution Planning** = where/how the requirement executes.
 
