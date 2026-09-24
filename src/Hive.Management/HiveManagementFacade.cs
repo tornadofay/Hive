@@ -321,7 +321,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                     configuration,
                     material);
             }
-            catch (ArgumentException exception)
+            catch (ArgumentException)
             {
                 return Result.Failure(
                     Error.Validation(
@@ -392,7 +392,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                 key,
                 displayName);
         }
-        catch (ArgumentException exception)
+        catch (ArgumentException)
         {
             return Failure<Secret>(
                 Error.Validation(
@@ -1380,7 +1380,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         {
             return Result<IReadOnlyList<WorkItemActivity>>.Failure(exception.Error);
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result<IReadOnlyList<WorkItemActivity>>.Failure(
                 new Error(
