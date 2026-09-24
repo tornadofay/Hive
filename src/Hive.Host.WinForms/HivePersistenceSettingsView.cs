@@ -673,6 +673,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         new()
         {
             Height = 32,
+            AutoSize = false,
             BorderStyle = BorderStyle.FixedSingle
         };
 
