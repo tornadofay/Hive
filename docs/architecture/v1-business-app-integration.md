@@ -1,0 +1,881 @@
+# Hive Architecture — V1 Business-App Integration
+
+This document is part of the authoritative architecture defined by `docs/architecture.md`. It contains the detailed V1 host-adapter, business-data, business-operation, write-receipt, and post-write review contracts.
+
+## 1. Purpose and boundary
+
+V1 automates data entry from an image into an existing business application. The business application's domain model, database, validation rules, transactions, and authoritative records remain owned by that application.
+
+Hive therefore needs an integration boundary that can understand enough of a host application to perform a governed operation without becoming coupled to one control library, ORM, database schema, or UI framework.
+
+The architectural direction is:
+
+```
+Hive-owned neutral contracts
+          ↓
+host/application adapter
+          ↓
+host-specific controls / data model / API
+```
+
+Examples of host implementations may include:
+
+- native WinForms controls;
+- application-owned/custom WinForms controls;
+- HForms/HControls;
+- another developer's control library;
+- another host integration implementation added later.
+
+Hive must not make HForms, HControls, `IHyperControl`, `HDataBox`, `HActionBar`, `TableInfo`, or any other application-specific type a platform dependency.
+
+The first concrete implementation remains the V1 WinForms boundary. Generic cross-host technology support remains Phase 7 work; the neutral contracts in this document exist so the V1 WinForms adapter itself is not vendor/control-library-specific.
+
+## 2. Three distinct integration layers
+
+V1 host integration has three different concerns:
+
+```
+1. Host context / discovery
+       ↓
+2. Host interaction and data surfaces
+       ↓
+3. Business operations
+```
+
+They must not be collapsed.
+
+### 2.1 Host context / discovery
+
+Discovers bounded, immutable information about the registered host context.
+
+Examples:
+
+- form/control hierarchy;
+- semantic control metadata;
+- binding metadata;
+- data-source descriptors;
+- available UI capabilities.
+
+Discovery alone grants no mutation authority.
+
+Phase 1.13 already establishes the concrete WinForms discovery boundary.
+
+### 2.2 Host interaction and data surfaces
+
+Provides bounded operations over the host application when an authorized operation genuinely needs the UI or host data surface.
+
+Examples:
+
+- read a control value;
+- set a permitted control value;
+- select an existing lookup value;
+- add/edit/delete a row;
+- read a bound collection;
+- resolve the stable identity of a row;
+- invoke an explicitly exposed host action.
+
+These are capabilities, not authorization.
+
+### 2.3 Business operations
+
+Represents an application-level operation such as:
+
+```
+CreateInvoice
+UpdateCustomer
+CreateOrder
+PostDocument
+```
+
+A business operation may be implemented through an API/service, a UI workflow, or a composition of both. The implementation mechanism must not redefine the business meaning.
+
+## 3. Neutral public extension contracts
+
+Hive should ship public, host-neutral contracts for the concepts required by V1. The exact type/interface names are implementation decisions for Phase 1.14, but the responsibilities are fixed by this architecture.
+
+The public contract family must support at least:
+
+- a host integration registration/adapter boundary;
+- semantic control descriptors;
+- data-source/data-surface descriptors;
+- field/column descriptors;
+- stable row identities;
+- lookup descriptors and bounded lookup operations;
+- bounded interaction operations;
+- business-operation capabilities;
+- write receipts;
+- review records and review evidence.
+
+These contracts must not expose:
+
+- WinForms `Control` types;
+- `IHyperControl` or HControls types;
+- `DataTable`/ORM-specific types as required public contracts;
+- `SqlConnection`, SQL commands, or raw SQL expressions;
+- provider credentials;
+- arbitrary host object references;
+- unrestricted reflection or arbitrary method invocation.
+
+The concrete WinForms adapter may internally use any of those host-specific mechanisms where appropriate.
+
+### 3.1 Contract placement
+
+Neutral contracts should live in a dependency-light Hive boundary that does not reference WinForms or HForms. The concrete implementation belongs in `Hive.Host.WinForms` or a directly related host-integration implementation boundary.
+
+Do not add a new universal host framework merely to support the first V1 host. Create only the neutral contracts required by the actual V1 integration boundary.
+
+## 4. Semantic control model
+
+A host control descriptor should expose semantic information rather than reproduce the host control's entire property bag.
+
+Conceptually:
+
+```
+ControlDescriptor
+├── identity/path
+├── presentation labels
+├── current state
+├── binding metadata
+├── data-source metadata
+├── field metadata
+└── supported capabilities
+```
+
+Potential semantic fields include:
+
+- logical/control identity;
+- runtime type name;
+- display/title metadata;
+- English/Arabic labels when the host exposes them;
+- bound field/property name;
+- data type and relevant size/precision metadata;
+- required/read-only/computed state;
+- primary-key/identity metadata;
+- generation semantics;
+- lookup metadata;
+- current value where reading is allowed.
+
+Not every host property should become Hive context. Designer-only, rendering-only, reporting-only, or implementation-specific properties remain outside the normal agent-facing semantic projection.
+
+### 4.1 Capability state versus authorization
+
+These are independent:
+
+```
+Host says:
+    edit is supported
+
+does not mean:
+
+Hive says:
+    this caller is authorized to edit
+```
+
+Likewise:
+
+```
+AllowNew = true
+AllowEdit = true
+AllowDelete = true
+```
+
+describe host/application behavior. They do not grant Hive authorization.
+
+Hive authorization remains enforced in code through the existing security/policy boundaries.
+
+### 4.2 Host application permission switches
+
+Application-owned settings such as:
+
+```
+AllowPermissionCheck
+AllowUserLogHandling
+```
+
+may be meaningful host metadata, but they do not replace Hive authorization.
+
+Hive must not infer that a disabled host permission check allows Hive to bypass Hive policy.
+
+## 5. Data surfaces and related data
+
+A grid or bound collection is a data surface, not automatically a database table.
+
+The neutral model is:
+
+```
+Host entity/data surface
+        ↓
+data source / collection
+        ↓
+rows
+        ↓
+fields
+```
+
+A data surface may represent:
+
+- a `BindingSource`;
+- a `DataTable`;
+- `IList<T>`;
+- another collection;
+- an application-owned data object;
+- a remote/API-backed data surface exposed by the host.
+
+The contract must not require SQL Server, a particular ORM, or a relational database.
+
+### 5.1 Parent/child data
+
+The V1 contract must represent a related data set explicitly when the host supplies it:
+
+```
+Invoice
+├── identity
+├── fields
+└── Lines
+     ├── Product
+     ├── Quantity
+     └── Price
+```
+
+The relationship should be expressed semantically:
+
+```
+Parent entity
+    ↓
+child collection
+    ↓
+parent-key → child-key relationship
+```
+
+Do not infer a relationship merely because:
+
+- a grid happens to be visually nested in a form;
+- two names look similar;
+- a database field is hidden;
+- a filter string references another table.
+
+The host adapter may use its own relationship metadata to establish the semantic relationship.
+
+### 5.2 HForms/TableInfo mapping
+
+The existing HForms pattern provides useful evidence for what the neutral contract must be able to represent.
+
+Conceptually:
+
+```
+TableInfo.MainTable
+        ↓
+root business/data entity
+
+TableInfo.PkName
+        ↓
+stable record identity
+
+TableInfo.ChildTable[]
+        ↓
+related child data sets
+
+TableInfo.DeleteType / VoidFieldName
+        ↓
+host-specific deletion semantics
+
+UseYear / UseBranch / related filters
+        ↓
+host-side data-selection/business context
+```
+
+The adapter must translate those concepts into Hive semantics.
+
+It must not expose `TableInfo` itself or its generated SQL methods.
+
+In particular, methods that generate `INSERT`, `UPDATE`, `DELETE`, or `SELECT` statements remain host implementation details. Hive does not receive an unrestricted SQL execution contract.
+
+## 6. Stable row identity
+
+Stable identity is mandatory for consequential row operations.
+
+The preferred identity order is:
+
+1. explicit primary key;
+2. explicit composite key;
+3. host-defined stable row identity;
+4. bound-object identity when the host contract guarantees its stability for the operation.
+
+Row index is not an authoritative identity.
+
+```
+row index = positional address
+row identity = stable record identity
+```
+
+An operation that begins from a row index must resolve that row to a stable identity before a consequential mutation is committed.
+
+### 6.1 Hidden primary-key columns
+
+A host may keep its primary-key column invisible to the user:
+
+```
+Id            Visible = false
+Product       Visible = true
+Quantity      Visible = true
+Price         Visible = true
+```
+
+This is valid and useful.
+
+The semantic signal must be explicit:
+
+```
+IsPrimaryKey = true
+Visible = false
+```
+
+Visibility alone never means "primary key".
+
+The adapter should therefore be able to expose an identity field even when the field is not visible in the UI.
+
+### 6.2 Composite identities
+
+The contract must support multiple key parts:
+
+```
+RowIdentity
+├── BranchId = 3
+└── OrderId = 5812
+```
+
+A single-key host simply provides one key part.
+
+### 6.3 Generation semantics
+
+Generated fields are host-owned outputs.
+
+Examples:
+
+- identity/sequence IDs;
+- creation timestamps;
+- host-generated document numbers.
+
+Hive must not invent generated values merely because an add-row operation requires the field.
+
+The write result should return the host-generated identity when the host can provide it.
+
+### 6.4 Computed fields
+
+Computed fields are readable host outputs and are not directly writable through generic field mutation.
+
+Examples:
+
+- calculated amount;
+- total;
+- derived status.
+
+A computed field may be used as evidence/input to reasoning, but direct mutation requires an explicit host/business operation contract.
+
+## 7. Lookup columns
+
+A lookup column is a semantic relationship, not an executable SQL expression.
+
+Conceptually:
+
+```
+Lookup
+├── identity
+├── display field
+├── value field
+└── bounded filtering/query capability
+```
+
+HForms properties such as:
+
+```
+FillTableName
+FillDisplayFieldName
+FillValueFieldName
+FillFilterQuery
+```
+
+may be translated into that semantic model.
+
+`FillFilterQuery` must never be exposed to the model as executable SQL.
+
+The host adapter owns actual lookup execution and returns bounded options such as:
+
+```
+value = 42
+display = "Product A"
+```
+
+The model can choose an option; it cannot execute arbitrary lookup SQL.
+
+## 8. UI edit modes and operation capabilities
+
+UI configuration may describe how the host expects data entry to happen.
+
+Examples include:
+
+```
+ByAlone
+ByControls
+ByForm
+```
+
+and action settings such as:
+
+```
+AllowNew
+AllowEdit
+AllowDelete
+AllowSearch
+```
+
+These describe available or intended UI behavior.
+
+The adapter must expose actual supported capabilities based on the current host state rather than assuming every grid supports direct cell/row mutation.
+
+Examples:
+
+```
+ByAlone
+    → direct grid row/cell operations may be supported
+
+ByControls
+    → edit may require surrounding controls
+
+ByForm
+    → edit may require a form-level workflow
+```
+
+The exact meaning is host-defined and is translated by the adapter.
+
+## 9. UI operations versus business operations
+
+These are separate contracts.
+
+### UI operations
+
+Examples:
+
+```
+ReadControl
+SetControlValue
+SelectLookupValue
+AddGridRow
+EditGridRow
+DeleteGridRow
+InvokeHostAction
+```
+
+### Business operations
+
+Examples:
+
+```
+CreateInvoice
+UpdateInvoice
+SaveOrder
+PostDocument
+```
+
+A UI operation must not silently acquire business semantics.
+
+Likewise, a business operation must not be modeled as a sequence of arbitrary UI clicks when the host exposes an authoritative business API.
+
+## 10. API/UI composition
+
+V1 supports:
+
+```
+API only
+UI only
+API + UI
+```
+
+The model should not be presented with an unrestricted "choose API or UI" switch.
+
+Instead, the host exposes an authorized operation capability, and the operation adapter selects the concrete implementation.
+
+Examples:
+
+```
+CreateInvoice
+    implementation = business API
+
+LegacyLookup
+    implementation = UI
+
+CreateInvoiceWithLegacyAttachment
+    implementation = API + UI
+```
+
+The implementation mechanism is transparent to authorization and audit.
+
+When API and UI paths are combined, one operation correlation identity must cover the complete logical operation.
+
+## 11. Business operation proposal
+
+A consequential business operation should be represented as a structured proposal before execution.
+
+Conceptually:
+
+```
+BusinessOperationProposal
+├── OperationId
+├── WorkItemId
+├── OperationType
+├── TargetEntity
+├── ParentData
+├── ChildData[]
+├── identity/lookup references
+├── intended changes
+├── provenance
+└── expected host state/version where available
+```
+
+The proposal is the object that reaches Hive authorization and, where policy requires it, the existing V1 Approval boundary.
+
+Hive does not authorize a raw control click merely because the model requested one.
+
+## 12. Business-operation receipt
+
+A successful or partially successful host write must produce a durable receipt.
+
+The receipt is not merely a success boolean and must not be replaced by the WorkItem status alone.
+
+Conceptually:
+
+```
+BusinessOperationReceipt
+├── OperationId
+├── WorkItemId
+├── Host/Application identity
+├── Adapter/implementation identity
+├── Operation type
+├── Parent identity
+├── Child identities[]
+├── Host correlation/transaction identifier when available
+├── completed-at timestamp
+├── result/status
+└── host version/concurrency evidence when available
+```
+
+For an invoice example:
+
+```
+Operation = CreateInvoice
+Parent:
+    InvoiceId = 1842
+
+Children:
+    InvoiceLineId = 9011
+    InvoiceLineId = 9012
+    InvoiceLineId = 9013
+```
+
+The host remains the authoritative source of those records. The receipt is Hive's durable attribution of what operation occurred.
+
+### 12.1 Why IDs are required
+
+The affected host identities allow Hive to:
+
+- link later review to the exact records written;
+- read the resulting host state for verification;
+- reconcile retries;
+- detect duplicate/partial effects;
+- explain the outcome to a user;
+- recover an interrupted workflow without blindly repeating a write.
+
+When the host uses generated identity values, the host adapter is responsible for obtaining them through an authorized mechanism.
+
+### 12.2 Partial success
+
+Parent/child operations can partially succeed at the boundary between the host and Hive.
+
+The receipt must therefore support:
+
+- complete success;
+- rejected/not executed;
+- partial result;
+- unknown result after transport/process interruption.
+
+An unknown result must not automatically trigger a duplicate write.
+
+Recovery/reconciliation uses the recorded operation identity and host-side state where available.
+
+## 13. First-class post-write Review
+
+Approval and Review are separate concepts.
+
+### Approval
+
+```
+Should Hive perform the proposed consequential operation?
+```
+
+### Review
+
+```
+Did the resulting host state contain the intended data correctly?
+```
+
+A review can therefore exist even after an approved and successfully completed write.
+
+The V1 architecture treats Review as a first-class, provenance-bearing WorkItem-linked object rather than a UI-only flag.
+
+Conceptually:
+
+```
+Review
+├── ReviewId
+├── WorkItemId
+├── OperationId / Receipt reference
+├── Status
+├── Verification method
+├── reviewer identity when human
+├── evidence
+├── discrepancy set
+├── created/completed timestamps
+└── review version/concurrency information
+```
+
+### 13.1 Review methods
+
+The contract should support:
+
+```
+Human
+Automated
+Hybrid
+```
+
+The minimum V1 implementation requirement is first-class human review after a governed business write when review policy requires it.
+
+Automated verification may perform a host-side read/compare before presenting a human task. A human may still be required for discrepancies or higher-risk operations.
+
+### 13.2 Review policy
+
+Review is policy-governed; it is not automatically mandatory for every operation.
+
+A host/application policy may require:
+
+- no review for a low-risk operation;
+- automated verification;
+- mandatory human review;
+- human review only when automated verification finds discrepancies.
+
+The policy is enforced in code and is never inferred from model output.
+
+### 13.3 Verification source of truth
+
+The host application's authoritative state is the verification source.
+
+The normal flow is:
+
+```
+intended candidate data
+        +
+BusinessOperationReceipt
+        ↓
+authorized host read
+        ↓
+bounded comparison
+        ↓
+Review outcome
+```
+
+Hive may store the minimum evidence required to explain and audit the review. It must not silently become a mirror of the host business database.
+
+### 13.4 Review outcomes
+
+The V1 minimum outcomes are:
+
+```
+VerifiedCorrect
+VerifiedIncorrect
+```
+
+The architecture may also represent:
+
+```
+PendingReview
+VerificationUnavailable
+Inconclusive
+```
+
+as operational states when the verification boundary cannot complete.
+
+A review finding must preserve the discrepancy rather than silently rewriting the intended data.
+
+## 14. End-to-end V1 data-entry lifecycle
+
+The completed architecture is:
+
+```
+Image
+  ↓
+Extraction
+  ↓
+Typed candidate
+  ↓
+Validation
+  ↓
+Business-operation proposal
+  ↓
+Authorization
+  ↓
+Approval (when required)
+  ↓
+Host operation
+  ↓
+Business-operation receipt
+  ↓
+Review policy
+  ↓
+Automated verification and/or human review
+  ↓
+VerifiedCorrect / VerifiedIncorrect / unresolved
+```
+
+This separates:
+
+- what Hive believed should be entered;
+- whether Hive was permitted to enter it;
+- what operation actually occurred;
+- which host records were affected;
+- whether the resulting state is correct.
+
+## 15. Provenance, staleness, and concurrency
+
+Every consequential host operation and review must remain attributable to:
+
+- WorkItem;
+- operation identity;
+- caller/principal;
+- host/application registration;
+- adapter/implementation;
+- relevant execution/runtime identity;
+- timestamps;
+- expected host version/concurrency token when available.
+
+A stale host context, disposed control, changed row identity, or changed authoritative business record must not silently receive a mutation.
+
+Where the host supports optimistic concurrency, the adapter should carry an expected host version/ETag/revision through the operation.
+
+Where the host provides no concurrency token, the adapter must use the strongest stable identity and current-state check that the host contract can guarantee; lack of concurrency evidence must not be represented as proof of correctness.
+
+## 16. Security boundary
+
+The host adapter is a translator and bounded executor, not an authorization authority.
+
+The following never grant Hive permission by themselves:
+
+- control visibility;
+- `Enabled`;
+- `ReadOnly`;
+- `AllowEdit`;
+- `AllowDelete`;
+- hidden primary-key columns;
+- database/table/field names;
+- lookup filter strings;
+- host-side permission switches.
+
+Authorization is checked by Hive code before the consequential operation.
+
+The model never receives:
+
+- database credentials;
+- unrestricted SQL;
+- raw host object handles when a semantic contract is sufficient;
+- arbitrary method invocation;
+- secret fields.
+
+## 17. HForms-specific evidence without HForms coupling
+
+The current HForms implementation demonstrates why the neutral contract needs to be richer than ordinary `DataGridView` metadata.
+
+`HDataBox : UserControl` combines UI/action state, binding state, labels, reporting configuration, and business-data conventions.
+
+`HActionBar : Control` exposes action availability such as New/Edit/Delete/Read/Search/Export/Print/Report.
+
+`TableInfo` represents a main table, child tables, primary-key identity, filtering/scoping rules, delete semantics, and generated SQL statements.
+
+These are excellent adapter inputs, but they remain implementation details of one host ecosystem.
+
+The HForms adapter should translate them:
+
+```
+HDataBox / HActionBar / HDataGridView / TableInfo
+                  ↓
+        Hive neutral semantics
+```
+
+It must not make Hive understand HForms itself.
+
+## 18. Non-goals for V1
+
+This architecture does not authorize:
+
+- direct Hive access to the host database;
+- generic SQL execution by the Agent;
+- a universal UI automation framework;
+- arbitrary host reflection;
+- automatic inference of all business relationships from visual layout;
+- treating UI action capability as business authorization;
+- copying the host application's entire domain model into Hive;
+- mandatory human review of every operation;
+- reopening Phase 1.13.
+
+## 19. Phase ownership
+
+```
+1.13
+    concrete WinForms discovery/read-only host context
+
+1.14
+    neutral host integration contracts
+    WinForms adapter
+    bounded UI/data-surface interaction
+    stable identities
+    lookup semantics
+    API/UI composition
+    authorization/provenance
+
+1.15
+    vision routing
+
+1.16
+    structured extraction and validation
+    (parent/child candidate structure only where the V1 operation requires it)
+
+1.17
+    business write
+    operation proposal
+    approval
+    durable business-operation receipt
+    first-class post-write Review
+
+1.18
+    MAF Sequential composition of the V1 pipeline
+
+1.19
+    full-pipeline crash/recovery including write receipt/review recovery
+```
+
+Phase 7 later generalizes the proven host concepts to meaningfully different host technologies.
+
+## 20. Implementation freeze rule
+
+Before Phase 1.14 implementation freezes the concrete adapter types, inspect the actual HForms/HControls production contracts and confirm:
+
+- how a data source is associated with the host record;
+- how child collections are related to their parent;
+- how primary/composite keys are represented;
+- how generated identities are surfaced after writes;
+- how grid rows are bound and updated;
+- how lookup data is resolved;
+- how ByAlone/ByControls/ByForm flows operate;
+- how HActionBar/HDataBox permissions and actions map to host behavior.
+
+Do not recreate these mechanisms in Hive when the host already exposes an authoritative contract.
+
+The goal is to adapt existing host semantics into Hive's neutral boundary, not to recreate the host's data-access or business framework.
