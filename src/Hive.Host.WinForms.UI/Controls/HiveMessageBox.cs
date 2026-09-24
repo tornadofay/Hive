@@ -620,6 +620,7 @@ public static class HiveMessageBox
             _title.Font = _titleFont;
             _message.Font = _messageFont;
             _details.Font = _detailsFont;
+            _copyButton.Font = _buttonFont;
             foreach (Control control in _footer.Controls)
             {
                 if (control is HiveMessageButton button)
@@ -793,8 +794,16 @@ public static class HiveMessageBox
             }
             catch (ExternalException exception)
             {
-                System.Diagnostics.Debug.WriteLine(
-                    $"HiveMessageBox clipboard copy failed: {exception}");
+                HiveMessageBox.Show(
+                    this,
+                    new HiveMessageOptions(
+                        "Copy details failed",
+                        "The technical details could not be copied to the clipboard.",
+                        HiveMessageType.Error,
+                        MessageBoxButtons.OK,
+                        exception.ToString(),
+                        DetailsExpanded: true),
+                    _themeManager);
             }
         }
 
