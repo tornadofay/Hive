@@ -219,6 +219,11 @@ public sealed record ResourceProvenance
         if (correlationId == default)
             throw new ArgumentException("CorrelationId is required.", nameof(correlationId));
 
+        if (causationId is { } causation && causation == default)
+            throw new ArgumentException(
+                "CausationId must be non-empty when supplied.",
+                nameof(causationId));
+
         if (source is { } sourceReference && !sourceReference.IsValid)
             throw new ArgumentException(
                 "Source resource reference must be valid when supplied.",
