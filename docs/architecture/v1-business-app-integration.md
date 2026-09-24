@@ -300,7 +300,7 @@ row index = positional address
 row identity = stable record identity
 ```
 
-An operation that begins from a row index must resolve that row to a stable identity before a consequential mutation is committed.
+An operation that begins from a row index must resolve that row to a stable identity before a consequential mutation is committed. The identity used to locate a record does not have to remain unchanged after the operation: a host may permit a key value to change as part of an update. Hive must therefore retain the authoritative pre-operation identity for locating the target, and the host adapter should report the resulting identity when the operation changes it.
 
 ### 6.1 Hidden primary-key columns
 
