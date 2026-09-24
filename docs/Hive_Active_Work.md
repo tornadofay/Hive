@@ -24,7 +24,10 @@ This is a focused backend contract-hardening pass requested directly by the user
 - strengthen EventEnvelope invariant validation, including required IDs and defined payload state;
 - preserve structured serialization failure behavior when custom event upcasters fail;
 - verify WorkItem attachment bytes against their recorded SHA-256 metadata at the Core content boundary;
-- add focused regression tests for each changed contract.
+- add focused regression tests for each changed contract;
+- reject malformed optional resource causation identities and invalid ResourceIdentitySnapshot state;
+- reject bootstrap credential references when Windows integrated authentication is selected;
+- keep custom upcaster/reducer exception text out of public structured error messages and reject invalid requested event payload versions.
 
 ### Explicitly out of scope
 
