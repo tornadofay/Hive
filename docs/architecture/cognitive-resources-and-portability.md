@@ -51,13 +51,14 @@ The evaluation should preserve:
 - expected result/success criteria;
 - observed actual result;
 - evidence supporting the evaluation;
+- separate assessment of outcome correctness versus method/strategy quality;
 - Objective/Goal/Intention/Plan/Method/Decision provenance;
 - attribution/credit context;
 - confidence and uncertainty;
 - relevant cost, time, risk, and consequence data;
 - applicability conditions.
 
-Mistake and Success are therefore meaningful learning evidence, but the system does not equate them with raw execution status. Attribution remains separate: a Mistake identifies that the intended result was not achieved, while causal analysis determines whether the failure arose from the Agent's reasoning, a tool, a specialist, the environment, missing information, or another factor.
+Mistake and Success are therefore meaningful learning evidence, but the system does not equate them with raw execution status. A Success identifies that the applicable objective was achieved, not that the method was inherently good or reusable; a Mistake identifies that the intended result was wrong, not that the Agent caused it. Attribution and method-quality assessment remain separate evidence problems.
 
 ### 11.2 Learning from outcomes
 
@@ -90,7 +91,7 @@ Examples include:
 - Dream evidence suggesting an alternative method or exposing a hidden failure condition;
 - repeated evidence showing that a deterministic procedure can replace an unnecessary model call.
 
-A candidate must preserve its evidence and applicability rather than storing only a sentence such as "this works."
+A candidate must preserve its evidence, applicability, and intended adaptation target rather than storing only a sentence such as "this works."
 
 ### 11.3 Dream evidence and Nightmares
 
@@ -102,7 +103,7 @@ An Optimization Dream searches for a better way to reproduce a Success.
 
 A Nightmare/Stress-Test Dream attempts to falsify or weaken an apparently successful method by exploring adverse conditions.
 
-A successful Nightmare is not itself a real failure. It is simulated evidence that may produce an applicability boundary, safeguard, Question, or new candidate lesson.
+A Nightmare that discovers a plausible failure condition is not itself a real failure. It is simulated evidence that may produce an applicability boundary, safeguard, Question, or later Learning Candidate.
 
 ### 11.4 Risk, Fear, and Confidence state
 
