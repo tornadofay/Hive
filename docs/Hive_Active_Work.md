@@ -52,27 +52,31 @@ Implemented the identified Core contract-hardening issues:
 - ExecutionTargetSelectionRequest rejects malformed optional preferred/fixed target identities;
 - EventEnvelope rejects missing required IDs, malformed causation identity, and undefined JSON payloads;
 - EventUpcasterRegistry converts unexpected custom-upcaster failures into structured EventSerializationException failures without copying exception text into the public error message, rejects undefined upcaster payloads, and validates the requested supported payload version; SerializeEnvelope now rejects null input explicitly;
-- EventSnapshotFolder keeps unexpected reducer exception text out of returned Error messages;
+- EventSnapshotFolder keeps unexpected reducer exception text out of returned Error messages and preserves OperationCanceledException instead of converting cancellation into an internal reducer failure;
 - WorkItemAttachmentContent verifies content SHA-256 against recorded metadata in addition to content length;
-- HivePersistenceConfiguration rejects a bootstrap credential reference when Windows integrated authentication is selected;
-- focused regression coverage was added to ResourceFoundationTests, SecretResourceTests, ProviderResourceTests, ExecutionTargetSelectionTests, EventInfrastructureTests, WorkItemFoundationTests, and HiveConfigurationTests;
+- WorkItemAttachmentMetadata and WorkItemImageSubmission enforce the existing 200-character persistence boundary for image media types;
+- HivePersistenceConfiguration rejects a bootstrap credential reference when Windows integrated authentication is selected and BuildDatabaseName performs bounded normalization without input-sized stack allocation;
+- EventType enforces the existing 200-character persistence boundary;
+- ExecutionTargetSelectionResult rejects a selected target that is not represented by the selection request;
+- ResourceLifecycle validates transition enum values before lifecycle-state transition rules;
+- focused regression coverage was added/updated in ResourceFoundationTests, ExecutionTargetSelectionTests, EventInfrastructureTests, WorkItemFoundationTests, and HiveConfigurationTests, while the existing SecretResourceTests and ProviderResourceTests coverage remains in place;
 - validity markers remain internal implementation state so they do not become accidental JSON/public serialization fields;
-- no provider, persistence, orchestration, MAF, host, UI, dependency, or roadmap changes were introduced.
+- no provider, persistence, orchestration, MAF, host, UI, dependency, schema, migration, or roadmap changes were introduced.
 
-The implementation is complete pending execution verification.
+The production-polish audit implementation is complete pending execution verification.
 
-The developer's 2026-09-24 verification run on commit 74d92d8079786adff40d7806aa4c350fba55fb59 reported 211 tests with 210 passed, 1 failed, 0 skipped. The only failure was the new ResourceIdentitySnapshot invalid-state regression at ResourceFoundationTests.cs line 289 because the test used default(ResourceKind); ResourceKind.Deployment is the valid zero-valued enum member, so no exception is expected. The production ResourceIdentitySnapshot validation correctly uses Enum.IsDefined. The regression assertion has been corrected to use the undefined value (ResourceKind)999. Verification is pending after this test-only correction.
+The developer's 2026-09-24 verification run on commit 031c8e122c3d1937f23d75b3cb981b7f2637a4a8 reported 211 tests with 211 passed, 0 failed, 0 skipped in 24.7 seconds. That verification established the state before this subsequent audit revision; the newly changed implementation and added regression tests have not yet been executed.
 
 ## Verification handoff
 
-Verification is authorized but **not yet established in this environment**. A local repository checkout could not be created because outbound GitHub access from the execution environment failed at DNS resolution, and the current commit has no GitHub Actions workflow run available to inspect.
+The pre-audit revision was developer-verified on 2026-09-24 with **211 tests passed, 0 failed, 0 skipped** in 24.7 seconds. The current audit revision is **not verified** because no new build/test execution was authorized during this audit pass.
 
 Run:
 - dotnet build src/Hive.Core/Hive.Core.csproj;
 - dotnet test tests/Hive.Tests/Hive.Tests.csproj;
-- inspect the seven affected Core test classes for the new regression cases and confirm the full suite remains green.
+- confirm the focused regression targets in ResourceFoundationTests.cs, EventInfrastructureTests.cs, ExecutionTargetSelectionTests.cs, WorkItemFoundationTests.cs, and HiveConfigurationTests.cs all pass within the full suite.
 
-No Example Host verification is required for this pass because the changes are Core contract hardening without externally visible UI or product behavior.
+No Example Host verification is required for this pass because the changes remain Core contract hardening without externally visible UI or product behavior.
 
 ## Roadmap state
 
