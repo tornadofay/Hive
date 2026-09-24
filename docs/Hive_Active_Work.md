@@ -10,11 +10,12 @@ This is a temporary maintenance slice explicitly authorized by the user for anot
 
 ### Scope
 
-- remove remaining raw exception text from public Management `Error` results;
+- remove remaining raw exception text from public Management `Error` results, including technical errors propagated from bootstrap credential storage and internal configured-agent execution;
 - reject malformed persisted configuration values as typed configuration-validation failures;
 - reject undefined persisted WorkItem status values during activity reconstruction;
 - prevent bootstrap credential removal from racing with configuration saves through the owning Management facade;
 - reject configured AgentDefinition targets whose target, ProviderAccount, or Provider dependency is inactive/inconsistent;
+- preserve useful provider `External` failures while sanitizing unexpected `Internal` execution failures at the Management boundary;
 - add only focused regression coverage for these discovered defects;
 - re-audit `Hive.Persistence` boundaries without introducing unrelated persistence changes;
 - do not change SQL schema, migrations, provider transport, orchestration, MAF, host adapters, UI, dependencies, or roadmap phase authorization
@@ -32,7 +33,7 @@ Developer verification is required before this maintenance slice can close. The 
 - configured AgentDefinition targets now require an active target, active ProviderAccount, active Provider, and consistent Provider relationship;
 - focused regression tests cover the newly discovered contracts.
 
-Verification status: **not yet verified by build/test execution for this revision**. Latest code checkpoint: `c94a577f8a88aca3a8eb5aa7cf3a103a6c62655d`.
+Verification status: **not yet verified by build/test execution for this revision**. Latest code checkpoint: `3845a288e237d272a7c6b191a60028790f7a16ed`. Latest regression-test checkpoint: `85443f96a1ef29432b98863ca8e6c1a545d77fa4`.
 
 ## Closed maintenance pass — Hive.Persistence Production Baseline Hardening
 
