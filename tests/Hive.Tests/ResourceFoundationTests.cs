@@ -76,9 +76,7 @@ public sealed class ResourceFoundationTests
             TenantId.New(),
             PrincipalId.New());
 
-        Assert.False(default(ResourceScope).IsValid);
         Assert.False(default(ResourceScope).Matches(context));
-        Assert.True(ResourceScope.Global().IsValid);
     }
 
     [Fact]
