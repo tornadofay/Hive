@@ -265,6 +265,14 @@ public sealed record ExecutionTargetSelectionResult
         ArgumentNullException.ThrowIfNull(diagnostics);
         ArgumentNullException.ThrowIfNull(request);
 
+        if (!request.Targets.Any(
+                target => target.Id == selectedTarget.Id))
+        {
+            throw new ArgumentException(
+                "Selected target must belong to the selection request.",
+                nameof(selectedTarget));
+        }
+
         SelectedTarget = selectedTarget;
         Diagnostics = new ReadOnlyCollection<ExecutionTargetSelectionDiagnostic>(
             diagnostics.ToList());
