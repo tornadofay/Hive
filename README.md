@@ -1,10 +1,10 @@
 # Hive
 
-**Hive is a general-purpose C# / .NET 10 platform for building, running, coordinating, observing, governing, and evolving multi-agent systems — proven first against a real deliverable: automating data entry from documents and images into an existing business application.**
+**Hive is a general-purpose C# / .NET 10 platform for building, running, coordinating, observing, governing, and evolving multi-agent systems — proven first against a real deliverable: automating data entry from supported input sources into an existing business application.**
 
 The data-entry pipeline is Hive's **V1 forcing function**, not Hive's permanent definition. It determines what gets built first so the general platform is proven against a real problem instead of an abstract feature list.
 
-Vision, document parsing, structured extraction, validation, business-app integration, and approval are V1 capabilities that emerge from the general Agent/Tool/platform architecture.
+Input preparation and interpretation, including vision when appropriate, structured candidate mapping/extraction, validation, business-app integration, and approval are V1 capabilities that emerge from the general Agent/Tool/platform architecture.
 
 ## Architecture
 
@@ -88,14 +88,13 @@ A member Agent inside a Hive normally requests missing specialties from the pare
 
 `Hive.Workspace` is the human-facing operational surface over `Hive.Management`.
 
-For **V1**, the Workspace is intentionally limited to the operational path needed to process submitted images:
+For **V1**, the Workspace is the operational surface for supported input submissions and their resulting WorkItems:
 
-- submit/attach an image to a WorkItem;
-- view WorkItem status and activity;
-- view relevant execution/provider status;
-- receive WorkItem notifications;
-- view PendingApproval;
-- Approve / Reject the governed business-app write.
+- submit supported inputs and associated attachments;
+- track WorkItem status, activity, and relevant execution/provider state;
+- receive completion and other WorkItem notifications;
+- inspect pending approvals and Approve / Reject when required;
+- later, when Phase 1.17 lands, review completed business operations through the first-class Review surface.
 
 This V1 surface works with a single Agent and does not require a Hive.
 
@@ -119,9 +118,9 @@ For V1, business-app integration supports **both API/service and bounded UI inte
 
 ## V1 work-unit semantics
 
-One submitted source item is one WorkItem. A batch submission expands into multiple independent WorkItems rather than one aggregate WorkItem or execution. A folder of images is therefore a batch of image WorkItems. Each WorkItem has its own lifecycle, provenance, execution/review state, and terminal result.
+A single input submission may produce one or multiple independent WorkItems. A WorkItem is the durable unit of user-visible work and represents one logical business operation when a business operation is required; one operation may contain parent data and child rows and may require multiple executions or steps. A folder of images can therefore produce many independent WorkItems, while spreadsheet workbook/worksheet rows can produce the appropriate WorkItems for the host operation. Submission/batch grouping does not replace each WorkItem's identity, lifecycle, provenance, authorization, or applicable operation receipt/Review state.
 
-The first V1 input is image data. Additional input formats such as spreadsheets can be added as later ingestion capabilities without changing the WorkItem boundary; a workbook containing multiple sheets/rows may likewise expand into the appropriate set of WorkItems when that ingestion capability exists.
+Image is the first V1 input boundary. Additional supported input sources such as spreadsheets are added through input-specific preparation/routing and converge on the same structured-candidate and business-operation boundaries.
 
 WorkItem identity and lifecycle are independent of individual runtime/execution lifetimes.
 
@@ -160,17 +159,17 @@ Questions are explicit cognitive work items. A Hive may route different Question
 ## V1 data-entry pipeline
 
 ```
-Image (first V1 input)
+Input submission
       ↓
-image preparation / vision
+input-specific preparation / routing
       ↓
-structured extraction
+structured candidate
       ↓
 validation
       ↓
 business-operation proposal
       ↓
-authorization / Approve / Reject when required
+authorization / approval when required
       ↓
 governed business-app write
       ↓
@@ -179,11 +178,20 @@ durable operation attempt / receipt
 policy-governed verification / Review
 ```
 
+Concrete paths include:
+
+```text
+Image      → vision capability       → structured candidate
+Spreadsheet → workbook/row mapping   → structured candidate
+```
+
+Both paths converge on the common validation and business-operation boundary.
+
 The business-app write is a governed Tool invocation surface over an authorized host/business capability. Approval, host-write disposition, and post-write Review are separate lifecycle boundaries. Hive never treats its own database as a gateway to the host application's business database.
 
 V1 does not choose between API and UI as an architecture decision. Both integration paths are supported from the start, and the implementation may use either or both per operation according to the real application's capabilities and authorization policy.
 
-The first V1 input is an image. Additional document formats can be added later without redefining Hive.
+Image is the first V1 input boundary. Additional supported input sources can be added later without redefining Hive.
 
 Generic cross-host integration remains later; the initial UI discovery contract is specifically for the real WinForms host boundary used by V1.
 
