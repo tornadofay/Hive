@@ -252,7 +252,7 @@ public readonly record struct ResourceReference
         _isValid = true;
     }
 
-    public bool IsValid => _isValid;
+    internal bool IsValid => _isValid;
 
     public ResourceKind Kind { get; }
 
