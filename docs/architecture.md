@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 41 — HForms integration contract review finalized)
+Last updated: 2026-09-24 (rev 42 — host-integration contract and public-doc boundary finalized)
 
 
 
@@ -96,7 +96,7 @@ Longer-term capabilities such as persistent individual cognition, offline Dream 
 2. A base `Agent` and base `Hive` that are complete and useful on their own.
 3. Later generations such as `CognitiveAgent : Agent` and `CognitiveHive : Hive` that add behavior without changing the base contracts.
 4. Provider-neutral, capability-aware execution planning.
-5. Host integration uses neutral public contracts with concrete adapters; V1 proves WinForms without coupling Hive to HForms, HControls, or another host library.
+5. Host integration uses neutral public contracts with concrete adapters; V1 proves WinForms without coupling Hive to any private or host-specific control/data framework.
 6. A reusable Workspace/control surface over authoritative Hive state, approval, and post-write review.
 7. Production-oriented automated tests for normal paths, edge cases, concurrency, recovery, persistence, and security.
 8. Microsoft Agent Framework (MAF) wherever MAF already owns the required mechanism.
@@ -303,6 +303,7 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 66. V1 vector storage uses SQL Server's native vector capability behind a replaceable `IVectorStore` where the selected SQL Server deployment supports it; deployments without the required vector capability must report `Unsupported` rather than silently substituting another vector database. Vector storage is not a reason to add a separate vector database, and semantic vector retrieval still requires an embedding/vectorization capability.
 67. A future lightweight/embedded Hive deployment may provide a first-class persistence backend behind the same Hive persistence/resource contracts; it must not fork the logical resource model, and a custom database engine is not assumed unless a measured requirement justifies building one.
 68. V1 WinForms integration may expose bounded semantics for application-owned/custom controls and data-bound grids, including related/child data, binding, column, lookup, and row-operation metadata; discovery or metadata never grants database or business authorization.
+69. Public Hive architecture and usage documentation must describe host integration at the neutral contract/semantic level. Private host class names, source excerpts, source-specific event/property mappings, private business conventions, and other implementation details must not be promoted into public Hive contracts merely because an adapter uses them.
 
 ---
 
