@@ -136,7 +136,10 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
 
             return result.IsSuccess
                 ? Result<HiveBootstrapCredentialReference>.Success(reference)
-                : Result<HiveBootstrapCredentialReference>.Failure(result.Error!);
+                : Result<HiveBootstrapCredentialReference>.Failure(
+                    SanitizeTechnicalError(
+                        result.Error!,
+                        "The bootstrap credential could not be stored."));
         }
         finally
         {
