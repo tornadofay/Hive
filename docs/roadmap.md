@@ -443,11 +443,11 @@ Bounded experience capture, provenance, expected-versus-observed results, outcom
 
 Define explicit outcome semantics:
 - Success = applicable success criteria were actually satisfied;
-- Mistake = applicable success criteria were not satisfied in a way attributable/relevant to the Agent's decision, assumption, method, or strategy;
+- Mistake = applicable success criteria were not satisfied;
 - Partial = some but not all criteria were satisfied;
 - Unknown = available evidence cannot establish the result.
 
-Technical execution failure is not automatically a Mistake. Technical execution success is not automatically a cognitive Success.
+Technical execution failure is not automatically a Mistake. Technical execution success is not automatically a cognitive Success. Attribution of the failure or success remains a separate evidence problem and may involve the Agent, tools, specialists, the environment, or other factors.
 
 Verify: outcome evaluation preserves evidence and attribution; actual/simulated evidence remain distinguishable; technical failure/success cannot be silently mapped to cognitive learning labels; partial and unresolved outcomes remain representable.
 
@@ -468,7 +468,9 @@ Dream processing is governed by applicable authorization, provider/model quota, 
 
 Dream evidence remains simulated/predicted evidence and cannot become actual experience. Counterfactual conclusions such as Regret must remain distinguishable from information actually available at the time of the original decision.
 
-Verify: failed outcome → Recovery candidate; successful outcome → Optimization candidate; successful outcome → Nightmare/Stress-Test candidate; Dream results remain simulated; Dream processing works while the Agent runtime is inactive; budgets/cancellation/concurrency are enforced.
+After a Mistake, Cognitive Strategy may retry with a revised method directly or may first use Questions, Hive assistance, or a Recovery Dream when the expected benefit justifies the additional work. After a Success, it may use Optimization and Nightmare/Stress-Test Dreams before adopting a broader lesson.
+
+Verify: failed outcome → Recovery candidate or bounded revised retry; successful outcome → Optimization candidate; successful outcome → Nightmare/Stress-Test candidate; Dream results remain simulated; Dream processing works while the Agent runtime is inactive; budgets/cancellation/concurrency are enforced.
 
 ## 4.8 — Questions
 Define first-class Questions with structured context, specialty, provenance, answer type, evidence requirements, status, and confidence/uncertainty where applicable. Support specialty-specific questions so different Agents can investigate different aspects of the same user objective.
