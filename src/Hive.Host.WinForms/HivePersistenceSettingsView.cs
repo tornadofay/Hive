@@ -206,6 +206,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _databaseTextBox.Text = HivePersistenceConfiguration.BuildDatabaseName(_applicationName);
 
+        _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(this);
         _authenticationComboBox.SelectedItem =
             HiveSqlAuthenticationMode.WindowsIntegrated;
@@ -613,13 +614,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 : configuration.BootstrapCredential is null
                     ? "Saved credential: not configured."
                     : "Saved credential: configured (material hidden).";
-    }
-
-    protected override void OnCreateControl()
-    {
-        base.OnCreateControl();
-        _themeManager.ThemeChanged += ThemeManagerOnChanged;
-        ApplyStatusVisual();
     }
 
     private void ThemeManagerOnChanged(object? sender, EventArgs e) =>
