@@ -42,30 +42,31 @@ Implemented in this maintenance pass:
 - HiveExampleTestSurface now disables "Copy code" when no reproduction snippet is present and uses distinct themed status tones for successful, warning/cancelled, and failed outcomes while keeping active/running status neutral;
 - HiveCrudPage now supports semantic status tones for information, success, warning, and error states; CRUD loading/cancellation/failure states use the existing theme semantics, and settings pages surface operation errors without changing their underlying behavior;
 - Workspace WorkItem status presentation now uses the existing theme Information/Success/Warning/Error states for lifecycle clarity and reapplies that presentation when the active theme changes;
-
-No business logic, Management contract, persistence behavior, provider behavior, or roadmap capability was changed.
+- CRUD search inputs now disable native TextBox AutoSize, status-filter ComboBoxes use centered native-height presentation, and list rebuilds return the footer status to a neutral summary tone so transient operation colors do not linger after the list state changes;
+- CRUD list focus indication now outlines the selected row rather than only the first cell, making keyboard selection clearer across wide multi-column lists;
+- Provider Account and Persistence credential editors now use explicit two-row input/status layouts without the previous unused vertical gap, and password TextBoxes retain the shared compact input sizing;
+- Execution Target filter ComboBoxes now stretch horizontally within their filter columns and use the same centered native-height rhythm as the other Settings filters;
+- Execution Target connection-test status now distinguishes testing, success, and failure with the shared Information/Success/Error theme tones and reapplies correctly after theme changes;
+- Persistence status now uses the shared Information/Success/Warning/Error tones and remains synchronized with Light/Dark theme changes;
+- cancelling a CRUD edit now restores the neutral list summary instead of leaving a stale "Editing..." status visible.
 
 ### Latest verification result
 
-User-run on 2026-09-24: `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — **190 tests, 189 passed, 1 failed, 0 skipped**.
+User-run on 2026-09-24: `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — **190 tests, 190 passed, 0 failed, 0 skipped** in 17 seconds.
 
-The previously failing CRUD filter test remains resolved after the explicit `SearchText` rebuild fix.
-
-The latest run still reached the focused editor-sizing test, but the test then failed on a brittle assertion that expected the outer editor host itself to be 72px high; WinForms layout assigned the host the available vertical space. The intended contract is the 32px compact slot inside that host, which the test already exposes through the inner row heights. The brittle outer-host height assertions have been removed.
-
-The latest test adjustment has **not yet been verified by a rerun**. The maintenance slice remains open pending the next test result and the existing manual UI verification.
+This is the verified automated result immediately before the current UI/UX audit changes. The current audit adds further UI presentation, state-clarity, and regression-test changes after that run; those changes have **not yet been verified by a test rerun**. The maintenance slice remains open pending the next test result and the existing manual UI verification.
 
 ## Verification handoff
 
 Example Host checks:
 - UI / Foundation / Theme — switch Light, Dark, and System modes and check typography, contrast, focus, and selected button state;
-- UI / Foundation / Controls & CRUD — resize through wide, compact, and very narrow desktop widths; verify search/status filter/action layout, wrapped actions, selection, Enter/Delete behavior, empty state, paging, and no clipped controls; when records exist but the search/status filter yields no matches, confirm the empty state says "No items match the current filters.";
+- UI / Foundation / Controls & CRUD — resize through wide, compact, and very narrow desktop widths; verify search/status filter/action layout, wrapped actions, vertically centered native filter controls, selection, Enter/Delete behavior, empty state, paging, and no clipped controls; when records exist but the search/status filter yields no matches, confirm the empty state says "No items match the current filters.";
 - UI / Foundation / Controls & CRUD — exercise loading, cancellation, and operation-failure states and confirm their status text uses the existing Information/Warning/Error theme tones in both Light and Dark modes; settings CRUD errors should remain visually distinct while the error dialog still provides details.
 - UI / Foundation / Dialogs — verify Information/Success/Warning/Error/Question dialogs and keyboard action focus;
 - Example Host / Overview / Getting Started / Example Configuration / Theme Foundation — switch Light and Dark modes and confirm headings, section labels, and body text retain the shared theme typography family and intended hierarchy;
 - Workspace / WorkItem Operations — confirm Workspace section labels use the same themed typography family as the surrounding surface;
 - Host / WinForms Integration / Image Input & WinForms Host Context — run the existing image/host-context example and expand the shared output; verify the output pane floats over the lower part of the active example without changing the example's reserved layout space; when collapsed, confirm the "Show Output" button is aligned to the lower-right workspace edge at different window sizes; then hide the output, clear it through the shared output controls, and confirm no stale "Show Output" affordance remains;
-- Settings editors — inspect Provider, Account/Credential, Execution Target, Agent, and Persistence fields at normal and narrow supported widths; confirm single-line editors remain compact and vertically centered, while multiline/composite editors retain their intended larger editing area;
+- Settings editors — inspect Provider, Account/Credential, Execution Target, Agent, and Persistence fields at normal and narrow supported widths; confirm single-line editors remain compact and vertically centered, native ComboBoxes retain their platform height without breaking field rhythm, multiline/composite editors retain their intended larger editing area, and credential input/status areas have no unexplained vertical gaps;
 - HiveMessageBox — open a dialog with technical details and confirm the "Copy details" action uses the same typography and visual treatment as the footer actions; with clipboard access unavailable, confirm copy failure is surfaced as a themed error dialog; 
 - Example Host configured-agent toolbar — confirm the selector is vertically centered in its row and remains aligned during resize;
 - Example Test Surface — open an example with and without a code snippet; confirm "Copy code" is unavailable when empty, becomes available when populated, and that Ready/Running/Completed/Cancelled/Failed states use clear but consistent visual emphasis in both Light and Dark themes;
@@ -73,6 +74,9 @@ Example Host checks:
 - Overview / Getting Started / Example Configuration — open the real Hive Settings surface and inspect Provider, Account/Credential, Execution Target, Agent, and Persistence editors in both themes; confirm read-only keys/database are visually distinct and resizing does not clip the form.
 
 - HiveMessageBox theme inheritance — open an Information/Success/Warning/Error/Question dialog from a HiveForm while an explicit Light or Dark mode is selected, including callers that omit the theme-manager argument; confirm the dialog matches the owner theme.
+- Execution Target editor — run the connection test and confirm the status visibly transitions through testing, success, and failure tones and remains correct after switching theme;
+- Persistence Settings — exercise load/save/test/initialize/cancel/error states and confirm Information/Success/Warning/Error tones remain correct after switching theme;
+- CRUD list keyboard focus — select a row with the keyboard and confirm the focus indication is visible across the selected row, including wide lists with multiple columns;
 
 Tests to run: dotnet test tests/Hive.Tests/Hive.Tests.csproj.
 
