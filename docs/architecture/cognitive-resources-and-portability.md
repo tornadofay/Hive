@@ -83,8 +83,8 @@ Both positive and negative evidence can produce Learning Candidates.
 
 Examples include:
 
-- repeated Success supporting a reusable method under stated conditions;
-- repeated Mistakes supporting a changed validation rule or decomposition strategy;
+- repeated evaluated Success supporting a reusable method under stated conditions;
+- repeated evaluated Mistake outcomes supporting a changed validation rule or decomposition strategy;
 - mixed outcomes narrowing the applicability conditions of a method;
 - human correction identifying an incorrect assumption;
 - Dream evidence suggesting an alternative method or exposing a hidden failure condition;
