@@ -35,6 +35,10 @@ Implemented in this maintenance pass:
 - CRUD empty-state messaging now describes filtered no-result states as the current filters rather than incorrectly attributing them only to search;
 - the shared Example Output surface now reports availability when output is cleared, and the Example Host removes a stale collapsed-output reveal affordance when the shared output becomes empty;
 - the Example Host now recalculates the collapsed "Show Output" button bounds whenever the output overlay layout is recalculated, keeping the reveal action aligned to the lower-right host workspace across resize/layout changes;
+- HiveEditorLayout now keeps compact single-line editors (text boxes, combo boxes, numeric editors, date pickers, and simple option controls) at a consistent usable height while retaining full-height layout for multiline and composite editors;
+- HiveMessageBox now applies the shared message-button typography to its technical-details copy action, and clipboard-copy failure is surfaced through a themed error dialog instead of being silently debug-only;
+- the Example Host now vertically centers the Configured Agent selector within its toolbar row;
+- focused UI polish tests now cover shared editor sizing for compact single-line and full-height multiline editors;
 
 No business logic, Management contract, persistence behavior, provider behavior, or roadmap capability was changed.
 
@@ -47,6 +51,9 @@ Example Host checks:
 - Example Host / Overview / Getting Started / Example Configuration / Theme Foundation — switch Light and Dark modes and confirm headings, section labels, and body text retain the shared theme typography family and intended hierarchy;
 - Workspace / WorkItem Operations — confirm Workspace section labels use the same themed typography family as the surrounding surface;
 - Host / WinForms Integration / Image Input & WinForms Host Context — run the existing image/host-context example and expand the shared output; verify the output pane floats over the lower part of the active example without changing the example's reserved layout space; when collapsed, confirm the "Show Output" button is aligned to the lower-right workspace edge at different window sizes; then hide the output, clear it through the shared output controls, and confirm no stale "Show Output" affordance remains;
+- Settings editors — inspect Provider, Account/Credential, Execution Target, Agent, and Persistence fields at normal and narrow supported widths; confirm single-line editors remain compact and vertically centered, while multiline/composite editors retain their intended larger editing area;
+- HiveMessageBox — open a dialog with technical details and confirm the "Copy details" action uses the same typography and visual treatment as the footer actions; with clipboard access unavailable, confirm copy failure is surfaced as a themed error dialog; 
+- Example Host configured-agent toolbar — confirm the selector is vertically centered in its row and remains aligned during resize;
 - Workspace / WorkItem Operations — for a PendingApproval WorkItem, open Reject and verify the themed Hive editor dialog, multiline reason field, Cancel, Reject, and empty-reason behavior;
 - Overview / Getting Started / Example Configuration — open the real Hive Settings surface and inspect Provider, Account/Credential, Execution Target, Agent, and Persistence editors in both themes; confirm read-only keys/database are visually distinct and resizing does not clip the form.
 
