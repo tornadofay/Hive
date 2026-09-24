@@ -30,6 +30,32 @@ public sealed class EventOutboxPollerIntegrationTests
     }
 
     [Fact]
+    public async Task CompleteOutbox_ExpiredLeaseIsRejectedAndRowRemains()
+    {
+        var database = await PrepareDatabase("Hive_Test_OutboxExpiredCompletion");
+        var store = new SqlEventPersistenceStore(database.Options);
+        var eventEnvelope = CreateEvent("outbox.expired-completion");
+        await AppendAsync(store, eventEnvelope);
+
+        var claimed = await store.ClaimNextOutboxAsync(TimeSpan.FromMinutes(5));
+        Assert.True(claimed.IsSuccess, claimed.Error?.Message);
+        Assert.NotNull(claimed.Value);
+
+        var workItem = claimed.Value!;
+        await ExpireLeaseAsync(database.Options, eventEnvelope.EventId);
+
+        var completed = await store.CompleteOutboxAsync(workItem);
+
+        Assert.True(completed.IsFailure);
+        Assert.Equal("hive.outbox.lease-lost", completed.Error!.Code);
+        Assert.Equal(ErrorCategory.Concurrency, completed.Error.Category);
+
+        var remaining = await store.GetOutboxAsync(eventEnvelope.EventId);
+        Assert.True(remaining.IsSuccess, remaining.Error?.Message);
+        Assert.NotNull(remaining.Value);
+    }
+
+    [Fact]
     public async Task ProcessNext_FailedDeliveryIsRetriedAfterLeaseExpiryWithoutDuplicatingSideEffect()
     {
         var database = await PrepareDatabase("Hive_Test_OutboxRetry");
