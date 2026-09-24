@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 44 — host-integration, batch WorkItem, Review, and mutable-key receipt semantics finalized)
+Last updated: 2026-09-24 (rev 45 — source-independent V1 WorkItems and input-routing semantics clarified)
 
 
 
@@ -58,20 +58,20 @@ Hive is a general-purpose C# / .NET 10 platform for building, running, coordinat
 
 ### V1 forcing function
 
-V1 has a real forcing function: automate data entry from documents and images into the user's existing business application.
+V1 has a real forcing function: automate data entry from supported input sources into the user's existing business application.
 
 That workflow is **not Hive's definition** and not a product-specific architecture. It is the first real deliverable that determines implementation order and proves that the general platform can solve a concrete problem.
 
-The V1 pipeline is:
+A single input submission may produce one or multiple WorkItems. A WorkItem is the durable unit of user-visible work and represents one logical business operation when a business operation is required. A logical operation may contain a parent record and child-row collection and may require multiple executions or steps. Related WorkItems may be grouped operationally as a submission or batch without replacing their independent identity, lifecycle, provenance, authorization, receipt, or review state.
+
+The common V1 pipeline is:
 
 ```
-Document / image
+Input submission
       ↓
-parse / rasterize
+input-specific preparation / interpretation
       ↓
-text / vision capability
-      ↓
-structured extraction
+structured candidate
       ↓
 validation
       ↓
@@ -86,7 +86,7 @@ durable operation attempt / receipt
 policy-governed verification / review / result
 ```
 
-Vision and image/document extraction are therefore capabilities that emerge from the general platform. They are not Hive's permanent scope.
+Image input may use a vision-capable execution target. Structured input such as a spreadsheet may already contain structured values and can therefore bypass vision or other interpretation steps that are unnecessary for that source. Input preparation and interpretation are capabilities of the general platform, not Hive's permanent scope.
 
 Longer-term capabilities such as persistent individual cognition, offline Dream processing, structured Questions, collective cognition, generic host integration, broader governance, and additional host surfaces remain part of Hive's architecture, but they must not become prerequisites for the V1 pipeline.
 
