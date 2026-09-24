@@ -101,7 +101,7 @@ Canonical scopes:
 Global / Tenant / User / Workspace / Agent / Runtime / Execution
 ```
 
-Resource examples include Provider, ProviderAccount, ExecutionTarget, AgentDefinition, HiveDefinition, Workspace, WorkItem, Question, Memory, Knowledge, Wiki, Skill, LearningCandidate, CognitiveState, and Review resources. CognitiveAgent evidence may additionally contain Experience and OutcomeEvaluation records or events; Mistake, Success, Regret, Risk, Fear, and Confidence are cognitive semantics/state and do not each require an independent generic resource type.
+Resource examples include Provider, ProviderAccount, ExecutionTarget, AgentDefinition, HiveDefinition, Workspace, WorkItem, Question, Memory, Knowledge, Wiki, Skill, LearningCandidate, CognitiveState, and Review resources. CognitiveAgent evidence additionally includes first-class Experience and OutcomeEvaluation semantics, with Mistake, Success, Partial, Unknown, Regret, Risk, Fear, and Confidence represented according to their owning cognitive contracts. A concept does not have to become a generic Resource merely to be first-class; where an independent lifecycle, persistence, scheduling, or replacement boundary exists, a dedicated resource/component/event stream may be used.
 
 Assignments are references/policies, not copies of the assigned resource.
 
@@ -169,7 +169,7 @@ Cognitive Strategy
           └── Learning Candidate
 ```
 
-The execution boundary owns what the execution actually returned and its technical lifecycle. The cognitive boundary decides whether that evidence means the intended objective was achieved, what likely contributed to the result, and what adaptation should be considered.
+The execution boundary owns what the execution actually returned and its technical lifecycle. The cognitive OutcomeEvaluation boundary decides whether that evidence means the intended objective was achieved, what likely contributed to the result, and what adaptation should be considered. OutcomeEvaluation, Mistake, Success, Risk, Fear, Confidence, Dream, and Learning remain first-class cognitive semantics even when they share persistence or processing infrastructure.
 
 Outcome evaluation must remain attributable to the objective/plan/method/decision and preserve expected-versus-observed evidence. Technical failures must not be silently converted into Mistakes, and technical successes must not be silently converted into durable Success lessons.
 
@@ -177,7 +177,7 @@ Risk/Fear/Confidence may affect strategy selection and escalation, but the Execu
 
 Dreams and counterfactuals are evidence with a different epistemic status from actual experience. Their predicted outcomes may support a Learning Candidate but must never be replayed as observed events.
 
-Learning Candidates are persisted through their owning cognitive-resource/governance boundary; the execution store does not become a cognitive-learning engine.
+Learning Candidates are persisted through their owning cognitive-resource/governance boundary; the execution store does not become a cognitive-learning engine. A future deterministic shortcut may be persisted as a governed Skill, Method, strategy rule, routing rule, or equivalent cognitive resource, but the promotion boundary must retain provenance/applicability and support later invalidation, revision, or retirement.
 
 ---
 
@@ -272,6 +272,8 @@ bounded comparison
         ↓
 Review outcome
 ```
+
+Review is host-operation correctness evidence, not a synonym for CognitiveAgent Success/Mistake. A Review may later contribute evidence to cognitive OutcomeEvaluation through an explicit provenance-bearing reconciliation step, including when a human review corrects the observed result.
 
 Minimum outcome states are:
 
