@@ -118,6 +118,7 @@ Facts:
 - non-null edit result reloads;
 - Delete confirms;
 - `OperationFailed` exposes operation failures.
+- `SetStatus(text, tone)` can explicitly select `HiveStatusTone.Neutral`, `Information`, `Success`, `Warning`, or `Error`; the existing `SetStatus(text)` remains neutral for backward compatibility.
 
 ## HiveEditorLayout
 
