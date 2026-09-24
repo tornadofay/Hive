@@ -78,7 +78,9 @@ public sealed class HiveWorkspaceView : UserControl
 
         Controls.Add(BuildLayout());
 
+        _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(this);
+        ApplyStatusVisual();
         UpdateActionState();
     }
 
@@ -86,11 +88,17 @@ public sealed class HiveWorkspaceView : UserControl
     {
         if (disposing)
         {
+            _themeManager.ThemeChanged -= ThemeManagerOnChanged;
             _operationCts?.Cancel();
             _operationCts?.Dispose();
         }
 
         base.Dispose(disposing);
+    }
+
+    private void ThemeManagerOnChanged(object? sender, EventArgs e)
+    {
+        ApplyStatusVisual();
     }
 
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
@@ -384,6 +392,7 @@ public sealed class HiveWorkspaceView : UserControl
         }
 
         _statusLabel.Text = $"{_selectedWorkItem.Status} · version {_selectedWorkItem.Resource.Version}";
+        ApplyStatusVisual();
         _attachmentLabel.Text = _selectedWorkItem.Attachment is null
             ? "No attachment"
             : $"{_selectedWorkItem.Attachment.FileName} · {FormatSize(_selectedWorkItem.Attachment.ContentLength)} · {_selectedWorkItem.Attachment.MediaType}";
@@ -394,6 +403,7 @@ public sealed class HiveWorkspaceView : UserControl
     private void ClearDetails()
     {
         _statusLabel.Text = "No WorkItem selected";
+        ApplyStatusVisual();
         _attachmentLabel.Text = "—";
         _executionLabel.Text = "—";
         _activityList.Items.Clear();
