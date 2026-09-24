@@ -11,11 +11,30 @@ This is a temporary maintenance slice explicitly authorized by the user for anot
 ### Scope
 
 - remove remaining raw exception text from public Management `Error` results;
+- reject malformed persisted configuration values as typed configuration-validation failures;
 - reject undefined persisted WorkItem status values during activity reconstruction;
-- preserve the bootstrap credential invariant under concurrent configuration-save/removal operations within the Management facade;
+- prevent bootstrap credential removal from racing with configuration saves through the owning Management facade;
+- reject configured AgentDefinition targets whose target, ProviderAccount, or Provider dependency is inactive/inconsistent;
 - add only focused regression coverage for these discovered defects;
 - re-audit `Hive.Persistence` boundaries without introducing unrelated persistence changes;
-- do not change SQL schema, migrations, provider transport, orchestration, MAF, host adapters, UI, dependencies, or roadmap phase authorization.
+- do not change SQL schema, migrations, provider transport, orchestration, MAF, host adapters, UI, dependencies, or roadmap phase authorization
+
+### Verification gate
+
+Developer verification is required before this maintenance slice can close. The previous 218-test result verifies the earlier Persistence-only checkpoint; it does not verify the current Management changes. This slice remains open until the developer reports the focused and broader `Hive.Tests` verification for this revision.
+
+### Implementation checkpoint
+
+- Management now redacts public persistence/configuration/secret/activity exception details;
+- persisted WorkItem activity rejects undefined status enum values instead of silently treating them as absent;
+- malformed persisted Hive settings values are classified as validation failures;
+- bootstrap credential set/save/remove mutations are serialized through the Management facade, and removal fails closed when configuration storage is unavailable;
+- configured AgentDefinition targets now require an active target, active ProviderAccount, active Provider, and consistent Provider relationship;
+- focused regression tests cover the newly discovered contracts.
+
+Verification status: **not yet verified by build/test execution for this revision**.
+
+## Closed maintenance pass — Hive.Persistence Production Baseline Hardening
 
 ### Scope
 
@@ -41,7 +60,6 @@ Implemented on `main` through commit `e22c11a1740ff84a33d14478d9ff93df23c25b3c`:
 
 Verification status: **developer-verified**. The final implementation was verified with 218 passed, 0 failed, 0 skipped tests on 2026-09-25; the maintenance slice is closed.
 
-## Closed maintenance pass — Hive.Persistence Production Baseline Hardening
 
 This maintenance pass is complete and verified. The final code checkpoint is `e22c11a1740ff84a33d14478d9ff93df23c25b3c`; the later documentation-only checkpoint is `a4ced845427efcc7bc0daad6696815ad0b47556d`.
 
