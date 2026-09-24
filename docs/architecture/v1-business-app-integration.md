@@ -350,7 +350,7 @@ Examples:
 
 Hive must not invent generated values merely because an add-row operation requires the field.
 
-The write result should return the host-generated identity when the host can provide it.
+The write result should return the host-generated or resulting identity when the host can provide it. When an authorized update changes the host key, the operation must retain the authoritative pre-operation identity used to locate the target and report the resulting identity separately.
 
 ### 6.4 Computed fields
 
@@ -520,8 +520,10 @@ BusinessOperationReceipt
 ├── Host/Application identity
 ├── Adapter/implementation identity
 ├── Operation type
-├── Parent identity
-├── Child identities[]
+├── Parent target identity
+├── resulting parent identity when changed
+├── Child target identities[]
+├── resulting child identities when changed
 ├── Host correlation/transaction identifier when available
 ├── completed-at timestamp
 ├── result/status
