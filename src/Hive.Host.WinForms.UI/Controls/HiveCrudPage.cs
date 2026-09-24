@@ -671,6 +671,14 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         UpdateToolbarLayout();
     }
 
+    protected override void OnCreateControl()
+    {
+        base.OnCreateControl();
+        UpdateThemeSubscription();
+        ApplyThemeTypography();
+        ApplyStatusColor();
+    }
+
     protected override void OnParentChanged(EventArgs e)
     {
         base.OnParentChanged(e);
