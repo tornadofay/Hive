@@ -1,6 +1,8 @@
+using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Controls;
+using Hive.Host.WinForms.UI.Theme;
 using Xunit;
 
 namespace Hive.Tests;
@@ -105,6 +107,29 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
+    public void HiveCrudPage_AppliesErrorStatusToneAndPreservesItAcrossThemeChanges()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        using var form = new TestHiveForm(themeManager);
+        using var page = new HiveCrudPage<TestItem>();
+
+        form.Body.Controls.Add(page);
+        themeManager.Apply(form.Body);
+
+        page.SetStatus("Operation failed.", HiveStatusTone.Error);
+
+        Assert.Equal(
+            themeManager.Theme.VisualStates.Error,
+            page.StatusLabel.ForeColor);
+
+        themeManager.SetMode(HiveThemeMode.Dark);
+
+        Assert.Equal(
+            themeManager.Theme.VisualStates.Error,
+            page.StatusLabel.ForeColor);
+    }
+
+    [Fact]
     public async Task HiveCrudPage_UsesFilterLanguageWhenFilteredResultIsEmpty()
     {
         using var page = new HiveCrudPage<TestItem>();
@@ -151,4 +176,19 @@ public sealed class HiveUiPolishTests
     }
 
     private sealed record TestItem(string Name);
+
+    private sealed class TestHiveForm : HiveForm
+    {
+        public TestHiveForm(IHiveThemeManager themeManager)
+            : base(
+                "Test",
+                string.Empty,
+                new Size(720, 480),
+                new Size(640, 420),
+                themeManager)
+        {
+        }
+
+        public Control Body => BodyPanel;
+    }
 }
