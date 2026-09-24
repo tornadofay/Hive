@@ -296,6 +296,10 @@ public sealed class HiveEditorLayout : UserControl
         compactHost.RowStyles.Add(
             new RowStyle(SizeType.Percent, 50f));
 
+        // Single-line native WinForms controls such as TextBox calculate their own
+        // height when AutoSize remains enabled, which can override the shared 32px
+        // compact-editor contract during layout.
+        editor.AutoSize = false;
         editor.Dock = DockStyle.Fill;
         editor.Height = editorHeight;
         compactHost.Controls.Add(editor, 0, 1);
