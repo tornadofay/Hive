@@ -29,6 +29,7 @@ public sealed class HiveExampleTestSurface : UserControl
     private CancellationTokenSource? _runCancellation;
     private bool _busy;
     private bool _compactWorkspace;
+    private HiveExampleStatusTone _statusTone = HiveExampleStatusTone.Neutral;
     private string _runButtonText = "Run example";
     private string _description = string.Empty;
     private string _expectedResult = string.Empty;
@@ -193,6 +194,7 @@ public sealed class HiveExampleTestSurface : UserControl
             Margin = new Padding(6, 0, 0, 0),
             Padding = new Padding(8)
         };
+        _code.TextChanged += (_, _) => UpdateActionState();
 
         _workspace.Controls.Add(_inputTitle, 0, 0);
         _workspace.Controls.Add(_codeTitle, 1, 0);
@@ -230,6 +232,7 @@ public sealed class HiveExampleTestSurface : UserControl
         Controls.Add(_root);
 
         UpdateWorkspaceLayout();
+        UpdateActionState();
         UpdateInformationLayout();
     }
 
@@ -361,7 +364,7 @@ public sealed class HiveExampleTestSurface : UserControl
     }
 
     public void SetStatus(string text) =>
-        _status.Text = text ?? string.Empty;
+        SetStatusVisual(text, HiveExampleStatusTone.Neutral);
 
     public void ConfigureRun(
         Func<CancellationToken, Task> action,
@@ -373,7 +376,7 @@ public sealed class HiveExampleTestSurface : UserControl
         _runAction = action;
         _output = output;
         _owner = owner;
-        SetStatus("Ready");
+        SetStatusVisual("Ready", HiveExampleStatusTone.Neutral);
     }
 
     public void Cancel()
@@ -400,15 +403,15 @@ public sealed class HiveExampleTestSurface : UserControl
         try
         {
             await action(_runCancellation.Token).ConfigureAwait(true);
-            SetStatus("Completed.");
+            SetStatusVisual("Completed.", HiveExampleStatusTone.Success);
         }
         catch (OperationCanceledException) when (_runCancellation.IsCancellationRequested)
         {
-            SetStatus("Cancelled.");
+            SetStatusVisual("Cancelled.", HiveExampleStatusTone.Warning);
         }
         catch (Exception exception)
         {
-            SetStatus("Failed.");
+            SetStatusVisual("Failed.", HiveExampleStatusTone.Error);
 
             var window = owner ?? FindForm();
             HiveUiErrorReporter.Report(
@@ -462,7 +465,7 @@ public sealed class HiveExampleTestSurface : UserControl
 
         _theme = theme;
         BackColor = theme.Palette.Surface;
-        _status.ForeColor = theme.Palette.MutedText;
+        ApplyStatusColor();
         _inputTitle.ForeColor = theme.Palette.Text;
         _codeTitle.ForeColor = theme.Palette.Text;
         _details.ForeColor = theme.Palette.Text;
@@ -617,7 +620,7 @@ public sealed class HiveExampleTestSurface : UserControl
         _runButton.AccessibleDescription = busy
             ? "Cancel the currently running developer example."
             : "Run the current developer example.";
-        _copyButton.Enabled = !busy;
+        _copyButton.Enabled = !busy && _code.TextLength > 0;
         _input.Enabled = !busy;
 
         if (_theme is not null)
@@ -637,18 +640,18 @@ public sealed class HiveExampleTestSurface : UserControl
     {
         if (string.IsNullOrEmpty(_code.Text))
         {
-            SetStatus("No code to copy.");
+            SetStatusVisual("No code to copy.", HiveExampleStatusTone.Neutral);
             return;
         }
 
         try
         {
             Clipboard.SetText(_code.Text);
-            SetStatus("Code copied.");
+            SetStatusVisual("Code copied.", HiveExampleStatusTone.Success);
         }
         catch (ExternalException exception)
         {
-            SetStatus("Copy failed.");
+            SetStatusVisual("Copy failed.", HiveExampleStatusTone.Error);
             HiveMessageBox.Show(
                 FindForm(),
                 new HiveMessageOptions(
@@ -660,6 +663,34 @@ public sealed class HiveExampleTestSurface : UserControl
                     DetailsExpanded: true),
                 FindHiveThemeManager());
         }
+    }
+
+    private void SetStatusVisual(
+        string text,
+        HiveExampleStatusTone tone)
+    {
+        _statusTone = tone;
+        _status.Text = text ?? string.Empty;
+        ApplyStatusColor();
+    }
+
+    private void ApplyStatusColor()
+    {
+        if (_theme is null)
+            return;
+
+        _status.ForeColor = _statusTone switch
+        {
+            HiveExampleStatusTone.Success => _theme.VisualStates.Success,
+            HiveExampleStatusTone.Warning => _theme.VisualStates.Warning,
+            HiveExampleStatusTone.Error => _theme.VisualStates.Error,
+            _ => _theme.Palette.MutedText
+        };
+    }
+
+    private void UpdateActionState()
+    {
+        _copyButton.Enabled = !_busy && _code.TextLength > 0;
     }
 
     private void UpdateInformationLayout()
@@ -708,6 +739,14 @@ public sealed class HiveExampleTestSurface : UserControl
             return form.ThemeManager;
 
         return null;
+    }
+
+    private enum HiveExampleStatusTone
+    {
+        Neutral,
+        Success,
+        Warning,
+        Error
     }
 
     private Label CreateSectionLabel(string text) =>
