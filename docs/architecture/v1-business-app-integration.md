@@ -924,7 +924,7 @@ Before Phase 1.14 implementation freezes the concrete adapter types, inspect the
 - how child collections are related to their parent;
 - how primary/composite keys are represented;
 - how generated identities are surfaced after writes;
-- how grid rows are bound and updated;
+- how grid rows are bound and updated, including add/remove-row policy and editable-column configuration;
 - how lookup data is resolved;
 - how ByAlone/ByControls/ByForm flows operate;
 - how HActionBar/HDataBox permissions and actions map to host behavior.
