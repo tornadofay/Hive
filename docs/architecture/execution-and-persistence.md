@@ -33,7 +33,8 @@ This document is part of the authoritative architecture defined by `docs/archite
 - capability evidence and execution requirements;
 - authorization and tool permission policy;
 - Hive-owned durable state, event history, snapshots, and outbox semantics;
-- cognitive lifecycle, Dream, and Question semantics for the cognitive generations;
+- cognitive lifecycle, outcome evaluation, Mistake/Success semantics, Risk/Fear/Confidence state, Dream, and Question semantics for the cognitive generations;
+- learning-candidate and cognitive-state reconciliation semantics for the cognitive generations;
 - host application integration;
 - WinForms management facade and configuration surface, including first-class Provider and Persistence configuration;
 - human intervention beyond MAF's lower-level request mechanics;
@@ -100,7 +101,7 @@ Canonical scopes:
 Global / Tenant / User / Workspace / Agent / Runtime / Execution
 ```
 
-Resource examples include Provider, ProviderAccount, ExecutionTarget, AgentDefinition, HiveDefinition, Workspace, WorkItem, Question, Memory, Knowledge, Wiki, Skill, LearningCandidate, CognitiveState, and Review resources.
+Resource examples include Provider, ProviderAccount, ExecutionTarget, AgentDefinition, HiveDefinition, Workspace, WorkItem, Question, Memory, Knowledge, Wiki, Skill, LearningCandidate, CognitiveState, and Review resources. CognitiveAgent evidence may additionally contain Experience and OutcomeEvaluation records or events; Mistake, Success, Regret, Risk, Fear, and Confidence are cognitive semantics/state and do not each require an independent generic resource type.
 
 Assignments are references/policies, not copies of the assigned resource.
 
@@ -144,6 +145,39 @@ Planner output must be explainable without exposing credentials.
 Running executions use immutable effective configuration snapshots.
 
 Terminal execution state cannot be overwritten by a late provider result.
+
+### Cognitive evidence and adaptation boundary
+
+For CognitiveAgent generations, execution produces evidence that is later interpreted by the cognitive layer.
+
+```
+Execution / external observation
+          ↓
+Experience
+          ↓
+OutcomeEvaluation
+          ├── Success
+          ├── Mistake
+          ├── Partial
+          └── Unknown
+          ↓
+Cognitive Strategy
+          ├── risk/confidence revision
+          ├── Question
+          ├── Dream
+          ├── Hive/specialist escalation
+          └── Learning Candidate
+```
+
+The execution boundary owns what the execution actually returned and its technical lifecycle. The cognitive boundary decides whether that evidence means the intended objective was achieved, what likely contributed to the result, and what adaptation should be considered.
+
+Outcome evaluation must remain attributable to the objective/plan/method/decision and preserve expected-versus-observed evidence. Technical failures must not be silently converted into Mistakes, and technical successes must not be silently converted into durable Success lessons.
+
+Risk/Fear/Confidence may affect strategy selection and escalation, but the Execution Planner and authorization boundaries remain authoritative for capability, target, policy, scope, budget, and permission decisions.
+
+Dreams and counterfactuals are evidence with a different epistemic status from actual experience. Their predicted outcomes may support a Learning Candidate but must never be replayed as observed events.
+
+Learning Candidates are persisted through their owning cognitive-resource/governance boundary; the execution store does not become a cognitive-learning engine.
 
 ---
 
