@@ -52,7 +52,7 @@ Hive must never build a second workflow/orchestration engine merely because Hive
 |---|---|---|
 | Language/runtime | C# / .NET 10 only | Single runtime baseline |
 | Agent programming model | Microsoft Agent Framework | Reuse MAF execution/orchestration |
-| Execution model | Ephemeral execution + durable Agent/Hive state + transactional outbox | Execution objects and Agent incarnations may end; durable state survives; one V1 submitted document is one WorkItem, while a batch is multiple WorkItems |
+| Execution model | Ephemeral execution + durable Agent/Hive state + transactional outbox | Execution objects and Agent incarnations may end; durable state survives; a WorkItem is the durable unit of user-visible work and a submission may produce one or multiple WorkItems |
 | Persistence | SQL Server; LocalDB for development | Hive database is isolated from host business data |
 | Vector storage | SQL Server `VECTOR` / `VECTOR_DISTANCE` behind `IVectorStore` | Replaceable storage boundary; no separate vector database is required for V1 |
 | Provider adapter | One shared OpenAI-compatible adapter | Compatible providers are configurations, not new adapter implementations |
@@ -153,9 +153,9 @@ Terminal execution state cannot be overwritten by a late provider result.
 
 ### V1 WorkItem semantics
 
-For V1, **one submitted document is one WorkItem**. A batch submission is a collection of independent WorkItems rather than one giant execution. Each WorkItem has its own identity, lifecycle, provenance, status, approvals, review state, and terminal result.
+For V1, a **WorkItem is the durable unit of user-visible work** and represents one logical business operation when a business operation is required. A single input submission may produce one or multiple independent WorkItems. A related submission or batch is an operational grouping of WorkItems, not a replacement for their individual lifecycle and correctness boundaries.
 
-A runtime incarnation is not inherently bound one-to-one to a WorkItem. A runtime may process multiple WorkItems according to its execution policy, and a WorkItem may require multiple executions/steps. The WorkItem is the durable unit of user-visible work; Execution remains the concrete execution/lifecycle unit.
+A WorkItem may contain a parent business record and child-row collection when the host treats those changes as one logical operation. A WorkItem may require multiple executions or steps. A runtime incarnation is not inherently bound one-to-one to a WorkItem; a runtime may process multiple WorkItems according to its execution policy. Execution remains the concrete execution/lifecycle unit.
 
 An active Swarm may be represented as the set of Hive members participating in a WorkItem or related Question. The Swarm is derived/session state, not a persistent resource.
 
