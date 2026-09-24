@@ -45,6 +45,16 @@ Implemented in this maintenance pass:
 
 No business logic, Management contract, persistence behavior, provider behavior, or roadmap capability was changed.
 
+### Latest verification result
+
+User-run on 2026-09-24: `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — **190 tests, 188 passed, 2 failed, 0 skipped**.
+
+The two failures were investigated:
+- `HiveEditorLayout_KeepsSingleLineEditorsAtCompactHeight`: the test read control bounds before WinForms performed layout. The test now realizes the layout before asserting the intended 32px compact editor height.
+- `HiveCrudPage_UsesFilterLanguageWhenFilteredResultIsEmpty`: programmatic `SearchText` updated the textbox but could skip the filtered-list rebuild because the textbox change event observed the already-updated backing value. `HiveCrudPage` now performs the rebuild explicitly after synchronizing the textbox.
+
+These fixes have **not yet been verified by a rerun**. The maintenance slice remains open pending the next test result and the existing manual UI verification.
+
 ## Verification handoff
 
 Example Host checks:
