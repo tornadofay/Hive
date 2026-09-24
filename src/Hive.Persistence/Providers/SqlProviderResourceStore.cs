@@ -2106,14 +2106,14 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
         {
             throw;
         }
-        catch (SqlException) when (IsConstraintConflict(exception))
+        catch (SqlException exception) when (IsConstraintConflict(exception))
         {
             return Result<T>.Failure(
                 Conflict(
                     $"hive.{resourceName.Replace(' ', '-')}.duplicate",
                     $"The {resourceName} identity or key already exists."));
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
             return Result<T>.Failure(
                 ToSqlError(resourceName, exception));
@@ -2125,7 +2125,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                     $"hive.{resourceName.Replace(' ', '-')}.concurrency",
                     $"The {resourceName} changed before the operation completed."));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<T>.Failure(
                 ToInvalidStateError(resourceName, exception));
@@ -2160,14 +2160,14 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
         {
             throw;
         }
-        catch (SqlException) when (IsConstraintConflict(exception))
+        catch (SqlException exception) when (IsConstraintConflict(exception))
         {
             return Result<T>.Failure(
                 Conflict(
                     $"hive.{resourceName.Replace(' ', '-')}.duplicate",
                     $"The {resourceName} identity or key already exists."));
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
             return Result<T>.Failure(
                 ToSqlError(resourceName, exception));
@@ -2179,7 +2179,7 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
                     $"hive.{resourceName.Replace(' ', '-')}.concurrency",
                     $"The {resourceName} changed before the operation completed."));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<T>.Failure(
                 ToInvalidStateError(resourceName, exception));
@@ -2517,18 +2517,18 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
     private static Error ToSqlError(
         string resourceName,
         SqlException exception) =>
-        new(
+        HivePersistenceError.External(
             $"hive.persistence.{resourceName.Replace(' ', '-')}.sql-failure",
-            ErrorCategory.External,
-            $"SQL Server operation for the {resourceName} failed.");
+            $"SQL Server operation for the {resourceName} failed.",
+            exception);
 
     private static Error ToInvalidStateError(
         string resourceName,
         Exception exception) =>
-        new(
+        HivePersistenceError.Internal(
             $"hive.persistence.{resourceName.Replace(' ', '-')}.invalid-state",
-            ErrorCategory.Internal,
-            $"Persisted {resourceName} state could not be read or validated.");
+            $"Persisted {resourceName} state could not be read or validated.",
+            exception);
 
     private sealed record CapabilityPersistenceItem(
         string Key,
