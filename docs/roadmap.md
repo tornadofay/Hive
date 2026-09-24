@@ -441,11 +441,11 @@ Verify: versioned cognitive-state transitions preserve context/provenance for Ri
 ## 4.5 — Experience, Outcome Evaluation & Cognitive Event History
 Bounded experience capture, provenance, expected-versus-observed results, outcome evaluation, attribution/credit context, and replayable supported transitions. OutcomeEvaluation is a first-class cognitive contract/process, and Success, Mistake, Partial, and Unknown are first-class interpretations produced by that boundary. Their implementation may use shared cognitive infrastructure or dedicated evaluators/event families when a real lifecycle or replacement boundary exists. Actual observations/experiences remain distinguishable from simulated, predicted, counterfactual, human-corrected, and external evidence.
 
-Define explicit outcome semantics:
-- Success = applicable success criteria were actually satisfied;
-- Mistake = applicable success criteria were not satisfied;
-- Partial = some but not all criteria were satisfied;
-- Unknown = available evidence cannot establish the result.
+Define mutually exclusive outcome semantics for one evaluation:
+- Success = all applicable success criteria were actually satisfied;
+- Partial = some but not all applicable criteria were satisfied and the result is incomplete rather than wholly incorrect;
+- Mistake = the result is known to be incorrect or failed in a way that is not better classified as Partial;
+- Unknown = available evidence cannot establish the substantive result.
 
 Technical execution failure is not automatically a Mistake. Technical execution success is not automatically a cognitive Success. Attribution of the failure or success remains a separate evidence problem and may involve the Agent, tools, specialists, the environment, or other factors.
 
