@@ -259,7 +259,7 @@ Scope:
 - Management-owned authorization/orchestration through injected Core-defined host ports, plus provenance, cancellation, lifecycle/disposal, stale-state, and concurrency boundaries.
 
 Production evidence now established before freezing the concrete adapter contract:
-- HDataBox/TableInfo explicitly associate the root record, child collections, and child controls;
+- HDataBox/TableInfo explicitly associate the root record, child collections, and child controls; the current production TableInfo key is a single integer primary key;
 - HDataBox prepares parent-key propagation into child rows;
 - HDataBox establishes required/unique validation, CheckBeforeSave, SaveRecord, PerformAfterSave(ID), New/Edit lifecycle, and authoritative reload behavior;
 - HDataGridView binds its DataTable directly, synchronizes edited cells back to that data surface, and implements concrete ByForm add/edit/delete interaction through AddGrid dialogs and host veto/validation hooks;
