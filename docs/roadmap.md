@@ -242,8 +242,42 @@ Verify: focused host-context/image-fixture tests, bounded/cancellation/ownership
 
 ## 1.14 — Dual Business-App Integration Contract
 Type: architecture/contract implementation slice.
-Objective: support both API/service and bounded UI integration. The same WorkItem or operation may use either path or both; the choice is made by actual operation capability and authorization, not a global API-vs-UI architecture gate.
-Verify: fake API path, fake/bounded WinForms UI path, authorization boundary, provenance, and combined API+UI path where a real operation needs both.
+
+Objective: establish the neutral host-integration contracts and implement the first concrete WinForms adapter boundary without coupling Hive to HForms, HControls, or any other host-specific control/data framework.
+
+Scope:
+- host-neutral public extension contracts for host registration/adapter ownership, semantic controls, data surfaces, fields, stable row identities, lookups, bounded UI interaction, and business-operation capabilities;
+- concrete bounded WinForms adapter implementation over native/custom WinForms controls;
+- support for application-owned/custom controls and HForms/HControls through adaptation rather than Hive dependencies;
+- semantic projection of host binding/data-source metadata rather than raw control/object exposure;
+- explicit parent/child data-surface relationships where the host can provide them;
+- stable primary/composite/host-defined row identities; row index is positional only;
+- generated-field and computed-field semantics;
+- bounded lookup operations; host filter expressions never become executable model input;
+- separation of UI interaction capabilities from business-operation semantics;
+- separate API, UI, and API+UI implementation paths behind one authorized logical operation;
+- authorization, provenance, cancellation, lifecycle/disposal, stale-state, and concurrency boundaries.
+
+Required investigation before freezing the concrete adapter contract:
+- actual HForms/HControls data-source and parent/child relationship mechanism;
+- primary/composite-key representation and generated-ID behavior;
+- grid editing lifecycle and edit modes;
+- lookup implementation;
+- HDataBox/HActionBar permission/action semantics;
+- existing host validation and business-operation boundaries.
+
+The adapter must translate these host semantics into Hive contracts and must not recreate the host's database/business framework.
+
+Verify:
+- neutral contract behavior with a fake host adapter;
+- native/custom WinForms discovery and bounded interaction;
+- HForms-compatible adapter mapping where the actual host contract has been inspected;
+- stable row identity, hidden primary-key, generated-field, computed-field, and stale-row cases;
+- lookup capability without arbitrary SQL execution;
+- authorization denial even when the host UI exposes an action;
+- API-only, UI-only, and combined API+UI operation paths;
+- registration/disposal/cancellation/lifecycle behavior;
+- provenance and operation correlation.
 
 ## 1.15 — Vision Routing
 Objective: rasterize/prepare non-text-extractable pages and route them to a Vision-capable execution target.
@@ -253,10 +287,40 @@ Verify: fixed scanned/image sample, unsupported-capability failure, bounded page
 Objective: structured-output extraction to typed candidate data with required-field/type/domain validation.
 Verify: valid sample, missing fields, invalid types, malformed model output, rejection path.
 
-## 1.17 — Business-App Write Tool
-Objective: propose a write, hold `PendingApproval`, and perform the write only after explicit approval.
-Verify: pending blocks execution; rejection prevents side effect; approval reaches a fake client; duplicate approval cannot duplicate the write.
+## 1.17 — Business-App Write, Receipt & Review
+Objective: perform governed business-app writes through the authorized host operation boundary and close the loop with durable write attribution and post-write correctness review.
 
+Scope:
+- structured BusinessOperationProposal for parent data and, where required, child collections;
+- authorization before the consequential operation;
+- `PendingApproval` with existing Approve / Reject semantics when policy requires approval;
+- host business operation execution through API, UI, or API+UI implementation;
+- durable BusinessOperationReceipt containing WorkItem/operation identity, host/adapter identity, parent identity, affected child identities, result state, and host correlation/concurrency evidence when available;
+- generated host IDs captured after creation;
+- unknown/partial write outcome handling that does not blindly duplicate a possibly completed operation;
+- first-class WorkItem-linked Review object;
+- policy-governed review modes: Human, Automated, or Hybrid;
+- minimum human-review path when correctness review is required;
+- authorized host-state reread and bounded comparison against intended candidate/proposed data;
+- review outcomes such as `PendingReview`, `VerifiedCorrect`, `VerifiedIncorrect`, with unresolved operational states when verification cannot establish correctness;
+- discrepancy recording without silently rewriting the original candidate;
+- minimum bounded review evidence; Hive does not become a mirror of host business state.
+
+Approval answers whether Hive may perform the proposed operation. Review answers whether the resulting host state is correct. They are separate lifecycle boundaries.
+
+Verify:
+- pending approval blocks the consequential write when required;
+- rejection prevents the side effect;
+- approved operation reaches a fake business client or bounded fake host adapter;
+- duplicate/stale approval cannot duplicate the write;
+- parent + child identity receipt is durable;
+- generated IDs are captured;
+- interrupted/unknown outcome is reconciled without duplicate mutation;
+- review can locate the exact written host records through the receipt;
+- correct result reaches `VerifiedCorrect`;
+- incorrect result reaches `VerifiedIncorrect` with discrepancies;
+- review does not mutate the original candidate;
+- authorization and provenance remain enforced across write and review.
 ## 1.18 — MAF Sequential V1 Pipeline
 Objective: wire ingest → extract → validate → write as one MAF Sequential workflow.
 Verify: end-to-end fake-host path plus developer manual verification with one controlled real sample when available.
