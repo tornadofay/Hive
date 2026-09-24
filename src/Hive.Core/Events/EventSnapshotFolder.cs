@@ -90,6 +90,10 @@ public sealed class EventSnapshotFolder<TState>
             {
                 return Result<TState>.Failure(exception.Error);
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception)
             {
                 return Result<TState>.Failure(
