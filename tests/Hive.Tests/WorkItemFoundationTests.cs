@@ -27,6 +27,43 @@ public sealed class WorkItemFoundationTests
     }
 
     [Fact]
+    public void WorkItemImageContracts_RejectMediaTypesBeyondPersistenceLimit()
+    {
+        var maxLengthMediaType = "image/" + new string('x', 194);
+        Assert.Equal(200, maxLengthMediaType.Length);
+
+        var metadata = new WorkItemAttachmentMetadata(
+            "sample.png",
+            maxLengthMediaType,
+            1,
+            "4bf5122f344554c53bde2ebb8cd2c7b3c0a7f7a7a0f1b2c3d4e5f60718293a4b5");
+
+        Assert.Equal(maxLengthMediaType, metadata.MediaType);
+
+        var submission = new WorkItemImageSubmission(
+            "sample.png",
+            maxLengthMediaType,
+            new byte[] { 1 });
+
+        Assert.Equal(maxLengthMediaType, submission.MediaType);
+
+        var oversized = "image/" + new string('x', 195);
+
+        Assert.Throws<ArgumentException>(
+            () => new WorkItemAttachmentMetadata(
+                "sample.png",
+                oversized,
+                1,
+                "4bf5122f344554c53bde2ebb8cd2c7b3c0a7f7a7a0f1b2c3d4e5f60718293a4b5"));
+
+        Assert.Throws<ArgumentException>(
+            () => new WorkItemImageSubmission(
+                "sample.png",
+                oversized,
+                new byte[] { 1 }));
+    }
+
+    [Fact]
     public void WorkItem_CreateEstablishesIndependentIdentityScopeAndProvenance()
     {
         var createdAt = new DateTimeOffset(2030, 1, 1, 10, 0, 0, TimeSpan.Zero);
