@@ -377,6 +377,7 @@ public sealed class HiveExampleTestSurface : UserControl
         _output = output;
         _owner = owner;
         SetStatusVisual("Ready", HiveExampleStatusTone.Neutral);
+        UpdateActionState();
     }
 
     public void Cancel()
@@ -609,7 +610,7 @@ public sealed class HiveExampleTestSurface : UserControl
         bool busy,
         string text)
     {
-        _runButton.Enabled = true;
+        _runButton.Enabled = busy || _runAction is not null;
         _runButton.Text = busy ? "Cancel" : _runButtonText;
         _runButton.Style = busy
             ? HiveButtonStyle.Secondary
@@ -695,6 +696,7 @@ public sealed class HiveExampleTestSurface : UserControl
 
     private void UpdateActionState()
     {
+        _runButton.Enabled = _busy || _runAction is not null;
         _copyButton.Enabled = !_busy && _code.TextLength > 0;
     }
 
