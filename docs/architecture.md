@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 43 — host-integration, batch WorkItem, and Review workflow finalized)
+Last updated: 2026-09-24 (rev 44 — host-integration, batch WorkItem, Review, and mutable-key receipt semantics finalized)
 
 
 
