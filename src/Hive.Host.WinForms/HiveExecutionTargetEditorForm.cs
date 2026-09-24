@@ -191,7 +191,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
     {
         _testStatusTone = tone;
         _testStatus.Text = text;
-        ApplyTestStatusVisual(_themeManager.Theme);
+        ApplyTestStatusVisual(ThemeManager.Theme);
     }
 
     private void ApplyTestStatusVisual(HiveThemeDefinition theme)
