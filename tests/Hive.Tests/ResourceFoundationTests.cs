@@ -244,6 +244,21 @@ public sealed class ResourceFoundationTests
     }
 
     [Fact]
+    public void ResourceLifecycle_RejectsInvalidTransitionStatus()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var lifecycle = ResourceLifecycle.Active(now)
+            .TransitionTo(
+                ResourceLifecycleStatus.Retired,
+                now.AddMinutes(1));
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => lifecycle.TransitionTo(
+                (ResourceLifecycleStatus)999,
+                now.AddMinutes(2)));
+    }
+
+    [Fact]
     public void ResourceLifecycle_AllowsReactivationAfterRetirementAndBlocksSuspension()
     {
         var now = DateTimeOffset.UtcNow;
