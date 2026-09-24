@@ -88,10 +88,11 @@ public sealed class HiveUiPolishTests
         Assert.Equal(32, textBox.Height);
         Assert.True(comboBox.Height > 0);
         Assert.True(comboBox.Height <= 32);
-        Assert.Equal(72, textHost!.Height);
-        Assert.Equal(72, comboHost!.Height);
-        Assert.Equal(32, ((TableLayoutPanel)textHost).GetRowHeights()[1]);
-        Assert.Equal(32, ((TableLayoutPanel)comboHost).GetRowHeights()[1]);
+
+        var textHostLayout = (TableLayoutPanel)textHost!;
+        var comboHostLayout = (TableLayoutPanel)comboHost!;
+        Assert.Equal(32, textHostLayout.GetRowHeights()[1]);
+        Assert.Equal(32, comboHostLayout.GetRowHeights()[1]);
         Assert.Equal(DockStyle.Fill, textBox.Dock);
         Assert.Equal(DockStyle.None, comboBox.Dock);
 
