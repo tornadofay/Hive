@@ -15,15 +15,37 @@ public enum ResourceScopeKind
 
 public readonly record struct ResourceScope
 {
+    private readonly bool _isValid;
+
     private ResourceScope(ResourceScopeKind kind, Guid? identity)
     {
+        if (!Enum.IsDefined(kind))
+            throw new ArgumentOutOfRangeException(nameof(kind), kind, "Resource scope kind is invalid.");
+
+        if (kind == ResourceScopeKind.Global)
+        {
+            if (identity is not null)
+                throw new ArgumentException(
+                    "Global scope must not contain an identity.",
+                    nameof(identity));
+        }
+        else if (identity is null || identity.Value == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "A non-global resource scope requires a non-empty identity.",
+                nameof(identity));
+        }
+
         Kind = kind;
         Identity = identity;
+        _isValid = true;
     }
 
     public ResourceScopeKind Kind { get; }
 
     public Guid? Identity { get; }
+
+    public bool IsValid => _isValid;
 
     public static ResourceScope Global() => new(ResourceScopeKind.Global, null);
 
@@ -48,6 +70,9 @@ public readonly record struct ResourceScope
     public bool Matches(ResourceAccessContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
+
+        if (!_isValid)
+            return false;
 
         if (context.PrincipalId is null || context.DeploymentId is null)
             return false;
@@ -138,6 +163,12 @@ public sealed record ResourceLifecycle
 {
     public ResourceLifecycle(ResourceLifecycleStatus status, DateTimeOffset changedAtUtc)
     {
+        if (!Enum.IsDefined(status))
+            throw new ArgumentOutOfRangeException(
+                nameof(status),
+                status,
+                "Resource lifecycle status is invalid.");
+
         Status = status;
         ChangedAtUtc = changedAtUtc.ToUniversalTime();
     }
@@ -198,14 +229,25 @@ public sealed record ResourceProvenance
 
 public readonly record struct ResourceReference
 {
+    private readonly bool _isValid;
+
     public ResourceReference(ResourceKind kind, Guid identity)
     {
+        if (!Enum.IsDefined(kind))
+            throw new ArgumentOutOfRangeException(
+                nameof(kind),
+                kind,
+                "Resource reference kind is invalid.");
+
         if (identity == Guid.Empty)
             throw new ArgumentException("Resource reference identity cannot be empty.", nameof(identity));
 
         Kind = kind;
         Identity = identity;
+        _isValid = true;
     }
+
+    public bool IsValid => _isValid;
 
     public ResourceKind Kind { get; }
 
@@ -253,6 +295,11 @@ public sealed class ResourceEnvelope<TIdentity>
 
         if (owner == default)
             throw new ArgumentException("Resource owner is required.", nameof(owner));
+
+        if (!scope.IsValid)
+            throw new ArgumentException(
+                "A valid resource scope is required.",
+                nameof(scope));
 
         Kind = kind;
         Identity = identity;
