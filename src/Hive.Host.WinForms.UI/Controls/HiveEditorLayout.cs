@@ -305,6 +305,14 @@ public sealed class HiveEditorLayout : UserControl
 
         editor.Dock = DockStyle.Fill;
         editor.Margin = Padding.Empty;
+
+        if (editor.MinimumSize.Height < editorHeight)
+        {
+            editor.MinimumSize = new Size(
+                editor.MinimumSize.Width,
+                editorHeight);
+        }
+
         editor.Height = editorHeight;
         compactHost.Controls.Add(editor, 0, 1);
         return compactHost;
