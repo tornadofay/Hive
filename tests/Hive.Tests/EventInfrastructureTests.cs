@@ -65,7 +65,7 @@ public sealed class EventInfrastructureTests
                 new EventType("customer.created"),
                 new EventPayloadVersion(1),
                 CorrelationId.New(),
-                default,
+                (CausationId?)default(CausationId),
                 document.RootElement));
 
         Assert.Throws<ArgumentException>(
