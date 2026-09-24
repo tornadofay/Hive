@@ -116,11 +116,15 @@ These contracts must not expose:
 - arbitrary host object references;
 - unrestricted reflection or arbitrary method invocation.
 
-The concrete WinForms adapter may internally use any of those host-specific mechanisms where appropriate.
+The concrete WinForms adapter may internally use the host APIs required to translate or perform an authorized bounded operation. That does not transfer database, business, or authorization ownership into the adapter.
 
 ### 3.1 Contract placement
 
-Neutral contracts should live in a dependency-light Hive boundary that does not reference WinForms or HForms. The concrete implementation belongs in `Hive.Host.WinForms` or a directly related host-integration implementation boundary.
+Pure host-integration semantics belong in `Hive.Core` because they must remain dependency-light, host-neutral, and usable by any host adapter. They may reference other pure Core contracts such as Hive identities and resource references, but they must not reference WinForms, HForms, UI controls, SQL providers, or MAF implementation types.
+
+Concrete WinForms adaptation belongs in `Hive.Host.WinForms`. Application-facing orchestration, authorization, and Management operations remain in `Hive.Management`; `Hive.Host.WinForms` must not bypass that boundary for management/application operations.
+
+A host-specific adapter may use live host objects internally when required to perform an authorized operation, but those objects must not escape through the neutral public contract. Database access remains owned by the host application's business/data layer; Hive does not execute host SQL merely because an adapter can identify a table or field.
 
 Do not add a new universal host framework merely to support the first V1 host. Create only the neutral contracts required by the actual V1 integration boundary.
 
@@ -514,7 +518,7 @@ When API and UI paths are combined, one operation correlation identity must cove
 
 ## 11. Business operation proposal
 
-A consequential business operation should be represented as a structured proposal before execution.
+A consequential business operation should be represented as a structured proposal before execution. The host application registers or exposes the logical operation capability through the Hive boundary; the model does not invent an arbitrary business operation name and gain permission merely by requesting it.
 
 Conceptually:
 
@@ -587,20 +591,21 @@ The affected host identities allow Hive to:
 
 When the host uses generated identity values, the host adapter is responsible for obtaining them through an authorized mechanism.
 
-### 12.2 Partial success
+### 12.2 Receipt disposition and partial success
 
-Parent/child operations can partially succeed at the boundary between the host and Hive.
+A receipt records the durable disposition of the attempted host operation, not merely successful writes. It should distinguish at least:
 
-The receipt must therefore support:
+- not executed/rejected before host mutation;
+- completed successfully;
+- partially applied;
+- failed with a known no-side-effect result;
+- unknown outcome after interruption or transport failure.
 
-- complete success;
-- rejected/not executed;
-- partial result;
-- unknown result after transport/process interruption.
+Parent/child operations may partially succeed when the host boundary is not atomic. The receipt therefore records the identities actually returned or otherwise established, plus the operation correlation/idempotency identity.
 
-An unknown result must not automatically trigger a duplicate write.
+An unknown outcome must not automatically trigger a duplicate write. Recovery first attempts reconciliation through the operation identity and host-side state; a second mutation requires an explicit idempotent/reconciliation decision.
 
-Recovery/reconciliation uses the recorded operation identity and host-side state where available.
+Where the host can enforce idempotency, Hive should reuse the same logical operation identity on retry. Where the host cannot, the receipt and host-state reconciliation are the source of truth for deciding whether a retry is safe.
 
 ## 13. First-class post-write Review
 
@@ -654,7 +659,7 @@ Automated verification may perform a host-side read/compare before presenting a 
 
 ### 13.2 Review policy
 
-Review is policy-governed; it is not automatically mandatory for every operation.
+Review is policy-governed; it is not automatically mandatory for every operation. A review requirement is a Hive/host policy decision, never a decision produced by the model.
 
 A host/application policy may require:
 
