@@ -152,17 +152,25 @@ internal sealed class HivePersistenceSettingsView : UserControl
             "Only used with SQL password authentication.",
             _userNameTextBox);
 
-        var passwordPanel = new Panel
+        var passwordPanel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        _passwordTextBox.Dock = DockStyle.Top;
-        _passwordTextBox.Height = 32;
-        passwordPanel.Controls.Add(_passwordTextBox);
-        _credentialStatus.Dock = DockStyle.Bottom;
-        _credentialStatus.Height = 22;
-        passwordPanel.Controls.Add(_credentialStatus);
+        passwordPanel.ColumnStyles.Add(
+            new ColumnStyle(SizeType.Percent, 100f));
+        passwordPanel.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, 38f));
+        passwordPanel.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, 22f));
+        _passwordTextBox.Dock = DockStyle.Fill;
+        _credentialStatus.Dock = DockStyle.Fill;
+        _credentialStatus.TextAlign = ContentAlignment.MiddleLeft;
+        passwordPanel.Controls.Add(_passwordTextBox, 0, 0);
+        passwordPanel.Controls.Add(_credentialStatus, 0, 1);
 
         _editor.AddField(
             "SQL password",
