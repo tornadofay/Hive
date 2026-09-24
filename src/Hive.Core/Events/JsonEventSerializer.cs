@@ -33,6 +33,21 @@ public sealed class EventUpcasterRegistry : IEventUpcasterRegistry
     {
         ArgumentNullException.ThrowIfNull(upcaster);
 
+        if (!upcaster.EventType.IsValid)
+            throw new ArgumentException(
+                "A valid event type is required.",
+                nameof(upcaster));
+
+        if (!upcaster.FromVersion.IsValid)
+            throw new ArgumentException(
+                "A valid source payload schema version is required.",
+                nameof(upcaster));
+
+        if (!upcaster.ToVersion.IsValid)
+            throw new ArgumentException(
+                "A valid target payload schema version is required.",
+                nameof(upcaster));
+
         if (upcaster.ToVersion.Value != upcaster.FromVersion.Value + 1)
         {
             throw new ArgumentException(
@@ -55,6 +70,27 @@ public sealed class EventUpcasterRegistry : IEventUpcasterRegistry
         EventPayloadVersion targetVersion,
         JsonElement payload)
     {
+        if (!eventType.IsValid)
+            throw new EventSerializationException(
+                new Error(
+                    "event.schema.type-invalid",
+                    ErrorCategory.Serialization,
+                    "Event type is invalid."));
+
+        if (!currentVersion.IsValid || !targetVersion.IsValid)
+            throw new EventSerializationException(
+                new Error(
+                    "event.schema.version-invalid",
+                    ErrorCategory.Serialization,
+                    "Event payload schema version is invalid."));
+
+        if (payload.ValueKind == JsonValueKind.Undefined)
+            throw new EventSerializationException(
+                new Error(
+                    "event.schema.payload-invalid",
+                    ErrorCategory.Serialization,
+                    "Event payload is undefined."));
+
         if (currentVersion.Value == targetVersion.Value)
             return payload.Clone();
 
