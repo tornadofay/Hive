@@ -100,7 +100,7 @@ Canonical scopes:
 Global / Tenant / User / Workspace / Agent / Runtime / Execution
 ```
 
-Resource examples include Provider, ProviderAccount, ExecutionTarget, AgentDefinition, HiveDefinition, Workspace, WorkItem, Question, Memory, Knowledge, Wiki, Skill, LearningCandidate, and CognitiveState resources.
+Resource examples include Provider, ProviderAccount, ExecutionTarget, AgentDefinition, HiveDefinition, Workspace, WorkItem, Question, Memory, Knowledge, Wiki, Skill, LearningCandidate, CognitiveState, and Review resources.
 
 Assignments are references/policies, not copies of the assigned resource.
 
@@ -153,32 +153,108 @@ Terminal execution state cannot be overwritten by a late provider result.
 
 ### V1 WorkItem semantics
 
-For V1, **one submitted document is one WorkItem**. A batch submission is a collection of independent WorkItems rather than one giant execution. Each WorkItem has its own identity, lifecycle, provenance, status, approvals, and terminal result.
+For V1, **one submitted document is one WorkItem**. A batch submission is a collection of independent WorkItems rather than one giant execution. Each WorkItem has its own identity, lifecycle, provenance, status, approvals, review state, and terminal result.
 
 A runtime incarnation is not inherently bound one-to-one to a WorkItem. A runtime may process multiple WorkItems according to its execution policy, and a WorkItem may require multiple executions/steps. The WorkItem is the durable unit of user-visible work; Execution remains the concrete execution/lifecycle unit.
 
 An active Swarm may be represented as the set of Hive members participating in a WorkItem or related Question. The Swarm is derived/session state, not a persistent resource.
 
+### Approval versus Review
 
+Approval and post-write Review are different lifecycle concepts.
+
+**Approval** answers:
+
+```
+Should Hive perform the proposed consequential operation?
+```
+
+**Review** answers:
+
+```
+Did the resulting host/application state contain the intended data correctly?
+```
+
+Approval therefore occurs before the governed business-app write when policy requires it. Review occurs after a write when review policy requires verification.
 
 Approval is one intervention action, not the entire architecture.
 
-The broader contract may eventually support:
+The broader intervention contract may eventually support:
 
 ```
 Inspect / Approve / Reject / Pause / Resume / Cancel /
 Retire / Shutdown / Redirect / Defer / RequestInformation
 ```
 
-For V1, only **Approve / Reject on the business-app write** is required.
-
-Intervention requests capture the target state/version at request time. A stale request is rejected rather than silently applied to a newer target state.
+For V1, **Approve / Reject** on the proposed business-app write is the required pre-write intervention. A separate first-class **Review** contract governs post-write correctness.
 
 Intervention never bypasses authorization, capability, budget, or host validation.
 
----
+### Business-operation receipt
 
+A consequential host write produces a durable business-operation receipt when the host reports a successful, partial, or otherwise attributable result.
 
+The receipt records, as available:
+
+- WorkItem and logical operation identity;
+- host/application and adapter identity;
+- operation type;
+- parent record identity;
+- affected child record identities;
+- host correlation/transaction identifier;
+- completion/result state;
+- host revision/concurrency evidence.
+
+The receipt is attribution and recovery state, not a copy of the host application's database.
+
+A generated host ID must be captured when the host can provide it. A hidden UI primary-key field is a valid host implementation mechanism, but visibility is never the source of identity semantics.
+
+An unknown write outcome after interruption must not automatically trigger a duplicate write. Recovery/reconciliation uses the receipt and host state to establish whether the operation already took effect.
+
+### First-class V1 Review
+
+Review is a provenance-bearing, WorkItem-linked durable object. It may be backed by a dedicated generic resource contract and persistence stream while retaining the host business record as the source of truth.
+
+Review supports:
+
+```
+Human
+Automated
+Hybrid
+```
+
+The minimum V1 requirement is human review when review policy requires it. Automated verification may precede human review and may resolve a low-risk operation without human intervention when policy explicitly permits that behavior.
+
+The normal verification flow is:
+
+```
+intended candidate/proposed data
+        +
+BusinessOperationReceipt
+        ↓
+authorized host read
+        ↓
+bounded comparison
+        ↓
+Review outcome
+```
+
+Minimum outcome states are:
+
+```
+PendingReview
+VerifiedCorrect
+VerifiedIncorrect
+```
+
+The contract may also represent unresolved operational states such as:
+
+```
+VerificationUnavailable
+Inconclusive
+```
+
+A review records discrepancies rather than silently rewriting the original candidate. Hive should persist only the minimum bounded evidence required to explain and audit the review; it must not become an uncontrolled mirror of host business data.
 
 ## 9. Events, Snapshots, and Transactional Outbox
 
