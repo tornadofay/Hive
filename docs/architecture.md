@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-23 (rev 31 — Phase 1.13 WinForms host-context boundary)
+Last updated: 2026-09-24 (rev 32 — V1 host integration, business write receipt, and review architecture)
 
 
 
@@ -32,7 +32,8 @@ All files under `docs/architecture/` are part of the same architecture source of
 
 | [`architecture/agents-and-hives.md`](architecture/agents-and-hives.md) | Agent/Hive hierarchy, runtime mechanisms, cognitive generations and lifecycle |
 
-| [`architecture/v1-host-and-management.md`](architecture/v1-host-and-management.md) | V1 host/business-app integration, Workspace/Management, Example Host, Settings and host composition |
+| [`architecture/v1-host-and-management.md`](architecture/v1-host-and-management.md) | V1 Workspace/Management, Example Host, Settings, and host composition |
+| [`architecture/v1-business-app-integration.md`](architecture/v1-business-app-integration.md) | V1 host adapters, semantic control/data surfaces, business operations, write receipts, and post-write review |
 
 | [`architecture/cognitive-resources-and-portability.md`](architecture/cognitive-resources-and-portability.md) | cognitive resource families and configuration portability |
 
@@ -74,9 +75,15 @@ structured extraction
       ↓
 validation
       ↓
-governed business-app write
+governed business-app proposal
       ↓
-approval / result
+authorization / approval when required
+      ↓
+business-app write
+      ↓
+operation receipt
+      ↓
+policy-governed verification / review / result
 ```
 
 Vision and image/document extraction are therefore capabilities that emerge from the general platform. They are not Hive's permanent scope.
@@ -89,8 +96,8 @@ Longer-term capabilities such as persistent individual cognition, offline Dream 
 2. A base `Agent` and base `Hive` that are complete and useful on their own.
 3. Later generations such as `CognitiveAgent : Agent` and `CognitiveHive : Hive` that add behavior without changing the base contracts.
 4. Provider-neutral, capability-aware execution planning.
-5. Host integration sized to the actual current host requirement instead of a speculative universal adapter framework.
-6. A reusable Workspace/control surface over authoritative Hive state and human intervention.
+5. Host integration uses neutral public contracts with concrete adapters; V1 proves WinForms without coupling Hive to HForms, HControls, or another host library.
+6. A reusable Workspace/control surface over authoritative Hive state, approval, and post-write review.
 7. Production-oriented automated tests for normal paths, edge cases, concurrency, recovery, persistence, and security.
 8. Microsoft Agent Framework (MAF) wherever MAF already owns the required mechanism.
 
@@ -246,9 +253,9 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 16. Running executions use immutable effective configuration snapshots.
 17. Terminal execution state is protected from late results.
 18. Private runtime state is isolated by explicit ownership.
-19. Generic cross-host integration is built only when a second real host requires it; V1 WinForms host discovery is part of the initial concrete integration boundary.
+19. Generic cross-host integration is built only when a second real host requires it; V1 uses neutral host-integration contracts with a concrete WinForms adapter, while broader host technology generalization remains later.
 20. Host discovery never grants tool permission.
-21. Approval is one intervention action; V1 only needs Approve/Reject at the business-app write.
+21. Approval is one intervention action; V1 uses Approve/Reject at the business-app write, while post-write correctness is represented separately through a durable business-operation receipt and Review.
 22. State-changing persistence is append-oriented; snapshots are recovery aids.
 23. Outbox work is transactional with its triggering durable state change.
 24. No empty catch blocks.
