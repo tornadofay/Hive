@@ -153,7 +153,7 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
         {
             throw;
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result<HivePersistenceConfiguration>.Failure(
                 new Error(
