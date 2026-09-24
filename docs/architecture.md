@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 35 — V1 host-operation lifecycle and durable attempt reconciliation clarified)
+Last updated: 2026-09-24 (rev 36 — V1 host-operation lifecycle and HForms evidence boundary finalized)
 
 
 
