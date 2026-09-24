@@ -113,7 +113,7 @@ The conceptual contract family covers:
 - post-write Review.
 
 
-The neutral contracts must not expose raw WinForms controls, HControl interfaces, arbitrary host object handles, SQL connections/commands, unrestricted SQL/filter execution, credentials, or arbitrary reflection/invocation.
+The neutral contracts must not expose raw WinForms controls, concrete host-control interfaces, arbitrary host object handles, SQL connections/commands, unrestricted SQL/filter execution, credentials, or arbitrary reflection/invocation.
 
 
 Detailed contract design is owned by [architecture/v1-business-app-integration.md](v1-business-app-integration.md).
