@@ -455,7 +455,7 @@ Verify: outcome evaluation preserves evidence and attribution; actual/simulated 
 Define death as complete termination of the current runtime/incarnation, preserve Agent identity and cognitive state, support inactive periods with no live runtime, and explicitly reconstruct a new runtime from durable state when the Agent wakes.
 
 ## 4.7 — Postmortem & Dream Processing
-Define bounded postmortem processing plus a first-class Dream subsystem that can inspect history, generate hypothetical alternatives, run multiple simulations in parallel, compare predicted outcomes, and produce candidate cognitive-state updates without requiring the Agent runtime to remain alive. Dream purposes have explicit semantics and provenance; purpose-specific processors may share the core Dream contract or be separately replaceable when scheduling, lifecycle, or resource boundaries justify that split.
+Define bounded postmortem processing plus a first-class Dream subsystem that can inspect history, generate hypothetical alternatives, run multiple simulations in parallel, compare predicted outcomes, and produce proposed cognitive updates without requiring the Agent runtime to remain alive. Dream purposes have explicit semantics and provenance; purpose-specific processors may share the core Dream contract or be separately replaceable when scheduling, lifecycle, or resource boundaries justify that split. Proposed changes are not authoritative state transitions; reconciliation and the owning resource/governance boundary decide whether they are accepted.
 
 Dream purposes include:
 - Recovery — explore alternatives after a Mistake or unresolved outcome;
@@ -470,7 +470,7 @@ Dream evidence remains simulated/predicted evidence and cannot become actual exp
 
 After a Mistake, Cognitive Strategy may retry with a revised method directly or may first use Questions, Hive assistance, or a Recovery Dream when the expected benefit justifies the additional work. After a Success, it may use Optimization and Nightmare/Stress-Test Dreams before adopting a broader lesson.
 
-Verify: failed outcome → Recovery candidate or bounded revised retry; successful outcome → Optimization candidate; successful outcome → Nightmare/Stress-Test candidate; Dream results remain simulated; Dream processing works while the Agent runtime is inactive; budgets/cancellation/concurrency are enforced.
+Verify: failed outcome → Recovery proposal or bounded revised retry; successful outcome → Optimization proposal; successful outcome → Nightmare/Stress-Test proposal; Dream results remain simulated; Dream processing works while the Agent runtime is inactive; an inactive-runtime Dream requires an already authorized request or durable policy trigger; budgets/cancellation/concurrency are enforced.
 
 ## 4.8 — Questions
 Define first-class Questions with structured context, specialty, provenance, answer type, evidence requirements, status, and confidence/uncertainty where applicable. Support specialty-specific questions so different Agents can investigate different aspects of the same user objective.
