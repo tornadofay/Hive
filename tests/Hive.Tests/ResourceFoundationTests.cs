@@ -62,6 +62,60 @@ public sealed class ResourceFoundationTests
     }
 
     [Fact]
+    public void ResourceScope_RejectsDefaultBoundIdentityAndDefaultScopeDoesNotMatch()
+    {
+        Assert.Throws<ArgumentException>(() => ResourceScope.Tenant(default));
+        Assert.Throws<ArgumentException>(() => ResourceScope.User(default));
+        Assert.Throws<ArgumentException>(() => ResourceScope.Workspace(default));
+        Assert.Throws<ArgumentException>(() => ResourceScope.Agent(default));
+        Assert.Throws<ArgumentException>(() => ResourceScope.Runtime(default));
+        Assert.Throws<ArgumentException>(() => ResourceScope.Execution(default));
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        Assert.False(default(ResourceScope).IsValid);
+        Assert.False(default(ResourceScope).Matches(context));
+        Assert.True(ResourceScope.Global().IsValid);
+    }
+
+    [Fact]
+    public void ResourceLifecycleAndReference_RejectInvalidValues()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new ResourceLifecycle(
+                (ResourceLifecycleStatus)999,
+                DateTimeOffset.UtcNow));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new ResourceReference(
+                (ResourceKind)999,
+                Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void ResourceEnvelope_RejectsDefaultScope()
+    {
+        var principal = PrincipalId.New();
+        var now = DateTimeOffset.UtcNow;
+
+        Assert.Throws<ArgumentException>(() =>
+            new ResourceEnvelope<AgentId>(
+                ResourceKind.Agent,
+                AgentId.New(),
+                principal,
+                default,
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)));
+    }
+
+    [Fact]
     public void ScopeMatching_FailsClosedWhenRequiredIdentityIsMissing()
     {
         var deploymentId = DeploymentId.New();
