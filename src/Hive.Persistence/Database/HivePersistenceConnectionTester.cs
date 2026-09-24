@@ -142,21 +142,21 @@ public sealed class HivePersistenceConnectionTester : IHivePersistenceConnection
                     "hive.persistence.configuration-invalid",
                     "The persistence configuration is invalid."));
         }
-        catch (SqlException)
+        catch (SqlException exception)
         {
             return Result<HivePersistenceConnectionTest>.Failure(
-                new Error(
+                HivePersistenceError.External(
                     "hive.persistence.connection-failed",
-                    ErrorCategory.External,
-                    "SQL Server connection test failed."));
+                    "SQL Server connection test failed.",
+                    exception));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             return Result<HivePersistenceConnectionTest>.Failure(
-                new Error(
+                HivePersistenceError.External(
                     "hive.persistence.connection-test-failed",
-                    ErrorCategory.External,
-                    "Persistence connection test failed unexpectedly."));
+                    "Persistence connection test failed unexpectedly.",
+                    exception));
         }
     }
 }
