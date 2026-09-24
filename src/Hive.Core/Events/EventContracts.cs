@@ -4,15 +4,20 @@ namespace Hive.Core;
 
 public readonly record struct EventType
 {
+    private readonly bool _isValid;
+
     public EventType(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Event type is required.", nameof(value));
 
         Value = value.Trim();
+        _isValid = true;
     }
 
     public string Value { get; }
+
+    internal bool IsValid => _isValid;
 
     public override string ToString() => Value;
 
@@ -21,15 +26,20 @@ public readonly record struct EventType
 
 public readonly record struct EventPayloadVersion
 {
+    private readonly bool _isValid;
+
     public EventPayloadVersion(int value)
     {
         if (value <= 0)
             throw new ArgumentOutOfRangeException(nameof(value), value, "Payload schema version must be greater than zero.");
 
         Value = value;
+        _isValid = true;
     }
 
     public int Value { get; }
+
+    internal bool IsValid => _isValid;
 
     public override string ToString() => Value.ToString();
 
@@ -51,6 +61,16 @@ public sealed record EventEnvelope
             throw new ArgumentException(
                 "EventId is required.",
                 nameof(eventId));
+
+        if (!eventType.IsValid)
+            throw new ArgumentException(
+                "A valid event type is required.",
+                nameof(eventType));
+
+        if (!payloadSchemaVersion.IsValid)
+            throw new ArgumentException(
+                "A valid event payload schema version is required.",
+                nameof(payloadSchemaVersion));
 
         if (correlationId == default)
             throw new ArgumentException(
