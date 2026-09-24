@@ -461,6 +461,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             overlayHeight);
 
         _outputView.Bounds = outputBounds;
+        UpdateOutputRevealButtonBounds();
     }
 
     private void UpdateOutputRevealButtonBounds()
