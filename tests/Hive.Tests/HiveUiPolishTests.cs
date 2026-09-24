@@ -54,6 +54,18 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
+    public void HiveExampleTestSurface_DisablesRunUntilConfiguredAndEnablesWhenConfigured()
+    {
+        using var surface = new HiveExampleTestSurface();
+
+        Assert.False(surface.RunButton.Enabled);
+
+        surface.ConfigureRun(_ => Task.CompletedTask);
+
+        Assert.True(surface.RunButton.Enabled);
+    }
+
+    [Fact]
     public async Task HiveExampleTestSurface_ReportsSuccessfulRunState()
     {
         using var surface = new HiveExampleTestSurface();
