@@ -86,7 +86,7 @@ Phase 0.4 establishes the Hive-owned SQL Server persistence boundary without put
 #### Database technology
 
 - SQL Server is the only V1 persistence engine.
-- SQL Server LocalDB is the supported local-development deployment of the same SQL Server boundary; it is not a separate persistence provider.
+- SQL Server LocalDB is the supported local-development deployment of the same SQL Server boundary; it is not a separate persistence provider. LocalDB is not the future end-user embedded deployment profile; that remains a separate later portability/deployment capability.
 - Microsoft.Data.SqlClient is used for SQL Server connectivity.
 - DbUp SQL Server support is used for ordered schema migrations rather than hand-written migration orchestration.
 - DbUp migrations are embedded SQL resources in Hive.Persistence, numbered in execution order, and executed transactionally per migration script.
