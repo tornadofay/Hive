@@ -34,7 +34,8 @@ public sealed class HiveDatabaseOptions
         CommandTimeoutSeconds = commandTimeoutSeconds;
     }
 
-    public string ConnectionString { get; }
+    // Credential-bearing connection strings are intentionally persistence-internal.
+    internal string ConnectionString { get; }
 
     public bool CreateDatabaseIfMissing { get; }
 
