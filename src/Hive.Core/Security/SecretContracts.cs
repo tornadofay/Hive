@@ -19,7 +19,7 @@ public readonly record struct SecretReference
 
     public SecretId Id { get; }
 
-    public bool IsValid => _isValid;
+    internal bool IsValid => _isValid;
 }
 
 public sealed class SecretMaterial : IDisposable
