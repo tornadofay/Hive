@@ -1033,7 +1033,9 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         if (target.IsFailure)
             return Result.Failure(target.Error!);
 
-        if (target.Value!.Resource?.Lifecycle.Status == ResourceLifecycleStatus.Retired)
+        var targetValue = target.Value!;
+
+        if (targetValue.Resource.Lifecycle.Status == ResourceLifecycleStatus.Retired)
         {
             return Result.Failure(
                 Error.Conflict(
@@ -1041,7 +1043,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                     "A retired execution target cannot be configured for an AgentDefinition."));
         }
 
-        if (target.Value.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        if (targetValue.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
         {
             return Result.Failure(
                 Error.Conflict(
@@ -1050,14 +1052,16 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         }
 
         var account = await _providerResources.GetProviderAccountAsync(
-            target.Value.ProviderAccountId,
+            targetValue.ProviderAccountId,
             accessContext,
             cancellationToken).ConfigureAwait(false);
 
         if (account.IsFailure)
             return Result.Failure(account.Error!);
 
-        if (account.Value!.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        var accountValue = account.Value!;
+
+        if (accountValue.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
         {
             return Result.Failure(
                 Error.Conflict(
@@ -1066,14 +1070,16 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         }
 
         var provider = await _providerResources.GetProviderAsync(
-            target.Value.ProviderId,
+            targetValue.ProviderId,
             accessContext,
             cancellationToken).ConfigureAwait(false);
 
         if (provider.IsFailure)
             return Result.Failure(provider.Error!);
 
-        if (provider.Value!.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        var providerValue = provider.Value!;
+
+        if (providerValue.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
         {
             return Result.Failure(
                 Error.Conflict(
@@ -1081,7 +1087,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
                     "An AgentDefinition cannot be configured with an execution target whose Provider is not active."));
         }
 
-        if (account.Value.ProviderId != provider.Value.Id)
+        if (accountValue.ProviderId != providerValue.Id)
         {
             return Result.Failure(
                 Error.Conflict(
