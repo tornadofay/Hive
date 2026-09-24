@@ -399,6 +399,24 @@ public sealed class HiveWorkspaceView : UserControl
         _activityList.Items.Clear();
     }
 
+    private void ApplyStatusVisual()
+    {
+        var status = _selectedWorkItem?.Status;
+
+        _statusLabel.ForeColor = status switch
+        {
+            WorkItemStatus.Completed => _themeManager.Theme.VisualStates.Success,
+            WorkItemStatus.PendingApproval => _themeManager.Theme.VisualStates.Warning,
+            WorkItemStatus.Rejected => _themeManager.Theme.VisualStates.Error,
+            WorkItemStatus.Failed => _themeManager.Theme.VisualStates.Error,
+            WorkItemStatus.Cancelled => _themeManager.Theme.VisualStates.Warning,
+            WorkItemStatus.Created or
+            WorkItemStatus.Queued or
+            WorkItemStatus.Running => _themeManager.Theme.VisualStates.Information,
+            _ => _themeManager.Theme.Palette.MutedText
+        };
+    }
+
     private void UpdateActionState()
     {
         var status = _selectedWorkItem?.Status;
