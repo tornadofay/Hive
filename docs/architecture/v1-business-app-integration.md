@@ -1,3 +1,141 @@
+## 17. HForms-specific evidence without HForms coupling
+
+The production source supplied for HForms demonstrates why the neutral contract must be richer than ordinary `DataGridView` metadata while still remaining independent of HForms.
+
+### 17.1 Host object relationships are established
+
+The HForms relationship is not inferred from visual nesting alone.
+
+The production implementation explicitly maps:
+
+```
+HDataBox.MainTable
+        ↓
+TableInfo.ChildTable[]
+        ↓
+child TableInfo.TableName
+        ↕
+HDataGridView / HList.DataSourceName
+```
+
+When reading data, HDataBox maps the corresponding child `DataTable` into the matching bound grid/list.
+
+When preparing an insert, HDataBox iterates the child data surfaces and writes the parent primary-key value into the child foreign-key field. The host therefore supplies an explicit parent → child relationship that the Hive adapter can translate into a semantic parent/child data-surface relationship.
+
+This is evidence for the neutral contract. It does not justify exposing `TableInfo`, `DataSet`, `DataTable`, or HForms objects as Hive public API.
+
+### 17.2 HDataBox save lifecycle is established
+
+The production save path is:
+
+```
+user Save
+   ↓
+binding/form validation
+   ↓
+required-field validation
+   ↓
+unique-field validation
+   ↓
+host CheckBeforeSave veto
+   ↓
+host SaveRecord operation
+   ↓
+PerformAfterSave(ID)
+   ↓
+reload authoritative record
+   ↓
+host logging
+```
+
+The exact database/business operation behind `SaveRecord` remains host-owned. This is important for the Hive architecture: Hive needs an authorized **business-operation capability**, not unrestricted access to HDataBox's generated SQL or internal persistence helpers.
+
+### 17.3 New/Edit and generated identities
+
+HDataBox has explicit New/Edit modes and invokes the same host save lifecycle for each.
+
+For New, the host may generate a record identity/code and later expose the resulting identity through `PerformAfterSave(ID)`. HDataBox then reloads the newly created record through its normal navigation path.
+
+Therefore the adapter contract must support:
+
+- new-row state before persistence;
+- host-generated identity returned after create;
+- authoritative record reload after create/update;
+- separation between positional navigation and record identity.
+
+The neutral contract must not assume that every identity is an immutable numeric auto-increment value.
+
+### 17.4 Identity stability versus identity immutability
+
+A row identity must be stable **for the duration and purpose of the consequential operation**, but the host may permit the key value itself to change as part of an update.
+
+For example:
+
+```
+before operation:
+    key = A
+
+intended update:
+    key = B
+    other fields = ...
+
+```
+
+The adapter must retain the authoritative pre-operation identity (and host concurrency/version evidence when available) to locate and protect the original record. The new key value is an intended field change, not the basis for locating the pre-update row.
+
+This permits single-key, composite-key, host-defined, generated, and mutable-key models without treating row position as identity.
+
+### 17.5 Host validation and business boundaries
+
+HDataBox supplies concrete host validation points:
+
+- required fields;
+- unique fields;
+- `CheckBeforeSave` custom business/application veto;
+- host-controlled save/update operation;
+- post-save callback and reload.
+
+These are host semantics. Hive should request a declared business operation and let the host remain authoritative over validation and business rules. Hive may perform earlier candidate validation in Phase 1.16, but successful Hive validation must never be treated as proof that the host will accept the write.
+
+### 17.6 ByAlone, ByControls, and ByForm
+
+The neutral adapter must preserve the host's edit-surface distinction.
+
+```
+ByAlone
+    → the grid itself is the editing surface; add/delete/direct cell editing may be available.
+
+ByControls
+    → controls on the same form as the DataGridView perform add/edit/delete for the selected grid row.
+
+ByForm
+    → an input dialog/form is the editing surface for add/edit/delete.
+```
+
+These are interaction modes, not authorization. The adapter may expose the resulting supported UI capabilities, but Hive authorization decides whether a caller may use them.
+
+### 17.7 HForms components remain adapter inputs
+
+The host-specific relationship is therefore:
+
+```
+HDataBox / HActionBar / HDataGridView / HList / TableInfo
+                         ↓
+                Hive neutral semantics
+```
+
+The adapter translates:
+
+- host lifecycle and action availability;
+- parent/child data-surface relationships;
+- field/column metadata;
+- stable row identity;
+- generated/computed semantics;
+- lookup behavior;
+- bounded UI interaction.
+
+It must not make Hive understand HForms itself.
+
 # Hive Architecture — V1 Business-App Integration
 
 This document is part of the authoritative architecture defined by `docs/architecture.md`. It contains the detailed V1 host-adapter, business-data, business-operation, write-receipt, and post-write review contracts.
@@ -827,42 +965,35 @@ The model never receives:
 
 ### 17.1 HForms configuration is evidence, not a second Hive contract
 
-The production HForms/HControls evidence contains several categories of metadata that should not all become Hive-facing semantics.
+The supplied production HForms/HControls source establishes the host-side lifecycle and data-entry conventions that the V1 adapter must be able to translate.
 
-`HDataBox` combines:
+`HDataBox : UserControl` combines:
 
 - CRUD/action flags such as `AllowNew`, `AllowEdit`, `AllowDelete`, `AllowRead`, `AllowSearch`, `AllowExport`, `AllowPrint`, `AllowReport`, `AllowViewLog`;
 - permission/logging behavior such as `AllowPermissionCheck` and `AllowUserLogHandling`;
-- binding state such as `BindingControl` and `Bs`;
+- binding state such as `BindingControl`, `Bs), and the loaded `DataSet`;
 - presentation/application metadata such as `TitleEn`, `TitleAr`, `LanguageType`, and `CodeType`;
-- reporting configuration such as `PrintCopies`, `ReportFileName`, `ReportFormualNumberWordName`, `ReportMainCommandName`, `ReportNumberWordType`, `ReportSourceType`, and `ReportViewMode`;
-- application/data conventions such as `VoidFieldName`.
+- reporting configuration that remains host-owned;
+- application/data conventions such as `VoidFieldName`, branch, and year handling.
 
-The neutral adapter should extract only semantics required for a Hive-authorized operation. Binding/data-source information, relevant bilingual labels, field semantics, and actual capabilities may be projected when they are part of the V1 boundary. Reporting, printing, code conventions, and other implementation/application metadata remain host-owned unless a concrete V1 capability requires them.
+The adapter should project only semantics required for a Hive-authorized operation. Reporting, printing, code-generation conventions, logging implementation, and other application-specific metadata remain host-owned unless a concrete V1 capability requires them.
 
-The production `HDataBox : UserControl` is evidence from the working host. The newer `HActionBar : Control` must not be treated as authoritative merely because it appears to provide a cleaner replacement; its actual production contract and lifecycle must be inspected before Phase 1.14 freezes the adapter. Likewise, `HDataGridView` row-add/remove and column-edit configuration are host behavior to adapt, not Hive authorization.
+The supplied `HDataBox` implementation is now sufficient evidence for the host lifecycle; it is not merely a property list. It establishes:
 
-## 17. HForms-specific evidence without HForms coupling
+- `MainTable` as the root `TableInfo) for the bound business record;
+- `MainTable.ChildTable` as the authoritative child-table collection used by HDataBox;
+- child `HDataGridView`/`HList` association through matching `DataSourceName`;
+- parent-key propagation into child rows through `MainTable.PkName`;
+- host-side required/unique validation before save;
+- `CheckBeforeSave` as an explicit host veto/boundary before persistence;
+- `SaveRecord` as the save operation event, allowing the host application to own the actual persistence/business implementation;
+- `PerformAfterSave(ID)` as the post-save generated-record identity callback;
+- New/Edit lifecycle transitions followed by record reload;
+- `AllowPermissionCheck` branch/year conventions as host data-selection/write conventions, not Hive authorization.
 
-The current HForms implementation demonstrates why the neutral contract needs to be richer than ordinary `DataGridView` metadata.
+The implementation therefore proves that HDataBox is an orchestration/container around binding, validation, child-data preparation, save/update lifecycle, and host callbacks. Hive must adapt that lifecycle; it must not recreate it or interpret its host flags as Hive permission.
 
-`HDataBox : UserControl` combines UI/action state, binding state, labels, reporting configuration, and business-data conventions.
-
-`HActionBar : Control` exposes action availability such as New/Edit/Delete/Read/Search/Export/Print/Report.
-
-`TableInfo` represents a main table, child tables, primary-key identity, filtering/scoping rules, delete semantics, and generated SQL statements.
-
-These are excellent adapter inputs, but they remain implementation details of one host ecosystem.
-
-The HForms adapter should translate them:
-
-```
-HDataBox / HActionBar / HDataGridView / TableInfo
-                  ↓
-        Hive neutral semantics
-```
-
-It must not make Hive understand HForms itself.
+The newer `HActionBar : Control` should only be inspected further when its concrete contract is needed by the adapter. Its existence is not a reason to keep the already-established HDataBox lifecycle open as an unknown.
 
 ## 18. Non-goals for V1
 
@@ -918,16 +1049,26 @@ Phase 7 later generalizes the proven host concepts to meaningfully different hos
 
 ## 20. Implementation freeze rule
 
-Before Phase 1.14 implementation freezes the concrete adapter types, inspect the actual HForms/HControls production contracts and confirm:
+The supplied production `HDataBox` source is sufficient evidence for the following host-level semantics and they should no longer be treated as open discovery questions:
 
-- how a data source is associated with the host record;
-- how child collections are related to their parent;
-- how primary/composite keys are represented;
-- how generated identities are surfaced after writes;
-- how grid rows are bound and updated, including add/remove-row policy and editable-column configuration;
-- how lookup data is resolved;
-- how ByAlone/ByControls/ByForm flows operate;
-- how HActionBar/HDataBox permissions and actions map to host behavior.
+- parent/root record through `MainTable`;
+- child collections through `MainTable.ChildTable`;
+- child-control mapping through `DataSourceName`;
+- parent-key propagation through `MainTable.PkName);
+- required/unique host validation;
+- `CheckBeforeSave` veto;
+- `SaveRecord` host save boundary;
+- `PerformAfterSave(ID)` generated-record identity callback;
+- New/Edit/None lifecycle and reload behavior;
+- host permission/logging flags as host behavior rather than Hive authorization.
+
+Before freezing the concrete Phase 1.14 adapter types, the remaining implementation-specific HForms/HControls contracts to inspect are:
+
+- exact `HControl`/`IHyperControl` semantic metadata and value access needed by the neutral descriptor;
+- exact `HDataGridView` row/column identity, generated/computed, add/remove/edit configuration, and editing lifecycle;
+- exact lookup resolution behavior;
+- exact concurrency/version behavior where the host exposes it;
+- the concrete `HActionBar` contract only where the adapter needs to expose or invoke its actions.
 
 Do not recreate these mechanisms in Hive when the host already exposes an authoritative contract.
 
