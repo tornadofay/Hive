@@ -1013,12 +1013,52 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         if (target.IsFailure)
             return Result.Failure(target.Error!);
 
-        if (target.Value!.Resource?.Lifecycle.Status == ResourceLifecycleStatus.Retired)
+        if (target.Value!.Resource?.Lifecycle.Status != ResourceLifecycleStatus.Active)
         {
             return Result.Failure(
                 Error.Conflict(
-                    "hive.management.agent-definition.execution-target-retired",
-                    "A retired execution target cannot be configured for an AgentDefinition."));
+                    "hive.management.agent-definition.execution-target-inactive",
+                    "An inactive execution target cannot be configured for an AgentDefinition."));
+        }
+
+        var account = await _providerResources.GetProviderAccountAsync(
+            target.Value.ProviderAccountId,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (account.IsFailure)
+            return Result.Failure(account.Error!);
+
+        if (account.Value!.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        {
+            return Result.Failure(
+                Error.Conflict(
+                    "hive.management.agent-definition.execution-target-account-inactive",
+                    "An AgentDefinition cannot be configured with an execution target whose ProviderAccount is not active."));
+        }
+
+        var provider = await _providerResources.GetProviderAsync(
+            target.Value.ProviderId,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (provider.IsFailure)
+            return Result.Failure(provider.Error!);
+
+        if (provider.Value!.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        {
+            return Result.Failure(
+                Error.Conflict(
+                    "hive.management.agent-definition.execution-target-provider-inactive",
+                    "An AgentDefinition cannot be configured with an execution target whose Provider is not active."));
+        }
+
+        if (account.Value.ProviderId != provider.Value.Id)
+        {
+            return Result.Failure(
+                Error.Conflict(
+                    "hive.management.agent-definition.execution-target-provider-mismatch",
+                    "The execution target references a ProviderAccount owned by a different Provider."));
         }
 
         return Result.Success();
