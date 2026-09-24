@@ -981,6 +981,7 @@ The adapter should project only semantics required for a Hive-authorized operati
 The supplied `HDataBox` implementation is now sufficient evidence for the host lifecycle; it is not merely a property list. It establishes:
 
 - `MainTable` as the root `TableInfo` for the bound business record;
+- `TableInfo.PkName` as the current production HForms record key; in this host model the key is a single integer key, not a composite key;
 - `MainTable.ChildTable` as the authoritative child-table collection used by HDataBox;
 - child `HDataGridView`/`HList` association through matching `DataSourceName`;
 - parent-key propagation into child rows through `MainTable.PkName`;
@@ -1055,6 +1056,7 @@ The supplied production `HDataBox` source is sufficient evidence for the followi
 - child collections through `MainTable.ChildTable`;
 - child-control mapping through `DataSourceName`;
 - parent-key propagation through `MainTable.PkName`;
+- child insert preparation excludes the child primary-key field so the host can provide/generated it;
 - required/unique host validation;
 - `CheckBeforeSave` veto;
 - `SaveRecord` host save boundary;
