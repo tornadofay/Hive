@@ -128,7 +128,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         try
         {
             var reference = existingReference ??
-            new HiveBootstrapCredentialReference(SecretId.New());
+                new HiveBootstrapCredentialReference(SecretId.New());
 
             var result = await _bootstrapCredentials
                 .SetAsync(reference, material, cancellationToken)
