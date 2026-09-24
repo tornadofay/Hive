@@ -439,7 +439,7 @@ Risk, Fear, and Confidence are evidence-backed cognitive state rather than autho
 Verify: versioned cognitive-state transitions preserve context/provenance for Risk/Fear/Confidence and do not permit cognitive state to bypass deterministic safety, authorization, capability, scope, or budget checks.
 
 ## 4.5 — Experience, Outcome Evaluation & Cognitive Event History
-Bounded experience capture, provenance, expected-versus-observed results, outcome evaluation, attribution/credit context, and replayable supported transitions. Actual observations/experiences remain distinguishable from simulated, predicted, counterfactual, human-corrected, and external evidence.
+Bounded experience capture, provenance, expected-versus-observed results, outcome evaluation, attribution/credit context, and replayable supported transitions. OutcomeEvaluation is a first-class cognitive contract/process, and Success, Mistake, Partial, and Unknown are first-class interpretations produced by that boundary. Their implementation may use shared cognitive infrastructure or dedicated evaluators/event families when a real lifecycle or replacement boundary exists. Actual observations/experiences remain distinguishable from simulated, predicted, counterfactual, human-corrected, and external evidence.
 
 Define explicit outcome semantics:
 - Success = applicable success criteria were actually satisfied;
@@ -455,7 +455,7 @@ Verify: outcome evaluation preserves evidence and attribution; actual/simulated 
 Define death as complete termination of the current runtime/incarnation, preserve Agent identity and cognitive state, support inactive periods with no live runtime, and explicitly reconstruct a new runtime from durable state when the Agent wakes.
 
 ## 4.7 — Postmortem & Dream Processing
-Define bounded postmortem processing plus a Dream subsystem that can inspect history, generate hypothetical alternatives, run multiple simulations in parallel, compare predicted outcomes, and produce candidate cognitive-state updates without requiring the Agent runtime to remain alive.
+Define bounded postmortem processing plus a first-class Dream subsystem that can inspect history, generate hypothetical alternatives, run multiple simulations in parallel, compare predicted outcomes, and produce candidate cognitive-state updates without requiring the Agent runtime to remain alive. Dream purposes have explicit semantics and provenance; purpose-specific processors may share the core Dream contract or be separately replaceable when scheduling, lifecycle, or resource boundaries justify that split.
 
 Dream purposes include:
 - Recovery — explore alternatives after a Mistake or unresolved outcome;
@@ -500,7 +500,7 @@ Versioned, permissioned knowledge resources and managed Wiki source.
 Versioned reusable procedures, dependencies, constraints, provenance, and assignments.
 
 ## 5.4 — Learning Candidates & Governance
-Transform evaluated cognitive evidence into governed Learning Candidates.
+Transform evaluated cognitive evidence into governed Learning Candidates through a first-class learning/governance boundary. The implementation may use a dedicated learning component or shared cognitive-resource infrastructure, but promotion remains explicit and governed.
 
 Evidence sources include:
 - successful outcomes;
@@ -518,14 +518,15 @@ Each candidate preserves:
 - provenance and attribution/credit context;
 - support/confidence;
 - applicability conditions;
-- proposed adaptation;
+- the proposed target of adaptation (Skill, Method, strategy/routing rule, safeguard, memory/knowledge update, or other owned cognitive resource);
+- conditions for invalidation, revision, or retirement;
 - validation status.
 
 Promotion may change an appropriate Skill, method, applicability rule, memory/knowledge representation, or Cognitive Strategy routing according to explicit ownership rules.
 
-A candidate may learn that a deterministic procedure is preferable to another model call for a known class of situations, but promotion must remain governed. No direct authoritative mutation from model output or Dream output.
+A candidate may learn that a deterministic procedure is preferable to another model call for a known class of situations, but promotion must remain governed. The promoted shortcut must identify its applicability boundary and remain revocable/revisable when later evidence invalidates or narrows it. No direct authoritative mutation from model output or Dream output.
 
-Verify: positive, negative, partial, mixed, human-corrected, and simulated evidence; conflicting candidates; applicability boundaries; insufficient support; promotion/rejection concurrency.
+Verify: positive, negative, partial, mixed, human-corrected, and simulated evidence; conflicting candidates; applicability boundaries; insufficient support; promotion/rejection concurrency; explicit adaptation target; and later invalidation/revision.
 
 ---
 
