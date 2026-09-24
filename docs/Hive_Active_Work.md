@@ -39,6 +39,7 @@ Implemented in this maintenance pass:
 - HiveMessageBox now applies the shared message-button typography to its technical-details copy action, and clipboard-copy failure is surfaced through a themed error dialog instead of being silently debug-only;
 - the Example Host now vertically centers the Configured Agent selector within its toolbar row;
 - focused UI polish tests now cover shared editor sizing for compact single-line and full-height multiline editors;
+- HiveExampleTestSurface now disables "Copy code" when no reproduction snippet is present and uses distinct themed status tones for successful, warning/cancelled, and failed outcomes while keeping active/running status neutral;
 
 No business logic, Management contract, persistence behavior, provider behavior, or roadmap capability was changed.
 
@@ -54,6 +55,7 @@ Example Host checks:
 - Settings editors — inspect Provider, Account/Credential, Execution Target, Agent, and Persistence fields at normal and narrow supported widths; confirm single-line editors remain compact and vertically centered, while multiline/composite editors retain their intended larger editing area;
 - HiveMessageBox — open a dialog with technical details and confirm the "Copy details" action uses the same typography and visual treatment as the footer actions; with clipboard access unavailable, confirm copy failure is surfaced as a themed error dialog; 
 - Example Host configured-agent toolbar — confirm the selector is vertically centered in its row and remains aligned during resize;
+- Example Test Surface — open an example with and without a code snippet; confirm "Copy code" is unavailable when empty, becomes available when populated, and that Ready/Running/Completed/Cancelled/Failed states use clear but consistent visual emphasis in both Light and Dark themes;
 - Workspace / WorkItem Operations — for a PendingApproval WorkItem, open Reject and verify the themed Hive editor dialog, multiline reason field, Cancel, Reject, and empty-reason behavior;
 - Overview / Getting Started / Example Configuration — open the real Hive Settings surface and inspect Provider, Account/Credential, Execution Target, Agent, and Persistence editors in both themes; confirm read-only keys/database are visually distinct and resizing does not clip the form.
 
