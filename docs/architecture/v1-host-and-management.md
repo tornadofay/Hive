@@ -263,13 +263,17 @@ Phase 7 remains the later generalization point for a second materially different
 
 `Hive.Management` is the authoritative management facade. `Workspace` is the authoritative human-facing operational surface over that facade; host UI code does not bypass the facade for management or persistence operations.
 
-For V1, Workspace is intentionally a small operational surface over Hive.Management. It supports:
+For V1, Workspace is intentionally a small operational surface over Hive.Management. The V1 target surface supports:
 
 - image submission/attachments bound to WorkItems;
+- batch submission that expands into independently tracked WorkItems;
 - WorkItem status and execution/activity;
 - relevant execution/provider status;
 - WorkItem notifications;
-- pending approvals and the Approve / Reject action for the governed business-app write.
+- pending approvals and the Approve / Reject action for the governed business-app write;
+- post-write Review work once the Phase 1.17 Review capability exists, including a review queue/list, opening the associated host record/editor through a bounded authorized host capability, and recording the review result/evidence.
+
+Human Review is policy-governed rather than permanently mandatory. A deployment may require human review initially and later use automated or hybrid verification, or no human review for an operation class, when its explicit review policy permits that behavior.
 
 This V1 surface works with a single Agent and does not require Hive membership or Swarm state.
 
