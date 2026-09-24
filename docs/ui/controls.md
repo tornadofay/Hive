@@ -129,6 +129,7 @@ var save = layout.AddActionButton("Save", HiveButtonStyle.Primary);
 ```
 
 Members: `FieldsPanel`, `FooterPanel`, `LabelColumnWidth`, `ClearFields()`, `AddField(...)`, `AddActionButton(...)`. Field descriptions use the shared tooltip when their visible text is ellipsized.
+- single-line editors are hosted at a consistent 32px usable height; the compact host disables native AutoSize behavior so controls such as TextBox do not collapse below the shared height during WinForms layout.
 
 ## HivePaginationBar
 
