@@ -54,7 +54,7 @@ Hive must never build a second workflow/orchestration engine merely because Hive
 | Agent programming model | Microsoft Agent Framework | Reuse MAF execution/orchestration |
 | Execution model | Ephemeral execution + durable Agent/Hive state + transactional outbox | Execution objects and Agent incarnations may end; durable state survives; one V1 submitted document is one WorkItem, while a batch is multiple WorkItems |
 | Persistence | SQL Server; LocalDB for development | Hive database is isolated from host business data |
-| Vector storage | SQL Server `VECTOR` / `VECTOR_DISTANCE` behind `IVectorStore` | Replaceable storage boundary |
+| Vector storage | SQL Server `VECTOR` / `VECTOR_DISTANCE` behind `IVectorStore` | Replaceable storage boundary; no separate vector database is required for V1 |
 | Provider adapter | One shared OpenAI-compatible adapter | Compatible providers are configurations, not new adapter implementations |
 | Provider | Vendor/service integration | Transport identity |
 | ProviderAccount | Credential/account/project under Provider | Credential/account boundary |
@@ -71,7 +71,7 @@ The Phase 1.12 Settings boundary uses one typed persistence configuration contra
 
 Current V1 provider configurations include compatible hosted/local targets such as Groq, OpenRouter, Cloudflare, Cerebras, NVIDIA, Google, and local OpenAI-compatible servers. The adapter contract remains vendor-neutral; adding another compatible provider should normally require configuration, not another transport implementation.
 
-Deferred until a measured requirement exists: Temporal, Dapr, PostgreSQL/pgvector, Elasticsearch/OpenSearch, Akka.NET, Orleans, DiskANN, a custom Hive workflow engine, and a separate external secrets-vault architecture.
+Deferred until a measured requirement exists: Temporal, Dapr, PostgreSQL/pgvector, Elasticsearch/OpenSearch, Akka.NET, Orleans, DiskANN, a custom Hive workflow engine, a separate external secrets-vault architecture, and the selection of a future embedded/local persistence backend. V1 does not require a separate vector database. Building a custom database engine is not assumed; a future embedded mode should prefer a mature embedded persistence technology behind the existing Hive persistence/resource contracts unless a measured requirement proves that insufficient.
 
 ---
 
