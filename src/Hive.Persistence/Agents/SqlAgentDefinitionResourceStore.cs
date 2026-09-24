@@ -752,28 +752,28 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
         {
             throw;
         }
-        catch (SqlException exception) when (IsConstraintConflict(exception))
+        catch (SqlException) when (IsConstraintConflict(exception))
         {
             return Result<T>.Failure(
                 Error.Conflict(
                     $"hive.{resourceName.Replace(' ', '-')}.duplicate",
                     $"The {resourceName} identity or key already exists."));
         }
-        catch (SqlException exception)
+        catch (SqlException)
         {
             return Result<T>.Failure(
                 new Error(
                     $"hive.persistence.{resourceName.Replace(' ', '-')}.sql-failure",
                     ErrorCategory.External,
-                    $"SQL Server operation for the {resourceName} failed: {exception.Message}"));
+                    $"SQL Server operation for the {resourceName} failed."));
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result<T>.Failure(
                 new Error(
                     $"hive.persistence.{resourceName.Replace(' ', '-')}.invalid-state",
                     ErrorCategory.Internal,
-                    $"Persisted {resourceName} state could not be read or validated: {exception.Message}"));
+                    $"Persisted {resourceName} state could not be read or validated."));
         }
     }
 
@@ -805,20 +805,20 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
         {
             throw;
         }
-        catch (SqlException exception) when (IsConstraintConflict(exception))
+        catch (SqlException) when (IsConstraintConflict(exception))
         {
             return Result<T>.Failure(
                 Error.Conflict(
                     $"hive.{resourceName.Replace(' ', '-')}.duplicate",
                     $"The {resourceName} identity or key already exists."));
         }
-        catch (SqlException exception)
+        catch (SqlException)
         {
             return Result<T>.Failure(
                 new Error(
                     $"hive.persistence.{resourceName.Replace(' ', '-')}.sql-failure",
                     ErrorCategory.External,
-                    $"SQL Server operation for the {resourceName} failed: {exception.Message}"));
+                    $"SQL Server operation for the {resourceName} failed."));
         }
         catch (ConcurrencyException)
         {
@@ -827,13 +827,13 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                     $"hive.{resourceName.Replace(' ', '-')}.concurrency",
                     $"The {resourceName} changed before the operation completed."));
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result<T>.Failure(
                 new Error(
                     $"hive.persistence.{resourceName.Replace(' ', '-')}.invalid-state",
                     ErrorCategory.Internal,
-                    $"Persisted {resourceName} state could not be read or validated: {exception.Message}"));
+                    $"Persisted {resourceName} state could not be read or validated."));
         }
     }
 
