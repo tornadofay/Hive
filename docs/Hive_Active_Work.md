@@ -22,7 +22,7 @@ Required before closure: developer build/test verification of the affected `Hive
 
 ### Implementation checkpoint
 
-Implemented on `main` through commit `f00a3b99d66052910aa1d522df9660d534d9d660`:
+Implemented on `main` through commit `e22c11a1740ff84a33d14478d9ff93df23c25b3c`:
 - `HiveDatabaseOptions.ConnectionString` is no longer public; credential-bearing connection access remains internal to `Hive.Persistence` and `Hive.Tests` receives test-only friend access;
 - Persistence SQL, unexpected-state, JSON-persistence, migration, connection-test, Agent/Provider/WorkItem, event/outbox, and outbox-handler failure paths no longer copy raw exception text into public `Error.Message` values;
 - `HivePersistenceError` centralizes technical exception redaction while preserving existing error codes/categories and the exception object remains transient rather than being stored in the returned `Error`;
