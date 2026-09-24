@@ -9,6 +9,23 @@ namespace Hive.Tests;
 public sealed class HiveConfigurationTests
 {
     [Fact]
+    public void PersistenceConfiguration_RejectsBootstrapCredentialForWindowsAuthentication()
+    {
+        Assert.Throws<ArgumentException>(
+            () => new HivePersistenceConfiguration(
+                HivePersistenceBackend.SqlServer,
+                "sql.example.test",
+                1433,
+                "Hive",
+                HiveSqlAuthenticationMode.WindowsIntegrated,
+                null,
+                new HiveBootstrapCredentialReference(SecretId.New()),
+                encrypt: true,
+                trustServerCertificate: false,
+                createDatabaseIfMissing: true));
+    }
+
+    [Fact]
     public void HiveBootstrapCredentialReference_RejectsDefaultIdentity()
     {
         Assert.Throws<ArgumentException>(
