@@ -322,12 +322,12 @@ Verify:
 - review does not mutate the original candidate;
 - authorization and provenance remain enforced across write and review.
 ## 1.18 — MAF Sequential V1 Pipeline
-Objective: wire ingest → extract → validate → write as one MAF Sequential workflow.
-Verify: end-to-end fake-host path plus developer manual verification with one controlled real sample when available.
+Objective: wire ingest → extract → validate → governed write → receipt → policy-governed verification/review as one MAF Sequential workflow, while keeping Hive-owned authorization, host integration, durable receipt, and Review semantics outside MAF's orchestration ownership.
+Verify: end-to-end fake-host path covering successful and rejected/failed branches plus developer manual verification with one controlled real sample when available.
 
 ## 1.19 — Full-Pipeline Crash/Resume
-Objective: prove event/outbox/recovery behavior across the complete V1 pipeline.
-Verify: process termination at several checkpoints, restart, resume without duplicate terminal writes.
+Objective: prove event/outbox/recovery behavior across the complete V1 pipeline, including business-operation receipt persistence, unknown write-outcome reconciliation, and Review recovery.
+Verify: process termination at several checkpoints, restart, resume or reconcile without duplicate terminal host mutation, and preserve the authoritative Review state.
 
 ## 1.20 — Metrics, Budget Cap & OpenTelemetry
 Objective: request/success/failure/timeout counters, token/cost tracking, hard per-runtime budget, and console OpenTelemetry.
