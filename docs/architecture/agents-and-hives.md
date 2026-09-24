@@ -130,14 +130,19 @@ technical result
     ↓
 Cognitive outcome evaluation
     ├── Success
-    ├── Mistake
     ├── Partial
+    ├── Mistake
     └── Unknown / unresolved
 ```
 
-**Success** is an evaluated outcome in which the applicable success criteria were actually satisfied.
+The classifications are mutually exclusive for a single evaluation:
 
-**Mistake** is an evaluated outcome in which the applicable success criteria were not satisfied. Whether the Agent, a tool, a specialist, the environment, or another factor caused the failure is a separate attribution question and may remain uncertain.
+- **Success** — all applicable success criteria were satisfied.
+- **Partial** — some but not all applicable criteria were satisfied, and the result is incomplete rather than wholly incorrect.
+- **Mistake** — the result is known to be incorrect or failed in a way that is not better classified as Partial.
+- **Unknown** — available evidence cannot establish which substantive outcome occurred.
+
+Whether the Agent, a tool, a specialist, the environment, or another factor caused a Mistake is a separate attribution question and may remain uncertain.
 
 A technical failure such as a timeout, unavailable provider, or cancelled transport is therefore not automatically a Mistake. Likewise, a technically successful execution is not automatically a cognitive Success: the produced result may still be wrong, incomplete, unsafe, or otherwise inconsistent with the objective.
 
