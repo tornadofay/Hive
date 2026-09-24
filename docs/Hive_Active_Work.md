@@ -4,9 +4,21 @@ Last updated: 2026-09-25
 
 ## Active slice
 
-**None — the Hive.Core Production Polish maintenance pass is closed; Phase 1.14 remains inactive.**
+**Authorized maintenance slice — Hive.Persistence Production Baseline Hardening. Phase 1.14 remains inactive.**
 
-The last completed maintenance slice is recorded below for handoff/history. No roadmap slice is currently authorized.
+This is a temporary maintenance slice explicitly authorized by the user after the prior Core production-polish closure. It does not advance the roadmap and does not authorize Phase 1.14 or any later roadmap work.
+
+### Scope
+
+- remove public exposure of credential-bearing SQL connection strings from `HiveDatabaseOptions` while preserving Persistence-internal connectivity;
+- normalize Persistence-facing SQL/unexpected-error messages so raw exception text from SQL Server, DbUp, or persistence internals is not returned through public `Error` results;
+- preserve existing structured error codes/categories and expected validation/concurrency/cancellation semantics unless required for the security boundary;
+- add focused regression coverage for the public connection-string boundary and error-message redaction;
+- do not change SQL schema, migrations, provider transport, orchestration, MAF integration, host adapters, UI, dependencies, or roadmap phase authorization.
+
+### Verification gate
+
+Required before closure: developer build/test verification of the affected `Hive.Tests` coverage, followed by the broader suite as appropriate. This slice remains open until actual verification is reported. No Example Host verification is required unless the implementation gains externally visible host/UI behavior.
 
 ## Closed maintenance pass — Hive.Core Production Polish
 
