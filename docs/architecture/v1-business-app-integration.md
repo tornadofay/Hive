@@ -1029,7 +1029,7 @@ Phase 7 later generalizes the proven host concepts to meaningfully different hos
 
 ## 20. Implementation freeze rule
 
-The supplied production `HDataBox` source is sufficient evidence for the following host-level semantics and they should no longer be treated as open discovery questions:
+The supplied production `HDataBox`/`HDataGridView`/`AddGrid`/`TableInfo` source is sufficient evidence for the following host-level semantics and they should no longer be treated as open discovery questions:
 
 - parent/root record through `MainTable`;
 - child collections through `MainTable.ChildTable`;
