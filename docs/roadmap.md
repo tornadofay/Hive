@@ -295,7 +295,8 @@ Scope:
 - authorization before the consequential operation;
 - `PendingApproval` with existing Approve / Reject semantics when policy requires approval;
 - host business operation execution through API, UI, or API+UI implementation;
-- durable BusinessOperationReceipt containing WorkItem/operation identity, host/adapter identity, parent identity, affected child identities, result state, and host correlation/concurrency evidence when available;
+- durable BusinessOperationReceipt/attempt record containing WorkItem/operation identity, host/adapter identity, parent identity, affected child identities, result state, and host correlation/concurrency evidence when available;
+- initial operation-attempt durability before submission when the host boundary is not transactionally coupled to Hive, so a crash after submission but before a host response remains reconcilable;
 - generated host IDs captured after creation;
 - stable operation correlation/idempotency identity, reused on retry when the host supports idempotency;
 - unknown/partial write outcome handling that does not blindly duplicate a possibly completed operation;
@@ -316,7 +317,7 @@ Verify:
 - duplicate/stale approval cannot duplicate the write;
 - parent + child identity receipt is durable;
 - generated IDs are captured;
-- interrupted/unknown outcome is reconciled without duplicate mutation;
+- interrupted/unknown outcome is reconciled from the durable operation attempt/receipt and authoritative host state without duplicate mutation;
 - an idempotent host retry reuses the logical operation identity, while a non-idempotent host requires reconciliation before any second mutation;
 - review can locate the exact written host records through the receipt;
 - correct result reaches `VerifiedCorrect`;
@@ -328,7 +329,7 @@ Objective: wire ingest → extract → validate → governed write → receipt �
 Verify: end-to-end fake-host path covering successful and rejected/failed branches plus developer manual verification with one controlled real sample when available.
 
 ## 1.19 — Full-Pipeline Crash/Resume
-Objective: prove event/outbox/recovery behavior across the complete V1 pipeline, including business-operation receipt persistence, unknown write-outcome reconciliation, and Review recovery.
+Objective: prove event/outbox/recovery behavior across the complete V1 pipeline, including durable business-operation attempt/receipt persistence before non-transactional host submission, unknown write-outcome reconciliation, and Review recovery.
 Verify: process termination at several checkpoints, restart, resume or reconcile without duplicate terminal host mutation, and preserve the authoritative Review state.
 
 ## 1.20 — Metrics, Budget Cap & OpenTelemetry
