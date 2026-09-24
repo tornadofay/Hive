@@ -293,6 +293,11 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 56. Questions are first-class, provenance-bearing, specialization-aware cognitive objects; semantically duplicate questions should be avoided when existing evidence is sufficient.
 57. CognitiveAgents remain complete autonomous cognitive entities; CognitiveHive adds collective cognition without owning or replacing member cognition.
 58. New lifecycle, Dream, Question, or collective-cognition behavior must remain additive to the generation that owns it and must not become an implicit prerequisite of the base Agent/Hive.
+59. Pure V1 host-integration semantic contracts belong in Hive.Core; host-specific adapters belong outside Core.
+60. Host adapters translate or execute authorized capabilities; they never become the host application's database, business-logic, or authorization owner.
+61. Consequential host row operations require stable row identity; row position is never authoritative identity.
+62. A business-operation receipt records the disposition and affected host identities of a consequential host operation; it does not make Hive a mirror of host business state.
+63. Approval and post-write Review are distinct lifecycle boundaries; Review uses authoritative host state and policy-governed verification.
 
 ---
 
