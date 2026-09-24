@@ -308,8 +308,10 @@ Scope:
 - stable operation correlation/idempotency identity, reused on retry when the host supports idempotency;
 - unknown/partial write outcome handling that does not blindly duplicate a possibly completed operation;
 - first-class WorkItem-linked Review object;
+- review queue/list over WorkItems awaiting review;
+- bounded authorized action to open/navigate to the associated host record/editor for human review when the host supports it;
 - policy-governed review modes: Human, Automated, or Hybrid;
-- minimum human-review path when correctness review is required;
+- human review initially supported when correctness review is required, with policy able to disable mandatory human review for an operation class later;
 - authorized host-state reread and bounded comparison against intended candidate/proposed data;
 - review outcomes such as `PendingReview`, `VerifiedCorrect`, `VerifiedIncorrect`, with unresolved operational states when verification cannot establish correctness;
 - discrepancy recording without silently rewriting the original candidate;
