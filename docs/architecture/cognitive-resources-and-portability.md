@@ -43,7 +43,7 @@ OutcomeEvaluation classifies a result into one mutually exclusive outcome for th
 
 - Success — all applicable success criteria were satisfied;
 - Partial — some but not all applicable criteria were satisfied and the result is incomplete rather than wholly incorrect;
-- Mistake — the result is known to be incorrect or failed in a way that is not better classified as Partial;
+- Mistake — the result is known to be wrong relative to the intended objective or success criteria and is not better classified as Partial;
 - Unknown / unresolved — available evidence cannot establish the substantive outcome.
 
 The evaluation should preserve:
