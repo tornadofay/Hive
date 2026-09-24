@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 32 — V1 host integration, business write receipt, and review architecture)
+Last updated: 2026-09-24 (rev 33 — V1 host-adapter dependency inversion and write/review reconciliation)
 
 
 
