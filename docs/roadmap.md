@@ -297,6 +297,7 @@ Scope:
 - host business operation execution through API, UI, or API+UI implementation;
 - durable BusinessOperationReceipt containing WorkItem/operation identity, host/adapter identity, parent identity, affected child identities, result state, and host correlation/concurrency evidence when available;
 - generated host IDs captured after creation;
+- stable operation correlation/idempotency identity, reused on retry when the host supports idempotency;
 - unknown/partial write outcome handling that does not blindly duplicate a possibly completed operation;
 - first-class WorkItem-linked Review object;
 - policy-governed review modes: Human, Automated, or Hybrid;
@@ -316,6 +317,7 @@ Verify:
 - parent + child identity receipt is durable;
 - generated IDs are captured;
 - interrupted/unknown outcome is reconciled without duplicate mutation;
+- an idempotent host retry reuses the logical operation identity, while a non-idempotent host requires reconciliation before any second mutation;
 - review can locate the exact written host records through the receipt;
 - correct result reaches `VerifiedCorrect`;
 - incorrect result reaches `VerifiedIncorrect` with discrepancies;
