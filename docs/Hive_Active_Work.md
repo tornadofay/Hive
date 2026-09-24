@@ -48,13 +48,15 @@ Implemented in this maintenance pass:
 - Execution Target filter ComboBoxes now stretch horizontally within their filter columns and use the same centered native-height rhythm as the other Settings filters;
 - Execution Target connection-test status now distinguishes testing, success, and failure with the shared Information/Success/Error theme tones and reapplies correctly after theme changes;
 - Persistence status now uses the shared Information/Success/Warning/Error tones and remains synchronized with Light/Dark theme changes;
-- cancelling a CRUD edit now restores the neutral list summary instead of leaving a stale "Editing..." status visible.
+- cancelling a CRUD edit now restores the neutral list summary instead of leaving a stale "Editing..." status visible;
+- Example Test Surface no longer presents "Run example" as available before an executable action is configured; the same action remains available as "Cancel" while a run is active;
+- CRUD list footer status text now uses ellipsis-safe presentation for narrow layouts, and the optional status-filter ComboBox follows the same themed disabled/input surface states as the shared search input during operations.
 
 ### Latest verification result
 
-User-run on 2026-09-24: `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — **190 tests, 190 passed, 0 failed, 0 skipped** in 17 seconds.
+User-run on 2026-09-24: `dotnet test tests/Hive.Tests/Hive.Tests.csproj` — **192 tests, 192 passed, 0 failed, 0 skipped** in 24.4 seconds.
 
-This is the verified automated result immediately before the current UI/UX audit changes. The current audit adds further UI presentation, state-clarity, and regression-test changes after that run; those changes have **not yet been verified by a test rerun**. The maintenance slice remains open pending the next test result and the existing manual UI verification.
+This is the verified automated result immediately before the latest UI/UX audit changes. The latest audit adds further UI presentation/state-clarity changes and one focused regression test after that run; those changes have **not yet been verified by a test rerun**. The maintenance slice remains open pending the next test result and the existing manual UI verification.
 
 ## Verification handoff
 
