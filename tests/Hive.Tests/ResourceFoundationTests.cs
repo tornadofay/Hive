@@ -104,6 +104,26 @@ public sealed class ResourceFoundationTests
                 ResourceKind.Agent,
                 AgentId.New(),
                 principal,
+                default,
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)));
+    }
+
+    [Fact]
+    public void ResourceEnvelope_RejectsDefaultVersion()
+    {
+        var principal = PrincipalId.New();
+        var now = DateTimeOffset.UtcNow;
+
+        Assert.Throws<ArgumentException>(() =>
+            new ResourceEnvelope<AgentId>(
+                ResourceKind.Agent,
+                AgentId.New(),
+                principal,
                 ResourceScope.Global(),
                 default,
                 new ResourceProvenance(
