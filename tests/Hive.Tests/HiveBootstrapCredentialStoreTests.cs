@@ -407,7 +407,12 @@ public sealed class HiveBootstrapCredentialStoreTests
         public Task<Result<SecretMaterial>> ResolveAsync(
             HiveBootstrapCredentialReference reference,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(Result<SecretMaterial>.Failure(Failure()));
+            Task.FromResult(
+                Result<SecretMaterial>.Failure(
+                    new Error(
+                        "test.bootstrap.failure",
+                        ErrorCategory.Internal,
+                        "sensitive internal details must never reach the public boundary")));
 
         public Task<Result> ClearAsync(
             HiveBootstrapCredentialReference reference,
