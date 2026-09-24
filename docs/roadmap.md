@@ -266,12 +266,12 @@ Production evidence now established before freezing the concrete adapter contrac
 - direct grid editing, same-form supporting controls, and dedicated editor forms/dialogs are distinct host interaction patterns rather than authorization grants;
 
 Remaining adapter-freeze investigation:
-- exact HControl/IHyperControl semantic metadata and value-access contract;
-- exact HDataGridView column metadata and runtime mapping from a grid row's bound data to its persisted integer key; row position remains non-authoritative;
+- exact neutral field/column metadata and value-access contract;
+- runtime mapping from a bound row to its stable persisted identity; row position remains non-authoritative;
 - exact generated/computed-column behavior and complete existing-child edit serialization;
 - exact lookup resolution behavior;
 - exact host concurrency/version behavior where available;
-- concrete HActionBar behavior only where the adapter must expose or invoke its actions; HActionBar remains unfinished.
+- any concrete host action surface required by the adapter, only where its production semantics are established;
 
 The adapter must translate these host semantics into Hive contracts and must not recreate the host's database/business framework.
 
