@@ -634,6 +634,11 @@ public sealed class HiveExampleTestSurface : UserControl
         }
 
         _status.Text = text;
+        if (busy)
+        {
+            _statusTone = HiveExampleStatusTone.Neutral;
+            ApplyStatusColor();
+        }
     }
 
     private void CopyCode()
