@@ -37,7 +37,7 @@ External
     supplied by an attributable external source
 ```
 
-An Experience describes what actually happened. An OutcomeEvaluation interprets that experience against the relevant objective or success criteria.
+An Experience describes what actually happened. An OutcomeEvaluation is a first-class cognitive evaluation that interprets that experience against the relevant objective or success criteria. Mistake and Success are first-class outcome interpretations produced by that boundary, not raw execution states.
 
 OutcomeEvaluation may classify the result as:
 
@@ -106,13 +106,13 @@ A successful Nightmare is not itself a real failure. It is simulated evidence th
 
 ### 11.4 Risk, Fear, and Confidence state
 
-Risk, Fear, and Confidence belong to CognitiveAgent state and strategy, not to generic configuration resources.
+Risk, Fear, and Confidence are first-class CognitiveAgent state semantics. They belong to cognitive state/strategy rather than generic configuration resources, but they may have dedicated persistence records, event streams, projections, or processors when their lifecycle or update boundary requires one.
 
 They should be contextual, versioned, and attributable to supporting evidence. They may influence decomposition, verification, specialist escalation, Question generation, Dream selection, and deterministic-vs-model-assisted routing.
 
 They must never be used as authorization state or as a substitute for explicit policy/capability checks.
 
-Learning is not model-weight training. Model output produces evidence or a candidate; authoritative cognitive/resource state changes only through Hive's validation, policy, authorization, reconciliation, and promotion boundaries.
+Learning is a first-class governed cognitive process, not model-weight training. Model output produces evidence or a candidate; authoritative cognitive/resource state changes only through Hive's validation, policy, authorization, reconciliation, and promotion boundaries. Promoted deterministic shortcuts must remain attributable, scoped by applicability conditions, and revocable/revisable when later evidence invalidates them.
 
 ---
 
