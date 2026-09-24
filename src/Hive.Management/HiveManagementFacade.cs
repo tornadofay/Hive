@@ -1013,7 +1013,15 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
         if (target.IsFailure)
             return Result.Failure(target.Error!);
 
-        if (target.Value!.Resource?.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        if (target.Value!.Resource?.Lifecycle.Status == ResourceLifecycleStatus.Retired)
+        {
+            return Result.Failure(
+                Error.Conflict(
+                    "hive.management.agent-definition.execution-target-retired",
+                    "A retired execution target cannot be configured for an AgentDefinition."));
+        }
+
+        if (target.Value.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
         {
             return Result.Failure(
                 Error.Conflict(
