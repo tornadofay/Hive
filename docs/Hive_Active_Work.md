@@ -47,6 +47,8 @@ Example Host checks:
 - Workspace / WorkItem Operations — for a PendingApproval WorkItem, open Reject and verify the themed Hive editor dialog, multiline reason field, Cancel, Reject, and empty-reason behavior;
 - Overview / Getting Started / Example Configuration — open the real Hive Settings surface and inspect Provider, Account/Credential, Execution Target, Agent, and Persistence editors in both themes; confirm read-only keys/database are visually distinct and resizing does not clip the form.
 
+- HiveMessageBox theme inheritance — open an Information/Success/Warning/Error/Question dialog from a HiveForm while an explicit Light or Dark mode is selected, including callers that omit the theme-manager argument; confirm the dialog matches the owner theme.
+
 Tests to run: dotnet test tests/Hive.Tests/Hive.Tests.csproj.
 
 Also perform the normal Example Host build/launch in Visual Studio or the existing repository workflow. No verification was run by this agent.
