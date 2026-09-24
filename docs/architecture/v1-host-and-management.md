@@ -6,18 +6,18 @@ This document is part of the authoritative architecture defined by `docs/archite
 
 
 
-## 4. V1 Document & Business-App Integration
+## 4. V1 Input & Business-App Integration
 
-The V1 forcing function is the complete pipeline from the first supported input image to a governed business-app write. The first V1 input is intentionally an image; additional document formats are additive later capabilities.
+The V1 forcing function is the complete pipeline from supported input sources to a governed business-app write. Image is the first implemented input boundary; additional input sources are additive V1 capabilities and must converge on the same structured-candidate and business-operation boundaries.
+
+A single input submission may produce one or multiple independent WorkItems. Each WorkItem retains its own lifecycle, provenance, authorization, operation receipt, and Review state. Submission/batch grouping is an operational navigation and notification concern and does not replace WorkItem identity.
 
 ```
-Submitted image
+Input submission
         ↓
-image preparation / vision routing
+input-specific preparation / interpretation
         ↓
-structured extraction
-        ↓
-typed candidate record
+structured candidate
         ↓
 validation
         ↓
@@ -25,7 +25,7 @@ business-operation proposal
         ↓
 authorization / PendingApproval when required
         ↓
-Approve / Reject
+Approve / Reject when required
         ↓
 authorized business operation / write capability
         ↓
@@ -37,6 +37,24 @@ policy-governed Review / verification
         ↓
 business-app result
 ```
+
+Concrete input examples:
+
+```
+Image
+  ↓
+Vision-capable execution target
+  ↓
+Structured candidate
+
+Spreadsheet
+  ↓
+Workbook / worksheet / row mapping
+  ↓
+Structured candidate
+```
+
+Both paths converge before business-operation validation and execution.
 
 The write remains a governed Tool invocation surface over an authorized host/business capability; the Tool is not the owner of the business-operation semantics. Hive's database is never a direct gateway to the host application's business database.
 
