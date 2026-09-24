@@ -47,6 +47,26 @@ public sealed record EventEnvelope
         CausationId? causationId,
         JsonElement payload)
     {
+        if (eventId == default)
+            throw new ArgumentException(
+                "EventId is required.",
+                nameof(eventId));
+
+        if (correlationId == default)
+            throw new ArgumentException(
+                "CorrelationId is required.",
+                nameof(correlationId));
+
+        if (causationId is { } causation && causation == default)
+            throw new ArgumentException(
+                "CausationId must be non-empty when supplied.",
+                nameof(causationId));
+
+        if (payload.ValueKind == JsonValueKind.Undefined)
+            throw new ArgumentException(
+                "Event payload must be a defined JSON value.",
+                nameof(payload));
+
         EventId = eventId;
         OccurredAtUtc = occurredAtUtc.ToUniversalTime();
         EventType = eventType;
