@@ -178,11 +178,18 @@ public sealed record HivePersistenceConfiguration
             ? DefaultApplicationName
             : applicationName.Trim();
 
-        Span<char> buffer = stackalloc char[value.Length];
+        const string prefix = "Hive-";
+        const int maxDatabaseNameLength = 128;
+        var maximumApplicationLength = maxDatabaseNameLength - prefix.Length;
+
+        Span<char> buffer = stackalloc char[maximumApplicationLength];
         var count = 0;
 
         foreach (var character in value)
         {
+            if (count == maximumApplicationLength)
+                break;
+
             buffer[count++] =
                 char.IsLetterOrDigit(character) ||
                 character is '-' or '_' or '.' or ' '
@@ -194,10 +201,6 @@ public sealed record HivePersistenceConfiguration
 
         if (string.IsNullOrWhiteSpace(normalized))
             normalized = DefaultApplicationName;
-
-        const string prefix = "Hive-";
-        const int maxDatabaseNameLength = 128;
-        var maximumApplicationLength = maxDatabaseNameLength - prefix.Length;
 
         if (normalized.Length > maximumApplicationLength)
             normalized = normalized[..maximumApplicationLength].TrimEnd();
