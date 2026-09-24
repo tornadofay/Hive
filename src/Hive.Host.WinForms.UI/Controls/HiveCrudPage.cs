@@ -13,6 +13,15 @@ public enum HiveCrudOperation
     Activate
 }
 
+public enum HiveStatusTone
+{
+    Neutral,
+    Information,
+    Success,
+    Warning,
+    Error
+}
+
 public sealed class HiveCrudOperationFailedEventArgs : EventArgs
 {
     public HiveCrudOperationFailedEventArgs(
@@ -87,6 +96,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private bool _busy;
     private bool _compactToolbar = false;
     private bool _typographyReady;
+    private HiveStatusTone _statusTone = HiveStatusTone.Neutral;
+    private IHiveThemeManager? _subscribedThemeManager;
 
     public HiveCrudPage()
     {
@@ -648,7 +659,16 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         SetColumns((IReadOnlyList<HiveCrudColumn<TItem>>)columns);
 
     public void SetStatus(string text) =>
+        SetStatus(text, HiveStatusTone.Neutral);
+
+    public void SetStatus(
+        string text,
+        HiveStatusTone tone)
+    {
+        _statusTone = tone;
         _statusLabel.Text = text ?? string.Empty;
+        ApplyStatusColor();
+    }
 
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
@@ -682,7 +702,48 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     protected override void OnParentChanged(EventArgs e)
     {
         base.OnParentChanged(e);
+        UpdateThemeSubscription();
         ApplyThemeTypography();
+        ApplyStatusColor();
+    }
+
+    private void UpdateThemeSubscription()
+    {
+        var nextManager = FindForm() is HiveForm hiveForm
+            ? hiveForm.ThemeManager
+            : null;
+
+        if (ReferenceEquals(_subscribedThemeManager, nextManager))
+            return;
+
+        if (_subscribedThemeManager is not null)
+            _subscribedThemeManager.ThemeChanged -= ThemeManagerOnChanged;
+
+        _subscribedThemeManager = nextManager;
+
+        if (_subscribedThemeManager is not null)
+            _subscribedThemeManager.ThemeChanged += ThemeManagerOnChanged;
+    }
+
+    private void ThemeManagerOnChanged(object? sender, EventArgs e)
+    {
+        ApplyThemeTypography();
+        ApplyStatusColor();
+    }
+
+    private void ApplyStatusColor()
+    {
+        if (FindForm() is not HiveForm hiveForm)
+            return;
+
+        _statusLabel.ForeColor = _statusTone switch
+        {
+            HiveStatusTone.Information => hiveForm.Theme.VisualStates.Information,
+            HiveStatusTone.Success => hiveForm.Theme.VisualStates.Success,
+            HiveStatusTone.Warning => hiveForm.Theme.VisualStates.Warning,
+            HiveStatusTone.Error => hiveForm.Theme.VisualStates.Error,
+            _ => hiveForm.Theme.Palette.MutedText
+        };
     }
 
     protected override void OnFontChanged(EventArgs e)
@@ -757,6 +818,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     {
         if (disposing)
         {
+            if (_subscribedThemeManager is not null)
+                _subscribedThemeManager.ThemeChanged -= ThemeManagerOnChanged;
+
             _operationCancellation?.Cancel();
             _statusFilterBox.SelectedIndexChanged -= StatusFilterBoxOnSelectedIndexChanged;
             _searchBox.TextChanged -= SearchBoxOnTextChanged;
@@ -1145,7 +1209,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             HiveCrudOperation.Edit,
             async token =>
             {
-                SetStatus(item is null ? "Adding..." : "Editing...");
+                SetStatus(
+                    item is null ? "Adding..." : "Editing...",
+                    HiveStatusTone.Information);
                 var result = await _editItemAsync(item, token);
                 if (result is null)
                     return;
@@ -1231,7 +1297,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             HiveCrudOperation.Delete,
             async token =>
             {
-                SetStatus("Deleting...");
+                SetStatus("Deleting...", HiveStatusTone.Information);
                 await _deleteItemAsync(item, token);
                 await LoadItemsCoreAsync(token);
             },
@@ -1263,7 +1329,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             HiveCrudOperation.Activate,
             async token =>
             {
-                SetStatus("Activating...");
+                SetStatus("Activating...", HiveStatusTone.Information);
                 await _activateItemAsync(item, token);
                 await LoadItemsCoreAsync(token);
             },
@@ -1276,7 +1342,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             throw new InvalidOperationException(
                 "LoadItemsAsync must be configured before refreshing the CRUD page.");
 
-        SetStatus("Loading...");
+        SetStatus("Loading...", HiveStatusTone.Information);
         var items = await _loadItemsAsync(cancellationToken);
         _items = items ?? throw new InvalidOperationException(
             "LoadItemsAsync returned null.");
@@ -1302,11 +1368,11 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         }
         catch (OperationCanceledException) when (source.IsCancellationRequested)
         {
-            SetStatus("Cancelled.");
+            SetStatus("Cancelled.", HiveStatusTone.Warning);
         }
         catch (Exception exception)
         {
-            SetStatus("Operation failed.");
+            SetStatus("Operation failed.", HiveStatusTone.Error);
             RaiseOperationFailed(operation, exception);
         }
         finally
