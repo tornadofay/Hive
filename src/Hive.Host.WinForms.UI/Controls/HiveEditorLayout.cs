@@ -297,6 +297,7 @@ public sealed class HiveEditorLayout : UserControl
             new RowStyle(SizeType.Percent, 50f));
 
         editor.Dock = DockStyle.Fill;
+        editor.Height = editorHeight;
         compactHost.Controls.Add(editor, 0, 1);
         return compactHost;
     }
