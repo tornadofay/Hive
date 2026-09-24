@@ -1,5 +1,7 @@
 # Phase 1.12 — Settings, Configuration, and Real Host Consumption Plan
 
+> **Historical planning document.** Phase 1.12 is complete. This file records its implementation plan and verification handoff; it is not the current implementation plan or authorization source. Current status/scope are authoritative in `docs/Hive_Current_Status.md` and `docs/Hive_Active_Work.md`; roadmap order is authoritative in `docs/roadmap.md`.
+
 ## Purpose
 
 Phase 1.12 turns Hive Settings into the **global Hive package configuration center** and makes the saved configuration actually drive the host application.
@@ -80,19 +82,11 @@ A UI page is therefore a consumer of an existing configuration contract, not the
 
 ---
 
-## 1. Current Checkpoint and Authorized Scope
+## 1. Historical Checkpoint and Authorized Scope
 
-The first Phase 1.12 Settings implementation already exists and is verification-pending.
+At the time this plan was active, the authorized sub-stage was **1.12-D — Settings UI on the Hive UI Foundation**. The 1.12-A, 1.12-B, and 1.12-C completion records below are historical.
 
-The current authorized sub-stage is:
-
-**1.12-D — Settings UI on the Hive UI Foundation**
-
-1.12-A — Host Configuration and Runtime Composition is complete and verified.
-1.12-B — Bootstrap Credential Boundary is complete and verified.
-1.12-C — Real Settings Management is complete and verified.
-
-Only implement 1.12-D and supporting contracts required to make 1.12-D complete.
+Phase 1.12 is now complete. No sub-stage in this historical plan authorizes current implementation work.
 
 1.12-C must build on the authoritative Management/Core contracts and the completed host/bootstrap boundaries. Do not implement later Settings UI migration, runtime recomposition, configured-host Example, or final verification/closure work in the same run unless it is a direct dependency of 1.12-C.
 
@@ -859,7 +853,7 @@ Phase 1.12 is complete. Phase 1.13 is the next roadmap slice.
 
 For any capability requiring an Example, the handoff must name the exact Example path and focused tests.
 
-### Current 1.12-A handoff
+### Historical 1.12-A handoff
 
 **Example to run:** No new Example is required solely to establish the internal composition boundary. Do not use the existing Settings Example as a substitute for composition tests.
 
