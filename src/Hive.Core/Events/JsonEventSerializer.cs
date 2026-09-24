@@ -81,7 +81,39 @@ public sealed class EventUpcasterRegistry : IEventUpcasterRegistry
                         $"No upcaster is registered for event '{eventType}' from payload schema version {current} to {current + 1}."));
             }
 
-            currentPayload = upcaster.Upcast(currentPayload).Clone();
+            try
+            {
+                var nextPayload = upcaster.Upcast(currentPayload);
+
+                if (nextPayload.ValueKind == JsonValueKind.Undefined)
+                {
+                    throw new EventSerializationException(
+                        new Error(
+                            "event.schema.upcaster-invalid-payload",
+                            ErrorCategory.Serialization,
+                            $"Upcaster for event '{eventType}' from version {current} returned an undefined JSON payload."));
+                }
+
+                currentPayload = nextPayload.Clone();
+            }
+            catch (EventSerializationException)
+            {
+                throw;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                throw new EventSerializationException(
+                    new Error(
+                        "event.schema.upcaster-failed",
+                        ErrorCategory.Serialization,
+                        $"Upcaster for event '{eventType}' from version {current} to {current + 1} failed: {exception.Message}"),
+                    exception);
+            }
+
             current++;
         }
 
@@ -143,8 +175,11 @@ public sealed class JsonEventSerializer
             payloadElement);
     }
 
-    public string SerializeEnvelope(EventEnvelope envelope) =>
-        JsonSerializer.Serialize(envelope, Options);
+    public string SerializeEnvelope(EventEnvelope envelope)
+    {
+        ArgumentNullException.ThrowIfNull(envelope);
+        return JsonSerializer.Serialize(envelope, Options);
+    }
 
     public EventEnvelope DeserializeEnvelope(string json)
     {
