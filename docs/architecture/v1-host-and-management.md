@@ -141,18 +141,24 @@ Useful semantics may include:
 A bound grid or collection is represented as a data surface. It is not assumed to be a database table.
 
 
-Parent/child data is represented explicitly when the host supplies a semantic relationship:
+The supplied production HForms implementation gives an explicit parent/child mapping rather than requiring visual inference:
 
 ```text
-parent entity
+HDataBox.MainTable
     ↓
-child collection
+TableInfo.ChildTable[]
     ↓
-parent-key → child-key relationship
+child TableInfo.TableName ↔ HDataGridView/HList.DataSourceName
+    ↓
+parent MainTable.PkName → child foreign-key field
 ```
+
+The adapter should preserve this as a semantic parent/child relationship while keeping `TableInfo`, `DataSet`, `DataTable`, and HForms controls private to the adapter.
 
 
 HForms concepts such as `HDataBox`, `HActionBar`, `HDataGridView`, and `TableInfo` are adapter inputs rather than Hive contracts.
+
+The production `HDataBox` source also establishes host lifecycle semantics: required/unique validation, `CheckBeforeSave`, `SaveRecord`, `PerformAfterSave(ID)`, New/Edit state transitions, and authoritative record reload after save. Those are host business/application behavior to adapt, not Hive authorization or database contracts.
 
 
 ### 4.1.4 Identity, lookup, and mutation boundaries
