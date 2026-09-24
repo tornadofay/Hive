@@ -73,6 +73,10 @@ Examples:
 
 The Phase 1.13 WinForms host-context example uses a deterministic fixture Form and the checked-in image fixture so it does not require a real business application or real provider account. Discovery returns read-only metadata snapshots; it never grants control-action authority.
 
+For the planned Phase 1.14 host-integration example, the Example Host should demonstrate the public neutral host contract rather than an HForms-only API. The scenario should use a deterministic fixture adapter and may include native WinForms/custom controls plus an adapter-shaped data surface with a hidden primary-key field. It should demonstrate semantic field metadata, stable row identity, bounded lookup behavior, UI capability versus Hive authorization, and API/UI capability composition without exposing raw control handles or SQL.
+
+For the planned Phase 1.17 business-write/review example, the Example Host should demonstrate the public business-operation boundary with a deterministic fake host/application. The scenario should show a structured proposal, PendingApproval when required, a BusinessOperationReceipt containing parent/child host identities, and a first-class Review that can locate the written records and record a correct or incorrect result. The example must not use a real business database or real credentials.
+
 The host-level Hive Settings entry is introduced through the Overview / Getting Started configuration example. The example explains the configuration model and opens the real Settings window; it is not a fake configuration-inspection surface.
 
 Future examples can create independent branches without changing the host:
