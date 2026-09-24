@@ -31,6 +31,7 @@ Implemented in this maintenance pass:
 - Provider, ProviderAccount, ExecutionTarget, AgentDefinition, and Persistence read-only fields use the shared read-only theme surface/text treatment;
 - Workspace rejection uses the existing HiveForm/HiveEditorLayout/HiveButton UI pattern instead of a separate native dialog style;
 - HiveEditorLayout exposes full field descriptions through shared tooltips when descriptions are truncated.
+- HiveMessageBox now inherits the active HiveForm theme from its owner when callers omit an explicit theme manager, preventing fallback dialogs from mismatching Light/Dark/System presentation;
 
 No business logic, Management contract, persistence behavior, provider behavior, or roadmap capability was changed.
 
