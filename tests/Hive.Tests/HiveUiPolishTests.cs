@@ -36,6 +36,33 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
+    public void HiveExampleTestSurface_DisablesCodeCopyWhenSnippetIsEmpty()
+    {
+        using var surface = new HiveExampleTestSurface();
+
+        Assert.False(surface.CopyCodeButton.Enabled);
+
+        surface.CodeSnippet = "// public API";
+
+        Assert.True(surface.CopyCodeButton.Enabled);
+
+        surface.CodeSnippet = string.Empty;
+
+        Assert.False(surface.CopyCodeButton.Enabled);
+    }
+
+    [Fact]
+    public async Task HiveExampleTestSurface_ReportsSuccessfulRunState()
+    {
+        using var surface = new HiveExampleTestSurface();
+
+        await surface.RunAsync(
+            _ => Task.CompletedTask);
+
+        Assert.Equal("Completed.", surface.StatusLabel.Text);
+    }
+
+    [Fact]
     public void HiveEditorLayout_KeepsSingleLineEditorsAtCompactHeight()
     {
         using var layout = new HiveEditorLayout();
