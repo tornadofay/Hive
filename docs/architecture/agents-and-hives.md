@@ -117,7 +117,7 @@ A cognitive strategy may decide that no model call is necessary.
 
 ### Cognitive outcomes: Mistake, Success, and Regret
 
-CognitiveAgent learning begins with an evaluated outcome, not with the raw transport result of an execution.
+CognitiveAgent learning begins with a first-class outcome evaluation, not with the raw transport result of an execution. Outcome evaluation is an explicit cognitive contract/process: it owns the comparison between intended success criteria and observed evidence and produces a provenance-bearing outcome interpretation. Mistake and Success are first-class interpretations produced by that boundary; they are not merely renamed execution states. A dedicated outcome component, evaluator, event family, projection, or other separate implementation boundary is valid when its lifecycle or replacement needs justify it.
 
 An outcome evaluation compares the intended objective/success criteria with the observed result and the evidence available to establish whether the objective was actually achieved.
 
@@ -179,7 +179,9 @@ They never bypass capability checks, authorization, safety rules, budgets, host 
 
 ### Dream modes and Nightmare
 
-Dreams are first-class bounded simulations/analyses. Their purpose is part of the Dream's semantics and provenance.
+Dream is a first-class cognitive subsystem/contract for bounded simulation and hypothetical analysis. Its purpose is part of the Dream's semantics and provenance, and Dream processing may run independently of an active runtime.
+
+Dream implementations may share common simulation infrastructure across purposes or separate recovery, optimization, and stress-test processing where their lifecycle, scheduling, or replacement boundary requires it; the architecture does not require them to be one implementation unit.
 
 Supported purposes include:
 
@@ -189,7 +191,7 @@ Supported purposes include:
 - **Reconsideration** — revisit goals, beliefs, plans, or decisions in light of new evidence;
 - **Preparation** — rehearse plausible future scenarios before wake/runtime execution.
 
-A Nightmare is therefore not a separate cognitive engine. It is a Dream mode whose objective is to find failure boundaries and hidden weaknesses in something the Agent currently considers successful or safe.
+A Nightmare is a first-class Dream purpose with its own semantic objective: actively search for failure boundaries and hidden weaknesses in something the Agent currently considers successful or safe. Whether Nightmare processing is implemented inside the general Dream component or as a replaceable specialized processor is an implementation decision governed by lifecycle, scheduling, resource, and replacement boundaries.
 
 A Recovery Dream can turn:
 
@@ -230,6 +232,8 @@ applicability boundary / new safeguard candidate
 Dream outputs remain simulated evidence. They never become actual experience merely because the simulation predicts success or failure.
 
 ### Adaptive learning loop
+
+Learning is a first-class governed cognitive process. It consumes evaluated evidence and produces candidate adaptations through an explicit validation/reconciliation boundary; it does not directly mutate durable strategy from raw model output.
 
 The CognitiveAgent learning loop is:
 
