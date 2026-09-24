@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 36 — V1 host-operation lifecycle and HForms evidence boundary finalized)
+Last updated: 2026-09-24 (rev 37 — V1 integration, storage, and deployment boundaries finalized)
 
 
 
