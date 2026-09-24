@@ -117,7 +117,7 @@ A cognitive strategy may decide that no model call is necessary.
 
 ### Cognitive outcomes: Mistake, Success, and Regret
 
-CognitiveAgent learning begins with a first-class outcome evaluation, not with the raw transport result of an execution. Outcome evaluation is an explicit cognitive contract/process: it owns the comparison between intended success criteria and observed evidence and produces a provenance-bearing outcome interpretation. Mistake and Success are first-class interpretations produced by that boundary; they are not merely renamed execution states. A dedicated outcome component, evaluator, event family, projection, or other separate implementation boundary is valid when its lifecycle or replacement needs justify it.
+CognitiveAgent learning begins with a first-class outcome evaluation, not with the raw transport result of an execution. OutcomeEvaluation is an explicit cognitive contract/process that owns the comparison between intended success criteria and observed evidence and establishes a provenance-bearing outcome classification. Mistake and Success are first-class cognitive outcome concepts associated with that evaluation; they are not merely renamed execution states. Separate processors, event families, projections, or other implementation boundaries for Mistake/Success behavior are valid when their lifecycle, persistence, scheduling, or replacement needs justify them.
 
 An outcome evaluation compares the intended objective/success criteria with the observed result and the evidence available to establish whether the objective was actually achieved.
 
@@ -428,7 +428,7 @@ Dreams may:
 Dream output is never silently treated as an event that actually happened. Persistent records distinguish at least actual observations/experiences from simulations, hypotheses, predictions, counterfactuals, stress-test results, and other non-observed evidence.
 A Dream records its purpose so recovery, optimization, and Nightmare/Stress-Test reasoning remain distinguishable.
 
-A Dream may produce a proposed cognitive update to goals, beliefs, plans, memories, self-model, or other state, but the proposal is not itself an authoritative state transition. Reconciliation, validation, ownership, authorization, provenance, and concurrency rules determine whether it is accepted.
+A Dream may produce a proposed cognitive update to goals, beliefs, plans, memories, self-model, or other cognitive state, but the proposal is not itself an authoritative state transition. Reconciliation, validation, ownership, authorization, provenance, and concurrency rules determine whether it is accepted. A Dream can also produce evidence for a first-class Mistake/Success interpretation or a later Learning Candidate without making that evidence an actual experience.
 
 When a proposed Dream result concerns a Phase 5 resource such as a Skill or Learning Candidate, the Dream produces evidence/proposal input; the owning resource/governance boundary performs the later promotion. A Dream does not bypass the roadmap's resource-ownership boundary merely because it can run independently.
 
