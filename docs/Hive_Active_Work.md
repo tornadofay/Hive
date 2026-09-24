@@ -32,6 +32,8 @@ Implemented in this maintenance pass:
 - Workspace rejection uses the existing HiveForm/HiveEditorLayout/HiveButton UI pattern instead of a separate native dialog style;
 - HiveEditorLayout exposes full field descriptions through shared tooltips when descriptions are truncated.
 - HiveMessageBox now inherits the active HiveForm theme from its owner when callers omit an explicit theme manager, preventing fallback dialogs from mismatching Light/Dark/System presentation;
+- CRUD empty-state messaging now describes filtered no-result states as the current filters rather than incorrectly attributing them only to search;
+- the shared Example Output surface now reports availability when output is cleared, and the Example Host removes a stale collapsed-output reveal affordance when the shared output becomes empty;
 
 No business logic, Management contract, persistence behavior, provider behavior, or roadmap capability was changed.
 
@@ -39,11 +41,11 @@ No business logic, Management contract, persistence behavior, provider behavior,
 
 Example Host checks:
 - UI / Foundation / Theme — switch Light, Dark, and System modes and check typography, contrast, focus, and selected button state;
-- UI / Foundation / Controls & CRUD — resize through wide, compact, and very narrow desktop widths; verify search/status filter/action layout, wrapped actions, selection, Enter/Delete behavior, empty state, paging, and no clipped controls;
+- UI / Foundation / Controls & CRUD — resize through wide, compact, and very narrow desktop widths; verify search/status filter/action layout, wrapped actions, selection, Enter/Delete behavior, empty state, paging, and no clipped controls; when records exist but the search/status filter yields no matches, confirm the empty state says "No items match the current filters.";
 - UI / Foundation / Dialogs — verify Information/Success/Warning/Error/Question dialogs and keyboard action focus;
 - Example Host / Overview / Getting Started / Example Configuration / Theme Foundation — switch Light and Dark modes and confirm headings, section labels, and body text retain the shared theme typography family and intended hierarchy;
 - Workspace / WorkItem Operations — confirm Workspace section labels use the same themed typography family as the surrounding surface;
-- Host / WinForms Integration / Image Input & WinForms Host Context — run the existing image/host-context example and expand the shared output; verify the output pane floats over the lower part of the active example without changing the example's reserved layout space;
+- Host / WinForms Integration / Image Input & WinForms Host Context — run the existing image/host-context example and expand the shared output; verify the output pane floats over the lower part of the active example without changing the example's reserved layout space; then hide the output, clear it through the shared output controls, and confirm no stale "Show Output" affordance remains;
 - Workspace / WorkItem Operations — for a PendingApproval WorkItem, open Reject and verify the themed Hive editor dialog, multiline reason field, Cancel, Reject, and empty-reason behavior;
 - Overview / Getting Started / Example Configuration — open the real Hive Settings surface and inspect Provider, Account/Credential, Execution Target, Agent, and Persistence editors in both themes; confirm read-only keys/database are visually distinct and resizing does not clip the form.
 
