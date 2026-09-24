@@ -258,13 +258,18 @@ Scope:
 - separate API, UI, and API+UI implementation paths behind one authorized logical operation;
 - Management-owned authorization/orchestration through injected Core-defined host ports, plus provenance, cancellation, lifecycle/disposal, stale-state, and concurrency boundaries.
 
-Required investigation before freezing the concrete adapter contract:
-- actual HForms/HControls data-source and parent/child relationship mechanism;
-- primary/composite-key representation and generated-ID behavior;
-- grid add/remove/edit configuration and editing lifecycle;
-- lookup implementation;
-- HDataBox/HActionBar permission/action semantics;
-- existing host validation and business-operation boundaries.
+Production evidence now established before freezing the concrete adapter contract:
+- HDataBox/TableInfo explicitly associate the root record, child collections, and child controls;
+- HDataBox prepares parent-key propagation into child rows;
+- HDataBox establishes required/unique validation, CheckBeforeSave, SaveRecord, PerformAfterSave(ID), New/Edit lifecycle, and authoritative reload behavior;
+- ByAlone, ByControls, and ByForm are host interaction modes rather than authorization grants.
+
+Remaining adapter-freeze investigation:
+- exact HControl/IHyperControl semantic metadata and value-access contract;
+- exact HDataGridView row/column identity, generated/computed fields, add/remove/edit configuration, and editing lifecycle;
+- exact lookup resolution behavior;
+- exact host concurrency/version behavior where available;
+- concrete HActionBar behavior only where the adapter must expose or invoke its actions.
 
 The adapter must translate these host semantics into Hive contracts and must not recreate the host's database/business framework.
 
