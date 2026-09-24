@@ -426,9 +426,11 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
     private static ComboBox CreateComboBox() =>
         new()
         {
-            Dock = DockStyle.Fill,
+            Height = 32,
+            IntegralHeight = false,
+            Anchor = AnchorStyles.Left | AnchorStyles.Right,
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Margin = new Padding(8, 0, 0, 0)
+            Margin = new Padding(0, 4, 0, 4)
         };
 
     private static string BuildModelDeployment(ExecutionTarget target)
