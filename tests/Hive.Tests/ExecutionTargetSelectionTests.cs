@@ -247,7 +247,7 @@ public sealed class ExecutionTargetSelectionTests
                 [target],
                 [],
                 ExecutionTargetSelectionMode.Preferred,
-                preferredTargetId: default));
+                preferredTargetId: (ExecutionTargetId?)default(ExecutionTargetId)));
 
         Assert.Throws<ArgumentException>(
             () => new ExecutionTargetSelectionRequest(
