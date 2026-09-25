@@ -139,9 +139,10 @@ When the authorization and verification gates permit implementation-affecting wo
 
 1. Capture the user request as explicit acceptance criteria, scope boundaries, exclusions, and verification requirements before implementation. Do not invent requirements or omit stated ones.
 2. Identify the changed boundary and its responsibility owner.
-2. Read the applicable detailed reference checklist **before** making implementation changes or concluding the audit:
-   - Revision → `references/revision-checklist.md`;
-   - Maintenance → `references/maintenance-checklists.md`;
+3. Read the applicable detailed reference checklist **before** making implementation changes or concluding the audit:
+   - Continue/implementation → read `references/revision-checklist.md` and the applicable sections of `references/maintenance-checklists.md`;
+   - Revision → read `references/revision-checklist.md` and the applicable sections of `references/maintenance-checklists.md`;
+   - Maintenance → read `references/maintenance-checklists.md`;
    - UI/Host/UI work → use the corresponding sections of the maintenance checklist;
    - Backend/integration work → use the corresponding backend sections.
 3. Evaluate the actual implementation and surrounding code against the main quality lens and the applicable detailed checklist. Do not treat either as a box-counting exercise.
