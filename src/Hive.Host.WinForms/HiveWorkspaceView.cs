@@ -89,8 +89,11 @@ public sealed class HiveWorkspaceView : UserControl
         if (disposing)
         {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
-            _operationCts?.Cancel();
-            _operationCts?.Dispose();
+
+            var operationCts = Interlocked.Exchange(
+                ref _operationCts,
+                null);
+            operationCts?.Cancel();
         }
 
         base.Dispose(disposing);
@@ -116,9 +119,13 @@ public sealed class HiveWorkspaceView : UserControl
 
         if (result.IsFailure)
         {
-            ShowError(result.Error!);
+            if (!IsDisposed && !Disposing)
+                ShowError(result.Error!);
             return;
         }
+
+        if (token.IsCancellationRequested || IsDisposed || Disposing)
+            return;
 
         _suppressSelectionChanged = true;
         _workItems.BeginUpdate();
@@ -150,6 +157,9 @@ public sealed class HiveWorkspaceView : UserControl
             result.Value!,
             _selectedWorkItem?.Id);
 
+        if (token.IsCancellationRequested || IsDisposed || Disposing)
+            return;
+
         if (_selectedWorkItem is null)
         {
             ClearDetails();
@@ -160,6 +170,9 @@ public sealed class HiveWorkspaceView : UserControl
                 _selectedWorkItem,
                 token).ConfigureAwait(true);
         }
+
+        if (token.IsCancellationRequested || IsDisposed || Disposing)
+            return;
 
         UpdateActionState();
     }
@@ -209,6 +222,10 @@ public sealed class HiveWorkspaceView : UserControl
                 }
 
                 await RefreshCoreAsync(token).ConfigureAwait(true);
+
+                if (token.IsCancellationRequested || IsDisposed || Disposing)
+                    return;
+
                 SelectWorkItem(result.Value!.Id);
 
                 if (_selectedWorkItem is not null)
@@ -311,6 +328,10 @@ public sealed class HiveWorkspaceView : UserControl
         }
 
         await RefreshCoreAsync(cancellationToken).ConfigureAwait(true);
+
+        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+            return;
+
         HiveMessageBox.ShowSuccess(
             FindForm(),
             $"{successTitle}.",
@@ -360,7 +381,16 @@ public sealed class HiveWorkspaceView : UserControl
 
         if (activity.IsFailure)
         {
-            ShowError(activity.Error!);
+            if (!IsDisposed && !Disposing && _selectedWorkItem?.Id == workItem.Id)
+                ShowError(activity.Error!);
+            return;
+        }
+
+        if (cancellationToken.IsCancellationRequested ||
+            IsDisposed ||
+            Disposing ||
+            _selectedWorkItem?.Id != workItem.Id)
+        {
             return;
         }
 
@@ -444,30 +474,56 @@ public sealed class HiveWorkspaceView : UserControl
         Func<CancellationToken, Task> operation,
         CancellationToken externalToken = default)
     {
-        _operationCts?.Cancel();
-        _operationCts?.Dispose();
-        _operationCts = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
+        var operationCts = CancellationTokenSource.CreateLinkedTokenSource(
+            externalToken);
+        var previous = Interlocked.Exchange(
+            ref _operationCts,
+            operationCts);
+        previous?.Cancel();
+
+        if (IsDisposed || Disposing)
+        {
+            Interlocked.CompareExchange(
+                ref _operationCts,
+                null,
+                operationCts);
+            operationCts.Dispose();
+            return;
+        }
 
         SetBusy(true);
 
         try
         {
-            await operation(_operationCts.Token).ConfigureAwait(true);
+            await operation(operationCts.Token).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
+            when (operationCts.IsCancellationRequested)
         {
+            return;
         }
         catch (Exception exception)
         {
-            ShowError(
-                new Error(
-                    "hive.workspace.operation-failed",
-                    ErrorCategory.Internal,
-                    exception.Message));
+            if (!IsDisposed && !Disposing)
+            {
+                ShowError(
+                    new Error(
+                        "hive.workspace.operation-failed",
+                        ErrorCategory.Internal,
+                        exception.Message));
+            }
         }
         finally
         {
-            if (!IsDisposed)
+            if (ReferenceEquals(_operationCts, operationCts))
+                Interlocked.CompareExchange(
+                    ref _operationCts,
+                    null,
+                    operationCts);
+
+            operationCts.Dispose();
+
+            if (!IsDisposed && !Disposing)
                 SetBusy(false);
         }
     }
