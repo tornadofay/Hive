@@ -33,6 +33,17 @@ Excluded:
 - Add focused regression coverage when an identified defect is testable and the repository test boundary can prove it.
 - Review the final diff for accidental, duplicate, stale, dead, or out-of-scope changes.
 
+### Implementation checkpoint
+
+Static production audit identified and corrected one concrete shared-UI failure boundary:
+
+1. **CRUD operation failure containment**
+   - `HiveCrudPage` previously rethrew an operation exception when no `OperationFailed` subscriber was attached, allowing a failure from a UI event path to escape as an unhandled async exception.
+   - The control now treats `OperationFailed` as an optional extension point. Without a subscriber, the failure remains contained in the control operation and is reported through `HiveUiErrorReporter` when the control is hosted by a form.
+   - Existing subscribed consumers retain their current event-based reporting behavior.
+   - Added focused regression coverage in `HiveUiPolishTests`.
+   - Updated `docs/ui/controls.md` to document the fallback behavior.
+
 ### Verification gate
 
 **VERIFICATION PENDING**
