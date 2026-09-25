@@ -1,3 +1,49 @@
+# Hive — Active Work
+
+## Phase 1.14 — Dual Business-App Integration Contract
+
+### Status
+
+**OPEN / implementation in progress; verification not authorized.**
+
+This is the current authorized roadmap slice. No Phase 1.15, 1.16, 1.17, 1.18, cognitive, durable business-write, Review, or unrelated maintenance work is authorized by this entry.
+
+### Scope
+
+- establish the neutral host-integration contracts in `Hive.Core`;
+- implement the concrete bounded WinForms adapter in `Hive.Host.WinForms` without exposing raw WinForms objects through neutral contracts;
+- support semantic control metadata and bounded control value interaction, including application-owned/custom controls through explicit adapters;
+- model parent/child data surfaces and stable primary/composite/host-defined row identities, with row position remaining non-authoritative;
+- support generated/identity fields and computed/read-only fields without treating them as writable input;
+- provide bounded lookup behavior without arbitrary SQL or executable host filters;
+- keep UI interaction capabilities separate from business-operation semantics;
+- provide Management-owned authorization/orchestration through injected Core-defined host ports, with registration ownership, scope, stale-state, cancellation, provenance, and disposal checks;
+- establish API-only, UI-only, and combined API+UI business-operation composition contracts without implementing the consequential business write or durable receipt/review lifecycle;
+- add focused automated regression coverage and the required public Example Host scenario.
+
+### Production review focus
+
+Audit the final implementation for nullable/public API correctness, bounded resource use, stable identity mapping, stale-row/concurrency protection, generated/computed behavior, lookup safety, authorization independent of host UI state, cancellation/thread affinity, registration lifetime/disposal, dependency direction, and absence of raw host/SQL/business-framework leakage.
+
+### Exact verification handoff
+
+Example to run: `Host / WinForms Integration / Dual Business-App Integration Contract` — `Hive.Example.WinForms`
+Tests to run: `tests/Hive.Tests/HostIntegrationTests.cs` and `tests/Hive.Tests/HiveWinFormsHostAdapterTests.cs`; broader requirement: `dotnet test tests/Hive.Tests/Hive.Tests.csproj` after the normal solution build.
+
+### Implementation checkpoint
+
+- Next implementation task: introduce the neutral Core host-integration contracts and the typed transient host-registration/semantic-reference model, then wire a concrete WinForms adapter and Management boundary against those contracts.
+- Existing Phase 1.13 `HiveWinFormsHostContext` remains the read-only discovery boundary and must not be replaced or given mutation authority.
+- No database schema/migration changes are expected because Phase 1.14 does not persist business-operation receipts or host business state.
+
+### Verification gate
+
+Execution is **not authorized in this request**. Do not run builds, tests, application launches, migrations, provider calls, or other runtime verification until the user explicitly authorizes execution or supplies actual developer verification results.
+
+No verification has been performed for Phase 1.14 yet. Keep this slice open until the required implementation, tests, Example Host scenario, documentation, and actual verification are supplied.
+
+Last updated: 2026-09-25
+
 ## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision 5
 
 ### Status
