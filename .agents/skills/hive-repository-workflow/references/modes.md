@@ -34,7 +34,7 @@ Hive: Maintenance — Backend
 Hive: Maintenance — UI
 Hive: Maintenance — Host/UI
 
-Meaning: Perform a production audit and correction pass in that domain. When Active Work is open, the pass is bounded by its authorization. When Active Work is closed or absent, this explicit Maintenance request establishes a new temporary Active Work slice before implementation, scoped exactly to the request.
+Meaning: Perform a production audit and correction pass in that domain. When Active Work is open, the pass is bounded by its authorization. When Active Work is closed or absent, this explicit Maintenance request establishes a new temporary Active Work slice before implementation, scoped exactly to the request. The same idle-state rule applies to any other explicitly bounded new implementation task.
 
 Maintenance is for concrete production defects and quality problems, not speculative future features.
 
@@ -82,7 +82,7 @@ Again -> same task/revision pass
 
 Polish again -> same maintenance scope
 
-An explicit new task may intentionally change mode or narrow scope. An explicitly requested new bounded Maintenance task may establish a temporary Active Work slice when none is open; it does not advance the roadmap.
+An explicit new task may intentionally change mode or narrow scope. When no Active Work slice is open, an explicitly bounded new implementation or Maintenance task may establish a temporary Active Work slice; it does not advance the roadmap.
 
 When Active Work exists, a new task may not silently broaden or replace its implementation boundary. If it conflicts with Active Work, report the conflict instead of guessing.
 
