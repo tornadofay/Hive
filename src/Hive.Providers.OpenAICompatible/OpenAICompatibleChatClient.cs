@@ -44,7 +44,9 @@ public sealed class OpenAICompatibleChatClient : IChatClient
 
         var request = new OpenAICompatibleChatRequest(
             model,
-            ConvertMessages(messages));
+            ConvertMessages(
+                messages,
+                cancellationToken));
 
         var result = await _adapter
             .CompleteChatAsync(request, cancellationToken)
@@ -85,7 +87,10 @@ public sealed class OpenAICompatibleChatClient : IChatClient
             .ConfigureAwait(false);
 
         foreach (var update in response.ToChatResponseUpdates())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
             yield return update;
+        }
     }
 
     public object? GetService(
@@ -107,12 +112,15 @@ public sealed class OpenAICompatibleChatClient : IChatClient
     }
 
     private static IReadOnlyList<OpenAICompatibleMessage> ConvertMessages(
-        IEnumerable<ChatMessage> messages)
+        IEnumerable<ChatMessage> messages,
+        CancellationToken cancellationToken)
     {
         var converted = new List<OpenAICompatibleMessage>();
 
         foreach (var message in messages)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (converted.Count >= OpenAICompatibleChatRequest.MaxMessageCount)
             {
                 throw new OpenAICompatibleProviderException(
