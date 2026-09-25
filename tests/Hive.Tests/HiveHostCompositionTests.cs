@@ -391,6 +391,33 @@ public sealed class HiveHostCompositionTests
     }
 
     [Fact]
+    public async Task Dispose_CancelsActiveCompositionAndDoesNotPublishCandidate()
+    {
+        var configuration =
+            HivePersistenceConfiguration.LocalDevelopment(
+                "Hive_Composition_Dispose_Active");
+        var store = new InMemoryConfigurationStore(configuration);
+        var factory = new SerializingGraphFactory(configuration);
+
+        using var composition = new HiveHostComposition(store, factory);
+
+        var initialization = composition.InitializeAsync();
+        await factory.FirstCandidateStarted.Task;
+
+        var disposal = Task.Run(composition.Dispose);
+
+        await disposal;
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => initialization);
+
+        Assert.Null(composition.Current);
+        Assert.Equal(
+            HiveHostCompositionState.Disposed,
+            composition.Status.State);
+    }
+
+    [Fact]
     public async Task GraphFactory_SanitizesBootstrapResolutionErrors()
     {
         var configuration = new HivePersistenceConfiguration(
