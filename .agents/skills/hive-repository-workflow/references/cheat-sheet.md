@@ -23,8 +23,8 @@ Architecture/design only unless implementation is explicitly requested.
 Hive: Verification
 Reconcile actual developer verification results.
 
-Hive: Start Phase 1.14
-Explicitly advance to that roadmap slice.
+Hive: Start Phase X.Y
+Explicitly advance to the named roadmap slice.
 
 Hive: Start the next roadmap slice
 Explicitly advance to the next roadmap slice selected from the repository.
