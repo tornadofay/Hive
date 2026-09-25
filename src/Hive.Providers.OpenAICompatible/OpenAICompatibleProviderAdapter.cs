@@ -172,8 +172,6 @@ public sealed class OpenAICompatibleProviderAdapter
             {
                 return SerializationFailure();
             }
-
-            return SerializationFailure();
         }
     }
 
