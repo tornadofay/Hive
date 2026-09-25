@@ -17,24 +17,14 @@ This maintenance pass is explicitly authorized by the current revision request. 
 
 ### Implementation checkpoint — 2026-09-25
 
-Implemented on main through commit 160cd0d6f94a4af777cdafc6d1627d36ded379e5:
+Implemented on main through commit a445886f34a1fde8e7b8fb0727bfddfe7025bf55:
 
-- JsonHiveConfigurationStore now opens persisted settings with FileShare.Delete in addition to FileShare.Read, allowing atomic replacement of the settings file while an existing reader is still open instead of surfacing a Windows sharing failure.
-- HiveManagementFacade now rejects malformed non-string WorkItem activity text properties instead of silently treating them as missing; JSON null remains accepted for optional values such as rejection reason.
-- Focused regression coverage was added for both contracts in HiveConfigurationTests and WorkItemManagementTests.
+- JsonHiveConfigurationStore opens persisted settings with FileShare.Delete in addition to FileShare.Read.
+- Existing settings files are now replaced with File.Replace rather than File.Move(..., overwrite: true), avoiding the Windows/.NET open-destination replacement failure while preserving atomic replacement semantics for the existing file.
+- First-time settings creation still uses File.Move because there is no destination file to replace.
+- HiveManagementFacade rejects malformed non-string WorkItem activity text properties instead of silently treating them as missing; JSON null remains accepted for optional values such as rejection reason.
+- Focused regression coverage covers both contracts in HiveConfigurationTests and WorkItemManagementTests, and the settings replacement regression now reloads the file to verify the replacement was actually persisted.
 - No schema, migration, provider, orchestration, MAF, host, UI, dependency, or public-contract redesign changes were introduced.
-
-### Verification gate — pending
-
-Execution was not authorized during this maintenance pass. The implementation and tests were reviewed statically only.
-
-Required verification before closing this maintenance pass:
-
-```text
-dotnet test tests/Hive.Tests/Hive.Tests.csproj
-```
-
-The result remains **unverified** until the user supplies an actual execution result. Keep this maintenance pass open until then.
 
 ## Closed maintenance pass — Hive.Management / Hive.Persistence Final Backend Audit — Revision
 
