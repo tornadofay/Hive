@@ -14,6 +14,23 @@ public sealed class EventSnapshot
         if (!Enum.IsDefined(stream.Kind))
             throw new ArgumentOutOfRangeException(nameof(stream), "Event stream resource kind is invalid.");
 
+        if (stream.Identity == Guid.Empty)
+            throw new ArgumentException(
+                "Event stream identity is required.",
+                nameof(stream));
+
+        if (version.Value <= 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(version),
+                version.Value,
+                "Snapshot version must be greater than zero.");
+
+        if (payloadSchemaVersion.Value <= 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(payloadSchemaVersion),
+                payloadSchemaVersion.Value,
+                "Snapshot payload schema version must be greater than zero.");
+
         Version = version;
         PayloadSchemaVersion = payloadSchemaVersion;
 
