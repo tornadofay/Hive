@@ -217,7 +217,6 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             ref _testCts,
             testCts);
         previous?.Cancel();
-        previous?.Dispose();
 
         _testButton.Enabled = false;
         SetTestStatus("Testing connection...", HiveStatusTone.Information);
