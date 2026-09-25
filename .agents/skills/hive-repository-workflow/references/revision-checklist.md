@@ -5,7 +5,7 @@ Revision asks whether the work just performed is complete, correct, and still in
 ## Context and scope
 
 - Exact task, mode, domain, and scope
-- Active Work authorization, or establishment of a temporary slice from an explicit new bounded non-roadmap corrective task when no slice is open, after confirming the request restores/preserves/corrects existing behavior rather than adding capability
+- Active Work authorization, or establishment of a temporary slice from an explicit new bounded non-roadmap corrective task when no slice is open, after confirming the entire request restores/preserves/corrects existing behavior rather than adding capability; confirm the new slice is recorded before implementation
 - Respect any developer-verification gate before implementation-affecting changes
 - No future roadmap work
 - No unrelated behavior changes
