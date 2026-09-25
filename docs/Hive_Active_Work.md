@@ -6,9 +6,9 @@
 
 Authorization: explicit user request — **Hive: Start Phase 1.14**.
 
-Mode: verification remediation required; **re-verification pending**.
+Mode: verification remediation completed; **re-verification pending**.
 
-Implementation checkpoint before this remediation: `89b3a994cde0fbfdd3d12f89a5592b1a53660276`.
+Implementation checkpoint after this remediation: `5b11c0816767c69834d2c85f91661fe00ef6e780`.
 
 ### Objective
 
@@ -49,11 +49,11 @@ Establish the Hive-owned neutral V1 host-integration contract family and reusabl
 
 Previous in-scope nullable compiler diagnostics were also remediated within this same slice. Historical verification and remediation details are archived under `docs/verification/phase-1/`.
 
-The first developer verification attempt exposed an in-scope Phase 1.14 defect and the subsequent nullable compiler diagnostics were remediated within the same authorized slice. Historical verification and remediation details are archived under `docs/verification/phase-1/`.
+Developer verification has exposed multiple in-scope Phase 1.14 defects; the latest bound-field discovery defect and earlier nullable compiler diagnostics were remediated within the same authorized slice. Historical verification and remediation details are archived under `docs/verification/phase-1/`.
 
 ### Verification gate
 
-**VERIFICATION FAILED / REMEDIATION REQUIRED — re-verification required after remediation.**
+**PENDING — re-verification required after remediation.**
 
 Required developer verification:
 
