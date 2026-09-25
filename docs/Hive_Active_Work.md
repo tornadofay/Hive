@@ -45,14 +45,9 @@ Establish the Hive-owned neutral V1 host-integration contract family and reusabl
 - reopening or replacing the Phase 1.13 read-only host-context boundary;
 - unrelated Management, Persistence, Provider, Agent, or UI refactoring/dependency upgrades.
 
-### Verification remediation
+### Verification remediation state
 
-The developer supplied a verification attempt reporting **290 passed / 1 failed**, followed by compiler diagnostics during the corrective iteration. The reported failure was within the Phase 1.14 contract boundary. The remediation commits were:
-
-- `2ebbd34a1ff53ced8eb766bc2683af277649656d` — corrected bound WinForms data-surface row-count handling.
-- `e1c029b69c4f08653484db2b2b7c85f3ddbc4467` — corrected nullable `BindingContext` access.
-
-No post-remediation build, test run, or Example Host run has been reported yet.
+The first developer verification attempt exposed an in-scope Phase 1.14 defect and the subsequent nullable compiler diagnostics were remediated within the same authorized slice. Historical verification and remediation details are archived under `docs/verification/phase-1/`.
 
 ### Verification gate
 
