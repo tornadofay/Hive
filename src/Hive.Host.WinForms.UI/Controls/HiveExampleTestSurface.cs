@@ -447,7 +447,8 @@ public sealed class HiveExampleTestSurface : UserControl
             if (ReferenceEquals(_runCancellation, runCancellation))
                 _runCancellation = null;
 
-            runCancellation.Dispose();        }
+            runCancellation.Dispose();
+        }
     }
 
     public static string RequireInput(string value)

@@ -227,7 +227,6 @@ public sealed class HiveUiPolishTests
         Assert.True(emptyState!.Visible);
     }
 
-
     [Fact]
     public async Task HiveCrudPage_DisposeDoesNotDisposeInFlightOperationCancellationSource()
     {

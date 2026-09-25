@@ -447,7 +447,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _searchLabel.Visible = value;
             _searchPanel.Visible = value;
             UpdateToolbarLayout();
-        }    }
+        }
+    }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string SearchText
@@ -836,7 +837,6 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
         if (disposing)
         {
-            _operationCancellation?.Dispose();
             _titleFont.Dispose();
             _descriptionFont.Dispose();
             _searchLabelFont.Dispose();
@@ -899,7 +899,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _pageLayout.ActionBarHeight == expectedActionBarHeight &&
             (compact ||
              _actionLayout.ColumnStyles.Count < 2 ||
-             Math.Abs(_actionLayout.ColumnStyles[1].Width - actionWidth) < 0.1f))        {
+             Math.Abs(_actionLayout.ColumnStyles[1].Width - actionWidth) < 0.1f))
+        {
             UpdateSearchBoxWidth();
             return;
         }
@@ -1348,6 +1349,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         if (_loadItemsAsync is null)
             throw new InvalidOperationException(
                 "LoadItemsAsync must be configured before refreshing the CRUD page.");
+
         SetStatus("Loading...", HiveStatusTone.Information);
         var items = await _loadItemsAsync(cancellationToken);
 

@@ -446,7 +446,8 @@ public sealed class HiveSettingsView : UserControl
                 new HiveExecutionTargetsSettingsView(
                     _management,
                     _accessContext,
-                    _themeManager,                    _output),
+                    _themeManager,
+                    _output),
 
             SettingsPageKey.Agents => _agentView ??=
                 new HiveAgentSettingsView(
