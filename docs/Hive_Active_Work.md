@@ -4,9 +4,9 @@
 
 ### Status
 
-**OPEN / static audit in progress; execution not authorized.**
+**CLOSED / developer-verified.**
 
-This maintenance pass is explicitly authorized by the current user request. It supersedes no roadmap slice and does not activate Phase 1.14 or any later roadmap work.
+This maintenance pass did not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
 ### Scope
 
@@ -15,21 +15,22 @@ This maintenance pass is explicitly authorized by the current user request. It s
 - Review provider project/dependency direction and integration with the existing Hive provider boundary without moving responsibility into Coordination, Management, Persistence, or MAF.
 - Correct only concrete defects or unsafe/misleading behavior found in this audit.
 - Add focused regression coverage only for changed contracts or realistic discovered regressions.
-- Inspect the existing Provider Transport Example for public-API correctness; change it only if revised public behavior requires it.
+- Inspect the existing Provider Transport Example for public-API correctness; no example source change was required.
 - No schema/migration, persistence redesign, orchestration, cognitive, host/UI, dependency upgrade, MAF replacement, or future roadmap implementation.
 
 ### Implementation checkpoint
 
-Production changes completed so far on `main`:
-- `OpenAICompatibleChatRequest` now bounds message count from the actual enumerable contents of the supplied collection rather than trusting a potentially stale/misreporting `Count`, while preserving the immutable read-only request snapshot.
+Production changes completed on `main`:
+
+- `OpenAICompatibleChatRequest` now bounds message count from actual enumeration rather than trusting a potentially stale/misreporting `Count`, while preserving the immutable read-only request snapshot.
 - Model and message-content length limits are centralized at the provider request boundary, and the MAF-facing default model is validated against the same model limit at construction.
-- The MAF-facing text bridge now rejects non-text `AIContent` instead of silently dropping binary/tool/other content before sending a provider request.
-- Provider response metadata now falls back to the requested model when the provider omits/returns blank model metadata, and blank response IDs are normalized to null.
+- The MAF-facing text bridge now rejects non-text `AIContent` instead of silently dropping unsupported content.
+- Provider response metadata now falls back to the requested model when provider model metadata is omitted/blank, and blank response IDs are normalized to null.
 - Invalid credentials that cannot form a valid Bearer authorization header now return a structured validation failure without exposing credential material.
-- The public connection tester now rejects mismatched Provider → ProviderAccount → ExecutionTarget relationships before making a network request.
-- Focused regression coverage was added for all changed contracts, including actual-enumeration message limits, non-text MAF content, default-model bounds, response-model fallback, invalid credential header input, and provider-graph mismatches.
-- The Phase 1.3 public usage documentation now records the revised provider/MAF boundary behavior.
-- Follow-up compile correction: `OpenAICompatibleMessage` now owns its 64 KiB content-limit constant, and the three connection-tester regression calls now pass the required nullable credential argument explicitly as `null`.
+- The public connection tester now rejects mismatched Provider → ProviderAccount → ExecutionTarget relationships before network access.
+- Focused regression coverage was added for actual-enumeration message limits, non-text MAF content, default-model bounds, response-model fallback, invalid credential header input, provider-graph mismatches, and the related public contract corrections.
+- The Phase 1.3 public usage documentation records the revised provider/MAF boundary behavior.
+- Follow-up compile corrections moved the 64 KiB content-limit constant to `OpenAICompatibleMessage` and passed the required nullable credential argument explicitly in the three provider-graph regression calls.
 - No schema, migration, persistence, orchestration, MAF replacement, host/UI, dependency upgrade, or future roadmap implementation was introduced.
 
 Affected implementation/test/documentation files:
@@ -40,19 +41,36 @@ Affected implementation/test/documentation files:
 - `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
 - `docs/examples/Phase13_OpenAI_Compatible_Provider_Adapter.md`
 
-The existing `Hive.Example.WinForms` provider-transport scenario remains valid and was inspected statically. No example source change is required.
+The existing `Hive.Example.WinForms` provider-transport scenario remained valid under static inspection and required no source change.
 
-### Verification gate
+### Verification result
 
-Execution is **not authorized in this request**, so no build, test, application launch, or provider call will be performed by this pass.
+Developer-supplied verification on 2026-09-25:
 
-Required verification handoff after implementation:
-- Focused: `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
-- Build: `src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`
-- Broader: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`
-- Manual Example Host only when the revised public behavior requires it: `Providers / Provider Platform / Provider Transport / OpenAI-compatible Provider Adapter` — `Hive.Example.WinForms`
+Full `Hive.Tests` run:
+- **246 tests passed, 0 failed, 0 skipped**
+- **27.8 seconds**
+- .NET **10.0.1**
+- xUnit.net VSTest Adapter **3.1.5+1b188a7b0a**
 
-This maintenance slice must remain open until actual verification results are supplied and recorded here. `docs/Hive_Current_Status.md` remains unchanged because no roadmap phase/status changed.
+The full test run exercises the provider project through the `Hive.Tests` dependency graph. A separate direct provider-project build result was not supplied.
+
+Configured provider execution:
+- Provider: `Groq`
+- Provider account: `Groqtest`
+- Execution target/model: `openai/gpt-oss-20b`
+- Execution status: **Succeeded**
+- Response: `Hello from the configured Hive Agent!`
+- Provider credentials: not displayed
+- Service graph: current host graph
+- LocalDevelopment database: not used by this example
+
+The configured execution adds runtime verification of the configured provider/target path beyond the local fake-server automated coverage.
+
+Verification archive:
+[`hive-openai-compatible-provider-audit-final-revision-2026-09-25.md`](verification/maintenance/hive-openai-compatible-provider-audit-final-revision-2026-09-25.md)
+
+The final provider maintenance slice is **developer-verified and closed**. `docs/Hive_Current_Status.md` remains unchanged because no roadmap phase/status changed.
 
 Last updated: 2026-09-25
 
