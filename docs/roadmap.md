@@ -261,17 +261,23 @@ Scope:
 Production evidence now established before freezing the concrete adapter contract:
 - the inspected V1 host explicitly associates the root record, child collections, and child data surfaces;
 - parent identity is propagated into child rows where the host operation requires it;
+- parent and child changes are saved as one combined business operation;
 - host-side required/unique validation, veto points, save boundaries, post-save result/reload behavior, and New/Edit lifecycle are application-owned;
 - the bound child data surface supports edit and row mutation patterns before the surrounding business save;
 - direct grid editing, same-form supporting controls, and dedicated editor forms/dialogs are distinct host interaction patterns rather than authorization grants;
+- the inspected V1 host uses a single primary-key ID as stable row identity; row index remains positional only;
+- generated and computed fields exist, with implementation mechanism intentionally host-defined;
+- lookup resolution can depend on current-record values, external host/application context, or both;
+- the host provides New, Edit, Save, Delete, Reload, Move, Search, Report, Print, and Preview capabilities;
+- the inspected host's normal concurrency behavior is ordinary save without explicit optimistic-conflict detection.
 
-Remaining adapter-freeze investigation:
-- exact neutral field/column metadata and value-access contract;
-- runtime mapping from a bound row to its stable persisted identity; row position remains non-authoritative;
-- exact generated/computed-column behavior and complete existing-child edit serialization;
-- exact lookup resolution behavior;
-- exact host concurrency/version behavior where available;
-- any concrete host action surface required by the adapter, only where its production semantics are established;
+Remaining adapter-definition work:
+- exact neutral public type shapes and bounded operation semantics;
+- adapter mapping from the established binding/value model to the neutral contracts;
+- bounded lookup request/result mapping, including dependent lookup context;
+- representation of generated/computed semantics and resulting values;
+- concrete mapping of the established host action surface into bounded neutral capabilities;
+- optional concurrency evidence only where a host actually exposes meaningful version information.
 
 The adapter must translate these host semantics into Hive contracts and must not recreate the host's database/business framework.
 
@@ -279,7 +285,7 @@ Verify:
 - neutral contract behavior with a fake host adapter;
 - native/custom WinForms discovery and bounded interaction;
 - production adapter mapping for the real V1 host where its concrete contract has been inspected;
-- stable row identity, hidden primary-key, generated-field, computed-field, and stale-row cases;
+- stable primary-key ID identity, positional row-index behavior, generated-field, computed-field, and host-state cases;
 - lookup capability without arbitrary SQL execution;
 - authorization denial even when the host UI exposes an action;
 - API-only, UI-only, and combined API+UI operation paths;
