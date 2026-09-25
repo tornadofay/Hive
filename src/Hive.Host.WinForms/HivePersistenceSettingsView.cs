@@ -796,8 +796,11 @@ internal sealed class HivePersistenceSettingsView : UserControl
         if (disposing)
         {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
-            _operationCts?.Cancel();
-            _operationCts?.Dispose();
+
+            var operationCts = Interlocked.Exchange(
+                ref _operationCts,
+                null);
+            operationCts?.Cancel();
         }
 
         base.Dispose(disposing);
