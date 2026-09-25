@@ -127,6 +127,72 @@ public sealed class WorkItemManagementTests
     }
 
     [Fact]
+    public async Task WorkItemActivity_RejectsMalformedReasonValue()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_WorkItemActivityInvalidReason");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var management = CreateFacade(database.Options);
+        var context = CreateContext();
+
+        var created = await management.CreateImageWorkItemAsync(
+            CreateSubmission(),
+            context);
+        Assert.True(created.IsSuccess, created.Error?.Message);
+
+        await using (var connection = new Microsoft.Data.SqlClient.SqlConnection(
+                         database.Options.ConnectionString))
+        {
+            await connection.OpenAsync();
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                UPDATE [dbo].[HiveEventLog]
+                SET [PayloadJson] = @PayloadJson
+                WHERE [EventId] =
+                (
+                    SELECT TOP (1) [EventId]
+                    FROM [dbo].[HiveEventLog]
+                    WHERE [StreamKind] = @StreamKind
+                      AND [StreamIdentity] = @StreamIdentity
+                      AND [EventType] = @EventType
+                    ORDER BY [StreamVersion]
+                );
+                """;
+            command.Parameters.AddWithValue(
+                "@PayloadJson",
+                """{"version":1,"status":"Created","reason":42}""");
+            command.Parameters.AddWithValue(
+                "@StreamKind",
+                (int)ResourceKind.WorkItem);
+            command.Parameters.AddWithValue(
+                "@StreamIdentity",
+                created.Value!.Id.Value);
+            command.Parameters.AddWithValue(
+                "@EventType",
+                "work-item.created");
+
+            Assert.Equal(1, await command.ExecuteNonQueryAsync());
+        }
+
+        var activity = await management.GetWorkItemActivityAsync(
+            created.Value!.Id,
+            context);
+
+        Assert.True(activity.IsFailure);
+        Assert.Equal(
+            "hive.management.work-item.activity-invalid",
+            activity.Error!.Code);
+        Assert.Equal(ErrorCategory.Validation, activity.Error.Category);
+        Assert.Equal(
+            "A WorkItem activity event contains an invalid reason value.",
+            activity.Error.Message);
+    }
+
+    [Fact]
     public async Task WorkItemApproval_UsesExpectedVersionAndEnforcesState()
     {
         var database = new PersistenceTestDatabase("Hive_Test_WorkItemApproval");
