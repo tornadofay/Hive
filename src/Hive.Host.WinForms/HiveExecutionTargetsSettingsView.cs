@@ -21,6 +21,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
     private Provider? _selectedProvider;
     private ProviderAccount? _selectedAccount;
     private bool _loadingFilters;
+    private readonly CancellationTokenSource _lifetimeCts = new();
 
     public HiveExecutionTargetsSettingsView(
         IHiveManagementFacade management,
@@ -158,6 +159,9 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         if (result.IsFailure)
             throw new InvalidOperationException(result.Error!.Message);
 
+        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+            return;
+
         _providers = result.Value!;
 
         _loadingFilters = true;
@@ -172,6 +176,9 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         {
             _loadingFilters = false;
         }
+
+        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+            return;
 
         await LoadAccountsForProviderAsync(cancellationToken).ConfigureAwait(true);
     }
@@ -188,10 +195,13 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
             _selectedProvider =
                 (_providerComboBox.SelectedItem as ProviderChoice)?.Value;
 
-            await LoadAccountsForProviderAsync().ConfigureAwait(true);
+            var cancellationToken = _lifetimeCts.Token;
+            await LoadAccountsForProviderAsync(cancellationToken).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
+            when (_lifetimeCts.IsCancellationRequested || IsDisposed || Disposing)
         {
+            return;
         }
         catch (Exception exception)
         {
@@ -218,6 +228,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
                 (_accountComboBox.SelectedItem as AccountChoice)?.Value;
 
             _page.AllowAdd = _selectedAccount is not null;
+            var cancellationToken = _lifetimeCts.Token;
 
             if (!IsDisposed && !Disposing)
             {
@@ -225,7 +236,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
                 _accountComboBox.Enabled = false;
                 try
                 {
-                    await _page.RefreshAsync().ConfigureAwait(true);
+                    await _page.RefreshAsync(cancellationToken).ConfigureAwait(true);
                 }
                 finally
                 {
@@ -288,6 +299,13 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
                 if (result.IsFailure)
                     throw new InvalidOperationException(result.Error!.Message);
 
+                if (cancellationToken.IsCancellationRequested ||
+                    IsDisposed ||
+                    Disposing)
+                {
+                    return;
+                }
+
                 _accounts = result.Value!;
 
                 foreach (var account in _accounts)
@@ -305,9 +323,15 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         finally
         {
             _loadingFilters = false;
-            _providerComboBox.Enabled = true;
-            _accountComboBox.Enabled = _selectedProvider is not null;
+            if (!IsDisposed && !Disposing)
+            {
+                _providerComboBox.Enabled = true;
+                _accountComboBox.Enabled = _selectedProvider is not null;
+            }
         }
+
+        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+            return;
 
         _page.AllowAdd = _selectedAccount is not null;
 
@@ -468,6 +492,8 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
             _page.OperationFailed -= PageOperationFailed;
             _providerComboBox.SelectedIndexChanged -= ProviderComboBoxOnSelectedIndexChanged;
             _accountComboBox.SelectedIndexChanged -= AccountComboBoxOnSelectedIndexChanged;
+            _lifetimeCts.Cancel();
+            _lifetimeCts.Dispose();
         }
 
         base.Dispose(disposing);
