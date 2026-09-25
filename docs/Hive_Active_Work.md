@@ -14,6 +14,11 @@ Provider-backend-only maintenance. This revision does not advance the roadmap an
 - Re-inspect provider tests, Example Host usage, provider dependencies, and architecture boundaries for unintended regressions or drift.
 - No schema/migration, persistence redesign, orchestration, cognitive, host/UI, dependency upgrade, MAF replacement, or future roadmap implementation.
 
+### Implementation checkpoint
+
+- The MAF-facing `OpenAICompatibleChatClient` now checks the caller cancellation token before tool/model/message validation, so an already-cancelled request returns `OperationCanceledException` instead of a later validation result.
+- Added focused regression coverage for an already-cancelled chat request with an otherwise empty message sequence.
+
 ### Verification gate
 
 Execution is **not authorized in this request**.
