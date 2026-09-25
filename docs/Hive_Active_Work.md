@@ -18,6 +18,29 @@ This maintenance pass is explicitly authorized by the current user request. It s
 - Inspect the existing Provider Transport Example for public-API correctness; change it only if revised public behavior requires it.
 - No schema/migration, persistence redesign, orchestration, cognitive, host/UI, dependency upgrade, MAF replacement, or future roadmap implementation.
 
+### Implementation checkpoint
+
+Production changes completed so far on `main`:
+- `OpenAICompatibleChatRequest` now bounds message count from the actual enumerable contents of the supplied collection rather than trusting a potentially stale/misreporting `Count`, while preserving the immutable read-only request snapshot.
+- Model and message-content length limits are centralized at the provider request boundary, and the MAF-facing default model is validated against the same model limit at construction.
+- The MAF-facing text bridge now rejects non-text `AIContent` instead of silently dropping binary/tool/other content before sending a provider request.
+- Provider response metadata now falls back to the requested model when the provider omits/returns blank model metadata, and blank response IDs are normalized to null.
+- Invalid credentials that cannot form a valid Bearer authorization header now return a structured validation failure without exposing credential material.
+- The public connection tester now rejects mismatched Provider → ProviderAccount → ExecutionTarget relationships before making a network request.
+- Focused regression coverage was added for all changed contracts, including actual-enumeration message limits, non-text MAF content, default-model bounds, response-model fallback, invalid credential header input, and provider-graph mismatches.
+- The Phase 1.3 public usage documentation now records the revised provider/MAF boundary behavior.
+- No schema, migration, persistence, orchestration, MAF replacement, host/UI, dependency upgrade, or future roadmap implementation was introduced.
+
+Affected implementation/test/documentation files:
+- `src/Hive.Providers.OpenAICompatible/OpenAICompatibleProviderContracts.cs`
+- `src/Hive.Providers.OpenAICompatible/OpenAICompatibleProviderAdapter.cs`
+- `src/Hive.Providers.OpenAICompatible/OpenAICompatibleChatClient.cs`
+- `src/Hive.Providers.OpenAICompatible/OpenAICompatibleProviderConnectionTester.cs`
+- `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
+- `docs/examples/Phase13_OpenAI_Compatible_Provider_Adapter.md`
+
+The existing `Hive.Example.WinForms` provider-transport scenario remains valid and was inspected statically. No example source change is required.
+
 ### Verification gate
 
 Execution is **not authorized in this request**, so no build, test, application launch, or provider call will be performed by this pass.
