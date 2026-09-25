@@ -12,6 +12,8 @@ public enum OpenAICompatibleMessageRole
 
 public sealed record OpenAICompatibleMessage
 {
+    internal const int MaxContentLength = 64 * 1024;
+
     public OpenAICompatibleMessage(OpenAICompatibleMessageRole role, string content)
     {
         if (!Enum.IsDefined(role))
@@ -20,7 +22,7 @@ public sealed record OpenAICompatibleMessage
         if (string.IsNullOrWhiteSpace(content))
             throw new ArgumentException("Message content is required.", nameof(content));
 
-        if (content.Length > MaxMessageContentLength)
+        if (content.Length > MaxContentLength)
             throw new ArgumentException(
                 "Message content cannot exceed 64 KiB.",
                 nameof(content));
@@ -114,7 +116,6 @@ public sealed class OpenAICompatibleChatRequest
     public OpenAICompatibleStructuredOutput? StructuredOutput { get; }
 
     internal const int MaxModelLength = 512;
-    internal const int MaxMessageContentLength = 64 * 1024;
     internal const int MaxMessageCount = 256;
 }
 
