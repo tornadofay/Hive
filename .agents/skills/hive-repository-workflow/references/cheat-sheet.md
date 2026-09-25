@@ -55,6 +55,12 @@ Start Phase X.Y = explicitly advance.
 
 Finishing a slice does not authorize the next slice.
 
+## Verification-pending Active Work
+
+STOP implementation until the developer supplies the required verification results.
+
+Do not edit Active Work or Status to bypass the gate.
+
 ## Closed Active Work
 
 STOP unless the user explicitly authorizes roadmap advancement.
