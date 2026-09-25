@@ -52,7 +52,7 @@ public sealed class HiveWorkspaceLifecycleTests
             var management =
                 (IHiveManagementFacade)Create<IHiveManagementFacade, ManagementFacadeProxy>();
 
-            return (management, (ManagementFacadeProxy)management);
+            return (management, (ManagementFacadeProxy)(object)management);
         }
 
         protected override object Invoke(
