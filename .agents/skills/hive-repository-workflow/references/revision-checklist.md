@@ -27,7 +27,7 @@ Use this checklist for Revision and other re-review passes. It is a review aid, 
 - exact verification handoff preserved while pending
 
 ## Verification remediation
-If developer verification failed/was partial, confirm the failure was classified in Active Work and remediation was recorded before implementation. After remediation, return to **VERIFICATION PENDING** and rerun the affected checks.
+While Active Work is **VERIFICATION PENDING** awaiting developer results, do not begin implementation-affecting work. If developer verification failed/was partial, confirm the failure was classified in Active Work and remediation was recorded before implementation. Revision may then remediate within that recorded failure boundary. After remediation, return to **VERIFICATION PENDING** and rerun the affected checks.
 
 ## Evidence
 - preserve earlier verification attempts; do not overwrite historical evidence
