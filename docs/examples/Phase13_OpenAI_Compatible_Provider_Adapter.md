@@ -64,8 +64,12 @@ Contract:
 - network transport failure → External.
 - malformed provider response or malformed structured JSON → Serialization.
 - each chat request is limited to 256 messages.
+- model identifiers are limited to 512 characters.
 - serialized provider request bodies are limited to 4 MiB and return a structured validation failure when exceeded.
 - successful provider response bodies are limited to 4 MiB; oversized responses return a structured serialization failure.
 - message content preserves caller-supplied leading/trailing whitespace; whitespace-only content remains invalid.
+- the MAF-facing text chat bridge rejects non-text message content as Unsupported rather than silently dropping it.
+- the MAF-facing text chat bridge rejects an invalid default model at construction rather than deferring the failure to execution.
+- connection testing validates the Provider → ProviderAccount → ExecutionTarget relationship before making a provider request.
 - Compatible providers are configurations of the shared adapter; do not add provider-specific transport implementations.
 The adapter receives already-resolved credential material and does not own or dispose it. ProviderAccount/SecretReference wiring is added by later management/execution slices.
