@@ -21,12 +21,10 @@ Phase 1.14 remains inactive and no later roadmap slice is active or authorized.
 
 #### Implementation checkpoint
 
-Repository `main` at `e4d593d9125695656f4a71fa7ba27878ecbbdd32` when this maintenance pass was opened.
+Opened from repository `main` at `e4d593d9125695656f4a71fa7ba27878ecbbdd32`.
 
 Confirmed production defect under revision:
 - `SqlAgentDefinitionResourceStore.DeleteAgentDefinitionAsync` returns a retired `AgentDefinition` with `ConfiguredExecutionTargetId` cleared in memory even though the durable row retains the configured target reference. The lifecycle transition must preserve the complete persisted definition state in its returned value.
-
-#### Implementation checkpoint
 
 Implementation is complete on `main` through:
 - `9d430d805df3f1229de0ffe2252326ab4c0c54ff` — preserves `ConfiguredExecutionTargetId` when constructing the retired AgentDefinition returned by `SqlAgentDefinitionResourceStore.DeleteAgentDefinitionAsync`;
