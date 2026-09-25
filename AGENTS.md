@@ -43,7 +43,11 @@ Determine the current repository checkpoint from evidence.
 
 If Active Work contains an open slice, continue that slice exactly. Do not implement later roadmap work.
 
-If the active slice is actually closed, update Active Work to the next authorized slice before implementation.
+If the active slice is closed, do not automatically advance the roadmap. Roadmap advancement requires explicit user authorization.
+
+A maintenance, audit, polish, revision, or "again/continue" request does not authorize a later roadmap slice.
+
+Revision means re-reviewing the immediately preceding work within its inherited mode, domain, scope, and active slice. Revision may correct concrete issues within that inherited scope but must never advance the roadmap.
 
 ## 3. Scope
 
@@ -189,6 +193,7 @@ Update only the source-of-truth document whose state changed:
 - `docs/verification/` — historical records of verification actually performed.
 - `docs/ui/` — concise UI/Example API usage.
 - `docs/examples/` — public usage/reference examples.
+- `.agents/skills/` — reusable agent workflow skills; these define procedure, not current Hive state or architecture.
 - `README.md` — project-facing overview.
 
 Do not document planned behavior as implemented.
