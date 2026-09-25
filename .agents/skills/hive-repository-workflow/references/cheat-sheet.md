@@ -31,11 +31,13 @@ Explicitly advance to the next roadmap slice selected from the repository.
 
 ## Rules
 
-Continue = same work.
+Continue = same authorized work.
 
-Revision = check the work just done.
+Revision = re-audit the work just done to production depth.
 
-Maintenance = production audit/fix.
+Maintenance = complete production audit/correction within the authorized boundary.
+
+Minimal patch size is not the goal; bounded scope with complete production engineering is the goal.
 
 Architecture = design.
 
@@ -57,11 +59,14 @@ Finishing a slice does not authorize the next slice.
 
 ## Verification-pending Active Work
 
-STOP all implementation until the developer supplies the required verification results.
+STOP new implementation while waiting for developer verification.
 
-A newly worded implementation request does not silently supersede the gate.
+When developer results arrive:
+- all required verification passes -> proceed to closure;
+- in-scope failures -> record **VERIFICATION FAILED / REMEDIATION REQUIRED**, perform same-slice production remediation, then return to **VERIFICATION PENDING**;
+- out-of-scope/new-capability failures -> stop and require separate authorization.
 
-Do not edit Active Work or Status to bypass the gate.
+Do not edit Active Work or Status merely to bypass the gate; Verification may change the state legitimately when actual developer results justify the transition.
 
 ## Closed Active Work
 
@@ -74,6 +79,8 @@ After a slice closes, remove the closed slice from `docs/Hive_Active_Work.md`. K
 Roadmap advancement still requires explicit user authorization.
 
 A corrective pass that discovers a required new capability or material public-contract expansion must stop that portion and require separate authorization.
+
+Do not use a workaround merely to avoid that authorization; stop at the boundary and report the required separation.
 
 ## Revision safety
 
