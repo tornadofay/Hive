@@ -445,12 +445,14 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
     private static int TryGetBoundRowCount(DataGridView grid)
     {
-        if (grid.DataSource is not null)
+        var dataSource = grid.DataSource;
+
+        if (dataSource is not null)
         {
             try
             {
                 var manager = grid.BindingContext[
-                    grid.DataSource,
+                    dataSource,
                     grid.DataMember];
 
                 if (manager is not null)
