@@ -446,6 +446,7 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
         private readonly Guid _invoiceReadCapability = Guid.NewGuid();
         private readonly Guid _invoiceEditCapability = Guid.NewGuid();
         private readonly Guid _lineReadCapability = Guid.NewGuid();
+        private readonly Guid _lineReadRowCapability = Guid.NewGuid();
         private readonly Guid _lineAddCapability = Guid.NewGuid();
         private readonly Guid _lineEditCapability = Guid.NewGuid();
         private readonly Guid _lineDeleteCapability = Guid.NewGuid();
@@ -800,6 +801,10 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
                         _lineReadCapability,
                         HiveHostCapabilityKind.ReadDataSurface,
                         "Read invoice lines"),
+                    new HiveHostCapabilityDescriptor(
+                        _lineReadRowCapability,
+                        HiveHostCapabilityKind.ReadRow,
+                        "Read invoice line"),
                     new HiveHostCapabilityDescriptor(
                         _lineAddCapability,
                         HiveHostCapabilityKind.AddRow,
