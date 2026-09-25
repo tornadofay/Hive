@@ -34,7 +34,7 @@ Hive: Maintenance — Backend
 Hive: Maintenance — UI
 Hive: Maintenance — Host/UI
 
-Meaning: Perform a production audit and correction pass in that domain. When Active Work is open, the pass is bounded by its authorization. When Active Work is closed or absent, this explicit Maintenance request establishes a new temporary Active Work slice before implementation, scoped exactly to the request. No equivalent automatic slice creation applies to an ordinary new feature/roadmap implementation request. Such work still requires explicit roadmap authorization.
+Meaning: Perform a production audit and correction pass in that domain. When Active Work is open, the pass is bounded by its authorization. When Active Work is closed or absent, this explicit Maintenance request establishes a new temporary Active Work slice before implementation, scoped exactly to the request. The same idle-state rule applies to clearly bounded non-roadmap corrective tasks such as bug fixes and regression fixes. New capabilities/features or roadmap implementation still require explicit roadmap authorization.
 
 Maintenance is for concrete production defects and quality problems, not speculative future features.
 
@@ -82,7 +82,7 @@ Again -> same task/revision pass
 
 Polish again -> same maintenance scope
 
-An explicit new task may intentionally change mode or narrow scope. When no Active Work slice is open, an explicitly bounded new Maintenance task may establish a temporary Active Work slice; it does not advance the roadmap. Ordinary new feature/roadmap implementation requires explicit roadmap authorization.
+An explicit new task may intentionally change mode or narrow scope. When no Active Work slice is open, an explicitly bounded non-roadmap corrective task may establish a temporary Active Work slice; it does not advance the roadmap. New capabilities/features or roadmap implementation require explicit roadmap authorization.
 
 When Active Work exists, a new task may not silently broaden or replace its implementation boundary. If it conflicts with Active Work, report the conflict instead of guessing.
 
