@@ -115,6 +115,14 @@ public sealed class HiveButton : UserControl, IButtonControl
         Invalidate();
     }
 
+    protected override void OnClick(EventArgs e)
+    {
+        if (FindForm() is { } form)
+            form.DialogResult = DialogResult;
+
+        base.OnClick(e);
+    }
+
     protected override void OnEnabledChanged(EventArgs e)
     {
         base.OnEnabledChanged(e);
