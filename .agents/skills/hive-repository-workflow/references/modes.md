@@ -36,7 +36,7 @@ Hive: Maintenance — Host/UI
 
 Meaning: Perform a production audit and correction pass in that domain. When Active Work is open, the pass is bounded by its authorization. When Active Work is closed or absent, this explicit Maintenance request establishes a new temporary Active Work slice before implementation, scoped exactly to the request. The same idle-state rule applies to clearly bounded non-roadmap corrective tasks such as bug fixes and regression fixes only when the entire request restores, preserves, or corrects existing behavior. Mixed corrective + feature requests do not qualify for auto-opening unless the user explicitly separates and authorizes the scopes. New capabilities, materially expanded public behavior, or roadmap implementation still require explicit roadmap authorization.
 
-Maintenance is for concrete production defects and quality problems, not speculative future features.
+Maintenance is for concrete production defects and quality problems, not speculative future features. If a discovered fix requires a new capability or materially expands a public contract, stop that portion and require separate authorization rather than widening the maintenance slice.
 
 Maintenance never advances the roadmap.
 
