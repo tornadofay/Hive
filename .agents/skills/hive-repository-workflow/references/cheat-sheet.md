@@ -65,7 +65,7 @@ Do not edit Active Work or Status to bypass the gate.
 
 ## Closed Active Work
 
-An explicit new bounded implementation or Maintenance request may establish a temporary Active Work slice before implementation.
+An explicit new bounded Maintenance request may establish a temporary Active Work slice before implementation. New feature/roadmap implementation still requires explicit roadmap authorization.
 
 `Continue`, `Again`, and similar continuation language still stop when no prior authorized task exists.
 
