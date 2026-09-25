@@ -295,7 +295,7 @@ row index = positional address
 row identity = primary-key ID
 ```
 
-An operation that begins from a row index resolves the selected row through the host's existing row/ID behavior before a consequential operation is committed. The inspected applications normally do not change an existing primary-key ID. A DataGridView editing path may delete and reinsert a saved row internally, but the existing host mechanism already handles that case through row-index-based editing and it is not a separate Hive identity requirement.
+An operation that begins from a row index resolves the selected row through the host's existing row/ID behavior before a consequential operation is committed. The current V1 host model normally does not change an existing primary-key ID. A DataGridView editing path may delete and reinsert a saved row internally, but the existing host mechanism already handles that case through row-index-based editing and it is not a separate Hive identity requirement.
 
 The neutral contract may remain extensible to other identity shapes in future hosts, but V1 does not require a composite-key implementation or a general key-mutation protocol.
 
@@ -331,7 +331,7 @@ The neutral architecture remains extensible so a future host can introduce anoth
 
 ### 6.3 Generation semantics
 
-Generated fields exist in the inspected applications, but their implementation mechanism is not a contract requirement. Generation may come from the database, host code, computed properties, or another host-specific mechanism.
+Generated fields are supported by the V1 host contract, but their implementation mechanism is not a contract requirement. Generation may come from the database, host code, computed properties, or another host-specific mechanism.
 
 Hive therefore treats generation semantically:
 
@@ -344,7 +344,7 @@ Hive must not invent generated values merely because an add-row operation requir
 
 ### 6.4 Computed fields
 
-Computed fields also exist in the inspected applications. Their implementation mechanism is host-defined and may take many forms.
+Computed fields are supported by the V1 host contract. Their implementation mechanism is host-defined and may take many forms.
 
 The neutral contract should describe the semantic fact that a field is computed and, separately, whether the host permits direct assignment to it. Hive should not require a particular attribute, property pattern, database expression, or other implementation technique merely to recognize a computed value.
 
@@ -913,36 +913,22 @@ Phase 7 later generalizes the proven host concepts to meaningfully different hos
 
 ## 20. Implementation freeze rule
 
-The inspected production host is sufficient evidence for the following host-level semantics and they should no longer be treated as open discovery questions:
+The Phase 1.14 contract should be frozen around semantics that are explicitly part of the supported V1 host-integration boundary. Discovery of a particular host implementation is not itself a reason to add that host's private types, helpers, persistence details, or conventions to Hive.
 
-- explicit parent/root and child-collection relationships;
-- parent-identity propagation into child rows where the host operation requires it;
-- host-owned required/unique validation and pre-save veto points;
-- the host business/save boundary and post-save result/reload behavior;
+The supported contract boundary includes:
+
+- explicit parent/root and child-collection relationships when supplied by the host;
+- parent-identity propagation where the host operation requires it;
+- host-owned validation and pre-save veto points;
+- host save/result/reload behavior exposed through bounded capabilities;
 - New/Edit and related host lifecycle behavior;
-- host permission/logging settings as host behavior rather than Hive authorization;
-- child data-surface editing and add/edit/delete lifecycle patterns.
+- child data-surface editing and add/edit/delete lifecycle patterns;
+- primary-key ID row identity for the current V1 contract and positional row-index handling;
+- generated/computed field semantics;
+- bounded lookup resolution with relevant host-provided context;
+- bounded host actions such as New, Edit, Save, Delete, Reload, Move, Search, Report, Print, and Preview when supported by the host.
 
-### 20.1 Freeze evidence summary
+Concrete adapter types should be frozen only after these neutral contracts, reuse/default implementations, capability boundaries, lifecycle/disposal rules, and contract tests are defined.
 
-The detailed host inspection establishes:
-
-- bound child-data editing and synchronization;
-- distinct direct-grid, same-form-control, and dedicated-editor interaction patterns;
-- host validation and veto points around consequential row changes;
-- in-memory child-row mutation before the surrounding business save;
-- positional row selection as non-authoritative identity;
-- a concrete single-key identity in the inspected V1 surface, without making that identity shape a Hive-wide requirement.
-
-Before freezing the concrete Phase 1.14 adapter types, the remaining implementation-specific adapter questions are:
-
-- exact neutral public type shapes and bounded operation semantics;
-- adapter mapping from the established binding/value model to the neutral contracts;
-- bounded lookup request/result mapping, including dependent lookup context;
-- representation of generated/computed semantics and resulting values;
-- mapping of the established host action surface into neutral capabilities;
-- optional concurrency evidence only where the host exposes it.
-
-Do not recreate these host mechanisms in Hive when the host already exposes an authoritative contract.
-
+Do not recreate host database or business frameworks in Hive when the host already owns the authoritative behavior.
 The goal is to adapt existing host semantics into Hive's neutral boundary, not to recreate the host's data-access or business framework.
