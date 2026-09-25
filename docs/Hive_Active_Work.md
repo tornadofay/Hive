@@ -2,7 +2,7 @@
 
 ### Status
 
-**IMPLEMENTATION COMPLETE / VERIFICATION PENDING DEVELOPER.**
+**CLOSED / DEVELOPER-VERIFIED.**
 
 This explicitly authorized backend maintenance pass does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
@@ -21,14 +21,14 @@ This explicitly authorized backend maintenance pass does not advance the roadmap
 Static production review identified and corrected seven concrete backend issues:
 
 - Hive.Core.Error now rejects undefined ErrorCategory values instead of allowing invalid structured error classifications into public contracts.
-- Event persistence contracts now reject default/invalid stream identities and stream/snapshot schema versions, and EventAppendRequest rejects an explicitly supplied invalid expected version instead of silently interpreting it as version zero.
+- Event persistence contracts now reject default/invalid stream identities and non-positive snapshot/outbox/event stream versions, and EventAppendRequest rejects an explicitly supplied invalid expected version instead of silently interpreting it as version zero.
 - Hive.Coordination.AgentExecutionRequest now rejects an explicitly supplied default CorrelationId, preventing an invalid lifecycle correlation from reaching durable event construction.
 - Hive.Agents.WorkItemBinding.Create now returns structured validation failures for invalid correlation/causation identities instead of allowing ResourceProvenance construction to throw.
 - Hive.Agents.DelegationRequest.Create now rejects invalid source references through its existing Result<T> boundary.
 - Hive.Persistence.SqlDpapiSecretStore now applies the configured Hive SQL command timeout consistently to all Secret Store commands.
 - SqlDpapiSecretStore now clears the loaded encrypted secret buffer after DPAPI decryption, in addition to its existing plaintext/encryption-buffer cleanup.
 
-Regression coverage was added for invalid error categories, event persistence contract invariants, default execution correlation identities, WorkItem binding provenance identities, and invalid delegation source references.
+Regression coverage was added for invalid error categories, event persistence contract invariants (including outbox stream versions), default execution correlation identities, WorkItem binding provenance identities, and invalid delegation source references.
 
 No public API shape, persistence schema, migration, orchestration, provider transport, credential model, authorization model, dependency graph, or roadmap phase was changed.
 
@@ -45,21 +45,18 @@ Implementation commits on main:
 - 7aac45da7dda83f52320d79e95519cf41c958a67 — test: cover event persistence contract validation
 - 60133fdf7f072e5706454ca251c0e80e8f375717 — test: cover execution correlation validation
 - a9f4754875f424f2ea2becc551d63c0566cc82e3 — test: cover protocol provenance validation
+- 7e97c6bdc2b23e980e7051e941e5ffdbe60fbf18 — test: correct event version exception expectations
 
-### Verification handoff
+### Verification result
 
 Developer supplied verification on 2026-09-25:
 
-- Full test run: **257 tests, 256 passed, 1 failed, 0 skipped**, 27.6 seconds.
-- The first failure was an exact exception-type assertion in `Hive.Tests.EventInfrastructureTests.EventPersistenceContracts_RejectInvalidVersionsAndStreams`; that test was corrected to expect `ArgumentOutOfRangeException` for invalid version/schema-version cases.
-- After that correction, the same full suite still reports **257 tests, 256 passed, 1 failed, 0 skipped**, now failing at `EventInfrastructureTests.cs(221)` because `EventOutboxEntry` did not yet reject a default stream version.
-- This exposed a concrete production invariant gap: `EventOutboxEntry` validated the stream kind/identity but did not validate `streamVersion > 0`, unlike `PersistedEvent` and `EventSnapshot`.
-- Corrected `EventOutboxEntry` to reject non-positive stream versions with `ArgumentOutOfRangeException`. This is a production correction within the existing Revision 3 event-persistence contract hardening; no API/schema redesign was introduced.
-- No build result was supplied in the reported output, so build status remains unverified from this handoff.
+- Affected solution build result: **5 succeeded, 0 failed, 5 up-to-date, 0 skipped**, completed in 7.166 seconds.
+- Full `Hive.Tests` run: **257 tests, 257 passed, 0 failed, 0 skipped**, completed in 24.6 seconds.
+- The previously reported test failure was resolved by correcting the regression assertion and then hardening `EventOutboxEntry` to reject non-positive stream versions.
+- No execution, provider-network, migration, or Example Host verification was required for the final backend-only contract corrections.
 
-Verification required after the production correction:
-- rerun the full `Hive.Tests` suite;
-- provide the full solution build result separately if it was run and is to be recorded.
+Revision 3 is closed. No `Hive_Current_Status.md` change was made and Phase 1.14 remains inactive.
 
 Do not change `Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
 
