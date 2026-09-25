@@ -924,10 +924,17 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 $"Control identity '{duplicates.Key}' is not unique within the captured host.");
         }
 
-        return candidates.ToDictionary(
-            static pair => pair.Key,
-            static pair => pair.Value["control:".Length..],
+        var result = new Dictionary<Control, string>(
             ReferenceEqualityComparer.Instance);
+
+        foreach (var candidate in candidates)
+        {
+            result.Add(
+                candidate.Key,
+                candidate.Value["control:".Length..]);
+        }
+
+        return result;
     }
 
     private static string CreateDataSurfaceIdentity(
@@ -1003,46 +1010,46 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var current = stack.Pop();
+            var (control, depth, path) = stack.Pop();
 
-            if (current.Depth > _options.MaxDepth ||
+            if (depth > _options.MaxDepth ||
                 visited.Count >= _options.MaxNodes)
             {
                 continue;
             }
 
-            if (!visited.Add(current))
+            if (!visited.Add(control))
                 continue;
 
-            if (GetExplicitControlId(current) is { } explicitId &&
+            if (GetExplicitControlId(control) is { } explicitId &&
                 string.Equals(
                     explicitId,
                     key,
                     StringComparison.Ordinal))
             {
-                explicitMatch.Add(current);
+                explicitMatch.Add(control);
             }
 
             if (string.Equals(
-                    current.Name,
+                    control.Name,
                     key,
                     StringComparison.Ordinal))
             {
-                namedMatch.Add(current);
+                namedMatch.Add(control);
             }
 
-            if (current.IsDisposed || current.Disposing)
+            if (control.IsDisposed || control.Disposing)
                 continue;
 
-            if (current.Depth >= _options.MaxDepth)
+            if (depth >= _options.MaxDepth)
                 continue;
 
-            for (var index = current.Controls.Count - 1; index >= 0; index--)
+            for (var index = control.Controls.Count - 1; index >= 0; index--)
             {
                 stack.Push((
-                    current.Controls[index],
-                    current.Depth + 1,
-                    current.Path + "/" + index));
+                    control.Controls[index],
+                    depth + 1,
+                    path + "/" + index));
             }
         }
 
