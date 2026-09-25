@@ -9,6 +9,7 @@ Revision asks whether the work just performed is complete, correct, and still in
 - Respect any developer-verification gate before implementation-affecting changes
 - No future roadmap work
 - No unrelated behavior changes
+- A corrective pass does not expand into newly discovered capability/public-contract work without separate authorization
 
 ## User requirement
 
