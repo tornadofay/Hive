@@ -33,7 +33,7 @@ public sealed class HiveWorkspaceLifecycleTests
 
         workspace.Dispose();
 
-        proxy.WorkItemsRequested.TrySetResult(
+        proxy.WorkItemsCompletion.TrySetResult(
             Result<IReadOnlyList<WorkItem>>.Success(
                 Array.Empty<WorkItem>()));
 
@@ -63,11 +63,16 @@ public sealed class HiveWorkspaceLifecycleTests
 
     public class ManagementFacadeProxy : DispatchProxy
     {
-        private readonly TaskCompletionSource<Result<IReadOnlyList<WorkItem>>> _workItemsRequested =
+        private readonly TaskCompletionSource<bool> _workItemsRequested =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<Result<IReadOnlyList<WorkItem>>> _workItemsCompletion =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        public TaskCompletionSource<Result<IReadOnlyList<WorkItem>>> WorkItemsRequested =>
+        public TaskCompletionSource<bool> WorkItemsRequested =>
             _workItemsRequested;
+
+        public TaskCompletionSource<Result<IReadOnlyList<WorkItem>>> WorkItemsCompletion =>
+            _workItemsCompletion;
 
         public static (
             IHiveManagementFacade Management,
@@ -84,7 +89,10 @@ public sealed class HiveWorkspaceLifecycleTests
             object?[]? args)
         {
             if (targetMethod?.Name == nameof(IHiveManagementFacade.ListWorkItemsAsync))
-                return _workItemsRequested.Task;
+            {
+                _workItemsRequested.TrySetResult(true);
+                return _workItemsCompletion.Task;
+            }
 
             throw new NotSupportedException(
                 $"The test proxy does not implement '{targetMethod?.Name}'.");
