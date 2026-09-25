@@ -8,7 +8,9 @@
 
 **Maintenance:** complete production audit within scope; no roadmap advancement.
 
-**Architecture:** design only unless implementation is explicitly requested.
+**Architecture:** specific design question; no implementation unless explicitly requested.
+
+**Review:** repository-wide Architecture + Production Engineering analysis; read-only, report in chat, no repository changes or authorization.
 
 **Verification:** reconcile actual results. Failed/in-scope → record **VERIFICATION FAILED / REMEDIATION REQUIRED** first, remediate same slice, then **VERIFICATION PENDING**. Out-of-scope/new capability → authorization required.
 
