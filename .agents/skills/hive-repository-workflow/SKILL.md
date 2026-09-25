@@ -32,7 +32,15 @@ For a revision of this skill or its references, inspect the complete workflow-sk
 
 Continue only the authorized slice.
 
-If the open Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, **stop all implementation-affecting work at that gate**. `Continue`, `Revision`, `Maintenance`, `Again`, `Polish again`, and similar follow-ups do not override the gate. A newly worded implementation request also does not silently supersede the gate. Do not resume implementation while the verification gate remains open. Resume implementation only after the developer supplies the required verification results and the repository reflects the authorized task transition. Separately authorized governance/documentation work may proceed only within its explicitly affected documentation scope and must not weaken or remove the verification gate.
+If the open Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, **stop new implementation at that gate**. `Continue`, `Revision`, `Maintenance`, `Again`, `Polish again`, and similar follow-ups do not silently cross it. A newly worded implementation request also does not silently supersede the gate.
+
+When developer verification results are supplied, Verification mode reconciles them:
+- successful required verification -> proceed toward closure;
+- failed or partial verification revealing defects within the authorized slice -> record **VERIFICATION FAILED / REMEDIATION REQUIRED** in Active Work and authorize same-slice remediation;
+- after remediation -> return Active Work to **VERIFICATION PENDING** with updated verification targets;
+- discovered work outside the authorized slice or requiring new capability/public-contract expansion -> stop that portion and require separate authorization.
+
+The verification gate is a pause between implementation and evidence, not a permanent dead-lock after a failed verification attempt. Separately authorized governance/documentation work may proceed only within its explicitly affected documentation scope and must not weaken or remove the verification gate.
 
 Never modify a source-of-truth document merely to manufacture authorization, remove a verification gate, mark work verified, close Active Work, or activate roadmap work. Closing an authorized slice requires the normal evidence-backed state transition and cleanup of the current Active Work document; cleanup means removing the closed slice from current-state storage, not deleting historical verification evidence. The sole exception relevant here is establishing a new temporary Active Work slice directly from an explicit new bounded non-roadmap corrective task when no slice is open. The entire task must restore, preserve, or correct existing documented/contracted/implemented behavior rather than add a capability or materially expand a public contract. Compare the request with the roadmap and current architecture before classifying it as corrective. A mixed corrective + feature request does not qualify for auto-opening; separate scopes only after explicit user authorization. Any temporary slice must reflect the authorized corrective scope, be recorded in Active Work before implementation begins, and must not activate roadmap work. State changes otherwise require their own authorized task and repository evidence.
 
@@ -110,7 +118,7 @@ Read `references/modes.md` for the command cheat sheet.
 
 ## 5. Production quality lens
 
-Once the authorization and verification gates permit implementation, every production implementation, Revision, or Maintenance pass must actively evaluate the quality areas that apply to the changed boundary. Do not treat this as a generic checklist pass; inspect the concrete code, contracts, lifecycle, and surrounding ownership.
+Once the authorization and verification gates permit implementation or same-slice remediation, every production implementation, Revision, Maintenance, polish, optimization, or verification-remediation pass must actively evaluate the quality areas that apply to the changed boundary. Do not optimize for minimal patch size. Inspect the concrete code, contracts, lifecycle, and surrounding ownership, and correct root causes to the depth required for a reliable production result.
 
 ### Always applicable
 
@@ -156,7 +164,7 @@ When the authorization and verification gates permit implementation-affecting wo
    - If the authorized task spans multiple domains, load each affected domain section and no unrelated sections.
    Do not load unrelated detailed checklists merely because they exist.
 4. Evaluate the actual implementation and surrounding code against the main quality lens and only the applicable detailed checklist(s). Do not treat either as a box-counting exercise.
-5. Correct every concrete issue within the authorized scope, while preserving existing behavior unless the active contract requires a change.
+5. Correct every concrete issue within the authorized scope, including root-cause issues and necessary supporting changes, while preserving existing behavior unless the active contract requires a change. Do not substitute a symptom-level workaround when a production-safe correction is required within scope.
 6. Re-review the corrected result against the same quality criteria and acceptance criteria before handoff.
 
 A short command such as `Hive: Continue`, `Hive: Revision`, or `Hive: Maintenance` does not reduce these quality requirements. The quality lens and applicable detailed reference remain mandatory whenever implementation-affecting work is authorized.
@@ -189,7 +197,9 @@ Read `references/revision-checklist.md` for the detailed checklist.
 
 Maintenance is broader than Revision but remains scope-bound.
 
-Inspect first, identify concrete production problems, correct them, add focused regression coverage when required, inspect affected examples when externally meaningful, and perform a final review.
+Treat Maintenance as a **complete production audit/correction pass within the authorized boundary**, not as a minimal patch exercise. Inspect first, identify concrete production problems and root causes, correct them to the depth required for a reliable result, add focused regression coverage when required, inspect affected examples when externally meaningful, and perform a final review.
+
+The goal is not to maximize the number of changes. The goal is to leave the authorized boundary in a production-quality state.
 
 If a discovered corrective problem requires a new capability or materially expands a public contract, stop that portion rather than widening the maintenance slice; require separate authorization before implementing it.
 
@@ -220,13 +230,22 @@ Record only what evidence supports.
 
 Do not convert inspection/reasoning into testing.
 
+If required verification fails or is partial:
+1. identify whether each failure is within the authorized slice;
+2. if so, transition Active Work to **VERIFICATION FAILED / REMEDIATION REQUIRED**;
+3. perform same-slice remediation to production depth;
+4. return Active Work to **VERIFICATION PENDING** and update the exact verification handoff;
+5. require the affected developer verification again.
+
+If a failure requires new capability, material public-contract expansion, or out-of-scope work, stop that portion and require separate authorization.
+
 Do not close Active Work or activate the next slice without the required real verification and authorization. When closing a slice, archive historical evidence as required and leave `docs/Hive_Active_Work.md` containing only the current no-slice state unless another slice is already authorized.
 
 ## 10. Execution boundary
 
 Follow the execution rules in `AGENTS.md`.
 
-Execution is never implied merely by Continue, Revision, Maintenance, Architecture, or Verification.
+Execution is never implied merely by Continue, Revision, Maintenance, Architecture, or Verification. Verification failure remediation is an exception only when the Verification workflow has explicitly recorded same-slice remediation as authorized.
 
 When execution is not authorized, do not run builds, tests, launches, migrations, provider calls, or other execution-based verification.
 
