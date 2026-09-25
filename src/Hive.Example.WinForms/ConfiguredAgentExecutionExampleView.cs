@@ -135,6 +135,7 @@ internal sealed class ConfiguredAgentExecutionExampleView : UserControl
             Execution: {execution.Execution.Id}; status={execution.Execution.Status}
             Target used: {execution.TargetId}
             Response: {execution.ResponseText}
+            Provider response ID: {execution.ProviderResponseId ?? "(none)"}
             Provider credentials: not displayed
             Service graph: current host graph
             LocalDevelopment database: not used by this example
