@@ -123,9 +123,11 @@ public sealed class HiveHostIntegrationContractTests
         var composition = new HiveBusinessOperationComposition(
             "SaveInvoice",
             implementation,
-            correlation);
+            correlation,
+            "ReferenceAdapter");
 
         Assert.Equal(correlation, composition.CorrelationId);
+        Assert.Equal("ReferenceAdapter", composition.AdapterId);
         Assert.Equal(stageCount, composition.Stages.Count);
         Assert.Equal(implementation, composition.Implementation);
     }
@@ -201,7 +203,7 @@ public sealed class HiveHostIntegrationContractTests
 
         Assert.True(result.IsSuccess, result.Error?.Message);
         Assert.Single(result.Value!);
-        Assert.Equal(10, adapter.LastLookupCategoryId);
+        Assert.Equal(10L, adapter.LastLookupCategoryId);
     }
 
     [Fact]
@@ -376,6 +378,7 @@ public sealed class HiveHostIntegrationContractTests
                             Guid.NewGuid(),
                             DateTimeOffset.UtcNow,
                             correlation,
+                            "ReferenceAdapter",
                             accessContext),
                         new[]
                         {

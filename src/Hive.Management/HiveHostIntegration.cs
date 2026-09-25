@@ -89,7 +89,13 @@ public sealed class HiveHostIntegrationService : IHiveHostIntegrationService
             new HiveHostCapabilityRequest(
                 request.CapabilityId,
                 capabilityKind,
-                request.CorrelationId),
+                request.CorrelationId,
+                adapter.AdapterId,
+                controlId: request.ControlId,
+                surfaceId: request.SurfaceId,
+                rowIdentity: request.RowIdentity,
+                fieldName: request.FieldName,
+                action: request.Action),
             accessContext);
 
         if (authorization.IsFailure)
@@ -121,7 +127,8 @@ public sealed class HiveHostIntegrationService : IHiveHostIntegrationService
             new HiveHostCapabilityRequest(
                 request.CapabilityId,
                 HiveHostCapabilityKind.ResolveLookup,
-                CorrelationId.New()),
+                CorrelationId.New(),
+                adapter.AdapterId),
             accessContext);
 
         if (authorization.IsFailure)
@@ -183,7 +190,8 @@ public sealed class HiveHostIntegrationService : IHiveHostIntegrationService
             new HiveHostCapabilityRequest(
                 descriptor.CapabilityId,
                 HiveHostCapabilityKind.BusinessOperation,
-                correlationId),
+                correlationId,
+                adapter.AdapterId),
             accessContext);
 
         if (authorization.IsFailure)
@@ -193,7 +201,8 @@ public sealed class HiveHostIntegrationService : IHiveHostIntegrationService
             new HiveBusinessOperationComposition(
                 descriptor.OperationType,
                 descriptor.Implementation,
-                correlationId));
+                correlationId,
+                adapter.AdapterId));
     }
 
     private static Error? ValidateAccessContext(

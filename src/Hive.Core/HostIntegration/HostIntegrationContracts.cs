@@ -177,6 +177,7 @@ public sealed record HiveHostProvenance
         Guid captureId,
         DateTimeOffset capturedAtUtc,
         CorrelationId correlationId,
+        string adapterId,
         ResourceAccessContext accessContext)
     {
         if (registrationId == Guid.Empty)
@@ -188,12 +189,14 @@ public sealed record HiveHostProvenance
         if (correlationId == default)
             throw new ArgumentException("Correlation identity is required.", nameof(correlationId));
 
+        ArgumentException.ThrowIfNullOrWhiteSpace(adapterId);
         ArgumentNullException.ThrowIfNull(accessContext);
 
         RegistrationId = registrationId;
         CaptureId = captureId;
         CapturedAtUtc = capturedAtUtc.ToUniversalTime();
         CorrelationId = correlationId;
+        AdapterId = adapterId.Trim();
         AccessContext = accessContext;
     }
 
@@ -205,6 +208,8 @@ public sealed record HiveHostProvenance
 
     public CorrelationId CorrelationId { get; }
 
+    public string AdapterId { get; }
+
     public ResourceAccessContext AccessContext { get; }
 }
 
@@ -214,7 +219,8 @@ public sealed record HiveHostCapabilityDescriptor
         Guid id,
         HiveHostCapabilityKind kind,
         string name,
-        bool supported = true)
+        bool supported = true,
+        HiveHostActionKind? action = null)
     {
         if (id == Guid.Empty)
             throw new ArgumentException("Capability identity is required.", nameof(id));
@@ -224,10 +230,19 @@ public sealed record HiveHostCapabilityDescriptor
 
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
+        if (action is not null &&
+            kind != HiveHostCapabilityKind.InvokeAction)
+        {
+            throw new ArgumentException(
+                "An action can only be supplied for InvokeAction capabilities.",
+                nameof(action));
+        }
+
         Id = id;
         Kind = kind;
         Name = name.Trim();
         Supported = supported;
+        Action = action;
     }
 
     public Guid Id { get; }
@@ -237,6 +252,8 @@ public sealed record HiveHostCapabilityDescriptor
     public string Name { get; }
 
     public bool Supported { get; }
+
+    public HiveHostActionKind? Action { get; }
 }
 
 public sealed record HiveHostFieldDescriptor
@@ -668,7 +685,13 @@ public sealed record HiveHostCapabilityRequest
         Guid capabilityId,
         HiveHostCapabilityKind capabilityKind,
         CorrelationId correlationId,
-        ResourceReference? source = null)
+        string adapterId,
+        ResourceReference? source = null,
+        string? controlId = null,
+        string? surfaceId = null,
+        HiveHostRowIdentity? rowIdentity = null,
+        string? fieldName = null,
+        HiveHostActionKind? action = null)
     {
         if (capabilityId == Guid.Empty)
             throw new ArgumentException("Capability identity is required.", nameof(capabilityId));
@@ -679,10 +702,26 @@ public sealed record HiveHostCapabilityRequest
         if (correlationId == default)
             throw new ArgumentException("Correlation identity is required.", nameof(correlationId));
 
+        ArgumentException.ThrowIfNullOrWhiteSpace(adapterId);
+
+        if (action is not null &&
+            capabilityKind != HiveHostCapabilityKind.InvokeAction)
+        {
+            throw new ArgumentException(
+                "An action can only be supplied for InvokeAction capabilities.",
+                nameof(action));
+        }
+
         CapabilityId = capabilityId;
         CapabilityKind = capabilityKind;
         CorrelationId = correlationId;
+        AdapterId = adapterId.Trim();
         Source = source;
+        ControlId = Clean(controlId);
+        SurfaceId = Clean(surfaceId);
+        RowIdentity = rowIdentity;
+        FieldName = Clean(fieldName);
+        Action = action;
     }
 
     public Guid CapabilityId { get; }
@@ -691,7 +730,22 @@ public sealed record HiveHostCapabilityRequest
 
     public CorrelationId CorrelationId { get; }
 
+    public string AdapterId { get; }
+
     public ResourceReference? Source { get; }
+
+    public string? ControlId { get; }
+
+    public string? SurfaceId { get; }
+
+    public HiveHostRowIdentity? RowIdentity { get; }
+
+    public string? FieldName { get; }
+
+    public HiveHostActionKind? Action { get; }
+
+    private static string? Clean(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 
 public sealed record HiveHostInteractionRequest
@@ -807,7 +861,8 @@ public sealed record HiveBusinessOperationComposition
     public HiveBusinessOperationComposition(
         string operationType,
         HiveBusinessOperationImplementation implementation,
-        CorrelationId correlationId)
+        CorrelationId correlationId,
+        string adapterId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operationType);
 
@@ -817,9 +872,12 @@ public sealed record HiveBusinessOperationComposition
         if (correlationId == default)
             throw new ArgumentException("Correlation identity is required.", nameof(correlationId));
 
+        ArgumentException.ThrowIfNullOrWhiteSpace(adapterId);
+
         OperationType = operationType.Trim();
         Implementation = implementation;
         CorrelationId = correlationId;
+        AdapterId = adapterId.Trim();
         Stages = implementation switch
         {
             HiveBusinessOperationImplementation.Api =>
@@ -841,6 +899,8 @@ public sealed record HiveBusinessOperationComposition
     public HiveBusinessOperationImplementation Implementation { get; }
 
     public CorrelationId CorrelationId { get; }
+
+    public string AdapterId { get; }
 
     public IReadOnlyList<HiveBusinessOperationImplementation> Stages { get; }
 }

@@ -126,6 +126,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     snapshot.Value.Provenance.CaptureId,
                     snapshot.Value.Provenance.CapturedAtUtc,
                     CorrelationId.New(),
+                    AdapterId,
                     accessContext),
                 controls,
                 dataSurfaces,
@@ -202,6 +203,43 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 Error.Validation(
                     "hive.host.winforms.ui-thread-required",
                     "WinForms host interaction must run on the UI thread."));
+        }
+
+        var capabilitySuffix = request.Kind switch
+        {
+            HiveHostInteractionKind.ReadControl => ":read",
+            HiveHostInteractionKind.SetControlValue => ":set",
+            _ => null
+        };
+
+        if (capabilitySuffix is not null)
+        {
+            var expectedKey = request.ControlId + capabilitySuffix;
+            if (!_capabilityIds.TryGetValue(expectedKey, out var expectedCapabilityId))
+            {
+                return Result<HiveHostInteractionResult>.Failure(
+                    new Error(
+                        "hive.host.winforms.capability-not-found",
+                        ErrorCategory.NotFound,
+                        "The requested WinForms capability is not part of the registered host context."));
+            }
+
+            if (expectedCapabilityId != request.CapabilityId)
+            {
+                return Result<HiveHostInteractionResult>.Failure(
+                    new Error(
+                        "hive.host.winforms.capability-mismatch",
+                        ErrorCategory.Forbidden,
+                        "The requested capability is not authorized for the supplied WinForms target."));
+            }
+        }
+
+        if (request.ExpectedHostVersion is not null)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Unsupported(
+                    "hive.host.winforms.host-version-unsupported",
+                    "The reusable standard-control adapter does not provide host-version concurrency evidence."));
         }
 
         try
