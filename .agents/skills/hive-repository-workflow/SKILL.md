@@ -24,7 +24,7 @@ For revisions of this skill, inspect the complete workflow-skill directory plus 
 
 Active Work defines the current implementation boundary.
 
-If Active Work is verification-pending, stop implementation-affecting work. Continue, Revision, Maintenance, Again, and Polish do not bypass the gate. Review is read-only, so the gate does not prevent repository-wide inspection.
+If Active Work is `VERIFICATION PENDING` before actual developer results arrive, stop implementation-affecting work. Continue, Revision, Maintenance, Again, and Polish do not bypass that waiting gate. Once a real failure is recorded as `VERIFICATION FAILED / REMEDIATION REQUIRED`, same-slice Revision/remediation may proceed within the recorded failure boundary; after remediation, return Active Work to `VERIFICATION PENDING` for developer re-verification. Review is read-only, so the waiting gate does not prevent repository-wide inspection.
 
 With no active slice, an explicit non-roadmap corrective request may establish a temporary implementation slice only when it clearly restores/preserves/corrects existing behavior without a new capability or material public-contract expansion. Record that slice before implementation. **Revision is an explicit corrective request in this situation when it follows a preceding implementation task, and may establish the temporary slice needed to re-audit that work and correct concrete findings discovered during Revision.** Workflow-documentation Revision stays within the affected governance documents and does not create an implementation slice. New capabilities and roadmap work require explicit authorization.
 
