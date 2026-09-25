@@ -19,6 +19,7 @@ public sealed class HiveSettingsView : UserControl
     private readonly Label _description;
     private readonly Font _titleFont;
 
+    private HiveSettingsOverviewView? _overviewView;
     private HiveProviderConfigurationView? _providerConfigurationView;
     private HiveProviderAccountsSettingsView? _providerAccountsView;
     private HiveExecutionTargetsSettingsView? _executionTargetsView;
@@ -95,6 +96,12 @@ public sealed class HiveSettingsView : UserControl
 
         var navigationRoot = new TreeNode("Hive Settings");
 
+        var overviewNode = CreatePageNode(
+            "Overview",
+            "Summary of the Hive Settings domains and the recommended configuration flow.",
+            SettingsPageKey.Overview);
+        navigationRoot.Nodes.Add(overviewNode);
+
         var providersNode = new TreeNode("Providers");
         providersNode.Nodes.Add(
             CreatePageNode(
@@ -144,7 +151,11 @@ public sealed class HiveSettingsView : UserControl
         _themeManager.Apply(this);
 
         _navigation.AfterSelect += NavigationAfterSelect;
-        _navigation.SelectedNode = persistenceNode;
+        _navigation.SelectedNode = overviewNode;
+        ShowSelectedPage(new SettingsPage(
+            SettingsPageKey.Overview,
+            "Overview",
+            "Summary of the Hive Settings domains and the recommended configuration flow."));
         Load += async (_, _) => await InitializeAsync();
     }
 
@@ -155,6 +166,8 @@ public sealed class HiveSettingsView : UserControl
             return;
 
         _lifetimeCts ??= new CancellationTokenSource();
+
+        _overviewView ??= new HiveSettingsOverviewView();
 
         _providerConfigurationView ??= new HiveProviderConfigurationView(
             _management,
@@ -187,12 +200,11 @@ public sealed class HiveSettingsView : UserControl
             _applicationName,
             _output);
 
-        // Persistence configuration is file/bootstrap-backed and must remain
-        // usable even when the currently configured Hive SQL database is
-        // unavailable. Database-backed resource pages initialize lazily when
-        // the user navigates to them.
+        // The Overview page is static and must be immediately usable without
+        // touching the configured Hive database. Other pages initialize lazily
+        // when the user navigates to them.
         await InitializePageAsync(
-            SettingsPageKey.Persistence,
+            SettingsPageKey.Overview,
             cancellationToken).ConfigureAwait(true);
     }
 
@@ -219,6 +231,9 @@ public sealed class HiveSettingsView : UserControl
         {
             switch (key)
             {
+                case SettingsPageKey.Overview:
+                    break;
+
                 case SettingsPageKey.ProviderConfiguration:
                     await _providerConfigurationView!
                         .InitializeAsync(operationCts.Token)
@@ -297,6 +312,7 @@ public sealed class HiveSettingsView : UserControl
             lifetimeCts?.Cancel();
             lifetimeCts?.Dispose();
 
+            _overviewView?.Dispose();
             _providerConfigurationView?.Dispose();
             _providerAccountsView?.Dispose();
             _executionTargetsView?.Dispose();
@@ -387,6 +403,9 @@ public sealed class HiveSettingsView : UserControl
 
         switch (key)
         {
+            case SettingsPageKey.Overview:
+                break;
+
             case SettingsPageKey.ProviderConfiguration:
                 await _providerConfigurationView!
                     .InitializeAsync(cancellationToken)
@@ -427,6 +446,8 @@ public sealed class HiveSettingsView : UserControl
     {
         Control control = page.Key switch
         {
+            SettingsPageKey.Overview => _overviewView ??= new HiveSettingsOverviewView(),
+
             SettingsPageKey.ProviderConfiguration => _providerConfigurationView ??=
                 new HiveProviderConfigurationView(
                     _management,
@@ -495,6 +516,7 @@ public sealed class HiveSettingsView : UserControl
 
     private enum SettingsPageKey
     {
+        Overview,
         ProviderConfiguration,
         ProviderAccounts,
         ExecutionTargets,
