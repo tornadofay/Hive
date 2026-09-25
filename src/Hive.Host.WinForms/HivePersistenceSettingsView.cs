@@ -702,7 +702,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         var previous = Interlocked.Exchange(
             ref _operationCts,
             operationCts);
-        previous?.Dispose();
+        previous?.Cancel();
 
         if (IsDisposed || Disposing)
         {
