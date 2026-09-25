@@ -6,7 +6,7 @@ Last updated: 2026-09-25
 
 ### Status
 
-**OPEN / implementation and verification pending.**
+**OPEN / implementation complete, verification pending.**
 
 Phase 1.14 and all later roadmap slices remain inactive and unauthorized. This maintenance pass does not advance the roadmap.
 
@@ -18,19 +18,52 @@ Phase 1.14 and all later roadmap slices remain inactive and unauthorized. This m
 - Update only the focused provider tests required to protect changed contracts.
 - No schema/migration, persistence redesign, orchestration, cognitive, host/UI, dependency upgrade, or future roadmap implementation.
 
+### Implementation checkpoint
+
+Concrete production corrections completed on `main`:
+- `OpenAICompatibleMessage` now preserves caller-supplied leading/trailing whitespace instead of silently trimming prompt content.
+- `OpenAICompatibleChatRequest` rejects requests containing more than 256 messages.
+- The MAF-facing `OpenAICompatibleChatClient` enforces the same message-count bound during lazy `IEnumerable<ChatMessage>` enumeration and checks cancellation between messages.
+- Provider request serialization now writes UTF-8 bytes directly, avoiding the previous string-to-UTF-8 re-encoding allocation.
+- Serialized request bodies are capped at 4 MiB before network submission.
+- Successful response bodies are capped at 4 MiB using bounded streaming reads, including responses without a declared Content-Length.
+- Response decoding uses strict UTF-8 so invalid response bytes are classified as serialization failures rather than silently replaced.
+- Streaming response enumeration checks caller cancellation before yielding each update.
+- Focused regression coverage protects whitespace preservation, message-count limits, lazy-enumeration cancellation, request-size rejection, declared-length oversized responses, and oversized responses without Content-Length.
+- Existing credential ownership remains unchanged: the adapter receives `SecretMaterial` and does not own or dispose it.
+- No schema, migration, persistence, provider-transport split, orchestration, MAF, host/UI, dependency, or public API redesign was introduced.
+
+Code/test commits:
+- `50761c8c3d7b08e9d04b422de1eef321140987ac` — request contract bounds and whitespace preservation.
+- `7487238a24ef3e4e8c19234d246899c308902835` — bounded UTF-8 request/response provider transport.
+- `3e7f8269531d0c7f13fcf60f7294e55b6e992825` — response-read flow cleanup.
+- `33a58aa8d02ae35dfe69e8ca96b09f15181b4f88` — MAF-facing message-count guard.
+- `80aa3719e9af3853955a610facb83eb1964dac7d` — cancellation propagation through chat conversion and streaming enumeration.
+- `5cd6b49de07742c52524fd60d896296bb8ee2dad` — focused provider regression coverage.
+
+Documentation commit:
+- `09e03de080aa186cff4dea9d330dd71fb3a5ae30` — records the provider safeguards in the Phase 1.3 usage documentation.
+
+Affected implementation/test files:
+- `src/Hive.Providers.OpenAICompatible/OpenAICompatibleProviderContracts.cs`
+- `src/Hive.Providers.OpenAICompatible/OpenAICompatibleProviderAdapter.cs`
+- `src/Hive.Providers.OpenAICompatible/OpenAICompatibleChatClient.cs`
+- `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
+- `docs/examples/Phase13_OpenAI_Compatible_Provider_Adapter.md`
+
+The existing Example Host scenario remains valid and uses only supported public APIs; no example source change is required.
+
 ### Verification gate
 
-Execution has not been authorized for this maintenance pass. No build, test, application launch, migration, provider call, or performance measurement is to be performed by the assistant.
+**NOT VERIFIED.** Execution was not authorized during this maintenance pass, so no build, test, application launch, migration, provider call, or performance measurement was performed by the assistant.
 
-Planned verification after implementation:
-- focused: `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`;
-- affected project build: `src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`;
-- broader required suite: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`;
-- Example Host: `Providers / Provider Transport / OpenAI-compatible Provider Adapter` — Hive.Example.WinForms, only if the changed public behavior requires manual confirmation.
+Exact verification to run:
+- Focused: `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
+- Build: `src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`
+- Broader: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`
+- Manual Example Host only if needed after execution: `Providers / Provider Transport / OpenAI-compatible Provider Adapter` — Hive.Example.WinForms.
 
-### Implementation state
-
-Audit is in progress. No provider code changes have been committed yet.
+The maintenance slice must remain open until actual verification results are recorded here. `docs/Hive_Current_Status.md` remains unchanged because no roadmap phase/status changed.
 
 ## Closed maintenance pass — Hive.Persistence Production Audit Revision
 
