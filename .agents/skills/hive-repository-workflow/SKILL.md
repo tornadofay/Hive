@@ -34,7 +34,7 @@ Continue only the authorized slice.
 
 If the open Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, **stop all implementation-affecting work at that gate**. `Continue`, `Revision`, `Maintenance`, `Again`, `Polish again`, and similar follow-ups do not override the gate. A newly worded implementation request also does not silently supersede the gate. Do not resume implementation while the verification gate remains open. Resume implementation only after the developer supplies the required verification results and the repository reflects the authorized task transition. Separately authorized governance/documentation work may proceed only within its explicitly affected documentation scope and must not weaken or remove the verification gate.
 
-Never modify a source-of-truth document merely to manufacture authorization, remove a verification gate, mark work verified, close Active Work, or activate roadmap work. The sole exception relevant here is establishing a new temporary Active Work slice that is directly authorized by an explicit new bounded Maintenance request when no slice is open. Any such slice must reflect the user's requested scope and must not activate roadmap work. State changes otherwise require their own authorized task and repository evidence.
+Never modify a source-of-truth document merely to manufacture authorization, remove a verification gate, mark work verified, close Active Work, or activate roadmap work. The sole exception relevant here is establishing a new temporary Active Work slice directly from an explicit new bounded implementation task when no slice is open. Any such slice must reflect the user's requested scope and must not activate roadmap work. State changes otherwise require their own authorized task and repository evidence.
 
 Do not:
 - start a later roadmap slice;
@@ -54,9 +54,9 @@ It must not:
 
 ### Closed or absent Active Work
 
-An explicitly requested new bounded Maintenance task may establish a temporary Active Work slice before implementation. Record the new slice's scope from the user request itself, keep it narrowly bounded, and do not include later roadmap work. This is task authorization, not roadmap advancement.
+An explicitly requested new bounded implementation task may establish a temporary Active Work slice before implementation. Record the new slice's scope from the user request itself, keep it narrowly bounded, and do not include later roadmap work. This is task authorization, not roadmap advancement.
 
-Examples include `Hive: Maintenance — Backend`, `Hive: Maintenance — UI`, and `Hive: Maintenance — Host/UI`. Generic `Continue`, `Again`, or similar continuation language does not create a new task or slice when no prior authorized task exists.
+Examples include `Hive: Maintenance — Backend`, `Hive: Maintenance — UI`, `Hive: Maintenance — Host/UI`, or an explicitly scoped implementation request. Generic `Continue`, `Again`, or similar continuation language does not create a new task or slice when no prior authorized task exists. `Revision` does not invent a task when no prior task context exists.
 
 The roadmap defines order, not permission.
 
@@ -77,7 +77,7 @@ At the start of a task, establish:
 
 When an Active Work slice exists, it is the maximum authorized implementation boundary for all implementation-affecting work, including Continue, Revision, and Maintenance. The user request selects or narrows the task within that boundary; it does not broaden, replace, or advance Active Work.
 
-When no Active Work slice exists, an explicitly requested bounded Maintenance task is authorized to establish a new temporary Active Work slice before implementation. The user request defines that new maintenance scope; the agent must record it as a bounded temporary slice and must not turn it into roadmap work.
+When no Active Work slice exists, an explicitly requested bounded implementation task is authorized to establish a new temporary Active Work slice before implementation. The user request defines that new scope; the agent must record it as a bounded temporary slice and must not turn it into roadmap work.
 
 For an explicitly authorized governance/documentation task, the named affected governance/documentation files are the change boundary, subject to the governance exception in the authorization gate.
 
