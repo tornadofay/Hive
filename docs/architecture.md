@@ -319,6 +319,7 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 80. V1 Review correctness and CognitiveAgent outcome evaluation are distinct semantics: Review verifies the correctness of a resulting host/business state for a WorkItem, while cognitive outcome evaluation determines whether a CognitiveAgent's objective or success criteria were satisfied for learning and strategy purposes. Neither substitutes for the other.
 81. Experience, OutcomeEvaluation, Mistake, Success, Partial, Unknown, Regret, Risk, Fear, Confidence, Dream, and LearningCandidate are first-class cognitive concepts with explicit semantic boundaries. They may be implemented by shared infrastructure or separate components/subsystems when their lifecycle, persistence, processing, or replacement boundary warrants it; architecture must not prohibit separation merely for structural uniformity.
 82. Human review/correction may become cognitive evidence when explicitly authorized and attributed, but Review state itself remains owned by the V1 host/work-operation boundary and must not be silently reclassified as a cognitive outcome.
+83. V1 host integration is contract-first: Hive.Core owns the neutral host-integration contracts, host applications implement those contracts against their own types, and Hive should provide reusable discovery/adaptation/governance infrastructure so host-specific integration code remains as small as practical. Private host implementations never become Hive public dependencies.
 
 ---
 
