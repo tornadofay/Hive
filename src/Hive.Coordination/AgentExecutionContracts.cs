@@ -33,6 +33,14 @@ public sealed class AgentExecutionRequest
                 nameof(userMessage));
         }
 
+        if (correlationId is { } suppliedCorrelationId &&
+            suppliedCorrelationId == default)
+        {
+            throw new ArgumentException(
+                "CorrelationId must be non-empty when supplied.",
+                nameof(correlationId));
+        }
+
         UserMessage = normalizedMessage;
         ApiKey = apiKey;
         CorrelationId = correlationId;
