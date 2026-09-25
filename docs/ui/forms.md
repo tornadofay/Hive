@@ -59,7 +59,7 @@ UI controls should consume application/Management APIs; do not put SQL or provid
 
 ## Settings form
 
-`HiveSettingsForm` is the application-window shell for the **global Hive package configuration center**. It is the single Settings entry point for durable Hive-owned package configuration; individual domains appear as pages inside it as their contracts become available:
+`HiveSettingsForm` is the application-window shell for the **global Hive package configuration center**. It is the single Settings entry point for durable Hive-owned package configuration. The Settings view opens on a dedicated **Overview** page by default; the Overview is informational and does not initialize or require the configured Hive database. Individual configuration domains appear as selectable pages inside the same Settings center as their contracts become available:
 
 ```csharp
 var form = new HiveSettingsForm(
