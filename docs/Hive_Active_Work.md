@@ -1,3 +1,48 @@
+## Temporary maintenance pass — Hive WinForms/UI Production Audit Revision 5
+
+### Status
+
+**OPEN / VERIFICATION PENDING DEVELOPER.**
+
+This explicitly authorized maintenance pass does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
+
+### Scope
+
+- Full production-grade static revision, audit, and polish of the affected current implementation across `Hive.Host.WinForms.UI`, `Hive.Host.WinForms`, and `Hive.Example.WinForms`.
+- Read and enforce the existing Phase 1.13 WinForms host-context, UI foundation, lifecycle, public-contract, and Example Host boundaries.
+- Correct only concrete production defects found in the final current implementation.
+- Add focused regression coverage only where a discovered defect protects an actual public/UI contract.
+- No future host-integration capabilities, no Phase 1.14, no speculative abstractions, dependency changes, schema changes, unrelated cleanup, or architectural expansion.
+- No builds, tests, launches, migrations, provider calls, or other execution-based verification by the assistant unless separately authorized.
+
+### Initial concrete finding
+
+Static review identified a public WinForms contract defect in `HiveButton`:
+
+- `HiveButton` implements `IButtonControl` and exposes `DialogResult`, while standard WinForms `Button.OnClick` propagates its `DialogResult` to the containing Form.
+- `HiveButton` currently raises its click without that propagation, so `HiveButton` does not fully honor the standard dialog-result behavior promised by the existing UI architecture.
+- The affected architecture document explicitly defines `HiveButton` as retaining standard `DialogResult` semantics.
+- The existing `HiveButtonTests` cover assignment/containment but do not protect the actual click-to-form `DialogResult` behavior.
+
+Planned correction within this maintenance slice:
+- Preserve the existing public API and input behavior.
+- Make the existing click path apply the configured `DialogResult` to the containing Form before raising the normal Click event, matching the standard WinForms contract.
+- Add one focused regression test for the containing Form result.
+
+### Verification target
+
+Because execution is not authorized, the required developer verification after implementation is:
+
+- focused `HiveButtonTests`;
+- full `Hive.Tests`;
+- relevant/full build for affected WinForms projects and test project;
+- manual dialog/default-button behavior only if the developer chooses to exercise it.
+
+All execution results remain **UNVERIFIED** until actually supplied.
+
+Last updated: 2026-09-25
+
+
 ## Temporary maintenance pass — Hive Backend Cross-Project Production Audit Revision 4
 
 ### Status
