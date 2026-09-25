@@ -40,7 +40,7 @@ If Active Work establishes a verification gate, stop implementation-affecting wo
 
 Active Work is the maximum implementation boundary.
 
-- Continue, Revision, Again, and Polish inherit the current task/scope. Maintenance does the same when Active Work is open; with no active slice, an explicit bounded corrective Maintenance request may create a temporary slice under the rule below. Review is read-only and does not modify repository state or create authorization. None advances the roadmap.
+- Continue, Revision, Again, and Polish inherit the current task/scope. Maintenance does the same when Active Work is open; with no active slice, an explicit bounded corrective Maintenance request may create a temporary slice under the rule below. Review is read-only, may inspect the whole repository beyond the current Active Work boundary, and does not modify repository state or create authorization. None advances the roadmap.
 - A new roadmap slice requires explicit user authorization such as `Hive: Start Phase X.Y`.
 - Do not silently widen scope, replace the current slice, or implement future work.
 - If Active Work is closed/absent, an explicitly requested bounded non-roadmap corrective task may create a temporary Active Work slice before implementation, but only when repository evidence confirms it restores, preserves, or corrects existing behavior without adding capability or materially expanding a public contract.
