@@ -52,7 +52,7 @@ var result = await adapter.CompleteChatAsync(
 \`\`\`
 
 Contract:
-- Base URI must be absolute HTTP/HTTPS and must not contain credentials.
+- Base URI must be absolute HTTP/HTTPS and must not contain credentials; a configured query is preserved when the adapter appends `/chat/completions`.
 - API key is supplied as \`SecretMaterial\`; the adapter does not persist or own it.
 - The adapter sends \`POST <base-uri>/chat/completions\`.
 - Successful responses expose assistant text.
