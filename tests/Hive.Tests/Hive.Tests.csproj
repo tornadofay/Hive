@@ -25,5 +25,6 @@
     <ProjectReference Include="../../src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj" />
     <ProjectReference Include="../../src/Hive.Management/Hive.Management.csproj" />
     <ProjectReference Include="../../src/Hive.Host.WinForms/Hive.Host.WinForms.csproj" />
+    <ProjectReference Include="../../src/Hive.Host.WinForms.UI/Hive.Host.WinForms.UI.csproj" />
   </ItemGroup>
 </Project>
