@@ -6,9 +6,9 @@
 
 Authorization: explicit user request — **Hive: Start Phase 1.14**.
 
-Mode: verification remediation completed; **re-verification pending**.
+Mode: verification remediation required; **re-verification pending**.
 
-Implementation checkpoint after the developer-reported verification failures were remediated: `e1c029b69c4f08653484db2b2b7c85f3ddbc4467`.
+Implementation checkpoint before this remediation: `89b3a994cde0fbfdd3d12f89a5592b1a53660276`.
 
 ### Objective
 
@@ -45,11 +45,15 @@ Establish the Hive-owned neutral V1 host-integration contract family and reusabl
 
 ### Verification remediation state
 
+**VERIFICATION FAILED / REMEDIATION REQUIRED.** The post-remediation developer run reported one remaining in-scope defect in `HiveWinFormsHostIntegrationTests.Capture_AdaptsStandardWinFormsControlsAndBoundDataSurface`: the default WinForms data-surface descriptor exposed zero fields when the bound `DataGridView` had not yet materialized generated columns, causing `grid.Fields[0]` to fail with `ArgumentOutOfRangeException`. Remediation is limited to robust field metadata discovery from the bound WinForms data source while preserving column metadata when available.
+
+Previous in-scope nullable compiler diagnostics were also remediated within this same slice. Historical verification and remediation details are archived under `docs/verification/phase-1/`.
+
 The first developer verification attempt exposed an in-scope Phase 1.14 defect and the subsequent nullable compiler diagnostics were remediated within the same authorized slice. Historical verification and remediation details are archived under `docs/verification/phase-1/`.
 
 ### Verification gate
 
-**PENDING — re-verification required after remediation.**
+**VERIFICATION FAILED / REMEDIATION REQUIRED — re-verification required after remediation.**
 
 Required developer verification:
 
