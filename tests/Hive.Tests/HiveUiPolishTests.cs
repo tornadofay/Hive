@@ -155,6 +155,35 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
+    public void HiveCrudPage_AlignsStatusFilterWhenToolbarBecomesCompact()
+    {
+        using var page = new HiveCrudPage<TestItem>();
+
+        page.StatusSelector = item => item.Name;
+        page.Size = new Size(420, 400);
+        page.CreateControl();
+        page.PerformLayout();
+
+        var statusLabel = page.ActionBarPanel
+            .Controls
+            .OfType<TableLayoutPanel>()
+            .SelectMany(static layout => layout.Controls.Cast<Control>())
+            .OfType<FlowLayoutPanel>()
+            .SelectMany(static flow => flow.Controls.Cast<Control>())
+            .OfType<Label>()
+            .FirstOrDefault(label =>
+                string.Equals(label.Text, "Status", StringComparison.Ordinal));
+
+        Assert.NotNull(statusLabel);
+        Assert.Equal(0, statusLabel!.Margin.Left);
+
+        page.Size = new Size(1200, 400);
+        page.PerformLayout();
+
+        Assert.Equal(16, statusLabel.Margin.Left);
+    }
+
+    [Fact]
     public void HiveCrudPage_UsesNonAutosizingSearchAndCenteredStatusFilter()
     {
         using var page = new HiveCrudPage<TestItem>();
