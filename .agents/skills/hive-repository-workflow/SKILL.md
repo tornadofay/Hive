@@ -133,7 +133,23 @@ Also inspect network/database/provider I/O, timeouts/budgets, configuration/effe
 
 Also inspect visual hierarchy/readability, spacing/alignment/density, theme consistency, selected/hover/pressed/focused/disabled/read-only states, keyboard/focus behavior, validation/loading/empty/success/error states, resizing/anchoring/docking, minimum sizes/overflow, DPI/scaling, responsiveness, thread affinity, dialog ownership, host composition/lifetime, UI-thread constraints, bounded discovery/interaction authority, and Example Host use of public contracts.
 
-Use `references/revision-checklist.md` for the detailed Revision review and `references/maintenance-checklists.md` for deeper domain-specific Maintenance review. These references expand the lens; they do not change authorization or scope.
+### Required quality workflow
+
+When the authorization and verification gates permit implementation-affecting work:
+
+1. Identify the changed boundary and its responsibility owner.
+2. Read the applicable detailed reference checklist **before** making implementation changes or concluding the audit:
+   - Revision → `references/revision-checklist.md`;
+   - Maintenance → `references/maintenance-checklists.md`;
+   - UI/Host/UI work → use the corresponding sections of the maintenance checklist;
+   - Backend/integration work → use the corresponding backend sections.
+3. Evaluate the actual implementation and surrounding code against the main quality lens and the applicable detailed checklist. Do not treat either as a box-counting exercise.
+4. Correct every concrete issue within the authorized scope, while preserving existing behavior unless the active contract requires a change.
+5. Re-review the corrected result against the same quality criteria before handoff.
+
+A short command such as `Hive: Continue`, `Hive: Revision`, or `Hive: Maintenance` does not reduce these quality requirements. The quality lens and applicable detailed reference remain mandatory whenever implementation-affecting work is authorized.
+
+These references expand the quality lens; they do not change authorization, scope, or roadmap permission.
 
 ## 6. Revision
 
