@@ -1,3 +1,34 @@
+## Temporary maintenance pass — Hive Backend Cross-Project Production Audit Revision 4
+
+### Status
+
+**OPEN / VERIFICATION PENDING DEVELOPER.**
+
+This explicitly authorized backend maintenance pass does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
+
+### Scope
+
+- Re-audit the current final backend implementation across Hive.Core, Hive.Agents, Hive.Coordination, Hive.Management, Hive.Persistence, Hive.Providers.OpenAICompatible, and Hive.Tools.
+- Inspect current tests, examples, project references, persistence/provider boundaries, authorization/scope enforcement, concurrency/cancellation/lifecycle behavior, serialization, secret isolation, and resource ownership.
+- Correct only concrete production defects found in the current implementation.
+- Add focused regression coverage only where a discovered defect protects a real contract.
+- Inspect affected Example Host behavior only when a revised public/external behavior requires it.
+- No future roadmap implementation, especially no Phase 1.14; no speculative abstractions, dependency upgrades, schema redesign, cognitive work, host-integration expansion, or unrelated cleanup.
+- Execution, builds, tests, launches, migrations, and provider calls remain unverified unless separately authorized by the developer.
+
+### Current audit finding
+
+Static review identified a concrete WorkItem attachment filename validation gap: the existing “leaf filename” contract rejects path separators but accepts the special path components "." and "..". These values are not valid attachment filenames for a leaf-file boundary and must be rejected before persistence or downstream file handling.
+
+Planned correction:
+- reject "." and ".." in both existing image-submission and attachment-metadata filename validation;
+- add focused regression coverage for both public constructors;
+- continue the final backend static audit after the correction and record any additional concrete defects without widening scope.
+
+Do not change `Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
+
+Last updated: 2026-09-25
+
 ## Temporary maintenance pass — Hive Backend Cross-Project Production Audit Revision 3
 
 ### Status
