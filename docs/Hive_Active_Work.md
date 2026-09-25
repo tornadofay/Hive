@@ -2,28 +2,50 @@
 
 ### Status
 
-**OPEN / static audit in progress; execution not authorized.**
+**CLOSED / developer-verified.**
 
 Provider-backend-only maintenance. This revision does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
 ### Scope
 
 - Re-audit the final revision-3 OpenAI-compatible provider implementation.
-- Correct the concrete malformed-response parsing gap where a non-object first `choices` item can escape the provider’s structured `Serialization` failure contract.
+- Correct the concrete malformed-response parsing gap where a non-object first `choices` item could escape the provider’s structured `Serialization` failure contract.
 - Add focused regression coverage for the corrected response-shape boundary.
 - Re-inspect provider tests, Example Host usage, provider dependencies, and architecture boundaries for unintended regressions or drift.
 - No schema/migration, persistence redesign, orchestration, cognitive, host/UI, dependency upgrade, MAF replacement, or future roadmap implementation.
 
-### Verification gate
+### Implementation checkpoint
 
-Execution is **not authorized in this request**.
+Production changes completed on `main`:
 
-Required verification after implementation:
-- Full solution build: the normal developer full solution build.
-- Full `Hive.Tests`: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`.
-- Configured Example Host/provider execution only when the revised public behavior requires manual verification; the existing provider-transport Example is otherwise statically re-inspected.
+- `OpenAICompatibleProviderAdapter.ParseResponse` now requires the first `choices` element to be a JSON object before accessing its `message` property.
+- Malformed non-object first choices now return the existing structured `hive.provider.openai-compatible.malformed-response` / `Serialization` failure instead of leaking a JSON API runtime exception.
+- Added focused regression coverage for the malformed non-object choices response.
+- No other provider contract, URI behavior, credential handling, MAF boundary, dependency, persistence, orchestration, or roadmap behavior changed.
 
-No verification has been performed by this revision yet. The slice remains open until actual developer verification is supplied.
+### Verification result
+
+Developer-supplied verification on 2026-09-25:
+
+- Full solution build: **completed successfully** — 5 succeeded, 0 failed, 5 up-to-date, 0 skipped.
+- Full `Hive.Tests` run: **249 tests passed, 0 failed, 0 skipped** in **28.6 seconds**.
+- Runtime: .NET **10.0.1** with xUnit.net VSTest Adapter **3.1.5+1b188a7b0a**.
+- Configured Example Host agent execution: **Succeeded**.
+- AgentDefinition key: `allam-2-7b`.
+- Provider: `Groq`.
+- ProviderAccount: `Groqtest`.
+- ExecutionTarget/model key: `openai/gpt-oss-20b`.
+- Model: `openai/gpt-oss-20b`.
+- Execution status: **Succeeded**.
+- Response: `Hello from the configured Hive Agent!`.
+- Provider credentials: not displayed.
+- Service graph: current host graph.
+- LocalDevelopment database: not used by this example.
+
+Verification archive:
+[`hive-openai-compatible-provider-audit-final-revision-4-2026-09-25.md`](verification/maintenance/hive-openai-compatible-provider-audit-final-revision-4-2026-09-25.md)
+
+Revision 4 is **developer-verified and closed**. `docs/Hive_Current_Status.md` remains unchanged because no roadmap phase/status changed.
 
 Last updated: 2026-09-25
 
