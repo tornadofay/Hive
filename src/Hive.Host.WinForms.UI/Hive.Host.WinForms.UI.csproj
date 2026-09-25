@@ -7,4 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Hive.Core/Hive.Core.csproj" />
+  </ItemGroup>
 </Project>
