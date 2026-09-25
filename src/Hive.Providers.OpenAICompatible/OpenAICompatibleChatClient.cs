@@ -150,10 +150,21 @@ public sealed class OpenAICompatibleChatClient : IChatClient
                         $"Message role '{message.Role.Value}' is not supported by the OpenAI-compatible adapter."))
             };
 
-            converted.Add(
-                new OpenAICompatibleMessage(
-                    role,
-                    message.Text));
+            try
+            {
+                converted.Add(
+                    new OpenAICompatibleMessage(
+                        role,
+                        message.Text));
+            }
+            catch (ArgumentException)
+            {
+                throw new OpenAICompatibleProviderException(
+                    new Hive.Core.Error(
+                        "hive.provider.openai-compatible.message-invalid",
+                        Hive.Core.ErrorCategory.Validation,
+                        "The chat message content is empty or exceeds the provider message limit."));
+            }
         }
 
         if (converted.Count == 0)
