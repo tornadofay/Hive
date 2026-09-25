@@ -150,6 +150,23 @@ public sealed record WorkItemBinding
                     "Only active non-terminal WorkItems can be bound to runtime work."));
         }
 
+        if (correlationId == default)
+        {
+            return Result<WorkItemBinding>.Failure(
+                Error.Validation(
+                    "hive.agent.workitem.correlation-required",
+                    "A WorkItem binding correlation identity is required."));
+        }
+
+        if (causationId is { } suppliedCausationId &&
+            suppliedCausationId == default)
+        {
+            return Result<WorkItemBinding>.Failure(
+                Error.Validation(
+                    "hive.agent.workitem.causation-invalid",
+                    "A WorkItem binding causation identity must be non-empty when supplied."));
+        }
+
         var provenance = new ResourceProvenance(
             accessContext.PrincipalId.Value,
             boundAtUtc,
