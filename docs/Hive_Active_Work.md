@@ -9,36 +9,105 @@ This explicitly authorized maintenance pass does not advance the roadmap and doe
 ### Scope
 
 - Full production-grade static revision, audit, and polish of the affected current implementation across `Hive.Host.WinForms.UI`, `Hive.Host.WinForms`, and `Hive.Example.WinForms`.
-- Read and enforce the existing Phase 1.13 WinForms host-context, UI foundation, lifecycle, public-contract, and Example Host boundaries.
+- Read and enforce the existing Phase 1.13 WinForms host-context, UI foundation, lifecycle, public-contract, concurrency, and Example Host boundaries.
 - Correct only concrete production defects found in the final current implementation.
 - Add focused regression coverage only where a discovered defect protects an actual public/UI contract.
-- No future host-integration capabilities, no Phase 1.14, no speculative abstractions, dependency changes, schema changes, unrelated cleanup, or architectural expansion.
-- No builds, tests, launches, migrations, provider calls, or other execution-based verification by the assistant unless separately authorized.
+- Inspect existing Example Host consumers and settings surfaces for externally meaningful effects without implementing any later host-integration capability.
+- No future roadmap work, especially no Phase 1.14; no speculative abstractions, dependency changes, schema changes, unrelated cleanup, or architectural expansion.
+- No builds, tests, launches, migrations, provider calls, or other execution-based verification by the assistant.
 
-### Initial concrete finding
+### Implementation checkpoint
 
-Static review identified a public WinForms contract defect in `HiveButton`:
+Static production review identified and corrected the following concrete defects:
 
-- `HiveButton` implements `IButtonControl` and exposes `DialogResult`, while standard WinForms `Button.OnClick` propagates its `DialogResult` to the containing Form.
-- `HiveButton` currently raises its click without that propagation, so `HiveButton` does not fully honor the standard dialog-result behavior promised by the existing UI architecture.
-- The affected architecture document explicitly defines `HiveButton` as retaining standard `DialogResult` semantics.
-- The existing `HiveButtonTests` cover assignment/containment but do not protect the actual click-to-form `DialogResult` behavior.
+1. **HiveButton DialogResult semantics**
+   - `HiveButton` implements `IButtonControl` and exposes `DialogResult`, but its click path did not propagate the configured result to the containing Form as the standard WinForms `Button` contract does.
+   - `DialogResult` also accepted undefined enum values.
+   - The implementation now propagates the result from `OnClick` and rejects undefined values with `InvalidEnumArgumentException`.
+   - Added focused tests for click-to-Form dialog result propagation and invalid enum rejection.
+   - Existing public API shape remains unchanged.
 
-Planned correction within this maintenance slice:
-- Preserve the existing public API and input behavior.
-- Make the existing click path apply the configured `DialogResult` to the containing Form before raising the normal Click event, matching the standard WinForms contract.
-- Add one focused regression test for the containing Form result.
+2. **Example Host startup/disposal lifecycle**
+   - `HiveExampleHostForm.OnLoad` could resume after the form was disposed, publish a service graph into a disposed host, continue refreshing controls, or surface cancellation as a normal startup error.
+   - Added a form-lifetime `CancellationTokenSource`, passed its token through host initialization and configured-resource refresh, added post-await disposal/cancellation guards, and suppresses expected disposal cancellation.
+   - The lifetime source is cancelled and disposed with the form.
 
-### Verification target
+3. **Disposed async Example Test Surface completion**
+   - A running `HiveExampleTestSurface.RunAsync` operation could complete after its view was disposed and still update status controls or report an error through a disposed UI surface.
+   - Completion, cancellation, and failure paths now skip UI mutation after disposal while still disposing the operation-owned cancellation source deterministically.
 
-Because execution is not authorized, the required developer verification after implementation is:
+4. **Disposed async CRUD completion**
+   - `HiveCrudPage` could finish a load after disposal and continue rebuilding filters/list UI.
+   - `LoadItemsCoreAsync` now stops before post-load UI mutation when cancellation/disposal is observed, and `ExecuteAsync` avoids final UI updates after disposal.
 
+5. **Execution Target filter concurrency**
+   - `HiveExecutionTargetsSettingsView` kept Provider/Account selectors interactive while their dependent account/list loads were in progress. Because `HiveCrudPage.RefreshAsync` intentionally returns while busy, this could leave an older selection/result active after a newer user selection.
+   - Provider/Account selectors are now disabled for the duration of dependent account loading and list refresh, then restored from current selection state.
+   - Existing CRUD busy semantics were preserved rather than changing the shared control contract.
+
+6. **Provider Account filter concurrency**
+   - `HiveProviderAccountsSettingsView` could accept a provider change while the current account list refresh was still running, while `HiveCrudPage.RefreshAsync` refuses a second busy refresh.
+   - Provider selection is now locked during initial and subsequent account-list refreshes and restored after completion unless the view is disposing.
+
+No Example Host scenario code, database schema/migration, persistence contract, orchestration, provider transport, credential model, authorization model, dependency graph, or roadmap phase was changed. Existing examples were inspected and continue to use public APIs and valid dialog/CRUD boundaries.
+
+Implementation commits on main:
+- 6bc9b6cb40660b9ab3d2e75134387bb0f5bb9a9a — docs: open WinForms/UI audit revision 5
+- 7c16a0702323b137bb3e718b911e8216f53dee86 — fix: honor HiveButton dialog result semantics
+- ad9bc722fe07be6fb1aa4844bf76b7a4f73f01a8 — test: cover HiveButton dialog result behavior
+- f018688608f71f5167ba6d5946d7fcfdffdf7b49 — fix: cancel Example Host startup on disposal
+- 5f942cdb509e95ce496d8a1940eb8e6733d14256 — fix: suppress Example Host disposal cancellation errors
+- a0207aae448c39c8fc2b63e15562e364e416e358 — fix: guard Example Host refresh after awaited loads
+- 22276494ff1a799a29d32b5ec820f46a8972b70b — fix: guard example completion after disposal
+- 4c5da3104fb1512521f577dc5f02f2c8a52d0b26 — fix: guard CRUD completion after disposal
+- 7ccdbf7f64a7ff74879c86c54c808ba3e3b0bd4e — fix: validate HiveButton dialog result values
+- 93998c77c94aa36f88ed41f8796cb7a1328f4218 — test: validate HiveButton dialog result values
+- 585dae9f56bc5020a62a3877e689eb539699635e — fix: lock execution target filters during account load
+- 30b8c680d713b1c1cf1522355ce54727f0343c09 — fix: prevent filter changes during execution target refresh
+- 57de47f1441dd6fefdb44359ce56d9806c8e1d78 — fix: prevent provider changes during account refresh
+- 160b3acf9f2e17ff5a7790485b6b820a65184bb3 — fix: lock provider selector during initial account refresh
+- c317877c4e79e3ccbf990e9d171123c93fc1ff78 — fix: stop CRUD refresh before post-load UI mutation
+
+### Final static review
+
+The final implementation was re-inspected after all code changes for:
+
+- WinForms public contracts, including `IButtonControl`, `DialogResult`, validation, focus/click behavior, ownership, and disposal.
+- Async event handlers, lifetime cancellation, post-await disposal guards, concurrent refresh behavior, stale UI-result prevention, and deterministic cancellation-source disposal.
+- Host Settings ownership of Provider/Account/Execution Target selection versus shared `HiveCrudPage` busy semantics.
+- Native/custom UI theme integration, control resource disposal, output/error reporting, accessibility metadata, responsive layout, and project dependency direction.
+- Example Host use of public Hive APIs, active-view replacement/disposal, Settings graph replacement, and Phase 1.13 Host Context boundaries.
+- No future host action capability, business-write capability, or Phase 1.14 implementation.
+- Final diff from the Revision 4 closed baseline is limited to:
+  - `docs/Hive_Active_Work.md`
+  - `src/Hive.Host.WinForms.UI/Controls/HiveButton.cs`
+  - `src/Hive.Host.WinForms.UI/Controls/HiveExampleTestSurface.cs`
+  - `src/Hive.Host.WinForms.UI/Controls/HiveCrudPage.cs`
+  - `src/Hive.Host.WinForms/HiveExecutionTargetsSettingsView.cs`
+  - `src/Hive.Host.WinForms/HiveProviderAccountsSettingsView.cs`
+  - `src/Hive.Example.WinForms/HiveExampleHostForm.cs`
+  - `tests/Hive.Tests/HiveButtonTests.cs`
+- `docs/Hive_Current_Status.md` was not changed. Phase 1.14 remains inactive.
+
+### Verification
+
+**UNVERIFIED / DEVELOPER VERIFICATION PENDING.**
+
+- No build was run by the assistant.
+- No focused or full test run was run by the assistant.
+- No Example Host launch/manual UI verification was run by the assistant.
+- No migration or provider/network execution was run by the assistant.
+
+Required developer verification:
 - focused `HiveButtonTests`;
 - full `Hive.Tests`;
-- relevant/full build for affected WinForms projects and test project;
-- manual dialog/default-button behavior only if the developer chooses to exercise it.
+- affected WinForms project/test build;
+- manual Example Host startup/close-during-startup and Settings filter interaction verification;
+- manual dialog `DialogResult` verification where appropriate.
 
-All execution results remain **UNVERIFIED** until actually supplied.
+### Completion
+
+Keep this maintenance pass open until the developer supplies actual verification results. Do not change `Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
 
 Last updated: 2026-09-25
 
