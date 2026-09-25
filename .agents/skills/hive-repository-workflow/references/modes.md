@@ -20,7 +20,7 @@ Meaning: Re-review the work just performed in the same task context. Do not infe
 
 Check whether anything was missed, incorrectly implemented, inconsistently designed, inadequately protected, accidentally changed, or left incomplete.
 
-Fix concrete problems within the same scope.
+Fix concrete problems within the same scope and to production depth. Revision is not a minimal-diff exercise; correct root causes and necessary supporting changes when they are within scope.
 
 A second or third Revision is still the same scope.
 
@@ -36,7 +36,7 @@ Hive: Maintenance — Host/UI
 
 Meaning: Perform a production audit and correction pass in that domain. When Active Work is open, the pass is bounded by its authorization. When Active Work is closed or absent, this explicit Maintenance request establishes a new temporary Active Work slice before implementation, scoped exactly to the request. The same idle-state rule applies to clearly bounded non-roadmap corrective tasks such as bug fixes and regression fixes only when the entire request restores, preserves, or corrects existing behavior. Mixed corrective + feature requests do not qualify for auto-opening unless the user explicitly separates and authorizes the scopes. New capabilities, materially expanded public behavior, or roadmap implementation still require explicit roadmap authorization.
 
-Maintenance is for concrete production defects and quality problems, not speculative future features. If a discovered fix requires a new capability or materially expands a public contract, stop that portion and require separate authorization rather than widening the maintenance slice.
+Maintenance is for concrete production defects and quality problems, not speculative future features. Audit the authorized boundary comprehensively enough to leave it production-safe; do not stop at the first symptom-level fix. If a discovered fix requires a new capability or materially expands a public contract, stop that portion and require separate authorization rather than widening the maintenance slice.
 
 Maintenance never advances the roadmap.
 
@@ -59,6 +59,8 @@ Follow with the actual developer build/test/manual results.
 Meaning: Reconcile those results against the repository and update only the records justified by evidence.
 
 Do not invent missing verification.
+
+If required verification fails or is partial, classify each failure against the current Active Work scope. For in-scope defects, transition Active Work to **VERIFICATION FAILED / REMEDIATION REQUIRED**, perform same-slice remediation to production depth, then return Active Work to **VERIFICATION PENDING** with updated verification targets. For out-of-scope or new-capability work, stop that portion and require separate authorization.
 
 When verification closes the current slice, move historical verification detail to `docs/verification/` when applicable and leave `docs/Hive_Active_Work.md` current-only: remove the closed slice and retain only the minimal no-active-slice state unless another slice is explicitly authorized.
 
