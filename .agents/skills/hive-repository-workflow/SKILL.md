@@ -140,13 +140,14 @@ When the authorization and verification gates permit implementation-affecting wo
 1. Capture the user request as explicit acceptance criteria, scope boundaries, exclusions, and verification requirements before implementation. Do not invent requirements or omit stated ones.
 2. Identify the changed boundary and its responsibility owner.
 3. Read the applicable detailed reference checklist **before** making implementation changes or concluding the audit. Load only the reference material relevant to the actual task and boundary:
-   - Continue/implementation → load the detailed checklist for the actual boundary; do not load unrelated domain checklists;
-   - Revision → read `references/revision-checklist.md` plus the applicable domain section(s) of `references/maintenance-checklists.md`;
+   - Continue/implementation → read `references/revision-checklist.md` and only the domain sections of `references/maintenance-checklists.md` matching the authorized affected projects/boundary;
+   - Revision → read `references/revision-checklist.md` plus only the applicable domain section(s) of `references/maintenance-checklists.md`;
    - Maintenance — Backend → use the Backend section of `references/maintenance-checklists.md`;
    - Maintenance — UI → use the WinForms/UI section of `references/maintenance-checklists.md`;
    - Maintenance — Host/UI → use the Host/UI section of `references/maintenance-checklists.md`;
    - Backend/integration work → use the corresponding Backend/Boundaries sections;
    - UI/Host/UI work → use the corresponding WinForms/UI and/or Host/UI sections.
+   - If the authorized task spans multiple domains, load each affected domain section and no unrelated sections.
    Do not load unrelated detailed checklists merely because they exist.
 4. Evaluate the actual implementation and surrounding code against the main quality lens and only the applicable detailed checklist(s). Do not treat either as a box-counting exercise.
 5. Correct every concrete issue within the authorized scope, while preserving existing behavior unless the active contract requires a change.
