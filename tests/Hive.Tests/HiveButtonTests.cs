@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Controls;
 using Xunit;
@@ -26,6 +27,15 @@ public sealed class HiveButtonTests
         control.DialogResult = DialogResult.OK;
 
         Assert.Equal(DialogResult.OK, control.DialogResult);
+    }
+
+    [Fact]
+    public void DialogResult_RejectsUndefinedEnumValues()
+    {
+        using var button = new HiveButton();
+
+        Assert.Throws<InvalidEnumArgumentException>(
+            () => button.DialogResult = (DialogResult)999);
     }
 
     [Fact]
