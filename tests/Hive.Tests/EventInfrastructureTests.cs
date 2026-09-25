@@ -167,6 +167,76 @@ public sealed class EventInfrastructureTests
     }
 
     [Fact]
+    public void EventPersistenceContracts_RejectInvalidVersionsAndStreams()
+    {
+        var stream = new ResourceReference(
+            ResourceKind.WorkItem,
+            Guid.NewGuid());
+        var serializer = new JsonEventSerializer();
+        var envelope = serializer.CreateEnvelope(
+            EventId.New(),
+            EventTestData.Timestamp,
+            new EventType("workitem.created"),
+            new EventPayloadVersion(1),
+            CorrelationId.New(),
+            null,
+            new { status = "Created" });
+
+        using var document = JsonDocument.Parse("""{"status":"Created"}""");
+
+        Assert.Throws<ArgumentException>(
+            () => new EventSnapshot(
+                default,
+                ResourceVersion.Initial,
+                new EventPayloadVersion(1),
+                document.RootElement));
+
+        Assert.Throws<ArgumentException>(
+            () => new EventSnapshot(
+                stream,
+                default,
+                new EventPayloadVersion(1),
+                document.RootElement));
+
+        Assert.Throws<ArgumentException>(
+            () => new EventSnapshot(
+                stream,
+                ResourceVersion.Initial,
+                default,
+                document.RootElement));
+
+        Assert.Throws<ArgumentException>(
+            () => new PersistedEvent(
+                default,
+                ResourceVersion.Initial,
+                envelope));
+
+        Assert.Throws<ArgumentException>(
+            () => new PersistedEvent(
+                stream,
+                default,
+                envelope));
+
+        Assert.Throws<ArgumentException>(
+            () => new EventOutboxEntry(
+                default,
+                ResourceVersion.Initial,
+                envelope));
+
+        Assert.Throws<ArgumentException>(
+            () => new EventOutboxEntry(
+                stream,
+                default,
+                envelope));
+
+        Assert.Throws<ArgumentException>(
+            () => new EventAppendRequest(
+                stream,
+                (ResourceVersion?)default(ResourceVersion),
+                envelope));
+    }
+
+    [Fact]
     public void Serializer_RoundTripsEnvelopeWithCommonValues()
     {
         var serializer = new JsonEventSerializer();
