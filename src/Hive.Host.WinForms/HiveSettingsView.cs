@@ -255,6 +255,9 @@ public sealed class HiveSettingsView : UserControl
                         $"Unknown Settings page '{key}'.");
             }
 
+            if (operationCts.IsCancellationRequested || IsDisposed || Disposing)
+                return;
+
             _initializedPages.Add(key);
         }
         catch (OperationCanceledException)
