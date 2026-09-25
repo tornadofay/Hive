@@ -59,6 +59,7 @@ Follow with the actual developer build/test/manual results.
 Meaning: Reconcile those results against the repository and update only the records justified by evidence.
 
 Do not invent missing verification.
+Preserve verification history: later verification or remediation must not erase the evidence of an earlier attempt; use a new dated record or clearly separated subsequent evidence.
 
 If required verification fails or is partial, classify each failure against the current Active Work scope. For in-scope defects, first record **VERIFICATION FAILED / REMEDIATION REQUIRED** in Active Work, then perform same-slice remediation to production depth. After remediation, return Active Work to **VERIFICATION PENDING** with updated verification targets. For out-of-scope or new-capability work, stop that portion and require separate authorization.
 
