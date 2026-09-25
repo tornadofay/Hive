@@ -35,8 +35,13 @@ Static UI/UX audit identified and corrected these concrete production issues:
    - Providers now remains collapsed on initial Settings display; selecting a Provider child still expands it normally through standard TreeView interaction.
    - No navigation capability or Settings page behavior changed.
 
+4. **Navigation destination consistency**
+   - `HiveNavigationTree` allowed category/group nodes to become selected even though they are not navigation destinations. Settings and the Example Host could therefore show a highlighted group while the previously displayed leaf page/example remained active.
+   - Group nodes are now non-selectable at the shared navigation-control boundary, keeping selection synchronized with the displayed destination.
+   - Added focused regression coverage for the group-selection guard.
+
 Regression coverage added/updated:
-- `HiveUiPolishTests` — compact CRUD status-filter alignment.
+- `HiveUiPolishTests` — compact CRUD status-filter alignment and navigation group-selection guard.
 - `HiveWorkspaceLifecycleTests` — explicit Workspace activity empty/selection state.
 
 No Example Host source change was required; the maintained public UI remains exercised through the existing Example Host scenarios.
