@@ -320,4 +320,4 @@ https://learn.microsoft.com/en-us/agent-framework/workflows/
 
 Hive is released under the [MIT License](LICENSE), allowing free use, modification, distribution, and commercial use subject to the license terms.
 
-Copyright (c) 2026 tornadofay.
+Copyright (c) 2026 Hani.
