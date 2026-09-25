@@ -2,7 +2,7 @@
 
 ### Status
 
-**OPEN.**
+**IMPLEMENTATION COMPLETE / VERIFICATION PENDING DEVELOPER.**
 
 This explicitly authorized backend maintenance pass does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
@@ -16,85 +16,51 @@ This explicitly authorized backend maintenance pass does not advance the roadmap
 - No future roadmap implementation, especially no Phase 1.14; no speculative abstractions, dependency changes, schema redesign, cognitive work, host-integration expansion, or unrelated cleanup.
 - No execution-based verification by this maintenance pass unless separately authorized.
 
-### Verification gate
-
-Implementation is incomplete until developer-supplied verification is reconciled. Do not change `Hive_Current_Status.md` or activate a roadmap slice from this maintenance pass alone.
-
-Last updated: 2026-09-25
-
-## Temporary maintenance pass — Hive Backend Cross-Project Production Audit Revision 2
-
-### Status
-
-**CLOSED / developer-verified.**
-
-This explicitly authorized backend maintenance pass does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
-
-### Scope
-
-- Full production-grade audit and polish of the affected backend implementation across the currently relevant Hive.Core, Hive.Agents, Hive.Coordination, Hive.Management, Hive.Persistence, Hive.Providers.OpenAICompatible, and Hive.Tools boundaries.
-- Inspect concrete implementation, tests, public contracts, project references, persistence behavior, security/authorization, concurrency/lifecycle, cancellation, error classification, disposal/resource ownership, and MAF/provider boundaries.
-- Correct only concrete defects found in the current implementation and add focused regression coverage where the public/behavioral contract warrants it.
-- Re-inspect the externally meaningful configured-agent execution example when revised public behavior is observable.
-- Preserve existing contracts unless the current implementation is incorrect, unsafe, or architecturally inconsistent.
-- No Phase 1.14 implementation, host-integration contract expansion, schema redesign, speculative abstraction/dependency work, cognitive roadmap work, or unrelated cleanup.
-
 ### Implementation checkpoint
 
-Static and final-diff review identified and corrected four concrete backend defects:
+Static production review identified and corrected seven concrete backend issues:
 
-- Hive.Coordination.AgentExecutionService no longer includes raw unexpected exception text in its public Internal Error message.
-- AgentExecutionService now preserves the MAF ChatResponse.ResponseId in AgentExecutionResult.ProviderResponseId and in the persisted succeeded-event payload.
-- Hive.Agents.QuestionTransport now removes a completed waiter from its waiter dictionary when the Question reaches Answered, Cancelled, or TimedOut, preventing unbounded retention of completed TaskCompletionSource instances.
-- Hive.Core.JsonEventSerializer no longer copies raw JsonException.Message text into public EventSerializationException.Error.Message values for malformed envelopes or invalid typed payloads.
+- Hive.Core.Error now rejects undefined ErrorCategory values instead of allowing invalid structured error classifications into public contracts.
+- Event persistence contracts now reject default/invalid stream identities and stream/snapshot schema versions, and EventAppendRequest rejects an explicitly supplied invalid expected version instead of silently interpreting it as version zero.
+- Hive.Coordination.AgentExecutionRequest now rejects an explicitly supplied default CorrelationId, preventing an invalid lifecycle correlation from reaching durable event construction.
+- Hive.Agents.WorkItemBinding.Create now returns structured validation failures for invalid correlation/causation identities instead of allowing ResourceProvenance construction to throw.
+- Hive.Agents.DelegationRequest.Create now rejects invalid source references through its existing Result<T> boundary.
+- Hive.Persistence.SqlDpapiSecretStore now applies the configured Hive SQL command timeout consistently to all Secret Store commands.
+- SqlDpapiSecretStore now clears the loaded encrypted secret buffer after DPAPI decryption, in addition to its existing plaintext/encryption-buffer cleanup.
 
-Regression coverage was added/updated for the Coordination error-redaction contract, provider response ID propagation/persistence, and JSON serializer error redaction. The configured-agent Example Host output now displays ProviderResponseId when the provider supplies one.
+Regression coverage was added for invalid error categories, event persistence contract invariants, default execution correlation identities, WorkItem binding provenance identities, and invalid delegation source references.
 
-No public API shape, persistence schema, migration, orchestration engine, provider transport contract, credential model, authorization model, or roadmap phase was introduced or changed.
+No public API shape, persistence schema, migration, orchestration, provider transport, credential model, authorization model, dependency graph, or roadmap phase was changed.
 
 Implementation commits on main:
-- 488fc2265830819398d628767243287e8ece95ad — fix: harden agent execution error and response metadata
-- 67c0763c7fabf866071906c2db4130a1e24ebf46 — test: cover agent execution error and response metadata contracts
-- f1c9232de1a97c044f7019d24ee4eca2464ee6df — docs: expose provider response id in execution example
-- e148225e0c6111dc6fb7d38e97e171c78d6164a6 — fix: release completed question waiters
-- aec69e246806b15e928f514893929d1aa346f674 — fix: remove unused execution exception variable
-- bb146a716e7de860363a1b5b9d99697a145a361e — docs: record configured execution verification
-- 67140a6457c6aa6c283cf77cd7a089edc706a10a — docs: correct configured response id verification
-- 31208804b59ec316e658f9d0c3a6bb4fdf6964f4 — fix: redact JSON serializer error details
-- bb68eceab8975cf47522be56b6839b337bc6a51d — test: cover JSON serializer error redaction
+- fe21727a60b32c21de00e300dd808b0a14b4a3d0 — fix: validate error category
+- d756529a2bb3852ed077614886640723bbb065ca — fix: harden event persistence contracts
+- 143642e210095e26c1ee6159493b790834527c21 — fix: validate event persistence versions
+- c015bb2751bfae5adacdd26fd5c80f614714053f — fix: validate execution correlation identity
+- 9ec33e0c039d105044c7b68ddb44bdbe6380154a — fix: validate work item binding provenance ids
+- cd1415705afa79d94d05fd1e45171fb0f2ab2cb4 — fix: validate delegation source reference
+- 0616c5e29f4cb60b11e999d98794bc2ec794438c — fix: honor secret store command timeout
+- 82c927c1669113a5a2357b3e2500090307da2c07 — test: cover invalid error category
+- 7aac45da7dda83f52320d79e95519cf41c958a67 — test: cover event persistence contract validation
+- 60133fdf7f072e5706454ca251c0e80e8f375717 — test: cover execution correlation validation
+- a9f4754875f424f2ea2becc551d63c0566cc82e3 — test: cover protocol provenance validation
 
-### Verification result
+### Verification handoff
 
-Developer-supplied verification on 2026-09-25:
+No build, test run, application launch, migration, provider call, or other execution was performed by this maintenance pass.
 
-- Configured-agent Example Host execution from the preceding maintenance revision: **Succeeded**.
-- AgentDefinition key: `allam-2-7b`.
-- Provider: `Groq`.
-- ProviderAccount: `Groqtest`.
-- ExecutionTarget key: `openai/gpt-oss-20b`.
-- Model: `openai/gpt-oss-20b`.
-- Execution status: **Succeeded**.
-- Provider response ID: `chatcmpl-5aba8248-2ae1-4214-905f-0379b179c8d7` was displayed by the Example Host.
-- Provider credentials: not displayed.
-- Service graph: current host graph.
-- LocalDevelopment database: not used by this example.
+Developer verification still required:
+- affected solution/backend build;
+- focused tests covering the changed Core, Agents, Coordination, and event-contract behavior;
+- full Hive.Tests suite;
+- persistence integration coverage exercising Secret Store command execution and existing DPAPI behavior.
 
-This confirms the externally meaningful configured-agent execution path preserves and displays the provider response ID from the completed execution.
+The previously verified configured-agent Example Host behavior remains unaffected by this revision; no new externally visible Example Host change was introduced.
 
-### Final developer verification
-
-Developer-supplied verification on 2026-09-25:
-
-- Full solution build: **completed successfully** — 9 projects succeeded, 1 project was up-to-date, 0 failed, 0 skipped.
-- Full `Hive.Tests` run: **252 tests passed, 0 failed, 0 skipped** in **26.9 seconds**.
-- Runtime: .NET **10.0.1** with xUnit.net VSTest Adapter **3.1.5+1b188a7b0a**.
-- The full test suite exercised the affected Coordination, Agents, Core serialization, persistence, provider, and management regression coverage.
-- The previously verified configured-agent Example Host execution remained successful and displayed the provider response ID; this revision changed only internal/public error-detail handling in Core and Coordination plus waiter cleanup, so no new Example Host behavior required manual exercise.
-
-Verification is **complete for this maintenance pass**. No Phase 1.14 or later roadmap work was activated.
-`Hive_Current_Status.md` remains unchanged because this maintenance pass does not change roadmap phase status.
+Do not change Hive_Current_Status.md or activate Phase 1.14 from the implementation handoff alone.
 
 Last updated: 2026-09-25
+
 ## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision 5
 
 ### Status
