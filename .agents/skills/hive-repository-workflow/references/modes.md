@@ -6,7 +6,7 @@ Command: Hive: Continue
 
 Meaning: Continue the current authorized task context from the repository checkpoint. For implementation work, this means the current Active Work item. For an explicitly requested governance/documentation task, this means that same governance/documentation scope.
 
-If the current Active Work item is verification-pending or otherwise establishes a developer-verification gate, Continue stops at that gate and returns the exact required verification handoff. It does not resume implementation until the gate is satisfied or an explicitly authorized new task changes the scope.
+If the current Active Work item is verification-pending or otherwise establishes a developer-verification gate, Continue stops at that gate and returns the exact required verification handoff. Revision, Maintenance, Again, Polish again, and other implementation-affecting follow-ups also stop at that gate; none may resume implementation until the gate is satisfied. Separately authorized governance/documentation work remains limited to its explicitly affected governance/documentation files.
 
 Do not reinterpret completion as permission to start the next roadmap slice.
 
