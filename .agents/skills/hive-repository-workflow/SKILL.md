@@ -73,11 +73,11 @@ At the start of a task, establish:
 - explicit exclusions or prohibited work;
 - execution/verification authorization.
 
-For implementation work, Active Work is the maximum authorized implementation boundary.
+For all implementation-affecting work, including Continue, Revision, and Maintenance, Active Work is the maximum authorized implementation boundary. The user request selects or narrows the task within that boundary; it does not broaden, replace, or advance Active Work.
 
-For maintenance, revision, or governance work, the user request is the task authorization and the named affected documents/projects are the change boundary. Do not treat an open implementation slice as permission to expand that task.
+For an explicitly authorized governance/documentation task, the named affected governance/documentation files are the change boundary, subject to the governance exception in the authorization gate.
 
-An explicit user task may narrow the authorized boundary, but does not silently broaden, replace, or advance it.
+An explicit user task may narrow the authorized implementation boundary, but does not silently broaden, replace, or advance it.
 
 If the explicit task conflicts with the current Active Work scope, do not choose one interpretation yourself. Report the conflict and require an explicit scope/Active Work change.
 
