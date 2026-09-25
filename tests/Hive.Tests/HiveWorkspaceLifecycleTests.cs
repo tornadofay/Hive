@@ -37,7 +37,7 @@ public sealed class HiveWorkspaceLifecycleTests
         await refresh;
     }
 
-    public sealed class ManagementFacadeProxy : DispatchProxy
+    public class ManagementFacadeProxy : DispatchProxy
     {
         private readonly TaskCompletionSource<Result<IReadOnlyList<WorkItem>>> _workItemsRequested =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
