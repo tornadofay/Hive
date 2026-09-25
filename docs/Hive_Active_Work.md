@@ -40,6 +40,9 @@ Code/test commits:
 - `33a58aa8d02ae35dfe69e8ca96b09f15181b4f88` — MAF-facing message-count guard.
 - `80aa3719e9af3853955a610facb83eb1964dac7d` — cancellation propagation through chat conversion and streaming enumeration.
 - `5cd6b49de07742c52524fd60d896296bb8ee2dad` — focused provider regression coverage.
+- `583e69755ea657b6121a1012a69e7890e861f04e` — seals the request message collection against mutation through an IList cast.
+- `6175b0252aa1dd6af4208e94f5fca6f8d91a9902` — regression coverage for the read-only request message collection.
+- `513900bc6d74ddf31a874c6d2779c0fa81a17420` — clarifies the no-Content-Length oversized-response regression test name.
 
 Documentation commit:
 - `09e03de080aa186cff4dea9d330dd71fb3a5ae30` — records the provider safeguards in the Phase 1.3 usage documentation.
