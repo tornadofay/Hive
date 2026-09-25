@@ -10,8 +10,6 @@ Mode: verification remediation completed; **re-verification pending**.
 
 Implementation checkpoint after the developer-reported verification failures were remediated: `e1c029b69c4f08653484db2b2b7c85f3ddbc4467`.
 
-Current workflow/documentation state is on `main`; this file intentionally does not self-reference its own documentation commit as an implementation checkpoint.
-
 ### Objective
 
 Establish the Hive-owned neutral V1 host-integration contract family and reusable bounded WinForms integration infrastructure so a host application can integrate through a small explicit contract surface without exposing private host controls, data/business framework, SQL, credentials, arbitrary reflection, or unrestricted invocation to Hive.
