@@ -17,7 +17,7 @@ These sources have different authoritative roles:
 9. `docs/ui/` and `docs/examples/` — usage guidance.
 10. `README.md` — project overview.
 
-Do not treat this as a simple precedence chain across different concerns: architecture defines intended structure, Active Work defines what is authorized now, source defines implementation reality, tests define what was exercised, roadmap defines future order, and status never turns an unverified claim into a fact. When sources conflict, apply the role that governs the decision and resolve genuine inconsistencies through the repository workflow. Previous chat history is not repository authority.
+Do not treat this as a simple precedence chain across different concerns. Apply the source that governs the decision. Previous chat history is not repository authority.
 
 ## 2. Before changing code
 
@@ -28,28 +28,31 @@ Read, in order:
 3. `docs/Hive_Active_Work.md`;
 4. the relevant roadmap section;
 5. the relevant architecture sections;
-6. the relevant UI guidance for UI/Example work.
+6. relevant UI guidance for UI/Example work.
 
 For cross-project, public-API, persistence, orchestration, lifecycle, security, or durable-state work, read the full applicable architecture documents.
 
 Then inspect affected projects, source, tests, examples, configuration, references, and responsibility owners. Determine the repository checkpoint from evidence.
 
-If Active Work is `VERIFICATION PENDING` before actual developer results arrive, stop implementation-affecting work at that gate. After a real failure is recorded as `VERIFICATION FAILED / REMEDIATION REQUIRED`, same-slice Revision/remediation may proceed only within the recorded failure boundary; it must return Active Work to `VERIFICATION PENDING` for developer re-verification.
+If Active Work is `VERIFICATION PENDING` before actual developer results arrive, stop implementation-affecting work at that gate. After a real failure is recorded as `VERIFICATION FAILED / REMEDIATION REQUIRED`, same-slice remediation may proceed only within the recorded failure boundary and must return Active Work to `VERIFICATION PENDING`.
 
 ## 3. Scope and authorization
 
 Active Work is the maximum implementation boundary.
 
-- `Continue` uses the current authorized task: after an established task it continues that task, and in a fresh context it may use an open Active Work slice as the implementation context. `Again` repeats the same task or Revision pass. `Polish`/`Polish again` repeats the same maintenance/polish scope. `Revision` inherits the immediately preceding task context and re-audits that work; it preserves that task's authorized domain and scope rather than switching to a different area. When the preceding task was Workflow Review, any implementation domain must come from an already applicable authorization boundary, not from the Review itself. **Maintenance — Backend**, **Maintenance — UI**, and **Maintenance — Host/UI** are explicit bounded maintenance modes; each performs a complete production audit/correction pass in its named boundary. When Active Work is open, they remain within that boundary; with no active slice, an explicitly requested bounded corrective maintenance mode may create a temporary slice under the rule below. **Workflow Review** is read-only and does not modify repository state or create authorization; it is not the V1/future business Review lifecycle or capability. **Revision is corrective:** it re-audits the preceding work and fixes concrete in-scope problems to production depth. When Revision follows Workflow Review, reported findings may be corrected only within an already applicable authorized boundary; if no implementation boundary exists, the Review findings do not themselves create one and require an explicitly bounded corrective authorization before implementation. The Review itself never authorizes unrelated work or roadmap advancement. None advances the roadmap.
-- A new roadmap slice requires explicit user authorization such as `Hive: Start Phase X.Y`.
-- Do not silently widen scope, replace the current slice, or implement future work.
-- If Active Work is closed/absent, an explicitly requested bounded non-roadmap corrective task may create a temporary Active Work slice before implementation, but only when repository evidence confirms it restores, preserves, or corrects existing behavior without adding capability or materially expanding a public contract. **Revision is such a corrective request when it follows a preceding implementation/corrective task:** it may establish the temporary slice needed to re-audit that work and correct concrete findings discovered during Revision. A read-only Workflow Review does not qualify for this auto-opening rule; without an existing implementation boundary, its findings require explicit bounded corrective authorization before implementation. If a finding requires a new capability, material public-contract expansion, or roadmap work, stop that portion and require separate authorization.
-- **Workflow-documentation work is separate from implementation Active Work:** Revision of `AGENTS.md`, `.agents/skills/`, or other workflow-owned documents remains bounded to those governance documents and does not create an implementation Active Work slice. It may update affected workflow documentation directly while preserving implementation authorization/state.
-- **Architecture work remains analysis-only:** Revision of an Architecture task re-audits the design and corrects the architectural analysis/documentation within that task, but does not turn an Architecture task into implementation without explicit implementation authorization.
-- **Continuation commands do not create work:** `Continue`, `Again`, and `Polish` require an identifiable preceding/current task or active slice and stop when none exists. `Continue` continues that same task; `Again` repeats the same task or Revision pass; `Polish`/`Polish again` repeats the same maintenance/polish scope. None creates a temporary slice or advances the roadmap. `Revision` is the corrective exception described above, but a read-only Workflow Review is not sufficient context to auto-open an implementation slice.
-- Mixed corrective + feature work does not qualify for auto-opening unless the user explicitly separates the scopes.
-- If a corrective task discovers work requiring a new capability, material public-contract expansion, or another roadmap slice, stop that portion and require separate authorization.
-- A governance/workflow-documentation task may update its affected documentation even when implementation Active Work is open, but must not alter unrelated implementation or manufacture authorization.
+- `Continue` continues the current authorized task.
+- `Revision` re-audits the immediately preceding task and fixes concrete problems within that task's scope.
+- `Again` repeats the same task or Revision pass.
+- `Polish` / `Polish again` repeats the same maintenance/polish scope.
+- `Maintenance — Backend`, `Maintenance — UI`, and `Maintenance — Host/UI` are bounded production audit/correction modes.
+- `Workflow Review` is read-only and never creates implementation authorization. `Architecture` is analysis/design-only unless implementation is explicitly authorized.
+- None of these commands advances the roadmap or silently widens an implementation boundary.
+
+When Active Work is closed or absent, an explicitly requested bounded corrective task may establish a temporary Active Work slice before implementation only when repository evidence confirms that it restores, preserves, or corrects existing behavior without a new capability or material public-contract expansion. A Revision may use this rule only when its immediately preceding task was implementation/corrective work. A Workflow Review does not qualify. Architecture Revision remains analysis-only. Workflow-documentation Revision remains within the governance/documentation files and does not create an implementation slice.
+
+If a corrective pass requires a new capability, material public-contract expansion, future roadmap work, or another scope, stop that portion and require explicit authorization. Mixed corrective + feature requests do not auto-open.
+
+A new roadmap slice requires explicit user authorization such as `Hive: Start Phase X.Y` or `Hive: Start the next roadmap slice`.
 
 ## 4. Verification
 
@@ -57,31 +60,29 @@ Verification is a hard gate between implementation and evidence.
 
 When developer results arrive:
 
-1. all required checks pass → close through the normal evidence-backed workflow;
-2. failures, compiler errors, or unmet required behavior within scope → record `VERIFICATION FAILED / REMEDIATION REQUIRED` in Active Work **before** changing implementation;
+1. required checks pass → complete the normal evidence-backed closure;
+2. an in-scope failure/compile error/unmet requirement → record `VERIFICATION FAILED / REMEDIATION REQUIRED` in Active Work before implementation changes;
 3. perform same-slice remediation to production depth;
-4. return Active Work to `VERIFICATION PENDING` with the exact rerun targets;
+4. return Active Work to `VERIFICATION PENDING` with exact rerun targets;
 5. require developer re-verification.
 
 Out-of-scope or new-capability failures require separate authorization.
 
-Never claim a build, test, integration, manual check, or provider result that did not actually happen.
+Never claim execution that did not happen. Use precise terms such as Inspected, Reasoned, Compiled, Automated-tested, Integration-tested, Manually verified, and Not verified.
 
-Use these terms precisely: Inspected, Reasoned, Compiled, Automated-tested, Integration-tested, Manually verified, Not verified.
-
-By default, do not run builds, tests, launches, migrations, performance measurements, or external integrations. A verification requirement defines what the developer must verify; it does not by itself authorize the agent to execute it.
+By default, the agent does not run builds, tests, launches, migrations, performance measurements, or external integrations unless explicitly authorized or required by repository workflow.
 
 ## 5. Engineering standard
 
-Keep implementation scope bounded, but make the engineering work complete and production-grade within that scope. Do not optimize for the fewest lines or files.
+Keep scope bounded, but make engineering complete and production-grade within the authorized boundary.
 
-Within the affected boundary, correct root causes and relevant supporting problems involving correctness, contracts/nullability, validation/errors, cancellation/async behavior, concurrency, lifecycle/disposal, determinism/recovery, observability, performance/I/O, authorization/security, persistence, compatibility, tests, examples, or documentation as applicable.
+Correct concrete root causes and relevant supporting problems involving correctness, contracts/nullability, validation/errors, async/cancellation, concurrency, lifecycle/disposal, determinism/recovery, observability, performance/I/O, authorization/security, persistence, compatibility, tests, examples, and documentation as applicable.
 
-Do not perform unrelated refactoring, speculative abstraction, dependency upgrades without requirement, or symptom-only workarounds when a root-cause fix is required.
+Do not perform unrelated refactoring, speculative abstraction, dependency upgrades without requirement, or symptom-only workarounds.
 
 ## 6. Architecture and safety
 
-Preserve the architecture in `docs/architecture.md`. In particular:
+Preserve `docs/architecture.md` and its detail documents. In particular:
 
 - Hive.Core stays dependency-light and host/provider neutral.
 - Persistence/database access stays in `Hive.Persistence` or an explicitly authorized persistence boundary.
@@ -89,7 +90,7 @@ Preserve the architecture in `docs/architecture.md`. In particular:
 - `Hive.Host.WinForms` does not bypass `Hive.Management`.
 - `Hive.Host.WinForms.UI` owns Hive WinForms presentation.
 - `Hive.Example.WinForms` is a consumer/example host, not a platform dependency.
-- Use MAF where it already owns the required orchestration mechanism; do not build a second orchestration engine.
+- Use MAF where it already owns the required orchestration mechanism.
 - Authorization is enforced in code, never by prompts, UI visibility, or model output.
 - Host business state remains host-owned; Hive persistence remains separate.
 - Do not expose secrets, private host types, SQL, arbitrary reflection/invocation, or unrestricted host control authority through neutral Hive contracts.
@@ -101,25 +102,26 @@ Preserve the architecture in `docs/architecture.md`. In particular:
 
 Every new meaningful capability needs focused coverage. Every new meaningful externally usable capability also needs a matching `Hive.Example.WinForms` scenario using public contracts and deterministic/reproducible fixtures.
 
-Use `docs/ui/examples.md` for the Example Host pattern. Capability handoff must preserve:
+For UI/Example changes, follow `docs/ui/` guidance and reuse existing Hive UI APIs. User-visible failures use `HiveMessageBox` and the Output panel when available.
+
+Capability handoff must preserve:
 
 ```text
 Example to run: <exact Category / Subcategory / optional AdditionalNavigationPath / Example title> — Hive.Example.WinForms
 Tests to run: <exact focused test class/file>; broader-suite requirement if applicable
 ```
 
-For UI/Example changes, follow `docs/ui/` guidance. Reuse existing Hive UI APIs; keep reusable controls free of SQL/provider transport/authorization policy. User-visible failures use `HiveMessageBox` and the Output panel when available.
-
 ## 8. Source-of-truth documents
 
-- `docs/Hive_Active_Work.md` is current-state only: keep only the current slice, checkpoint, scope, and verification handoff/state.
-- `docs/Hive_Current_Status.md` is current status only.
-- `docs/verification/` stores historical verification evidence and must remain auditable; do not overwrite an earlier attempt with a later result.
-- `docs/roadmap.md` is the ordered plan, not permission to skip authorization.
-- `.agents/skills/` contains reusable workflow procedure and checklists, not current Hive state or architecture.
+- `docs/Hive_Active_Work.md` — current slice, checkpoint, scope, and verification state only.
+- `docs/Hive_Current_Status.md` — current status only.
+- `docs/verification/` — historical verification evidence; never overwrite earlier attempts.
+- `docs/roadmap.md` — ordered plan, not permission.
+- `.agents/skills/` — reusable workflow procedure/checklists, not current Hive state.
+- `docs/ui/` and `docs/examples/` — usage guidance.
 - Do not document planned behavior as implemented.
 
-When a slice closes, archive historical verification evidence as needed, update Current Status from real evidence, then remove the closed slice from Active Work and leave only the minimal no-active-slice state unless another slice is already authorized.
+When a slice closes, archive historical verification evidence as needed, update Current Status from real evidence, remove the closed slice from Active Work, and leave only the current no-slice state unless another slice is already authorized.
 
 ## 9. Git and final review
 
@@ -128,7 +130,7 @@ Work directly on `main` unless explicitly instructed otherwise. Do not create br
 Before handoff:
 
 1. review the relevant diff and affected files;
-2. confirm scope, architecture, tests/examples/docs, and absence of accidental or stale changes;
+2. confirm scope, architecture, tests/examples/docs, and no accidental or stale changes;
 3. report exactly what changed, exactly what was verified, and what remains unverified.
 
 ## Final rule

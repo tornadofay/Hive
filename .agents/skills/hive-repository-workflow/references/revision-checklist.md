@@ -1,14 +1,14 @@
 # Hive Revision Checklist
 
-Use this checklist for Revision and other re-review passes. It is a review aid, not permission to widen scope.
+Use for Revision and other production re-review passes. It is a quality aid, not permission to widen scope.
 
 ## Scope
 - original request and acceptance criteria
 - Active Work authorization and verification gate
-- inherited mode/domain and authorized scope
+- inherited task/mode/domain and authorized scope
 - architecture and roadmap boundary
 - no future work or unrelated behavior changes
-- when Revision follows read-only Workflow Review, confirm an existing implementation boundary or explicit bounded corrective authorization; Review findings alone do not authorize implementation
+- Review findings alone do not authorize implementation
 
 ## Production quality
 - correctness, invariants, edge cases
@@ -29,9 +29,9 @@ Use this checklist for Revision and other re-review passes. It is a review aid, 
 - exact verification handoff preserved while pending
 
 ## Verification remediation
-While Active Work is **VERIFICATION PENDING** awaiting developer results, do not begin implementation-affecting work. If developer verification failed/was partial, confirm the failure was classified in Active Work and remediation was recorded before implementation. Revision may then remediate within that recorded failure boundary. After remediation, return to **VERIFICATION PENDING** and rerun the affected checks.
+While Active Work is `VERIFICATION PENDING`, do not begin implementation-affecting work while awaiting developer results. If verification failed/was partial, confirm the failure was recorded before implementation changes. After remediation, return to `VERIFICATION PENDING` and rerun the affected checks.
 
 ## Evidence
-- preserve earlier verification attempts; do not overwrite historical evidence
+- preserve earlier verification attempts
 - distinguish inspection/reasoning from actual execution
 - review the final diff for stale/dead/accidental changes
