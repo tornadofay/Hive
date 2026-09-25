@@ -244,6 +244,8 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         _accounts = Array.Empty<ProviderAccount>();
 
         _loadingFilters = true;
+        _providerComboBox.Enabled = false;
+        _accountComboBox.Enabled = false;
         try
         {
             _accountComboBox.BeginUpdate();
@@ -287,6 +289,8 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         finally
         {
             _loadingFilters = false;
+            _providerComboBox.Enabled = true;
+            _accountComboBox.Enabled = _selectedProvider is not null;
         }
 
         _page.AllowAdd = _selectedAccount is not null;
