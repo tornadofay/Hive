@@ -4,27 +4,48 @@ Last updated: 2026-09-25
 
 ## Active slice
 
-**Temporary maintenance — Hive.Management / Hive.Persistence Production Audit Revision (verification pending).**
+**None — Temporary Hive.Management / Hive.Persistence Production Audit Revision is complete and verified.**
 
-This maintenance pass is explicitly authorized by the current revision request. It does not activate or advance Phase 1.14; the next roadmap slice remains inactive.
+Phase 1.14 remains inactive and no later roadmap slice is active or authorized.
 
-### Current maintenance scope
+### Closed maintenance pass — Hive.Management / Hive.Persistence Production Audit Revision
 
-- Audit only the existing Hive.Management and Hive.Persistence backend implementation against the repository architecture and previously verified contracts.
+#### Scope
+
+- Audit of the existing Hive.Management and Hive.Persistence backend implementation against the repository architecture and previously verified contracts.
 - Fix only concrete production defects found during the final implementation review.
 - Preserve public contracts, persistence ownership, authorization/scope enforcement, lifecycle semantics, credential isolation, cancellation, and transaction boundaries.
-- No roadmap advancement, schema/migration changes, provider changes, orchestration changes, MAF changes, host/UI changes, or dependency changes are authorized.
+- No roadmap advancement, schema/migration changes, provider changes, orchestration changes, MAF changes, host/UI changes, or dependency changes.
 
-### Implementation checkpoint — 2026-09-25
+#### Implementation checkpoint
 
-Implemented on main through commit a445886f34a1fde8e7b8fb0727bfddfe7025bf55:
+Implemented on main through commit 71a27cac58bdf15528e26cc7e371a024b93b8879:
 
 - JsonHiveConfigurationStore opens persisted settings with FileShare.Delete in addition to FileShare.Read.
-- Existing settings files are now replaced with File.Replace rather than File.Move(..., overwrite: true), avoiding the Windows/.NET open-destination replacement failure while preserving atomic replacement semantics for the existing file.
+- Existing settings files are replaced with File.Replace rather than File.Move(..., overwrite: true), avoiding the Windows/.NET open-destination replacement failure while preserving replacement semantics for an existing file.
 - First-time settings creation still uses File.Move because there is no destination file to replace.
 - HiveManagementFacade rejects malformed non-string WorkItem activity text properties instead of silently treating them as missing; JSON null remains accepted for optional values such as rejection reason.
-- Focused regression coverage covers both contracts in HiveConfigurationTests and WorkItemManagementTests, and the settings replacement regression now reloads the file to verify the replacement was actually persisted.
+- Focused regression coverage covers both contracts in HiveConfigurationTests and WorkItemManagementTests.
+- The settings replacement regression also reloads the settings file and verifies that the replacement configuration was persisted.
 - No schema, migration, provider, orchestration, MAF, host, UI, dependency, or public-contract redesign changes were introduced.
+
+#### Verification result
+
+The developer ran:
+
+```text
+dotnet test tests/Hive.Tests/Hive.Tests.csproj
+```
+
+Result on 2026-09-25:
+
+**228 tests passed, 0 failed, 0 skipped** in 25.2 seconds on .NET 10.0.1 using xUnit.net VSTest Adapter 3.1.5+1b188a7b0a.
+
+Verification archive: [hive-management-persistence-production-audit-revision-2026-09-25.md](verification/maintenance/hive-management-persistence-production-audit-revision-2026-09-25.md)
+
+No Example Host verification was required because the maintenance pass remained backend/internal and introduced no externally visible host/UI capability.
+
+This maintenance revision is developer-verified and closed. Phase 1.14 remains inactive.
 
 ## Closed maintenance pass — Hive.Management / Hive.Persistence Final Backend Audit — Revision
 
