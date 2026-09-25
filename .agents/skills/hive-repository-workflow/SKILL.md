@@ -262,6 +262,7 @@ Before implementation handoff or completed Revision:
 7. report what remains unverified.
 
 For pending verification, preserve the exact verification handoff required by `AGENTS.md`.
+Historical verification evidence must remain auditable. Do not overwrite an earlier verification attempt with a later result; use a new dated record or a clearly separated subsequent section/record for later verification or remediation evidence.
 
 For governance/workflow-skill changes, also verify that the edited procedure does not contradict `AGENTS.md`, silently alter current Hive state, or introduce a stale roadmap-specific command/example. Specifically verify that Active Work remains current-only: no closed slice remains after closure, and historical evidence is kept in `docs/verification/`.
 
