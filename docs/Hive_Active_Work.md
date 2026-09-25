@@ -1,8 +1,8 @@
-## Temporary maintenance pass — Hive Backend Cross-Project Production Audit Revision 1
+## Temporary maintenance pass — Hive Backend Cross-Project Production Audit Revision 2
 
 ### Status
 
-**IMPLEMENTATION COMPLETE / VERIFICATION IN PROGRESS.**
+**IMPLEMENTATION COMPLETE / VERIFICATION PENDING DEVELOPER.**
 
 This explicitly authorized backend maintenance pass does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
@@ -17,13 +17,14 @@ This explicitly authorized backend maintenance pass does not advance the roadmap
 
 ### Implementation checkpoint
 
-Static and final-diff review identified and corrected three concrete backend defects:
+Static and final-diff review identified and corrected four concrete backend defects:
 
 - Hive.Coordination.AgentExecutionService no longer includes raw unexpected exception text in its public Internal Error message.
 - AgentExecutionService now preserves the MAF ChatResponse.ResponseId in AgentExecutionResult.ProviderResponseId and in the persisted succeeded-event payload.
 - Hive.Agents.QuestionTransport now removes a completed waiter from its waiter dictionary when the Question reaches Answered, Cancelled, or TimedOut, preventing unbounded retention of completed TaskCompletionSource instances.
+- Hive.Core.JsonEventSerializer no longer copies raw JsonException.Message text into public EventSerializationException.Error.Message values for malformed envelopes or invalid typed payloads.
 
-Regression coverage was added/updated for the Coordination error-redaction contract and provider response ID propagation/persistence. The configured-agent Example Host output now displays ProviderResponseId when the provider supplies one.
+Regression coverage was added/updated for the Coordination error-redaction contract, provider response ID propagation/persistence, and JSON serializer error redaction. The configured-agent Example Host output now displays ProviderResponseId when the provider supplies one.
 
 No public API shape, persistence schema, migration, orchestration engine, provider transport contract, credential model, authorization model, or roadmap phase was introduced or changed.
 
@@ -32,12 +33,17 @@ Implementation commits on main:
 - 67c0763c7fabf866071906c2db4130a1e24ebf46 — test: cover agent execution error and response metadata contracts
 - f1c9232de1a97c044f7019d24ee4eca2464ee6df — docs: expose provider response id in execution example
 - e148225e0c6111dc6fb7d38e97e171c78d6164a6 — fix: release completed question waiters
+- aec69e246806b15e928f514893929d1aa346f674 — fix: remove unused execution exception variable
+- bb146a716e7de860363a1b5b9d99697a145a361e — docs: record configured execution verification
+- 67140a6457c6aa6c283cf77cd7a089edc706a10a — docs: correct configured response id verification
+- 31208804b59ec316e658f9d0c3a6bb4fdf6964f4 — fix: redact JSON serializer error details
+- bb68eceab8975cf47522be56b6839b337bc6a51d — test: cover JSON serializer error redaction
 
 ### Verification result
 
 Developer-supplied verification on 2026-09-25:
 
-- Configured-agent Example Host execution: **Succeeded**.
+- Configured-agent Example Host execution from the preceding maintenance revision: **Succeeded**.
 - AgentDefinition key: `allam-2-7b`.
 - Provider: `Groq`.
 - ProviderAccount: `Groqtest`.
@@ -51,15 +57,17 @@ Developer-supplied verification on 2026-09-25:
 
 This confirms the externally meaningful configured-agent execution path preserves and displays the provider response ID from the completed execution.
 
-### Verification still required
+### Verification still required for Revision 2
 
 The maintenance pass remains open pending reconciliation of:
-- affected solution/backend project build after the final `CS0168` correction;
-- focused `Hive.Tests` coverage for AgentExecutionIntegrationTests and BaseAgentWorkProtocolsTests;
+- affected solution/backend project build after the final `CS0168` correction and the Core serializer revision;
+- focused `Hive.Tests` coverage for `AgentExecutionIntegrationTests`, `BaseAgentWorkProtocolsTests`, and `EventInfrastructureTests`;
 - full Hive.Tests suite;
-- the unexpected transport failure path confirming the returned Coordination error message is generic and does not expose the thrown exception text.
+- the unexpected transport failure path confirming the returned Coordination error message is generic and does not expose the thrown exception text;
+- the JSON serializer regressions confirming malformed envelope/payload errors do not echo the underlying `JsonException.Message`.
 
-Do not close this maintenance pass or change Hive_Current_Status.md until these remaining supplied verification results are reconciled with the repository.
+No build, test run, application launch, migration, provider call, or other execution was performed by this revision.
+Do not close this maintenance pass or change Hive_Current_Status.md until the remaining developer-supplied verification results are reconciled with the repository.
 
 Last updated: 2026-09-25
 ## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision 5
