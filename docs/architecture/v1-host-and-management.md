@@ -111,37 +111,43 @@ Traversal rules are contractual:
 
 Registration and capture provenance contains the Hive resource access identity supplied by the host plus a registration/capture identifier and timestamp. Discovery therefore remains attributable to the host registration without granting that registration any authorization to mutate the application.
 
-### 4.1.2 Neutral Host Integration Extension Contract
+### 4.1.2 Contract-first Host Integration
 
+Phase 1.14 establishes Hive-owned, host-neutral public contracts for V1 host integration. The host application implements those contracts against its own forms, controls, data surfaces, business objects, and application services.
 
-Phase 1.14 must establish Hive-owned, host-neutral public contracts for V1 host integration. The concrete WinForms implementation may adapt native WinForms controls, application-owned/custom controls, or another control/data implementation without making any host library a dependency of Hive's neutral contracts.
+The intended model is:
 
+```text
+Hive.Core
+    ↓
+Hive-owned integration contracts
+    ↓
+host application implements the contracts
+    ↓
+Hive discovers/composes/authorizes the exposed capabilities
+```
+
+A host may implement a contract directly on an application-owned type when that is the simplest option. A custom text control may implement the semantic field/value contract, while a host Form may implement the host-context contract.
+
+Hive should provide reusable infrastructure for the common work so host applications do not have to build their own discovery, traversal, capability plumbing, provenance, cancellation, or authorization machinery. Host-specific code should be limited to semantics Hive cannot safely infer.
 
 The Phase 1.14 contract family covers:
 
-- host registration/adapter ownership;
-- semantic control descriptors;
-- data-source/data-surface descriptors;
-- field/column descriptors;
-- stable row identities;
-- lookup descriptors and bounded lookup operations;
-- bounded host interaction capabilities;
-- business-operation capability boundaries needed for API/UI composition.
-
-Durable business-operation receipts and first-class post-write Review are later V1 contracts owned by Phase 1.17; this document defines their target semantics without moving their implementation into Phase 1.14.
-
+- host registration/context;
+- semantic controls and fields;
+- data sources/data surfaces and rows;
+- stable row identity;
+- lookup capabilities;
+- bounded host actions;
+- business-operation capability boundaries for API/UI composition.
 
 The neutral contracts must not expose raw WinForms controls, concrete host-control interfaces, arbitrary host object handles, SQL connections/commands, unrestricted SQL/filter execution, credentials, or arbitrary reflection/invocation.
 
-
 Detailed contract design is owned by [architecture/v1-business-app-integration.md](v1-business-app-integration.md).
-
 
 ### 4.1.3 Controls, data surfaces, and host semantics
 
-
 Hive consumes a semantic projection of host controls rather than the complete host property bag.
-
 
 Useful semantics may include:
 
@@ -155,54 +161,30 @@ Useful semantics may include:
 - supported UI capabilities;
 - bounded current value where reading is authorized.
 
-
 A bound grid or collection is represented as a data surface. It is not assumed to be a database table.
 
+Parent/child relationships are exposed explicitly by the host implementation when they are meaningful to the application. Hive does not infer business relationships from visual nesting, naming, hidden fields, SQL, or control placement.
 
-A real production WinForms host inspected for V1 provides explicit parent/child metadata rather than requiring visual inference.
-
-Conceptually:
-
-```text
-root data surface
-    ↓
-explicit child-collection metadata
-    ↓
-child data surface
-    ↓
-parent identity → child foreign-key relationship
-```
-
-The adapter preserves this as a semantic relationship. It does not expose host data containers, persistence objects, generated SQL, or private control types.
-
-The same host inspection establishes lifecycle semantics including required/unique validation, pre-save veto points, a host business/save boundary, post-save result handling, New/Edit state transitions, parent/child binding, bound child-data synchronization, editor-dialog workflows, grid-level validation, and child-row add/edit/delete hooks. These are host business/application behaviors to adapt, not Hive authorization or database contracts.
-
+The host implementation may expose parent identity propagation, child editing, combined parent/child save semantics, validation/veto points, editor workflows, and other application behavior through the appropriate neutral capabilities. These remain host-owned business/application semantics rather than Hive database or authorization contracts.
 
 ### 4.1.4 Identity, lookup, and mutation boundaries
 
+For the current V1 integration contract, stable row identity is the primary-key ID. Row index is positional only and is never authoritative identity.
 
-For consequential row operations, stable identity is required. The inspected V1 host exposes a single-key record identity in this particular surface, but the neutral Hive contract remains broader so other hosts may use explicit composite or host-defined identities. A hidden identity field is valid host behavior:
+A hidden identity field remains valid host behavior:
 
 ```text
 IsPrimaryKey = true
 Visible = false
 ```
 
+Generated fields are host-owned outputs. Computed fields are semantic field states whose implementation mechanism remains host-defined. They are not directly writable through generic field mutation unless the host exposes an explicit operation that permits it.
 
-Visibility alone never establishes identity, and row index is never authoritative identity.
+Lookup metadata is translated into a bounded lookup capability. Lookup resolution may use current-record values, external host/application context, or both. Host-specific filter expressions remain implementation metadata and are never exposed to the model as executable SQL.
 
+Host UI settings such as AllowNew, AllowEdit, AllowDelete, or equivalent application switches describe host capability; they never replace Hive authorization.
 
-Generated fields are host-owned outputs. Computed fields are readable but are not directly writable through generic field mutation.
-
-
-Lookup metadata is translated into a bounded lookup capability. Host-specific filter expressions remain implementation metadata and are never exposed to the model as executable SQL.
-
-
-Host UI settings such as `AllowNew`, `AllowEdit`, `AllowDelete`, `AllowRead`, `AllowPermissionCheck`, or equivalent application switches describe host behavior; they never replace Hive authorization.
-
-
-UI operations such as `SetControlValue`, `EditGridRow`, or `InvokeHostAction` remain distinct from business operations such as `CreateInvoice` or `PostDocument`.
-
+UI operations remain distinct from business operations.
 
 ### 4.1.5 API/UI composition
 
