@@ -8,6 +8,8 @@ Meaning: Continue the current authorized task context from the repository checkp
 
 If the current Active Work item is verification-pending or otherwise establishes a developer-verification gate, Continue stops at that gate and returns the exact required verification handoff. Revision, Maintenance, Again, Polish again, and other implementation-affecting follow-ups also stop at that gate; none may resume implementation until the gate is satisfied. Separately authorized governance/documentation work remains limited to its explicitly affected governance/documentation files.
 
+Do not rewrite Active Work, Status, roadmap, or verification records to make an implementation task appear authorized or verified.
+
 Do not reinterpret completion as permission to start the next roadmap slice.
 
 ## Revision
