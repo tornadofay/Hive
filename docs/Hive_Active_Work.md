@@ -4,7 +4,7 @@
 
 ### Status
 
-**OPEN / static audit in progress; execution not authorized.**
+**CLOSED / developer-verified.**
 
 Provider-backend-only maintenance. This revision does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
@@ -17,16 +17,27 @@ Provider-backend-only maintenance. This revision does not advance the roadmap an
 - Re-inspect provider documentation/example consistency.
 - No schema/migration, persistence redesign, orchestration, cognitive, host/UI, dependency upgrade, MAF replacement, or future roadmap implementation.
 
-### Verification gate
+### Verification result
 
-Execution is **not authorized in this request**.
+Developer-supplied verification on 2026-09-25:
 
-Required verification after implementation:
-- Focused: `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
-- Full developer build/test path: the normal full solution build followed by `dotnet test tests/Hive.Tests/Hive.Tests.csproj`
-- Configured Example Host/provider execution only when the revised public behavior requires manual verification.
+- Full solution build: **completed successfully**.
+- Full `Hive.Tests` run: **248 tests passed, 0 failed, 0 skipped** in **28 seconds**.
+- Runtime: .NET **10.0.1** with xUnit.net VSTest Adapter **3.1.5+1b188a7b0a**.
+- Configured Example Host agent execution: **Succeeded**.
+- Provider: `Groq`.
+- ProviderAccount: `Groqtest`.
+- ExecutionTarget/model key: `allam-2-7b`.
+- Provider credentials: not displayed.
+- Service graph: current host graph.
+- LocalDevelopment database: not used by this example.
 
-No execution has been performed by this revision. The slice remains open until actual verification results are supplied.
+The configured Example Host execution verifies the built solution through the configured provider/target execution path.
+
+Verification archive:
+[`hive-openai-compatible-provider-audit-final-revision-3-2026-09-25.md`](verification/maintenance/hive-openai-compatible-provider-audit-final-revision-3-2026-09-25.md)
+
+The provider audit revision 3 is **developer-verified and closed**. `docs/Hive_Current_Status.md` remains unchanged because no roadmap phase/status changed.
 
 Last updated: 2026-09-25
 
