@@ -1,3 +1,32 @@
+## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision 5
+
+### Status
+
+**OPEN / static audit in progress; execution not authorized.**
+
+Provider-backend-only maintenance. This revision does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
+
+### Scope
+
+- Re-audit the final revision-4 OpenAI-compatible provider implementation.
+- Correct the concrete MAF `IChatClient` cancellation boundary so an already-cancelled caller token is honored before synchronous validation/conversion.
+- Add focused regression coverage for already-cancelled requests.
+- Re-inspect provider tests, Example Host usage, provider dependencies, and architecture boundaries for unintended regressions or drift.
+- No schema/migration, persistence redesign, orchestration, cognitive, host/UI, dependency upgrade, MAF replacement, or future roadmap implementation.
+
+### Verification gate
+
+Execution is **not authorized in this request**.
+
+Required verification after implementation:
+- Full solution build: the normal developer full solution build.
+- Full `Hive.Tests`: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`.
+- Configured Example Host/provider execution only when the revised public behavior requires manual verification; the existing provider-transport Example is otherwise statically re-inspected.
+
+No verification has been performed by this revision yet. The slice remains open until actual developer verification is supplied.
+
+Last updated: 2026-09-25
+
 ## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision 4
 
 ### Status
