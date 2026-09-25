@@ -6,7 +6,7 @@ Last updated: 2026-09-25
 
 ### Status
 
-**OPEN / test-verified, provider-project build verification pending.**
+**CLOSED / developer-verified.**
 
 Phase 1.14 and all later roadmap slices remain inactive and unauthorized. This maintenance pass does not advance the roadmap.
 
@@ -47,6 +47,9 @@ Code/test commits:
 - `eee3a39c6822cc1aeddaa8b3455ad5d8365e69a0` — regression coverage for empty/whitespace and oversized ChatMessage content through IChatClient.
 - `02aa82e68593b35474b1220e20b916a486e5f9b7` — archives the developer-run full-suite verification result.
 
+Verification/documentation commits:
+- `ea46356d82f5a1c782fc55afca1720e1addb73d8` — archives final provider-audit verification after the provider build and configured execution were supplied.
+
 Documentation commit:
 - `09e03de080aa186cff4dea9d330dd71fb3a5ae30` — records the provider safeguards in the Phase 1.3 usage documentation.
 
@@ -61,7 +64,7 @@ The existing Example Host scenario remains valid and uses only supported public 
 
 ### Verification gate
 
-**PARTIALLY VERIFIED.**
+**VERIFIED.**
 
 Developer-run full-suite result on 2026-09-25:
 
@@ -69,19 +72,20 @@ Developer-run full-suite result on 2026-09-25:
 
 The full suite includes the focused OpenAI-compatible provider tests, but no separate focused-run output was provided.
 
-Still unverified:
-- Build: `src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`
+Additional developer verification on 2026-09-25:
+- `src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`: **compiled successfully**.
+- Solution configured-agent execution: **manually verified successful** against the configured Groq target `openai/gpt-oss-20b`; execution status was `Succeeded` and the application returned `Hello from the configured Hive Agent!`.
+- Provider credentials were not displayed by the run.
+- This runtime verification exercised the configured provider/target execution path beyond the local fake-server automated coverage.
 
 Not performed / not required for this maintenance pass:
-- real provider call;
-- application launch;
 - migration;
 - performance measurement;
-- Example Host manual run, because the existing example was inspected and no example source change was needed.
+- separate Example Host navigation-path manual verification, because the supplied evidence identifies the run as a solution configured-agent execution rather than an explicit Example Host path.
 
 Verification archive: [hive-openai-compatible-provider-audit-2026-09-25.md](verification/maintenance/hive-openai-compatible-provider-audit-2026-09-25.md)
 
-The maintenance slice remains open until the provider project build is actually verified. `docs/Hive_Current_Status.md` remains unchanged because no roadmap phase/status changed.
+The maintenance slice is **developer-verified and closed**. `docs/Hive_Current_Status.md` remains unchanged because no roadmap phase/status changed.
 
 ## Closed maintenance pass — Hive.Persistence Production Audit Revision
 
