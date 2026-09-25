@@ -1,242 +1,178 @@
 ---
 name: hive-repository-workflow
-description: Govern all AI-agent work in the Hive repository using its repository authority, Active Work authorization gate, task-context lock, Continue/Revision/Maintenance/Architecture/Verification modes, production review, and verification handoff. Use whenever an agent works on Hive.
+description: Govern Hive agent work through repository bootstrap, explicit scope authorization, task-context locking, Continue/Revision/Maintenance/Architecture/Verification modes, and safe roadmap handoff. Use whenever working in the Hive repository.
 ---
 
 # Hive Repository Workflow
 
-Use this skill for all Hive repository work.
+Use this skill for Hive work. It defines workflow procedure; `AGENTS.md` remains the repository constitution and engineering authority.
 
-## Core principle
+## 1. Enter through repository authority
 
-The repository is the source of truth.
+Before changing implementation or repository state:
 
-This skill defines reusable workflow procedure. It does not replace or duplicate Hive's current architecture, roadmap, implementation state, or verification history.
+1. Read `AGENTS.md` completely.
+2. Read `docs/Hive_Current_Status.md`.
+3. Read `docs/Hive_Active_Work.md`.
+4. Read the relevant `docs/roadmap.md` section.
+5. Read the relevant `docs/architecture.md` sections.
+6. Read full `docs/architecture.md` when the task crosses projects, public APIs, persistence, orchestration, lifecycle, security, or durable state.
+7. For UI/Example work, read the relevant `docs/ui/` guidance.
+8. Inspect affected source/projects/references/tests/examples/configuration and responsibility owners.
 
-Always start by reading AGENTS.md. Follow its authority order and task-specific reading requirements.
+Determine the repository checkpoint from evidence. Do not use previous chat history as repository authority.
 
-## Entry and authorization gate
+## 2. Authorization gate
 
-Before implementation or repository-changing work:
-
-1. Read AGENTS.md completely.
-2. Read docs/Hive_Current_Status.md.
-3. Read docs/Hive_Active_Work.md.
-4. Read the relevant docs/roadmap.md section.
-5. Read the relevant docs/architecture.md sections.
-6. Read full docs/architecture.md when the task crosses projects, public APIs, persistence, orchestration, lifecycle, security, or durable state.
-7. For UI/Example work, read the relevant docs/ui/ guidance.
-8. Inspect the affected implementation, project references, tests, examples, configuration, and responsibility owners before changing anything.
-
-Determine the current repository checkpoint from evidence.
+`docs/Hive_Active_Work.md` is the only authority for the current implementation slice.
 
 ### Open Active Work
 
-When docs/Hive_Active_Work.md contains an open slice or maintenance pass:
+Continue only the authorized slice.
 
-- continue only that authorized work;
-- preserve its scope and verification gate;
-- do not start a later roadmap slice;
-- do not interpret "continue", "again", "revise", "polish", or "finish" as roadmap advancement.
+Do not:
+- start a later roadmap slice;
+- repeat already completed work;
+- silently widen scope;
+- interpret "continue", "again", "revision", "polish", or "finish" as roadmap advancement.
 
-### Governance/documentation exception
+### Governance/documentation work
 
-An explicitly requested governance, workflow-skill, or source-of-truth documentation task may modify only its affected governance/documentation files even when an unrelated implementation slice is open.
+An explicitly requested governance, workflow-skill, or source-of-truth documentation task may change only its affected governance/documentation files even when unrelated implementation Active Work is open.
 
-Such work must not:
-- modify unrelated implementation;
+It must not:
+- change unrelated implementation;
 - close or advance Active Work;
-- activate a roadmap slice;
-- treat the governance task as a substitute for implementation of the active slice.
+- activate roadmap work.
 
 ### Closed or absent Active Work
 
-A closed or absent Active Work item is a stop boundary for implementation.
+Stop implementation.
 
-Do not automatically activate the next roadmap slice.
+The roadmap defines order, not permission.
 
-The roadmap describes order, not permission.
+A future roadmap slice requires explicit user authorization such as `Hive: Start Phase 1.14` or `Hive: Start the next roadmap slice`.
 
-Only an explicit user instruction to advance the roadmap can authorize it, for example:
+## 3. Task-context lock
 
-- Hive: Start Phase 1.14
-- Hive: Start the next roadmap slice
-- Hive: Move to Phase 1.14
+At the start of a task, establish:
 
-If the user has not explicitly advanced the roadmap, report the state and stop rather than inventing new implementation scope.
-
-## Task-context lock
-
-When a task starts, treat these as the working context:
-
-- repository;
-- branch;
-- repository checkpoint;
-- Active Work item;
-- authorized slice;
-- mode;
-- domain;
+- repository and branch;
+- checkpoint;
+- Active Work item/slice;
+- mode and domain;
 - affected projects;
 - requested scope;
-- verification authorization.
+- execution/verification authorization.
 
-Subsequent Revision, Again, or Continue messages inherit that context unless the user explicitly changes it.
+`Continue`, `Revision`, `Again`, and similar short follow-ups inherit this context.
 
-Never broaden a later message into a new roadmap slice merely because the previous work appears complete.
+Do not infer a different task from the current Active Work merely because it is open.
 
-If a short command such as Revision arrives without enough prior-task context, do not infer a task from the current Active Work merely because it is the only open item. Stop before making changes and require an explicit task/context reference in the user instruction.
+If a Revision/Continue request lacks enough prior-task context to identify the intended work safely, stop before making changes and require an explicit task/context reference.
 
-## Modes
+## 4. Modes
 
-Use the mode requested by the user. Load references/modes.md when the mode is ambiguous or when detailed behavior is needed.
+Use the mode requested by the user:
 
-- Continue — continue the current authorized work.
-- Revision — re-check the work just completed, fix concrete issues within the inherited scope, and repeat the final review.
-- Maintenance — perform a production audit and correction pass within the authorized maintenance scope.
-- Architecture — reason about architecture and documentation; do not implement unless implementation is explicitly requested.
-- Verification — reconcile actual developer verification results with repository state and update the owning records from evidence.
-- Explicit advancement — only an explicit user instruction changes the roadmap slice.
+- **Continue** — continue the current task context.
+- **Revision** — re-review the work just performed, fix concrete issues within the inherited scope, and repeat the final review.
+- **Maintenance** — perform a production audit/correction pass within the authorized maintenance scope.
+- **Architecture** — analyze architecture/design; do not implement unless explicitly requested.
+- **Verification** — reconcile actual developer verification with repository state.
+- **Explicit advancement** — only explicit user authorization moves to another roadmap slice.
 
-Do not silently convert one mode into another.
+Read `references/modes.md` for the command cheat sheet.
 
-## Implementation and repository changes
+## 5. Revision
 
-Follow AGENTS.md for production engineering, architecture, tests, examples, documentation ownership, and Git rules.
+Revision is not a new task.
 
-Use the smallest correct change that satisfies the authorized task.
+Review the final result against:
 
-Prefer existing responsibility owners, contracts, extension points, persistence boundaries, MAF mechanisms, UI patterns, and dependencies.
+- the original request;
+- inherited scope and Active Work;
+- `AGENTS.md`;
+- architecture and relevant roadmap boundaries;
+- affected implementation and complete relevant diff;
+- tests/examples/documentation;
+- lifecycle, concurrency, cancellation, security, persistence, UI, or other boundary concerns that apply.
 
-Do not add speculative abstractions, duplicate implementations, unrelated cleanup, dependency upgrades, framework replacements, or hidden architectural changes.
+Fix every concrete issue found within the inherited scope.
 
-Do not weaken validation, authorization, cancellation, security, or failure visibility.
+Then review the corrected result again.
 
-Do not duplicate current status or architectural truth into skill files.
+A repeated Revision remains in the same context.
 
-## Verification boundary
+Read `references/revision-checklist.md` for the detailed checklist.
 
-Execution is not implied by this skill.
+## 6. Maintenance
 
-Unless the user explicitly authorizes execution under the repository rules, do not run:
+Maintenance is broader than Revision but remains scope-bound.
 
-- builds;
-- tests;
-- application launches;
-- migrations;
-- provider/network calls;
-- performance measurements;
-- other execution-based verification.
+Inspect first, identify concrete production problems, correct them, add focused regression coverage when required, inspect affected examples when externally meaningful, and perform a final review.
 
-Use precise evidence terms:
-
-- Inspected
-- Reasoned
-- Compiled
-- Automated-tested
-- Integration-tested
-- Manually verified
-- Not verified
-
-Never claim execution that did not occur.
-
-## Revision behavior
-
-Revision is a quality-control pass over the work just performed.
-
-A Revision must:
-
-1. identify the inherited task context;
-2. review the final implementation, not only the original code;
-3. compare the result against the user request;
-4. compare it against AGENTS.md, Active Work, architecture, roadmap scope, and relevant UI/implementation guidance;
-5. inspect the complete relevant diff;
-6. look for omissions, incorrect behavior, regressions, inconsistent contracts, lifecycle/cancellation/concurrency problems, security or persistence mistakes, duplicated responsibility, stale/dead code, missing test/example coverage, and accidental scope expansion;
-7. correct every concrete issue found that belongs to the inherited scope;
-8. review the corrected result again;
-9. preserve the existing verification gate.
-
-Revision is allowed to change code or owning documentation when a concrete issue is found.
-
-Revision is never permission to start future work.
-
-Repeated Revision requests remain in the same context until the user explicitly changes it.
-
-Load references/revision-checklist.md for the detailed Revision checklist.
-
-## Maintenance behavior
-
-Maintenance is broader than Revision but still bounded.
-
-A maintenance request should:
-
-1. inspect first;
-2. identify concrete production defects or quality gaps;
-3. correct only issues inside the authorized maintenance scope;
-4. add focused regression coverage when a discovered defect protects a real contract;
-5. inspect affected examples when public behavior changes;
-6. review the final implementation again;
-7. stop at the verification gate unless verification is explicitly supplied or authorized.
-
-Use references/maintenance-checklists.md for backend, WinForms/UI, and Host/UI boundary review areas.
+Use `references/maintenance-checklists.md` for domain-specific review areas.
 
 Maintenance never advances the roadmap.
 
-## Architecture behavior
+## 7. Architecture
 
-Architecture mode is for design and source-of-truth reasoning.
-
-Inspect the current architecture and actual implementation as necessary.
+Architecture mode separates design from implementation.
 
 Distinguish:
 
 - intended architecture;
-- implementation reality;
-- current authorized scope;
+- current implementation;
+- authorized current scope;
 - future roadmap possibilities.
 
-Do not implement a proposed architectural change merely because the discussion identified it.
+Do not implement a design discussed in Architecture mode unless the user explicitly asks to apply it.
 
-When the user explicitly asks to apply the architectural decision, switch to implementation only within the newly authorized scope.
+## 8. Verification
 
-## Verification reconciliation
+Verification begins with actual developer-supplied results.
 
-Verification mode starts from the developer's actual supplied results.
+Reconcile requested verification, actual results, current source state, and the Active Work completion gate.
 
-Reconcile:
+Record only what evidence supports.
 
-- requested verification;
-- actual results;
-- failures or omissions;
-- current source state;
-- Active Work verification gate;
-- historical verification requirements.
+Do not convert inspection/reasoning into testing.
 
-Record only what the evidence supports.
+Do not close Active Work or activate the next slice without the required real verification and authorization.
 
-Do not upgrade "inspected" or "reasoned" into "tested".
+## 9. Execution boundary
 
-Do not close Active Work until its completion gate is actually satisfied.
+Follow the execution rules in `AGENTS.md`.
 
-## Final review
+Execution is never implied merely by Continue, Revision, Maintenance, Architecture, or Verification.
 
-Before every implementation handoff or completed revision:
+When execution is not authorized, do not run builds, tests, launches, migrations, provider calls, or other execution-based verification.
+
+## 10. Final review and handoff
+
+Before implementation handoff or completed Revision:
 
 1. inspect the final diff;
-2. confirm scope remained inside the authorized context;
-3. confirm architecture and responsibility boundaries;
-4. inspect changed tests and examples;
-5. check for duplicate/dead/stale logic;
-6. verify documentation changes belong to the owning source-of-truth location;
-7. state exactly what changed;
-8. state exactly what was verified;
-9. state what remains unverified.
+2. confirm scope and architecture;
+3. inspect tests/examples/docs;
+4. check for accidental, duplicate, stale, or unrelated changes;
+5. report exactly what changed;
+6. report exactly what was verified;
+7. report what remains unverified.
+
+For pending verification, preserve the exact verification handoff required by `AGENTS.md`.
 
 ## Hard-stop rules
 
-- No explicit roadmap advancement -> no roadmap advancement.
-- No active slice -> no automatic implementation.
-- Maintenance -> never becomes roadmap work.
-- Revision -> never becomes roadmap work.
-- "Again" -> never means next phase.
-- "Continue" -> same authorized context unless the user explicitly changes it.
-- Completion of one slice -> does not authorize the next slice.
+**No explicit roadmap advancement -> no roadmap advancement.**
+
+**No prior task context -> no guessed Revision/Continue scope.**
+
+**Maintenance -> never becomes roadmap work.**
+
+**Revision -> never becomes roadmap work.**
+
+**"Again" -> same context, not next phase.**
+
+**Completion of one slice -> does not authorize the next slice.**
