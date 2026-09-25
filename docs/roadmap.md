@@ -243,19 +243,23 @@ Verify: focused host-context/image-fixture tests, bounded/cancellation/ownership
 ## 1.14 — Dual Business-App Integration Contract
 Type: architecture/contract implementation slice.
 
-Objective: establish Hive-owned neutral host-integration contracts and implement reusable WinForms integration infrastructure so a host application can integrate by implementing a small explicit contract surface, without exposing its private control/data/business framework to Hive.
+Objective: establish Hive-owned neutral host-integration contracts and a reusable WinForms implementation layer so a host application can adopt Hive with minimal integration code while keeping all host-private business semantics authoritative in the host.
 
 Design model:
-- Hive.Core owns the neutral host integration contracts.
-- The host application implements those contracts against its own forms, controls, data surfaces, business/application services, and lookup mechanisms.
-- Hive supplies as much reusable discovery, metadata projection, capability plumbing, lifecycle, cancellation, provenance, and authorization integration as can be implemented without knowing host-private semantics.
-- A host may implement contracts directly on application-owned types or through a small host adapter; the contract does not require a particular control/library architecture.
-- The reference WinForms implementation demonstrates the supported pattern without creating a dependency on any external/private host library.
+- Hive.Core owns the neutral host integration contracts and guarantees.
+- Hive provides reusable WinForms base forms/controls and bounded default implementations for common control/data-surface semantics.
+- A typical host can opt in by deriving application forms from `HiveForm` and using Hive-owned base controls such as `HiveTextBox`, `HiveComboBox`, `HiveDataGridView`, and other justified common controls.
+- Common integration metadata and capabilities should work automatically through deterministic conventions/defaults; explicit host metadata and semantic hooks override those defaults when the application meaning cannot be safely inferred.
+- Host-specific business semantics remain host-owned: authoritative parent/child relationships, application-specific field meaning, lookup resolution, validation/save semantics, and business/application actions.
+- Existing native/custom WinForms controls that cannot or should not derive from Hive controls remain supported through the bounded adapter/semantic-provider path.
+- Hive must not turn the base-control layer into a complete replacement WinForms toolkit or expose host-private control libraries, SQL, credentials, arbitrary reflection, or unrestricted invocation through the neutral boundary.
 
 Scope:
 - host-neutral Core-defined contracts for host registration/context, semantic controls, data surfaces, fields, stable row identity, lookups, bounded UI interaction, and business-operation capabilities needed for API/UI composition;
-- reusable bounded WinForms discovery/adaptation infrastructure over native/custom controls where semantics are standard;
-- host implementation hooks for application-specific semantics that Hive cannot safely infer;
+- reusable bounded WinForms base forms/controls that implement the neutral contracts without leaking presentation or host-private business semantics into Hive.Core;
+- deterministic default metadata/capability behavior for common WinForms controls, including safe conventions for control/field/surface identity where inference is reliable;
+- explicit override points for host-specific field/surface names, generated/computed semantics, primary-key row identity, parent/child relationships, lookup dependencies, and other business-specific meaning;
+- bounded WinForms discovery/adaptation over native/custom controls where base-control inheritance is not practical or desired;
 - explicit parent/child data-surface relationships where the host provides them, including combined parent/child save semantics when supported by the host;
 - stable row identity using the current V1 primary-key ID contract; row index is positional only;
 - generated-field and computed-field semantics without requiring a particular implementation mechanism;
@@ -269,30 +273,28 @@ Known V1 host semantics represented by the contracts:
 - generated and computed fields are semantic states; their internal implementation remains host-owned;
 - child editing is supported and parent/child changes may form one combined business operation;
 - ordinary host save behavior is supported without requiring an optimistic-concurrency token;
-- DataGridView row-index editing behavior remains a host implementation detail rather than a separate Hive identity model.
+- DataGridView row-index handling remains positional and must not replace stable primary-key identity.
 
-Remaining contract-definition work:
-- exact neutral public type shapes and bounded operation semantics;
-- reusable default/base implementations for common WinForms patterns where they reduce host-side code without hiding application semantics;
-- exact context/discovery-to-capability transition;
-- exact bounded lookup request/result context;
-- generated/computed field representation and resulting values;
-- stable ID row mapping and child-row mutation semantics;
-- contract-level cancellation, lifecycle, provenance, and disposal;
-- contract-test and reference-fixture strategy.
-
-The host-specific implementation remains outside the Hive public contract. Hive documentation must not encode private host classes, private control libraries, private SQL, or private business conventions.
+Phase 1.14 revision work:
+- define the reusable Hive WinForms base-control/form hierarchy and ownership boundary;
+- define automatic/default semantic metadata behavior and deterministic convention rules;
+- define explicit host override points so application-specific semantics remain visible and authoritative;
+- implement justified common base controls without creating a complete control toolkit;
+- connect base-control metadata/capabilities to the existing neutral contracts and Management authorization path;
+- preserve the existing adapter/semantic-provider compatibility path for controls that cannot use Hive base types;
+- extend the deterministic reference host/example to prove the low-code host integration path and the explicit-override path;
+- extend focused contract/WinForms tests for defaults, overrides, lifecycle, disposal, stable IDs, generated/computed fields, child surfaces, lookups, authorization, and unsupported/malformed cases.
 
 Verify:
-- neutral contract behavior with a deterministic reference host/fixture that implements the Hive contracts;
-- reusable WinForms discovery/adaptation for native/custom controls;
-- host-provided stable primary-key ID identity and positional row-index behavior;
-- generated/computed fields and child editing/combined parent-child operation semantics;
-- bounded dependent lookup resolution without arbitrary SQL execution;
-- authorization denial even when the host exposes an action;
-- API-only, UI-only, and combined API+UI operation paths;
-- registration/disposal/cancellation/lifecycle behavior;
-- provenance and operation correlation.
+- a minimal host Form can derive from the Hive base form and gain bounded integration behavior without manually constructing neutral descriptors for every standard control;
+- standard Hive base controls automatically expose safe default field/surface/capability metadata;
+- explicit host overrides replace defaults deterministically without bypassing Hive authorization;
+- parent/child surfaces, stable primary-key identity, generated/computed fields, and bounded dependent lookup semantics remain correct;
+- non-inheriting native/custom controls continue to work through the bounded adapter/semantic-provider path;
+- authorization is enforced before consequential capability execution;
+- API-only, UI-only, and API+UI composition remains represented under one logical correlation;
+- registration/disposal/cancellation/lifecycle and provenance remain correct;
+- no host business write is introduced in this slice.
 
 ## 1.15 — Input Preparation & Routing
 Objective: prepare supported V1 input sources and route each source through the capability required to produce structured candidate data.
