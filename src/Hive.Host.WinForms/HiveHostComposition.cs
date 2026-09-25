@@ -22,6 +22,7 @@ public sealed class HiveHostComposition : IDisposable
     private readonly IHiveConfigurationStore _configurationStore;
     private readonly IHiveHostServiceGraphFactory _graphFactory;
     private readonly SemaphoreSlim _reconfigurationGate = new(1, 1);
+    private readonly CancellationTokenSource _lifetimeCts = new();
 
     private HiveHostServiceGraph? _current;
     private HiveHostCompositionStatus _status =
@@ -74,6 +75,7 @@ public sealed class HiveHostComposition : IDisposable
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
             return;
 
+        _lifetimeCts.Cancel();
         _reconfigurationGate.Wait();
 
         try
@@ -92,6 +94,7 @@ public sealed class HiveHostComposition : IDisposable
         {
             _reconfigurationGate.Release();
             _reconfigurationGate.Dispose();
+            _lifetimeCts.Dispose();
         }
 
         GC.SuppressFinalize(this);
@@ -103,14 +106,21 @@ public sealed class HiveHostComposition : IDisposable
     {
         ThrowIfDisposed();
 
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken,
+            _lifetimeCts.Token);
+        var operationToken = linkedCts.Token;
+
         await _reconfigurationGate
-            .WaitAsync(cancellationToken)
+            .WaitAsync(operationToken)
             .ConfigureAwait(false);
 
         try
         {
+            operationToken.ThrowIfCancellationRequested();
+
             var configuration = await _configurationStore
-                .LoadPersistenceConfigurationAsync(cancellationToken)
+                .LoadPersistenceConfigurationAsync(operationToken)
                 .ConfigureAwait(false);
 
             if (configuration.IsFailure)
@@ -127,6 +137,8 @@ public sealed class HiveHostComposition : IDisposable
                 current is not null &&
                 current.PersistenceConfiguration == configuration.Value)
             {
+                operationToken.ThrowIfCancellationRequested();
+
                 _status = new HiveHostCompositionStatus(
                     HiveHostCompositionState.Ready,
                     null);
@@ -137,8 +149,10 @@ public sealed class HiveHostComposition : IDisposable
             var candidate = await _graphFactory
                 .CreateAsync(
                     configuration.Value!,
-                    cancellationToken)
+                    operationToken)
                 .ConfigureAwait(false);
+
+            operationToken.ThrowIfCancellationRequested();
 
             if (candidate.IsFailure)
             {
