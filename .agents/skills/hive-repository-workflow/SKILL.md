@@ -117,6 +117,8 @@ Once the authorization and verification gates permit implementation, every produ
 - concurrency, supersession, stale-result protection, and idempotency where relevant;
 - lifecycle, state transitions, disposal, and resource ownership;
 - deterministic behavior and safe recovery/failure isolation;
+- diagnostics, logging/telemetry, and error observability without leaking secrets or sensitive data;
+- performance, allocation, I/O, timeout/budget, and resource-use behavior where contractually relevant;
 - correct project/owner, dependency direction, and reuse of existing responsibilities;
 - no duplicate implementation, hidden coupling, speculative abstraction, or unrelated behavior change;
 - security, authorization/ownership/scope, credential/secret isolation, and safe error disclosure where relevant;
