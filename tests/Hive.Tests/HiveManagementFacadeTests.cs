@@ -154,10 +154,10 @@ public sealed class HiveManagementFacadeTests
             reloaded.Value!.ConfiguredExecutionTargetId);
         Assert.Equal(
             retired.Value.Resource.Version,
-            reloaded.Value.Resource.Version);
+            reloaded.Value.Resource?.Version);
         Assert.Equal(
             retired.Value.Resource.Lifecycle.Status,
-            reloaded.Value.Resource.Lifecycle.Status);
+            reloaded.Value.Resource?.Lifecycle.Status);
     }
 
     [Fact]
