@@ -117,6 +117,9 @@ public sealed class HiveWorkspaceView : UserControl
             _accessContext,
             cancellationToken: token).ConfigureAwait(true);
 
+        if (token.IsCancellationRequested || IsDisposed || Disposing)
+            return;
+
         if (result.IsFailure)
         {
             if (!IsDisposed && !Disposing)
@@ -215,9 +218,13 @@ public sealed class HiveWorkspaceView : UserControl
                     _accessContext,
                     token).ConfigureAwait(true);
 
+                if (token.IsCancellationRequested || IsDisposed || Disposing)
+                    return;
+
                 if (result.IsFailure)
                 {
-                    ShowError(result.Error!);
+                    if (!IsDisposed && !Disposing)
+                        ShowError(result.Error!);
                     return;
                 }
 
@@ -320,9 +327,13 @@ public sealed class HiveWorkspaceView : UserControl
         string successTitle,
         CancellationToken cancellationToken)
     {
+        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+            return;
+
         if (result.IsFailure)
         {
-            ShowError(result.Error!);
+            if (!IsDisposed && !Disposing)
+                ShowError(result.Error!);
             await RefreshCoreAsync(cancellationToken).ConfigureAwait(true);
             return;
         }
@@ -378,6 +389,9 @@ public sealed class HiveWorkspaceView : UserControl
             workItem.Id,
             _accessContext,
             cancellationToken).ConfigureAwait(true);
+
+        if (cancellationToken.IsCancellationRequested)
+            return;
 
         if (activity.IsFailure)
         {
@@ -504,7 +518,9 @@ public sealed class HiveWorkspaceView : UserControl
         }
         catch (Exception exception)
         {
-            if (!IsDisposed && !Disposing)
+            if (!operationCts.IsCancellationRequested &&
+                !IsDisposed &&
+                !Disposing)
             {
                 ShowError(
                     new Error(
