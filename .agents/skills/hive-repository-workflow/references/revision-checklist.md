@@ -6,6 +6,7 @@ Revision asks whether the work just performed is complete, correct, production-g
 
 - Exact task, mode, domain, and scope
 - Active Work authorization, or establishment of a temporary slice from an explicit new bounded non-roadmap corrective task when no slice is open, after confirming the entire request restores/preserves/corrects existing behavior rather than adding capability; confirm the new slice is recorded before implementation
+- For workflow/governance revisions, current-state documents are changed only when repository evidence requires reconciliation; never use them to manufacture authorization, verification, closure, or roadmap advancement
 - Respect any developer-verification gate before implementation-affecting changes
 - If verification failed, confirm the remediation state is recorded in Active Work before implementation resumes
 - No future roadmap work
