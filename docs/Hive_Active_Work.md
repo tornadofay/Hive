@@ -2,7 +2,7 @@
 
 ## Phase 1.14 — Dual Business-App Integration Contract (Reopened Revision)
 
-Status: IMPLEMENTATION AUTHORIZED
+Status: VERIFICATION PENDING
 
 Opened: 2026-09-26
 
@@ -66,10 +66,15 @@ Defaults must be deterministic and explicit overrides must not bypass authorizat
 
 Lifecycle/disposal must never dispose host-owned application objects merely because Hive integration is disposed.
 
+
+### Implementation checkpoint
+
+The authorized Phase 1.14 revision implementation is complete and has been placed at the verification gate. The change adds the bounded Hive-owned WinForms base form/control layer, deterministic automatic control/surface/capability identities, explicit field/surface semantic overrides, parent/child relationship materialization, and preserves the existing semantic-provider path for custom/ordinary controls. The adapter remains non-owning of host application controls and forms.
+
 ### Verification handoff
 
 Example to run: Host / WinForms Integration / Dual Business-App Integration Contract — Hive.Example.WinForms
 
-Tests to run: HiveHostIntegrationContractTests; HiveWinFormsHostIntegrationTests; any new focused Phase 1.14 base-control tests added by this revision; broader Hive.Tests suite after focused coverage passes.
+Tests to run: HiveHostIntegrationContractTests; HiveWinFormsHostIntegrationTests; HiveWinFormsBaseControlIntegrationTests; broader Hive.Tests suite after focused coverage passes.
 
 No build, test, launch, or integration execution has been performed by the agent.
