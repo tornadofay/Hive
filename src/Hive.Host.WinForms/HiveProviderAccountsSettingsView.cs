@@ -169,7 +169,16 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
         _page.AllowAdd = false;
         _page.SetStatus("Select a Provider to manage its accounts and credentials.");
 
-        await _page.RefreshAsync(cancellationToken).ConfigureAwait(true);
+        _providerComboBox.Enabled = false;
+        try
+        {
+            await _page.RefreshAsync(cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            if (!IsDisposed && !Disposing)
+                _providerComboBox.Enabled = true;
+        }
     }
 
     private async void ProviderComboBoxOnSelectedIndexChanged(
