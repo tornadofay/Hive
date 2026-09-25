@@ -467,7 +467,7 @@ public sealed class OpenAICompatibleProviderAdapterTests
             server.BaseUri);
 
         var result = await new OpenAICompatibleProviderConnectionTester()
-            .TestAsync(provider, account, target);
+            .TestAsync(provider, account, target, null);
 
         Assert.True(result.IsFailure);
         Assert.Equal(
@@ -510,7 +510,7 @@ public sealed class OpenAICompatibleProviderAdapterTests
             server.BaseUri);
 
         var result = await new OpenAICompatibleProviderConnectionTester()
-            .TestAsync(provider, account, target);
+            .TestAsync(provider, account, target, null);
 
         Assert.True(result.IsFailure);
         Assert.Equal(
@@ -553,7 +553,7 @@ public sealed class OpenAICompatibleProviderAdapterTests
             server.BaseUri);
 
         var result = await new OpenAICompatibleProviderConnectionTester()
-            .TestAsync(provider, account, target);
+            .TestAsync(provider, account, target, null);
 
         Assert.True(result.IsFailure);
         Assert.Equal(
