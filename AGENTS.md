@@ -1,274 +1,131 @@
 # Hive AI Agent Operating Rules
 
-This file is the repository operating constitution. Keep it small. Detailed architecture, APIs, roadmap, UI usage, and implementation guidance belong in the documents named below.
+This file is the repository operating constitution. Keep it compact. Detailed architecture, APIs, UI guidance, and review checklists belong in their owning documents.
 
-## 1. Source of truth
+## 1. Authority
 
-Use this authority order:
+Use this order:
 
-1. `AGENTS.md` — agent workflow and repository rules.
-2. `docs/architecture.md` plus the relevant `docs/architecture/*.md` detail documents — intended architecture and ownership.
-3. `docs/Hive_Active_Work.md` — only the current authorized implementation slice and verification gate; it is current-state only, not historical storage.
+1. `AGENTS.md` — workflow and non-negotiable repository rules.
+2. `docs/architecture.md` and relevant `docs/architecture/*.md` — intended architecture and ownership.
+3. `docs/Hive_Active_Work.md` — current authorized implementation slice and verification gate.
 4. `docs/roadmap.md` — ordered future work.
-5. Source/project files — actual implementation.
-6. Tests — behavior actually exercised by tests.
-7. `docs/Hive_Current_Status.md` — current phase/status record only; it does not store verification history.
-8. `docs/verification/` — historical verification evidence only.
-9. `docs/examples/` and `docs/ui/` — practical usage guidance.
+5. Source/project files — implementation reality.
+6. Tests — behavior actually exercised.
+7. `docs/Hive_Current_Status.md` — current status only.
+8. `docs/verification/` — historical verification evidence.
+9. `docs/ui/` and `docs/examples/` — usage guidance.
 10. `README.md` — project overview.
 
-When sources conflict:
-- architecture governs intended structure;
-- source governs implementation reality;
-- Active Work governs current scope;
-- roadmap governs order, not permission to skip work;
-- status never turns an unverified claim into a fact.
-
-Do not use previous chat history as repository authority.
+Architecture defines intended structure, source defines implementation reality, Active Work defines current scope, roadmap defines order, and status never turns an unverified claim into a fact. Previous chat history is not repository authority.
 
 ## 2. Before changing code
 
-For agents that support repository-local skills, use `.agents/skills/hive-repository-workflow/SKILL.md` as the reusable Hive workflow procedure for Hive tasks, including implementation, Revision, Maintenance, Architecture, Verification, and governance/workflow-documentation work. The skill is subordinate to this file and does not replace its rules.
+Read, in order:
 
-Read:
 1. this file;
 2. `docs/Hive_Current_Status.md`;
 3. `docs/Hive_Active_Work.md`;
-4. the relevant `docs/roadmap.md` slice;
-5. the relevant `docs/architecture.md` sections and corresponding `docs/architecture/*.md` detail documents.
+4. the relevant roadmap section;
+5. the relevant architecture sections;
+6. the relevant UI guidance for UI/Example work.
 
-For UI/Example work, also read the relevant `docs/ui/` guide.
+Then inspect affected projects, source, tests, examples, configuration, references, and responsibility owners. Determine the repository checkpoint from evidence.
 
-Then inspect the affected projects, references, source, tests, examples, configuration, and package references.
+If Active Work establishes a verification gate, stop implementation-affecting work at that gate.
 
-Determine the current repository checkpoint from evidence.
+## 3. Scope and authorization
 
-First determine whether Active Work establishes a developer-verification gate. If it does, stop implementation at that gate before considering any continuation or new implementation request.
+Active Work is the maximum implementation boundary.
 
-If the Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, stop new implementation at that gate. No implementation-affecting `Continue`, `Revision`, `Maintenance`, `Again`, or similar follow-up may silently cross it. A newly worded implementation request does not supersede the gate.
+- Continue, Revision, Again, Polish, and Maintenance inherit the current task/scope; they never advance the roadmap.
+- A new roadmap slice requires explicit user authorization such as `Hive: Start Phase X.Y`.
+- Do not silently widen scope, replace the current slice, or implement future work.
+- If Active Work is closed/absent, an explicitly requested bounded non-roadmap corrective task may create a temporary Active Work slice before implementation, but only when repository evidence confirms it restores, preserves, or corrects existing behavior without adding capability or materially expanding a public contract.
+- Mixed corrective + feature work does not qualify for auto-opening unless the user explicitly separates the scopes.
+- If a corrective task discovers work requiring a new capability, material public-contract expansion, or another roadmap slice, stop that portion and require separate authorization.
+- A governance/workflow-documentation task may update its affected documentation even when implementation Active Work is open, but must not alter unrelated implementation or manufacture authorization.
 
-When the developer supplies verification results:
-- if all required verification succeeds, perform the normal evidence-backed closure transition;
-- if verification exposes failures, defects, compiler errors, or unmet required behavior within the authorized slice, enter a **VERIFICATION FAILED / REMEDIATION REQUIRED** state through the Verification workflow;
-- record that state transition in `docs/Hive_Active_Work.md` **before making any remediation implementation change**;
-- once the transition is recorded, same-slice remediation may fix every concrete issue needed for the authorized contract, including root-cause corrections and focused regression coverage; it does not create a new roadmap slice;
-- after remediation, return Active Work to **VERIFICATION PENDING** and require the affected verification to be rerun;
-- if remediation would require a new capability, material public-contract expansion, or work outside the authorized slice, stop that portion and require separate authorization.
+## 4. Verification
 
-A verification gate therefore pauses implementation; it does not permanently dead-lock a slice after failed developer verification. A separate governance/documentation task may proceed only within its explicitly authorized documentation scope and must not weaken or remove the verification gate.
+Verification is a hard gate between implementation and evidence.
 
-If Active Work has an open implementation slice and no verification gate, continue that slice exactly. Do not implement later roadmap work.
+When developer results arrive:
 
-An agent must not edit `docs/Hive_Active_Work.md`, `docs/Hive_Current_Status.md`, the roadmap, or another source-of-truth document merely to manufacture authorization, remove, weaken, or bypass authorization or a verification gate. However, when Active Work is closed or absent, an explicitly requested new bounded non-roadmap corrective task is itself authorization to establish a temporary Active Work slice before implementation. This includes maintenance, audit, polish, bug-fix, and regression-fix work only when the entire request restores, preserves, or corrects existing documented/contracted/implemented behavior and does not add a new capability or materially expand a public contract. A mixed request containing both corrective work and a new capability/feature cannot use the auto-open rule; separate the scopes only when the user explicitly authorizes that separation. Before treating a request as corrective work, compare it with the roadmap and current architecture; if any requested portion would implement a roadmap capability, new public behavior, or an ambiguous future requirement, require explicit roadmap/task authorization instead. The temporary slice must record exactly the authorized corrective scope and must not activate, imply, or incorporate a later roadmap slice.
+1. all required checks pass → close through the normal evidence-backed workflow;
+2. failures, compiler errors, or unmet required behavior within scope → record `VERIFICATION FAILED / REMEDIATION REQUIRED` in Active Work **before** changing implementation;
+3. perform same-slice remediation to production depth;
+4. return Active Work to `VERIFICATION PENDING` with the exact rerun targets;
+5. require developer re-verification.
 
-If Active Work is closed or absent:
-- an explicitly requested new bounded non-roadmap corrective task may establish a new temporary Active Work slice scoped exactly to that request before implementation, only after confirming from repository evidence that the entire request is corrective rather than new capability work; the new slice must be recorded in Active Work before implementation changes begin;
-- generic `Continue`, `Again`, or similar continuation language does not create a new task or slice when no prior authorized task exists;
-- `Revision` does not invent a task when no prior task context exists;
-- a new capability/feature, new public behavior, or roadmap implementation request requires explicit roadmap authorization;
-- roadmap advancement still requires explicit user authorization.
+Out-of-scope or new-capability failures require separate authorization.
 
-A maintenance, audit, polish, bug-fix, regression-fix, revision, or "again/continue" request does not authorize a later roadmap slice. If corrective work later reveals that a fix requires a new capability or material public-contract expansion, stop that portion rather than widening the temporary slice and require separate authorization. Establishing a temporary slice from an explicit new non-roadmap corrective task is task authorization only; it is not roadmap advancement.
+Never claim a build, test, integration, manual check, or provider result that did not actually happen.
 
-`docs/Hive_Active_Work.md` must contain only the current slice. Do not append closed slices or historical checkpoints to it. When a slice is closed, preserve historical verification evidence under `docs/verification/`, update `docs/Hive_Current_Status.md` when its status record changes, and then reduce `docs/Hive_Active_Work.md` to the minimal no-active-slice state unless another slice is being explicitly established. When opening a new temporary or roadmap-authorized slice, replace the inactive placeholder with only that new current slice; do not retain prior closed slices in the file.
+Use these terms precisely: Inspected, Reasoned, Compiled, Automated-tested, Integration-tested, Manually verified, Not verified.
 
-Revision means re-reviewing the immediately preceding work within its inherited mode, domain, scope, and active slice. Revision may correct concrete issues within that inherited scope but must never advance the roadmap.
+By default, do not run builds, tests, launches, migrations, performance measurements, or external integrations unless the user authorizes execution or the repository workflow explicitly requires it.
 
-## 3. Scope and engineering depth
+## 5. Engineering standard
 
-Default rule: **keep the implementation scope as small as necessary to satisfy the authorized requirement, but make the engineering work complete and production-grade within that scope.**
+Keep implementation scope bounded, but make the engineering work complete and production-grade within that scope. Do not optimize for the fewest lines or files.
 
-Do not optimize for the fewest lines, fewest files, or narrowest patch when deeper correction is required for correctness, lifecycle safety, concurrency, security, persistence, contracts, maintainability, or other production concerns.
+Within the affected boundary, correct root causes and relevant supporting problems involving correctness, contracts/nullability, validation/errors, cancellation/async behavior, concurrency, lifecycle/disposal, determinism/recovery, observability, performance/I/O, authorization/security, persistence, compatibility, tests, examples, or documentation as applicable.
 
-Maintenance, Revision, implementation, polish, optimization, and verification-remediation work use the same production engineering standard. The task mode changes the purpose and authorization boundary, not the required engineering depth.
+Do not perform unrelated refactoring, speculative abstraction, dependency upgrades without requirement, or symptom-only workarounds when a root-cause fix is required.
 
-Do not:
-- implement future slices;
-- refactor unrelated code;
-- perform drive-by cleanup outside the authorized requirement;
-- add speculative abstractions;
-- upgrade dependencies without a concrete requirement;
-- replace working technology for preference;
-- silently widen scope or change behavior;
-- stop at a symptom-level workaround when a concrete root-cause correction is required within scope.
+## 6. Architecture and safety
 
-Supporting changes are allowed when required to make the authorized behavior correct, reliable, maintainable, testable, or production-safe.
+Preserve the architecture in `docs/architecture.md`. In particular:
 
-Governance/documentation tasks explicitly requested by the user may change the affected source-of-truth files even when an unrelated implementation slice is open, but must not modify unrelated implementation, close/advance Active Work, or activate roadmap work.
-
-## 4. Architecture
-
-Preserve the boundaries in `docs/architecture.md`.
-
-Key non-negotiables:
-- Hive.Core remains dependency-light and host/provider neutral.
-- SQL/database access stays inside `Hive.Persistence` or an explicitly authorized persistence boundary.
+- Hive.Core stays dependency-light and host/provider neutral.
+- Persistence/database access stays in `Hive.Persistence` or an explicitly authorized persistence boundary.
 - `Hive.Management` owns management/application operations.
-- `Hive.Host.WinForms` must not bypass `Hive.Management`.
+- `Hive.Host.WinForms` does not bypass `Hive.Management`.
 - `Hive.Host.WinForms.UI` owns Hive WinForms presentation.
-- Hive.Example.WinForms is a consumer/example host, not a platform dependency.
-- Use Microsoft Agent Framework where it already owns the required mechanism; do not build a second orchestration engine for the same responsibility.
-- Preserve explicit Agent/Hive generations; do not add runtime promotion/demotion.
+- `Hive.Example.WinForms` is a consumer/example host, not a platform dependency.
+- Use MAF where it already owns the required orchestration mechanism; do not build a second orchestration engine.
 - Authorization is enforced in code, never by prompts, UI visibility, or model output.
 - Host business state remains host-owned; Hive persistence remains separate.
-- Do not introduce architectural changes silently. Escalate ambiguous or breaking decisions.
+- Do not expose secrets, private host types, SQL, arbitrary reflection/invocation, or unrestricted host control authority through neutral Hive contracts.
+- Before adding an abstraction, identify the existing responsibility owner and reuse it when the contract fits.
 
-Before creating a new abstraction, find the existing responsibility owner and reuse it when the contract fits.
-
-## 5. Production implementation
-
-New production code must be production-ready for the active contract, not a prototype or happy-path stub.
-
-Apply the requirements that matter to the boundary:
-- validation and clear errors;
-- nullable/public API correctness;
-- cancellation and async behavior;
-- concurrency/lifecycle correctness;
-- authorization/security;
-- deterministic resource ownership/disposal;
-- persistence consistency and constraints;
-- compatibility and extensibility where required.
-
-Prefer the simplest design that fully satisfies the contract. Do not add abstraction without a real boundary, substitution, volatility, ownership, or testability reason.
-
-Never silently swallow failures or expose secrets.
-
-## 6. Dependencies and persistence
-
-Before adding a dependency, inspect existing references and versions.
-
-Prefer:
-1. existing Hive architecture;
-2. .NET/framework capability;
-3. MAF where applicable;
-4. existing dependencies/boundaries.
-
-Do not upgrade packages/frameworks merely because newer versions exist.
-
-Persistence rules:
-- parameterized SQL;
-- appropriate indexes for repeated lookups;
-- explicit transaction boundaries where required;
-- database constraints for concurrency-sensitive invariants;
-- explicit ordered/repeatable migrations;
-- no silent durable-schema or persistence-semantic changes.
-
-## 7. Example and test requirements
+## 7. Tests, examples, and UI
 
 `Hive.Tests` is the authoritative automated test project.
 
-Every new meaningful capability requires the focused automated coverage appropriate to its boundary.
+Every new meaningful capability needs focused coverage. Every new meaningful externally usable capability also needs a matching `Hive.Example.WinForms` scenario using public contracts and deterministic/reproducible fixtures.
 
-Every new meaningful externally usable capability also requires a matching `Hive.Example.WinForms` scenario in the same implementation run.
-
-Examples must:
-- use supported public APIs;
-- be reproducible and understandable;
-- use the established Example Host discovery pattern;
-- not use test-only shortcuts or private production helpers.
-
-Use `docs/ui/examples.md` for the exact Example Host pattern and tree placement.
-
-Final handoff for a capability requiring an Example MUST contain:
+Use `docs/ui/examples.md` for the Example Host pattern. Capability handoff must preserve:
 
 ```text
 Example to run: <exact Category / Subcategory / optional AdditionalNavigationPath / Example title> — Hive.Example.WinForms
 Tests to run: <exact focused test class/file>; broader-suite requirement if applicable
 ```
 
-When verification is pending, keep the same exact Example path and test target in `docs/Hive_Active_Work.md`.
+For UI/Example changes, follow `docs/ui/` guidance. Reuse existing Hive UI APIs; keep reusable controls free of SQL/provider transport/authorization policy. User-visible failures use `HiveMessageBox` and the Output panel when available.
 
-## 8. UI rules
+## 8. Source-of-truth documents
 
-Use the existing Hive UI API before creating a new UI abstraction.
+- `docs/Hive_Active_Work.md` is current-state only: keep only the current slice, checkpoint, scope, and verification handoff/state.
+- `docs/Hive_Current_Status.md` is current status only.
+- `docs/verification/` stores historical verification evidence and must remain auditable; do not overwrite an earlier attempt with a later result.
+- `docs/roadmap.md` is the ordered plan, not permission to skip authorization.
+- `.agents/skills/` contains reusable workflow procedure and checklists, not current Hive state or architecture.
+- Do not document planned behavior as implemented.
 
-For UI/Example changes:
-- read `docs/ui/README.md`;
-- use the relevant `docs/ui/controls.md`, `forms.md`, or `examples.md`;
-- use native WinForms when no Hive-specific contract is needed;
-- do not create Hive wrappers merely to rename native controls;
-- preserve theme, focus/selection, responsiveness, thread affinity, and resource ownership;
-- user-visible UI errors/failures must be reported through `HiveMessageBox` and, when an `IHiveExampleOutput` sink is available, the active Output panel;
-- unexpected exceptions should include technical details in the MessageBox details section and Output panel while never exposing secrets;
-- cancellation and expected validation feedback are not treated as unexpected exceptions;
-- do not put SQL, provider transport, or authorization policy into reusable UI controls.
+When a slice closes, archive historical verification evidence as needed, update Current Status from real evidence, then remove the closed slice from Active Work and leave only the minimal no-active-slice state unless another slice is already authorized.
 
-Manual UI correctness is established only by actual developer/manual verification when required by the active slice.
+## 9. Git and final review
 
-## 9. Verification
-
-Never claim verification that did not happen.
-
-Use precise terms:
-- **Inspected** — source/document inspection only.
-- **Reasoned** — behavior derived without execution.
-- **Compiled** — an actual successful build.
-- **Automated-tested** — tests actually ran.
-- **Integration-tested** — integration boundary actually ran.
-- **Manually verified** — developer actually exercised the behavior.
-- **Not verified** — not executed/established.
-
-By default, do not run builds, tests, application launches, migrations, performance measurements, or external integrations unless explicitly authorized by the user or required by the repository workflow for the requested task.
-
-Never invent results, test counts, provider responses, migration results, or performance data.
-
-## 10. Documentation
-
-Update only the source-of-truth document whose state changed:
-
-- `docs/architecture.md` — intended architecture/ownership/contracts.
-- `docs/Hive_Active_Work.md` — current scope/checkpoint/verification gate.
-- `docs/roadmap.md` — ordered implementation plan.
-- `docs/Hive_Current_Status.md` — actual phase/status only; link to historical verification records rather than copying them here.
-- `docs/verification/` — historical records of verification actually performed.
-- Historical verification records are evidence-preserving records: do not overwrite an earlier verification attempt with a later result. Create a new dated record or clearly separate subsequent verification/remediation evidence so the original result remains auditable.
-- `docs/ui/` — concise UI/Example API usage.
-- `docs/examples/` — public usage/reference examples.
-- `.agents/skills/` — reusable agent workflow skills; these define procedure, not current Hive state or architecture.
-- `README.md` — project-facing overview.
-
-Do not document planned behavior as implemented.
-Do not copy detailed architecture or API manuals into `AGENTS.md`.
-
-## 11. Slice completion
-
-Do not close a slice merely because code is written or because one verification attempt passed.
-
-A slice closes only after:
-1. required implementation exists;
-2. required tests/examples/docs exist;
-3. required verification has actually been performed;
-4. the historical verification evidence is archived under `docs/verification/` when applicable;
-5. Active Work and Status are updated from real results;
-6. the closed slice is removed from `docs/Hive_Active_Work.md`, leaving only the minimal current no-slice state unless another slice is already authorized;
-7. the next slice is authorized.
-
-`docs/Hive_Active_Work.md` is a current-state control document, not a changelog. Never leave a closed slice in it merely for history.
-
-When execution is not authorized, hand off exact verification targets and leave the gate open.
-
-## 12. Git and repository hygiene
-
-- Normal work goes directly to `main` unless explicitly instructed otherwise.
-- Do not create branches/PRs unless requested.
-- Preserve unrelated developer changes.
-- Never reset, clean, overwrite, or force-resolve work you did not create.
-- Never rewrite published history or force-push unless explicitly instructed.
-- Keep commits focused and logically scoped.
-- Do not commit secrets, local environment files, build artifacts, or machine-specific output.
-- If remote `main` changed concurrently, reconcile before updating it.
-
-## 13. Final review
+Work directly on `main` unless explicitly instructed otherwise. Do not create branches/PRs, rewrite history, force-push, or overwrite unrelated changes unless requested.
 
 Before handoff:
-1. review the diff and affected files;
-2. check for accidental edits and dead/stale code;
-3. confirm scope and architecture;
-4. confirm required tests/examples/docs exist;
-5. report exactly what changed;
-6. report exactly what was verified;
-7. explicitly state what remains unverified.
+
+1. review the relevant diff and affected files;
+2. confirm scope, architecture, tests/examples/docs, and absence of accidental or stale changes;
+3. report exactly what changed, exactly what was verified, and what remains unverified.
 
 ## Final rule
 
-**Use repository evidence. Continue only the authorized slice. Keep scope bounded, but make the engineering work complete and production-grade within that scope. Preserve architecture and boundaries. Add required tests/examples. Verify only what actually ran. Keep detailed knowledge in the owning docs, not here.**
+**Use repository evidence. Stay inside the authorized slice. Keep scope bounded and engineering depth production-grade. Preserve architecture. Add required tests/examples. Verify only what actually ran. Keep detailed knowledge in the owning docs.**
