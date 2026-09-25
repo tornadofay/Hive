@@ -113,7 +113,7 @@ Registration and capture provenance contains the Hive resource access identity s
 
 ### 4.1.2 Contract-first Host Integration
 
-Phase 1.14 establishes Hive-owned, host-neutral public contracts for V1 host integration. The host application implements those contracts against its own forms, controls, data surfaces, business objects, and application services.
+Phase 1.14 establishes Hive-owned, host-neutral public contracts for V1 host integration plus a reusable WinForms implementation layer that reduces the amount of integration code required in a typical host application.
 
 The intended model is:
 
@@ -122,14 +122,22 @@ Hive.Core
     ↓
 Hive-owned integration contracts
     ↓
-host application implements the contracts
+Hive WinForms base forms/controls
     ↓
-Hive discovers/composes/authorizes the exposed capabilities
+automatic safe defaults
+    ↓
+explicit host overrides when application semantics require them
+    ↓
+Hive discovers/composes/authorizes bounded capabilities
 ```
 
-A host may implement a contract directly on an application-owned type when that is the simplest option. A custom text control may implement the semantic field/value contract, while a host Form may implement the host-context contract.
+The preferred WinForms path is for an application Form to derive from the Hive-owned base form (for example, `HiveForm`) and for standard controls to use Hive-owned base controls where those controls provide reusable integration behavior. A host should not have to manually construct a neutral descriptor for every standard control merely to obtain normal Hive integration.
 
-Hive should provide reusable infrastructure for the common work so host applications do not have to build their own discovery, traversal, capability plumbing, provenance, cancellation, or authorization machinery. Host-specific code should be limited to semantics Hive cannot safely infer.
+A host may derive its own reusable application type from a Hive base type, or may provide explicit semantic metadata on a Hive control/data surface when automatic conventions are not sufficient. Hive defaults must be deterministic and overridable.
+
+Existing native/custom/third-party WinForms controls that cannot or should not use Hive base types remain supported through the bounded WinForms adapter/semantic-provider path. This compatibility path and the base-control path converge on the same neutral contract and Hive Management authorization boundary.
+
+Hive owns reusable mechanics such as bounded discovery, standard value adaptation, metadata projection, capability plumbing, lifecycle, cancellation, provenance, disposal, and contract validation. The host remains authoritative for semantics Hive cannot safely infer, including authoritative parent/child relationships, application-specific generated/computed meaning, dependent lookup behavior, business/application actions, validation, and save semantics.
 
 The Phase 1.14 contract family covers:
 
@@ -141,9 +149,9 @@ The Phase 1.14 contract family covers:
 - bounded host actions;
 - business-operation capability boundaries for API/UI composition.
 
-The neutral contracts must not expose raw WinForms controls, concrete host-control interfaces, arbitrary host object handles, SQL connections/commands, unrestricted SQL/filter execution, credentials, or arbitrary reflection/invocation.
+The neutral contracts must not expose raw WinForms controls, concrete private host-control interfaces, arbitrary host object handles, SQL connections/commands, unrestricted SQL/filter execution, credentials, or arbitrary reflection/invocation.
 
-Detailed contract design is owned by [architecture/v1-business-app-integration.md](v1-business-app-integration.md).
+Detailed contract design and the base-control ownership boundary are owned by [architecture/v1-business-app-integration.md](v1-business-app-integration.md).
 
 ### 4.1.3 Controls, data surfaces, and host semantics
 
