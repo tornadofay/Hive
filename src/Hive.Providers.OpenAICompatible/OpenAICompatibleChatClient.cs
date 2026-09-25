@@ -37,6 +37,7 @@ public sealed class OpenAICompatibleChatClient : IChatClient
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(messages);
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (options?.Tools is { Count: > 0 })
         {
