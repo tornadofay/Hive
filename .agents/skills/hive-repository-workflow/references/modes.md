@@ -66,7 +66,7 @@ If a future slice is not named, a request such as "start the next phase" is stil
 
 ## Context rule
 
-After an implementation task:
+After a clearly established task:
 
 Continue -> same task
 
@@ -76,4 +76,8 @@ Again -> same task/revision pass
 
 Polish again -> same maintenance scope
 
-Only an explicit change of scope or explicit roadmap advancement changes that context.
+An explicit new task may intentionally change mode or narrow scope.
+
+A new task may not silently broaden or replace the current Active Work implementation boundary. If it conflicts with Active Work, report the conflict instead of guessing.
+
+Only explicit roadmap advancement changes the roadmap slice.

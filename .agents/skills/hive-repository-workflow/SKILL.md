@@ -53,7 +53,7 @@ The roadmap defines order, not permission.
 
 A future roadmap slice requires explicit user authorization such as `Hive: Start Phase 1.14` or `Hive: Start the next roadmap slice`.
 
-## 3. Task-context lock
+## 3. Task-context and scope lock
 
 At the start of a task, establish:
 
@@ -65,11 +65,19 @@ At the start of a task, establish:
 - requested scope;
 - execution/verification authorization.
 
-`Continue`, `Revision`, `Again`, and similar short follow-ups inherit this context.
+For implementation work, Active Work is the maximum authorized implementation boundary.
+
+An explicit user task may narrow that boundary, but does not silently broaden, replace, or advance it.
+
+If the explicit task conflicts with the current Active Work scope, do not choose one interpretation yourself. Report the conflict and require an explicit scope/Active Work change.
+
+`Continue`, `Revision`, `Again`, and similar short follow-ups inherit the immediately preceding task context.
 
 Do not infer a different task from the current Active Work merely because it is open.
 
-If a Revision/Continue request lacks enough prior-task context to identify the intended work safely, stop before making changes and require an explicit task/context reference.
+For Revision, the immediately preceding task context is authoritative. If it is unavailable or ambiguous, stop before making changes and require an explicit task/context reference.
+
+For Continue after a task has been clearly established, continue that task context. In a fresh context with no prior task, Continue may use an open Active Work item as the implementation context, subject to the authorization gate above.
 
 ## 4. Modes
 
