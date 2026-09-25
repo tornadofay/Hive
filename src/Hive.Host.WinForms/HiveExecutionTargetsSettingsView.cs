@@ -251,6 +251,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         }
         catch (OperationCanceledException)
         {
+            return;
         }
         catch (Exception exception)
         {
