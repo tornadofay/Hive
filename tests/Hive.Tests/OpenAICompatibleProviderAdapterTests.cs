@@ -677,6 +677,26 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     [Fact]
+    public async Task ChatClient_PropagatesAlreadyCancelledTokenBeforeValidation()
+    {
+        using var client = new HttpClient();
+        using var chatClient = new OpenAICompatibleChatClient(
+            new OpenAICompatibleProviderAdapter(
+                client,
+                new OpenAICompatibleProviderOptions(
+                    new Uri("http://127.0.0.1/v1/"),
+                    timeout: TimeSpan.FromSeconds(2))),
+            "test-model");
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => chatClient.GetResponseAsync(
+                [],
+                cancellationToken: cancellation.Token));
+    }
+
+    [Fact]
     public async Task ChatClient_MapsOversizedPerCallModelToProviderError()
     {
         using var client = new HttpClient();
