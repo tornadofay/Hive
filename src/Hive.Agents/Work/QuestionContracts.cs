@@ -478,7 +478,7 @@ public sealed class QuestionTransport : IQuestionTransport
         QuestionId questionId,
         Result<Question> result)
     {
-        if (_waiters.TryGetValue(questionId, out var waiter))
+        if (_waiters.Remove(questionId, out var waiter))
             waiter.TrySetResult(result);
     }
 }
