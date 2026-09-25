@@ -238,6 +238,47 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task ExplicitPathLikeControlIdentityRemainsResolvable()
+    {
+        using var form = new Form();
+        var control = new HiveTextBox
+        {
+            Name = "customer",
+            Text = "Example"
+        };
+        control.HiveIntegration.ControlId = "0/0";
+        form.Controls.Add(control);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var captured = descriptor.Controls.Single();
+
+        var readCapability = captured.Capabilities.Single(capability =>
+            capability.Kind == HiveHostCapabilityKind.ReadControl);
+
+        var service = new HiveHostIntegrationService(
+            new AllowAllAuthorizer());
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                readCapability.Id,
+                HiveHostInteractionKind.ReadControl,
+                CorrelationId.New(),
+                controlId: captured.Id),
+            accessContext);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(
+            "Example",
+            result.Value!.ResultValue!.Value.AsString());
+    }
+
+    [Fact]
     public async Task Management_DeniesDefaultBaseControlCapabilityBeforeInteraction()
     {
         using var form = CreateBaseFixtureForm();
