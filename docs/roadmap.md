@@ -243,51 +243,53 @@ Verify: focused host-context/image-fixture tests, bounded/cancellation/ownership
 ## 1.14 — Dual Business-App Integration Contract
 Type: architecture/contract implementation slice.
 
-Objective: establish the neutral host-integration contracts and implement the first concrete WinForms adapter boundary without coupling Hive to any host-specific control, data, UI, ORM, or business framework.
+Objective: establish Hive-owned neutral host-integration contracts and implement reusable WinForms integration infrastructure so a host application can integrate by implementing a small explicit contract surface, without exposing its private control/data/business framework to Hive.
+
+Design model:
+- Hive.Core owns the neutral host integration contracts.
+- The host application implements those contracts against its own forms, controls, data surfaces, business/application services, and lookup mechanisms.
+- Hive supplies as much reusable discovery, metadata projection, capability plumbing, lifecycle, cancellation, provenance, and authorization integration as can be implemented without knowing host-private semantics.
+- A host may implement contracts directly on application-owned types or through a small host adapter; the contract does not require a particular control/library architecture.
+- The reference WinForms implementation demonstrates the supported pattern without creating a dependency on any external/private host library.
 
 Scope:
-- host-neutral Core-defined ports/contracts for host registration/adapter ownership, semantic controls, data surfaces, fields, stable row identities, lookups, bounded UI interaction, and the business-operation capability boundary needed for API/UI composition;
-- concrete bounded WinForms adapter implementation over native/custom WinForms controls;
-- support for application-owned/custom controls through adaptation rather than Hive dependencies;
-- semantic projection of host binding/data-source metadata rather than raw control/object exposure;
-- explicit parent/child data-surface relationships where the host can provide them;
-- stable row identity for the inspected V1 host is the primary-key ID; row index is positional only. The neutral contract remains extensible to other identity shapes later, but V1 does not require composite-key or general key-change handling;
-- generated-field and computed-field semantics;
-- bounded lookup operations; host filter expressions never become executable model input;
+- host-neutral Core-defined contracts for host registration/context, semantic controls, data surfaces, fields, stable row identity, lookups, bounded UI interaction, and business-operation capabilities needed for API/UI composition;
+- reusable bounded WinForms discovery/adaptation infrastructure over native/custom controls where semantics are standard;
+- host implementation hooks for application-specific semantics that Hive cannot safely infer;
+- explicit parent/child data-surface relationships where the host provides them, including combined parent/child save semantics when supported by the host;
+- stable row identity using the current V1 primary-key ID contract; row index is positional only;
+- generated-field and computed-field semantics without requiring a particular implementation mechanism;
+- bounded lookup operations, including dependencies on current-record values and/or external host/application context;
 - separation of UI interaction capabilities from business-operation semantics;
 - API, UI, and API+UI composition contracts behind one authorized logical operation, without implementing the consequential business write in this slice;
-- Management-owned authorization/orchestration through injected Core-defined host ports, plus provenance, cancellation, lifecycle/disposal, stale-state, and concurrency boundaries.
+- Management-owned authorization/orchestration through Core-defined host ports, plus provenance, cancellation, lifecycle/disposal, stale-state, and supported concurrency evidence.
 
-Production evidence now established before freezing the concrete adapter contract:
-- the inspected V1 host explicitly associates the root record, child collections, and child data surfaces;
-- parent identity is propagated into child rows where the host operation requires it;
-- parent and child changes are saved as one combined business operation;
-- host-side required/unique validation, veto points, save boundaries, post-save result/reload behavior, and New/Edit lifecycle are application-owned;
-- the bound child data surface supports edit and row mutation patterns before the surrounding business save;
-- direct grid editing, same-form supporting controls, and dedicated editor forms/dialogs are distinct host interaction patterns rather than authorization grants;
-- the inspected V1 host uses a single primary-key ID as stable row identity; row index remains positional only;
-- generated and computed fields exist, with implementation mechanism intentionally host-defined;
-- lookup resolution can depend on current-record values, external host/application context, or both;
-- the host provides New, Edit, Save, Delete, Reload, Move, Search, Report, Print, and Preview capabilities;
-- the inspected host's normal concurrency behavior is ordinary save without explicit optimistic-conflict detection.
+Known V1 host semantics represented by the contracts:
+- New, Edit, Save, Delete, Reload, Move, Search, Report, Print, and Preview may be exposed as bounded host capabilities when the host provides them;
+- generated and computed fields are semantic states; their internal implementation remains host-owned;
+- child editing is supported and parent/child changes may form one combined business operation;
+- ordinary host save behavior is supported without requiring an optimistic-concurrency token;
+- DataGridView row-index editing behavior remains a host implementation detail rather than a separate Hive identity model.
 
-Remaining adapter-definition work:
+Remaining contract-definition work:
 - exact neutral public type shapes and bounded operation semantics;
-- adapter mapping from the established binding/value model to the neutral contracts;
-- bounded lookup request/result mapping, including dependent lookup context;
-- representation of generated/computed semantics and resulting values;
-- concrete mapping of the established host action surface into bounded neutral capabilities;
-- optional concurrency evidence only where a host actually exposes meaningful version information.
+- reusable default/base implementations for common WinForms patterns where they reduce host-side code without hiding application semantics;
+- exact context/discovery-to-capability transition;
+- exact bounded lookup request/result context;
+- generated/computed field representation and resulting values;
+- stable ID row mapping and child-row mutation semantics;
+- contract-level cancellation, lifecycle, provenance, and disposal;
+- contract-test and reference-fixture strategy.
 
-The adapter must translate these host semantics into Hive contracts and must not recreate the host's database/business framework.
+The host-specific implementation remains outside the Hive public contract. Hive documentation must not encode private host classes, private control libraries, private SQL, or private business conventions.
 
 Verify:
-- neutral contract behavior with a fake host adapter;
-- native/custom WinForms discovery and bounded interaction;
-- production adapter mapping for the real V1 host where its concrete contract has been inspected;
-- stable primary-key ID identity, positional row-index behavior, generated-field, computed-field, and host-state cases;
-- lookup capability without arbitrary SQL execution;
-- authorization denial even when the host UI exposes an action;
+- neutral contract behavior with a deterministic reference host/fixture that implements the Hive contracts;
+- reusable WinForms discovery/adaptation for native/custom controls;
+- host-provided stable primary-key ID identity and positional row-index behavior;
+- generated/computed fields and child editing/combined parent-child operation semantics;
+- bounded dependent lookup resolution without arbitrary SQL execution;
+- authorization denial even when the host exposes an action;
 - API-only, UI-only, and combined API+UI operation paths;
 - registration/disposal/cancellation/lifecycle behavior;
 - provenance and operation correlation.
