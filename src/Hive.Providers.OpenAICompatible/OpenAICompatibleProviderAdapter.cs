@@ -9,10 +9,18 @@ namespace Hive.Providers.OpenAICompatible;
 
 public sealed class OpenAICompatibleProviderAdapter
 {
+    private const int MaxRequestBodyBytes = 4 * 1024 * 1024;
+    private const int MaxResponseBodyBytes = 4 * 1024 * 1024;
+    private const int ResponseReadBufferSize = 8192;
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
+
+    private static readonly Encoding StrictUtf8 = new UTF8Encoding(
+        encoderShouldEmitUTF8Identifier: false,
+        throwOnInvalidBytes: true);
 
     private readonly HttpClient _httpClient;
     private readonly OpenAICompatibleProviderOptions _options;
@@ -32,6 +40,7 @@ public sealed class OpenAICompatibleProviderAdapter
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+        cancellationToken.ThrowIfCancellationRequested();
 
         using var timeoutCts =
             CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -53,11 +62,25 @@ public sealed class OpenAICompatibleProviderAdapter
         }
 
         var payload = BuildPayload(request);
-        var json = JsonSerializer.Serialize(payload, JsonOptions);
-        httpRequest.Content = new StringContent(
-            json,
-            Encoding.UTF8,
-            "application/json");
+        var requestBody = JsonSerializer.SerializeToUtf8Bytes(
+            payload,
+            JsonOptions);
+
+        if (requestBody.Length > MaxRequestBodyBytes)
+        {
+            return Result<OpenAICompatibleChatResponse>.Failure(
+                new Error(
+                    "hive.provider.openai-compatible.request-too-large",
+                    ErrorCategory.Validation,
+                    "The provider request exceeds the 4 MiB request-body limit."));
+        }
+
+        httpRequest.Content = new ByteArrayContent(requestBody);
+        httpRequest.Content.Headers.ContentType =
+            new MediaTypeHeaderValue("application/json")
+            {
+                CharSet = StrictUtf8.WebName
+            };
 
         HttpResponseMessage response;
 
@@ -99,13 +122,20 @@ public sealed class OpenAICompatibleProviderAdapter
                 return Result<OpenAICompatibleChatResponse>.Failure(
                     MapHttpFailure(response.StatusCode));
 
-            string responseJson;
-
             try
             {
-                responseJson = await response.Content
-                    .ReadAsStringAsync(timeoutCts.Token)
+                var responseBody = await ReadResponseBodyAsync(
+                        response.Content,
+                        timeoutCts.Token)
                     .ConfigureAwait(false);
+
+                if (responseBody.IsFailure)
+                    return Result<OpenAICompatibleChatResponse>.Failure(
+                        responseBody.Error!);
+
+                return ParseResponse(
+                    responseBody.Value!,
+                    request.StructuredOutput is not null);
             }
             catch (OperationCanceledException)
                 when (!cancellationToken.IsCancellationRequested)
@@ -130,12 +160,79 @@ public sealed class OpenAICompatibleProviderAdapter
                         ErrorCategory.External,
                         "The provider response could not be read."));
             }
+            catch (IOException)
+            {
+                return Result<OpenAICompatibleChatResponse>.Failure(
+                    new Error(
+                        "hive.provider.openai-compatible.transport-failed",
+                        ErrorCategory.External,
+                        "The provider response could not be read."));
+            }
+            catch (DecoderFallbackException)
+            {
+                return SerializationFailure();
+            }
 
-            return ParseResponse(
-                responseJson,
-                request.StructuredOutput is not null);
+            return SerializationFailure();
         }
     }
+
+    private static async Task<Result<string>> ReadResponseBodyAsync(
+        HttpContent content,
+        CancellationToken cancellationToken)
+    {
+        var contentLength = content.Headers.ContentLength;
+
+        if (contentLength is > MaxResponseBodyBytes)
+            return Result<string>.Failure(ResponseTooLargeFailure());
+
+        await using var stream = await content
+            .ReadAsStreamAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        using var buffer = new MemoryStream(
+            contentLength is >= 0
+                ? checked((int)contentLength.Value)
+                : 0);
+
+        var readBuffer = new byte[ResponseReadBufferSize];
+        long totalBytes = 0;
+
+        while (true)
+        {
+            var read = await stream
+                .ReadAsync(
+                    readBuffer.AsMemory(),
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (read == 0)
+                break;
+
+            totalBytes += read;
+
+            if (totalBytes > MaxResponseBodyBytes)
+                return Result<string>.Failure(ResponseTooLargeFailure());
+
+            await buffer
+                .WriteAsync(
+                    readBuffer.AsMemory(0, read),
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        return Result<string>.Success(
+            StrictUtf8.GetString(
+                buffer.GetBuffer(),
+                0,
+                checked((int)totalBytes)));
+    }
+
+    private static Error ResponseTooLargeFailure() =>
+        new(
+            "hive.provider.openai-compatible.response-too-large",
+            ErrorCategory.Serialization,
+            "The provider response exceeds the 4 MiB response-body limit.");
 
     private static object BuildPayload(OpenAICompatibleChatRequest request)
     {
