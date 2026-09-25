@@ -216,6 +216,48 @@ public sealed class EventInfrastructureTests
 
         Assert.Equal("event.json.invalid", malformed.Error.Code);
         Assert.Equal(ErrorCategory.Serialization, malformed.Error.Category);
+        Assert.Equal("Event envelope JSON is invalid.", malformed.Error.Message);
+        Assert.NotNull(malformed.InnerException);
+        Assert.DoesNotContain(
+            malformed.InnerException!.Message,
+            malformed.Error.Message,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Serializer_DoesNotExposeJsonExceptionTextForInvalidPayload()
+    {
+        var serializer = new JsonEventSerializer();
+
+        var envelope = serializer.CreateEnvelope(
+            EventId.New(),
+            EventTestData.Timestamp,
+            new EventType("customer.created"),
+            new EventPayloadVersion(1),
+            CorrelationId.New(),
+            null,
+            new
+            {
+                name = "Alice"
+            });
+
+        var exception = Assert.Throws<EventSerializationException>(
+            () => serializer.DeserializePayload<int>(
+                envelope,
+                new EventPayloadVersion(1)));
+
+        Assert.Equal("event.payload.invalid", exception.Error.Code);
+        Assert.Equal(
+            ErrorCategory.Serialization,
+            exception.Error.Category);
+        Assert.Equal(
+            "Event 'customer.created' payload is invalid.",
+            exception.Error.Message);
+        Assert.NotNull(exception.InnerException);
+        Assert.DoesNotContain(
+            exception.InnerException!.Message,
+            exception.Error.Message,
+            StringComparison.Ordinal);
     }
 
     [Fact]
