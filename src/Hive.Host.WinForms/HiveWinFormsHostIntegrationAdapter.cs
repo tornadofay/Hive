@@ -449,27 +449,30 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
         if (dataSource is not null)
         {
-            try
+            var bindingContext = grid.BindingContext;
+            if (bindingContext is not null)
             {
-                var manager = grid.BindingContext[
-                    dataSource,
-                    grid.DataMember];
+                try
+                {
+                    var manager = bindingContext[
+                        dataSource,
+                        grid.DataMember];
 
-                if (manager is not null)
-                    return Math.Max(0, manager.Count);
-            }
-            catch (ArgumentException)
-            {
-                // Fall back to the materialized grid rows when the bound
-                // source cannot provide a currency manager.
-            }
-            catch (InvalidOperationException)
-            {
-                // Fall back to the materialized grid rows when the bound
-                // source is not currently available.
+                    if (manager is not null)
+                        return Math.Max(0, manager.Count);
+                }
+                catch (ArgumentException)
+                {
+                    // Fall back to the materialized grid rows when the bound
+                    // source cannot provide a currency manager.
+                }
+                catch (InvalidOperationException)
+                {
+                    // Fall back to the materialized grid rows when the bound
+                    // source is not currently available.
+                }
             }
         }
-
         return grid.AllowUserToAddRows
             ? Math.Max(0, grid.Rows.Count - 1)
             : grid.Rows.Count;
