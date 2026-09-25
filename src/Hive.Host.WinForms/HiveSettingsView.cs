@@ -25,6 +25,7 @@ public sealed class HiveSettingsView : UserControl
     private HiveAgentSettingsView? _agentView;
     private HivePersistenceSettingsView? _persistenceView;
     private CancellationTokenSource? _lifetimeCts;
+    private CancellationTokenSource? _navigationCts;
     private readonly HashSet<SettingsPageKey> _initializedPages = new();
     private readonly HashSet<SettingsPageKey> _initializingPages = new();
 
@@ -285,6 +286,10 @@ public sealed class HiveSettingsView : UserControl
         {
             _navigation.AfterSelect -= NavigationAfterSelect;
 
+            var navigationCts = Interlocked.Exchange(ref _navigationCts, null);
+            navigationCts?.Cancel();
+            navigationCts?.Dispose();
+
             var lifetimeCts = _lifetimeCts;
             _lifetimeCts = null;
             lifetimeCts?.Cancel();
@@ -305,25 +310,60 @@ public sealed class HiveSettingsView : UserControl
         object? sender,
         TreeViewEventArgs e)
     {
-        if (e.Node?.Tag is not SettingsPage page)
+        if (e.Node?.Tag is not SettingsPage page ||
+            IsDisposed ||
+            Disposing)
+        {
             return;
+        }
+
+        var lifetimeCts = _lifetimeCts;
+        if (lifetimeCts is null || lifetimeCts.IsCancellationRequested)
+            return;
+
+        var navigationCts = CancellationTokenSource.CreateLinkedTokenSource(
+            lifetimeCts.Token);
+
+        var previous = Interlocked.Exchange(
+            ref _navigationCts,
+            navigationCts);
+        previous?.Cancel();
 
         try
         {
             ShowSelectedPage(page);
             await RefreshPageOnNavigationAsync(
                 page.Key,
-                CancellationToken.None).ConfigureAwait(true);
+                navigationCts.Token).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+            when (navigationCts.IsCancellationRequested ||
+                  IsDisposed ||
+                  Disposing)
+        {
         }
         catch (Exception exception)
         {
-            HiveUiErrorReporter.Report(
-                FindForm(),
-                exception,
-                "Hive Settings",
-                "The selected Settings page could not be displayed.",
-                _output,
-                _themeManager);
+            if (!IsDisposed && !Disposing)
+            {
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    exception,
+                    "Hive Settings",
+                    "The selected Settings page could not be displayed.",
+                    _output,
+                    _themeManager);
+            }
+        }
+        finally
+        {
+            if (ReferenceEquals(_navigationCts, navigationCts))
+                Interlocked.CompareExchange(
+                    ref _navigationCts,
+                    null,
+                    navigationCts);
+
+            navigationCts.Dispose();
         }
     }
 
