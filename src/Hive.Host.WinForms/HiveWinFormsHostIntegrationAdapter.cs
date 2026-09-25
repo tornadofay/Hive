@@ -991,12 +991,6 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
         var key = id[prefix.Length..];
 
-        if (key.StartsWith("0", StringComparison.Ordinal) &&
-            key.Contains('/'))
-        {
-            return FindControl(key);
-        }
-
         var stack = new Stack<(Control Control, int Depth, string Path)>();
         stack.Push((_registration.Root, 0, "0"));
 
@@ -1061,8 +1055,12 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             return null;
         }
 
-        return namedMatch.Count == 1
-            ? namedMatch[0]
+        if (namedMatch.Count == 1)
+            return namedMatch[0];
+
+        return key.StartsWith("0", StringComparison.Ordinal) &&
+               key.Contains('/', StringComparison.Ordinal)
+            ? FindControl(key)
             : null;
     }
 
