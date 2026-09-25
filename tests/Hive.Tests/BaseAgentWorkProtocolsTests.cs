@@ -141,6 +141,61 @@ public sealed class BaseAgentWorkProtocolsTests
     }
 
     [Fact]
+    public void WorkItemBinding_RejectsInvalidProvenanceIdentities()
+    {
+        var fixture = CreateRuntime();
+        var workItem = CreateWorkItem(fixture);
+
+        var missingCorrelation = fixture.Runtime.Work.BindWorkItem(
+            fixture.Context,
+            workItem,
+            fixture.Clock.UtcNow,
+            default);
+
+        Assert.True(missingCorrelation.IsFailure);
+        Assert.Equal(
+            "hive.agent.workitem.correlation-required",
+            missingCorrelation.Error!.Code);
+
+        var invalidCausation = fixture.Runtime.Work.BindWorkItem(
+            fixture.Context,
+            workItem,
+            fixture.Clock.UtcNow,
+            CorrelationId.New(),
+            (CausationId?)default(CausationId));
+
+        Assert.True(invalidCausation.IsFailure);
+        Assert.Equal(
+            "hive.agent.workitem.causation-invalid",
+            invalidCausation.Error!.Code);
+    }
+
+    [Fact]
+    public void DelegationRequest_RejectsInvalidSourceReference()
+    {
+        var first = CreateRuntime();
+        var second = CreateRuntime(
+            first.DeploymentId,
+            first.TenantId,
+            first.Context.PrincipalId!.Value);
+
+        var result = DelegationRequest.Create(
+            first.Context,
+            first.Agent.Id,
+            first.Runtime.Id,
+            second.Agent.Id,
+            second.Runtime.Id,
+            "Validate invoice total.",
+            first.Clock.UtcNow,
+            (ResourceReference?)default(ResourceReference));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.agent.delegation.source-invalid",
+            result.Error!.Code);
+    }
+
+    [Fact]
     public void WorkItemBinding_RequiresOwnerScopeAndMatchingRuntime()
     {
         var fixture = CreateRuntime();
