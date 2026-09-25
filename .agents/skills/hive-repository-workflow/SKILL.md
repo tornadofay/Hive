@@ -137,7 +137,8 @@ Also inspect visual hierarchy/readability, spacing/alignment/density, theme cons
 
 When the authorization and verification gates permit implementation-affecting work:
 
-1. Identify the changed boundary and its responsibility owner.
+1. Capture the user request as explicit acceptance criteria, scope boundaries, exclusions, and verification requirements before implementation. Do not invent requirements or omit stated ones.
+2. Identify the changed boundary and its responsibility owner.
 2. Read the applicable detailed reference checklist **before** making implementation changes or concluding the audit:
    - Revision → `references/revision-checklist.md`;
    - Maintenance → `references/maintenance-checklists.md`;
