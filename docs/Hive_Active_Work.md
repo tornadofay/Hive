@@ -2,7 +2,7 @@
 
 ### Status
 
-**IMPLEMENTATION COMPLETE / VERIFICATION PENDING DEVELOPER.**
+**CLOSED / developer-verified.**
 
 This explicitly authorized backend maintenance pass does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
@@ -57,17 +57,18 @@ Developer-supplied verification on 2026-09-25:
 
 This confirms the externally meaningful configured-agent execution path preserves and displays the provider response ID from the completed execution.
 
-### Verification still required for Revision 2
+### Final developer verification
 
-The maintenance pass remains open pending reconciliation of:
-- affected solution/backend project build after the final `CS0168` correction and the Core serializer revision;
-- focused `Hive.Tests` coverage for `AgentExecutionIntegrationTests`, `BaseAgentWorkProtocolsTests`, and `EventInfrastructureTests`;
-- full Hive.Tests suite;
-- the unexpected transport failure path confirming the returned Coordination error message is generic and does not expose the thrown exception text;
-- the JSON serializer regressions confirming malformed envelope/payload errors do not echo the underlying `JsonException.Message`.
+Developer-supplied verification on 2026-09-25:
 
-No build, test run, application launch, migration, provider call, or other execution was performed by this revision.
-Do not close this maintenance pass or change Hive_Current_Status.md until the remaining developer-supplied verification results are reconciled with the repository.
+- Full solution build: **completed successfully** — 9 projects succeeded, 1 project was up-to-date, 0 failed, 0 skipped.
+- Full `Hive.Tests` run: **252 tests passed, 0 failed, 0 skipped** in **26.9 seconds**.
+- Runtime: .NET **10.0.1** with xUnit.net VSTest Adapter **3.1.5+1b188a7b0a**.
+- The full test suite exercised the affected Coordination, Agents, Core serialization, persistence, provider, and management regression coverage.
+- The previously verified configured-agent Example Host execution remained successful and displayed the provider response ID; this revision changed only internal/public error-detail handling in Core and Coordination plus waiter cleanup, so no new Example Host behavior required manual exercise.
+
+Verification is **complete for this maintenance pass**. No Phase 1.14 or later roadmap work was activated.
+`Hive_Current_Status.md` remains unchanged because this maintenance pass does not change roadmap phase status.
 
 Last updated: 2026-09-25
 ## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision 5
