@@ -172,9 +172,13 @@ public sealed class OpenAICompatibleProviderOptions
 
     private static Uri EnsureTrailingSlash(Uri uri)
     {
-        var text = uri.ToString();
-        return text.EndsWith("/", StringComparison.Ordinal)
-            ? uri
-            : new Uri(text + "/", UriKind.Absolute);
+        var path = uri.GetLeftPart(UriPartial.Path);
+
+        if (path.EndsWith("/", StringComparison.Ordinal))
+            return uri;
+
+        return new Uri(
+            path + "/" + uri.Query + uri.Fragment,
+            UriKind.Absolute);
     }
 }
