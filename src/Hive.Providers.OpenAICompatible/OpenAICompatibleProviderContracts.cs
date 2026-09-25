@@ -93,7 +93,7 @@ public sealed class OpenAICompatibleChatRequest
             ArgumentNullException.ThrowIfNull(message);
 
         Model = normalizedModel;
-        Messages = normalizedMessages;
+        Messages = Array.AsReadOnly(normalizedMessages);
         StructuredOutput = structuredOutput;
     }
 
