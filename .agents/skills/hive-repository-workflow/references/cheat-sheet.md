@@ -3,7 +3,7 @@
 ## Commands
 
 Hive: Continue
-Same authorized work.
+Same authorized work, unless the current Active Work is verification-pending; then stop and return the verification handoff.
 
 Hive: Revision
 Review the work just completed. Fix what was missed or wrong. Same scope.
