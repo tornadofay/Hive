@@ -4,9 +4,37 @@ Last updated: 2026-09-25
 
 ## Active slice
 
-**None — current backend audit revision closed and Phase 1.14 remains inactive.**
+**Temporary maintenance — Hive.Management / Hive.Persistence Production Audit Revision (verification pending).**
 
-No implementation slice is currently authorized. The next roadmap slice remains inactive until explicitly authorized.
+This maintenance pass is explicitly authorized by the current revision request. It does not activate or advance Phase 1.14; the next roadmap slice remains inactive.
+
+### Current maintenance scope
+
+- Audit only the existing Hive.Management and Hive.Persistence backend implementation against the repository architecture and previously verified contracts.
+- Fix only concrete production defects found during the final implementation review.
+- Preserve public contracts, persistence ownership, authorization/scope enforcement, lifecycle semantics, credential isolation, cancellation, and transaction boundaries.
+- No roadmap advancement, schema/migration changes, provider changes, orchestration changes, MAF changes, host/UI changes, or dependency changes are authorized.
+
+### Implementation checkpoint — 2026-09-25
+
+Implemented on main through commit 160cd0d6f94a4af777cdafc6d1627d36ded379e5:
+
+- JsonHiveConfigurationStore now opens persisted settings with FileShare.Delete in addition to FileShare.Read, allowing atomic replacement of the settings file while an existing reader is still open instead of surfacing a Windows sharing failure.
+- HiveManagementFacade now rejects malformed non-string WorkItem activity text properties instead of silently treating them as missing; JSON null remains accepted for optional values such as rejection reason.
+- Focused regression coverage was added for both contracts in HiveConfigurationTests and WorkItemManagementTests.
+- No schema, migration, provider, orchestration, MAF, host, UI, dependency, or public-contract redesign changes were introduced.
+
+### Verification gate — pending
+
+Execution was not authorized during this maintenance pass. The implementation and tests were reviewed statically only.
+
+Required verification before closing this maintenance pass:
+
+```text
+dotnet test tests/Hive.Tests/Hive.Tests.csproj
+```
+
+The result remains **unverified** until the user supplies an actual execution result. Keep this maintenance pass open until then.
 
 ## Closed maintenance pass — Hive.Management / Hive.Persistence Final Backend Audit — Revision
 
