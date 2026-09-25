@@ -91,7 +91,7 @@ public sealed class HiveSettingsView : UserControl
             Dock = DockStyle.Fill,
             AccessibleName = "Hive Settings navigation",
             AccessibleDescription =
-                "Navigate Hive package configuration by Providers, Agents, and Persistence."
+                "Navigate Hive package configuration by Overview, Providers, Accounts / Credentials, Execution Targets, Agents, and Persistence."
         };
 
         var navigationRoot = new TreeNode("Hive Settings");
