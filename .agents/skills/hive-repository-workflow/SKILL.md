@@ -191,6 +191,8 @@ Maintenance is broader than Revision but remains scope-bound.
 
 Inspect first, identify concrete production problems, correct them, add focused regression coverage when required, inspect affected examples when externally meaningful, and perform a final review.
 
+If a discovered corrective problem requires a new capability or materially expands a public contract, stop that portion rather than widening the maintenance slice; require separate authorization before implementing it.
+
 Use `references/maintenance-checklists.md` for domain-specific review areas.
 
 Maintenance never advances the roadmap.
