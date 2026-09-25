@@ -58,11 +58,13 @@ Do not invent missing verification.
 
 ## Explicit roadmap advancement
 
-Command example: Hive: Start Phase 1.14
+Command example: Hive: Start Phase X.Y
 
-This authorizes moving to another roadmap slice.
+This authorizes moving to the named roadmap slice.
 
-If a future slice is not named, a request such as "start the next phase" is still an intentional roadmap-advance request; identify the next slice from the repository before changing Active Work.
+A request such as "start the next roadmap slice" also explicitly authorizes advancement; identify the next slice from the repository before changing Active Work.
+
+Completion, maintenance, revision, polish, or "continue/again" language does not authorize advancement.
 
 ## Context rule
 
