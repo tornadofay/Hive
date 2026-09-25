@@ -18,3 +18,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [1.12 — Settings, Configuration, and Real Host Consumption](1.12.md)
 - [1.13 — Image Input & WinForms Host Context](1.13.md)
 - [1.14 — Dual Business-App Integration Contract](1.14.md)
+- [1.14 Revision — Reusable WinForms Base Controls — 2026-09-26](1.14-revision-2026-09-26.md)
