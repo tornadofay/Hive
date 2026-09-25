@@ -77,6 +77,7 @@ When applicable:
 
 - Correct source-of-truth documents only
 - Planned behavior not recorded as implemented
+- Historical verification evidence is preserved and not overwritten by later results
 - Complete relevant diff reviewed
 - Accidental edits removed
 - Duplicate/dead/stale logic checked
