@@ -2,9 +2,9 @@
 
 ### Status
 
-**OPEN / IMPLEMENTATION AUTHORIZED — VERIFICATION PENDING DEVELOPER.**
+**CLOSED / DEVELOPER-VERIFIED.**
 
-This explicitly authorized maintenance pass is UI/UX and production UI maintenance only. It does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
+This explicitly authorized maintenance pass was UI/UX and production UI maintenance only. It did not advance the roadmap and did not activate Phase 1.14 or any later roadmap work.
 
 ### Scope
 
@@ -20,39 +20,38 @@ This explicitly authorized maintenance pass is UI/UX and production UI maintenan
 Static UI/UX audit identified and corrected these concrete production issues:
 
 1. **Workspace activity-state clarity**
-   - The activity pane previously rendered as a blank surface when no WorkItem was selected, while activity was loading, or when a selected WorkItem had no activity.
-   - Added a dedicated muted state label with explicit `Select a WorkItem to view activity.`, `Loading activity...`, `No activity recorded for this WorkItem yet.`, and `Activity could not be loaded.` states.
-   - Activity list visibility is now coordinated with those states without changing WorkItem/activity data or operation behavior.
-   - Added accessible naming/role for the activity list and state surface.
+   - Added an explicit muted activity-pane state surface covering WorkItem selection, loading, no-activity, and load-failure states.
+   - Coordinated activity-list visibility with the state surface and added accessible naming/role.
+   - Corrected the control-tree wiring after regression verification exposed the missing activity-state label attachment.
 
 2. **Compact CRUD filter alignment**
-   - The shared CRUD status-filter label retained the wide-layout leading margin when the toolbar collapsed and the Search label disappeared.
-   - Compact mode now removes that unnecessary leading offset while wide mode preserves the established spacing.
+   - Compact CRUD toolbar mode now removes the wide-layout leading margin from the status-filter label while preserving established wide-layout spacing.
    - Added focused regression coverage for compact and wide toolbar alignment.
 
 3. **Settings navigation density**
-   - The Settings navigation opened both the root and Providers subtree by default even though the initial page is Persistence and the Example Host navigation is intentionally collapsed before selecting a concrete example.
-   - Providers now remains collapsed on initial Settings display; selecting a Provider child still expands it normally through standard TreeView interaction.
+   - Providers remains collapsed on initial Settings display while normal TreeView interaction still expands the group when a concrete child is selected.
    - No navigation capability or Settings page behavior changed.
 
 4. **Navigation destination consistency**
-   - `HiveNavigationTree` allowed category/group nodes to become selected even though they are not navigation destinations. Settings and the Example Host could therefore show a highlighted group while the previously displayed leaf page/example remained active.
-   - Group nodes are now non-selectable at the shared navigation-control boundary, keeping selection synchronized with the displayed destination.
-   - Added focused regression coverage for the group-selection guard.
+   - Shared `HiveNavigationTree` group/category nodes are non-selectable because they are not navigation destinations.
+   - Added focused regression coverage so the highlighted navigation destination remains synchronized with the displayed leaf page/example.
 
 Regression coverage added/updated:
 - `HiveUiPolishTests` — compact CRUD status-filter alignment and navigation group-selection guard.
 - `HiveWorkspaceLifecycleTests` — explicit Workspace activity empty/selection state.
 
-No Example Host source change was required; the maintained public UI remains exercised through the existing Example Host scenarios.
+No Example Host source change was required; existing public Example Host scenarios exercise the maintained UI.
 
-### Verification gate
+### Verification
 
-Developer verification is required after implementation, including:
-- rebuild `Hive.Host.WinForms`, `Hive.Host.WinForms.UI`, and `Hive.Tests`;
-- run `HiveUiPolishTests` and `HiveWorkspaceLifecycleTests`;
-- run the full `Hive.Tests` suite;
-- manually verify the affected Settings and Workspace UI in Light/Dark/System modes and representative compact/normal resizing states.
+Developer-supplied verification on 2026-09-25:
+
+- Full `Hive.Tests` suite: **270 passed, 0 failed, 0 skipped** in **23.9 seconds** on .NET 10.0.1 / xUnit.net VSTest Adapter v3.1.5+1b188a7b0a.
+- Existing Example Host UI scenarios: **manually verified successfully**.
+- Light, Dark, and System themes: **manually verified successfully**.
+- Compact and normal resize states: **manually verified successfully**.
+
+The full suite included the affected regression coverage in `HiveUiPolishTests` and `HiveWorkspaceLifecycleTests`.
 
 Example to run: `UI / Foundation / Theme` — Hive.Example.WinForms
 Example to run: `UI / Foundation / Controls & CRUD` — Hive.Example.WinForms
@@ -63,7 +62,10 @@ Tests to run: `tests/Hive.Tests/HiveUiPolishTests.cs`; `tests/Hive.Tests/HiveWor
 
 ### Completion
 
-Keep this maintenance pass open until the developer supplies actual verification results. Do not change `docs/Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
+This temporary maintenance pass is **closed / developer-verified**. Phase 1.14 remains inactive and no later roadmap slice is active or authorized.
+
+Verification archive:
+[`hive-winforms-ui-ux-production-audit-2026-09-25.md`](verification/maintenance/hive-winforms-ui-ux-production-audit-2026-09-25.md)
 
 Last updated: 2026-09-25
 
