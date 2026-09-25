@@ -390,6 +390,71 @@ public sealed class HiveHostCompositionTests
         Assert.Equal(2, factory.CreationCount);
     }
 
+    [Fact]
+    public async Task GraphFactory_SanitizesBootstrapResolutionErrors()
+    {
+        var configuration = new HivePersistenceConfiguration(
+            HivePersistenceBackend.SqlServer,
+            "sql.example.test",
+            1433,
+            "Hive_HostFactory_ErrorBoundary",
+            HiveSqlAuthenticationMode.SqlPassword,
+            "hive-user",
+            new HiveBootstrapCredentialReference(SecretId.New()),
+            encrypt: true,
+            trustServerCertificate: false,
+            createDatabaseIfMissing: false);
+
+        var factory = new SqlHiveHostServiceGraphFactory(
+            new LeakyBootstrapCredentialStore(),
+            new InMemoryConfigurationStore(configuration));
+
+        var result = await factory.CreateAsync(configuration);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("test.bootstrap.failure", result.Error!.Code);
+        Assert.Equal(ErrorCategory.External, result.Error.Category);
+        Assert.Equal(
+            "The Hive bootstrap credential could not be resolved.",
+            result.Error.Message);
+        Assert.DoesNotContain(
+            "sensitive",
+            result.Error.Message,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Composition_SanitizesUnexpectedFailureDetails()
+    {
+        var configuration =
+            HivePersistenceConfiguration.LocalDevelopment(
+                "Hive_Composition_ErrorBoundary");
+        var composition = new HiveHostComposition(
+            new InMemoryConfigurationStore(configuration),
+            new ThrowingGraphFactory());
+
+        try
+        {
+            var result = await composition.InitializeAsync();
+
+            Assert.True(result.IsFailure);
+            Assert.Equal(
+                "hive.host.composition-failed",
+                result.Error!.Code);
+            Assert.Equal(
+                "Hive host composition failed.",
+                result.Error.Message);
+            Assert.DoesNotContain(
+                "sensitive",
+                result.Error.Message,
+                StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            composition.Dispose();
+        }
+    }
+
     private static HiveHostServiceGraph CreateGraph(
         HivePersistenceConfiguration configuration,
         params IDisposable[] resources)
@@ -404,6 +469,51 @@ public sealed class HiveHostCompositionTests
             configuration,
             facade,
             resources);
+    }
+
+    private sealed class LeakyBootstrapCredentialStore :
+        IHiveBootstrapCredentialStore
+    {
+        public Task<Result> SetAsync(
+            HiveBootstrapCredentialReference reference,
+            SecretMaterial material,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(
+                Result.Failure(
+                    new Error(
+                        "test.bootstrap.failure",
+                        ErrorCategory.External,
+                        "sensitive bootstrap details")));
+
+        public Task<Result<SecretMaterial>> ResolveAsync(
+            HiveBootstrapCredentialReference reference,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(
+                Result<SecretMaterial>.Failure(
+                    new Error(
+                        "test.bootstrap.failure",
+                        ErrorCategory.External,
+                        "sensitive bootstrap details")));
+
+        public Task<Result> ClearAsync(
+            HiveBootstrapCredentialReference reference,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(
+                Result.Failure(
+                    new Error(
+                        "test.bootstrap.failure",
+                        ErrorCategory.External,
+                        "sensitive bootstrap details")));
+    }
+
+    private sealed class ThrowingGraphFactory :
+        IHiveHostServiceGraphFactory
+    {
+        public Task<Result<HiveHostServiceGraph>> CreateAsync(
+            HivePersistenceConfiguration configuration,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException(
+                "sensitive graph construction details");
     }
 
     private sealed class InMemoryConfigurationStore :
