@@ -1,5 +1,35 @@
 # Hive — Active Work
 
+## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision 3
+
+### Status
+
+**OPEN / static audit in progress; execution not authorized.**
+
+Provider-backend-only maintenance. This revision does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
+
+### Scope
+
+- Re-audit the current OpenAI-compatible provider implementation after revision 2.
+- Correct only concrete provider-boundary defects.
+- Preserve accepted ExecutionTarget URI shapes; do not add a new URI rejection rule merely to mask adapter resolution problems.
+- Add focused regression coverage for changed URI behavior.
+- Re-inspect provider documentation/example consistency.
+- No schema/migration, persistence redesign, orchestration, cognitive, host/UI, dependency upgrade, MAF replacement, or future roadmap implementation.
+
+### Verification gate
+
+Execution is **not authorized in this request**.
+
+Required verification after implementation:
+- Focused: `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
+- Full developer build/test path: the normal full solution build followed by `dotnet test tests/Hive.Tests/Hive.Tests.csproj`
+- Configured Example Host/provider execution only when the revised public behavior requires manual verification.
+
+No execution has been performed by this revision. The slice remains open until actual verification results are supplied.
+
+Last updated: 2026-09-25
+
 ## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision 2
 
 ### Status
