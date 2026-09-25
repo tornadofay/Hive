@@ -34,7 +34,7 @@ For cross-project, public-API, persistence, orchestration, lifecycle, security, 
 
 Then inspect affected projects, source, tests, examples, configuration, references, and responsibility owners. Determine the repository checkpoint from evidence.
 
-If Active Work establishes a verification gate, stop implementation-affecting work at that gate.
+If Active Work is `VERIFICATION PENDING` before actual developer results arrive, stop implementation-affecting work at that gate. After a real failure is recorded as `VERIFICATION FAILED / REMEDIATION REQUIRED`, same-slice Revision/remediation may proceed only within the recorded failure boundary; it must return Active Work to `VERIFICATION PENDING` for developer re-verification.
 
 ## 3. Scope and authorization
 
