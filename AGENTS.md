@@ -45,6 +45,8 @@ Determine the current repository checkpoint from evidence.
 
 If Active Work contains an open slice, continue that slice exactly. Do not implement later roadmap work.
 
+If the open Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, stop implementation at that gate. Do not perform additional implementation merely because the user says "Continue". Provide the exact required verification handoff instead.
+
 If the active slice is closed, do not automatically advance the roadmap. Roadmap advancement requires explicit user authorization.
 
 A maintenance, audit, polish, revision, or "again/continue" request does not authorize a later roadmap slice.
