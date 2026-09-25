@@ -1423,19 +1423,33 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         Exception exception)
     {
         var handler = OperationFailed;
-        if (handler is null)
+        if (handler is not null)
         {
-            System.Diagnostics.Debug.WriteLine(exception.ToString());
-            System.Runtime.ExceptionServices.ExceptionDispatchInfo
-                .Capture(exception)
-                .Throw();
+            handler(
+                this,
+                new HiveCrudOperationFailedEventArgs(
+                    operation,
+                    exception));
+            return;
         }
 
-        handler(
-            this,
-            new HiveCrudOperationFailedEventArgs(
-                operation,
-                exception));
+        // OperationFailed is an extension point, not a requirement for safe
+        // reusable-control behavior. Without a subscriber, keep the failure
+        // inside the UI operation instead of allowing an exception from a
+        // button/event path to escape as an unhandled async exception.
+        System.Diagnostics.Debug.WriteLine(exception.ToString());
+
+        var owner = FindForm();
+        if (owner is not null && !owner.IsDisposed)
+        {
+            HiveUiErrorReporter.Report(
+                owner,
+                exception,
+                "CRUD operation failed",
+                $"The {operation.ToString().ToLowerInvariant()} operation could not be completed.",
+                null,
+                ThemeManager());
+        }
     }
 
     private void SetBusy(bool busy)
