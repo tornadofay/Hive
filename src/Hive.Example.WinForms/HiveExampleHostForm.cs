@@ -350,7 +350,8 @@ internal sealed class HiveExampleHostForm : HiveForm
                 _composition.Current!,
                 ExampleSettingsAccessContext);
 
-            await RefreshConfiguredStateAsync(_lifetimeCts.Token);
+            await RefreshConfiguredStateAsync(
+                cancellationToken: _lifetimeCts.Token);
 
             if (_lifetimeCts.IsCancellationRequested ||
                 IsDisposed ||
@@ -857,7 +858,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             var providers = await graph.Management
                 .ListProvidersAsync(
                     services.AccessContext,
-                    cancellationToken)
+                    cancellationToken: cancellationToken)
                 .ConfigureAwait(true);
 
             if (cancellationToken.IsCancellationRequested ||
@@ -887,7 +888,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             var agents = await graph.Management
                 .ListAgentDefinitionsAsync(
                     services.AccessContext,
-                    cancellationToken)
+                    cancellationToken: cancellationToken)
                 .ConfigureAwait(true);
 
             if (cancellationToken.IsCancellationRequested ||
