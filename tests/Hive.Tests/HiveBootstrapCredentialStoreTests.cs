@@ -44,6 +44,49 @@ public sealed class HiveBootstrapCredentialStoreTests
     }
 
     [Fact]
+    public async Task DpapiStore_DoesNotExposeFileSystemExceptionText()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var rootPath = System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(),
+            "HiveBootstrapCredentialStoreTests",
+            $"root-{Guid.NewGuid():N}.file");
+
+        System.IO.Directory.CreateDirectory(
+            System.IO.Path.GetDirectoryName(rootPath)!);
+        await File.WriteAllTextAsync(rootPath, "not-a-directory");
+
+        try
+        {
+            var store = new DpapiHiveBootstrapCredentialStore(rootPath);
+            var reference = new HiveBootstrapCredentialReference(SecretId.New());
+
+            using var material = SecretMaterial.Create("bootstrap-secret");
+
+            var result = await store.SetAsync(reference, material);
+
+            Assert.True(result.IsFailure);
+            Assert.Equal(
+                "hive.host.bootstrap-credential-write-failed",
+                result.Error!.Code);
+            Assert.Equal(
+                "The Hive bootstrap credential could not be stored.",
+                result.Error.Message);
+            Assert.DoesNotContain(
+                rootPath,
+                result.Error.Message,
+                StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (File.Exists(rootPath))
+                File.Delete(rootPath);
+        }
+    }
+
+    [Fact]
     public async Task DpapiStore_ReplacesAndClearsCredential()
     {
         if (!OperatingSystem.IsWindows())
