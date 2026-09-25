@@ -60,7 +60,7 @@ Meaning: Reconcile those results against the repository and update only the reco
 
 Do not invent missing verification.
 
-If required verification fails or is partial, classify each failure against the current Active Work scope. For in-scope defects, transition Active Work to **VERIFICATION FAILED / REMEDIATION REQUIRED**, perform same-slice remediation to production depth, then return Active Work to **VERIFICATION PENDING** with updated verification targets. For out-of-scope or new-capability work, stop that portion and require separate authorization.
+If required verification fails or is partial, classify each failure against the current Active Work scope. For in-scope defects, first record **VERIFICATION FAILED / REMEDIATION REQUIRED** in Active Work, then perform same-slice remediation to production depth. After remediation, return Active Work to **VERIFICATION PENDING** with updated verification targets. For out-of-scope or new-capability work, stop that portion and require separate authorization.
 
 When verification closes the current slice, move historical verification detail to `docs/verification/` when applicable and leave `docs/Hive_Active_Work.md` current-only: remove the closed slice and retain only the minimal no-active-slice state unless another slice is explicitly authorized.
 
