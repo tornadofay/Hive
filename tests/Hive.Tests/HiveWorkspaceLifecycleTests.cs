@@ -11,6 +11,29 @@ namespace Hive.Tests;
 public sealed class HiveWorkspaceLifecycleTests
 {
     [Fact]
+    public void Constructor_ShowsExplicitActivitySelectionState()
+    {
+        var (management, _) = ManagementFacadeProxy.Create();
+        var accessContext = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var workspace = new HiveWorkspaceView(
+            management,
+            accessContext,
+            themeManager);
+
+        var state = FindLabel(
+            workspace,
+            "Select a WorkItem to view activity.");
+
+        Assert.NotNull(state);
+        Assert.True(state!.Visible);
+    }
+
+    [Fact]
     public void RefreshAsync_DoesNotMutateDisposedViewWhenManagementCompletesLate()
     {
         var (management, proxy) = ManagementFacadeProxy.Create();
@@ -40,6 +63,26 @@ public sealed class HiveWorkspaceLifecycleTests
         WaitForTask(
             refresh,
             "The disposed workspace refresh did not complete.");
+    }
+
+    private static Label? FindLabel(
+        Control root,
+        string text)
+    {
+        foreach (Control child in root.Controls)
+        {
+            if (child is Label label &&
+                string.Equals(label.Text, text, StringComparison.Ordinal))
+            {
+                return label;
+            }
+
+            var nested = FindLabel(child, text);
+            if (nested is not null)
+                return nested;
+        }
+
+        return null;
     }
 
     private static void WaitForTask(
