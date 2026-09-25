@@ -47,17 +47,19 @@ Implementation commits on main:
 
 ### Verification handoff
 
-No build, test run, application launch, migration, provider call, or other execution was performed by this maintenance pass.
+Developer supplied verification on 2026-09-25:
 
-Developer verification still required:
-- affected solution/backend build;
-- focused tests covering the changed Core, Agents, Coordination, and event-contract behavior;
-- full Hive.Tests suite;
-- persistence integration coverage exercising Secret Store command execution and existing DPAPI behavior.
+- Full test run: **257 tests, 256 passed, 1 failed, 0 skipped**, 27.6 seconds.
+- Failure was `Hive.Tests.EventInfrastructureTests.EventPersistenceContracts_RejectInvalidVersionsAndStreams`.
+- The failure is an exact exception-type assertion in the regression test. The production constructor correctly throws `ArgumentOutOfRangeException` for an invalid resource version; the test was incorrectly asserting the base `ArgumentException` type, and xUnit `Assert.Throws<T>` requires an exact type match.
+- Corrected the regression test to expect `ArgumentOutOfRangeException` for invalid version/schema-version cases. Production implementation was not changed in response to this failure.
+- No build result was supplied in the reported output, so build status remains unverified from this handoff.
 
-The previously verified configured-agent Example Host behavior remains unaffected by this revision; no new externally visible Example Host change was introduced.
+Verification required after the test correction:
+- rerun the full `Hive.Tests` suite;
+- provide the full solution build result separately if it was run and is to be recorded.
 
-Do not change Hive_Current_Status.md or activate Phase 1.14 from the implementation handoff alone.
+Do not change `Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
 
 Last updated: 2026-09-25
 
