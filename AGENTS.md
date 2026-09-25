@@ -58,7 +58,7 @@ If Active Work is closed or absent:
 - a new capability/feature, new public behavior, or roadmap implementation request requires explicit roadmap authorization;
 - roadmap advancement still requires explicit user authorization.
 
-A maintenance, audit, polish, bug-fix, regression-fix, revision, or "again/continue" request does not authorize a later roadmap slice. Establishing a temporary slice from an explicit new non-roadmap corrective task is task authorization only; it is not roadmap advancement.
+A maintenance, audit, polish, bug-fix, regression-fix, revision, or "again/continue" request does not authorize a later roadmap slice. If corrective work later reveals that a fix requires a new capability or material public-contract expansion, stop that portion rather than widening the temporary slice and require separate authorization. Establishing a temporary slice from an explicit new non-roadmap corrective task is task authorization only; it is not roadmap advancement.
 
 Revision means re-reviewing the immediately preceding work within its inherited mode, domain, scope, and active slice. Revision may correct concrete issues within that inherited scope but must never advance the roadmap.
 
