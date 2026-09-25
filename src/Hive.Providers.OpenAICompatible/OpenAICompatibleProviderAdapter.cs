@@ -32,7 +32,7 @@ public sealed class OpenAICompatibleProviderAdapter
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _options = options ?? throw new ArgumentNullException(nameof(options));
-        _chatCompletionsUri = new Uri(_options.BaseUri, "chat/completions");
+        _chatCompletionsUri = BuildChatCompletionsUri(_options.BaseUri);
     }
 
     public async Task<Result<OpenAICompatibleChatResponse>> CompleteChatAsync(
@@ -277,6 +277,18 @@ public sealed class OpenAICompatibleProviderAdapter
             buffer.Dispose();
             throw;
         }
+    }
+
+    private static Uri BuildChatCompletionsUri(Uri baseUri)
+    {
+        var path = baseUri.GetLeftPart(UriPartial.Path);
+
+        if (!path.EndsWith("/", StringComparison.Ordinal))
+            path += "/";
+
+        return new Uri(
+            path + "chat/completions" + baseUri.Query + baseUri.Fragment,
+            UriKind.Absolute);
     }
 
     private static object BuildPayload(OpenAICompatibleChatRequest request)
