@@ -16,6 +16,27 @@ This maintenance pass is provider-backend-only maintenance. It does not advance 
 - Re-inspect the Phase 1.3 provider documentation and existing Example Host provider scenario for consistency.
 - No schema/migration, persistence redesign, orchestration, cognitive, host/UI, dependency upgrade, MAF replacement, or future roadmap implementation.
 
+### Implementation checkpoint
+
+Concrete revision-2 corrections on `main`:
+
+- The MAF-facing `OpenAICompatibleChatClient` now converts an oversized per-call `ChatOptions.ModelId` into the provider's structured `Validation` exception contract instead of leaking the lower-level `ArgumentException`.
+- The model-validation mapping is isolated to `OpenAICompatibleChatRequest` construction so null-message and other MAF conversion failures retain their existing structured classifications.
+- Provider request serialization is now streamed into a bounded in-memory buffer capped at 4 MiB before `HttpClient` submission. Oversized serialization fails with the existing structured request-size error without first materializing an arbitrarily oversized UTF-8 byte array.
+- The request body is sent through `StreamContent`, removing the previous final byte-array copy and preserving the existing JSON content-type/transport contract.
+- Focused regression coverage was added for oversized per-call model selection; the existing oversized-request regression now protects the bounded serialization path as well.
+- The Phase 1.3 public usage documentation now records the structured per-call model validation behavior.
+- No schema, migration, persistence, orchestration, MAF replacement, host/UI, dependency upgrade, or future roadmap implementation was introduced.
+
+Affected implementation/test/documentation files:
+- `src/Hive.Providers.OpenAICompatible/OpenAICompatibleProviderAdapter.cs`
+- `src/Hive.Providers.OpenAICompatible/OpenAICompatibleChatClient.cs`
+- `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
+- `docs/examples/Phase13_OpenAI_Compatible_Provider_Adapter.md`
+- `docs/Hive_Active_Work.md`
+
+The existing `Hive.Example.WinForms` provider-transport scenario was re-inspected statically and remains valid; no example source change is required.
+
 ### Verification gate
 
 Execution is **not authorized in this request**.
@@ -24,9 +45,9 @@ Required verification after implementation:
 - Focused: `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
 - Build: `src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`
 - Broader: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`
-- Configured Example Host execution only if the revised public behavior requires manual verification.
+- Manual configured Example Host provider execution only when the revised public behavior requires it.
 
-The slice remains open until actual verification results are supplied.
+No build/test/provider execution has been performed by this revision. The slice remains open until actual verification results are supplied.
 
 Last updated: 2026-09-25
 
