@@ -2,7 +2,7 @@
 
 ## Phase 1.14 — Dual Business-App Integration Contract (Reopened Revision)
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Opened: 2026-09-26
 
@@ -76,6 +76,12 @@ The authorized Phase 1.14 revision implementation is complete and has been place
 Developer verification on 2026-09-26 reported one example integration failure and four focused-test failures within the Phase 1.14 revision boundary. The example fails because an automatically generated standard-control capability ID is computed from the bare control identity while the interaction request supplies the public `control:<identity>` descriptor ID. Two focused tests also use `Single()` against the full captured control collection even though the capture contract includes the registered root form; these are test expectation defects, not new product scope. The remaining focused failures are the same capability-ID mismatch on standard-control interactions.
 
 Remediation boundary: fix the Phase 1.14 standard-control capability target normalization so descriptor/request control IDs authorize against the same deterministic identity; correct the affected focused tests to select the intended control explicitly. Do not widen the slice or alter unrelated host semantics.
+
+### Remediation checkpoint
+
+The recorded Phase 1.14 verification failures were remediated within the same slice. Automatic standard-control interaction validation now normalizes the public `control:<identity>` target before deriving the deterministic capability identity, matching capture-time capability generation. The two affected focused tests now select their intended control explicitly because host capture includes the registered root form descriptor.
+
+Developer-provided results before remediation remain recorded above; no post-remediation test or example execution has been performed by the agent.
 
 ### Verification handoff
 
