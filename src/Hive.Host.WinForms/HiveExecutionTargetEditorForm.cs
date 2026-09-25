@@ -25,6 +25,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
     private readonly Label _testStatus;
     private readonly HiveButton _testButton;
     private HiveStatusTone _testStatusTone = HiveStatusTone.Neutral;
+    private CancellationTokenSource? _testCts;
 
     public HiveExecutionTargetEditorForm(
         ExecutionTarget? target,
@@ -208,18 +209,34 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
     private async Task TestConnectionAsync()
     {
-        if (_existing is null)
+        if (_existing is null || IsDisposed || Disposing)
             return;
+
+        var testCts = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(
+            ref _testCts,
+            testCts);
+        previous?.Cancel();
+        previous?.Dispose();
 
         _testButton.Enabled = false;
         SetTestStatus("Testing connection...", HiveStatusTone.Information);
+
         try
         {
             var result = await _management
                 .TestExecutionTargetConnectionAsync(
                     _existing.Id,
-                    _accessContext)
+                    _accessContext,
+                    testCts.Token)
                 .ConfigureAwait(true);
+
+            if (testCts.IsCancellationRequested ||
+                IsDisposed ||
+                Disposing)
+            {
+                return;
+            }
 
             if (result.IsFailure)
             {
@@ -236,20 +253,41 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
             SetTestStatus("Connection test succeeded.", HiveStatusTone.Success);
         }
+        catch (OperationCanceledException)
+            when (testCts.IsCancellationRequested ||
+                  IsDisposed ||
+                  Disposing)
+        {
+            return;
+        }
         catch (Exception exception)
         {
-            SetTestStatus($"Connection test failed: {exception.Message}", HiveStatusTone.Error);
-            HiveUiErrorReporter.Report(
-                this,
-                exception,
-                "Execution Target",
-                "The execution-target connection test failed.",
-                _output,
-                ThemeManager);
+            if (!IsDisposed && !Disposing)
+            {
+                SetTestStatus(
+                    $"Connection test failed: {exception.Message}",
+                    HiveStatusTone.Error);
+                HiveUiErrorReporter.Report(
+                    this,
+                    exception,
+                    "Execution Target",
+                    "The execution-target connection test failed.",
+                    _output,
+                    ThemeManager);
+            }
         }
         finally
         {
-            _testButton.Enabled = true;
+            if (ReferenceEquals(_testCts, testCts))
+                Interlocked.CompareExchange(
+                    ref _testCts,
+                    null,
+                    testCts);
+
+            testCts.Dispose();
+
+            if (!IsDisposed && !Disposing)
+                _testButton.Enabled = true;
         }
     }
 
@@ -354,6 +392,17 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         string.IsNullOrWhiteSpace(text)
             ? null
             : text.Trim();
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _testCts?.Cancel();
+            _testCts = null;
+        }
+
+        base.Dispose(disposing);
+    }
 
     private static TextBox CreateTextBox() =>
         new()
