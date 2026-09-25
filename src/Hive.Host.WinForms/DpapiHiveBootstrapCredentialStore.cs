@@ -102,7 +102,7 @@ public sealed class DpapiHiveBootstrapCredentialStore :
                 new Error(
                     "hive.host.bootstrap-credential-write-failed",
                     ErrorCategory.External,
-                    $"The Hive bootstrap credential could not be stored: {exception.Message}"));
+                    "The Hive bootstrap credential could not be stored."));
         }
         finally
         {
@@ -197,7 +197,7 @@ public sealed class DpapiHiveBootstrapCredentialStore :
                 new Error(
                     "hive.host.bootstrap-credential-read-failed",
                     ErrorCategory.External,
-                    $"The Hive bootstrap credential could not be read: {exception.Message}"));
+                    "The Hive bootstrap credential could not be read."));
         }
         finally
         {
@@ -242,7 +242,7 @@ public sealed class DpapiHiveBootstrapCredentialStore :
                     new Error(
                         "hive.host.bootstrap-credential-clear-failed",
                         ErrorCategory.External,
-                        $"The Hive bootstrap credential could not be removed: {exception.Message}")));
+                        "The Hive bootstrap credential could not be removed.")));
         }
     }
 
