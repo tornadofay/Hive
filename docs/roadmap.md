@@ -251,7 +251,7 @@ Scope:
 - support for application-owned/custom controls through adaptation rather than Hive dependencies;
 - semantic projection of host binding/data-source metadata rather than raw control/object exposure;
 - explicit parent/child data-surface relationships where the host can provide them;
-- stable primary/composite/host-defined row identities; row index is positional only, and a host key may change during an authorized update without changing the operation's pre-operation target identity;
+- stable row identity for the inspected V1 host is the primary-key ID; row index is positional only. The neutral contract remains extensible to other identity shapes later, but V1 does not require composite-key or general key-change handling;
 - generated-field and computed-field semantics;
 - bounded lookup operations; host filter expressions never become executable model input;
 - separation of UI interaction capabilities from business-operation semantics;
