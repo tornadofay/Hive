@@ -63,6 +63,15 @@ Static production audit identified and corrected these concrete shared-UI issues
    - Added focused regression coverage in `HiveUiPolishTests`.
    - Updated `docs/ui/forms.md` to document the Overview-first behavior.
 
+### Revision checkpoint
+
+A post-verification Revision identified one concrete stale UI contract detail within the existing Settings navigation:
+
+3. **Hive Settings accessibility description**
+   - The Settings navigation AccessibleDescription listed only Providers, Agents, and Persistence even though the Settings navigation also contains Overview, Accounts / Credentials, and Execution Targets.
+   - Updated the description to enumerate the current Settings destinations.
+   - Extended HiveUiPolishTests.HiveSettingsView_OpensOverviewByDefault to protect the accessibility contract.
+
 ### Verification gate
 
 **VERIFICATION PENDING**
