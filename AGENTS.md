@@ -8,7 +8,7 @@ Use this authority order:
 
 1. `AGENTS.md` — agent workflow and repository rules.
 2. `docs/architecture.md` plus the relevant `docs/architecture/*.md` detail documents — intended architecture and ownership.
-3. `docs/Hive_Active_Work.md` — only authorized current implementation slice and verification gate.
+3. `docs/Hive_Active_Work.md` — only the current authorized implementation slice and verification gate; it is current-state only, not historical storage.
 4. `docs/roadmap.md` — ordered future work.
 5. Source/project files — actual implementation.
 6. Tests — behavior actually exercised by tests.
@@ -59,6 +59,8 @@ If Active Work is closed or absent:
 - roadmap advancement still requires explicit user authorization.
 
 A maintenance, audit, polish, bug-fix, regression-fix, revision, or "again/continue" request does not authorize a later roadmap slice. If corrective work later reveals that a fix requires a new capability or material public-contract expansion, stop that portion rather than widening the temporary slice and require separate authorization. Establishing a temporary slice from an explicit new non-roadmap corrective task is task authorization only; it is not roadmap advancement.
+
+`docs/Hive_Active_Work.md` must contain only the current slice. Do not append closed slices or historical checkpoints to it. When a slice is closed, preserve historical verification evidence under `docs/verification/`, update `docs/Hive_Current_Status.md` when its status record changes, and then reduce `docs/Hive_Active_Work.md` to the minimal no-active-slice state unless another slice is being explicitly established. When opening a new temporary or roadmap-authorized slice, replace the inactive placeholder with only that new current slice; do not retain prior closed slices in the file.
 
 Revision means re-reviewing the immediately preceding work within its inherited mode, domain, scope, and active slice. Revision may correct concrete issues within that inherited scope but must never advance the roadmap.
 
@@ -220,8 +222,12 @@ A slice closes only after:
 1. required implementation exists;
 2. required tests/examples/docs exist;
 3. required verification has actually been performed;
-4. Active Work and Status are updated from real results;
-5. the next slice is authorized.
+4. the historical verification evidence is archived under `docs/verification/` when applicable;
+5. Active Work and Status are updated from real results;
+6. the closed slice is removed from `docs/Hive_Active_Work.md`, leaving only the minimal current no-slice state unless another slice is already authorized;
+7. the next slice is authorized.
+
+`docs/Hive_Active_Work.md` is a current-state control document, not a changelog. Never leave a closed slice in it merely for history.
 
 When execution is not authorized, hand off exact verification targets and leave the gate open.
 
