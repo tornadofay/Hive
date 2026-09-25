@@ -260,6 +260,7 @@ public sealed class HiveSettingsView : UserControl
         catch (OperationCanceledException)
             when (operationCts.IsCancellationRequested)
         {
+            return;
         }
         catch (Exception exception)
         {
@@ -341,6 +342,7 @@ public sealed class HiveSettingsView : UserControl
                   IsDisposed ||
                   Disposing)
         {
+            return;
         }
         catch (Exception exception)
         {
