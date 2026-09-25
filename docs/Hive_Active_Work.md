@@ -2,7 +2,7 @@
 
 ### Status
 
-**IMPLEMENTATION COMPLETE / VERIFICATION PENDING DEVELOPER.**
+**IMPLEMENTATION COMPLETE / VERIFICATION IN PROGRESS.**
 
 This explicitly authorized backend maintenance pass does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
@@ -35,20 +35,31 @@ Implementation commits on main:
 
 ### Verification result
 
-**Pending developer verification.**
+Developer-supplied verification on 2026-09-25:
 
-No build, test run, application launch, migration, provider call, or other execution has been performed by this pass.
+- Configured-agent Example Host execution: **Succeeded**.
+- AgentDefinition key: `allam-2-7b`.
+- Provider: `Groq`.
+- ProviderAccount: `Groqtest`.
+- ExecutionTarget key: `openai/gpt-oss-20b`.
+- Model: `openai/gpt-oss-20b`.
+- Execution status: **Succeeded**.
+- Provider response ID: `chatcmpl-5aba8248-2ae1-4211-9587-93bbb549c7ba` was displayed by the Example Host.
+- Provider credentials: not displayed.
+- Service graph: current host graph.
+- LocalDevelopment database: not used by this example.
 
-### Verification handoff
+This confirms the externally meaningful configured-agent execution path preserves and displays the provider response ID from the completed execution.
 
-Run and return the actual results for:
-- affected solution/backend projects build;
-- focused Hive.Tests coverage for AgentExecutionIntegrationTests and BaseAgentWorkProtocolsTests;
+### Verification still required
+
+The maintenance pass remains open pending reconciliation of:
+- affected solution/backend project build after the final `CS0168` correction;
+- focused `Hive.Tests` coverage for AgentExecutionIntegrationTests and BaseAgentWorkProtocolsTests;
 - full Hive.Tests suite;
-- configured-agent Example Host execution and confirmation that the configured provider response ID is shown when the provider returns one;
-- an unexpected transport failure path confirming the returned Coordination error message is generic and does not expose the thrown exception text.
+- the unexpected transport failure path confirming the returned Coordination error message is generic and does not expose the thrown exception text.
 
-Do not close this maintenance pass or change Hive_Current_Status.md from this handoff alone. Close it only after the supplied verification results are reconciled with the repository.
+Do not close this maintenance pass or change Hive_Current_Status.md until these remaining supplied verification results are reconciled with the repository.
 
 Last updated: 2026-09-25
 ## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision 5
