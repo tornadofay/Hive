@@ -95,6 +95,72 @@ public sealed class HiveManagementFacadeTests
     }
 
     [Fact]
+    public async Task RetiringConfiguredAgentDefinition_PreservesExecutionTargetReference()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ManagementAgentRetireTarget");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var facade = CreateFacade(database.Options);
+        var context = CreateContext();
+        var provider = CreateProvider(context);
+
+        var providerCreated = await facade.CreateProviderAsync(provider, context);
+        Assert.True(providerCreated.IsSuccess, providerCreated.Error?.Message);
+
+        var account = CreateProviderAccount(provider.Id, context);
+        var accountCreated = await facade.CreateProviderAccountAsync(account, context);
+        Assert.True(accountCreated.IsSuccess, accountCreated.Error?.Message);
+
+        var target = CreateExecutionTarget(
+            provider.Id,
+            account.Id,
+            context);
+
+        var targetCreated = await facade.CreateExecutionTargetAsync(target, context);
+        Assert.True(targetCreated.IsSuccess, targetCreated.Error?.Message);
+
+        var definition = CreateAgentDefinition(
+            context,
+            target.Id,
+            key: "configured-retire-agent");
+
+        var created = await facade.CreateAgentDefinitionAsync(
+            definition,
+            context);
+        Assert.True(created.IsSuccess, created.Error?.Message);
+
+        var retired = await facade.DeleteAgentDefinitionAsync(
+            definition.Id,
+            context);
+
+        Assert.True(retired.IsSuccess, retired.Error?.Message);
+        Assert.Equal(
+            ResourceLifecycleStatus.Retired,
+            retired.Value!.Resource!.Lifecycle.Status);
+        Assert.Equal(
+            target.Id,
+            retired.Value.ConfiguredExecutionTargetId);
+
+        var reloaded = await facade.GetAgentDefinitionAsync(
+            definition.Id,
+            context);
+
+        Assert.True(reloaded.IsSuccess, reloaded.Error?.Message);
+        Assert.Equal(
+            target.Id,
+            reloaded.Value!.ConfiguredExecutionTargetId);
+        Assert.Equal(
+            retired.Value.Resource.Version,
+            reloaded.Value.Resource.Version);
+        Assert.Equal(
+            retired.Value.Resource.Lifecycle.Status,
+            reloaded.Value.Resource.Lifecycle.Status);
+    }
+
+    [Fact]
     public async Task RetiredAgentDefinitionKey_CanBeReusedByNewActiveDefinition()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ManagementAgentKeyReuse");
