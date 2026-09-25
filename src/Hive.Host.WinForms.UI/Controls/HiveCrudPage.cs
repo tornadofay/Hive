@@ -1350,6 +1350,14 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
 
         SetStatus("Loading...", HiveStatusTone.Information);
         var items = await _loadItemsAsync(cancellationToken);
+
+        if (cancellationToken.IsCancellationRequested ||
+            IsDisposed ||
+            Disposing)
+        {
+            return;
+        }
+
         _items = items ?? throw new InvalidOperationException(
             "LoadItemsAsync returned null.");
 
