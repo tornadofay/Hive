@@ -2,10 +2,47 @@
 
 ## Current checkpoint
 
-**No active implementation slice.**
+**TEMPORARY MAINTENANCE — UI**
 
-Phase 1.13 is complete and developer-verified. All temporary maintenance passes are closed. Phase 1.14 remains inactive and unauthorized.
+Authorized by the explicit user task: **Hive: Maintenance - UI**.
 
-Historical verification evidence belongs under [docs/verification/](verification/) and is not duplicated in this file.
+### Scope
+
+Production audit and corrective maintenance of the existing WinForms presentation surface only.
+
+Included:
+- `Hive.Host.WinForms.UI` shared visual foundation, controls, themes, layout, dialogs, and interaction behavior;
+- existing UI-facing forms/views in `Hive.Host.WinForms` where the correction is purely presentation/interaction/lifecycle behavior;
+- existing `Hive.Example.WinForms` presentation usage only where required to preserve or correct the established UI contract;
+- focused regression coverage in `Hive.Tests` when a concrete defect requires it.
+
+Excluded:
+- Phase 1.14 or any later roadmap slice;
+- new capabilities or materially expanded public UI contracts;
+- new host/business actions, authorization behavior, persistence/provider logic, or host-integration capabilities;
+- unrelated backend refactoring or dependency upgrades;
+- changes to roadmap ordering.
+
+### Acceptance criteria
+
+- Identify and correct concrete production UI defects or quality problems within the existing contract.
+- Preserve existing behavior and architecture unless the existing documented UI contract requires correction.
+- Reuse the established Hive UI APIs; do not introduce wrapper-only controls or a parallel theme/navigation system.
+- Preserve Light/Dark/System behavior, focus/selection states, resizing/anchoring, responsiveness, disposal/resource ownership, and UI-thread correctness.
+- User-visible unexpected failures continue to use `HiveUiErrorReporter` / `HiveMessageBox` and Output reporting without exposing secrets.
+- Add focused regression coverage when an identified defect is testable and the repository test boundary can prove it.
+- Review the final diff for accidental, duplicate, stale, dead, or out-of-scope changes.
+
+### Verification gate
+
+**VERIFICATION PENDING**
+
+Implementation may stop at the developer-verification gate only. Required developer verification will be recorded after the concrete changes are known and will include:
+- build of the affected solution/projects;
+- focused `Hive.Tests` coverage for changed UI contracts/defects;
+- broader `Hive.Tests` run when required by the changed boundary;
+- manual Example Host verification of affected Light/Dark/System, resize, interaction, dialog, loading/error/empty states, and lifecycle behavior as applicable.
+
+This temporary slice does not authorize roadmap advancement.
 
 Last updated: 2026-09-25
