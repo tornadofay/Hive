@@ -94,7 +94,7 @@ public sealed class SqlDpapiSecretStore : ISecretStore
                 accessContext,
                 cancellationToken));
 
-    private static async Task<Result<Secret>> CreateCoreAsync(
+    private async Task<Result<Secret>> CreateCoreAsync(
         SqlConnection connection,
         Secret secret,
         SecretMaterial material,
@@ -177,7 +177,7 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         }
     }
 
-    private static async Task<Result<SecretReadResult>> GetCoreAsync(
+    private async Task<Result<SecretReadResult>> GetCoreAsync(
         SqlConnection connection,
         SecretId id,
         ResourceAccessContext accessContext,
@@ -227,6 +227,10 @@ public sealed class SqlDpapiSecretStore : ISecretStore
                     ErrorCategory.Internal,
                     "The stored secret could not be decrypted for the current Windows user."));
         }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(loaded.EncryptedValue!);
+        }
 
         try
         {
@@ -251,7 +255,7 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         }
     }
 
-    private static async Task<Result<Secret>> GetDescriptorCoreAsync(
+    private async Task<Result<Secret>> GetDescriptorCoreAsync(
         SqlConnection connection,
         SecretId id,
         ResourceAccessContext accessContext,
@@ -271,7 +275,7 @@ public sealed class SqlDpapiSecretStore : ISecretStore
             : Result<Secret>.Success(row.Value!.Secret);
     }
 
-    private static async Task<Result<Secret>> ReplaceCoreAsync(
+    private async Task<Result<Secret>> ReplaceCoreAsync(
         SqlConnection connection,
         SqlTransaction transaction,
         SecretId id,
@@ -370,7 +374,7 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         }
     }
 
-    private static async Task<Result> DeleteCoreAsync(
+    private async Task<Result> DeleteCoreAsync(
         SqlConnection connection,
         SqlTransaction transaction,
         SecretId id,
@@ -411,7 +415,7 @@ public sealed class SqlDpapiSecretStore : ISecretStore
                     "The secret was not found."));
     }
 
-    private static async Task<Result<LoadedSecret>> LoadAsync(
+    private async Task<Result<LoadedSecret>> LoadAsync(
         SqlConnection connection,
         SqlTransaction? transaction,
         SecretId id,
@@ -681,11 +685,14 @@ public sealed class SqlDpapiSecretStore : ISecretStore
                 -1));
     }
 
-    private static SqlCommand CreateCommand(
+    private SqlCommand CreateCommand(
         SqlConnection connection,
         string commandText,
         SqlTransaction? transaction = null) =>
-        new(commandText, connection, transaction);
+        new(commandText, connection, transaction)
+        {
+            CommandTimeout = _options.CommandTimeoutSeconds
+        };
 
     private static SqlParameter GuidParameter(
         string name,
