@@ -103,7 +103,7 @@ public sealed class OpenAICompatibleChatRequest
                 nameof(messages));
 
         Model = normalizedModel;
-        Messages = Array.AsReadOnly(normalizedMessages.ToArray());
+        Messages = normalizedMessages.AsReadOnly();
         StructuredOutput = structuredOutput;
     }
 
