@@ -14,6 +14,30 @@ namespace Hive.Tests;
 public sealed class AgentExecutionIntegrationTests
 {
     [Fact]
+    public void AgentExecutionRequest_RejectsDefaultCorrelationIdentity()
+    {
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var agent = CreateAgent(context);
+        var runtime = agent.CreateRuntimeInstance();
+        var target = CreateTarget(
+            new Uri("https://example.invalid/v1"),
+            context.PrincipalId!.Value,
+            context.TenantId!.Value);
+
+        Assert.Throws<ArgumentException>(
+            () => new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                context,
+                "Test request.",
+                correlationId: (CorrelationId?)default(CorrelationId)));
+    }
+
+    [Fact]
     public async Task ExecuteConfiguredAgentAsync_UsesPersistedTargetAndRefreshesAfterTargetChange()
     {
         var database = await PrepareDatabase("Hive_Test_ConfiguredAgentExecution");
