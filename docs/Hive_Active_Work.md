@@ -2,7 +2,7 @@
 
 ## Phase 1.14 — Dual Business-App Integration Contract (Reopened Revision)
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Opened: 2026-09-26
 
@@ -87,7 +87,7 @@ Remediation boundary: make primary-key semantics consistently read-only in the W
 
 The recorded Phase 1.14 verification failures were remediated within the same slice. Automatic standard-control interaction validation now normalizes the public `control:<identity>` target before deriving the deterministic capability identity, matching capture-time capability generation. The two affected focused tests now select their intended control explicitly because host capture includes the registered root form descriptor.
 
-Developer-provided results before remediation remain recorded above; no post-remediation test or example execution has been performed by the agent.
+Developer-provided results remain the evidence for this remediation gate: the broader suite was 303/303 before the primary-key correction, while the example still failed on the read-only representation. The primary-key correction itself has not been executed by the agent.
 
 ### Verification handoff
 
