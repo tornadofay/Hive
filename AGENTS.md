@@ -270,4 +270,4 @@ Before handoff:
 
 ## Final rule
 
-**Use repository evidence. Continue only the authorized slice. Make the smallest correct production change. Preserve architecture and boundaries. Add required tests/examples. Verify only what actually ran. Keep detailed knowledge in the owning docs, not here.**
+**Use repository evidence. Continue only the authorized slice. Keep scope bounded, but make the engineering work complete and production-grade within that scope. Preserve architecture and boundaries. Add required tests/examples. Verify only what actually ran. Keep detailed knowledge in the owning docs, not here.**
