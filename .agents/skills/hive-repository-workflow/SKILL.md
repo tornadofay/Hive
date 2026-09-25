@@ -32,9 +32,12 @@ For a revision of this skill or its references, inspect the complete workflow-sk
 
 Continue only the authorized slice.
 
+If the open Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, **stop implementation at that gate**. A `Continue` command does not override the gate. Provide the exact required verification handoff and wait for actual developer results or an explicit new task that is permitted by the repository.
+
 Do not:
 - start a later roadmap slice;
 - repeat already completed work;
+- resume implementation past a verification gate;
 - silently widen scope;
 - interpret "continue", "again", "revision", "polish", or "finish" as roadmap advancement.
 
