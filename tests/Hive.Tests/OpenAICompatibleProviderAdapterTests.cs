@@ -416,7 +416,7 @@ public sealed class OpenAICompatibleProviderAdapterTests
                 new OpenAICompatibleMessage(
                     OpenAICompatibleMessageRole.User,
                     "test"),
-                OpenAICompatibleChatRequest.MaxMessageCount + 1)
+                257)
             .ToArray();
 
         Assert.Throws<ArgumentException>(
@@ -440,7 +440,7 @@ public sealed class OpenAICompatibleProviderAdapterTests
         static IEnumerable<Microsoft.Extensions.AI.ChatMessage> Messages()
         {
             for (var index = 0;
-                 index <= OpenAICompatibleChatRequest.MaxMessageCount;
+                 index <= 256;
                  index++)
             {
                 yield return new Microsoft.Extensions.AI.ChatMessage(
@@ -489,9 +489,9 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     private static string BuildLargeResponseBody() =>
-        """{"choices":[{"message":{"role":"assistant","content":""" +
+        "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"" +
         new string('x', (4 * 1024 * 1024) + 1) +
-        """""}}]}""";
+        "\"}}]}";
 
     private static OpenAICompatibleChatRequest CreateRequest() =>
         new(
