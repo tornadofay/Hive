@@ -2,7 +2,7 @@
 
 ### Status
 
-**OPEN / VERIFICATION PENDING DEVELOPER.**
+**CLOSED / DEVELOPER-VERIFIED.**
 
 This explicitly authorized backend maintenance pass does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
@@ -14,7 +14,7 @@ This explicitly authorized backend maintenance pass does not advance the roadmap
 - Add focused regression coverage only where a discovered defect protects a real contract.
 - Inspect affected Example Host behavior only when a revised public/external behavior requires it.
 - No future roadmap implementation, especially no Phase 1.14; no speculative abstractions, dependency upgrades, schema redesign, cognitive work, host-integration expansion, or unrelated cleanup.
-- Execution, builds, tests, launches, migrations, and provider calls remain unverified unless separately authorized by the developer.
+- Execution, builds, tests, launches, migrations, and provider calls were not performed by the assistant; developer-supplied verification is recorded below.
 
 ### Implementation checkpoint
 
@@ -23,7 +23,7 @@ Static production review identified and corrected one concrete backend input-bou
 - `WorkItemAttachmentMetadata` and `WorkItemImageSubmission` now reject the special path components `.` and `..` in addition to existing path-separator and length validation. This completes the existing logical leaf-filename contract without introducing a filesystem-specific restriction into Hive.Core.
 - Added focused regression coverage proving both public constructors reject `.` and `..`.
 - The final static cross-project review found no additional concrete backend defect requiring a code change within this maintenance scope.
-- No Example Host change is required because the correction is validation of malformed input at an existing public contract and existing examples already use valid leaf filenames.
+- No Example Host change was required because the correction is validation of malformed input at an existing public contract and existing examples already use valid leaf filenames.
 - No public API shape, database schema, migration, orchestration, provider transport, credential model, authorization model, dependency graph, or roadmap phase was changed.
 
 Implementation commits on main:
@@ -43,22 +43,23 @@ The final implementation was inspected after the correction for:
 - Project references and dependency direction.
 - Affected tests and public Example Host consumers.
 
-Final GitHub diff from the Revision 4 opening checkpoint contains exactly:
+The final GitHub diff from the Revision 4 opening checkpoint contains exactly:
 - `src/Hive.Core/Resources/WorkItemContracts.cs`
 - `tests/Hive.Tests/WorkItemFoundationTests.cs`
 
 ### Verification
 
-**Not verified by this maintenance pass.**
+**Developer-verified.**
 
-No build, test run, application launch, migration, provider call, or manual Example Host execution was performed.
+- Full solution build: **9 succeeded, 0 failed, 1 up-to-date, 0 skipped**.
+- Build completed at **7:47 AM**, duration **21.051 seconds**.
+- Full `Hive.Tests` suite: **258 passed, 0 failed, 0 skipped**, completed in **28.5 seconds**.
+- The focused `WorkItemFoundationTests` regression coverage was exercised as part of the full 258-test suite; no separate filtered test run was supplied.
+- No application launch, migration, provider call, or manual Example Host verification was supplied for this maintenance pass.
 
-Required developer verification:
-- Focused: `Hive.Tests.WorkItemFoundationTests`.
-- Broader regression: full `Hive.Tests` suite.
-- Build: affected solution/projects, preferably the normal full solution build used for Hive verification.
+### Completion
 
-After verification, record the exact developer-supplied results here before closing this maintenance pass.
+The backend maintenance pass is closed because the production correction compiled successfully and the complete automated test suite passed.
 
 Do not change `Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
 
