@@ -12,7 +12,7 @@
 
 **Review (workflow mode):** repository-wide Architecture + Production Engineering analysis; inspect beyond Active Work when useful; read-only, report in chat, no repository changes or authorization. Distinct from the business Review lifecycle/capability.
 
-**Verification:** reconcile actual results. Failed/in-scope → record **VERIFICATION FAILED / REMEDIATION REQUIRED** first, remediate same slice, then **VERIFICATION PENDING**. Out-of-scope/new capability → authorization required.
+**Verification:** while **VERIFICATION PENDING** awaiting developer results, implementation stops. Failed/in-scope → record **VERIFICATION FAILED / REMEDIATION REQUIRED** first, allow same-slice remediation, then **VERIFICATION PENDING**. Out-of-scope/new capability → authorization required.
 
 **Roadmap:** only explicit user authorization advances it.
 
