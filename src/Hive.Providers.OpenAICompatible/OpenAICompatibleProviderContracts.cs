@@ -147,14 +147,6 @@ public sealed class OpenAICompatibleProviderOptions
                 "Base URI must not embed credentials.",
                 nameof(baseUri));
 
-        if (!string.IsNullOrEmpty(baseUri.Query) ||
-            !string.IsNullOrEmpty(baseUri.Fragment))
-        {
-            throw new ArgumentException(
-                "Base URI must not contain a query string or fragment.",
-                nameof(baseUri));
-        }
-
         var effectiveTimeout = timeout ?? TimeSpan.FromSeconds(30);
 
         if (effectiveTimeout <= TimeSpan.Zero ||
