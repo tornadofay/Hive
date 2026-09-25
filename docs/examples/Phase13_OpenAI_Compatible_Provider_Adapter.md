@@ -60,9 +60,12 @@ Contract:
 - \`401/403\` → \`Unauthorized\`.
 - \`429\` → \`External\` with the rate-limit error code.
 - provider timeout → \`Timeout\`.
-- caller cancellation propagates as \`OperationCanceledException\`.
-- network transport failure → \`External\`.
-- malformed provider response or malformed structured JSON → \`Serialization\`.
+- caller cancellation propagates as OperationCanceledException.
+- network transport failure → External.
+- malformed provider response or malformed structured JSON → Serialization.
+- each chat request is limited to 256 messages.
+- serialized provider request bodies are limited to 4 MiB and return a structured validation failure when exceeded.
+- successful provider response bodies are limited to 4 MiB; oversized responses return a structured serialization failure.
+- message content preserves caller-supplied leading/trailing whitespace; whitespace-only content remains invalid.
 - Compatible providers are configurations of the shared adapter; do not add provider-specific transport implementations.
-
-The adapter receives already-resolved credential material. ProviderAccount/SecretReference wiring is added by later management/execution slices.
+The adapter receives already-resolved credential material and does not own or dispose it. ProviderAccount/SecretReference wiring is added by later management/execution slices.
