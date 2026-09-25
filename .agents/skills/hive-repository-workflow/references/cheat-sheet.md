@@ -3,6 +3,8 @@
 **Authority by role:** `AGENTS.md` = workflow rules; architecture = intended design; Active Work = current authorization/scope; roadmap = future order only; source/tests = implementation/evidence; status/verification = current or historical state.
 
 **Continue:** same task; stop at verification gate; never create work when no task/active slice exists.
+**Again:** repeat the same task or Revision pass; same context/scope; never next phase.
+**Polish / Polish again:** repeat the same maintenance/polish scope; never broaden or advance.
 
 **Revision:** production-depth re-audit and correction of the preceding task's findings; review the result again; never next phase. With open implementation Active Work, stay inside it. With no Active Work after a preceding implementation/corrective task, establish a temporary bounded corrective slice before re-auditing and correcting findings. A read-only Workflow Review does not qualify as that preceding task and does not by itself create implementation authorization; its findings require an existing authorized boundary or explicit bounded corrective authorization. Workflow-documentation Revision stays within the affected governance documents; new capability/public-contract expansion/roadmap work still needs authorization.
 
