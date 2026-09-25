@@ -5,7 +5,7 @@ Revision asks whether the work just performed is complete, correct, and still in
 ## Context and scope
 
 - Exact task, mode, domain, and scope
-- Active Work authorization, or establishment of a temporary slice from an explicit new bounded task when no slice is open
+- Active Work authorization, or establishment of a temporary slice from an explicit new bounded Maintenance task when no slice is open
 - Respect any developer-verification gate before implementation-affecting changes
 - No future roadmap work
 - No unrelated behavior changes
