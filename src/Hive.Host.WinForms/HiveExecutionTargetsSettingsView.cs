@@ -270,6 +270,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
     {
         _selectedAccount = null;
         _accounts = Array.Empty<ProviderAccount>();
+        _page.AllowAdd = false;
 
         _loadingFilters = true;
         _providerComboBox.Enabled = false;
