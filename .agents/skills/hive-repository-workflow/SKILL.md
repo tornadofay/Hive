@@ -38,7 +38,11 @@ Before every write, re-check the branch checkpoint and reconcile any concurrent 
 
 **Revision** — re-audit the work just performed, fix concrete in-scope problems to production depth, then review again. Revision is corrective, not read-only. When it follows Workflow Review, use the review findings to make concrete corrections within the applicable authorized boundary; the Review itself does not authorize unrelated work or roadmap advancement.
 
-**Maintenance** — perform a complete production audit/correction pass within the authorized boundary; do not stop at the first symptom.
+**Maintenance — Backend** — perform a complete production backend/integration audit and correction pass within the authorized boundary; use the Backend / Integration checklist; do not stop at the first symptom.
+
+**Maintenance — UI** — perform a complete production WinForms/UI audit and correction pass within the authorized boundary; use the WinForms / UI checklist; do not stop at the first symptom.
+
+**Maintenance — Host/UI** — perform a complete production host/UI-boundary audit and correction pass within the authorized boundary; use the Host / UI Boundary checklist; do not stop at the first symptom.
 
 **Architecture** — analyze a specific design/ownership/contract question; do not implement unless explicitly requested.
 
