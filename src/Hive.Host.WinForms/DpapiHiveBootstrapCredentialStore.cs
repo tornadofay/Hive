@@ -96,7 +96,7 @@ public sealed class DpapiHiveBootstrapCredentialStore :
                     ErrorCategory.Internal,
                     "The bootstrap credential could not be protected for the current Windows user."));
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result.Failure(
                 new Error(

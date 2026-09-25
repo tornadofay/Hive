@@ -178,7 +178,7 @@ public sealed class HiveHostComposition : IDisposable
         {
             throw;
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             var error = new Error(
                 "hive.host.composition-failed",

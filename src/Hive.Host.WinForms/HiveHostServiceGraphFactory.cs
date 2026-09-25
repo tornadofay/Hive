@@ -89,7 +89,7 @@ public sealed class SqlHiveHostServiceGraphFactory :
                     configuration,
                     credential);
             }
-            catch (ArgumentException exception)
+            catch (ArgumentException)
             {
                 return Result<HiveHostServiceGraph>.Failure(
                     Error.Validation(
@@ -123,7 +123,7 @@ public sealed class SqlHiveHostServiceGraphFactory :
         {
             throw;
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result<HiveHostServiceGraph>.Failure(
                 new Error(
