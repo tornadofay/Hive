@@ -4,7 +4,7 @@
 
 ### Status
 
-**OPEN / static audit in progress; execution not authorized.**
+**CLOSED / developer-verified.**
 
 This maintenance pass is provider-backend-only maintenance. It does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
@@ -37,17 +37,42 @@ Affected implementation/test/documentation files:
 
 The existing `Hive.Example.WinForms` provider-transport scenario was re-inspected statically and remains valid; no example source change is required.
 
-### Verification gate
+### Verification result
 
-Execution is **not authorized in this request**.
+Developer-supplied verification on 2026-09-25:
 
-Required verification after implementation:
-- Focused: `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
-- Build: `src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`
-- Broader: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`
-- Manual configured Example Host provider execution only when the revised public behavior requires it.
+Full `Hive.Tests` run:
+- **247 tests passed, 0 failed, 0 skipped**
+- **27.4 seconds**
+- .NET **10.0.1**
+- xUnit.net VSTest Adapter **3.1.5+1b188a7b0a**
 
-No build/test/provider execution has been performed by this revision. The slice remains open until actual verification results are supplied.
+Configured provider execution:
+- AgentDefinition key: `allam-2-7b`
+- Provider: `Groq`
+- ProviderAccount: `Groqtest`
+- ExecutionTarget key: `allam-2-7b`
+- Model: `allam-2-7b`
+- Execution status: **Succeeded**
+- Provider credentials: not displayed
+- Service graph: current host graph
+- LocalDevelopment database: not used by this example
+
+This provides runtime verification of the configured provider/target execution path in addition to the local fake-server automated coverage.
+
+### Verification limits
+
+Not separately supplied:
+- direct standalone build output for `src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`;
+- a dedicated focused-only test-run transcript;
+- a separate Example Host navigation-path manual transcript.
+
+The full suite exercised the provider project through the `Hive.Tests` dependency graph.
+
+Verification archive:
+[`hive-openai-compatible-provider-audit-final-revision-2-2026-09-25.md`](verification/maintenance/hive-openai-compatible-provider-audit-final-revision-2-2026-09-25.md)
+
+The provider audit revision 2 is **developer-verified and closed**. `docs/Hive_Current_Status.md` remains unchanged because no roadmap phase/status changed.
 
 Last updated: 2026-09-25
 
