@@ -246,7 +246,7 @@ public sealed class JsonEventSerializer
                 new Error(
                     "event.json.invalid",
                     ErrorCategory.Serialization,
-                    $"Event envelope JSON is invalid: {exception.Message}"),
+                    "Event envelope JSON is invalid."),
                 exception);
         }
     }
@@ -300,7 +300,7 @@ public sealed class JsonEventSerializer
                 new Error(
                     "event.payload.invalid",
                     ErrorCategory.Serialization,
-                    $"Event '{envelope.EventType}' payload is invalid: {exception.Message}"),
+                    $"Event '{envelope.EventType}' payload is invalid."),
                 exception);
         }
     }
