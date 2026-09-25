@@ -47,6 +47,8 @@ If Active Work contains an open slice, continue that slice exactly. Do not imple
 
 If the open Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, stop implementation at that gate. No implementation-affecting `Continue`, `Revision`, `Maintenance`, `Again`, or similar follow-up may cross that gate. Provide the exact required verification handoff instead. A separately authorized governance/documentation task may still change only its explicitly affected governance/documentation files.
 
+An agent must not edit `docs/Hive_Active_Work.md`, `docs/Hive_Current_Status.md`, the roadmap, or another source-of-truth document merely to create, remove, weaken, or bypass authorization or a verification gate.
+
 If the active slice is closed, do not automatically advance the roadmap. Roadmap advancement requires explicit user authorization.
 
 A maintenance, audit, polish, revision, or "again/continue" request does not authorize a later roadmap slice.
