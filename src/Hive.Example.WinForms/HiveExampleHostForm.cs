@@ -1,5 +1,4 @@
 using System.Drawing;
-using System.Text;
 using System.Reflection;
 using System.Windows.Forms;
 using Hive.Agents;
@@ -502,32 +501,35 @@ internal sealed class HiveExampleHostForm : HiveForm
         {
             _navigation.Nodes.Clear();
 
-            var navigationNodes =
-                new Dictionary<string, TreeNode>(
-                    StringComparer.OrdinalIgnoreCase);
+            var categoryNodes =
+                new Dictionary<string, TreeNode>(StringComparer.OrdinalIgnoreCase);
+            var subcategoryNodes =
+                new Dictionary<string, TreeNode>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var example in _examples)
             {
-                TreeNodeCollection currentChildren = _navigation.Nodes;
-                TreeNode? parent = null;
-                var path = example.NavigationPath;
-
-                for (var index = 0; index < path.Count; index++)
+                if (!categoryNodes.TryGetValue(
+                        example.Category,
+                        out var categoryNode))
                 {
-                    var key = CreateNavigationKey(path, index + 1);
-
-                    if (!navigationNodes.TryGetValue(key, out var node))
-                    {
-                        node = new TreeNode(path[index]);
-                        navigationNodes.Add(key, node);
-                        currentChildren.Add(node);
-                    }
-
-                    parent = node;
-                    currentChildren = node.Nodes;
+                    categoryNode = new TreeNode(example.Category);
+                    categoryNodes.Add(example.Category, categoryNode);
+                    _navigation.Nodes.Add(categoryNode);
                 }
 
-                currentChildren.Add(
+                var subcategoryKey =
+                    example.Category + "" + example.Subcategory;
+
+                if (!subcategoryNodes.TryGetValue(
+                        subcategoryKey,
+                        out var subcategoryNode))
+                {
+                    subcategoryNode = new TreeNode(example.Subcategory);
+                    subcategoryNodes.Add(subcategoryKey, subcategoryNode);
+                    categoryNode.Nodes.Add(subcategoryNode);
+                }
+
+                subcategoryNode.Nodes.Add(
                     new TreeNode(example.Title)
                     {
                         Tag = example
@@ -540,23 +542,6 @@ internal sealed class HiveExampleHostForm : HiveForm
         {
             _navigation.EndUpdate();
         }
-    }
-
-    private static string CreateNavigationKey(
-        IReadOnlyList<string> path,
-        int length)
-    {
-        var key = new StringBuilder();
-
-        for (var index = 0; index < length; index++)
-        {
-            var segment = path[index];
-            key.Append(segment.Length);
-            key.Append(':');
-            key.Append(segment);
-        }
-
-        return key.ToString();
     }
 
     private void SelectFirstExample()
