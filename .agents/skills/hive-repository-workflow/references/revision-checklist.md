@@ -7,6 +7,7 @@ Use this checklist for Revision and other re-review passes. It is a review aid, 
 - Active Work authorization and verification gate
 - architecture and roadmap boundary
 - no future work or unrelated behavior changes
+- when Revision follows read-only Workflow Review, confirm an existing implementation boundary or explicit bounded corrective authorization; Review findings alone do not authorize implementation
 
 ## Production quality
 - correctness, invariants, edge cases
