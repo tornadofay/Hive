@@ -169,7 +169,7 @@ public sealed class HiveHostComposition : IDisposable
             var error = new Error(
                 "hive.host.composition-failed",
                 ErrorCategory.External,
-                $"Hive host composition failed: {exception.Message}");
+                "Hive host composition failed.");
 
             SetFailure(error);
 
