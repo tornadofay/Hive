@@ -172,6 +172,16 @@ public sealed record DelegationRequest
                     "Delegation task is required."));
         }
 
+        if (source is { } sourceReference &&
+            (!Enum.IsDefined(sourceReference.Kind) ||
+             sourceReference.Identity == Guid.Empty))
+        {
+            return Result<DelegationRequest>.Failure(
+                Error.Validation(
+                    "hive.agent.delegation.source-invalid",
+                    "Delegation source reference is invalid."));
+        }
+
         var provenance = new ResourceProvenance(
             requesterContext.PrincipalId!.Value,
             requestedAtUtc,
