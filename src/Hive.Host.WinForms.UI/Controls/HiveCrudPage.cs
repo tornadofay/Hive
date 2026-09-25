@@ -882,6 +882,16 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     {
         var compact = ClientSize.Width > 0 &&
                       ClientSize.Width < GetWideToolbarMinimumWidth();
+
+        // Status filtering remains a secondary filter. In compact mode the
+        // search label disappears, so keep the status filter aligned with the
+        // search field instead of retaining the wide-layout leading offset.
+        _statusFilterLabel.Margin = new Padding(
+            compact ? 0 : 16,
+            0,
+            6,
+            0);
+
         var expectedRows = compact && _searchBox.Visible ? 2 : 1;
         var expectedColumns = compact ? 1 : 2;
         var actionWidth = GetVisibleActionBarWidth(compact);
