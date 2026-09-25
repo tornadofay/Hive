@@ -70,6 +70,21 @@ public sealed class HiveNavigationTree : TreeView
         Invalidate();
     }
 
+    protected override void OnBeforeSelect(TreeViewCancelEventArgs e)
+    {
+        // Navigation categories/groups describe destinations; only their leaf
+        // examples/pages represent selectable content. Preventing group selection
+        // keeps the highlighted navigation item synchronized with the displayed
+        // page and avoids a non-actionable selection state.
+        if (e.Node?.Nodes.Count > 0)
+        {
+            e.Cancel = true;
+            return;
+        }
+
+        base.OnBeforeSelect(e);
+    }
+
     protected override void OnDrawNode(DrawTreeNodeEventArgs e)
     {
         var theme = _theme;
