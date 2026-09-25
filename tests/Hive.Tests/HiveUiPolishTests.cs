@@ -246,6 +246,20 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
+    public async Task HiveCrudPage_DoesNotEscapeOperationFailureWithoutSubscriber()
+    {
+        using var page = new HiveCrudPage<TestItem>();
+
+        page.LoadItemsAsync = _ =>
+            Task.FromException<IReadOnlyList<TestItem>>(
+                new InvalidOperationException("synthetic CRUD failure"));
+
+        await page.RefreshAsync();
+
+        Assert.Equal("Operation failed.", page.StatusLabel.Text);
+    }
+
+    [Fact]
     public async Task HiveCrudPage_UsesFilterLanguageWhenFilteredResultIsEmpty()
     {
         using var page = new HiveCrudPage<TestItem>();
