@@ -1374,12 +1374,16 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         }
         catch (OperationCanceledException) when (source.IsCancellationRequested)
         {
-            SetStatus("Cancelled.", HiveStatusTone.Warning);
+            if (!IsDisposed && !Disposing)
+                SetStatus("Cancelled.", HiveStatusTone.Warning);
         }
         catch (Exception exception)
         {
-            SetStatus("Operation failed.", HiveStatusTone.Error);
-            RaiseOperationFailed(operation, exception);
+            if (!IsDisposed && !Disposing)
+            {
+                SetStatus("Operation failed.", HiveStatusTone.Error);
+                RaiseOperationFailed(operation, exception);
+            }
         }
         finally
         {
@@ -1387,7 +1391,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
                 _operationCancellation = null;
 
             source.Dispose();
-            SetBusy(false);
+
+            if (!IsDisposed && !Disposing)
+                SetBusy(false);
         }
     }
 
