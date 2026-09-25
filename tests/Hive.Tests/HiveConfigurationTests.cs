@@ -150,6 +150,55 @@ public sealed class HiveConfigurationTests
     }
 
     [Fact]
+    public async Task JsonConfigurationStore_CanReplaceSettingsWhileAReaderHasTheOldFileOpen()
+    {
+        var filePath = Path.Combine(
+            Path.GetTempPath(),
+            $"hive-settings-replace-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            var store = new JsonHiveConfigurationStore(filePath);
+            var initial = HivePersistenceConfiguration.LocalDevelopmentForApplication(
+                "Hive.Tests");
+
+            var firstSave = await store.SavePersistenceConfigurationAsync(initial);
+            Assert.True(firstSave.IsSuccess, firstSave.Error?.Message);
+
+            await using var reader = new FileStream(
+                filePath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                bufferSize: 4096,
+                useAsync: true);
+
+            var replacement = new HivePersistenceConfiguration(
+                HivePersistenceBackend.SqlServer,
+                "sql.example.test",
+                1433,
+                "HiveProduction",
+                HiveSqlAuthenticationMode.WindowsIntegrated,
+                null,
+                null,
+                encrypt: true,
+                trustServerCertificate: false,
+                createDatabaseIfMissing: false,
+                commandTimeoutSeconds: 45);
+
+            var saved = await store.SavePersistenceConfigurationAsync(replacement);
+
+            Assert.True(saved.IsSuccess, saved.Error?.Message);
+            Assert.Equal(replacement, saved.Value);
+        }
+        finally
+        {
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+        }
+    }
+
+    [Fact]
     public async Task Management_CreateSecret_InvalidDefinition_UsesStablePublicError()
     {
         var options = HiveDatabaseOptions.LocalDevelopment();
