@@ -204,6 +204,9 @@ public sealed class HiveUiPolishTests
         Assert.NotNull(navigation);
         Assert.NotNull(navigation!.SelectedNode);
         Assert.Equal("Overview", navigation.SelectedNode!.Text);
+        Assert.Equal(
+            "Navigate Hive package configuration by Overview, Providers, Accounts / Credentials, Execution Targets, Agents, and Persistence.",
+            navigation.AccessibleDescription);
         Assert.NotNull(FindLabel(view, "Configuration flow"));
     }
 
