@@ -22,7 +22,7 @@ Before changing implementation or repository state:
 
 Determine the repository checkpoint from evidence. Do not use previous chat history as repository authority.
 
-For a revision of this skill or its references, inspect the complete workflow-skill directory together with `AGENTS.md` so the procedure remains internally consistent. Do not modify implementation or current-state documents unless the user explicitly asks for that separate scope.
+For a revision of this skill or its references, inspect the complete workflow-skill directory together with `AGENTS.md` so the procedure remains internally consistent. Do not modify implementation. Current-state documents may be reconciled when the workflow revision itself exposes an actual source-of-truth inconsistency, but only from repository evidence and never to manufacture authorization, verification, closure, or roadmap advancement.
 
 ## 2. Authorization gate
 
