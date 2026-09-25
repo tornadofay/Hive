@@ -43,6 +43,8 @@ Code/test commits:
 - `583e69755ea657b6121a1012a69e7890e861f04e` — seals the request message collection against mutation through an IList cast.
 - `6175b0252aa1dd6af4208e94f5fca6f8d91a9902` — regression coverage for the read-only request message collection.
 - `513900bc6d74ddf31a874c6d2779c0fa81a17420` — clarifies the no-Content-Length oversized-response regression test name.
+- `ba86f369a4ba1949c5bbfe8e5d6918aa618a9994` — normalizes invalid MAF ChatMessage content to a structured provider validation error.
+- `eee3a39c6822cc1aeddaa8b3455ad5d8365e69a0` — regression coverage for empty/whitespace and oversized ChatMessage content through IChatClient.
 
 Documentation commit:
 - `09e03de080aa186cff4dea9d330dd71fb3a5ae30` — records the provider safeguards in the Phase 1.3 usage documentation.
