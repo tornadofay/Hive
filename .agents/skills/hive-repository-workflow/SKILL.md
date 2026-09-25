@@ -36,7 +36,7 @@ Before every write, re-check the branch checkpoint and reconcile any concurrent 
 
 **Continue** — continue the same authorized task.
 
-**Revision** — re-review the work just performed, fix concrete issues within the same scope, then review again. It inherits the preceding task's permissions; a Revision of a workflow Review remains read-only unless implementation is separately authorized.
+**Revision** — re-audit the work just performed, fix concrete in-scope problems to production depth, then review again. Revision is corrective, not read-only. When it follows Workflow Review, use the review findings to make concrete corrections within the applicable authorized boundary; the Review itself does not authorize unrelated work or roadmap advancement.
 
 **Maintenance** — perform a complete production audit/correction pass within the authorized boundary; do not stop at the first symptom.
 
