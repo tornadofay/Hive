@@ -57,7 +57,9 @@ Finishing a slice does not authorize the next slice.
 
 ## Verification-pending Active Work
 
-STOP implementation until the developer supplies the required verification results.
+STOP all implementation until the developer supplies the required verification results.
+
+A newly worded implementation request does not silently supersede the gate.
 
 Do not edit Active Work or Status to bypass the gate.
 
