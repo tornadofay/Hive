@@ -288,21 +288,18 @@ For create operations, the host may propagate the parent identity into new child
 
 Stable identity is mandatory for consequential row operations.
 
-The preferred identity order is:
-
-1. explicit primary key;
-2. explicit composite key;
-3. host-defined stable row identity;
-4. bound-object identity when the host contract guarantees its stability for the operation.
+For the inspected V1 host, the stable row identity is the record's primary-key **ID**.
 
 Row index is not an authoritative identity.
 
 ```
 row index = positional address
-row identity = stable record identity
+row identity = primary-key ID
 ```
 
-An operation that begins from a row index must resolve that row to a stable identity before a consequential mutation is committed. The identity used to locate a record does not have to remain unchanged after the operation: a host may permit a key value to change as part of an update. Hive must therefore retain the authoritative pre-operation identity for locating the target, and the host adapter should report the resulting identity when the operation changes it.
+An operation that begins from a row index resolves the selected row through the host's existing row/ID behavior before a consequential operation is committed. The inspected applications normally do not change an existing primary-key ID. A DataGridView editing path may delete and reinsert a saved row internally, but the existing host mechanism already handles that case through row-index-based editing and it is not a separate Hive identity requirement.
+
+The neutral contract may remain extensible to other identity shapes in future hosts, but V1 does not require a composite-key implementation or a general key-mutation protocol.
 
 ### 6.1 Hidden primary-key columns
 
@@ -328,43 +325,30 @@ Visibility alone never means "primary key".
 
 The adapter should therefore be able to expose an identity field even when the field is not visible in the UI.
 
-### 6.2 Composite identities
+### 6.2 Identity shape outside the V1 host
 
-The contract must support multiple key parts:
+The V1 inspected host uses a single primary-key **ID**. Composite or other host-defined identity shapes are not required by the current V1 production evidence and are not a current implementation requirement.
 
-```
-RowIdentity
-├── BranchId = 3
-└── OrderId = 5812
-```
-
-A single-key host simply provides one key part.
+The neutral architecture remains extensible so a future host can introduce another stable identity form without redefining the overall host-integration boundary.
 
 ### 6.3 Generation semantics
 
-Generated fields are host-owned outputs.
+Generated fields exist in the inspected applications, but their implementation mechanism is not a contract requirement. Generation may come from the database, host code, computed properties, or another host-specific mechanism.
 
-Examples:
+Hive therefore treats generation semantically:
 
-- identity/sequence IDs;
-- creation timestamps;
-- host-generated document numbers.
+- whether the field is generated;
+- whether the host supplies the resulting value;
+- whether the field may be supplied by the caller before the operation;
+- what resulting value/identity the host returns after create or save.
 
 Hive must not invent generated values merely because an add-row operation requires the field.
 
-The write result should return the host-generated or resulting identity when the host can provide it. When an authorized update changes the host key, the operation must retain the authoritative pre-operation identity used to locate the target and report the resulting identity separately.
-
 ### 6.4 Computed fields
 
-Computed fields are readable host outputs and are not directly writable through generic field mutation.
+Computed fields also exist in the inspected applications. Their implementation mechanism is host-defined and may take many forms.
 
-Examples:
-
-- calculated amount;
-- total;
-- derived status.
-
-A computed field may be used as evidence/input to reasoning, but direct mutation requires an explicit host/business operation contract.
+The neutral contract should describe the semantic fact that a field is computed and, separately, whether the host permits direct assignment to it. Hive should not require a particular attribute, property pattern, database expression, or other implementation technique merely to recognize a computed value.
 
 ## 7. Lookup columns
 
@@ -381,6 +365,14 @@ Lookup
 ```
 
 A host may provide table/entity names, display/value field metadata, or a host-defined filter descriptor. Those details are adapter inputs and must be translated into a bounded lookup contract.
+
+Lookup resolution may depend on:
+
+- values from the current record;
+- other host/application context;
+- both at the same time.
+
+The neutral contract should therefore allow bounded lookup resolution to receive the relevant host-provided context without exposing arbitrary SQL, unrestricted filtering, or private host objects.
 
 The host adapter owns actual lookup execution and returns bounded options such as:
 
@@ -410,7 +402,7 @@ Dedicated editor form/dialog
 
 These are interaction patterns, not authorization grants.
 
-Action/settings metadata may describe capabilities such as add, edit, delete, read, search, export, print, report, or view-only behavior. Grid configuration may separately describe whether rows/cells are editable or whether add/remove actions are exposed.
+Action/settings metadata may describe capabilities such as add, edit, delete, read, search, export, print, report, preview, or view-only behavior. Grid configuration may separately describe whether rows/cells are editable or whether add/remove actions are exposed.
 
 The adapter must expose the actual supported capability for the current host state rather than assuming that one edit pattern implies another. A host may allow row creation but require a dedicated editor for modification, or expose only a subset of editable fields.
 
@@ -748,11 +740,11 @@ Every consequential host operation and review must remain attributable to:
 - timestamps;
 - expected host version/concurrency token when available.
 
-A stale host context, disposed control, changed row identity, or changed authoritative business record must not silently receive a mutation.
+A stale host context or disposed control must not silently receive a mutation.
 
-Where the host supports optimistic concurrency, the adapter should carry an expected host version/ETag/revision through the operation.
+The inspected host does not perform explicit optimistic-concurrency conflict detection; its normal behavior is to save the current record state. The V1 neutral contract must therefore not require an ETag/version token when the host provides none.
 
-Where the host provides no concurrency token, the adapter must use the strongest stable identity and current-state check that the host contract can guarantee; lack of concurrency evidence must not be represented as proof of correctness.
+Where a host does provide a meaningful concurrency/version value, the adapter may expose it as evidence. Where it does not, absence of such evidence is simply the host's current concurrency model and is not itself treated as a detected conflict.
 
 ## 16. Security boundary
 
@@ -827,19 +819,20 @@ public Hive documentation
 
 A future public adapter may document its own public integration contract when that contract is intentionally part of Hive's supported surface.
 
-### 17.3 Remaining adapter-fidelity questions
+### 17.3 Remaining contract-definition work
 
-Before freezing concrete Phase 1.14 adapter types, the remaining host-specific questions are limited to the adapter implementation boundary:
+The earlier production-host discovery work has now established the relevant V1 semantics. The remaining work is contract and adapter definition rather than asking the host to enumerate every possible implementation detail.
 
-- exact semantic value access required by the neutral descriptor;
-- exact field/column metadata and runtime mapping from a bound row to stable persisted identity;
-- generated/computed-field behavior during create and edit serialization;
-- complete existing-child edit serialization;
-- bounded lookup execution and result mapping;
-- host concurrency/version behavior;
-- any host action contract actually required by V1.
+It is limited to:
 
-These questions remain implementation inputs and must not be promoted into public Hive architecture merely because they were observed in one private host implementation.
+- exact neutral public type shapes for semantic controls, fields, data surfaces, rows, lookups, and bounded host actions;
+- exact adapter mapping from the existing host binding/value model into those neutral contracts;
+- bounded lookup request/result shape, including current-record and external host/application context where required;
+- exact representation of generated/computed semantics and resulting values;
+- concrete mapping of the established New/Edit/Save/Delete/Reload/Move/Search/Report/Print/Preview capabilities into bounded host actions;
+- stale/concurrency metadata only where the host actually provides meaningful evidence.
+
+These are implementation-definition questions, not open-ended requests to model every possible host behavior.
 
 ## 18. Non-goals for V1
 
@@ -920,12 +913,12 @@ The detailed host inspection establishes:
 
 Before freezing the concrete Phase 1.14 adapter types, the remaining implementation-specific adapter questions are:
 
-- exact neutral field/column metadata and value access needed by the adapter;
-- runtime mapping from a bound row to its stable persisted identity; row position remains non-authoritative;
-- exact generated/computed-field behavior and edit serialization for existing child rows where the complete host path is not yet established;
-- exact bounded lookup resolution behavior;
-- exact concurrency/version behavior where the host exposes it;
-- any host action surface the adapter must expose or invoke, only where its production semantics are established.
+- exact neutral public type shapes and bounded operation semantics;
+- adapter mapping from the established binding/value model to the neutral contracts;
+- bounded lookup request/result mapping, including dependent lookup context;
+- representation of generated/computed semantics and resulting values;
+- mapping of the established host action surface into neutral capabilities;
+- optional concurrency evidence only where the host exposes it.
 
 Do not recreate these host mechanisms in Hive when the host already exposes an authoritative contract.
 
