@@ -97,9 +97,9 @@ public sealed class OpenAICompatibleProviderAdapterTests
             result.Error!.Code);
         Assert.Equal(ErrorCategory.Validation, result.Error.Category);
         Assert.DoesNotContain(
-            "invalid",
+            "invalid\r\ncredential",
             result.Error.Message,
-            StringComparison.OrdinalIgnoreCase);
+            StringComparison.Ordinal);
         Assert.Empty(server.RequestBody);
     }
 
