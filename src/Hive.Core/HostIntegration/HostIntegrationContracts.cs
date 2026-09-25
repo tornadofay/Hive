@@ -112,25 +112,34 @@ public readonly record struct HiveHostValue
 
     public string? AsString() => _value;
 
-    public bool TryGetBoolean(out bool value) =>
-        Kind == HiveHostValueKind.Boolean &&
-        bool.TryParse(_value, out value);
+    public bool TryGetBoolean(out bool value)
+    {
+        value = default;
+        return Kind == HiveHostValueKind.Boolean &&
+               bool.TryParse(_value, out value);
+    }
 
-    public bool TryGetInt64(out long value) =>
-        Kind == HiveHostValueKind.Int64 &&
-        long.TryParse(
-            _value,
-            System.Globalization.NumberStyles.Integer,
-            System.Globalization.CultureInfo.InvariantCulture,
-            out value);
+    public bool TryGetInt64(out long value)
+    {
+        value = default;
+        return Kind == HiveHostValueKind.Int64 &&
+               long.TryParse(
+                   _value,
+                   System.Globalization.NumberStyles.Integer,
+                   System.Globalization.CultureInfo.InvariantCulture,
+                   out value);
+    }
 
-    public bool TryGetDecimal(out decimal value) =>
-        Kind == HiveHostValueKind.Decimal &&
-        decimal.TryParse(
-            _value,
-            System.Globalization.NumberStyles.Number,
-            System.Globalization.CultureInfo.InvariantCulture,
-            out value);
+    public bool TryGetDecimal(out decimal value)
+    {
+        value = default;
+        return Kind == HiveHostValueKind.Decimal &&
+               decimal.TryParse(
+                   _value,
+                   System.Globalization.NumberStyles.Number,
+                   System.Globalization.CultureInfo.InvariantCulture,
+                   out value);
+    }
 
     public bool TryGetDateTime(out DateTime value)
     {
@@ -149,10 +158,13 @@ public readonly record struct HiveHostValue
         return true;
     }
 
-    public bool TryGetGuid(out Guid value) =>
-        Kind == HiveHostValueKind.Guid &&
-        Guid.TryParse(_value, out value) &&
-        value != Guid.Empty;
+    public bool TryGetGuid(out Guid value)
+    {
+        value = default;
+        return Kind == HiveHostValueKind.Guid &&
+               Guid.TryParse(_value, out value) &&
+               value != Guid.Empty;
+    }
 
     public override string ToString() => _value ?? string.Empty;
 }

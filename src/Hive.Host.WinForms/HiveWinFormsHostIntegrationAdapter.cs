@@ -94,6 +94,15 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             cancellationToken.ThrowIfCancellationRequested();
 
             var control = FindControl(controlSnapshot.Path);
+            if (control is null)
+            {
+                return Result<HiveHostContextDescriptor>.Failure(
+                    new Error(
+                        "hive.host.winforms.control-not-found",
+                        ErrorCategory.NotFound,
+                        "A control discovered during host capture is no longer available."));
+            }
+
             controls.Add(CreateControlDescriptor(controlSnapshot, control));
 
             if (control is DataGridView grid)
@@ -504,8 +513,8 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
     private static HiveHostValue? TryReadValue(Control control)
     {
-        if (control is TextBox textBox &&
-            (textBox.UseSystemPasswordChar || textBox.PasswordChar != '\0'))
+        if (control is TextBox passwordTextBox &&
+            (passwordTextBox.UseSystemPasswordChar || passwordTextBox.PasswordChar != '\0'))
         {
             return null;
         }
@@ -518,14 +527,14 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
         return control switch
         {
-            TextBoxBase textBox => HiveHostValue.FromString(textBox.Text),
+            TextBoxBase textControl => HiveHostValue.FromString(textControl.Text),
             CheckBox checkBox => HiveHostValue.FromBoolean(checkBox.Checked),
             ComboBox comboBox => HiveHostValue.FromString(comboBox.Text),
             DateTimePicker dateTimePicker =>
                 HiveHostValue.FromDateTime(dateTimePicker.Value),
             NumericUpDown numericUpDown =>
                 HiveHostValue.FromDecimal(numericUpDown.Value),
-            _ => null
+            _ => (HiveHostValue?)null
         };
     }
 
