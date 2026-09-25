@@ -1,3 +1,30 @@
+## Temporary maintenance pass — Hive WinForms/UI UX Production Audit
+
+### Status
+
+**OPEN / IMPLEMENTATION AUTHORIZED — VERIFICATION PENDING DEVELOPER.**
+
+This explicitly authorized maintenance pass is UI/UX and production UI maintenance only. It does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
+
+### Scope
+
+- Full UI/UX audit, revision, and polish of the current implementation across `Hive.Host.WinForms.UI` and affected `Hive.Host.WinForms` screens/forms.
+- Review shared controls, forms, layouts, themes, navigation, CRUD/editor/dialog patterns, interaction states, keyboard/focus behavior, resizing/DPI behavior, error/empty/loading/success states, resource ownership, and Host/UI composition as one coherent system.
+- Prefer shared/root fixes over repeated per-screen styling.
+- Preserve existing behavior and functionality.
+- No product features, roadmap work, business-logic changes, persistence/schema/provider changes, speculative abstractions, dependency changes, or unrelated cleanup.
+- No builds, tests, launches, migrations, provider calls, or other execution-based verification by the assistant.
+
+### Verification gate
+
+Developer verification is required after implementation, including a rebuild, focused UI regression coverage for changed shared controls/screens, the full `Hive.Tests` suite, and manual Example Host verification of the affected UI in supported Light/Dark/System themes and representative resize/interaction states.
+
+### Completion
+
+Keep this maintenance pass open until the developer supplies actual verification results. Do not change `docs/Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
+
+Last updated: 2026-09-25
+
 ## Temporary maintenance pass — Hive WinForms/UI Production Audit Revision 6
 
 ### Status
