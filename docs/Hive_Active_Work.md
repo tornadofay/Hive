@@ -106,6 +106,14 @@ Regression coverage added/updated:
 - e6d7835fa8353f985bbb9f6231320cd444e2baa9 — test: cover composition disposal race
 - f04e46ab4c79e6ec7dc30faea61712483195273b — fix: preserve in-flight UI cancellation ownership (superseded by clean follow-up)
 - 3203eeac4e5a152362ea8b41d81a1a89a598c186 — fix: clean UI cancellation ownership patch
+- 51ef74e5b48d48736c2e1929387d5ca60b2abde6 — fix: remove unused sanitized catch variables
+- a01fa625776668d982a21802d948464b072f424d — fix: remove remaining unused catch variables
+- 39bf143408e40ec3f3efb0152e43f15cdf21be6b — fix: correct DispatchProxy test proxy cast
+- 1a369dfbbfbc536ffb8d0df06baec0fa207400e6 — fix: allow DispatchProxy test helper inheritance
+- aa3b4d5e94794c5946b478dfa49cf645c0f6a79d — test: isolate workspace lifecycle await from test context
+- bcb8939316a7095f9c644063b284181fc69d074d — test: bound workspace lifecycle regression awaits
+- 0bbf39c211bd5f7064d2fe1cb7bd99fa79fb84dc — test: separate workspace invocation and completion gates
+- a6c90b7bb408629b6ec32356c178f8e0f3f05583 — test: pump WinForms lifecycle regression
 
 ### Final static review
 
@@ -140,11 +148,14 @@ The final implementation was re-inspected after the last correction for:
 
 ### Verification
 
-**UNVERIFIED — developer execution required.**
+**PARTIALLY VERIFIED — full Hive.Tests suite passed; remaining developer verification is required.**
+
+Developer-supplied result on 2026-09-25:
+- dotnet test tests/Hive.Tests/Hive.Tests.csproj — **267 passed, 0 failed, 0 skipped** in 25.3 seconds on .NET 10.0.1 / xUnit.net VSTest Adapter 3.1.5+1b188a7b0a.
 
 No build, test, launch, migration, provider call, or other execution-based verification was performed by the assistant.
 
-Required developer verification:
+Remaining required developer verification:
 - rebuild `Hive.Host.WinForms`, `Hive.Host.WinForms.UI`, and `Hive.Tests`;
 - run focused regression coverage for `HiveWorkspaceLifecycleTests`, `HiveHostCompositionTests`, and `HiveBootstrapCredentialStoreTests`;
 - run the full `Hive.Tests` suite;
