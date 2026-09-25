@@ -117,8 +117,10 @@ public sealed class HiveWinFormsHostIntegrationTests
         var lines = descriptor.DataSurfaces.Single(surface =>
             surface.Id == "surface:invoiceLines");
 
-        Assert.True(invoice.Fields.Single(field =>
-            field.Name == "Id").IsPrimaryKey);
+        var invoicePrimaryKey = invoice.Fields.Single(field =>
+            field.Name == "Id");
+        Assert.True(invoicePrimaryKey.IsPrimaryKey);
+        Assert.True(invoicePrimaryKey.ReadOnly);
         Assert.True(invoice.Fields.Single(field =>
             field.Name == "InvoiceNumber").Generated);
         Assert.True(invoice.Fields.Single(field =>
