@@ -145,9 +145,9 @@ When the authorization and verification gates permit implementation-affecting wo
    - Maintenance → read `references/maintenance-checklists.md`;
    - UI/Host/UI work → use the corresponding sections of the maintenance checklist;
    - Backend/integration work → use the corresponding backend sections.
-3. Evaluate the actual implementation and surrounding code against the main quality lens and the applicable detailed checklist. Do not treat either as a box-counting exercise.
-4. Correct every concrete issue within the authorized scope, while preserving existing behavior unless the active contract requires a change.
-5. Re-review the corrected result against the same quality criteria before handoff.
+4. Evaluate the actual implementation and surrounding code against the main quality lens and the applicable detailed checklist. Do not treat either as a box-counting exercise.
+5. Correct every concrete issue within the authorized scope, while preserving existing behavior unless the active contract requires a change.
+6. Re-review the corrected result against the same quality criteria and acceptance criteria before handoff.
 
 A short command such as `Hive: Continue`, `Hive: Revision`, or `Hive: Maintenance` does not reduce these quality requirements. The quality lens and applicable detailed reference remain mandatory whenever implementation-affecting work is authorized.
 
