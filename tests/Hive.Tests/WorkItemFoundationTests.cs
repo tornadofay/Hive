@@ -6,6 +6,29 @@ namespace Hive.Tests;
 public sealed class WorkItemFoundationTests
 {
     [Fact]
+    public void WorkItemImageContracts_RejectCurrentDirectoryAndParentDirectoryNames()
+    {
+        const string mediaType = "image/png";
+        const string sha256 = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
+
+        foreach (var fileName in new[] { ".", ".." })
+        {
+            Assert.Throws<ArgumentException>(
+                () => new WorkItemAttachmentMetadata(
+                    fileName,
+                    mediaType,
+                    1,
+                    sha256));
+
+            Assert.Throws<ArgumentException>(
+                () => new WorkItemImageSubmission(
+                    fileName,
+                    mediaType,
+                    new byte[] { 1 }));
+        }
+    }
+
+    [Fact]
     public void WorkItemAttachmentContent_RejectsHashMismatchAndAcceptsMatchingContent()
     {
         var metadata = new WorkItemAttachmentMetadata(
