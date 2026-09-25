@@ -8,6 +8,9 @@ internal sealed class OpenAICompatibleProviderExample : IHiveExample
 
     public string Subcategory => "Provider Transport";
 
+    public IReadOnlyList<string> AdditionalNavigationPath =>
+        new[] { "Provider" };
+
     public int Order => 30;
 
     public string Title => "OpenAI-compatible Provider Adapter";
