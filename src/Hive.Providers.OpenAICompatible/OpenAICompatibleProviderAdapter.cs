@@ -55,10 +55,29 @@ public sealed class OpenAICompatibleProviderAdapter
 
         if (_options.ApiKey is not null)
         {
-            httpRequest.Headers.Authorization =
-                new AuthenticationHeaderValue(
-                    "Bearer",
-                    _options.ApiKey.Reveal());
+            try
+            {
+                httpRequest.Headers.Authorization =
+                    new AuthenticationHeaderValue(
+                        "Bearer",
+                        _options.ApiKey.Reveal());
+            }
+            catch (ArgumentException)
+            {
+                return Result<OpenAICompatibleChatResponse>.Failure(
+                    new Error(
+                        "hive.provider.openai-compatible.invalid-credential",
+                        ErrorCategory.Validation,
+                        "The supplied provider credential cannot be used in an Authorization header."));
+            }
+            catch (FormatException)
+            {
+                return Result<OpenAICompatibleChatResponse>.Failure(
+                    new Error(
+                        "hive.provider.openai-compatible.invalid-credential",
+                        ErrorCategory.Validation,
+                        "The supplied provider credential cannot be used in an Authorization header."));
+            }
         }
 
         var payload = BuildPayload(request);
@@ -135,7 +154,8 @@ public sealed class OpenAICompatibleProviderAdapter
 
                 return ParseResponse(
                     responseBody.Value!,
-                    request.StructuredOutput is not null);
+                    request.StructuredOutput is not null,
+                    request.Model);
             }
             catch (OperationCanceledException)
                 when (!cancellationToken.IsCancellationRequested)
@@ -275,7 +295,8 @@ public sealed class OpenAICompatibleProviderAdapter
 
     private static Result<OpenAICompatibleChatResponse> ParseResponse(
         string responseJson,
-        bool structuredOutputRequested)
+        bool structuredOutputRequested,
+        string requestedModel)
     {
         try
         {
@@ -305,15 +326,23 @@ public sealed class OpenAICompatibleProviderAdapter
             if (string.IsNullOrWhiteSpace(text))
                 return SerializationFailure();
 
-            var model = root.TryGetProperty("model", out var modelElement) &&
-                        modelElement.ValueKind == JsonValueKind.String
+            var responseModel = root.TryGetProperty("model", out var modelElement) &&
+                                modelElement.ValueKind == JsonValueKind.String
                 ? modelElement.GetString()
                 : null;
 
-            var id = root.TryGetProperty("id", out var idElement) &&
-                     idElement.ValueKind == JsonValueKind.String
+            var responseId = root.TryGetProperty("id", out var idElement) &&
+                             idElement.ValueKind == JsonValueKind.String
                 ? idElement.GetString()
                 : null;
+
+            var model = string.IsNullOrWhiteSpace(responseModel)
+                ? requestedModel
+                : responseModel.Trim();
+
+            var id = string.IsNullOrWhiteSpace(responseId)
+                ? null
+                : responseId.Trim();
 
             JsonElement? structuredContent = null;
 
@@ -326,7 +355,7 @@ public sealed class OpenAICompatibleProviderAdapter
             return Result<OpenAICompatibleChatResponse>.Success(
                 new OpenAICompatibleChatResponse(
                     id,
-                    model ?? string.Empty,
+                    model,
                     text,
                     structuredContent));
         }
