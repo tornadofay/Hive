@@ -92,6 +92,17 @@ public sealed class EventOutboxEntry
         if (!Enum.IsDefined(stream.Kind))
             throw new ArgumentOutOfRangeException(nameof(stream), "Event stream resource kind is invalid.");
 
+        if (stream.Identity == Guid.Empty)
+            throw new ArgumentException(
+                "Event stream identity is required.",
+                nameof(stream));
+
+        if (streamVersion.Value <= 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(streamVersion),
+                streamVersion.Value,
+                "Event stream version must be greater than zero.");
+
         Stream = stream;
         StreamVersion = streamVersion;
         Envelope = envelope ?? throw new ArgumentNullException(nameof(envelope));
