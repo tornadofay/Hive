@@ -1,3 +1,50 @@
+## Temporary maintenance pass — Hive WinForms/UI Production Audit Revision 6
+
+### Status
+
+**OPEN / VERIFICATION PENDING DEVELOPER.**
+
+This explicitly authorized maintenance pass is production maintenance only. It does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
+
+### Scope
+
+- Full production-grade static revision, audit, and polish of the affected current implementation across `Hive.Host.WinForms.UI` and `Hive.Host.WinForms`.
+- Re-audit UI lifecycle, cancellation, disposal, async event boundaries, stale-result protection, configuration/settings flows, host composition, public-contract consistency, secret isolation, resource ownership, and concurrency.
+- Correct only concrete production defects found in the current implementation.
+- Add focused regression coverage only where a discovered defect protects a real contract or realistic regression.
+- Inspect affected Example Host consumers only when a changed Host/UI behavior is externally meaningful.
+- No future roadmap work, especially no Phase 1.14; no speculative abstractions, dependency changes, schema changes, unrelated cleanup, or architectural expansion.
+- No builds, tests, launches, migrations, provider calls, or other execution-based verification by the assistant.
+
+### Initial audit findings
+
+The static review identified concrete lifecycle/cancellation risks to investigate and correct within this maintenance scope:
+
+1. `HiveSettingsView` navigation refresh uses `CancellationToken.None` instead of the Settings view lifetime token, so an asynchronous page refresh can continue after Settings disposal.
+2. `HiveSettingsView` navigation exception handling can attempt user-visible error reporting after the view is disposing/disposed.
+3. `HivePersistenceSettingsView` operation completion paths can mutate controls or show dialogs after disposal because post-await lifetime guards are missing.
+4. `HiveProviderAccountsSettingsView` and `HiveExecutionTargetsSettingsView` have post-await filter initialization/update paths that need disposal/cancellation guards; execution-target event handlers also start refreshes with an uncancelled default token.
+5. `HiveExecutionTargetEditorForm` connection testing is not cancellation-aware and can complete after the editor has been closed, mutating disposed controls.
+
+A full final review remains required before any maintenance conclusion is recorded.
+
+### Verification
+
+No execution-based verification has been performed by the assistant.
+
+Required developer verification after corrections:
+- rebuild affected WinForms projects and `Hive.Tests`;
+- focused regression tests for changed lifecycle/cancellation contracts;
+- full `Hive.Tests` suite;
+- manual Settings navigation/close-during-refresh verification;
+- manual Persistence Settings close-during-operation verification;
+- manual Provider Account / Execution Target filter refresh and disposal verification;
+- manual Execution Target editor close-during-connection-test verification where the connection-test path is available.
+
+Keep this maintenance pass open until developer verification is supplied. Do not change `Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
+
+Last updated: 2026-09-25
+
 ## Temporary maintenance pass — Hive WinForms/UI Production Audit Revision 5
 
 ### Status
