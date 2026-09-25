@@ -6,7 +6,7 @@ Last updated: 2026-09-25
 
 ### Status
 
-**OPEN / implementation complete, verification pending.**
+**OPEN / test-verified, provider-project build verification pending.**
 
 Phase 1.14 and all later roadmap slices remain inactive and unauthorized. This maintenance pass does not advance the roadmap.
 
@@ -45,6 +45,7 @@ Code/test commits:
 - `513900bc6d74ddf31a874c6d2779c0fa81a17420` — clarifies the no-Content-Length oversized-response regression test name.
 - `ba86f369a4ba1949c5bbfe8e5d6918aa618a9994` — normalizes invalid MAF ChatMessage content to a structured provider validation error.
 - `eee3a39c6822cc1aeddaa8b3455ad5d8365e69a0` — regression coverage for empty/whitespace and oversized ChatMessage content through IChatClient.
+- `02aa82e68593b35474b1220e20b916a486e5f9b7` — archives the developer-run full-suite verification result.
 
 Documentation commit:
 - `09e03de080aa186cff4dea9d330dd71fb3a5ae30` — records the provider safeguards in the Phase 1.3 usage documentation.
@@ -60,15 +61,27 @@ The existing Example Host scenario remains valid and uses only supported public 
 
 ### Verification gate
 
-**NOT VERIFIED.** Execution was not authorized during this maintenance pass, so no build, test, application launch, migration, provider call, or performance measurement was performed by the assistant.
+**PARTIALLY VERIFIED.**
 
-Exact verification to run:
-- Focused: `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
+Developer-run full-suite result on 2026-09-25:
+
+**238 tests passed, 0 failed, 0 skipped** in 27.2 seconds on .NET 10.0.1 using xUnit.net VSTest Adapter 3.1.5+1b188a7b0a.
+
+The full suite includes the focused OpenAI-compatible provider tests, but no separate focused-run output was provided.
+
+Still unverified:
 - Build: `src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`
-- Broader: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`
-- Manual Example Host only if needed after execution: `Providers / Provider Transport / OpenAI-compatible Provider Adapter` — Hive.Example.WinForms.
 
-The maintenance slice must remain open until actual verification results are recorded here. `docs/Hive_Current_Status.md` remains unchanged because no roadmap phase/status changed.
+Not performed / not required for this maintenance pass:
+- real provider call;
+- application launch;
+- migration;
+- performance measurement;
+- Example Host manual run, because the existing example was inspected and no example source change was needed.
+
+Verification archive: [hive-openai-compatible-provider-audit-2026-09-25.md](verification/maintenance/hive-openai-compatible-provider-audit-2026-09-25.md)
+
+The maintenance slice remains open until the provider project build is actually verified. `docs/Hive_Current_Status.md` remains unchanged because no roadmap phase/status changed.
 
 ## Closed maintenance pass — Hive.Persistence Production Audit Revision
 
