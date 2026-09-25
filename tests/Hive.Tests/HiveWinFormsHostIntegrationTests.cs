@@ -238,6 +238,43 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task Management_DeniesDefaultBaseControlCapabilityBeforeInteraction()
+    {
+        using var form = CreateBaseFixtureForm();
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var customer = descriptor.Controls.Single(control =>
+            control.Name == "customer");
+        var capability = customer.Capabilities.Single(item =>
+            item.Kind == HiveHostCapabilityKind.SetControlValue);
+
+        var service = new HiveHostIntegrationService(
+            new DenyCapabilityAuthorizer(capability.Id));
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                capability.Id,
+                HiveHostInteractionKind.SetControlValue,
+                CorrelationId.New(),
+                controlId: customer.Id,
+                value: HiveHostValue.FromString("blocked")),
+            accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            ErrorCategory.Forbidden,
+            result.Error!.Category);
+        Assert.Equal(
+            "Example",
+            ((HiveTextBox)FindControl(form, "customer")).Text);
+    }
+
+    [Fact]
     public async Task ExecuteInteraction_SetsAndReadsStandardTextControl()
     {
         using var form = CreateFixtureForm();
@@ -487,6 +524,22 @@ public sealed class HiveWinFormsHostIntegrationTests
         return form;
     }
 
+    private static Control FindControl(Control root, string name)
+    {
+        if (root.Name == name)
+            return root;
+
+        foreach (Control child in root.Controls)
+        {
+            var result = FindControl(child, name);
+            if (result is not null)
+                return result;
+        }
+
+        throw new InvalidOperationException(
+            $"Control '{name}' was not found in the test fixture.");
+    }
+
     private static Form CreateFixtureForm()
     {
         var form = new Form
@@ -544,6 +597,28 @@ public sealed class HiveWinFormsHostIntegrationTests
             : base("Test", "Test")
         {
         }
+    }
+
+    private sealed class DenyCapabilityAuthorizer :
+        IHiveHostCapabilityAuthorizer
+    {
+        private readonly Guid _deniedCapabilityId;
+
+        public DenyCapabilityAuthorizer(Guid deniedCapabilityId)
+        {
+            _deniedCapabilityId = deniedCapabilityId;
+        }
+
+        public Result Authorize(
+            HiveHostCapabilityRequest request,
+            ResourceAccessContext accessContext) =>
+            request.CapabilityId == _deniedCapabilityId
+                ? Result.Failure(
+                    new Error(
+                        "hive.tests.host-capability-forbidden",
+                        ErrorCategory.Forbidden,
+                        "The test authorizer denied the default base-control capability."))
+                : Result.Success();
     }
 
     private sealed class AllowAllAuthorizer :
