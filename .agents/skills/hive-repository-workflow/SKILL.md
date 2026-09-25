@@ -104,7 +104,38 @@ Use the mode requested by the user:
 
 Read `references/modes.md` for the command cheat sheet.
 
-## 5. Revision
+## 5. Production quality lens
+
+Once the authorization and verification gates permit implementation, every production implementation, Revision, or Maintenance pass must actively evaluate the quality areas that apply to the changed boundary. Do not treat this as a generic checklist pass; inspect the concrete code, contracts, lifecycle, and surrounding ownership.
+
+### Always applicable
+
+- correctness, invariants, and edge cases;
+- public/nullability/API contract correctness;
+- validation, clear structured errors, and failure behavior;
+- async behavior, cancellation propagation, and post-await safety;
+- concurrency, supersession, stale-result protection, and idempotency where relevant;
+- lifecycle, state transitions, disposal, and resource ownership;
+- deterministic behavior and safe recovery/failure isolation;
+- correct project/owner, dependency direction, and reuse of existing responsibilities;
+- no duplicate implementation, hidden coupling, speculative abstraction, or unrelated behavior change;
+- security, authorization/ownership/scope, credential/secret isolation, and safe error disclosure where relevant;
+- persistence, transaction/constraint semantics, query efficiency, and durable-state correctness where relevant;
+- serialization/public-contract compatibility and extensibility where required;
+- required focused tests, regression coverage, and externally meaningful Example Host behavior;
+- final diff, accidental/stale/dead changes, and documentation consistency.
+
+### Backend and integration boundaries
+
+Also inspect network/database/provider I/O, timeouts/budgets, configuration/effective configuration, transaction boundaries, recovery/reconciliation, event/lifecycle semantics, and the MAF responsibility boundary where applicable.
+
+### WinForms/UI and Host/UI boundaries
+
+Also inspect visual hierarchy/readability, spacing/alignment/density, theme consistency, selected/hover/pressed/focused/disabled/read-only states, keyboard/focus behavior, validation/loading/empty/success/error states, resizing/anchoring/docking, minimum sizes/overflow, DPI/scaling, responsiveness, thread affinity, dialog ownership, host composition/lifetime, UI-thread constraints, bounded discovery/interaction authority, and Example Host use of public contracts.
+
+Use `references/revision-checklist.md` for the detailed Revision review and `references/maintenance-checklists.md` for deeper domain-specific Maintenance review. These references expand the lens; they do not change authorization or scope.
+
+## 6. Revision
 
 Revision is not a new task.
 
@@ -126,7 +157,7 @@ A repeated Revision remains in the same context.
 
 Read `references/revision-checklist.md` for the detailed checklist.
 
-## 6. Maintenance
+## 7. Maintenance
 
 Maintenance is broader than Revision but remains scope-bound.
 
@@ -136,7 +167,7 @@ Use `references/maintenance-checklists.md` for domain-specific review areas.
 
 Maintenance never advances the roadmap.
 
-## 7. Architecture
+## 8. Architecture
 
 Architecture mode separates design from implementation.
 
@@ -149,7 +180,7 @@ Distinguish:
 
 Do not implement a design discussed in Architecture mode unless the user explicitly asks to apply it.
 
-## 8. Verification
+## 9. Verification
 
 Verification begins with actual developer-supplied results.
 
@@ -161,7 +192,7 @@ Do not convert inspection/reasoning into testing.
 
 Do not close Active Work or activate the next slice without the required real verification and authorization.
 
-## 9. Execution boundary
+## 10. Execution boundary
 
 Follow the execution rules in `AGENTS.md`.
 
@@ -169,7 +200,7 @@ Execution is never implied merely by Continue, Revision, Maintenance, Architectu
 
 When execution is not authorized, do not run builds, tests, launches, migrations, provider calls, or other execution-based verification.
 
-## 10. Final review and handoff
+## 11. Final review and handoff
 
 Before implementation handoff or completed Revision:
 
