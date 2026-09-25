@@ -262,9 +262,9 @@ Do not infer a relationship merely because:
 
 The host adapter may use its own relationship metadata to establish the semantic relationship.
 
-### 5.2 Established host-provided parent/child mapping
+### 5.2 Host-provided parent/child mapping
 
-A real production host inspected for V1 establishes the pattern the neutral contract must represent without exposing the host application's implementation types.
+The host integration contract represents parent/child relationships explicitly when the host application provides them. Hive does not infer these relationships from visual layout, naming, hidden fields, SQL, or control nesting.
 
 Conceptually:
 
@@ -275,20 +275,18 @@ explicit child-collection metadata
       ↓
 child data surface
       ↓
-parent identity → child foreign-key relationship
+parent identity → child relationship
 ```
 
-The relationship is host-provided and authoritative for the adapter. It must not be inferred merely from visual nesting, similar names, hidden fields, or arbitrary database metadata.
+The host application remains responsible for implementing or exposing the authoritative relationship semantics. Hive consumes that information through the neutral contract.
 
-The adapter may translate host-provided relationship metadata into Hive's semantic parent/child data-surface contract. Host-specific deletion rules, filtering/partition context, data containers, and persistence helpers remain inside the adapter or host business layer.
-
-For create operations, the host may propagate the parent identity into new child rows. For load and edit operations, the adapter may expose the resulting parent/child data surfaces without exposing the host's database objects, generated SQL, or binding containers.
+Parent identity propagation, child editing, and combined parent/child save are supported host capabilities when the host implementation provides them. These semantics are represented through the contract; Hive does not copy the host application's data model or persistence implementation.
 
 ## 6. Stable row identity
 
 Stable identity is mandatory for consequential row operations.
 
-For the inspected V1 host, the stable row identity is the record's primary-key **ID**.
+For the current V1 integration contract, the stable row identity is the record's primary-key **ID**.
 
 Row index is not an authoritative identity.
 
@@ -327,7 +325,7 @@ The adapter should therefore be able to expose an identity field even when the f
 
 ### 6.2 Identity shape outside the V1 host
 
-The V1 inspected host uses a single primary-key **ID**. Composite or other host-defined identity shapes are not required by the current V1 production evidence and are not a current implementation requirement.
+The current V1 integration contract uses a single primary-key **ID**. Composite or other identity shapes are not required by the current V1 implementation boundary.
 
 The neutral architecture remains extensible so a future host can introduce another stable identity form without redefining the overall host-integration boundary.
 
@@ -742,9 +740,9 @@ Every consequential host operation and review must remain attributable to:
 
 A stale host context or disposed control must not silently receive a mutation.
 
-The inspected host does not perform explicit optimistic-concurrency conflict detection; its normal behavior is to save the current record state. The V1 neutral contract must therefore not require an ETag/version token when the host provides none.
+The V1 neutral contract does not require an ETag/version token. A host may expose meaningful concurrency/version evidence when it has one, but a host without such evidence may use its ordinary save behavior.
 
-Where a host does provide a meaningful concurrency/version value, the adapter may expose it as evidence. Where it does not, absence of such evidence is simply the host's current concurrency model and is not itself treated as a detected conflict.
+Where a host provides a meaningful concurrency/version value, its contract implementation may expose it as evidence. Where it does not, absence of such evidence is simply the host's current concurrency model and is not represented as a detected conflict.
 
 ## 16. Security boundary
 
@@ -772,73 +770,92 @@ The model never receives:
 - arbitrary method invocation;
 - secret fields.
 
-## 17. Host-specific implementation evidence and public-document boundary
+## 17. Contract-first host implementation model
 
-The V1 host-integration design was informed by inspection of a real production WinForms application with application-owned controls and bound parent/child data surfaces. That inspection establishes implementation evidence for the adapter; it does not establish a public Hive dependency.
+Phase 1.14 is intentionally contract-first. Hive owns the neutral public integration contracts; the host application implements those contracts against its own controls, data surfaces, business objects, and application services.
 
-### 17.1 Established host semantics
-
-The inspected host establishes these reusable semantic patterns:
-
-- an explicit root-to-child data relationship supplied by host metadata;
-- parent identity propagation into child rows during create;
-- parent and child changes committed as one combined business operation;
-- host-owned required/unique validation and veto points before a save;
-- a host business/save boundary followed by an authoritative result or reload;
-- editable child collections that can be changed in the host data surface before the surrounding business save;
-- multiple UI edit-surface patterns, including direct grid editing, same-form supporting controls, and dedicated editor forms/dialogs;
-- the primary-key **ID** is the stable row identity for the inspected V1 host;
-- row index is positional and not authoritative identity;
-- the existing DataGridView edit path may delete and reinsert a saved row while its established row-index mechanism continues to handle the edit;
-- host-generated record identity is available after creation;
-- selection lists can synchronize selection state from bound data;
-- semantic field/column metadata covers binding, type, key, generation, nullability, requiredness, computed values, and lookup behavior;
-- lookup resolution can depend on current-record values, external host/application context, or both;
-- host actions include New, Edit, Save, Delete, Reload, Move, Search, Report, Print, and Preview;
-- the inspected host uses ordinary save behavior without explicit optimistic-concurrency conflict detection.
-
-These semantics are useful adapter inputs. They are not Hive business logic, database contracts, or authorization grants.
-
-### 17.2 Public documentation boundary
-
-Public Hive documentation intentionally describes the neutral semantics and contracts, not the private implementation that happened to provide the evidence.
-
-Do not publish:
-
-- private host class, interface, property, method, or event names;
-- source-code excerpts from a private host application;
-- host-specific field/control mappings that are not part of Hive's neutral contract;
-- private business conventions merely because an adapter currently uses them;
-- host-generated SQL or persistence implementation details.
-
-The intended relationship is:
+The intended ownership model is:
 
 ```text
-private host source
-      ↓
-host adapter / design knowledge
-      ↓
-neutral Hive contract
-      ↓
-public Hive documentation
+Hive.Core
+  ↓
+Hive-owned host integration contracts
+
+Host application
+  ↓
+implements those contracts against its own types
+
+Hive host integration/runtime
+  ↓
+discovers, composes, governs, and invokes the implemented capabilities
 ```
 
-A future public adapter may document its own public integration contract when that contract is intentionally part of Hive's supported surface.
+A host may implement a Hive contract directly on an application-owned type where that is the simplest design. For example, a custom text control can implement the semantic field/value contract, while a host Form can implement the host-context contract. The exact interface/type names are part of Phase 1.14 contract design and are not prescribed by this document.
 
-### 17.3 Remaining contract-definition work
+### 17.1 Minimize host implementation work
 
-The earlier production-host discovery work has now established the relevant V1 semantics. The remaining work is contract and adapter definition rather than asking the host to enumerate every possible implementation detail.
+The host integration should do as much reusable work as possible inside Hive.
 
-It is limited to:
+Hive should provide reusable infrastructure for:
 
-- exact neutral public type shapes for semantic controls, fields, data surfaces, rows, lookups, and bounded host actions;
-- exact adapter mapping from the existing host binding/value model into those neutral contracts;
-- bounded lookup request/result shape, including current-record and external host/application context where required;
-- exact representation of generated/computed semantics and resulting values;
-- concrete mapping of the established New/Edit/Save/Delete/Reload/Move/Search/Report/Print/Preview capabilities into bounded host actions;
-- stale/concurrency metadata only where the host actually provides meaningful evidence.
+- bounded Form/control traversal and host-context capture;
+- common WinForms control/value adaptation where the host's semantics are standard;
+- common metadata projection;
+- row/field/lookup capability plumbing;
+- capability discovery and bounded invocation;
+- cancellation, lifecycle, provenance, and authorization integration;
+- contract-level validation and deterministic failure handling;
+- reusable contract tests that a host implementation can run against its own adapter.
 
-These are implementation-definition questions, not open-ended requests to model every possible host behavior.
+The host application should provide only the application-specific semantic information and behaviors that Hive cannot safely infer, such as:
+
+- which controls/data surfaces are meaningful to Hive;
+- application-specific field semantics;
+- authoritative parent/child relationships;
+- lookup resolution that depends on application context;
+- business/application actions and their concrete implementation;
+- host-specific validation or save semantics.
+
+The goal is that a host developer implements a small, explicit contract surface while Hive handles the reusable discovery, orchestration, governance, and safety work.
+
+### 17.2 Host context
+
+The host root contract may provide the bounded context Hive needs to understand a registered Form/application surface.
+
+Conceptually:
+
+```text
+Host
+ ├── Form/context identity
+ ├── semantic controls
+ ├── data surfaces
+ ├── fields
+ ├── lookups
+ └── bounded actions/capabilities
+```
+
+Hive may then discover the registered surface and use the semantic contracts directly. Raw WinForms controls, arbitrary reflection, SQL, credentials, and unrestricted method invocation remain outside the neutral public contract.
+
+### 17.3 Public boundary
+
+Public Hive documentation describes the neutral contracts, guarantees, lifecycle, security boundaries, and supported semantics. A host application's private classes, methods, source code, database schema, control library, query text, and private business conventions remain outside the Hive repository's architectural contract.
+
+A host may publish its own adapter implementation separately. Hive only depends on conformance to the Hive contract.
+
+### 17.4 Remaining contract-definition work
+
+The remaining Phase 1.14 design work is limited to:
+
+- exact neutral public type shapes for host, control, field, row, data surface, lookup, and action contracts;
+- reusable default/base implementations for common host patterns where they reduce host-side code without hiding meaningful application semantics;
+- exact context/discovery-to-action transition and capability authorization boundary;
+- bounded lookup request/result context;
+- generated/computed field representation and resulting values;
+- stable primary-key ID row mapping and child-row mutation semantics;
+- concrete cancellation, lifecycle, provenance, and disposal contracts;
+- the contract-test/reference-fixture strategy.
+
+These are contract-definition questions, not a request to document or support every possible host implementation.
 
 ## 18. Non-goals for V1
 
