@@ -16,6 +16,7 @@ public sealed class HiveWorkspaceView : UserControl
     private readonly Label _attachmentLabel;
     private readonly Label _executionLabel;
     private readonly ListBox _activityList;
+    private readonly Label _activityEmptyLabel;
     private readonly HiveButton _refreshButton;
     private readonly HiveButton _addImageButton;
     private readonly HiveButton _requestApprovalButton;
@@ -73,14 +74,30 @@ public sealed class HiveWorkspaceView : UserControl
             Dock = DockStyle.Fill,
             IntegralHeight = false,
             BorderStyle = BorderStyle.None,
-            HorizontalScrollbar = false
+            HorizontalScrollbar = false,
+            AccessibleName = "Workspace activity list",
+            AccessibleRole = AccessibleRole.List
+        };
+
+        _activityEmptyLabel = new Label
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Padding = new Padding(16),
+            Text = "Select a WorkItem to view activity.",
+            AccessibleName = "Workspace activity state",
+            AccessibleRole = AccessibleRole.StatusBar
         };
 
         Controls.Add(BuildLayout());
 
+
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(this);
         ApplyStatusVisual();
+        ApplyActivityEmptyStateVisual();
+        UpdateActivityEmptyState();
         UpdateActionState();
     }
 
@@ -102,6 +119,7 @@ public sealed class HiveWorkspaceView : UserControl
     private void ThemeManagerOnChanged(object? sender, EventArgs e)
     {
         ApplyStatusVisual();
+        ApplyActivityEmptyStateVisual();
     }
 
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
@@ -379,6 +397,9 @@ public sealed class HiveWorkspaceView : UserControl
     {
         _statusLabel.Text = workItem.Status.ToString();
         ApplyStatusVisual();
+        _activityEmptyLabel.Text = "Loading activity...";
+        _activityEmptyLabel.Visible = true;
+        _activityList.Visible = false;
         _attachmentLabel.Text = workItem.Attachment is null
             ? "No attachment"
             : $"{workItem.Attachment.FileName} · {FormatSize(workItem.Attachment.ContentLength)} · {workItem.Attachment.MediaType}";
@@ -396,7 +417,13 @@ public sealed class HiveWorkspaceView : UserControl
         if (activity.IsFailure)
         {
             if (!IsDisposed && !Disposing && _selectedWorkItem?.Id == workItem.Id)
+            {
+                _activityEmptyLabel.Text = "Activity could not be loaded.";
+                _activityEmptyLabel.Visible = true;
+                _activityList.Visible = false;
                 ShowError(activity.Error!);
+            }
+
             return;
         }
 
@@ -424,6 +451,7 @@ public sealed class HiveWorkspaceView : UserControl
             _activityList.EndUpdate();
         }
 
+        UpdateActivityEmptyState();
         UpdateActionState();
     }
 
@@ -451,6 +479,35 @@ public sealed class HiveWorkspaceView : UserControl
         _attachmentLabel.Text = "—";
         _executionLabel.Text = "—";
         _activityList.Items.Clear();
+        UpdateActivityEmptyState();
+    }
+
+    private void UpdateActivityEmptyState()
+    {
+        if (_selectedWorkItem is null)
+        {
+            _activityEmptyLabel.Text = "Select a WorkItem to view activity.";
+            _activityEmptyLabel.Visible = true;
+            _activityList.Visible = false;
+            return;
+        }
+
+        if (_activityList.Items.Count == 0)
+        {
+            _activityEmptyLabel.Text = "No activity recorded for this WorkItem yet.";
+            _activityEmptyLabel.Visible = true;
+            _activityList.Visible = false;
+            return;
+        }
+
+        _activityEmptyLabel.Visible = false;
+        _activityList.Visible = true;
+    }
+
+    private void ApplyActivityEmptyStateVisual()
+    {
+        _activityEmptyLabel.ForeColor = _themeManager.Theme.Palette.MutedText;
+        _activityEmptyLabel.BackColor = _themeManager.Theme.Palette.Surface;
     }
 
     private void ApplyStatusVisual()
