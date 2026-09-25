@@ -352,7 +352,8 @@ public sealed class OpenAICompatibleProviderAdapter
 
             var choice = choices[0];
 
-            if (!choice.TryGetProperty("message", out var message) ||
+            if (choice.ValueKind != JsonValueKind.Object ||
+                !choice.TryGetProperty("message", out var message) ||
                 message.ValueKind != JsonValueKind.Object ||
                 !message.TryGetProperty("content", out var content) ||
                 content.ValueKind != JsonValueKind.String)
