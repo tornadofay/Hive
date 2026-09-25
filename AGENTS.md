@@ -38,7 +38,7 @@ If Active Work establishes a verification gate, stop implementation-affecting wo
 
 Active Work is the maximum implementation boundary.
 
-- Continue, Revision, Again, Polish, and Maintenance inherit the current task/scope; they never advance the roadmap.
+- Continue, Revision, Again, and Polish inherit the current task/scope. Maintenance does the same when Active Work is open; with no active slice, an explicit bounded corrective Maintenance request may create a temporary slice under the rule below. None advances the roadmap.
 - A new roadmap slice requires explicit user authorization such as `Hive: Start Phase X.Y`.
 - Do not silently widen scope, replace the current slice, or implement future work.
 - If Active Work is closed/absent, an explicitly requested bounded non-roadmap corrective task may create a temporary Active Work slice before implementation, but only when repository evidence confirms it restores, preserves, or corrects existing behavior without adding capability or materially expanding a public contract.
@@ -64,7 +64,7 @@ Never claim a build, test, integration, manual check, or provider result that di
 
 Use these terms precisely: Inspected, Reasoned, Compiled, Automated-tested, Integration-tested, Manually verified, Not verified.
 
-By default, do not run builds, tests, launches, migrations, performance measurements, or external integrations unless the user authorizes execution or the repository workflow explicitly requires it.
+By default, do not run builds, tests, launches, migrations, performance measurements, or external integrations. A verification requirement defines what the developer must verify; it does not by itself authorize the agent to execute it.
 
 ## 5. Engineering standard
 
