@@ -2,7 +2,7 @@
 
 ## Phase 1.14 — Dual Business-App Integration Contract (Reopened Revision)
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Opened: 2026-09-26
 
@@ -76,6 +76,12 @@ The authorized Phase 1.14 revision implementation is complete and has been place
 Developer verification on 2026-09-26 reported one example integration failure and four focused-test failures within the Phase 1.14 revision boundary. The example fails because an automatically generated standard-control capability ID is computed from the bare control identity while the interaction request supplies the public `control:<identity>` descriptor ID. Two focused tests also use `Single()` against the full captured control collection even though the capture contract includes the registered root form; these are test expectation defects, not new product scope. The remaining focused failures are the same capability-ID mismatch on standard-control interactions.
 
 Remediation boundary: fix the Phase 1.14 standard-control capability target normalization so descriptor/request control IDs authorize against the same deterministic identity; correct the affected focused tests to select the intended control explicitly. Do not widen the slice or alter unrelated host semantics.
+
+### Verification failure — stable child-row primary key
+
+Developer verification on 2026-09-26 reported the focused suite passing at 303/303, but the Phase 1.14 example failed because the configured child-surface primary-key field was marked `IsPrimaryKey` without also being represented as read-only. This is within the existing Phase 1.14 stable-row/primary-key semantic boundary.
+
+Remediation boundary: make primary-key semantics consistently read-only in the WinForms adapter, including configured surface primary keys and explicit field metadata, and add focused coverage. Do not widen the slice or change row mutation, persistence, or business-write scope.
 
 ### Remediation checkpoint
 
