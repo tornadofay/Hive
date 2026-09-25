@@ -425,9 +425,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     isPrimaryKey: false))
             .ToArray();
 
-        var rowCount = grid.AllowUserToAddRows
-            ? Math.Max(0, grid.Rows.Count - 1)
-            : grid.Rows.Count;
+        var rowCount = TryGetBoundRowCount(grid);
 
         var capabilities = new[]
         {
@@ -443,6 +441,36 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             rowCount,
             fields,
             capabilities);
+    }
+
+    private static int TryGetBoundRowCount(DataGridView grid)
+    {
+        if (grid.DataSource is not null)
+        {
+            try
+            {
+                var manager = grid.BindingContext[
+                    grid.DataSource,
+                    grid.DataMember];
+
+                if (manager is not null)
+                    return Math.Max(0, manager.Count);
+            }
+            catch (ArgumentException)
+            {
+                // Fall back to the materialized grid rows when the bound
+                // source cannot provide a currency manager.
+            }
+            catch (InvalidOperationException)
+            {
+                // Fall back to the materialized grid rows when the bound
+                // source is not currently available.
+            }
+        }
+
+        return grid.AllowUserToAddRows
+            ? Math.Max(0, grid.Rows.Count - 1)
+            : grid.Rows.Count;
     }
 
     private HiveHostCapabilityDescriptor CreateCapability(
