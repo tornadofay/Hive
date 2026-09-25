@@ -45,7 +45,16 @@ Determine the current repository checkpoint from evidence.
 
 First determine whether Active Work establishes a developer-verification gate. If it does, stop implementation at that gate before considering any continuation or new implementation request.
 
-If the Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, stop implementation at that gate. No implementation-affecting `Continue`, `Revision`, `Maintenance`, `Again`, or similar follow-up may cross that gate. A newly worded implementation request also does not silently supersede the gate. Provide the exact required verification handoff instead. Do not resume implementation while the verification gate remains open. Implementation may resume only after the developer supplies the required verification results and the repository reflects the authorized task transition. A separate governance/documentation task may proceed only within its explicitly authorized documentation scope and must not weaken or remove the verification gate. A separately authorized governance/documentation task may still change only its explicitly affected governance/documentation files.
+If the Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, stop new implementation at that gate. No implementation-affecting `Continue`, `Revision`, `Maintenance`, `Again`, or similar follow-up may silently cross it. A newly worded implementation request does not supersede the gate.
+
+When the developer supplies verification results:
+- if all required verification succeeds, perform the normal evidence-backed closure transition;
+- if verification exposes failures, defects, compiler errors, or unmet required behavior within the authorized slice, enter a **VERIFICATION FAILED / REMEDIATION REQUIRED** state through the Verification workflow and allow same-slice remediation only after Active Work records that transition;
+- same-slice remediation may fix every concrete issue needed for the authorized contract, including root-cause corrections and focused regression coverage; it does not create a new roadmap slice;
+- after remediation, return Active Work to **VERIFICATION PENDING** and require the affected verification to be rerun;
+- if remediation would require a new capability, material public-contract expansion, or work outside the authorized slice, stop that portion and require separate authorization.
+
+A verification gate therefore pauses implementation; it does not permanently dead-lock a slice after failed developer verification. A separate governance/documentation task may proceed only within its explicitly authorized documentation scope and must not weaken or remove the verification gate.
 
 If Active Work has an open implementation slice and no verification gate, continue that slice exactly. Do not implement later roadmap work.
 
@@ -64,20 +73,25 @@ A maintenance, audit, polish, bug-fix, regression-fix, revision, or "again/conti
 
 Revision means re-reviewing the immediately preceding work within its inherited mode, domain, scope, and active slice. Revision may correct concrete issues within that inherited scope but must never advance the roadmap.
 
-## 3. Scope
+## 3. Scope and engineering depth
 
-Default rule: **make the smallest correct change that fully satisfies the active requirement.**
+Default rule: **keep the implementation scope as small as necessary to satisfy the authorized requirement, but make the engineering work complete and production-grade within that scope.**
+
+Do not optimize for the fewest lines, fewest files, or narrowest patch when deeper correction is required for correctness, lifecycle safety, concurrency, security, persistence, contracts, maintainability, or other production concerns.
+
+Maintenance, Revision, implementation, polish, optimization, and verification-remediation work use the same production engineering standard. The task mode changes the purpose and authorization boundary, not the required engineering depth.
 
 Do not:
 - implement future slices;
 - refactor unrelated code;
-- perform drive-by cleanup;
+- perform drive-by cleanup outside the authorized requirement;
 - add speculative abstractions;
 - upgrade dependencies without a concrete requirement;
 - replace working technology for preference;
-- silently widen scope or change behavior.
+- silently widen scope or change behavior;
+- stop at a symptom-level workaround when a concrete root-cause correction is required within scope.
 
-Supporting changes are allowed only when required for the active implementation.
+Supporting changes are allowed when required to make the authorized behavior correct, reliable, maintainable, testable, or production-safe.
 
 Governance/documentation tasks explicitly requested by the user may change the affected source-of-truth files even when an unrelated implementation slice is open, but must not modify unrelated implementation, close/advance Active Work, or activate roadmap work.
 
@@ -216,7 +230,7 @@ Do not copy detailed architecture or API manuals into `AGENTS.md`.
 
 ## 11. Slice completion
 
-Do not close a slice merely because code is written.
+Do not close a slice merely because code is written or because one verification attempt passed.
 
 A slice closes only after:
 1. required implementation exists;
