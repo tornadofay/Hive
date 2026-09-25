@@ -19,7 +19,16 @@ public sealed class OpenAICompatibleChatClient : IChatClient
                 "A default model is required.",
                 nameof(defaultModel));
 
-        _defaultModel = defaultModel.Trim();
+        var normalizedModel = defaultModel.Trim();
+
+        if (normalizedModel.Length > OpenAICompatibleChatRequest.MaxModelLength)
+        {
+            throw new ArgumentException(
+                $"Default model cannot exceed {OpenAICompatibleChatRequest.MaxModelLength} characters.",
+                nameof(defaultModel));
+        }
+
+        _defaultModel = normalizedModel;
     }
 
     public async Task<ChatResponse> GetResponseAsync(
@@ -149,6 +158,16 @@ public sealed class OpenAICompatibleChatClient : IChatClient
                         Hive.Core.ErrorCategory.Unsupported,
                         $"Message role '{message.Role.Value}' is not supported by the OpenAI-compatible adapter."))
             };
+
+            if (message.Contents is null ||
+                message.Contents.Any(content => content is not TextContent))
+            {
+                throw new OpenAICompatibleProviderException(
+                    new Hive.Core.Error(
+                        "hive.provider.openai-compatible.message-content-unsupported",
+                        Hive.Core.ErrorCategory.Unsupported,
+                        "The chat message contains content types that the text-only provider adapter does not support."));
+            }
 
             try
             {
