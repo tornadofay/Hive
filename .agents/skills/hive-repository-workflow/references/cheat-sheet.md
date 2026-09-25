@@ -4,7 +4,7 @@
 
 **Continue:** same task; stop at verification gate.
 
-**Revision:** production-depth re-audit and correction of the preceding task's concrete findings; review the result again; never next phase. With open Active Work, stay inside it. With no Active Work after a concrete task or workflow Review, establish a temporary bounded corrective slice before fixing findings; new capability/public-contract expansion/roadmap work still needs authorization.
+**Revision:** production-depth re-audit and correction of the preceding task's concrete findings; review the result again; never next phase. With open Active Work, stay inside it. With no Active Work after a preceding task with concrete findings, establish a temporary bounded corrective slice before fixing findings; new capability/public-contract expansion/roadmap work still needs authorization.
 
 **Maintenance:** complete production audit within scope; no roadmap advancement.
 
