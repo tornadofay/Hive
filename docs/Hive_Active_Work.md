@@ -1,76 +1,32 @@
 # Hive — Active Work
 
-## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision
+## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision 2
 
 ### Status
 
-**CLOSED / developer-verified.**
+**OPEN / static audit in progress; execution not authorized.**
 
-This maintenance pass did not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
+This maintenance pass is provider-backend-only maintenance. It does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
 ### Scope
 
-- Full production-grade audit and revision of the existing `Hive.Providers.OpenAICompatible` backend implementation and directly affected provider tests.
-- Review local correctness, nullable/public API behavior, validation, structured errors, async/cancellation behavior, concurrency safety, disposal/ownership, serialization, bounded resource use, provider failure handling, and MAF `IChatClient` boundary behavior.
-- Review provider project/dependency direction and integration with the existing Hive provider boundary without moving responsibility into Coordination, Management, Persistence, or MAF.
-- Correct only concrete defects or unsafe/misleading behavior found in this audit.
-- Add focused regression coverage only for changed contracts or realistic discovered regressions.
-- Inspect the existing Provider Transport Example for public-API correctness; no example source change was required.
+- Re-audit the current `Hive.Providers.OpenAICompatible` implementation after the previous developer-verified provider audit.
+- Correct only concrete production defects found in the final implementation, with emphasis on public MAF input validation and bounded request serialization/allocation.
+- Add focused regression coverage for changed contracts.
+- Re-inspect the Phase 1.3 provider documentation and existing Example Host provider scenario for consistency.
 - No schema/migration, persistence redesign, orchestration, cognitive, host/UI, dependency upgrade, MAF replacement, or future roadmap implementation.
 
-### Implementation checkpoint
+### Verification gate
 
-Production changes completed on `main`:
+Execution is **not authorized in this request**.
 
-- `OpenAICompatibleChatRequest` now bounds message count from actual enumeration rather than trusting a potentially stale/misreporting `Count`, while preserving the immutable read-only request snapshot.
-- Model and message-content length limits are centralized at the provider request boundary, and the MAF-facing default model is validated against the same model limit at construction.
-- The MAF-facing text bridge now rejects non-text `AIContent` instead of silently dropping unsupported content.
-- Provider response metadata now falls back to the requested model when provider model metadata is omitted/blank, and blank response IDs are normalized to null.
-- Invalid credentials that cannot form a valid Bearer authorization header now return a structured validation failure without exposing credential material.
-- The public connection tester now rejects mismatched Provider → ProviderAccount → ExecutionTarget relationships before network access.
-- Focused regression coverage was added for actual-enumeration message limits, non-text MAF content, default-model bounds, response-model fallback, invalid credential header input, provider-graph mismatches, and the related public contract corrections.
-- The Phase 1.3 public usage documentation records the revised provider/MAF boundary behavior.
-- Follow-up compile corrections moved the 64 KiB content-limit constant to `OpenAICompatibleMessage` and passed the required nullable credential argument explicitly in the three provider-graph regression calls.
-- No schema, migration, persistence, orchestration, MAF replacement, host/UI, dependency upgrade, or future roadmap implementation was introduced.
+Required verification after implementation:
+- Focused: `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
+- Build: `src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`
+- Broader: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`
+- Configured Example Host execution only if the revised public behavior requires manual verification.
 
-Affected implementation/test/documentation files:
-- `src/Hive.Providers.OpenAICompatible/OpenAICompatibleProviderContracts.cs`
-- `src/Hive.Providers.OpenAICompatible/OpenAICompatibleProviderAdapter.cs`
-- `src/Hive.Providers.OpenAICompatible/OpenAICompatibleChatClient.cs`
-- `src/Hive.Providers.OpenAICompatible/OpenAICompatibleProviderConnectionTester.cs`
-- `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
-- `docs/examples/Phase13_OpenAI_Compatible_Provider_Adapter.md`
-
-The existing `Hive.Example.WinForms` provider-transport scenario remained valid under static inspection and required no source change.
-
-### Verification result
-
-Developer-supplied verification on 2026-09-25:
-
-Full `Hive.Tests` run:
-- **246 tests passed, 0 failed, 0 skipped**
-- **27.8 seconds**
-- .NET **10.0.1**
-- xUnit.net VSTest Adapter **3.1.5+1b188a7b0a**
-
-The full test run exercises the provider project through the `Hive.Tests` dependency graph. A separate direct provider-project build result was not supplied.
-
-Configured provider execution:
-- Provider: `Groq`
-- Provider account: `Groqtest`
-- Execution target/model: `openai/gpt-oss-20b`
-- Execution status: **Succeeded**
-- Response: `Hello from the configured Hive Agent!`
-- Provider credentials: not displayed
-- Service graph: current host graph
-- LocalDevelopment database: not used by this example
-
-The configured execution adds runtime verification of the configured provider/target path beyond the local fake-server automated coverage.
-
-Verification archive:
-[`hive-openai-compatible-provider-audit-final-revision-2026-09-25.md`](verification/maintenance/hive-openai-compatible-provider-audit-final-revision-2026-09-25.md)
-
-The final provider maintenance slice is **developer-verified and closed**. `docs/Hive_Current_Status.md` remains unchanged because no roadmap phase/status changed.
+The slice remains open until actual verification results are supplied.
 
 Last updated: 2026-09-25
 
