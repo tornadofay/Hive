@@ -1734,11 +1734,22 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
 
     private static string? ReadString(
         EventEnvelope envelope,
-        string propertyName) =>
-        envelope.Payload.TryGetProperty(propertyName, out var property) &&
-        property.ValueKind == System.Text.Json.JsonValueKind.String
-            ? property.GetString()
-            : null;
+        string propertyName)
+    {
+        if (!envelope.Payload.TryGetProperty(propertyName, out var property) ||
+            property.ValueKind == System.Text.Json.JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        if (property.ValueKind == System.Text.Json.JsonValueKind.String)
+            return property.GetString();
+
+        throw new EventSerializationException(
+            Error.Validation(
+                "hive.management.work-item.activity-invalid",
+                $"A WorkItem activity event contains an invalid {propertyName} value."));
+    }
 
     private static string ActivityMessage(
         string eventType,
