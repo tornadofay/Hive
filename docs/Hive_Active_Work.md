@@ -2,6 +2,36 @@
 
 Last updated: 2026-09-25
 
+## Temporary maintenance pass — Hive.Providers.OpenAICompatible Production Audit
+
+### Status
+
+**OPEN / implementation and verification pending.**
+
+Phase 1.14 and all later roadmap slices remain inactive and unauthorized. This maintenance pass does not advance the roadmap.
+
+### Scope
+
+- Full production-grade audit, revision, and polish of the existing `Hive.Providers.OpenAICompatible` backend implementation and its directly affected provider tests only.
+- Inspect and correct concrete provider-boundary defects involving request/response validation, bounded resource usage, cancellation/timeout behavior, error classification/redaction, public contract correctness, concurrency/disposal, MAF `IChatClient` compatibility, and transport behavior.
+- Preserve existing public contracts and provider behavior unless the current implementation is incorrect, unsafe, or silently misleading.
+- Update only the focused provider tests required to protect changed contracts.
+- No schema/migration, persistence redesign, orchestration, cognitive, host/UI, dependency upgrade, or future roadmap implementation.
+
+### Verification gate
+
+Execution has not been authorized for this maintenance pass. No build, test, application launch, migration, provider call, or performance measurement is to be performed by the assistant.
+
+Planned verification after implementation:
+- focused: `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`;
+- affected project build: `src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`;
+- broader required suite: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`;
+- Example Host: `Providers / Provider Transport / OpenAI-compatible Provider Adapter` — Hive.Example.WinForms, only if the changed public behavior requires manual confirmation.
+
+### Implementation state
+
+Audit is in progress. No provider code changes have been committed yet.
+
 ## Closed maintenance pass — Hive.Persistence Production Audit Revision
 
 #### Scope
