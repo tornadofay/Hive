@@ -219,8 +219,24 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
 
             _page.AllowAdd = _selectedAccount is not null;
 
-            if (!IsDisposed)
-                await _page.RefreshAsync().ConfigureAwait(true);
+            if (!IsDisposed && !Disposing)
+            {
+                _providerComboBox.Enabled = false;
+                _accountComboBox.Enabled = false;
+                try
+                {
+                    await _page.RefreshAsync().ConfigureAwait(true);
+                }
+                finally
+                {
+                    if (!IsDisposed && !Disposing)
+                    {
+                        _providerComboBox.Enabled = true;
+                        _accountComboBox.Enabled =
+                            _selectedProvider is not null;
+                    }
+                }
+            }
         }
         catch (OperationCanceledException)
         {
