@@ -1,3 +1,47 @@
+## Temporary maintenance pass — Hive Backend Cross-Project Production Audit Revision 1
+
+### Status
+
+**OPEN / implementation in progress.**
+
+This is an explicitly authorized backend maintenance pass. It does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
+
+### Scope
+
+- Full production-grade audit and polish of the affected backend implementation across the currently relevant Hive.Core, Hive.Agents, Hive.Coordination, Hive.Management, Hive.Persistence, Hive.Providers.OpenAICompatible, and Hive.Tools boundaries.
+- Inspect concrete implementation, tests, public contracts, project references, persistence behavior, security/authorization, concurrency/lifecycle, cancellation, error classification, disposal/resource ownership, and MAF/provider boundaries.
+- Correct only concrete defects found in the current implementation and add focused regression coverage where the public/behavioral contract warrants it.
+- Re-inspect the externally meaningful configured-agent execution example when revised public behavior is observable.
+- Preserve existing contracts unless the current implementation is incorrect, unsafe, or architecturally inconsistent.
+- No Phase 1.14 implementation, host-integration contract expansion, schema redesign, speculative abstraction/dependency work, cognitive roadmap work, or unrelated cleanup.
+
+### Audit checkpoint
+
+Static review has identified two concrete defects requiring correction:
+
+- Hive.Coordination.AgentExecutionService currently converts an unexpected exception into a public Error containing exception.Message, which can expose lower-level transport/provider implementation details through the Coordination contract.
+- AgentExecutionService receives the MAF ChatResponse but currently discards its ResponseId, leaving the existing public AgentExecutionResult.ProviderResponseId field and the persisted terminal-event field permanently null even when the provider supplies a response identifier.
+
+Additional backend surfaces have been statically reviewed for validation, authorization/scope enforcement, cancellation, concurrency, disposal, persistence transactions, bounded I/O, credential isolation, serialization, stale-result/lease handling, and project responsibility boundaries. No Phase 1.14 work is authorized by this pass.
+
+### Verification result
+
+**Pending developer verification.**
+
+No build, test run, application launch, migration, provider call, or other execution has been performed by this pass.
+
+Verification will be handed off only after the implementation and focused tests are complete.
+
+### Handoff
+
+Required verification will cover:
+- affected solution/backend projects build;
+- focused Coordination/Agent regression tests;
+- full Hive.Tests suite;
+- configured-agent Example Host execution, with the resulting ProviderResponseId observed when the provider supplies one;
+- static/manual confirmation that unexpected Coordination failures no longer expose raw exception text.
+
+Last updated: 2026-09-25
 ## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision 5
 
 ### Status
