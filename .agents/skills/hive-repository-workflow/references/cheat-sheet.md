@@ -73,6 +73,7 @@ Do not edit Active Work or Status merely to bypass the gate; Verification may ch
 An explicit new bounded non-roadmap corrective request (maintenance, bug fix, regression fix, audit, or polish) may establish a temporary Active Work slice before implementation only when repository evidence confirms the entire request restores/preserves/corrects existing behavior; replace the inactive Active Work placeholder with the temporary slice before implementation.
 
 After a slice closes, remove the closed slice from `docs/Hive_Active_Work.md`. Keep historical verification details in `docs/verification/`; Active Work is current-state only. Mixed corrective + feature requests require explicit separation/authorization. New capabilities, materially expanded public behavior, or roadmap implementation still require explicit roadmap authorization.
+Historical verification evidence is preserved; later attempts do not replace earlier results.
 
 `Continue`, `Again`, and similar continuation language still stop when no prior authorized task exists.
 
