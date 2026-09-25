@@ -1,6 +1,6 @@
 # Hive Revision Checklist
 
-Revision asks whether the work just performed is complete, correct, and still inside the intended boundary.
+Revision asks whether the work just performed is complete, correct, production-grade, and still inside the intended boundary.
 
 ## Context and scope
 
@@ -9,6 +9,8 @@ Revision asks whether the work just performed is complete, correct, and still in
 - Respect any developer-verification gate before implementation-affecting changes
 - No future roadmap work
 - No unrelated behavior changes
+- Do not optimize for minimal patch size
+- Root causes and necessary supporting corrections are addressed within scope
 - A corrective pass does not expand into newly discovered capability/public-contract work without separate authorization
 
 ## User requirement
