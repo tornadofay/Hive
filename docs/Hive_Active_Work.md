@@ -44,7 +44,7 @@ Developer-supplied verification on 2026-09-25:
 - ExecutionTarget key: `openai/gpt-oss-20b`.
 - Model: `openai/gpt-oss-20b`.
 - Execution status: **Succeeded**.
-- Provider response ID: `chatcmpl-5aba8248-2ae1-4211-9587-93bbb549c7ba` was displayed by the Example Host.
+- Provider response ID: `chatcmpl-5aba8248-2ae1-4214-905f-0379b179c8d7` was displayed by the Example Host.
 - Provider credentials: not displayed.
 - Service graph: current host graph.
 - LocalDevelopment database: not used by this example.
