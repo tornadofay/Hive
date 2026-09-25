@@ -13,10 +13,13 @@ public sealed record WorkItemAttachmentMetadata
         if (string.IsNullOrWhiteSpace(fileName))
             throw new ArgumentException("Attachment file name is required.", nameof(fileName));
 
-        if (fileName.Length > 260 || fileName.Contains('/') || fileName.Contains('\\'))
+        if (fileName.Length > 260 ||
+            fileName.Contains('/') ||
+            fileName.Contains('\\') ||
+            fileName is "." or "..")
         {
             throw new ArgumentException(
-                "Attachment file name must be a leaf file name no longer than 260 characters.",
+                "Attachment file name must be a leaf file name no longer than 260 characters and cannot be a path component.",
                 nameof(fileName));
         }
 
@@ -94,10 +97,13 @@ public sealed class WorkItemImageSubmission
         if (string.IsNullOrWhiteSpace(fileName))
             throw new ArgumentException("Image file name is required.", nameof(fileName));
 
-        if (fileName.Length > 260 || fileName.Contains('/') || fileName.Contains('\\'))
+        if (fileName.Length > 260 ||
+            fileName.Contains('/') ||
+            fileName.Contains('\\') ||
+            fileName is "." or "..")
         {
             throw new ArgumentException(
-                "Image file name must be a leaf file name no longer than 260 characters.",
+                "Image file name must be a leaf file name no longer than 260 characters and cannot be a path component.",
                 nameof(fileName));
         }
 
