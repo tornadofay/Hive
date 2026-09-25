@@ -79,6 +79,8 @@ public abstract class HiveForm : Form
         ApplyTheme();
     }
 
+    public HiveWinFormsFormMetadata HiveHostIntegration { get; } = new();
+
     public IHiveThemeManager ThemeManager => _themeManager;
 
     public HiveThemeDefinition Theme => _themeManager.Theme;
