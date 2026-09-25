@@ -11,7 +11,7 @@ Provider-backend-only maintenance. This revision does not advance the roadmap an
 ### Scope
 
 - Re-audit the current OpenAI-compatible provider implementation after revision 2.
-- Correct only concrete provider-boundary defects.
+- Corrected the accepted ExecutionTarget URI handling so a query-bearing endpoint remains stable while /chat/completions is appended to the path.
 - Preserve accepted ExecutionTarget URI shapes; do not add a new URI rejection rule merely to mask adapter resolution problems.
 - Add focused regression coverage for changed URI behavior.
 - Re-inspect provider documentation/example consistency.
