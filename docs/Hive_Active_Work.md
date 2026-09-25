@@ -91,7 +91,29 @@ The final implementation was re-inspected after all code changes for:
 
 ### Verification
 
-**UNVERIFIED / DEVELOPER VERIFICATION PENDING.**
+**Developer verification attempt: COMPILATION FAILED; corrected patch awaiting re-run.**
+
+The developer supplied these compiler diagnostics from `Hive.Example.WinForms/HiveExampleHostForm.cs`:
+
+- line 353: `RefreshConfiguredStateAsync` was called with a `CancellationToken` in the first positional argument, but the first parameter is `AgentDefinitionId?`.
+- lines 860 and 890: `ListProvidersAsync` / `ListAgentDefinitionsAsync` were called with a `CancellationToken` as the second positional argument, but the second parameter is the existing `includeRetired: bool`.
+
+The code has been corrected to use the repository's actual parameter contracts:
+- `RefreshConfiguredStateAsync(cancellationToken: _lifetimeCts.Token)`
+- `cancellationToken: cancellationToken` on both management list calls.
+
+No tests were run after the correction.
+
+No application launch, migration, provider call, or manual Example Host verification was run by the assistant.
+
+Required developer verification:
+- rebuild the affected WinForms projects/test project;
+- focused `HiveButtonTests`;
+- full `Hive.Tests`;
+- Example Host startup/close-during-startup and Settings filter interaction verification;
+- dialog `DialogResult` verification where appropriate.
+
+
 
 - No build was run by the assistant.
 - No focused or full test run was run by the assistant.
