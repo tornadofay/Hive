@@ -401,9 +401,12 @@ internal sealed class HiveExampleHostForm : HiveForm
             _outputView.OutputAvailabilityChanged -= OutputViewOnOutputAvailabilityChanged;
             _configuredAgentSelector.SelectedIndexChanged -= ConfiguredAgentSelectorOnSelectedIndexChanged;
             DisposeActiveView();
+            _lifetimeCts.Cancel();
+
             _composition?.Dispose();
             _composition = null;
             _services = null;
+            _lifetimeCts.Dispose();
         }
 
         base.Dispose(disposing);
@@ -809,6 +812,10 @@ internal sealed class HiveExampleHostForm : HiveForm
                 ShowExample(
                     _activeExample,
                     resetOutput: false);
+        }
+        catch (OperationCanceledException)
+            when (_lifetimeCts.IsCancellationRequested)
+        {
         }
         catch (Exception exception)
         {
