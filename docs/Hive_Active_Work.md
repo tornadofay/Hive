@@ -16,32 +16,137 @@ This explicitly authorized maintenance pass is production maintenance only. It d
 - No future roadmap work, especially no Phase 1.14; no speculative abstractions, dependency changes, schema changes, unrelated cleanup, or architectural expansion.
 - No builds, tests, launches, migrations, provider calls, or other execution-based verification by the assistant.
 
-### Initial audit findings
+### Implementation checkpoint
 
-The static review identified concrete lifecycle/cancellation risks to investigate and correct within this maintenance scope:
+Static production review identified and corrected these concrete issues:
 
-1. `HiveSettingsView` navigation refresh uses `CancellationToken.None` instead of the Settings view lifetime token, so an asynchronous page refresh can continue after Settings disposal.
-2. `HiveSettingsView` navigation exception handling can attempt user-visible error reporting after the view is disposing/disposed.
-3. `HivePersistenceSettingsView` operation completion paths can mutate controls or show dialogs after disposal because post-await lifetime guards are missing.
-4. `HiveProviderAccountsSettingsView` and `HiveExecutionTargetsSettingsView` have post-await filter initialization/update paths that need disposal/cancellation guards; execution-target event handlers also start refreshes with an uncancelled default token.
-5. `HiveExecutionTargetEditorForm` connection testing is not cancellation-aware and can complete after the editor has been closed, mutating disposed controls.
+1. **Settings navigation lifecycle**
+   - `HiveSettingsView` navigation refreshes previously used `CancellationToken.None`, allowing page refresh completion after Settings disposal.
+   - Added navigation-operation cancellation linked to the existing Settings lifetime token, cancellation of superseded navigation loads, post-await initialization guards, and disposal-safe error reporting.
+   - Operation-owned navigation cancellation sources are disposed by their owning asynchronous operation.
 
-A full final review remains required before any maintenance conclusion is recorded.
+2. **Provider Account filter lifecycle**
+   - `HiveProviderAccountsSettingsView` could complete provider/account refresh work after disposal and accepted provider changes while dependent list refreshes were still active.
+   - Added a view lifetime token, post-await disposal/cancellation guards, lifetime-token propagation to CRUD refreshes, and explicit cancellation handling.
+   - Provider selection remains locked while dependent account data is loading.
+
+3. **Execution Target filter lifecycle/concurrency**
+   - `HiveExecutionTargetsSettingsView` had equivalent post-await lifecycle gaps and an uncancelled account/list refresh path.
+   - Added lifetime-token propagation, post-await guards, explicit cancellation handling, selector locking, and clearing of Add availability while the parent filter is being reloaded.
+   - Shared `HiveCrudPage` busy semantics were preserved.
+
+4. **Persistence Settings lifecycle**
+   - `HivePersistenceSettingsView` could mutate controls or show completion/error dialogs after disposal.
+   - Added post-await guards for configuration load/save, connection test, and database initialization; disposal-safe error reporting; and operation-local cancellation-source ownership.
+   - Existing operation cancellation now cancels the active source without disposing it underneath an in-flight operation; the operation disposes its own source in `finally`.
+   - Save failure cleanup retains the existing transactional safety behavior; cancellation/exception outcomes are not guessed as successful or failed so an indeterminate persistence outcome cannot cause unsafe credential deletion.
+
+5. **Execution Target connection-test lifecycle**
+   - `HiveExecutionTargetEditorForm` connection testing did not have an editor-owned cancellation boundary and could complete after the dialog was closed.
+   - Added an operation-local cancellation token, disposal cancellation, post-await guards, and ownership-safe cleanup.
+
+6. **Workspace lifecycle and stale-result protection**
+   - `HiveWorkspaceView` could mutate a disposed control after work-item/activity operations completed; activity loads could also complete for an earlier selection and overwrite the currently selected WorkItem's activity.
+   - Added operation-local cancellation-source ownership, post-await disposal/cancellation guards, cancellation-aware failure reporting, and a selected-WorkItem identity check before activity-list mutation.
+   - Added a focused regression test proving a late work-item list completion does not mutate a disposed Workspace.
+
+7. **Host error-boundary sanitization**
+   - `DpapiHiveBootstrapCredentialStore`, `SqlHiveHostServiceGraphFactory`, and `HiveHostComposition` exposed raw exception text through Host-layer public `Error` results, unlike the already-hardened Management/Persistence boundaries.
+   - Host bootstrap write/read/clear failures now return stable generic messages; service-graph configuration/construction failures are sanitized; bootstrap resolution failures preserve the structured error code/category but replace untrusted technical detail with a stable message.
+   - Added focused regression coverage for filesystem error-message isolation, bootstrap-resolution error isolation, and unexpected composition failure isolation.
+
+8. **Host composition disposal race**
+   - `HiveHostComposition.Dispose()` could race an already-entered asynchronous composition operation and allow a candidate graph to continue toward publication after disposal.
+   - Added composition-owned lifetime cancellation, propagated it through configuration loading and graph creation, and require cancellation to remain clear before candidate publication.
+   - Disposal now cancels active composition work before waiting for the existing serialization gate.
+
+9. **Cancellation-source ownership consistency**
+   - Re-audited operation-local cancellation source ownership in Settings, Workspace, and Execution Target editor paths.
+   - Superseded operations are cancelled but not disposed by their replacement; each in-flight operation owns final disposal in its own `finally` path.
+
+Regression coverage added/updated:
+- `HiveWorkspaceLifecycleTests` — disposed Workspace completion.
+- `HiveHostCompositionTests` — disposal race and Host error-boundary sanitization.
+- `HiveBootstrapCredentialStoreTests` — filesystem error-message sanitization.
+
+No `Hive.Example.WinForms` code was required because the revised behavior is lifecycle/error-boundary hardening of existing Host APIs rather than a new externally meaningful example scenario. No `Hive.Host.WinForms.UI` source change was required in this revision; its affected controls were re-reviewed against the current Host callers and the existing Revision 5 fixes.
+
+### Implementation commits on main
+
+- fce5bb9174619d80647ee288b00ec83edaf5c1a6 — fix: cancel Settings navigation refreshes on disposal
+- 4b90dc8e4b896b9d4378cac9152db12ae72dc041 — fix: guard Provider Account refresh lifecycle
+- 8e2087e3c22f56ad76702be1e483d99e47e708e4 — fix: guard Execution Target filter lifecycle
+- 2ed106f7d371d4f43106be7873a10329177ebffa — fix: harden Persistence Settings operation lifecycle
+- 9f94168c996260b0b8aa5e2b180040a72acd128b — fix: guard remaining Persistence Settings continuations
+- 69ee45223d5217d92f3f9b99cfb20a608fb9f284 — fix: cancel Execution Target connection tests on disposal
+- 1f755fd9a5384e8b69750136ff002583bf8bc637 — fix: harden Workspace lifecycle and stale activity loads
+- 176e1941d9007304176bda47559de1050cbf4fb7 — fix: sanitize Host boundary error details
+- af5541f1bcda3dd1b22f01d8706215a6ed2f90ff — fix: sanitize bootstrap resolution errors
+- 5bb96965ea8af64299b77780fd703bf428a8a6f1 — fix: sanitize Host boundary error details
+- 6e54e2e2173c6ce09d06389b254c5bdcb071f02e — fix: align cancellation source ownership
+- 6479c6aae9a73e572f6f821aff1c01d868141f11 — fix: make cancellation handling explicit
+- 837e1e7593e345a01ce995b34578355319b811dc — fix: make cancellation handling explicit
+- f0110d7622d83cd846862bca18e6bcf7d9e10369 — fix: suppress stale Workspace failures
+- 07a35af76e6d4f983e5568dbb12575e88f63c2b2 — fix: suppress stale Workspace failures
+- 8390351b91e83d9f3a73f9c8eeca2a6e2379a93d — fix: preserve operation cancellation ownership
+- 956e79a031fca6d0a777a1005dcea9f9c54bc366 — fix: preserve connection test ownership
+- 1d763cb85954fb185849ef715a1be37b6372acea — fix: align Persistence Settings disposer ownership
+- e385fa9596494429255a351250a53ea20b0d19b — fix: align connection test ownership
+- 9e8ff8043d64c7379d73e452c9c251b02555996b — fix: make Host composition disposal cancellation-owned
+- 3e31ea98e38c557688ec53e42a70cb22a13ddc4a — test: cover Workspace disposal completion
+- becfb584fca6c222038af98e4b2fe6d01726c59d — test: cover Host bootstrap error sanitization
+- 1a0d4d71c3285529e8e08ae92802af8eff6b1837 — test: cover Host composition error boundaries
+- e6d7835fa8353f985bbb9f6231320cd444e2baa9 — test: cover composition disposal race
+
+### Final static review
+
+The final implementation was re-inspected after the last correction for:
+
+- WinForms public contracts, including dialog ownership, disposal, dynamic child ownership, and event-handler boundaries.
+- Cancellation propagation, cancellation-source lifetime ownership, superseded-operation behavior, post-await disposal guards, and stale-result prevention.
+- Settings Provider/Account/Execution Target hierarchy and the shared `HiveCrudPage` busy/refresh contract.
+- Persistence configuration, bootstrap-credential boundaries, secret isolation, explicit initialization ownership, and non-destructive Save/Test semantics.
+- Workspace WorkItem authorization flow remaining through `Hive.Management`; no new direct persistence/provider path was introduced.
+- Host composition serialization, candidate replacement/disposal, disposal cancellation, and structured error boundaries.
+- Project references and dependency direction.
+- Native/custom UI foundation, theme integration, error/output reporting, accessibility, responsive layout, and existing Revision 5 behavior in `Hive.Host.WinForms.UI`.
+- Existing `Hive.Example.WinForms` consumers and public Management/Host APIs; no example update was required.
+- No SQL schema, migration, provider transport, MAF orchestration, business-write capability, host action capability, dependency, or roadmap-phase changes.
+- The complete diff from the Revision 5 closed baseline is limited to:
+  - `docs/Hive_Active_Work.md`
+  - `src/Hive.Host.WinForms/DpapiHiveBootstrapCredentialStore.cs`
+  - `src/Hive.Host.WinForms/HiveExecutionTargetEditorForm.cs`
+  - `src/Hive.Host.WinForms/HiveExecutionTargetsSettingsView.cs`
+  - `src/Hive.Host.WinForms/HiveHostComposition.cs`
+  - `src/Hive.Host.WinForms/HiveHostServiceGraphFactory.cs`
+  - `src/Hive.Host.WinForms/HivePersistenceSettingsView.cs`
+  - `src/Hive.Host.WinForms/HiveProviderAccountsSettingsView.cs`
+  - `src/Hive.Host.WinForms/HiveSettingsView.cs`
+  - `src/Hive.Host.WinForms/HiveWorkspaceView.cs`
+  - `tests/Hive.Tests/HiveBootstrapCredentialStoreTests.cs`
+  - `tests/Hive.Tests/HiveHostCompositionTests.cs`
+  - `tests/Hive.Tests/HiveWorkspaceLifecycleTests.cs`
+- `docs/Hive_Current_Status.md` was not changed. Phase 1.14 remains inactive.
 
 ### Verification
 
-No execution-based verification has been performed by the assistant.
+**UNVERIFIED — developer execution required.**
 
-Required developer verification after corrections:
-- rebuild affected WinForms projects and `Hive.Tests`;
-- focused regression tests for changed lifecycle/cancellation contracts;
-- full `Hive.Tests` suite;
-- manual Settings navigation/close-during-refresh verification;
-- manual Persistence Settings close-during-operation verification;
-- manual Provider Account / Execution Target filter refresh and disposal verification;
-- manual Execution Target editor close-during-connection-test verification where the connection-test path is available.
+No build, test, launch, migration, provider call, or other execution-based verification was performed by the assistant.
 
-Keep this maintenance pass open until developer verification is supplied. Do not change `Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
+Required developer verification:
+- rebuild `Hive.Host.WinForms`, `Hive.Host.WinForms.UI`, and `Hive.Tests`;
+- run focused regression coverage for `HiveWorkspaceLifecycleTests`, `HiveHostCompositionTests`, and `HiveBootstrapCredentialStoreTests`;
+- run the full `Hive.Tests` suite;
+- manually verify Settings navigation/close-during-refresh;
+- manually verify Persistence Settings close-during-operation and Save/Test/Initialize behavior;
+- manually verify Provider Account and Execution Target filter interaction, including disposal during refresh;
+- manually verify Execution Target editor close-during-connection-test;
+- manually exercise the affected Example Host/Settings lifecycle where the revised Host composition path is used.
+
+### Completion
+
+Keep this maintenance pass open until the developer supplies actual verification results. Do not change `Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
 
 Last updated: 2026-09-25
 
