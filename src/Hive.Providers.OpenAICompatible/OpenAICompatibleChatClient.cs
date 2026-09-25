@@ -51,11 +51,24 @@ public sealed class OpenAICompatibleChatClient : IChatClient
             ? _defaultModel
             : options.ModelId!.Trim();
 
-        var request = new OpenAICompatibleChatRequest(
-            model,
-            ConvertMessages(
-                messages,
-                cancellationToken));
+        OpenAICompatibleChatRequest request;
+
+        try
+        {
+            request = new OpenAICompatibleChatRequest(
+                model,
+                ConvertMessages(
+                    messages,
+                    cancellationToken));
+        }
+        catch (ArgumentException)
+        {
+            throw new OpenAICompatibleProviderException(
+                new Hive.Core.Error(
+                    "hive.provider.openai-compatible.model-invalid",
+                    Hive.Core.ErrorCategory.Validation,
+                    "The selected model is empty or exceeds the provider model limit."));
+        }
 
         var result = await _adapter
             .CompleteChatAsync(request, cancellationToken)
