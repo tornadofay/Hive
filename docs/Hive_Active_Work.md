@@ -29,6 +29,7 @@ Production changes completed so far on `main`:
 - The public connection tester now rejects mismatched Provider → ProviderAccount → ExecutionTarget relationships before making a network request.
 - Focused regression coverage was added for all changed contracts, including actual-enumeration message limits, non-text MAF content, default-model bounds, response-model fallback, invalid credential header input, and provider-graph mismatches.
 - The Phase 1.3 public usage documentation now records the revised provider/MAF boundary behavior.
+- Follow-up compile correction: `OpenAICompatibleMessage` now owns its 64 KiB content-limit constant, and the three connection-tester regression calls now pass the required nullable credential argument explicitly as `null`.
 - No schema, migration, persistence, orchestration, MAF replacement, host/UI, dependency upgrade, or future roadmap implementation was introduced.
 
 Affected implementation/test/documentation files:
