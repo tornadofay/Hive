@@ -2,6 +2,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using Hive.Core;
 using Hive.Host.WinForms;
+using Hive.Management;
 using Xunit;
 
 namespace Hive.Tests;
