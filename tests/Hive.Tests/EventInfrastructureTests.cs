@@ -192,14 +192,14 @@ public sealed class EventInfrastructureTests
                 new EventPayloadVersion(1),
                 document.RootElement));
 
-        Assert.Throws<ArgumentException>(
+        Assert.Throws<ArgumentOutOfRangeException>(
             () => new EventSnapshot(
                 stream,
                 default,
                 new EventPayloadVersion(1),
                 document.RootElement));
 
-        Assert.Throws<ArgumentException>(
+        Assert.Throws<ArgumentOutOfRangeException>(
             () => new EventSnapshot(
                 stream,
                 ResourceVersion.Initial,
@@ -212,7 +212,7 @@ public sealed class EventInfrastructureTests
                 ResourceVersion.Initial,
                 envelope));
 
-        Assert.Throws<ArgumentException>(
+        Assert.Throws<ArgumentOutOfRangeException>(
             () => new PersistedEvent(
                 stream,
                 default,
@@ -224,13 +224,13 @@ public sealed class EventInfrastructureTests
                 ResourceVersion.Initial,
                 envelope));
 
-        Assert.Throws<ArgumentException>(
+        Assert.Throws<ArgumentOutOfRangeException>(
             () => new EventOutboxEntry(
                 stream,
                 default,
                 envelope));
 
-        Assert.Throws<ArgumentException>(
+        Assert.Throws<ArgumentOutOfRangeException>(
             () => new EventAppendRequest(
                 stream,
                 (ResourceVersion?)default(ResourceVersion),
