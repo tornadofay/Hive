@@ -16,18 +16,54 @@ This explicitly authorized backend maintenance pass does not advance the roadmap
 - No future roadmap implementation, especially no Phase 1.14; no speculative abstractions, dependency upgrades, schema redesign, cognitive work, host-integration expansion, or unrelated cleanup.
 - Execution, builds, tests, launches, migrations, and provider calls remain unverified unless separately authorized by the developer.
 
-### Current audit finding
+### Implementation checkpoint
 
-Static review identified a concrete WorkItem attachment filename validation gap: the existing “leaf filename” contract rejects path separators but accepts the special path components "." and "..". These values are not valid attachment filenames for a leaf-file boundary and must be rejected before persistence or downstream file handling.
+Static production review identified and corrected one concrete backend input-boundary defect:
 
-Planned correction:
-- reject "." and ".." in both existing image-submission and attachment-metadata filename validation;
-- add focused regression coverage for both public constructors;
-- continue the final backend static audit after the correction and record any additional concrete defects without widening scope.
+- `WorkItemAttachmentMetadata` and `WorkItemImageSubmission` now reject the special path components `.` and `..` in addition to existing path-separator and length validation. This completes the existing logical leaf-filename contract without introducing a filesystem-specific restriction into Hive.Core.
+- Added focused regression coverage proving both public constructors reject `.` and `..`.
+- The final static cross-project review found no additional concrete backend defect requiring a code change within this maintenance scope.
+- No Example Host change is required because the correction is validation of malformed input at an existing public contract and existing examples already use valid leaf filenames.
+- No public API shape, database schema, migration, orchestration, provider transport, credential model, authorization model, dependency graph, or roadmap phase was changed.
+
+Implementation commits on main:
+- 12281379effff2ef4c1d3273d0c1fb8f2c783b25 — fix: reject path component attachment names
+- 1bcbcdd569f44c43527f3033ddd8a661efcad8b7 — test: reject path component attachment names
+
+### Final static review
+
+The final implementation was inspected after the correction for:
+
+- Core value/resource contracts, validation, nullable boundaries, serialization, and error classification.
+- Agent objective/question/memory/understanding/delegation/runtime protocol ownership and concurrency boundaries.
+- Coordination execution lifecycle, MAF boundary, cancellation, stale-result protection, and provider/resource resolution.
+- Management authorization, ownership/scope enforcement, configuration handling, lifecycle checks, and secret isolation.
+- Persistence SQL commands, parameterization, transaction boundaries, command timeouts, connection/reader disposal, indexes/constraints, event atomicity, snapshot/outbox invariants, lease recovery, and persisted-state validation.
+- OpenAI-compatible provider request/response bounds, UTF-8 handling, cancellation, timeout/error classification, credential isolation, and MAF `IChatClient` behavior.
+- Project references and dependency direction.
+- Affected tests and public Example Host consumers.
+
+Final GitHub diff from the Revision 4 opening checkpoint contains exactly:
+- `src/Hive.Core/Resources/WorkItemContracts.cs`
+- `tests/Hive.Tests/WorkItemFoundationTests.cs`
+
+### Verification
+
+**Not verified by this maintenance pass.**
+
+No build, test run, application launch, migration, provider call, or manual Example Host execution was performed.
+
+Required developer verification:
+- Focused: `Hive.Tests.WorkItemFoundationTests`.
+- Broader regression: full `Hive.Tests` suite.
+- Build: affected solution/projects, preferably the normal full solution build used for Hive verification.
+
+After verification, record the exact developer-supplied results here before closing this maintenance pass.
 
 Do not change `Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
 
 Last updated: 2026-09-25
+
 
 ## Temporary maintenance pass — Hive Backend Cross-Project Production Audit Revision 3
 
