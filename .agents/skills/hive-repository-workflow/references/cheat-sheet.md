@@ -6,7 +6,9 @@
 
 **Revision:** production-depth re-audit and correction of the preceding task's findings; review the result again; never next phase. With open implementation Active Work, stay inside it. With no Active Work after a preceding task with implementation findings, including Workflow Review, establish a temporary bounded corrective slice before re-auditing and correcting findings. Workflow-documentation Revision stays within the affected governance documents; new capability/public-contract expansion/roadmap work still needs authorization.
 
-**Maintenance:** complete production audit within scope; no roadmap advancement.
+**Maintenance — Backend:** production backend/integration audit and correction within scope.
+**Maintenance — UI:** production WinForms/UI audit and correction within scope.
+**Maintenance — Host/UI:** production host/UI-boundary audit and correction within scope.
 
 **Architecture:** specific design question; no implementation unless explicitly requested.
 
