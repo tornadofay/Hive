@@ -939,6 +939,55 @@ Public Hive documentation describes the neutral contracts, reusable WinForms bas
 
 Hive's reusable base controls and forms are Hive-owned implementation types. Host applications may derive from them, compose them, or bypass them through the compatibility adapter. Hive must not require host applications to expose their private business frameworks as public Hive types.
 
+
+### 17.6 Concrete WinForms base integration surface
+
+The preferred WinForms path uses a small, bounded set of Hive-owned native-control-derived types. These types add integration metadata and safe conventions; they do not replace the WinForms control model or move host business logic into Hive.
+
+The Phase 1.14 V1 base types are:
+
+```
+HiveForm : Form
+HiveTextBox : TextBox
+HiveComboBox : ComboBox
+HiveCheckBox : CheckBox
+HiveDateTimePicker : DateTimePicker
+HiveNumericUpDown : NumericUpDown
+HiveDataGridView : DataGridView
+```
+
+Each base type exposes Hive-owned integration metadata while preserving the normal WinForms API. A base type therefore does not require a host-side wrapper whose only purpose is to obtain Hive integration behavior.
+
+The metadata surface is intentionally bounded:
+
+- control identity may be explicitly overridden;
+- field controls may override field name, binding member, value type, required/read-only state, generated/computed state, primary-key state, and lookup metadata;
+- data surfaces may override surface identity/name, primary-key field, and explicit parent/child relationship metadata;
+- individual data-surface fields may receive the same explicit semantic overrides;
+- `HiveForm` may override the host display identity while retaining the normal WinForms form lifecycle.
+
+The default precedence is:
+
+```
+explicit Hive metadata
+        ↓
+safe deterministic WinForms convention
+        ↓
+bounded path fallback
+```
+
+For control identity, an explicit control identity wins; otherwise a unique non-empty WinForms `Name` is used; otherwise the deterministic control path is used. Duplicate explicit/derived identities that would make the contract ambiguous must fail capture rather than silently alias two controls.
+
+For field identity, an explicit field name wins; otherwise a bound member is used; otherwise a control name is used; the bounded path is the final fallback. For a data-grid column the equivalent order is explicit field name, `DataPropertyName`, then column name. Required, generated, computed, and primary-key state defaults to false unless the standard control semantics provide a reliable read-only state; host-specific semantic flags are explicit overrides.
+
+For data-surface identity, an explicit surface identifier wins; otherwise a unique non-empty control name is used; otherwise the deterministic control path is used. A child surface may explicitly name its parent surface and the parent/child key fields. The adapter materializes the corresponding parent-side `HiveHostChildDataSurfaceDescriptor`; it does not infer arbitrary business relationships from layout.
+
+Capability identities generated from automatic behavior are deterministic for the canonical adapter/control/surface identity and capability kind. Capability identifiers remain identifiers, not authorization grants: Management authorization is still required before any consequential interaction.
+
+`HiveDataGridView` exposes field metadata and stable-row identity configuration, but it does not become a generic data-access or business-write engine. Row mutation, host validation/save behavior, lookup resolution, and business/application actions remain host-owned through the bounded semantic-provider/operation hooks. The base control only supplies reusable contract metadata and safe standard interaction plumbing.
+
+Base metadata is owned by the host control/form instance. Disposing the adapter or host-integration registration does not dispose host controls or forms and does not invalidate host-owned application lifecycle beyond the registration itself.
+
 ## 18. Non-goals for V1
 
 
