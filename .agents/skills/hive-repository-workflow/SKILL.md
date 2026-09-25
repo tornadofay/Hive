@@ -34,6 +34,8 @@ Continue only the authorized slice.
 
 If the open Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, **stop all implementation-affecting work at that gate**. `Continue`, `Revision`, `Maintenance`, `Again`, `Polish again`, and similar follow-ups do not override the gate. Provide the exact required verification handoff and wait for actual developer results or an explicitly authorized task that is permitted without violating the gate. Separately authorized governance/documentation work remains limited to its explicitly affected governance/documentation files.
 
+Never modify a source-of-truth document merely to manufacture authorization, remove a verification gate, mark work verified, close Active Work, or activate roadmap work. State changes must be justified by their own authorized task and repository evidence.
+
 Do not:
 - start a later roadmap slice;
 - repeat already completed work;
