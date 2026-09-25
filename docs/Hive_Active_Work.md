@@ -6,9 +6,11 @@
 
 Authorization: explicit user request — **Hive: Start Phase 1.14**.
 
-Mode: explicit roadmap advancement / implementation completed; verification pending.
+Mode: verification remediation completed; **re-verification pending**.
 
-Repository checkpoint: `ca9f84af3dd2190a888ae5c2d3422ec40b491168` on `main`.
+Current repository checkpoint: `889d6c9f1c7b9722722c5b50f2fe1a914e11069a` on `main`.
+
+Implementation checkpoint after the developer-reported verification failures were remediated: `e1c029b69c4f08653484db2b2b7c85f3ddbc4467`.
 
 ### Objective
 
@@ -43,13 +45,18 @@ Establish the Hive-owned neutral V1 host-integration contract family and reusabl
 - reopening or replacing the Phase 1.13 read-only host-context boundary;
 - unrelated Management, Persistence, Provider, Agent, or UI refactoring/dependency upgrades.
 
-### Implementation state
+### Verification remediation
 
-**Implementation complete; not developer-verified.**
+The developer supplied a verification attempt reporting **290 passed / 1 failed**, followed by compiler diagnostics during the corrective iteration. The reported failure was within the Phase 1.14 contract boundary. The remediation commits were:
+
+- `2ebbd34a1ff53ced8eb766bc2683af277649656d` — corrected bound WinForms data-surface row-count handling.
+- `e1c029b69c4f08653484db2b2b7c85f3ddbc4467` — corrected nullable `BindingContext` access.
+
+No post-remediation build, test run, or Example Host run has been reported yet.
 
 ### Verification gate
 
-Verification remains **PENDING** until developer verification is supplied.
+**PENDING — re-verification required after remediation.**
 
 Required developer verification:
 
@@ -59,6 +66,6 @@ Tests to run: **`HiveHostIntegrationContractTests.cs` and `HiveWinFormsHostInteg
 
 Manual verification must confirm the deterministic reference-host scenario demonstrates semantic controls/fields, stable hidden primary-key identity, generated/computed fields, parent/child data surfaces and combined operation semantics, bounded dependent lookup, UI capability versus Hive authorization, and API-only/UI-only/API+UI composition without exposing raw controls or SQL.
 
-After implementation, do not close this slice or activate a later phase until the developer supplies the required verification results.
+After remediation, do not close this slice or activate a later phase until the developer supplies the required verification results.
 
 Last updated: 2026-09-25
