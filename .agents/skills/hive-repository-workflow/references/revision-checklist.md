@@ -14,6 +14,14 @@ Revision asks whether the work just performed is complete, correct, production-g
 - Root causes and necessary supporting corrections are addressed within scope
 - A corrective pass does not expand into newly discovered capability/public-contract work without separate authorization
 
+## Verification remediation
+
+- If developer verification fails or is partial, classify each failure against the authorized Active Work slice
+- Record **VERIFICATION FAILED / REMEDIATION REQUIRED** in Active Work before implementation resumes
+- Same-slice remediation remains within the authorized contract and uses production depth
+- Return Active Work to **VERIFICATION PENDING** after remediation and update exact verification targets
+- Do not use remediation to introduce new capabilities, materially expand public contracts, or cross roadmap boundaries
+
 ## User requirement
 
 - Every requested requirement addressed
