@@ -3,6 +3,9 @@
 ## Continue
 Continue the current authorized task. Stop at a verification gate.
 
+## Again
+Repeat the same task or Revision pass in the same context and scope. Do not create a new task, broaden scope, or advance the roadmap. Stop at a verification gate.
+
 ## Revision
 Re-audit the work just performed in the same task context. Fix concrete findings to production depth, then review the result again. Revision is corrective, not read-only. When Active Work is open, remain within that authorized implementation boundary. When no Active Work is open and Revision follows a preceding implementation/corrective task, establish a temporary bounded corrective slice before implementation so that task can be re-audited and concrete findings discovered during Revision can be corrected. A read-only Workflow Review is not an implementation/corrective task for this auto-opening rule; Review findings without an existing implementation boundary require explicit bounded corrective authorization. Workflow-documentation Revision stays within the affected governance documents and does not create an implementation slice. The correction must restore/preserve/correct existing behavior; any new capability, material public-contract expansion, or roadmap work requires separate authorization. Revision of an Architecture task remains analysis-only unless implementation is explicitly authorized. A later Revision remains the same scope.
 
