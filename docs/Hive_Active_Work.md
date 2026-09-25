@@ -4,63 +4,42 @@ Last updated: 2026-09-25
 
 ## Active slice
 
-**Authorized maintenance slice — Hive.Management / Hive.Persistence final backend audit (revision). Phase 1.14 remains inactive.**
+**None — current backend audit revision closed and Phase 1.14 remains inactive.**
 
-This is a temporary maintenance slice explicitly authorized by the user's revision request. It does not advance the roadmap and does not authorize Phase 1.14 or any later roadmap work.
+No implementation slice is currently authorized. The next roadmap slice remains inactive until explicitly authorized.
+
+## Closed maintenance pass — Hive.Management / Hive.Persistence Final Backend Audit — Revision
 
 ### Scope
 
-- audit the final Hive.Management / Hive.Persistence implementation for concrete production defects within existing contracts;
-- prevent completion of an outbox item after its lease has already expired, preserving stale-work protection;
-- ensure secret replacement plaintext buffers are zeroed on every exit path, including DPAPI protection failure;
-- inspect affected tests and add only focused regression coverage required by these changes;
-- re-audit authorization, ownership/scope, persistence transactions, cancellation, lifecycle, resource disposal, serialization, configuration, and provider failure boundaries without changing their established contracts unless a concrete defect requires it;
-- do not change SQL schema, migrations, provider transport, orchestration, MAF, host adapters, UI, dependencies, or roadmap phase authorization.
-
-### Verification gate
-
-Execution is not authorized by the revision request. This slice remains open until the developer reports the focused and broader `Hive.Tests` verification for this revision.
+- final production audit of the existing `Hive.Management` / `Hive.Persistence` backend contracts;
+- reject completion of an outbox item after its lease has expired;
+- guarantee secret replacement plaintext-buffer cleanup on every exit path;
+- add focused regression coverage for the expired-lease contract;
+- re-audit authorization, ownership/scope, persistence transactions, cancellation, lifecycle, resource disposal, serialization, configuration, and provider failure boundaries;
+- no schema, migration, provider transport, orchestration, MAF, host adapter, UI, dependency, or roadmap-phase changes.
 
 ### Implementation checkpoint
 
-- `SqlEventPersistenceStore.CompleteOutboxAsync` now requires the current outbox lease to remain unexpired in addition to matching the lease identity; an expired lease returns `hive.outbox.lease-lost` and does not delete the row;
-- `SqlDpapiSecretStore.ReplaceCoreAsync` now delegates plaintext-to-DPAPI conversion to the existing `Protect` helper, which zeroes its plaintext buffer even when protection fails; the encrypted replacement buffer remains explicitly zeroed after persistence;
-- focused regression coverage now proves that an expired outbox lease cannot be completed and the durable outbox row remains available for recovery;
-- no schema/migration/provider/orchestration/MAF/host/UI/dependency changes were introduced.
+- Outbox completion now requires a matching, still-unexpired lease and returns `hive.outbox.lease-lost` without deleting the row when the lease has expired.
+- Secret replacement now uses the existing DPAPI `Protect` helper so plaintext replacement bytes are zeroed even if protection fails; encrypted replacement bytes remain zeroed after persistence.
+- Focused regression coverage proves an expired outbox lease is rejected and the durable row remains available for recovery.
 
-Code commits: `b48ae28a0b5fd90bd9d40ab4d7d8a5f990f9b701` (outbox lease), `a6b4ecd8b760de81c871230606be7f573cc8a322` (secret buffer cleanup).
+Code commits: `b48ae28a0b5fd90bd9d40ab4d7d8a5f990f9b701`, `a6b4ecd8b760de81c871230606be7f573cc8a322`.
 Regression-test commit: `b4039f96227d5958746c1494d83bab5cca0fb6df`.
-
-Verification status: **not yet verified by build/test execution for this revision**.
-
-## Closed maintenance pass — Hive.Management / Hive.Persistence Final Backend Audit
-
-### Scope
-
-- remove raw exception text from public Management `Error` results, including technical errors propagated from bootstrap credential storage and internal configured-agent execution;
-- reject malformed persisted configuration values as typed configuration-validation failures;
-- reject undefined persisted WorkItem status values during activity reconstruction;
-- prevent bootstrap credential removal from racing with configuration saves through the owning Management facade;
-- reject configured AgentDefinition targets whose target, ProviderAccount, or Provider dependency is inactive/inconsistent;
-- preserve useful provider `External` failures while sanitizing unexpected `Internal` execution failures at the Management boundary;
-- add focused regression coverage for these discovered defects;
-- re-audit Persistence boundaries without unrelated persistence changes.
-
-### Implementation checkpoint
-
-The maintenance implementation was completed on `main`. The final nullable-flow correction was committed as `3cdd0c93ab20e4f2aaf8d855c181b09f7c0b7211`; the final regression-test correction was committed as `2866aa495b03880487cb3f0a4b7d9224e69cdd75`.
 
 ### Verification result
 
 The developer ran `dotnet test tests/Hive.Tests/Hive.Tests.csproj` on 2026-09-25:
 
-**225 tests passed, 0 failed, 0 skipped** in 22.6 seconds on .NET 10.0.1 using xUnit.net VSTest Adapter 3.1.5+1b188a7b0a.
+**226 tests passed, 0 failed, 0 skipped** in 27 seconds on .NET 10.0.1 using xUnit.net VSTest Adapter 3.1.5+1b188a7b0a.
 
-Verification archive: [hive-management-persistence-final-backend-audit-2026-09-25.md](verification/maintenance/hive-management-persistence-final-backend-audit-2026-09-25.md)
+Verification archive: [hive-management-persistence-final-backend-audit-revision-2026-09-25.md](verification/maintenance/hive-management-persistence-final-backend-audit-revision-2026-09-25.md)
 
-No Example Host verification was required because this maintenance remained backend/internal and introduced no externally visible host/UI capability.
+No Example Host verification was required because the revision remained backend/internal and introduced no externally visible host/UI capability.
 
-The maintenance slice is closed. Phase 1.14 remains inactive.
+The maintenance revision is developer-verified and closed. Phase 1.14 remains inactive.
+
 ## Closed maintenance pass — Hive.Persistence Production Baseline Hardening
 
 ### Closed maintenance-pass scope
