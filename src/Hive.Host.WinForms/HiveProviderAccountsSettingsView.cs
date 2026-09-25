@@ -18,6 +18,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
     private IReadOnlyList<Provider> _providers = Array.Empty<Provider>();
     private Provider? _selectedProvider;
     private bool _loadingProviders;
+    private readonly CancellationTokenSource _lifetimeCts = new();
 
     public HiveProviderAccountsSettingsView(
         IHiveManagementFacade management,
@@ -139,6 +140,9 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
         if (result.IsFailure)
             throw new InvalidOperationException(result.Error!.Message);
 
+        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+            return;
+
         _providers = result.Value!;
 
         _loadingProviders = true;
@@ -194,6 +198,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
                 (_providerComboBox.SelectedItem as ProviderChoice)?.Value;
 
             _page.AllowAdd = _selectedProvider is not null;
+            var cancellationToken = _lifetimeCts.Token;
 
             if (_selectedProvider is null)
                 _providerComboBox.Text = "Select a Provider...";
@@ -203,7 +208,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
                 _providerComboBox.Enabled = false;
                 try
                 {
-                    await _page.RefreshAsync().ConfigureAwait(true);
+                    await _page.RefreshAsync(cancellationToken).ConfigureAwait(true);
                 }
                 finally
                 {
@@ -213,7 +218,9 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
             }
         }
         catch (OperationCanceledException)
+            when (_lifetimeCts.IsCancellationRequested || IsDisposed || Disposing)
         {
+            return;
         }
         catch (Exception exception)
         {
@@ -424,6 +431,8 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
         {
             _page.OperationFailed -= PageOperationFailed;
             _providerComboBox.SelectedIndexChanged -= ProviderComboBoxOnSelectedIndexChanged;
+            _lifetimeCts.Cancel();
+            _lifetimeCts.Dispose();
         }
 
         base.Dispose(disposing);
