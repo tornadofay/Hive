@@ -3,6 +3,7 @@ using System.Windows.Forms;
 using Hive.Core;
 using Hive.Host.WinForms;
 using Hive.Management;
+using Hive.Host.WinForms.UI.Controls;
 using Xunit;
 
 namespace Hive.Tests;
@@ -50,6 +51,190 @@ public sealed class HiveWinFormsHostIntegrationTests
         Assert.DoesNotContain(
             descriptor.Controls,
             control => control.Field?.CurrentValue?.AsString() == "secret-value");
+    }
+
+    [Fact]
+    public async Task Capture_UsesDeterministicNamesAndBaseControlMetadata()
+    {
+        using var form = CreateBaseFixtureForm();
+        var accessContext = CreateAccessContext();
+
+        using var first = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var firstResult = await first.CaptureAsync(accessContext);
+
+        Assert.True(firstResult.IsSuccess, firstResult.Error?.Message);
+
+        var firstControl = firstResult.Value!.Controls
+            .Single(control => control.Name == "customer");
+
+        Assert.Equal(
+            "control:customer",
+            firstControl.Id);
+
+        var firstSetCapability = firstControl.Capabilities.Single(capability =>
+            capability.Kind == HiveHostCapabilityKind.SetControlValue);
+
+        first.Dispose();
+
+        using var second = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var secondResult = await second.CaptureAsync(accessContext);
+
+        Assert.True(secondResult.IsSuccess, secondResult.Error?.Message);
+
+        var secondControl = secondResult.Value!.Controls
+            .Single(control => control.Name == "customer");
+
+        var secondSetCapability = secondControl.Capabilities.Single(capability =>
+            capability.Kind == HiveHostCapabilityKind.SetControlValue);
+
+        Assert.Equal(
+            firstSetCapability.Id,
+            secondSetCapability.Id);
+    }
+
+    [Fact]
+    public async Task Capture_BaseDataSurfaceAppliesExplicitOverridesAndParentChildRelationship()
+    {
+        using var form = CreateBaseFixtureForm();
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var result = await adapter.CaptureAsync(accessContext);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var descriptor = result.Value!;
+        var invoice = descriptor.DataSurfaces.Single(surface =>
+            surface.Id == "surface:invoice");
+        var lines = descriptor.DataSurfaces.Single(surface =>
+            surface.Id == "surface:invoiceLines");
+
+        Assert.True(invoice.Fields.Single(field =>
+            field.Name == "Id").IsPrimaryKey);
+        Assert.True(invoice.Fields.Single(field =>
+            field.Name == "InvoiceNumber").Generated);
+        Assert.True(invoice.Fields.Single(field =>
+            field.Name == "Total").Computed);
+
+        var product = lines.Fields.Single(field =>
+            field.Name == "ProductId");
+
+        Assert.NotNull(product.Lookup);
+        Assert.Single(invoice.Children);
+        Assert.Equal(
+            "surface:invoiceLines",
+            invoice.Children[0].ChildSurfaceId);
+        Assert.Equal(
+            "InvoiceId",
+            invoice.Children[0].ChildKeyField);
+        Assert.Contains(
+            lines.Capabilities,
+            capability => capability.Kind == HiveHostCapabilityKind.EditRow);
+    }
+
+    [Fact]
+    public async Task Capture_DuplicateExplicitControlIdentityFailsInsteadOfAliasing()
+    {
+        using var form = new Form();
+        var first = new HiveTextBox { Name = "first" };
+        var second = new HiveTextBox { Name = "second" };
+        first.HiveIntegration.ControlId = "shared";
+        second.HiveIntegration.ControlId = "shared";
+        form.Controls.Add(first);
+        form.Controls.Add(second);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var result = await adapter.CaptureAsync(accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.control-identity-duplicate",
+            result.Error!.Code);
+    }
+
+    [Fact]
+    public async Task Capture_RejectsMissingExplicitPrimaryKeyField()
+    {
+        using var form = new Form();
+        var grid = new HiveDataGridView
+        {
+            Name = "orders",
+            AutoGenerateColumns = false
+        };
+        grid.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "OrderNumber",
+                DataPropertyName = "OrderNumber"
+            });
+        grid.HiveDataSurface.PrimaryKeyField = "Id";
+        form.Controls.Add(grid);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var result = await adapter.CaptureAsync(accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.primary-key-field-not-found",
+            result.Error!.Code);
+    }
+
+    [Fact]
+    public async Task Capture_ComputedBaseFieldDoesNotExposeWriteCapability()
+    {
+        using var form = new Form();
+        var total = new HiveTextBox
+        {
+            Name = "total",
+            Text = "100"
+        };
+        total.HiveField.Computed = true;
+        form.Controls.Add(total);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var result = await adapter.CaptureAsync(accessContext);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var descriptor = result.Value!.Controls.Single();
+        Assert.DoesNotContain(
+            descriptor.Capabilities,
+            capability => capability.Kind == HiveHostCapabilityKind.SetControlValue);
+    }
+
+    [Fact]
+    public async Task Dispose_BaseHostDoesNotDisposeHostForm()
+    {
+        var form = new TestHiveForm();
+        var accessContext = CreateAccessContext();
+        var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        adapter.Dispose();
+
+        Assert.False(form.IsDisposed);
+        form.Dispose();
     }
 
     [Fact]
@@ -204,6 +389,104 @@ public sealed class HiveWinFormsHostIntegrationTests
                 cancellation.Token));
     }
 
+    private static Form CreateBaseFixtureForm()
+    {
+        var form = new Form
+        {
+            Name = "baseFixture",
+            Text = "Base Fixture"
+        };
+
+        var customer = new HiveTextBox
+        {
+            Name = "customer",
+            Text = "Example"
+        };
+
+        var invoiceGrid = new HiveDataGridView
+        {
+            Name = "invoiceGrid",
+            AutoGenerateColumns = false
+        };
+
+        invoiceGrid.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "Id",
+                DataPropertyName = "Id",
+                Visible = false
+            });
+        invoiceGrid.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "InvoiceNumber",
+                DataPropertyName = "InvoiceNumber"
+            });
+        invoiceGrid.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "Total",
+                DataPropertyName = "Total"
+            });
+
+        var lineGrid = new HiveDataGridView
+        {
+            Name = "invoiceLinesGrid",
+            AutoGenerateColumns = false
+        };
+
+        lineGrid.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "Id",
+                DataPropertyName = "Id",
+                Visible = false
+            });
+        lineGrid.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "InvoiceId",
+                DataPropertyName = "InvoiceId",
+                Visible = false
+            });
+        lineGrid.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "ProductId",
+                DataPropertyName = "ProductId"
+            });
+
+        lineGrid.HiveDataSurface.SurfaceId = "invoiceLines";
+        lineGrid.HiveDataSurface.ParentSurfaceId = "surface:invoice";
+        lineGrid.HiveDataSurface.ParentKeyField = "Id";
+        lineGrid.HiveDataSurface.ChildKeyField = "InvoiceId";
+        lineGrid.HiveDataSurface.PrimaryKeyField = "Id";
+        lineGrid.HiveDataSurface.ConfigureField("ProductId").Lookup =
+            new HiveHostLookupDescriptor(
+                "lookup:products",
+                Guid.Parse("00000000-0000-0000-0000-000000000001"),
+                "Name",
+                "Id",
+                new[] { "CategoryId" });
+        lineGrid.HiveDataSurface.AddCapability(
+            new HiveHostCapabilityDescriptor(
+                Guid.Parse("00000000-0000-0000-0000-000000000002"),
+                HiveHostCapabilityKind.EditRow,
+                "Edit invoice line"));
+
+        var invoiceSurface = invoiceGrid.HiveDataSurface;
+        invoiceSurface.SurfaceId = "invoice";
+        invoiceSurface.PrimaryKeyField = "Id";
+        invoiceSurface.ConfigureField("InvoiceNumber").Generated = true;
+        invoiceSurface.ConfigureField("Total").Computed = true;
+
+        form.Controls.Add(customer);
+        form.Controls.Add(invoiceGrid);
+        form.Controls.Add(lineGrid);
+
+        return form;
+    }
+
     private static Form CreateFixtureForm()
     {
         var form = new Form
@@ -253,6 +536,15 @@ public sealed class HiveWinFormsHostIntegrationTests
             DeploymentId.New(),
             TenantId.New(),
             PrincipalId.New());
+
+    private sealed class TestHiveForm :
+        HiveForm
+    {
+        public TestHiveForm()
+            : base("Test", "Test")
+        {
+        }
+    }
 
     private sealed class AllowAllAuthorizer :
         IHiveHostCapabilityAuthorizer
