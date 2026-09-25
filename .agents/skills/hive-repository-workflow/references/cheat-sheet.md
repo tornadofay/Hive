@@ -63,7 +63,7 @@ STOP new implementation while waiting for developer verification.
 
 When developer results arrive:
 - all required verification passes -> proceed to closure;
-- in-scope failures -> record **VERIFICATION FAILED / REMEDIATION REQUIRED**, perform same-slice production remediation, then return to **VERIFICATION PENDING**;
+- in-scope failures -> first record **VERIFICATION FAILED / REMEDIATION REQUIRED**, then perform same-slice production remediation, then return to **VERIFICATION PENDING**;
 - out-of-scope/new-capability failures -> stop and require separate authorization.
 
 Do not edit Active Work or Status merely to bypass the gate; Verification may change the state legitimately when actual developer results justify the transition.
