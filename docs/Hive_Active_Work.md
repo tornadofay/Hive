@@ -2,7 +2,7 @@
 
 ### Status
 
-**OPEN / VERIFICATION PENDING DEVELOPER.**
+**CLOSED / DEVELOPER-VERIFIED.**
 
 This explicitly authorized maintenance pass does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
@@ -91,48 +91,25 @@ The final implementation was re-inspected after all code changes for:
 
 ### Verification
 
-**Developer verification attempt: COMPILATION FAILED; corrected patch awaiting re-run.**
+**Developer-verified.**
 
-The developer supplied these compiler diagnostics from `Hive.Example.WinForms/HiveExampleHostForm.cs`:
+Developer supplied final verification on 2026-09-25:
 
-- line 353: `RefreshConfiguredStateAsync` was called with a `CancellationToken` in the first positional argument, but the first parameter is `AgentDefinitionId?`.
-- lines 860 and 890: `ListProvidersAsync` / `ListAgentDefinitionsAsync` were called with a `CancellationToken` as the second positional argument, but the second parameter is the existing `includeRetired: bool`.
+- Full `Hive.Tests` suite: **260 tests passed, 0 failed, 0 skipped**, completed in **28.3 seconds** on .NET 10.0.1 using xUnit.net VSTest Adapter v3.1.5+1b188a7b0a.
+- Example Host startup/close-during-startup verification: **confirmed successful**.
+- Settings Provider/Account/Execution Target filter interaction verification: **confirmed successful**.
+- `DialogResult` behavior verification: **confirmed successful**.
+- The earlier three `CS1503` compilation diagnostics were corrected before this final verification run.
 
-The code has been corrected to use the repository's actual parameter contracts:
-- `RefreshConfiguredStateAsync(cancellationToken: _lifetimeCts.Token)`
-- `cancellationToken: cancellationToken` on both management list calls.
-
-No tests were run after the correction.
-
-No application launch, migration, provider call, or manual Example Host verification was run by the assistant.
-
-Required developer verification:
-- rebuild the affected WinForms projects/test project;
-- focused `HiveButtonTests`;
-- full `Hive.Tests`;
-- Example Host startup/close-during-startup and Settings filter interaction verification;
-- dialog `DialogResult` verification where appropriate.
-
-
-
-- No build was run by the assistant.
-- No focused or full test run was run by the assistant.
-- No Example Host launch/manual UI verification was run by the assistant.
-- No migration or provider/network execution was run by the assistant.
-
-Required developer verification:
-- focused `HiveButtonTests`;
-- full `Hive.Tests`;
-- affected WinForms project/test build;
-- manual Example Host startup/close-during-startup and Settings filter interaction verification;
-- manual dialog `DialogResult` verification where appropriate.
+No migration, provider/network, or unrelated execution was performed by the assistant.
 
 ### Completion
 
-Keep this maintenance pass open until the developer supplies actual verification results. Do not change `Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
+Revision 5 is **closed / developer-verified**. The affected Host/UI implementation changes and focused regression coverage were verified by the developer with the complete 260-test suite and the three required manual UI/lifecycle checks.
+
+Do not change `Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
 
 Last updated: 2026-09-25
-
 
 ## Temporary maintenance pass — Hive Backend Cross-Project Production Audit Revision 4
 
