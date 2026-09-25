@@ -18,6 +18,30 @@ public sealed class OpenAICompatibleProviderConnectionTester : IProviderConnecti
         ArgumentNullException.ThrowIfNull(account);
         ArgumentNullException.ThrowIfNull(target);
 
+        if (account.ProviderId != provider.Id)
+        {
+            return Result<ProviderConnectionTestResult>.Failure(
+                Error.Validation(
+                    "hive.provider.connection-test.account-provider-mismatch",
+                    "The provider account does not belong to the supplied provider."));
+        }
+
+        if (target.ProviderId != provider.Id)
+        {
+            return Result<ProviderConnectionTestResult>.Failure(
+                Error.Validation(
+                    "hive.provider.connection-test.target-provider-mismatch",
+                    "The execution target does not belong to the supplied provider."));
+        }
+
+        if (target.ProviderAccountId != account.Id)
+        {
+            return Result<ProviderConnectionTestResult>.Failure(
+                Error.Validation(
+                    "hive.provider.connection-test.target-account-mismatch",
+                    "The execution target does not belong to the supplied provider account."));
+        }
+
         if (!string.Equals(
                 provider.TransportKind,
                 "openai-compatible",
