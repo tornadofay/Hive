@@ -58,6 +58,52 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     [Fact]
+    public async Task CompleteChatAsync_UsesRequestedModelWhenResponseOmitsModel()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                """{"choices":[{"message":{"role":"assistant","content":"hello"}}]}"""));
+        using var client = new HttpClient();
+
+        var result = await CreateAdapter(server, client)
+            .CompleteChatAsync(
+                new OpenAICompatibleChatRequest(
+                    "requested-model",
+                    [
+                        new OpenAICompatibleMessage(
+                            OpenAICompatibleMessageRole.User,
+                            "Say hello.")
+                    ]));
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal("requested-model", result.Value!.Model);
+    }
+
+    [Fact]
+    public async Task CompleteChatAsync_MapsInvalidCredentialToValidationFailure()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                """{"choices":[{"message":{"role":"assistant","content":"should not be used"}}]}"""));
+        using var credential = SecretMaterial.Create("invalid\r\ncredential");
+        using var client = new HttpClient();
+
+        var result = await CreateAdapter(server, client, credential)
+            .CompleteChatAsync(CreateRequest());
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.provider.openai-compatible.invalid-credential",
+            result.Error!.Code);
+        Assert.Equal(ErrorCategory.Validation, result.Error.Category);
+        Assert.DoesNotContain(
+            "invalid",
+            result.Error.Message,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(server.RequestBody);
+    }
+
+    [Fact]
     public async Task CompleteChatAsync_RejectsOversizedRequestBeforeSending()
     {
         await using var server = new LocalFakeHttpServer(
@@ -389,6 +435,135 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     [Fact]
+    public async Task ConnectionTester_RejectsMismatchedAccountProvider()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                """{"choices":[{"message":{"role":"assistant","content":"OK"}}]}"""));
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var now = DateTimeOffset.UtcNow;
+        var providerId = ProviderId.New();
+
+        var provider = CreateProviderForConnectionTest(
+            principal,
+            tenant,
+            now,
+            providerId);
+
+        var account = CreateProviderAccountForConnectionTest(
+            principal,
+            tenant,
+            now,
+            ProviderId.New());
+
+        var target = CreateExecutionTargetForConnectionTest(
+            principal,
+            tenant,
+            now,
+            providerId,
+            account.Id,
+            server.BaseUri);
+
+        var result = await new OpenAICompatibleProviderConnectionTester()
+            .TestAsync(provider, account, target);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.provider.connection-test.account-provider-mismatch",
+            result.Error!.Code);
+        Assert.Equal(ErrorCategory.Validation, result.Error.Category);
+        Assert.Empty(server.RequestBody);
+    }
+
+    [Fact]
+    public async Task ConnectionTester_RejectsMismatchedTargetProvider()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                """{"choices":[{"message":{"role":"assistant","content":"OK"}}]}"""));
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var now = DateTimeOffset.UtcNow;
+        var providerId = ProviderId.New();
+
+        var provider = CreateProviderForConnectionTest(
+            principal,
+            tenant,
+            now,
+            providerId);
+
+        var account = CreateProviderAccountForConnectionTest(
+            principal,
+            tenant,
+            now,
+            providerId);
+
+        var target = CreateExecutionTargetForConnectionTest(
+            principal,
+            tenant,
+            now,
+            ProviderId.New(),
+            account.Id,
+            server.BaseUri);
+
+        var result = await new OpenAICompatibleProviderConnectionTester()
+            .TestAsync(provider, account, target);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.provider.connection-test.target-provider-mismatch",
+            result.Error!.Code);
+        Assert.Equal(ErrorCategory.Validation, result.Error.Category);
+        Assert.Empty(server.RequestBody);
+    }
+
+    [Fact]
+    public async Task ConnectionTester_RejectsMismatchedTargetAccount()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                """{"choices":[{"message":{"role":"assistant","content":"OK"}}]}"""));
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var now = DateTimeOffset.UtcNow;
+        var providerId = ProviderId.New();
+
+        var provider = CreateProviderForConnectionTest(
+            principal,
+            tenant,
+            now,
+            providerId);
+
+        var account = CreateProviderAccountForConnectionTest(
+            principal,
+            tenant,
+            now,
+            providerId);
+
+        var target = CreateExecutionTargetForConnectionTest(
+            principal,
+            tenant,
+            now,
+            providerId,
+            ProviderAccountId.New(),
+            server.BaseUri);
+
+        var result = await new OpenAICompatibleProviderConnectionTester()
+            .TestAsync(provider, account, target);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.provider.connection-test.target-account-mismatch",
+            result.Error!.Code);
+        Assert.Equal(ErrorCategory.Validation, result.Error.Category);
+        Assert.Empty(server.RequestBody);
+    }
+
+    [Fact]
     public void ChatRequestMessageCollection_IsReadOnly()
     {
         var request = new OpenAICompatibleChatRequest(
@@ -425,6 +600,21 @@ public sealed class OpenAICompatibleProviderAdapterTests
             () => new OpenAICompatibleMessage(
                 OpenAICompatibleMessageRole.User,
                 new string('x', 64 * 1024 + 1)));
+    }
+
+    [Fact]
+    public void ChatClient_RejectsOversizedDefaultModel()
+    {
+        using var client = new HttpClient();
+        var adapter = new OpenAICompatibleProviderAdapter(
+            client,
+            new OpenAICompatibleProviderOptions(
+                new Uri("http://127.0.0.1/v1/")));
+
+        Assert.Throws<ArgumentException>(
+            () => new OpenAICompatibleChatClient(
+                adapter,
+                new string('x', 513)));
     }
 
     [Fact]
@@ -483,6 +673,40 @@ public sealed class OpenAICompatibleProviderAdapterTests
             exception.Error.Code);
         Assert.Equal(
             ErrorCategory.Validation,
+            exception.Error.Category);
+    }
+
+    [Fact]
+    public async Task ChatClient_RejectsNonTextMessageContent()
+    {
+        using var client = new HttpClient();
+        using var chatClient = new OpenAICompatibleChatClient(
+            new OpenAICompatibleProviderAdapter(
+                client,
+                new OpenAICompatibleProviderOptions(
+                    new Uri("http://127.0.0.1/v1/"),
+                    timeout: TimeSpan.FromSeconds(2))),
+            "test-model");
+
+        var exception = await Assert.ThrowsAsync<OpenAICompatibleProviderException>(
+            () => chatClient.GetResponseAsync(
+                [
+                    new Microsoft.Extensions.AI.ChatMessage(
+                        Microsoft.Extensions.AI.ChatRole.User,
+                        new List<Microsoft.Extensions.AI.AIContent>
+                        {
+                            new Microsoft.Extensions.AI.TextContent("hello"),
+                            new Microsoft.Extensions.AI.DataContent(
+                                new byte[] { 1 },
+                                "application/octet-stream")
+                        })
+                ]));
+
+        Assert.Equal(
+            "hive.provider.openai-compatible.message-content-unsupported",
+            exception.Error.Code);
+        Assert.Equal(
+            ErrorCategory.Unsupported,
             exception.Error.Category);
     }
 
@@ -554,6 +778,22 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     [Fact]
+    public void Contracts_EnforceMessageLimitDuringActualEnumeration()
+    {
+        var messages = Enumerable.Repeat(
+                new OpenAICompatibleMessage(
+                    OpenAICompatibleMessageRole.User,
+                    "test"),
+                257)
+            .ToArray();
+
+        Assert.Throws<ArgumentException>(
+            () => new OpenAICompatibleChatRequest(
+                "model",
+                new MisreportingMessageList(messages, 1)));
+    }
+
+    [Fact]
     public void Options_RejectInvalidEndpointAndTimeout()
     {
         Assert.Throws<ArgumentException>(
@@ -595,6 +835,80 @@ public sealed class OpenAICompatibleProviderAdapterTests
                     "test")
             ]);
 
+    private static Provider CreateProviderForConnectionTest(
+        PrincipalId principal,
+        TenantId tenant,
+        DateTimeOffset now,
+        ProviderId providerId) =>
+        new(
+            new ResourceEnvelope<ProviderId>(
+                ResourceKind.Provider,
+                providerId,
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            "test-provider",
+            "Test Provider",
+            "openai-compatible");
+
+    private static ProviderAccount CreateProviderAccountForConnectionTest(
+        PrincipalId principal,
+        TenantId tenant,
+        DateTimeOffset now,
+        ProviderId providerId) =>
+        new(
+            new ResourceEnvelope<ProviderAccountId>(
+                ResourceKind.ProviderAccount,
+                ProviderAccountId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            providerId,
+            "test-account",
+            "Test Account");
+
+    private static ExecutionTarget CreateExecutionTargetForConnectionTest(
+        PrincipalId principal,
+        TenantId tenant,
+        DateTimeOffset now,
+        ProviderId providerId,
+        ProviderAccountId providerAccountId,
+        Uri endpoint) =>
+        new(
+            new ResourceEnvelope<ExecutionTargetId>(
+                ResourceKind.ExecutionTarget,
+                ExecutionTargetId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            providerId,
+            providerAccountId,
+            "test-target",
+            "Test Target",
+            endpoint,
+            "test-model",
+            null,
+            [
+                new CapabilityStateEntry(
+                    new CapabilityKey("text.generate"),
+                    CapabilityState.Supported)
+            ]);
+
     private static OpenAICompatibleProviderAdapter CreateAdapter(
         LocalFakeHttpServer server,
         HttpClient client,
@@ -606,6 +920,30 @@ public sealed class OpenAICompatibleProviderAdapterTests
                 server.BaseUri,
                 credential,
                 timeout ?? TimeSpan.FromSeconds(2)));
+
+    private sealed class MisreportingMessageList :
+        IReadOnlyList<OpenAICompatibleMessage>
+    {
+        private readonly IReadOnlyList<OpenAICompatibleMessage> _items;
+
+        public MisreportingMessageList(
+            IReadOnlyList<OpenAICompatibleMessage> items,
+            int reportedCount)
+        {
+            _items = items;
+            Count = reportedCount;
+        }
+
+        public int Count { get; }
+
+        public OpenAICompatibleMessage this[int index] => _items[index];
+
+        public IEnumerator<OpenAICompatibleMessage> GetEnumerator() =>
+            _items.GetEnumerator();
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() =>
+            GetEnumerator();
+    }
 
     private sealed class LocalFakeHttpServer : IAsyncDisposable
     {
