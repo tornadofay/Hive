@@ -30,6 +30,8 @@ Read, in order:
 5. the relevant architecture sections;
 6. the relevant UI guidance for UI/Example work.
 
+For cross-project, public-API, persistence, orchestration, lifecycle, security, or durable-state work, read the full applicable architecture documents.
+
 Then inspect affected projects, source, tests, examples, configuration, references, and responsibility owners. Determine the repository checkpoint from evidence.
 
 If Active Work establishes a verification gate, stop implementation-affecting work at that gate.
