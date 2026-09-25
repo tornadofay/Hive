@@ -44,6 +44,25 @@ Static production audit identified and corrected one concrete shared-UI failure 
    - Added focused regression coverage in `HiveUiPolishTests`.
    - Updated `docs/ui/controls.md` to document the fallback behavior.
 
+### Implementation checkpoint
+
+Static production audit identified and corrected these concrete shared-UI issues:
+
+1. **CRUD operation failure containment**
+   - `HiveCrudPage` previously rethrew an operation exception when no `OperationFailed` subscriber was attached, allowing a failure from a UI event path to escape as an unhandled async exception.
+   - The control now treats `OperationFailed` as an optional extension point. Without a subscriber, the failure remains contained in the control operation and is reported through `HiveUiErrorReporter` when the control is hosted by a form.
+   - Existing subscribed consumers retain their current event-based reporting behavior.
+   - Added focused regression coverage in `HiveUiPolishTests`.
+   - Updated `docs/ui/controls.md` to document the fallback behavior.
+
+2. **Hive Settings default destination**
+   - Added a dedicated informational `Overview` page to the existing Settings navigation.
+   - `Overview` is now the selected and displayed destination when `HiveSettingsView` is constructed, eliminating the prior state where Persistence could appear selected without a page being displayed.
+   - Persistence and the other configuration domains remain available as leaf pages.
+   - Settings no longer initializes the Persistence page on initial display; database-backed/configuration-heavy pages continue to initialize when navigated to.
+   - Added focused regression coverage in `HiveUiPolishTests`.
+   - Updated `docs/ui/forms.md` to document the Overview-first behavior.
+
 ### Verification gate
 
 **VERIFICATION PENDING**
