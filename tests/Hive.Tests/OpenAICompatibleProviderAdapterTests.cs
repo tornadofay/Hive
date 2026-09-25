@@ -389,6 +389,24 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     [Fact]
+    public void ChatRequestMessageCollection_IsReadOnly()
+    {
+        var request = new OpenAICompatibleChatRequest(
+            "model",
+            [
+                new OpenAICompatibleMessage(
+                    OpenAICompatibleMessageRole.User,
+                    "test")
+            ]);
+
+        var messages =
+            Assert.IsAssignableFrom<IList<OpenAICompatibleMessage>>(
+                request.Messages);
+
+        Assert.True(messages.IsReadOnly);
+    }
+
+    [Fact]
     public void Contracts_RejectInvalidModelAndMessages()
     {
         Assert.Throws<ArgumentException>(
