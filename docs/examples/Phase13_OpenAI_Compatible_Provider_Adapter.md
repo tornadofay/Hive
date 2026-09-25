@@ -70,6 +70,7 @@ Contract:
 - message content preserves caller-supplied leading/trailing whitespace; whitespace-only content remains invalid.
 - the MAF-facing text chat bridge rejects non-text message content as Unsupported rather than silently dropping it.
 - the MAF-facing text chat bridge rejects an invalid default model at construction rather than deferring the failure to execution.
+- per-call model selections that exceed the same 512-character model limit return a structured validation error instead of leaking the lower-level argument exception.
 - connection testing validates the Provider → ProviderAccount → ExecutionTarget relationship before making a provider request.
 - Compatible providers are configurations of the shared adapter; do not add provider-specific transport implementations.
 The adapter receives already-resolved credential material and does not own or dispose it. ProviderAccount/SecretReference wiring is added by later management/execution slices.
