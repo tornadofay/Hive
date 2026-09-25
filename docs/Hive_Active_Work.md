@@ -2,7 +2,7 @@
 
 ### Status
 
-**OPEN / static audit in progress; execution not authorized.**
+**CLOSED / developer-verified.**
 
 Provider-backend-only maintenance. This revision does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
@@ -18,22 +18,24 @@ Provider-backend-only maintenance. This revision does not advance the roadmap an
 
 - The MAF-facing `OpenAICompatibleChatClient` now checks the caller cancellation token before tool/model/message validation, so an already-cancelled request returns `OperationCanceledException` instead of a later validation result.
 - Added focused regression coverage for an already-cancelled chat request with an otherwise empty message sequence.
+- The Phase 1.3 public provider documentation now records the pre-cancellation behavior.
 
-### Verification gate
+### Verification result
 
-Execution is **not authorized in this request**.
+Developer-supplied verification on 2026-09-25:
 
-Required verification after implementation:
-- Full solution build: the normal developer full solution build.
-- Full `Hive.Tests`: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`.
-- Configured Example Host/provider execution only when the revised public behavior requires manual verification; the existing provider-transport Example is otherwise statically re-inspected.
+- Full solution build: **completed successfully** — 5 succeeded, 0 failed, 5 up-to-date, 0 skipped.
+- Full `Hive.Tests` run: **250 tests passed, 0 failed, 0 skipped** in **27.9 seconds**.
+- Runtime: .NET **10.0.1** with xUnit.net VSTest Adapter **3.1.5+1b188a7b0a**.
+- Example Host provider-transport scenario: **manually verified** against the local in-process fake HTTP server.
+- Example output: model `example-model`, response ID `chatcmpl-example`, assistant content `{"name":"Alice"}`, structured name `Alice`.
+- Authentication: none.
+- Vendor SDK: none.
 
-No verification has been performed by this revision yet. The slice remains open until actual developer verification is supplied.
+Verification archive:
+[`hive-openai-compatible-provider-audit-final-revision-5-2026-09-25.md`](verification/maintenance/hive-openai-compatible-provider-audit-final-revision-5-2026-09-25.md)
 
-### Verification handoff
-
-Example to run: `Providers / Provider Transport / OpenAI-compatible Provider Adapter` — `Hive.Example.WinForms`
-Tests to run: `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`; broader requirement: full `dotnet test tests/Hive.Tests/Hive.Tests.csproj` after the normal full solution build.
+Revision 5 is **developer-verified and closed**. `docs/Hive_Current_Status.md` remains unchanged because no roadmap phase/status changed.
 
 Last updated: 2026-09-25
 
