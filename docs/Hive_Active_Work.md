@@ -26,11 +26,33 @@ Repository `main` at `e4d593d9125695656f4a71fa7ba27878ecbbdd32` when this mainte
 Confirmed production defect under revision:
 - `SqlAgentDefinitionResourceStore.DeleteAgentDefinitionAsync` returns a retired `AgentDefinition` with `ConfiguredExecutionTargetId` cleared in memory even though the durable row retains the configured target reference. The lifecycle transition must preserve the complete persisted definition state in its returned value.
 
-#### Verification gate
+#### Implementation checkpoint
 
-Execution is not authorized yet. Do not close this maintenance pass until the final implementation has been developer-verified.
+Implementation is complete on `main` through:
+- `9d430d805df3f1229de0ffe2252326ab4c0c54ff` — preserves `ConfiguredExecutionTargetId` when constructing the retired AgentDefinition returned by `SqlAgentDefinitionResourceStore.DeleteAgentDefinitionAsync`;
+- `ea05f67e07a54f4a9d49f165af50f6a4a9f49701` — adds focused regression coverage proving the returned retired definition and a subsequent reload preserve the configured ExecutionTarget reference;
+- `7050be7d7f1486f7c77797642ae01f7b561bfaf5` — opened this maintenance slice from the prior closed checkpoint.
 
-When verification is performed, record the exact test/build/manual results here and update `docs/Hive_Current_Status.md` only when the resulting phase/status actually changes.
+The final change set contains only `docs/Hive_Active_Work.md`, `src/Hive.Persistence/Agents/SqlAgentDefinitionResourceStore.cs`, and `tests/Hive.Tests/HiveManagementFacadeTests.cs`. No schema, migration, provider, orchestration, MAF, host/UI, dependency, or public API redesign changes were introduced.
+
+#### Verification handoff
+
+**Status: NOT VERIFIED.** No builds, tests, application launches, migrations, provider calls, or manual execution were performed for this revision.
+
+Tests to run:
+- Focused: `Hive.Tests/HiveManagementFacadeTests.cs`, especially `RetiringConfiguredAgentDefinition_PreservesExecutionTargetReference`.
+- Broader required boundary check: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`.
+
+Manual persistence check:
+- create an AgentDefinition with a configured ExecutionTarget;
+- retire it through the Management boundary;
+- confirm the returned retired definition still contains the same `ConfiguredExecutionTargetId`;
+- reload the retired definition and confirm the target reference, lifecycle state, and version match the returned result;
+- confirm the configured target row remains unchanged.
+
+No Example Host verification is required because the change is backend-only and introduces no new externally meaningful capability.
+
+After actual verification, record the real results here before closing the maintenance pass. `docs/Hive_Current_Status.md` remains unchanged because the roadmap phase/status has not changed.
 
 ### Closed maintenance pass — Hive.Management / Hive.Persistence Production Audit Revision
 
