@@ -9,13 +9,13 @@ Hive: Revision
 Review the work just completed. Same scope; stop at any verification gate and do not resume implementation.
 
 Hive: Maintenance — Backend
-Production backend audit/fix. Same authorized scope when Active Work is open; otherwise creates a new temporary bounded maintenance slice from this request.
+Production backend audit/fix. Same authorized scope when Active Work is open; otherwise creates a new temporary bounded slice from this request.
 
 Hive: Maintenance — UI
-Production UI/UX audit/fix. Same authorized scope when Active Work is open; otherwise creates a new temporary bounded maintenance slice from this request.
+Production UI/UX audit/fix. Same authorized scope when Active Work is open; otherwise creates a new temporary bounded slice from this request.
 
 Hive: Maintenance — Host/UI
-Production Host/UI boundary audit/fix. Same authorized scope when Active Work is open; otherwise creates a new temporary bounded maintenance slice from this request.
+Production Host/UI boundary audit/fix. Same authorized scope when Active Work is open; otherwise creates a new temporary bounded slice from this request.
 
 Hive: Architecture
 Architecture/design only unless implementation is explicitly requested.
@@ -65,7 +65,7 @@ Do not edit Active Work or Status to bypass the gate.
 
 ## Closed Active Work
 
-An explicit new bounded Maintenance request may establish a temporary Active Work slice before implementation.
+An explicit new bounded implementation or Maintenance request may establish a temporary Active Work slice before implementation.
 
 `Continue`, `Again`, and similar continuation language still stop when no prior authorized task exists.
 
