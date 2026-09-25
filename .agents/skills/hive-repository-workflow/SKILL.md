@@ -40,13 +40,15 @@ Before every write, re-check the branch checkpoint and reconcile any concurrent 
 
 **Maintenance** — perform a complete production audit/correction pass within the authorized boundary; do not stop at the first symptom.
 
-**Architecture** — analyze design/ownership/trade-offs; do not implement unless explicitly requested.
+**Architecture** — analyze a specific design/ownership/contract question; do not implement unless explicitly requested.
+
+**Review** — perform a read-only, repository-wide Architecture + Production Engineering review. Inspect documentation, architecture, implementation, project structure, dependencies, contracts, tests, examples, and relevant repository history. Identify defects, design mistakes, architectural inconsistencies, duplicate or problematic tests, unnecessary complexity, optimization opportunities, maintainability risks, and larger improvements that exceed normal Maintenance scope. Recommend better solutions, including substantial redesigns when warranted. Review findings are advisory only and must not modify code, tests, documentation, Active Work, Status, roadmap, or any other repository state.
 
 **Verification** — reconcile actual developer results with the current scope and completion gate.
 
 **Explicit advancement** — only explicit user authorization moves to another roadmap slice.
 
-None of these modes silently advances the roadmap.
+None of these modes silently advances the roadmap. Review is read-only and does not create authorization.
 
 ## 4. Verification lifecycle
 
