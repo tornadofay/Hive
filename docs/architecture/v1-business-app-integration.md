@@ -782,14 +782,20 @@ The inspected host establishes these reusable semantic patterns:
 
 - an explicit root-to-child data relationship supplied by host metadata;
 - parent identity propagation into child rows during create;
+- parent and child changes committed as one combined business operation;
 - host-owned required/unique validation and veto points before a save;
 - a host business/save boundary followed by an authoritative result or reload;
 - editable child collections that can be changed in the host data surface before the surrounding business save;
 - multiple UI edit-surface patterns, including direct grid editing, same-form supporting controls, and dedicated editor forms/dialogs;
-- host-generated record identity returned after creation;
-- positional row addresses that are insufficient as persisted identity;
-- selection lists that can synchronize selection state from bound data;
-- semantic field/column metadata for binding, type, key, generation, nullability, requiredness, computed values, and lookup behavior.
+- the primary-key **ID** is the stable row identity for the inspected V1 host;
+- row index is positional and not authoritative identity;
+- the existing DataGridView edit path may delete and reinsert a saved row while its established row-index mechanism continues to handle the edit;
+- host-generated record identity is available after creation;
+- selection lists can synchronize selection state from bound data;
+- semantic field/column metadata covers binding, type, key, generation, nullability, requiredness, computed values, and lookup behavior;
+- lookup resolution can depend on current-record values, external host/application context, or both;
+- host actions include New, Edit, Save, Delete, Reload, Move, Search, Report, Print, and Preview;
+- the inspected host uses ordinary save behavior without explicit optimistic-concurrency conflict detection.
 
 These semantics are useful adapter inputs. They are not Hive business logic, database contracts, or authorization grants.
 
