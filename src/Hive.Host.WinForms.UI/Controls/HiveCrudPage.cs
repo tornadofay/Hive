@@ -447,8 +447,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _searchLabel.Visible = value;
             _searchPanel.Visible = value;
             UpdateToolbarLayout();
-        }
-    }
+        }    }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string SearchText
@@ -824,7 +823,10 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             if (_subscribedThemeManager is not null)
                 _subscribedThemeManager.ThemeChanged -= ThemeManagerOnChanged;
 
-            _operationCancellation?.Cancel();
+            var operationCancellation = Interlocked.Exchange(
+                ref _operationCancellation,
+                null);
+            operationCancellation?.Cancel();
             _statusFilterBox.SelectedIndexChanged -= StatusFilterBoxOnSelectedIndexChanged;
             _searchBox.TextChanged -= SearchBoxOnTextChanged;
             _searchBox.KeyDown -= SearchBoxOnKeyDown;
@@ -897,8 +899,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             _pageLayout.ActionBarHeight == expectedActionBarHeight &&
             (compact ||
              _actionLayout.ColumnStyles.Count < 2 ||
-             Math.Abs(_actionLayout.ColumnStyles[1].Width - actionWidth) < 0.1f))
-        {
+             Math.Abs(_actionLayout.ColumnStyles[1].Width - actionWidth) < 0.1f))        {
             UpdateSearchBoxWidth();
             return;
         }
@@ -1347,7 +1348,6 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         if (_loadItemsAsync is null)
             throw new InvalidOperationException(
                 "LoadItemsAsync must be configured before refreshing the CRUD page.");
-
         SetStatus("Loading...", HiveStatusTone.Information);
         var items = await _loadItemsAsync(cancellationToken);
 
@@ -1371,9 +1371,10 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         CancellationToken cancellationToken)
     {
         var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        _operationCancellation?.Cancel();
-        _operationCancellation?.Dispose();
-        _operationCancellation = source;
+        var previous = Interlocked.Exchange(
+            ref _operationCancellation,
+            source);
+        previous?.Cancel();
         SetBusy(true);
 
         try

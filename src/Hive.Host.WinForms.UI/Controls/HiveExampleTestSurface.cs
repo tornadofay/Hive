@@ -447,8 +447,7 @@ public sealed class HiveExampleTestSurface : UserControl
             if (ReferenceEquals(_runCancellation, runCancellation))
                 _runCancellation = null;
 
-            runCancellation.Dispose();
-        }
+            runCancellation.Dispose();        }
     }
 
     public static string RequireInput(string value)
@@ -465,8 +464,10 @@ public sealed class HiveExampleTestSurface : UserControl
     {
         if (disposing)
         {
-            _runCancellation?.Cancel();
-            _runCancellation?.Dispose();
+            var runCancellation = Interlocked.Exchange(
+                ref _runCancellation,
+                null);
+            runCancellation?.Cancel();
             _sectionFont.Dispose();
             _inputFont.Dispose();
             _codeFont.Dispose();

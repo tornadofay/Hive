@@ -227,6 +227,83 @@ public sealed class HiveUiPolishTests
         Assert.True(emptyState!.Visible);
     }
 
+
+    [Fact]
+    public async Task HiveCrudPage_DisposeDoesNotDisposeInFlightOperationCancellationSource()
+    {
+        var page = new HiveCrudPage<TestItem>();
+        var started = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        Exception? tokenUseFailure = null;
+
+        page.LoadItemsAsync = async token =>
+        {
+            started.TrySetResult(true);
+            await release.Task;
+
+            try
+            {
+                using var registration = token.Register(static () => { });
+            }
+            catch (Exception exception)
+            {
+                tokenUseFailure = exception;
+            }
+
+            return
+            [
+                new TestItem("Alpha")
+            ];
+        };
+
+        var refresh = page.RefreshAsync();
+        await started.Task;
+
+        page.Dispose();
+        release.SetResult(true);
+
+        await refresh;
+
+        Assert.Null(tokenUseFailure);
+    }
+
+    [Fact]
+    public async Task HiveExampleTestSurface_DisposeDoesNotDisposeInFlightRunCancellationSource()
+    {
+        var surface = new HiveExampleTestSurface();
+        var started = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        Exception? tokenUseFailure = null;
+
+        var run = surface.RunAsync(async token =>
+        {
+            started.TrySetResult(true);
+            await release.Task;
+
+            try
+            {
+                using var registration = token.Register(static () => { });
+            }
+            catch (Exception exception)
+            {
+                tokenUseFailure = exception;
+            }
+        });
+
+        await started.Task;
+
+        surface.Dispose();
+        release.SetResult(true);
+
+        await run;
+
+        Assert.Null(tokenUseFailure);
+    }
+
     private static Label? FindLabel(Control root, string text)
     {
         foreach (Control child in root.Controls)
