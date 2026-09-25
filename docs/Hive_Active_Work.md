@@ -104,7 +104,8 @@ Regression coverage added/updated:
 - becfb584fca6c222038af98e4b2fe6d01726c59d — test: cover Host bootstrap error sanitization
 - 1a0d4d71c3285529e8e08ae92802af8eff6b1837 — test: cover Host composition error boundaries
 - e6d7835fa8353f985bbb9f6231320cd444e2baa9 — test: cover composition disposal race
-- f04e46ab4c79e6ec7dc30faea61712483195273b — fix: preserve in-flight UI cancellation ownership
+- f04e46ab4c79e6ec7dc30faea61712483195273b — fix: preserve in-flight UI cancellation ownership (superseded by clean follow-up)
+- 3203eeac4e5a152362ea8b41d81a1a89a598c186 — fix: clean UI cancellation ownership patch
 
 ### Final static review
 
