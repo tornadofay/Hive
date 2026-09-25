@@ -136,10 +136,20 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                         cancellationToken).ConfigureAwait(false);
                 }
 
-                File.Move(
-                    temporaryPath,
-                    _filePath,
-                    overwrite: true);
+                if (File.Exists(_filePath))
+                {
+                    File.Replace(
+                        temporaryPath,
+                        _filePath,
+                        destinationBackupFileName: null,
+                        ignoreMetadataErrors: true);
+                }
+                else
+                {
+                    File.Move(
+                        temporaryPath,
+                        _filePath);
+                }
             }
             finally
             {
