@@ -24,6 +24,16 @@ public sealed class CommonResultAndClockTests
     }
 
     [Fact]
+    public void Error_RejectsInvalidCategory()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new Error(
+                "test.code",
+                (ErrorCategory)999,
+                "test message"));
+    }
+
+    [Fact]
     public void Result_SuccessAndFailurePreserveState()
     {
         var success = Result.Success();
