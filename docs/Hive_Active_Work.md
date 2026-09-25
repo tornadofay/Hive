@@ -4,9 +4,33 @@ Last updated: 2026-09-25
 
 ## Active slice
 
-**None — Temporary Hive.Management / Hive.Persistence Production Audit Revision is complete and verified.**
+**Temporary Hive.Persistence Production Audit Revision — OPEN / verification pending.**
 
 Phase 1.14 remains inactive and no later roadmap slice is active or authorized.
+
+### Active maintenance pass — Hive.Persistence Production Audit Revision
+
+#### Scope
+
+- Full production-grade audit, revision, and polish of the existing `Hive.Persistence` backend implementation only.
+- Inspect and correct concrete correctness, validation, authorization/scope, persistence, lifecycle, concurrency, cancellation, disposal, serialization, credential isolation, error-classification, indexing, and boundary defects found in the current implementation.
+- Preserve existing public contracts and architecture unless the implementation is demonstrably incorrect or inconsistent with the repository's established contracts.
+- Add focused regression coverage for every concrete changed behavior.
+- No roadmap advancement; no Phase 1.14 or later implementation.
+- No schema/migration, provider transport, orchestration, MAF, host/UI, dependency, or unrelated refactor changes unless a concrete discovered defect requires one.
+
+#### Implementation checkpoint
+
+Repository `main` at `e4d593d9125695656f4a71fa7ba27878ecbbdd32` when this maintenance pass was opened.
+
+Confirmed production defect under revision:
+- `SqlAgentDefinitionResourceStore.DeleteAgentDefinitionAsync` returns a retired `AgentDefinition` with `ConfiguredExecutionTargetId` cleared in memory even though the durable row retains the configured target reference. The lifecycle transition must preserve the complete persisted definition state in its returned value.
+
+#### Verification gate
+
+Execution is not authorized yet. Do not close this maintenance pass until the final implementation has been developer-verified.
+
+When verification is performed, record the exact test/build/manual results here and update `docs/Hive_Current_Status.md` only when the resulting phase/status actually changes.
 
 ### Closed maintenance pass — Hive.Management / Hive.Persistence Production Audit Revision
 
