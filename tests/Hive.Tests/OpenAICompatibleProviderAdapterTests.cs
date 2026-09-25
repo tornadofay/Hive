@@ -11,6 +11,18 @@ namespace Hive.Tests;
 public sealed class OpenAICompatibleProviderAdapterTests
 {
     [Fact]
+    public void Message_PreservesLeadingAndTrailingWhitespace()
+    {
+        const string content = "  preserve exact prompt text  ";
+
+        var message = new OpenAICompatibleMessage(
+            OpenAICompatibleMessageRole.User,
+            content);
+
+        Assert.Equal(content, message.Content);
+    }
+
+    [Fact]
     public async Task CompleteChatAsync_ReturnsAssistantContent_AndSendsBearerCredential()
     {
         await using var server = new LocalFakeHttpServer(
@@ -46,6 +58,34 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     [Fact]
+    public async Task CompleteChatAsync_RejectsOversizedRequestBeforeSending()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                """{"choices":[{"message":{"role":"assistant","content":"should not be used"}}]}"""));
+        using var client = new HttpClient();
+        var content = new string('x', 64 * 1024);
+
+        var result = await CreateAdapter(server, client)
+            .CompleteChatAsync(
+                new OpenAICompatibleChatRequest(
+                    "test-model",
+                    Enumerable.Repeat(
+                        new OpenAICompatibleMessage(
+                            OpenAICompatibleMessageRole.User,
+                            content),
+                        65)
+                    .ToArray()));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.provider.openai-compatible.request-too-large",
+            result.Error!.Code);
+        Assert.Equal(ErrorCategory.Validation, result.Error.Category);
+        Assert.Empty(server.RequestBody);
+    }
+
+    [Fact]
     public async Task CompleteChatAsync_ReturnsSerializationError_ForMalformedResponse()
     {
         await using var server = new LocalFakeHttpServer(
@@ -57,6 +97,42 @@ public sealed class OpenAICompatibleProviderAdapterTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorCategory.Serialization, result.Error!.Category);
+    }
+
+    [Fact]
+    public async Task CompleteChatAsync_RejectsOversizedResponse()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                BuildLargeResponseBody()));
+        using var client = new HttpClient();
+
+        var result = await CreateAdapter(server, client)
+            .CompleteChatAsync(CreateRequest());
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.provider.openai-compatible.response-too-large",
+            result.Error!.Code);
+        Assert.Equal(ErrorCategory.Serialization, result.Error.Category);
+    }
+
+    [Fact]
+    public async Task CompleteChatAsync_RejectsOversizedChunkedResponse()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.WithoutContentLength(
+                BuildLargeResponseBody()));
+        using var client = new HttpClient();
+
+        var result = await CreateAdapter(server, client)
+            .CompleteChatAsync(CreateRequest());
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.provider.openai-compatible.response-too-large",
+            result.Error!.Code);
+        Assert.Equal(ErrorCategory.Serialization, result.Error.Category);
     }
 
     [Fact]
@@ -334,6 +410,57 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     [Fact]
+    public void Contracts_RejectExcessiveMessageCount()
+    {
+        var messages = Enumerable.Repeat(
+                new OpenAICompatibleMessage(
+                    OpenAICompatibleMessageRole.User,
+                    "test"),
+                OpenAICompatibleChatRequest.MaxMessageCount + 1)
+            .ToArray();
+
+        Assert.Throws<ArgumentException>(
+            () => new OpenAICompatibleChatRequest(
+                "model",
+                messages));
+    }
+
+    [Fact]
+    public async Task ChatClient_RejectsExcessiveGeneratedMessageCount()
+    {
+        using var client = new HttpClient();
+        using var chatClient = new OpenAICompatibleChatClient(
+            new OpenAICompatibleProviderAdapter(
+                client,
+                new OpenAICompatibleProviderOptions(
+                    new Uri("http://127.0.0.1/v1/"),
+                    timeout: TimeSpan.FromSeconds(2))),
+            "test-model");
+
+        static IEnumerable<Microsoft.Extensions.AI.ChatMessage> Messages()
+        {
+            for (var index = 0;
+                 index <= OpenAICompatibleChatRequest.MaxMessageCount;
+                 index++)
+            {
+                yield return new Microsoft.Extensions.AI.ChatMessage(
+                    Microsoft.Extensions.AI.ChatRole.User,
+                    "test");
+            }
+        }
+
+        var exception = await Assert.ThrowsAsync<OpenAICompatibleProviderException>(
+            () => chatClient.GetResponseAsync(Messages()));
+
+        Assert.Equal(
+            "hive.provider.openai-compatible.message-count-limit",
+            exception.Error.Code);
+        Assert.Equal(
+            ErrorCategory.Validation,
+            exception.Error.Category);
+    }
+
+    [Fact]
     public void Options_RejectInvalidEndpointAndTimeout()
     {
         Assert.Throws<ArgumentException>(
@@ -360,6 +487,11 @@ public sealed class OpenAICompatibleProviderAdapterTests
                 "test",
                 document.RootElement));
     }
+
+    private static string BuildLargeResponseBody() =>
+        """{"choices":[{"message":{"role":"assistant","content":""" +
+        new string('x', (4 * 1024 * 1024) + 1) +
+        """""}}]}""";
 
     private static OpenAICompatibleChatRequest CreateRequest() =>
         new(
@@ -461,10 +593,14 @@ public sealed class OpenAICompatibleProviderAdapterTests
                 }
 
                 var bodyBytes = Encoding.UTF8.GetBytes(response.Body);
+                var contentLengthHeader = response.IncludeContentLength
+                    ? $"Content-Length: {bodyBytes.Length}\r\n"
+                    : string.Empty;
+
                 var headerBytes = Encoding.ASCII.GetBytes(
                     $"HTTP/1.1 {(int)response.StatusCode} {response.StatusCode}\r\n" +
                     "Content-Type: application/json\r\n" +
-                    $"Content-Length: {bodyBytes.Length}\r\n" +
+                    contentLengthHeader +
                     "Connection: close\r\n\r\n");
 
                 await stream.WriteAsync(
@@ -606,17 +742,23 @@ public sealed class OpenAICompatibleProviderAdapterTests
         HttpStatusCode StatusCode,
         string Body,
         bool WaitForCancellation,
-        bool CloseConnection)
+        bool CloseConnection,
+        bool IncludeContentLength)
     {
         public static LocalFakeHttpResponse Json(
             string body,
             HttpStatusCode statusCode = HttpStatusCode.OK) =>
-            new(statusCode, body, false, false);
+            new(statusCode, body, false, false, true);
+
+        public static LocalFakeHttpResponse WithoutContentLength(
+            string body,
+            HttpStatusCode statusCode = HttpStatusCode.OK) =>
+            new(statusCode, body, false, false, false);
 
         public static LocalFakeHttpResponse Waiting() =>
-            new(HttpStatusCode.OK, string.Empty, true, false);
+            new(HttpStatusCode.OK, string.Empty, true, false, true);
 
         public static LocalFakeHttpResponse AbruptClose() =>
-            new(HttpStatusCode.OK, string.Empty, false, true);
+            new(HttpStatusCode.OK, string.Empty, false, true, true);
     }
 }
