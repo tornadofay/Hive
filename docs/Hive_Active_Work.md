@@ -1,5 +1,35 @@
 # Hive — Active Work
 
+## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision
+
+### Status
+
+**OPEN / static audit in progress; execution not authorized.**
+
+This maintenance pass is explicitly authorized by the current user request. It supersedes no roadmap slice and does not activate Phase 1.14 or any later roadmap work.
+
+### Scope
+
+- Full production-grade audit and revision of the existing `Hive.Providers.OpenAICompatible` backend implementation and directly affected provider tests.
+- Review local correctness, nullable/public API behavior, validation, structured errors, async/cancellation behavior, concurrency safety, disposal/ownership, serialization, bounded resource use, provider failure handling, and MAF `IChatClient` boundary behavior.
+- Review provider project/dependency direction and integration with the existing Hive provider boundary without moving responsibility into Coordination, Management, Persistence, or MAF.
+- Correct only concrete defects or unsafe/misleading behavior found in this audit.
+- Add focused regression coverage only for changed contracts or realistic discovered regressions.
+- Inspect the existing Provider Transport Example for public-API correctness; change it only if revised public behavior requires it.
+- No schema/migration, persistence redesign, orchestration, cognitive, host/UI, dependency upgrade, MAF replacement, or future roadmap implementation.
+
+### Verification gate
+
+Execution is **not authorized in this request**, so no build, test, application launch, or provider call will be performed by this pass.
+
+Required verification handoff after implementation:
+- Focused: `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`
+- Build: `src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`
+- Broader: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`
+- Manual Example Host only when the revised public behavior requires it: `Providers / Provider Platform / Provider Transport / OpenAI-compatible Provider Adapter` — `Hive.Example.WinForms`
+
+This maintenance slice must remain open until actual verification results are supplied and recorded here. `docs/Hive_Current_Status.md` remains unchanged because no roadmap phase/status changed.
+
 Last updated: 2026-09-25
 
 ## Temporary maintenance pass — Hive.Providers.OpenAICompatible Production Audit
