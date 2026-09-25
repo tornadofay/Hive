@@ -1,4 +1,5 @@
 using Hive.Core;
+using Hive.Persistence;
 using Hive.Tests.TestInfrastructure;
 using System.Text.Json;
 using Xunit;
