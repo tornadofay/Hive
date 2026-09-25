@@ -89,7 +89,7 @@ public sealed class SqlHiveHostServiceGraphFactory :
                 return Result<HiveHostServiceGraph>.Failure(
                     Error.Validation(
                         "hive.host.persistence-configuration-invalid",
-                        exception.Message));
+                        "The persistence configuration is invalid."));
             }
 
             var secretStore = new SqlDpapiSecretStore(options);
@@ -124,7 +124,7 @@ public sealed class SqlHiveHostServiceGraphFactory :
                 new Error(
                     "hive.host.service-graph-construction-failed",
                     ErrorCategory.External,
-                    $"Hive service graph construction failed: {exception.Message}"));
+                    "Hive service graph construction failed."));
         }
         finally
         {
