@@ -26,6 +26,14 @@ public sealed record Error
         if (string.IsNullOrWhiteSpace(message))
             throw new ArgumentException("Error message is required.", nameof(message));
 
+        if (!Enum.IsDefined(category))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(category),
+                category,
+                "Error category is invalid.");
+        }
+
         Code = code.Trim();
         Category = category;
         Message = message.Trim();
