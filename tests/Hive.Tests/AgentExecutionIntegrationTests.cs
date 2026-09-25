@@ -326,6 +326,9 @@ public sealed class AgentExecutionIntegrationTests
         Assert.Equal(
             ExecutionStatus.Succeeded,
             result.Value.Execution.Status);
+        Assert.Equal(
+            "chatcmpl-agent-test",
+            result.Value.ProviderResponseId);
 
         var events = await store.ReadEventsAsync(
             new ResourceReference(
@@ -361,6 +364,9 @@ public sealed class AgentExecutionIntegrationTests
         Assert.Equal(
             result.Value.TerminalEventId,
             succeeded.Envelope.EventId);
+        Assert.Equal(
+            "chatcmpl-agent-test",
+            succeeded.Envelope.Payload.GetProperty("providerResponseId").GetString());
     }
 
     [Fact]
@@ -424,6 +430,75 @@ public sealed class AgentExecutionIntegrationTests
         Assert.Equal(
             events.Value[0].Envelope.EventId.Value,
             events.Value[1].Envelope.CausationId!.Value.Value);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_UnexpectedFailure_DoesNotExposeExceptionMessage()
+    {
+        var database = await PrepareDatabase("Hive_Test_AgentExecutionUnexpectedFailure");
+        var store = new SqlEventPersistenceStore(database.Options);
+
+        using var httpClient = new HttpClient(
+            new ThrowingHttpMessageHandler(
+                "secret transport implementation detail"));
+        var service = new AgentExecutionService(
+            store,
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var accessContext = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var agent = CreateAgent(accessContext);
+        var runtime = agent.CreateRuntimeInstance();
+        var target = CreateTarget(
+            new Uri("https://example.invalid/v1"),
+            principal,
+            tenant);
+
+        var result = await service.ExecuteAsync(
+            new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                accessContext,
+                "Trigger an unexpected transport failure."));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            ErrorCategory.Internal,
+            result.Error!.Category);
+        Assert.Equal(
+            "hive.agent.execution.failed",
+            result.Error.Code);
+        Assert.Equal(
+            "Agent execution failed unexpectedly.",
+            result.Error.Message);
+        Assert.DoesNotContain(
+            "secret transport implementation detail",
+            result.Error.Message,
+            StringComparison.Ordinal);
+
+        var executionId = await ReadLatestExecutionIdAsync(
+            database.Options);
+
+        var events = await store.ReadEventsAsync(
+            new ResourceReference(
+                ResourceKind.Execution,
+                executionId.Value));
+
+        Assert.True(events.IsSuccess, events.Error?.Message);
+        Assert.Equal(2, events.Value!.Count);
+        Assert.Equal(
+            "agent.execution.started",
+            events.Value[0].Envelope.EventType.Value);
+        Assert.Equal(
+            "agent.execution.failed",
+            events.Value[1].Envelope.EventType.Value);
     }
 
     [Fact]
@@ -749,6 +824,23 @@ public sealed class AgentExecutionIntegrationTests
                     new CapabilityKey("text.generate"),
                     CapabilityState.Supported)
             ]);
+    }
+
+    private sealed class ThrowingHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly string _message;
+
+        public ThrowingHttpMessageHandler(string message)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(message);
+            _message = message;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) =>
+            Task.FromException<HttpResponseMessage>(
+                new InvalidOperationException(_message));
     }
 
     private static async Task<PersistenceTestDatabase> PrepareDatabase(
