@@ -51,15 +51,17 @@ public sealed class OpenAICompatibleChatClient : IChatClient
             ? _defaultModel
             : options.ModelId!.Trim();
 
+        var convertedMessages = ConvertMessages(
+            messages,
+            cancellationToken);
+
         OpenAICompatibleChatRequest request;
 
         try
         {
             request = new OpenAICompatibleChatRequest(
                 model,
-                ConvertMessages(
-                    messages,
-                    cancellationToken));
+                convertedMessages);
         }
         catch (ArgumentException)
         {
