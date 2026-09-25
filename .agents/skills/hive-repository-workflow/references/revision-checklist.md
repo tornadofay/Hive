@@ -5,6 +5,7 @@ Use this checklist for Revision and other re-review passes. It is a review aid, 
 ## Scope
 - original request and acceptance criteria
 - Active Work authorization and verification gate
+- inherited mode/domain and authorized scope
 - architecture and roadmap boundary
 - no future work or unrelated behavior changes
 - when Revision follows read-only Workflow Review, confirm an existing implementation boundary or explicit bounded corrective authorization; Review findings alone do not authorize implementation
