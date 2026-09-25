@@ -11,6 +11,7 @@
 **Maintenance — Host/UI:** production host/UI-boundary audit and correction within scope.
 
 **Architecture:** specific design question; no implementation unless explicitly requested.
+**Architecture → Revision:** re-audit/correct the design analysis; implementation still requires explicit authorization.
 
 **Review (workflow mode):** repository-wide Architecture + Production Engineering analysis; inspect beyond Active Work when useful; read-only, report in chat, no repository changes or authorization. Distinct from the business Review lifecycle/capability.
 
