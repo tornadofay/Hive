@@ -52,6 +52,10 @@ Before every write, re-check the branch checkpoint and reconcile any concurrent 
 
 **Explicit advancement** — only explicit user authorization moves to another roadmap slice.
 
+**Again** — repeat the same task or Revision pass in the same context and scope; do not reinterpret it as a new task or roadmap advancement.
+
+**Polish / Polish again** — repeat the same maintenance or polish scope in the same context; do not broaden the boundary or advance the roadmap.
+
 None of these modes silently advances the roadmap. Review is read-only and does not create authorization.
 
 ## 4. Verification lifecycle
