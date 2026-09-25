@@ -49,8 +49,9 @@ If the Active Work item says **VERIFICATION PENDING**, **verification is require
 
 When the developer supplies verification results:
 - if all required verification succeeds, perform the normal evidence-backed closure transition;
-- if verification exposes failures, defects, compiler errors, or unmet required behavior within the authorized slice, enter a **VERIFICATION FAILED / REMEDIATION REQUIRED** state through the Verification workflow and allow same-slice remediation only after Active Work records that transition;
-- same-slice remediation may fix every concrete issue needed for the authorized contract, including root-cause corrections and focused regression coverage; it does not create a new roadmap slice;
+- if verification exposes failures, defects, compiler errors, or unmet required behavior within the authorized slice, enter a **VERIFICATION FAILED / REMEDIATION REQUIRED** state through the Verification workflow;
+- record that state transition in `docs/Hive_Active_Work.md` **before making any remediation implementation change**;
+- once the transition is recorded, same-slice remediation may fix every concrete issue needed for the authorized contract, including root-cause corrections and focused regression coverage; it does not create a new roadmap slice;
 - after remediation, return Active Work to **VERIFICATION PENDING** and require the affected verification to be rerun;
 - if remediation would require a new capability, material public-contract expansion, or work outside the authorized slice, stop that portion and require separate authorization.
 
