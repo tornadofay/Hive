@@ -36,7 +36,7 @@ If the open Active Work item says **VERIFICATION PENDING**, **verification is re
 
 When developer verification results are supplied, Verification mode reconciles them:
 - successful required verification -> proceed toward closure;
-- failed or partial verification revealing defects within the authorized slice -> record **VERIFICATION FAILED / REMEDIATION REQUIRED** in Active Work and authorize same-slice remediation;
+- failed or partial verification revealing defects within the authorized slice -> record **VERIFICATION FAILED / REMEDIATION REQUIRED** in Active Work **before any remediation implementation change** and authorize same-slice remediation;
 - after remediation -> return Active Work to **VERIFICATION PENDING** with updated verification targets;
 - discovered work outside the authorized slice or requiring new capability/public-contract expansion -> stop that portion and require separate authorization.
 
