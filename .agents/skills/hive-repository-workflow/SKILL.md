@@ -22,6 +22,8 @@ Before changing implementation or repository state:
 
 Determine the repository checkpoint from evidence. Do not use previous chat history as repository authority.
 
+For a revision of this skill or its references, inspect the complete workflow-skill directory together with `AGENTS.md` so the procedure remains internally consistent. Do not modify implementation or current-state documents unless the user explicitly asks for that separate scope.
+
 ## 2. Authorization gate
 
 `docs/Hive_Active_Work.md` is the only authority for the current implementation slice.
@@ -51,7 +53,7 @@ Stop implementation.
 
 The roadmap defines order, not permission.
 
-A future roadmap slice requires explicit user authorization such as `Hive: Start Phase 1.14` or `Hive: Start the next roadmap slice`.
+A future roadmap slice requires explicit user authorization such as `Hive: Start Phase X.Y` or `Hive: Start the next roadmap slice`.
 
 ## 3. Task-context and scope lock
 
@@ -63,11 +65,14 @@ At the start of a task, establish:
 - mode and domain;
 - affected projects;
 - requested scope;
+- explicit exclusions or prohibited work;
 - execution/verification authorization.
 
 For implementation work, Active Work is the maximum authorized implementation boundary.
 
-An explicit user task may narrow that boundary, but does not silently broaden, replace, or advance it.
+For maintenance, revision, or governance work, the user request is the task authorization and the named affected documents/projects are the change boundary. Do not treat an open implementation slice as permission to expand that task.
+
+An explicit user task may narrow the authorized boundary, but does not silently broaden, replace, or advance it.
 
 If the explicit task conflicts with the current Active Work scope, do not choose one interpretation yourself. Report the conflict and require an explicit scope/Active Work change.
 
@@ -78,6 +83,8 @@ Do not infer a different task from the current Active Work merely because it is 
 For Revision, the immediately preceding task context is authoritative. If it is unavailable or ambiguous, stop before making changes and require an explicit task/context reference.
 
 For Continue after a task has been clearly established, continue that task context. In a fresh context with no prior task, Continue may use an open Active Work item as the implementation context, subject to the authorization gate above.
+
+Before any repository write, re-check the current branch checkpoint. If the branch moved since the checkpoint used for inspection, refresh and reconcile against the new tip before writing. Never overwrite or force-resolve concurrent changes you did not create.
 
 ## 4. Modes
 
@@ -171,6 +178,8 @@ Before implementation handoff or completed Revision:
 
 For pending verification, preserve the exact verification handoff required by `AGENTS.md`.
 
+For governance/workflow-skill changes, also verify that the edited procedure does not contradict `AGENTS.md`, silently alter current Hive state, or introduce a stale roadmap-specific command/example.
+
 ## Hard-stop rules
 
 **No explicit roadmap advancement -> no roadmap advancement.**
@@ -184,3 +193,5 @@ For pending verification, preserve the exact verification handoff required by `A
 **"Again" -> same context, not next phase.**
 
 **Completion of one slice -> does not authorize the next slice.**
+
+**A moved repository checkpoint -> refresh before writing.**
