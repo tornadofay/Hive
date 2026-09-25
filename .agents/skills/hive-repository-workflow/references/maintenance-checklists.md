@@ -2,9 +2,12 @@
 
 These are review checklists, not permission to expand task scope.
 
+Maintenance uses these checklists to produce a complete production-quality result within the authorized boundary. They do not imply minimal patching; evaluate root causes and all applicable surrounding risks before stopping.
+
 ## Backend
 
 ### Local code
+- root-cause identification, not symptom-only workarounds
 - correctness and invariants
 - nullable/public API correctness
 - validation and structured errors
@@ -74,11 +77,13 @@ These are review checklists, not permission to expand task scope.
 - theme updates without unnecessary layout/repaint
 
 ### Architecture
+- root-cause correction remains within the correct owner
 - existing Hive UI API reused
 - no wrapper-only controls
 - no business logic in reusable UI controls
 - persistence/provider/authorization logic remains outside UI
 - Example Host remains a consumer
+- do not stop at the smallest apparent fix when the authorized boundary requires broader correction
 
 ## Host/UI boundary
 
