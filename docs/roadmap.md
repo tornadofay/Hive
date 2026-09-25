@@ -296,6 +296,18 @@ Verify:
 - registration/disposal/cancellation/lifecycle and provenance remain correct;
 - no host business write is introduced in this slice.
 
+### Phase 1.14 revision implementation boundary
+
+The reopened revision is implemented around the concrete Hive-owned WinForms base layer:
+
+- `HiveForm` plus bounded native-derived controls `HiveTextBox`, `HiveComboBox`, `HiveCheckBox`, `HiveDateTimePicker`, `HiveNumericUpDown`, and `HiveDataGridView`;
+- deterministic control, field, surface, and automatic capability identities;
+- explicit field/surface metadata for generated/computed fields, primary-key identity, lookups, and parent/child relationships;
+- compatibility with the existing non-inheriting adapter/semantic-provider path;
+- Management authorization remains the gate for interactions and application semantics remain host-owned.
+
+Verification and slice completion remain controlled by `docs/Hive_Active_Work.md`; this roadmap entry does not constitute verification evidence.
+
 ## 1.15 — Input Preparation & Routing
 Objective: prepare supported V1 input sources and route each source through the capability required to produce structured candidate data.
 
