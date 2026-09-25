@@ -6,6 +6,7 @@ Revision asks whether the work just performed is complete, correct, and still in
 
 - Exact task, mode, domain, and scope
 - Active Work authorization
+- Respect any developer-verification gate before implementation-affecting changes
 - No future roadmap work
 - No unrelated behavior changes
 
