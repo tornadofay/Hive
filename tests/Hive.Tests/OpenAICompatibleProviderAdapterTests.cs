@@ -169,6 +169,26 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     [Fact]
+    public async Task CompleteChatAsync_ReturnsSerializationError_ForNonObjectChoice()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                """{"choices":[null]}"""));
+        using var client = new HttpClient();
+
+        var result = await CreateAdapter(server, client)
+            .CompleteChatAsync(CreateRequest());
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.provider.openai-compatible.malformed-response",
+            result.Error!.Code);
+        Assert.Equal(
+            ErrorCategory.Serialization,
+            result.Error.Category);
+    }
+
+    [Fact]
     public async Task CompleteChatAsync_RejectsOversizedResponse()
     {
         await using var server = new LocalFakeHttpServer(
