@@ -80,6 +80,29 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     [Fact]
+    public async Task CompleteChatAsync_PreservesBaseUriQueryWhenAppendingCompletionPath()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                """{"choices":[{"message":{"role":"assistant","content":"hello"}}]}"""));
+        using var client = new HttpClient();
+
+        var baseUri = new Uri(
+            server.BaseUri.GetLeftPart(UriPartial.Path).TrimEnd('/') +
+            "?api-version=2026-01-01");
+
+        var result = await new OpenAICompatibleProviderAdapter(
+                client,
+                new OpenAICompatibleProviderOptions(baseUri))
+            .CompleteChatAsync(CreateRequest());
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(
+            "/v1/chat/completions?api-version=2026-01-01",
+            server.RequestTarget);
+    }
+
+    [Fact]
     public async Task CompleteChatAsync_MapsInvalidCredentialToValidationFailure()
     {
         await using var server = new LocalFakeHttpServer(
@@ -999,6 +1022,8 @@ public sealed class OpenAICompatibleProviderAdapterTests
 
         public string RequestBody { get; private set; } = string.Empty;
 
+        public string? RequestTarget { get; private set; }
+
         public string? AuthorizationScheme { get; private set; }
 
         public string? AuthorizationParameter { get; private set; }
@@ -1040,6 +1065,7 @@ public sealed class OpenAICompatibleProviderAdapterTests
                     _stop.Token).ConfigureAwait(false);
 
                 RequestBody = request.Body;
+                RequestTarget = request.RequestTarget;
                 AuthorizationScheme = request.AuthorizationScheme;
                 AuthorizationParameter = request.AuthorizationParameter;
 
@@ -1171,8 +1197,22 @@ public sealed class OpenAICompatibleProviderAdapterTests
                 }
             }
 
+            var requestLine = headerText
+                .Split("\r\n", StringSplitOptions.None)[0];
+            var firstSpace = requestLine.IndexOf(' ');
+            var secondSpace = firstSpace < 0
+                ? -1
+                : requestLine.IndexOf(' ', firstSpace + 1);
+
+            if (firstSpace <= 0 || secondSpace <= firstSpace + 1)
+                throw new InvalidOperationException("Client sent an invalid HTTP request line.");
+
+            var requestTarget = requestLine[
+                (firstSpace + 1)..secondSpace];
+
             return new LocalFakeHttpRequest(
                 body,
+                requestTarget,
                 authorizationScheme,
                 authorizationParameter);
         }
@@ -1198,6 +1238,7 @@ public sealed class OpenAICompatibleProviderAdapterTests
 
     private sealed record LocalFakeHttpRequest(
         string Body,
+        string RequestTarget,
         string? AuthorizationScheme,
         string? AuthorizationParameter);
 
