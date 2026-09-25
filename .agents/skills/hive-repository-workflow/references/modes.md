@@ -6,8 +6,14 @@ Continue the current authorized task. Stop at a verification gate.
 ## Revision
 Re-audit the work just performed in the same task context. Fix concrete findings to production depth, then review the result again. Revision is corrective, not read-only. When Active Work is open, remain within that authorized implementation boundary. When no Active Work is open and Revision follows a preceding task with implementation findings, including a Workflow Review, establish a temporary bounded corrective slice before implementation so those findings can be re-audited and corrected. Workflow-documentation Revision stays within the affected governance documents and does not create an implementation slice. The correction must restore/preserve/correct existing behavior; any new capability, material public-contract expansion, or roadmap work requires separate authorization. A later Revision remains the same scope.
 
-## Maintenance
-Perform a complete production audit/correction pass within the authorized boundary. When no slice is open, an explicit bounded corrective request may create a temporary slice before implementation if it restores/preserves/corrects existing behavior. New capability or roadmap work still needs explicit authorization. Never use Maintenance to advance the roadmap.
+## Maintenance — Backend
+Perform a complete production backend/integration audit and correction pass within the authorized boundary. Use the Backend / Integration checklist. When no slice is open, this explicit bounded corrective request may create a temporary slice before implementation if it restores/preserves/corrects existing behavior. New capability or roadmap work still needs explicit authorization. Never use Maintenance to advance the roadmap.
+
+## Maintenance — UI
+Perform a complete production WinForms/UI audit and correction pass within the authorized boundary. Use the WinForms / UI checklist. When no slice is open, this explicit bounded corrective request may create a temporary slice before implementation if it restores/preserves/corrects existing behavior. New capability or roadmap work still needs explicit authorization. Never use Maintenance to advance the roadmap.
+
+## Maintenance — Host/UI
+Perform a complete production host/UI-boundary audit and correction pass within the authorized boundary. Use the Host / UI Boundary checklist. When no slice is open, this explicit bounded corrective request may create a temporary slice before implementation if it restores/preserves/corrects existing behavior. New capability or roadmap work still needs explicit authorization. Never use Maintenance to advance the roadmap.
 
 ## Architecture
 Analyze a specific architecture/design question, ownership boundary, contract, or trade-off. Do not implement unless explicitly requested.
