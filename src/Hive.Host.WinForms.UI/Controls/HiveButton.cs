@@ -36,6 +36,7 @@ public sealed class HiveButton : UserControl, IButtonControl
     private Pen? _focusPen;
     private Pen? _disabledBorderPen;
     private Color _foregroundColor;
+    private DialogResult _dialogResult;
 
     public HiveButton()
     {
@@ -59,7 +60,22 @@ public sealed class HiveButton : UserControl, IButtonControl
 
     [Browsable(false)]
     [DefaultValue(DialogResult.None)]
-    public DialogResult DialogResult { get; set; }
+    public DialogResult DialogResult
+    {
+        get => _dialogResult;
+        set
+        {
+            if (!Enum.IsDefined(typeof(DialogResult), value))
+            {
+                throw new InvalidEnumArgumentException(
+                    nameof(value),
+                    (int)value,
+                    typeof(DialogResult));
+            }
+
+            _dialogResult = value;
+        }
+    }
 
     public void NotifyDefault(bool value)
     {
