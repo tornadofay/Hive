@@ -118,7 +118,7 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     [Fact]
-    public async Task CompleteChatAsync_RejectsOversizedChunkedResponse()
+    public async Task CompleteChatAsync_RejectsOversizedResponseWithoutContentLength()
     {
         await using var server = new LocalFakeHttpServer(
             _ => LocalFakeHttpResponse.WithoutContentLength(
