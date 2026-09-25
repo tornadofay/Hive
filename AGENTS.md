@@ -221,6 +221,7 @@ Update only the source-of-truth document whose state changed:
 - `docs/roadmap.md` — ordered implementation plan.
 - `docs/Hive_Current_Status.md` — actual phase/status only; link to historical verification records rather than copying them here.
 - `docs/verification/` — historical records of verification actually performed.
+- Historical verification records are evidence-preserving records: do not overwrite an earlier verification attempt with a later result. Create a new dated record or clearly separate subsequent verification/remediation evidence so the original result remains auditable.
 - `docs/ui/` — concise UI/Example API usage.
 - `docs/examples/` — public usage/reference examples.
 - `.agents/skills/` — reusable agent workflow skills; these define procedure, not current Hive state or architecture.
