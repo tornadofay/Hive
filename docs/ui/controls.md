@@ -167,3 +167,57 @@ void Clear();
 void Write(string title, string value);
 void Append(string value);
 ```
+
+
+## WinForms host-integration base controls
+
+Phase 1.14 provides a bounded set of native-control-derived integration bases:
+
+```csharp
+HiveForm
+HiveTextBox
+HiveComboBox
+HiveCheckBox
+HiveDateTimePicker
+HiveNumericUpDown
+HiveDataGridView
+```
+
+They preserve the normal WinForms control API while exposing Hive-owned integration metadata. Hosts do not need one-off wrappers merely to obtain the common integration behavior.
+
+For field controls, use `HiveField` for explicit semantic overrides:
+
+```csharp
+var customer = new HiveTextBox
+{
+    Name = "customer"
+};
+customer.HiveField.Required = true;
+
+var total = new HiveTextBox
+{
+    Name = "total"
+};
+total.HiveField.Computed = true;
+```
+
+For data surfaces, use `HiveDataSurface`:
+
+```csharp
+var grid = new HiveDataGridView
+{
+    Name = "invoiceLines"
+};
+
+grid.HiveDataSurface.SurfaceId = "invoiceLines";
+grid.HiveDataSurface.PrimaryKeyField = "Id";
+grid.HiveDataSurface.ConfigureField("Id").IsPrimaryKey = true;
+grid.HiveDataSurface.ConfigureField("ProductId").Lookup = lookup;
+grid.HiveDataSurface.ParentSurfaceId = "surface:invoice";
+grid.HiveDataSurface.ParentKeyField = "Id";
+grid.HiveDataSurface.ChildKeyField = "InvoiceId";
+```
+
+For a `HiveForm`, `HiveHostIntegration.HostName` can override the host display identity without changing the normal WinForms form lifecycle.
+
+Automatic metadata uses safe deterministic conventions first and explicit Hive metadata where supplied. Base metadata does not grant authorization and does not turn `HiveDataGridView` into a database or business-write engine. Row operations, lookup execution, validation/save behavior, and business actions remain host-owned through the existing bounded semantic-provider/operation path.
