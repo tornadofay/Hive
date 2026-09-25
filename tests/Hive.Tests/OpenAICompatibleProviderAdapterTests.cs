@@ -634,6 +634,38 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     [Fact]
+    public async Task ChatClient_MapsOversizedPerCallModelToProviderError()
+    {
+        using var client = new HttpClient();
+        using var chatClient = new OpenAICompatibleChatClient(
+            new OpenAICompatibleProviderAdapter(
+                client,
+                new OpenAICompatibleProviderOptions(
+                    new Uri("http://127.0.0.1/v1/"),
+                    timeout: TimeSpan.FromSeconds(2))),
+            "test-model");
+
+        var exception = await Assert.ThrowsAsync<OpenAICompatibleProviderException>(
+            () => chatClient.GetResponseAsync(
+                [
+                    new Microsoft.Extensions.AI.ChatMessage(
+                        Microsoft.Extensions.AI.ChatRole.User,
+                        "test")
+                ],
+                new Microsoft.Extensions.AI.ChatOptions
+                {
+                    ModelId = new string('x', 513)
+                }));
+
+        Assert.Equal(
+            "hive.provider.openai-compatible.model-invalid",
+            exception.Error.Code);
+        Assert.Equal(
+            ErrorCategory.Validation,
+            exception.Error.Category);
+    }
+
+    [Fact]
     public async Task ChatClient_MapsInvalidMessageContentToProviderError()
     {
         using var client = new HttpClient();
