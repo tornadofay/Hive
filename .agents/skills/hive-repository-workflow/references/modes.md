@@ -60,6 +60,8 @@ Meaning: Reconcile those results against the repository and update only the reco
 
 Do not invent missing verification.
 
+When verification closes the current slice, move historical verification detail to `docs/verification/` when applicable and leave `docs/Hive_Active_Work.md` current-only: remove the closed slice and retain only the minimal no-active-slice state unless another slice is explicitly authorized.
+
 ## Explicit roadmap advancement
 
 Command example: Hive: Start Phase X.Y
@@ -82,7 +84,7 @@ Again -> same task/revision pass
 
 Polish again -> same maintenance scope
 
-An explicit new task may intentionally change mode or narrow scope. When no Active Work slice is open, an explicitly bounded non-roadmap corrective task may establish a temporary Active Work slice only after repository evidence confirms the entire request is corrective rather than new capability work; the slice is recorded before implementation and does not advance the roadmap. Mixed corrective + feature requests require explicit separation/authorization. New capabilities, materially expanded public behavior, or roadmap implementation require explicit roadmap authorization.
+An explicit new task may intentionally change mode or narrow scope. When no Active Work slice is open, an explicitly bounded non-roadmap corrective task may establish a temporary Active Work slice only after repository evidence confirms the entire request is corrective rather than new capability work; replace the inactive placeholder with the slice before implementation and do not append it to historical entries. Mixed corrective + feature requests require explicit separation/authorization. New capabilities, materially expanded public behavior, or roadmap implementation require explicit roadmap authorization.
 
 When Active Work exists, a new task may not silently broaden or replace its implementation boundary. If it conflicts with Active Work, report the conflict instead of guessing.
 
