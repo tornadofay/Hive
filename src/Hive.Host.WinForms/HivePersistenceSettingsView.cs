@@ -296,16 +296,23 @@ internal sealed class HivePersistenceSettingsView : UserControl
                     .ConfigureAwait(true);
             }
 
-            SetStatus(result.Error!.Message, HiveStatusTone.Error);
+            if (!IsDisposed && !Disposing)
+            {
+                SetStatus(result.Error!.Message, HiveStatusTone.Error);
 
-            HiveUiErrorReporter.Report(
-                FindForm(),
-                result.Error!.Message,
-                "Hive Persistence",
-                _output,
-                _themeManager);
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    result.Error!.Message,
+                    "Hive Persistence",
+                    _output,
+                    _themeManager);
+            }
+
             return;
         }
+
+        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+            return;
 
         _loadedConfiguration = result.Value!;
         if (previousBootstrapReference is { } previousReference &&
@@ -337,11 +344,17 @@ internal sealed class HivePersistenceSettingsView : UserControl
             }
         }
 
+        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+            return;
+
         _passwordTextBox.Clear();
         UpdateCredentialStatus(_loadedConfiguration);
         SetStatus(
             "Persistence configuration saved successfully. Database/schema state was not changed.",
             HiveStatusTone.Success);
+
+        if (IsDisposed || Disposing)
+            return;
 
         HiveMessageBox.ShowInformation(
             FindForm(),
@@ -375,6 +388,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 _accessContext,
                 cancellationToken)
             .ConfigureAwait(true);
+
+        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+            return;
 
         if (result.IsFailure)
         {
@@ -433,6 +449,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 _accessContext,
                 cancellationToken)
             .ConfigureAwait(true);
+
+        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+            return;
 
         if (result.IsFailure)
         {
@@ -651,36 +670,62 @@ internal sealed class HivePersistenceSettingsView : UserControl
         Func<CancellationToken, Task> operation)
     {
         _operationCts?.Cancel();
-        _operationCts?.Dispose();
-        _operationCts = new CancellationTokenSource();
+
+        var operationCts = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(
+            ref _operationCts,
+            operationCts);
+        previous?.Dispose();
+
+        if (IsDisposed || Disposing)
+        {
+            Interlocked.CompareExchange(
+                ref _operationCts,
+                null,
+                operationCts);
+            operationCts.Dispose();
+            return;
+        }
 
         SetBusy(true);
 
         try
         {
-            await operation(_operationCts.Token).ConfigureAwait(true);
+            await operation(operationCts.Token).ConfigureAwait(true);
         }
-        catch (OperationCanceledException) when (_operationCts.IsCancellationRequested)
+        catch (OperationCanceledException)
+            when (operationCts.IsCancellationRequested)
         {
-            SetStatus("Operation cancelled.", HiveStatusTone.Warning);
+            if (!IsDisposed && !Disposing)
+                SetStatus("Operation cancelled.", HiveStatusTone.Warning);
         }
         catch (Exception exception)
         {
-            SetStatus(exception.Message, HiveStatusTone.Error);
+            if (!IsDisposed && !Disposing)
+            {
+                SetStatus(exception.Message, HiveStatusTone.Error);
 
-            HiveUiErrorReporter.Report(
-                FindForm(),
-                exception,
-                "Hive Persistence",
-                "The persistence operation could not be completed.",
-                _output,
-                _themeManager);
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    exception,
+                    "Hive Persistence",
+                    "The persistence operation could not be completed.",
+                    _output,
+                    _themeManager);
+            }
         }
         finally
         {
-            SetBusy(false);
-            _operationCts.Dispose();
-            _operationCts = null;
+            if (ReferenceEquals(_operationCts, operationCts))
+                Interlocked.CompareExchange(
+                    ref _operationCts,
+                    null,
+                    operationCts);
+
+            operationCts.Dispose();
+
+            if (!IsDisposed && !Disposing)
+                SetBusy(false);
         }
     }
 
