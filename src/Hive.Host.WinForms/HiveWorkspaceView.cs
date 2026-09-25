@@ -777,6 +777,7 @@ public sealed class HiveWorkspaceView : UserControl
             Padding = new Padding(0, 8, 0, 0)
         };
         activityPanel.Controls.Add(_activityList);
+        activityPanel.Controls.Add(_activityEmptyLabel);
         activityPanel.Controls.Add(activityHeader);
 
         root.Controls.Add(header, 0, 0);
