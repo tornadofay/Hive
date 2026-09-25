@@ -426,6 +426,38 @@ public sealed class OpenAICompatibleProviderAdapterTests
     }
 
     [Fact]
+    public async Task ChatClient_PropagatesCancellationDuringMessageEnumeration()
+    {
+        using var client = new HttpClient();
+        using var chatClient = new OpenAICompatibleChatClient(
+            new OpenAICompatibleProviderAdapter(
+                client,
+                new OpenAICompatibleProviderOptions(
+                    new Uri("http://127.0.0.1/v1/"),
+                    timeout: TimeSpan.FromSeconds(2))),
+            "test-model");
+        using var cancellation = new CancellationTokenSource();
+
+        IEnumerable<Microsoft.Extensions.AI.ChatMessage> Messages()
+        {
+            yield return new Microsoft.Extensions.AI.ChatMessage(
+                Microsoft.Extensions.AI.ChatRole.User,
+                "first");
+
+            cancellation.Cancel();
+
+            yield return new Microsoft.Extensions.AI.ChatMessage(
+                Microsoft.Extensions.AI.ChatRole.User,
+                "second");
+        }
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => chatClient.GetResponseAsync(
+                Messages(),
+                cancellationToken: cancellation.Token));
+    }
+
+    [Fact]
     public async Task ChatClient_RejectsExcessiveGeneratedMessageCount()
     {
         using var client = new HttpClient();
