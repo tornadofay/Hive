@@ -189,8 +189,19 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl
             if (_selectedProvider is null)
                 _providerComboBox.Text = "Select a Provider...";
 
-            if (!IsDisposed)
-                await _page.RefreshAsync().ConfigureAwait(true);
+            if (!IsDisposed && !Disposing)
+            {
+                _providerComboBox.Enabled = false;
+                try
+                {
+                    await _page.RefreshAsync().ConfigureAwait(true);
+                }
+                finally
+                {
+                    if (!IsDisposed && !Disposing)
+                        _providerComboBox.Enabled = true;
+                }
+            }
         }
         catch (OperationCanceledException)
         {
