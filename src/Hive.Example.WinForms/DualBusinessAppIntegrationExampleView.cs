@@ -301,18 +301,21 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
         }
     }
 
-    private sealed class Phase14FixtureForm : Form
+    private sealed class Phase14FixtureForm : HiveForm
     {
         public Phase14FixtureForm(
             Phase14SemanticProvider provider)
+            : base(
+                "Phase 1.14 Fixture",
+                "Hive base form + base controls + explicit semantic overrides",
+                new Size(900, 520),
+                new Size(760, 420))
         {
             ArgumentNullException.ThrowIfNull(provider);
 
             Name = "phase14Fixture";
-            Text = "Phase 1.14 Fixture";
-            ClientSize = new Size(900, 520);
 
-            var invoiceNumber = new TextBox
+            var invoiceNumber = new HiveTextBox
             {
                 Name = "invoiceNumber",
                 Text = "INV-1001",
@@ -320,7 +323,7 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
                 Width = 260
             };
 
-            var invoiceGrid = new DataGridView
+            var invoiceGrid = new HiveDataGridView
             {
                 Name = "invoiceGrid",
                 Location = new Point(12, 48),
@@ -353,7 +356,7 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
             });
             invoiceGrid.DataSource = provider.Invoices;
 
-            var linesGrid = new DataGridView
+            var linesGrid = new HiveDataGridView
             {
                 Name = "invoiceLinesGrid",
                 Location = new Point(12, 224),
@@ -405,9 +408,78 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
             });
             linesGrid.DataSource = provider.Lines;
 
-            Controls.Add(invoiceNumber);
-            Controls.Add(invoiceGrid);
-            Controls.Add(linesGrid);
+            invoiceGrid.HiveDataSurface.SurfaceId = "invoice";
+            invoiceGrid.HiveDataSurface.Name = "Invoices";
+            invoiceGrid.HiveDataSurface.PrimaryKeyField = "Id";
+            invoiceGrid.HiveDataSurface.ConfigureField("InvoiceNumber").Generated = true;
+            invoiceGrid.HiveDataSurface.ConfigureField("Total").Computed = true;
+
+            foreach (var capability in new[]
+            {
+                new HiveHostCapabilityDescriptor(
+                    provider.InvoiceReadCapabilityId,
+                    HiveHostCapabilityKind.ReadDataSurface,
+                    "Read invoices"),
+                new HiveHostCapabilityDescriptor(
+                    provider.InvoiceEditCapabilityId,
+                    HiveHostCapabilityKind.EditRow,
+                    "Edit invoice"),
+                new HiveHostCapabilityDescriptor(
+                    provider.PreviewCapabilityId,
+                    HiveHostCapabilityKind.InvokeAction,
+                    "Preview invoice",
+                    action: HiveHostActionKind.Preview)
+            })
+            {
+                invoiceGrid.HiveDataSurface.AddCapability(capability);
+            }
+
+            linesGrid.HiveDataSurface.SurfaceId = "invoiceLines";
+            linesGrid.HiveDataSurface.Name = "Invoice lines";
+            linesGrid.HiveDataSurface.PrimaryKeyField = "Id";
+            linesGrid.HiveDataSurface.ParentSurfaceId = "surface:invoice";
+            linesGrid.HiveDataSurface.ParentKeyField = "Id";
+            linesGrid.HiveDataSurface.ChildKeyField = "InvoiceId";
+            linesGrid.HiveDataSurface.ConfigureField("Id").IsPrimaryKey = true;
+            linesGrid.HiveDataSurface.ConfigureField("ProductId").Lookup =
+                new HiveHostLookupDescriptor(
+                    "lookup:products",
+                    provider.LookupCapabilityId,
+                    "Name",
+                    "Id",
+                    new[] { "CategoryId" });
+
+            foreach (var capability in new[]
+            {
+                new HiveHostCapabilityDescriptor(
+                    provider.LineReadCapabilityId,
+                    HiveHostCapabilityKind.ReadDataSurface,
+                    "Read invoice lines"),
+                new HiveHostCapabilityDescriptor(
+                    provider.LineReadRowCapabilityId,
+                    HiveHostCapabilityKind.ReadRow,
+                    "Read invoice line"),
+                new HiveHostCapabilityDescriptor(
+                    provider.LineAddCapabilityId,
+                    HiveHostCapabilityKind.AddRow,
+                    "Add invoice line"),
+                new HiveHostCapabilityDescriptor(
+                    provider.LineEditCapabilityId,
+                    HiveHostCapabilityKind.EditRow,
+                    "Edit invoice line"),
+                new HiveHostCapabilityDescriptor(
+                    provider.LineDeleteCapabilityId,
+                    HiveHostCapabilityKind.DeleteRow,
+                    "Delete invoice line")
+            })
+            {
+                linesGrid.HiveDataSurface.AddCapability(capability);
+            }
+
+            BodyPanel.Controls.Add(invoiceNumber);
+            BodyPanel.Controls.Add(invoiceGrid);
+            BodyPanel.Controls.Add(linesGrid);
+            ThemeManager.Apply(BodyPanel);
         }
     }
 
@@ -497,23 +569,29 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
 
         public Guid DeniedEditCapabilityId { get; }
 
+        public Guid InvoiceReadCapabilityId => _invoiceReadCapability;
+
+        public Guid InvoiceEditCapabilityId => _invoiceEditCapability;
+
+        public Guid LineReadCapabilityId => _lineReadCapability;
+
+        public Guid LineReadRowCapabilityId => _lineReadRowCapability;
+
+        public Guid LineAddCapabilityId => _lineAddCapability;
+
+        public Guid LineEditCapabilityId => _lineEditCapability;
+
+        public Guid LineDeleteCapabilityId => _lineDeleteCapability;
+
+        public Guid PreviewCapabilityId => _previewCapability;
+
+        public Guid LookupCapabilityId => _lookupCapability;
+
         public bool TryDescribeDataSurface(
             DataGridView grid,
             string surfaceId,
             out HiveHostDataSurfaceDescriptor descriptor)
         {
-            if (grid.Name == "invoiceGrid")
-            {
-                descriptor = CreateInvoiceSurface("surface:invoice");
-                return true;
-            }
-
-            if (grid.Name == "invoiceLinesGrid")
-            {
-                descriptor = CreateLinesSurface("surface:invoiceLines");
-                return true;
-            }
-
             descriptor = null!;
             return false;
         }
@@ -638,186 +716,6 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
             return Task.FromResult(
                 Result<IReadOnlyList<HiveLookupOption>>.Success(options));
         }
-
-        private HiveHostDataSurfaceDescriptor CreateInvoiceSurface(
-            string surfaceId) =>
-            new(
-                surfaceId,
-                "Invoices",
-                Invoices.Count,
-                new[]
-                {
-                    new HiveHostFieldDescriptor(
-                        "Id",
-                        "Id",
-                        typeof(long).FullName!,
-                        required: true,
-                        readOnly: true,
-                        computed: false,
-                        generated: false,
-                        isPrimaryKey: true,
-                        currentValue: HiveHostValue.FromInt64(
-                            Invoices[0].Id)),
-                    new HiveHostFieldDescriptor(
-                        "InvoiceNumber",
-                        "InvoiceNumber",
-                        typeof(string).FullName!,
-                        required: true,
-                        readOnly: true,
-                        computed: false,
-                        generated: true,
-                        isPrimaryKey: false,
-                        currentValue: HiveHostValue.FromString(
-                            Invoices[0].InvoiceNumber)),
-                    new HiveHostFieldDescriptor(
-                        "Customer",
-                        "Customer",
-                        typeof(string).FullName!,
-                        required: true,
-                        readOnly: false,
-                        computed: false,
-                        generated: false,
-                        isPrimaryKey: false,
-                        currentValue: HiveHostValue.FromString(
-                            Invoices[0].Customer)),
-                    new HiveHostFieldDescriptor(
-                        "Total",
-                        "Total",
-                        typeof(decimal).FullName!,
-                        required: true,
-                        readOnly: true,
-                        computed: true,
-                        generated: false,
-                        isPrimaryKey: false,
-                        currentValue: HiveHostValue.FromDecimal(
-                            Invoices[0].Total))
-                },
-                new[]
-                {
-                    new HiveHostCapabilityDescriptor(
-                        _invoiceReadCapability,
-                        HiveHostCapabilityKind.ReadDataSurface,
-                        "Read invoices"),
-                    new HiveHostCapabilityDescriptor(
-                        _invoiceEditCapability,
-                        HiveHostCapabilityKind.EditRow,
-                        "Edit invoice"),
-                    new HiveHostCapabilityDescriptor(
-                        _previewCapability,
-                        HiveHostCapabilityKind.InvokeAction,
-                        "Preview invoice",
-                        action: HiveHostActionKind.Preview)
-                },
-                new[]
-                {
-                    new HiveHostChildDataSurfaceDescriptor(
-                        surfaceId,
-                        "surface:invoiceLines",
-                        "Id",
-                        "InvoiceId")
-                });
-
-        private HiveHostDataSurfaceDescriptor CreateLinesSurface(
-            string surfaceId) =>
-            new(
-                surfaceId,
-                "Invoice lines",
-                Lines.Count,
-                new[]
-                {
-                    new HiveHostFieldDescriptor(
-                        "Id",
-                        "Id",
-                        typeof(long).FullName!,
-                        required: true,
-                        readOnly: true,
-                        computed: false,
-                        generated: false,
-                        isPrimaryKey: true),
-                    new HiveHostFieldDescriptor(
-                        "InvoiceId",
-                        "InvoiceId",
-                        typeof(long).FullName!,
-                        required: true,
-                        readOnly: true,
-                        computed: false,
-                        generated: false,
-                        isPrimaryKey: false),
-                    new HiveHostFieldDescriptor(
-                        "CategoryId",
-                        "CategoryId",
-                        typeof(long).FullName!,
-                        required: true,
-                        readOnly: false,
-                        computed: false,
-                        generated: false,
-                        isPrimaryKey: false),
-                    new HiveHostFieldDescriptor(
-                        "ProductId",
-                        "ProductId",
-                        typeof(long).FullName!,
-                        required: true,
-                        readOnly: false,
-                        computed: false,
-                        generated: false,
-                        isPrimaryKey: false,
-                        lookup: new HiveHostLookupDescriptor(
-                            "lookup:products",
-                            _lookupCapability,
-                            "Name",
-                            "Id",
-                            new[] { "CategoryId" })),
-                    new HiveHostFieldDescriptor(
-                        "Quantity",
-                        "Quantity",
-                        typeof(long).FullName!,
-                        required: true,
-                        readOnly: false,
-                        computed: false,
-                        generated: false,
-                        isPrimaryKey: false),
-                    new HiveHostFieldDescriptor(
-                        "Price",
-                        "Price",
-                        typeof(decimal).FullName!,
-                        required: true,
-                        readOnly: false,
-                        computed: false,
-                        generated: false,
-                        isPrimaryKey: false),
-                    new HiveHostFieldDescriptor(
-                        "LineTotal",
-                        "LineTotal",
-                        typeof(decimal).FullName!,
-                        required: true,
-                        readOnly: true,
-                        computed: true,
-                        generated: false,
-                        isPrimaryKey: false)
-                },
-                new[]
-                {
-                    new HiveHostCapabilityDescriptor(
-                        _lineReadCapability,
-                        HiveHostCapabilityKind.ReadDataSurface,
-                        "Read invoice lines"),
-                    new HiveHostCapabilityDescriptor(
-                        _lineReadRowCapability,
-                        HiveHostCapabilityKind.ReadRow,
-                        "Read invoice line"),
-                    new HiveHostCapabilityDescriptor(
-                        _lineAddCapability,
-                        HiveHostCapabilityKind.AddRow,
-                        "Add invoice line"),
-                    new HiveHostCapabilityDescriptor(
-                        _lineEditCapability,
-                        HiveHostCapabilityKind.EditRow,
-                        "Edit invoice line"),
-                    new HiveHostCapabilityDescriptor(
-                        _lineDeleteCapability,
-                        HiveHostCapabilityKind.DeleteRow,
-                        "Delete invoice line")
-                });
 
         private Result<HiveHostInteractionResult> ReadRow(
             HiveHostInteractionRequest request)
