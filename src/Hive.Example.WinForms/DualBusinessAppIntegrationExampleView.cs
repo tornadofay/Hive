@@ -279,7 +279,7 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
         }
 
         _output.Write(
-            "Phase 1.14 host integration",
+            "Dual Business-App Integration Contract",
             $"Captured {descriptor.Controls.Count} controls, {descriptor.DataSurfaces.Count} semantic data surfaces, {descriptor.BusinessOperations.Count} business-operation paths. " +
             $"Hidden primary key '{primaryKey.Name}' remained stable as row ID {stableRow.Value.Row.Identity.Value}; " +
             $"dependent lookup returned {lookupResult.Value!.Count} bounded options; authorization denied the exposed EditRow capability; " +
