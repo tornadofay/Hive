@@ -8,9 +8,9 @@ Authorization: explicit user request — **Hive: Start Phase 1.14**.
 
 Mode: verification remediation completed; **re-verification pending**.
 
-Current repository checkpoint: `49ac51b6ae7011e3a34cd16062f1e5f7e5c724a4` on `main`.
-
 Implementation checkpoint after the developer-reported verification failures were remediated: `e1c029b69c4f08653484db2b2b7c85f3ddbc4467`.
+
+Current workflow/documentation state is on `main`; this file intentionally does not self-reference its own documentation commit as an implementation checkpoint.
 
 ### Objective
 
