@@ -2,7 +2,7 @@
 
 ### Status
 
-**OPEN / VERIFICATION PENDING DEVELOPER.**
+**CLOSED / DEVELOPER-VERIFIED.**
 
 This explicitly authorized maintenance pass is production maintenance only. It does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
@@ -148,26 +148,30 @@ The final implementation was re-inspected after the last correction for:
 
 ### Verification
 
-**PARTIALLY VERIFIED — full Hive.Tests suite passed; remaining developer verification is required.**
+**DEVELOPER-VERIFIED — maintenance completion gate satisfied.**
 
-Developer-supplied result on 2026-09-25:
-- dotnet test tests/Hive.Tests/Hive.Tests.csproj — **267 passed, 0 failed, 0 skipped** in 25.3 seconds on .NET 10.0.1 / xUnit.net VSTest Adapter 3.1.5+1b188a7b0a.
+Developer-supplied verification on 2026-09-25:
 
-No build, test, launch, migration, provider call, or other execution-based verification was performed by the assistant.
+- Rebuild of `Hive.Host.WinForms`, `Hive.Host.WinForms.UI`, and `Hive.Tests`: completed.
+- Focused regression coverage for `HiveWorkspaceLifecycleTests`, `HiveHostCompositionTests`, and `HiveBootstrapCredentialStoreTests`: developer confirmed completed.
+- Full `dotnet test tests/Hive.Tests/Hive.Tests.csproj` suite:
+  - **267 passed, 0 failed, 0 skipped**
+  - **25.9 seconds**
+  - .NET 10.0.1 / xUnit.net VSTest Adapter v3.1.5+1b188a7b0a
+- Settings navigation/close-during-refresh: **manually verified successfully**.
+- Persistence Settings close-during-operation and Save/Test/Initialize behavior: **manually verified successfully**.
+- Provider Account and Execution Target filter interaction, including disposal during refresh: **manually verified successfully**.
+- Execution Target editor close-during-connection-test: **manually verified successfully**.
+- Affected Example Host/Settings lifecycle using the revised Host composition path: **manually verified successfully**.
 
-Remaining required developer verification:
-- rebuild `Hive.Host.WinForms`, `Hive.Host.WinForms.UI`, and `Hive.Tests`;
-- run focused regression coverage for `HiveWorkspaceLifecycleTests`, `HiveHostCompositionTests`, and `HiveBootstrapCredentialStoreTests`;
-- run the full `Hive.Tests` suite;
-- manually verify Settings navigation/close-during-refresh;
-- manually verify Persistence Settings close-during-operation and Save/Test/Initialize behavior;
-- manually verify Provider Account and Execution Target filter interaction, including disposal during refresh;
-- manually verify Execution Target editor close-during-connection-test;
-- manually exercise the affected Example Host/Settings lifecycle where the revised Host composition path is used.
+No additional assistant execution-based verification was performed.
 
 ### Completion
 
-Keep this maintenance pass open until the developer supplies actual verification results. Do not change `Hive_Current_Status.md` or activate Phase 1.14 from this maintenance pass.
+Revision 6 is **closed / developer-verified**. The required developer rebuild, automated regression/full-suite verification, and manual UI/Example Host lifecycle checks have been supplied. Phase 1.14 remains inactive and no later roadmap slice is active or authorized.
+
+Verification archive:
+[`hive-winforms-ui-production-audit-revision-6-2026-09-25.md`](verification/maintenance/hive-winforms-ui-production-audit-revision-6-2026-09-25.md)
 
 Last updated: 2026-09-25
 
