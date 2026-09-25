@@ -184,6 +184,23 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
+    public void HiveNavigationTree_DoesNotSelectGroupNodes()
+    {
+        using var tree = new HiveNavigationTree();
+
+        var group = new TreeNode("Group");
+        var leaf = new TreeNode("Leaf");
+        group.Nodes.Add(leaf);
+        tree.Nodes.Add(group);
+        tree.CreateControl();
+
+        tree.SelectedNode = leaf;
+        tree.SelectedNode = group;
+
+        Assert.Same(leaf, tree.SelectedNode);
+    }
+
+    [Fact]
     public void HiveCrudPage_UsesNonAutosizingSearchAndCenteredStatusFilter()
     {
         using var page = new HiveCrudPage<TestItem>();
