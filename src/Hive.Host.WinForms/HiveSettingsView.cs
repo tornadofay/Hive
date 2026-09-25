@@ -126,7 +126,6 @@ public sealed class HiveSettingsView : UserControl
 
         _navigation.Nodes.Add(navigationRoot);
         navigationRoot.Expand();
-        providersNode.Expand();
 
         _content = new Panel
         {
