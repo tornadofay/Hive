@@ -1,6 +1,6 @@
 # Hive Agent Cheat Sheet
 
-**Authority:** `AGENTS.md` → architecture → Active Work → roadmap → source/tests → status/verification evidence.
+**Authority by role:** `AGENTS.md` = workflow rules; architecture = intended design; Active Work = current authorization/scope; roadmap = future order only; source/tests = implementation/evidence; status/verification = current or historical state.
 
 **Continue:** same task; stop at verification gate.
 
