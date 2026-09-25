@@ -29,5 +29,8 @@ Reconcile actual developer results. While Active Work is **VERIFICATION PENDING*
 
 Historical verification evidence is preserved rather than overwritten. Closed slices are removed from Active Work and their historical evidence remains under `docs/verification/`.
 
+## Polish / Polish again
+Repeat the same maintenance or polish scope in the same context. Do not create a new task, broaden scope, or advance the roadmap. Stop at a verification gate.
+
 ## Context
-Continue, Revision, Again, and Polish inherit the immediately preceding task. `Continue`, `Again`, and `Polish` stop when no preceding/current task or active slice exists; they never create new work. `Revision` may create a temporary corrective slice as defined above. Do not guess a missing task context. Only explicit roadmap authorization advances the roadmap.
+Continue, Revision, Again, and Polish inherit the immediately preceding task. `Continue` continues that task; `Again` repeats the same task or Revision pass; `Polish`/`Polish again` repeats the same maintenance or polish scope. `Continue`, `Again`, and `Polish` stop when no preceding/current task or active slice exists; they never create new work. `Revision` may create a temporary corrective slice as defined above. Do not guess a missing task context. Only explicit roadmap authorization advances the roadmap.
