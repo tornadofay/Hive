@@ -29,6 +29,21 @@ public sealed class HiveButtonTests
     }
 
     [Fact]
+    public void PerformClick_PropagatesDialogResultToContainingForm()
+    {
+        using var button = new HiveButton
+        {
+            DialogResult = DialogResult.OK
+        };
+        using var form = new Form();
+        form.Controls.Add(button);
+
+        button.PerformClick();
+
+        Assert.Equal(DialogResult.OK, form.DialogResult);
+    }
+
+    [Fact]
     public void PerformClick_RaisesClickWhenEnabled()
     {
         using var button = new HiveButton();
