@@ -49,13 +49,13 @@ If the Active Work item says **VERIFICATION PENDING**, **verification is require
 
 If Active Work has an open implementation slice and no verification gate, continue that slice exactly. Do not implement later roadmap work.
 
-An agent must not edit `docs/Hive_Active_Work.md`, `docs/Hive_Current_Status.md`, the roadmap, or another source-of-truth document merely to manufacture authorization, remove, weaken, or bypass authorization or a verification gate. However, when Active Work is closed or absent, an explicitly requested new bounded non-roadmap corrective task is itself authorization to establish a temporary Active Work slice before implementation. This includes maintenance, audit, polish, bug-fix, and regression-fix work when the request is clearly bounded and does not implement a roadmap capability. The temporary slice must record exactly the requested scope and must not activate, imply, or incorporate a later roadmap slice.
+An agent must not edit `docs/Hive_Active_Work.md`, `docs/Hive_Current_Status.md`, the roadmap, or another source-of-truth document merely to manufacture authorization, remove, weaken, or bypass authorization or a verification gate. However, when Active Work is closed or absent, an explicitly requested new bounded non-roadmap corrective task is itself authorization to establish a temporary Active Work slice before implementation. This includes maintenance, audit, polish, bug-fix, and regression-fix work only when the request restores, preserves, or corrects an existing documented/contracted/implemented behavior and does not add a new capability or materially expand a public contract. Before treating such a request as corrective work, compare it with the roadmap and current architecture; if it would implement a roadmap capability, new public behavior, or an ambiguous future requirement, require explicit roadmap/task authorization instead. The temporary slice must record exactly the requested corrective scope and must not activate, imply, or incorporate a later roadmap slice.
 
 If Active Work is closed or absent:
-- an explicitly requested new bounded non-roadmap corrective task may establish a new temporary Active Work slice scoped exactly to that request before implementation;
+- an explicitly requested new bounded non-roadmap corrective task may establish a new temporary Active Work slice scoped exactly to that request before implementation, only after confirming from repository evidence that it is corrective rather than new capability work;
 - generic `Continue`, `Again`, or similar continuation language does not create a new task or slice when no prior authorized task exists;
 - `Revision` does not invent a task when no prior task context exists;
-- a new capability/feature or roadmap implementation request requires explicit roadmap authorization;
+- a new capability/feature, new public behavior, or roadmap implementation request requires explicit roadmap authorization;
 - roadmap advancement still requires explicit user authorization.
 
 A maintenance, audit, polish, bug-fix, regression-fix, revision, or "again/continue" request does not authorize a later roadmap slice. Establishing a temporary slice from an explicit new non-roadmap corrective task is task authorization only; it is not roadmap advancement.
