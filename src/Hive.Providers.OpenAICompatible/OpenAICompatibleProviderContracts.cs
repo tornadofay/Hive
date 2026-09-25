@@ -20,8 +20,10 @@ public sealed record OpenAICompatibleMessage
         if (string.IsNullOrWhiteSpace(content))
             throw new ArgumentException("Message content is required.", nameof(content));
 
-        if (content.Length > 64 * 1024)
-            throw new ArgumentException("Message content cannot exceed 64 KiB.", nameof(content));
+        if (content.Length > MaxMessageContentLength)
+            throw new ArgumentException(
+                "Message content cannot exceed 64 KiB.",
+                nameof(content));
 
         Role = role;
         Content = content;
@@ -74,26 +76,34 @@ public sealed class OpenAICompatibleChatRequest
 
         var normalizedModel = model.Trim();
 
-        if (normalizedModel.Length > 512)
+        if (normalizedModel.Length > MaxModelLength)
             throw new ArgumentException("Model cannot exceed 512 characters.", nameof(model));
 
         ArgumentNullException.ThrowIfNull(messages);
 
-        if (messages.Count == 0)
-            throw new ArgumentException("At least one message is required.", nameof(messages));
+        var normalizedMessages = new List<OpenAICompatibleMessage>(
+            Math.Min(messages.Count, MaxMessageCount));
 
-        if (messages.Count > MaxMessageCount)
+        foreach (var message in messages)
+        {
+            if (normalizedMessages.Count >= MaxMessageCount)
+            {
+                throw new ArgumentException(
+                    $"A chat request cannot contain more than {MaxMessageCount} messages.",
+                    nameof(messages));
+            }
+
+            ArgumentNullException.ThrowIfNull(message);
+            normalizedMessages.Add(message);
+        }
+
+        if (normalizedMessages.Count == 0)
             throw new ArgumentException(
-                $"A chat request cannot contain more than {MaxMessageCount} messages.",
+                "At least one message is required.",
                 nameof(messages));
 
-        var normalizedMessages = messages.ToArray();
-
-        foreach (var message in normalizedMessages)
-            ArgumentNullException.ThrowIfNull(message);
-
         Model = normalizedModel;
-        Messages = Array.AsReadOnly(normalizedMessages);
+        Messages = Array.AsReadOnly(normalizedMessages.ToArray());
         StructuredOutput = structuredOutput;
     }
 
@@ -103,6 +113,8 @@ public sealed class OpenAICompatibleChatRequest
 
     public OpenAICompatibleStructuredOutput? StructuredOutput { get; }
 
+    internal const int MaxModelLength = 512;
+    internal const int MaxMessageContentLength = 64 * 1024;
     internal const int MaxMessageCount = 256;
 }
 
@@ -134,6 +146,14 @@ public sealed class OpenAICompatibleProviderOptions
             throw new ArgumentException(
                 "Base URI must not embed credentials.",
                 nameof(baseUri));
+
+        if (!string.IsNullOrEmpty(baseUri.Query) ||
+            !string.IsNullOrEmpty(baseUri.Fragment))
+        {
+            throw new ArgumentException(
+                "Base URI must not contain a query string or fragment.",
+                nameof(baseUri));
+        }
 
         var effectiveTimeout = timeout ?? TimeSpan.FromSeconds(30);
 
