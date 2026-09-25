@@ -64,7 +64,7 @@ Do not:
 
 Supporting changes are allowed only when required for the active implementation.
 
-For governance/documentation tasks, change only the affected source-of-truth files.
+Governance/documentation tasks explicitly requested by the user may change the affected source-of-truth files even when an unrelated implementation slice is open, but must not modify unrelated implementation, close/advance Active Work, or activate roadmap work.
 
 ## 4. Architecture
 

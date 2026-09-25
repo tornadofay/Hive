@@ -4,7 +4,7 @@
 
 Command: Hive: Continue
 
-Meaning: Continue the current authorized Active Work item from the repository checkpoint.
+Meaning: Continue the current authorized task context from the repository checkpoint. For implementation work, this means the current Active Work item. For an explicitly requested governance/documentation task, this means that same governance/documentation scope.
 
 Do not reinterpret completion as permission to start the next roadmap slice.
 
@@ -12,7 +12,7 @@ Do not reinterpret completion as permission to start the next roadmap slice.
 
 Command: Hive: Revision
 
-Meaning: Re-review the work just performed in the same task context.
+Meaning: Re-review the work just performed in the same task context. Do not infer a different task from the current Active Work if the immediately preceding task context is unavailable.
 
 Check whether anything was missed, incorrectly implemented, inconsistently designed, inadequately protected, accidentally changed, or left incomplete.
 

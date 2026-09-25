@@ -39,6 +39,16 @@ When docs/Hive_Active_Work.md contains an open slice or maintenance pass:
 - do not start a later roadmap slice;
 - do not interpret "continue", "again", "revise", "polish", or "finish" as roadmap advancement.
 
+### Governance/documentation exception
+
+An explicitly requested governance, workflow-skill, or source-of-truth documentation task may modify only its affected governance/documentation files even when an unrelated implementation slice is open.
+
+Such work must not:
+- modify unrelated implementation;
+- close or advance Active Work;
+- activate a roadmap slice;
+- treat the governance task as a substitute for implementation of the active slice.
+
 ### Closed or absent Active Work
 
 A closed or absent Active Work item is a stop boundary for implementation.
@@ -74,7 +84,7 @@ Subsequent Revision, Again, or Continue messages inherit that context unless the
 
 Never broaden a later message into a new roadmap slice merely because the previous work appears complete.
 
-If a short command such as Revision arrives without enough conversational context, reconstruct the narrowest context supported by the current repository and Active Work. Never guess a broader scope.
+If a short command such as Revision arrives without enough prior-task context, do not infer a task from the current Active Work merely because it is the only open item. Stop before making changes and require an explicit task/context reference in the user instruction.
 
 ## Modes
 
@@ -89,33 +99,17 @@ Use the mode requested by the user. Load references/modes.md when the mode is am
 
 Do not silently convert one mode into another.
 
-## Production implementation
+## Implementation and repository changes
 
-Make the smallest correct production change that completely satisfies the authorized task.
+Follow AGENTS.md for production engineering, architecture, tests, examples, documentation ownership, and Git rules.
 
-Prefer existing:
+Use the smallest correct change that satisfies the authorized task.
 
-- responsibility owners;
-- public contracts;
-- extension points;
-- persistence boundaries;
-- MAF mechanisms;
-- UI patterns;
-- dependencies.
+Prefer existing responsibility owners, contracts, extension points, persistence boundaries, MAF mechanisms, UI patterns, and dependencies.
 
 Do not add speculative abstractions, duplicate implementations, unrelated cleanup, dependency upgrades, framework replacements, or hidden architectural changes.
 
-Preserve relevant validation, nullable contracts, structured errors, authorization/scope, cancellation, concurrency, lifecycle, disposal, persistence consistency, security, compatibility, and deterministic behavior.
-
-Never weaken safeguards to make a task appear complete.
-
-## Tests, examples, and documentation
-
-Follow AGENTS.md for required tests, examples, and documentation ownership.
-
-Do not add tests merely to increase counts.
-
-Do not add externally meaningful examples merely to demonstrate internal changes.
+Do not weaken validation, authorization, cancellation, security, or failure visibility.
 
 Do not duplicate current status or architectural truth into skill files.
 
