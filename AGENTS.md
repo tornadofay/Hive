@@ -28,6 +28,8 @@ Do not use previous chat history as repository authority.
 
 ## 2. Before changing code
 
+For agents that support repository-local skills, use `.agents/skills/hive-repository-workflow/SKILL.md` as the reusable Hive workflow procedure. The skill is subordinate to this file and does not replace its rules.
+
 Read:
 1. this file;
 2. `docs/Hive_Current_Status.md`;
