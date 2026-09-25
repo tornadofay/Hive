@@ -71,6 +71,8 @@ An explicit new bounded non-roadmap corrective request (maintenance, bug fix, re
 
 Roadmap advancement still requires explicit user authorization.
 
+A corrective pass that discovers a required new capability or material public-contract expansion must stop that portion and require separate authorization.
+
 ## Revision safety
 
 Revision follows the immediately preceding task context.
