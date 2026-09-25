@@ -30,6 +30,11 @@ Required verification after implementation:
 
 No verification has been performed by this revision yet. The slice remains open until actual developer verification is supplied.
 
+### Verification handoff
+
+Example to run: `Providers / Provider Transport / OpenAI-compatible Provider Adapter` — `Hive.Example.WinForms`
+Tests to run: `tests/Hive.Tests/OpenAICompatibleProviderAdapterTests.cs`; broader requirement: full `dotnet test tests/Hive.Tests/Hive.Tests.csproj` after the normal full solution build.
+
 Last updated: 2026-09-25
 
 ## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision 4
