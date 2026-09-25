@@ -60,8 +60,13 @@ public sealed class SqlHiveHostServiceGraphFactory :
 
                 if (resolved.IsFailure)
                 {
+                    var error = resolved.Error!;
+
                     return Result<HiveHostServiceGraph>.Failure(
-                        resolved.Error!);
+                        new Error(
+                            error.Code,
+                            error.Category,
+                            "The Hive bootstrap credential could not be resolved."));
                 }
 
                 credential = resolved.Value;
