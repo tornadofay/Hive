@@ -45,7 +45,7 @@ Determine the current repository checkpoint from evidence.
 
 If Active Work contains an open slice, continue that slice exactly. Do not implement later roadmap work.
 
-If the open Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, stop implementation at that gate. No implementation-affecting `Continue`, `Revision`, `Maintenance`, `Again`, or similar follow-up may cross that gate. Provide the exact required verification handoff instead. A separately authorized governance/documentation task may still change only its explicitly affected governance/documentation files.
+If the open Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, stop implementation at that gate. No implementation-affecting `Continue`, `Revision`, `Maintenance`, `Again`, or similar follow-up may cross that gate. A newly worded implementation request also does not silently supersede the gate. Provide the exact required verification handoff instead. Resume implementation only after the developer supplies the required verification results and the repository reflects the authorized next task, or after an explicit user instruction changes the task authorization without falsifying or weakening the verification record. A separately authorized governance/documentation task may still change only its explicitly affected governance/documentation files.
 
 An agent must not edit `docs/Hive_Active_Work.md`, `docs/Hive_Current_Status.md`, the roadmap, or another source-of-truth document merely to create, remove, weaken, or bypass authorization or a verification gate.
 
