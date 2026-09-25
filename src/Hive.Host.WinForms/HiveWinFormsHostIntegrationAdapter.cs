@@ -525,7 +525,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     existing.BindingMember,
                     existing.ValueType,
                     existing.Required,
-                    existing.ReadOnly,
+                    true,
                     existing.Computed,
                     existing.Generated,
                     true,
@@ -726,7 +726,8 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     {
         var effectiveReadOnly =
             readOnly ||
-            metadata?.ReadOnly == true;
+            metadata?.ReadOnly == true ||
+            metadata?.IsPrimaryKey == true;
 
         return new HiveHostFieldDescriptor(
             name,
