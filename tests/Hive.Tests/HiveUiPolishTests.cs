@@ -1,6 +1,8 @@
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Hive.Core;
+using Hive.Host.WinForms;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 using Xunit;
@@ -184,6 +186,28 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
+    public void HiveSettingsView_OpensOverviewByDefault()
+    {
+        var (management, _) =
+            HiveWorkspaceLifecycleTests.ManagementFacadeProxy.Create();
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        using var view = new HiveSettingsView(
+            management,
+            new ResourceAccessContext(
+                DeploymentId.New(),
+                TenantId.New(),
+                PrincipalId.New()),
+            themeManager);
+
+        var navigation = FindControl<HiveNavigationTree>(view);
+
+        Assert.NotNull(navigation);
+        Assert.NotNull(navigation!.SelectedNode);
+        Assert.Equal("Overview", navigation.SelectedNode!.Text);
+        Assert.NotNull(FindLabel(view, "Configuration flow"));
+    }
+
+    [Fact]
     public void HiveNavigationTree_DoesNotSelectGroupNodes()
     {
         using var tree = new HiveNavigationTree();
@@ -361,6 +385,22 @@ public sealed class HiveUiPolishTests
         await run;
 
         Assert.Null(tokenUseFailure);
+    }
+
+    private static TControl? FindControl<TControl>(Control root)
+        where TControl : Control
+    {
+        foreach (Control child in root.Controls)
+        {
+            if (child is TControl match)
+                return match;
+
+            var nested = FindControl<TControl>(child);
+            if (nested is not null)
+                return nested;
+        }
+
+        return null;
     }
 
     private static Label? FindLabel(Control root, string text)
