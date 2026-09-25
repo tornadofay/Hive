@@ -190,6 +190,11 @@ public sealed class HiveConfigurationTests
 
             Assert.True(saved.IsSuccess, saved.Error?.Message);
             Assert.Equal(replacement, saved.Value);
+
+            var loaded = await store.LoadPersistenceConfigurationAsync();
+
+            Assert.True(loaded.IsSuccess, loaded.Error?.Message);
+            Assert.Equal(replacement, loaded.Value);
         }
         finally
         {
