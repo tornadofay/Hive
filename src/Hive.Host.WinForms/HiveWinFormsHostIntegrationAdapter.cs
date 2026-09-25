@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
+using System.Security.Cryptography;
+using System.Text;
 using System.Windows.Forms;
 using Hive.Core;
+using Hive.Host.WinForms.UI.Controls;
 
 namespace Hive.Host.WinForms;
 
@@ -32,8 +34,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     private readonly HiveWinFormsHostRegistration _registration;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveWinFormsSemanticProvider? _semanticProvider;
-    private readonly Dictionary<string, Guid> _capabilityIds =
-        new(StringComparer.Ordinal);
+    private readonly HiveWinFormsHostContextOptions _options;
     private int _disposed;
 
     public HiveWinFormsHostIntegrationAdapter(
@@ -55,7 +56,8 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
         _accessContext = accessContext;
         _semanticProvider = semanticProvider;
-        _context = new HiveWinFormsHostContext(accessContext, options);
+        _options = options ?? new HiveWinFormsHostContextOptions();
+        _context = new HiveWinFormsHostContext(accessContext, _options);
         _registration = _context.Register(root);
     }
 
@@ -85,63 +87,120 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         if (snapshot.IsFailure)
             return Result<HiveHostContextDescriptor>.Failure(snapshot.Error!);
 
-        var controls = new List<HiveHostControlDescriptor>(
-            snapshot.Value!.Controls.Count);
-
-        var dataSurfaces = new List<HiveHostDataSurfaceDescriptor>();
-
-        foreach (var controlSnapshot in snapshot.Value.Controls)
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            var capturedControls =
+                new List<(HiveWinFormsControlSnapshot Snapshot, Control Control)>(
+                    snapshot.Value!.Controls.Count);
 
-            var control = FindControl(controlSnapshot.Path);
-            if (control is null)
+            foreach (var controlSnapshot in snapshot.Value.Controls)
             {
-                return Result<HiveHostContextDescriptor>.Failure(
-                    new Error(
-                        "hive.host.winforms.control-not-found",
-                        ErrorCategory.NotFound,
-                        "A control discovered during host capture is no longer available."));
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var control = FindControl(controlSnapshot.Path);
+                if (control is null)
+                {
+                    return Result<HiveHostContextDescriptor>.Failure(
+                        new Error(
+                            "hive.host.winforms.control-not-found",
+                            ErrorCategory.NotFound,
+                            "A control discovered during host capture is no longer available."));
+                }
+
+                capturedControls.Add((controlSnapshot, control));
             }
 
-            controls.Add(CreateControlDescriptor(controlSnapshot, control));
+            var controlIds = CreateControlIdentityMap(capturedControls);
+            var surfaceEntries =
+                new List<(DataGridView Grid, HiveWinFormsDataSurfaceMetadata? Metadata, HiveHostDataSurfaceDescriptor Surface)>();
 
-            if (control is DataGridView grid)
+            var controls = new List<HiveHostControlDescriptor>(
+                capturedControls.Count);
+
+            foreach (var entry in capturedControls)
             {
-                var surfaceId = "surface:" + controlSnapshot.Path;
+                cancellationToken.ThrowIfCancellationRequested();
 
-                if (_semanticProvider is not null &&
-                    _semanticProvider.TryDescribeDataSurface(
-                        grid,
-                        surfaceId,
-                        out var semanticSurface))
+                var controlId = controlIds[entry.Control];
+                var fieldMetadata = entry.Control is IHiveWinFormsFieldControl fieldControl
+                    ? fieldControl.HiveField
+                    : null;
+
+                controls.Add(
+                    CreateControlDescriptor(
+                        entry.Snapshot,
+                        entry.Control,
+                        controlId,
+                        fieldMetadata));
+
+                if (entry.Control is not DataGridView grid)
+                    continue;
+
+                var surfaceId = CreateDataSurfaceIdentity(
+                    grid,
+                    entry.Snapshot,
+                    capturedControls);
+
+                HiveHostDataSurfaceDescriptor surface;
+                HiveWinFormsDataSurfaceMetadata? metadata = null;
+
+                if (grid is IHiveWinFormsDataSurface hiveSurface)
                 {
-                    dataSurfaces.Add(semanticSurface);
+                    metadata = hiveSurface.HiveDataSurface;
+                    surface = CreateDataSurface(grid, surfaceId, metadata);
+                }
+                else if (_semanticProvider is not null &&
+                         _semanticProvider.TryDescribeDataSurface(
+                             grid,
+                             surfaceId,
+                             out var semanticSurface))
+                {
+                    surface = semanticSurface;
                 }
                 else
                 {
-                    dataSurfaces.Add(
-                        CreateDefaultDataSurface(grid, surfaceId));
+                    surface = CreateDataSurface(grid, surfaceId, null);
                 }
-            }
-        }
 
-        return Result<HiveHostContextDescriptor>.Success(
-            new HiveHostContextDescriptor(
-                snapshot.Value.Provenance.RegistrationId,
-                snapshot.Value.RootName ??
-                snapshot.Value.RootRuntimeType,
-                new HiveHostProvenance(
+                surfaceEntries.Add((grid, metadata, surface));
+            }
+
+            var dataSurfaces = ApplyParentChildRelationships(surfaceEntries);
+
+            return Result<HiveHostContextDescriptor>.Success(
+                new HiveHostContextDescriptor(
                     snapshot.Value.Provenance.RegistrationId,
-                    snapshot.Value.Provenance.CaptureId,
-                    snapshot.Value.Provenance.CapturedAtUtc,
-                    CorrelationId.New(),
-                    AdapterId,
-                    accessContext),
-                controls,
-                dataSurfaces,
-                _semanticProvider?.GetBusinessOperations()
-                    ?? Array.Empty<HiveHostBusinessOperationDescriptor>()));
+                    GetHostName(
+                        snapshot.Value.RootName,
+                        snapshot.Value.RootRuntimeType),
+                    new HiveHostProvenance(
+                        snapshot.Value.Provenance.RegistrationId,
+                        snapshot.Value.Provenance.CaptureId,
+                        snapshot.Value.Provenance.CapturedAtUtc,
+                        CorrelationId.New(),
+                        AdapterId,
+                        accessContext),
+                    controls,
+                    dataSurfaces,
+                    _semanticProvider?.GetBusinessOperations()
+                        ?? Array.Empty<HiveHostBusinessOperationDescriptor>()));
+        }
+        catch (HiveWinFormsIntegrationException exception)
+        {
+            return Result<HiveHostContextDescriptor>.Failure(
+                new Error(
+                    exception.Code,
+                    ErrorCategory.Validation,
+                    exception.Message));
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Result<HiveHostContextDescriptor>.Failure(
+                new Error(
+                    "hive.host.winforms.capture-failed",
+                    ErrorCategory.Conflict,
+                    $"WinForms host integration discovery could not be completed: {exception.Message}"));
+        }
     }
 
     public async Task<Result<HiveHostInteractionResult>> ExecuteInteractionAsync(
@@ -167,14 +226,8 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             HiveHostInteractionKind.ReadRow or
             HiveHostInteractionKind.AddRow or
             HiveHostInteractionKind.EditRow or
-            HiveHostInteractionKind.DeleteRow)
-        {
-            return await ExecuteWithProviderAsync(
-                request,
-                cancellationToken).ConfigureAwait(false);
-        }
-
-        if (request.Kind == HiveHostInteractionKind.InvokeAction)
+            HiveHostInteractionKind.DeleteRow or
+            HiveHostInteractionKind.InvokeAction)
         {
             return await ExecuteWithProviderAsync(
                 request,
@@ -189,7 +242,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     "A control identity is required for this interaction."));
         }
 
-        var control = FindControlById(request.ControlId);
+        var control = FindControlById(request.ControlId, cancellationToken);
         if (control is null)
         {
             return Result<HiveHostInteractionResult>.Failure(
@@ -215,41 +268,56 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     "WinForms host interaction must run on the UI thread."));
         }
 
-        var capabilitySuffix = request.Kind switch
-        {
-            HiveHostInteractionKind.ReadControl => ":read",
-            HiveHostInteractionKind.SetControlValue => ":set",
-            _ => null
-        };
-
-        if (capabilitySuffix is not null)
-        {
-            var expectedKey = request.ControlId + capabilitySuffix;
-            if (!_capabilityIds.TryGetValue(expectedKey, out var expectedCapabilityId))
-            {
-                return Result<HiveHostInteractionResult>.Failure(
-                    new Error(
-                        "hive.host.winforms.capability-not-found",
-                        ErrorCategory.NotFound,
-                        "The requested WinForms capability is not part of the registered host context."));
-            }
-
-            if (expectedCapabilityId != request.CapabilityId)
-            {
-                return Result<HiveHostInteractionResult>.Failure(
-                    new Error(
-                        "hive.host.winforms.capability-mismatch",
-                        ErrorCategory.Forbidden,
-                        "The requested capability is not authorized for the supplied WinForms target."));
-            }
-        }
-
-        if (request.ExpectedHostVersion is not null)
+        if (request.Kind is
+            not HiveHostInteractionKind.ReadControl and
+            not HiveHostInteractionKind.SetControlValue)
         {
             return Result<HiveHostInteractionResult>.Failure(
                 Error.Unsupported(
-                    "hive.host.winforms.host-version-unsupported",
-                    "The reusable standard-control adapter does not provide host-version concurrency evidence."));
+                    "hive.host.winforms.interaction-unsupported",
+                    "The requested WinForms interaction is not supported by the reusable standard-control adapter."));
+        }
+
+        if (request.Kind == HiveHostInteractionKind.ReadControl &&
+            !SupportsStandardField(control))
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                new Error(
+                    "hive.host.winforms.capability-not-found",
+                    ErrorCategory.NotFound,
+                    "The requested WinForms capability is not exposed for this control."));
+        }
+
+        if (request.Kind == HiveHostInteractionKind.SetControlValue &&
+            !CanSetStandardValue(control))
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                new Error(
+                    "hive.host.winforms.capability-not-found",
+                    ErrorCategory.NotFound,
+                    "The requested WinForms control does not currently expose a writable value capability."));
+        }
+
+        var capabilitySuffix = request.Kind switch
+        {
+            HiveHostInteractionKind.ReadControl => "read",
+            HiveHostInteractionKind.SetControlValue => "set",
+            _ => throw new InvalidOperationException("The host interaction kind is invalid.")
+        };
+
+        var expectedCapabilityId = CreateCapabilityId(
+            "control|" +
+            request.ControlId +
+            "|" +
+            capabilitySuffix);
+
+        if (expectedCapabilityId != request.CapabilityId)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                new Error(
+                    "hive.host.winforms.capability-mismatch",
+                    ErrorCategory.Forbidden,
+                    "The requested capability is not authorized for the supplied WinForms target."));
         }
 
         try
@@ -298,6 +366,8 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     "The supplied host integration access context does not match the registered host."));
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (_semanticProvider is null)
         {
             return Result<IReadOnlyList<HiveLookupOption>>.Failure(
@@ -340,31 +410,37 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
     private HiveHostControlDescriptor CreateControlDescriptor(
         HiveWinFormsControlSnapshot snapshot,
-        Control control)
+        Control control,
+        string controlId,
+        HiveWinFormsFieldMetadata? fieldMetadata)
     {
-        var field = CreateStandardField(control, snapshot);
+        var field = CreateStandardField(
+            control,
+            snapshot,
+            fieldMetadata);
+
         var capabilities = new List<HiveHostCapabilityDescriptor>();
 
         if (field is not null)
         {
             capabilities.Add(
                 CreateCapability(
-                    "control:" + snapshot.Path + ":read",
+                    "control|" + controlId + "|read",
                     HiveHostCapabilityKind.ReadControl,
                     "Read control value"));
         }
 
-        if (CanSetStandardValue(control, snapshot))
+        if (CanSetStandardValue(control, field))
         {
             capabilities.Add(
                 CreateCapability(
-                    "control:" + snapshot.Path + ":set",
+                    "control|" + controlId + "|set",
                     HiveHostCapabilityKind.SetControlValue,
                     "Set control value"));
         }
 
         return new HiveHostControlDescriptor(
-            "control:" + snapshot.Path,
+            "control:" + controlId,
             snapshot.Path,
             snapshot.Depth,
             snapshot.RuntimeType,
@@ -373,139 +449,155 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             snapshot.Visible,
             snapshot.Enabled,
             snapshot.Focused,
-            snapshot.ReadOnly,
+            field?.ReadOnly ?? snapshot.ReadOnly,
             field,
             capabilities);
     }
 
-    private HiveHostFieldDescriptor? CreateStandardField(
+    private static HiveHostFieldDescriptor? CreateStandardField(
         Control control,
-        HiveWinFormsControlSnapshot snapshot)
+        HiveWinFormsControlSnapshot snapshot,
+        HiveWinFormsFieldMetadata? metadata)
     {
-        if (control is not
-            (TextBoxBase or CheckBox or ComboBox or DateTimePicker or NumericUpDown))
-        {
+        if (!SupportsStandardField(control))
             return null;
-        }
 
-        var bindingMember = snapshot.Bindings
-            .Select(static binding => binding.BindingMember)
-            .FirstOrDefault(static member => !string.IsNullOrWhiteSpace(member));
+        var bindingMember =
+            CleanOptional(metadata?.BindingMember) ??
+            snapshot.Bindings
+                .Select(static binding => binding.BindingMember)
+                .FirstOrDefault(static member => !string.IsNullOrWhiteSpace(member));
 
-        var value = TryReadValue(control);
+        var fieldName = CleanRequired(
+            metadata?.Name,
+            bindingMember ??
+            snapshot.Name ??
+            snapshot.Path);
+
+        var readOnly =
+            snapshot.ReadOnly ||
+            metadata?.ReadOnly == true;
 
         return new HiveHostFieldDescriptor(
-            bindingMember ?? snapshot.Name ?? snapshot.Path,
-            bindingMember,
-            GetValueTypeName(control),
-            required: false,
-            readOnly: snapshot.ReadOnly,
-            computed: false,
-            generated: false,
-            isPrimaryKey: false,
-            currentValue: value);
+            fieldName,
+            CleanOptional(metadata?.BindingMember) ?? bindingMember,
+            CleanRequired(
+                metadata?.ValueType,
+                GetValueTypeName(control)),
+            metadata?.Required ?? false,
+            readOnly,
+            metadata?.Computed ?? false,
+            metadata?.Generated ?? false,
+            metadata?.IsPrimaryKey ?? false,
+            TryReadValue(control),
+            metadata?.Lookup);
     }
 
-    private HiveHostDataSurfaceDescriptor CreateDefaultDataSurface(
+    private static HiveHostDataSurfaceDescriptor CreateDataSurface(
         DataGridView grid,
-        string surfaceId)
+        string surfaceId,
+        HiveWinFormsDataSurfaceMetadata? metadata)
     {
-        var fields = CreateDefaultDataSurfaceFields(grid);
-        var rowCount = TryGetBoundRowCount(grid);
+        var fields = CreateDataSurfaceFields(grid, metadata);
 
-        var capabilities = new[]
+        if (metadata is not null &&
+            !string.IsNullOrWhiteSpace(metadata.PrimaryKeyField))
+        {
+            var primaryKey = metadata.PrimaryKeyField.Trim();
+            var primaryIndex = fields.FindIndex(field =>
+                string.Equals(field.Name, primaryKey, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(field.BindingMember, primaryKey, StringComparison.OrdinalIgnoreCase));
+
+            if (primaryIndex < 0)
+            {
+                throw new HiveWinFormsIntegrationException(
+                    "hive.host.winforms.primary-key-field-not-found",
+                    $"The configured primary-key field '{primaryKey}' is not present on data surface '{surfaceId}'.");
+            }
+
+            var existing = fields[primaryIndex];
+            if (!existing.IsPrimaryKey)
+            {
+                fields[primaryIndex] = new HiveHostFieldDescriptor(
+                    existing.Name,
+                    existing.BindingMember,
+                    existing.ValueType,
+                    existing.Required,
+                    existing.ReadOnly,
+                    existing.Computed,
+                    existing.Generated,
+                    true,
+                    existing.CurrentValue,
+                    existing.Lookup);
+            }
+        }
+
+        var capabilities = new List<HiveHostCapabilityDescriptor>
         {
             CreateCapability(
-                surfaceId + ":read",
+                "surface|" + surfaceId + "|read",
                 HiveHostCapabilityKind.ReadDataSurface,
                 "Read data surface")
         };
 
+        if (metadata is not null)
+        {
+            foreach (var capability in metadata.Capabilities)
+            {
+                if (capabilities.Any(existing => existing.Id == capability.Id))
+                {
+                    throw new HiveWinFormsIntegrationException(
+                        "hive.host.winforms.capability-duplicate",
+                        $"Capability '{capability.Id}' is duplicated on data surface '{surfaceId}'.");
+                }
+
+                capabilities.Add(capability);
+            }
+        }
+
         return new HiveHostDataSurfaceDescriptor(
             surfaceId,
-            grid.Name.Length == 0 ? "WinForms data surface" : grid.Name,
-            rowCount,
+            CleanRequired(
+                metadata?.Name,
+                string.IsNullOrWhiteSpace(grid.Name)
+                    ? "WinForms data surface"
+                    : grid.Name),
+            TryGetBoundRowCount(grid),
             fields,
             capabilities);
     }
 
-    private static HiveHostFieldDescriptor[] CreateDefaultDataSurfaceFields(
-        DataGridView grid)
+    private static List<HiveHostFieldDescriptor> CreateDataSurfaceFields(
+        DataGridView grid,
+        HiveWinFormsDataSurfaceMetadata? metadata)
     {
-        var columns = grid.Columns
-            .Cast<DataGridViewColumn>()
-            .ToArray();
+        var fields = new List<HiveHostFieldDescriptor>();
 
-        if (columns.Length > 0 || !grid.AutoGenerateColumns)
+        if (grid.Columns.Count > 0 || !grid.AutoGenerateColumns)
         {
-            return columns
-                .Select(column =>
-                    new HiveHostFieldDescriptor(
-                        string.IsNullOrWhiteSpace(column.DataPropertyName)
-                            ? column.Name
-                            : column.DataPropertyName,
-                        column.DataPropertyName,
-                        column.ValueType?.FullName ??
-                        typeof(string).FullName!,
-                        required: false,
-                        readOnly: column.ReadOnly,
-                        computed: false,
-                        generated: false,
-                        isPrimaryKey: false))
-                .ToArray();
+            foreach (DataGridViewColumn column in grid.Columns)
+            {
+                var fieldKey = string.IsNullOrWhiteSpace(column.DataPropertyName)
+                    ? column.Name
+                    : column.DataPropertyName;
+
+                HiveWinFormsFieldMetadata? fieldOverride = null;
+                if (metadata is not null)
+                    metadata.TryGetFieldOverride(fieldKey, out fieldOverride);
+
+                fields.Add(
+                    CreateDataSurfaceField(
+                        column,
+                        fieldKey,
+                        fieldOverride));
+            }
         }
-
-        var dataSource = grid.DataSource;
-        if (dataSource is null)
-            return Array.Empty<HiveHostFieldDescriptor>();
-
-        var bindingContext = grid.BindingContext;
-        if (bindingContext is null)
-            return Array.Empty<HiveHostFieldDescriptor>();
-
-        try
+        else
         {
-            var manager = bindingContext[
-                dataSource,
-                grid.DataMember];
-
-            var properties = manager?.GetItemProperties();
-            if (properties is null)
-                return Array.Empty<HiveHostFieldDescriptor>();
-
-            return properties
-                .Cast<PropertyDescriptor>()
-                .Select(property =>
-                    new HiveHostFieldDescriptor(
-                        property.Name,
-                        property.Name,
-                        property.PropertyType.FullName ??
-                        typeof(string).FullName!,
-                        required: false,
-                        readOnly: property.IsReadOnly,
-                        computed: false,
-                        generated: false,
-                        isPrimaryKey: false))
-                .ToArray();
-        }
-        catch (ArgumentException)
-        {
-            return Array.Empty<HiveHostFieldDescriptor>();
-        }
-        catch (InvalidOperationException)
-        {
-            return Array.Empty<HiveHostFieldDescriptor>();
-        }
-    }
-
-    private static int TryGetBoundRowCount(DataGridView grid)
-    {
-        var dataSource = grid.DataSource;
-
-        if (dataSource is not null)
-        {
+            var dataSource = grid.DataSource;
             var bindingContext = grid.BindingContext;
-            if (bindingContext is not null)
+
+            if (dataSource is not null && bindingContext is not null)
             {
                 try
                 {
@@ -513,49 +605,465 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                         dataSource,
                         grid.DataMember];
 
-                    if (manager is not null)
-                        return Math.Max(0, manager.Count);
+                    var properties = manager?.GetItemProperties();
+
+                    if (properties is not null)
+                    {
+                        foreach (PropertyDescriptor property in properties)
+                        {
+                            HiveWinFormsFieldMetadata? fieldOverride = null;
+                            if (metadata is not null)
+                            {
+                                metadata.TryGetFieldOverride(
+                                    property.Name,
+                                    out fieldOverride);
+                            }
+
+                            fields.Add(
+                                CreateDataSurfaceField(
+                                    property.Name,
+                                    property.PropertyType,
+                                    property.IsReadOnly,
+                                    fieldOverride));
+                        }
+                    }
                 }
                 catch (ArgumentException)
                 {
-                    // Fall back to the materialized grid rows when the bound
-                    // source cannot provide a currency manager.
                 }
                 catch (InvalidOperationException)
                 {
-                    // Fall back to the materialized grid rows when the bound
-                    // source is not currently available.
                 }
             }
         }
-        return grid.AllowUserToAddRows
-            ? Math.Max(0, grid.Rows.Count - 1)
-            : grid.Rows.Count;
-    }
 
-    private HiveHostCapabilityDescriptor CreateCapability(
-        string key,
-        HiveHostCapabilityKind kind,
-        string name)
-    {
-        if (!_capabilityIds.TryGetValue(key, out var id))
+        if (metadata is not null)
         {
-            id = Guid.NewGuid();
-            _capabilityIds.Add(key, id);
+            foreach (var overrideEntry in metadata.FieldOverrides)
+            {
+                var consumed = fields.Any(field =>
+                    string.Equals(
+                        field.Name,
+                        overrideEntry.Key,
+                        StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(
+                        field.BindingMember,
+                        overrideEntry.Key,
+                        StringComparison.OrdinalIgnoreCase));
+
+                if (!consumed)
+                {
+                    var columnMatch = grid.Columns
+                        .Cast<DataGridViewColumn>()
+                        .Any(column =>
+                            string.Equals(
+                                column.Name,
+                                overrideEntry.Key,
+                                StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(
+                                column.DataPropertyName,
+                                overrideEntry.Key,
+                                StringComparison.OrdinalIgnoreCase));
+
+                    if (!columnMatch)
+                    {
+                        throw new HiveWinFormsIntegrationException(
+                            "hive.host.winforms.field-override-not-found",
+                            $"The configured field override '{overrideEntry.Key}' is not present on data surface.");
+                    }
+                }
+            }
         }
 
-        return new HiveHostCapabilityDescriptor(id, kind, name);
+        return fields;
     }
 
-    private Control? FindControlById(string id)
+    private static HiveHostFieldDescriptor CreateDataSurfaceField(
+        DataGridViewColumn column,
+        string fieldKey,
+        HiveWinFormsFieldMetadata? metadata)
+    {
+        var name = CleanRequired(
+            metadata?.Name,
+            string.IsNullOrWhiteSpace(fieldKey)
+                ? column.Name
+                : fieldKey);
+
+        var bindingMember =
+            CleanOptional(metadata?.BindingMember) ??
+            CleanOptional(column.DataPropertyName);
+
+        return CreateDataSurfaceField(
+            name,
+            bindingMember,
+            column.ValueType ?? typeof(string),
+            column.ReadOnly,
+            metadata);
+    }
+
+    private static HiveHostFieldDescriptor CreateDataSurfaceField(
+        string propertyName,
+        Type propertyType,
+        bool readOnly,
+        HiveWinFormsFieldMetadata? metadata)
+    {
+        return CreateDataSurfaceField(
+            CleanRequired(metadata?.Name, propertyName),
+            CleanOptional(metadata?.BindingMember) ?? propertyName,
+            propertyType,
+            readOnly,
+            metadata);
+    }
+
+    private static HiveHostFieldDescriptor CreateDataSurfaceField(
+        string name,
+        string? bindingMember,
+        Type valueType,
+        bool readOnly,
+        HiveWinFormsFieldMetadata? metadata)
+    {
+        var effectiveReadOnly =
+            readOnly ||
+            metadata?.ReadOnly == true;
+
+        return new HiveHostFieldDescriptor(
+            name,
+            bindingMember,
+            CleanRequired(
+                metadata?.ValueType,
+                valueType.FullName ?? typeof(string).FullName!),
+            metadata?.Required ?? false,
+            effectiveReadOnly,
+            metadata?.Computed ?? false,
+            metadata?.Generated ?? false,
+            metadata?.IsPrimaryKey ?? false,
+            currentValue: null,
+            lookup: metadata?.Lookup);
+    }
+
+    private static List<HiveHostDataSurfaceDescriptor> ApplyParentChildRelationships(
+        IReadOnlyList<(
+            DataGridView Grid,
+            HiveWinFormsDataSurfaceMetadata? Metadata,
+            HiveHostDataSurfaceDescriptor Surface)> entries)
+    {
+        var duplicateSurface = entries
+            .GroupBy(
+                static entry => entry.Surface.Id,
+                StringComparer.Ordinal)
+            .FirstOrDefault(static group => group.Count() > 1);
+
+        if (duplicateSurface is not null)
+        {
+            throw new HiveWinFormsIntegrationException(
+                "hive.host.winforms.surface-identity-duplicate",
+                $"Data-surface identity '{duplicateSurface.Key}' is not unique within the captured host.");
+        }
+
+        var byId = entries.ToDictionary(
+            static entry => entry.Surface.Id,
+            static entry => entry.Surface,
+            StringComparer.Ordinal);
+
+        var childrenByParent =
+            new Dictionary<string, List<HiveHostChildDataSurfaceDescriptor>>(
+                StringComparer.Ordinal);
+
+        foreach (var entry in entries)
+        {
+            var metadata = entry.Metadata;
+            if (metadata is null || !metadata.HasParentRelationship)
+                continue;
+
+            var parentSurfaceId = CleanOptional(metadata.ParentSurfaceId);
+            var parentKeyField = CleanOptional(metadata.ParentKeyField);
+            var childKeyField = CleanOptional(metadata.ChildKeyField);
+
+            if (parentSurfaceId is null ||
+                parentKeyField is null ||
+                childKeyField is null)
+            {
+                throw new HiveWinFormsIntegrationException(
+                    "hive.host.winforms.child-surface-invalid",
+                    $"The child data-surface relationship for '{entry.Surface.Id}' must define parent surface, parent key field, and child key field.");
+            }
+
+            if (string.Equals(
+                    parentSurfaceId,
+                    entry.Surface.Id,
+                    StringComparison.Ordinal))
+            {
+                throw new HiveWinFormsIntegrationException(
+                    "hive.host.winforms.child-surface-self-reference",
+                    $"Data surface '{entry.Surface.Id}' cannot be its own parent.");
+            }
+
+            if (!byId.TryGetValue(parentSurfaceId, out var parent))
+            {
+                throw new HiveWinFormsIntegrationException(
+                    "hive.host.winforms.child-parent-not-found",
+                    $"Parent data surface '{parentSurfaceId}' was not found for child '{entry.Surface.Id}'.");
+            }
+
+            if (!parent.Fields.Any(field =>
+                    string.Equals(
+                        field.Name,
+                        parentKeyField,
+                        StringComparison.Ordinal)))
+            {
+                throw new HiveWinFormsIntegrationException(
+                    "hive.host.winforms.child-parent-key-not-found",
+                    $"Parent key field '{parentKeyField}' was not found on data surface '{parentSurfaceId}'.");
+            }
+
+            if (!entry.Surface.Fields.Any(field =>
+                    string.Equals(
+                        field.Name,
+                        childKeyField,
+                        StringComparison.Ordinal)))
+            {
+                throw new HiveWinFormsIntegrationException(
+                    "hive.host.winforms.child-key-not-found",
+                    $"Child key field '{childKeyField}' was not found on data surface '{entry.Surface.Id}'.");
+            }
+
+            var childDescriptor = new HiveHostChildDataSurfaceDescriptor(
+                parentSurfaceId,
+                entry.Surface.Id,
+                parentKeyField,
+                childKeyField);
+
+            if (!childrenByParent.TryGetValue(
+                    parentSurfaceId,
+                    out var children))
+            {
+                children = new List<HiveHostChildDataSurfaceDescriptor>();
+                childrenByParent.Add(parentSurfaceId, children);
+            }
+
+            if (children.Any(existing =>
+                    string.Equals(
+                        existing.ChildSurfaceId,
+                        childDescriptor.ChildSurfaceId,
+                        StringComparison.Ordinal)))
+            {
+                throw new HiveWinFormsIntegrationException(
+                    "hive.host.winforms.child-surface-duplicate",
+                    $"Child data surface '{entry.Surface.Id}' is already related to parent '{parentSurfaceId}'.");
+            }
+
+            children.Add(childDescriptor);
+        }
+
+        var result = new List<HiveHostDataSurfaceDescriptor>(entries.Count);
+
+        foreach (var entry in entries)
+        {
+            if (!childrenByParent.TryGetValue(
+                    entry.Surface.Id,
+                    out var children))
+            {
+                result.Add(entry.Surface);
+                continue;
+            }
+
+            result.Add(
+                new HiveHostDataSurfaceDescriptor(
+                    entry.Surface.Id,
+                    entry.Surface.Name,
+                    entry.Surface.RowCount,
+                    entry.Surface.Fields,
+                    entry.Surface.Capabilities,
+                    entry.Surface.Children.Concat(children)));
+        }
+
+        return result;
+    }
+
+    private static Dictionary<Control, string> CreateControlIdentityMap(
+        IReadOnlyList<(HiveWinFormsControlSnapshot Snapshot, Control Control)> controls)
+    {
+        var nameCounts = controls
+            .Where(static entry => !string.IsNullOrWhiteSpace(entry.Snapshot.Name))
+            .GroupBy(
+                static entry => entry.Snapshot.Name!,
+                StringComparer.Ordinal)
+            .ToDictionary(
+                static group => group.Key,
+                static group => group.Count(),
+                StringComparer.Ordinal);
+
+        var candidates = new Dictionary<Control, string>(
+            ReferenceEqualityComparer.Instance);
+
+        foreach (var entry in controls)
+        {
+            var explicitId = GetExplicitControlId(entry.Control);
+            var candidate =
+                explicitId ??
+                (!string.IsNullOrWhiteSpace(entry.Snapshot.Name) &&
+                 nameCounts[entry.Snapshot.Name!] == 1
+                    ? entry.Snapshot.Name!.Trim()
+                    : entry.Snapshot.Path);
+
+            candidates.Add(
+                entry.Control,
+                "control:" + candidate);
+        }
+
+        var duplicates = candidates
+            .GroupBy(
+                static pair => pair.Value,
+                StringComparer.Ordinal)
+            .FirstOrDefault(static group => group.Count() > 1);
+
+        if (duplicates is not null)
+        {
+            throw new HiveWinFormsIntegrationException(
+                "hive.host.winforms.control-identity-duplicate",
+                $"Control identity '{duplicates.Key}' is not unique within the captured host.");
+        }
+
+        return candidates.ToDictionary(
+            static pair => pair.Key,
+            static pair => pair.Value["control:".Length..],
+            ReferenceEqualityComparer.Instance);
+    }
+
+    private static string CreateDataSurfaceIdentity(
+        DataGridView grid,
+        HiveWinFormsControlSnapshot snapshot,
+        IReadOnlyList<(HiveWinFormsControlSnapshot Snapshot, Control Control)> controls)
+    {
+        var metadata = grid is IHiveWinFormsDataSurface hiveSurface
+            ? hiveSurface.HiveDataSurface
+            : null;
+
+        var explicitId = CleanOptional(metadata?.SurfaceId);
+        if (explicitId is not null)
+            return "surface:" + explicitId;
+
+        var nameCount = controls.Count(entry =>
+            entry.Control is DataGridView &&
+            string.Equals(
+                entry.Snapshot.Name,
+                snapshot.Name,
+                StringComparison.Ordinal) &&
+            !string.IsNullOrWhiteSpace(entry.Snapshot.Name));
+
+        var candidate =
+            !string.IsNullOrWhiteSpace(snapshot.Name) && nameCount == 1
+                ? snapshot.Name.Trim()
+                : snapshot.Path;
+
+        return "surface:" + candidate;
+    }
+
+    private string GetHostName(
+        string? rootName,
+        string rootRuntimeType)
+    {
+        if (_registration.Root is HiveForm hiveForm)
+        {
+            var overrideName = CleanOptional(
+                hiveForm.HiveHostIntegration.HostName);
+
+            if (overrideName is not null)
+                return overrideName;
+        }
+
+        return rootName ?? rootRuntimeType;
+    }
+
+    private static string? GetExplicitControlId(Control control) =>
+        control is IHiveWinFormsControl hiveControl
+            ? CleanOptional(hiveControl.HiveIntegration.ControlId)
+            : null;
+
+    private Control? FindControlById(
+        string id,
+        CancellationToken cancellationToken)
     {
         const string prefix = "control:";
 
         if (!id.StartsWith(prefix, StringComparison.Ordinal))
             return null;
 
-        var path = id[prefix.Length..];
-        return FindControl(path);
+        var key = id[prefix.Length..];
+
+        if (key.StartsWith("0", StringComparison.Ordinal) &&
+            key.Contains('/'))
+        {
+            return FindControl(key);
+        }
+
+        var stack = new Stack<(Control Control, int Depth, string Path)>();
+        stack.Push((_registration.Root, 0, "0"));
+
+        var explicitMatch = new List<Control>();
+        var namedMatch = new List<Control>();
+        var visited = new HashSet<Control>(
+            ReferenceEqualityComparer.Instance);
+
+        while (stack.Count > 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var current = stack.Pop();
+
+            if (current.Depth > _options.MaxDepth ||
+                visited.Count >= _options.MaxNodes)
+            {
+                continue;
+            }
+
+            if (!visited.Add(current))
+                continue;
+
+            if (GetExplicitControlId(current) is { } explicitId &&
+                string.Equals(
+                    explicitId,
+                    key,
+                    StringComparison.Ordinal))
+            {
+                explicitMatch.Add(current);
+            }
+
+            if (string.Equals(
+                    current.Name,
+                    key,
+                    StringComparison.Ordinal))
+            {
+                namedMatch.Add(current);
+            }
+
+            if (current.IsDisposed || current.Disposing)
+                continue;
+
+            if (current.Depth >= _options.MaxDepth)
+                continue;
+
+            for (var index = current.Controls.Count - 1; index >= 0; index--)
+            {
+                stack.Push((
+                    current.Controls[index],
+                    current.Depth + 1,
+                    current.Path + "/" + index));
+            }
+        }
+
+        if (explicitMatch.Count == 1)
+            return explicitMatch[0];
+
+        if (explicitMatch.Count > 1 ||
+            namedMatch.Count > 1)
+        {
+            return null;
+        }
+
+        return namedMatch.Count == 1
+            ? namedMatch[0]
+            : null;
     }
 
     private Control? FindControl(string path)
@@ -588,6 +1096,110 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         return current;
     }
 
+    private static bool SupportsStandardField(Control control) =>
+        control is
+            (TextBoxBase or CheckBox or ComboBox or DateTimePicker or NumericUpDown);
+
+    private static bool CanSetStandardValue(
+        Control control,
+        HiveHostFieldDescriptor? field = null)
+    {
+        if (!control.Enabled ||
+            IsStandardReadOnly(control))
+        {
+            return false;
+        }
+
+        if (field is not null &&
+            (field.ReadOnly ||
+             field.Computed ||
+             field.Generated ||
+             field.IsPrimaryKey))
+        {
+            return false;
+        }
+
+        if (control is IHiveWinFormsFieldControl fieldControl)
+        {
+            var metadata = fieldControl.HiveField;
+
+            if (metadata.ReadOnly == true ||
+                metadata.Computed == true ||
+                metadata.Generated == true ||
+                metadata.IsPrimaryKey == true)
+            {
+                return false;
+            }
+        }
+
+        return control is
+            (TextBoxBase or CheckBox or DateTimePicker or NumericUpDown) ||
+            control is ComboBox comboBox &&
+            comboBox.DropDownStyle != ComboBoxStyle.DropDownList;
+    }
+
+    private static bool IsStandardReadOnly(Control control) =>
+        control switch
+        {
+            TextBox textBox => textBox.ReadOnly,
+            RichTextBox richTextBox => richTextBox.ReadOnly,
+            MaskedTextBox maskedTextBox => maskedTextBox.ReadOnly,
+            NumericUpDown numericUpDown => numericUpDown.ReadOnly,
+            _ => false
+        };
+
+    private static HiveHostCapabilityDescriptor CreateCapability(
+        string key,
+        HiveHostCapabilityKind kind,
+        string name,
+        HiveHostActionKind? action = null) =>
+        new(
+            CreateCapabilityId(key),
+            kind,
+            name,
+            action: action);
+
+    private static Guid CreateCapabilityId(string key)
+    {
+        var bytes = SHA256.HashData(
+            Encoding.UTF8.GetBytes(
+                "Hive.Host.WinForms.Capability.V1|" + key));
+
+        return new Guid(bytes.AsSpan(0, 16));
+    }
+
+    private static int TryGetBoundRowCount(DataGridView grid)
+    {
+        var dataSource = grid.DataSource;
+
+        if (dataSource is not null)
+        {
+            var bindingContext = grid.BindingContext;
+            if (bindingContext is not null)
+            {
+                try
+                {
+                    var manager = bindingContext[
+                        dataSource,
+                        grid.DataMember];
+
+                    if (manager is not null)
+                        return Math.Max(0, manager.Count);
+                }
+                catch (ArgumentException)
+                {
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            }
+        }
+
+        return grid.AllowUserToAddRows
+            ? Math.Max(0, grid.Rows.Count - 1)
+            : grid.Rows.Count;
+    }
+
     private static string GetValueTypeName(Control control) =>
         control switch
         {
@@ -602,51 +1214,33 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     private static HiveHostValue? TryReadValue(Control control)
     {
         if (control is TextBox passwordTextBox &&
-            (passwordTextBox.UseSystemPasswordChar || passwordTextBox.PasswordChar != '\0'))
+            (passwordTextBox.UseSystemPasswordChar ||
+             passwordTextBox.PasswordChar != ' '))
         {
             return null;
         }
 
         if (control is MaskedTextBox maskedTextBox &&
-            maskedTextBox.PasswordChar != '\0')
+            maskedTextBox.PasswordChar != ' ')
         {
             return null;
         }
 
         return control switch
         {
-            TextBoxBase textControl => HiveHostValue.FromString(textControl.Text),
-            CheckBox checkBox => HiveHostValue.FromBoolean(checkBox.Checked),
-            ComboBox comboBox => HiveHostValue.FromString(comboBox.Text),
+            TextBoxBase textControl =>
+                HiveHostValue.FromString(textControl.Text),
+            CheckBox checkBox =>
+                HiveHostValue.FromBoolean(checkBox.Checked),
+            ComboBox comboBox =>
+                HiveHostValue.FromString(comboBox.Text),
             DateTimePicker dateTimePicker =>
                 HiveHostValue.FromDateTime(dateTimePicker.Value),
             NumericUpDown numericUpDown =>
                 HiveHostValue.FromDecimal(numericUpDown.Value),
-            _ => (HiveHostValue?)null
+            _ => null
         };
     }
-
-    private static bool CanSetStandardValue(
-        Control control,
-        HiveWinFormsControlSnapshot snapshot) =>
-        snapshot.Enabled &&
-        !IsStandardReadOnly(control) &&
-        control is
-            (TextBoxBase or CheckBox or DateTimePicker or NumericUpDown) ||
-        control is ComboBox comboBox &&
-        snapshot.Enabled &&
-        !IsStandardReadOnly(control) &&
-        comboBox.DropDownStyle != ComboBoxStyle.DropDownList;
-
-    private static bool IsStandardReadOnly(Control control) =>
-        control switch
-        {
-            TextBox textBox => textBox.ReadOnly,
-            RichTextBox richTextBox => richTextBox.ReadOnly,
-            MaskedTextBox maskedTextBox => maskedTextBox.ReadOnly,
-            NumericUpDown numericUpDown => numericUpDown.ReadOnly,
-            _ => false
-        };
 
     private static Result<HiveHostInteractionResult> SetControlValue(
         Control control,
@@ -668,6 +1262,22 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     "The requested WinForms control is read-only."));
         }
 
+        if (control is IHiveWinFormsFieldControl fieldControl)
+        {
+            var metadata = fieldControl.HiveField;
+
+            if (metadata.ReadOnly == true ||
+                metadata.Computed == true ||
+                metadata.Generated == true ||
+                metadata.IsPrimaryKey == true)
+            {
+                return Result<HiveHostInteractionResult>.Failure(
+                    Error.Conflict(
+                        "hive.host.winforms.field-write-blocked",
+                        "The requested Hive field is not directly writable."));
+            }
+        }
+
         if (control is TextBoxBase textBox)
         {
             if (request.Value is not { } value ||
@@ -680,7 +1290,8 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             }
 
             if (control is TextBox password &&
-                (password.UseSystemPasswordChar || password.PasswordChar != '\0'))
+                (password.UseSystemPasswordChar ||
+                 password.PasswordChar != ' '))
             {
                 return Result<HiveHostInteractionResult>.Failure(
                     Error.Unsupported(
@@ -774,10 +1385,39 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 TryReadValue(control)));
     }
 
+    private static string CleanRequired(
+        string? overrideValue,
+        string fallback)
+    {
+        if (!string.IsNullOrWhiteSpace(overrideValue))
+            return overrideValue.Trim();
+
+        return fallback.Trim();
+    }
+
+    private static string? CleanOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value)
+            ? null
+            : value.Trim();
+
     private void ThrowIfDisposed()
     {
         ObjectDisposedException.ThrowIf(
             Volatile.Read(ref _disposed) != 0,
             this);
     }
+}
+
+public sealed class HiveWinFormsIntegrationException : Exception
+{
+    public HiveWinFormsIntegrationException(
+        string code,
+        string message)
+        : base(message)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(code);
+        Code = code;
+    }
+
+    public string Code { get; }
 }
