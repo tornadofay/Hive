@@ -28,7 +28,7 @@ If Active Work is `VERIFICATION PENDING` before actual developer results arrive,
 
 With no active slice, an explicit non-roadmap corrective request may establish a temporary implementation slice only when it clearly restores/preserves/corrects existing behavior without a new capability or material public-contract expansion. Record that slice before implementation. **Revision is an explicit corrective request in this situation when it follows a preceding task with implementation findings, including a Workflow Review, and may establish the temporary slice needed to re-audit and correct those findings.** Workflow-documentation Revision stays within the affected governance documents and does not create an implementation slice. New capabilities and roadmap work require explicit authorization.
 
-Revision inherits the immediately preceding task and re-audits it for concrete findings; it does not require findings to have been identified in advance. If the preceding context is unavailable or ambiguous, do not guess.
+Revision inherits the immediately preceding task, re-audits it for concrete findings, and does not require findings to have been identified in advance. When no Active Work is open, Revision may establish the temporary bounded corrective slice described above before implementation. If the preceding context is unavailable or ambiguous, do not guess.
 
 Before every write, re-check the branch checkpoint and reconcile any concurrent movement.
 
