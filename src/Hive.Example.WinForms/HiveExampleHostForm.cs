@@ -401,7 +401,6 @@ internal sealed class HiveExampleHostForm : HiveForm
             _outputView.OutputAvailabilityChanged -= OutputViewOnOutputAvailabilityChanged;
             _configuredAgentSelector.SelectedIndexChanged -= ConfiguredAgentSelectorOnSelectedIndexChanged;
             DisposeActiveView();
-            _lifetimeCts.Cancel();
 
             _composition?.Dispose();
             _composition = null;
@@ -861,6 +860,13 @@ internal sealed class HiveExampleHostForm : HiveForm
                     cancellationToken)
                 .ConfigureAwait(true);
 
+            if (cancellationToken.IsCancellationRequested ||
+                IsDisposed ||
+                Disposing)
+            {
+                return;
+            }
+
             if (providers.IsFailure)
             {
                 _configuredAgentSelector.Items.Clear();
@@ -883,6 +889,13 @@ internal sealed class HiveExampleHostForm : HiveForm
                     services.AccessContext,
                     cancellationToken)
                 .ConfigureAwait(true);
+
+            if (cancellationToken.IsCancellationRequested ||
+                IsDisposed ||
+                Disposing)
+            {
+                return;
+            }
 
             if (agents.IsFailure)
             {
