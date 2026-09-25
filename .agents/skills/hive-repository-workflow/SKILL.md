@@ -26,7 +26,7 @@ For a revision of this skill or its references, inspect the complete workflow-sk
 
 ## 2. Authorization gate
 
-`docs/Hive_Active_Work.md` is the only authority for the current implementation slice.
+`docs/Hive_Active_Work.md` is the only authority for the current implementation slice. It is current-state only and must not accumulate historical closed slices.
 
 ### Open Active Work
 
@@ -34,7 +34,7 @@ Continue only the authorized slice.
 
 If the open Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, **stop all implementation-affecting work at that gate**. `Continue`, `Revision`, `Maintenance`, `Again`, `Polish again`, and similar follow-ups do not override the gate. A newly worded implementation request also does not silently supersede the gate. Do not resume implementation while the verification gate remains open. Resume implementation only after the developer supplies the required verification results and the repository reflects the authorized task transition. Separately authorized governance/documentation work may proceed only within its explicitly affected documentation scope and must not weaken or remove the verification gate.
 
-Never modify a source-of-truth document merely to manufacture authorization, remove a verification gate, mark work verified, close Active Work, or activate roadmap work. The sole exception relevant here is establishing a new temporary Active Work slice directly from an explicit new bounded non-roadmap corrective task when no slice is open. The entire task must restore, preserve, or correct existing documented/contracted/implemented behavior rather than add a capability or materially expand a public contract. Compare the request with the roadmap and current architecture before classifying it as corrective. A mixed corrective + feature request does not qualify for auto-opening; separate scopes only after explicit user authorization. Any temporary slice must reflect the authorized corrective scope, be recorded in Active Work before implementation begins, and must not activate roadmap work. State changes otherwise require their own authorized task and repository evidence.
+Never modify a source-of-truth document merely to manufacture authorization, remove a verification gate, mark work verified, close Active Work, or activate roadmap work. Closing an authorized slice requires the normal evidence-backed state transition and cleanup of the current Active Work document; cleanup means removing the closed slice from current-state storage, not deleting historical verification evidence. The sole exception relevant here is establishing a new temporary Active Work slice directly from an explicit new bounded non-roadmap corrective task when no slice is open. The entire task must restore, preserve, or correct existing documented/contracted/implemented behavior rather than add a capability or materially expand a public contract. Compare the request with the roadmap and current architecture before classifying it as corrective. A mixed corrective + feature request does not qualify for auto-opening; separate scopes only after explicit user authorization. Any temporary slice must reflect the authorized corrective scope, be recorded in Active Work before implementation begins, and must not activate roadmap work. State changes otherwise require their own authorized task and repository evidence.
 
 Do not:
 - start a later roadmap slice;
@@ -54,7 +54,7 @@ It must not:
 
 ### Closed or absent Active Work
 
-An explicitly requested new bounded non-roadmap corrective task may establish a temporary Active Work slice before implementation. Record the new slice's scope from the user request itself, keep it narrowly bounded, and do not include later roadmap work. This is task authorization, not roadmap advancement. First confirm from repository evidence that the entire request restores, preserves, or corrects existing behavior; a new capability, materially expanded public behavior, or roadmap requirement is not corrective work. A mixed request cannot use auto-opening unless the user explicitly separates and authorizes the scopes. Record the temporary slice in Active Work before implementation begins.
+An explicitly requested new bounded non-roadmap corrective task may establish a temporary Active Work slice before implementation. Record the new slice's scope from the user request itself, keep it narrowly bounded, and do not include later roadmap work. Replace the inactive/current placeholder with the new slice; do not append it beneath historical closed work. This is task authorization, not roadmap advancement. First confirm from repository evidence that the entire request restores, preserves, or corrects existing behavior; a new capability, materially expanded public behavior, or roadmap requirement is not corrective work. A mixed request cannot use auto-opening unless the user explicitly separates and authorizes the scopes. Record the temporary slice in Active Work before implementation begins.
 
 Examples include `Hive: Maintenance — Backend`, `Hive: Maintenance — UI`, `Hive: Maintenance — Host/UI`, a clearly bounded bug fix, or a regression fix. Generic `Continue`, `Again`, or similar continuation language does not create a new task or slice when no prior authorized task exists. `Revision` does not invent a task when no prior task context exists. A new capability/feature or roadmap implementation request still requires explicit roadmap authorization.
 
@@ -220,7 +220,7 @@ Record only what evidence supports.
 
 Do not convert inspection/reasoning into testing.
 
-Do not close Active Work or activate the next slice without the required real verification and authorization.
+Do not close Active Work or activate the next slice without the required real verification and authorization. When closing a slice, archive historical evidence as required and leave `docs/Hive_Active_Work.md` containing only the current no-slice state unless another slice is already authorized.
 
 ## 10. Execution boundary
 
@@ -244,7 +244,7 @@ Before implementation handoff or completed Revision:
 
 For pending verification, preserve the exact verification handoff required by `AGENTS.md`.
 
-For governance/workflow-skill changes, also verify that the edited procedure does not contradict `AGENTS.md`, silently alter current Hive state, or introduce a stale roadmap-specific command/example.
+For governance/workflow-skill changes, also verify that the edited procedure does not contradict `AGENTS.md`, silently alter current Hive state, or introduce a stale roadmap-specific command/example. Specifically verify that Active Work remains current-only: no closed slice remains after closure, and historical evidence is kept in `docs/verification/`.
 
 ## Hard-stop rules
 
