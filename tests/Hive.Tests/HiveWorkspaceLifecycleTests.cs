@@ -11,7 +11,7 @@ namespace Hive.Tests;
 public sealed class HiveWorkspaceLifecycleTests
 {
     [Fact]
-    public async Task RefreshAsync_DoesNotMutateDisposedViewWhenManagementCompletesLate()
+    public void RefreshAsync_DoesNotMutateDisposedViewWhenManagementCompletesLate()
     {
         var (management, proxy) = ManagementFacadeProxy.Create();
         var accessContext = new ResourceAccessContext(
@@ -27,9 +27,9 @@ public sealed class HiveWorkspaceLifecycleTests
 
         var refresh = workspace.RefreshAsync();
 
-        await proxy.WorkItemsRequested.Task
-            .WaitAsync(TimeSpan.FromSeconds(5))
-            .ConfigureAwait(false);
+        WaitForTask(
+            proxy.WorkItemsRequested.Task,
+            "The workspace did not reach the management facade.");
 
         workspace.Dispose();
 
@@ -37,9 +37,28 @@ public sealed class HiveWorkspaceLifecycleTests
             Result<IReadOnlyList<WorkItem>>.Success(
                 Array.Empty<WorkItem>()));
 
-        await refresh
-            .WaitAsync(TimeSpan.FromSeconds(5))
-            .ConfigureAwait(false);
+        WaitForTask(
+            refresh,
+            "The disposed workspace refresh did not complete.");
+    }
+
+    private static void WaitForTask(
+        Task task,
+        string timeoutMessage)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+
+        while (!task.IsCompleted)
+        {
+            Application.DoEvents();
+
+            if (DateTime.UtcNow >= deadline)
+                throw new TimeoutException(timeoutMessage);
+
+            Thread.Sleep(10);
+        }
+
+        task.GetAwaiter().GetResult();
     }
 
     public class ManagementFacadeProxy : DispatchProxy
