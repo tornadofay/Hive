@@ -345,7 +345,8 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                         DateTimeOffset.UtcNow),
                     current.Key,
                     current.DisplayName,
-                    current.Generation);
+                    current.Generation,
+                    current.ConfiguredExecutionTargetId);
 
                 await UpdateLifecycleAsync(
                     connection,
