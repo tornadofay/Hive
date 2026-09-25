@@ -305,9 +305,11 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             _ => throw new InvalidOperationException("The host interaction kind is invalid.")
         };
 
+        var controlIdentity = request.ControlId["control:".Length..];
+
         var expectedCapabilityId = CreateCapabilityId(
             "control|" +
-            request.ControlId +
+            controlIdentity +
             "|" +
             capabilitySuffix);
 
