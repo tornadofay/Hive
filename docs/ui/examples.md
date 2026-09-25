@@ -42,7 +42,7 @@ Current branches:
 - `Agents → Base Agent`
 - `Providers → Provider Platform`
 - `Providers → Target Selection`
-- `Providers → Provider Transport`
+- `Providers → Provider → Provider Transport`
 - `Management → Facade`
 - `Workspace → WorkItem Operations`
 - `Settings → Configuration`
@@ -65,7 +65,7 @@ Examples:
 - Configured-host Agent execution example → `Agents / Base Agent`; uses the Example Host's selected persisted `AgentDefinition` and `IHiveManagementFacade.ExecuteConfiguredAgentAsync`, not a private database or synthetic execution target.
 - Provider/ProviderAccount/ExecutionTarget example → `Providers / Provider Platform`
 - Capability-aware execution target selection example → `Providers / Target Selection`
-- OpenAI-compatible provider transport example → `Providers / Provider Transport`
+- OpenAI-compatible provider transport example → `Providers / Provider / Provider Transport`
 - Hive.Management CRUD facade example → `Management / Facade`
 - V1 Workspace / WorkItem operations example → `Workspace / WorkItem Operations`
 - Durable event log/snapshot/outbox example → `Persistence / Events / Event Persistence`
