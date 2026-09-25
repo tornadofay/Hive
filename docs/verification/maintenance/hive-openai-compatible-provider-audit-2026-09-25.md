@@ -36,15 +36,16 @@ Environment:
 
 - Full `Hive.Tests` suite: **verified passed**.
 - Focused OpenAI-compatible provider tests: included in the full suite and therefore covered by this run; no separate focused-run output was provided.
-- Provider project build: **not reported as run; remains unverified**.
-- Example Host manual verification: not required to close this backend change unless a public behavior issue remains; the existing example source was statically inspected and requires no source change.
-- Real provider call: not performed and not required for this maintenance closure.
+- Provider project build `src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`: **developer-verified successful**.
+- Solution runtime configured-agent execution: **developer manually verified successful** on 2026-09-25 against the configured Groq target `openai/gpt-oss-20b`; execution status was `Succeeded` and the application returned `Hello from the configured Hive Agent!`.
+- The successful configured execution did not display provider credentials.
+- Real provider/configured-target execution: **performed successfully**; therefore the earlier optional manual-provider verification item is also satisfied by the reported run.
+- Example Host manual verification: not separately claimed because the provided evidence identifies the run as a solution execution rather than an explicit Example Host navigation path.
 
 ## Scope confirmation
 
 No schema/migration, persistence redesign, orchestration, MAF replacement, host/UI, dependency upgrade, or future roadmap implementation was introduced by this maintenance pass.
 
-The remaining verification item is the explicit provider-project build:
-`src/Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj`.
+All verification items required for this maintenance slice are now satisfied.
 
-The maintenance slice remains open until that build is actually verified.
+The maintenance slice is **developer-verified and closed**. No roadmap phase advanced and Phase 1.14 remains inactive and unauthorized.
