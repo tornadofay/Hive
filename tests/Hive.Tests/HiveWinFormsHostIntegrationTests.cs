@@ -216,7 +216,8 @@ public sealed class HiveWinFormsHostIntegrationTests
 
         Assert.True(result.IsSuccess, result.Error?.Message);
 
-        var descriptor = result.Value!.Controls.Single();
+        var descriptor = result.Value!.Controls
+            .Single(control => control.Name == "total");
         Assert.DoesNotContain(
             descriptor.Capabilities,
             capability => capability.Kind == HiveHostCapabilityKind.SetControlValue);
@@ -255,7 +256,8 @@ public sealed class HiveWinFormsHostIntegrationTests
             accessContext);
 
         var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
-        var captured = descriptor.Controls.Single();
+        var captured = descriptor.Controls
+            .Single(control => control.Name == "customer");
 
         var readCapability = captured.Capabilities.Single(capability =>
             capability.Kind == HiveHostCapabilityKind.ReadControl);
