@@ -64,12 +64,19 @@ Static production review identified and corrected these concrete issues:
    - Re-audited operation-local cancellation source ownership in Settings, Workspace, and Execution Target editor paths.
    - Superseded operations are cancelled but not disposed by their replacement; each in-flight operation owns final disposal in its own `finally` path.
 
+10. **Remaining UI operation-ownership races**
+   - `HiveCrudPage` was still disposing the active operation cancellation source during replacement and control disposal. It now cancels or detaches the active source and leaves final disposal to the in-flight operation.
+   - `HiveExampleTestSurface` was still disposing the active run cancellation source during control disposal. It now cancels/detaches the source and lets `RunAsync` dispose it in its own `finally`.
+   - `HiveSettingsView` was still disposing the active navigation cancellation source from the parent disposal path even though `NavigationAfterSelect` owns that operation. Parent disposal now only cancels/detaches it.
+   - Added focused regression coverage proving an in-flight UI operation can continue using its cancellation token after the control has requested disposal.
+
 Regression coverage added/updated:
 - `HiveWorkspaceLifecycleTests` — disposed Workspace completion.
 - `HiveHostCompositionTests` — disposal race and Host error-boundary sanitization.
 - `HiveBootstrapCredentialStoreTests` — filesystem error-message sanitization.
+- `HiveUiPolishTests` — in-flight `HiveCrudPage` and `HiveExampleTestSurface` cancellation-source ownership during disposal.
 
-No `Hive.Example.WinForms` code was required because the revised behavior is lifecycle/error-boundary hardening of existing Host APIs rather than a new externally meaningful example scenario. No `Hive.Host.WinForms.UI` source change was required in this revision; its affected controls were re-reviewed against the current Host callers and the existing Revision 5 fixes.
+`Hive.Host.WinForms.UI` source changes were required for this follow-up because the remaining cancellation-ownership defects were in shared UI controls. No `Hive.Example.WinForms` code was required because no externally meaningful Example Host capability changed.
 
 ### Implementation commits on main
 
@@ -97,6 +104,7 @@ No `Hive.Example.WinForms` code was required because the revised behavior is lif
 - becfb584fca6c222038af98e4b2fe6d01726c59d — test: cover Host bootstrap error sanitization
 - 1a0d4d71c3285529e8e08ae92802af8eff6b1837 — test: cover Host composition error boundaries
 - e6d7835fa8353f985bbb9f6231320cd444e2baa9 — test: cover composition disposal race
+- f04e46ab4c79e6ec7dc30faea61712483195273b — fix: preserve in-flight UI cancellation ownership
 
 ### Final static review
 
@@ -110,6 +118,7 @@ The final implementation was re-inspected after the last correction for:
 - Host composition serialization, candidate replacement/disposal, disposal cancellation, and structured error boundaries.
 - Project references and dependency direction.
 - Native/custom UI foundation, theme integration, error/output reporting, accessibility, responsive layout, and existing Revision 5 behavior in `Hive.Host.WinForms.UI`.
+- Operation-local cancellation ownership in shared UI controls, including disposal and supersession boundaries.
 - Existing `Hive.Example.WinForms` consumers and public Management/Host APIs; no example update was required.
 - No SQL schema, migration, provider transport, MAF orchestration, business-write capability, host action capability, dependency, or roadmap-phase changes.
 - The complete diff from the Revision 5 closed baseline is limited to:
