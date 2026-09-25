@@ -25,29 +25,21 @@ public sealed class HiveWorkspaceLifecycleTests
             accessContext,
             themeManager);
 
-        var testSynchronizationContext =
-            SynchronizationContext.Current;
-        SynchronizationContext.SetSynchronizationContext(null);
+        var refresh = workspace.RefreshAsync();
 
-        Task refresh;
-        try
-        {
-            refresh = workspace.RefreshAsync();
-        }
-        finally
-        {
-            SynchronizationContext.SetSynchronizationContext(
-                testSynchronizationContext);
-        }
+        await proxy.WorkItemsRequested.Task
+            .WaitAsync(TimeSpan.FromSeconds(5))
+            .ConfigureAwait(false);
 
-        await proxy.WorkItemsRequested.Task;
         workspace.Dispose();
 
         proxy.WorkItemsRequested.TrySetResult(
             Result<IReadOnlyList<WorkItem>>.Success(
                 Array.Empty<WorkItem>()));
 
-        await refresh;
+        await refresh
+            .WaitAsync(TimeSpan.FromSeconds(5))
+            .ConfigureAwait(false);
     }
 
     public class ManagementFacadeProxy : DispatchProxy
