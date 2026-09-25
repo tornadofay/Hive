@@ -191,7 +191,7 @@ public sealed class DpapiHiveBootstrapCredentialStore :
                     ErrorCategory.Internal,
                     "The referenced Hive bootstrap credential contains invalid secret material."));
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Result<SecretMaterial>.Failure(
                 new Error(
@@ -235,7 +235,7 @@ public sealed class DpapiHiveBootstrapCredentialStore :
             File.Delete(path);
             return Task.FromResult(Result.Success());
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return Task.FromResult(
                 Result.Failure(
