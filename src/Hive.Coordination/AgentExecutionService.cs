@@ -188,7 +188,7 @@ public sealed class AgentExecutionService
                     CancellationToken.None)
                 .ConfigureAwait(false);
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             return await PersistTerminalFailureAsync(
                     request,
