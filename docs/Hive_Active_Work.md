@@ -2,9 +2,9 @@
 
 ### Status
 
-**OPEN / implementation in progress.**
+**IMPLEMENTATION COMPLETE / VERIFICATION PENDING DEVELOPER.**
 
-This is an explicitly authorized backend maintenance pass. It does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
+This explicitly authorized backend maintenance pass does not advance the roadmap and does not activate Phase 1.14 or any later roadmap work.
 
 ### Scope
 
@@ -15,14 +15,23 @@ This is an explicitly authorized backend maintenance pass. It does not advance t
 - Preserve existing contracts unless the current implementation is incorrect, unsafe, or architecturally inconsistent.
 - No Phase 1.14 implementation, host-integration contract expansion, schema redesign, speculative abstraction/dependency work, cognitive roadmap work, or unrelated cleanup.
 
-### Audit checkpoint
+### Implementation checkpoint
 
-Static review has identified two concrete defects requiring correction:
+Static and final-diff review identified and corrected three concrete backend defects:
 
-- Hive.Coordination.AgentExecutionService currently converts an unexpected exception into a public Error containing exception.Message, which can expose lower-level transport/provider implementation details through the Coordination contract.
-- AgentExecutionService receives the MAF ChatResponse but currently discards its ResponseId, leaving the existing public AgentExecutionResult.ProviderResponseId field and the persisted terminal-event field permanently null even when the provider supplies a response identifier.
+- Hive.Coordination.AgentExecutionService no longer includes raw unexpected exception text in its public Internal Error message.
+- AgentExecutionService now preserves the MAF ChatResponse.ResponseId in AgentExecutionResult.ProviderResponseId and in the persisted succeeded-event payload.
+- Hive.Agents.QuestionTransport now removes a completed waiter from its waiter dictionary when the Question reaches Answered, Cancelled, or TimedOut, preventing unbounded retention of completed TaskCompletionSource instances.
 
-Additional backend surfaces have been statically reviewed for validation, authorization/scope enforcement, cancellation, concurrency, disposal, persistence transactions, bounded I/O, credential isolation, serialization, stale-result/lease handling, and project responsibility boundaries. No Phase 1.14 work is authorized by this pass.
+Regression coverage was added/updated for the Coordination error-redaction contract and provider response ID propagation/persistence. The configured-agent Example Host output now displays ProviderResponseId when the provider supplies one.
+
+No public API shape, persistence schema, migration, orchestration engine, provider transport contract, credential model, authorization model, or roadmap phase was introduced or changed.
+
+Implementation commits on main:
+- 488fc2265830819398d628767243287e8ece95ad — fix: harden agent execution error and response metadata
+- 67c0763c7fabf866071906c2db4130a1e24ebf46 — test: cover agent execution error and response metadata contracts
+- f1c9232de1a97c044f7019d24ee4eca2464ee6df — docs: expose provider response id in execution example
+- e148225e0c6111dc6fb7d38e97e171c78d6164a6 — fix: release completed question waiters
 
 ### Verification result
 
@@ -30,16 +39,16 @@ Additional backend surfaces have been statically reviewed for validation, author
 
 No build, test run, application launch, migration, provider call, or other execution has been performed by this pass.
 
-Verification will be handed off only after the implementation and focused tests are complete.
+### Verification handoff
 
-### Handoff
-
-Required verification will cover:
+Run and return the actual results for:
 - affected solution/backend projects build;
-- focused Coordination/Agent regression tests;
+- focused Hive.Tests coverage for AgentExecutionIntegrationTests and BaseAgentWorkProtocolsTests;
 - full Hive.Tests suite;
-- configured-agent Example Host execution, with the resulting ProviderResponseId observed when the provider supplies one;
-- static/manual confirmation that unexpected Coordination failures no longer expose raw exception text.
+- configured-agent Example Host execution and confirmation that the configured provider response ID is shown when the provider returns one;
+- an unexpected transport failure path confirming the returned Coordination error message is generic and does not expose the thrown exception text.
+
+Do not close this maintenance pass or change Hive_Current_Status.md from this handoff alone. Close it only after the supplied verification results are reconciled with the repository.
 
 Last updated: 2026-09-25
 ## Temporary maintenance pass — Hive.Providers.OpenAICompatible Final Production Audit Revision 5
