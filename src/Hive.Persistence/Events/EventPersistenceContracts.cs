@@ -59,6 +59,17 @@ public sealed class PersistedEvent
         if (!Enum.IsDefined(stream.Kind))
             throw new ArgumentOutOfRangeException(nameof(stream), "Event stream resource kind is invalid.");
 
+        if (stream.Identity == Guid.Empty)
+            throw new ArgumentException(
+                "Event stream identity is required.",
+                nameof(stream));
+
+        if (streamVersion.Value <= 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(streamVersion),
+                streamVersion.Value,
+                "Event stream version must be greater than zero.");
+
         Stream = stream;
         StreamVersion = streamVersion;
         Envelope = envelope ?? throw new ArgumentNullException(nameof(envelope));
@@ -153,6 +164,16 @@ public sealed class EventAppendRequest
 
         Envelope = envelope ?? throw new ArgumentNullException(nameof(envelope));
         Stream = stream;
+
+        if (expectedVersion is { } suppliedExpectedVersion &&
+            suppliedExpectedVersion.Value <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(expectedVersion),
+                suppliedExpectedVersion.Value,
+                "Expected event stream version must be greater than zero when supplied.");
+        }
+
         ExpectedVersion = expectedVersion;
 
         var expectedValue = expectedVersion?.Value ?? 0;
