@@ -4,12 +4,12 @@ This file is the repository operating constitution. Keep it compact. Detailed ar
 
 ## 1. Authority
 
-Use this order:
+These sources have different authoritative roles:
 
 1. `AGENTS.md` — workflow and non-negotiable repository rules.
 2. `docs/architecture.md` and relevant `docs/architecture/*.md` — intended architecture and ownership.
-3. `docs/Hive_Active_Work.md` — current authorized implementation slice and verification gate.
-4. `docs/roadmap.md` — ordered future work.
+3. `docs/Hive_Active_Work.md` — current authorization, implementation slice, and verification gate.
+4. `docs/roadmap.md` — ordered future work, not authorization.
 5. Source/project files — implementation reality.
 6. Tests — behavior actually exercised.
 7. `docs/Hive_Current_Status.md` — current status only.
@@ -17,7 +17,7 @@ Use this order:
 9. `docs/ui/` and `docs/examples/` — usage guidance.
 10. `README.md` — project overview.
 
-Architecture defines intended structure, source defines implementation reality, Active Work defines current scope, roadmap defines order, and status never turns an unverified claim into a fact. Previous chat history is not repository authority.
+Do not treat this as a simple precedence chain across different concerns: architecture defines intended structure, Active Work defines what is authorized now, source defines implementation reality, tests define what was exercised, roadmap defines future order, and status never turns an unverified claim into a fact. When sources conflict, apply the role that governs the decision and resolve genuine inconsistencies through the repository workflow. Previous chat history is not repository authority.
 
 ## 2. Before changing code
 
