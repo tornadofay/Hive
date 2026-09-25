@@ -20,13 +20,11 @@ public sealed record OpenAICompatibleMessage
         if (string.IsNullOrWhiteSpace(content))
             throw new ArgumentException("Message content is required.", nameof(content));
 
-        var normalized = content.Trim();
-
-        if (normalized.Length > 64 * 1024)
+        if (content.Length > 64 * 1024)
             throw new ArgumentException("Message content cannot exceed 64 KiB.", nameof(content));
 
         Role = role;
-        Content = normalized;
+        Content = content;
     }
 
     public OpenAICompatibleMessageRole Role { get; }
@@ -84,6 +82,11 @@ public sealed class OpenAICompatibleChatRequest
         if (messages.Count == 0)
             throw new ArgumentException("At least one message is required.", nameof(messages));
 
+        if (messages.Count > MaxMessageCount)
+            throw new ArgumentException(
+                $"A chat request cannot contain more than {MaxMessageCount} messages.",
+                nameof(messages));
+
         var normalizedMessages = messages.ToArray();
 
         foreach (var message in normalizedMessages)
@@ -99,6 +102,8 @@ public sealed class OpenAICompatibleChatRequest
     public IReadOnlyList<OpenAICompatibleMessage> Messages { get; }
 
     public OpenAICompatibleStructuredOutput? StructuredOutput { get; }
+
+    internal const int MaxMessageCount = 256;
 }
 
 public sealed record OpenAICompatibleChatResponse(
