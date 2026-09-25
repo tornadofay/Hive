@@ -81,11 +81,13 @@ public sealed class OpenAICompatibleProviderAdapter
         }
 
         var payload = BuildPayload(request);
-        var requestBody = JsonSerializer.SerializeToUtf8Bytes(
-            payload,
-            JsonOptions);
+        Stream requestBody;
 
-        if (requestBody.Length > MaxRequestBodyBytes)
+        try
+        {
+            requestBody = SerializeRequestBody(payload);
+        }
+        catch (RequestBodyTooLargeException)
         {
             return Result<OpenAICompatibleChatResponse>.Failure(
                 new Error(
@@ -94,7 +96,7 @@ public sealed class OpenAICompatibleProviderAdapter
                     "The provider request exceeds the 4 MiB request-body limit."));
         }
 
-        httpRequest.Content = new ByteArrayContent(requestBody);
+        httpRequest.Content = new StreamContent(requestBody);
         httpRequest.Content.Headers.ContentType =
             new MediaTypeHeaderValue("application/json")
             {
@@ -252,6 +254,31 @@ public sealed class OpenAICompatibleProviderAdapter
             ErrorCategory.Serialization,
             "The provider response exceeds the 4 MiB response-body limit.");
 
+    private static Stream SerializeRequestBody(object payload)
+    {
+        var buffer = new MemoryStream(16 * 1024);
+
+        try
+        {
+            var boundedStream = new BoundedWriteStream(
+                buffer,
+                MaxRequestBodyBytes);
+
+            JsonSerializer.Serialize(
+                boundedStream,
+                payload,
+                JsonOptions);
+
+            buffer.Position = 0;
+            return buffer;
+        }
+        catch
+        {
+            buffer.Dispose();
+            throw;
+        }
+    }
+
     private static object BuildPayload(OpenAICompatibleChatRequest request)
     {
         var messages = request.Messages.Select(message => new
@@ -367,6 +394,101 @@ public sealed class OpenAICompatibleProviderAdapter
         {
             return SerializationFailure();
         }
+    }
+
+    private sealed class BoundedWriteStream : Stream
+    {
+        private readonly Stream _inner;
+        private readonly long _maxBytes;
+
+        public BoundedWriteStream(Stream inner, long maxBytes)
+        {
+            _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+
+            if (maxBytes <= 0)
+                throw new ArgumentOutOfRangeException(nameof(maxBytes));
+
+            _maxBytes = maxBytes;
+        }
+
+        public override bool CanRead => _inner.CanRead;
+
+        public override bool CanSeek => _inner.CanSeek;
+
+        public override bool CanWrite => _inner.CanWrite;
+
+        public override long Length => _inner.Length;
+
+        public override long Position
+        {
+            get => _inner.Position;
+            set => _inner.Position = value;
+        }
+
+        public override void Flush() => _inner.Flush();
+
+        public override int Read(
+            byte[] buffer,
+            int offset,
+            int count) =>
+            _inner.Read(buffer, offset, count);
+
+        public override long Seek(
+            long offset,
+            SeekOrigin origin) =>
+            _inner.Seek(offset, origin);
+
+        public override void SetLength(long value)
+        {
+            if (value > _maxBytes)
+                throw new RequestBodyTooLargeException();
+
+            _inner.SetLength(value);
+        }
+
+        public override void Write(
+            byte[] buffer,
+            int offset,
+            int count)
+        {
+            ArgumentNullException.ThrowIfNull(buffer);
+
+            if (count < 0 ||
+                offset < 0 ||
+                offset > buffer.Length - count)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            EnsureWriteFits(count);
+            _inner.Write(buffer, offset, count);
+        }
+
+        public override void Write(ReadOnlySpan<byte> buffer)
+        {
+            EnsureWriteFits(buffer.Length);
+            _inner.Write(buffer);
+        }
+
+        public override void WriteByte(byte value)
+        {
+            EnsureWriteFits(1);
+            _inner.WriteByte(value);
+        }
+
+        private void EnsureWriteFits(int count)
+        {
+            if (count > _maxBytes - _inner.Length)
+                throw new RequestBodyTooLargeException();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+        }
+    }
+
+    private sealed class RequestBodyTooLargeException : Exception
+    {
     }
 
     private static Result<OpenAICompatibleChatResponse> SerializationFailure() =>
