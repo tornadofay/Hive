@@ -43,15 +43,20 @@ Then inspect the affected projects, references, source, tests, examples, configu
 
 Determine the current repository checkpoint from evidence.
 
-If Active Work contains an open slice, continue that slice exactly. Do not implement later roadmap work.
+First determine whether Active Work establishes a developer-verification gate. If it does, stop implementation at that gate before considering any continuation or new implementation request.
 
-If the open Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, stop implementation at that gate. No implementation-affecting `Continue`, `Revision`, `Maintenance`, `Again`, or similar follow-up may cross that gate. A newly worded implementation request also does not silently supersede the gate. Provide the exact required verification handoff instead. Do not resume implementation while the verification gate remains open. Implementation may resume only after the developer supplies the required verification results and the repository reflects the authorized task transition. A separate governance/documentation task may proceed only within its explicitly authorized documentation scope and must not weaken or remove the verification gate. A separately authorized governance/documentation task may still change only its explicitly affected governance/documentation files.
+If the Active Work item says **VERIFICATION PENDING**, **verification is required**, or otherwise establishes a developer-verification gate, stop implementation at that gate. No implementation-affecting `Continue`, `Revision`, `Maintenance`, `Again`, or similar follow-up may cross that gate. A newly worded implementation request also does not silently supersede the gate. Provide the exact required verification handoff instead. Do not resume implementation while the verification gate remains open. Implementation may resume only after the developer supplies the required verification results and the repository reflects the authorized task transition. A separate governance/documentation task may proceed only within its explicitly authorized documentation scope and must not weaken or remove the verification gate. A separately authorized governance/documentation task may still change only its explicitly affected governance/documentation files.
 
-An agent must not edit `docs/Hive_Active_Work.md`, `docs/Hive_Current_Status.md`, the roadmap, or another source-of-truth document merely to create, remove, weaken, or bypass authorization or a verification gate.
+If Active Work has an open implementation slice and no verification gate, continue that slice exactly. Do not implement later roadmap work.
 
-If the active slice is closed, do not automatically advance the roadmap. Roadmap advancement requires explicit user authorization.
+An agent must not edit `docs/Hive_Active_Work.md`, `docs/Hive_Current_Status.md`, the roadmap, or another source-of-truth document merely to manufacture authorization, remove, weaken, or bypass authorization or a verification gate. However, when Active Work is closed or absent, an explicitly requested new bounded Maintenance task is itself authorization to establish a temporary Active Work slice before implementation. That temporary slice must record exactly the requested maintenance scope and must not activate, imply, or incorporate a later roadmap slice.
 
-A maintenance, audit, polish, revision, or "again/continue" request does not authorize a later roadmap slice.
+If Active Work is closed or absent:
+- an explicitly requested new bounded Maintenance, audit, polish, or equivalent maintenance pass may establish a new temporary Active Work slice scoped exactly to that request before implementation;
+- generic `Continue`, `Again`, or similar continuation language does not create a new task or slice when no prior authorized task exists;
+- roadmap advancement still requires explicit user authorization.
+
+A maintenance, audit, polish, revision, or "again/continue" request does not authorize a later roadmap slice. A new temporary maintenance slice is task authorization only; it is not roadmap advancement.
 
 Revision means re-reviewing the immediately preceding work within its inherited mode, domain, scope, and active slice. Revision may correct concrete issues within that inherited scope but must never advance the roadmap.
 
