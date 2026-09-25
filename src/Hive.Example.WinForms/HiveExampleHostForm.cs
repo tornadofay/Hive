@@ -53,6 +53,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     private bool _responsiveLayoutReady;
     private bool _loadingConfiguredAgents;
     private Rectangle _lastOutputRevealButtonBounds;
+    private readonly CancellationTokenSource _lifetimeCts = new();
 
     public HiveExampleHostForm()
         : base(
@@ -309,7 +310,17 @@ internal sealed class HiveExampleHostForm : HiveForm
         try
         {
             candidateComposition = new HiveHostComposition();
-            var result = await candidateComposition.InitializeAsync();
+            var result = await candidateComposition
+                .InitializeAsync(_lifetimeCts.Token);
+
+            if (_lifetimeCts.IsCancellationRequested ||
+                IsDisposed ||
+                Disposing)
+            {
+                candidateComposition.Dispose();
+                candidateComposition = null;
+                return;
+            }
 
             if (result.IsFailure)
             {
@@ -339,9 +350,22 @@ internal sealed class HiveExampleHostForm : HiveForm
                 _composition.Current!,
                 ExampleSettingsAccessContext);
 
-            await RefreshConfiguredStateAsync();
+            await RefreshConfiguredStateAsync(_lifetimeCts.Token);
+
+            if (_lifetimeCts.IsCancellationRequested ||
+                IsDisposed ||
+                Disposing)
+            {
+                return;
+            }
 
             SelectFirstExample();
+        }
+        catch (OperationCanceledException)
+            when (_lifetimeCts.IsCancellationRequested)
+        {
+            candidateComposition?.Dispose();
+            candidateComposition = null;
         }
         catch (Exception exception)
         {
@@ -370,6 +394,8 @@ internal sealed class HiveExampleHostForm : HiveForm
     {
         if (disposing)
         {
+            _lifetimeCts.Cancel();
+
             _navigation.AfterSelect -= NavigationAfterSelect;
             _outputView.CollapseStateChanged -= OutputViewOnCollapseStateChanged;
             _outputView.OutputAvailabilityChanged -= OutputViewOnOutputAvailabilityChanged;
@@ -739,8 +765,15 @@ internal sealed class HiveExampleHostForm : HiveForm
             form.ShowDialog(this);
 
             var apply = await composition
-                .ApplyPersistedConfigurationAsync()
+                .ApplyPersistedConfigurationAsync(_lifetimeCts.Token)
                 .ConfigureAwait(true);
+
+            if (_lifetimeCts.IsCancellationRequested ||
+                IsDisposed ||
+                Disposing)
+            {
+                return;
+            }
 
             if (apply.IsFailure)
             {
@@ -761,7 +794,16 @@ internal sealed class HiveExampleHostForm : HiveForm
                 currentGraph,
                 ExampleSettingsAccessContext);
 
-            await RefreshConfiguredStateAsync(preferredAgentId);
+            await RefreshConfiguredStateAsync(
+                preferredAgentId,
+                _lifetimeCts.Token);
+
+            if (_lifetimeCts.IsCancellationRequested ||
+                IsDisposed ||
+                Disposing)
+            {
+                return;
+            }
 
             if (_activeExample is not null)
                 ShowExample(
@@ -792,7 +834,8 @@ internal sealed class HiveExampleHostForm : HiveForm
     }
 
     private async Task RefreshConfiguredStateAsync(
-        AgentDefinitionId? preferredAgentId = null)
+        AgentDefinitionId? preferredAgentId = null,
+        CancellationToken cancellationToken = default)
     {
         var services = _services;
         var composition = _composition;
@@ -808,7 +851,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             var providers = await graph.Management
                 .ListProvidersAsync(
                     services.AccessContext,
-                    cancellationToken: default)
+                    cancellationToken)
                 .ConfigureAwait(true);
 
             if (providers.IsFailure)
@@ -831,7 +874,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             var agents = await graph.Management
                 .ListAgentDefinitionsAsync(
                     services.AccessContext,
-                    cancellationToken: default)
+                    cancellationToken)
                 .ConfigureAwait(true);
 
             if (agents.IsFailure)
