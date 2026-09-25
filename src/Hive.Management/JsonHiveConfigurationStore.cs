@@ -47,7 +47,7 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                 _filePath,
                 FileMode.Open,
                 FileAccess.Read,
-                FileShare.Read,
+                FileShare.Read | FileShare.Delete,
                 bufferSize: 4096,
                 useAsync: true);
 
