@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using Hive.Core;
@@ -409,22 +410,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         DataGridView grid,
         string surfaceId)
     {
-        var fields = grid.Columns
-            .Cast<DataGridViewColumn>()
-            .Select(column =>
-                new HiveHostFieldDescriptor(
-                    string.IsNullOrWhiteSpace(column.DataPropertyName)
-                        ? column.Name
-                        : column.DataPropertyName,
-                    column.DataPropertyName,
-                    column.ValueType?.FullName ?? typeof(string).FullName!,
-                    required: false,
-                    readOnly: column.ReadOnly,
-                    computed: false,
-                    generated: false,
-                    isPrimaryKey: false))
-            .ToArray();
-
+        var fields = CreateDefaultDataSurfaceFields(grid);
         var rowCount = TryGetBoundRowCount(grid);
 
         var capabilities = new[]
@@ -441,6 +427,75 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             rowCount,
             fields,
             capabilities);
+    }
+
+    private static HiveHostFieldDescriptor[] CreateDefaultDataSurfaceFields(
+        DataGridView grid)
+    {
+        var columns = grid.Columns
+            .Cast<DataGridViewColumn>()
+            .ToArray();
+
+        if (columns.Length > 0 || !grid.AutoGenerateColumns)
+        {
+            return columns
+                .Select(column =>
+                    new HiveHostFieldDescriptor(
+                        string.IsNullOrWhiteSpace(column.DataPropertyName)
+                            ? column.Name
+                            : column.DataPropertyName,
+                        column.DataPropertyName,
+                        column.ValueType?.FullName ??
+                        typeof(string).FullName!,
+                        required: false,
+                        readOnly: column.ReadOnly,
+                        computed: false,
+                        generated: false,
+                        isPrimaryKey: false))
+                .ToArray();
+        }
+
+        var dataSource = grid.DataSource;
+        if (dataSource is null)
+            return Array.Empty<HiveHostFieldDescriptor>();
+
+        var bindingContext = grid.BindingContext;
+        if (bindingContext is null)
+            return Array.Empty<HiveHostFieldDescriptor>();
+
+        try
+        {
+            var manager = bindingContext[
+                dataSource,
+                grid.DataMember];
+
+            var properties = manager?.GetItemProperties();
+            if (properties is null)
+                return Array.Empty<HiveHostFieldDescriptor>();
+
+            return properties
+                .Cast<PropertyDescriptor>()
+                .Select(property =>
+                    new HiveHostFieldDescriptor(
+                        property.Name,
+                        property.Name,
+                        property.PropertyType.FullName ??
+                        typeof(string).FullName!,
+                        required: false,
+                        readOnly: property.IsReadOnly,
+                        computed: false,
+                        generated: false,
+                        isPrimaryKey: false))
+                .ToArray();
+        }
+        catch (ArgumentException)
+        {
+            return Array.Empty<HiveHostFieldDescriptor>();
+        }
+        catch (InvalidOperationException)
+        {
+            return Array.Empty<HiveHostFieldDescriptor>();
+        }
     }
 
     private static int TryGetBoundRowCount(DataGridView grid)
