@@ -397,21 +397,32 @@ public sealed class HiveExampleTestSurface : UserControl
             return;
 
         _runCancellation?.Dispose();
-        _runCancellation = new CancellationTokenSource();
+        var runCancellation = new CancellationTokenSource();
+        _runCancellation = runCancellation;
         _busy = true;
         SetBusy(true, busyText);
 
         try
         {
-            await action(_runCancellation.Token).ConfigureAwait(true);
+            await action(runCancellation.Token).ConfigureAwait(true);
+
+            if (IsDisposed || Disposing)
+                return;
+
             SetStatusVisual("Completed.", HiveExampleStatusTone.Success);
         }
-        catch (OperationCanceledException) when (_runCancellation.IsCancellationRequested)
+        catch (OperationCanceledException) when (runCancellation.IsCancellationRequested)
         {
+            if (IsDisposed || Disposing)
+                return;
+
             SetStatusVisual("Cancelled.", HiveExampleStatusTone.Warning);
         }
         catch (Exception exception)
         {
+            if (IsDisposed || Disposing)
+                return;
+
             SetStatusVisual("Failed.", HiveExampleStatusTone.Error);
 
             var window = owner ?? FindForm();
@@ -427,10 +438,16 @@ public sealed class HiveExampleTestSurface : UserControl
         }
         finally
         {
-            _busy = false;
-            SetBusy(false, _status.Text);
-            _runCancellation?.Dispose();
-            _runCancellation = null;
+            if (!IsDisposed && !Disposing)
+            {
+                _busy = false;
+                SetBusy(false, _status.Text);
+            }
+
+            if (ReferenceEquals(_runCancellation, runCancellation))
+                _runCancellation = null;
+
+            runCancellation.Dispose();
         }
     }
 
