@@ -25,7 +25,20 @@ public sealed class HiveWorkspaceLifecycleTests
             accessContext,
             themeManager);
 
-        var refresh = workspace.RefreshAsync();
+        var testSynchronizationContext =
+            SynchronizationContext.Current;
+        SynchronizationContext.SetSynchronizationContext(null);
+
+        Task refresh;
+        try
+        {
+            refresh = workspace.RefreshAsync();
+        }
+        finally
+        {
+            SynchronizationContext.SetSynchronizationContext(
+                testSynchronizationContext);
+        }
 
         await proxy.WorkItemsRequested.Task;
         workspace.Dispose();
