@@ -235,16 +235,23 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         if (result.IsFailure)
         {
-            SetStatus(result.Error!.Message, HiveStatusTone.Error);
+            if (!IsDisposed && !Disposing)
+            {
+                SetStatus(result.Error!.Message, HiveStatusTone.Error);
 
-            HiveUiErrorReporter.Report(
-                FindForm(),
-                result.Error!.Message,
-                "Hive Persistence",
-                _output,
-                _themeManager);
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    result.Error!.Message,
+                    "Hive Persistence",
+                    _output,
+                    _themeManager);
+            }
+
             return;
         }
+
+        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+            return;
 
         ApplyConfiguration(result.Value!);
         SetStatus("Persistence configuration loaded.", HiveStatusTone.Success);
@@ -264,15 +271,19 @@ internal sealed class HivePersistenceSettingsView : UserControl
         }
         catch (ArgumentException exception)
         {
-            SetStatus(exception.Message, HiveStatusTone.Error);
+            if (!IsDisposed && !Disposing)
+            {
+                SetStatus(exception.Message, HiveStatusTone.Error);
 
-            HiveUiErrorReporter.Report(
-                FindForm(),
-                exception,
-                "Hive Persistence",
-                "The persistence configuration is invalid.",
-                _output,
-                _themeManager);
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    exception,
+                    "Hive Persistence",
+                    "The persistence configuration is invalid.",
+                    _output,
+                    _themeManager);
+            }
+
             return;
         }
 
@@ -327,6 +338,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
             if (cleanup.IsFailure)
             {
+                if (IsDisposed || Disposing)
+                    return;
+
                 _passwordTextBox.Clear();
                 UpdateCredentialStatus(_loadedConfiguration);
                 const string message =
@@ -369,6 +383,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         if (configuration is null)
         {
+            if (IsDisposed || Disposing)
+                return;
+
             HiveUiErrorReporter.Report(
                 FindForm(),
                 "No persistence configuration is loaded. Save or load the Settings configuration before initializing Hive.",
@@ -410,6 +427,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         SetStatus(message, HiveStatusTone.Success);
 
+        if (IsDisposed || Disposing)
+            return;
+
         HiveMessageBox.ShowInformation(
             FindForm(),
             message,
@@ -431,15 +451,19 @@ internal sealed class HivePersistenceSettingsView : UserControl
         }
         catch (ArgumentException exception)
         {
-            SetStatus(exception.Message, HiveStatusTone.Error);
+            if (!IsDisposed && !Disposing)
+            {
+                SetStatus(exception.Message, HiveStatusTone.Error);
 
-            HiveUiErrorReporter.Report(
-                FindForm(),
-                exception,
-                "Hive Persistence",
-                "The persistence configuration is invalid.",
-                _output,
-                _themeManager);
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    exception,
+                    "Hive Persistence",
+                    "The persistence configuration is invalid.",
+                    _output,
+                    _themeManager);
+            }
+
             return;
         }
 
@@ -475,6 +499,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
             $"(supported {value.SupportedSchemaVersion}).";
 
         SetStatus(successMessage, HiveStatusTone.Success);
+
+        if (IsDisposed || Disposing)
+            return;
 
         HiveMessageBox.ShowInformation(
             FindForm(),
