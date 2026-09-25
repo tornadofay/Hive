@@ -126,6 +126,7 @@ public sealed class AgentExecutionService
 
             var responseMessage = response.Messages.LastOrDefault();
             var responseText = responseMessage?.Text;
+            var providerResponseId = response.ResponseId;
 
             if (string.IsNullOrWhiteSpace(responseText))
             {
@@ -155,7 +156,7 @@ public sealed class AgentExecutionService
                     correlationId,
                     startedEvent,
                     responseText,
-                    null,
+                    providerResponseId,
                     CancellationToken.None)
                 .ConfigureAwait(false);
         }
@@ -198,7 +199,7 @@ public sealed class AgentExecutionService
                     new Error(
                         "hive.agent.execution.failed",
                         ErrorCategory.Internal,
-                        $"Agent execution failed unexpectedly: {exception.Message}"),
+                        "Agent execution failed unexpectedly."),
                     CancellationToken.None)
                 .ConfigureAwait(false);
         }
