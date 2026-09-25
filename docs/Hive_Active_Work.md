@@ -33,6 +33,7 @@ Regression coverage was added for invalid error categories, event persistence co
 No public API shape, persistence schema, migration, orchestration, provider transport, credential model, authorization model, dependency graph, or roadmap phase was changed.
 
 Implementation commits on main:
+- 7c534ad4323ca5eee226476f0585a2d3c7d09e5f — fix: validate event outbox stream version
 - fe21727a60b32c21de00e300dd808b0a14b4a3d0 — fix: validate error category
 - d756529a2bb3852ed077614886640723bbb065ca — fix: harden event persistence contracts
 - 143642e210095e26c1ee6159493b790834527c21 — fix: validate event persistence versions
@@ -50,12 +51,13 @@ Implementation commits on main:
 Developer supplied verification on 2026-09-25:
 
 - Full test run: **257 tests, 256 passed, 1 failed, 0 skipped**, 27.6 seconds.
-- Failure was `Hive.Tests.EventInfrastructureTests.EventPersistenceContracts_RejectInvalidVersionsAndStreams`.
-- The failure is an exact exception-type assertion in the regression test. The production constructor correctly throws `ArgumentOutOfRangeException` for an invalid resource version; the test was incorrectly asserting the base `ArgumentException` type, and xUnit `Assert.Throws<T>` requires an exact type match.
-- Corrected the regression test to expect `ArgumentOutOfRangeException` for invalid version/schema-version cases. Production implementation was not changed in response to this failure.
+- The first failure was an exact exception-type assertion in `Hive.Tests.EventInfrastructureTests.EventPersistenceContracts_RejectInvalidVersionsAndStreams`; that test was corrected to expect `ArgumentOutOfRangeException` for invalid version/schema-version cases.
+- After that correction, the same full suite still reports **257 tests, 256 passed, 1 failed, 0 skipped**, now failing at `EventInfrastructureTests.cs(221)` because `EventOutboxEntry` did not yet reject a default stream version.
+- This exposed a concrete production invariant gap: `EventOutboxEntry` validated the stream kind/identity but did not validate `streamVersion > 0`, unlike `PersistedEvent` and `EventSnapshot`.
+- Corrected `EventOutboxEntry` to reject non-positive stream versions with `ArgumentOutOfRangeException`. This is a production correction within the existing Revision 3 event-persistence contract hardening; no API/schema redesign was introduced.
 - No build result was supplied in the reported output, so build status remains unverified from this handoff.
 
-Verification required after the test correction:
+Verification required after the production correction:
 - rerun the full `Hive.Tests` suite;
 - provide the full solution build result separately if it was run and is to be recorded.
 
