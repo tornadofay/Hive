@@ -4,7 +4,7 @@
 
 **Continue:** same task; stop at verification gate.
 
-**Revision:** same task; production-depth re-review; never next phase.
+**Revision:** same task and inherited permissions; production-depth re-review; never next phase. After workflow Review, remains read-only unless implementation is separately authorized.
 
 **Maintenance:** complete production audit within scope; no roadmap advancement.
 
