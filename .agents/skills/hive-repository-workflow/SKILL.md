@@ -24,7 +24,7 @@ For revisions of this skill, inspect the complete workflow-skill directory plus 
 
 Active Work defines the current implementation boundary.
 
-If Active Work is verification-pending, stop implementation-affecting work. Continue, Revision, Maintenance, Again, and Polish do not bypass the gate.
+If Active Work is verification-pending, stop implementation-affecting work. Continue, Revision, Maintenance, Again, and Polish do not bypass the gate. Review is read-only, so the gate does not prevent repository-wide inspection.
 
 With no active slice, an explicit bounded non-roadmap corrective request may establish a temporary slice only when it clearly restores/preserves/corrects existing behavior without a new capability or material public-contract expansion. Record that slice before implementation. New capabilities and roadmap work require explicit authorization.
 
