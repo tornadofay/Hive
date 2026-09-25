@@ -113,6 +113,15 @@ public sealed class OpenAICompatibleChatClient : IChatClient
 
         foreach (var message in messages)
         {
+            if (converted.Count >= OpenAICompatibleChatRequest.MaxMessageCount)
+            {
+                throw new OpenAICompatibleProviderException(
+                    new Hive.Core.Error(
+                        "hive.provider.openai-compatible.message-count-limit",
+                        Hive.Core.ErrorCategory.Validation,
+                        $"A chat request cannot contain more than {OpenAICompatibleChatRequest.MaxMessageCount} messages."));
+            }
+
             ArgumentNullException.ThrowIfNull(message);
 
             var role = message.Role switch
