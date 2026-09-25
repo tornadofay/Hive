@@ -2,55 +2,50 @@
 
 Last updated: 2026-09-25
 
-## Active slice
-
-**Temporary Hive.Persistence Production Audit Revision — OPEN / verification pending.**
-
-Phase 1.14 remains inactive and no later roadmap slice is active or authorized.
-
-### Active maintenance pass — Hive.Persistence Production Audit Revision
+## Closed maintenance pass — Hive.Persistence Production Audit Revision
 
 #### Scope
 
 - Full production-grade audit, revision, and polish of the existing `Hive.Persistence` backend implementation only.
 - Inspect and correct concrete correctness, validation, authorization/scope, persistence, lifecycle, concurrency, cancellation, disposal, serialization, credential isolation, error-classification, indexing, and boundary defects found in the current implementation.
-- Preserve existing public contracts and architecture unless the implementation is demonstrably incorrect or inconsistent with the repository's established contracts.
+- Preserve existing public contracts and architecture unless the implementation is demonstrably incorrect or inconsistent with established repository contracts.
 - Add focused regression coverage for every concrete changed behavior.
 - No roadmap advancement; no Phase 1.14 or later implementation.
-- No schema/migration, provider transport, orchestration, MAF, host/UI, dependency, or unrelated refactor changes unless a concrete discovered defect requires one.
+- No schema/migration, provider transport, orchestration, MAF, host/UI, dependency, or unrelated refactor changes.
 
 #### Implementation checkpoint
 
 Opened from repository `main` at `e4d593d9125695656f4a71fa7ba27878ecbbdd32`.
 
-Confirmed production defect under revision:
-- `SqlAgentDefinitionResourceStore.DeleteAgentDefinitionAsync` returns a retired `AgentDefinition` with `ConfiguredExecutionTargetId` cleared in memory even though the durable row retains the configured target reference. The lifecycle transition must preserve the complete persisted definition state in its returned value.
+Confirmed production defect and correction:
+- `SqlAgentDefinitionResourceStore.DeleteAgentDefinitionAsync` now preserves `ConfiguredExecutionTargetId` when constructing the retired `AgentDefinition` returned to the caller, matching the durable row and preserving the complete persisted definition state across the lifecycle transition.
+- Focused regression coverage in `Hive.Tests/HiveManagementFacadeTests.cs` proves that the configured ExecutionTarget reference survives retirement and a subsequent reload, with lifecycle state and version remaining consistent.
 
 Implementation is complete on `main` through:
-- `9d430d805df3f1229de0ffe2252326ab4c0c54ff` — preserves `ConfiguredExecutionTargetId` when constructing the retired AgentDefinition returned by `SqlAgentDefinitionResourceStore.DeleteAgentDefinitionAsync`;
-- `ea05f67e07a54f4a9d49f165af50f6a4a9f49701` — adds focused regression coverage proving the returned retired definition and a subsequent reload preserve the configured ExecutionTarget reference;
-- `7050be7d7f1486f7c77797642ae01f7b561bfaf5` — opened this maintenance slice from the prior closed checkpoint.
+- `9d430d805df3f1229de0ffe2252326ab4c0c54ff` — persistence correctness fix;
+- `ea05f67e07a54f4a9d49f165af50f6a4a9f49701` — focused regression coverage;
+- `7050be7d7f1486f7c77797642ae01f7b561bfaf5` — opened this maintenance slice;
+- `bf6a664294bf8cc47e502f5431a8ea5abff05840` — archived the final developer verification result.
 
-The final change set contains only `docs/Hive_Active_Work.md`, `src/Hive.Persistence/Agents/SqlAgentDefinitionResourceStore.cs`, and `tests/Hive.Tests/HiveManagementFacadeTests.cs`. No schema, migration, provider, orchestration, MAF, host/UI, dependency, or public API redesign changes were introduced.
+The maintenance code/test change set remains limited to `src/Hive.Persistence/Agents/SqlAgentDefinitionResourceStore.cs` and `tests/Hive.Tests/HiveManagementFacadeTests.cs`, with maintenance state/evidence in the documentation files. No schema, migration, provider, orchestration, MAF, host/UI, dependency, or public API redesign changes were introduced.
 
-#### Verification handoff
+#### Verification result
 
-**Status: NOT VERIFIED.** No builds, tests, application launches, migrations, provider calls, or manual execution were performed for this revision.
+The developer ran:
 
-Tests to run:
-- Focused: `Hive.Tests/HiveManagementFacadeTests.cs`, especially `RetiringConfiguredAgentDefinition_PreservesExecutionTargetReference`.
-- Broader required boundary check: `dotnet test tests/Hive.Tests/Hive.Tests.csproj`.
+```
+dotnet test tests/Hive.Tests/Hive.Tests.csproj
+```
 
-Manual persistence check:
-- create an AgentDefinition with a configured ExecutionTarget;
-- retire it through the Management boundary;
-- confirm the returned retired definition still contains the same `ConfiguredExecutionTargetId`;
-- reload the retired definition and confirm the target reference, lifecycle state, and version match the returned result;
-- confirm the configured target row remains unchanged.
+Result on 2026-09-25:
 
-No Example Host verification is required because the change is backend-only and introduces no new externally meaningful capability.
+**229 tests passed, 0 failed, 0 skipped** in 25.8 seconds on .NET 10.0.1 using xUnit.net VSTest Adapter 3.1.5+1b188a7b0a.
 
-After actual verification, record the real results here before closing the maintenance pass. `docs/Hive_Current_Status.md` remains unchanged because the roadmap phase/status has not changed.
+Verification archive: [hive-persistence-production-audit-revision-2026-09-25.md](verification/maintenance/hive-persistence-production-audit-revision-2026-09-25.md)
+
+No Example Host verification was required because this maintenance pass is backend-only and introduced no externally meaningful host/UI capability.
+
+This temporary Hive.Persistence production audit revision is developer-verified and closed. Phase 1.14 remains inactive and no later roadmap slice is active or authorized.
 
 ### Closed maintenance pass — Hive.Management / Hive.Persistence Production Audit Revision
 
