@@ -4,7 +4,7 @@
 Continue the current authorized task. Stop at a verification gate.
 
 ## Revision
-Re-review the work just performed in the same task context. Fix concrete in-scope problems to production depth when the inherited task permits implementation. Never advance the roadmap. A Revision of a workflow Review remains read-only unless implementation is separately authorized. A later Revision remains the same scope.
+Re-audit the work just performed in the same task context. Fix concrete in-scope problems to production depth, then review the result again. Revision is corrective, not read-only. When it follows Workflow Review, correct the identified in-scope findings within the applicable boundary; the Review itself does not authorize unrelated work or roadmap advancement. A later Revision remains the same scope.
 
 ## Maintenance
 Perform a complete production audit/correction pass within the authorized boundary. When no slice is open, an explicit bounded corrective request may create a temporary slice before implementation if it restores/preserves/corrects existing behavior. New capability or roadmap work still needs explicit authorization. Never use Maintenance to advance the roadmap.
