@@ -94,17 +94,17 @@ For **V1**, the intended Workspace surface covers supported input submissions an
 - track WorkItem status, activity, and relevant execution/provider state;
 - receive completion and other WorkItem notifications;
 - inspect pending approvals and Approve / Reject when required;
-- later, when Phase 1.19 lands, review completed business operations through the first-class Review surface.
+- direct **LLM mode** with explicit model/ExecutionTarget selection;
+- **Agent mode** with explicit Agent selection;
+- conversation/chat and user command/objective submission;
+- application-wide and specialized host-associated Agents;
+- visibility into active Agent/runtime/execution context;
+- assignment and monitoring of work performed by multiple independent Agents;
+- WorkItem/job status, activity, notifications, approvals, and Review state as the owning V1 phases land.
 
-This V1 surface works with a single Agent and does not require a Hive.
+V1 permits multiple independent Agents and runtimes to operate concurrently inside one host application. This does not create persistent Hive membership or Swarm state.
 
-Later Workspace extensions are added when their owning platform capabilities exist:
-
-- general **LLM mode** with explicit model/execution-target selection;
-- **Agentic mode** with Agent/Hive-selected execution targets;
-- Agent and Hive organization/topology;
-- active Swarm membership;
-- Questions, cognitive state, and other later-generation views.
+After Phase 2 establishes persistent Hive membership and Swarm state, Workspace can extend with Hive organization/topology, active Swarm visibility, and Hive-dependent Agentic coordination.
 
 A business application can register a host context with a bounded API such as:
 
@@ -230,7 +230,7 @@ V1 starts with:
 2. Agents
 3. V1 WorkItems / Operational Workspace
 
-Later areas are added when their owning phase lands: Hive Membership, Governance, Cognition, Dreams, Questions, Learning Review, Knowledge/Skills/Memory, Storage, Runtime Diagnostics, Human Intervention, Resource Inventory, Configuration Import/Export, and generic host-integration diagnostics.
+Later areas are added when their owning phase lands: Hive Membership and Governance, CognitiveAgent/CognitiveHive capabilities, Knowledge/Skills/Learning resources, broader storage/deployment portability, configuration import/export, additional host surfaces, and the generic host-integration/operations extensions that remain outside V1.
 
 ## WinForms UI foundation
 
@@ -308,7 +308,7 @@ The solution and project files are the implementation source for the actual proj
 
 **Phase 0 — Foundations: Complete.**
 
-**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1): 1.1–1.13 complete and verified.** The latest Hive.Core Production Polish maintenance pass is complete and verified; no later roadmap slice is currently active or authorized. Authoritative current status and implementation scope remain in `docs/Hive_Current_Status.md` and `docs/Hive_Active_Work.md`.
+**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1): 1.1–1.15 complete and verified.** The latest Hive UI and Phase 1.15 verification passes are complete; Phase 1.16+ is not currently authorized. Authoritative current status and implementation scope remain in `docs/Hive_Current_Status.md` and `docs/Hive_Active_Work.md`.
 
 See [Architecture](docs/architecture.md) and [Roadmap](docs/roadmap.md).
 
