@@ -489,7 +489,7 @@ public sealed class HiveManagementFacadeTests
         Assert.True(
             (await facade.CreateProviderAccountAsync(account, context)).IsSuccess);
 
-        var target = CreateExecutionTarget(provider.Id, account.Id);
+        var target = CreateExecutionTarget(provider.Id, account.Id, context);
         target = target.WithCapabilities(
         [
             new CapabilityStateEntry(
@@ -506,7 +506,7 @@ public sealed class HiveManagementFacadeTests
                 new InputItem(
                     "invoice.png",
                     "image/png",
-                    [1, 2, 3])
+                    new byte[] { 1, 2, 3 })
             ]),
             context);
 
@@ -526,7 +526,7 @@ public sealed class HiveManagementFacadeTests
                 new InputItem(
                     "invoice.png",
                     "image/png",
-                    [1, 2, 3])
+                    new byte[] { 1, 2, 3 })
             ]),
             otherPrincipalContext);
 
