@@ -383,7 +383,7 @@ The V1 application-facing Management contract exposes:
 
 Approval operations are compare-and-set operations against the expected WorkItem version. A stale intervention request returns a typed concurrency error and never applies to a newer WorkItem state. Approve is valid only from `PendingApproval` and transitions to `Completed`; Reject is valid only from `PendingApproval` and transitions to `Rejected`.
 
-In this Phase 1.11 boundary, `Completed` means the approval-only WorkItem interaction reached its terminal state. It is not evidence that a host business write occurred or that the resulting host state was verified. Phase 1.17 must keep approval, host-write disposition, and post-write Review as distinct lifecycle semantics when the real business-operation path is introduced.
+In this Phase 1.11 boundary, `Completed` means the approval-only WorkItem interaction reached its terminal state. It is not evidence that a host business write occurred or that the resulting host state was verified. Phase 1.17 and Phase 1.18 must keep approval, host-write disposition, durable receipt/reconciliation, and post-write Review as distinct lifecycle semantics when the real business-operation path is introduced.
 
 The V1 image attachment is immutable input data owned by Hive and bound to exactly one WorkItem. Attachment metadata is part of the WorkItem snapshot; binary content is stored in a dedicated Hive.Persistence table. Creation persists the attachment and WorkItem-created event/snapshot/outbox in the same SQL transaction. Attachment content is bounded and is never exposed through persistence-specific types.
 
