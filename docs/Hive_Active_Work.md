@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Current slice
 
@@ -12,9 +12,8 @@ Bounded corrective maintenance slice. This work removes duplicated scope/access 
 
 ## Scope
 
-- Refactor `SqlWorkItemResourceStore` to reuse the existing `SqlResourceStoreBase`.
-- Refactor `SqlAgentDefinitionResourceStore` to reuse the existing `SqlResourceStoreBase`.
-- Generalize provider-specific wording/assumptions in `SqlResourceStoreBase` only where required for safe reuse.
+- Refactor `SqlWorkItemResourceStore` and `SqlAgentDefinitionResourceStore` to reuse one internal common helper for the duplicated shared mechanics.
+- Keep `SqlResourceStoreBase` internal and make it delegate the same shared mechanics to that helper; do not widen the public API.
 - Remove duplicated scope-access predicate and common JSON metadata serialization/deserialization from the two stores where the base contract covers them.
 - Preserve WorkItem-specific attachment/event behavior and AgentDefinition-specific persistence semantics.
 - Preserve public contracts, persistence schema, authorization behavior, lifecycle/concurrency behavior, cancellation, diagnostics, and existing host/UI behavior.
@@ -29,7 +28,7 @@ Implementation before verification had centralized the duplicated scope-access p
 
 ## Verification gate
 
-Developer verification failed with compile errors in `SqlResourceStoreCommon.cs` (`GuidParameter` / `IntParameter`) and `SqlAgentDefinitionResourceStore.cs` (`ConcurrencyException` / `IsConstraintConflict`). Same-slice remediation is authorized only for these concrete failures. After remediation, Active Work returns to `VERIFICATION PENDING` and the developer must rerun the required focused tests and broader `Hive.Tests` suite.
+A developer verification failure was recorded for missing `GuidParameter` / `IntParameter` in `SqlResourceStoreCommon` and missing `ConcurrencyException` / `IsConstraintConflict` in `SqlAgentDefinitionResourceStore`. Same-slice remediation restored those helper dependencies. The affected files were re-inspected after remediation; no automated build or tests were run by the agent. Developer verification is required before closure.
 
 ## Example to run
 
