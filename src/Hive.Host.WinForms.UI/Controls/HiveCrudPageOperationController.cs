@@ -100,21 +100,27 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         var handler = OperationFailed;
         if (handler is not null)
         {
-            try
+            var eventArgs = new HiveCrudOperationFailedEventArgs(
+                operation,
+                exception);
+
+            foreach (var subscriber in handler.GetInvocationList())
             {
-                handler(
-                    _eventSender,
-                    new HiveCrudOperationFailedEventArgs(
-                        operation,
-                        exception));
-            }
-            catch (Exception subscriberException)
-            {
-                // Failure notification is an observer boundary. A subscriber
-                // must not turn the already-contained CRUD operation failure
-                // into an unhandled exception on a WinForms async event path.
-                System.Diagnostics.Debug.WriteLine(
-                    $"HiveCrudPage OperationFailed subscriber failed: {subscriberException}");
+                if (subscriber is not EventHandler<HiveCrudOperationFailedEventArgs> callback)
+                    continue;
+
+                try
+                {
+                    callback(_eventSender, eventArgs);
+                }
+                catch (Exception subscriberException)
+                {
+                    // Failure notification is an observer boundary. A subscriber
+                    // must not turn the already-contained CRUD operation failure
+                    // into an unhandled exception or suppress other observers.
+                    System.Diagnostics.Debug.WriteLine(
+                        $"HiveCrudPage OperationFailed subscriber failed: {subscriberException}");
+                }
             }
 
             return;
