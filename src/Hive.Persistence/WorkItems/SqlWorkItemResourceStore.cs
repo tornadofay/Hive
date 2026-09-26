@@ -710,7 +710,8 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         }
 
         var metadata = SqlResourceStoreCommon.DeserializeMetadata(
-            reader.GetString(reader.GetOrdinal("MetadataJson")));
+            reader.GetString(reader.GetOrdinal("MetadataJson")),
+            "Persisted WorkItem metadata is invalid.");
 
         WorkItemAttachmentMetadata? attachment = null;
 
