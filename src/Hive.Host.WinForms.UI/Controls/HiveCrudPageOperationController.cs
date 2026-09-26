@@ -56,7 +56,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         var previous = Interlocked.Exchange(
             ref _operationCancellation,
             source);
-        previous?.Cancel();
+        CancelSafely(previous, "superseding a CRUD operation");
         SetBusy(true);
 
         try
@@ -157,6 +157,24 @@ internal sealed class HiveCrudPageOperationController : IDisposable
     }
 
 
+    private static void CancelSafely(
+        CancellationTokenSource? source,
+        string reason)
+    {
+        if (source is null)
+            return;
+
+        try
+        {
+            source.Cancel();
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"HiveCrudPage operation cancellation callback failed while {reason}: {exception}");
+        }
+    }
+
     private void SetBusy(bool busy)
     {
         _busy = busy;
@@ -189,7 +207,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
     public void Dispose()
     {
         var operationCancellation = Interlocked.Exchange(ref _operationCancellation, null);
-        operationCancellation?.Cancel();
+        CancelSafely(operationCancellation, "disposing the CRUD operation controller");
         operationCancellation?.Dispose();
         _busy = false;
         OperationFailed = null;
