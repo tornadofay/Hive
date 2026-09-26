@@ -47,6 +47,11 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         Func<CancellationToken, Task> action,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(action);
+
+        if (_owner.IsDisposed || _owner.Disposing)
+            return;
+
         var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var previous = Interlocked.Exchange(
             ref _operationCancellation,
@@ -157,6 +162,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         var operationCancellation = Interlocked.Exchange(ref _operationCancellation, null);
         operationCancellation?.Cancel();
         operationCancellation?.Dispose();
+        _busy = false;
         OperationFailed = null;
     }
 }
