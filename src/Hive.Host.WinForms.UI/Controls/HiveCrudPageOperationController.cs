@@ -124,18 +124,29 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         // reusable-control behavior. Without a subscriber, keep the failure
         // inside the UI operation instead of allowing an exception from a
         // button/event path to escape as an unhandled async exception.
-        System.Diagnostics.Debug.WriteLine(exception.ToString());
-
-        var owner = _owner.FindForm();
-        if (owner is not null && !owner.IsDisposed)
+        try
         {
-            HiveUiErrorReporter.Report(
-                owner,
-                exception,
-                "CRUD operation failed",
-                $"The {operation.ToString().ToLowerInvariant()} operation could not be completed.",
-                null,
-                _themeManagerProvider());
+            System.Diagnostics.Debug.WriteLine(exception.ToString());
+
+            var owner = _owner.FindForm();
+            if (owner is not null && !owner.IsDisposed && !owner.Disposing)
+            {
+                HiveUiErrorReporter.Report(
+                    owner,
+                    exception,
+                    "CRUD operation failed",
+                    $"The {operation.ToString().ToLowerInvariant()} operation could not be completed.",
+                    null,
+                    _themeManagerProvider());
+            }
+        }
+        catch (Exception reporterException)
+        {
+            // Error reporting is also an observer boundary: teardown or a
+            // failing presentation surface must not rethrow the original
+            // operation failure from an async UI event path.
+            System.Diagnostics.Debug.WriteLine(
+                $"HiveCrudPage operation error reporter failed: {reporterException}");
         }
     }
 
