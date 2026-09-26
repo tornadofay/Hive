@@ -12,13 +12,13 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
 
 {
 
-    private readonly IHiveConfigurationStore? _configurationStore
+    private readonly IHiveConfigurationStore? _configurationStore;
 
-    private readonly IHivePersistenceConnectionTester? _persistenceConnectionTester
+    private readonly IHivePersistenceConnectionTester? _persistenceConnectionTester;
 
-    private readonly IHiveBootstrapCredentialStore? _bootstrapCredentials
+    private readonly IHiveBootstrapCredentialStore? _bootstrapCredentials;
 
-    private readonly SemaphoreSlim _bootstrapConfigurationMutationGate
+    private readonly SemaphoreSlim _bootstrapConfigurationMutationGate;
 
 
 
