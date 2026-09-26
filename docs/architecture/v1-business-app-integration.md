@@ -1034,6 +1034,7 @@ This architecture does not authorize:
     business write
     operation proposal
     authorization / approval
+    initial durable operation-attempt boundary
 
 1.18
     durable business-operation receipt
