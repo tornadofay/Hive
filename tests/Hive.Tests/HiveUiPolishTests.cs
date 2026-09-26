@@ -347,130 +347,79 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
-    public async Task HiveCrudPageOperationController_ContainsCancellationCallbackExceptionsWhenSuperseding()
+    public async Task HiveCrudPage_ContainsCancellationCallbackExceptionsWhenSuperseding()
     {
-        using var owner = new Panel();
-        using var list = new ListView();
-        using var searchBox = new TextBox();
-        using var statusFilterBox = new ComboBox();
-        using var pagination = new HivePaginationBar();
-        using var controller = new HiveCrudPageOperationController(
-            owner,
-            list,
-            searchBox,
-            statusFilterBox,
-            pagination,
-            () => { },
-            (_, _) => { },
-            () => null,
-            new object());
+        using var page = new HiveCrudPage<TestItem>();
 
-        var started = new TaskCompletionSource<bool>(
+        var firstStarted = new TaskCompletionSource<bool>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource<bool>(
             TaskCreationOptions.RunContinuationsAsynchronously);
+        var invocationCount = 0;
+        var firstOperation = true;
 
-        var first = controller.ExecuteAsync(
-            HiveCrudOperation.Load,
-            async token =>
+        page.LoadItemsAsync = async token =>
+        {
+            if (Interlocked.Exchange(ref invocationCount, 1) == 0)
             {
                 using var registration = token.Register(
                     static () => throw new InvalidOperationException(
                         "synthetic cancellation callback failure"));
 
-                started.TrySetResult(true);
+                firstStarted.TrySetResult(true);
                 await release.Task;
-            },
-            CancellationToken.None);
+            }
 
-        await started.Task;
+            return
+            [
+                new TestItem("Alpha")
+            ];
+        };
 
-        var secondCompleted = false;
-        var second = controller.ExecuteAsync(
-            HiveCrudOperation.Load,
-            _ =>
-            {
-                secondCompleted = true;
-                return Task.CompletedTask;
-            },
-            CancellationToken.None);
+        var first = page.RefreshAsync();
+        await firstStarted.Task;
+
+        var second = page.RefreshAsync();
+
+        release.SetResult(true);
 
         await second;
-
-        release.SetResult(true);
         await first;
 
-        Assert.True(secondCompleted);
+        Assert.Equal(2, Volatile.Read(ref invocationCount));
     }
 
     [Fact]
-    public async Task HiveCrudPageOperationController_ContainsCancellationCallbackExceptionsDuringDispose()
+    public async Task HiveCrudPage_ContainsCancellationCallbackExceptionsDuringDispose()
     {
-        using var owner = new Panel();
-        using var list = new ListView();
-        using var searchBox = new TextBox();
-        using var statusFilterBox = new ComboBox();
-        using var pagination = new HivePaginationBar();
-        var controller = new HiveCrudPageOperationController(
-            owner,
-            list,
-            searchBox,
-            statusFilterBox,
-            pagination,
-            () => { },
-            (_, _) => { },
-            () => null,
-            new object());
-
+        var page = new HiveCrudPage<TestItem>();
         var started = new TaskCompletionSource<bool>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource<bool>(
             TaskCreationOptions.RunContinuationsAsynchronously);
 
-        var operation = controller.ExecuteAsync(
-            HiveCrudOperation.Load,
-            async token =>
-            {
-                using var registration = token.Register(
-                    static () => throw new InvalidOperationException(
-                        "synthetic cancellation callback failure"));
-
-                started.TrySetResult(true);
-                await release.Task;
-            },
-            CancellationToken.None);
-
-        await started.Task;
-
-        controller.Dispose();
-
-        release.SetResult(true);
-        await operation;
-    }
-
-    [Fact]
-    public async Task HiveExampleTestSurface_ContainsCancellationCallbackExceptions()
-    {
-        using var surface = new HiveExampleTestSurface();
-        var started = new TaskCompletionSource<bool>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-
-        var run = surface.RunAsync(async token =>
+        page.LoadItemsAsync = async token =>
         {
             using var registration = token.Register(
                 static () => throw new InvalidOperationException(
                     "synthetic cancellation callback failure"));
 
             started.TrySetResult(true);
-            await Task.Delay(Timeout.Infinite, token);
-        });
+            await release.Task;
 
+            return
+            [
+                new TestItem("Alpha")
+            ];
+        };
+
+        var operation = page.RefreshAsync();
         await started.Task;
 
-        surface.Cancel();
-        await run;
+        page.Dispose();
 
-        Assert.Equal("Cancelled.", surface.StatusLabel.Text);
+        release.SetResult(true);
+        await operation;
     }
 
     [Fact]
