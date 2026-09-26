@@ -117,7 +117,8 @@ public sealed class SqlHiveHostServiceGraphFactory :
             return Result<HiveHostServiceGraph>.Success(
                 new HiveHostServiceGraph(
                     configuration,
-                    management));
+                    management,
+                    [management]));
         }
         catch (OperationCanceledException)
         {
