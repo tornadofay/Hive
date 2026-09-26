@@ -86,7 +86,8 @@ Planned V1 interaction and operations examples should also cover:
 - multiple independent Agents assigned concurrent WorkItems without Hive/Swarm membership → `Workspace / Multi-Agent Work Assignment`;
 - governed Tool, policy, permission, and human-intervention behavior → `Management / Governance`;
 - authoritative resource inventory and runtime/execution diagnostics → `Operations / Resource Inventory`;
-- durable Base-Agent work state and bounded vector retrieval → `Persistence / Agent Work State`.
+- durable Base-Agent work state and runtime-lifetime recovery → `Persistence / Agent Work State`;
+- bounded V1 vector insertion and similarity retrieval infrastructure → `Persistence / Vector Retrieval`;
 
 The host-level Hive Settings entry is introduced through the Overview / Getting Started configuration example. The example explains the configuration model and opens the real Settings window; it is not a fake configuration-inspection surface.
 
