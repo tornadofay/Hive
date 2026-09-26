@@ -18,14 +18,17 @@ internal sealed class InputPreparationExampleView : UserControl
 
     public InputPreparationExampleView(
         IHiveManagementFacade management,
-        ResourceAccessContext context,
         IHiveThemeManager themeManager,
         IHiveExampleOutput output)
     {
         _management = management ?? throw new ArgumentNullException(nameof(management));
-        _context = context ?? throw new ArgumentNullException(nameof(context));
         _output = output ?? throw new ArgumentNullException(nameof(output));
         ArgumentNullException.ThrowIfNull(themeManager);
+
+        _context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
 
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
