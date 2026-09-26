@@ -473,6 +473,18 @@ internal sealed class SqlProviderStore : SqlResourceStoreBase
     }
 
 
+    private static Provider ReadProvider(SqlDataReader reader) =>
+        new(
+            ReadResourceEnvelope<ProviderId>(
+                reader,
+                ResourceKind.Provider,
+                "ProviderId",
+                static value => new ProviderId(value)),
+            reader.GetString(reader.GetOrdinal("ProviderKey")),
+            reader.GetString(reader.GetOrdinal("DisplayName")),
+            reader.GetString(reader.GetOrdinal("TransportKind")));
+
+
     private static void AddProviderParameters(
         SqlCommand command,
         Provider provider)
