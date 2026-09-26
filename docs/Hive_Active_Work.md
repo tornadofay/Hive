@@ -39,6 +39,17 @@ Correct the identified production concerns while preserving existing public cont
 - No changes to the closed 1.14 roadmap status beyond directly required verification documentation.
 - No Phase 1.15+ work.
 
+## Implementation
+
+Complete within the authorized scope.
+
+- `HiveHostComposition` now rejects the publish handoff when disposal occurs during replacement ownership transfer, preventing a disposed candidate from being returned as a successful composition result.
+- `HiveManagementFacade` now owns a deterministic disposal path for the configuration service, and the host service graph owns that facade.
+- `HiveConfigurationManagementService` keeps its mutation gate alive through already-admitted in-flight operations and disposes it when the service reaches an idle disposed state.
+- `HiveHostServiceGraphFactory` releases the management facade if graph construction fails before ownership transfers to the graph.
+- `HiveCrudPageOperationController` isolates exceptions thrown by `OperationFailed` observers so the original operation failure remains contained.
+- Added deterministic regression coverage for the host publish/dispose race, management disposal during an in-flight configuration mutation, and CRUD failure-observer exceptions.
+
 ## Verification
 
 **Status: VERIFICATION PENDING**
