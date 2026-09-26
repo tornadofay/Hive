@@ -55,7 +55,7 @@ public sealed class HiveHostComposition : IDisposable
         Volatile.Read(ref _current);
 
     public HiveHostCompositionStatus Status =>
-        _status;
+        Volatile.Read(ref _status);
 
     public Task<Result<HiveHostServiceGraph>> InitializeAsync(
         CancellationToken cancellationToken = default) =>
