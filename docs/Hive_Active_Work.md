@@ -1,6 +1,8 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+
+Failure reported by developer: `HiveWinFormsHostIntegrationAdapter.cs` no longer resolves existing helper methods `CreateCapability`, `CreateCapabilityId`, and `TryGetBoundRowCount`. The refactor must restore these existing host-integration helpers; this is an in-scope remediation because it preserves the pre-existing adapter behavior and public contract.
 
 ## Current slice
 
