@@ -19,7 +19,7 @@ Image
   → PreparedSpreadsheetRowInput
 ```
 
-Both paths converge on the prepared-input boundary. Typed candidate extraction and validation belong to Phase 1.16.
+Both paths converge on the prepared-input boundary. Typed candidate extraction and validation belong to Phase 1.17.
 
 ## Input submission
 
