@@ -7,13 +7,15 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
     private readonly SqlProviderStore _providers;
     private readonly SqlProviderAccountStore _accounts;
     private readonly SqlExecutionTargetStore _executionTargets;
+    private readonly SqlProviderResourceReader _reader;
 
     public SqlProviderResourceStore(HiveDatabaseOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        _providers = new SqlProviderStore(options);
-        _accounts = new SqlProviderAccountStore(options);
-        _executionTargets = new SqlExecutionTargetStore(options);
+        _reader = new SqlProviderResourceReader(options);
+        _providers = new SqlProviderStore(options, _reader);
+        _accounts = new SqlProviderAccountStore(options, _reader);
+        _executionTargets = new SqlExecutionTargetStore(options, _reader);
     }
 
     public Task<Result<Provider>> CreateProviderAsync(Provider provider, ResourceAccessContext accessContext, CancellationToken cancellationToken = default) =>

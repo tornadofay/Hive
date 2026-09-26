@@ -127,9 +127,9 @@ Provider      ProviderAccount   ExecutionTarget
 store         store             store
 ```
 
-Each internal store owns the SQL statements, row mapping, resource-specific validation that belongs to persistence, lifecycle transitions, and optimistic-concurrency mechanics for its resource. Shared connection creation, command construction, access-parameter construction, common serialization, and structured SQL/error translation remain shared infrastructure when those mechanics are genuinely identical.
+Each internal store owns the SQL statements, resource-specific write logic, resource-specific validation that belongs to persistence, lifecycle transitions, and optimistic-concurrency mechanics for its resource. A small shared `SqlProviderResourceReader` owns cross-resource reads and row materialization needed to validate relationships without duplicating SQL or coupling the resource stores directly to one another. Shared connection creation, command construction, access-parameter construction, common serialization, and structured SQL/error translation remain shared infrastructure when those mechanics are genuinely identical.
 
-This is an internal implementation separation. It must preserve the existing public `IProviderResourceStore` contract, resource ownership/scope enforcement, transactional semantics, cancellation behavior, error classification, deterministic ordering, and dependency direction. The composition class must not regain resource-specific SQL or domain logic merely to make the split appear superficial.
+This is an internal implementation separation. It must preserve the existing public `IProviderResourceStore` contract, resource ownership/scope enforcement, transactional semantics, cancellation behavior, error classification, deterministic ordering, and dependency direction. The composition class must not regain resource-specific SQL or domain logic merely to make the split appear superficial. Cross-resource relationship reads must remain explicit through the shared reader rather than recreating a monolithic three-resource store.
 
 ## 7. Execution Planning
 

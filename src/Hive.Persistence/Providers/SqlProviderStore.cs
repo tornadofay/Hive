@@ -6,6 +6,8 @@ namespace Hive.Persistence;
 
 internal sealed class SqlProviderStore : SqlResourceStoreBase
 {
+    private readonly SqlProviderResourceReader _reader;
+
     private const string ProviderColumns = """
         [ProviderId],
         [ProviderKey],
@@ -24,9 +26,10 @@ internal sealed class SqlProviderStore : SqlResourceStoreBase
         [MetadataJson]
         """;
 
-    internal SqlProviderStore(HiveDatabaseOptions options)
+    internal SqlProviderStore(HiveDatabaseOptions options, SqlProviderResourceReader reader)
         : base(options)
     {
+        _reader = reader ?? throw new ArgumentNullException(nameof(reader));
     }
 
     internal Task<Result<Provider>> CreateProviderAsync(
@@ -167,7 +170,7 @@ internal sealed class SqlProviderStore : SqlResourceStoreBase
                 if (validation is not null)
                     return Result<Provider>.Failure(validation);
 
-                var current = await LoadProviderAsync(
+                var current = await _reader.LoadProviderAsync(
                     connection,
                     transaction,
                     provider.Id,
@@ -263,7 +266,7 @@ internal sealed class SqlProviderStore : SqlResourceStoreBase
             {
                 ValidateAccessContext(accessContext);
 
-                var current = await LoadProviderAsync(
+                var current = await _reader.LoadProviderAsync(
                     connection,
                     transaction,
                     providerId,
@@ -325,7 +328,7 @@ internal sealed class SqlProviderStore : SqlResourceStoreBase
             {
                 ValidateAccessContext(accessContext);
 
-                var current = await LoadProviderAsync(
+                var current = await _reader.LoadProviderAsync(
                     connection,
                     transaction,
                     providerId,
@@ -468,44 +471,6 @@ internal sealed class SqlProviderStore : SqlResourceStoreBase
         if (affected != 1)
             throw new ConcurrencyException();
     }
-
-
-    private async Task<Provider?> LoadProviderAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        ProviderId providerId,
-        CancellationToken cancellationToken)
-    {
-        await using var command = CreateCommand(
-            connection,
-            $"""
-            SELECT {ProviderColumns}
-            FROM [dbo].[HiveProviders] WITH (UPDLOCK, HOLDLOCK)
-            WHERE [ProviderId] = @ProviderId;
-            """,
-            transaction);
-
-        command.Parameters.Add(GuidParameter("@ProviderId", providerId.Value));
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
-            ? ReadProvider(reader)
-            : null;
-    }
-
-
-    private static Provider ReadProvider(SqlDataReader reader) =>
-        new(
-            ReadResourceEnvelope<ProviderId>(
-                reader,
-                ResourceKind.Provider,
-                "ProviderId",
-                static value => new ProviderId(value)),
-            reader.GetString(reader.GetOrdinal("ProviderKey")),
-            reader.GetString(reader.GetOrdinal("DisplayName")),
-            reader.GetString(reader.GetOrdinal("TransportKind")));
 
 
     private static void AddProviderParameters(

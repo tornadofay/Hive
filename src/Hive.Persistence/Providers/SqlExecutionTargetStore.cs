@@ -6,6 +6,8 @@ namespace Hive.Persistence;
 
 internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
 {
+    private readonly SqlProviderResourceReader _reader;
+
     private const string ExecutionTargetColumns = """
         [ExecutionTargetId],
         [ProviderId],
@@ -29,9 +31,10 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
         [MetadataJson]
         """;
 
-    internal SqlExecutionTargetStore(HiveDatabaseOptions options)
+    internal SqlExecutionTargetStore(HiveDatabaseOptions options, SqlProviderResourceReader reader)
         : base(options)
     {
+        _reader = reader ?? throw new ArgumentNullException(nameof(reader));
     }
 
     internal Task<Result<ExecutionTarget>> CreateExecutionTargetAsync(
@@ -52,7 +55,7 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
                 if (validation is not null)
                     return Result<ExecutionTarget>.Failure(validation);
 
-                var provider = await LoadProviderAsync(
+                var provider = await _reader.LoadProviderAsync(
                     connection,
                     transaction,
                     target.ProviderId,
@@ -74,7 +77,7 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
                 if (providerAccessError is not null)
                     return Result<ExecutionTarget>.Failure(providerAccessError);
 
-                var account = await LoadProviderAccountAsync(
+                var account = await _reader.LoadProviderAccountAsync(
                     connection,
                     transaction,
                     target.ProviderAccountId,
@@ -243,7 +246,7 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
                 if (validation is not null)
                     return Result<ExecutionTarget>.Failure(validation);
 
-                var current = await LoadExecutionTargetAsync(
+                var current = await _reader.LoadExecutionTargetAsync(
                     connection,
                     transaction,
                     target.Id,
@@ -359,7 +362,7 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
             {
                 ValidateAccessContext(accessContext);
 
-                var current = await LoadExecutionTargetAsync(
+                var current = await _reader.LoadExecutionTargetAsync(
                     connection,
                     transaction,
                     executionTargetId,
@@ -388,7 +391,7 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
                             "hive.execution-target.lifecycle-invalid",
                             "Only a retired execution target can be reactivated."));
 
-                var provider = await LoadProviderAsync(
+                var provider = await _reader.LoadProviderAsync(
                     connection,
                     transaction,
                     current.ProviderId,
@@ -414,7 +417,7 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
                             "hive.execution-target.provider-inactive",
                             "An execution target cannot be reactivated while its provider is not active."));
 
-                var account = await LoadProviderAccountAsync(
+                var account = await _reader.LoadProviderAccountAsync(
                     connection,
                     transaction,
                     current.ProviderAccountId,
@@ -478,7 +481,7 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
             {
                 ValidateAccessContext(accessContext);
 
-                var current = await LoadExecutionTargetAsync(
+                var current = await _reader.LoadExecutionTargetAsync(
                     connection,
                     transaction,
                     executionTargetId,
@@ -707,58 +710,6 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
             throw new ConcurrencyException();
     }
 
-
-    private async Task<ExecutionTarget?> LoadExecutionTargetAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        ExecutionTargetId executionTargetId,
-        CancellationToken cancellationToken)
-    {
-        await using var command = CreateCommand(
-            connection,
-            $"""
-            SELECT {ExecutionTargetColumns}
-            FROM [dbo].[HiveExecutionTargets] WITH (UPDLOCK, HOLDLOCK)
-            WHERE [ExecutionTargetId] = @ExecutionTargetId;
-            """,
-            transaction);
-
-        command.Parameters.Add(
-            GuidParameter(
-                "@ExecutionTargetId",
-                executionTargetId.Value));
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
-            ? ReadExecutionTarget(reader)
-            : null;
-    }
-
-
-    private static ExecutionTarget ReadExecutionTarget(SqlDataReader reader) =>
-        new(
-            ReadResourceEnvelope<ExecutionTargetId>(
-                reader,
-                ResourceKind.ExecutionTarget,
-                "ExecutionTargetId",
-                static value => new ExecutionTargetId(value)),
-            new ProviderId(reader.GetGuid(reader.GetOrdinal("ProviderId"))),
-            new ProviderAccountId(reader.GetGuid(reader.GetOrdinal("ProviderAccountId"))),
-            reader.GetString(reader.GetOrdinal("TargetKey")),
-            reader.GetString(reader.GetOrdinal("DisplayName")),
-            new Uri(
-                reader.GetString(reader.GetOrdinal("EndpointUri")),
-                UriKind.Absolute),
-            reader.IsDBNull(reader.GetOrdinal("Model"))
-                ? null
-                : reader.GetString(reader.GetOrdinal("Model")),
-            reader.IsDBNull(reader.GetOrdinal("Deployment"))
-                ? null
-                : reader.GetString(reader.GetOrdinal("Deployment")),
-            DeserializeCapabilities(
-                reader.GetString(reader.GetOrdinal("CapabilitiesJson"))));
 
     private static ResourceEnvelope<TIdentity> ReadResourceEnvelope<TIdentity>(
         SqlDataReader reader,

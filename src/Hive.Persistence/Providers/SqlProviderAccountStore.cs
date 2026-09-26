@@ -6,6 +6,8 @@ namespace Hive.Persistence;
 
 internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
 {
+    private readonly SqlProviderResourceReader _reader;
+
     private const string ProviderAccountColumns = """
         [ProviderAccountId],
         [ProviderId],
@@ -26,9 +28,10 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
         [MetadataJson]
         """;
 
-    internal SqlProviderAccountStore(HiveDatabaseOptions options)
+    internal SqlProviderAccountStore(HiveDatabaseOptions options, SqlProviderResourceReader reader)
         : base(options)
     {
+        _reader = reader ?? throw new ArgumentNullException(nameof(reader));
     }
 
     internal Task<Result<ProviderAccount>> CreateProviderAccountAsync(
@@ -49,7 +52,7 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
                 if (validation is not null)
                     return Result<ProviderAccount>.Failure(validation);
 
-                var provider = await LoadProviderAsync(
+                var provider = await _reader.LoadProviderAsync(
                     connection,
                     transaction,
                     account.ProviderId,
@@ -205,7 +208,7 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
                 if (validation is not null)
                     return Result<ProviderAccount>.Failure(validation);
 
-                var current = await LoadProviderAccountAsync(
+                var current = await _reader.LoadProviderAccountAsync(
                     connection,
                     transaction,
                     account.Id,
@@ -317,7 +320,7 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
             {
                 ValidateAccessContext(accessContext);
 
-                var current = await LoadProviderAccountAsync(
+                var current = await _reader.LoadProviderAccountAsync(
                     connection,
                     transaction,
                     providerAccountId,
@@ -346,7 +349,7 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
                             "hive.provider-account.lifecycle-invalid",
                             "Only a retired provider account can be reactivated."));
 
-                var provider = await LoadProviderAsync(
+                var provider = await _reader.LoadProviderAsync(
                     connection,
                     transaction,
                     current.ProviderId,
@@ -407,7 +410,7 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
             {
                 ValidateAccessContext(accessContext);
 
-                var current = await LoadProviderAccountAsync(
+                var current = await _reader.LoadProviderAccountAsync(
                     connection,
                     transaction,
                     providerAccountId,
@@ -561,55 +564,6 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
         if (affected != 1)
             throw new ConcurrencyException();
     }
-
-
-    private async Task<ProviderAccount?> LoadProviderAccountAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        ProviderAccountId providerAccountId,
-        CancellationToken cancellationToken)
-    {
-        await using var command = CreateCommand(
-            connection,
-            $"""
-            SELECT {ProviderAccountColumns}
-            FROM [dbo].[HiveProviderAccounts] WITH (UPDLOCK, HOLDLOCK)
-            WHERE [ProviderAccountId] = @ProviderAccountId;
-            """,
-            transaction);
-
-        command.Parameters.Add(
-            GuidParameter(
-                "@ProviderAccountId",
-                providerAccountId.Value));
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
-            ? ReadProviderAccount(reader)
-            : null;
-    }
-
-
-    private static ProviderAccount ReadProviderAccount(SqlDataReader reader) =>
-        new(
-            ReadResourceEnvelope<ProviderAccountId>(
-                reader,
-                ResourceKind.ProviderAccount,
-                "ProviderAccountId",
-                static value => new ProviderAccountId(value)),
-            new ProviderId(reader.GetGuid(reader.GetOrdinal("ProviderId"))),
-            reader.GetString(reader.GetOrdinal("AccountKey")),
-            reader.GetString(reader.GetOrdinal("DisplayName")),
-            reader.IsDBNull(reader.GetOrdinal("ExternalAccountId"))
-                ? null
-                : reader.GetString(reader.GetOrdinal("ExternalAccountId")),
-            reader.IsDBNull(reader.GetOrdinal("CredentialSecretId"))
-                ? null
-                : new SecretReference(
-                    new SecretId(
-                        reader.GetGuid(reader.GetOrdinal("CredentialSecretId")))));
 
 
     private static void AddProviderAccountParameters(
