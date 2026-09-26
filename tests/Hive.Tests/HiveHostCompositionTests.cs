@@ -454,7 +454,7 @@ public sealed class HiveHostCompositionTests
     }
 
     [Fact]
-    public void Dispose_StillDisposesLifetimeAfterCurrentGraphThrows()
+    public async Task Dispose_StillDisposesLifetimeAfterCurrentGraphThrows()
     {
         var configuration =
             HivePersistenceConfiguration.LocalDevelopment(
@@ -468,7 +468,7 @@ public sealed class HiveHostCompositionTests
             new ScriptedGraphFactory(
                 Result<HiveHostServiceGraph>.Success(graph)));
 
-        var initialization = composition.InitializeAsync().GetAwaiter().GetResult();
+        var initialization = await composition.InitializeAsync();
         Assert.True(initialization.IsSuccess, initialization.Error?.Message);
 
         var exception = Assert.Throws<InvalidOperationException>(
