@@ -12,11 +12,11 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
 {
 
-    private readonly IProviderResourceStore _providerResources
+    private readonly IProviderResourceStore _providerResources;
 
-    private readonly IProviderConnectionTester? _providerConnectionTester
+    private readonly IProviderConnectionTester? _providerConnectionTester;
 
-    private readonly ISecretStore? _secrets
+    private readonly ISecretStore? _secrets;
 
 
 
