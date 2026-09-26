@@ -6,7 +6,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Hive.Persistence;
 
-public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
+public sealed class SqlWorkItemResourceStore : SqlResourceStoreBase, IWorkItemResourceStore
 {
     private const string WorkItemColumns = """
         [WorkItemId],
@@ -30,15 +30,14 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         [AttachmentSha256]
         """;
 
-    private static readonly JsonSerializerOptions JsonOptions =
-        new(JsonSerializerDefaults.General);
-
-    private readonly HiveDatabaseOptions _options;
     private readonly SqlEventPersistenceStore _eventStore;
 
+    protected override IsolationLevel TransactionIsolationLevel =>
+        IsolationLevel.Serializable;
+
     public SqlWorkItemResourceStore(HiveDatabaseOptions options)
+        : base(options)
     {
-        _options = options ?? throw new ArgumentNullException(nameof(options));
         _eventStore = new SqlEventPersistenceStore(options);
     }
 
@@ -150,7 +149,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
             }
 
             var workItem = ReadWorkItem(reader);
-            var accessError = ValidateAccess(workItem.Resource, accessContext);
+            var accessError = ValidateAccess(workItem.Resource, accessContext, "work item");
 
             return accessError is null
                 ? Result<WorkItem>.Success(workItem)
@@ -162,11 +161,11 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         }
         catch (SqlException exception)
         {
-            return Result<WorkItem>.Failure(ToSqlError(exception));
+            return Result<WorkItem>.Failure(ToSqlError("work item", exception));
         }
         catch (Exception exception)
         {
-            return Result<WorkItem>.Failure(ToInvalidStateError(exception));
+            return Result<WorkItem>.Failure(ToInvalidStateError("work item", exception));
         }
     }
 
@@ -226,11 +225,11 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         }
         catch (SqlException exception)
         {
-            return Result<IReadOnlyList<WorkItem>>.Failure(ToSqlError(exception));
+            return Result<IReadOnlyList<WorkItem>>.Failure(ToSqlError("work item", exception));
         }
         catch (Exception exception)
         {
-            return Result<IReadOnlyList<WorkItem>>.Failure(ToInvalidStateError(exception));
+            return Result<IReadOnlyList<WorkItem>>.Failure(ToInvalidStateError("work item", exception));
         }
     }
 
@@ -304,11 +303,11 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         }
         catch (SqlException exception)
         {
-            return Result<WorkItemAttachmentContent>.Failure(ToSqlError(exception));
+            return Result<WorkItemAttachmentContent>.Failure(ToSqlError("work item", exception));
         }
         catch (Exception exception)
         {
-            return Result<WorkItemAttachmentContent>.Failure(ToInvalidStateError(exception));
+            return Result<WorkItemAttachmentContent>.Failure(ToInvalidStateError("work item", exception));
         }
     }
 
@@ -434,9 +433,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                             "The requested WorkItem does not exist."));
                 }
 
-                var accessError = ValidateAccess(
-                    current.Resource,
-                    accessContext);
+                var accessError = ValidateAccess(current.Resource, accessContext, "work item");
 
                 if (accessError is not null)
                     return Result<WorkItem>.Failure(accessError);
@@ -561,11 +558,11 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
 
         AddWorkItemStateParameters(command, updated);
         command.Parameters.Add(
-            BigIntParameter("@NewVersion", updated.Resource.Version.Value));
+            SqlParameter("@NewVersion", SqlDbType.BigInt, updated.Resource.Version.Value));
         command.Parameters.Add(
             GuidParameter("@WorkItemId", updated.Id.Value));
         command.Parameters.Add(
-            BigIntParameter("@ExpectedVersion", current.Resource.Version.Value));
+            SqlParameter("@ExpectedVersion", SqlDbType.BigInt, current.Resource.Version.Value));
 
         if (await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
         {
@@ -611,13 +608,13 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         command.Parameters.Add(
             GuidParameter("@WorkItemId", workItemId.Value));
         command.Parameters.Add(
-            TextParameter("@FileName", 260, submission.FileName));
+            SqlParameter("@FileName", SqlDbType.NVarChar, 260, submission.FileName));
         command.Parameters.Add(
-            TextParameter("@MediaType", 200, submission.MediaType));
+            SqlParameter("@MediaType", SqlDbType.NVarChar, 200, submission.MediaType));
         command.Parameters.Add(
-            BigIntParameter("@ContentLength", attachment.ContentLength));
+            SqlParameter("@ContentLength", SqlDbType.BigInt, attachment.ContentLength));
         command.Parameters.Add(
-            TextParameter("@Sha256", 64, attachment.Sha256));
+            SqlParameter("@Sha256", SqlDbType.NVarChar, 64, attachment.Sha256));
         command.Parameters.Add(
             new SqlParameter("@Content", SqlDbType.VarBinary, -1)
             {
@@ -712,10 +709,8 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                 "Persisted WorkItem lifecycle or status is invalid.");
         }
 
-        var metadata = JsonSerializer.Deserialize<Dictionary<string, string>>(
-            reader.GetString(reader.GetOrdinal("MetadataJson")),
-            JsonOptions) ?? throw new InvalidOperationException(
-                "Persisted WorkItem metadata is invalid.");
+        var metadata = DeserializeMetadata(
+            reader.GetString(reader.GetOrdinal("MetadataJson")));
 
         WorkItemAttachmentMetadata? attachment = null;
 
@@ -778,7 +773,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                 workItem.Id.Value),
             workItem.Resource.Version,
             new EventPayloadVersion(1),
-            JsonSerializer.SerializeToElement(document, JsonOptions));
+            JsonSerializer.SerializeToElement(document));
     }
 
     private static EventEnvelope CreateEvent(
@@ -861,24 +856,8 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
     {
         var resource = workItem.Resource;
 
-        command.Parameters.Add(
-            GuidParameter("@OwnerPrincipalId", resource.Owner.Value));
-        command.Parameters.Add(
-            IntParameter("@ScopeKind", (int)resource.Scope.Kind));
-        command.Parameters.Add(
-            GuidParameter("@ScopeIdentity", resource.Scope.Identity));
-        command.Parameters.Add(
-            BigIntParameter("@ResourceVersion", resource.Version.Value));
-        command.Parameters.Add(
-            GuidParameter("@CreatedByPrincipalId", resource.Provenance.CreatedBy.Value));
-        command.Parameters.Add(
-            DateTimeParameter("@CreatedAtUtc", resource.Provenance.CreatedAtUtc));
-        command.Parameters.Add(
-            GuidParameter("@CorrelationId", resource.Provenance.CorrelationId.Value));
-        command.Parameters.Add(
-            GuidParameter(
-                "@CausationId",
-                resource.Provenance.CausationId?.Value));
+        AddResourceParameters(command, resource);
+
         command.Parameters.Add(
             new SqlParameter("@SourceKind", SqlDbType.Int)
             {
@@ -886,106 +865,24 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                     ? DBNull.Value
                     : (object)(int)resource.Provenance.Source.Value.Kind
             });
+
         command.Parameters.Add(
             GuidParameter(
                 "@SourceIdentity",
                 resource.Provenance.Source?.Identity));
-        command.Parameters.Add(
-            IntParameter("@LifecycleStatus", (int)resource.Lifecycle.Status));
-        command.Parameters.Add(
-            DateTimeParameter(
-                "@LifecycleChangedAtUtc",
-                resource.Lifecycle.ChangedAtUtc));
+
         command.Parameters.Add(
             IntParameter("@Status", (int)workItem.Status));
-        command.Parameters.Add(
-            TextParameter(
-                "@MetadataJson",
-                -1,
-                JsonSerializer.Serialize(
-                    resource.Metadata,
-                    JsonOptions)));
 
         command.Parameters.Add(
-            TextParameter(
-                "@AttachmentFileName",
-                260,
-                workItem.Attachment?.FileName));
+            SqlParameter("@AttachmentFileName", SqlDbType.NVarChar, 260, workItem.Attachment?.FileName));
         command.Parameters.Add(
-            TextParameter(
-                "@AttachmentMediaType",
-                200,
-                workItem.Attachment?.MediaType));
+            SqlParameter("@AttachmentMediaType", SqlDbType.NVarChar, 200, workItem.Attachment?.MediaType));
         command.Parameters.Add(
-            BigIntNullableParameter(
-                "@AttachmentContentLength",
-                workItem.Attachment?.ContentLength));
+            SqlParameter("@AttachmentContentLength", SqlDbType.BigInt, workItem.Attachment?.ContentLength));
         command.Parameters.Add(
-            TextParameter(
-                "@AttachmentSha256",
-                64,
-                workItem.Attachment?.Sha256));
+            SqlParameter("@AttachmentSha256", SqlDbType.NVarChar, 64, workItem.Attachment?.Sha256));
     }
-
-    private static void AddAccessParameters(
-        SqlCommand command,
-        ResourceAccessContext accessContext)
-    {
-        command.Parameters.Add(
-            GuidParameter(
-                "@PrincipalId",
-                accessContext.PrincipalId!.Value.Value));
-        command.Parameters.Add(
-            GuidParameter("@TenantId", accessContext.TenantId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@UserId", accessContext.UserId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@WorkspaceId", accessContext.WorkspaceId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@AgentId", accessContext.AgentId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@RuntimeId", accessContext.RuntimeId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@ExecutionId", accessContext.ExecutionId?.Value));
-        command.Parameters.Add(
-            IntParameter("@GlobalScope", (int)ResourceScopeKind.Global));
-        command.Parameters.Add(
-            IntParameter("@TenantScope", (int)ResourceScopeKind.Tenant));
-        command.Parameters.Add(
-            IntParameter("@UserScope", (int)ResourceScopeKind.User));
-        command.Parameters.Add(
-            IntParameter("@WorkspaceScope", (int)ResourceScopeKind.Workspace));
-        command.Parameters.Add(
-            IntParameter("@AgentScope", (int)ResourceScopeKind.Agent));
-        command.Parameters.Add(
-            IntParameter("@RuntimeScope", (int)ResourceScopeKind.Runtime));
-        command.Parameters.Add(
-            IntParameter("@ExecutionScope", (int)ResourceScopeKind.Execution));
-    }
-
-    private const string ScopeAccessPredicate = """
-        (
-            [ScopeKind] = @GlobalScope
-            OR ([ScopeKind] = @TenantScope
-                AND @TenantId IS NOT NULL
-                AND [ScopeIdentity] = @TenantId)
-            OR ([ScopeKind] = @UserScope
-                AND @UserId IS NOT NULL
-                AND [ScopeIdentity] = @UserId)
-            OR ([ScopeKind] = @WorkspaceScope
-                AND @WorkspaceId IS NOT NULL
-                AND [ScopeIdentity] = @WorkspaceId)
-            OR ([ScopeKind] = @AgentScope
-                AND @AgentId IS NOT NULL
-                AND [ScopeIdentity] = @AgentId)
-            OR ([ScopeKind] = @RuntimeScope
-                AND @RuntimeId IS NOT NULL
-                AND [ScopeIdentity] = @RuntimeId)
-            OR ([ScopeKind] = @ExecutionScope
-                AND @ExecutionId IS NOT NULL
-                AND [ScopeIdentity] = @ExecutionId)
-        )
-        """;
 
     private static ResourceScope CreateScope(ResourceAccessContext context)
     {
@@ -998,186 +895,5 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         return ResourceScope.Global();
     }
 
-    private static Error? ValidateAccess(
-        ResourceEnvelope<WorkItemId> resource,
-        ResourceAccessContext accessContext)
-    {
-        if (resource.Owner != accessContext.PrincipalId)
-        {
-            return new Error(
-                "hive.resource.owner-forbidden",
-                ErrorCategory.Forbidden,
-                "The current principal does not own the WorkItem.");
-        }
 
-        return resource.Scope.Matches(accessContext)
-            ? null
-            : new Error(
-                "hive.resource.scope-forbidden",
-                ErrorCategory.Forbidden,
-                "The current access context is outside the WorkItem scope.");
-    }
-
-    private static void ValidateAccessContext(
-        ResourceAccessContext accessContext)
-    {
-        ArgumentNullException.ThrowIfNull(accessContext);
-
-        if (accessContext.PrincipalId is null ||
-            accessContext.DeploymentId is null)
-        {
-            throw new InvalidOperationException(
-                "A deployment and principal are required for WorkItem access.");
-        }
-    }
-
-    private async Task<Result<T>> ExecuteInTransactionAsync<T>(
-        string resourceName,
-        CancellationToken cancellationToken,
-        Func<SqlConnection, SqlTransaction, Task<Result<T>>> operation)
-    {
-        try
-        {
-            await using var connection =
-                await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-
-            await using var transaction =
-                (SqlTransaction)await connection.BeginTransactionAsync(
-                    IsolationLevel.Serializable,
-                    cancellationToken).ConfigureAwait(false);
-
-            var result = await operation(
-                connection,
-                transaction).ConfigureAwait(false);
-
-            if (result.IsSuccess)
-                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-            else
-                await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
-
-            return result;
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (SqlException exception) when (exception.Number is 2601 or 2627)
-        {
-            return Result<T>.Failure(
-                Error.Conflict(
-                    "hive.work-item.duplicate",
-                    "The WorkItem or attachment already exists."));
-        }
-        catch (ConcurrencyException)
-        {
-            return Result<T>.Failure(
-                Error.Concurrency(
-                    "hive.work-item.concurrency",
-                    "The WorkItem changed before the operation completed."));
-        }
-        catch (SqlException exception)
-        {
-            return Result<T>.Failure(ToSqlError(exception));
-        }
-        catch (Exception exception)
-        {
-            return Result<T>.Failure(ToInvalidStateError(exception));
-        }
-    }
-
-    private async Task<SqlConnection> OpenConnectionAsync(
-        CancellationToken cancellationToken)
-    {
-        var connection = new SqlConnection(_options.ConnectionString);
-
-        try
-        {
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-            return connection;
-        }
-        catch
-        {
-            await connection.DisposeAsync().ConfigureAwait(false);
-            throw;
-        }
-    }
-
-    private SqlCommand CreateCommand(
-        SqlConnection connection,
-        string commandText,
-        SqlTransaction? transaction = null) =>
-        new(commandText, connection, transaction)
-        {
-            CommandTimeout = _options.CommandTimeoutSeconds
-        };
-
-    private static SqlParameter GuidParameter(
-        string name,
-        Guid? value) =>
-        new(name, SqlDbType.UniqueIdentifier)
-        {
-            Value = (object?)value ?? DBNull.Value
-        };
-
-    private static SqlParameter BigIntParameter(
-        string name,
-        long value) =>
-        new(name, SqlDbType.BigInt)
-        {
-            Value = value
-        };
-
-    private static SqlParameter BigIntNullableParameter(
-        string name,
-        long? value) =>
-        new(name, SqlDbType.BigInt)
-        {
-            Value = (object?)value ?? DBNull.Value
-        };
-
-    private static SqlParameter IntParameter(
-        string name,
-        int value) =>
-        new(name, SqlDbType.Int)
-        {
-            Value = value
-        };
-
-    private static SqlParameter DateTimeParameter(
-        string name,
-        DateTimeOffset value) =>
-        new(name, SqlDbType.DateTime2)
-        {
-            Value = value.UtcDateTime
-        };
-
-    private static SqlParameter TextParameter(
-        string name,
-        int size,
-        object? value) =>
-        new(name, SqlDbType.NVarChar, size)
-        {
-            Value = value ?? DBNull.Value
-        };
-
-    private static Error NotFound(
-        string code,
-        string message) =>
-        new(code, ErrorCategory.NotFound, message);
-
-    private static Error ToSqlError(SqlException exception) =>
-        HivePersistenceError.External(
-            "hive.persistence.work-item.sql-failure",
-            "SQL Server operation for the WorkItem failed.",
-            exception);
-
-    private static Error ToInvalidStateError(Exception exception) =>
-        HivePersistenceError.Internal(
-            "hive.persistence.work-item.invalid-state",
-            "Persisted WorkItem state could not be read or validated.",
-            exception);
-
-    private sealed class ConcurrencyException : Exception
-    {
-    }
 }
