@@ -566,6 +566,26 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
     }
 
 
+    private static ProviderAccount ReadProviderAccount(SqlDataReader reader) =>
+        new(
+            ReadResourceEnvelope<ProviderAccountId>(
+                reader,
+                ResourceKind.ProviderAccount,
+                "ProviderAccountId",
+                static value => new ProviderAccountId(value)),
+            new ProviderId(reader.GetGuid(reader.GetOrdinal("ProviderId"))),
+            reader.GetString(reader.GetOrdinal("AccountKey")),
+            reader.GetString(reader.GetOrdinal("DisplayName")),
+            reader.IsDBNull(reader.GetOrdinal("ExternalAccountId"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("ExternalAccountId")),
+            reader.IsDBNull(reader.GetOrdinal("CredentialSecretId"))
+                ? null
+                : new SecretReference(
+                    new SecretId(
+                        reader.GetGuid(reader.GetOrdinal("CredentialSecretId")))));
+
+
     private static void AddProviderAccountParameters(
         SqlCommand command,
         ProviderAccount account)
