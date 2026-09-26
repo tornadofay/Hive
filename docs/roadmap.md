@@ -309,21 +309,21 @@ The reopened revision is implemented around the concrete Hive-owned WinForms bas
 Verification and slice completion remain controlled by `docs/Hive_Active_Work.md`; this roadmap entry does not constitute verification evidence.
 
 ## 1.15 — Input Preparation & Routing
-Objective: prepare supported V1 input sources and route each source through the capability required to produce structured candidate data.
+Objective: prepare supported V1 input sources and route each source through the capability required to produce the common prepared-input boundary.
 
 Initial V1 input paths:
 
 ```
 Image
   → Vision-capable execution target
-  → structured candidate
+  → prepared input
 
 Spreadsheet
   → workbook / worksheet / row parsing and mapping
-  → structured candidate
+  → prepared input
 ```
 
-Input-specific processing must converge on the common structured-candidate boundary rather than creating separate downstream business-operation pipelines.
+Input-specific processing must converge on the common prepared-input boundary rather than creating separate downstream business-operation pipelines. Phase 1.16 consumes prepared input to produce the common structured-candidate boundary.
 
 Verify: image routing, spreadsheet workbook/worksheet/row handling, multiple WorkItems from one submission, bounded file/workbook/row processing, cancellation, input failure isolation, and unsupported-input handling.
 
