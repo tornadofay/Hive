@@ -252,6 +252,11 @@ public sealed class HiveUiPolishTests
                 TenantId.New(),
                 PrincipalId.New()),
             themeManager);
+        using var host = new Form();
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
 
         await view.InitializeAsync();
 
