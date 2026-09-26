@@ -2,7 +2,7 @@
 
 ## Maintenance — Host/UI — Corrective Follow-up
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: IMPLEMENTATION COMPLETE — VERIFICATION PENDING
 
 Opened: 2026-09-26
 
@@ -41,8 +41,10 @@ Tests to run: HiveHostCompositionTests.cs; HiveWinFormsHostIntegrationTests.cs; 
 
 No build, test, launch, migration, or manual UI verification has been performed by the agent.
 
-### Verification failure
+### Remediation
 
-Developer verification reported xUnit1031 in `HiveHostCompositionTests.cs`: the `Dispose_StillDisposesLifetimeAfterCurrentGraphThrows` test uses blocking task operations and must be converted to an async test.
+The xUnit1031 regression was corrected by converting `Dispose_StillDisposesLifetimeAfterCurrentGraphThrows` to an async test and awaiting `InitializeAsync()`. No production code or scope changed.
 
-Remediation boundary: test-only async conversion of that regression. No production scope changes.
+### Required rerun
+
+Tests to run: HiveHostCompositionTests.cs; HiveWinFormsHostIntegrationTests.cs; then the full Hive.Tests suite.
