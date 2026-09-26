@@ -1039,47 +1039,52 @@ This architecture does not authorize:
 1.18
     durable Base-Agent work state
     base-Agent memory/Question/Objective persistence
-    V1 vector storage and retrieval infrastructure
 
 1.19
-    V1 Workspace
-    direct LLM and Agent interaction
-    application-wide and specialized Agent usage
+    V1 vector storage and retrieval infrastructure
 
 1.20
+    V1 Workspace foundation
+    direct LLM interaction
+
+1.21
+    Agent-directed Workspace interaction
+    application-wide and specialized Agent usage
+
+1.22
     governed Tools
     policy/permissions
     authorization
     human intervention
 
-1.21
+1.23
     business write
     operation proposal
     authorization / approval
     initial durable operation-attempt boundary
 
-1.22
+1.24
     durable business-operation receipt
     unknown-outcome reconciliation
 
-1.23
+1.25
     first-class post-write Review
 
-1.24
+1.26
     MAF Sequential composition of the V1 pipeline
 
-1.25
+1.27
     multi-Agent work assignment
     concurrent independent Agent execution using the established V1 workflow
 
-1.26
+1.28
     full-pipeline crash/recovery including durable Agent work state and write receipt/review recovery
 
-1.27
+1.29
     resource inventory
     runtime/execution diagnostics
 
-1.28
+1.30
     metrics
     budget cap
     OpenTelemetry
