@@ -311,7 +311,7 @@ For V1, Workspace is intentionally a small operational surface over Hive.Managem
 - relevant execution/provider status;
 - WorkItem notifications;
 - pending approvals and the Approve / Reject action for the governed business-app write;
-- post-write Review work once the Phase 1.18 Review capability exists, including a review queue/list, opening the associated host record/editor through a bounded authorized host capability, and recording the review result/evidence.
+- post-write Review work once the Phase 1.19 Review capability exists, including a review queue/list, opening the associated host record/editor through a bounded authorized host capability, and recording the review result/evidence.
 
 Human Review is policy-governed rather than permanently mandatory. A deployment may require human review initially and later use automated or hybrid verification, or no human review for an operation class, when its explicit review policy permits that behavior.
 
