@@ -626,7 +626,8 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                 "Persisted resource lifecycle state is invalid.");
 
         var metadata = SqlResourceStoreCommon.DeserializeMetadata(
-            reader.GetString(reader.GetOrdinal("MetadataJson")));
+            reader.GetString(reader.GetOrdinal("MetadataJson")),
+            "Persisted resource metadata is invalid.");
 
         return new ResourceEnvelope<TIdentity>(
             expectedKind,
