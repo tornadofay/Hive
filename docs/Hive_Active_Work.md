@@ -33,6 +33,10 @@ Developer supplied another compiler result within this same corrective slice. Sa
 - removed the unused `HiveCrudPageOperationController._disposed` field and assignment.
 
 The prior compiler failure is retained here as historical verification evidence.
+
+Developer subsequently confirmed that the solution runs and the Example Forms run. This evidence predates the latest Revision pass and therefore does not verify the revision change itself.
+
+Revision re-audit found one concrete lifecycle issue in the extracted CRUD operation controller: disposal cancelled active work but left `_busy` true and allowed a late internal execution call to enter the controller. Same-slice correction now rejects execution after the owner is disposing/disposed, validates the action delegate, and clears busy state during disposal.
 - removed the duplicated legacy `HiveCrudPage<TItem>` member/state block and routed operation calls through the extracted controller;
 - restored `ReadExecutionTarget` and `AddExecutionTargetParameters` in `SqlExecutionTargetStore`;
 - restored the three-argument `SqlParameter` helper overload;
