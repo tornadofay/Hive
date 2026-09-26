@@ -797,7 +797,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         if (result != DialogResult.Yes)
             return;
 
-        await ExecuteAsync(
+        await _operationController.ExecuteAsync(
             HiveCrudOperation.Delete,
             async token =>
             {
@@ -830,7 +830,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         if (result != DialogResult.Yes)
             return;
 
-        await ExecuteAsync(
+        await _operationController.ExecuteAsync(
             HiveCrudOperation.Activate,
             async token =>
             {
