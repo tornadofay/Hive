@@ -153,7 +153,13 @@ public sealed class HiveHostComposition : IDisposable
                     operationToken)
                 .ConfigureAwait(false);
 
-            operationToken.ThrowIfCancellationRequested();
+            if (operationToken.IsCancellationRequested)
+            {
+                if (candidate.IsSuccess)
+                    candidate.Value!.Dispose();
+
+                operationToken.ThrowIfCancellationRequested();
+            }
 
             if (candidate.IsFailure)
             {
