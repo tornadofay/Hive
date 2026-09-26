@@ -127,7 +127,7 @@ internal sealed class InputPreparationExampleView : UserControl
             {FormatFailures(result.Failures)}
 
             Next boundary: Phase 1.16 structured extraction/validation
-            WorkItem binding: Phase 1.18 end-to-end MAF pipeline
+            WorkItem binding: Phase 1.19 end-to-end MAF pipeline
             Provider calls: none
             """);
     }
