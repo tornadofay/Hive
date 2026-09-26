@@ -21,9 +21,13 @@ Bounded corrective maintenance slice. This work removes duplicated scope/access 
 - Add or adjust focused persistence tests only where needed to prove the refactor preserves behavior.
 - No new capability, schema change, roadmap work, or WinForms refactor.
 
+## Checkpoint
+
+Implementation is complete. The duplicated scope-access predicate and JSON metadata serialization/deserialization now have one internal implementation used by the existing provider base and both affected public stores. No public store type was changed to inherit from the internal SQL base, avoiding a public API expansion.
+
 ## Verification gate
 
-Developer must run the focused affected persistence tests and the broader `Hive.Tests` suite as required by existing repository verification practice.
+Developer verification is required before closure. No automated tests or build have been run by the agent.
 
 ## Example to run
 
@@ -31,5 +35,5 @@ None — this is an internal persistence maintenance refactor with no new extern
 
 ## Tests to run
 
-Affected WorkItem/AgentDefinition persistence tests; then the broader `Hive.Tests` suite.
+`tests/Hive.Tests/WorkItemManagementTests.cs`; `tests/Hive.Tests/HiveManagementFacadeTests.cs`; then the broader `Hive.Tests` suite.
 
