@@ -66,7 +66,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         }
         catch (Exception exception)
         {
-            if (!IsDisposed && !Disposing)
+            if (!_owner.IsDisposed && !_owner.Disposing)
             {
                 _setStatus("Operation failed.", HiveStatusTone.Error);
                 RaiseOperationFailed(operation, exception);
@@ -83,7 +83,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
 
             source.Dispose();
 
-            if (isCurrentOperation && !IsDisposed && !Disposing)
+            if (isCurrentOperation && !_owner.IsDisposed && !_owner.Disposing)
                 SetBusy(false);
         }
     }
