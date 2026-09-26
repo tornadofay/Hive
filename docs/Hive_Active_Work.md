@@ -14,7 +14,7 @@ Bounded corrective maintenance slice. This work removes duplicated scope/access 
 
 - Refactor `SqlWorkItemResourceStore` and `SqlAgentDefinitionResourceStore` to reuse one internal common helper for the duplicated shared mechanics.
 - Keep `SqlResourceStoreBase` internal and make it delegate the same shared mechanics to that helper; do not widen the public API.
-- Remove duplicated scope-access predicate and common JSON metadata serialization/deserialization from the two stores where the base contract covers them.
+- Remove duplicated scope-access predicate and common JSON metadata serialization/deserialization from the two stores by reusing the internal common helper.
 - Preserve WorkItem-specific attachment/event behavior and AgentDefinition-specific persistence semantics.
 - Preserve public contracts, persistence schema, authorization behavior, lifecycle/concurrency behavior, cancellation, diagnostics, and existing host/UI behavior.
 - Add or adjust focused persistence tests only where needed to prove the refactor preserves behavior.
@@ -22,7 +22,7 @@ Bounded corrective maintenance slice. This work removes duplicated scope/access 
 
 ## Checkpoint
 
-Revision complete. The duplicated scope-access predicate, access-parameter construction, and common metadata JSON serialization/deserialization now have one internal implementation used by the existing provider base and both affected public stores. Public SqlWorkItemResourceStore and SqlAgentDefinitionResourceStore types remain unchanged and do not inherit from the internal SQL base, avoiding a public API expansion. The revision also preserves the resource-specific metadata-deserialization diagnostic messages that existed before this slice.
+Revision complete. The duplicated scope-access predicate, access-parameter construction, and common metadata JSON serialization/deserialization now have one internal implementation used by the existing provider base and both affected public stores. Public SqlWorkItemResourceStore and SqlAgentDefinitionResourceStore types remain unchanged and do not inherit from the internal SQL base, avoiding a public API expansion. The revision also preserves the resource-specific metadata-deserialization diagnostic messages that existed before this slice. A second revision pass found no remaining implementation defect; only the Active Work wording was aligned with the actual composition boundary.
 
 ## Verification gate
 
