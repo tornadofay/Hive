@@ -100,17 +100,17 @@ internal abstract class WinFormsControlValueAdapterBase :
 
 internal sealed class TextBoxValueAdapter : WinFormsControlValueAdapterBase
 {
-    public bool CanHandle(Control control) =>
+    public override bool CanHandle(Control control) =>
         control is TextBoxBase;
 
-    public bool CanSet(Control control) =>
+    public override bool CanSet(Control control) =>
         control is TextBoxBase &&
         !IsReadOnly(control);
 
-    public string ValueTypeName =>
+    public override string ValueTypeName =>
         typeof(string).FullName!;
 
-    public HiveHostValue? Read(Control control)
+    public override HiveHostValue? Read(Control control)
     {
         if (control is TextBox passwordTextBox &&
             (passwordTextBox.UseSystemPasswordChar ||
@@ -130,7 +130,7 @@ internal sealed class TextBoxValueAdapter : WinFormsControlValueAdapterBase
             : null;
     }
 
-    public Result<HiveHostInteractionResult> Set(
+    public override Result<HiveHostInteractionResult> Set(
         Control control,
         HiveHostInteractionRequest request)
     {
@@ -184,21 +184,21 @@ internal sealed class TextBoxValueAdapter : WinFormsControlValueAdapterBase
 
 internal sealed class CheckBoxValueAdapter : WinFormsControlValueAdapterBase
 {
-    public bool CanHandle(Control control) =>
+    public override bool CanHandle(Control control) =>
         control is CheckBox;
 
-    public bool CanSet(Control control) =>
+    public override bool CanSet(Control control) =>
         control is CheckBox;
 
-    public string ValueTypeName =>
+    public override string ValueTypeName =>
         typeof(bool).FullName!;
 
-    public HiveHostValue? Read(Control control) =>
+    public override HiveHostValue? Read(Control control) =>
         control is CheckBox checkBox
             ? HiveHostValue.FromBoolean(checkBox.Checked)
             : null;
 
-    public Result<HiveHostInteractionResult> Set(
+    public override Result<HiveHostInteractionResult> Set(
         Control control,
         HiveHostInteractionRequest request)
     {
@@ -223,22 +223,22 @@ internal sealed class CheckBoxValueAdapter : WinFormsControlValueAdapterBase
 
 internal sealed class ComboBoxValueAdapter : WinFormsControlValueAdapterBase
 {
-    public bool CanHandle(Control control) =>
+    public override bool CanHandle(Control control) =>
         control is ComboBox;
 
-    public bool CanSet(Control control) =>
+    public override bool CanSet(Control control) =>
         control is ComboBox comboBox &&
         comboBox.DropDownStyle != ComboBoxStyle.DropDownList;
 
-    public string ValueTypeName =>
+    public override string ValueTypeName =>
         typeof(string).FullName!;
 
-    public HiveHostValue? Read(Control control) =>
+    public override HiveHostValue? Read(Control control) =>
         control is ComboBox comboBox
             ? HiveHostValue.FromString(comboBox.Text)
             : null;
 
-    public Result<HiveHostInteractionResult> Set(
+    public override Result<HiveHostInteractionResult> Set(
         Control control,
         HiveHostInteractionRequest request)
     {
@@ -271,21 +271,21 @@ internal sealed class ComboBoxValueAdapter : WinFormsControlValueAdapterBase
 
 internal sealed class DateTimePickerValueAdapter : WinFormsControlValueAdapterBase
 {
-    public bool CanHandle(Control control) =>
+    public override bool CanHandle(Control control) =>
         control is DateTimePicker;
 
-    public bool CanSet(Control control) =>
+    public override bool CanSet(Control control) =>
         control is DateTimePicker;
 
-    public string ValueTypeName =>
+    public override string ValueTypeName =>
         typeof(DateTime).FullName!;
 
-    public HiveHostValue? Read(Control control) =>
+    public override HiveHostValue? Read(Control control) =>
         control is DateTimePicker dateTimePicker
             ? HiveHostValue.FromDateTime(dateTimePicker.Value)
             : null;
 
-    public Result<HiveHostInteractionResult> Set(
+    public override Result<HiveHostInteractionResult> Set(
         Control control,
         HiveHostInteractionRequest request)
     {
@@ -319,22 +319,22 @@ internal sealed class DateTimePickerValueAdapter : WinFormsControlValueAdapterBa
 
 internal sealed class NumericUpDownValueAdapter : WinFormsControlValueAdapterBase
 {
-    public bool CanHandle(Control control) =>
+    public override bool CanHandle(Control control) =>
         control is NumericUpDown;
 
-    public bool CanSet(Control control) =>
+    public override bool CanSet(Control control) =>
         control is NumericUpDown numericUpDown &&
         !numericUpDown.ReadOnly;
 
-    public string ValueTypeName =>
+    public override string ValueTypeName =>
         typeof(decimal).FullName!;
 
-    public HiveHostValue? Read(Control control) =>
+    public override HiveHostValue? Read(Control control) =>
         control is NumericUpDown numericUpDown
             ? HiveHostValue.FromDecimal(numericUpDown.Value)
             : null;
 
-    public Result<HiveHostInteractionResult> Set(
+    public override Result<HiveHostInteractionResult> Set(
         Control control,
         HiveHostInteractionRequest request)
     {
