@@ -659,4 +659,84 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
     }
 
 
+
+    private static ExecutionTarget ReadExecutionTarget(SqlDataReader reader) =>
+        new(
+            ReadResourceEnvelope<ExecutionTargetId>(
+                reader,
+                ResourceKind.ExecutionTarget,
+                "ExecutionTargetId",
+                static value => new ExecutionTargetId(value)),
+            new ProviderId(reader.GetGuid(reader.GetOrdinal("ProviderId"))),
+            new ProviderAccountId(reader.GetGuid(reader.GetOrdinal("ProviderAccountId"))),
+            reader.GetString(reader.GetOrdinal("TargetKey")),
+            reader.GetString(reader.GetOrdinal("DisplayName")),
+            new Uri(
+                reader.GetString(reader.GetOrdinal("EndpointUri")),
+                UriKind.Absolute),
+            reader.IsDBNull(reader.GetOrdinal("Model"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("Model")),
+            reader.IsDBNull(reader.GetOrdinal("Deployment"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("Deployment")),
+            DeserializeCapabilities(
+                reader.GetString(reader.GetOrdinal("CapabilitiesJson"))));
+
+
+    private static void AddExecutionTargetParameters(
+        SqlCommand command,
+        ExecutionTarget target)
+    {
+        AddResourceParameters(command, target.Resource);
+        command.Parameters.Add(
+            GuidParameter(
+                "@ExecutionTargetId",
+                target.Id.Value));
+        command.Parameters.Add(
+            GuidParameter(
+                "@ProviderId",
+                target.ProviderId.Value));
+        command.Parameters.Add(
+            GuidParameter(
+                "@ProviderAccountId",
+                target.ProviderAccountId.Value));
+        command.Parameters.Add(
+            SqlParameter(
+                "@TargetKey",
+                SqlDbType.NVarChar,
+                100,
+                target.Key));
+        command.Parameters.Add(
+            SqlParameter(
+                "@DisplayName",
+                SqlDbType.NVarChar,
+                200,
+                target.DisplayName));
+        command.Parameters.Add(
+            SqlParameter(
+                "@EndpointUri",
+                SqlDbType.NVarChar,
+                2048,
+                target.Endpoint.AbsoluteUri));
+        command.Parameters.Add(
+            SqlParameter(
+                "@Model",
+                SqlDbType.NVarChar,
+                512,
+                target.Model));
+        command.Parameters.Add(
+            SqlParameter(
+                "@Deployment",
+                SqlDbType.NVarChar,
+                512,
+                target.Deployment));
+        command.Parameters.Add(
+            SqlParameter(
+                "@CapabilitiesJson",
+                SqlDbType.NVarChar,
+                -1,
+                SerializeCapabilities(target.Capabilities)));
+    }
+
 }
