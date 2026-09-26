@@ -77,7 +77,15 @@ The verified Phase 1.14 Example Host scenario demonstrates the public Hive-owned
 
 The reopened Phase 1.14 revision extends this same scenario to demonstrate the preferred low-code WinForms path: Hive-owned base forms/controls provide common integration behavior automatically, while explicit semantic overrides are used where application meaning cannot be safely inferred. The example should also retain coverage of the adapter/semantic-provider compatibility path for ordinary/native/custom controls.
 
-For the planned Phase 1.17–1.19 business-write/review example, the Example Host should demonstrate the public business-operation boundary with a deterministic fake host/application. The scenario should show a structured proposal, PendingApproval when required, a durable BusinessOperationReceipt/attempt record with parent/child host identities, a simulated unknown outcome with reconciliation, and a first-class Review queue/list that can locate the written records, open/navigate to the associated host record through the bounded host-review capability, and record a correct or incorrect result with evidence. The scenario should demonstrate the same stable logical operation identity across retry/reconciliation and the policy distinction between required human review, automated/hybrid verification, and an operation class for which human review is not required. The example must not use a real business database or real credentials.
+For the planned V1 business-write/review examples across Phases 1.21–1.23, the Example Host should demonstrate the public business-operation boundary with a deterministic fake host/application. The scenario should show a structured proposal, PendingApproval when required, a durable BusinessOperationReceipt/attempt record with parent/child host identities, a simulated unknown outcome with reconciliation, and a first-class Review queue/list that can locate the written records, open/navigate to the associated host record through the bounded host-review capability, and record a correct or incorrect result with evidence. The scenario should demonstrate the same stable logical operation identity across retry/reconciliation and the policy distinction between required human review, automated/hybrid verification, and an operation class for which human review is not required. The example must not use a real business database or real credentials.
+
+Planned V1 interaction and operations examples should also cover:
+- Provider/model capability discovery and operational metadata → `Providers / Target Selection / Capability Discovery`;
+- direct LLM and Agent Workspace interaction, including application-wide and form-associated specialist Agents → `Workspace / Agent Interaction`;
+- multiple independent Agents assigned concurrent WorkItems without Hive/Swarm membership → `Workspace / Multi-Agent Work Assignment`;
+- governed Tool, policy, permission, and human-intervention behavior → `Management / Governance`;
+- authoritative resource inventory and runtime/execution diagnostics → `Operations / Resource Inventory`;
+- durable Base-Agent work state and bounded vector retrieval → `Persistence / Agent Work State`.
 
 The host-level Hive Settings entry is introduced through the Overview / Getting Started configuration example. The example explains the configuration model and opens the real Settings window; it is not a fake configuration-inspection surface.
 
@@ -134,7 +142,7 @@ Persistence
 
 Provider Configuration, Accounts / Credentials, and Execution Targets are separate CRUD Settings pages because their Management contracts are separate resources. Accounts / Credentials are not provider login screens; they identify durable credential/resource records used by execution targets. Execution Targets own the concrete endpoint/model/deployment/capability configuration used for execution. Agents are also a separate CRUD page that references an ExecutionTarget. Persistence is different: it is a single global configuration editor rather than a CRUD collection.
 
-Future durable configuration such as Tools, Policy / Permissions, Runtime / Execution Defaults, Cognition, Knowledge, Skills, and Memory extends the same Settings center only after its authoritative contract exists.
+Later durable configuration such as Runtime / Execution Defaults, Cognition, Knowledge, Skills, and Phase 5 semantic Memory extends the same Settings center only after its authoritative contract exists. V1 Tools, Policy / Permissions, and Base-Agent work state remain under their V1 Management and persistence boundaries.
 
 The Example Host must consume the same configured Hive state a real host would consume. It must not construct a competing Hive management/persistence graph or hard-code `HiveDatabaseOptions.LocalDevelopment()` when saved configuration exists.
 
