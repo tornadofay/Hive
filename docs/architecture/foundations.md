@@ -233,6 +233,24 @@ The reusable page follows a compact application UX hierarchy: page title/descrip
 WinForms DPI behavior is delegated to the .NET 10 / WinForms platform rather than duplicated in Hive. Hive does not maintain a custom DPI helper or manual control-tree scaling layer. Normal forms and controls use WinForms' built-in scaling behavior; custom-painted Hive controls keep their own design geometry unless a concrete, measured DPI defect requires a focused exception.
 
 
+#### Internal `HiveCrudPage<TItem>` implementation separation
+
+`HiveCrudPage<TItem>` remains the stable consumer-facing generic CRUD control. Its public responsibility is reusable CRUD interaction, not ownership of a single monolithic implementation.
+
+The concrete implementation should separate the mechanical concerns that have independent change pressure:
+
+```
+HiveCrudPage<TItem>
+   ├── operation lifecycle / cancellation / busy state
+   ├── item filtering / selection / paging / projection
+   └── layout / theme / responsive presentation
+```
+
+These components are internal implementation details and may use callbacks supplied by the page. They must not become a second public UI framework, ORM, domain CRUD model, or replacement for the existing Hive UI contracts.
+
+The refactored page must preserve the existing consumer-facing API and behavior, including search/filter semantics, stable selection where applicable, paging, Add/Edit/Delete/Activate/Refresh callbacks, cancellation and stale-operation protection, error reporting, theme changes, compact/normal layout behavior, disposal, and the existing `HiveCrudPage<TItem>` ownership model.
+
+
 #### Hive-owned controls and window shell
 
 The foundation introduces only consumer-facing Hive contracts:
