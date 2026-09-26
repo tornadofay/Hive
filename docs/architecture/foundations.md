@@ -26,7 +26,7 @@ The common resource identity set is:
 
 Each identity is immutable, strongly typed, and non-empty. Identities are references, not mutable state objects.
 
-`ReviewId` is a planned Phase 1.17 identity for the first-class Review resource and is intentionally not part of the current Phase 0 identity implementation until that slice owns the contract.
+`ReviewId` is a planned Phase 1.18 identity for the first-class Review resource and is intentionally not part of the current Phase 0 identity implementation until that slice owns the contract.
 
 ### Lifecycle semantics
 
