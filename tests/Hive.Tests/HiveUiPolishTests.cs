@@ -245,6 +245,7 @@ public sealed class HiveUiPolishTests
         var (management, proxy) = SettingsManagementProxy.Create();
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
 
+        using var host = new Form();
         using var view = new HiveSettingsView(
             management,
             new ResourceAccessContext(
@@ -252,7 +253,6 @@ public sealed class HiveUiPolishTests
                 TenantId.New(),
                 PrincipalId.New()),
             themeManager);
-        using var host = new Form();
 
         host.Controls.Add(view);
         host.Show();
