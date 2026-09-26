@@ -316,15 +316,20 @@ public sealed class InputPreparationTests
             tooManyItemsException.Message,
             StringComparison.OrdinalIgnoreCase);
 
-        var oversized = new byte[InputSubmission.MaxTotalContentBytes + 1];
+        var aggregateFirst = new byte[17 * 1024 * 1024];
+        var aggregateSecond = new byte[17 * 1024 * 1024];
 
         var aggregateException = Assert.Throws<ArgumentException>(
             () => new InputSubmission(
             [
                 new InputItem(
-                    "large.bin",
+                    "first.bin",
                     "application/octet-stream",
-                    oversized)
+                    aggregateFirst),
+                new InputItem(
+                    "second.bin",
+                    "application/octet-stream",
+                    aggregateSecond)
             ]));
 
         Assert.Contains(
