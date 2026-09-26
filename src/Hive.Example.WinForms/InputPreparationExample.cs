@@ -15,7 +15,6 @@ internal sealed class InputPreparationExample : IHiveExample
         ArgumentNullException.ThrowIfNull(services);
         return new InputPreparationExampleView(
             services.GetManagementFacade(),
-            services.GetExampleAccessContext(),
             services.GetThemeManager(),
             services.GetExampleOutput());
     }
