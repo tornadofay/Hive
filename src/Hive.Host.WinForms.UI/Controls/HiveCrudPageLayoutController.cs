@@ -474,7 +474,7 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         };
     }
 
-    internal void Dispose()
+    public void Dispose()
     {
         _owner.FontChanged -= OwnerFontChanged;
         if (_subscribedThemeManager is not null)
