@@ -1,6 +1,8 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+
+Failure reported by developer: `Hive.Host.WinForms/WinFormsControlValueAdapters.cs` does not compile because each concrete control-family adapter declares members that hide the corresponding abstract members on `WinFormsControlValueAdapterBase` instead of overriding them.
 
 ## Current slice
 
