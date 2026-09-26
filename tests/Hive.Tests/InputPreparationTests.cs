@@ -20,7 +20,7 @@ public sealed class InputPreparationTests
             new InputItem(
                 "invoice.png",
                 "image/png",
-                [1, 2, 3, 4])
+                new byte[] { 1, 2, 3, 4 })
         ]);
 
         var result = InputPreparationEngine.Prepare(
@@ -53,7 +53,7 @@ public sealed class InputPreparationTests
             new InputItem(
                 "invoice.png",
                 "image/png",
-                [1, 2, 3, 4])
+                new byte[] { 1, 2, 3, 4 })
         ]);
 
         var result = InputPreparationEngine.Prepare(
@@ -125,11 +125,12 @@ public sealed class InputPreparationTests
     {
         var workbook = CreateWorkbook(
             ("Customers",
-                [
-                    ["Name", "City"],
-                    ["Ada", "Cairo"],
-                    ["Grace", "Giza"]
-                ]),
+                new string[][]
+                {
+                    new[] { "Name", "City" },
+                    new[] { "Ada", "Cairo" },
+                    new[] { "Grace", "Giza" }
+                }),
             useSharedStrings: true);
 
         var result = InputPreparationEngine.Prepare(
@@ -222,7 +223,7 @@ public sealed class InputPreparationTests
     {
         var rows = new List<string[]>
         {
-            ["Name"]
+            new[] { "Name" }
         };
 
         for (var index = 0; index < InputPreparationLimits.MaxWorksheetRows; index++)
@@ -286,7 +287,7 @@ public sealed class InputPreparationTests
             new InputItem(
                 "invoice.png",
                 "image/png",
-                [1, 2, 3])
+                new byte[] { 1, 2, 3 })
         ]);
 
         Assert.Throws<OperationCanceledException>(
@@ -305,7 +306,7 @@ public sealed class InputPreparationTests
             .Select(_ => new InputItem(
                 "item.png",
                 "image/png",
-                [1]))
+                new byte[] { 1 }))
             .ToArray();
 
         var tooManyItemsException = Assert.Throws<ArgumentException>(
@@ -384,21 +385,25 @@ public sealed class InputPreparationTests
     {
         const string mainNamespace =
             "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
-
         const string relationshipNamespace =
             "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
-
         const string packageRelationshipNamespace =
             "http://schemas.openxmlformats.org/package/2006/relationships";
+        const string contentTypesNamespace =
+            "http://schemas.openxmlformats.org/package/2006/content-types";
+
+        var spreadsheet = XNamespace.Get(mainNamespace);
+        var relationship = XNamespace.Get(relationshipNamespace);
+        var packageRelationship = XNamespace.Get(packageRelationshipNamespace);
+        var contentTypes = XNamespace.Get(contentTypesNamespace);
 
         var sharedStrings = new List<string>();
-        var sharedStringMap = new Dictionary<string, int>(
-            StringComparer.Ordinal);
+        var sharedStringMap = new Dictionary<string, int>(StringComparer.Ordinal);
 
         if (useSharedStrings)
         {
-            foreach (var (_, rows) in sheets)
-            foreach (var row in rows)
+            foreach (var sheet in sheets)
+            foreach (var row in sheet.Rows)
             foreach (var value in row)
             {
                 if (!sharedStringMap.ContainsKey(value))
@@ -410,158 +415,186 @@ public sealed class InputPreparationTests
         }
 
         using var memory = new MemoryStream();
+
         using (var archive = new ZipArchive(
                    memory,
                    ZipArchiveMode.Create,
                    leaveOpen: true))
         {
+            var contentTypeOverrides = sheets
+                .Select(
+                    (sheet, index) =>
+                        new XElement(
+                            contentTypes + "Override",
+                            new XAttribute(
+                                "PartName",
+                                $"/xl/worksheets/sheet{index + 1}.xml"),
+                            new XAttribute(
+                                "ContentType",
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml")));
+
+            var contentTypesDocument = new XDocument(
+                new XElement(
+                    contentTypes + "Types",
+                    new XElement(
+                        contentTypes + "Default",
+                        new XAttribute("Extension", "rels"),
+                        new XAttribute(
+                            "ContentType",
+                            "application/vnd.openxmlformats-package.relationships+xml")),
+                    new XElement(
+                        contentTypes + "Default",
+                        new XAttribute("Extension", "xml"),
+                        new XAttribute(
+                            "ContentType",
+                            "application/xml")),
+                    new XElement(
+                        contentTypes + "Override",
+                        new XAttribute("PartName", "/xl/workbook.xml"),
+                        new XAttribute(
+                            "ContentType",
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml")),
+                    contentTypeOverrides));
+
             WriteEntry(
                 archive,
                 "[Content_Types].xml",
-                new XDocument(
-                    new XElement(
-                        XNamespace.Get(
-                            "http://schemas.openxmlformats.org/package/2006/content-types"),
-                        new XElement(
-                            XNamespace.Get(
-                                "http://schemas.openxmlformats.org/package/2006/content-types") +
-                            "Default",
-                            new XAttribute("Extension", "rels"),
-                            new XAttribute("ContentType", "application/vnd.openxmlformats-package.relationships+xml")),
-                        new XElement(
-                            XNamespace.Get(
-                                "http://schemas.openxmlformats.org/package/2006/content-types") +
-                            "Default",
-                            new XAttribute("Extension", "xml"),
-                            new XAttribute("ContentType", "application/xml")),
-                        new XElement(
-                            XNamespace.Get(
-                                "http://schemas.openxmlformats.org/package/2006/content-types") +
-                            "Override",
-                            new XAttribute("PartName", "/xl/workbook.xml"),
-                            new XAttribute("ContentType", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml")),
-                        sheets.Select(
-                            (_, index) =>
-                                new XElement(
-                                    XNamespace.Get(
-                                        "http://schemas.openxmlformats.org/package/2006/content-types") +
-                                    "Override",
-                                    new XAttribute("PartName", $"/xl/worksheets/sheet{index + 1}.xml"),
-                                    new XAttribute("ContentType", "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml")))
-                    ),
+                contentTypesDocument,
                 Encoding.UTF8);
+
+            var packageRootRelationships = new XDocument(
+                new XElement(
+                    packageRelationship + "Relationships",
+                    new XElement(
+                        packageRelationship + "Relationship",
+                        new XAttribute("Id", "rId1"),
+                        new XAttribute(
+                            "Type",
+                            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"),
+                        new XAttribute("Target", "xl/workbook.xml"))));
 
             WriteEntry(
                 archive,
                 "_rels/.rels",
-                Encoding.UTF8.GetBytes(
-                    $"""<?xml version="1.0" encoding="utf-8"?><Relationships xmlns="{packageRelationshipNamespace}"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>"""));
+                packageRootRelationships,
+                Encoding.UTF8);
 
-            var workbookNamespace = XNamespace.Get(mainNamespace);
-            var relationshipAttribute = XNamespace.Get(relationshipNamespace);
+            var workbookDocument = new XDocument(
+                new XElement(
+                    spreadsheet + "workbook",
+                    new XElement(
+                        spreadsheet + "sheets",
+                        sheets.Select(
+                            (sheet, index) =>
+                                new XElement(
+                                    spreadsheet + "sheet",
+                                    new XAttribute("name", sheet.Name),
+                                    new XAttribute("sheetId", index + 1),
+                                    new XAttribute(
+                                        relationship + "id",
+                                        $"rId{index + 1}"))))));
 
             WriteEntry(
                 archive,
                 "xl/workbook.xml",
-                new XDocument(
-                    new XElement(
-                        workbookNamespace + "workbook",
-                        new XElement(
-                            workbookNamespace + "sheets",
-                            sheets.Select(
-                                (sheet, index) =>
-                                    new XElement(
-                                        workbookNamespace + "sheet",
-                                        new XAttribute("name", sheet.Name),
-                                        new XAttribute("sheetId", index + 1),
-                                        new XAttribute(relationshipAttribute + "id", $"rId{index + 1}"))))),
+                workbookDocument,
                 Encoding.UTF8);
+
+            var workbookRelationshipsDocument = new XDocument(
+                new XElement(
+                    packageRelationship + "Relationships",
+                    sheets.Select(
+                        (_, index) =>
+                            new XElement(
+                                packageRelationship + "Relationship",
+                                new XAttribute("Id", $"rId{index + 1}"),
+                                new XAttribute(
+                                    "Type",
+                                    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"),
+                                new XAttribute(
+                                    "Target",
+                                    $"worksheets/sheet{index + 1}.xml")))));
 
             WriteEntry(
                 archive,
                 "xl/_rels/workbook.xml.rels",
-                new XDocument(
-                    new XElement(
-                        XNamespace.Get(packageRelationshipNamespace) + "Relationships",
-                        sheets.Select(
-                            (_, index) =>
-                                new XElement(
-                                    XNamespace.Get(packageRelationshipNamespace) + "Relationship",
-                                    new XAttribute("Id", $"rId{index + 1}"),
-                                    new XAttribute(
-                                        "Type",
-                                        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"),
-                                    new XAttribute("Target", $"worksheets/sheet{index + 1}.xml")))),
+                workbookRelationshipsDocument,
                 Encoding.UTF8);
 
             if (useSharedStrings)
             {
+                var sharedStringsDocument = new XDocument(
+                    new XElement(
+                        spreadsheet + "sst",
+                        new XAttribute("count", sharedStrings.Count),
+                        new XAttribute("uniqueCount", sharedStrings.Count),
+                        sharedStrings.Select(
+                            value =>
+                                new XElement(
+                                    spreadsheet + "si",
+                                    new XElement(
+                                        spreadsheet + "t",
+                                        value)))));
+
                 WriteEntry(
                     archive,
                     "xl/sharedStrings.xml",
-                    new XDocument(
-                        new XElement(
-                            workbookNamespace + "sst",
-                            new XAttribute("count", sharedStrings.Count),
-                            new XAttribute("uniqueCount", sharedStrings.Count),
-                            sharedStrings.Select(
-                                value =>
-                                    new XElement(
-                                        workbookNamespace + "si",
-                                        new XElement(
-                                            workbookNamespace + "t",
-                                            value)))),
+                    sharedStringsDocument,
                     Encoding.UTF8);
             }
 
-            foreach (var (sheet, index) in sheets.Select(
-                         (value, index) => (value, index)))
+            for (var index = 0; index < sheets.Length; index++)
             {
-                var worksheetRoot = new XElement(
-                    workbookNamespace + "worksheet",
+                var sheet = sheets[index];
+
+                var rows = sheet.Rows.Select(
+                    (row, rowIndex) =>
+                        new XElement(
+                            spreadsheet + "row",
+                            new XAttribute("r", rowIndex + 1),
+                            row.Select(
+                                (value, columnIndex) =>
+                                {
+                                    var cell = new XElement(
+                                        spreadsheet + "c",
+                                        new XAttribute(
+                                            "r",
+                                            ToColumnName(columnIndex + 1) +
+                                            (rowIndex + 1)));
+
+                                    if (useSharedStrings)
+                                    {
+                                        cell.Add(
+                                            new XAttribute("t", "s"),
+                                            new XElement(
+                                                spreadsheet + "v",
+                                                sharedStringMap[value]));
+                                    }
+                                    else
+                                    {
+                                        cell.Add(
+                                            new XAttribute("t", "inlineStr"),
+                                            new XElement(
+                                                spreadsheet + "is",
+                                                new XElement(
+                                                    spreadsheet + "t",
+                                                    value)));
+                                    }
+
+                                    return cell;
+                                })));
+
+                var worksheetDocument = new XDocument(
                     new XElement(
-                        workbookNamespace + "sheetData",
-                        sheet.Rows.Select(
-                            (row, rowIndex) =>
-                                new XElement(
-                                    workbookNamespace + "row",
-                                    new XAttribute("r", rowIndex + 1),
-                                    row.Select(
-                                        (value, columnIndex) =>
-                                        {
-                                            var cell = new XElement(
-                                                workbookNamespace + "c",
-                                                new XAttribute(
-                                                    "r",
-                                                    ToColumnName(columnIndex + 1) +
-                                                    (rowIndex + 1)));
-
-                                            if (useSharedStrings)
-                                            {
-                                                cell.Add(
-                                                    new XAttribute("t", "s"),
-                                                    new XElement(
-                                                        workbookNamespace + "v",
-                                                        sharedStringMap[value]));
-                                            }
-                                            else
-                                            {
-                                                cell.Add(
-                                                    new XAttribute("t", "inlineStr"),
-                                                    new XElement(
-                                                        workbookNamespace + "is",
-                                                        new XElement(
-                                                            workbookNamespace + "t",
-                                                            value)));
-                                            }
-
-                                            return cell;
-                                        }))));
+                        spreadsheet + "worksheet",
+                        new XElement(
+                            spreadsheet + "sheetData",
+                            rows)));
 
                 WriteEntry(
                     archive,
                     $"xl/worksheets/sheet{index + 1}.xml",
-                    new XDocument(worksheetRoot),
+                    worksheetDocument,
                     Encoding.UTF8);
             }
         }
