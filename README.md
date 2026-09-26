@@ -88,12 +88,16 @@ A member Agent inside a Hive normally requests missing specialties from the pare
 
 `Hive.Workspace` is the human-facing operational surface over `Hive.Management`.
 
-For **V1**, the intended Workspace surface covers supported input submissions and their resulting WorkItems:
+For **V1**, Workspace is the primary human interaction surface for Hive and covers direct LLM interaction, Agent interaction, and V1 work operations:
 
+- direct **LLM mode** with explicit model/ExecutionTarget selection;
+- **Agent mode** with explicit Agent selection;
+- conversation/chat and user command/objective submission;
+- application-wide and specialized host-associated Agents;
+- visibility into active Agent/runtime/execution context;
 - submit supported inputs and associated attachments;
-- track WorkItem status, activity, and relevant execution/provider state;
-- receive completion and other WorkItem notifications;
-- inspect pending approvals and Approve / Reject when required;
+- assign and monitor work performed by multiple independent Agents;
+- track WorkItem status, activity, notifications, approvals, and Review state;
 - direct **LLM mode** with explicit model/ExecutionTarget selection;
 - **Agent mode** with explicit Agent selection;
 - conversation/chat and user command/objective submission;
