@@ -153,7 +153,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
     }
 
 
-    internal void Dispose()
+    public void Dispose()
     {
         _disposed = true;
         var operationCancellation = Interlocked.Exchange(ref _operationCancellation, null);
