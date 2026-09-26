@@ -151,10 +151,10 @@ Verify: fake-provider automated path plus manual real-provider developer verific
 Objective: CRUD facade for Providers, ProviderAccounts, ExecutionTargets, and AgentDefinitions.
 Verify: service-level validation, authorization/scope cases, persistence integration.
 
-## 1.11 — V1 Workspace & WorkItem Operations
-Objective: implement the V1 operational Workspace over Hive.Management for image submission and governed business-app processing.
+## 1.11 — Initial Workspace & WorkItem Operations
+Objective: establish the initial Workspace foundation over Hive.Management for image-backed WorkItems and governed approval interaction. This is the first V1 Workspace slice; later V1 slices expand it into direct LLM/Agent interaction and multiple independent Agent operation.
 
-V1 scope:
+Initial scope:
 - submit/attach an image to a WorkItem;
 - view WorkItem status and activity;
 - view relevant execution/provider status;
@@ -162,7 +162,7 @@ V1 scope:
 - view PendingApproval;
 - Approve / Reject the governed business-app write.
 
-The V1 Workspace works with a single Agent and does not require Hive membership or Swarm state.
+This initial Workspace foundation uses a single Agent and does not require Hive membership or Swarm state. Later V1 slices may add multiple independent Agents and direct LLM/Agent interaction without changing the persistent Hive/Swarm boundary.
 
 Verify: image submission creates the correct WorkItem, status/activity are visible, approval state is visible, Approve/Reject changes the authoritative WorkItem state correctly, stale approval is rejected, and the Workspace does not create hidden Hive/Swarm behavior.
 
