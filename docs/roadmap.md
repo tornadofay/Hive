@@ -325,7 +325,7 @@ Spreadsheet
   → prepared input
 ```
 
-Input-specific processing must converge on the common prepared-input boundary rather than creating separate downstream business-operation pipelines. Phase 1.16 consumes prepared input to produce the common structured-candidate boundary.
+Input-specific processing must converge on the common prepared-input boundary rather than creating separate downstream business-operation pipelines. Phase 1.17 consumes prepared input to produce the common structured-candidate boundary.
 
 Verify: image routing, spreadsheet workbook/worksheet/row handling, multiple WorkItems from one submission, bounded file/workbook/row processing, cancellation, input failure isolation, and unsupported-input handling.
 
