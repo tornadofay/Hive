@@ -215,7 +215,7 @@ When API and UI are combined in one logical operation, one operation correlation
 ### 4.1.6 Business-operation receipt and post-write Review
 
 
-Phase 1.17 establishes the governed business-operation proposal, authorization/approval, and consequential host-write boundary. Phase 1.18 establishes the durable `BusinessOperationReceipt`/attempt record, unknown-outcome reconciliation, and first-class post-write Review. Every consequential host operation attempt must be attributable to its WorkItem/operation identity, host/adapter identity, operation type, affected parent/child record identities when established, disposition/result state, and host correlation or concurrency evidence when available.
+Phase 1.17 establishes the governed business-operation proposal, authorization/approval, consequential host-write boundary, and the durable initial operation-attempt state required before any non-transactionally coupled host submission. Phase 1.18 establishes the durable `BusinessOperationReceipt`, unknown-outcome reconciliation, and first-class post-write Review. Every consequential host operation attempt must be attributable to its WorkItem/operation identity, host/adapter identity, operation type, affected parent/child record identities when established, disposition/result state, and host correlation or concurrency evidence when available.
 
 
 The receipt does not make Hive a copy of the host business database. The host application remains the source of truth.
@@ -256,7 +256,7 @@ Hive persists only the minimum bounded evidence needed to explain and audit the 
 ### 4.1.7 V1 implementation boundary
 
 
-Phase 1.14 establishes the extension/adapter and interaction contracts. Phase 1.17 establishes the governed business-operation proposal, authorization/approval, and consequential host write. Phase 1.18 establishes durable operation receipt, unknown-outcome reconciliation, and first-class Review.
+Phase 1.14 establishes the extension/adapter and interaction contracts. Phase 1.17 establishes the governed business-operation proposal, authorization/approval, consequential host write, and the initial durable operation-attempt safety boundary. Phase 1.18 establishes the durable operation receipt, unknown-outcome reconciliation, and first-class Review.
 
 
 Phase 1.15 and 1.16 establish input preparation/routing and structured candidate extraction/validation respectively. Vision is one possible input capability; structured spreadsheet input may bypass vision. Parent/child candidate data is added only when the actual V1 operation requires it.
