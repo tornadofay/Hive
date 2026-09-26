@@ -100,10 +100,6 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
                     cancellationToken)
                 .ConfigureAwait(false);
         }
-        finally
-        {
-            mutation.Dispose();
-        }
     }
 
 
@@ -151,10 +147,6 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
                     SanitizeTechnicalError(
                         result.Error!,
                         "The bootstrap credential could not be stored."));
-        }
-        finally
-        {
-            mutation.Dispose();
         }
     }
 
@@ -220,10 +212,6 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
                     SanitizeTechnicalError(
                         result.Error!,
                         "The bootstrap credential could not be removed."));
-        }
-        finally
-        {
-            mutation.Dispose();
         }
     }
 
