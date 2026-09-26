@@ -1,5 +1,4 @@
 using System.Data;
-using System.Text.Json;
 using Hive.Agents;
 using Hive.Core;
 using Microsoft.Data.SqlClient;
@@ -495,7 +494,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                 "@MetadataJson",
                 SqlDbType.NVarChar,
                 -1,
-                SerializeMetadata(updated.Resource.Metadata)));
+                SqlResourceStoreCommon.SerializeMetadata(updated.Resource.Metadata)));
         command.Parameters.Add(
             GuidParameter(
                 "@AgentDefinitionId",
@@ -938,7 +937,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                 "@MetadataJson",
                 SqlDbType.NVarChar,
                 -1,
-                SerializeMetadata(resource.Metadata)));
+                SqlResourceStoreCommon.SerializeMetadata(resource.Metadata)));
     }
 
     private static Error NotFound(
