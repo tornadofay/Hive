@@ -6,18 +6,18 @@ namespace Hive.Host.WinForms.UI.Controls;
 
 internal sealed class HiveCrudPageLayoutController : IDisposable
 {
-    private const int HeaderHeight = 64;
-    private const int ActionBarHeight = 46;
-    private const int FooterHeight = 42;
-    private const int ActionButtonWidth = 92;
-    private const int CompactActionButtonWidth = 84;
-    private const int ActionButtonSpacing = 8;
-    private const int InitialActionBarActionsWidth =
-        (ActionButtonWidth + ActionButtonSpacing) * 4;
-    private const int PaginationWidth = 276;
-    private const int MinimumSearchWidth = 180;
-    private const int MaximumSearchWidth = 420;
+    internal const int HeaderHeight = 64;
+    internal const int ActionBarHeight = 46;
+    internal const int FooterHeight = 42;
+    internal const int ActionButtonWidth = 92;
+    internal const int CompactActionButtonWidth = 84;
+    internal const int ActionButtonSpacing = 8;
+    internal const int InitialActionBarActionsWidth = (ActionButtonWidth + ActionButtonSpacing) * 4;
+    internal const int PaginationWidth = 276;
+    internal const int MinimumSearchWidth = 180;
+    internal const int MaximumSearchWidth = 420;
 
+    private readonly Control _owner;
     private readonly HiveListPageLayout _pageLayout;
     private readonly Label _titleLabel;
     private readonly Label _descriptionLabel;
@@ -30,6 +30,7 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
     private readonly FlowLayoutPanel _actionButtons;
     private readonly TableLayoutPanel _footerLayout;
     private readonly Label _statusLabel;
+    private readonly Label _emptyStateLabel;
     private readonly HiveButton _addButton;
     private readonly HiveButton _editButton;
     private readonly HiveButton _activateButton;
@@ -37,16 +38,16 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
     private readonly HiveButton _refreshButton;
     private readonly HivePaginationBar _pagination;
     private readonly Func<HiveStatusTone> _statusToneProvider;
-
     private Font _titleFont;
     private Font _descriptionFont;
     private Font _searchLabelFont;
     private Font _emptyStateFont;
     private IHiveThemeManager? _subscribedThemeManager;
-
+    private bool _typographyReady = true;
     private bool _compactToolbar;
 
     internal HiveCrudPageLayoutController(
+        Control owner,
         HiveListPageLayout pageLayout,
         Label titleLabel,
         Label descriptionLabel,
@@ -59,6 +60,7 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         FlowLayoutPanel actionButtons,
         TableLayoutPanel footerLayout,
         Label statusLabel,
+        Label emptyStateLabel,
         HiveButton addButton,
         HiveButton editButton,
         HiveButton activateButton,
@@ -71,6 +73,7 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         Font emptyStateFont,
         Func<HiveStatusTone> statusToneProvider)
     {
+        _owner = owner ?? throw new ArgumentNullException(nameof(owner));
         _pageLayout = pageLayout ?? throw new ArgumentNullException(nameof(pageLayout));
         _titleLabel = titleLabel ?? throw new ArgumentNullException(nameof(titleLabel));
         _descriptionLabel = descriptionLabel ?? throw new ArgumentNullException(nameof(descriptionLabel));
@@ -83,6 +86,7 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         _actionButtons = actionButtons ?? throw new ArgumentNullException(nameof(actionButtons));
         _footerLayout = footerLayout ?? throw new ArgumentNullException(nameof(footerLayout));
         _statusLabel = statusLabel ?? throw new ArgumentNullException(nameof(statusLabel));
+        _emptyStateLabel = emptyStateLabel ?? throw new ArgumentNullException(nameof(emptyStateLabel));
         _addButton = addButton ?? throw new ArgumentNullException(nameof(addButton));
         _editButton = editButton ?? throw new ArgumentNullException(nameof(editButton));
         _activateButton = activateButton ?? throw new ArgumentNullException(nameof(activateButton));
@@ -90,16 +94,16 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         _refreshButton = refreshButton ?? throw new ArgumentNullException(nameof(refreshButton));
         _pagination = pagination ?? throw new ArgumentNullException(nameof(pagination));
         _statusToneProvider = statusToneProvider ?? throw new ArgumentNullException(nameof(statusToneProvider));
-
         _titleFont = titleFont ?? throw new ArgumentNullException(nameof(titleFont));
         _descriptionFont = descriptionFont ?? throw new ArgumentNullException(nameof(descriptionFont));
         _searchLabelFont = searchLabelFont ?? throw new ArgumentNullException(nameof(searchLabelFont));
         _emptyStateFont = emptyStateFont ?? throw new ArgumentNullException(nameof(emptyStateFont));
+        _owner.FontChanged += OwnerFontChanged;
     }
 
     internal void UpdateThemeSubscription()
     {
-        var nextManager = FindForm() is HiveForm hiveForm
+        var nextManager = _owner.FindForm() is HiveForm hiveForm
             ? hiveForm.ThemeManager
             : null;
 
@@ -115,20 +119,18 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
             _subscribedThemeManager.ThemeChanged += ThemeManagerOnChanged;
     }
 
-
     internal void ThemeManagerOnChanged(object? sender, EventArgs e)
     {
         ApplyThemeTypography();
         ApplyStatusColor();
     }
 
-
     internal void ApplyStatusColor()
     {
-        if (FindForm() is not HiveForm hiveForm)
+        if (_owner.FindForm() is not HiveForm hiveForm)
             return;
 
-        _statusLabel.ForeColor = _statusTone switch
+        _statusLabel.ForeColor = _statusToneProvider() switch
         {
             HiveStatusTone.Information => hiveForm.Theme.VisualStates.Information,
             HiveStatusTone.Success => hiveForm.Theme.VisualStates.Success,
@@ -138,11 +140,10 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         };
     }
 
-
     internal void ApplyThemeTypography()
     {
-        if (!true ||
-            FindForm() is not HiveForm hiveForm)
+        if (!_typographyReady ||
+            _owner.FindForm() is not HiveForm hiveForm)
         {
             return;
         }
@@ -183,7 +184,6 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         previousEmptyState?.Dispose();
     }
 
-
     internal static Font? ReplaceFontIfNeeded(
         ref Font current,
         string family,
@@ -201,7 +201,6 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         current = new Font(family, size, style);
         return previous;
     }
-
 
     internal void UpdateFooterLayout()
     {
@@ -237,11 +236,10 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         }
     }
 
-
     internal void UpdateToolbarLayout()
     {
-        var compact = ClientSize.Width > 0 &&
-                      ClientSize.Width < GetWideToolbarMinimumWidth();
+        var compact = _owner.ClientSize.Width > 0 &&
+                      _owner.ClientSize.Width < GetWideToolbarMinimumWidth();
 
         // Status filtering remains a secondary filter. In compact mode the
         // search label disappears, so keep the status filter aligned with the
@@ -350,7 +348,6 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         UpdateSearchBoxWidth();
     }
 
-
     internal int GetCompactActionRowCount()
     {
         var visibleCount =
@@ -365,7 +362,7 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
 
         var availableWidth = Math.Max(
             1,
-            ClientSize.Width -
+            _owner.ClientSize.Width -
             _actionButtons.Padding.Left -
             _actionButtons.Padding.Right);
 
@@ -378,7 +375,6 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
                 visibleCount * buttonWidth /
                 (double)availableWidth));
     }
-
 
     internal void UpdateSearchBoxWidth()
     {
@@ -422,7 +418,6 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
             _searchBox.Width = targetWidth;
     }
 
-
     internal int GetWideToolbarMinimumWidth()
     {
         var requiredWidth = GetVisibleActionBarWidth(compact: false) + 24;
@@ -452,7 +447,6 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         return requiredWidth;
     }
 
-
     internal int GetVisibleActionBarWidth(bool compact)
     {
         if (compact)
@@ -469,23 +463,22 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         return visibleCount * (buttonWidth + ActionButtonSpacing);
     }
 
+    internal void OwnerFontChanged(object? sender, EventArgs e) => ApplyThemeTypography();
 
     internal IHiveThemeManager? ThemeManager()
     {
-        return FindForm() switch
+        return _owner.FindForm() switch
         {
             HiveForm hiveForm => hiveForm.ThemeManager,
             _ => null
         };
     }
-}
-
 
     internal void Dispose()
     {
+        _owner.FontChanged -= OwnerFontChanged;
         if (_subscribedThemeManager is not null)
             _subscribedThemeManager.ThemeChanged -= ThemeManagerOnChanged;
-
         _titleFont.Dispose();
         _descriptionFont.Dispose();
         _searchLabelFont.Dispose();

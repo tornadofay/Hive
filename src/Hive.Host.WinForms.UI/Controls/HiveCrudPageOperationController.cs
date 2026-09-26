@@ -1,4 +1,3 @@
-using System.Drawing;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Theme;
 
@@ -12,10 +11,12 @@ internal sealed class HiveCrudPageOperationController : IDisposable
     private readonly ComboBox _statusFilterBox;
     private readonly HivePaginationBar _pagination;
     private readonly Action _updateActionState;
+    private readonly Action<string, HiveStatusTone> _setStatus;
     private readonly Func<IHiveThemeManager?> _themeManagerProvider;
-
+    private readonly object _eventSender;
     private CancellationTokenSource? _operationCancellation;
     private bool _busy;
+    private bool _disposed;
 
     internal HiveCrudPageOperationController(
         Control owner,
@@ -24,7 +25,9 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         ComboBox statusFilterBox,
         HivePaginationBar pagination,
         Action updateActionState,
-        Func<IHiveThemeManager?> themeManagerProvider)
+        Action<string, HiveStatusTone> setStatus,
+        Func<IHiveThemeManager?> themeManagerProvider,
+        object eventSender)
     {
         _owner = owner ?? throw new ArgumentNullException(nameof(owner));
         _list = list ?? throw new ArgumentNullException(nameof(list));
@@ -32,11 +35,12 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         _statusFilterBox = statusFilterBox ?? throw new ArgumentNullException(nameof(statusFilterBox));
         _pagination = pagination ?? throw new ArgumentNullException(nameof(pagination));
         _updateActionState = updateActionState ?? throw new ArgumentNullException(nameof(updateActionState));
+        _setStatus = setStatus ?? throw new ArgumentNullException(nameof(setStatus));
         _themeManagerProvider = themeManagerProvider ?? throw new ArgumentNullException(nameof(themeManagerProvider));
+        _eventSender = eventSender ?? throw new ArgumentNullException(nameof(eventSender));
     }
 
     internal event EventHandler<HiveCrudOperationFailedEventArgs>? OperationFailed;
-
     internal bool IsBusy => _busy;
 
     private async Task ExecuteAsync(
@@ -58,13 +62,13 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         catch (OperationCanceledException) when (source.IsCancellationRequested)
         {
             if (!IsDisposed && !Disposing)
-                SetStatus("Cancelled.", HiveStatusTone.Warning);
+                _setStatus("Cancelled.", HiveStatusTone.Warning);
         }
         catch (Exception exception)
         {
             if (!IsDisposed && !Disposing)
             {
-                SetStatus("Operation failed.", HiveStatusTone.Error);
+                _setStatus("Operation failed.", HiveStatusTone.Error);
                 RaiseOperationFailed(operation, exception);
             }
         }
@@ -93,7 +97,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         if (handler is not null)
         {
             handler(
-                this,
+                _eventSender,
                 new HiveCrudOperationFailedEventArgs(
                     operation,
                     exception));
@@ -106,7 +110,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         // button/event path to escape as an unhandled async exception.
         System.Diagnostics.Debug.WriteLine(exception.ToString());
 
-        var owner = FindForm();
+        var owner = _owner.FindForm();
         if (owner is not null && !owner.IsDisposed)
         {
             HiveUiErrorReporter.Report(
@@ -115,7 +119,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
                 "CRUD operation failed",
                 $"The {operation.ToString().ToLowerInvariant()} operation could not be completed.",
                 null,
-                ThemeManager());
+                _themeManagerProvider());
         }
     }
 
@@ -127,7 +131,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         _searchBox.Enabled = !busy;
         _statusFilterBox.Enabled = !busy;
 
-        if (FindForm() is HiveForm hiveForm)
+        if (_owner.FindForm() is HiveForm hiveForm)
         {
             var theme = hiveForm.ThemeManager.Theme;
             _searchBox.BackColor = busy
@@ -145,15 +149,14 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         }
 
         _pagination.Enabled = !busy;
-        UpdateActionState();
+        _updateActionState();
     }
 
 
     internal void Dispose()
     {
-        var operationCancellation = Interlocked.Exchange(
-            ref _operationCancellation,
-            null);
+        _disposed = true;
+        var operationCancellation = Interlocked.Exchange(ref _operationCancellation, null);
         operationCancellation?.Cancel();
         operationCancellation?.Dispose();
         OperationFailed = null;

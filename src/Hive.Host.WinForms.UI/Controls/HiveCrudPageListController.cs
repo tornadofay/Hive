@@ -1,4 +1,3 @@
-using System.Drawing;
 using System.Windows.Forms;
 
 namespace Hive.Host.WinForms.UI.Controls;
@@ -16,6 +15,7 @@ internal sealed class HiveCrudPageListController<TItem>
     private readonly ComboBox _statusFilterBox;
     private readonly Action _applyStatusColor;
     private readonly Action _updateActionState;
+    private readonly Func<bool> _isBusy;
     private readonly List<HiveCrudColumn<TItem>> _columns = new();
 
     private IReadOnlyList<TItem> _items = Array.Empty<TItem>();
@@ -32,7 +32,8 @@ internal sealed class HiveCrudPageListController<TItem>
         Label emptyStateLabel,
         ComboBox statusFilterBox,
         Action applyStatusColor,
-        Action updateActionState)
+        Action updateActionState,
+        Func<bool> isBusy)
     {
         _list = list ?? throw new ArgumentNullException(nameof(list));
         _pagination = pagination ?? throw new ArgumentNullException(nameof(pagination));
@@ -41,15 +42,11 @@ internal sealed class HiveCrudPageListController<TItem>
         _statusFilterBox = statusFilterBox ?? throw new ArgumentNullException(nameof(statusFilterBox));
         _applyStatusColor = applyStatusColor ?? throw new ArgumentNullException(nameof(applyStatusColor));
         _updateActionState = updateActionState ?? throw new ArgumentNullException(nameof(updateActionState));
+        _isBusy = isBusy ?? throw new ArgumentNullException(nameof(isBusy));
     }
 
     internal IReadOnlyList<TItem> Items => _items;
-
-    internal TItem? SelectedItem =>
-        _list.SelectedItems.Count == 0
-            ? default
-            : (TItem?)_list.SelectedItems[0].Tag;
-
+    internal TItem? SelectedItem => _list.SelectedItems.Count == 0 ? default : (TItem?)_list.SelectedItems[0].Tag;
     internal IReadOnlyList<HiveCrudColumn<TItem>> Columns => _columns;
 
     internal string SearchText
@@ -60,7 +57,6 @@ internal sealed class HiveCrudPageListController<TItem>
             var normalized = value ?? string.Empty;
             if (string.Equals(_searchText, normalized, StringComparison.Ordinal))
                 return;
-
             _searchText = normalized;
             _pagination.PageNumber = 1;
             RebuildItems();
@@ -75,7 +71,6 @@ internal sealed class HiveCrudPageListController<TItem>
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
             if (_pageSize == value)
                 return;
-
             _pageSize = value;
             _pagination.PageNumber = 1;
             RebuildItems();
@@ -93,14 +88,17 @@ internal sealed class HiveCrudPageListController<TItem>
         }
     }
 
-    internal bool HasStatusSelector => _statusSelector is not null;
-
     internal HiveStatusTone StatusTone => _statusTone;
+
+    internal Func<TItem, string?>? StatusSelector
+    {
+        get => _statusSelector;
+        set => SetStatusSelector(value);
+    }
 
     internal void SetStatusSelector(Func<TItem, string?>? statusSelector)
     {
         _statusSelector = statusSelector;
-
         if (statusSelector is not null)
             RebuildStatusFilterOptions();
         else
@@ -108,15 +106,12 @@ internal sealed class HiveCrudPageListController<TItem>
             _statusFilterBox.Items.Clear();
             _statusFilterBox.SelectedItem = null;
         }
-
         RebuildItems();
     }
 
     internal void SetItems(IReadOnlyList<TItem> items)
     {
-        _items = items ?? throw new InvalidOperationException(
-            "LoadItemsAsync returned null.");
-
+        _items = items ?? throw new InvalidOperationException("LoadItemsAsync returned null.");
         RebuildStatusFilterOptions();
         RebuildItems();
     }
@@ -124,21 +119,17 @@ internal sealed class HiveCrudPageListController<TItem>
     internal void SetColumns(IReadOnlyList<HiveCrudColumn<TItem>> columns)
     {
         ArgumentNullException.ThrowIfNull(columns);
-
         _columns.Clear();
         foreach (var column in columns)
         {
             ArgumentNullException.ThrowIfNull(column);
             _columns.Add(column);
         }
-
         RebuildColumns();
         RebuildItems();
     }
 
-    internal void SetStatus(
-        string text,
-        HiveStatusTone tone)
+    internal void SetStatus(string text, HiveStatusTone tone)
     {
         _statusTone = tone;
         _statusLabel.Text = text ?? string.Empty;
@@ -149,7 +140,6 @@ internal sealed class HiveCrudPageListController<TItem>
     {
         if (_updatingStatusFilter)
             return;
-
         _pagination.PageNumber = 1;
         RebuildItems();
     }
@@ -192,7 +182,6 @@ internal sealed class HiveCrudPageListController<TItem>
         }
     }
 
-
     private bool MatchesStatusFilter(TItem item)
     {
         if (_statusSelector is null ||
@@ -205,7 +194,6 @@ internal sealed class HiveCrudPageListController<TItem>
         var status = _statusSelector(item);
         return string.Equals(status, selected, StringComparison.OrdinalIgnoreCase);
     }
-
 
     private void RebuildColumns()
     {
@@ -224,7 +212,6 @@ internal sealed class HiveCrudPageListController<TItem>
         if (_list is HiveListView hiveList)
             hiveList.ResetColumnLayout();
     }
-
 
     private void RebuildItems()
     {
@@ -303,7 +290,7 @@ internal sealed class HiveCrudPageListController<TItem>
                 visibleCount,
                 _pagination.PageNumber,
                 _pageSize);
-            ApplyStatusColor();
+            _applyStatusColor();
             UpdateEmptyState(matchingCount);
         }
         finally
@@ -311,9 +298,8 @@ internal sealed class HiveCrudPageListController<TItem>
             _list.EndUpdate();
         }
 
-        UpdateActionState();
+        _updateActionState();
     }
-
 
     private int CountMatchingItems()
     {
@@ -326,7 +312,6 @@ internal sealed class HiveCrudPageListController<TItem>
 
         return count;
     }
-
 
     private bool MatchesSearch(TItem item)
     {
@@ -346,7 +331,6 @@ internal sealed class HiveCrudPageListController<TItem>
         return false;
     }
 
-
     private void UpdateEmptyState(int matchingCount)
     {
         var show = matchingCount == 0;
@@ -357,12 +341,10 @@ internal sealed class HiveCrudPageListController<TItem>
                 : "No items match the current filters.";
     }
 
-
     private void UpdateStatusSummary()
     {
         RebuildItems();
     }
-
 
     private static string BuildStatusText(
         int totalCount,
@@ -382,30 +364,15 @@ internal sealed class HiveCrudPageListController<TItem>
         return $"Showing {firstVisible:N0}-{lastVisible:N0} of {totalCount:N0}";
     }
 
-
-    private void ChangePage(int delta)
-    {
-        if (_busy)
-            return;
-
-        var nextPage = _pagination.PageNumber + delta;
-        if (nextPage < 1)
-            return;
-
-        _pagination.PageNumber = nextPage;
-        RebuildItems();
-    }
-
+    internal void RefreshView() => RebuildItems();
 
     internal void ChangePage(int delta)
     {
-        if (delta == 0)
+        if (_isBusy() || delta == 0)
             return;
-
         var nextPage = _pagination.PageNumber + delta;
         if (nextPage < 1)
             return;
-
         _pagination.PageNumber = nextPage;
         RebuildItems();
     }
