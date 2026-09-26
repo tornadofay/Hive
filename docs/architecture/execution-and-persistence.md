@@ -55,7 +55,7 @@ Hive must never build a second workflow/orchestration engine merely because Hive
 | Agent programming model | Microsoft Agent Framework | Reuse MAF execution/orchestration |
 | Execution model | Ephemeral execution + durable Agent/Hive state + transactional outbox | Execution objects and Agent incarnations may end; durable state survives; a WorkItem is the durable unit of user-visible work and a submission may produce one or multiple WorkItems |
 | Persistence | SQL Server; LocalDB for development | Hive database is isolated from host business data |
-| Vector storage | SQL Server `VECTOR` / `VECTOR_DISTANCE` behind `IVectorStore` | Replaceable storage boundary; no separate vector database is required for V1 |
+| Vector storage | SQL Server `VECTOR` / `VECTOR_DISTANCE` behind `IVectorStore` | V1 bounded storage/search infrastructure; no separate vector database is required for V1 |
 | Provider adapter | One shared OpenAI-compatible adapter | Compatible providers are configurations, not new adapter implementations |
 | Provider | Vendor/service integration | Transport identity |
 | ProviderAccount | Credential/account/project under Provider | Credential/account boundary |
@@ -146,7 +146,7 @@ Execution Target
     ↓
 MAF execution / model call
 
-LLM mode is a Workspace interaction path where the user chooses the execution target. Agentic mode uses this planner on behalf of the Agent/Hive.
+LLM mode is a V1 Workspace interaction path where the user chooses the execution target. Agent mode selects an Agent, which uses this planner on behalf of that Agent; after Phase 2 adds persistent Hive/Swarm coordination, Hive-level Agentic behavior extends the same planner boundary.
 ```
 
 A required capability must be explicitly supported. Unknown capability evidence does not qualify for a hard requirement.
@@ -159,6 +159,8 @@ Operational state remains separate from configured capability:
 - availability;
 - capacity;
 - cost.
+
+Phase 1.16 adds provider/model discovery and refresh semantics for these metadata dimensions where the provider can report them. Discovery evidence is distinct from explicitly configured capability overrides; unsupported discovery does not fabricate a capability.
 
 Planner output must be explainable without exposing credentials.
 
