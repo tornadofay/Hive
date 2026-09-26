@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IMPLEMENTATION IN PROGRESS
+Status: VERIFICATION PENDING
 
 ## Current slice
 
@@ -25,6 +25,10 @@ Bounded corrective maintenance. Extract the existing standard WinForms control v
 - Use only internal implementation contracts/classes; do not create one wrapper per WinForms control merely for size.
 - Add focused regression coverage only where needed to prove the extraction preserves existing behavior.
 - No new control support, schema change, roadmap advancement, or unrelated WinForms refactor.
+
+## Checkpoint
+
+Implementation complete. `HiveWinFormsHostIntegrationAdapter` retains host integration orchestration, capture/discovery, identity, data-surface handling, provider delegation, capability identity validation, lifecycle, and authorization-facing boundaries. Standard control value mechanics now live in internal control-family adapters without changing the public host integration contracts or capability identity rules. Focused regression coverage now exercises Boolean, editable ComboBox, NumericUpDown, DropDownList capability behavior, and NumericUpDown range validation in addition to the existing text, password, and DateTimePicker coverage.
 
 ## Design boundary
 
