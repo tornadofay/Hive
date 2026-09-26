@@ -26,13 +26,13 @@ Reduce implementation-responsibility concentration in those three classes while 
 
 ## Verification
 
-**Status: VERIFICATION FAILED / REMEDIATION REQUIRED**
+**Status: VERIFICATION PENDING**
 
-Developer supplied another compiler result within this same corrective slice. The remaining diagnostics are:
-- `HiveCrudPage.cs` still calls the removed page-local `ExecuteAsync` helper from the Delete and Activate paths;
-- `HiveCrudPageOperationController._disposed` is assigned during disposal but has no read site.
+Developer supplied another compiler result within this same corrective slice. Same-slice remediation corrected the remaining reported diagnostics:
+- routed the Delete and Activate paths through `_operationController.ExecuteAsync`;
+- removed the unused `HiveCrudPageOperationController._disposed` field and assignment.
 
-Same-slice remediation is required before verification can return to pending:
+The prior compiler failure is retained here as historical verification evidence.
 - removed the duplicated legacy `HiveCrudPage<TItem>` member/state block and routed operation calls through the extracted controller;
 - restored `ReadExecutionTarget` and `AddExecutionTargetParameters` in `SqlExecutionTargetStore`;
 - restored the three-argument `SqlParameter` helper overload;
