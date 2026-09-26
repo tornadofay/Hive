@@ -134,14 +134,6 @@ internal sealed class TextBoxValueAdapter : WinFormsControlValueAdapterBase
         Control control,
         HiveHostInteractionRequest request)
     {
-        if (!control.Enabled)
-        {
-            return Result<HiveHostInteractionResult>.Failure(
-                Error.Conflict(
-                    "hive.host.winforms.control-disabled",
-                    "The requested WinForms control is disabled."));
-        }
-
         if (IsReadOnly(control))
         {
             return Result<HiveHostInteractionResult>.Failure(
@@ -210,14 +202,6 @@ internal sealed class CheckBoxValueAdapter : WinFormsControlValueAdapterBase
         Control control,
         HiveHostInteractionRequest request)
     {
-        if (!control.Enabled)
-        {
-            return Result<HiveHostInteractionResult>.Failure(
-                Error.Conflict(
-                    "hive.host.winforms.control-disabled",
-                    "The requested WinForms control is disabled."));
-        }
-
         if (control is not CheckBox checkBox)
             return Unsupported();
 
@@ -258,14 +242,6 @@ internal sealed class ComboBoxValueAdapter : WinFormsControlValueAdapterBase
         Control control,
         HiveHostInteractionRequest request)
     {
-        if (!control.Enabled)
-        {
-            return Result<HiveHostInteractionResult>.Failure(
-                Error.Conflict(
-                    "hive.host.winforms.control-disabled",
-                    "The requested WinForms control is disabled."));
-        }
-
         if (control is not ComboBox comboBox)
             return Unsupported();
 
@@ -313,14 +289,6 @@ internal sealed class DateTimePickerValueAdapter : WinFormsControlValueAdapterBa
         Control control,
         HiveHostInteractionRequest request)
     {
-        if (!control.Enabled)
-        {
-            return Result<HiveHostInteractionResult>.Failure(
-                Error.Conflict(
-                    "hive.host.winforms.control-disabled",
-                    "The requested WinForms control is disabled."));
-        }
-
         if (control is not DateTimePicker dateTimePicker)
             return Unsupported();
 
@@ -370,14 +338,6 @@ internal sealed class NumericUpDownValueAdapter : WinFormsControlValueAdapterBas
         Control control,
         HiveHostInteractionRequest request)
     {
-        if (!control.Enabled)
-        {
-            return Result<HiveHostInteractionResult>.Failure(
-                Error.Conflict(
-                    "hive.host.winforms.control-disabled",
-                    "The requested WinForms control is disabled."));
-        }
-
         if (control is not NumericUpDown numericUpDown)
             return Unsupported();
 
