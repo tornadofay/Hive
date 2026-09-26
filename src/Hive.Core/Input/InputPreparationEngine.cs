@@ -890,8 +890,531 @@ public static class InputPreparationEngine
         string cellReference)
     {
         var letters = cellReference
-            .TakeWhile(static character => character is '$' or >= 'A' and <= 'Z' or >= 'a' and <= 'z')
-            .Where(static character => character != '$')
+            .TakeWhile(static character =>
+                character == '
+            .ToArray();
+
+        if (letters.Length == 0)
+        {
+            throw new SpreadsheetRowException(
+                "hive.input.spreadsheet.cell-reference-invalid",
+                "Spreadsheet cell reference is invalid.");
+        }
+
+        var result = 0;
+
+        foreach (var letter in letters)
+        {
+            var normalized = char.ToUpperInvariant(letter) - 'A' + 1;
+
+            if (normalized is < 1 or > 26)
+            {
+                throw new SpreadsheetRowException(
+                    "hive.input.spreadsheet.cell-reference-invalid",
+                    "Spreadsheet cell reference is invalid.");
+            }
+
+            result = checked(result * 26 + normalized);
+
+            if (result > InputPreparationLimits.MaxWorksheetColumns)
+            {
+                return result;
+            }
+        }
+
+        return result;
+    }
+
+    private static XDocument LoadXml(
+        ZipArchiveEntry entry,
+        CancellationToken cancellationToken)
+    {
+        var bytes = ReadEntryBytes(
+            entry,
+            cancellationToken);
+
+        using var stream = new MemoryStream(
+            bytes,
+            writable: false);
+
+        var settings = new XmlReaderSettings
+        {
+            DtdProcessing = DtdProcessing.Prohibit,
+            XmlResolver = null,
+            MaxCharactersInDocument = InputPreparationLimits.MaxXmlCharacters,
+            IgnoreComments = true
+        };
+
+        using var reader = XmlReader.Create(
+            stream,
+            settings);
+
+        return XDocument.Load(
+            reader,
+            LoadOptions.None);
+    }
+
+    private static byte[] ReadEntryBytes(
+        ZipArchiveEntry entry,
+        CancellationToken cancellationToken)
+    {
+        if (entry.Length > InputPreparationLimits.MaxXmlEntryBytes)
+        {
+            throw new SpreadsheetPackageLimitException(
+                "hive.input.spreadsheet.xml-entry-too-large",
+                $"Spreadsheet XML entry exceeds the {InputPreparationLimits.MaxXmlEntryBytes}-byte limit.");
+        }
+
+        using var source = entry.Open();
+        using var destination = new MemoryStream(
+            entry.Length > 0
+                ? checked((int)Math.Min(
+                    entry.Length,
+                    InputPreparationLimits.MaxXmlEntryBytes))
+                : 0);
+
+        var buffer = new byte[8192];
+        long total = 0;
+
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var read = source.Read(
+                buffer,
+                0,
+                buffer.Length);
+
+            if (read == 0)
+                break;
+
+            total += read;
+
+            if (total > InputPreparationLimits.MaxXmlEntryBytes)
+            {
+                throw new SpreadsheetPackageLimitException(
+                    "hive.input.spreadsheet.xml-entry-too-large",
+                    $"Spreadsheet XML entry exceeds the {InputPreparationLimits.MaxXmlEntryBytes}-byte limit.");
+            }
+
+            destination.Write(
+                buffer,
+                0,
+                read);
+        }
+
+        return destination.ToArray();
+    }
+
+    private static string ResolvePackagePath(
+        string baseEntry,
+        string target)
+    {
+        if (string.IsNullOrWhiteSpace(target) ||
+            target.Contains('\\'))
+        {
+            throw new SpreadsheetPackageException(
+                "hive.input.spreadsheet.relationship-target-invalid",
+                "Spreadsheet relationship target is invalid.");
+        }
+
+        var baseDirectoryIndex = baseEntry.LastIndexOf('/');
+
+        if (baseDirectoryIndex < 0)
+            throw new SpreadsheetPackageException(
+                "hive.input.spreadsheet.relationship-target-invalid",
+                "Spreadsheet package base path is invalid.");
+
+        var baseDirectory = baseEntry[..(baseDirectoryIndex + 1)];
+        var combined = target.StartsWith("/", StringComparison.Ordinal)
+            ? target.TrimStart('/')
+            : baseDirectory + target;
+
+        var segments = new List<string>();
+
+        foreach (var segment in combined.Split('/'))
+        {
+            if (string.IsNullOrEmpty(segment) ||
+                segment == ".")
+            {
+                continue;
+            }
+
+            if (segment == "..")
+            {
+                throw new SpreadsheetPackageException(
+                    "hive.input.spreadsheet.relationship-target-invalid",
+                    "Spreadsheet relationship target attempts to leave the package.");
+            }
+
+            segments.Add(segment);
+        }
+
+        if (segments.Count == 0)
+        {
+            throw new SpreadsheetPackageException(
+                "hive.input.spreadsheet.relationship-target-invalid",
+                "Spreadsheet relationship target is empty.");
+        }
+
+        return string.Join("/", segments);
+    }
+
+    private static bool IsImage(InputItem item) =>
+        item.MediaType.StartsWith(
+            "image/",
+            StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsSpreadsheet(InputItem item) =>
+        string.Equals(
+            item.MediaType,
+            SpreadsheetMediaType,
+            StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(
+            Path.GetExtension(item.FileName),
+            ".xlsx",
+            StringComparison.OrdinalIgnoreCase);
+
+    private static Error SerializationError(
+        string code,
+        string message) =>
+        new(code, ErrorCategory.Serialization, message);
+
+    private static string? AttributeByLocalName(
+        XElement element,
+        string localName) =>
+        element
+            .Attributes()
+            .FirstOrDefault(
+                attribute =>
+                    string.Equals(
+                        attribute.Name.LocalName,
+                        localName,
+                        StringComparison.OrdinalIgnoreCase))
+            ?.Value;
+
+    private static void AddFailure(
+        List<InputPreparationFailure> failures,
+        int itemIndex,
+        InputItem item,
+        string? sourceLocation,
+        Error error)
+    {
+        failures.Add(
+            new InputPreparationFailure(
+                itemIndex,
+                item.FileName,
+                sourceLocation,
+                error));
+    }
+
+    private sealed record WorksheetDescriptor(
+        string Name,
+        string Target);
+
+    private sealed record HeaderMap(
+        int MaxColumn,
+        IReadOnlyDictionary<int, string> Names);
+
+    private sealed class SpreadsheetPackageException : Exception
+    {
+        public SpreadsheetPackageException(
+            string code,
+            string message)
+            : base(message)
+        {
+            Code = code;
+        }
+
+        public string Code { get; }
+    }
+
+    private sealed class SpreadsheetPackageLimitException : SpreadsheetPackageException
+    {
+        public SpreadsheetPackageLimitException(
+            string code,
+            string message)
+            : base(code, message)
+        {
+        }
+    }
+
+    private sealed class SpreadsheetRowException : Exception
+    {
+        public SpreadsheetRowException(
+            string code,
+            string message)
+            : base(message)
+        {
+            Code = code;
+        }
+
+        public string Code { get; }
+    }
+} ||
+                (character >= 'A' && character <= 'Z') ||
+                (character >= 'a' && character <= 'z'))
+            .Where(static character => character != '
+            .ToArray();
+
+        if (letters.Length == 0)
+        {
+            throw new SpreadsheetRowException(
+                "hive.input.spreadsheet.cell-reference-invalid",
+                "Spreadsheet cell reference is invalid.");
+        }
+
+        var result = 0;
+
+        foreach (var letter in letters)
+        {
+            var normalized = char.ToUpperInvariant(letter) - 'A' + 1;
+
+            if (normalized is < 1 or > 26)
+            {
+                throw new SpreadsheetRowException(
+                    "hive.input.spreadsheet.cell-reference-invalid",
+                    "Spreadsheet cell reference is invalid.");
+            }
+
+            result = checked(result * 26 + normalized);
+
+            if (result > InputPreparationLimits.MaxWorksheetColumns)
+            {
+                return result;
+            }
+        }
+
+        return result;
+    }
+
+    private static XDocument LoadXml(
+        ZipArchiveEntry entry,
+        CancellationToken cancellationToken)
+    {
+        var bytes = ReadEntryBytes(
+            entry,
+            cancellationToken);
+
+        using var stream = new MemoryStream(
+            bytes,
+            writable: false);
+
+        var settings = new XmlReaderSettings
+        {
+            DtdProcessing = DtdProcessing.Prohibit,
+            XmlResolver = null,
+            MaxCharactersInDocument = InputPreparationLimits.MaxXmlCharacters,
+            IgnoreComments = true
+        };
+
+        using var reader = XmlReader.Create(
+            stream,
+            settings);
+
+        return XDocument.Load(
+            reader,
+            LoadOptions.None);
+    }
+
+    private static byte[] ReadEntryBytes(
+        ZipArchiveEntry entry,
+        CancellationToken cancellationToken)
+    {
+        if (entry.Length > InputPreparationLimits.MaxXmlEntryBytes)
+        {
+            throw new SpreadsheetPackageLimitException(
+                "hive.input.spreadsheet.xml-entry-too-large",
+                $"Spreadsheet XML entry exceeds the {InputPreparationLimits.MaxXmlEntryBytes}-byte limit.");
+        }
+
+        using var source = entry.Open();
+        using var destination = new MemoryStream(
+            entry.Length > 0
+                ? checked((int)Math.Min(
+                    entry.Length,
+                    InputPreparationLimits.MaxXmlEntryBytes))
+                : 0);
+
+        var buffer = new byte[8192];
+        long total = 0;
+
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var read = source.Read(
+                buffer,
+                0,
+                buffer.Length);
+
+            if (read == 0)
+                break;
+
+            total += read;
+
+            if (total > InputPreparationLimits.MaxXmlEntryBytes)
+            {
+                throw new SpreadsheetPackageLimitException(
+                    "hive.input.spreadsheet.xml-entry-too-large",
+                    $"Spreadsheet XML entry exceeds the {InputPreparationLimits.MaxXmlEntryBytes}-byte limit.");
+            }
+
+            destination.Write(
+                buffer,
+                0,
+                read);
+        }
+
+        return destination.ToArray();
+    }
+
+    private static string ResolvePackagePath(
+        string baseEntry,
+        string target)
+    {
+        if (string.IsNullOrWhiteSpace(target) ||
+            target.Contains('\\'))
+        {
+            throw new SpreadsheetPackageException(
+                "hive.input.spreadsheet.relationship-target-invalid",
+                "Spreadsheet relationship target is invalid.");
+        }
+
+        var baseDirectoryIndex = baseEntry.LastIndexOf('/');
+
+        if (baseDirectoryIndex < 0)
+            throw new SpreadsheetPackageException(
+                "hive.input.spreadsheet.relationship-target-invalid",
+                "Spreadsheet package base path is invalid.");
+
+        var baseDirectory = baseEntry[..(baseDirectoryIndex + 1)];
+        var combined = target.StartsWith("/", StringComparison.Ordinal)
+            ? target.TrimStart('/')
+            : baseDirectory + target;
+
+        var segments = new List<string>();
+
+        foreach (var segment in combined.Split('/'))
+        {
+            if (string.IsNullOrEmpty(segment) ||
+                segment == ".")
+            {
+                continue;
+            }
+
+            if (segment == "..")
+            {
+                throw new SpreadsheetPackageException(
+                    "hive.input.spreadsheet.relationship-target-invalid",
+                    "Spreadsheet relationship target attempts to leave the package.");
+            }
+
+            segments.Add(segment);
+        }
+
+        if (segments.Count == 0)
+        {
+            throw new SpreadsheetPackageException(
+                "hive.input.spreadsheet.relationship-target-invalid",
+                "Spreadsheet relationship target is empty.");
+        }
+
+        return string.Join("/", segments);
+    }
+
+    private static bool IsImage(InputItem item) =>
+        item.MediaType.StartsWith(
+            "image/",
+            StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsSpreadsheet(InputItem item) =>
+        string.Equals(
+            item.MediaType,
+            SpreadsheetMediaType,
+            StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(
+            Path.GetExtension(item.FileName),
+            ".xlsx",
+            StringComparison.OrdinalIgnoreCase);
+
+    private static Error SerializationError(
+        string code,
+        string message) =>
+        new(code, ErrorCategory.Serialization, message);
+
+    private static string? AttributeByLocalName(
+        XElement element,
+        string localName) =>
+        element
+            .Attributes()
+            .FirstOrDefault(
+                attribute =>
+                    string.Equals(
+                        attribute.Name.LocalName,
+                        localName,
+                        StringComparison.OrdinalIgnoreCase))
+            ?.Value;
+
+    private static void AddFailure(
+        List<InputPreparationFailure> failures,
+        int itemIndex,
+        InputItem item,
+        string? sourceLocation,
+        Error error)
+    {
+        failures.Add(
+            new InputPreparationFailure(
+                itemIndex,
+                item.FileName,
+                sourceLocation,
+                error));
+    }
+
+    private sealed record WorksheetDescriptor(
+        string Name,
+        string Target);
+
+    private sealed record HeaderMap(
+        int MaxColumn,
+        IReadOnlyDictionary<int, string> Names);
+
+    private sealed class SpreadsheetPackageException : Exception
+    {
+        public SpreadsheetPackageException(
+            string code,
+            string message)
+            : base(message)
+        {
+            Code = code;
+        }
+
+        public string Code { get; }
+    }
+
+    private sealed class SpreadsheetPackageLimitException : SpreadsheetPackageException
+    {
+        public SpreadsheetPackageLimitException(
+            string code,
+            string message)
+            : base(code, message)
+        {
+        }
+    }
+
+    private sealed class SpreadsheetRowException : Exception
+    {
+        public SpreadsheetRowException(
+            string code,
+            string message)
+            : base(message)
+        {
+            Code = code;
+        }
+
+        public string Code { get; }
+    }
+})
             .ToArray();
 
         if (letters.Length == 0)
