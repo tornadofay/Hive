@@ -510,7 +510,7 @@ public sealed class HiveUiPolishTests
         }
     }
 
-    private sealed class SettingsManagementProxy : DispatchProxy
+    private class SettingsManagementProxy : DispatchProxy
     {
         private readonly TaskCompletionSource<Result<IReadOnlyList<Provider>>> _firstCompletion =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
