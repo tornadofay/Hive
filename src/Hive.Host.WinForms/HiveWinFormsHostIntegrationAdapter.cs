@@ -1333,6 +1333,15 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                         "A date/time value is required for a date-time control."));
             }
 
+            if (dateTime < dateTimePicker.MinDate ||
+                dateTime > dateTimePicker.MaxDate)
+            {
+                return Result<HiveHostInteractionResult>.Failure(
+                    Error.Validation(
+                        "hive.host.winforms.datetime-range-invalid",
+                        "The requested date/time value is outside the host control range."));
+            }
+
             dateTimePicker.Value = dateTime;
         }
         else if (control is NumericUpDown numericUpDown)
