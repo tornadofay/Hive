@@ -698,3 +698,274 @@ Scope:
 
 Basic LLM mode, basic Agent mode, ordinary multi-Agent application work, and single-application Agent assignment remain V1 capabilities.
 
+# Phase 3 — Hive Governance Patterns
+
+## 3.1 — Manager-led Strategy
+Define manager/supervisor selection and authority policy.
+
+## 3.2 — Democratic/Voting Strategy
+Add the first explicit voting rule and deterministic tie/insufficient-vote behavior.
+
+## 3.3 — Adversarial/Critique Strategy
+Add critique/challenge roles and bounded conflict reporting.
+
+## 3.4 — Governance Strategy Selection UI
+Expose governance mode and policy through Hive.Management.
+
+---
+
+# Phase 4 — CognitiveAgent : Agent
+
+The base Agent and V1 pipeline continue working unchanged throughout this phase. The base Agent may already provide Objectives, Question transport, patience/understanding gates, memory infrastructure, simulations, delegation, and Hive creation as reusable mechanisms. CognitiveAgent is created explicitly and adds adaptive cognition over those mechanisms; no runtime type promotion or demotion is introduced.
+
+## 4.1 — Cognitive Kernel
+Persistent cognitive identity binding, lifecycle, state versioning, recovery, and per-runtime concurrency ownership.
+
+## 4.2 — Cognitive Strategy
+Replaceable strategy contract capable of deterministic decisions and explicit no-model paths, including adaptive interpretation of evaluated outcomes, contextual Risk/Fear/Confidence, reconsideration, and selection among direct execution, Questions, Hive assistance, Dreams, decomposition, and previously governed strategy/resource adaptations. This slice defines the extension point for learned deterministic shortcuts but does not implement Learning Candidate promotion from later Phase 5 work.
+
+Verify: strategy decisions can consume cognitive evidence and Risk/Fear/Confidence without bypassing authorization, capability, scope, budget, or execution planning; any promoted adaptation is consumed only through its owning governed contract.
+
+## 4.3 — Reasoning Requirement
+Provider-neutral reasoning requirements kept separate from concrete Execution Target planning.
+
+## 4.4 — Persistent Cognitive State
+Beliefs, bounded workspace/attention, goals, intentions, plans, methods, self-model, contextual Risk/Fear/Confidence state, impasses, and revision-safe transitions. Persistent state is independent of whether a runtime incarnation is currently active.
+
+Risk, Fear, and Confidence are evidence-backed cognitive state rather than authorization or policy state. They may alter strategy and escalation behavior but never override authoritative enforcement.
+
+Verify: versioned cognitive-state transitions preserve context/provenance for Risk/Fear/Confidence and do not permit cognitive state to bypass deterministic safety, authorization, capability, scope, or budget checks.
+
+## 4.5 — Experience, Outcome Evaluation & Cognitive Event History
+Bounded experience capture, provenance, expected-versus-observed results, outcome evaluation, attribution/credit context, and replayable supported transitions. OutcomeEvaluation is a first-class cognitive contract/process that establishes a provenance-bearing outcome classification from the observed evidence and applicable success criteria. Success, Mistake, Partial, and Unknown are first-class cognitive outcome concepts associated with that evaluation; specialized processing may consume them without making them aliases for execution states. Outcome correctness remains distinct from method/strategy quality and causal attribution. Actual observations/experiences remain distinguishable from simulated, predicted, counterfactual, human-corrected, and external evidence.
+
+Define mutually exclusive outcome semantics for one evaluation:
+- Success = all applicable success criteria were actually satisfied;
+- Partial = some but not all applicable criteria were satisfied and the result is incomplete rather than wholly incorrect;
+- Mistake = the result is known to be wrong relative to the intended objective or success criteria and is not better classified as Partial;
+- Unknown = available evidence cannot establish the substantive result.
+
+Technical execution failure is not automatically a Mistake. Technical execution success is not automatically a cognitive Success. Attribution of the failure or success remains a separate evidence problem and may involve the Agent, tools, specialists, the environment, or other factors.
+
+Verify: outcome evaluation preserves evidence, attribution, and the distinction between outcome correctness and method/strategy quality; actual/simulated evidence remain distinguishable; technical failure/success cannot be silently mapped to cognitive learning labels; partial and unresolved outcomes remain representable.
+
+## 4.6 — Death / Wake / Reincarnation Lifecycle
+Define death as complete termination of the current runtime/incarnation, preserve Agent identity and cognitive state, support inactive periods with no live runtime, and explicitly reconstruct a new runtime from durable state when the Agent wakes.
+
+## 4.7 — Postmortem & Dream Processing
+Define bounded postmortem processing plus a first-class Dream subsystem that can inspect history, generate hypothetical alternatives, run multiple simulations in parallel, compare predicted outcomes, and produce proposed cognitive updates without requiring the Agent runtime to remain alive. Dream purposes have explicit semantics and provenance; purpose-specific processors may share the core Dream contract or be separately replaceable when scheduling, lifecycle, or resource boundaries justify that split. Proposed changes are not authoritative state transitions; reconciliation and the owning resource/governance boundary decide whether they are accepted.
+
+Dream purposes include:
+- Recovery — explore alternatives after a Mistake or unresolved outcome;
+- Optimization — search for cheaper, faster, safer, simpler, or more deterministic ways to reproduce a Success;
+- Nightmare / Stress-Test — actively search for plausible conditions under which an apparently successful method, plan, assumption, or strategy would fail;
+- Reconsideration — revisit prior decisions in light of later evidence;
+- Preparation — rehearse plausible future scenarios.
+
+Dream processing is governed by applicable authorization, provider/model quota, token/cost budget, time budget, concurrency/parallelism limits, retrieval/work limits, and cancellation.
+
+Dream evidence remains simulated/predicted evidence and cannot become actual experience. Counterfactual conclusions such as Regret must remain distinguishable from information actually available at the time of the original decision.
+
+After a Mistake, Cognitive Strategy may retry with a revised method directly or may first use Questions, Hive assistance, or a Recovery Dream when the expected benefit justifies the additional work. After a Success, it may use Optimization and Nightmare/Stress-Test Dreams before adopting a broader lesson.
+
+Verify: evaluated Mistake → Recovery proposal or bounded revised retry; evaluated Success → Optimization proposal; evaluated Success → Nightmare/Stress-Test proposal; Dream results remain simulated; Dream processing works while the Agent runtime is inactive; an inactive-runtime Dream requires an already authorized request or durable policy trigger; budgets/cancellation/concurrency are enforced.
+
+## 4.8 — Questions
+Define first-class Questions with structured context, specialty, provenance, answer type, evidence requirements, status, and confidence/uncertainty where applicable. Support specialty-specific questions so different Agents can investigate different aspects of the same user objective.
+
+Questions may be selected or prioritized when outcome attribution is uncertain, risk remains high, evidence conflicts, or a missing fact materially changes the choice among competing strategies.
+
+Verify: unresolved Mistake/Success attribution can result in an evidence-seeking Question; redundant Questions remain avoidable when sufficient evidence already exists.
+
+## 4.9 — Cognitive State Reconciliation
+Integrate human edits, actual experience, evaluated outcomes, Mistake/Success interpretations, Dream results, Question answers, beliefs, goals, plans, Risk/Fear/Confidence state, and other candidate updates through versioning, provenance, authorization, validation, and concurrency boundaries before the next wake/reincarnation.
+
+Conflicting evidence must remain attributable. Reconciliation may retain multiple hypotheses, uncertainty, or an unresolved Question instead of inventing a single authoritative explanation.
+
+Verify: concurrent human/Dream updates do not lose evidence; actual experience cannot be overwritten by simulated evidence; stale candidate updates are rejected or reconciled explicitly.
+
+---
+
+# Phase 5 — Cognitive Resources
+
+## 5.1 — Memory Resource Families
+Working, episodic, semantic, procedural, and future extensible families with explicit scope/ownership.
+
+## 5.2 — Knowledge / Wiki
+Versioned, permissioned knowledge resources and managed Wiki source.
+
+## 5.3 — Skills
+Versioned reusable procedures, dependencies, constraints, provenance, and assignments.
+
+## 5.4 — Learning Candidates & Governance
+Transform evaluated cognitive evidence into governed Learning Candidates through a first-class learning/governance boundary. The implementation may use a dedicated learning component or shared cognitive-resource infrastructure, but promotion remains explicit and governed.
+
+Evidence sources include:
+- evaluated Success outcomes;
+- evaluated Mistake outcomes;
+- Partial or mixed outcomes;
+- repeated outcome patterns;
+- human corrections;
+- Question answers;
+- Recovery Dreams;
+- Optimization Dreams;
+- Nightmare/Stress-Test Dreams.
+
+Each candidate preserves:
+- evidence type and actual/simulated origin;
+- provenance and attribution/credit context;
+- support/confidence;
+- applicability conditions;
+- the proposed target of adaptation (Skill, Method, strategy/routing rule, safeguard, memory/knowledge update, or other owned cognitive resource);
+- conditions for invalidation, revision, or retirement;
+- validation status.
+
+Promotion may change an appropriate Skill, method, applicability rule, memory/knowledge representation, or Cognitive Strategy routing according to explicit ownership rules.
+
+A candidate may learn that a deterministic procedure is preferable to another model call for a known class of situations, but promotion must remain governed. The promoted shortcut must identify its applicability boundary and remain revocable/revisable when later evidence invalidates or narrows it. No direct authoritative mutation from model output or Dream output.
+
+Verify: positive, negative, partial, mixed, human-corrected, and simulated evidence; conflicting candidates; applicability boundaries; insufficient support; promotion/rejection concurrency; explicit adaptation target; later invalidation/revision; and strategy consumption of an already-governed adaptation.
+
+---
+
+# Phase 6 — CognitiveHive : Hive
+
+## 6.1 — Collective Cognitive State
+Hive-level collective state is distinct from each member's own Agent/CognitiveAgent state.
+
+## 6.2 — Collective Strategy
+Coordinate planning/reasoning across members without moving member cognition into the Hive itself.
+
+## 6.3 — Collective Questions & Specialty Routing
+Route Questions by Agent specialty, avoid semantically duplicate work where evidence already exists, and allow each Agent to retain its own Questions and answers.
+
+## 6.4 — Cross-Agent Evidence & Synthesis
+Combine attributable answers, experiences, evaluated outcomes, Mistakes, Successes, Dreams, observations, and other evidence into collective reasoning without erasing individual provenance or actual-versus-simulated evidence status.
+
+## 6.5 — Collective Conflict & Consensus
+Bounded coordination, conflict resolution, disagreement handling, and consensus mechanisms.
+
+Base Hive coordination remains usable without CognitiveHive.
+
+---
+
+# Phase 7 — Additional Generic Host Integration
+
+Only pull this phase forward when a second real host application with meaningfully different integration requirements proves the need to generalize patterns already proven by the V1 WinForms boundary.
+
+## 7.1 — Generic Host Context
+Provider-neutral bounded host observations/context.
+
+## 7.2 — Cross-Host Data-Source & Control Adapters
+Generalize V1's WinForms integration patterns to other host representations only when a second real host requires it.
+
+## 7.3 — Cross-Host Bounded Object Discovery
+Generalize the proven V1 discovery contract to other UI/object models. Discovery remains cycle-safe, cancellation-aware, bounded, read-oriented, and never grants action authority.
+
+
+# Phase 8 — Multi-Tenancy, Scale, Configuration Portability & Extensibility
+
+## 8.1 — Authentication Boundary
+Add real authentication integration.
+
+## 8.2 — Distributed Execution Decision Point
+Re-evaluate Temporal/Dapr/distributed execution only from measured operational requirements.
+
+## 8.3 — Configuration Import/Export
+Versioned Hive configuration packages with compatibility/conflict handling.
+
+## 8.4 — MCP / Tool Extensibility
+Additional governed tool-extension boundary.
+
+## 8.5 — Additional Host Surfaces
+WPF/web/other hosts consume the same core and Management contracts.
+
+## 8.6 — Lightweight / Embedded Hive Deployment Profile
+Objective: provide an optional local/embedded persistence deployment for users who should not need to install or operate a separate SQL Server instance, while preserving the same Hive resource model, Management contracts, event/snapshot/outbox semantics, and authorization boundaries.
+
+Scope:
+- select and document a mature embedded persistence technology rather than creating a database engine without a measured requirement;
+- reuse the existing Hive persistence/resource contracts instead of maintaining a second logical schema/model;
+- define which capabilities the embedded backend supports, including vector storage/search;
+- keep SQL Server as the server-oriented V1 persistence implementation;
+- make backend selection explicit and configuration-driven;
+- preserve migration/version/concurrency/security semantics across supported backends;
+- provide a clear upgrade/export path from local/embedded deployment to the server-oriented persistence profile when required.
+
+This slice is a deployment/storage portability capability, not permission to fork Hive's domain model or introduce a separate vector database.
+
+Verify: clean local install, restart/persistence durability, migrations/upgrades, concurrency, crash/recovery, secret handling, supported vector-search behavior where available, explicit unsupported-capability reporting, and configuration migration between supported deployment profiles where that contract is provided.
+
+---
+
+# Phase 9 — Observability, Operations & Replay
+
+## 9.1 — Full Metrics Taxonomy
+Standardize platform metrics and operational dimensions.
+
+## 9.2 — Dashboards & Operational Views
+Management/operations visibility.
+
+## 9.3 — CI/CD
+Automated build, test, packaging, and verification pipelines.
+
+## 9.4 — Event-Log Replay Regression
+Replay durable event histories against stable contracts for regression detection.
+
+## 9.5 — Long-Running Resilience
+Long-duration concurrency, recovery, provider degradation, and resource-retention tests.
+
+## 9.6 — Production Diagnostics & Support Tooling
+Operational diagnostics, safe support exports, and controlled replay tooling.
+
+---
+
+## Ordering invariant
+
+The order is intentional. Base Agent contracts reserve reusable mechanisms such as Objectives, Question transport, patience/understanding gates, memory infrastructure, simulation interfaces, delegation, and Hive sponsorship. Implementation is pulled into the earliest phase only when the current V1 boundary requires it. The cognitive lifecycle, Dreams, and adaptive Questions remain CognitiveAgent-generation capabilities; CognitiveHive later extends them with cross-agent coordination without moving individual cognition into the Hive.
+
+
+```
+Foundations
+   ↓
+Base Agent + V1 data-entry pipeline
+   ↓
+Base Hive coordination
+   ↓
+Hive governance
+   ↓
+CognitiveAgent
+   ↓
+Cognitive resources
+   ↓
+CognitiveHive
+   ↓
+Generic future host integration
+   ↓
+Scale / portability / extensibility
+   ↓
+Operations / replay
+```
+
+The existence of a later architectural concept never makes it an implicit prerequisite for an earlier phase.
+
+The CognitiveAgent outcome/learning branch is intentionally contained within Phases 4–5:
+```
+actual experience
+    ↓
+outcome evaluation
+    ↓
+Mistake / Success / Partial / Unknown
+    ↓
+Risk/Fear/Confidence + attribution
+    ↓
+Question / Dream / Hive assistance
+    ↓
+Learning Candidate
+    ↓
+validation / reconciliation
+    ↓
+future strategy
+```
+
+This branch does not alter Base Agent execution semantics or make CognitiveAgent state a prerequisite for V1.
