@@ -49,7 +49,8 @@ Future generations remain open-ended and may coexist with older generations.
 11. Agent generation is selected explicitly when the Agent is created; it never changes automatically during runtime or reincarnation.
 12. A creator may request any supported Agent generation, including a CognitiveAgent, only when explicit authorization/policy permits that generation; generation is never inferred automatically from task complexity.
 13. Agent generation and Hive membership are independent. A base Hive may contain CognitiveAgents and a base Agent may create or join Hives without changing type.
-14. The Agent that sponsors a Hive is not the Hive's lifecycle owner. Sponsorship is a relationship; sponsor retirement, runtime death, or deletion does not automatically delete or retire the Hive or its members.
+14. Multiple independent Agent resources may coexist within the same host application and may operate concurrently without persistent Hive membership. Application roles such as Manager or Invoice Specialist are Agent definitions/context, not new framework generations; concurrent Agents remain independently identified and governed.
+15. The Agent that sponsors a Hive is not the Hive's lifecycle owner. Sponsorship is a relationship; sponsor retirement, runtime death, or deletion does not automatically delete or retire the Hive or its members.
 
 This gives Hive long-term flexibility without making type mutation a correctness problem.
 
