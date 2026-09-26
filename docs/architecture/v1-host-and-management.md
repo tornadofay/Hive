@@ -422,6 +422,28 @@ The Example host may provide a developer test panel that invokes `dotnet test` a
 
 The Example host is a first-class project from repository scaffolding onward, grows with Hive, and uses the same Hive UI foundation as all other WinForms surfaces.
 
+### Internal Management Facade Implementation Boundary
+
+`IHiveManagementFacade` remains the unified public application-management contract. The concrete `HiveManagementFacade` is a public boundary type, not the required home for every management implementation detail.
+
+Its implementation is separated into internal responsibility components aligned with the existing management domains:
+
+```
+IHiveManagementFacade
+        ↓
+HiveManagementFacade
+   ┌─────┼─────────┬─────────┬──────────┐
+   ↓     ↓         ↓         ↓          ↓
+Config Secrets  Provider   Agent     WorkItem
+```
+
+The internal components own the orchestration, validation, error translation, lifecycle/concurrency coordination, and cross-service dependencies for their domain. The facade is responsible for composing those components and preserving the stable public contract.
+
+Cross-domain behavior remains explicit. A provider operation may depend on secret resolution or execution services only through injected dependencies; an internal component must not reach back through the public facade to create a second management path.
+
+This separation is intentionally internal. It does not create a parallel public management API, does not move authorization out of `Hive.Management`, and does not permit `Hive.Host.WinForms` or `Hive.Example.WinForms` to bypass the facade. Public consumers continue to use `IHiveManagementFacade` exactly as before.
+
+
 ### 13.3 Settings and Host Runtime Configuration Boundary
 
 Hive Settings is the **global Hive package configuration center** and the permanent first-class user-facing configuration surface for durable Hive-owned package configuration. It is an application-management surface over the same authoritative state consumed by host applications, not a separate test configuration model or a collection of parallel settings roots.
