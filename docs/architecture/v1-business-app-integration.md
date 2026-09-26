@@ -106,7 +106,7 @@ The Phase 1.14 public contract family must support at least:
 - bounded interaction operations;
 - business-operation capability boundaries needed for API/UI composition.
 
-Durable business-operation receipts are owned by Phase 1.22 and first-class Review records are owned by Phase 1.23. Their semantics are defined in Sections 12–13 so the earlier host-integration contracts do not have to be redesigned later.
+Durable business-operation receipts are owned by Phase 1.24 and first-class Review records are owned by Phase 1.25. Their semantics are defined in Sections 12–13 so the earlier host-integration contracts do not have to be redesigned later.
 
 These contracts must not expose:
 
@@ -499,7 +499,7 @@ Hive does not authorize a raw control click merely because the model requested o
 
 Every consequential operation attempt that is submitted to the host boundary must have durable attempt/receipt evidence, including successful, rejected-before-mutation, partially applied, known-failed, and unknown outcomes.
 
-Phase 1.21 establishes the logical `OperationId` and the initial durable operation-attempt state required before a non-transactionally coupled host submission. Phase 1.22 completes that attempt into the durable `BusinessOperationReceipt`, records the final disposition when known, and owns unknown-outcome reconciliation. A crash or transport break after submission but before a host response therefore leaves a durable recovery anchor rather than an untracked host call.
+Phase 1.23 establishes the logical `OperationId` and the initial durable operation-attempt state required before a non-transactionally coupled host submission. Phase 1.24 completes that attempt into the durable `BusinessOperationReceipt`, records the final disposition when known, and owns unknown-outcome reconciliation. A crash or transport break after submission but before a host response therefore leaves a durable recovery anchor rather than an untracked host call.
 
 The receipt is not merely a success boolean and must not be replaced by the WorkItem status alone.
 
