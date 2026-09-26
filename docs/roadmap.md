@@ -358,14 +358,27 @@ Verify:
 - authorization and provenance remain enforced through the consequential operation;
 - unknown/partial host dispositions are preserved for the Phase 1.18 receipt/reconciliation boundary.
 
-## 1.18 — Business Operation Receipt, Reconciliation & Review
-Objective: durably attribute each consequential host operation, reconcile interrupted or unknown outcomes without blind duplicate mutation, and verify the resulting host state through the first-class WorkItem-linked Review boundary.
+## 1.18 — Business Operation Receipt & Reconciliation
+Objective: durably attribute each consequential host operation and reconcile interrupted or unknown outcomes without blind duplicate mutation.
 
 Scope:
 - durable BusinessOperationReceipt built from the Phase 1.17 operation-attempt state, containing WorkItem/operation identity, host/adapter identity, pre-operation target identities, resulting host identities when changed, result/disposition state, and host correlation/concurrency evidence when available;
 - durable operation-attempt state from Phase 1.17 remains the recovery anchor when a crash occurs after submission but before a host response;
 - stable operation correlation/idempotency identity reused by receipt/reconciliation when the host supports it;
 - unknown/partial write outcome reconciliation that does not blindly duplicate a possibly completed operation;
+- parent/child identities actually established by the host remain attributable to the operation;
+- each WorkItem retains its own operation receipt and reconciliation state.
+
+Verify:
+- parent + child identity receipt is durable;
+- interrupted/unknown outcome is reconciled from the durable operation attempt/receipt and authoritative host state without duplicate mutation;
+- an idempotent host retry reuses the same logical operation identity, while a non-idempotent host requires reconciliation before any second mutation;
+- authorization and provenance remain enforced across receipt and reconciliation.
+
+## 1.19 — Post-Write Review
+Objective: verify the resulting host state against the intended candidate/proposed data through a first-class WorkItem-linked Review boundary after the operation outcome is sufficiently established.
+
+Scope:
 - first-class WorkItem-linked Review object;
 - review queue/list over WorkItems awaiting review;
 - bounded authorized action to open/navigate to the associated host record/editor for human review when the host supports it;
@@ -375,33 +388,28 @@ Scope:
 - review outcomes such as `PendingReview`, `VerifiedCorrect`, `VerifiedIncorrect`, with unresolved operational states when verification cannot establish correctness;
 - discrepancy recording without silently rewriting the original candidate;
 - minimum bounded review evidence; Hive does not become a mirror of host business state;
-- each WorkItem retains its own operation receipt and review state.
+- review uses the operation identity/receipt to locate the exact host operation and affected records.
 
 Approval answers whether Hive may perform the proposed operation. Review answers whether the resulting host state is correct. They are separate lifecycle boundaries.
 
 Verify:
-- parent + child identity receipt is durable;
-- interrupted/unknown outcome is reconciled from the durable operation attempt/receipt and authoritative host state without duplicate mutation;
-- an idempotent host retry reuses the logical operation identity, while a non-idempotent host requires reconciliation before any second mutation;
 - review can locate the exact written host records through the receipt;
 - correct result reaches `VerifiedCorrect`;
 - incorrect result reaches `VerifiedIncorrect` with discrepancies;
 - review does not mutate the original candidate;
-- authorization and provenance remain enforced across receipt, reconciliation, and review.
+- authorization and provenance remain enforced across review.
 
-## 1.19 — MAF Sequential V1 Pipeline
-Objective: wire submission → WorkItem creation → input-specific preparation/routing → candidate extraction/mapping → validation → governed write → durable receipt/reconciliation → policy-governed verification/review as one MAF Sequential workflow, while keeping Hive-owned WorkItem identity, authorization, host integration, receipt, reconciliation, and Review semantics outside MAF's orchestration ownership. A submission/batch is not itself the correctness or execution unit.
+## 1.20 — MAF Sequential V1 Pipeline
+Objective: wire submission → WorkItem creation → input-specific preparation/routing → candidate extraction/mapping → validation → governed write → durable receipt/reconciliation → post-write Review as one MAF Sequential workflow, while keeping Hive-owned WorkItem identity, authorization, host integration, receipt, reconciliation, and Review semantics outside MAF's orchestration ownership. A submission/batch is not itself the correctness or execution unit.
 Verify: end-to-end fake-host path covering successful and rejected/failed branches plus developer manual verification with one controlled real sample when available.
 
-## 1.20 — Full-Pipeline Crash/Resume
+## 1.21 — Full-Pipeline Crash/Resume
 Objective: prove event/outbox/recovery behavior across the complete V1 pipeline, including durable business-operation attempt/receipt persistence before non-transactional host submission, unknown write-outcome reconciliation, independent WorkItem recovery within multi-item submissions, and Review recovery.
 Verify: process termination at several checkpoints, restart, resume or reconcile without duplicate terminal host mutation; already-terminal WorkItems are not processed again; failure of one WorkItem does not incorrectly fail unrelated WorkItems; completed WorkItems retain receipts; Review state survives restart; and recoverable WorkItems can resume/reconcile independently.
 
-## 1.21 — Metrics, Budget Cap & OpenTelemetry
+## 1.22 — Metrics, Budget Cap & OpenTelemetry
 Objective: request/success/failure/timeout counters, token/cost tracking, hard per-runtime budget, and console OpenTelemetry.
 Verify: configured limit produces typed stop; telemetry contains correlation data and no secrets.
-
----
 
 # Phase 2 — Base Hive Membership & Coordination
 
