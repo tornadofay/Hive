@@ -92,14 +92,11 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
                     "The Hive management configuration service has been disposed."));
         }
 
-        try
-        {
-            return await _configurationStore
-                .SavePersistenceConfigurationAsync(
-                    configuration,
-                    cancellationToken)
-                .ConfigureAwait(false);
-        }
+        return await _configurationStore
+            .SavePersistenceConfigurationAsync(
+                configuration,
+                cancellationToken)
+            .ConfigureAwait(false);
     }
 
 
@@ -132,22 +129,19 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
                     "The Hive management configuration service has been disposed."));
         }
 
-        try
-        {
-            var reference = existingReference ??
-                new HiveBootstrapCredentialReference(SecretId.New());
+        var reference = existingReference ??
+            new HiveBootstrapCredentialReference(SecretId.New());
 
-            var result = await _bootstrapCredentials
-                .SetAsync(reference, material, cancellationToken)
-                .ConfigureAwait(false);
+        var result = await _bootstrapCredentials
+            .SetAsync(reference, material, cancellationToken)
+            .ConfigureAwait(false);
 
-            return result.IsSuccess
-                ? Result<HiveBootstrapCredentialReference>.Success(reference)
-                : Result<HiveBootstrapCredentialReference>.Failure(
-                    SanitizeTechnicalError(
-                        result.Error!,
-                        "The bootstrap credential could not be stored."));
-        }
+        return result.IsSuccess
+            ? Result<HiveBootstrapCredentialReference>.Success(reference)
+            : Result<HiveBootstrapCredentialReference>.Failure(
+                SanitizeTechnicalError(
+                    result.Error!,
+                    "The bootstrap credential could not be stored."));
     }
 
 
@@ -185,34 +179,31 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
                     "The Hive management configuration service has been disposed."));
         }
 
-        try
+        var configuration = await _configurationStore
+            .LoadPersistenceConfigurationAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (configuration.IsFailure)
+            return Result.Failure(configuration.Error!);
+
+        if (configuration.Value!.BootstrapCredential == reference)
         {
-            var configuration = await _configurationStore
-                .LoadPersistenceConfigurationAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            if (configuration.IsFailure)
-                return Result.Failure(configuration.Error!);
-
-            if (configuration.Value!.BootstrapCredential == reference)
-            {
-                return Result.Failure(
-                    Error.Validation(
-                        "hive.management.bootstrap-credential-still-referenced",
-                        "The bootstrap credential cannot be removed while persistence configuration still references it."));
-            }
-
-            var result = await _bootstrapCredentials
-                .ClearAsync(reference, cancellationToken)
-                .ConfigureAwait(false);
-
-            return result.IsSuccess
-                ? result
-                : Result.Failure(
-                    SanitizeTechnicalError(
-                        result.Error!,
-                        "The bootstrap credential could not be removed."));
+            return Result.Failure(
+                Error.Validation(
+                    "hive.management.bootstrap-credential-still-referenced",
+                    "The bootstrap credential cannot be removed while persistence configuration still references it."));
         }
+
+        var result = await _bootstrapCredentials
+            .ClearAsync(reference, cancellationToken)
+            .ConfigureAwait(false);
+
+        return result.IsSuccess
+            ? result
+            : Result.Failure(
+                SanitizeTechnicalError(
+                    result.Error!,
+                    "The bootstrap credential could not be removed."));
     }
 
 
