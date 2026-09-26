@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Current slice
 
@@ -23,11 +23,13 @@ Bounded corrective maintenance slice. This work removes duplicated scope/access 
 
 ## Checkpoint
 
-Implementation is complete. The duplicated scope-access predicate and JSON metadata serialization/deserialization now have one internal implementation used by the existing provider base and both affected public stores. No public store type was changed to inherit from the internal SQL base, avoiding a public API expansion.
+Developer verification exposed compile errors in the new common helper and AgentDefinition store. Remediation is limited to restoring the helper dependencies removed during this slice; no contract or schema change is authorized.
+
+Implementation before verification had centralized the duplicated scope-access predicate and JSON metadata serialization/deserialization in one internal helper used by the existing provider base and both affected public stores. The duplicated scope-access predicate and JSON metadata serialization/deserialization now have one internal implementation used by the existing provider base and both affected public stores. No public store type was changed to inherit from the internal SQL base, avoiding a public API expansion.
 
 ## Verification gate
 
-Developer verification is required before closure. No automated tests or build have been run by the agent.
+Developer verification failed with compile errors in `SqlResourceStoreCommon.cs` (`GuidParameter` / `IntParameter`) and `SqlAgentDefinitionResourceStore.cs` (`ConcurrencyException` / `IsConstraintConflict`). Same-slice remediation is authorized only for these concrete failures. After remediation, Active Work returns to `VERIFICATION PENDING` and the developer must rerun the required focused tests and broader `Hive.Tests` suite.
 
 ## Example to run
 
