@@ -43,7 +43,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
     internal event EventHandler<HiveCrudOperationFailedEventArgs>? OperationFailed;
     internal bool IsBusy => _busy;
 
-    private async Task ExecuteAsync(
+    internal async Task ExecuteAsync(
         HiveCrudOperation operation,
         Func<CancellationToken, Task> action,
         CancellationToken cancellationToken)
@@ -61,7 +61,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         }
         catch (OperationCanceledException) when (source.IsCancellationRequested)
         {
-            if (!IsDisposed && !Disposing)
+            if (!_owner.IsDisposed && !_owner.Disposing)
                 _setStatus("Cancelled.", HiveStatusTone.Warning);
         }
         catch (Exception exception)
