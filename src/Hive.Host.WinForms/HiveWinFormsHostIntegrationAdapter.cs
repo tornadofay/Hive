@@ -330,7 +330,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         }
 
         if (request.Kind == HiveHostInteractionKind.ReadControl &&
-            !SupportsStandardField(control))
+            !WinFormsControlValueAdapters.TryGet(control, out _))
         {
             return Result<HiveHostInteractionResult>.Failure(
                 new Error(
@@ -536,13 +536,13 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             CleanOptional(metadata?.BindingMember) ?? bindingMember,
             CleanRequired(
                 metadata?.ValueType,
-                GetValueTypeName(control)),
+                WinFormsControlValueAdapters.GetValueTypeName(control)),
             metadata?.Required ?? false,
             readOnly,
             metadata?.Computed ?? false,
             metadata?.Generated ?? false,
             metadata?.IsPrimaryKey ?? false,
-            TryReadValue(control),
+            WinFormsControlValueAdapters.TryReadValue(control),
             metadata?.Lookup);
     }
 
@@ -1155,16 +1155,15 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         return current;
     }
 
-    private static bool SupportsStandardField(Control control) =>
-        control is
-            (TextBoxBase or CheckBox or ComboBox or DateTimePicker or NumericUpDown);
-
     private static bool CanSetStandardValue(
         Control control,
         HiveHostFieldDescriptor? field = null)
     {
         if (!control.Enabled ||
-            IsStandardReadOnly(control))
+            !WinFormsControlValueAdapters.TryGet(
+                control,
+                out var adapter) ||
+            !adapter.CanSet(control))
         {
             return false;
         }
@@ -1191,114 +1190,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             }
         }
 
-        return control is
-            (TextBoxBase or CheckBox or DateTimePicker or NumericUpDown) ||
-            control is ComboBox comboBox &&
-            comboBox.DropDownStyle != ComboBoxStyle.DropDownList;
-    }
-
-    private static bool IsStandardReadOnly(Control control) =>
-        control switch
-        {
-            TextBox textBox => textBox.ReadOnly,
-            RichTextBox richTextBox => richTextBox.ReadOnly,
-            MaskedTextBox maskedTextBox => maskedTextBox.ReadOnly,
-            NumericUpDown numericUpDown => numericUpDown.ReadOnly,
-            _ => false
-        };
-
-    private static HiveHostCapabilityDescriptor CreateCapability(
-        string key,
-        HiveHostCapabilityKind kind,
-        string name,
-        HiveHostActionKind? action = null) =>
-        new(
-            CreateCapabilityId(key),
-            kind,
-            name,
-            action: action);
-
-    private static Guid CreateCapabilityId(string key)
-    {
-        var bytes = SHA256.HashData(
-            Encoding.UTF8.GetBytes(
-                "Hive.Host.WinForms.Capability.V1|" + key));
-
-        return new Guid(bytes.AsSpan(0, 16));
-    }
-
-    private static int TryGetBoundRowCount(DataGridView grid)
-    {
-        var dataSource = grid.DataSource;
-
-        if (dataSource is not null)
-        {
-            var bindingContext = grid.BindingContext;
-            if (bindingContext is not null)
-            {
-                try
-                {
-                    var manager = bindingContext[
-                        dataSource,
-                        grid.DataMember];
-
-                    if (manager is not null)
-                        return Math.Max(0, manager.Count);
-                }
-                catch (ArgumentException)
-                {
-                }
-                catch (InvalidOperationException)
-                {
-                }
-            }
-        }
-
-        return grid.AllowUserToAddRows
-            ? Math.Max(0, grid.Rows.Count - 1)
-            : grid.Rows.Count;
-    }
-
-    private static string GetValueTypeName(Control control) =>
-        control switch
-        {
-            TextBoxBase => typeof(string).FullName!,
-            CheckBox => typeof(bool).FullName!,
-            ComboBox => typeof(string).FullName!,
-            DateTimePicker => typeof(DateTime).FullName!,
-            NumericUpDown => typeof(decimal).FullName!,
-            _ => typeof(string).FullName!
-        };
-
-    private static HiveHostValue? TryReadValue(Control control)
-    {
-        if (control is TextBox passwordTextBox &&
-            (passwordTextBox.UseSystemPasswordChar ||
-             passwordTextBox.PasswordChar != ' '))
-        {
-            return null;
-        }
-
-        if (control is MaskedTextBox maskedTextBox &&
-            maskedTextBox.PasswordChar != ' ')
-        {
-            return null;
-        }
-
-        return control switch
-        {
-            TextBoxBase textControl =>
-                HiveHostValue.FromString(textControl.Text),
-            CheckBox checkBox =>
-                HiveHostValue.FromBoolean(checkBox.Checked),
-            ComboBox comboBox =>
-                HiveHostValue.FromString(comboBox.Text),
-            DateTimePicker dateTimePicker =>
-                HiveHostValue.FromDateTime(dateTimePicker.Value),
-            NumericUpDown numericUpDown =>
-                HiveHostValue.FromDecimal(numericUpDown.Value),
-            _ => null
-        };
+        return true;
     }
 
     private static Result<HiveHostInteractionResult> SetControlValue(
@@ -1311,14 +1203,6 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 Error.Conflict(
                     "hive.host.winforms.control-disabled",
                     "The requested WinForms control is disabled."));
-        }
-
-        if (IsStandardReadOnly(control))
-        {
-            return Result<HiveHostInteractionResult>.Failure(
-                Error.Conflict(
-                    "hive.host.winforms.control-read-only",
-                    "The requested WinForms control is read-only."));
         }
 
         if (control is IHiveWinFormsFieldControl fieldControl)
@@ -1337,120 +1221,9 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             }
         }
 
-        if (control is TextBoxBase textBox)
-        {
-            if (request.Value is not { } value ||
-                value.Kind != HiveHostValueKind.String)
-            {
-                return Result<HiveHostInteractionResult>.Failure(
-                    Error.Validation(
-                        "hive.host.winforms.value-type-invalid",
-                        "A string value is required for a text control."));
-            }
-
-            if (control is TextBox password &&
-                (password.UseSystemPasswordChar ||
-                 password.PasswordChar != ' '))
-            {
-                return Result<HiveHostInteractionResult>.Failure(
-                    Error.Unsupported(
-                        "hive.host.winforms.password-write-unsupported",
-                        "Password controls are not handled by the reusable value adapter."));
-            }
-
-            textBox.Text = value.AsString()!;
-        }
-        else if (control is CheckBox checkBox)
-        {
-            if (request.Value is not { } value ||
-                !value.TryGetBoolean(out var boolean))
-            {
-                return Result<HiveHostInteractionResult>.Failure(
-                    Error.Validation(
-                        "hive.host.winforms.value-type-invalid",
-                        "A boolean value is required for a check box."));
-            }
-
-            checkBox.Checked = boolean;
-        }
-        else if (control is DateTimePicker dateTimePicker)
-        {
-            if (request.Value is not { } value ||
-                !value.TryGetDateTime(out var dateTime))
-            {
-                return Result<HiveHostInteractionResult>.Failure(
-                    Error.Validation(
-                        "hive.host.winforms.value-type-invalid",
-                        "A date/time value is required for a date-time control."));
-            }
-
-            if (dateTime < dateTimePicker.MinDate ||
-                dateTime > dateTimePicker.MaxDate)
-            {
-                return Result<HiveHostInteractionResult>.Failure(
-                    Error.Validation(
-                        "hive.host.winforms.datetime-range-invalid",
-                        "The requested date/time value is outside the host control range."));
-            }
-
-            dateTimePicker.Value = dateTime;
-        }
-        else if (control is NumericUpDown numericUpDown)
-        {
-            if (request.Value is not { } value ||
-                !value.TryGetDecimal(out var decimalValue))
-            {
-                return Result<HiveHostInteractionResult>.Failure(
-                    Error.Validation(
-                        "hive.host.winforms.value-type-invalid",
-                        "A decimal value is required for a numeric control."));
-            }
-
-            if (decimalValue < numericUpDown.Minimum ||
-                decimalValue > numericUpDown.Maximum)
-            {
-                return Result<HiveHostInteractionResult>.Failure(
-                    Error.Validation(
-                        "hive.host.winforms.numeric-range-invalid",
-                        "The requested numeric value is outside the host control range."));
-            }
-
-            numericUpDown.Value = decimalValue;
-        }
-        else if (control is ComboBox comboBox)
-        {
-            if (comboBox.DropDownStyle == ComboBoxStyle.DropDownList)
-            {
-                return Result<HiveHostInteractionResult>.Failure(
-                    Error.Unsupported(
-                        "hive.host.winforms.combo-selection-requires-lookup",
-                        "Selection in a drop-down list must use the bounded lookup contract."));
-            }
-
-            if (request.Value is not { } value ||
-                value.Kind != HiveHostValueKind.String)
-            {
-                return Result<HiveHostInteractionResult>.Failure(
-                    Error.Validation(
-                        "hive.host.winforms.value-type-invalid",
-                        "A string value is required for a combo box."));
-            }
-
-            comboBox.Text = value.AsString()!;
-        }
-        else
-        {
-            return Result<HiveHostInteractionResult>.Failure(
-                Error.Unsupported(
-                    "hive.host.winforms.interaction-unsupported",
-                    "The reusable adapter does not support setting this control type."));
-        }
-
-        return Result<HiveHostInteractionResult>.Success(
-            new HiveHostInteractionResult(
-                request.CorrelationId,
-                request.Kind,
-                TryReadValue(control)));
+        return WinFormsControlValueAdapters.SetControlValue(
+            control,
+            request);
     }
 
     private static string CleanRequired(
