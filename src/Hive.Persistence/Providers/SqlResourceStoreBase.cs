@@ -542,4 +542,11 @@ internal abstract class SqlResourceStoreBase
         exception.Number is 2601 or 2627;
 }
 
+    protected sealed record CapabilityPersistenceItem(
+        string Key,
+        CapabilityState State);
+
+    protected sealed class ConcurrencyException : Exception
+    {
+    }
 }
