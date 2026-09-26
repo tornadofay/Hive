@@ -101,6 +101,8 @@ Verify: adding one new example implementation makes it appear in navigation with
 
 Nothing in Phases 4–6 is required to complete this phase.
 
+**V1 completion target:** Hive is usable as an embedded platform inside a real host application such as HForms. Completed V1 provides provider/model discovery and operational metadata, a user-facing Workspace with direct LLM and Agent interaction, durable Base-Agent work state, governed Tools and authorization, application-scoped Agents including multiple concurrent specialist Agents, the complete supported-input-to-host-write pipeline, operation receipt/reconciliation, post-write Review, operational inventory/diagnostics, MAF composition, crash/recovery, budgets, and telemetry. V1 multi-Agent operation does not require persistent Hive membership or Swarm state; multiple Agents may work concurrently inside one application while remaining independent Agent resources. Phase 2 introduces the persistent Hive collective, membership, and Swarm model.
+
 ## 1.1 — Provider / ProviderAccount / ExecutionTarget
 Objective: concrete provider resources, account boundary, execution targets, persistence, and three-state capabilities.
 Verify: CRUD, ownership/scope, duplicate identity, malformed state.
@@ -327,24 +329,166 @@ Input-specific processing must converge on the common prepared-input boundary ra
 
 Verify: image routing, spreadsheet workbook/worksheet/row handling, multiple WorkItems from one submission, bounded file/workbook/row processing, cancellation, input failure isolation, and unsupported-input handling.
 
-## 1.16 — Structured Extraction & Validation
-Objective: produce typed candidate business data from supported input capabilities and apply required-field, type, and domain validation. Vision-derived candidates and structured spreadsheet-derived candidates both enter this common candidate/validation boundary. When the target business operation requires it, candidate data may preserve an explicit parent record with nested child-row collections and their relationships; this does not create a generic relational-document framework.
-Verify: valid sample, missing fields, invalid types, malformed model output, parent/child candidate structure when required by the target operation, and rejection path.
+## 1.16 — Provider / Model Capability Discovery & Operational Metadata
+Objective: complete the Provider platform with automatic discovery of provider/model metadata and normalized capability state.
 
-## 1.17 — Business-App Proposal & Governed Write
-Objective: turn a validated structured candidate into an authorized business-operation proposal and perform the consequential host write through the approved host operation boundary.
+Scope:
+- provider/account connection and metadata discovery through the existing provider/Management boundary;
+- model/target enumeration when a provider supports it;
+- normalization of provider-specific model capabilities into Hive capability keys;
+- discovered `Supported / Unsupported / Unknown` capability state;
+- refresh and stale-discovery handling;
+- provider/model availability and health metadata;
+- discovery failures remain typed and do not silently fabricate capabilities;
+- explicit configured capability overrides remain distinguishable from discovered capability information;
+- capability-aware ExecutionTarget selection continues to use the existing authoritative capability boundary.
+
+Verify:
+- supported provider discovery;
+- model enumeration where available;
+- capability normalization;
+- unsupported/unavailable capability handling;
+- discovery timeout/cancellation/failure;
+- stale metadata refresh;
+- explicit capability override behavior;
+- no provider credentials or secrets appear in metadata/diagnostics.
+
+## 1.17 — Structured Extraction & Validation
+Objective: produce typed candidate business data from supported input capabilities and apply required-field, type, and domain validation.
+
+Scope:
+- image/vision extraction;
+- spreadsheet-derived structured candidate input;
+- source-neutral candidate contract;
+- parent/child candidate structure when required by the target operation;
+- required/type/domain validation;
+- malformed extraction result handling;
+- candidate provenance and source linkage;
+- no host mutation.
+
+Verify:
+- valid candidate;
+- missing fields;
+- invalid types;
+- malformed model output;
+- parent/child candidate structure;
+- invalid/rejected candidate path;
+- provenance preservation.
+
+## 1.18 — Durable Base-Agent Work State & Vector Retrieval
+Objective: make the already-defined Base-Agent work mechanisms durable across runtime lifetimes while establishing the bounded V1 vector-storage/retrieval foundation.
+
+Scope:
+- durable Objective state;
+- durable WorkItem binding/provenance where applicable;
+- durable Question/Answer state;
+- durable base-Agent memory/work-state records;
+- durable delegation state where required by active work;
+- runtime/lifecycle recovery for those work mechanisms;
+- preservation of ownership, scope, provenance, version, and concurrency rules;
+- replaceable `IVectorStore` contract;
+- SQL Server `VECTOR` implementation for the V1 persistence profile;
+- bounded vector insertion and similarity search;
+- vector retrieval remains infrastructure, not a Phase 5 semantic-memory system;
+- actual versus simulated evidence remains distinguishable.
+
+Explicit non-goal: no CognitiveAgent beliefs/goals/learning/Dream semantics.
+
+Verify:
+- persistence across runtime restart;
+- ownership and scope isolation;
+- stale/concurrent state handling;
+- durable Question transitions;
+- durable Objective transitions;
+- durable memory retrieval;
+- vector insertion/search;
+- cancellation and bounded retrieval;
+- no cross-runtime state leakage.
+
+## 1.19 — V1 Workspace & Agent Interaction
+Objective: provide the real human-facing Workspace where users interact directly with LLMs or with Hive Agents.
+
+Scope:
+- Workspace becomes a first-class V1 interaction surface, not only a WorkItem monitor;
+- LLM mode with explicit model/ExecutionTarget selection;
+- Agent mode with explicit Agent selection;
+- conversation/chat surface;
+- active Agent/runtime/execution context;
+- user commands/objectives submitted to an Agent;
+- application-wide Agent support;
+- application-scoped role/context such as a Manager Agent;
+- form-associated specialized Agents;
+- Agent association with bounded host context;
+- create/reuse/activate/deactivate Agent instances through the normal Management boundary;
+- switching between LLM and Agent modes;
+- display current WorkItems/jobs produced by the interaction;
+- Workspace never creates Hive membership merely because multiple Agents are visible;
+- Workspace remains a presentation/control surface over Management and does not become an authority.
+
+V1 Agent model:
+
+```text
+Application
+    │
+    ├── Manager Agent
+    ├── Invoice Agent
+    ├── Customer Agent
+    └── other specialized Agents
+```
+
+These remain ordinary Agent resources with different definitions/context. `ManagerAgent`, `InvoiceAgent`, etc. are not required as new framework types.
+
+Verify:
+- direct LLM conversation;
+- explicit model selection;
+- Agent conversation;
+- Agent selection;
+- application-wide Agent;
+- specialized form-associated Agent;
+- switching modes;
+- independent Agent/runtime state;
+- Workspace restart/reload;
+- authorization remains outside the UI.
+
+## 1.20 — Governed Tools, Policy, Permissions & Human Intervention
+Objective: establish the general governance boundary used whenever an Agent proposes or performs consequential work.
+
+Scope:
+- first-class Tool identity/capability contract;
+- Tool registration/discovery through Hive-owned contracts;
+- policy/permission evaluation;
+- authorization decisions;
+- provenance and audit evidence;
+- generic human-intervention contract;
+- V1 `Approve / Reject` implemented through the intervention boundary;
+- intervention states and stale-state handling;
+- deterministic fail-closed authorization;
+- business/application actions remain host-owned;
+- model output never grants authorization;
+- UI capability never substitutes for Hive authorization.
+
+Verify:
+- unauthorized Tool execution rejected;
+- authorized Tool execution succeeds;
+- stale authorization/intervention rejected;
+- Approve/Reject behaves through the generalized intervention boundary;
+- provenance/audit evidence preserved;
+- model cannot grant itself permission.
+
+## 1.21 — Business-App Proposal & Governed Write
+Objective: turn validated structured data into an authorized business operation and perform the consequential host write through the approved host operation boundary.
 
 Scope:
 - structured BusinessOperationProposal for parent data and, where required, child collections;
 - authorization before the consequential operation;
-- `PendingApproval` with existing Approve / Reject semantics when policy requires approval;
+- `PendingApproval` with Approve / Reject semantics when policy requires approval;
 - host business operation execution through API, UI, or API+UI implementation;
-- each WorkItem has its own logical business-operation identity; submission/batch grouping does not combine independent WorkItems into one mutable operation;
-- durable initial operation-attempt state is persisted before submission when the host boundary is not transactionally coupled to Hive, so an interrupted call remains attributable and reconcilable;
-- operation correlation/idempotency identity is established for the write boundary and is reused for retries when the host supports idempotency;
-- generated host IDs are captured from successful creation operations;
-- write success, known no-side-effect failure, partial outcome, and rejected-before-mutation disposition are preserved as operation evidence for the later receipt boundary;
-- unknown host outcomes remain explicitly unresolved for Phase 1.18 reconciliation rather than being treated as confirmed success or failure.
+- each WorkItem has its own logical business-operation identity;
+- durable initial operation-attempt state before non-transactionally coupled host submission;
+- operation correlation/idempotency identity reused for retries when supported;
+- generated host IDs captured from successful creation operations;
+- success, known no-side-effect failure, partial, and rejected-before-mutation evidence;
+- unknown outcome remains unresolved for Phase 1.22 reconciliation.
 
 Approval answers whether Hive may perform the proposed operation. It is distinct from post-write correctness Review.
 
@@ -356,60 +500,161 @@ Verify:
 - generated host IDs are captured;
 - operation identity remains stable for a retry-capable host boundary;
 - authorization and provenance remain enforced through the consequential operation;
-- unknown/partial host dispositions are preserved for the Phase 1.18 receipt/reconciliation boundary.
+- unknown/partial host dispositions are preserved for the receipt/reconciliation boundary.
 
-## 1.18 — Business Operation Receipt & Reconciliation
-Objective: durably attribute each consequential host operation and reconcile interrupted or unknown outcomes without blind duplicate mutation.
+## 1.22 — Business Operation Receipt & Reconciliation
+Objective: durably establish what happened after a consequential host operation and recover safely from interrupted or unknown outcomes.
 
 Scope:
-- durable BusinessOperationReceipt built from the Phase 1.17 operation-attempt state, containing WorkItem/operation identity, host/adapter identity, pre-operation target identities, resulting host identities when changed, result/disposition state, and host correlation/concurrency evidence when available;
-- durable operation-attempt state from Phase 1.17 remains the recovery anchor when a crash occurs after submission but before a host response;
-- stable operation correlation/idempotency identity reused by receipt/reconciliation when the host supports it;
-- unknown/partial write outcome reconciliation that does not blindly duplicate a possibly completed operation;
-- parent/child identities actually established by the host remain attributable to the operation;
+- durable `BusinessOperationReceipt` built from the Phase 1.21 operation-attempt state;
+- durable attempt remains the recovery anchor after submission but before host response;
+- host correlation/idempotency evidence;
+- unknown and partial outcome reconciliation;
+- authoritative host-state reread when required;
+- parent/child identities established by the host remain attributable;
 - each WorkItem retains its own operation receipt and reconciliation state.
 
 Verify:
 - parent + child identity receipt is durable;
-- interrupted/unknown outcome is reconciled from the durable operation attempt/receipt and authoritative host state without duplicate mutation;
-- an idempotent host retry reuses the same logical operation identity, while a non-idempotent host requires reconciliation before any second mutation;
-- authorization and provenance remain enforced across receipt and reconciliation.
+- interrupted/unknown outcome is reconciled from durable state and authoritative host state without duplicate mutation;
+- idempotent retry reuses the logical operation identity;
+- non-idempotent host requires reconciliation before a second mutation;
+- authorization and provenance remain enforced.
 
-## 1.19 — Post-Write Review
-Objective: verify the resulting host state against the intended candidate/proposed data through a first-class WorkItem-linked Review boundary after the operation outcome is sufficiently established.
+## 1.23 — Post-Write Review
+Objective: verify the resulting host state against the intended candidate/proposed data through a first-class WorkItem-linked Review boundary.
 
 Scope:
 - first-class WorkItem-linked Review object;
-- review queue/list over WorkItems awaiting review;
-- bounded authorized action to open/navigate to the associated host record/editor for human review when the host supports it;
-- policy-governed review modes: Human, Automated, or Hybrid;
-- human review initially supported when correctness review is required, with policy able to disable mandatory human review for an operation class later;
-- authorized host-state reread and bounded comparison against intended candidate/proposed data;
-- review outcomes such as `PendingReview`, `VerifiedCorrect`, `VerifiedIncorrect`, with unresolved operational states when verification cannot establish correctness;
-- discrepancy recording without silently rewriting the original candidate;
-- minimum bounded review evidence; Hive does not become a mirror of host business state;
-- review uses the operation identity/receipt to locate the exact host operation and affected records.
+- review queue/list;
+- bounded authorized action to open/navigate to the associated host record/editor;
+- Human, Automated, or Hybrid review modes;
+- authorized host-state reread and bounded comparison;
+- `PendingReview`, `VerifiedCorrect`, `VerifiedIncorrect`, and unresolved verification states;
+- discrepancy recording without rewriting the original candidate;
+- minimum bounded review evidence;
+- Review uses the operation identity/receipt to locate affected host records.
 
 Approval answers whether Hive may perform the proposed operation. Review answers whether the resulting host state is correct. They are separate lifecycle boundaries.
 
 Verify:
-- review can locate the exact written host records through the receipt;
+- review locates the exact written host records through the receipt;
 - correct result reaches `VerifiedCorrect`;
 - incorrect result reaches `VerifiedIncorrect` with discrepancies;
 - review does not mutate the original candidate;
-- authorization and provenance remain enforced across review.
+- authorization and provenance remain enforced.
 
-## 1.20 — MAF Sequential V1 Pipeline
-Objective: wire submission → WorkItem creation → input-specific preparation/routing → candidate extraction/mapping → validation → governed write → durable receipt/reconciliation → post-write Review as one MAF Sequential workflow, while keeping Hive-owned WorkItem identity, authorization, host integration, receipt, reconciliation, and Review semantics outside MAF's orchestration ownership. A submission/batch is not itself the correctness or execution unit.
-Verify: end-to-end fake-host path covering successful and rejected/failed branches plus developer manual verification with one controlled real sample when available.
+## 1.24 — Multi-Agent Work Assignment & Concurrent Execution
+Objective: allow multiple independent Agents to perform work concurrently inside one host application without requiring persistent Hive membership or Swarm state.
 
-## 1.21 — Full-Pipeline Crash/Resume
-Objective: prove event/outbox/recovery behavior across the complete V1 pipeline, including durable business-operation attempt/receipt persistence before non-transactional host submission, unknown write-outcome reconciliation, independent WorkItem recovery within multi-item submissions, and Review recovery.
-Verify: process termination at several checkpoints, restart, resume or reconcile without duplicate terminal host mutation; already-terminal WorkItems are not processed again; failure of one WorkItem does not incorrectly fail unrelated WorkItems; completed WorkItems retain receipts; Review state survives restart; and recoverable WorkItems can resume/reconcile independently.
+Scope:
+- assign WorkItems/jobs to specific Agent instances;
+- application-wide Manager Agent may coordinate assignment through authorized mechanisms;
+- specialized Agents can own and execute their own WorkItems;
+- multiple Agent runtimes may execute concurrently;
+- independent WorkItem queues/assignment state;
+- independent cancellation;
+- independent failure/retry;
+- bounded host-form/context association;
+- multiple different forms may have different specialized Agents active simultaneously;
+- execution/provider/resource policy remains authoritative;
+- Agent identities and WorkItem identities remain separate;
+- concurrency and isolation are explicit;
+- no persistent Hive membership;
+- no Swarm resource.
 
-## 1.22 — Metrics, Budget Cap & OpenTelemetry
-Objective: request/success/failure/timeout counters, token/cost tracking, hard per-runtime budget, and console OpenTelemetry.
-Verify: configured limit produces typed stop; telemetry contains correlation data and no secrets.
+Example:
+
+```text
+Manager Agent
+      │
+      ├── Invoice Agent A → Invoice Form A → WorkItem 1
+      ├── Invoice Agent B → Invoice Form B → WorkItem 2
+      └── Customer Agent  → Customer Form  → WorkItem 3
+
+all may run concurrently
+```
+
+Verify:
+- multiple Agents operating simultaneously;
+- different forms/contexts;
+- independent WorkItems;
+- failure isolation;
+- cancellation isolation;
+- provider/target selection isolation;
+- no accidental shared runtime state;
+- no implicit Hive/Swarm creation.
+
+## 1.25 — MAF Sequential V1 Pipeline
+Objective: compose the complete V1 business workflow through MAF Sequential orchestration.
+
+```text
+Submission
+    ↓
+WorkItem creation
+    ↓
+Input preparation / routing
+    ↓
+Structured extraction / validation
+    ↓
+Tool / policy / authorization
+    ↓
+Business proposal
+    ↓
+Approval / intervention when required
+    ↓
+Governed host write
+    ↓
+Receipt / reconciliation
+    ↓
+Post-write Review
+```
+
+MAF owns orchestration where applicable; Hive retains ownership of identity, authorization, host semantics, receipts, reconciliation, Review, and resource governance.
+
+Verify: complete deterministic fake-host end-to-end path.
+
+## 1.26 — Full-Pipeline Crash/Resume
+Objective: prove recovery across the complete V1 workflow, including WorkItem, runtime/execution, durable Base-Agent work state, operation-attempt, receipt, reconciliation, multiple-Agent, and Review recovery.
+Verify: process termination at several checkpoints, restart, resume or reconcile without duplicate terminal host mutation; already-terminal WorkItems are not processed again; failure of one WorkItem or Agent does not incorrectly fail unrelated work; durable Base-Agent work state remains consistent; completed WorkItems retain receipts; Review state survives restart; and recoverable Agents/WorkItems can resume or reconcile independently.
+
+## 1.27 — Resource Inventory & Runtime Diagnostics
+Objective: provide the V1 operational surface for understanding what Hive owns and what it is doing.
+
+Scope:
+- authoritative resource inventory;
+- Providers, ProviderAccounts, ExecutionTargets, Agents, RuntimeInstances, Executions, WorkItems, jobs/assignments, operation/receipt state, and Review state;
+- provider/model availability and health;
+- runtime/execution diagnostics;
+- lifecycle/state inspection;
+- bounded failure diagnostics;
+- safe correlation/provenance information;
+- no secret disclosure;
+- inspection does not mutate state unless an explicitly authorized action exists.
+
+Verify:
+- inventory reflects authoritative Management state;
+- resource ownership/scope is respected;
+- runtime state is inspectable;
+- failed operations expose useful typed diagnostics;
+- secrets remain redacted;
+- inventory survives/reloads from durable state.
+
+## 1.28 — Metrics, Budget Cap & OpenTelemetry
+Objective: establish V1 resource control and observability.
+
+Scope:
+- request/success/failure/timeout metrics;
+- provider/model operational metrics;
+- WorkItem/Agent/runtime correlation;
+- token/cost tracking;
+- hard per-runtime budget;
+- applicable provider/model quotas;
+- cancellation;
+- OpenTelemetry traces/metrics;
+- no secrets in telemetry.
+
+Verify: budget stop, telemetry correlation, cancellation, and secret redaction.
 
 # Phase 2 — Base Hive Membership & Coordination
 
@@ -438,284 +683,18 @@ Define Swarm as the active subset of Hive members collaborating on a WorkItem, Q
 
 All coordination uses MAF orchestration primitives where applicable; Hive does not become a second workflow engine.
 
-## 2.8 — Workspace Coordination & Agentic Extensions
-Extend Workspace after Hive membership and Swarm contracts exist.
-
-Objective: add Agent/Hive organization and topology, active Swarm visibility, and Agentic mode where an Agent/Hive selects execution targets through the normal planner/policy boundary.
-
-General LLM mode with explicit model selection may be added here as a general Workspace capability; it is not part of the V1 data-entry workflow.
-
-Verify: topology reflects authoritative Hive membership, Swarm views reflect derived active membership, Agentic mode displays the selected execution target, and Workspace does not create Hive/Swarm state merely by displaying it.
-
-
-# Phase 3 — Hive Governance Patterns
-
-## 3.1 — Manager-led Strategy
-Define manager/supervisor selection and authority policy.
-
-## 3.2 — Democratic/Voting Strategy
-Add the first explicit voting rule and deterministic tie/insufficient-vote behavior.
-
-## 3.3 — Adversarial/Critique Strategy
-Add critique/challenge roles and bounded conflict reporting.
-
-## 3.4 — Governance Strategy Selection UI
-Expose governance mode and policy through Hive.Management.
-
----
-
-# Phase 4 — CognitiveAgent : Agent
-
-The base Agent and V1 pipeline continue working unchanged throughout this phase. The base Agent may already provide Objectives, Question transport, patience/understanding gates, memory infrastructure, simulations, delegation, and Hive creation as reusable mechanisms. CognitiveAgent is created explicitly and adds adaptive cognition over those mechanisms; no runtime type promotion or demotion is introduced.
-
-## 4.1 — Cognitive Kernel
-Persistent cognitive identity binding, lifecycle, state versioning, recovery, and per-runtime concurrency ownership.
-
-## 4.2 — Cognitive Strategy
-Replaceable strategy contract capable of deterministic decisions and explicit no-model paths, including adaptive interpretation of evaluated outcomes, contextual Risk/Fear/Confidence, reconsideration, and selection among direct execution, Questions, Hive assistance, Dreams, decomposition, and previously governed strategy/resource adaptations. This slice defines the extension point for learned deterministic shortcuts but does not implement Learning Candidate promotion from later Phase 5 work.
-
-Verify: strategy decisions can consume cognitive evidence and Risk/Fear/Confidence without bypassing authorization, capability, scope, budget, or execution planning; any promoted adaptation is consumed only through its owning governed contract.
-
-## 4.3 — Reasoning Requirement
-Provider-neutral reasoning requirements kept separate from concrete Execution Target planning.
-
-## 4.4 — Persistent Cognitive State
-Beliefs, bounded workspace/attention, goals, intentions, plans, methods, self-model, contextual Risk/Fear/Confidence state, impasses, and revision-safe transitions. Persistent state is independent of whether a runtime incarnation is currently active.
-
-Risk, Fear, and Confidence are evidence-backed cognitive state rather than authorization or policy state. They may alter strategy and escalation behavior but never override authoritative enforcement.
-
-Verify: versioned cognitive-state transitions preserve context/provenance for Risk/Fear/Confidence and do not permit cognitive state to bypass deterministic safety, authorization, capability, scope, or budget checks.
-
-## 4.5 — Experience, Outcome Evaluation & Cognitive Event History
-Bounded experience capture, provenance, expected-versus-observed results, outcome evaluation, attribution/credit context, and replayable supported transitions. OutcomeEvaluation is a first-class cognitive contract/process that establishes a provenance-bearing outcome classification from the observed evidence and applicable success criteria. Success, Mistake, Partial, and Unknown are first-class cognitive outcome concepts associated with that evaluation; specialized processing may consume them without making them aliases for execution states. Outcome correctness remains distinct from method/strategy quality and causal attribution. Actual observations/experiences remain distinguishable from simulated, predicted, counterfactual, human-corrected, and external evidence.
-
-Define mutually exclusive outcome semantics for one evaluation:
-- Success = all applicable success criteria were actually satisfied;
-- Partial = some but not all applicable criteria were satisfied and the result is incomplete rather than wholly incorrect;
-- Mistake = the result is known to be wrong relative to the intended objective or success criteria and is not better classified as Partial;
-- Unknown = available evidence cannot establish the substantive result.
-
-Technical execution failure is not automatically a Mistake. Technical execution success is not automatically a cognitive Success. Attribution of the failure or success remains a separate evidence problem and may involve the Agent, tools, specialists, the environment, or other factors.
-
-Verify: outcome evaluation preserves evidence, attribution, and the distinction between outcome correctness and method/strategy quality; actual/simulated evidence remain distinguishable; technical failure/success cannot be silently mapped to cognitive learning labels; partial and unresolved outcomes remain representable.
-
-## 4.6 — Death / Wake / Reincarnation Lifecycle
-Define death as complete termination of the current runtime/incarnation, preserve Agent identity and cognitive state, support inactive periods with no live runtime, and explicitly reconstruct a new runtime from durable state when the Agent wakes.
-
-## 4.7 — Postmortem & Dream Processing
-Define bounded postmortem processing plus a first-class Dream subsystem that can inspect history, generate hypothetical alternatives, run multiple simulations in parallel, compare predicted outcomes, and produce proposed cognitive updates without requiring the Agent runtime to remain alive. Dream purposes have explicit semantics and provenance; purpose-specific processors may share the core Dream contract or be separately replaceable when scheduling, lifecycle, or resource boundaries justify that split. Proposed changes are not authoritative state transitions; reconciliation and the owning resource/governance boundary decide whether they are accepted.
-
-Dream purposes include:
-- Recovery — explore alternatives after a Mistake or unresolved outcome;
-- Optimization — search for cheaper, faster, safer, simpler, or more deterministic ways to reproduce a Success;
-- Nightmare / Stress-Test — actively search for plausible conditions under which an apparently successful method, plan, assumption, or strategy would fail;
-- Reconsideration — revisit prior decisions in light of later evidence;
-- Preparation — rehearse plausible future scenarios.
-
-Dream processing is governed by applicable authorization, provider/model quota, token/cost budget, time budget, concurrency/parallelism limits, retrieval/work limits, and cancellation.
-
-Dream evidence remains simulated/predicted evidence and cannot become actual experience. Counterfactual conclusions such as Regret must remain distinguishable from information actually available at the time of the original decision.
-
-After a Mistake, Cognitive Strategy may retry with a revised method directly or may first use Questions, Hive assistance, or a Recovery Dream when the expected benefit justifies the additional work. After a Success, it may use Optimization and Nightmare/Stress-Test Dreams before adopting a broader lesson.
-
-Verify: evaluated Mistake → Recovery proposal or bounded revised retry; evaluated Success → Optimization proposal; evaluated Success → Nightmare/Stress-Test proposal; Dream results remain simulated; Dream processing works while the Agent runtime is inactive; an inactive-runtime Dream requires an already authorized request or durable policy trigger; budgets/cancellation/concurrency are enforced.
-
-## 4.8 — Questions
-Define first-class Questions with structured context, specialty, provenance, answer type, evidence requirements, status, and confidence/uncertainty where applicable. Support specialty-specific questions so different Agents can investigate different aspects of the same user objective.
-
-Questions may be selected or prioritized when outcome attribution is uncertain, risk remains high, evidence conflicts, or a missing fact materially changes the choice among competing strategies.
-
-Verify: unresolved Mistake/Success attribution can result in an evidence-seeking Question; redundant Questions remain avoidable when sufficient evidence already exists.
-
-## 4.9 — Cognitive State Reconciliation
-Integrate human edits, actual experience, evaluated outcomes, Mistake/Success interpretations, Dream results, Question answers, beliefs, goals, plans, Risk/Fear/Confidence state, and other candidate updates through versioning, provenance, authorization, validation, and concurrency boundaries before the next wake/reincarnation.
-
-Conflicting evidence must remain attributable. Reconciliation may retain multiple hypotheses, uncertainty, or an unresolved Question instead of inventing a single authoritative explanation.
-
-Verify: concurrent human/Dream updates do not lose evidence; actual experience cannot be overwritten by simulated evidence; stale candidate updates are rejected or reconciled explicitly.
-
----
-
-# Phase 5 — Cognitive Resources
-
-## 5.1 — Memory Resource Families
-Working, episodic, semantic, procedural, and future extensible families with explicit scope/ownership.
-
-## 5.2 — Knowledge / Wiki
-Versioned, permissioned knowledge resources and managed Wiki source.
-
-## 5.3 — Skills
-Versioned reusable procedures, dependencies, constraints, provenance, and assignments.
-
-## 5.4 — Learning Candidates & Governance
-Transform evaluated cognitive evidence into governed Learning Candidates through a first-class learning/governance boundary. The implementation may use a dedicated learning component or shared cognitive-resource infrastructure, but promotion remains explicit and governed.
-
-Evidence sources include:
-- evaluated Success outcomes;
-- evaluated Mistake outcomes;
-- Partial or mixed outcomes;
-- repeated outcome patterns;
-- human corrections;
-- Question answers;
-- Recovery Dreams;
-- Optimization Dreams;
-- Nightmare/Stress-Test Dreams.
-
-Each candidate preserves:
-- evidence type and actual/simulated origin;
-- provenance and attribution/credit context;
-- support/confidence;
-- applicability conditions;
-- the proposed target of adaptation (Skill, Method, strategy/routing rule, safeguard, memory/knowledge update, or other owned cognitive resource);
-- conditions for invalidation, revision, or retirement;
-- validation status.
-
-Promotion may change an appropriate Skill, method, applicability rule, memory/knowledge representation, or Cognitive Strategy routing according to explicit ownership rules.
-
-A candidate may learn that a deterministic procedure is preferable to another model call for a known class of situations, but promotion must remain governed. The promoted shortcut must identify its applicability boundary and remain revocable/revisable when later evidence invalidates or narrows it. No direct authoritative mutation from model output or Dream output.
-
-Verify: positive, negative, partial, mixed, human-corrected, and simulated evidence; conflicting candidates; applicability boundaries; insufficient support; promotion/rejection concurrency; explicit adaptation target; later invalidation/revision; and strategy consumption of an already-governed adaptation.
-
----
-
-# Phase 6 — CognitiveHive : Hive
-
-## 6.1 — Collective Cognitive State
-Hive-level collective state is distinct from each member's own Agent/CognitiveAgent state.
-
-## 6.2 — Collective Strategy
-Coordinate planning/reasoning across members without moving member cognition into the Hive itself.
-
-## 6.3 — Collective Questions & Specialty Routing
-Route Questions by Agent specialty, avoid semantically duplicate work where evidence already exists, and allow each Agent to retain its own Questions and answers.
-
-## 6.4 — Cross-Agent Evidence & Synthesis
-Combine attributable answers, experiences, evaluated outcomes, Mistakes, Successes, Dreams, observations, and other evidence into collective reasoning without erasing individual provenance or actual-versus-simulated evidence status.
-
-## 6.5 — Collective Conflict & Consensus
-Bounded coordination, conflict resolution, disagreement handling, and consensus mechanisms.
-
-Base Hive coordination remains usable without CognitiveHive.
-
----
-
-# Phase 7 — Additional Generic Host Integration
-
-Only pull this phase forward when a second real host application with meaningfully different integration requirements proves the need to generalize patterns already proven by the V1 WinForms boundary.
-
-## 7.1 — Generic Host Context
-Provider-neutral bounded host observations/context.
-
-## 7.2 — Cross-Host Data-Source & Control Adapters
-Generalize V1's WinForms integration patterns to other host representations only when a second real host requires it.
-
-## 7.3 — Cross-Host Bounded Object Discovery
-Generalize the proven V1 discovery contract to other UI/object models. Discovery remains cycle-safe, cancellation-aware, bounded, read-oriented, and never grants action authority.
-
-
-# Phase 8 — Multi-Tenancy, Scale, Configuration Portability & Extensibility
-
-## 8.1 — Authentication Boundary
-Add real authentication integration.
-
-## 8.2 — Distributed Execution Decision Point
-Re-evaluate Temporal/Dapr/distributed execution only from measured operational requirements.
-
-## 8.3 — Configuration Import/Export
-Versioned Hive configuration packages with compatibility/conflict handling.
-
-## 8.4 — MCP / Tool Extensibility
-Additional governed tool-extension boundary.
-
-## 8.5 — Additional Host Surfaces
-WPF/web/other hosts consume the same core and Management contracts.
-
-## 8.6 — Lightweight / Embedded Hive Deployment Profile
-Objective: provide an optional local/embedded persistence deployment for users who should not need to install or operate a separate SQL Server instance, while preserving the same Hive resource model, Management contracts, event/snapshot/outbox semantics, and authorization boundaries.
+## 2.8 — Hive Coordination Workspace & Swarm Extensions
+Objective: extend the V1 Workspace with persistent Hive organization and collective coordination capabilities.
 
 Scope:
-- select and document a mature embedded persistence technology rather than creating a database engine without a measured requirement;
-- reuse the existing Hive persistence/resource contracts instead of maintaining a second logical schema/model;
-- define which capabilities the embedded backend supports, including vector storage/search;
-- keep SQL Server as the server-oriented V1 persistence implementation;
-- make backend selection explicit and configuration-driven;
-- preserve migration/version/concurrency/security semantics across supported backends;
-- provide a clear upgrade/export path from local/embedded deployment to the server-oriented persistence profile when required.
+- Hive organization/topology;
+- Hive membership presentation;
+- persistent Hive/Agent relationships;
+- active Swarm visibility;
+- Hive-level coordination;
+- collective work context;
+- Workspace representation of persistent Hive membership;
+- Agentic behavior that specifically depends on Hive membership or Swarm state.
 
-This slice is a deployment/storage portability capability, not permission to fork Hive's domain model or introduce a separate vector database.
+Basic LLM mode, basic Agent mode, ordinary multi-Agent application work, and single-application Agent assignment remain V1 capabilities.
 
-Verify: clean local install, restart/persistence durability, migrations/upgrades, concurrency, crash/recovery, secret handling, supported vector-search behavior where available, explicit unsupported-capability reporting, and configuration migration between supported deployment profiles where that contract is provided.
-
----
-
-# Phase 9 — Observability, Operations & Replay
-
-## 9.1 — Full Metrics Taxonomy
-Standardize platform metrics and operational dimensions.
-
-## 9.2 — Dashboards & Operational Views
-Management/operations visibility.
-
-## 9.3 — CI/CD
-Automated build, test, packaging, and verification pipelines.
-
-## 9.4 — Event-Log Replay Regression
-Replay durable event histories against stable contracts for regression detection.
-
-## 9.5 — Long-Running Resilience
-Long-duration concurrency, recovery, provider degradation, and resource-retention tests.
-
-## 9.6 — Production Diagnostics & Support Tooling
-Operational diagnostics, safe support exports, and controlled replay tooling.
-
----
-
-## Ordering invariant
-
-The order is intentional. Base Agent contracts reserve reusable mechanisms such as Objectives, Question transport, patience/understanding gates, memory infrastructure, simulation interfaces, delegation, and Hive sponsorship. Implementation is pulled into the earliest phase only when the current V1 boundary requires it. The cognitive lifecycle, Dreams, and adaptive Questions remain CognitiveAgent-generation capabilities; CognitiveHive later extends them with cross-agent coordination without moving individual cognition into the Hive.
-
-
-```
-Foundations
-   ↓
-Base Agent + V1 data-entry pipeline
-   ↓
-Base Hive coordination
-   ↓
-Hive governance
-   ↓
-CognitiveAgent
-   ↓
-Cognitive resources
-   ↓
-CognitiveHive
-   ↓
-Generic future host integration
-   ↓
-Scale / portability / extensibility
-   ↓
-Operations / replay
-```
-
-The existence of a later architectural concept never makes it an implicit prerequisite for an earlier phase.
-
-The CognitiveAgent outcome/learning branch is intentionally contained within Phases 4–5:
-```
-actual experience
-    ↓
-outcome evaluation
-    ↓
-Mistake / Success / Partial / Unknown
-    ↓
-Risk/Fear/Confidence + attribution
-    ↓
-Question / Dream / Hive assistance
-    ↓
-Learning Candidate
-    ↓
-validation / reconciliation
-    ↓
-future strategy
-```
-
-This branch does not alter Base Agent execution semantics or make CognitiveAgent state a prerequisite for V1.
