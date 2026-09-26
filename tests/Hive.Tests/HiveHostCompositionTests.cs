@@ -359,6 +359,62 @@ public sealed class HiveHostCompositionTests
     }
 
     [Fact]
+    public async Task Replacement_DisposalTriggeredByPreviousGraphDoesNotReturnDisposedCandidate()
+    {
+        var configurationStore = new InMemoryConfigurationStore(
+            HivePersistenceConfiguration.LocalDevelopment(
+                "Hive_Composition_Publish_Dispose_Race"));
+        HiveHostComposition? composition = null;
+
+        var firstResource = new CallbackDisposable(
+            () => composition!.Dispose());
+        var secondResource = new TrackingDisposable();
+
+        var firstGraph = CreateGraph(
+            configurationStore.Configuration!,
+            firstResource);
+        var secondGraph = CreateGraph(
+            HivePersistenceConfiguration.LocalDevelopment(
+                "Hive_Composition_Publish_Dispose_Race_2"),
+            secondResource);
+
+        var factory = new ScriptedGraphFactory(
+            Result<HiveHostServiceGraph>.Success(firstGraph),
+            Result<HiveHostServiceGraph>.Success(secondGraph));
+
+        composition = new HiveHostComposition(
+            configurationStore,
+            factory);
+
+        try
+        {
+            var first = await composition.InitializeAsync();
+            Assert.True(first.IsSuccess, first.Error?.Message);
+
+            configurationStore.Configuration =
+                secondGraph.PersistenceConfiguration;
+
+            var replacement = composition.ReloadAsync();
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => replacement);
+
+            Assert.Null(composition.Current);
+            Assert.Equal(
+                HiveHostCompositionState.Disposed,
+                composition.Status.State);
+            Assert.True(secondGraph.IsDisposed);
+            Assert.Equal(1, secondResource.DisposeCount);
+        }
+        finally
+        {
+            composition.Dispose();
+            firstGraph.Dispose();
+            secondGraph.Dispose();
+        }
+    }
+
+    [Fact]
     public async Task ConcurrentCompositionRequests_SerializeCandidateConstruction()
     {
         var configurationStore = new InMemoryConfigurationStore(
@@ -846,6 +902,22 @@ public sealed class HiveHostCompositionTests
         public void Dispose() =>
             throw new InvalidOperationException(
                 "synthetic disposal failure");
+    }
+
+    private sealed class CallbackDisposable : IDisposable
+    {
+        private Action? _callback;
+
+        public CallbackDisposable(Action callback)
+        {
+            _callback = callback ?? throw new ArgumentNullException(nameof(callback));
+        }
+
+        public void Dispose()
+        {
+            var callback = Interlocked.Exchange(ref _callback, null);
+            callback?.Invoke();
+        }
     }
 
     private sealed class TrackingDisposable : IDisposable
