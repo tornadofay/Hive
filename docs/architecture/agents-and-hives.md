@@ -100,7 +100,7 @@ The bundle provides:
 - **Patience / Understanding Gate** — IUnderstandingGate evaluates explicit required-information keys and optional confirmation requirements. It returns a deterministic Satisfied or Blocked result with missing information; it does not generate questions, infer missing facts, or make cognitive decisions.
 - **Delegation** — IDelegationChannel carries explicit work requests between Agent runtimes with requester/delegate identity, optional WorkItem source, and ResourceProvenance. The Phase 1.6 in-memory implementation stores requests but does not schedule, execute, retry, or otherwise orchestrate delegated work.
 
-Phase 1.6 adds typed protocol identities for ObjectiveId, MemoryId, QuestionId, and transient DelegationId. Objective, Memory, and Question use the existing Core resource envelope/scope/provenance model and remain in-memory in this slice. Their durable event/snapshot/outbox representation belongs to later persistence slices.
+Phase 1.6 adds typed protocol identities for ObjectiveId, MemoryId, QuestionId, and transient DelegationId. Objective, Memory, and Question use the existing Core resource envelope/scope/provenance model and remain in-memory in Phase 1.6. Phase 1.18 establishes their durable Base-Agent work-state representation and recovery semantics.
 
 The base work-protocol APIs are additive to Agent and RuntimeInstance; they do not alter the Agent generation contract and do not create CognitiveAgent behavior. Cognitive generations may later build adaptive interpretation and revision over these same stable mechanisms.
 
