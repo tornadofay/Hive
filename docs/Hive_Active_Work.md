@@ -1,12 +1,12 @@
 # Hive — Active Work
 
-Status: IN PROGRESS
+Status: COMPLETE
 
 ## Authorized slice
 
 **Maintenance — UI**
 
-This temporary corrective slice is authorized by the explicit `Hive: Maintenance — UI` request received on 2026-09-26. It exists only to audit and correct existing WinForms/UI behavior without advancing the roadmap or adding a new capability.
+This temporary corrective slice was authorized by the explicit `Hive: Maintenance — UI` request received on 2026-09-26. It existed only to audit and correct existing WinForms/UI behavior without advancing the roadmap or adding a new capability.
 
 ### Scope
 
@@ -31,6 +31,17 @@ Do not add future capabilities, advance Phase 1.15+, widen public contracts mate
 
 Repository checkpoint at authorization: `7309a3b4f6fd73334f87bf573d5f047d7cdf2ad9` (`main`).
 
-### Verification gate
+### Verification
 
-Implementation changes are complete only after actual developer verification. No build/test/manual-verification claim may be recorded before the corresponding result is actually supplied.
+Implementation and corrective work are complete following actual developer verification on 2026-09-26:
+
+- Full `Hive.Tests` suite: **322 passed, 0 failed, 0 skipped**.
+- Developer manual verification: Example host runs correctly and the affected UI behavior looks good.
+
+Verification evidence: [Maintenance UI verification](verification/maintenance/ui-2026-09-26.md)
+
+### Scope outcome
+
+**COMPLETE.**
+
+No Phase 1.15+ work was started or authorized.
