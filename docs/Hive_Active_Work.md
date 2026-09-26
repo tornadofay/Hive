@@ -27,7 +27,7 @@ Prepare supported V1 input sources and route each source through the capability 
 
 - No typed business candidate extraction or validation beyond the prepared-input boundary; that belongs to Phase 1.16.
 - No business-operation proposal, host mutation, receipt, Review, or full MAF V1 pipeline; later phases own those boundaries.
-- No WorkItem creation redesign or submission persistence model; The Phase 1.19 MAF pipeline owns submission → WorkItem creation → pipeline composition.
+- No WorkItem creation redesign or submission persistence model; Phase 1.19 owns submission → WorkItem creation → pipeline composition.
 - No new provider transport; image routing selects a vision-capable target but does not perform a provider call in this slice.
 - No generic UI automation, cognition, Dreams, Questions, Hive membership, or later roadmap capabilities.
 - No unrelated refactoring or dependency additions.
