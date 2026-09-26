@@ -9,6 +9,7 @@ Last updated: 2026-09-26
   - **1.1–1.13:** Complete and verified.
   - **1.14 — Dual Business-App Integration Contract:** Complete and verified. The 2026-09-26 bounded revision added reusable Hive WinForms base forms/controls, deterministic automatic defaults, explicit semantic overrides, and aligned stable primary-key/capability behavior. [Revision verification archive](verification/phase-1/1.14-revision-2026-09-26.md)
   - **1.14 review corrective follow-up:** Complete and verified on 2026-09-26. [Verification record](verification/phase-1/1.14-review-corrective-follow-up-2026-09-26.md)
+  - **Boundary Implementation Concentration corrective refactor:** Complete and verified on 2026-09-26. [Verification record](verification/phase-1/1.14-boundary-concentration-corrective-refactor-2026-09-26.md)
   - **1.15+:** Not authorized.
   
 Historical verification records are maintained under [`docs/verification/`](verification/).
