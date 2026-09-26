@@ -12,7 +12,7 @@ internal sealed class HiveWorkItemManagementService : HiveManagementServiceBase
 
 {
 
-    private readonly IWorkItemResourceStore _workItems
+    private readonly IWorkItemResourceStore _workItems;
 
 
 
