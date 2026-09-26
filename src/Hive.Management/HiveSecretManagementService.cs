@@ -12,7 +12,7 @@ internal sealed class HiveSecretManagementService : HiveManagementServiceBase
 
 {
 
-    private readonly ISecretStore? _secrets
+    private readonly ISecretStore? _secrets;
 
 
 
