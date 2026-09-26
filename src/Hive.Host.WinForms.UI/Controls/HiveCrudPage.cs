@@ -1408,12 +1408,16 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         }
         finally
         {
-            if (ReferenceEquals(_operationCancellation, source))
+            var isCurrentOperation = ReferenceEquals(
+                _operationCancellation,
+                source);
+
+            if (isCurrentOperation)
                 _operationCancellation = null;
 
             source.Dispose();
 
-            if (!IsDisposed && !Disposing)
+            if (isCurrentOperation && !IsDisposed && !Disposing)
                 SetBusy(false);
         }
     }
