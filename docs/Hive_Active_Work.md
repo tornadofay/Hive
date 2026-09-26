@@ -2,7 +2,7 @@
 
 ## Maintenance — Host/UI — Corrective Follow-up
 
-Status: IMPLEMENTATION IN PROGRESS
+Status: IMPLEMENTATION COMPLETE — VERIFICATION PENDING
 
 Opened: 2026-09-26
 
@@ -18,6 +18,14 @@ Correct only the three concrete review findings:
 - guarantee Host Composition lifetime-CTS cleanup even when the current graph throws during disposal;
 - add focused regression coverage for these corrections.
 
+### Corrective work completed
+
+- The unchanged-configuration fast path now synchronizes status publication with the disposal state gate, so terminal Disposed state cannot be overwritten after shutdown.
+- Host composition status reads use the same volatile state model as current-graph reads.
+- Host Composition lifetime CTS disposal now occurs in a finally block even when disposal of the current graph throws.
+- WinForms host capture now enforces root lifecycle/UI-thread checks before and after the host-context capture boundary, while preserving distinct disposed/UI-thread error semantics.
+- Focused regression coverage was added for background-thread capture and graph-disposal failure cleanup.
+
 ### Explicit exclusions
 
 - Phase 1.15+ work;
@@ -31,4 +39,4 @@ Correct only the three concrete review findings:
 Example to run: existing UI Foundation / representative CRUD and Settings surfaces — Hive.Example.WinForms
 Tests to run: HiveHostCompositionTests.cs; HiveWinFormsHostIntegrationTests.cs; then the full Hive.Tests suite.
 
-Agent verification: no build, test, launch, migration, or manual UI verification unless explicitly authorized.
+No build, test, launch, migration, or manual UI verification has been performed by the agent.
