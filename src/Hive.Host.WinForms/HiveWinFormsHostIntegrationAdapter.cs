@@ -512,7 +512,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         HiveWinFormsControlSnapshot snapshot,
         HiveWinFormsFieldMetadata? metadata)
     {
-        if (!SupportsStandardField(control))
+        if (!WinFormsControlValueAdapters.TryGet(control, out _))
             return null;
 
         var bindingMember =
