@@ -1,8 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
-
-Failure reported by developer: `Hive.Host.WinForms/WinFormsControlValueAdapters.cs` does not compile because each concrete control-family adapter declares members that hide the corresponding abstract members on `WinFormsControlValueAdapterBase` instead of overriding them.
+Status: VERIFICATION PENDING
 
 ## Current slice
 
@@ -27,6 +25,10 @@ Bounded corrective maintenance. Extract the existing standard WinForms control v
 - Use only internal implementation contracts/classes; do not create one wrapper per WinForms control merely for size.
 - Add focused regression coverage only where needed to prove the extraction preserves existing behavior.
 - No new control support, schema change, roadmap advancement, or unrelated WinForms refactor.
+
+## Remediation
+
+Corrected the concrete adapter declarations so all five control-family adapters override the five abstract members on `WinFormsControlValueAdapterBase`. No behavior, contract, capability identity, or scope changes were made. Developer compilation/test verification is still required.
 
 ## Checkpoint
 
@@ -54,4 +56,4 @@ None — this is an internal implementation refactor with no new externally usab
 
 ## Tests to run
 
-`tests/Hive.Tests/HiveWinFormsHostIntegrationTests.cs`; then the broader `Hive.Tests` suite.
+`tests/Hive.Tests/HiveWinFormsHostIntegrationTests.cs`; then the broader `Hive.Tests` suite. Re-verify compilation first.
