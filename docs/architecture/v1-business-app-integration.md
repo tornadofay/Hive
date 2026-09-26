@@ -106,7 +106,7 @@ The Phase 1.14 public contract family must support at least:
 - bounded interaction operations;
 - business-operation capability boundaries needed for API/UI composition.
 
-Durable business-operation receipts and first-class Review records are owned by Phase 1.17. Their semantics are defined in Sections 12–13 so the earlier host-integration contracts do not have to be redesigned later.
+Durable business-operation receipts and first-class Review records are owned by Phase 1.18. Their semantics are defined in Sections 12–13 so the earlier host-integration contracts do not have to be redesigned later.
 
 These contracts must not expose:
 
