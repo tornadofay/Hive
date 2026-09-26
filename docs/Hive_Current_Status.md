@@ -1,6 +1,6 @@
 # Hive — Current Status
 
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 ## Phase status
 
@@ -13,6 +13,7 @@ Last updated: 2026-09-26
   - **Production Lifecycle & Failure-Boundary Corrections:** Complete and verified on 2026-09-26. [Verification record](verification/phase-1/production-lifecycle-failure-boundary-corrections-2026-09-26.md)
   - **Maintenance — UI:** Complete and verified on 2026-09-26. Final developer verification: `Hive.Tests` 322/322 passed, with manual confirmation that the Example host runs correctly and the affected UI looks good. [Verification record](verification/maintenance/ui-2026-09-26.md)
   - **1.15 — Input Preparation & Routing:** Complete and verified on 2026-09-26. Developer verification: exact Example Host scenario confirmed the image and spreadsheet preparation/routing boundary with isolated unsupported input handling; the full `Hive.Tests` suite passed 333/333.
+  - **Maintenance — Persistence Resource-Store Deduplication:** Complete and verified on 2026-09-27. Developer verification: full `Hive.Tests` suite passed 333/333. [Verification record](verification/maintenance/persistence-resource-store-deduplication-2026-09-27.md)
   - **1.16+:** Not authorized.
   
 Historical verification records are maintained under [`docs/verification/`](verification/).
