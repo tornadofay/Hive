@@ -420,6 +420,14 @@ internal abstract class SqlResourceStoreBase
             Value = value ?? DBNull.Value
         };
 
+    protected static SqlParameter SqlParameter(
+        string name,
+        SqlDbType type,
+        object? value) =>
+        new(name, type)
+        {
+            Value = value ?? DBNull.Value
+        };
 
     protected static void AddAccessParameters(
         SqlCommand command,
