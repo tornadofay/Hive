@@ -988,4 +988,12 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
         };
 
 
+    private sealed class ConcurrencyException : Exception
+    {
+    }
+
+    private static bool IsConstraintConflict(SqlException exception) =>
+        exception.Number is 2601 or 2627;
+
+
 }
