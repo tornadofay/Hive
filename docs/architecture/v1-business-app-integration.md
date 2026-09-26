@@ -1033,15 +1033,23 @@ This architecture does not authorize:
 1.17
     business write
     operation proposal
-    approval
-    durable business-operation receipt
-    first-class post-write Review
+    authorization / approval
 
 1.18
-    MAF Sequential composition of the V1 pipeline
+    durable business-operation receipt
+    unknown-outcome reconciliation
+    first-class post-write Review
 
 1.19
+    MAF Sequential composition of the V1 pipeline
+
+1.20
     full-pipeline crash/recovery including write receipt/review recovery
+
+1.21
+    metrics
+    budget cap
+    OpenTelemetry
 ```
 
 Phase 7 later generalizes the proven host concepts to meaningfully different host technologies.
