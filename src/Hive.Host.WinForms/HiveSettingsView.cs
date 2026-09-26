@@ -337,12 +337,12 @@ public sealed class HiveSettingsView : UserControl
             lifetimeCts?.Cancel();
             lifetimeCts?.Dispose();
 
-            _overviewView?.Dispose();
-            _providerConfigurationView?.Dispose();
-            _providerAccountsView?.Dispose();
-            _executionTargetsView?.Dispose();
-            _agentView?.Dispose();
-            _persistenceView?.Dispose();
+            DisposeDetachedPage(_overviewView);
+            DisposeDetachedPage(_providerConfigurationView);
+            DisposeDetachedPage(_providerAccountsView);
+            DisposeDetachedPage(_executionTargetsView);
+            DisposeDetachedPage(_agentView);
+            DisposeDetachedPage(_persistenceView);
             _titleFont.Dispose();
         }
 
@@ -526,6 +526,14 @@ public sealed class HiveSettingsView : UserControl
         }
 
         _themeManager.Apply(control);
+    }
+
+    private void DisposeDetachedPage(Control? page)
+    {
+        if (page is null || page.Parent is not null)
+            return;
+
+        page.Dispose();
     }
 
     private static TreeNode CreatePageNode(
