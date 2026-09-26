@@ -359,6 +359,43 @@ public sealed class HiveHostCompositionTests
     }
 
     [Fact]
+    public async Task Graph_DisposesOwnedManagementFacade()
+    {
+        var configuration = HivePersistenceConfiguration.LocalDevelopment(
+            "Hive_Composition_OwnedManagement");
+        var configurationStore = new InMemoryConfigurationStore(configuration);
+        var facade = new HiveManagementFacade(
+            new SqlProviderResourceStore(
+                HiveDatabaseOptions.FromConfiguration(configuration)),
+            new SqlAgentDefinitionResourceStore(
+                HiveDatabaseOptions.FromConfiguration(configuration)),
+            new SqlWorkItemResourceStore(
+                HiveDatabaseOptions.FromConfiguration(configuration)),
+            configurationStore: configurationStore);
+
+        var graph = new HiveHostServiceGraph(
+            configuration,
+            facade,
+            [facade]);
+
+        graph.Dispose();
+
+        var result = await facade.SavePersistenceConfigurationAsync(
+            configuration,
+            new ResourceAccessContext(
+                DeploymentId.New(),
+                TenantId.New(),
+                PrincipalId.New()));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.management.disposed",
+            result.Error!.Code);
+
+        graph.Dispose();
+    }
+
+    [Fact]
     public async Task Replacement_DisposalTriggeredByPreviousGraphDoesNotReturnDisposedCandidate()
     {
         var configurationStore = new InMemoryConfigurationStore(
