@@ -1066,11 +1066,11 @@ This architecture does not authorize:
     first-class post-write Review
 
 1.24
-    multi-Agent work assignment
-    concurrent independent Agent execution
+    MAF Sequential composition of the V1 pipeline
 
 1.25
-    MAF Sequential composition of the V1 pipeline
+    multi-Agent work assignment
+    concurrent independent Agent execution using the established V1 workflow
 
 1.26
     full-pipeline crash/recovery including durable Agent work state and write receipt/review recovery
