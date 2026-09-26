@@ -192,7 +192,7 @@ public sealed class HiveHostComposition : IDisposable
 
             if (!publishCandidate)
             {
-                candidate.Value.Dispose();
+                candidate.Value!.Dispose();
                 throw new OperationCanceledException(operationToken);
             }
 
