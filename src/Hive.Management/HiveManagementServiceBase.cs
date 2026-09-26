@@ -1,9 +1,15 @@
 using Hive.Core;
 
+
+
 namespace Hive.Management;
 
+
+
 internal abstract class HiveManagementServiceBase
+
 {
+
     protected static Task<Result<T>> Execute<TIdentity, T>(
         ResourceEnvelope<TIdentity>? resource,
         ResourceKind expectedKind,
@@ -169,6 +175,7 @@ internal abstract class HiveManagementServiceBase
 
         return null;
     }
+
 
     protected static Error SanitizeTechnicalError(
         Error error,
