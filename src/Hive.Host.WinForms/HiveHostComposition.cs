@@ -223,13 +223,19 @@ public sealed class HiveHostComposition : IDisposable
 
     private void SetFailure(Error error)
     {
-        var state = Volatile.Read(ref _current) is null
-            ? HiveHostCompositionState.Unavailable
-            : HiveHostCompositionState.ReplacementFailed;
+        lock (_stateGate)
+        {
+            if (Volatile.Read(ref _disposed) != 0)
+                return;
 
-        _status = new HiveHostCompositionStatus(
-            state,
-            error);
+            var state = Volatile.Read(ref _current) is null
+                ? HiveHostCompositionState.Unavailable
+                : HiveHostCompositionState.ReplacementFailed;
+
+            _status = new HiveHostCompositionStatus(
+                state,
+                error);
+        }
     }
 
     private void ThrowIfDisposed()
