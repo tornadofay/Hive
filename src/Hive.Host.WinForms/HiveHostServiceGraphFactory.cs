@@ -38,6 +38,7 @@ public sealed class SqlHiveHostServiceGraphFactory :
         ArgumentNullException.ThrowIfNull(configuration);
 
         SecretMaterial? credential = null;
+        HiveManagementFacade? management = null;
 
         try
         {
@@ -103,7 +104,7 @@ public sealed class SqlHiveHostServiceGraphFactory :
                 eventStore,
                 SharedHttpClient);
 
-            var management = new HiveManagementFacade(
+            management = new HiveManagementFacade(
                 new SqlProviderResourceStore(options),
                 new SqlAgentDefinitionResourceStore(options),
                 new SqlWorkItemResourceStore(options),
@@ -114,11 +115,14 @@ public sealed class SqlHiveHostServiceGraphFactory :
                 _bootstrapCredentials,
                 agentExecution);
 
-            return Result<HiveHostServiceGraph>.Success(
-                new HiveHostServiceGraph(
-                    configuration,
-                    management,
-                    [management]));
+            var graph = new HiveHostServiceGraph(
+                configuration,
+                management,
+                [management]);
+
+            management = null;
+
+            return Result<HiveHostServiceGraph>.Success(graph);
         }
         catch (OperationCanceledException)
         {
@@ -134,6 +138,7 @@ public sealed class SqlHiveHostServiceGraphFactory :
         }
         finally
         {
+            management?.Dispose();
             credential?.Dispose();
         }
     }
