@@ -11,6 +11,7 @@ Last updated: 2026-09-26
   - **1.14 review corrective follow-up:** Complete and verified on 2026-09-26. [Verification record](verification/phase-1/1.14-review-corrective-follow-up-2026-09-26.md)
   - **Boundary Implementation Concentration corrective refactor:** Complete and verified on 2026-09-26. [Verification record](verification/phase-1/1.14-boundary-concentration-corrective-refactor-2026-09-26.md)
   - **Production Lifecycle & Failure-Boundary Corrections:** Complete and verified on 2026-09-26. [Verification record](verification/phase-1/production-lifecycle-failure-boundary-corrections-2026-09-26.md)
+  - **Maintenance — UI:** Complete and verified on 2026-09-26. Final developer verification: `Hive.Tests` 322/322 passed, with manual confirmation that the Example host runs correctly and the affected UI looks good. [Verification record](verification/maintenance/ui-2026-09-26.md)
   - **1.15+:** Not authorized.
   
 Historical verification records are maintained under [`docs/verification/`](verification/).
