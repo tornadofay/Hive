@@ -10,7 +10,7 @@ public enum InputSourceKind
 
 public sealed class InputItem
 {
-    public const int MaxContentBytes = 16 * 1024 * 1024;
+    public const int MaxContentBytes = 32 * 1024 * 1024;
 
     public InputItem(
         string fileName,
