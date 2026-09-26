@@ -26,11 +26,18 @@ Reduce implementation-responsibility concentration in those three classes while 
 
 ## Verification
 
-**Status: VERIFICATION PENDING**
+**Status: VERIFICATION FAILED / REMEDIATION REQUIRED**
 
-Developer reported **51 compiler errors** after pulling `e6ffd12b52b90eafa981cd570329ed79b9a61d11`. Same-slice remediation restored the extracted persistence helpers/readers, corrected the CRUD controller/page boundary, and restored malformed extracted Management field declarations. The exact IDE error list was not provided, so no claim is made that the 51 diagnostics map one-to-one to those defects.
+Developer provided the current compiler diagnostics. The reported failures remain within the same corrective refactor boundary and identify concrete residual defects in the extracted CRUD, persistence, and Management implementations.
 
-Source-level re-audit after remediation found no remaining malformed field declarations in the affected refactor files, no duplicate base persistence helper definitions, no missing CRUD controller members used by the page, and all 43 `IHiveManagementFacade` method names present on the facade.
+The reported diagnostics include:
+- duplicated legacy `HiveCrudPage<TItem>` members and page-local state left behind after extraction;
+- a missing `ReadExecutionTarget` and `AddExecutionTargetParameters`;
+- `SqlParameter` call sites still using the old three-argument shape;
+- `IDisposable.Dispose()` accessibility on extracted controllers;
+- `AgentExecutionService` / `AgentExecutionResult` type resolution in `HiveAgentManagementService`.
+
+Same-slice remediation is authorized only for these concrete defects and their directly required supporting corrections.
 
 Required developer verification:
 
