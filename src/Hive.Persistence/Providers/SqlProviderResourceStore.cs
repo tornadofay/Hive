@@ -60,6 +60,9 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
     public Task<Result<ExecutionTarget>> GetExecutionTargetAsync(ExecutionTargetId executionTargetId, ResourceAccessContext accessContext, CancellationToken cancellationToken = default) =>
         _executionTargets.GetExecutionTargetAsync(executionTargetId, accessContext, cancellationToken);
 
+    public Task<Result<IReadOnlyList<ExecutionTarget>>> ListExecutionTargetsAsync(ResourceAccessContext accessContext, bool includeRetired = false, CancellationToken cancellationToken = default) =>
+        _executionTargets.ListExecutionTargetsAsync(accessContext, includeRetired, cancellationToken);
+
     public Task<Result<IReadOnlyList<ExecutionTarget>>> ListExecutionTargetsAsync(ProviderAccountId providerAccountId, ResourceAccessContext accessContext, bool includeRetired = false, CancellationToken cancellationToken = default) =>
         _executionTargets.ListExecutionTargetsAsync(providerAccountId, accessContext, includeRetired, cancellationToken);
 
