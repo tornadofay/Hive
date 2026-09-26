@@ -76,6 +76,11 @@ public sealed class ProviderPersistenceIntegrationTests
         var targets = await store.ListExecutionTargetsAsync(
             account.Id,
             context);
+        var allTargets = await store.ListExecutionTargetsAsync(
+            context);
+        Assert.True(allTargets.IsSuccess, allTargets.Error?.Message);
+        Assert.Single(allTargets.Value!);
+
         Assert.True(targets.IsSuccess, targets.Error?.Message);
         Assert.Single(targets.Value!);
 
