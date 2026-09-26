@@ -470,6 +470,77 @@ public sealed class HiveManagementFacadeTests
     }
 
     [Fact]
+    public async Task PrepareInput_UsesAccessScopedVisionTargets()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ManagementInputPreparation");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var facade = CreateFacade(database.Options);
+        var context = CreateContext();
+
+        var provider = CreateProvider(context);
+        Assert.True(
+            (await facade.CreateProviderAsync(provider, context)).IsSuccess);
+
+        var account = CreateProviderAccount(provider.Id, context);
+        Assert.True(
+            (await facade.CreateProviderAccountAsync(account, context)).IsSuccess);
+
+        var target = CreateExecutionTarget(provider.Id, account.Id);
+        target = target.WithCapabilities(
+        [
+            new CapabilityStateEntry(
+                new CapabilityKey("vision"),
+                CapabilityState.Supported)
+        ]);
+
+        Assert.True(
+            (await facade.CreateExecutionTargetAsync(target, context)).IsSuccess);
+
+        var prepared = await facade.PrepareInputAsync(
+            new InputSubmission(
+            [
+                new InputItem(
+                    "invoice.png",
+                    "image/png",
+                    [1, 2, 3])
+            ]),
+            context);
+
+        Assert.True(prepared.IsSuccess, prepared.Error?.Message);
+        var image = Assert.IsType<PreparedImageInput>(
+            Assert.Single(prepared.Value!.PreparedInputs));
+        Assert.Equal(target.Id, image.ExecutionTargetId);
+
+        var otherPrincipalContext = new ResourceAccessContext(
+            context.DeploymentId,
+            context.TenantId,
+            PrincipalId.New());
+
+        var isolated = await facade.PrepareInputAsync(
+            new InputSubmission(
+            [
+                new InputItem(
+                    "invoice.png",
+                    "image/png",
+                    [1, 2, 3])
+            ]),
+            otherPrincipalContext);
+
+        Assert.True(isolated.IsSuccess, isolated.Error?.Message);
+        Assert.Empty(isolated.Value!.PreparedInputs);
+
+        var failure = Assert.Single(isolated.Value.Failures);
+        Assert.Equal(
+            "hive.input.vision-target-unavailable",
+            failure.Error.Code);
+        Assert.Equal(ErrorCategory.Unsupported, failure.Error.Category);
+    }
+
+    [Fact]
     public async Task Facade_RejectsMissingIdentityResourceAndDefaultIdBeforePersistence()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ManagementValidation");
