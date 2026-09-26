@@ -542,7 +542,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             metadata?.Computed ?? false,
             metadata?.Generated ?? false,
             metadata?.IsPrimaryKey ?? false,
-            WinFormsControlValueAdapters.WinFormsControlValueAdapters.TryReadValue(control),
+            WinFormsControlValueAdapters.TryReadValue(control),
             metadata?.Lookup);
     }
 
