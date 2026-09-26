@@ -1,12 +1,11 @@
 using System.Data;
-using System.Text.Json;
 using Hive.Agents;
 using Hive.Core;
 using Microsoft.Data.SqlClient;
 
 namespace Hive.Persistence;
 
-public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceStore
+public sealed class SqlAgentDefinitionResourceStore : SqlResourceStoreBase, IAgentDefinitionResourceStore
 {
     private const string Columns = """
         [AgentDefinitionId],
@@ -27,14 +26,9 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
         [MetadataJson]
         """;
 
-    private static readonly JsonSerializerOptions JsonOptions =
-        new(JsonSerializerDefaults.General);
-
-    private readonly HiveDatabaseOptions _options;
-
     public SqlAgentDefinitionResourceStore(HiveDatabaseOptions options)
+        : base(options)
     {
-        _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
     public Task<Result<AgentDefinition>> CreateAgentDefinitionAsync(
@@ -57,7 +51,11 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                             "A persisted AgentDefinition requires a resource envelope."));
                 }
 
-                var validation = ValidateCreate(resource, accessContext);
+                var validation = ValidateCreate(
+                    resource,
+                    ResourceKind.AgentDefinition,
+                    accessContext,
+                    "agent definition");
                 if (validation is not null)
                     return Result<AgentDefinition>.Failure(validation);
 
@@ -140,9 +138,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                 }
 
                 var definition = ReadDefinition(reader);
-                var accessError = ValidateAccess(
-                    definition.Resource!,
-                    accessContext);
+                var accessError = ValidateAccess(definition.Resource!, accessContext, "agent definition");
 
                 return accessError is null
                     ? Result<AgentDefinition>.Success(definition)
@@ -216,7 +212,9 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
 
                 var validation = ValidateUpdate(
                     resource,
-                    accessContext);
+                    ResourceKind.AgentDefinition,
+                    accessContext,
+                    "agent definition");
 
                 if (validation is not null)
                     return Result<AgentDefinition>.Failure(validation);
@@ -235,9 +233,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                             "The requested AgentDefinition does not exist."));
                 }
 
-                var accessError = ValidateAccess(
-                    current.Resource!,
-                    accessContext);
+                var accessError = ValidateAccess(current.Resource!, accessContext, "agent definition");
 
                 if (accessError is not null)
                     return Result<AgentDefinition>.Failure(accessError);
@@ -329,9 +325,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                             "The requested AgentDefinition does not exist."));
                 }
 
-                var accessError = ValidateAccess(
-                    current.Resource!,
-                    accessContext);
+                var accessError = ValidateAccess(current.Resource!, accessContext, "agent definition");
 
                 if (accessError is not null)
                     return Result<AgentDefinition>.Failure(accessError);
@@ -351,7 +345,10 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                 await UpdateLifecycleAsync(
                     connection,
                     transaction,
-                    retired,
+                    "HiveAgentDefinitions",
+                    "AgentDefinitionId",
+                    retired.Id.Value,
+                    retired.Resource!,
                     current.Resource.Version,
                     cancellationToken).ConfigureAwait(false);
 
@@ -391,9 +388,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                             "The requested AgentDefinition does not exist."));
                 }
 
-                var accessError = ValidateAccess(
-                    current.Resource!,
-                    accessContext);
+                var accessError = ValidateAccess(current.Resource!, accessContext, "agent definition");
 
                 if (accessError is not null)
                     return Result<AgentDefinition>.Failure(accessError);
@@ -421,7 +416,10 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                 await UpdateLifecycleAsync(
                     connection,
                     transaction,
-                    active,
+                    "HiveAgentDefinitions",
+                    "AgentDefinitionId",
+                    active.Id.Value,
+                    active.Resource!,
                     current.Resource.Version,
                     cancellationToken).ConfigureAwait(false);
 
@@ -490,9 +488,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                 "@ConfiguredExecutionTargetId",
                 updated.ConfiguredExecutionTargetId?.Value));
         command.Parameters.Add(
-            BigIntParameter(
-                "@NewVersion",
-                updated.Resource!.Version.Value));
+            SqlParameter("@NewVersion", SqlDbType.BigInt, updated.Resource!.Version.Value));
         command.Parameters.Add(
             SqlParameter(
                 "@MetadataJson",
@@ -504,54 +500,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                 "@AgentDefinitionId",
                 updated.Id.Value));
         command.Parameters.Add(
-            BigIntParameter(
-                "@ExpectedVersion",
-                current.Resource!.Version.Value));
-
-        if (await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
-            throw new ConcurrencyException();
-    }
-
-    private async Task UpdateLifecycleAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        AgentDefinition retired,
-        ResourceVersion expectedVersion,
-        CancellationToken cancellationToken)
-    {
-        await using var command = CreateCommand(
-            connection,
-            """
-            UPDATE [dbo].[HiveAgentDefinitions]
-            SET
-                [ResourceVersion] = @NewVersion,
-                [LifecycleStatus] = @LifecycleStatus,
-                [LifecycleChangedAtUtc] = @LifecycleChangedAtUtc
-            WHERE [AgentDefinitionId] = @AgentDefinitionId
-              AND [ResourceVersion] = @ExpectedVersion;
-            """,
-            transaction);
-
-        command.Parameters.Add(
-            BigIntParameter(
-                "@NewVersion",
-                retired.Resource!.Version.Value));
-        command.Parameters.Add(
-            IntParameter(
-                "@LifecycleStatus",
-                (int)retired.Resource.Lifecycle.Status));
-        command.Parameters.Add(
-            DateTimeParameter(
-                "@LifecycleChangedAtUtc",
-                retired.Resource.Lifecycle.ChangedAtUtc));
-        command.Parameters.Add(
-            GuidParameter(
-                "@AgentDefinitionId",
-                retired.Id.Value));
-        command.Parameters.Add(
-            BigIntParameter(
-                "@ExpectedVersion",
-                expectedVersion.Value));
+            SqlParameter("@ExpectedVersion", SqlDbType.BigInt, current.Resource!.Version.Value));
 
         if (await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
             throw new ConcurrencyException();
@@ -582,287 +531,6 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                 : new ExecutionTargetId(
                     reader.GetGuid(reader.GetOrdinal("ConfiguredExecutionTargetId"))));
     }
-
-    private static ResourceEnvelope<TIdentity> ReadResourceEnvelope<TIdentity>(
-        SqlDataReader reader,
-        ResourceKind expectedKind,
-        string identityColumn,
-        Func<Guid, TIdentity> identityFactory)
-        where TIdentity : struct
-    {
-        var scopeKind = (ResourceScopeKind)reader.GetInt32(
-            reader.GetOrdinal("ScopeKind"));
-
-        Guid? scopeIdentity = reader.IsDBNull(
-            reader.GetOrdinal("ScopeIdentity"))
-            ? null
-            : reader.GetGuid(reader.GetOrdinal("ScopeIdentity"));
-
-        if (!Enum.IsDefined(scopeKind))
-            throw new InvalidOperationException(
-                "Persisted resource scope kind is invalid.");
-
-        var scope = scopeKind switch
-        {
-            ResourceScopeKind.Global when scopeIdentity is null =>
-                ResourceScope.Global(),
-            ResourceScopeKind.Tenant when scopeIdentity is not null =>
-                ResourceScope.Tenant(new TenantId(scopeIdentity.Value)),
-            ResourceScopeKind.User when scopeIdentity is not null =>
-                ResourceScope.User(new UserId(scopeIdentity.Value)),
-            ResourceScopeKind.Workspace when scopeIdentity is not null =>
-                ResourceScope.Workspace(new WorkspaceId(scopeIdentity.Value)),
-            ResourceScopeKind.Agent when scopeIdentity is not null =>
-                ResourceScope.Agent(new AgentId(scopeIdentity.Value)),
-            ResourceScopeKind.Runtime when scopeIdentity is not null =>
-                ResourceScope.Runtime(new RuntimeId(scopeIdentity.Value)),
-            ResourceScopeKind.Execution when scopeIdentity is not null =>
-                ResourceScope.Execution(new ExecutionId(scopeIdentity.Value)),
-            _ => throw new InvalidOperationException(
-                "Persisted resource scope state is invalid.")
-        };
-
-        var lifecycleStatus = (ResourceLifecycleStatus)reader.GetInt32(
-            reader.GetOrdinal("LifecycleStatus"));
-
-        if (!Enum.IsDefined(lifecycleStatus))
-            throw new InvalidOperationException(
-                "Persisted resource lifecycle state is invalid.");
-
-        var metadata = JsonSerializer.Deserialize<Dictionary<string, string>>(
-            reader.GetString(reader.GetOrdinal("MetadataJson")),
-            JsonOptions);
-
-        if (metadata is null)
-            throw new InvalidOperationException(
-                "Persisted resource metadata is invalid.");
-
-        return new ResourceEnvelope<TIdentity>(
-            expectedKind,
-            identityFactory(reader.GetGuid(reader.GetOrdinal(identityColumn))),
-            new PrincipalId(
-                reader.GetGuid(reader.GetOrdinal("OwnerPrincipalId"))),
-            scope,
-            new ResourceVersion(
-                reader.GetInt64(reader.GetOrdinal("ResourceVersion"))),
-            new ResourceProvenance(
-                new PrincipalId(
-                    reader.GetGuid(reader.GetOrdinal("CreatedByPrincipalId"))),
-                reader.GetDateTime(reader.GetOrdinal("CreatedAtUtc")),
-                new CorrelationId(
-                    reader.GetGuid(reader.GetOrdinal("CorrelationId"))),
-                reader.IsDBNull(reader.GetOrdinal("CausationId"))
-                    ? null
-                    : new CausationId(
-                        reader.GetGuid(reader.GetOrdinal("CausationId")))),
-            new ResourceLifecycle(
-                lifecycleStatus,
-                reader.GetDateTime(reader.GetOrdinal("LifecycleChangedAtUtc"))),
-            metadata);
-    }
-
-    private static Error? ValidateCreate(
-        ResourceEnvelope<AgentDefinitionId> resource,
-        ResourceAccessContext accessContext)
-    {
-        ValidateAccessContext(accessContext);
-
-        if (resource.Kind != ResourceKind.AgentDefinition)
-            return Error.Validation(
-                "hive.resource.kind-invalid",
-                "The agent definition resource kind is invalid.");
-
-        if (resource.Version != ResourceVersion.Initial)
-            return Error.Validation(
-                "hive.resource.version-invalid",
-                "A new agent definition must start at resource version 1.");
-
-        if (resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
-            return Error.Validation(
-                "hive.resource.lifecycle-invalid",
-                "A new agent definition must start in Active lifecycle state.");
-
-        return ValidateAccess(resource, accessContext);
-    }
-
-    private static Error? ValidateUpdate(
-        ResourceEnvelope<AgentDefinitionId> resource,
-        ResourceAccessContext accessContext)
-    {
-        ValidateAccessContext(accessContext);
-
-        if (resource.Kind != ResourceKind.AgentDefinition)
-            return Error.Validation(
-                "hive.resource.kind-invalid",
-                "The agent definition resource kind is invalid.");
-
-        if (resource.Version.Value <= 0)
-            return Error.Validation(
-                "hive.resource.version-invalid",
-                "The agent definition resource version is invalid.");
-
-        return ValidateAccess(resource, accessContext);
-    }
-
-    private static Error? ValidateAccess(
-        ResourceEnvelope<AgentDefinitionId> resource,
-        ResourceAccessContext accessContext)
-    {
-        if (resource.Owner != accessContext.PrincipalId)
-        {
-            return new Error(
-                "hive.resource.owner-forbidden",
-                ErrorCategory.Forbidden,
-                "The current principal does not own the agent definition.");
-        }
-
-        return resource.Scope.Matches(accessContext)
-            ? null
-            : new Error(
-                "hive.resource.scope-forbidden",
-                ErrorCategory.Forbidden,
-                "The current access context is outside the agent definition scope.");
-    }
-
-    private static void ValidateAccessContext(
-        ResourceAccessContext accessContext)
-    {
-        ArgumentNullException.ThrowIfNull(accessContext);
-
-        if (accessContext.PrincipalId is null ||
-            accessContext.DeploymentId is null)
-        {
-            throw new InvalidOperationException(
-                "A deployment and principal are required for agent definition access.");
-        }
-    }
-
-    private async Task<Result<T>> ExecuteAsync<T>(
-        string resourceName,
-        CancellationToken cancellationToken,
-        Func<SqlConnection, Task<Result<T>>> operation)
-    {
-        try
-        {
-            await using var connection =
-                await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-
-            return await operation(connection).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (SqlException exception) when (IsConstraintConflict(exception))
-        {
-            return Result<T>.Failure(
-                Error.Conflict(
-                    $"hive.{resourceName.Replace(' ', '-')}.duplicate",
-                    $"The {resourceName} identity or key already exists."));
-        }
-        catch (SqlException exception)
-        {
-            return Result<T>.Failure(
-                HivePersistenceError.External(
-                    $"hive.persistence.{resourceName.Replace(' ', '-')}.sql-failure",
-                    $"SQL Server operation for the {resourceName} failed.",
-                    exception));
-        }
-        catch (Exception exception)
-        {
-            return Result<T>.Failure(
-                HivePersistenceError.Internal(
-                    $"hive.persistence.{resourceName.Replace(' ', '-')}.invalid-state",
-                    $"Persisted {resourceName} state could not be read or validated.",
-                    exception));
-        }
-    }
-
-    private async Task<Result<T>> ExecuteInTransactionAsync<T>(
-        string resourceName,
-        CancellationToken cancellationToken,
-        Func<SqlConnection, SqlTransaction, Task<Result<T>>> operation)
-    {
-        try
-        {
-            await using var connection =
-                await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-
-            await using var transaction =
-                (SqlTransaction)await connection.BeginTransactionAsync(
-                    IsolationLevel.ReadCommitted,
-                    cancellationToken).ConfigureAwait(false);
-
-            var result = await operation(
-                connection,
-                transaction).ConfigureAwait(false);
-
-            if (result.IsSuccess)
-                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-
-            return result;
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (SqlException exception) when (IsConstraintConflict(exception))
-        {
-            return Result<T>.Failure(
-                Error.Conflict(
-                    $"hive.{resourceName.Replace(' ', '-')}.duplicate",
-                    $"The {resourceName} identity or key already exists."));
-        }
-        catch (SqlException exception)
-        {
-            return Result<T>.Failure(
-                HivePersistenceError.External(
-                    $"hive.persistence.{resourceName.Replace(' ', '-')}.sql-failure",
-                    $"SQL Server operation for the {resourceName} failed.",
-                    exception));
-        }
-        catch (ConcurrencyException)
-        {
-            return Result<T>.Failure(
-                Error.Concurrency(
-                    $"hive.{resourceName.Replace(' ', '-')}.concurrency",
-                    $"The {resourceName} changed before the operation completed."));
-        }
-        catch (Exception exception)
-        {
-            return Result<T>.Failure(
-                HivePersistenceError.Internal(
-                    $"hive.persistence.{resourceName.Replace(' ', '-')}.invalid-state",
-                    $"Persisted {resourceName} state could not be read or validated.",
-                    exception));
-        }
-    }
-
-    private async Task<SqlConnection> OpenConnectionAsync(
-        CancellationToken cancellationToken)
-    {
-        var connection = new SqlConnection(_options.ConnectionString);
-
-        try
-        {
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-            return connection;
-        }
-        catch
-        {
-            await connection.DisposeAsync().ConfigureAwait(false);
-            throw;
-        }
-    }
-
-    private SqlCommand CreateCommand(
-        SqlConnection connection,
-        string commandText,
-        SqlTransaction? transaction = null) =>
-        new(commandText, connection, transaction)
-        {
-            CommandTimeout = _options.CommandTimeoutSeconds
-        };
 
     private static void AddParameters(
         SqlCommand command,
@@ -897,173 +565,4 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
         AddResourceParameters(command, resource);
     }
 
-    private static void AddResourceParameters(
-        SqlCommand command,
-        ResourceEnvelope<AgentDefinitionId> resource)
-    {
-        command.Parameters.Add(
-            GuidParameter(
-                "@OwnerPrincipalId",
-                resource.Owner.Value));
-        command.Parameters.Add(
-            IntParameter(
-                "@ScopeKind",
-                (int)resource.Scope.Kind));
-        command.Parameters.Add(
-            GuidParameter(
-                "@ScopeIdentity",
-                resource.Scope.Identity));
-        command.Parameters.Add(
-            BigIntParameter(
-                "@ResourceVersion",
-                resource.Version.Value));
-        command.Parameters.Add(
-            GuidParameter(
-                "@CreatedByPrincipalId",
-                resource.Provenance.CreatedBy.Value));
-        command.Parameters.Add(
-            DateTimeParameter(
-                "@CreatedAtUtc",
-                resource.Provenance.CreatedAtUtc));
-        command.Parameters.Add(
-            GuidParameter(
-                "@CorrelationId",
-                resource.Provenance.CorrelationId.Value));
-        command.Parameters.Add(
-            GuidParameter(
-                "@CausationId",
-                resource.Provenance.CausationId?.Value));
-        command.Parameters.Add(
-            IntParameter(
-                "@LifecycleStatus",
-                (int)resource.Lifecycle.Status));
-        command.Parameters.Add(
-            DateTimeParameter(
-                "@LifecycleChangedAtUtc",
-                resource.Lifecycle.ChangedAtUtc));
-        command.Parameters.Add(
-            SqlParameter(
-                "@MetadataJson",
-                SqlDbType.NVarChar,
-                -1,
-                SerializeMetadata(resource.Metadata)));
-    }
-
-    private static void AddAccessParameters(
-        SqlCommand command,
-        ResourceAccessContext accessContext)
-    {
-        command.Parameters.Add(
-            GuidParameter(
-                "@PrincipalId",
-                accessContext.PrincipalId!.Value.Value));
-        command.Parameters.Add(
-            GuidParameter("@TenantId", accessContext.TenantId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@UserId", accessContext.UserId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@WorkspaceId", accessContext.WorkspaceId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@AgentId", accessContext.AgentId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@RuntimeId", accessContext.RuntimeId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@ExecutionId", accessContext.ExecutionId?.Value));
-        command.Parameters.Add(
-            IntParameter("@GlobalScope", (int)ResourceScopeKind.Global));
-        command.Parameters.Add(
-            IntParameter("@TenantScope", (int)ResourceScopeKind.Tenant));
-        command.Parameters.Add(
-            IntParameter("@UserScope", (int)ResourceScopeKind.User));
-        command.Parameters.Add(
-            IntParameter("@WorkspaceScope", (int)ResourceScopeKind.Workspace));
-        command.Parameters.Add(
-            IntParameter("@AgentScope", (int)ResourceScopeKind.Agent));
-        command.Parameters.Add(
-            IntParameter("@RuntimeScope", (int)ResourceScopeKind.Runtime));
-        command.Parameters.Add(
-            IntParameter("@ExecutionScope", (int)ResourceScopeKind.Execution));
-    }
-
-    private const string ScopeAccessPredicate = """
-        (
-            [ScopeKind] = @GlobalScope
-            OR ([ScopeKind] = @TenantScope
-                AND @TenantId IS NOT NULL
-                AND [ScopeIdentity] = @TenantId)
-            OR ([ScopeKind] = @UserScope
-                AND @UserId IS NOT NULL
-                AND [ScopeIdentity] = @UserId)
-            OR ([ScopeKind] = @WorkspaceScope
-                AND @WorkspaceId IS NOT NULL
-                AND [ScopeIdentity] = @WorkspaceId)
-            OR ([ScopeKind] = @AgentScope
-                AND @AgentId IS NOT NULL
-                AND [ScopeIdentity] = @AgentId)
-            OR ([ScopeKind] = @RuntimeScope
-                AND @RuntimeId IS NOT NULL
-                AND [ScopeIdentity] = @RuntimeId)
-            OR ([ScopeKind] = @ExecutionScope
-                AND @ExecutionId IS NOT NULL
-                AND [ScopeIdentity] = @ExecutionId)
-        )
-        """;
-
-    private static Error NotFound(
-        string code,
-        string message) =>
-        new(code, ErrorCategory.NotFound, message);
-
-    private static SqlParameter GuidParameter(
-        string name,
-        Guid? value) =>
-        new(name, SqlDbType.UniqueIdentifier)
-        {
-            Value = (object?)value ?? DBNull.Value
-        };
-
-    private static SqlParameter IntParameter(
-        string name,
-        int value) =>
-        new(name, SqlDbType.Int)
-        {
-            Value = value
-        };
-
-    private static SqlParameter BigIntParameter(
-        string name,
-        long value) =>
-        new(name, SqlDbType.BigInt)
-        {
-            Value = value
-        };
-
-    private static SqlParameter DateTimeParameter(
-        string name,
-        DateTimeOffset value) =>
-        new(name, SqlDbType.DateTime2)
-        {
-            Value = value.UtcDateTime
-        };
-
-    private static SqlParameter SqlParameter(
-        string name,
-        SqlDbType type,
-        int size,
-        object? value) =>
-        new(name, type, size)
-        {
-            Value = value ?? DBNull.Value
-        };
-
-    private static string SerializeMetadata(
-        IReadOnlyDictionary<string, string> metadata) =>
-        JsonSerializer.Serialize(metadata, JsonOptions);
-
-    private sealed class ConcurrencyException : Exception
-    {
-    }
-
-    private static bool IsConstraintConflict(SqlException exception) =>
-        exception.Number is 2601 or 2627;
 }
