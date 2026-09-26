@@ -382,7 +382,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                         new HiveHostInteractionResult(
                             request.CorrelationId,
                             request.Kind,
-                            TryReadValue(control))),
+                            WinFormsControlValueAdapters.TryReadValue(control))),
 
                 HiveHostInteractionKind.SetControlValue =>
                     SetControlValue(control, request),
@@ -542,7 +542,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             metadata?.Computed ?? false,
             metadata?.Generated ?? false,
             metadata?.IsPrimaryKey ?? false,
-            WinFormsControlValueAdapters.TryReadValue(control),
+            WinFormsControlValueAdapters.WinFormsControlValueAdapters.TryReadValue(control),
             metadata?.Lookup);
     }
 
