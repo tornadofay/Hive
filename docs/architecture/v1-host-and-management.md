@@ -259,7 +259,7 @@ Hive persists only the minimum bounded evidence needed to explain and audit the 
 Phase 1.14 establishes the extension/adapter and interaction contracts. Phase 1.17 establishes the governed business-operation proposal, authorization/approval, consequential host write, and the initial durable operation-attempt safety boundary. Phase 1.18 establishes the durable operation receipt and unknown-outcome reconciliation. Phase 1.19 establishes first-class Review.
 
 
-Phase 1.15 and 1.16 establish input preparation/routing and structured candidate extraction/validation respectively. Vision is one possible input capability; structured spreadsheet input may bypass vision. Parent/child candidate data is added only when the actual V1 operation requires it.
+Phase 1.15 establishes input preparation/routing. Phase 1.16 establishes provider/model capability discovery and operational metadata. Phase 1.17 establishes structured candidate extraction/validation. Vision is one possible input capability; structured spreadsheet input may bypass vision. Parent/child candidate data is added only when the actual V1 operation requires it.
 
 ### 4.1.8 Phase 1.15 Input Preparation & Routing
 
@@ -276,7 +276,7 @@ selected ExecutionTarget
     ↓
 prepared image input
     ↓
-Phase 1.16 structured extraction/validation
+Phase 1.17 structured extraction/validation
 
 .xlsx spreadsheet submission item
     ↓
@@ -303,34 +303,43 @@ Phase 7 remains the later generalization point for a second materially different
 
 `Hive.Management` is the authoritative management facade. `Workspace` is the authoritative human-facing operational surface over that facade; host UI code does not bypass the facade for management or persistence operations.
 
-For V1, Workspace is intentionally a small operational surface over Hive.Management. The complete V1 target surface is intended to support:
+For V1, Workspace is the primary place where a user interacts with Hive. It supports both direct LLM interaction and Agent interaction, in addition to monitoring and controlling V1 work.
 
-- supported input submissions and any associated attachments bound to WorkItems;
-- submission/batch grouping that may produce multiple independently tracked WorkItems;
-- WorkItem status and execution/activity;
-- relevant execution/provider status;
-- WorkItem notifications;
-- pending approvals and the Approve / Reject action for the governed business-app write;
-- post-write Review work once the Phase 1.19 Review capability exists, including a review queue/list, opening the associated host record/editor through a bounded authorized host capability, and recording the review result/evidence.
+The complete V1 Workspace target surface includes:
 
-Human Review is policy-governed rather than permanently mandatory. A deployment may require human review initially and later use automated or hybrid verification, or no human review for an operation class, when its explicit review policy permits that behavior.
+- direct **LLM mode** with explicit model/ExecutionTarget selection;
+- **Agent mode** with explicit Agent selection;
+- conversation/chat and user command/objective submission;
+- application-wide Agent interaction;
+- specialized Agent interaction associated with a bounded host Form/context;
+- visibility into active Agent/runtime/execution context;
+- submission of input data and creation/tracking of independent WorkItems;
+- assignment and monitoring of work performed by multiple independent Agents;
+- WorkItem/job status, activity, notifications, provider/target status, approvals, and Review state as the owning V1 phases land.
 
-This V1 surface works with a single Agent and does not require Hive membership or Swarm state.
+An application may create an application-scoped Agent for a role such as a Manager and create or reuse specialized Agents for particular host forms or business domains. These are ordinary Agent resources with explicit definitions/context; the role name does not create a new Agent generation or require Hive membership.
 
-Later Workspace extensions are phase-gated by the capabilities that own their underlying state. These include:
+V1 permits multiple Agents and runtimes to operate concurrently inside one host application. Each Agent and WorkItem retains its own identity, lifecycle, authorization, provenance, and failure/cancellation boundary. Multiple visible or concurrent Agents do not by themselves create a persistent Hive or Swarm.
 
-- general **LLM mode** with explicit user model selection;
-- **Agentic mode** with Agent/Hive-selected execution targets;
-- Agent/Hive organization and topology;
-- active Swarm membership;
-- Questions, cognitive state, Dreams, and other later-generation views.
+Workspace mode semantics are:
 
-For later modes:
+- In **LLM mode**, the user explicitly selects the model/ExecutionTarget subject to normal capability and authorization policy.
+- In **Agent mode**, the user selects an Agent; that Agent uses the normal Execution Planner and policy boundary to choose its ExecutionTarget. The user is not required to select the model for every Agent decision.
+- Workspace may display the selected target and relevant diagnostics, but it does not become the authorization authority or execution engine.
 
-- In **LLM mode**, the user explicitly selects the model/execution target subject to normal capability and authorization policy, with a configured default available.
-- In **Agentic mode**, the Agent/Hive selects an execution target through the normal Execution Planner and policy boundary. The Workspace displays the selected target and relevant diagnostics, but the user is not required to choose the model for every Agent decision.
+V1 Agent interaction can therefore follow a bounded application pattern such as:
 
-Workspace is not a cognitive authority. It displays and controls authoritative Agent/Hive state; it does not invent Agent decisions or rewrite cognitive state outside the normal management/authorization contracts.
+```text
+Application
+    │
+    ├── Manager Agent
+    ├── Invoice Agent
+    ├── Customer Agent
+    └── other specialized Agents
+             │
+             ▼
+         WorkItems / jobs
+```
 
 A business application can register a host context through a bounded public API such as:
 
@@ -338,35 +347,9 @@ A business application can register a host context through a bounded public API 
 ai.Register(this);
 ```
 
-For V1 WinForms integration, the registered context can expose bounded discovery of the complete relevant Form/control hierarchy, including UserControls, custom/inherited controls, Panels, GroupBoxes, other container controls, nested descendants, and relevant runtime/data-source context. The discovery boundary is structural/contextual and must be cycle-safe, bounded, cancellable, and read-oriented unless a separate action is explicitly authorized.
+Registration binds host context to Workspace/Hive management and may reuse or associate a specialized Agent. It does not automatically create a Hive or Swarm. The host application remains responsible for application-specific business semantics; Hive provides the bounded integration, management, authorization, and work coordination boundaries.
 
-Registration binds host context to Workspace/Hive management and may reuse an existing specialized Agent. Registration does not by itself create a new Agent, create a Hive, or imply that multiple open forms must communicate. Host-specific specialization and lifecycle are explicit policy/configuration.
-
-After Phase 2 establishes Hive membership and Swarm state, the Workspace can display Agent/Hive organization and the current collaborating subset as a Swarm. The visual representation does not itself create a Hive or Swarm; durable creation and membership follow the Agent/Hive contracts.
-
-The planned V1 management areas are:
-
-1. Workspace — V1 operational WorkItem/approval surface
-2. Providers / Models / Execution Targets
-3. Agents
-
-Later areas are added only when their owning phase lands:
-
-- Hive Membership
-- Governance
-- Agent/Hive organization and Swarm views
-- LLM mode / Agentic mode
-- Cognition / Dreams / Questions / Learning Review
-- Knowledge / Skills / Memory
-- Storage
-- Runtime Diagnostics
-- Human Intervention
-- Resource Inventory
-- Configuration Import / Export
-- Generic Host Integration diagnostics
-
----
-
+After Phase 2 establishes persistent Hive membership and Swarm state, Workspace can add persistent Hive organization/topology and collective coordination views. Those later views extend the V1 Workspace rather than replacing its LLM/Agent interaction model.
 
 ### 5.1 V1 WorkItem aggregate and Workspace operations
 
@@ -383,7 +366,7 @@ The V1 application-facing Management contract exposes:
 
 Approval operations are compare-and-set operations against the expected WorkItem version. A stale intervention request returns a typed concurrency error and never applies to a newer WorkItem state. Approve is valid only from `PendingApproval` and transitions to `Completed`; Reject is valid only from `PendingApproval` and transitions to `Rejected`.
 
-In this Phase 1.11 boundary, `Completed` means the approval-only WorkItem interaction reached its terminal state. It is not evidence that a host business write occurred or that the resulting host state was verified. Phase 1.17, Phase 1.18, and Phase 1.19 must keep approval, host-write disposition, durable receipt/reconciliation, and post-write Review as distinct lifecycle semantics when the real business-operation path is introduced.
+In this Phase 1.11 boundary, `Completed` means the approval-only WorkItem interaction reached its terminal state. It is not evidence that a host business write occurred or that the resulting host state was verified. Phase 1.21, Phase 1.22, and Phase 1.23 must keep approval, host-write disposition, durable receipt/reconciliation, and post-write Review as distinct lifecycle semantics when the real business-operation path is introduced.
 
 The V1 image attachment is immutable input data owned by Hive and bound to exactly one WorkItem. Attachment metadata is part of the WorkItem snapshot; binary content is stored in a dedicated Hive.Persistence table. Creation persists the attachment and WorkItem-created event/snapshot/outbox in the same SQL transaction. Attachment content is bounded and is never exposed through persistence-specific types.
 
