@@ -230,6 +230,30 @@ public sealed class HiveHostIntegrationContractTests
     }
 
     [Fact]
+    public async Task Management_RejectsAmbiguousDuplicateBusinessOperationTypes()
+    {
+        var adapter = new FakeHostAdapter(
+            duplicateBusinessOperationTypes: true);
+        var service = new HiveHostIntegrationService(new FakeAuthorizer());
+        var context = CreateAccessContext();
+
+        var result = await service.PrepareBusinessOperationAsync(
+            adapter,
+            "SaveInvoice",
+            CorrelationId.New(),
+            context);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.business-operation-ambiguous",
+            result.Error!.Code);
+        Assert.Equal(
+            ErrorCategory.Conflict,
+            result.Error.Category);
+        Assert.Equal(0, adapter.BusinessWriteCalls);
+    }
+
+    [Fact]
     public async Task Management_CancellationStopsBeforeHostInvocation()
     {
         var adapter = new FakeHostAdapter();
@@ -298,6 +322,14 @@ public sealed class HiveHostIntegrationContractTests
 
     private sealed class FakeHostAdapter : IHiveHostIntegrationAdapter
     {
+        private readonly bool _duplicateBusinessOperationTypes;
+
+        public FakeHostAdapter(
+            bool duplicateBusinessOperationTypes = false)
+        {
+            _duplicateBusinessOperationTypes = duplicateBusinessOperationTypes;
+        }
+
         public Guid EditCapabilityId { get; } = Guid.NewGuid();
 
         public Guid LookupCapabilityId { get; } = Guid.NewGuid();
@@ -368,6 +400,29 @@ public sealed class HiveHostIntegrationContractTests
 
             var correlation = CorrelationId.New();
 
+            var saveInvoiceOperations = _duplicateBusinessOperationTypes
+                ? new[]
+                {
+                    new HiveHostBusinessOperationDescriptor(
+                        Guid.NewGuid(),
+                        "SaveInvoice",
+                        "Save invoice",
+                        HiveBusinessOperationImplementation.ApiAndUi),
+                    new HiveHostBusinessOperationDescriptor(
+                        Guid.NewGuid(),
+                        "SaveInvoice",
+                        "Duplicate save invoice",
+                        HiveBusinessOperationImplementation.Api)
+                }
+                : new[]
+                {
+                    new HiveHostBusinessOperationDescriptor(
+                        Guid.NewGuid(),
+                        "SaveInvoice",
+                        "Save invoice",
+                        HiveBusinessOperationImplementation.ApiAndUi)
+                };
+
             return Task.FromResult(
                 Result<HiveHostContextDescriptor>.Success(
                     new HiveHostContextDescriptor(
@@ -411,14 +466,7 @@ public sealed class HiveHostIntegrationContractTests
                                 })
                         },
                         new[] { lineSurface },
-                        new[]
-                        {
-                            new HiveHostBusinessOperationDescriptor(
-                                Guid.NewGuid(),
-                                "SaveInvoice",
-                                "Save invoice",
-                                HiveBusinessOperationImplementation.ApiAndUi)
-                        })));
+                        saveInvoiceOperations)));
         }
 
         public Task<Result<HiveHostInteractionResult>> ExecuteInteractionAsync(
