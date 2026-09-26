@@ -2,7 +2,7 @@
 
 ## Maintenance — UI
 
-Status: IN PROGRESS
+Status: VERIFICATION PENDING
 
 Opened: 2026-09-26
 
@@ -36,8 +36,18 @@ Audit and correct the existing Hive WinForms UI boundary, with emphasis on:
 2. `HiveListPageLayout.SetContent()` removes the previous content control without disposing it, contrary to the documented owner-disposal rule for dynamically replaced children.
 3. `HiveCrudPage.ExecuteAsync()` can let an older operation's completion path clear the shared busy state after a newer operation has become current if overlapping callers reach the operation boundary; the cleanup should only release busy state for the current operation.
 
+### Corrective work completed
+
+- `HiveEditorLayout.ClearFields()` now disposes the previously owned field containers/editors after removing them.
+- `HiveListPageLayout.SetContent()` now disposes the previously hosted content control when it is replaced, while preserving the incoming content control.
+- `HiveCrudPage.ExecuteAsync()` now releases the shared busy state only when its operation is still the current operation, preventing stale cleanup from re-enabling the UI for a newer operation.
+- Focused regression tests cover editor-field disposal and replaced list-content disposal.
+- The UI controls reference now documents the disposal ownership behavior.
+
 ### Required handoff
 
-Manual developer verification of affected UI behavior is required where applicable. Automated focused UI tests should accompany concrete behavioral corrections; broader Hive.Tests verification should follow when implementation changes are made.
+Example to run: existing UI Foundation / representative CRUD and Settings surfaces — Hive.Example.WinForms
+Tests to run: `HiveUiPolishTests.cs`; then the full `Hive.Tests` suite.
+Manual verification: existing Example Host UI, Light/Dark/System themes, compact/normal resize, representative dialog/CRUD flows, and affected dynamic content/editor replacement behavior.
 
-No verification has been performed by the agent.
+No build, test, or manual UI verification has been performed by the agent.
