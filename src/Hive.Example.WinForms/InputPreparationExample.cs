@@ -1,3 +1,5 @@
+using System.Windows.Forms;
+
 namespace Hive.Example.WinForms;
 
 internal sealed class InputPreparationExample : IHiveExample
