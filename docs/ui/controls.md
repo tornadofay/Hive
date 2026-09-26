@@ -76,6 +76,7 @@ layout.SetContent(content);
 ```
 
 Members: `HeaderPanel`, `ActionBarPanel`, `ContentPanel`, `HeaderHeight`, `ActionBarHeight`, `SetContent(Control)`.
+- `SetContent(Control)` disposes the previously hosted content control when it is replaced.
 
 ## HiveCrudPage<TItem>
 
@@ -131,6 +132,7 @@ var save = layout.AddActionButton("Save", HiveButtonStyle.Primary);
 ```
 
 Members: `FieldsPanel`, `FooterPanel`, `LabelColumnWidth`, `ClearFields()`, `AddField(...)`, `AddActionButton(...)`. Field descriptions use the shared tooltip when their visible text is ellipsized.
+- `ClearFields()` disposes the field containers and editors previously added to the layout.
 - single-line editors use a 32px compact layout slot; native controls such as ComboBox retain their platform-defined control height and are vertically centered within that slot, while controls such as TextBox use the full slot height. Composite fields that embed native editors must preserve the same compact input sizing explicitly.
 
 ## HivePaginationBar
