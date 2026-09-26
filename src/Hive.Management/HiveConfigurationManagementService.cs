@@ -383,6 +383,16 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
                 .WaitAsync(cancellationToken)
                 .ConfigureAwait(false);
 
+            lock (_mutationLifetimeGate)
+            {
+                if (_disposed != 0)
+                {
+                    _bootstrapConfigurationMutationGate.Release();
+                    ExitMutationOperation();
+                    return null;
+                }
+            }
+
             return new MutationLease(this);
         }
         catch
