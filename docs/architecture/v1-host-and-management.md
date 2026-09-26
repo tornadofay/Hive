@@ -215,7 +215,7 @@ When API and UI are combined in one logical operation, one operation correlation
 ### 4.1.6 Business-operation receipt and post-write Review
 
 
-Phase 1.17 establishes the governed business-operation proposal, authorization/approval, consequential host-write boundary, and the durable initial operation-attempt state required before any non-transactionally coupled host submission. Phase 1.18 establishes the durable `BusinessOperationReceipt` and unknown-outcome reconciliation. Phase 1.19 establishes the first-class post-write Review. Every consequential host operation attempt must be attributable to its WorkItem/operation identity, host/adapter identity, operation type, affected parent/child record identities when established, disposition/result state, and host correlation or concurrency evidence when available.
+Phase 1.21 establishes the governed business-operation proposal, authorization/approval, consequential host-write boundary, and the durable initial operation-attempt state required before any non-transactionally coupled host submission. Phase 1.22 establishes the durable `BusinessOperationReceipt` and unknown-outcome reconciliation. Phase 1.23 establishes the first-class post-write Review. Every consequential host operation attempt must be attributable to its WorkItem/operation identity, host/adapter identity, operation type, affected parent/child record identities when established, disposition/result state, and host correlation or concurrency evidence when available.
 
 
 The receipt does not make Hive a copy of the host business database. The host application remains the source of truth.
@@ -291,7 +291,7 @@ Image preparation performs capability-aware target routing only in Phase 1.15. I
 
 Spreadsheet preparation supports OOXML `.xlsx` workbooks. The first configured header row is the worksheet's column mapping boundary; data rows become independent prepared inputs with deterministic column-name/value mappings. Formatting, formulas, dates, and business semantics are not interpreted into typed domain values in this phase. The parser uses bounded workbook, worksheet, row, column, archive-entry, shared-string, and cell-content limits and rejects unsafe/malformed package structures rather than silently truncating data.
 
-Input-item failures are isolated. A malformed or unsupported item/worksheet/row produces a typed failure associated with its source location while preparation continues for other independent inputs when safe to do so. A malformed submission envelope or cancellation remains a submission-level failure. Phase 1.20 remains the boundary that turns submission/prepared input units into durable WorkItems and composes the end-to-end MAF pipeline.
+Input-item failures are isolated. A malformed or unsupported item/worksheet/row produces a typed failure associated with its source location while preparation continues for other independent inputs when safe to do so. A malformed submission envelope or cancellation remains a submission-level failure. Phase 1.25 remains the boundary that turns submission/prepared input units into durable WorkItems and composes the end-to-end MAF pipeline.
 
 
 Phase 7 remains the later generalization point for a second materially different host technology; Phase 1.14 must not become a universal UI automation framework.
