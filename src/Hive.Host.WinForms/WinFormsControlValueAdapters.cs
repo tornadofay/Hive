@@ -67,7 +67,38 @@ internal static class WinFormsControlValueAdapters
                     "The reusable adapter does not support setting this control type."));
 }
 
-internal sealed class TextBoxValueAdapter : IWinFormsControlValueAdapter
+internal abstract class WinFormsControlValueAdapterBase :
+    IWinFormsControlValueAdapter
+{
+    public abstract bool CanHandle(Control control);
+
+    public abstract bool CanSet(Control control);
+
+    public abstract string ValueTypeName { get; }
+
+    public abstract HiveHostValue? Read(Control control);
+
+    public abstract Result<HiveHostInteractionResult> Set(
+        Control control,
+        HiveHostInteractionRequest request);
+
+    protected static Result<HiveHostInteractionResult> Unsupported() =>
+        Result<HiveHostInteractionResult>.Failure(
+            Error.Unsupported(
+                "hive.host.winforms.interaction-unsupported",
+                "The reusable adapter does not support setting this control type."));
+
+    protected static Result<HiveHostInteractionResult> Success(
+        Control control,
+        HiveHostInteractionRequest request) =>
+        Result<HiveHostInteractionResult>.Success(
+            new HiveHostInteractionResult(
+                request.CorrelationId,
+                request.Kind,
+                WinFormsControlValueAdapters.TryReadValue(control)));
+}
+
+internal sealed class TextBoxValueAdapter : WinFormsControlValueAdapterBase
 {
     public bool CanHandle(Control control) =>
         control is TextBoxBase;
@@ -157,23 +188,9 @@ internal sealed class TextBoxValueAdapter : IWinFormsControlValueAdapter
             _ => false
         };
 
-    private static Result<HiveHostInteractionResult> Unsupported() =>
-        Result<HiveHostInteractionResult>.Failure(
-            Error.Unsupported(
-                "hive.host.winforms.interaction-unsupported",
-                "The reusable adapter does not support setting this control type."));
-
-    private static Result<HiveHostInteractionResult> Success(
-        Control control,
-        HiveHostInteractionRequest request) =>
-        Result<HiveHostInteractionResult>.Success(
-            new HiveHostInteractionResult(
-                request.CorrelationId,
-                request.Kind,
-                WinFormsControlValueAdapters.TryReadValue(control)));
 }
 
-internal sealed class CheckBoxValueAdapter : IWinFormsControlValueAdapter
+internal sealed class CheckBoxValueAdapter : WinFormsControlValueAdapterBase
 {
     public bool CanHandle(Control control) =>
         control is CheckBox;
@@ -218,23 +235,9 @@ internal sealed class CheckBoxValueAdapter : IWinFormsControlValueAdapter
         return Success(control, request);
     }
 
-    private static Result<HiveHostInteractionResult> Unsupported() =>
-        Result<HiveHostInteractionResult>.Failure(
-            Error.Unsupported(
-                "hive.host.winforms.interaction-unsupported",
-                "The reusable adapter does not support setting this control type."));
-
-    private static Result<HiveHostInteractionResult> Success(
-        Control control,
-        HiveHostInteractionRequest request) =>
-        Result<HiveHostInteractionResult>.Success(
-            new HiveHostInteractionResult(
-                request.CorrelationId,
-                request.Kind,
-                WinFormsControlValueAdapters.TryReadValue(control)));
 }
 
-internal sealed class ComboBoxValueAdapter : IWinFormsControlValueAdapter
+internal sealed class ComboBoxValueAdapter : WinFormsControlValueAdapterBase
 {
     public bool CanHandle(Control control) =>
         control is ComboBox;
@@ -288,23 +291,9 @@ internal sealed class ComboBoxValueAdapter : IWinFormsControlValueAdapter
         return Success(control, request);
     }
 
-    private static Result<HiveHostInteractionResult> Unsupported() =>
-        Result<HiveHostInteractionResult>.Failure(
-            Error.Unsupported(
-                "hive.host.winforms.interaction-unsupported",
-                "The reusable adapter does not support setting this control type."));
-
-    private static Result<HiveHostInteractionResult> Success(
-        Control control,
-        HiveHostInteractionRequest request) =>
-        Result<HiveHostInteractionResult>.Success(
-            new HiveHostInteractionResult(
-                request.CorrelationId,
-                request.Kind,
-                WinFormsControlValueAdapters.TryReadValue(control)));
 }
 
-internal sealed class DateTimePickerValueAdapter : IWinFormsControlValueAdapter
+internal sealed class DateTimePickerValueAdapter : WinFormsControlValueAdapterBase
 {
     public bool CanHandle(Control control) =>
         control is DateTimePicker;
@@ -358,23 +347,9 @@ internal sealed class DateTimePickerValueAdapter : IWinFormsControlValueAdapter
         return Success(control, request);
     }
 
-    private static Result<HiveHostInteractionResult> Unsupported() =>
-        Result<HiveHostInteractionResult>.Failure(
-            Error.Unsupported(
-                "hive.host.winforms.interaction-unsupported",
-                "The reusable adapter does not support setting this control type."));
-
-    private static Result<HiveHostInteractionResult> Success(
-        Control control,
-        HiveHostInteractionRequest request) =>
-        Result<HiveHostInteractionResult>.Success(
-            new HiveHostInteractionResult(
-                request.CorrelationId,
-                request.Kind,
-                WinFormsControlValueAdapters.TryReadValue(control)));
 }
 
-internal sealed class NumericUpDownValueAdapter : IWinFormsControlValueAdapter
+internal sealed class NumericUpDownValueAdapter : WinFormsControlValueAdapterBase
 {
     public bool CanHandle(Control control) =>
         control is NumericUpDown;
@@ -437,18 +412,4 @@ internal sealed class NumericUpDownValueAdapter : IWinFormsControlValueAdapter
         return Success(control, request);
     }
 
-    private static Result<HiveHostInteractionResult> Unsupported() =>
-        Result<HiveHostInteractionResult>.Failure(
-            Error.Unsupported(
-                "hive.host.winforms.interaction-unsupported",
-                "The reusable adapter does not support setting this control type."));
-
-    private static Result<HiveHostInteractionResult> Success(
-        Control control,
-        HiveHostInteractionRequest request) =>
-        Result<HiveHostInteractionResult>.Success(
-            new HiveHostInteractionResult(
-                request.CorrelationId,
-                request.Kind,
-                WinFormsControlValueAdapters.TryReadValue(control)));
 }
