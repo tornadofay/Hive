@@ -174,6 +174,56 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
 
 
     internal Task<Result<IReadOnlyList<ExecutionTarget>>> ListExecutionTargetsAsync(
+        ResourceAccessContext accessContext,
+        bool includeRetired = false,
+        CancellationToken cancellationToken = default) =>
+        ExecuteAsync(
+            "execution target",
+            cancellationToken,
+            async connection =>
+            {
+                ValidateAccessContext(accessContext);
+
+                await using var command = CreateCommand(
+                    connection,
+                    $"""
+                    SELECT {ExecutionTargetColumns}
+                    FROM [dbo].[HiveExecutionTargets]
+                    WHERE [OwnerPrincipalId] = @PrincipalId
+                      AND {ScopeAccessPredicate}
+                    {(includeRetired
+                        ? string.Empty
+                        : "AND [LifecycleStatus] <> @RetiredLifecycle")}
+                    ORDER BY [DisplayName], [ExecutionTargetId];
+                    """);
+
+                AddAccessParameters(command, accessContext);
+
+                if (!includeRetired)
+                {
+                    command.Parameters.Add(
+                        IntParameter(
+                            "@RetiredLifecycle",
+                            (int)ResourceLifecycleStatus.Retired));
+                }
+
+                var items = new List<ExecutionTarget>();
+
+                await using var reader =
+                    await command.ExecuteReaderAsync(cancellationToken)
+                        .ConfigureAwait(false);
+
+                while (await reader.ReadAsync(cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    items.Add(ReadExecutionTarget(reader));
+                }
+
+                return Result<IReadOnlyList<ExecutionTarget>>.Success(items);
+            });
+
+
+    internal Task<Result<IReadOnlyList<ExecutionTarget>>> ListExecutionTargetsAsync(
         ProviderAccountId providerAccountId,
         ResourceAccessContext accessContext,
         bool includeRetired = false,

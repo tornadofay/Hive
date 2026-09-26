@@ -12,6 +12,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
     private readonly HiveProviderManagementService _providers;
     private readonly HiveAgentManagementService _agents;
     private readonly HiveWorkItemManagementService _workItems;
+    private readonly HiveInputPreparationManagementService _inputPreparation;
 
     public HiveManagementFacade(
         IProviderResourceStore providerResources,
@@ -39,6 +40,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
             secrets,
             agentExecution);
         _workItems = new HiveWorkItemManagementService(workItems);
+        _inputPreparation = new HiveInputPreparationManagementService(providerResources);
     }
 
     public void Dispose()
@@ -263,6 +265,15 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         string userMessage,
         CancellationToken cancellationToken = default) =>
         _agents.ExecuteConfiguredAgentAsync(agentDefinitionId, accessContext, userMessage, cancellationToken);
+
+    public Task<Result<InputPreparationResult>> PrepareInputAsync(
+        InputSubmission submission,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) =>
+        _inputPreparation.PrepareInputAsync(
+            submission,
+            accessContext,
+            cancellationToken);
 
     public Task<Result<WorkItem>> CreateImageWorkItemAsync(
         WorkItemImageSubmission submission,

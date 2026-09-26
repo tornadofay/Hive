@@ -76,6 +76,11 @@ public interface IProviderResourceStore
         CancellationToken cancellationToken = default);
 
     Task<Result<IReadOnlyList<ExecutionTarget>>> ListExecutionTargetsAsync(
+        ResourceAccessContext accessContext,
+        bool includeRetired = false,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<ExecutionTarget>>> ListExecutionTargetsAsync(
         ProviderAccountId providerAccountId,
         ResourceAccessContext accessContext,
         bool includeRetired = false,

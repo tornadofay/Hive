@@ -188,6 +188,11 @@ public interface IHiveManagementFacade
         string userMessage,
         CancellationToken cancellationToken = default);
 
+    Task<Result<InputPreparationResult>> PrepareInputAsync(
+        InputSubmission submission,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
     Task<Result<WorkItem>> CreateImageWorkItemAsync(
         WorkItemImageSubmission submission,
         ResourceAccessContext accessContext,
