@@ -28,6 +28,9 @@ internal abstract class SqlResourceStoreBase
         _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
+    protected virtual IsolationLevel TransactionIsolationLevel =>
+        IsolationLevel.ReadCommitted;
+
     protected static IReadOnlyDictionary<string, string> DeserializeMetadata(
         string json)
     {
@@ -197,7 +200,7 @@ internal abstract class SqlResourceStoreBase
             accessContext.DeploymentId is null)
         {
             throw new InvalidOperationException(
-                "A deployment and principal are required for provider resource access.");
+                "A deployment and principal are required for Hive resource access.");
         }
     }
 
@@ -257,7 +260,7 @@ internal abstract class SqlResourceStoreBase
 
             await using var transaction =
                 (SqlTransaction)await connection.BeginTransactionAsync(
-                    IsolationLevel.ReadCommitted,
+                    TransactionIsolationLevel,
                     cancellationToken).ConfigureAwait(false);
 
             var result = await operation(
