@@ -5,7 +5,7 @@ using Hive.Persistence;
 
 namespace Hive.Management;
 
-public sealed class HiveManagementFacade : IHiveManagementFacade
+public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
 {
     private readonly HiveConfigurationManagementService _configuration;
     private readonly HiveSecretManagementService _secrets;
@@ -39,6 +39,12 @@ public sealed class HiveManagementFacade : IHiveManagementFacade
             secrets,
             agentExecution);
         _workItems = new HiveWorkItemManagementService(workItems);
+    }
+
+    public void Dispose()
+    {
+        _configuration.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     public Task<Result<HivePersistenceConfiguration>> GetPersistenceConfigurationAsync(
