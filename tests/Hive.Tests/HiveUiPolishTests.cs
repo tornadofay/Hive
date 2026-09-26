@@ -369,13 +369,21 @@ public sealed class HiveUiPolishTests
             Task.FromException<IReadOnlyList<TestItem>>(
                 new InvalidOperationException("synthetic CRUD failure"));
 
+        var secondSubscriberCalled = false;
+
         page.OperationFailed += (_, _) =>
             throw new InvalidOperationException("synthetic subscriber failure");
+
+        page.OperationFailed += (_, _) =>
+        {
+            secondSubscriberCalled = true;
+        };
 
         await page.RefreshAsync();
 
         Assert.Equal("Operation failed.", page.StatusLabel.Text);
         Assert.False(page.IsBusy);
+        Assert.True(secondSubscriberCalled);
     }
 
     [Fact]
