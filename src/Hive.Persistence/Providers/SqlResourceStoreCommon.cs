@@ -1,3 +1,4 @@
+using System.Data;
 using System.Text.Json;
 using Hive.Core;
 using Microsoft.Data.SqlClient;
@@ -41,6 +42,22 @@ internal static class SqlResourceStoreCommon
         IReadOnlyDictionary<string, string> metadata) =>
         JsonSerializer.Serialize(metadata, JsonOptions);
 
+
+    private static SqlParameter GuidParameter(
+        string name,
+        Guid? value) =>
+        new(name, SqlDbType.UniqueIdentifier)
+        {
+            Value = (object?)value ?? DBNull.Value
+        };
+
+    private static SqlParameter IntParameter(
+        string name,
+        int value) =>
+        new(name, SqlDbType.Int)
+        {
+            Value = value
+        };
 
     internal static void AddAccessParameters(
         SqlCommand command,
