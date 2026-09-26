@@ -371,6 +371,51 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task ExecuteInteraction_RejectsDateOutsideHostRangeWithoutThrowing()
+    {
+        using var form = new Form();
+        var picker = new DateTimePicker
+        {
+            Name = "date",
+            MinDate = new DateTime(2026, 1, 1),
+            MaxDate = new DateTime(2026, 12, 31),
+            Value = new DateTime(2026, 6, 1)
+        };
+        form.Controls.Add(picker);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var control = descriptor.Controls.Single(item => item.Name == "date");
+        var capability = control.Capabilities.Single(item =>
+            item.Kind == HiveHostCapabilityKind.SetControlValue);
+
+        var service = new HiveHostIntegrationService(
+            new AllowAllAuthorizer());
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                capability.Id,
+                HiveHostInteractionKind.SetControlValue,
+                CorrelationId.New(),
+                controlId: control.Id,
+                value: HiveHostValue.FromDateTime(new DateTime(2027, 1, 1))),
+            accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.datetime-range-invalid",
+            result.Error!.Code);
+        Assert.Equal(
+            new DateTime(2026, 6, 1),
+            picker.Value);
+    }
+
+    [Fact]
     public async Task PasswordControl_IsNeverExposedAsValue()
     {
         using var form = CreateFixtureForm();
