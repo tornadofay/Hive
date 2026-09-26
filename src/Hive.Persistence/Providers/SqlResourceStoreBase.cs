@@ -483,17 +483,157 @@ internal abstract class SqlResourceStoreBase
                 (int)ResourceScopeKind.Execution));
     }
 
-    private const string ScopeAccessPredicate = """
-        (
-            [ScopeKind] = @GlobalScope
-            OR ([ScopeKind] = @TenantScope AND @TenantId IS NOT NULL AND [ScopeIdentity] = @TenantId)
-            OR ([ScopeKind] = @UserScope AND @UserId IS NOT NULL AND [ScopeIdentity] = @UserId)
-            OR ([ScopeKind] = @WorkspaceScope AND @WorkspaceId IS NOT NULL AND [ScopeIdentity] = @WorkspaceId)
-            OR ([ScopeKind] = @AgentScope AND @AgentId IS NOT NULL AND [ScopeIdentity] = @AgentId)
-            OR ([ScopeKind] = @RuntimeScope AND @RuntimeId IS NOT NULL AND [ScopeIdentity] = @RuntimeId)
-            OR ([ScopeKind] = @ExecutionScope AND @ExecutionId IS NOT NULL AND [ScopeIdentity] = @ExecutionId)
-        )
-        """;
+
+
+    protected async Task UpdateLifecycleAsync<TIdentity>(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        string tableName,
+        string identityColumn,
+        Guid resourceId,
+        ResourceEnvelope<TIdentity> updatedResource,
+        ResourceVersion expectedVersion,
+        CancellationToken cancellationToken)
+        where TIdentity : struct
+    {
+        await using var command = CreateCommand(
+            connection,
+            $"""
+            UPDATE [dbo].[{tableName}]
+            SET [ResourceVersion] = @NewVersion,
+                [LifecycleStatus] = @LifecycleStatus,
+                [LifecycleChangedAtUtc] = @LifecycleChangedAtUtc
+            WHERE [{identityColumn}] = @ResourceId
+              AND [ResourceVersion] = @ExpectedVersion;
+            """,
+            transaction);
+
+        command.Parameters.Add(
+            SqlParameter(
+                "@NewVersion",
+                SqlDbType.BigInt,
+                updatedResource.Version.Value));
+        command.Parameters.Add(
+            IntParameter(
+                "@LifecycleStatus",
+                (int)updatedResource.Lifecycle.Status));
+        command.Parameters.Add(
+            DateTimeParameter(
+                "@LifecycleChangedAtUtc",
+                updatedResource.Lifecycle.ChangedAtUtc));
+        command.Parameters.Add(
+            GuidParameter(
+                "@ResourceId",
+                resourceId));
+        command.Parameters.Add(
+            SqlParameter(
+                "@ExpectedVersion",
+                SqlDbType.BigInt,
+                expectedVersion.Value));
+
+        var affected = await command.ExecuteNonQueryAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (affected != 1)
+            throw new ConcurrencyException();
+    }
+
+
+    protected static ResourceEnvelope<TIdentity> ReadResourceEnvelope<TIdentity>(
+        SqlDataReader reader,
+        ResourceKind expectedKind,
+        string identityColumn,
+        Func<Guid, TIdentity> identityFactory)
+        where TIdentity : struct
+    {
+        var identity = identityFactory(
+            reader.GetGuid(reader.GetOrdinal(identityColumn)));
+
+        var owner = new PrincipalId(
+            reader.GetGuid(reader.GetOrdinal("OwnerPrincipalId")));
+
+        var scopeKind = (ResourceScopeKind)reader.GetInt32(
+            reader.GetOrdinal("ScopeKind"));
+
+        Guid? scopeIdentity = reader.IsDBNull(
+            reader.GetOrdinal("ScopeIdentity"))
+            ? null
+            : reader.GetGuid(reader.GetOrdinal("ScopeIdentity"));
+
+        if (!Enum.IsDefined(scopeKind))
+            throw new InvalidOperationException(
+                "Persisted resource scope kind is invalid.");
+
+        var scope = scopeKind switch
+        {
+            ResourceScopeKind.Global when scopeIdentity is null =>
+                ResourceScope.Global(),
+
+            ResourceScopeKind.Tenant when scopeIdentity is not null =>
+                ResourceScope.Tenant(new TenantId(scopeIdentity.Value)),
+
+            ResourceScopeKind.User when scopeIdentity is not null =>
+                ResourceScope.User(new UserId(scopeIdentity.Value)),
+
+            ResourceScopeKind.Workspace when scopeIdentity is not null =>
+                ResourceScope.Workspace(new WorkspaceId(scopeIdentity.Value)),
+
+            ResourceScopeKind.Agent when scopeIdentity is not null =>
+                ResourceScope.Agent(new AgentId(scopeIdentity.Value)),
+
+            ResourceScopeKind.Runtime when scopeIdentity is not null =>
+                ResourceScope.Runtime(new RuntimeId(scopeIdentity.Value)),
+
+            ResourceScopeKind.Execution when scopeIdentity is not null =>
+                ResourceScope.Execution(new ExecutionId(scopeIdentity.Value)),
+
+            _ => throw new InvalidOperationException(
+                "Persisted resource scope state is invalid.")
+        };
+
+        var version = new ResourceVersion(
+            reader.GetInt64(reader.GetOrdinal("ResourceVersion")));
+
+        var provenance = new ResourceProvenance(
+            new PrincipalId(
+                reader.GetGuid(
+                    reader.GetOrdinal("CreatedByPrincipalId"))),
+            reader.GetDateTime(
+                reader.GetOrdinal("CreatedAtUtc")),
+            new CorrelationId(
+                reader.GetGuid(reader.GetOrdinal("CorrelationId"))),
+            reader.IsDBNull(reader.GetOrdinal("CausationId"))
+                ? null
+                : new CausationId(
+                    reader.GetGuid(reader.GetOrdinal("CausationId"))));
+
+        var lifecycleStatus = (ResourceLifecycleStatus)reader.GetInt32(
+            reader.GetOrdinal("LifecycleStatus"));
+
+        if (!Enum.IsDefined(lifecycleStatus))
+        {
+            throw new InvalidOperationException(
+                "Persisted resource lifecycle state is invalid.");
+        }
+
+        var lifecycle = new ResourceLifecycle(
+            lifecycleStatus,
+            reader.GetDateTime(
+                reader.GetOrdinal("LifecycleChangedAtUtc")));
+
+        var metadata = DeserializeMetadata(
+            reader.GetString(reader.GetOrdinal("MetadataJson")));
+
+        return new ResourceEnvelope<TIdentity>(
+            expectedKind,
+            identity,
+            owner,
+            scope,
+            version,
+            provenance,
+            lifecycle,
+            metadata);
+    }
 
 
     protected static Error NotFound(string code, string message) =>
@@ -533,7 +673,7 @@ internal abstract class SqlResourceStoreBase
         string Key,
         CapabilityState State);
 
-    private sealed class ConcurrencyException : Exception
+    protected sealed class ConcurrencyException : Exception
     {
     }
 
