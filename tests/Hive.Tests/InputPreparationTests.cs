@@ -207,11 +207,11 @@ public sealed class InputPreparationTests
         Assert.True(result.IsSuccess, result.Error?.Message);
         var prepared = Assert.Single(result.Value!.PreparedInputs);
         var row = Assert.IsType<PreparedSpreadsheetRowInput>(prepared);
-        Assert.Equal(4, row.RowNumber);
+        Assert.Equal(3, row.RowNumber);
         Assert.Equal("Good", row.Values["Customer"]);
 
         var failure = Assert.Single(result.Value.Failures);
-        Assert.Equal("Orders!3", failure.SourceLocation);
+        Assert.Equal("Orders!2", failure.SourceLocation);
         Assert.Equal(
             "hive.input.spreadsheet.cell-too-large",
             failure.Error.Code);
