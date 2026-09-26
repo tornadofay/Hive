@@ -340,10 +340,11 @@ Scope:
 - `PendingApproval` with existing Approve / Reject semantics when policy requires approval;
 - host business operation execution through API, UI, or API+UI implementation;
 - each WorkItem has its own logical business-operation identity; submission/batch grouping does not combine independent WorkItems into one mutable operation;
+- durable initial operation-attempt state is persisted before submission when the host boundary is not transactionally coupled to Hive, so an interrupted call remains attributable and reconcilable;
 - operation correlation/idempotency identity is established for the write boundary and is reused for retries when the host supports idempotency;
 - generated host IDs are captured from successful creation operations;
-- write success, known no-side-effect failure, partial outcome, and rejected-before-mutation disposition are represented at the operation boundary;
-- unknown host outcomes remain explicitly unresolved for the later receipt/reconciliation boundary rather than being treated as confirmed success or failure.
+- write success, known no-side-effect failure, partial outcome, and rejected-before-mutation disposition are preserved as operation evidence for the later receipt boundary;
+- unknown host outcomes remain explicitly unresolved for Phase 1.18 reconciliation rather than being treated as confirmed success or failure.
 
 Approval answers whether Hive may perform the proposed operation. It is distinct from post-write correctness Review.
 
@@ -361,8 +362,8 @@ Verify:
 Objective: durably attribute each consequential host operation, reconcile interrupted or unknown outcomes without blind duplicate mutation, and verify the resulting host state through the first-class WorkItem-linked Review boundary.
 
 Scope:
-- durable BusinessOperationReceipt/attempt record containing WorkItem/operation identity, host/adapter identity, pre-operation target identities, resulting host identities when changed, result/disposition state, and host correlation/concurrency evidence when available;
-- initial operation-attempt durability before submission when the host boundary is not transactionally coupled to Hive, so a crash after submission but before a host response remains reconcilable;
+- durable BusinessOperationReceipt built from the Phase 1.17 operation-attempt state, containing WorkItem/operation identity, host/adapter identity, pre-operation target identities, resulting host identities when changed, result/disposition state, and host correlation/concurrency evidence when available;
+- durable operation-attempt state from Phase 1.17 remains the recovery anchor when a crash occurs after submission but before a host response;
 - stable operation correlation/idempotency identity reused by receipt/reconciliation when the host supports it;
 - unknown/partial write outcome reconciliation that does not blindly duplicate a possibly completed operation;
 - first-class WorkItem-linked Review object;
