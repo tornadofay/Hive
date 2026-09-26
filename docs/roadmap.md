@@ -331,21 +331,41 @@ Verify: image routing, spreadsheet workbook/worksheet/row handling, multiple Wor
 Objective: produce typed candidate business data from supported input capabilities and apply required-field, type, and domain validation. Vision-derived candidates and structured spreadsheet-derived candidates both enter this common candidate/validation boundary. When the target business operation requires it, candidate data may preserve an explicit parent record with nested child-row collections and their relationships; this does not create a generic relational-document framework.
 Verify: valid sample, missing fields, invalid types, malformed model output, parent/child candidate structure when required by the target operation, and rejection path.
 
-## 1.17 — Business-App Write, Receipt & Review
-Objective: perform governed business-app writes through the authorized host operation boundary and close the loop with durable write attribution and post-write correctness review.
+## 1.17 — Business-App Proposal & Governed Write
+Objective: turn a validated structured candidate into an authorized business-operation proposal and perform the consequential host write through the approved host operation boundary.
 
 Scope:
 - structured BusinessOperationProposal for parent data and, where required, child collections;
 - authorization before the consequential operation;
 - `PendingApproval` with existing Approve / Reject semantics when policy requires approval;
 - host business operation execution through API, UI, or API+UI implementation;
-- durable BusinessOperationReceipt/attempt record containing WorkItem/operation identity, host/adapter identity, pre-operation target identities, resulting host identities when changed, result state, and host correlation/concurrency evidence when available;
+- each WorkItem has its own logical business-operation identity; submission/batch grouping does not combine independent WorkItems into one mutable operation;
+- operation correlation/idempotency identity is established for the write boundary and is reused for retries when the host supports idempotency;
+- generated host IDs are captured from successful creation operations;
+- write success, known no-side-effect failure, partial outcome, and rejected-before-mutation disposition are represented at the operation boundary;
+- unknown host outcomes remain explicitly unresolved for the later receipt/reconciliation boundary rather than being treated as confirmed success or failure.
+
+Approval answers whether Hive may perform the proposed operation. It is distinct from post-write correctness Review.
+
+Verify:
+- pending approval blocks the consequential write when required;
+- rejection prevents the side effect;
+- approved operation reaches a fake business client or bounded fake host adapter;
+- duplicate/stale approval cannot duplicate the write;
+- generated host IDs are captured;
+- operation identity remains stable for a retry-capable host boundary;
+- authorization and provenance remain enforced through the consequential operation;
+- unknown/partial host dispositions are preserved for the Phase 1.18 receipt/reconciliation boundary.
+
+## 1.18 — Business Operation Receipt, Reconciliation & Review
+Objective: durably attribute each consequential host operation, reconcile interrupted or unknown outcomes without blind duplicate mutation, and verify the resulting host state through the first-class WorkItem-linked Review boundary.
+
+Scope:
+- durable BusinessOperationReceipt/attempt record containing WorkItem/operation identity, host/adapter identity, pre-operation target identities, resulting host identities when changed, result/disposition state, and host correlation/concurrency evidence when available;
 - initial operation-attempt durability before submission when the host boundary is not transactionally coupled to Hive, so a crash after submission but before a host response remains reconcilable;
-- generated host IDs captured after creation;
-- stable operation correlation/idempotency identity, reused on retry when the host supports idempotency;
-- unknown/partial write outcome handling that does not blindly duplicate a possibly completed operation;
+- stable operation correlation/idempotency identity reused by receipt/reconciliation when the host supports it;
+- unknown/partial write outcome reconciliation that does not blindly duplicate a possibly completed operation;
 - first-class WorkItem-linked Review object;
-- each WorkItem has its own business-operation attempt/receipt and review state; submission/batch grouping does not combine independent WorkItems into one mutable operation;
 - review queue/list over WorkItems awaiting review;
 - bounded authorized action to open/navigate to the associated host record/editor for human review when the host supports it;
 - policy-governed review modes: Human, Automated, or Hybrid;
@@ -353,33 +373,30 @@ Scope:
 - authorized host-state reread and bounded comparison against intended candidate/proposed data;
 - review outcomes such as `PendingReview`, `VerifiedCorrect`, `VerifiedIncorrect`, with unresolved operational states when verification cannot establish correctness;
 - discrepancy recording without silently rewriting the original candidate;
-- minimum bounded review evidence; Hive does not become a mirror of host business state.
+- minimum bounded review evidence; Hive does not become a mirror of host business state;
+- each WorkItem retains its own operation receipt and review state.
 
 Approval answers whether Hive may perform the proposed operation. Review answers whether the resulting host state is correct. They are separate lifecycle boundaries.
 
 Verify:
-- pending approval blocks the consequential write when required;
-- rejection prevents the side effect;
-- approved operation reaches a fake business client or bounded fake host adapter;
-- duplicate/stale approval cannot duplicate the write;
 - parent + child identity receipt is durable;
-- generated IDs are captured;
 - interrupted/unknown outcome is reconciled from the durable operation attempt/receipt and authoritative host state without duplicate mutation;
 - an idempotent host retry reuses the logical operation identity, while a non-idempotent host requires reconciliation before any second mutation;
 - review can locate the exact written host records through the receipt;
 - correct result reaches `VerifiedCorrect`;
 - incorrect result reaches `VerifiedIncorrect` with discrepancies;
 - review does not mutate the original candidate;
-- authorization and provenance remain enforced across write and review.
-## 1.18 — MAF Sequential V1 Pipeline
-Objective: wire submission → WorkItem creation → input-specific preparation/routing → candidate extraction/mapping → validation → governed write → receipt → policy-governed verification/review as one MAF Sequential workflow, while keeping Hive-owned WorkItem identity, authorization, host integration, durable receipt, and Review semantics outside MAF's orchestration ownership. A submission/batch is not itself the correctness or execution unit.
+- authorization and provenance remain enforced across receipt, reconciliation, and review.
+
+## 1.19 — MAF Sequential V1 Pipeline
+Objective: wire submission → WorkItem creation → input-specific preparation/routing → candidate extraction/mapping → validation → governed write → durable receipt/reconciliation → policy-governed verification/review as one MAF Sequential workflow, while keeping Hive-owned WorkItem identity, authorization, host integration, receipt, reconciliation, and Review semantics outside MAF's orchestration ownership. A submission/batch is not itself the correctness or execution unit.
 Verify: end-to-end fake-host path covering successful and rejected/failed branches plus developer manual verification with one controlled real sample when available.
 
-## 1.19 — Full-Pipeline Crash/Resume
+## 1.20 — Full-Pipeline Crash/Resume
 Objective: prove event/outbox/recovery behavior across the complete V1 pipeline, including durable business-operation attempt/receipt persistence before non-transactional host submission, unknown write-outcome reconciliation, independent WorkItem recovery within multi-item submissions, and Review recovery.
 Verify: process termination at several checkpoints, restart, resume or reconcile without duplicate terminal host mutation; already-terminal WorkItems are not processed again; failure of one WorkItem does not incorrectly fail unrelated WorkItems; completed WorkItems retain receipts; Review state survives restart; and recoverable WorkItems can resume/reconcile independently.
 
-## 1.20 — Metrics, Budget Cap & OpenTelemetry
+## 1.21 — Metrics, Budget Cap & OpenTelemetry
 Objective: request/success/failure/timeout counters, token/cost tracking, hard per-runtime budget, and console OpenTelemetry.
 Verify: configured limit produces typed stop; telemetry contains correlation data and no secrets.
 
