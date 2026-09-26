@@ -371,6 +371,134 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task ExecuteInteraction_SetsAndReadsStandardBooleanComboAndNumericControls()
+    {
+        using var form = new Form();
+
+        var checkBox = new CheckBox
+        {
+            Name = "active",
+            Checked = false
+        };
+
+        var comboBox = new ComboBox
+        {
+            Name = "status",
+            DropDownStyle = ComboBoxStyle.DropDown,
+            Text = "Pending"
+        };
+        comboBox.Items.AddRange(["Pending", "Approved"]);
+
+        var numeric = new NumericUpDown
+        {
+            Name = "amount",
+            Minimum = 0,
+            Maximum = 100,
+            Value = 10
+        };
+
+        form.Controls.Add(checkBox);
+        form.Controls.Add(comboBox);
+        form.Controls.Add(numeric);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var captured = (await adapter.CaptureAsync(accessContext)).Value!;
+        Assert.Equal(
+            typeof(bool).FullName,
+            captured.Controls.Single(item => item.Name == "active").Field!.ValueType);
+        Assert.Equal(
+            typeof(string).FullName,
+            captured.Controls.Single(item => item.Name == "status").Field!.ValueType);
+        Assert.Equal(
+            typeof(decimal).FullName,
+            captured.Controls.Single(item => item.Name == "amount").Field!.ValueType);
+
+        var service = new HiveHostIntegrationService(
+            new AllowAllAuthorizer());
+
+        var checkBoxControl = captured.Controls.Single(item => item.Name == "active");
+        var checkBoxWrite = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                checkBoxControl.Capabilities.Single(item =>
+                    item.Kind == HiveHostCapabilityKind.SetControlValue).Id,
+                HiveHostInteractionKind.SetControlValue,
+                CorrelationId.New(),
+                controlId: checkBoxControl.Id,
+                value: HiveHostValue.FromBoolean(true)),
+            accessContext);
+
+        Assert.True(checkBoxWrite.IsSuccess, checkBoxWrite.Error?.Message);
+        Assert.True(checkBox.Checked);
+
+        var comboControl = captured.Controls.Single(item => item.Name == "status");
+        var comboWrite = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                comboControl.Capabilities.Single(item =>
+                    item.Kind == HiveHostCapabilityKind.SetControlValue).Id,
+                HiveHostInteractionKind.SetControlValue,
+                CorrelationId.New(),
+                controlId: comboControl.Id,
+                value: HiveHostValue.FromString("Approved")),
+            accessContext);
+
+        Assert.True(comboWrite.IsSuccess, comboWrite.Error?.Message);
+        Assert.Equal("Approved", comboBox.Text);
+
+        var numericControl = captured.Controls.Single(item => item.Name == "amount");
+        var numericWrite = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                numericControl.Capabilities.Single(item =>
+                    item.Kind == HiveHostCapabilityKind.SetControlValue).Id,
+                HiveHostInteractionKind.SetControlValue,
+                CorrelationId.New(),
+                controlId: numericControl.Id,
+                value: HiveHostValue.FromDecimal(42.5m)),
+            accessContext);
+
+        Assert.True(numericWrite.IsSuccess, numericWrite.Error?.Message);
+        Assert.Equal(42.5m, numeric.Value);
+    }
+
+    [Fact]
+    public async Task Capture_DropDownListDoesNotExposeStandardSetCapability()
+    {
+        using var form = new Form();
+        var comboBox = new ComboBox
+        {
+            Name = "status",
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+        comboBox.Items.AddRange(["Pending", "Approved"]);
+        comboBox.SelectedIndex = 0;
+        form.Controls.Add(comboBox);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var result = await adapter.CaptureAsync(accessContext);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var control = result.Value!.Controls.Single(item => item.Name == "status");
+
+        Assert.Contains(
+            control.Capabilities,
+            capability => capability.Kind == HiveHostCapabilityKind.ReadControl);
+        Assert.DoesNotContain(
+            control.Capabilities,
+            capability => capability.Kind == HiveHostCapabilityKind.SetControlValue);
+    }
+
+    [Fact]
     public async Task ExecuteInteraction_RejectsDateOutsideHostRangeWithoutThrowing()
     {
         using var form = new Form();
