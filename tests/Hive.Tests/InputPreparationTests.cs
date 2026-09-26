@@ -124,13 +124,17 @@ public sealed class InputPreparationTests
     public void SpreadsheetInput_UsesSharedStrings()
     {
         var workbook = CreateWorkbook(
-            ("Customers",
-                new string[][]
-                {
-                    new[] { "Name", "City" },
-                    new[] { "Ada", "Cairo" },
-                    new[] { "Grace", "Giza" }
-                }),
+            new[]
+            {
+                (
+                    "Customers",
+                    new string[][]
+                    {
+                        new[] { "Name", "City" },
+                        new[] { "Ada", "Cairo" },
+                        new[] { "Grace", "Giza" }
+                    })
+            },
             useSharedStrings: true);
 
         var result = InputPreparationEngine.Prepare(
