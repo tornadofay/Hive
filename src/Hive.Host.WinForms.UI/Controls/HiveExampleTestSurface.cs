@@ -382,7 +382,7 @@ public sealed class HiveExampleTestSurface : UserControl
 
     public void Cancel()
     {
-        _runCancellation?.Cancel();
+        CancelSafely(_runCancellation, "cancelling an example run");
     }
 
     public async Task RunAsync(
@@ -461,6 +461,24 @@ public sealed class HiveExampleTestSurface : UserControl
         return value;
     }
 
+    private static void CancelSafely(
+        CancellationTokenSource? source,
+        string reason)
+    {
+        if (source is null)
+            return;
+
+        try
+        {
+            source.Cancel();
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"HiveExampleTestSurface cancellation callback failed while {reason}: {exception}");
+        }
+    }
+
     protected override void Dispose(bool disposing)
     {
         if (disposing)
@@ -468,7 +486,7 @@ public sealed class HiveExampleTestSurface : UserControl
             var runCancellation = Interlocked.Exchange(
                 ref _runCancellation,
                 null);
-            runCancellation?.Cancel();
+            CancelSafely(runCancellation, "disposing the example test surface");
             _sectionFont.Dispose();
             _inputFont.Dispose();
             _codeFont.Dispose();
