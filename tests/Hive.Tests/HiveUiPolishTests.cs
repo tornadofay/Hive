@@ -240,7 +240,7 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
-    public void HiveSettingsView_RetriesCancelledPageInitializationAfterRapidNavigation()
+    public async Task HiveSettingsView_RetriesCancelledPageInitializationAfterRapidNavigation()
     {
         var (management, proxy) = SettingsManagementProxy.Create();
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
@@ -252,6 +252,8 @@ public sealed class HiveUiPolishTests
                 TenantId.New(),
                 PrincipalId.New()),
             themeManager);
+
+        await view.InitializeAsync();
 
         var navigation = FindControl<HiveNavigationTree>(view);
         Assert.NotNull(navigation);
