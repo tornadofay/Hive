@@ -310,7 +310,7 @@ internal sealed class InputPreparationExampleView : UserControl
                                         new XAttribute("sheetId", index + 1),
                                         new XAttribute(
                                             relationshipAttribute,
-                                            $"rId{index + 1}")))));
+                                            $"rId{index + 1}"))))));
 
             WriteXml(
                 archive,
@@ -360,7 +360,7 @@ internal sealed class InputPreparationExampleView : UserControl
                                                 spreadsheet + "is",
                                                 new XElement(
                                                     spreadsheet + "t",
-                                                    value)))));
+                                                    value))))));
 
                 var worksheetDocument =
                     new XDocument(
