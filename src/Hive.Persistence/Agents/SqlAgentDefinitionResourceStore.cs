@@ -27,9 +27,6 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
         [MetadataJson]
         """;
 
-    private static readonly JsonSerializerOptions JsonOptions =
-        new(JsonSerializerDefaults.General);
-
     private readonly HiveDatabaseOptions _options;
 
     public SqlAgentDefinitionResourceStore(HiveDatabaseOptions options)
@@ -166,14 +163,14 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                     SELECT {Columns}
                     FROM [dbo].[HiveAgentDefinitions]
                     WHERE [OwnerPrincipalId] = @PrincipalId
-                      AND {ScopeAccessPredicate}
+                      AND {SqlResourceStoreCommon.ScopeAccessPredicate}
                     {(includeRetired
                         ? string.Empty
                         : "AND [LifecycleStatus] <> @RetiredLifecycle")}
                     ORDER BY [DisplayName], [AgentDefinitionId];
                     """);
 
-                AddAccessParameters(command, accessContext);
+                SqlResourceStoreCommon.AddAccessParameters(command, accessContext);
 
                 if (!includeRetired)
                 {
@@ -629,13 +626,8 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
             throw new InvalidOperationException(
                 "Persisted resource lifecycle state is invalid.");
 
-        var metadata = JsonSerializer.Deserialize<Dictionary<string, string>>(
-            reader.GetString(reader.GetOrdinal("MetadataJson")),
-            JsonOptions);
-
-        if (metadata is null)
-            throw new InvalidOperationException(
-                "Persisted resource metadata is invalid.");
+        var metadata = SqlResourceStoreCommon.DeserializeMetadata(
+            reader.GetString(reader.GetOrdinal("MetadataJson")));
 
         return new ResourceEnvelope<TIdentity>(
             expectedKind,
@@ -949,66 +941,6 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                 SerializeMetadata(resource.Metadata)));
     }
 
-    private static void AddAccessParameters(
-        SqlCommand command,
-        ResourceAccessContext accessContext)
-    {
-        command.Parameters.Add(
-            GuidParameter(
-                "@PrincipalId",
-                accessContext.PrincipalId!.Value.Value));
-        command.Parameters.Add(
-            GuidParameter("@TenantId", accessContext.TenantId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@UserId", accessContext.UserId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@WorkspaceId", accessContext.WorkspaceId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@AgentId", accessContext.AgentId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@RuntimeId", accessContext.RuntimeId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@ExecutionId", accessContext.ExecutionId?.Value));
-        command.Parameters.Add(
-            IntParameter("@GlobalScope", (int)ResourceScopeKind.Global));
-        command.Parameters.Add(
-            IntParameter("@TenantScope", (int)ResourceScopeKind.Tenant));
-        command.Parameters.Add(
-            IntParameter("@UserScope", (int)ResourceScopeKind.User));
-        command.Parameters.Add(
-            IntParameter("@WorkspaceScope", (int)ResourceScopeKind.Workspace));
-        command.Parameters.Add(
-            IntParameter("@AgentScope", (int)ResourceScopeKind.Agent));
-        command.Parameters.Add(
-            IntParameter("@RuntimeScope", (int)ResourceScopeKind.Runtime));
-        command.Parameters.Add(
-            IntParameter("@ExecutionScope", (int)ResourceScopeKind.Execution));
-    }
-
-    private const string ScopeAccessPredicate = """
-        (
-            [ScopeKind] = @GlobalScope
-            OR ([ScopeKind] = @TenantScope
-                AND @TenantId IS NOT NULL
-                AND [ScopeIdentity] = @TenantId)
-            OR ([ScopeKind] = @UserScope
-                AND @UserId IS NOT NULL
-                AND [ScopeIdentity] = @UserId)
-            OR ([ScopeKind] = @WorkspaceScope
-                AND @WorkspaceId IS NOT NULL
-                AND [ScopeIdentity] = @WorkspaceId)
-            OR ([ScopeKind] = @AgentScope
-                AND @AgentId IS NOT NULL
-                AND [ScopeIdentity] = @AgentId)
-            OR ([ScopeKind] = @RuntimeScope
-                AND @RuntimeId IS NOT NULL
-                AND [ScopeIdentity] = @RuntimeId)
-            OR ([ScopeKind] = @ExecutionScope
-                AND @ExecutionId IS NOT NULL
-                AND [ScopeIdentity] = @ExecutionId)
-        )
-        """;
-
     private static Error NotFound(
         string code,
         string message) =>
@@ -1056,14 +988,5 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
             Value = value ?? DBNull.Value
         };
 
-    private static string SerializeMetadata(
-        IReadOnlyDictionary<string, string> metadata) =>
-        JsonSerializer.Serialize(metadata, JsonOptions);
 
-    private sealed class ConcurrencyException : Exception
-    {
-    }
-
-    private static bool IsConstraintConflict(SqlException exception) =>
-        exception.Number is 2601 or 2627;
 }
