@@ -2,7 +2,7 @@
 
 ## Maintenance — Backend
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Opened: 2026-09-26
 
@@ -39,6 +39,10 @@ Audit and correct the existing backend/integration boundary, with emphasis on:
 Developer verification on 2026-09-26 reported a compile error in the newly added cancellation regression test: the test asserts `adapter.AuthorizationCalls`, but `AuthorizationCalls` is defined on `FakeAuthorizer`. This is a test-only defect within the existing maintenance regression coverage.
 
 Remediation boundary: correct the assertion to inspect the fake authorizer instance. No production scope change.
+
+### Remediation checkpoint
+
+The compile-test defect was corrected by retaining the fake authorizer in a local variable and asserting its authorization-call count. No production implementation was changed for this remediation. Post-remediation build/test execution remains pending.
 
 ### Maintenance outcome
 
