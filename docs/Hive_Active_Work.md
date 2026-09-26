@@ -1,47 +1,51 @@
 # Hive — Active Work
 
-Status: COMPLETE
+Status: IN PROGRESS
 
 ## Authorized slice
 
-**Maintenance — UI**
+**Phase 1.15 — Input Preparation & Routing**
 
-This temporary corrective slice was authorized by the explicit `Hive: Maintenance — UI` request received on 2026-09-26. It existed only to audit and correct existing WinForms/UI behavior without advancing the roadmap or adding a new capability.
+This roadmap slice was explicitly authorized by the `Hive: Start Phase 1.15` request received on 2026-09-26.
+
+### Objective
+
+Prepare supported V1 input sources and route each source through the capability required to produce the common prepared-input boundary that Phase 1.16 will turn into structured candidate data.
 
 ### Scope
 
-- `Hive.Host.WinForms.UI` WinForms presentation contracts and their implementation.
-- Directly affected `Hive.Host.WinForms` / `Hive.Example.WinForms` UI consumers only where required to preserve an existing UI contract or regression.
-- Focused `Hive.Tests` coverage for concrete UI defects found in this maintenance pass.
-- Relevant UI guidance/status evidence updates required by the correction.
+- `Hive.Core` source-neutral input submission, prepared-input, routing, bounded-input, and per-item failure contracts.
+- `Hive.Core` input-preparation engine for the initial V1 image and `.xlsx` spreadsheet paths.
+- `Hive.Core` deterministic vision-capability target selection for image inputs using the existing capability-aware ExecutionTarget selection contract.
+- `Hive.Management` facade/service integration that obtains eligible execution targets through the existing provider resource boundary and exposes the preparation operation to consumers.
+- `Hive.Persistence` provider-resource listing required to obtain all execution targets in one access-scoped query; no new persistence resource/schema.
+- `Hive.Example.WinForms` externally usable example covering image routing, spreadsheet worksheet/row mapping, multiple prepared units from one submission, bounded/unsupported input handling, and isolated per-item failures.
+- Focused `Hive.Tests` coverage for normal, invalid, boundary, cancellation, routing, spreadsheet parsing/mapping, failure isolation, and authorization/scope behavior for this slice.
+- Required architecture/status/Active Work documentation updates.
 
-### Maintenance boundary
+### Explicit exclusions
 
-Audit and correct existing behavior for:
-- hierarchy, spacing, typography, density, theme/contrast;
-- selected/hover/focus/disabled/read-only states;
-- keyboard/focus, validation, loading/empty/error/success;
-- dialogs, CRUD flows, responsiveness, resize/DPI;
-- thread affinity, disposal, repaint/layout efficiency;
-- reuse and ownership of existing Hive UI APIs.
+- No typed business candidate extraction or validation beyond the prepared-input boundary; that belongs to Phase 1.16.
+- No business-operation proposal, host mutation, receipt, Review, or full MAF V1 pipeline; later phases own those boundaries.
+- No WorkItem creation redesign or submission persistence model; Phase 1.18 owns submission → WorkItem creation → pipeline composition.
+- No new provider transport; image routing selects a vision-capable target but does not perform a provider call in this slice.
+- No generic UI automation, cognition, Dreams, Questions, Hive membership, or later roadmap capabilities.
+- No unrelated refactoring or dependency additions.
 
-Do not add future capabilities, advance Phase 1.15+, widen public contracts materially, introduce unrelated refactoring/dependencies, or move host business/database/authorization ownership into the UI layer.
+### Verification boundary
+
+Required before marking complete:
+
+- focused deterministic unit tests for input contracts, bounds, routing, workbook/worksheet/row parsing and mapping, cancellation, unsupported input, and failure isolation;
+- contract/integration coverage for the access-scoped execution-target listing and Management preparation boundary;
+- no real provider/vendor network calls;
+- exact Example scenario manual verification in `Hive.Example.WinForms`;
+- broader `Hive.Tests` suite result only if actually run by the developer; no unrun verification will be reported as complete.
 
 ### Checkpoint
 
-Repository checkpoint at authorization: `7309a3b4f6fd73334f87bf573d5f047d7cdf2ad9` (`main`).
+Repository checkpoint at authorization: `5996737f2d94631ed5659a0fb4800e3d9a3fdc31` (`main`).
 
-### Verification
+### Current verification state
 
-Implementation and corrective work are complete following actual developer verification on 2026-09-26:
-
-- Full `Hive.Tests` suite: **322 passed, 0 failed, 0 skipped**.
-- Developer manual verification: Example host runs correctly and the affected UI behavior looks good.
-
-Verification evidence: [Maintenance UI verification](verification/maintenance/ui-2026-09-26.md)
-
-### Scope outcome
-
-**COMPLETE.**
-
-No Phase 1.15+ work was started or authorized.
+**VERIFICATION PENDING.** Implementation has not yet been verified by developer test execution or manual Example-host execution.

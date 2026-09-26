@@ -261,6 +261,38 @@ Phase 1.14 establishes the extension/adapter and interaction contracts. Phase 1.
 
 Phase 1.15 and 1.16 establish input preparation/routing and structured candidate extraction/validation respectively. Vision is one possible input capability; structured spreadsheet input may bypass vision. Parent/child candidate data is added only when the actual V1 operation requires it.
 
+### 4.1.8 Phase 1.15 Input Preparation & Routing
+
+Phase 1.15 establishes the source-neutral input preparation boundary before typed candidate extraction. A single submission may contain multiple input items; preparation is allowed to produce zero, one, or multiple prepared items while retaining the submission grouping only as operational context. Each prepared item remains attributable to its source item and, where applicable, worksheet and row.
+
+The initial public preparation paths are:
+
+```text
+Image submission item
+    ↓
+required capability: vision
+    ↓
+selected ExecutionTarget
+    ↓
+prepared image input
+    ↓
+Phase 1.16 structured extraction/validation
+
+.xlsx spreadsheet submission item
+    ↓
+workbook → worksheet → header/data rows
+    ↓
+prepared spreadsheet-row inputs
+    ↓
+Phase 1.16 structured extraction/validation
+```
+
+Image preparation performs capability-aware target routing only in Phase 1.15. It requires `vision` to be explicitly `Supported`; `Unsupported` and `Unknown` targets do not qualify. No provider request is made by the preparation boundary. Provider/model interpretation of the selected image belongs to the later extraction boundary.
+
+Spreadsheet preparation supports OOXML `.xlsx` workbooks. The first configured header row is the worksheet's column mapping boundary; data rows become independent prepared inputs with deterministic column-name/value mappings. Formatting, formulas, dates, and business semantics are not interpreted into typed domain values in this phase. The parser uses bounded workbook, worksheet, row, column, archive-entry, shared-string, and cell-content limits and rejects unsafe/malformed package structures rather than silently truncating data.
+
+Input-item failures are isolated. A malformed or unsupported item/worksheet/row produces a typed failure associated with its source location while preparation continues for other independent inputs when safe to do so. A malformed submission envelope or cancellation remains a submission-level failure. Phase 1.18 remains the boundary that turns submission/prepared input units into durable WorkItems and composes the end-to-end MAF pipeline.
+
 
 Phase 7 remains the later generalization point for a second materially different host technology; Phase 1.14 must not become a universal UI automation framework.
 
