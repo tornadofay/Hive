@@ -454,6 +454,33 @@ public sealed class HiveHostCompositionTests
     }
 
     [Fact]
+    public void Dispose_StillDisposesLifetimeAfterCurrentGraphThrows()
+    {
+        var configuration =
+            HivePersistenceConfiguration.LocalDevelopment(
+                "Hive_Composition_Dispose_ThrowingGraph");
+        var store = new InMemoryConfigurationStore(configuration);
+        var resource = new ThrowingDisposable();
+        var graph = CreateGraph(configuration, resource);
+
+        var composition = new HiveHostComposition(
+            store,
+            new ScriptedGraphFactory(
+                Result<HiveHostServiceGraph>.Success(graph)));
+
+        var initialization = composition.InitializeAsync().GetAwaiter().GetResult();
+        Assert.True(initialization.IsSuccess, initialization.Error?.Message);
+
+        var exception = Assert.Throws<InvalidOperationException>(
+            composition.Dispose);
+
+        Assert.Equal("synthetic disposal failure", exception.Message);
+        Assert.Equal(HiveHostCompositionState.Disposed, composition.Status.State);
+
+        composition.Dispose();
+    }
+
+    [Fact]
     public async Task Dispose_DoesNotOverwriteTerminalStatusAfterLateFactoryFailure()
     {
         var configuration =
@@ -812,6 +839,13 @@ public sealed class HiveHostCompositionTests
                     return;
             }
         }
+    }
+
+    private sealed class ThrowingDisposable : IDisposable
+    {
+        public void Dispose() =>
+            throw new InvalidOperationException(
+                "synthetic disposal failure");
     }
 
     private sealed class TrackingDisposable : IDisposable
