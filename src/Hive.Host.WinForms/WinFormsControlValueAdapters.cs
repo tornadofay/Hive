@@ -1,0 +1,454 @@
+using System.Windows.Forms;
+using Hive.Core;
+
+namespace Hive.Host.WinForms;
+
+internal interface IWinFormsControlValueAdapter
+{
+    bool CanHandle(Control control);
+
+    bool CanSet(Control control);
+
+    string ValueTypeName { get; }
+
+    HiveHostValue? Read(Control control);
+
+    Result<HiveHostInteractionResult> Set(
+        Control control,
+        HiveHostInteractionRequest request);
+}
+
+internal static class WinFormsControlValueAdapters
+{
+    private static readonly IWinFormsControlValueAdapter[] Adapters =
+    [
+        new TextBoxValueAdapter(),
+        new CheckBoxValueAdapter(),
+        new ComboBoxValueAdapter(),
+        new DateTimePickerValueAdapter(),
+        new NumericUpDownValueAdapter()
+    ];
+
+    internal static bool TryGet(
+        Control control,
+        out IWinFormsControlValueAdapter adapter)
+    {
+        foreach (var candidate in Adapters)
+        {
+            if (candidate.CanHandle(control))
+            {
+                adapter = candidate;
+                return true;
+            }
+        }
+
+        adapter = null!;
+        return false;
+    }
+
+    internal static string GetValueTypeName(Control control) =>
+        TryGet(control, out var adapter)
+            ? adapter.ValueTypeName
+            : typeof(string).FullName!;
+
+    internal static HiveHostValue? TryReadValue(Control control) =>
+        TryGet(control, out var adapter)
+            ? adapter.Read(control)
+            : null;
+
+    internal static Result<HiveHostInteractionResult> SetControlValue(
+        Control control,
+        HiveHostInteractionRequest request) =>
+        TryGet(control, out var adapter)
+            ? adapter.Set(control, request)
+            : Result<HiveHostInteractionResult>.Failure(
+                Error.Unsupported(
+                    "hive.host.winforms.interaction-unsupported",
+                    "The reusable adapter does not support setting this control type."));
+}
+
+internal sealed class TextBoxValueAdapter : IWinFormsControlValueAdapter
+{
+    public bool CanHandle(Control control) =>
+        control is TextBoxBase;
+
+    public bool CanSet(Control control) =>
+        control is TextBoxBase &&
+        !IsReadOnly(control);
+
+    public string ValueTypeName =>
+        typeof(string).FullName!;
+
+    public HiveHostValue? Read(Control control)
+    {
+        if (control is TextBox passwordTextBox &&
+            (passwordTextBox.UseSystemPasswordChar ||
+             passwordTextBox.PasswordChar != '\\0'))
+        {
+            return null;
+        }
+
+        if (control is MaskedTextBox maskedTextBox &&
+            maskedTextBox.PasswordChar != '\\0')
+        {
+            return null;
+        }
+
+        return control is TextBoxBase textBox
+            ? HiveHostValue.FromString(textBox.Text)
+            : null;
+    }
+
+    public Result<HiveHostInteractionResult> Set(
+        Control control,
+        HiveHostInteractionRequest request)
+    {
+        if (!control.Enabled)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Conflict(
+                    "hive.host.winforms.control-disabled",
+                    "The requested WinForms control is disabled."));
+        }
+
+        if (IsReadOnly(control))
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Conflict(
+                    "hive.host.winforms.control-read-only",
+                    "The requested WinForms control is read-only."));
+        }
+
+        if (control is not TextBoxBase textBox)
+        {
+            return Unsupported();
+        }
+
+        if (request.Value is not { } value ||
+            value.Kind != HiveHostValueKind.String)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Validation(
+                    "hive.host.winforms.value-type-invalid",
+                    "A string value is required for a text control."));
+        }
+
+        if (control is TextBox password &&
+            (password.UseSystemPasswordChar ||
+             password.PasswordChar != '\\0'))
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Unsupported(
+                    "hive.host.winforms.password-write-unsupported",
+                    "Password controls are not handled by the reusable value adapter."));
+        }
+
+        textBox.Text = value.AsString()!;
+
+        return Success(control, request);
+    }
+
+    private static bool IsReadOnly(Control control) =>
+        control switch
+        {
+            TextBox textBox => textBox.ReadOnly,
+            RichTextBox richTextBox => richTextBox.ReadOnly,
+            MaskedTextBox maskedTextBox => maskedTextBox.ReadOnly,
+            _ => false
+        };
+
+    private static Result<HiveHostInteractionResult> Unsupported() =>
+        Result<HiveHostInteractionResult>.Failure(
+            Error.Unsupported(
+                "hive.host.winforms.interaction-unsupported",
+                "The reusable adapter does not support setting this control type."));
+
+    private static Result<HiveHostInteractionResult> Success(
+        Control control,
+        HiveHostInteractionRequest request) =>
+        Result<HiveHostInteractionResult>.Success(
+            new HiveHostInteractionResult(
+                request.CorrelationId,
+                request.Kind,
+                WinFormsControlValueAdapters.TryReadValue(control)));
+}
+
+internal sealed class CheckBoxValueAdapter : IWinFormsControlValueAdapter
+{
+    public bool CanHandle(Control control) =>
+        control is CheckBox;
+
+    public bool CanSet(Control control) =>
+        control is CheckBox;
+
+    public string ValueTypeName =>
+        typeof(bool).FullName!;
+
+    public HiveHostValue? Read(Control control) =>
+        control is CheckBox checkBox
+            ? HiveHostValue.FromBoolean(checkBox.Checked)
+            : null;
+
+    public Result<HiveHostInteractionResult> Set(
+        Control control,
+        HiveHostInteractionRequest request)
+    {
+        if (!control.Enabled)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Conflict(
+                    "hive.host.winforms.control-disabled",
+                    "The requested WinForms control is disabled."));
+        }
+
+        if (control is not CheckBox checkBox)
+            return Unsupported();
+
+        if (request.Value is not { } value ||
+            !value.TryGetBoolean(out var boolean))
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Validation(
+                    "hive.host.winforms.value-type-invalid",
+                    "A boolean value is required for a check box."));
+        }
+
+        checkBox.Checked = boolean;
+
+        return Success(control, request);
+    }
+
+    private static Result<HiveHostInteractionResult> Unsupported() =>
+        Result<HiveHostInteractionResult>.Failure(
+            Error.Unsupported(
+                "hive.host.winforms.interaction-unsupported",
+                "The reusable adapter does not support setting this control type."));
+
+    private static Result<HiveHostInteractionResult> Success(
+        Control control,
+        HiveHostInteractionRequest request) =>
+        Result<HiveHostInteractionResult>.Success(
+            new HiveHostInteractionResult(
+                request.CorrelationId,
+                request.Kind,
+                WinFormsControlValueAdapters.TryReadValue(control)));
+}
+
+internal sealed class ComboBoxValueAdapter : IWinFormsControlValueAdapter
+{
+    public bool CanHandle(Control control) =>
+        control is ComboBox;
+
+    public bool CanSet(Control control) =>
+        control is ComboBox comboBox &&
+        comboBox.DropDownStyle != ComboBoxStyle.DropDownList;
+
+    public string ValueTypeName =>
+        typeof(string).FullName!;
+
+    public HiveHostValue? Read(Control control) =>
+        control is ComboBox comboBox
+            ? HiveHostValue.FromString(comboBox.Text)
+            : null;
+
+    public Result<HiveHostInteractionResult> Set(
+        Control control,
+        HiveHostInteractionRequest request)
+    {
+        if (!control.Enabled)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Conflict(
+                    "hive.host.winforms.control-disabled",
+                    "The requested WinForms control is disabled."));
+        }
+
+        if (control is not ComboBox comboBox)
+            return Unsupported();
+
+        if (comboBox.DropDownStyle == ComboBoxStyle.DropDownList)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Unsupported(
+                    "hive.host.winforms.combo-selection-requires-lookup",
+                    "Selection in a drop-down list must use the bounded lookup contract."));
+        }
+
+        if (request.Value is not { } value ||
+            value.Kind != HiveHostValueKind.String)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Validation(
+                    "hive.host.winforms.value-type-invalid",
+                    "A string value is required for a combo box."));
+        }
+
+        comboBox.Text = value.AsString()!;
+
+        return Success(control, request);
+    }
+
+    private static Result<HiveHostInteractionResult> Unsupported() =>
+        Result<HiveHostInteractionResult>.Failure(
+            Error.Unsupported(
+                "hive.host.winforms.interaction-unsupported",
+                "The reusable adapter does not support setting this control type."));
+
+    private static Result<HiveHostInteractionResult> Success(
+        Control control,
+        HiveHostInteractionRequest request) =>
+        Result<HiveHostInteractionResult>.Success(
+            new HiveHostInteractionResult(
+                request.CorrelationId,
+                request.Kind,
+                WinFormsControlValueAdapters.TryReadValue(control)));
+}
+
+internal sealed class DateTimePickerValueAdapter : IWinFormsControlValueAdapter
+{
+    public bool CanHandle(Control control) =>
+        control is DateTimePicker;
+
+    public bool CanSet(Control control) =>
+        control is DateTimePicker;
+
+    public string ValueTypeName =>
+        typeof(DateTime).FullName!;
+
+    public HiveHostValue? Read(Control control) =>
+        control is DateTimePicker dateTimePicker
+            ? HiveHostValue.FromDateTime(dateTimePicker.Value)
+            : null;
+
+    public Result<HiveHostInteractionResult> Set(
+        Control control,
+        HiveHostInteractionRequest request)
+    {
+        if (!control.Enabled)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Conflict(
+                    "hive.host.winforms.control-disabled",
+                    "The requested WinForms control is disabled."));
+        }
+
+        if (control is not DateTimePicker dateTimePicker)
+            return Unsupported();
+
+        if (request.Value is not { } value ||
+            !value.TryGetDateTime(out var dateTime))
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Validation(
+                    "hive.host.winforms.value-type-invalid",
+                    "A date/time value is required for a date-time control."));
+        }
+
+        if (dateTime < dateTimePicker.MinDate ||
+            dateTime > dateTimePicker.MaxDate)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Validation(
+                    "hive.host.winforms.datetime-range-invalid",
+                    "The requested date/time value is outside the host control range."));
+        }
+
+        dateTimePicker.Value = dateTime;
+
+        return Success(control, request);
+    }
+
+    private static Result<HiveHostInteractionResult> Unsupported() =>
+        Result<HiveHostInteractionResult>.Failure(
+            Error.Unsupported(
+                "hive.host.winforms.interaction-unsupported",
+                "The reusable adapter does not support setting this control type."));
+
+    private static Result<HiveHostInteractionResult> Success(
+        Control control,
+        HiveHostInteractionRequest request) =>
+        Result<HiveHostInteractionResult>.Success(
+            new HiveHostInteractionResult(
+                request.CorrelationId,
+                request.Kind,
+                WinFormsControlValueAdapters.TryReadValue(control)));
+}
+
+internal sealed class NumericUpDownValueAdapter : IWinFormsControlValueAdapter
+{
+    public bool CanHandle(Control control) =>
+        control is NumericUpDown;
+
+    public bool CanSet(Control control) =>
+        control is NumericUpDown numericUpDown &&
+        !numericUpDown.ReadOnly;
+
+    public string ValueTypeName =>
+        typeof(decimal).FullName!;
+
+    public HiveHostValue? Read(Control control) =>
+        control is NumericUpDown numericUpDown
+            ? HiveHostValue.FromDecimal(numericUpDown.Value)
+            : null;
+
+    public Result<HiveHostInteractionResult> Set(
+        Control control,
+        HiveHostInteractionRequest request)
+    {
+        if (!control.Enabled)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Conflict(
+                    "hive.host.winforms.control-disabled",
+                    "The requested WinForms control is disabled."));
+        }
+
+        if (control is not NumericUpDown numericUpDown)
+            return Unsupported();
+
+        if (numericUpDown.ReadOnly)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Conflict(
+                    "hive.host.winforms.control-read-only",
+                    "The requested WinForms control is read-only."));
+        }
+
+        if (request.Value is not { } value ||
+            !value.TryGetDecimal(out var decimalValue))
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Validation(
+                    "hive.host.winforms.value-type-invalid",
+                    "A decimal value is required for a numeric control."));
+        }
+
+        if (decimalValue < numericUpDown.Minimum ||
+            decimalValue > numericUpDown.Maximum)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Validation(
+                    "hive.host.winforms.numeric-range-invalid",
+                    "The requested numeric value is outside the host control range."));
+        }
+
+        numericUpDown.Value = decimalValue;
+
+        return Success(control, request);
+    }
+
+    private static Result<HiveHostInteractionResult> Unsupported() =>
+        Result<HiveHostInteractionResult>.Failure(
+            Error.Unsupported(
+                "hive.host.winforms.interaction-unsupported",
+                "The reusable adapter does not support setting this control type."));
+
+    private static Result<HiveHostInteractionResult> Success(
+        Control control,
+        HiveHostInteractionRequest request) =>
+        Result<HiveHostInteractionResult>.Success(
+            new HiveHostInteractionResult(
+                request.CorrelationId,
+                request.Kind,
+                WinFormsControlValueAdapters.TryReadValue(control)));
+}
