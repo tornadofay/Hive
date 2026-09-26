@@ -49,3 +49,9 @@ Repository checkpoint at authorization: `5996737f2d94631ed5659a0fb4800e3d9a3fdc3
 ### Current verification state
 
 **VERIFICATION PENDING.** Implementation has not yet been verified by developer test execution or manual Example-host execution.
+
+
+### Capability handoff
+
+Example to run: Workspace / WorkItem Operations / Input Preparation & Routing / V1 Input Preparation & Routing — Hive.Example.WinForms
+Tests to run: `InputPreparationTests.cs`, focused `HiveManagementFacadeTests` Phase 1.15 test, and focused `ProviderPersistenceIntegrationTests` access-scoped target-listing coverage; broader `Hive.Tests` suite if developer chooses to run it.
