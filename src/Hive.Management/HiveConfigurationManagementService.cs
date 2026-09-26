@@ -8,7 +8,7 @@ namespace Hive.Management;
 
 
 
-internal sealed class HiveConfigurationManagementService : HiveManagementServiceBase
+internal sealed class HiveConfigurationManagementService : HiveManagementServiceBase, IDisposable
 
 {
 
@@ -19,6 +19,10 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
     private readonly IHiveBootstrapCredentialStore? _bootstrapCredentials;
 
     private readonly SemaphoreSlim _bootstrapConfigurationMutationGate;
+    private readonly object _mutationLifetimeGate = new();
+    private int _activeMutationOperations;
+    private int _disposed;
+    private bool _mutationGateDisposed;
 
 
 
@@ -79,9 +83,14 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
                     "Hive persistence configuration storage is not configured."));
         }
 
-        await _bootstrapConfigurationMutationGate
-            .WaitAsync(cancellationToken)
-            .ConfigureAwait(false);
+        using var mutation = await EnterMutationAsync(cancellationToken).ConfigureAwait(false);
+        if (mutation is null)
+        {
+            return Result<HivePersistenceConfiguration>.Failure(
+                Error.Unsupported(
+                    "hive.management.disposed",
+                    "The Hive management configuration service has been disposed."));
+        }
 
         try
         {
@@ -93,7 +102,7 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
         }
         finally
         {
-            _bootstrapConfigurationMutationGate.Release();
+            mutation.Dispose();
         }
     }
 
@@ -118,9 +127,14 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
                     "The Hive bootstrap credential store is not configured."));
         }
 
-        await _bootstrapConfigurationMutationGate
-            .WaitAsync(cancellationToken)
-            .ConfigureAwait(false);
+        using var mutation = await EnterMutationAsync(cancellationToken).ConfigureAwait(false);
+        if (mutation is null)
+        {
+            return Result<HiveBootstrapCredentialReference>.Failure(
+                Error.Unsupported(
+                    "hive.management.disposed",
+                    "The Hive management configuration service has been disposed."));
+        }
 
         try
         {
@@ -140,7 +154,7 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
         }
         finally
         {
-            _bootstrapConfigurationMutationGate.Release();
+            mutation.Dispose();
         }
     }
 
@@ -170,9 +184,14 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
                     "Hive persistence configuration storage is required to safely remove a bootstrap credential."));
         }
 
-        await _bootstrapConfigurationMutationGate
-            .WaitAsync(cancellationToken)
-            .ConfigureAwait(false);
+        using var mutation = await EnterMutationAsync(cancellationToken).ConfigureAwait(false);
+        if (mutation is null)
+        {
+            return Result.Failure(
+                Error.Unsupported(
+                    "hive.management.disposed",
+                    "The Hive management configuration service has been disposed."));
+        }
 
         try
         {
@@ -204,7 +223,7 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
         }
         finally
         {
-            _bootstrapConfigurationMutationGate.Release();
+            mutation.Dispose();
         }
     }
 
@@ -346,5 +365,88 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
         }
     }
 
+
+
+    public void Dispose()
+    {
+        lock (_mutationLifetimeGate)
+        {
+            if (_disposed != 0)
+                return;
+
+            _disposed = 1;
+
+            if (_activeMutationOperations == 0 &&
+                !_mutationGateDisposed)
+            {
+                _bootstrapConfigurationMutationGate.Dispose();
+                _mutationGateDisposed = true;
+            }
+        }
+
+        GC.SuppressFinalize(this);
+    }
+
+    private async Task<MutationLease?> EnterMutationAsync(
+        CancellationToken cancellationToken)
+    {
+        lock (_mutationLifetimeGate)
+        {
+            if (_disposed != 0)
+                return null;
+
+            _activeMutationOperations++;
+        }
+
+        try
+        {
+            await _bootstrapConfigurationMutationGate
+                .WaitAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return new MutationLease(this);
+        }
+        catch
+        {
+            ExitMutationOperation();
+            throw;
+        }
+    }
+
+    private void ExitMutationOperation()
+    {
+        lock (_mutationLifetimeGate)
+        {
+            _activeMutationOperations--;
+
+            if (_disposed != 0 &&
+                _activeMutationOperations == 0 &&
+                !_mutationGateDisposed)
+            {
+                _bootstrapConfigurationMutationGate.Dispose();
+                _mutationGateDisposed = true;
+            }
+        }
+    }
+
+    private sealed class MutationLease : IDisposable
+    {
+        private HiveConfigurationManagementService? _owner;
+
+        public MutationLease(HiveConfigurationManagementService owner)
+        {
+            _owner = owner;
+        }
+
+        public void Dispose()
+        {
+            var owner = Interlocked.Exchange(ref _owner, null);
+            if (owner is null)
+                return;
+
+            owner._bootstrapConfigurationMutationGate.Release();
+            owner.ExitMutationOperation();
+        }
+    }
 
 }
