@@ -222,6 +222,23 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
         cancellationToken.ThrowIfCancellationRequested();
 
+        if (_registration.Root.IsDisposed ||
+            _registration.Root.Disposing)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Conflict(
+                    "hive.host.winforms.root-disposed",
+                    "The registered WinForms host is no longer available."));
+        }
+
+        if (_registration.Root.InvokeRequired)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Validation(
+                    "hive.host.winforms.ui-thread-required",
+                    "WinForms host interaction must run on the UI thread."));
+        }
+
         if (request.Kind is
             HiveHostInteractionKind.ReadRow or
             HiveHostInteractionKind.AddRow or

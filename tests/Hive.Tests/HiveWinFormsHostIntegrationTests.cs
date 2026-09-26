@@ -500,6 +500,39 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task ExecuteInteraction_FromBackgroundThread_IsRejectedBeforeHostTraversal()
+    {
+        using var form = CreateFixtureForm();
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+        _ = form.Handle;
+
+        for (var index = 0; index < 600; index++)
+        {
+            form.Controls.Add(new Panel
+            {
+                Name = $"padding{index}"
+            });
+        }
+
+        var result = await Task.Run(() =>
+            adapter.ExecuteInteractionAsync(
+                new HiveHostInteractionRequest(
+                    Guid.NewGuid(),
+                    HiveHostInteractionKind.ReadControl,
+                    CorrelationId.New(),
+                    controlId: "control:missing"),
+                accessContext));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.ui-thread-required",
+            result.Error!.Code);
+    }
+
+    [Fact]
     public async Task Cancellation_IsCheckedBeforeCapture()
     {
         using var form = CreateFixtureForm();

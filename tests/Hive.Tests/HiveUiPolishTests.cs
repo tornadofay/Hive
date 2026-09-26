@@ -1,8 +1,10 @@
 using System.Drawing;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Hive.Core;
 using Hive.Host.WinForms;
+using Hive.Management;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 using Xunit;
@@ -238,6 +240,44 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
+    public void HiveSettingsView_RetriesCancelledPageInitializationAfterRapidNavigation()
+    {
+        var (management, proxy) = SettingsManagementProxy.Create();
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var view = new HiveSettingsView(
+            management,
+            new ResourceAccessContext(
+                DeploymentId.New(),
+                TenantId.New(),
+                PrincipalId.New()),
+            themeManager);
+
+        var navigation = FindControl<HiveNavigationTree>(view);
+        Assert.NotNull(navigation);
+
+        var root = navigation!.Nodes[0];
+        var overview = root.Nodes[0];
+        var providerPage = root.Nodes[1].Nodes[0];
+
+        navigation.SelectedNode = providerPage;
+        WaitForUi(
+            () => proxy.InvocationCount == 1,
+            "The first Settings page initialization did not reach management.");
+
+        navigation.SelectedNode = overview;
+        navigation.SelectedNode = providerPage;
+
+        proxy.FirstCompletion.TrySetResult(
+            Result<IReadOnlyList<Provider>>.Success(
+                Array.Empty<Provider>()));
+
+        WaitForUi(
+            () => proxy.InvocationCount >= 2,
+            "The cancelled Settings page initialization was not retried.");
+    }
+
+    [Fact]
     public void HiveNavigationTree_DoesNotSelectGroupNodes()
     {
         using var tree = new HiveNavigationTree();
@@ -449,6 +489,67 @@ public sealed class HiveUiPolishTests
         }
 
         return null;
+    }
+
+    private static void WaitForUi(
+        Func<bool> condition,
+        string timeoutMessage)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+
+        while (!condition())
+        {
+            Application.DoEvents();
+
+            if (DateTime.UtcNow >= deadline)
+                throw new TimeoutException(timeoutMessage);
+
+            Thread.Sleep(10);
+        }
+    }
+
+    private sealed class SettingsManagementProxy : DispatchProxy
+    {
+        private readonly TaskCompletionSource<Result<IReadOnlyList<Provider>>> _firstCompletion =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _invocationCount;
+
+        public TaskCompletionSource<Result<IReadOnlyList<Provider>>> FirstCompletion =>
+            _firstCompletion;
+
+        public int InvocationCount =>
+            Volatile.Read(ref _invocationCount);
+
+        public static (
+            IHiveManagementFacade Management,
+            SettingsManagementProxy Proxy) Create()
+        {
+            var management =
+                (IHiveManagementFacade)Create<IHiveManagementFacade, SettingsManagementProxy>();
+
+            return (
+                management,
+                (SettingsManagementProxy)(object)management);
+        }
+
+        protected override object Invoke(
+            MethodInfo? targetMethod,
+            object?[]? args)
+        {
+            if (targetMethod?.Name == nameof(IHiveManagementFacade.ListProvidersAsync))
+            {
+                var invocation = Interlocked.Increment(ref _invocationCount);
+
+                return invocation == 1
+                    ? _firstCompletion.Task
+                    : Task.FromResult(
+                        Result<IReadOnlyList<Provider>>.Success(
+                            Array.Empty<Provider>()));
+            }
+
+            throw new NotSupportedException(
+                $"The Settings test proxy does not implement '{targetMethod?.Name}'.");
+        }
     }
 
     private sealed record TestItem(string Name);

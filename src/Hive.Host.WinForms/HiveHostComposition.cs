@@ -23,6 +23,7 @@ public sealed class HiveHostComposition : IDisposable
     private readonly IHiveHostServiceGraphFactory _graphFactory;
     private readonly SemaphoreSlim _reconfigurationGate = new(1, 1);
     private readonly CancellationTokenSource _lifetimeCts = new();
+    private readonly object _stateGate = new();
 
     private HiveHostServiceGraph? _current;
     private HiveHostCompositionStatus _status =
@@ -76,26 +77,26 @@ public sealed class HiveHostComposition : IDisposable
             return;
 
         _lifetimeCts.Cancel();
-        _reconfigurationGate.Wait();
 
-        try
+        HiveHostServiceGraph? current;
+        lock (_stateGate)
         {
-            var current = Interlocked.Exchange(
+            current = Interlocked.Exchange(
                 ref _current,
                 null);
-
-            current?.Dispose();
 
             _status = new HiveHostCompositionStatus(
                 HiveHostCompositionState.Disposed,
                 null);
         }
-        finally
-        {
-            _reconfigurationGate.Release();
-            _reconfigurationGate.Dispose();
-            _lifetimeCts.Dispose();
-        }
+
+        current?.Dispose();
+        _lifetimeCts.Dispose();
+
+        // Do not synchronously wait on the async reconfiguration gate here.
+        // An in-flight ComposeAsync operation will observe the lifetime
+        // cancellation, unwind, and release the gate without blocking the
+        // WinForms shutdown path.
 
         GC.SuppressFinalize(this);
     }
@@ -162,13 +163,32 @@ public sealed class HiveHostComposition : IDisposable
                     candidate.Error!);
             }
 
-            var previous = Interlocked.Exchange(
-                ref _current,
-                candidate.Value);
+            HiveHostServiceGraph? previous = null;
+            var publishCandidate = true;
 
-            _status = new HiveHostCompositionStatus(
-                HiveHostCompositionState.Ready,
-                null);
+            lock (_stateGate)
+            {
+                if (Volatile.Read(ref _disposed) != 0)
+                {
+                    publishCandidate = false;
+                }
+                else
+                {
+                    previous = Interlocked.Exchange(
+                        ref _current,
+                        candidate.Value);
+
+                    _status = new HiveHostCompositionStatus(
+                        HiveHostCompositionState.Ready,
+                        null);
+                }
+            }
+
+            if (!publishCandidate)
+            {
+                candidate.Value.Dispose();
+                throw new OperationCanceledException(operationToken);
+            }
 
             previous?.Dispose();
 

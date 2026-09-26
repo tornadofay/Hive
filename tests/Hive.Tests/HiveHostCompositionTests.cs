@@ -404,9 +404,7 @@ public sealed class HiveHostCompositionTests
         var initialization = composition.InitializeAsync();
         await factory.FirstCandidateStarted.Task;
 
-        var disposal = Task.Run(composition.Dispose);
-
-        await disposal;
+        composition.Dispose();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
             () => initialization);
@@ -415,6 +413,44 @@ public sealed class HiveHostCompositionTests
         Assert.Equal(
             HiveHostCompositionState.Disposed,
             composition.Status.State);
+    }
+
+    [Fact]
+    public async Task Dispose_DoesNotPublishOrLeakLateCandidate()
+    {
+        var configuration =
+            HivePersistenceConfiguration.LocalDevelopment(
+                "Hive_Composition_Late_Candidate");
+        var store = new InMemoryConfigurationStore(configuration);
+        var resource = new TrackingDisposable();
+        var candidate = CreateGraph(configuration, resource);
+        var factory = new CancellationIgnoringGraphFactory(candidate);
+
+        var composition = new HiveHostComposition(store, factory);
+
+        try
+        {
+            var initialization = composition.InitializeAsync();
+            await factory.CandidateStarted.Task;
+
+            composition.Dispose();
+            factory.ReleaseCandidate();
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => initialization);
+
+            Assert.Null(composition.Current);
+            Assert.Equal(
+                HiveHostCompositionState.Disposed,
+                composition.Status.State);
+            Assert.Equal(1, resource.DisposeCount);
+            Assert.True(candidate.IsDisposed);
+        }
+        finally
+        {
+            composition.Dispose();
+            candidate.Dispose();
+        }
     }
 
     [Fact]
@@ -496,6 +532,38 @@ public sealed class HiveHostCompositionTests
             configuration,
             facade,
             resources);
+    }
+
+    private sealed class CancellationIgnoringGraphFactory :
+        IHiveHostServiceGraphFactory
+    {
+        private readonly HiveHostServiceGraph _candidate;
+        private readonly TaskCompletionSource<bool> _candidateStarted =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<bool> _releaseCandidate =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public CancellationIgnoringGraphFactory(
+            HiveHostServiceGraph candidate)
+        {
+            _candidate = candidate
+                ?? throw new ArgumentNullException(nameof(candidate));
+        }
+
+        public TaskCompletionSource<bool> CandidateStarted =>
+            _candidateStarted;
+
+        public void ReleaseCandidate() =>
+            _releaseCandidate.TrySetResult(true);
+
+        public async Task<Result<HiveHostServiceGraph>> CreateAsync(
+            HivePersistenceConfiguration configuration,
+            CancellationToken cancellationToken = default)
+        {
+            _candidateStarted.TrySetResult(true);
+            await _releaseCandidate.Task.ConfigureAwait(false);
+            return Result<HiveHostServiceGraph>.Success(_candidate);
+        }
     }
 
     private sealed class LeakyBootstrapCredentialStore :

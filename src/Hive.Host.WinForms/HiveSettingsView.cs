@@ -28,7 +28,7 @@ public sealed class HiveSettingsView : UserControl
     private CancellationTokenSource? _lifetimeCts;
     private CancellationTokenSource? _navigationCts;
     private readonly HashSet<SettingsPageKey> _initializedPages = new();
-    private readonly HashSet<SettingsPageKey> _initializingPages = new();
+    private readonly Dictionary<SettingsPageKey, Task> _pageInitializationTasks = new();
 
     public HiveSettingsView(
         IHiveManagementFacade management,
@@ -212,16 +212,45 @@ public sealed class HiveSettingsView : UserControl
         SettingsPageKey key,
         CancellationToken cancellationToken)
     {
-        if (_initializedPages.Contains(key) ||
-            _initializingPages.Contains(key) ||
-            IsDisposed)
-        {
+        if (_initializedPages.Contains(key) || IsDisposed)
             return;
+
+        if (_pageInitializationTasks.TryGetValue(key, out var existing) &&
+            !existing.IsCompleted)
+        {
+            try
+            {
+                await existing.ConfigureAwait(true);
+            }
+            catch (OperationCanceledException)
+            {
+                // The existing initialization was cancelled by an earlier
+                // navigation. A still-active caller may retry below.
+            }
+
+            if (cancellationToken.IsCancellationRequested ||
+                IsDisposed ||
+                Disposing ||
+                _initializedPages.Contains(key))
+            {
+                return;
+            }
         }
 
-        var lifetimeCts = _lifetimeCts ??= new CancellationTokenSource();
+        if (_initializedPages.Contains(key) || IsDisposed)
+            return;
 
-        _initializingPages.Add(key);
+        var task = InitializePageCoreAsync(key, cancellationToken);
+        _pageInitializationTasks[key] = task;
+
+        await task.ConfigureAwait(true);
+    }
+
+    private async Task InitializePageCoreAsync(
+        SettingsPageKey key,
+        CancellationToken cancellationToken)
+    {
+        var lifetimeCts = _lifetimeCts ??= new CancellationTokenSource();
 
         using var operationCts = CancellationTokenSource.CreateLinkedTokenSource(
             lifetimeCts.Token,
@@ -291,10 +320,6 @@ public sealed class HiveSettingsView : UserControl
                     _output,
                     _themeManager);
             }
-        }
-        finally
-        {
-            _initializingPages.Remove(key);
         }
     }
 
