@@ -84,8 +84,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _pageLayout = new HiveListPageLayout
         {
             Dock = DockStyle.Fill,
-            HiveCrudPageLayoutController.HeaderHeight = HiveCrudPageLayoutController.HeaderHeight,
-            HiveCrudPageLayoutController.ActionBarHeight = HiveCrudPageLayoutController.ActionBarHeight
+            HeaderHeight = HiveCrudPageLayoutController.HeaderHeight,
+            ActionBarHeight = HiveCrudPageLayoutController.ActionBarHeight
         };
 
         var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
