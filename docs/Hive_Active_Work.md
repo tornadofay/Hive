@@ -2,7 +2,7 @@
 
 ## Maintenance — UI
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION PENDING — MANUAL UI VERIFICATION REMAINS
 
 Opened: 2026-09-26
 
@@ -49,5 +49,9 @@ Audit and correct the existing Hive WinForms UI boundary, with emphasis on:
 Example to run: existing UI Foundation / representative CRUD and Settings surfaces — Hive.Example.WinForms
 Tests to run: `HiveUiPolishTests.cs`; then the full `Hive.Tests` suite.
 Manual verification: existing Example Host UI, Light/Dark/System themes, compact/normal resize, representative dialog/CRUD flows, and affected dynamic content/editor replacement behavior.
+
+Developer automated verification on 2026-09-26: full `Hive.Tests` suite passed with 309 tests passed, 0 failed, 0 skipped in 29.3 seconds. This validates the automated test gate for the maintenance changes.
+
+Manual Example Host/UI verification remains pending: existing UI Foundation, representative CRUD and Settings surfaces, Light/Dark/System themes, compact/normal resize, representative dialog/CRUD flows, and affected dynamic content/editor replacement behavior.
 
 No build, test, or manual UI verification has been performed by the agent.
