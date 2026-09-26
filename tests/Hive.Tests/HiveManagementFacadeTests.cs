@@ -10,6 +10,44 @@ namespace Hive.Tests;
 public sealed class HiveManagementFacadeTests
 {
     [Fact]
+    public async Task DisposedFacade_AllowsInFlightConfigurationMutationToFinishAndRejectsNewMutation()
+    {
+        var configuration = HivePersistenceConfiguration.LocalDevelopment(
+            "Hive_Test_ManagementDispose");
+        var configurationStore = new BlockingConfigurationStore(configuration);
+        using var facade = new HiveManagementFacade(
+            new SqlProviderResourceStore(
+                HiveDatabaseOptions.FromConfiguration(configuration)),
+            new SqlAgentDefinitionResourceStore(
+                HiveDatabaseOptions.FromConfiguration(configuration)),
+            new SqlWorkItemResourceStore(
+                HiveDatabaseOptions.FromConfiguration(configuration)),
+            configurationStore: configurationStore);
+
+        var context = CreateContext();
+        var save = facade.SavePersistenceConfigurationAsync(
+            configuration,
+            context);
+
+        await configurationStore.SaveStarted.Task;
+
+        facade.Dispose();
+        configurationStore.ReleaseSave();
+
+        var completed = await save;
+        Assert.True(completed.IsSuccess, completed.Error?.Message);
+
+        var rejected = await facade.SavePersistenceConfigurationAsync(
+            configuration,
+            context);
+
+        Assert.True(rejected.IsFailure);
+        Assert.Equal(
+            "hive.management.disposed",
+            rejected.Error!.Code);
+    }
+
+    [Fact]
     public async Task CrudFacade_PersistsProviderGraphAndAgentDefinition()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ManagementCrud");
@@ -728,6 +766,43 @@ public sealed class HiveManagementFacadeTests
         Assert.Equal(
             ResourceLifecycleStatus.Retired,
             retired.Value!.Resource!.Lifecycle.Status);
+    }
+
+    private sealed class BlockingConfigurationStore :
+        IHiveConfigurationStore
+    {
+        private readonly TaskCompletionSource<bool> _saveStarted =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<bool> _releaseSave =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public BlockingConfigurationStore(HivePersistenceConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public HivePersistenceConfiguration Configuration { get; private set; }
+
+        public TaskCompletionSource<bool> SaveStarted =>
+            _saveStarted;
+
+        public void ReleaseSave() =>
+            _releaseSave.TrySetResult(true);
+
+        public Task<Result<HivePersistenceConfiguration>> LoadPersistenceConfigurationAsync(
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(
+                Result<HivePersistenceConfiguration>.Success(Configuration));
+
+        public async Task<Result<HivePersistenceConfiguration>> SavePersistenceConfigurationAsync(
+            HivePersistenceConfiguration configuration,
+            CancellationToken cancellationToken = default)
+        {
+            _saveStarted.TrySetResult(true);
+            await _releaseSave.Task.WaitAsync(cancellationToken);
+            Configuration = configuration;
+            return Result<HivePersistenceConfiguration>.Success(configuration);
+        }
     }
 
     private static HiveManagementFacade CreateFacade(
