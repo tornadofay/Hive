@@ -2,7 +2,7 @@
 
 ## Maintenance — Backend
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Opened: 2026-09-26
 
@@ -33,6 +33,12 @@ Audit and correct the existing backend/integration boundary, with emphasis on:
 
 1. `DateTimePicker.Value` assignment can throw when a requested date is outside the host control's `MinDate`/`MaxDate` bounds; the bounded adapter should return a validation failure rather than leak a host exception.
 2. `HiveHostIntegrationService.PrepareBusinessOperationAsync` uses `SingleOrDefault` over host-supplied operation descriptors; duplicate operation types can therefore escape the Result contract as an exception instead of producing a deterministic validation/ambiguity failure.
+
+### Verification failure
+
+Developer verification on 2026-09-26 reported a compile error in the newly added cancellation regression test: the test asserts `adapter.AuthorizationCalls`, but `AuthorizationCalls` is defined on `FakeAuthorizer`. This is a test-only defect within the existing maintenance regression coverage.
+
+Remediation boundary: correct the assertion to inspect the fake authorizer instance. No production scope change.
 
 ### Maintenance outcome
 
