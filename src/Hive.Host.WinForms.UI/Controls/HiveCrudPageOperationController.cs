@@ -16,7 +16,6 @@ internal sealed class HiveCrudPageOperationController : IDisposable
     private readonly object _eventSender;
     private CancellationTokenSource? _operationCancellation;
     private bool _busy;
-    private bool _disposed;
 
     internal HiveCrudPageOperationController(
         Control owner,
@@ -155,7 +154,6 @@ internal sealed class HiveCrudPageOperationController : IDisposable
 
     public void Dispose()
     {
-        _disposed = true;
         var operationCancellation = Interlocked.Exchange(ref _operationCancellation, null);
         operationCancellation?.Cancel();
         operationCancellation?.Dispose();
