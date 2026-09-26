@@ -8,7 +8,7 @@ Status: VERIFICATION PENDING
 
 ## Authorization
 
-Bounded corrective maintenance slice. This work removes duplicated implementation already represented by the existing `SqlResourceStoreBase` and generalizes that base only as required so both affected resource stores can reuse the same persistence mechanics.
+Bounded corrective maintenance slice. This work removes duplicated scope/access and JSON-metadata implementation by centralizing the shared mechanics in an internal persistence helper used by the existing provider base and the public WorkItem / AgentDefinition stores. The public stores remain public without exposing the internal SQL implementation base as a new API contract.
 
 ## Scope
 
