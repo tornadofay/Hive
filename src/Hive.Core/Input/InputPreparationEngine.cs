@@ -907,7 +907,8 @@ public static class InputPreparationEngine
     {
         var letters = cellReference
             .TakeWhile(static character =>
-                character == '
+                (character >= 'A' && character <= 'Z') ||
+                (character >= 'a' && character <= 'z'))
             .ToArray();
 
         if (letters.Length == 0)
