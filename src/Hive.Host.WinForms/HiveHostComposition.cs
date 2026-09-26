@@ -90,8 +90,14 @@ public sealed class HiveHostComposition : IDisposable
                 null);
         }
 
-        current?.Dispose();
-        _lifetimeCts.Dispose();
+        try
+        {
+            current?.Dispose();
+        }
+        finally
+        {
+            _lifetimeCts.Dispose();
+        }
 
         // Do not synchronously wait on the async reconfiguration gate here.
         // An in-flight ComposeAsync operation will observe the lifetime
@@ -140,9 +146,15 @@ public sealed class HiveHostComposition : IDisposable
             {
                 operationToken.ThrowIfCancellationRequested();
 
-                _status = new HiveHostCompositionStatus(
-                    HiveHostCompositionState.Ready,
-                    null);
+                lock (_stateGate)
+                {
+                    if (Volatile.Read(ref _disposed) != 0)
+                        throw new OperationCanceledException(operationToken);
+
+                    _status = new HiveHostCompositionStatus(
+                        HiveHostCompositionState.Ready,
+                        null);
+                }
 
                 return Result<HiveHostServiceGraph>.Success(current);
             }
