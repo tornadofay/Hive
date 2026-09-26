@@ -22,15 +22,15 @@ internal static class SqlResourceStoreCommon
     internal static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.General);
 
     internal static IReadOnlyDictionary<string, string> DeserializeMetadata(
-        string json)
+        string json,
+        string invalidMessage = "Persisted metadata JSON is invalid.")
     {
         var value = JsonSerializer.Deserialize<Dictionary<string, string>>(
             json,
             JsonOptions);
 
         return value is null
-            ? throw new InvalidOperationException(
-                "Persisted metadata JSON is invalid.")
+            ? throw new InvalidOperationException(invalidMessage)
             : new Dictionary<string, string>(
                 value,
                 StringComparer.Ordinal);
