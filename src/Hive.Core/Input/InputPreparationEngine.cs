@@ -1,5 +1,4 @@
 using System.IO.Compression;
-using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -9,9 +8,6 @@ public static class InputPreparationEngine
 {
     private const string SpreadsheetMediaType =
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-    private const string SpreadsheetNamespace =
-        "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
 
     public static bool RequiresVisionTargetRouting(
         InputSubmission submission)
@@ -299,7 +295,7 @@ public static class InputPreparationEngine
                                 itemIndex,
                                 item.FileName,
                                 worksheet.Name,
-                                Error.Serialization(
+                                SerializationError(
                                     "hive.input.spreadsheet.worksheet-missing",
                                     "The worksheet package entry could not be found.")));
                         continue;
@@ -1078,6 +1074,11 @@ public static class InputPreparationEngine
             Path.GetExtension(item.FileName),
             ".xlsx",
             StringComparison.OrdinalIgnoreCase);
+
+    private static Error SerializationError(
+        string code,
+        string message) =>
+        new(code, ErrorCategory.Serialization, message);
 
     private static string? AttributeByLocalName(
         XElement element,
