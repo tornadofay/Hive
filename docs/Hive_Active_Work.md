@@ -13,7 +13,7 @@ This is an explicitly requested bounded corrective follow-up to the completed UI
 ### Scope
 
 Correct only the concrete production issues identified by the repository review of the preceding UI maintenance result:
-- prevent background-thread WinForms interaction from traversing the host control tree before the required UI-thread boundary is enforced;
+- prevent background-thread standard-control WinForms interaction from traversing the host control tree before the required UI-thread boundary is enforced;
 - ensure cancelled Settings-page initialization can be retried after a rapid navigation sequence;
 - prevent synchronous Host Composition disposal from blocking while an async composition operation owns the reconfiguration gate;
 - ensure a late candidate produced after disposal is not published or leaked;
@@ -29,7 +29,7 @@ Correct only the concrete production issues identified by the repository review 
 
 ### Corrective work completed
 
-- WinForms host interactions now enforce the registered-root UI-thread boundary before live host-tree traversal or semantic-provider interaction.
+- Standard-control WinForms interactions now enforce the registered-root UI-thread boundary before live host-tree traversal; semantic-provider operations retain their existing host-owned execution path.
 - Settings page initialization now tracks in-flight initialization tasks so a cancelled initialization can be retried when the user navigates back before the previous operation has unwound.
 - Host composition disposal no longer synchronously waits on the async reconfiguration gate.
 - Host composition publication is state-gated so disposal cannot publish a late candidate, and a cancelled/unpublishable candidate is disposed.

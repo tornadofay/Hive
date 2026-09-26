@@ -222,6 +222,18 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
         cancellationToken.ThrowIfCancellationRequested();
 
+        if (request.Kind is
+            HiveHostInteractionKind.ReadRow or
+            HiveHostInteractionKind.AddRow or
+            HiveHostInteractionKind.EditRow or
+            HiveHostInteractionKind.DeleteRow or
+            HiveHostInteractionKind.InvokeAction)
+        {
+            return await ExecuteWithProviderAsync(
+                request,
+                cancellationToken).ConfigureAwait(false);
+        }
+
         if (_registration.Root.IsDisposed ||
             _registration.Root.Disposing)
         {
@@ -237,18 +249,6 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 Error.Validation(
                     "hive.host.winforms.ui-thread-required",
                     "WinForms host interaction must run on the UI thread."));
-        }
-
-        if (request.Kind is
-            HiveHostInteractionKind.ReadRow or
-            HiveHostInteractionKind.AddRow or
-            HiveHostInteractionKind.EditRow or
-            HiveHostInteractionKind.DeleteRow or
-            HiveHostInteractionKind.InvokeAction)
-        {
-            return await ExecuteWithProviderAsync(
-                request,
-                cancellationToken).ConfigureAwait(false);
         }
 
         if (request.ControlId is null)
