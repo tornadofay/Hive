@@ -210,6 +210,15 @@ public sealed class HiveHostComposition : IDisposable
 
             previous?.Dispose();
 
+            // Disposal can be triggered by disposal of a previous graph resource.
+            // Treat that as a failed handoff rather than returning a graph that
+            // has already lost its composition ownership.
+            if (Volatile.Read(ref _disposed) != 0)
+            {
+                candidate.Value!.Dispose();
+                throw new OperationCanceledException(operationToken);
+            }
+
             return candidate;
         }
         catch (OperationCanceledException)
