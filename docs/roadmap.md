@@ -375,8 +375,8 @@ Verify:
 - invalid/rejected candidate path;
 - provenance preservation.
 
-## 1.18 — Durable Base-Agent Work State & Vector Retrieval
-Objective: make the already-defined Base-Agent work mechanisms durable across runtime lifetimes while establishing the bounded V1 vector-storage/retrieval foundation.
+## 1.18 — Durable Base-Agent Work State
+Objective: make the already-defined Base-Agent work mechanisms durable across runtime lifetimes.
 
 Scope:
 - durable Objective state;
@@ -386,13 +386,10 @@ Scope:
 - durable delegation state where required by active work;
 - runtime/lifecycle recovery for those work mechanisms;
 - preservation of ownership, scope, provenance, version, and concurrency rules;
-- replaceable `IVectorStore` contract;
-- SQL Server `VECTOR` implementation for the V1 persistence profile;
-- bounded vector insertion and similarity search;
-- vector retrieval remains infrastructure, not a Phase 5 semantic-memory system;
+- deterministic durable retrieval of Base-Agent work records;
 - actual versus simulated evidence remains distinguishable.
 
-Explicit non-goal: no CognitiveAgent beliefs/goals/learning/Dream semantics.
+Explicit non-goal: no CognitiveAgent beliefs/goals/learning/Dream semantics and no vector-database implementation in this slice.
 
 Verify:
 - persistence across runtime restart;
@@ -400,30 +397,78 @@ Verify:
 - stale/concurrent state handling;
 - durable Question transitions;
 - durable Objective transitions;
-- durable memory retrieval;
-- vector insertion/search;
-- cancellation and bounded retrieval;
+- durable memory/work-state retrieval;
+- delegation-state durability where applicable;
+- cancellation and recovery;
 - no cross-runtime state leakage.
 
-## 1.19 — V1 Workspace & Agent Interaction
-Objective: provide the real human-facing Workspace where users interact directly with LLMs or with Hive Agents.
+## 1.19 — V1 Vector Retrieval Infrastructure
+Objective: establish the bounded, replaceable vector-storage and similarity-retrieval foundation used by later Hive capabilities without turning V1 into a semantic-memory product.
+
+Scope:
+- replaceable `IVectorStore` contract;
+- SQL Server `VECTOR` implementation for the V1 persistence profile;
+- bounded vector insertion;
+- bounded similarity search;
+- deterministic result ordering/tie handling;
+- ownership/scope/provenance boundaries for stored vectors;
+- cancellation and bounded result limits;
+- integration with the existing Base-Agent work-state persistence boundary only where required for durable references;
+- explicit actual versus simulated evidence metadata where vectorized records represent evidence.
+
+Explicit non-goal: no CognitiveAgent beliefs/goals/learning/Dream semantics and no Phase 5 semantic Memory/Knowledge/Learning system.
+
+Verify:
+- vector insertion/search;
+- similarity ordering and deterministic boundaries;
+- ownership and scope isolation;
+- malformed/invalid vector handling;
+- bounded result behavior;
+- cancellation;
+- persistence/reload;
+- no cross-resource or cross-runtime leakage.
+
+## 1.20 — V1 Workspace Foundation
+Objective: establish the real human-facing Workspace as the common interaction and operational surface over Hive.Management.
 
 Scope:
 - Workspace becomes a first-class V1 interaction surface, not only a WorkItem monitor;
-- LLM mode with explicit model/ExecutionTarget selection;
+- common Workspace shell and conversation/history model;
+- direct LLM mode with explicit model/ExecutionTarget selection;
+- conversation/chat submission and display;
+- active execution/runtime context;
+- WorkItem/job visibility;
+- Workspace restart/reload state handling;
+- mode/state presentation boundaries;
+- normal Management and authorization boundaries remain authoritative;
+- Workspace does not create Hive membership merely because Agents are visible;
+- Workspace remains a presentation/control surface, not an authority.
+
+Verify:
+- Workspace opens as the normal user-facing interaction surface;
+- direct LLM conversation;
+- explicit model/ExecutionTarget selection;
+- active execution/runtime visibility;
+- conversation/history behavior;
+- WorkItem/job visibility;
+- Workspace restart/reload;
+- authorization remains outside the UI.
+
+## 1.21 — V1 Agent Interaction & Application/Form Agents
+Objective: extend the Workspace foundation with Agent-directed interaction and application-scoped specialist Agent operation.
+
+Scope:
 - Agent mode with explicit Agent selection;
-- conversation/chat surface;
-- active Agent/runtime/execution context;
 - user commands/objectives submitted to an Agent;
 - application-wide Agent support;
 - application-scoped role/context such as a Manager Agent;
 - form-associated specialized Agents;
 - Agent association with bounded host context;
 - create/reuse/activate/deactivate Agent instances through the normal Management boundary;
-- switching between LLM and Agent modes;
-- display current WorkItems/jobs produced by the interaction;
-- Workspace never creates Hive membership merely because multiple Agents are visible;
-- Workspace remains a presentation/control surface over Management and does not become an authority.
+- switching between direct LLM and Agent modes;
+- display current Agent/WorkItem/job context;
+- ordinary Agent resources with different definitions/context; no new Manager/Invoice framework types;
+- no automatic Hive membership or Swarm creation.
 
 V1 Agent model:
 
@@ -436,21 +481,19 @@ Application
     └── other specialized Agents
 ```
 
-These remain ordinary Agent resources with different definitions/context. `ManagerAgent`, `InvoiceAgent`, etc. are not required as new framework types.
-
 Verify:
-- direct LLM conversation;
-- explicit model selection;
 - Agent conversation;
 - Agent selection;
 - application-wide Agent;
 - specialized form-associated Agent;
+- create/reuse/activate/deactivate behavior;
 - switching modes;
 - independent Agent/runtime state;
-- Workspace restart/reload;
-- authorization remains outside the UI.
+- bounded host association;
+- authorization remains outside the UI;
+- Workspace does not create Hive/Swarm state implicitly.
 
-## 1.20 — Governed Tools, Policy, Permissions & Human Intervention
+## 1.22 — Governed Tools, Policy, Permissions & Human Intervention
 Objective: establish the general governance boundary used whenever an Agent proposes or performs consequential work.
 
 Scope:
@@ -475,7 +518,7 @@ Verify:
 - provenance/audit evidence preserved;
 - model cannot grant itself permission.
 
-## 1.21 — Business-App Proposal & Governed Write
+## 1.23 — Business-App Proposal & Governed Write
 Objective: turn validated structured data into an authorized business operation and perform the consequential host write through the approved host operation boundary.
 
 Scope:
@@ -488,7 +531,7 @@ Scope:
 - operation correlation/idempotency identity reused for retries when supported;
 - generated host IDs captured from successful creation operations;
 - success, known no-side-effect failure, partial, and rejected-before-mutation evidence;
-- unknown outcome remains unresolved for Phase 1.22 reconciliation.
+- unknown outcome remains unresolved for Phase 1.24 reconciliation.
 
 Approval answers whether Hive may perform the proposed operation. It is distinct from post-write correctness Review.
 
@@ -502,11 +545,11 @@ Verify:
 - authorization and provenance remain enforced through the consequential operation;
 - unknown/partial host dispositions are preserved for the receipt/reconciliation boundary.
 
-## 1.22 — Business Operation Receipt & Reconciliation
+## 1.24 — Business Operation Receipt & Reconciliation
 Objective: durably establish what happened after a consequential host operation and recover safely from interrupted or unknown outcomes.
 
 Scope:
-- durable `BusinessOperationReceipt` built from the Phase 1.21 operation-attempt state;
+- durable `BusinessOperationReceipt` built from the Phase 1.23 operation-attempt state;
 - durable attempt remains the recovery anchor after submission but before host response;
 - host correlation/idempotency evidence;
 - unknown and partial outcome reconciliation;
@@ -521,7 +564,7 @@ Verify:
 - non-idempotent host requires reconciliation before a second mutation;
 - authorization and provenance remain enforced.
 
-## 1.23 — Post-Write Review
+## 1.25 — Post-Write Review
 Objective: verify the resulting host state against the intended candidate/proposed data through a first-class WorkItem-linked Review boundary.
 
 Scope:
@@ -544,7 +587,7 @@ Verify:
 - review does not mutate the original candidate;
 - authorization and provenance remain enforced.
 
-## 1.24 — MAF Sequential V1 Pipeline
+## 1.26 — MAF Sequential V1 Pipeline
 Objective: compose the complete single-Agent V1 business workflow through MAF Sequential orchestration before introducing application-level concurrent Agent assignment.
 
 ```text
@@ -573,7 +616,7 @@ MAF owns orchestration where applicable; Hive retains ownership of identity, aut
 
 Verify: complete deterministic fake-host end-to-end path with one Agent, covering successful and rejected/failed branches.
 
-## 1.25 — Multi-Agent Work Assignment & Concurrent Execution
+## 1.27 — Multi-Agent Work Assignment & Concurrent Execution
 Objective: allow multiple independent Agents to perform the established V1 workflow concurrently inside one host application without requiring persistent Hive membership or Swarm state.
 
 Scope:
@@ -614,11 +657,21 @@ Verify:
 - no accidental shared runtime state;
 - no implicit Hive/Swarm creation.
 
-## 1.26 — Full-Pipeline Crash/Resume
+## 1.28 — Full-Pipeline Crash/Resume
 Objective: prove recovery across the complete V1 workflow, including WorkItem, runtime/execution, durable Base-Agent work state, operation-attempt, receipt, reconciliation, multiple-Agent, and Review recovery.
-Verify: process termination at several checkpoints, restart, resume or reconcile without duplicate terminal host mutation; already-terminal WorkItems are not processed again; failure of one WorkItem or Agent does not incorrectly fail unrelated work; durable Base-Agent work state remains consistent; completed WorkItems retain receipts; Review state survives restart; and recoverable Agents/WorkItems can resume or reconcile independently.
 
-## 1.27 — Resource Inventory & Runtime Diagnostics
+Verify:
+- process termination at several checkpoints;
+- restart;
+- resume or reconcile without duplicate terminal host mutation;
+- already-terminal WorkItems are not processed again;
+- failure of one WorkItem or Agent does not incorrectly fail unrelated work;
+- durable Base-Agent work state remains consistent;
+- completed WorkItems retain receipts;
+- Review state survives restart;
+- recoverable Agents/WorkItems can resume or reconcile independently.
+
+## 1.29 — Resource Inventory & Runtime Diagnostics
 Objective: provide the V1 operational surface for understanding what Hive owns and what it is doing.
 
 Scope:
@@ -640,7 +693,7 @@ Verify:
 - secrets remain redacted;
 - inventory survives/reloads from durable state.
 
-## 1.28 — Metrics, Budget Cap & OpenTelemetry
+## 1.30 — Metrics, Budget Cap & OpenTelemetry
 Objective: establish V1 resource control and observability.
 
 Scope:
@@ -654,7 +707,11 @@ Scope:
 - OpenTelemetry traces/metrics;
 - no secrets in telemetry.
 
-Verify: budget stop, telemetry correlation, cancellation, and secret redaction.
+Verify:
+- budget stop;
+- telemetry correlation;
+- cancellation;
+- secret redaction.
 
 # Phase 2 — Base Hive Membership & Coordination
 
