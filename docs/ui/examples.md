@@ -81,7 +81,8 @@ For the planned V1 business-write/review examples across Phases 1.23–1.25, the
 
 Planned V1 interaction and operations examples should also cover:
 - Provider/model capability discovery and operational metadata → `Providers / Target Selection / Capability Discovery`;
-- direct LLM and Agent Workspace interaction, including application-wide and form-associated specialist Agents → `Workspace / Agent Interaction`;
+- V1 Workspace foundation and direct LLM interaction → `Workspace / Direct LLM`;
+- Agent-directed Workspace interaction, including application-wide and form-associated specialist Agents → `Workspace / Agent Interaction`;
 - multiple independent Agents assigned concurrent WorkItems without Hive/Swarm membership → `Workspace / Multi-Agent Work Assignment`;
 - governed Tool, policy, permission, and human-intervention behavior → `Management / Governance`;
 - authoritative resource inventory and runtime/execution diagnostics → `Operations / Resource Inventory`;
