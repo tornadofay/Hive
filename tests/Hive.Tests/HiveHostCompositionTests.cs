@@ -454,6 +454,40 @@ public sealed class HiveHostCompositionTests
     }
 
     [Fact]
+    public async Task Dispose_DoesNotOverwriteTerminalStatusAfterLateFactoryFailure()
+    {
+        var configuration =
+            HivePersistenceConfiguration.LocalDevelopment(
+                "Hive_Composition_Late_Failure");
+        var store = new InMemoryConfigurationStore(configuration);
+        var factory = new CancellationIgnoringFailureGraphFactory();
+
+        var composition = new HiveHostComposition(store, factory);
+
+        try
+        {
+            var initialization = composition.InitializeAsync();
+            await factory.FailureStarted.Task;
+
+            composition.Dispose();
+            factory.ReleaseFailure();
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => initialization);
+
+            Assert.Null(composition.Current);
+            Assert.Equal(
+                HiveHostCompositionState.Disposed,
+                composition.Status.State);
+            Assert.Null(composition.Status.LastError);
+        }
+        finally
+        {
+            composition.Dispose();
+        }
+    }
+
+    [Fact]
     public async Task GraphFactory_SanitizesBootstrapResolutionErrors()
     {
         var configuration = new HivePersistenceConfiguration(
@@ -563,6 +597,35 @@ public sealed class HiveHostCompositionTests
             _candidateStarted.TrySetResult(true);
             await _releaseCandidate.Task.ConfigureAwait(false);
             return Result<HiveHostServiceGraph>.Success(_candidate);
+        }
+    }
+
+    private sealed class CancellationIgnoringFailureGraphFactory :
+        IHiveHostServiceGraphFactory
+    {
+        private readonly TaskCompletionSource<bool> _failureStarted =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<bool> _releaseFailure =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource<bool> FailureStarted =>
+            _failureStarted;
+
+        public void ReleaseFailure() =>
+            _releaseFailure.TrySetResult(true);
+
+        public async Task<Result<HiveHostServiceGraph>> CreateAsync(
+            HivePersistenceConfiguration configuration,
+            CancellationToken cancellationToken = default)
+        {
+            _failureStarted.TrySetResult(true);
+            await _releaseFailure.Task.ConfigureAwait(false);
+
+            return Result<HiveHostServiceGraph>.Failure(
+                new Error(
+                    "test.late-factory-failure",
+                    ErrorCategory.External,
+                    "late factory failure"));
         }
     }
 
