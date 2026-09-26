@@ -31,11 +31,21 @@ public sealed class HiveManagementFacadeTests
 
         await configurationStore.SaveStarted.Task;
 
+        var waitingSave = facade.SavePersistenceConfigurationAsync(
+            configuration,
+            context);
+
         facade.Dispose();
         configurationStore.ReleaseSave();
 
         var completed = await save;
         Assert.True(completed.IsSuccess, completed.Error?.Message);
+
+        var rejectedWaitingSave = await waitingSave;
+        Assert.True(rejectedWaitingSave.IsFailure);
+        Assert.Equal(
+            "hive.management.disposed",
+            rejectedWaitingSave.Error!.Code);
 
         var rejected = await facade.SavePersistenceConfigurationAsync(
             configuration,
