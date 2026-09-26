@@ -228,49 +228,155 @@ internal sealed class InputPreparationExampleView : UserControl
 
     private static byte[] CreateWorkbook(params (string Name, string[][] Rows)[] sheets)
     {
-        const string packageContentTypesNamespace = "http://schemas.openxmlformats.org/package/2006/content-types";
-        const string packageRelationshipsNamespace = "http://schemas.openxmlformats.org/package/2006/relationships";
-        const string officeRelationshipsNamespace = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
-        const string mainNamespace = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+        const string packageContentTypesNamespace =
+            "http://schemas.openxmlformats.org/package/2006/content-types";
+        const string packageRelationshipsNamespace =
+            "http://schemas.openxmlformats.org/package/2006/relationships";
+        const string officeRelationshipsNamespace =
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+        const string mainNamespace =
+            "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+
         var spreadsheet = XNamespace.Get(mainNamespace);
         var contentTypes = XNamespace.Get(packageContentTypesNamespace);
         using var memory = new MemoryStream();
-        using (var archive = new ZipArchive(memory, ZipArchiveMode.Create, leaveOpen: true))
+
+        using (var archive = new ZipArchive(
+                   memory,
+                   ZipArchiveMode.Create,
+                   leaveOpen: true))
         {
-            WriteXml(archive, "[Content_Types].xml", new XDocument(
-                new XElement(contentTypes + "Types",
-                    new XElement(contentTypes + "Default", new XAttribute("Extension", "rels"), new XAttribute("ContentType", "application/vnd.openxmlformats-package.relationships+xml")),
-                    new XElement(contentTypes + "Default", new XAttribute("Extension", "xml"), new XAttribute("ContentType", "application/xml")),
-                    new XElement(contentTypes + "Override", new XAttribute("PartName", "/xl/workbook.xml"), new XAttribute("ContentType", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml")),
-                    sheets.Select((_, index) => new XElement(contentTypes + "Override", new XAttribute("PartName", $"/xl/worksheets/sheet{index + 1}.xml"), new XAttribute("ContentType", "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml")))));
-            WriteBytes(archive, "_rels/.rels", Encoding.UTF8.GetBytes($"<?xml version=\"1.0\" encoding=\"utf-8\"?><Relationships xmlns=\"{packageRelationshipsNamespace}\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/></Relationships>"));
-            var relationshipAttribute = XNamespace.Get(officeRelationshipsNamespace) + "id";
-            WriteXml(archive, "xl/workbook.xml", new XDocument(
-                new XElement(spreadsheet + "workbook",
-                    new XElement(spreadsheet + "sheets",
-                        sheets.Select((sheet, index) => new XElement(spreadsheet + "sheet",
-                            new XAttribute("name", sheet.Name),
-                            new XAttribute("sheetId", index + 1),
-                            new XAttribute(relationshipAttribute, $"rId{index + 1}")))))));
-            WriteXml(archive, "xl/_rels/workbook.xml.rels", new XDocument(
-                new XElement(XNamespace.Get(packageRelationshipsNamespace) + "Relationships",
-                    sheets.Select((_, index) => new XElement(XNamespace.Get(packageRelationshipsNamespace) + "Relationship",
-                        new XAttribute("Id", $"rId{index + 1}"),
-                        new XAttribute("Type", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"),
-                        new XAttribute("Target", $"worksheets/sheet{index + 1}.xml"))))));
-            foreach (var (sheet, index) in sheets.Select((value, index) => (value, index)))
+            var contentTypeOverrides =
+                sheets.Select(
+                    (sheet, index) =>
+                        new XElement(
+                            contentTypes + "Override",
+                            new XAttribute(
+                                "PartName",
+                                $"/xl/worksheets/sheet{index + 1}.xml"),
+                            new XAttribute(
+                                "ContentType",
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml")));
+
+            var contentTypesDocument =
+                new XDocument(
+                    new XElement(
+                        contentTypes + "Types",
+                        new XElement(
+                            contentTypes + "Default",
+                            new XAttribute("Extension", "rels"),
+                            new XAttribute(
+                                "ContentType",
+                                "application/vnd.openxmlformats-package.relationships+xml")),
+                        new XElement(
+                            contentTypes + "Default",
+                            new XAttribute("Extension", "xml"),
+                            new XAttribute(
+                                "ContentType",
+                                "application/xml")),
+                        new XElement(
+                            contentTypes + "Override",
+                            new XAttribute("PartName", "/xl/workbook.xml"),
+                            new XAttribute(
+                                "ContentType",
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml")),
+                        contentTypeOverrides));
+
+            WriteXml(
+                archive,
+                "[Content_Types].xml",
+                contentTypesDocument);
+
+            WriteBytes(
+                archive,
+                "_rels/.rels",
+                Encoding.UTF8.GetBytes(
+                    $"<?xml version=\"1.0\" encoding=\"utf-8\"?><Relationships xmlns=\"{packageRelationshipsNamespace}\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/></Relationships>"));
+
+            var relationshipAttribute =
+                XNamespace.Get(officeRelationshipsNamespace) + "id";
+
+            var workbookDocument =
+                new XDocument(
+                    new XElement(
+                        spreadsheet + "workbook",
+                        new XElement(
+                            spreadsheet + "sheets",
+                            sheets.Select(
+                                (sheet, index) =>
+                                    new XElement(
+                                        spreadsheet + "sheet",
+                                        new XAttribute("name", sheet.Name),
+                                        new XAttribute("sheetId", index + 1),
+                                        new XAttribute(
+                                            relationshipAttribute,
+                                            $"rId{index + 1}")))));
+
+            WriteXml(
+                archive,
+                "xl/workbook.xml",
+                workbookDocument);
+
+            var workbookRelationshipsDocument =
+                new XDocument(
+                    new XElement(
+                        XNamespace.Get(packageRelationshipsNamespace) + "Relationships",
+                        sheets.Select(
+                            (_, index) =>
+                                new XElement(
+                                    XNamespace.Get(packageRelationshipsNamespace) + "Relationship",
+                                    new XAttribute("Id", $"rId{index + 1}"),
+                                    new XAttribute(
+                                        "Type",
+                                        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"),
+                                    new XAttribute(
+                                        "Target",
+                                        $"worksheets/sheet{index + 1}.xml")))));
+
+            WriteXml(
+                archive,
+                "xl/_rels/workbook.xml.rels",
+                workbookRelationshipsDocument);
+
+            foreach (var (sheet, index) in sheets.Select(
+                         (value, index) => (value, index)))
             {
-                WriteXml(archive, $"xl/worksheets/sheet{index + 1}.xml", new XDocument(
-                    new XElement(spreadsheet + "worksheet",
-                        new XElement(spreadsheet + "sheetData",
-                            sheet.Rows.Select((row, rowIndex) => new XElement(spreadsheet + "row",
+                var rows =
+                    sheet.Rows.Select(
+                        (row, rowIndex) =>
+                            new XElement(
+                                spreadsheet + "row",
                                 new XAttribute("r", rowIndex + 1),
-                                row.Select((value, columnIndex) => new XElement(spreadsheet + "c",
-                                    new XAttribute("r", ToColumnName(columnIndex + 1) + (rowIndex + 1)),
-                                    new XAttribute("t", "inlineStr"),
-                                    new XElement(spreadsheet + "is", new XElement(spreadsheet + "t", value))))))))));
+                                row.Select(
+                                    (value, columnIndex) =>
+                                        new XElement(
+                                            spreadsheet + "c",
+                                            new XAttribute(
+                                                "r",
+                                                ToColumnName(columnIndex + 1) +
+                                                (rowIndex + 1)),
+                                            new XAttribute("t", "inlineStr"),
+                                            new XElement(
+                                                spreadsheet + "is",
+                                                new XElement(
+                                                    spreadsheet + "t",
+                                                    value)))));
+
+                var worksheetDocument =
+                    new XDocument(
+                        new XElement(
+                            spreadsheet + "worksheet",
+                            new XElement(
+                                spreadsheet + "sheetData",
+                                rows)));
+
+                WriteXml(
+                    archive,
+                    $"xl/worksheets/sheet{index + 1}.xml",
+                    worksheetDocument);
             }
         }
+
         return memory.ToArray();
     }
 
