@@ -1155,6 +1155,58 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         return current;
     }
 
+    private static HiveHostCapabilityDescriptor CreateCapability(
+        string key,
+        HiveHostCapabilityKind kind,
+        string name,
+        HiveHostActionKind? action = null) =>
+        new(
+            CreateCapabilityId(key),
+            kind,
+            name,
+            action: action);
+
+    private static Guid CreateCapabilityId(string key)
+    {
+        var bytes = SHA256.HashData(
+            Encoding.UTF8.GetBytes(
+                "Hive.Host.WinForms.Capability.V1|" + key));
+
+        return new Guid(bytes.AsSpan(0, 16));
+    }
+
+    private static int TryGetBoundRowCount(DataGridView grid)
+    {
+        var dataSource = grid.DataSource;
+
+        if (dataSource is not null)
+        {
+            var bindingContext = grid.BindingContext;
+            if (bindingContext is not null)
+            {
+                try
+                {
+                    var manager = bindingContext[
+                        dataSource,
+                        grid.DataMember];
+
+                    if (manager is not null)
+                        return Math.Max(0, manager.Count);
+                }
+                catch (ArgumentException)
+                {
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            }
+        }
+
+        return grid.AllowUserToAddRows
+            ? Math.Max(0, grid.Rows.Count - 1)
+            : grid.Rows.Count;
+    }
+
     private static bool CanSetStandardValue(
         Control control,
         HiveHostFieldDescriptor? field = null)
