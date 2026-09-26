@@ -14,13 +14,13 @@ internal sealed class HiveAgentManagementService : HiveManagementServiceBase
 
 {
 
-    private readonly IAgentDefinitionResourceStore _agentDefinitions
+    private readonly IAgentDefinitionResourceStore _agentDefinitions;
 
-    private readonly IProviderResourceStore _providerResources
+    private readonly IProviderResourceStore _providerResources;
 
-    private readonly ISecretStore? _secrets
+    private readonly ISecretStore? _secrets;
 
-    private readonly AgentExecutionService? _agentExecution
+    private readonly AgentExecutionService? _agentExecution;
 
 
 
