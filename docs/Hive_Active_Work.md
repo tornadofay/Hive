@@ -60,7 +60,7 @@ Developer verification is required after implementation. No agent-run build/test
 
 Example to run: `Host / WinForms Integration / Dual Business-App Integration Contract` — `Hive.Example.WinForms`
 
-Tests to run: the focused lifecycle/host-composition, management, and CRUD/UI regression tests; then the full `Hive.Tests` suite.
+Tests to run: `HiveHostCompositionTests.cs`, `HiveManagementFacadeTests.cs`, `HiveUiPolishTests.cs`; then the full `Hive.Tests` suite.
 
 Manual verification: existing Example Host Settings/CRUD behavior and the affected disposal/error paths remain correct.
 
