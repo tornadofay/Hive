@@ -290,11 +290,13 @@ public sealed class InputPreparationTests
                 new byte[] { 1, 2, 3 })
         ]);
 
-        Assert.Throws<OperationCanceledException>(
-            () => InputPreparationEngine.Prepare(
+        Assert.Throws<OperationCanceledException>(() =>
+        {
+            _ = InputPreparationEngine.Prepare(
                 submission,
                 Array.Empty<ExecutionTarget>(),
-                cancellation.Token));
+                cancellation.Token);
+        });
     }
 
     [Fact]
