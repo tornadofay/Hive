@@ -207,6 +207,50 @@ public sealed class HiveHostIntegrationContractTests
     }
 
     [Fact]
+    public async Task Management_LookupCancellationAfterAuthorizationStopsBeforeAdapterInvocation()
+    {
+        var adapter = new FakeHostAdapter();
+        using var cancellation = new CancellationTokenSource();
+        var service = new HiveHostIntegrationService(
+            new FakeAuthorizer(
+                onAuthorize: cancellation.Cancel));
+        var context = CreateAccessContext();
+
+        var request = new HiveLookupRequest(
+            "products",
+            adapter.LookupCapabilityId);
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => service.ResolveLookupAsync(
+                adapter,
+                request,
+                context,
+                cancellation.Token));
+
+        Assert.Equal(0, adapter.LookupCalls);
+    }
+
+    [Fact]
+    public async Task Management_BusinessOperationCaptureCancellationStopsBeforeAuthorization()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var adapter = new FakeHostAdapter(
+            onCapture: cancellation.Cancel);
+        var service = new HiveHostIntegrationService(new FakeAuthorizer());
+        var context = CreateAccessContext();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => service.PrepareBusinessOperationAsync(
+                adapter,
+                "SaveInvoice",
+                CorrelationId.New(),
+                context,
+                cancellation.Token));
+
+        Assert.Equal(0, adapter.AuthorizationCalls);
+    }
+
+    [Fact]
     public async Task Management_PreparesApiUiCompositionWithoutExecutingBusinessWrite()
     {
         var adapter = new FakeHostAdapter();
@@ -302,32 +346,46 @@ public sealed class HiveHostIntegrationContractTests
     private sealed class FakeAuthorizer : IHiveHostCapabilityAuthorizer
     {
         private readonly Guid? _deniedCapabilityId;
+        private readonly Action? _onAuthorize;
 
-        public FakeAuthorizer(Guid? deniedCapabilityId = null)
+        public FakeAuthorizer(
+            Guid? deniedCapabilityId = null,
+            Action? onAuthorize = null)
         {
             _deniedCapabilityId = deniedCapabilityId;
+            _onAuthorize = onAuthorize;
         }
+
+        public int AuthorizationCalls { get; private set; }
 
         public Result Authorize(
             HiveHostCapabilityRequest request,
-            ResourceAccessContext accessContext) =>
-            request.CapabilityId == _deniedCapabilityId
+            ResourceAccessContext accessContext)
+        {
+            AuthorizationCalls++;
+            _onAuthorize?.Invoke();
+
+            return request.CapabilityId == _deniedCapabilityId
                 ? Result.Failure(
                     new Error(
                         "hive.tests.host-capability-forbidden",
                         ErrorCategory.Forbidden,
                         "The test authorizer denied the host capability."))
                 : Result.Success();
+        }
     }
 
     private sealed class FakeHostAdapter : IHiveHostIntegrationAdapter
     {
         private readonly bool _duplicateBusinessOperationTypes;
+        private readonly Action? _onCapture;
 
         public FakeHostAdapter(
-            bool duplicateBusinessOperationTypes = false)
+            bool duplicateBusinessOperationTypes = false,
+            Action? onCapture = null)
         {
             _duplicateBusinessOperationTypes = duplicateBusinessOperationTypes;
+            _onCapture = onCapture;
         }
 
         public Guid EditCapabilityId { get; } = Guid.NewGuid();
@@ -338,6 +396,8 @@ public sealed class HiveHostIntegrationContractTests
 
         public int BusinessWriteCalls { get; private set; }
 
+        public int LookupCalls { get; private set; }
+
         public long LastLookupCategoryId { get; private set; }
 
         public string AdapterId => "Hive.Tests.ReferenceHost";
@@ -347,6 +407,7 @@ public sealed class HiveHostIntegrationContractTests
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            _onCapture?.Invoke();
 
             var lookup = new HiveHostLookupDescriptor(
                 "products",
@@ -490,6 +551,7 @@ public sealed class HiveHostIntegrationContractTests
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            LookupCalls++;
 
             if (request.CurrentValues.TryGetValue(
                     "CategoryId",
