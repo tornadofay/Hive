@@ -352,8 +352,9 @@ public static class InputPreparationEngine
                             itemIndex,
                             item.FileName,
                             worksheet.Name,
-                            Error.Serialization(
+                            new Error(
                                 "hive.input.spreadsheet.worksheet-invalid",
+                                ErrorCategory.Serialization,
                                 "The worksheet XML is malformed.")));
                 }
             }
@@ -395,8 +396,9 @@ public static class InputPreparationEngine
                     itemIndex,
                     item.FileName,
                     null,
-                    Error.Serialization(
+                    new Error(
                         "hive.input.spreadsheet.package-invalid",
+                        ErrorCategory.Serialization,
                         "The spreadsheet package is invalid or cannot be read.")));
             return;
         }
@@ -407,8 +409,9 @@ public static class InputPreparationEngine
                     itemIndex,
                     item.FileName,
                     null,
-                    Error.Serialization(
+                    new Error(
                         "hive.input.spreadsheet.xml-invalid",
+                        ErrorCategory.Serialization,
                         "The spreadsheet XML is malformed.")));
             return;
         }
@@ -419,8 +422,9 @@ public static class InputPreparationEngine
                     itemIndex,
                     item.FileName,
                     null,
-                    Error.Serialization(
+                    new Error(
                         "hive.input.spreadsheet.read-failed",
+                        ErrorCategory.Serialization,
                         "The spreadsheet could not be read safely.")));
             return;
         }
@@ -1133,7 +1137,7 @@ public static class InputPreparationEngine
         int MaxColumn,
         IReadOnlyDictionary<int, string> Names);
 
-    private sealed class SpreadsheetPackageException : Exception
+    private class SpreadsheetPackageException : Exception
     {
         public SpreadsheetPackageException(
             string code,
