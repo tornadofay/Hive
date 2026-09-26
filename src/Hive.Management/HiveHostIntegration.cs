@@ -170,14 +170,15 @@ public sealed class HiveHostIntegrationService : IHiveHostIntegrationService
         if (context.IsFailure)
             return Result<HiveBusinessOperationComposition>.Failure(context.Error!);
 
-        var descriptor = context.Value!.BusinessOperations
-            .SingleOrDefault(operation =>
+        var matchingOperations = context.Value!.BusinessOperations
+            .Where(operation =>
                 string.Equals(
                     operation.OperationType,
                     operationType.Trim(),
-                    StringComparison.Ordinal));
+                    StringComparison.Ordinal))
+            .ToArray();
 
-        if (descriptor is null)
+        if (matchingOperations.Length == 0)
         {
             return Result<HiveBusinessOperationComposition>.Failure(
                 new Error(
@@ -185,6 +186,17 @@ public sealed class HiveHostIntegrationService : IHiveHostIntegrationService
                     ErrorCategory.NotFound,
                     $"The host does not expose business operation '{operationType.Trim()}'."));
         }
+
+        if (matchingOperations.Length > 1)
+        {
+            return Result<HiveBusinessOperationComposition>.Failure(
+                new Error(
+                    "hive.host.business-operation-ambiguous",
+                    ErrorCategory.Conflict,
+                    $"The host exposes multiple business operations with the same operation type '{operationType.Trim()}'."));
+        }
+
+        var descriptor = matchingOperations[0];
 
         var authorization = _authorizer.Authorize(
             new HiveHostCapabilityRequest(
