@@ -108,7 +108,16 @@ public sealed class HiveListPageLayout : UserControl
         _contentPanel.SuspendLayout();
         try
         {
+            var existing = _contentPanel.Controls
+                .Cast<Control>()
+                .Where(control => !ReferenceEquals(control, content))
+                .ToArray();
+
             _contentPanel.Controls.Clear();
+
+            foreach (var control in existing)
+                control.Dispose();
+
             content.Dock = DockStyle.Fill;
             _contentPanel.Controls.Add(content);
         }
