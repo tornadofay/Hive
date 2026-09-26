@@ -30,6 +30,12 @@ Audit and correct the existing Hive WinForms UI boundary, with emphasis on:
 - unrelated refactoring;
 - redesigning already-verified behavior without a concrete maintenance defect.
 
+### Maintenance findings
+
+1. `HiveEditorLayout.ClearFields()` removes field containers without disposing the controls it owns, which can leak WinForms/GDI resources when fields are rebuilt dynamically.
+2. `HiveListPageLayout.SetContent()` removes the previous content control without disposing it, contrary to the documented owner-disposal rule for dynamically replaced children.
+3. `HiveCrudPage.ExecuteAsync()` can let an older operation's completion path clear the shared busy state after a newer operation has become current if overlapping callers reach the operation boundary; the cleanup should only release busy state for the current operation.
+
 ### Required handoff
 
 Manual developer verification of affected UI behavior is required where applicable. Automated focused UI tests should accompany concrete behavioral corrections; broader Hive.Tests verification should follow when implementation changes are made.
