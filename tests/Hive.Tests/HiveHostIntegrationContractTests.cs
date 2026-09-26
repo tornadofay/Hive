@@ -236,7 +236,8 @@ public sealed class HiveHostIntegrationContractTests
         using var cancellation = new CancellationTokenSource();
         var adapter = new FakeHostAdapter(
             onCapture: cancellation.Cancel);
-        var service = new HiveHostIntegrationService(new FakeAuthorizer());
+        var authorizer = new FakeAuthorizer();
+        var service = new HiveHostIntegrationService(authorizer);
         var context = CreateAccessContext();
 
         await Assert.ThrowsAsync<OperationCanceledException>(
@@ -247,7 +248,7 @@ public sealed class HiveHostIntegrationContractTests
                 context,
                 cancellation.Token));
 
-        Assert.Equal(0, adapter.AuthorizationCalls);
+        Assert.Equal(0, authorizer.AuthorizationCalls);
     }
 
     [Fact]
