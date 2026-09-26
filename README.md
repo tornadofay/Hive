@@ -94,7 +94,7 @@ For **V1**, the intended Workspace surface covers supported input submissions an
 - track WorkItem status, activity, and relevant execution/provider state;
 - receive completion and other WorkItem notifications;
 - inspect pending approvals and Approve / Reject when required;
-- later, when Phase 1.18 lands, review completed business operations through the first-class Review surface.
+- later, when Phase 1.19 lands, review completed business operations through the first-class Review surface.
 
 This V1 surface works with a single Agent and does not require a Hive.
 
