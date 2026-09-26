@@ -215,7 +215,7 @@ When API and UI are combined in one logical operation, one operation correlation
 ### 4.1.6 Business-operation receipt and post-write Review
 
 
-Phase 1.17 establishes the governed business-operation proposal, authorization/approval, consequential host-write boundary, and the durable initial operation-attempt state required before any non-transactionally coupled host submission. Phase 1.18 establishes the durable `BusinessOperationReceipt`, unknown-outcome reconciliation, and first-class post-write Review. Every consequential host operation attempt must be attributable to its WorkItem/operation identity, host/adapter identity, operation type, affected parent/child record identities when established, disposition/result state, and host correlation or concurrency evidence when available.
+Phase 1.17 establishes the governed business-operation proposal, authorization/approval, consequential host-write boundary, and the durable initial operation-attempt state required before any non-transactionally coupled host submission. Phase 1.18 establishes the durable `BusinessOperationReceipt` and unknown-outcome reconciliation. Phase 1.19 establishes the first-class post-write Review. Every consequential host operation attempt must be attributable to its WorkItem/operation identity, host/adapter identity, operation type, affected parent/child record identities when established, disposition/result state, and host correlation or concurrency evidence when available.
 
 
 The receipt does not make Hive a copy of the host business database. The host application remains the source of truth.
