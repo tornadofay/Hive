@@ -497,9 +497,9 @@ Hive does not authorize a raw control click merely because the model requested o
 
 ## 12. Business-operation receipt
 
-Every consequential operation attempt that is submitted to the host boundary must have a durable receipt/attempt record, including successful, rejected-before-mutation, partially applied, known-failed, and unknown outcomes.
+Every consequential operation attempt that is submitted to the host boundary must have durable attempt/receipt evidence, including successful, rejected-before-mutation, partially applied, known-failed, and unknown outcomes.
 
-For a host boundary that is not transactionally coupled to Hive persistence, the logical operation identity and an initial durable attempt record must be persisted before submission whenever needed to make interruption/reconciliation safe. The final receipt disposition is then recorded after the host reports an outcome; a crash or transport break after submission but before a host response leaves the durable attempt in an unknown/reconcilable state.
+Phase 1.17 establishes the logical `OperationId` and the initial durable operation-attempt state required before a non-transactionally coupled host submission. Phase 1.18 completes that attempt into the durable `BusinessOperationReceipt`, records the final disposition when known, and owns unknown-outcome reconciliation. A crash or transport break after submission but before a host response therefore leaves a durable recovery anchor rather than an untracked host call.
 
 The receipt is not merely a success boolean and must not be replaced by the WorkItem status alone.
 
