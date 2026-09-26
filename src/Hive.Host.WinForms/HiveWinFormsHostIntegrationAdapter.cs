@@ -80,15 +80,42 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
         cancellationToken.ThrowIfCancellationRequested();
 
+        if (_registration.Root.IsDisposed ||
+            _registration.Root.Disposing)
+        {
+            return Result<HiveHostContextDescriptor>.Failure(
+                Error.Conflict(
+                    "hive.host.winforms.root-disposed",
+                    "The registered WinForms host is no longer available."));
+        }
+
+        if (_registration.Root.InvokeRequired)
+        {
+            return Result<HiveHostContextDescriptor>.Failure(
+                Error.Validation(
+                    "hive.host.winforms.ui-thread-required",
+                    "WinForms host capture must run on the UI thread."));
+        }
+
         var snapshot = await _context
             .CaptureAsync(_registration, cancellationToken)
-            .ConfigureAwait(false);
+            .ConfigureAwait(true);
 
         if (snapshot.IsFailure)
             return Result<HiveHostContextDescriptor>.Failure(snapshot.Error!);
 
         try
         {
+            if (_registration.Root.IsDisposed ||
+                _registration.Root.Disposing ||
+                _registration.Root.InvokeRequired)
+            {
+                return Result<HiveHostContextDescriptor>.Failure(
+                    Error.Validation(
+                        "hive.host.winforms.ui-thread-required",
+                        "WinForms host capture must run on the UI thread."));
+            }
+
             var capturedControls =
                 new List<(HiveWinFormsControlSnapshot Snapshot, Control Control)>(
                     snapshot.Value!.Controls.Count);
