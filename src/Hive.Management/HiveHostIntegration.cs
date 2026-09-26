@@ -134,6 +134,8 @@ public sealed class HiveHostIntegrationService : IHiveHostIntegrationService
         if (authorization.IsFailure)
             return Result<IReadOnlyList<HiveLookupOption>>.Failure(authorization.Error!);
 
+        cancellationToken.ThrowIfCancellationRequested();
+
         return await adapter
             .ResolveLookupAsync(request, accessContext, cancellationToken)
             .ConfigureAwait(false);
@@ -169,6 +171,8 @@ public sealed class HiveHostIntegrationService : IHiveHostIntegrationService
 
         if (context.IsFailure)
             return Result<HiveBusinessOperationComposition>.Failure(context.Error!);
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         var matchingOperations = context.Value!.BusinessOperations
             .Where(operation =>
