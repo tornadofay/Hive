@@ -256,7 +256,7 @@ Hive persists only the minimum bounded evidence needed to explain and audit the 
 ### 4.1.7 V1 implementation boundary
 
 
-Phase 1.14 establishes the extension/adapter and interaction contracts. Phase 1.17 establishes the governed business-operation proposal, authorization/approval, consequential host write, and the initial durable operation-attempt safety boundary. Phase 1.18 establishes the durable operation receipt, unknown-outcome reconciliation, and first-class Review.
+Phase 1.14 establishes the extension/adapter and interaction contracts. Phase 1.17 establishes the governed business-operation proposal, authorization/approval, consequential host write, and the initial durable operation-attempt safety boundary. Phase 1.18 establishes the durable operation receipt and unknown-outcome reconciliation. Phase 1.19 establishes first-class Review.
 
 
 Phase 1.15 and 1.16 establish input preparation/routing and structured candidate extraction/validation respectively. Vision is one possible input capability; structured spreadsheet input may bypass vision. Parent/child candidate data is added only when the actual V1 operation requires it.
