@@ -12,7 +12,7 @@ Last updated: 2026-09-26
   - **Boundary Implementation Concentration corrective refactor:** Complete and verified on 2026-09-26. [Verification record](verification/phase-1/1.14-boundary-concentration-corrective-refactor-2026-09-26.md)
   - **Production Lifecycle & Failure-Boundary Corrections:** Complete and verified on 2026-09-26. [Verification record](verification/phase-1/production-lifecycle-failure-boundary-corrections-2026-09-26.md)
   - **Maintenance — UI:** Complete and verified on 2026-09-26. Final developer verification: `Hive.Tests` 322/322 passed, with manual confirmation that the Example host runs correctly and the affected UI looks good. [Verification record](verification/maintenance/ui-2026-09-26.md)
-  - **1.15 — Input Preparation & Routing:** In progress. Started on 2026-09-26 by explicit roadmap authorization; implementation is in progress and verification is pending.
+  - **1.15 — Input Preparation & Routing:** Complete and verified on 2026-09-26. Developer verification: exact Example Host scenario confirmed the image and spreadsheet preparation/routing boundary with isolated unsupported input handling; the full `Hive.Tests` suite passed 333/333.
   - **1.16+:** Not authorized.
   
 Historical verification records are maintained under [`docs/verification/`](verification/).
