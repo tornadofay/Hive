@@ -341,11 +341,6 @@ internal sealed class HiveCrudPageListController<TItem>
                 : "No items match the current filters.";
     }
 
-    private void UpdateStatusSummary()
-    {
-        RebuildItems();
-    }
-
     private static string BuildStatusText(
         int totalCount,
         int visibleCount,
