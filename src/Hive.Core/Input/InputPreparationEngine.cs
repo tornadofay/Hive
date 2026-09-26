@@ -483,12 +483,28 @@ public static class InputPreparationEngine
                     "Worksheet row numbers must increase in document order.");
             }
 
-            var cells = ReadCells(
-                row,
-                sharedStrings);
-
-            normalizedRows.Add((rowNumber, cells));
             lastRowNumber = rowNumber;
+
+            try
+            {
+                var cells = ReadCells(
+                    row,
+                    sharedStrings);
+
+                normalizedRows.Add((rowNumber, cells));
+            }
+            catch (SpreadsheetRowException exception)
+            {
+                failures.Add(
+                    new InputPreparationFailure(
+                        itemIndex,
+                        item.FileName,
+                        worksheetName + "!" + rowNumber,
+                        new Error(
+                            exception.Code,
+                            ErrorCategory.Validation,
+                            exception.Message)));
+            }
         }
 
         var header = normalizedRows.FirstOrDefault(
