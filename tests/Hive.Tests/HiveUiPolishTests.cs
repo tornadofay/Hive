@@ -115,6 +115,33 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
+    public void HiveEditorLayout_ClearFieldsDisposesOwnedEditors()
+    {
+        using var layout = new HiveEditorLayout();
+        var editor = new TextBox();
+
+        layout.AddField("Name", "Name.", editor);
+        layout.ClearFields();
+
+        Assert.True(editor.IsDisposed);
+    }
+
+    [Fact]
+    public void HiveListPageLayout_SetContentDisposesPreviousContent()
+    {
+        using var layout = new HiveListPageLayout();
+        var first = new Panel();
+        var second = new Panel();
+
+        layout.SetContent(first);
+        layout.SetContent(second);
+
+        Assert.True(first.IsDisposed);
+        Assert.False(second.IsDisposed);
+        Assert.Same(second, layout.ContentPanel.Controls[0]);
+    }
+
+    [Fact]
     public void HiveEditorLayout_PreservesFullHeightForMultilineEditors()
     {
         using var layout = new HiveEditorLayout();
