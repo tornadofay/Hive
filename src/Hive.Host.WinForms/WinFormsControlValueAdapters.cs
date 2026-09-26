@@ -83,13 +83,13 @@ internal sealed class TextBoxValueAdapter : IWinFormsControlValueAdapter
     {
         if (control is TextBox passwordTextBox &&
             (passwordTextBox.UseSystemPasswordChar ||
-             passwordTextBox.PasswordChar != '\\0'))
+             passwordTextBox.PasswordChar != '\0'))
         {
             return null;
         }
 
         if (control is MaskedTextBox maskedTextBox &&
-            maskedTextBox.PasswordChar != '\\0')
+            maskedTextBox.PasswordChar != '\0')
         {
             return null;
         }
@@ -135,7 +135,7 @@ internal sealed class TextBoxValueAdapter : IWinFormsControlValueAdapter
 
         if (control is TextBox password &&
             (password.UseSystemPasswordChar ||
-             password.PasswordChar != '\\0'))
+             password.PasswordChar != '\0'))
         {
             return Result<HiveHostInteractionResult>.Failure(
                 Error.Unsupported(
