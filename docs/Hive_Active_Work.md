@@ -22,13 +22,11 @@ Bounded corrective maintenance slice. This work removes duplicated scope/access 
 
 ## Checkpoint
 
-Developer verification exposed compile errors in the new common helper and AgentDefinition store. Remediation is limited to restoring the helper dependencies removed during this slice; no contract or schema change is authorized.
-
-Implementation before verification had centralized the duplicated scope-access predicate and JSON metadata serialization/deserialization in one internal helper used by the existing provider base and both affected public stores. The duplicated scope-access predicate and JSON metadata serialization/deserialization now have one internal implementation used by the existing provider base and both affected public stores. No public store type was changed to inherit from the internal SQL base, avoiding a public API expansion.
+Revision complete. The duplicated scope-access predicate, access-parameter construction, and common metadata JSON serialization/deserialization now have one internal implementation used by the existing provider base and both affected public stores. Public SqlWorkItemResourceStore and SqlAgentDefinitionResourceStore types remain unchanged and do not inherit from the internal SQL base, avoiding a public API expansion. The revision also preserves the resource-specific metadata-deserialization diagnostic messages that existed before this slice.
 
 ## Verification gate
 
-A developer verification failure was recorded for missing `GuidParameter` / `IntParameter` in `SqlResourceStoreCommon` and missing `ConcurrencyException` / `IsConstraintConflict` in `SqlAgentDefinitionResourceStore`. Same-slice remediation restored those helper dependencies. The affected files were re-inspected after remediation; no automated build or tests were run by the agent. Developer verification is required before closure.
+A developer verification failure was recorded for missing `GuidParameter` / `IntParameter` in `SqlResourceStoreCommon` and missing `ConcurrencyException` / `IsConstraintConflict` in `SqlAgentDefinitionResourceStore`. Same-slice remediation restored those helper dependencies. A subsequent revision also restored the pre-slice resource-specific metadata-deserialization diagnostics. The affected files were re-inspected after remediation; no automated build or tests were run by the agent. Required developer test verification is still required before closure.
 
 ## Example to run
 
