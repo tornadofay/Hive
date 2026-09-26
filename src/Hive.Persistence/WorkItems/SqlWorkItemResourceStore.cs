@@ -30,9 +30,6 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         [AttachmentSha256]
         """;
 
-    private static readonly JsonSerializerOptions JsonOptions =
-        new(JsonSerializerDefaults.General);
-
     private readonly HiveDatabaseOptions _options;
     private readonly SqlEventPersistenceStore _eventStore;
 
@@ -188,14 +185,14 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                 SELECT {WorkItemColumns}
                 FROM [dbo].[HiveWorkItems]
                 WHERE [OwnerPrincipalId] = @PrincipalId
-                  AND {ScopeAccessPredicate}
+                  AND {SqlResourceStoreCommon.ScopeAccessPredicate}
                 {(includeRetired
                     ? string.Empty
                     : "AND [LifecycleStatus] <> @RetiredLifecycle")}
                 ORDER BY [CreatedAtUtc] DESC, [WorkItemId];
                 """);
 
-            AddAccessParameters(command, accessContext);
+            SqlResourceStoreCommon.AddAccessParameters(command, accessContext);
 
             if (!includeRetired)
             {
@@ -712,10 +709,8 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                 "Persisted WorkItem lifecycle or status is invalid.");
         }
 
-        var metadata = JsonSerializer.Deserialize<Dictionary<string, string>>(
-            reader.GetString(reader.GetOrdinal("MetadataJson")),
-            JsonOptions) ?? throw new InvalidOperationException(
-                "Persisted WorkItem metadata is invalid.");
+        var metadata = SqlResourceStoreCommon.DeserializeMetadata(
+            reader.GetString(reader.GetOrdinal("MetadataJson")));
 
         WorkItemAttachmentMetadata? attachment = null;
 
@@ -778,7 +773,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                 workItem.Id.Value),
             workItem.Resource.Version,
             new EventPayloadVersion(1),
-            JsonSerializer.SerializeToElement(document, JsonOptions));
+            JsonSerializer.SerializeToElement(document, SqlResourceStoreCommon.JsonOptions));
     }
 
     private static EventEnvelope CreateEvent(
@@ -902,9 +897,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
             TextParameter(
                 "@MetadataJson",
                 -1,
-                JsonSerializer.Serialize(
-                    resource.Metadata,
-                    JsonOptions)));
+                SqlResourceStoreCommon.SerializeMetadata(resource.Metadata)));
 
         command.Parameters.Add(
             TextParameter(
@@ -926,66 +919,6 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                 64,
                 workItem.Attachment?.Sha256));
     }
-
-    private static void AddAccessParameters(
-        SqlCommand command,
-        ResourceAccessContext accessContext)
-    {
-        command.Parameters.Add(
-            GuidParameter(
-                "@PrincipalId",
-                accessContext.PrincipalId!.Value.Value));
-        command.Parameters.Add(
-            GuidParameter("@TenantId", accessContext.TenantId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@UserId", accessContext.UserId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@WorkspaceId", accessContext.WorkspaceId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@AgentId", accessContext.AgentId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@RuntimeId", accessContext.RuntimeId?.Value));
-        command.Parameters.Add(
-            GuidParameter("@ExecutionId", accessContext.ExecutionId?.Value));
-        command.Parameters.Add(
-            IntParameter("@GlobalScope", (int)ResourceScopeKind.Global));
-        command.Parameters.Add(
-            IntParameter("@TenantScope", (int)ResourceScopeKind.Tenant));
-        command.Parameters.Add(
-            IntParameter("@UserScope", (int)ResourceScopeKind.User));
-        command.Parameters.Add(
-            IntParameter("@WorkspaceScope", (int)ResourceScopeKind.Workspace));
-        command.Parameters.Add(
-            IntParameter("@AgentScope", (int)ResourceScopeKind.Agent));
-        command.Parameters.Add(
-            IntParameter("@RuntimeScope", (int)ResourceScopeKind.Runtime));
-        command.Parameters.Add(
-            IntParameter("@ExecutionScope", (int)ResourceScopeKind.Execution));
-    }
-
-    private const string ScopeAccessPredicate = """
-        (
-            [ScopeKind] = @GlobalScope
-            OR ([ScopeKind] = @TenantScope
-                AND @TenantId IS NOT NULL
-                AND [ScopeIdentity] = @TenantId)
-            OR ([ScopeKind] = @UserScope
-                AND @UserId IS NOT NULL
-                AND [ScopeIdentity] = @UserId)
-            OR ([ScopeKind] = @WorkspaceScope
-                AND @WorkspaceId IS NOT NULL
-                AND [ScopeIdentity] = @WorkspaceId)
-            OR ([ScopeKind] = @AgentScope
-                AND @AgentId IS NOT NULL
-                AND [ScopeIdentity] = @AgentId)
-            OR ([ScopeKind] = @RuntimeScope
-                AND @RuntimeId IS NOT NULL
-                AND [ScopeIdentity] = @RuntimeId)
-            OR ([ScopeKind] = @ExecutionScope
-                AND @ExecutionId IS NOT NULL
-                AND [ScopeIdentity] = @ExecutionId)
-        )
-        """;
 
     private static ResourceScope CreateScope(ResourceAccessContext context)
     {
