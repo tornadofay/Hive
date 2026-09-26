@@ -107,8 +107,15 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         try
         {
             if (_registration.Root.IsDisposed ||
-                _registration.Root.Disposing ||
-                _registration.Root.InvokeRequired)
+                _registration.Root.Disposing)
+            {
+                return Result<HiveHostContextDescriptor>.Failure(
+                    Error.Conflict(
+                        "hive.host.winforms.root-disposed",
+                        "The registered WinForms host is no longer available."));
+            }
+
+            if (_registration.Root.InvokeRequired)
             {
                 return Result<HiveHostContextDescriptor>.Failure(
                     Error.Validation(
