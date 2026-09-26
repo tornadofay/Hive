@@ -26,18 +26,19 @@ Reduce implementation-responsibility concentration in those three classes while 
 
 ## Verification
 
-**Status: VERIFICATION FAILED / REMEDIATION REQUIRED**
+**Status: VERIFICATION PENDING**
 
-Developer provided the current compiler diagnostics. The reported failures remain within the same corrective refactor boundary and identify concrete residual defects in the extracted CRUD, persistence, and Management implementations.
+Developer supplied the compiler diagnostics for the prior remediation pass. Same-slice remediation corrected the reported root causes:
+- removed the duplicated legacy `HiveCrudPage<TItem>` member/state block and routed operation calls through the extracted controller;
+- restored `ReadExecutionTarget` and `AddExecutionTargetParameters` in `SqlExecutionTargetStore`;
+- restored the three-argument `SqlParameter` helper overload;
+- made extracted controller `Dispose()` implementations public for `IDisposable`;
+- restored the `Hive.Coordination` namespace import for `AgentExecutionService` / `AgentExecutionResult`;
+- restored the nullable-safe CRUD disposal/status callbacks.
 
-The reported diagnostics include:
-- duplicated legacy `HiveCrudPage<TItem>` members and page-local state left behind after extraction;
-- a missing `ReadExecutionTarget` and `AddExecutionTargetParameters`;
-- `SqlParameter` call sites still using the old three-argument shape;
-- `IDisposable.Dispose()` accessibility on extracted controllers;
-- `AgentExecutionService` / `AgentExecutionResult` type resolution in `HiveAgentManagementService`.
+Source-level re-audit after remediation found no remaining malformed field declarations in the affected refactor files, no duplicate CRUD public members beyond intentional `SetColumns`/`SetStatus` overloads, no residual page references to extracted private list/operation state, no local duplicate lifecycle/read helpers in the execution-target store, and the required management execution types resolve to `Hive.Coordination` by repository inspection.
 
-Same-slice remediation is authorized only for these concrete defects and their directly required supporting corrections.
+No build or test was run by the agent.
 
 Required developer verification:
 
