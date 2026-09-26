@@ -49,6 +49,9 @@ Complete within the authorized scope.
 - `HiveHostServiceGraphFactory` releases the management facade if graph construction fails before ownership transfers to the graph.
 - `HiveCrudPageOperationController` isolates exceptions thrown by `OperationFailed` observers so the original operation failure remains contained.
 - Added deterministic regression coverage for the host publish/dispose race, management disposal during an in-flight configuration mutation, and CRUD failure-observer exceptions.
+- Revision pass found that a waiter already counted as an active mutation could acquire the semaphore after service disposal; `EnterMutationAsync` now rechecks disposal after acquisition, releases the gate safely, and rejects that waiter.
+- Revision pass strengthened CRUD failure notification so each subscriber is isolated individually; one throwing observer no longer suppresses later observers.
+- The host-composition lifecycle correction was re-audited for disposal during previous-graph teardown and for candidate ownership cleanup.
 
 ## Verification
 
