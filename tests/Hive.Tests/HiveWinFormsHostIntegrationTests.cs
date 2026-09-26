@@ -533,6 +533,25 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task Capture_FromBackgroundThread_IsRejectedBeforeHostTraversal()
+    {
+        using var form = CreateFixtureForm();
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+        _ = form.Handle;
+
+        var result = await Task.Run(
+            () => adapter.CaptureAsync(accessContext));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.ui-thread-required",
+            result.Error!.Code);
+    }
+
+    [Fact]
     public async Task Cancellation_IsCheckedBeforeCapture()
     {
         using var form = CreateFixtureForm();
