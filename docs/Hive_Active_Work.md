@@ -2,10 +2,6 @@
 
 Status: VERIFICATION PENDING
 
-## Remediation
-
-Restored the pre-existing `CreateCapability`, `CreateCapabilityId`, and `TryGetBoundRowCount` helpers to `HiveWinFormsHostIntegrationAdapter`. The helpers retain their prior behavior and remain outside the extracted standard-control value adaptation boundary. Developer compilation/test verification is still required.
-
 ## Current slice
 
 **Maintenance — Host/UI: WinForms Standard Control Value Adaptation Refactor**
@@ -32,7 +28,7 @@ Bounded corrective maintenance. Extract the existing standard WinForms control v
 
 ## Remediation
 
-Corrected the concrete adapter declarations so all five control-family adapters override the five abstract members on `WinFormsControlValueAdapterBase`. No behavior, contract, capability identity, or scope changes were made. Developer compilation/test verification is still required.
+Corrected the concrete adapter declarations so all five control-family adapters override the five abstract members on `WinFormsControlValueAdapterBase`. Restored the pre-existing `CreateCapability`, `CreateCapabilityId`, and `TryGetBoundRowCount` helpers to `HiveWinFormsHostIntegrationAdapter` with their prior behavior. No public contract, capability identity, authorization, discovery, lifecycle, or scope change was introduced. Developer compilation/test verification is still required.
 
 ## Checkpoint
 
