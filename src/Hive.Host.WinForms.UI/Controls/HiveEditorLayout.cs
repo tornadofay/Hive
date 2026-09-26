@@ -188,11 +188,16 @@ public sealed class HiveEditorLayout : UserControl
 
     public void ClearFields()
     {
+        var existing = _fields.Controls.Cast<Control>().ToArray();
+
         _fields.Controls.Clear();
         _fields.RowStyles.Clear();
         _fields.RowCount = 0;
         _descriptionLabels.Clear();
         _titleLabels.Clear();
+
+        foreach (var control in existing)
+            control.Dispose();
     }
 
     public void AddField(
