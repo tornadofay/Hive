@@ -106,7 +106,7 @@ The Phase 1.14 public contract family must support at least:
 - bounded interaction operations;
 - business-operation capability boundaries needed for API/UI composition.
 
-Durable business-operation receipts are owned by Phase 1.18 and first-class Review records are owned by Phase 1.19. Their semantics are defined in Sections 12–13 so the earlier host-integration contracts do not have to be redesigned later.
+Durable business-operation receipts are owned by Phase 1.22 and first-class Review records are owned by Phase 1.23. Their semantics are defined in Sections 12–13 so the earlier host-integration contracts do not have to be redesigned later.
 
 These contracts must not expose:
 
@@ -499,7 +499,7 @@ Hive does not authorize a raw control click merely because the model requested o
 
 Every consequential operation attempt that is submitted to the host boundary must have durable attempt/receipt evidence, including successful, rejected-before-mutation, partially applied, known-failed, and unknown outcomes.
 
-Phase 1.17 establishes the logical `OperationId` and the initial durable operation-attempt state required before a non-transactionally coupled host submission. Phase 1.18 completes that attempt into the durable `BusinessOperationReceipt`, records the final disposition when known, and owns unknown-outcome reconciliation. A crash or transport break after submission but before a host response therefore leaves a durable recovery anchor rather than an untracked host call.
+Phase 1.21 establishes the logical `OperationId` and the initial durable operation-attempt state required before a non-transactionally coupled host submission. Phase 1.22 completes that attempt into the durable `BusinessOperationReceipt`, records the final disposition when known, and owns unknown-outcome reconciliation. A crash or transport break after submission but before a host response therefore leaves a durable recovery anchor rather than an untracked host call.
 
 The receipt is not merely a success boolean and must not be replaced by the WorkItem status alone.
 
@@ -1027,27 +1027,59 @@ This architecture does not authorize:
     spreadsheet → structured row mapping
 
 1.16
+    provider/model capability discovery
+    provider/model operational metadata
+    capability normalization
+    health/availability and stale metadata handling
+
+1.17
     structured candidate extraction and validation
     (parent/child candidate structure only where the V1 operation requires it)
 
-1.17
+1.18
+    durable Base-Agent work state
+    base-Agent memory/Question/Objective persistence
+    V1 vector storage and retrieval infrastructure
+
+1.19
+    V1 Workspace
+    direct LLM and Agent interaction
+    application-wide and specialized Agent usage
+
+1.20
+    governed Tools
+    policy/permissions
+    authorization
+    human intervention
+
+1.21
     business write
     operation proposal
     authorization / approval
     initial durable operation-attempt boundary
 
-1.18
+1.22
     durable business-operation receipt
     unknown-outcome reconciliation
+
+1.23
     first-class post-write Review
 
-1.19
+1.24
+    multi-Agent work assignment
+    concurrent independent Agent execution
+
+1.25
     MAF Sequential composition of the V1 pipeline
 
-1.20
-    full-pipeline crash/recovery including write receipt/review recovery
+1.26
+    full-pipeline crash/recovery including durable Agent work state and write receipt/review recovery
 
-1.21
+1.27
+    resource inventory
+    runtime/execution diagnostics
+
+1.28
     metrics
     budget cap
     OpenTelemetry
