@@ -544,6 +544,49 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task ExecuteInteraction_RejectsNumericOutsideHostRangeWithoutChangingValue()
+    {
+        using var form = new Form();
+        var numeric = new NumericUpDown
+        {
+            Name = "amount",
+            Minimum = 0,
+            Maximum = 100,
+            Value = 25
+        };
+        form.Controls.Add(numeric);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var control = descriptor.Controls.Single(item => item.Name == "amount");
+        var capability = control.Capabilities.Single(item =>
+            item.Kind == HiveHostCapabilityKind.SetControlValue);
+
+        var service = new HiveHostIntegrationService(
+            new AllowAllAuthorizer());
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                capability.Id,
+                HiveHostInteractionKind.SetControlValue,
+                CorrelationId.New(),
+                controlId: control.Id,
+                value: HiveHostValue.FromDecimal(101m)),
+            accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.numeric-range-invalid",
+            result.Error!.Code);
+        Assert.Equal(25m, numeric.Value);
+    }
+
+    [Fact]
     public async Task PasswordControl_IsNeverExposedAsValue()
     {
         using var form = CreateFixtureForm();
