@@ -33,7 +33,8 @@ Correct only the concrete production issues identified by the repository review 
 - Settings page initialization now tracks in-flight initialization tasks so a cancelled initialization can be retried when the user navigates back before the previous operation has unwound.
 - Host composition disposal no longer synchronously waits on the async reconfiguration gate.
 - Host composition publication is state-gated so disposal cannot publish a late candidate, and a cancelled/unpublishable candidate is disposed.
-- Focused regression coverage was added for the UI-thread boundary, Settings navigation retry, active composition disposal, and late candidate cleanup.
+- Late composition failures cannot overwrite the terminal Disposed status.
+- Focused regression coverage was added for the UI-thread boundary, Settings navigation retry, active composition disposal, late candidate cleanup, and late failure-state protection.
 
 ### Review disposition
 
