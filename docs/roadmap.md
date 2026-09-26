@@ -544,49 +544,8 @@ Verify:
 - review does not mutate the original candidate;
 - authorization and provenance remain enforced.
 
-## 1.24 — Multi-Agent Work Assignment & Concurrent Execution
-Objective: allow multiple independent Agents to perform work concurrently inside one host application without requiring persistent Hive membership or Swarm state.
-
-Scope:
-- assign WorkItems/jobs to specific Agent instances;
-- application-wide Manager Agent may coordinate assignment through authorized mechanisms;
-- specialized Agents can own and execute their own WorkItems;
-- multiple Agent runtimes may execute concurrently;
-- independent WorkItem queues/assignment state;
-- independent cancellation;
-- independent failure/retry;
-- bounded host-form/context association;
-- multiple different forms may have different specialized Agents active simultaneously;
-- execution/provider/resource policy remains authoritative;
-- Agent identities and WorkItem identities remain separate;
-- concurrency and isolation are explicit;
-- no persistent Hive membership;
-- no Swarm resource.
-
-Example:
-
-```text
-Manager Agent
-      │
-      ├── Invoice Agent A → Invoice Form A → WorkItem 1
-      ├── Invoice Agent B → Invoice Form B → WorkItem 2
-      └── Customer Agent  → Customer Form  → WorkItem 3
-
-all may run concurrently
-```
-
-Verify:
-- multiple Agents operating simultaneously;
-- different forms/contexts;
-- independent WorkItems;
-- failure isolation;
-- cancellation isolation;
-- provider/target selection isolation;
-- no accidental shared runtime state;
-- no implicit Hive/Swarm creation.
-
-## 1.25 — MAF Sequential V1 Pipeline
-Objective: compose the complete V1 business workflow through MAF Sequential orchestration.
+## 1.24 — MAF Sequential V1 Pipeline
+Objective: compose the complete single-Agent V1 business workflow through MAF Sequential orchestration before introducing application-level concurrent Agent assignment.
 
 ```text
 Submission
@@ -612,7 +571,48 @@ Post-write Review
 
 MAF owns orchestration where applicable; Hive retains ownership of identity, authorization, host semantics, receipts, reconciliation, Review, and resource governance.
 
-Verify: complete deterministic fake-host end-to-end path.
+Verify: complete deterministic fake-host end-to-end path with one Agent, covering successful and rejected/failed branches.
+
+## 1.25 — Multi-Agent Work Assignment & Concurrent Execution
+Objective: allow multiple independent Agents to perform the established V1 workflow concurrently inside one host application without requiring persistent Hive membership or Swarm state.
+
+Scope:
+- assign WorkItems/jobs to specific Agent instances;
+- application-wide Manager Agent may coordinate assignment through authorized mechanisms;
+- specialized Agents can own and execute their own WorkItems;
+- multiple Agent runtimes may execute concurrently using the established V1 MAF workflow;
+- independent WorkItem queues/assignment state;
+- independent cancellation;
+- independent failure/retry;
+- bounded host-form/context association;
+- multiple different forms may have different specialized Agents active simultaneously;
+- execution/provider/resource policy remains authoritative;
+- Agent identities and WorkItem identities remain separate;
+- concurrency and isolation are explicit;
+- no persistent Hive membership;
+- no Swarm resource.
+
+Example:
+
+```text
+Manager Agent
+      │
+      ├── Invoice Agent A → Invoice Form A → WorkItem 1
+      ├── Invoice Agent B → Invoice Form B → WorkItem 2
+      └── Customer Agent  → Customer Form  → WorkItem 3
+
+all may run concurrently
+```
+
+Verify:
+- multiple Agents operating simultaneously through the established V1 workflow;
+- different forms/contexts;
+- independent WorkItems;
+- failure isolation;
+- cancellation isolation;
+- provider/target selection isolation;
+- no accidental shared runtime state;
+- no implicit Hive/Swarm creation.
 
 ## 1.26 — Full-Pipeline Crash/Resume
 Objective: prove recovery across the complete V1 workflow, including WorkItem, runtime/execution, durable Base-Agent work state, operation-attempt, receipt, reconciliation, multiple-Agent, and Review recovery.
