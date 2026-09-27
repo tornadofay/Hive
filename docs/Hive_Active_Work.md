@@ -42,7 +42,7 @@ Correct the four concrete production findings identified in the 2026-09-27 repos
 - No branch/PR creation.
 
 ## Verification Gate
-VERIFICATION PENDING — revision remediation is complete: the original HiveHostFieldDescriptor constructor signature is preserved through an overload, sensitive-field architecture wording now matches passive host-context/captured-value behavior, and contract regression coverage verifies both constructor shapes and legacy value preservation. Developer must rerun the focused tests and full Hive.Tests suite before slice closure.
+VERIFICATION FAILED / REMEDIATION REQUIRED — second revision found three in-scope completeness issues before developer verification: architecture revision metadata is stale, public WinForms control documentation omits the new Sensitive field metadata, and prepared spreadsheet output remains unbounded across multiple spreadsheet items in one InputSubmission. Remediation is limited to correcting those documentation gaps and adding a submission-wide prepared-output budget with focused regression coverage. Return to VERIFICATION PENDING after remediation.
 
 ## Handoff
 Example to run: existing host/integration examples are unchanged by this maintenance slice; no new externally meaningful capability is introduced.
