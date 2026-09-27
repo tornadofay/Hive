@@ -199,10 +199,12 @@ internal sealed class HiveWorkspaceExampleView : UserControl
         }
         catch (Exception exception)
         {
-            HiveMessageBox.ShowError(
+            HiveUiErrorReporter.Report(
                 FindForm(),
-                exception.Message,
+                exception,
                 "Workspace example failed",
+                "The workspace example operation could not be completed.",
+                null,
                 _services.GetThemeManager());
         }
     }
