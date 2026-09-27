@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Current slice: Maintenance — Host/UI: Host Integration Contract Corrections
 
@@ -56,7 +56,17 @@ Verification target:
 - Full Hive.Tests suite.
 - Existing relevant Hive.Example.WinForms host-integration scenario/manual launch.
 
+Developer verification failure:
+- The rerun of the full `Hive.Tests` suite completed with 372 tests: 371 passed, 1 failed.
+- `HiveWinFormsHostIntegrationTests.AdapterLowLevelOperationsAreExplicitInterfaceImplementations` failed because the regression asserted the C# property name `AdapterId` against `Type.GetMethods(...)`, where the public property is represented by its accessor method name `get_AdapterId`.
+- The failure remains confined to the same explicit-interface API-shape regression.
+
+Remediation required:
+- Replace the public `AdapterId` method-name assertion with a direct public-instance-property assertion for `AdapterId`.
+- Preserve the existing assertions that the three low-level operations are absent from the public method surface and are private explicit-interface targets.
+- Return this document to `VERIFICATION PENDING` after the corrective test change.
+
 Agent verification:
 - Static repository/source review completed after the reported failure.
 - Builds, tests, and manual Example Host execution were not run by the agent.
-- Developer-reported 371/372 result is recorded as a remediated verification failure; developer re-verification is still required.
+- Developer-reported 371/372 result is recorded as the current verification failure.
