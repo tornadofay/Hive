@@ -36,7 +36,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     private readonly IHiveWinFormsSemanticProvider? _semanticProvider;
     private readonly HiveWinFormsHostContextOptions _options;
     private readonly object _captureGate = new();
-    private Guid? _currentCaptureId;
+    private HiveHostContextDescriptor? _currentCapture;
     private int _disposed;
 
     public HiveWinFormsHostIntegrationAdapter(
@@ -226,7 +226,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
             lock (_captureGate)
             {
-                _currentCaptureId = descriptor.Provenance.CaptureId;
+                _currentCapture = descriptor;
             }
 
             return Result<HiveHostContextDescriptor>.Success(descriptor);
@@ -268,9 +268,12 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        var captureValidation = ValidateCaptureBinding(request);
-        if (captureValidation is not null)
-            return Result<HiveHostInteractionResult>.Failure(captureValidation);
+        if (RequiresFreshCapture(request.Kind))
+        {
+            var captureValidation = ValidateCaptureBinding(request);
+            if (captureValidation is not null)
+                return Result<HiveHostInteractionResult>.Failure(captureValidation);
+        }
 
         if (request.Kind is
             HiveHostInteractionKind.ReadRow or
@@ -463,31 +466,122 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     private Error? ValidateCaptureBinding(
         HiveHostInteractionRequest request)
     {
-        var captureId = request.CaptureId;
-        if (captureId is null)
+        if (request.CaptureId is not { } captureId)
+        {
             return Error.Validation(
                 "hive.host.winforms.capture-required",
                 "A host capture identity is required for consequential interaction.");
-
-        Guid? currentCaptureId;
-        lock (_captureGate)
-        {
-            currentCaptureId = _currentCaptureId;
         }
 
-        if (currentCaptureId is null)
+        HiveHostContextDescriptor? currentCapture;
+        lock (_captureGate)
+        {
+            currentCapture = _currentCapture;
+        }
+
+        if (currentCapture is null)
         {
             return Error.Conflict(
                 "hive.host.winforms.capture-unavailable",
                 "No host capture is available for the requested interaction.");
         }
 
-        return currentCaptureId == captureId.Value
-            ? null
-            : Error.Conflict(
+        if (currentCapture.Provenance.CaptureId != captureId)
+        {
+            return Error.Conflict(
                 "hive.host.winforms.capture-stale",
                 "The requested host interaction was created from a stale host capture.");
+        }
+
+        var capabilityKind = request.Kind switch
+        {
+            HiveHostInteractionKind.SetControlValue =>
+                HiveHostCapabilityKind.SetControlValue,
+            HiveHostInteractionKind.ReadRow =>
+                HiveHostCapabilityKind.ReadRow,
+            HiveHostInteractionKind.AddRow =>
+                HiveHostCapabilityKind.AddRow,
+            HiveHostInteractionKind.EditRow =>
+                HiveHostCapabilityKind.EditRow,
+            HiveHostInteractionKind.DeleteRow =>
+                HiveHostCapabilityKind.DeleteRow,
+            HiveHostInteractionKind.InvokeAction =>
+                HiveHostCapabilityKind.InvokeAction,
+            _ => throw new InvalidOperationException(
+                "The interaction does not require a fresh capture.")
+        };
+
+        HiveHostCapabilityDescriptor? capability = null;
+
+        if (request.Kind == HiveHostInteractionKind.SetControlValue)
+        {
+            capability = currentCapture.Controls
+                .Where(control =>
+                    string.Equals(
+                        control.Id,
+                        request.ControlId,
+                        StringComparison.Ordinal))
+                .SelectMany(control => control.Capabilities)
+                .SingleOrDefault(candidate =>
+                    candidate.Id == request.CapabilityId &&
+                    candidate.Kind == capabilityKind);
+        }
+        else if (request.Kind is
+            HiveHostInteractionKind.ReadRow or
+            HiveHostInteractionKind.AddRow or
+            HiveHostInteractionKind.EditRow or
+            HiveHostInteractionKind.DeleteRow)
+        {
+            capability = currentCapture.DataSurfaces
+                .Where(surface =>
+                    string.Equals(
+                        surface.Id,
+                        request.SurfaceId,
+                        StringComparison.Ordinal))
+                .SelectMany(surface => surface.Capabilities)
+                .SingleOrDefault(candidate =>
+                    candidate.Id == request.CapabilityId &&
+                    candidate.Kind == capabilityKind);
+        }
+        else
+        {
+            capability = currentCapture.Controls
+                .SelectMany(control => control.Capabilities)
+                .Concat(
+                    currentCapture.DataSurfaces
+                        .SelectMany(surface => surface.Capabilities))
+                .SingleOrDefault(candidate =>
+                    candidate.Id == request.CapabilityId &&
+                    candidate.Kind == capabilityKind);
+        }
+
+        if (capability is null)
+        {
+            return new Error(
+                "hive.host.winforms.capability-mismatch",
+                ErrorCategory.Forbidden,
+                "The requested capability is not exposed by the current host capture for the supplied target.");
+        }
+
+        if (!capability.Supported)
+        {
+            return Error.Unsupported(
+                "hive.host.winforms.capability-unsupported",
+                "The requested host capability is currently unsupported.");
+        }
+
+        return null;
     }
+
+    private static bool RequiresFreshCapture(
+        HiveHostInteractionKind kind) =>
+        kind is
+            HiveHostInteractionKind.SetControlValue or
+            HiveHostInteractionKind.AddRow or
+            HiveHostInteractionKind.EditRow or
+            HiveHostInteractionKind.DeleteRow or
+            HiveHostInteractionKind.InvokeAction or
+            HiveHostInteractionKind.ReadRow;
 
     private async Task<Result<HiveHostInteractionResult>> ExecuteWithProviderAsync(
         HiveHostInteractionRequest request,
