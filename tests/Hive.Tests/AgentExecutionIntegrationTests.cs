@@ -632,6 +632,7 @@ public sealed class AgentExecutionIntegrationTests
                 "test.terminal-persistence",
                 ErrorCategory.External,
                 "synthetic ambiguous terminal persistence failure"),
+            failureAppendNumbers: [2],
             persistBeforeFailureAppendNumbers: [2]);
 
         await using var server = new LocalAgentServer(
@@ -716,7 +717,7 @@ public sealed class AgentExecutionIntegrationTests
             ["agent.execution.started", "agent.execution.succeeded", "agent.execution.succeeded"],
             store.AttemptedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
         Assert.Equal(
-            ["agent.execution.started", "agent.execution.succeeded", "agent.execution.succeeded"],
+            ["agent.execution.started", "agent.execution.succeeded"],
             store.AppendedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
     }
 
