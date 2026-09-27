@@ -28,6 +28,83 @@ public sealed class HiveHostIntegrationContractTests
         Assert.Equal(DateTimeKind.Utc, dateResult.Kind);
     }
 
+    [Theory]
+    [InlineData(DateTimeKind.Utc)]
+    [InlineData(DateTimeKind.Local)]
+    [InlineData(DateTimeKind.Unspecified)]
+    public void HostValues_DateTimeRoundTripsWithoutMachineTimezoneConversion(
+        DateTimeKind kind)
+    {
+        var value = DateTime.SpecifyKind(
+            new DateTime(2026, 9, 25, 10, 20, 30, 123, DateTimeKind.Unspecified),
+            kind);
+
+        var hostValue = HiveHostValue.FromDateTime(value);
+
+        Assert.True(hostValue.TryGetDateTime(out var result));
+        Assert.Equal(value, result);
+        Assert.Equal(kind, result.Kind);
+    }
+
+    [Fact]
+    public void HostContracts_RejectDuplicateSemanticIdentities()
+    {
+        var duplicateCapabilityId = Guid.NewGuid();
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostControlDescriptor(
+                "control:1",
+                "0/1",
+                1,
+                typeof(TextBox).FullName!,
+                "Name",
+                null,
+                true,
+                true,
+                false,
+                false,
+                null,
+                new[]
+                {
+                    new HiveHostCapabilityDescriptor(
+                        duplicateCapabilityId,
+                        HiveHostCapabilityKind.ReadControl,
+                        "Read"),
+                    new HiveHostCapabilityDescriptor(
+                        duplicateCapabilityId,
+                        HiveHostCapabilityKind.SetControlValue,
+                        "Set")
+                }));
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostDataSurfaceDescriptor(
+                "surface:1",
+                "Rows",
+                0,
+                new[]
+                {
+                    new HiveHostFieldDescriptor(
+                        "Id",
+                        "Id",
+                        typeof(long).FullName!,
+                        false,
+                        true,
+                        false,
+                        false,
+                        true),
+                    new HiveHostFieldDescriptor(
+                        "Id",
+                        "OtherId",
+                        typeof(long).FullName!,
+                        false,
+                        true,
+                        false,
+                        false,
+                        false)
+                },
+                Array.Empty<HiveHostCapabilityDescriptor>()));
+    }
+
     [Fact]
     public void RowIdentity_IsOpaqueAndIndependentFromPosition()
     {
@@ -204,6 +281,7 @@ public sealed class HiveHostIntegrationContractTests
         Assert.True(result.IsSuccess, result.Error?.Message);
         Assert.Single(result.Value!);
         Assert.Equal(10L, adapter.LastLookupCategoryId);
+        Assert.Equal("products", authorizer.LastLookupId);
     }
 
     [Fact]
@@ -359,11 +437,14 @@ public sealed class HiveHostIntegrationContractTests
 
         public int AuthorizationCalls { get; private set; }
 
+        public string? LastLookupId { get; private set; }
+
         public Result Authorize(
             HiveHostCapabilityRequest request,
             ResourceAccessContext accessContext)
         {
             AuthorizationCalls++;
+            LastLookupId = request.LookupId;
             _onAuthorize?.Invoke();
 
             return request.CapabilityId == _deniedCapabilityId
