@@ -280,7 +280,8 @@ public sealed record HiveHostFieldDescriptor
         bool generated,
         bool isPrimaryKey,
         HiveHostValue? currentValue = null,
-        HiveHostLookupDescriptor? lookup = null)
+        HiveHostLookupDescriptor? lookup = null,
+        bool sensitive = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(valueType);
@@ -296,7 +297,8 @@ public sealed record HiveHostFieldDescriptor
         Computed = computed;
         Generated = generated;
         IsPrimaryKey = isPrimaryKey;
-        CurrentValue = currentValue;
+        Sensitive = sensitive;
+        CurrentValue = sensitive ? null : currentValue;
         Lookup = lookup;
     }
 
@@ -315,6 +317,8 @@ public sealed record HiveHostFieldDescriptor
     public bool Generated { get; }
 
     public bool IsPrimaryKey { get; }
+
+    public bool Sensitive { get; }
 
     public HiveHostValue? CurrentValue { get; }
 
