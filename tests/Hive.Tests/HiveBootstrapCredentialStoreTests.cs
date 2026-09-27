@@ -123,6 +123,43 @@ public sealed class HiveBootstrapCredentialStoreTests
     }
 
     [Fact]
+    public async Task DpapiStore_CanReplaceCredentialWhileAnotherReaderAllowsDeleteSharing()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        using var storage = TemporaryDirectory.Create();
+        var store = new DpapiHiveBootstrapCredentialStore(storage.Path);
+        var reference = new HiveBootstrapCredentialReference(SecretId.New());
+
+        using var first = SecretMaterial.Create("first-secret");
+        using var second = SecretMaterial.Create("second-secret");
+
+        Assert.True(
+            (await store.SetAsync(reference, first)).IsSuccess);
+
+        var file = Assert.Single(Directory.GetFiles(storage.Path));
+
+        await using var reader = new FileStream(
+            file,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.ReadWrite | FileShare.Delete,
+            bufferSize: 4096,
+            useAsync: true);
+
+        var replaced = await store.SetAsync(reference, second);
+
+        Assert.True(replaced.IsSuccess, replaced.Error?.Message);
+
+        var resolved = await store.ResolveAsync(reference);
+        Assert.True(resolved.IsSuccess, resolved.Error?.Message);
+
+        using var resolvedMaterial = resolved.Value!;
+        Assert.Equal("second-secret", resolvedMaterial.Reveal());
+    }
+
+    [Fact]
     public async Task DpapiStore_ReportsCorruptEncryptedStateWithoutLeakingMaterial()
     {
         if (!OperatingSystem.IsWindows())
