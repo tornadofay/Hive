@@ -623,6 +623,154 @@ public sealed class AgentExecutionIntegrationTests
         Assert.Null(store.AppendedEnvelopes[0].CausationId);
     }
 
+
+    [Fact]
+    public async Task ExecuteAsync_TerminalEventPersistence_ReconcilesAlreadyPersistedFailure()
+    {
+        var store = new ScriptedStartEventStore(
+            appendFailure: new Error(
+                "test.terminal-persistence",
+                ErrorCategory.External,
+                "synthetic ambiguous terminal persistence failure"),
+            persistBeforeFailureAppendNumbers: [2]);
+
+        await using var server = new LocalAgentServer(
+            HttpStatusCode.OK,
+            """{"id":"chatcmpl-terminal-reconcile","model":"test-model","choices":[{"message":{"role":"assistant","content":"Recovered terminal reconciliation."}}]}""");
+
+        using var httpClient = new HttpClient();
+        var service = new AgentExecutionService(
+            store,
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var agent = CreateAgent(context);
+        var runtime = agent.CreateRuntimeInstance();
+        var target = CreateTarget(
+            server.BaseUri,
+            context.PrincipalId!.Value,
+            context.TenantId!.Value);
+
+        var result = await service.ExecuteAsync(
+            new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                context,
+                "Reconcile terminal persistence."));
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(
+            ["agent.execution.started", "agent.execution.succeeded"],
+            store.AttemptedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
+        Assert.Equal(
+            ["agent.execution.started", "agent.execution.succeeded"],
+            store.AppendedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_TerminalEventPersistence_RecoversFromSingleFailure()
+    {
+        var store = new ScriptedStartEventStore(
+            appendFailure: new Error(
+                "test.terminal-persistence",
+                ErrorCategory.External,
+                "synthetic terminal persistence failure"),
+            failureAppendNumbers: [2]);
+
+        await using var server = new LocalAgentServer(
+            HttpStatusCode.OK,
+            """{"id":"chatcmpl-terminal-retry","model":"test-model","choices":[{"message":{"role":"assistant","content":"Recovered terminal persistence."}}]}""");
+
+        using var httpClient = new HttpClient();
+        var service = new AgentExecutionService(
+            store,
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var agent = CreateAgent(context);
+        var runtime = agent.CreateRuntimeInstance();
+        var target = CreateTarget(
+            server.BaseUri,
+            context.PrincipalId!.Value,
+            context.TenantId!.Value);
+
+        var result = await service.ExecuteAsync(
+            new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                context,
+                "Recover terminal persistence."));
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(
+            ["agent.execution.started", "agent.execution.succeeded", "agent.execution.succeeded"],
+            store.AttemptedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
+        Assert.Equal(
+            ["agent.execution.started", "agent.execution.succeeded", "agent.execution.succeeded"],
+            store.AppendedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_TerminalEventPersistenceFailure_ReturnsExplicitFailureAfterRetry()
+    {
+        var store = new ScriptedStartEventStore(
+            appendFailure: new Error(
+                "test.terminal-persistence",
+                ErrorCategory.External,
+                "synthetic terminal persistence failure"),
+            failureAppendNumbers: [2, 3]);
+
+        await using var server = new LocalAgentServer(
+            HttpStatusCode.OK,
+            """{"id":"chatcmpl-terminal-failure","model":"test-model","choices":[{"message":{"role":"assistant","content":"Provider completed."}}]}""");
+
+        using var httpClient = new HttpClient();
+        var service = new AgentExecutionService(
+            store,
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var agent = CreateAgent(context);
+        var runtime = agent.CreateRuntimeInstance();
+        var target = CreateTarget(
+            server.BaseUri,
+            context.PrincipalId!.Value,
+            context.TenantId!.Value);
+
+        var result = await service.ExecuteAsync(
+            new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                context,
+                "Fail terminal persistence after bounded retry."));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.agent.execution.terminal-persistence-failed",
+            result.Error!.Code);
+        Assert.Equal(
+            ["agent.execution.started", "agent.execution.succeeded", "agent.execution.succeeded"],
+            store.AttemptedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
+        Assert.Equal(
+            ["agent.execution.started"],
+            store.AppendedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
+    }
+
     [Fact]
     public async Task ExecuteAsync_TargetScopeMismatchFailsBeforeExecution()
     {
@@ -950,16 +1098,26 @@ public sealed class AgentExecutionIntegrationTests
 
     private sealed class ScriptedStartEventStore : IEventPersistenceStore
     {
-        private readonly Error? _firstAppendFailure;
+        private readonly Error? _appendFailure;
+        private readonly HashSet<int> _failureAppendNumbers;
+        private readonly HashSet<int> _persistBeforeFailureAppendNumbers;
         private readonly bool _cancellationOnFirstAppend;
         private int _appendCount;
 
         public ScriptedStartEventStore(
-            Error? firstAppendFailure = null,
-            bool cancellationOnFirstAppend = false)
+            Error? appendFailure = null,
+            bool cancellationOnFirstAppend = false,
+            IEnumerable<int>? failureAppendNumbers = null,
+            IEnumerable<int>? persistBeforeFailureAppendNumbers = null)
         {
-            _firstAppendFailure = firstAppendFailure;
+            _appendFailure = appendFailure;
             _cancellationOnFirstAppend = cancellationOnFirstAppend;
+            _failureAppendNumbers =
+                (failureAppendNumbers ?? (appendFailure is null ? [] : [1]))
+                .ToHashSet();
+            _persistBeforeFailureAppendNumbers =
+                (persistBeforeFailureAppendNumbers ?? [])
+                .ToHashSet();
         }
 
         public TaskCompletionSource<bool> FirstAppendStarted { get; } =
@@ -967,6 +1125,7 @@ public sealed class AgentExecutionIntegrationTests
 
         public List<EventEnvelope> AttemptedEnvelopes { get; } = [];
         public List<EventEnvelope> AppendedEnvelopes { get; } = [];
+        public List<PersistedEvent> AppendedEvents { get; } = [];
 
         public async Task<Result<EventAppendResult>> AppendAsync(
             EventAppendRequest request,
@@ -974,7 +1133,9 @@ public sealed class AgentExecutionIntegrationTests
         {
             AttemptedEnvelopes.Add(request.Envelope);
 
-            if (Interlocked.Increment(ref _appendCount) == 1)
+            var appendNumber = Interlocked.Increment(ref _appendCount);
+
+            if (appendNumber == 1)
             {
                 FirstAppendStarted.TrySetResult(true);
 
@@ -984,19 +1145,38 @@ public sealed class AgentExecutionIntegrationTests
                         Timeout.InfiniteTimeSpan,
                         cancellationToken);
                 }
+            }
 
-                if (_firstAppendFailure is not null)
-                    return Result<EventAppendResult>.Failure(_firstAppendFailure);
+            if (_appendFailure is not null &&
+                _failureAppendNumbers.Contains(appendNumber))
+            {
+                var persistedBeforeFailure =
+                    new PersistedEvent(
+                        request.Stream,
+                        request.StreamVersion,
+                        request.Envelope);
+
+                if (_persistBeforeFailureAppendNumbers.Contains(appendNumber))
+                {
+                    AppendedEnvelopes.Add(request.Envelope);
+                    AppendedEvents.Add(persistedBeforeFailure);
+                }
+
+                return Result<EventAppendResult>.Failure(_appendFailure);
             }
 
             AppendedEnvelopes.Add(request.Envelope);
 
+            var persisted = new PersistedEvent(
+                request.Stream,
+                request.StreamVersion,
+                request.Envelope);
+
+            AppendedEvents.Add(persisted);
+
             return Result<EventAppendResult>.Success(
                 new EventAppendResult(
-                    new PersistedEvent(
-                        request.Stream,
-                        request.StreamVersion,
-                        request.Envelope),
+                    persisted,
                     request.Snapshot,
                     new EventOutboxEntry(
                         request.Stream,
@@ -1007,8 +1187,20 @@ public sealed class AgentExecutionIntegrationTests
         public Task<Result<IReadOnlyList<PersistedEvent>>> ReadEventsAsync(
             ResourceReference stream,
             ResourceVersion? afterVersion = null,
-            CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var events = AppendedEvents
+                .Where(eventItem =>
+                    eventItem.Stream == stream &&
+                    (afterVersion is null ||
+                     eventItem.StreamVersion > afterVersion))
+                .ToArray();
+
+            return Task.FromResult(
+                Result<IReadOnlyList<PersistedEvent>>.Success(events));
+        }
 
         public Task<Result<EventSnapshot?>> GetSnapshotAsync(
             ResourceReference stream,
