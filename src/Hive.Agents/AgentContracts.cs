@@ -144,14 +144,18 @@ public enum RuntimeInstanceStatus
 
 public class Agent
 {
+    private readonly IClock _clock;
+
     protected internal Agent(
         AgentId id,
         AgentDefinition definition,
-        DateTimeOffset createdAtUtc)
+        DateTimeOffset createdAtUtc,
+        IClock? clock = null)
     {
         Id = id;
         Definition = definition ?? throw new ArgumentNullException(nameof(definition));
         CreatedAtUtc = createdAtUtc.ToUniversalTime();
+        _clock = clock ?? SystemClock.Instance;
     }
 
     public AgentId Id { get; }
@@ -170,8 +174,8 @@ public class Agent
         return RuntimeInstance.Create(
             Id,
             Generation,
-            createdAtUtc ?? DateTimeOffset.UtcNow,
-            clock,
+            createdAtUtc ?? _clock.UtcNow,
+            clock ?? _clock,
             delegation);
     }
 }
@@ -185,7 +189,8 @@ public sealed class RuntimeInstance
         RuntimeInstanceStatus status,
         DateTimeOffset createdAtUtc,
         DateTimeOffset? stoppedAtUtc,
-        RuntimeWorkProtocols workProtocols)
+        RuntimeWorkProtocols workProtocols,
+        IClock clock)
     {
         Id = id;
         AgentId = agentId;
@@ -194,6 +199,7 @@ public sealed class RuntimeInstance
         CreatedAtUtc = createdAtUtc.ToUniversalTime();
         StoppedAtUtc = stoppedAtUtc?.ToUniversalTime();
         Work = workProtocols ?? throw new ArgumentNullException(nameof(workProtocols));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     public RuntimeId Id { get; }
@@ -209,6 +215,8 @@ public sealed class RuntimeInstance
     public DateTimeOffset? StoppedAtUtc { get; }
 
     public RuntimeWorkProtocols Work { get; }
+
+    private readonly IClock _clock;
 
     public Result<Execution> StartExecution(
         DateTimeOffset? startedAtUtc = null)
@@ -226,7 +234,8 @@ public sealed class RuntimeInstance
                 Id,
                 AgentId,
                 Generation,
-                startedAtUtc ?? DateTimeOffset.UtcNow));
+                startedAtUtc ?? _clock.UtcNow,
+                _clock));
     }
 
     public Result<RuntimeInstance> Stop(
@@ -240,7 +249,7 @@ public sealed class RuntimeInstance
                     "The runtime instance is already stopped."));
         }
 
-        var stopped = stoppedAtUtc ?? DateTimeOffset.UtcNow;
+        var stopped = stoppedAtUtc ?? _clock.UtcNow;
 
         return Result<RuntimeInstance>.Success(
             new RuntimeInstance(
@@ -261,6 +270,7 @@ public sealed class RuntimeInstance
         IDelegationChannel? delegation)
     {
         var runtimeId = RuntimeId.New();
+        var effectiveClock = clock ?? SystemClock.Instance;
 
         return new RuntimeInstance(
             runtimeId,
@@ -272,8 +282,9 @@ public sealed class RuntimeInstance
             new RuntimeWorkProtocols(
                 agentId,
                 runtimeId,
-                clock,
-                delegation));
+                effectiveClock,
+                delegation),
+            effectiveClock);
     }
 }
 
@@ -294,7 +305,8 @@ public sealed class Execution
         AgentGeneration generation,
         ExecutionStatus status,
         DateTimeOffset startedAtUtc,
-        DateTimeOffset? completedAtUtc)
+        DateTimeOffset? completedAtUtc,
+        IClock clock)
     {
         Id = id;
         RuntimeId = runtimeId;
@@ -303,7 +315,10 @@ public sealed class Execution
         Status = status;
         StartedAtUtc = startedAtUtc.ToUniversalTime();
         CompletedAtUtc = completedAtUtc?.ToUniversalTime();
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
+
+    private readonly IClock _clock;
 
     public ExecutionId Id { get; }
 
@@ -328,7 +343,7 @@ public sealed class Execution
         return Result<Execution>.Success(
             WithStatus(
                 ExecutionStatus.Succeeded,
-                completedAtUtc ?? DateTimeOffset.UtcNow));
+                completedAtUtc ?? _clock.UtcNow));
     }
 
     public Result<Execution> Fail(
@@ -340,7 +355,7 @@ public sealed class Execution
         return Result<Execution>.Success(
             WithStatus(
                 ExecutionStatus.Failed,
-                completedAtUtc ?? DateTimeOffset.UtcNow));
+                completedAtUtc ?? _clock.UtcNow));
     }
 
     public Result<Execution> Cancel(
@@ -352,14 +367,15 @@ public sealed class Execution
         return Result<Execution>.Success(
             WithStatus(
                 ExecutionStatus.Cancelled,
-                completedAtUtc ?? DateTimeOffset.UtcNow));
+                completedAtUtc ?? _clock.UtcNow));
     }
 
     internal static Execution Create(
         RuntimeId runtimeId,
         AgentId agentId,
         AgentGeneration generation,
-        DateTimeOffset startedAtUtc) =>
+        DateTimeOffset startedAtUtc,
+        IClock clock) =>
         new(
             ExecutionId.New(),
             runtimeId,
@@ -367,7 +383,8 @@ public sealed class Execution
             generation,
             ExecutionStatus.Running,
             startedAtUtc,
-            null);
+            null,
+            clock);
 
     private Execution WithStatus(
         ExecutionStatus status,
