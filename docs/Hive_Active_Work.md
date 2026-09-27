@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Current slice: Maintenance — Host/UI: Host Integration Contract Corrections
 
@@ -28,10 +28,10 @@ Remediation completed:
 - Routed the two remaining test `CaptureAsync` calls through the `IHiveHostIntegrationAdapter` interface helper.
 - Reinspected the affected test file; no remaining concrete-adapter calls to `CaptureAsync`, `ExecuteInteractionAsync`, or `ResolveLookupAsync` remain.
 
-Remediation target:
-- Restrict the explicit-interface reflection assertion to the three low-level adapter operations; `AdapterId` is intentionally public on the concrete adapter and is not a low-level execution operation.
-- Make the background-thread stale/readability regression obtain and validate a non-null capture before entering `Task.Run`, so the test itself cannot dereference a failed capture result.
-- Reinspect the corrected tests and return to `VERIFICATION PENDING` with the exact developer rerun targets.
+Remediation completed:
+- Restricted the explicit-interface reflection assertion to the three low-level adapter operations; `AdapterId` remains intentionally public.
+- Changed the background-thread regression to capture and validate the host context before adding 600 traversal-padding controls, avoiding a test-side null capture caused by the bounded capture limit.
+- Static reinspection confirms the corrected test paths and assertions are present.
 
 Verification target:
 - Developer build with the repository's Treat-Warnings-as-Errors configuration.
