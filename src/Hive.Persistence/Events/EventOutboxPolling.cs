@@ -43,7 +43,9 @@ public sealed class EventOutboxPoller
             workItem,
             deliveryCts);
 
-        Hive.Core.Result delivery;
+        Hive.Core.Result? delivery = null;
+        OperationCanceledException? handlerCancellation = null;
+
         try
         {
             try
@@ -52,19 +54,9 @@ public sealed class EventOutboxPoller
                     workItem.Entry,
                     deliveryCts.Token).ConfigureAwait(false);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException exception)
             {
-                if (cancellationToken.IsCancellationRequested)
-                    throw;
-
-                var renewal = await renewalTask.ConfigureAwait(false);
-                if (renewal.IsFailure)
-                {
-                    return Hive.Core.Result<EventOutboxEntry?>.Failure(
-                        renewal.Error!);
-                }
-
-                throw;
+                handlerCancellation = exception;
             }
             catch (Exception exception)
             {
@@ -85,6 +77,22 @@ public sealed class EventOutboxPoller
         {
             return Hive.Core.Result<EventOutboxEntry?>.Failure(
                 renewalResult.Error!);
+        }
+
+        if (handlerCancellation is not null)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                throw handlerCancellation;
+
+            throw handlerCancellation;
+        }
+
+        if (delivery is null)
+        {
+            return Hive.Core.Result<EventOutboxEntry?>.Failure(
+                HivePersistenceError.Internal(
+                    "hive.outbox.delivery-result-missing",
+                    "Outbox delivery completed without a result."));
         }
 
         if (delivery.IsFailure)
