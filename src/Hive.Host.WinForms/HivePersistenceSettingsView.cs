@@ -239,7 +239,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             {
                 SetStatus(result.Error!.Message, HiveStatusTone.Error);
 
-                HiveUiErrorReporter.Report(
+                    // The reporter displays sanitized exception details; keep the status text generic.
                     FindForm(),
                     result.Error!.Message,
                     "Hive Persistence",
@@ -455,7 +455,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         {
             if (!IsDisposed && !Disposing)
             {
-                SetStatus(exception.Message, HiveStatusTone.Error);
+                SetStatus(
 
                 HiveUiErrorReporter.Report(
                     FindForm(),
