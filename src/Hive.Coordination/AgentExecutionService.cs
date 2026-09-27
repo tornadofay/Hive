@@ -73,17 +73,80 @@ public sealed class AgentExecutionService
                 model = request.Target.Model ?? request.Target.Deployment
             });
 
-        var started = await _eventStore
-            .AppendAsync(
-                new EventAppendRequest(
+        Result<EventAppendResult> started;
+
+        try
+        {
+            started = await _eventStore
+                .AppendAsync(
+                    new EventAppendRequest(
+                        stream,
+                        null,
+                        startedEnvelope),
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            var cancelled = execution.Cancel();
+
+            if (cancelled.IsSuccess)
+            {
+                await TryPersistInitialTerminalAsync(
+                    request,
+                    cancelled.Value!,
                     stream,
-                    null,
-                    startedEnvelope),
-                cancellationToken)
-            .ConfigureAwait(false);
+                    correlationId,
+                    "agent.execution.cancelled",
+                    error: null)
+                    .ConfigureAwait(false);
+            }
+
+            throw;
+        }
+        catch (Exception)
+        {
+            var failed = execution.Fail();
+
+            if (failed.IsSuccess)
+            {
+                await TryPersistInitialTerminalAsync(
+                    request,
+                    failed.Value!,
+                    stream,
+                    correlationId,
+                    "agent.execution.failed",
+                    Error.Validation(
+                        "hive.agent.execution.start-persistence-failed",
+                        "The agent execution could not record its started lifecycle event."))
+                    .ConfigureAwait(false);
+            }
+
+            return Result<AgentExecutionResult>.Failure(
+                new Error(
+                    "hive.agent.execution.start-persistence-failed",
+                    ErrorCategory.External,
+                    "The agent execution could not record its started lifecycle event."));
+        }
 
         if (started.IsFailure)
+        {
+            var failed = execution.Fail();
+
+            if (failed.IsSuccess)
+            {
+                await TryPersistInitialTerminalAsync(
+                    request,
+                    failed.Value!,
+                    stream,
+                    correlationId,
+                    "agent.execution.failed",
+                    started.Error)
+                    .ConfigureAwait(false);
+            }
+
             return Result<AgentExecutionResult>.Failure(started.Error!);
+        }
 
         var startedEvent = started.Value!.Event.Envelope;
 
@@ -267,6 +330,47 @@ public sealed class AgentExecutionService
             correlationId,
             causationId,
             JsonSerializer.SerializeToElement(payload));
+
+    private async Task TryPersistInitialTerminalAsync(
+        AgentExecutionRequest request,
+        Execution execution,
+        ResourceReference stream,
+        CorrelationId correlationId,
+        string eventType,
+        Error? error)
+    {
+        try
+        {
+            var envelope = CreateLifecycleEvent(
+                eventType,
+                correlationId,
+                null,
+                new
+                {
+                    executionId = execution.Id.Value,
+                    agentId = execution.AgentId.Value,
+                    runtimeId = execution.RuntimeId.Value,
+                    targetId = request.Target.Id.Value,
+                    status = execution.Status.ToString(),
+                    errorCode = error?.Code,
+                    errorCategory = error?.Category.ToString()
+                });
+
+            await _eventStore
+                .AppendAsync(
+                    new EventAppendRequest(
+                        stream,
+                        null,
+                        envelope),
+                    CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch
+        {
+            // The original start-persistence failure/cancellation remains authoritative.
+            // This best-effort terminal event closes the durable lifecycle when possible.
+        }
+    }
 
     private async Task<Result<AgentExecutionResult>> PersistTerminalSuccessAsync(
         AgentExecutionRequest request,
