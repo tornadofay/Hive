@@ -188,10 +188,14 @@ internal sealed class WinFormsHostContextExampleView : UserControl
         }
         catch (Exception exception)
         {
-            _status.Text = $"Discovery failed: {exception.Message}";
-            _output.Write(
-                "WinForms context error",
-                exception.ToString());
+            _status.Text = "Discovery failed. See technical details.";
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                exception,
+                "WinForms host context",
+                "WinForms host discovery failed.",
+                _output,
+                _themeManager);
         }
         finally
         {
@@ -218,10 +222,14 @@ internal sealed class WinFormsHostContextExampleView : UserControl
         }
         catch (Exception exception)
         {
-            _status.Text = $"Image fixture invalid: {exception.Message}";
-            _output.Write(
-                "Image input error",
-                exception.ToString());
+            _status.Text = "Image fixture validation failed. See technical details.";
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                exception,
+                "Image input",
+                "The image fixture could not be validated.",
+                _output,
+                _themeManager);
         }
     }
 
