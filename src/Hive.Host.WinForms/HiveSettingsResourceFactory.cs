@@ -7,7 +7,8 @@ internal static class HiveSettingsResourceFactory
     public static ResourceEnvelope<TIdentity> CreateEnvelope<TIdentity>(
         ResourceKind kind,
         TIdentity identity,
-        ResourceAccessContext accessContext)
+        ResourceAccessContext accessContext,
+        IClock? clock = null)
         where TIdentity : struct
     {
         ArgumentNullException.ThrowIfNull(accessContext);
@@ -16,7 +17,7 @@ internal static class HiveSettingsResourceFactory
             throw new InvalidOperationException(
                 "A PrincipalId is required to create a Settings resource.");
 
-        var now = DateTimeOffset.UtcNow;
+        var now = (clock ?? SystemClock.Instance).UtcNow;
         var scope = accessContext.TenantId is { } tenantId
             ? ResourceScope.Tenant(tenantId)
             : ResourceScope.Global();
