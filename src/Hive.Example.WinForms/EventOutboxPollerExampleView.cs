@@ -104,11 +104,12 @@ internal sealed class EventOutboxPollerExampleView : UserControl
             if (_failFirstDelivery)
             {
                 _failFirstDelivery = false;
-                return Task.FromResult(Result.Failure(new Error(
+                return Result.Failure(new Error(
                     "example.outbox.simulated-failure", ErrorCategory.External,
-                    "Simulated delivery failure after recording the EventId.")));
+                    "Simulated delivery failure after recording the EventId."));
             }
-            return Task.FromResult(Result.Success());
+
+            return Result.Success();
         }
     }
 
