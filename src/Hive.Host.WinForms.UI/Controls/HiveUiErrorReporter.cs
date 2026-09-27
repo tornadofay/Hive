@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Theme;
 
@@ -19,7 +21,8 @@ public static class HiveUiErrorReporter
             ? exception.Message
             : message;
 
-        output?.Write("EXCEPTION", exception.ToString());
+        var technicalDetails = HiveUiExceptionDiagnostics.Format(exception);
+        output?.Write("EXCEPTION", technicalDetails);
 
         HiveMessageBox.Show(
             owner,
@@ -28,7 +31,7 @@ public static class HiveUiErrorReporter
                 safeMessage,
                 HiveMessageType.Error,
                 MessageBoxButtons.OK,
-                exception.ToString(),
+                technicalDetails,
                 DetailsExpanded: true),
             themeManager);
     }
@@ -50,5 +53,85 @@ public static class HiveUiErrorReporter
             message,
             title,
             themeManager);
+    }
+}
+
+
+internal static class HiveUiExceptionDiagnostics
+{
+    private static readonly Regex[] SensitivePatterns =
+    [
+        new(
+            @"(?<prefix>\b(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|refresh[_-]?token)\s*[:=]\s*)(?<value>[^\s;,\]\}"']+)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+        new(
+            @"(?<prefix>\b(?:authorization)\s*:\s*bearer\s+)(?<value>[^\s,;]+)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+        new(
+            @"(?<prefix>\b(?:uid|user\s*id|username)\s*[:=]\s*)(?<value>[^\s;]+)(?<separator>\s*[;,]\s*)(?<password>password\s*=\s*)(?<secret>[^\s;]+)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+        new(
+            @"(?<prefix>://[^/\s:@]+:)(?<value>[^@\s/]+)(?<suffix>@)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)
+    ];
+
+    public static string Format(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        var builder = new StringBuilder();
+        var current = exception;
+        var depth = 0;
+
+        while (current is not null)
+        {
+            if (depth > 0)
+                builder.AppendLine();
+
+            builder.Append("Exception ");
+            builder.Append(depth + 1);
+            builder.Append(": ");
+            builder.Append(current.GetType().FullName ?? current.GetType().Name);
+
+            if (!string.IsNullOrWhiteSpace(current.Message))
+            {
+                builder.Append(": ");
+                builder.Append(Redact(current.Message));
+            }
+
+            current = current.InnerException;
+            depth++;
+        }
+
+        return builder.ToString();
+    }
+
+    private static string Redact(string text)
+    {
+        var result = text;
+
+        foreach (var pattern in SensitivePatterns)
+        {
+            result = pattern.Replace(
+                result,
+                match =>
+                {
+                    if (!match.Groups["prefix"].Success ||
+                        !match.Groups["value"].Success)
+                    {
+                        return match.Value;
+                    }
+
+                    var replacement = match.Groups["prefix"].Value +
+                        "[REDACTED]";
+
+                    if (match.Groups["suffix"].Success)
+                        replacement += match.Groups["suffix"].Value;
+
+                    return replacement;
+                });
+        }
+
+        return result;
     }
 }
