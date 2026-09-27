@@ -569,8 +569,8 @@ public sealed class AgentExecutionIntegrationTests
             store.AttemptedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
         Assert.Equal(
             ExecutionStatus.Failed.ToString(),
-            store.Envelopes[1].Payload.GetProperty("status").GetString());
-        Assert.Null(store.Envelopes[1].CausationId);
+            store.AppendedEnvelopes[0].Payload.GetProperty("status").GetString());
+        Assert.Null(store.AppendedEnvelopes[0].CausationId);
     }
 
     [Fact]
