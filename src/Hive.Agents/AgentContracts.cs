@@ -171,12 +171,14 @@ public class Agent
         IDelegationChannel? delegation = null,
         IClock? clock = null)
     {
+        var effectiveClock = clock ?? _clock;
+
         return RuntimeInstance.Create(
             Id,
             Generation,
-            createdAtUtc ?? _clock.UtcNow,
+            createdAtUtc ?? effectiveClock.UtcNow,
             delegation,
-            clock ?? _clock);
+            effectiveClock);
     }
 }
 
