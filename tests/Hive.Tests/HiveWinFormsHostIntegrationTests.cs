@@ -700,9 +700,13 @@ public sealed class HiveWinFormsHostIntegrationTests
             lowLevelTargets,
             method => Assert.True(method.IsPrivate));
 
-        Assert.Contains(
-            nameof(HiveWinFormsHostIntegrationAdapter.AdapterId),
-            publicMethodNames);
+        var adapterIdProperty = typeof(HiveWinFormsHostIntegrationAdapter)
+            .GetProperty(
+                nameof(HiveWinFormsHostIntegrationAdapter.AdapterId),
+                BindingFlags.Instance | BindingFlags.Public);
+
+        Assert.NotNull(adapterIdProperty);
+        Assert.True(adapterIdProperty!.GetMethod?.IsPublic);
     }
 
     [Fact]
