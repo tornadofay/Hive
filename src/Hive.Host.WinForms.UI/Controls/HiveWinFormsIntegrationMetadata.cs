@@ -45,6 +45,8 @@ public sealed class HiveWinFormsFieldMetadata
 
     public bool? IsPrimaryKey { get; set; }
 
+    public bool? Sensitive { get; set; }
+
     public HiveHostLookupDescriptor? Lookup { get; set; }
 }
 
