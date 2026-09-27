@@ -135,6 +135,17 @@ internal sealed class HiveWinFormsHostCaptureService
                              surfaceId,
                              out var semanticSurface))
                 {
+                    if (semanticSurface is null ||
+                        !string.Equals(
+                            semanticSurface.Id,
+                            surfaceId,
+                            StringComparison.Ordinal))
+                    {
+                        throw new HiveWinFormsIntegrationException(
+                            "hive.host.winforms.semantic-surface-identity-mismatch",
+                            "The semantic provider returned a data-surface identity that does not match the identity supplied by Hive.");
+                    }
+
                     surface = semanticSurface;
                 }
                 else
@@ -317,7 +328,8 @@ internal sealed class HiveWinFormsHostCaptureService
             metadata?.Generated ?? false,
             metadata?.IsPrimaryKey ?? false,
             WinFormsControlValueAdapters.TryReadValue(control),
-            metadata?.Lookup);
+            metadata?.Lookup,
+            metadata?.Sensitive == true);
     }
 
     private static bool CanSetStandardValue(
