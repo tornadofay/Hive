@@ -218,7 +218,7 @@ public sealed class ProviderPersistenceIntegrationTests
             context);
 
         Assert.True(loaded.IsSuccess, loaded.Error?.Message);
-        Assert.Equal(firstSecret, loaded.Value!.CredentialSecret);
+        Assert.Equal(firstReference, loaded.Value!.CredentialSecret);
 
         var missingUpdate = await store.UpdateProviderAccountAsync(
             loaded.Value.WithCredentialSecret(
@@ -257,7 +257,7 @@ public sealed class ProviderPersistenceIntegrationTests
             context);
 
         Assert.True(reloaded.IsSuccess, reloaded.Error?.Message);
-        Assert.Equal(secondSecret, reloaded.Value!.CredentialSecret);
+        Assert.Equal(secondReference, reloaded.Value!.CredentialSecret);
     }
 
     [Fact]
