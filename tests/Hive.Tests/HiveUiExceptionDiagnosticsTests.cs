@@ -30,6 +30,14 @@ public sealed class HiveUiExceptionDiagnosticsTests
         Assert.DoesNotContain("json-secret", details, StringComparison.Ordinal);
         Assert.DoesNotContain("json-secret-tail", details, StringComparison.Ordinal);
         Assert.DoesNotContain("inner-secret", details, StringComparison.Ordinal);
+        Assert.Contains(
+            "payload={\"password\":\"[REDACTED]\"}",
+            details,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "escaped={\"password\":\"[REDACTED]\"}",
+            details,
+            StringComparison.Ordinal);
         Assert.Equal(10, Count(details, "[REDACTED]"));
     }
 
