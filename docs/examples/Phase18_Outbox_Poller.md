@@ -11,7 +11,7 @@ var result = await poller.ProcessNextAsync(handler, cancellationToken);
 
 Implement `IEventOutboxHandler` at the delivery boundary and use `entry.Envelope.EventId` as the idempotency key.
 
-The poller claims one committed outbox row with a lease, invokes the handler outside the SQL transaction, and deletes the row only after the handler reports success.
+The poller claims one committed outbox row with a lease, invokes the handler outside the SQL transaction, renews the lease while the handler is still running, and deletes the row only after the handler reports success. If lease renewal is lost, the delivery token is canceled and the row remains recoverable.
 
 A failed or canceled delivery leaves the row leased until the lease expires. Another poller can then reclaim the row. A process crash after claim therefore does not permanently lose the outbox item.
 
