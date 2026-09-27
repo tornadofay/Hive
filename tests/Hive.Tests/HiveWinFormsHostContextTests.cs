@@ -2,6 +2,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using Hive.Core;
 using Hive.Host.WinForms;
+using Hive.Host.WinForms.UI.Controls;
 using Hive.Tests.TestInfrastructure;
 using Xunit;
 
@@ -161,6 +162,30 @@ public sealed class HiveWinFormsHostContextTests
         Assert.Equal(access.DeploymentId, result.Value.Provenance.DeploymentId);
         Assert.Equal(access.PrincipalId, result.Value.Provenance.PrincipalId);
         Assert.NotEqual(Guid.Empty, result.Value.Provenance.CaptureId);
+    }
+
+
+    [Fact]
+    public async Task Capture_RedactsSensitiveFieldMetadataText()
+    {
+        using var form = new Form();
+        var secret = new HiveTextBox
+        {
+            Name = "secret",
+            Text = "top-secret"
+        };
+        secret.HiveField.Sensitive = true;
+        form.Controls.Add(secret);
+
+        using var context = new HiveWinFormsHostContext(CreateAccessContext());
+        using var registration = context.Register(form);
+
+        var result = await context.CaptureAsync(registration);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(
+            "[redacted]",
+            result.Value!.Controls.Single(item => item.Name == "secret").Text);
     }
 
     [Fact]
