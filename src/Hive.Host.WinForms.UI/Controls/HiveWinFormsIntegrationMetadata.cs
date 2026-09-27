@@ -51,7 +51,7 @@ public sealed class HiveWinFormsFieldMetadata
 public sealed class HiveWinFormsDataSurfaceMetadata
 {
     private readonly Dictionary<string, HiveWinFormsFieldMetadata> _fieldOverrides =
-        new(StringComparer.Ordinal);
+        new(StringComparer.OrdinalIgnoreCase);
 
     private readonly List<HiveHostCapabilityDescriptor> _capabilities = new();
 
@@ -109,6 +109,9 @@ public sealed class HiveWinFormsDataSurfaceMetadata
 
     public bool TryGetFieldOverride(
         string fieldKey,
-        out HiveWinFormsFieldMetadata metadata) =>
-        _fieldOverrides.TryGetValue(fieldKey, out metadata!);
+        out HiveWinFormsFieldMetadata metadata)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldKey);
+        return _fieldOverrides.TryGetValue(fieldKey.Trim(), out metadata!);
+    }
 }
