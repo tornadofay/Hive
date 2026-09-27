@@ -99,7 +99,7 @@ internal static class HiveUiExceptionDiagnostics
             if (!string.IsNullOrWhiteSpace(current.Message))
             {
                 builder.Append(": ");
-                builder.Append(Redact(current.Message));
+                builder.Append(SanitizeMessage(current.Message));
             }
 
             current = current.InnerException;
