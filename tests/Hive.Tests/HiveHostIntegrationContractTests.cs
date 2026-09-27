@@ -258,6 +258,13 @@ public sealed class HiveHostIntegrationContractTests
         Assert.Throws<ArgumentException>(
             () => new HiveHostInteractionRequest(
                 Guid.NewGuid(),
+                HiveHostInteractionKind.ReadControl,
+                CorrelationId.New(),
+                controlId: "control:0/0"));
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostInteractionRequest(
+                Guid.NewGuid(),
                 HiveHostInteractionKind.SetControlValue,
                 CorrelationId.New(),
                 controlId: "control:0/0",
@@ -266,11 +273,17 @@ public sealed class HiveHostIntegrationContractTests
         Assert.Throws<ArgumentException>(
             () => new HiveHostCapabilityRequest(
                 Guid.NewGuid(),
+                HiveHostCapabilityKind.ReadControl,
+                CorrelationId.New(),
+                "TestAdapter"));
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostCapabilityRequest(
+                Guid.NewGuid(),
                 HiveHostCapabilityKind.SetControlValue,
                 CorrelationId.New(),
                 "TestAdapter"));
     }
-
     [Fact]
     public async Task Management_DeniesHostCapabilityBeforeAdapterInvocation()
     {
@@ -459,7 +472,8 @@ public sealed class HiveHostIntegrationContractTests
                     adapter.EditCapabilityId,
                     HiveHostInteractionKind.ReadControl,
                     CorrelationId.New(),
-                    controlId: "control:0/0"),
+                    controlId: "control:0/0",
+                    captureId: Guid.NewGuid()),
                 context,
                 cancellation.Token));
 
