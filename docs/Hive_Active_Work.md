@@ -1,53 +1,7 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: NO ACTIVE WORK
 
-## Maintenance — Review Corrections
+No implementation slice is currently authorized.
 
-Opened: 2026-09-27
-
-Scope: Correct the concrete production problems identified by the 2026-09-27 repository-wide Review, without advancing the roadmap or introducing new capability.
-
-Completed implementation boundary:
-- lookup authorization now carries and requires the specific `LookupId` for `ResolveLookup`;
-- unused `ExpectedHostVersion` request input was removed; host operations may still return meaningful `HostVersion` evidence when supplied by the host;
-- production time-sensitive boundaries use the existing injectable `IClock` with system-clock defaults;
-- Agent lifecycle transitions preserve the injected clock across immutable state transitions;
-- neutral host contracts reject duplicate semantic identities/capability IDs where ambiguity is invalid;
-- WinForms binding-inspection failures now surface as typed capture failures instead of silently producing incomplete metadata;
-- `HiveHostValue` DateTime serialization preserves the original `DateTimeKind` and no longer performs machine-local timezone conversion;
-- focused regression tests cover lookup authorization context, DateTime round-tripping, host contract uniqueness, deterministic Agent lifecycle time, deterministic WinForms provenance time, and binding-inspection failure;
-- UI test polling no longer uses arbitrary sleeps or wall-clock polling; it uses monotonic `Stopwatch` deadlines and yielding.
-
-Explicit exclusions:
-- no Phase 1.16+ implementation;
-- no new host capabilities or new business workflow;
-- no unrelated refactoring or dependency upgrades;
-- no roadmap advancement.
-
-Starting checkpoint: main @ a778b2414704d76190eedeba94560503c3702ffa
-
-Implementation commits are now on `main`; current source is awaiting final developer verification.
-
-Required developer verification:
-- build the affected solution/projects with warnings treated as errors;
-- run the focused tests:
-  - `HiveHostIntegrationContractTests`
-  - `HiveWinFormsHostContextTests`
-  - `HiveWinFormsHostIntegrationTests`
-  - `AgentFactoryTests`
-  - `HiveWorkspaceLifecycleTests`
-  - `HiveUiPolishTests`
-  - `BaseAgentWorkProtocolsTests`
-- run the full `Hive.Tests` suite;
-- manually launch `Hive.Example.WinForms` and verify the affected Host/UI behavior remains correct where applicable.
-
-Developer verification received on 2026-09-27:
-- full `Hive.Tests`: 347/347 passed, 0 failed, 0 skipped, 29.1 seconds;
-- `Hive.Example.WinForms`: manually launched successfully and the Example form runs correctly;
-- the focused test classes are included in the reported full `Hive.Tests` run and therefore were exercised by that run;
-- no warnings-as-errors build result was provided, so final verification remains pending and the slice is not closed.
-
-Developer verification failure received before final verification: `HiveWinFormsHostIntegrationTests.Capture_BindingInspectionFailureIsReportedInsteadOfReturningIncompleteSurface` initially failed with a raw `ArgumentException` from `DataGridView`/`BindingContext` access before the typed binding-inspection failure boundary. Same-slice remediation is complete: the full binding-inspection and bound-row-count paths are now inside their typed exception boundaries, with regression coverage for both. Developer verification also reported `CS1744` in `BaseAgentWorkProtocolsExampleView.cs` because the Example passed `clock` positionally before a named `delegation` argument after the compatibility-preserving signature reorder. Same-slice remediation corrected both Example call sites to `(now, delegation, clock)`.
-
-The revision also corrected `Agent.CreateRuntimeInstance` so the new optional `IClock` parameter remains after the existing `IDelegationChannel` parameter, preserving positional-call compatibility; corrected the internal `RuntimeInstance.Create` parameter order for the same reason; completed the bound-row-count binding exception boundary; added duplicate business-operation capability-identity validation and coverage; and made an explicitly supplied runtime clock control the runtime creation timestamp as well as subsequent lifecycle timestamps.
+The previously active Maintenance — Review Corrections slice is complete and verified on 2026-09-27. Verification is archived at `docs/verification/maintenance/review-corrections-2026-09-27.md`.
