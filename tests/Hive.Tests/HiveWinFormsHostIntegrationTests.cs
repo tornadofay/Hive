@@ -257,7 +257,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             AutoGenerateColumns = false
         };
         child.HiveDataSurface.SurfaceId = "lines";
-        child.HiveDataSurface.ParentSurfaceId = "invoice";
+        child.HiveDataSurface.ParentSurfaceId = "surface:invoice";
         child.HiveDataSurface.ParentKeyField = "id";
         child.HiveDataSurface.ChildKeyField = "invoiceid";
         child.Columns.Add(
