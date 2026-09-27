@@ -31,8 +31,11 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
         [MetadataJson]
         """;
 
-    internal SqlExecutionTargetStore(HiveDatabaseOptions options, SqlProviderResourceReader reader)
-        : base(options)
+    internal SqlExecutionTargetStore(
+        HiveDatabaseOptions options,
+        SqlProviderResourceReader reader,
+        IClock? clock = null)
+        : base(options, clock)
     {
         _reader = reader ?? throw new ArgumentNullException(nameof(reader));
     }
@@ -496,7 +499,7 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
                 var active = new ExecutionTarget(
                     current.Resource.TransitionLifecycle(
                         ResourceLifecycleStatus.Active,
-                        DateTimeOffset.UtcNow),
+                        _clock.UtcNow),
                     current.ProviderId,
                     current.ProviderAccountId,
                     current.Key,
@@ -559,7 +562,7 @@ internal sealed class SqlExecutionTargetStore : SqlResourceStoreBase
                 var retired = new ExecutionTarget(
                     current.Resource.TransitionLifecycle(
                         ResourceLifecycleStatus.Retired,
-                        DateTimeOffset.UtcNow),
+                        _clock.UtcNow),
                     current.ProviderId,
                     current.ProviderAccountId,
                     current.Key,
