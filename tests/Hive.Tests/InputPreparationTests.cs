@@ -403,6 +403,55 @@ public sealed class InputPreparationTests
     }
 
     [Fact]
+    public void SpreadsheetInput_RejectsAggregatePreparedValueMappingsAcrossSubmission()
+    {
+        const int columnCount = InputPreparationLimits.MaxWorksheetColumns;
+        const int rowsPerSheet = 3906;
+
+        var firstWorkbook = CreateCompactWideWorkbook(
+            columnCount,
+            ("First-A", rowsPerSheet),
+            ("First-B", rowsPerSheet));
+        var secondWorkbook = CreateCompactWideWorkbook(
+            columnCount,
+            ("Second-A", rowsPerSheet),
+            ("Second-B", rowsPerSheet));
+        var thirdWorkbook = CreateCompactWideWorkbook(
+            columnCount,
+            ("Third", 2));
+
+        var result = InputPreparationEngine.Prepare(
+            new InputSubmission(
+            [
+                new InputItem(
+                    "first-wide.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    firstWorkbook),
+                new InputItem(
+                    "second-wide.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    secondWorkbook),
+                new InputItem(
+                    "third-wide.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    thirdWorkbook)
+            ]),
+            Array.Empty<ExecutionTarget>());
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(
+            2 * rowsPerSheet * 2,
+            result.Value!.PreparedInputs.Count);
+
+        var failure = Assert.Single(result.Value.Failures);
+        Assert.Equal(
+            "hive.input.spreadsheet.too-many-prepared-values-submission",
+            failure.Error.Code);
+        Assert.Equal(ErrorCategory.Validation, failure.Error.Category);
+        Assert.Null(failure.SourceLocation);
+    }
+
+    [Fact]
     public void SpreadsheetInput_FileLimitIsReportedAsItemFailure()
     {
         var bytes = new byte[InputPreparationLimits.MaxSpreadsheetBytes + 1];
@@ -523,6 +572,139 @@ public sealed class InputPreparationTests
                     new CapabilityKey("vision"),
                     visionState)
             ]);
+    }
+
+    private static byte[] CreateCompactWideWorkbook(
+        int columnCount,
+        params (string Name, int DataRows)[] sheets)
+    {
+        const string mainNamespace =
+            "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+        const string relationshipNamespace =
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+        const string packageRelationshipNamespace =
+            "http://schemas.openxmlformats.org/package/2006/relationships";
+        const string contentTypesNamespace =
+            "http://schemas.openxmlformats.org/package/2006/content-types";
+
+        if (columnCount <= 0 ||
+            columnCount > InputPreparationLimits.MaxWorksheetColumns)
+        {
+            throw new ArgumentOutOfRangeException(nameof(columnCount));
+        }
+
+        if (sheets.Length == 0)
+            throw new ArgumentException("At least one worksheet is required.", nameof(sheets));
+
+        using var memory = new MemoryStream();
+
+        using (var archive = new ZipArchive(
+                   memory,
+                   ZipArchiveMode.Create,
+                   leaveOpen: true))
+        {
+            var contentTypeOverrides = sheets
+                .Select(
+                    (sheet, index) =>
+                        $"<Override PartName=\"/xl/worksheets/sheet{index + 1}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\" />");
+
+            var contentTypesXml =
+                $"<Types xmlns=\"{contentTypesNamespace}\">" +
+                "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\" />" +
+                "<Default Extension=\"xml\" ContentType=\"application/xml\" />" +
+                "<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\" />" +
+                string.Concat(contentTypeOverrides) +
+                "</Types>";
+
+            WriteEntry(
+                archive,
+                "[Content_Types].xml",
+                Encoding.UTF8.GetBytes(contentTypesXml));
+
+            var packageRelationshipsXml =
+                $"<Relationships xmlns=\"{packageRelationshipNamespace}\">" +
+                "<Relationship Id=\"rId1\" " +
+                "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" " +
+                "Target=\"xl/workbook.xml\" />" +
+                "</Relationships>";
+
+            WriteEntry(
+                archive,
+                "_rels/.rels",
+                Encoding.UTF8.GetBytes(packageRelationshipsXml));
+
+            var workbookXml =
+                $"<workbook xmlns=\"{mainNamespace}\" xmlns:r=\"{relationshipNamespace}\"><sheets>" +
+                string.Concat(
+                    sheets.Select(
+                        (sheet, index) =>
+                            $"<sheet name=\"{sheet.Name}\" sheetId=\"{index + 1}\" r:id=\"rId{index + 1}\" />")) +
+                "</sheets></workbook>";
+
+            WriteEntry(
+                archive,
+                "xl/workbook.xml",
+                Encoding.UTF8.GetBytes(workbookXml));
+
+            var workbookRelationshipsXml =
+                $"<Relationships xmlns=\"{packageRelationshipNamespace}\">" +
+                string.Concat(
+                    sheets.Select(
+                        (_, index) =>
+                            $"<Relationship Id=\"rId{index + 1}\" " +
+                            "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" " +
+                            $"Target=\"worksheets/sheet{index + 1}.xml\" />")) +
+                "</Relationships>";
+
+            WriteEntry(
+                archive,
+                "xl/_rels/workbook.xml.rels",
+                Encoding.UTF8.GetBytes(workbookRelationshipsXml));
+
+            for (var sheetIndex = 0; sheetIndex < sheets.Length; sheetIndex++)
+            {
+                var sheet = sheets[sheetIndex];
+
+                if (sheet.DataRows <= 0 ||
+                    sheet.DataRows + 1 > InputPreparationLimits.MaxWorksheetRows)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sheets));
+                }
+
+                var worksheetBuilder = new StringBuilder(
+                    checked((sheet.DataRows + 1) * (columnCount * 15 + 24)));
+
+                worksheetBuilder.Append(
+                    $"<worksheet xmlns=\"{mainNamespace}\"><sheetData><row>");
+
+                for (var column = 1; column <= columnCount; column++)
+                {
+                    worksheetBuilder.Append(
+                        $"<c t=\"inlineStr\"><is><t>Column{column}</t></is></c>");
+                }
+
+                worksheetBuilder.Append("</row>");
+
+                for (var row = 0; row < sheet.DataRows; row++)
+                {
+                    worksheetBuilder.Append("<row>");
+
+                    for (var column = 0; column < columnCount; column++)
+                        worksheetBuilder.Append("<c><v>0</v></c>");
+
+                    worksheetBuilder.Append("</row>");
+                }
+
+                worksheetBuilder.Append("</sheetData></worksheet>");
+
+                WriteEntry(
+                    archive,
+                    $"xl/worksheets/sheet{sheetIndex + 1}.xml",
+                    Encoding.UTF8.GetBytes(worksheetBuilder.ToString()));
+            }
+        }
+
+        return memory.ToArray();
     }
 
     private static byte[] CreateWorkbook(
