@@ -144,6 +144,43 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task Capture_AppliesFieldOverrideWhenConfiguredWithDifferentCase()
+    {
+        using var form = new Form();
+        var grid = new HiveDataGridView
+        {
+            Name = "orders",
+            AutoGenerateColumns = false
+        };
+
+        grid.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "CustomerId",
+                DataPropertyName = "CustomerId"
+            });
+        grid.HiveDataSurface.ConfigureField("customerid").Required = true;
+
+        form.Controls.Add(grid);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var field = result.Value!.DataSurfaces
+            .Single(surface => surface.Id == "surface:orders")
+            .Fields
+            .Single(candidate => candidate.BindingMember == "CustomerId");
+
+        Assert.True(field.Required);
+    }
+
+    [Fact]
     public async Task Capture_DuplicateExplicitControlIdentityFailsInsteadOfAliasing()
     {
         using var form = new Form();
