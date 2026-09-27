@@ -13,14 +13,17 @@ public sealed class AgentExecutionService
     private readonly IEventPersistenceStore _eventStore;
     private readonly HttpClient _httpClient;
     private readonly TimeSpan _providerTimeout;
+    private readonly IClock _clock;
 
     public AgentExecutionService(
         IEventPersistenceStore eventStore,
         HttpClient httpClient,
-        TimeSpan? providerTimeout = null)
+        TimeSpan? providerTimeout = null,
+        IClock? clock = null)
     {
         _eventStore = eventStore ?? throw new ArgumentNullException(nameof(eventStore));
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _clock = clock ?? SystemClock.Instance;
 
         var effectiveTimeout = providerTimeout ?? TimeSpan.FromSeconds(30);
 
@@ -251,14 +254,14 @@ public sealed class AgentExecutionService
         return Result.Success();
     }
 
-    private static EventEnvelope CreateLifecycleEvent(
+    private EventEnvelope CreateLifecycleEvent(
         string eventType,
         CorrelationId correlationId,
         CausationId? causationId,
         object payload) =>
         new JsonEventSerializer().CreateEnvelope(
             EventId.New(),
-            DateTimeOffset.UtcNow,
+            _clock.UtcNow,
             new EventType(eventType),
             new EventPayloadVersion(1),
             correlationId,
