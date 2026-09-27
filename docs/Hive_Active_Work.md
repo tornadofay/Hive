@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Slice: Maintenance — Review Medium-Finding Corrections
 
@@ -36,12 +36,14 @@ Correct the four concrete medium-severity findings from the repository review im
 
 ## Verification
 
-Status: PENDING DEVELOPER VERIFICATION
+Status: REMEDIATION REQUIRED — COMPILE FAILURES REPORTED
 
 Required developer verification before closure:
 
 Example to run: existing affected Example Host scenarios for Outbox Poller, WinForms Host Integration / Dual Business-App Integration, and Provider Accounts / Security as applicable.
 
 Tests to run: focused regression tests added by this slice; full Hive.Tests suite.
+
+Developer verification failed on 2026-09-27 with compile errors in `HiveWinFormsHostIntegrationAdapter.cs`, `EventOutboxPolling.cs`, `SqlProviderAccountStore.cs`, and `EventOutboxPollerExampleView.cs`. Same-slice remediation is limited to these reported compile failures and directly related compile/type/nullability issues; return this slice to `VERIFICATION PENDING` after the fixes with exact rerun targets.
 
 Do not close the slice until developer verification results are recorded.
