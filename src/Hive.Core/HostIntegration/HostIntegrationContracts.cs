@@ -750,11 +750,11 @@ public sealed record HiveHostCapabilityRequest
         string adapterId,
         ResourceReference? source = null,
         string? controlId = null,
-        string? lookupId = null,
         string? surfaceId = null,
         HiveHostRowIdentity? rowIdentity = null,
         string? fieldName = null,
-        HiveHostActionKind? action = null)
+        HiveHostActionKind? action = null,
+        string? lookupId = null)
     {
         if (capabilityId == Guid.Empty)
             throw new ArgumentException("Capability identity is required.", nameof(capabilityId));
