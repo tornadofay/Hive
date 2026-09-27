@@ -41,7 +41,7 @@ public sealed class EventOutboxPoller
             CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var renewalTask = RenewLeaseUntilCompletedAsync(
             workItem,
-            deliveryCts.Token);
+            deliveryCts);
 
         Hive.Core.Result delivery;
         try
@@ -102,8 +102,9 @@ public sealed class EventOutboxPoller
 
     private async Task<Hive.Core.Result> RenewLeaseUntilCompletedAsync(
         EventOutboxWorkItem workItem,
-        CancellationToken cancellationToken)
+        CancellationTokenSource deliveryCts)
     {
+        var cancellationToken = deliveryCts.Token;
         var interval = TimeSpan.FromTicks(
             Math.Max(
                 TimeSpan.FromMilliseconds(1).Ticks,
@@ -123,6 +124,7 @@ public sealed class EventOutboxPoller
 
                 if (renewed.IsFailure)
                 {
+                    deliveryCts.Cancel();
                     return Hive.Core.Result.Failure(renewed.Error!);
                 }
             }
@@ -135,6 +137,7 @@ public sealed class EventOutboxPoller
         }
         catch (Exception exception)
         {
+            deliveryCts.Cancel();
             return Hive.Core.Result.Failure(
                 HivePersistenceError.External(
                     "hive.outbox.lease-renewal",
