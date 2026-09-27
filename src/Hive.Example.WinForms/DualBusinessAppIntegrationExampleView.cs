@@ -123,7 +123,8 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
                     HiveHostInteractionKind.SetControlValue,
                     CorrelationId.New(),
                     controlId: invoiceNumber.Id,
-                    value: HiveHostValue.FromString("INV-1001-EDITED")),
+                    value: HiveHostValue.FromString("INV-1001-EDITED"),
+                    captureId: descriptor.Provenance.CaptureId),
                 accessContext,
                 cancellationToken)
             .ConfigureAwait(true);
@@ -153,7 +154,8 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
                     surfaceId: linesSurface.Id,
                     rowIdentity: new HiveHostRowIdentity("101"),
                     fieldName: "Quantity",
-                    value: HiveHostValue.FromInt64(3)),
+                    value: HiveHostValue.FromInt64(3),
+                    captureId: descriptor.Provenance.CaptureId),
                 accessContext,
                 cancellationToken)
             .ConfigureAwait(true);
