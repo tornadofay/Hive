@@ -85,6 +85,53 @@ public sealed record WorkItemAttachmentMetadata
     public string Sha256 { get; }
 }
 
+public sealed record WorkItemListCursor
+{
+    public WorkItemListCursor(
+        DateTimeOffset createdAtUtc,
+        WorkItemId workItemId)
+    {
+        if (workItemId == default)
+            throw new ArgumentException(
+                "A WorkItem identity is required.",
+                nameof(workItemId));
+
+        CreatedAtUtc = createdAtUtc.ToUniversalTime();
+        WorkItemId = workItemId;
+    }
+
+    public DateTimeOffset CreatedAtUtc { get; }
+
+    public WorkItemId WorkItemId { get; }
+}
+
+public sealed class WorkItemListPage
+{
+    public const int DefaultPageSize = 25;
+    public const int MaxPageSize = 100;
+
+    public WorkItemListPage(
+        IReadOnlyList<WorkItem> items,
+        WorkItemListCursor? nextCursor)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+
+        if (items.Count > MaxPageSize)
+            throw new ArgumentOutOfRangeException(
+                nameof(items),
+                "A WorkItem page cannot contain more than the maximum page size.");
+
+        Items = items.ToArray();
+        NextCursor = nextCursor;
+    }
+
+    public IReadOnlyList<WorkItem> Items { get; }
+
+    public WorkItemListCursor? NextCursor { get; }
+
+    public bool HasNextPage => NextCursor is not null;
+}
+
 public sealed class WorkItemImageSubmission
 {
     public const int MaxContentBytes = 10 * 1024 * 1024;
