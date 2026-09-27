@@ -99,7 +99,7 @@ public sealed class HiveHostComposition : IDisposable
         finally
         {
             _lifetimeCts.Dispose();
-            DisposeReconfigurationGateIfIdle();
+            TryDisposeReconfigurationGateIfIdle();
         }
 
         // Do not synchronously wait on the async reconfiguration gate here.
@@ -117,13 +117,15 @@ public sealed class HiveHostComposition : IDisposable
     {
         EnterCompositionOperation();
 
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken,
-            _lifetimeCts.Token);
-        var operationToken = linkedCts.Token;
+        CancellationTokenSource? linkedCts = null;
         var gateAcquired = false;
 
         try
+        {
+            linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken,
+                _lifetimeCts.Token);
+            var operationToken = linkedCts.Token;
         {
             await _reconfigurationGate
                 .WaitAsync(operationToken)
@@ -263,6 +265,7 @@ public sealed class HiveHostComposition : IDisposable
             if (gateAcquired)
                 _reconfigurationGate.Release();
 
+            linkedCts?.Dispose();
             ExitCompositionOperation();
         }
     }
@@ -282,11 +285,6 @@ public sealed class HiveHostComposition : IDisposable
 
     private void ExitCompositionOperation()
     {
-        DisposeReconfigurationGateIfIdle();
-    }
-
-    private void DisposeReconfigurationGateIfIdle()
-    {
         var dispose = false;
 
         lock (_stateGate)
@@ -294,6 +292,25 @@ public sealed class HiveHostComposition : IDisposable
             if (_activeCompositionOperations > 0)
                 _activeCompositionOperations--;
 
+            if (_disposed != 0 &&
+                _activeCompositionOperations == 0 &&
+                !_reconfigurationGateDisposed)
+            {
+                _reconfigurationGateDisposed = true;
+                dispose = true;
+            }
+        }
+
+        if (dispose)
+            _reconfigurationGate.Dispose();
+    }
+
+    private void TryDisposeReconfigurationGateIfIdle()
+    {
+        var dispose = false;
+
+        lock (_stateGate)
+        {
             if (_disposed != 0 &&
                 _activeCompositionOperations == 0 &&
                 !_reconfigurationGateDisposed)
