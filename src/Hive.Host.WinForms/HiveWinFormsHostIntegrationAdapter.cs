@@ -39,6 +39,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     private HiveHostContextDescriptor? _currentCapture;
     private IReadOnlyDictionary<string, Control>? _currentControls;
     private IReadOnlyDictionary<string, DataGridView>? _currentSurfaces;
+    private IReadOnlyDictionary<string, string>? _currentSurfacePaths;
     private long _captureGeneration;
     private int _disposed;
 
@@ -157,7 +158,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
             var controlIds = CreateControlIdentityMap(capturedControls);
             var surfaceEntries =
-                new List<(DataGridView Grid, HiveWinFormsDataSurfaceMetadata? Metadata, HiveHostDataSurfaceDescriptor Surface)>();
+                new List<(DataGridView Grid, HiveWinFormsDataSurfaceMetadata? Metadata, HiveHostDataSurfaceDescriptor Surface, string Path)>();
 
             var controls = new List<HiveHostControlDescriptor>(
                 capturedControls.Count);
@@ -207,7 +208,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     surface = CreateDataSurface(grid, surfaceId, null);
                 }
 
-                surfaceEntries.Add((grid, metadata, surface));
+                surfaceEntries.Add((grid, metadata, surface, entry.Snapshot.Path));
             }
 
             var dataSurfaces = ApplyParentChildRelationships(surfaceEntries);
@@ -239,6 +240,11 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 entry => entry.Grid,
                 StringComparer.Ordinal);
 
+            var surfacePathsById = surfaceEntries.ToDictionary(
+                entry => entry.Surface.Id,
+                entry => entry.Path,
+                StringComparer.Ordinal);
+
             lock (_captureGate)
             {
                 if (captureGeneration != _captureGeneration)
@@ -252,6 +258,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 _currentCapture = descriptor;
                 _currentControls = controlsById;
                 _currentSurfaces = surfacesById;
+                _currentSurfacePaths = surfacePathsById;
             }
 
             return Result<HiveHostContextDescriptor>.Success(descriptor);
@@ -494,19 +501,19 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         HiveHostInteractionRequest request,
         CancellationToken cancellationToken)
     {
+        if (_registration.Root.InvokeRequired)
+        {
+            return Error.Validation(
+                "hive.host.winforms.ui-thread-required",
+                "WinForms host interaction must run on the UI thread.");
+        }
+
         if (_registration.Root.IsDisposed ||
             _registration.Root.Disposing)
         {
             return Error.Conflict(
                 "hive.host.winforms.root-disposed",
                 "The registered WinForms host is no longer available.");
-        }
-
-        if (_registration.Root.InvokeRequired)
-        {
-            return Error.Validation(
-                "hive.host.winforms.ui-thread-required",
-                "WinForms host interaction must run on the UI thread.");
         }
 
         if (request.CaptureId is not { } captureId)
@@ -519,17 +526,20 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         HiveHostContextDescriptor? currentCapture;
         IReadOnlyDictionary<string, Control>? currentControls;
         IReadOnlyDictionary<string, DataGridView>? currentSurfaces;
+        IReadOnlyDictionary<string, string>? currentSurfacePaths;
 
         lock (_captureGate)
         {
             currentCapture = _currentCapture;
             currentControls = _currentControls;
             currentSurfaces = _currentSurfaces;
+            currentSurfacePaths = _currentSurfacePaths;
         }
 
         if (currentCapture is null ||
             currentControls is null ||
-            currentSurfaces is null)
+            currentSurfaces is null ||
+            currentSurfacePaths is null)
         {
             return Error.Conflict(
                 "hive.host.winforms.capture-unavailable",
@@ -582,9 +592,19 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             {
                 var currentControl = FindControlById(
                     request.ControlId,
-                    cancellationToken);
+                    cancellationToken,
+                    out var currentControlPath);
+                var capturedControlDescriptor = currentCapture.Controls
+                    .Single(control => string.Equals(
+                        control.Id,
+                        request.ControlId,
+                        StringComparison.Ordinal));
 
-                if (!ReferenceEquals(currentControl, capturedControl))
+                if (!ReferenceEquals(currentControl, capturedControl) ||
+                    !string.Equals(
+                        capturedControlDescriptor.Path,
+                        currentControlPath,
+                        StringComparison.Ordinal))
                 {
                     return Error.Conflict(
                         "hive.host.winforms.target-stale",
@@ -613,11 +633,19 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 (!currentSurfaces.TryGetValue(
                     request.SurfaceId,
                     out var capturedSurface) ||
+                 !currentSurfacePaths.TryGetValue(
+                    request.SurfaceId,
+                    out var capturedSurfacePath) ||
                  !ReferenceEquals(
                      FindDataSurfaceById(
                          request.SurfaceId,
-                         cancellationToken),
-                     capturedSurface)))
+                         cancellationToken,
+                         out var currentSurfacePath),
+                     capturedSurface) ||
+                 !string.Equals(
+                    capturedSurfacePath,
+                    currentSurfacePath,
+                    StringComparison.Ordinal)))
             {
                 return Error.Conflict(
                     "hive.host.winforms.target-stale",
@@ -686,8 +714,16 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                  !ReferenceEquals(
                      FindControlById(
                          request.ControlId,
-                         cancellationToken),
-                     capturedControl)))
+                         cancellationToken,
+                         out var currentControlPath),
+                     capturedControl) ||
+                 !string.Equals(
+                     currentCapture.Controls.Single(control => string.Equals(
+                         control.Id,
+                         request.ControlId,
+                         StringComparison.Ordinal)).Path,
+                     currentControlPath,
+                     StringComparison.Ordinal)))
             {
                 return Error.Conflict(
                     "hive.host.winforms.target-stale",
@@ -698,11 +734,19 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 (!currentSurfaces.TryGetValue(
                     request.SurfaceId,
                     out var capturedSurface) ||
+                 !currentSurfacePaths.TryGetValue(
+                     request.SurfaceId,
+                     out var capturedSurfacePath) ||
                  !ReferenceEquals(
                      FindDataSurfaceById(
                          request.SurfaceId,
-                         cancellationToken),
-                     capturedSurface)))
+                         cancellationToken,
+                         out var currentSurfacePath),
+                     capturedSurface) ||
+                 !string.Equals(
+                     capturedSurfacePath,
+                     currentSurfacePath,
+                     StringComparison.Ordinal)))
             {
                 return Error.Conflict(
                     "hive.host.winforms.target-stale",
@@ -715,8 +759,11 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
     private DataGridView? FindDataSurfaceById(
         string surfaceId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        out string? path)
     {
+        path = null;
+
         const string prefix = "surface:";
         if (!surfaceId.StartsWith(prefix, StringComparison.Ordinal))
             return null;
@@ -804,9 +851,15 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             .Take(2)
             .ToArray();
 
-        return matches.Length == 1
-            ? matches[0]
-            : null;
+        if (matches.Length != 1)
+            return null;
+
+        path = entries
+            .Where(entry => ReferenceEquals(entry.Grid, matches[0]))
+            .Select(entry => entry.Path)
+            .Single();
+
+        return matches[0];
     }
 
     private static bool RequiresFreshCapture(
@@ -1423,8 +1476,19 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
     private Control? FindControlById(
         string id,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken) =>
+        FindControlById(
+            id,
+            cancellationToken,
+            out _);
+
+    private Control? FindControlById(
+        string id,
+        CancellationToken cancellationToken,
+        out string? path)
     {
+        path = null;
+
         const string prefix = "control:";
 
         if (!id.StartsWith(prefix, StringComparison.Ordinal))
@@ -1488,7 +1552,11 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         }
 
         if (explicitMatch.Count == 1)
-            return explicitMatch[0];
+        {
+            var result = explicitMatch[0];
+            path = FindControlPath(result, cancellationToken);
+            return result;
+        }
 
         if (explicitMatch.Count > 1 ||
             namedMatch.Count > 1)
@@ -1497,12 +1565,64 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         }
 
         if (namedMatch.Count == 1)
-            return namedMatch[0];
+        {
+            var result = namedMatch[0];
+            path = FindControlPath(result, cancellationToken);
+            return result;
+        }
 
-        return key.StartsWith("0", StringComparison.Ordinal) &&
-               key.Contains('/', StringComparison.Ordinal)
-            ? FindControl(key)
-            : null;
+        if (key.StartsWith("0", StringComparison.Ordinal) &&
+            key.Contains('/', StringComparison.Ordinal))
+        {
+            var result = FindControl(key);
+            path = result is null ? null : key;
+            return result;
+        }
+
+        return null;
+    }
+
+    private string? FindControlPath(
+        Control target,
+        CancellationToken cancellationToken)
+    {
+        var stack = new Stack<(Control Control, int Depth, string Path)>();
+        stack.Push((_registration.Root, 0, "0"));
+
+        var visited = new HashSet<Control>(
+            ReferenceEqualityComparer.Instance);
+
+        while (stack.Count > 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var (control, depth, currentPath) = stack.Pop();
+
+            if (depth > _options.MaxDepth ||
+                visited.Count >= _options.MaxNodes)
+            {
+                continue;
+            }
+
+            if (!visited.Add(control))
+                continue;
+
+            if (ReferenceEquals(control, target))
+                return currentPath;
+
+            if (control.IsDisposed || control.Disposing || depth >= _options.MaxDepth)
+                continue;
+
+            for (var index = control.Controls.Count - 1; index >= 0; index--)
+            {
+                stack.Push((
+                    control.Controls[index],
+                    depth + 1,
+                    currentPath + "/" + index));
+            }
+        }
+
+        return null;
     }
 
     private Control? FindControl(string path)
