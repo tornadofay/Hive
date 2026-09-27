@@ -139,7 +139,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                         "The host capture was superseded by a newer capture."));
             }
 
-            _currentState = capture.Value;
+            _currentState = capture.Value!;
             return Result<HiveHostContextDescriptor>.Success(
                 capture.Value!.Capture);
         }
