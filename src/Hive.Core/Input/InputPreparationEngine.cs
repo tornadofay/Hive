@@ -37,6 +37,7 @@ public static class InputPreparationEngine
 
         var prepared = new List<PreparedInput>();
         var failures = new List<InputPreparationFailure>();
+        var submissionPreparationBudget = new SubmissionSpreadsheetPreparationBudget();
 
         for (var index = 0; index < submission.Items.Count; index++)
         {
@@ -66,6 +67,7 @@ public static class InputPreparationEngine
                         item,
                         prepared,
                         failures,
+                        submissionPreparationBudget,
                         cancellationToken);
                     continue;
                 }
@@ -193,6 +195,7 @@ public static class InputPreparationEngine
         InputItem item,
         List<PreparedInput> prepared,
         List<InputPreparationFailure> failures,
+        SubmissionSpreadsheetPreparationBudget submissionPreparationBudget,
         CancellationToken cancellationToken)
     {
         if (item.Content.Length > InputPreparationLimits.MaxSpreadsheetBytes)
@@ -451,6 +454,7 @@ public static class InputPreparationEngine
             return;
         }
 
+        submissionPreparationBudget.ConsumeWorkbook(preparationBudget);
         prepared.AddRange(localPrepared);
     }
 
@@ -1155,10 +1159,44 @@ public static class InputPreparationEngine
                 error));
     }
 
+    private sealed class SubmissionSpreadsheetPreparationBudget
+    {
+        private int _preparedRows;
+        private long _preparedValueMappings;
+
+        public void ConsumeWorkbook(SpreadsheetPreparationBudget workbookBudget)
+        {
+            ArgumentNullException.ThrowIfNull(workbookBudget);
+
+            if (_preparedRows >
+                InputPreparationLimits.MaxPreparedSpreadsheetRowsPerSubmission - workbookBudget.PreparedRows)
+            {
+                throw new SpreadsheetPackageWorkbookLimitException(
+                    "hive.input.spreadsheet.too-many-prepared-rows-submission",
+                    $"Spreadsheet submission preparation exceeds the {InputPreparationLimits.MaxPreparedSpreadsheetRowsPerSubmission}-row output limit.");
+            }
+
+            if (_preparedValueMappings >
+                InputPreparationLimits.MaxPreparedSpreadsheetValueMappingsPerSubmission - workbookBudget.PreparedValueMappings)
+            {
+                throw new SpreadsheetPackageWorkbookLimitException(
+                    "hive.input.spreadsheet.too-many-prepared-values-submission",
+                    $"Spreadsheet submission preparation exceeds the {InputPreparationLimits.MaxPreparedSpreadsheetValueMappingsPerSubmission}-value mapping limit.");
+            }
+
+            _preparedRows += workbookBudget.PreparedRows;
+            _preparedValueMappings += workbookBudget.PreparedValueMappings;
+        }
+    }
+
     private sealed class SpreadsheetPreparationBudget
     {
         private int _preparedRows;
         private long _preparedValueMappings;
+
+        public int PreparedRows => _preparedRows;
+
+        public long PreparedValueMappings => _preparedValueMappings;
 
         public void ConsumePreparedRow(int valueMappingCount)
         {
