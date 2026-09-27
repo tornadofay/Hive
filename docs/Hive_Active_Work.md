@@ -66,7 +66,13 @@ Remediation completed:
 - Preserved the assertions that the three low-level operations are absent from the public method surface and are private explicit-interface targets.
 - Static reinspection confirms the corrected property reflection assertion is present.
 
+Revision finding and correction:
+- The Management/adapter boundary documentation was broader than the implementation and could imply that host capture itself is capability-authorized.
+- Corrected the public API XML documentation and `v1-business-app-integration.md` so bounded host capture is explicitly described as discovery that validates the access context, while consequential interactions and bounded lookups remain capability-authorized through Management.
+- No runtime behavior change was required for this documentation correction.
+
 Agent verification:
-- Static repository/source review completed after the reported failure.
+- Static repository/source review completed after the reported failure and during this revision.
 - Builds, tests, and manual Example Host execution were not run by the agent.
-- Developer-reported 371/372 result is recorded as a remediated verification failure; developer re-verification is still required.
+- Developer reports that the Example Host and tests are now working correctly; the latest exact numeric test result after the final remediation was not supplied.
+- The slice remains `VERIFICATION PENDING` until the developer's final handoff verification is recorded.
