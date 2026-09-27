@@ -64,7 +64,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var firstResult = await first.CaptureAsync(accessContext);
+        var firstResult = await AsIntegrationAdapter(first).CaptureAsync(accessContext);
 
         Assert.True(firstResult.IsSuccess, firstResult.Error?.Message);
 
@@ -84,7 +84,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var secondResult = await second.CaptureAsync(accessContext);
+        var secondResult = await AsIntegrationAdapter(second).CaptureAsync(accessContext);
 
         Assert.True(secondResult.IsSuccess, secondResult.Error?.Message);
 
