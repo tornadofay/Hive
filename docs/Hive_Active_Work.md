@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IN PROGRESS
+Status: VERIFICATION PENDING
 
 Slice: Maintenance — Review Medium-Finding Corrections
 
@@ -36,7 +36,7 @@ Correct the four concrete medium-severity findings from the repository review im
 
 ## Verification
 
-Status: NOT YET RUN
+Status: PENDING DEVELOPER VERIFICATION
 
 Required developer verification before closure:
 
