@@ -65,7 +65,7 @@ internal static class HiveUiExceptionDiagnostics
     =
     [
         new(
-            @"(?<prefix>\b(?:password|passwd|pwd|secret|api[\s_-]?key|access[\s_-]?token|refresh[\s_-]?token|client[\s_-]?secret)\s*[:=]\s*(?<quote>[""']))(?<value>(?:\\[\s\S]|(?!\k<quote>)[^\\])*)(?<suffix>\k<quote>)",
+            @"(?<prefix>\b(?:password|passwd|pwd|secret|api[\s_-]?key|access[\s_-]?token|refresh[\s_-]?token|client[\s_-]?secret)\s*[""']?\s*[:=]\s*(?<quote>[""']))(?<value>(?:\\[\s\S]|(?!\k<quote>)[^\\])*)(?<suffix>\k<quote>)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
         new(
             @"(?<prefix>\b(?:password|passwd|pwd|secret|api[\s_-]?key|access[\s_-]?token|refresh[\s_-]?token|client[\s_-]?secret)\s*[:=]\s*(?<quote>[""']))(?!\[REDACTED\])(?<value>(?:\\[\s\S]|(?!\k<quote>)[^\\\r\n;\]\}])*)",
