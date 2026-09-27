@@ -125,12 +125,14 @@ public sealed class HiveWinFormsHostContext : IDisposable
     private readonly object _gate = new();
     private readonly ResourceAccessContext _accessContext;
     private readonly HiveWinFormsHostContextOptions _options;
+    private readonly IClock _clock;
     private readonly List<HiveWinFormsHostRegistration> _registrations = new();
     private int _disposed;
 
     public HiveWinFormsHostContext(
         ResourceAccessContext accessContext,
-        HiveWinFormsHostContextOptions? options = null)
+        HiveWinFormsHostContextOptions? options = null,
+        IClock? clock = null)
     {
         _accessContext = accessContext
             ?? throw new ArgumentNullException(nameof(accessContext));
@@ -144,6 +146,7 @@ public sealed class HiveWinFormsHostContext : IDisposable
         }
 
         _options = options ?? new HiveWinFormsHostContextOptions();
+        _clock = clock ?? SystemClock.Instance;
     }
 
     public HiveWinFormsHostRegistration Register(Form root)
@@ -479,7 +482,7 @@ public sealed class HiveWinFormsHostContext : IDisposable
         return new HiveWinFormsHostContextProvenance(
             registrationId,
             Guid.NewGuid(),
-            DateTimeOffset.UtcNow,
+            _clock.UtcNow,
             _accessContext.DeploymentId,
             _accessContext.TenantId,
             _accessContext.PrincipalId,
