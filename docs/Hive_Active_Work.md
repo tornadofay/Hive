@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Current slice: Maintenance — Host/UI: Host Integration Contract Corrections
 
@@ -33,9 +33,9 @@ Remediation completed:
 - Changed the background-thread regression to capture and validate the host context before adding 600 traversal-padding controls, avoiding a test-side null capture caused by the bounded capture limit.
 - Static reinspection confirms the corrected test paths and assertions are present.
 
-Remediation target:
-- Correct the xUnit `Assert.Contains` argument order in the explicit-adapter API regression test.
-- Reinspect the corrected test and return to `VERIFICATION PENDING` with the exact developer rerun targets.
+Remediation completed:
+- Corrected the xUnit `Assert.Contains` argument order in the explicit-adapter API regression test.
+- Static reinspection confirms the assertion now uses the expected-item-first overload.
 
 Verification target:
 - Developer build with the repository's Treat-Warnings-as-Errors configuration.
