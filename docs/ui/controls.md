@@ -64,7 +64,7 @@ HiveUiErrorReporter.Report(
     themeManager);
 ```
 
-It writes technical exception details to the Output panel when an `IHiveExampleOutput` sink is available and shows a themed error MessageBox with expandable details. Never pass secrets or credential material.
+It writes sanitized technical exception diagnostics to the Output panel when an `IHiveExampleOutput` sink is available and shows a themed error MessageBox with expandable details. The sanitized diagnostics include exception types and redacted messages but do not expose raw stack traces or common credential forms. Do not pass secrets or credential material.
 
 ## HiveListPageLayout
 
