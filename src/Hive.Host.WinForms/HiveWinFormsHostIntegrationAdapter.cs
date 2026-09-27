@@ -446,7 +446,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                         "The requested WinForms interaction is not supported by the reusable standard-control adapter."))
             };
         }
-        catch (InvalidOperationException exception)
+        catch (InvalidOperationException)
         {
             return Result<HiveHostInteractionResult>.Failure(
                 Error.Conflict(
@@ -1109,13 +1109,13 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     }
                 }
             }
-            catch (ArgumentException exception)
+            catch (ArgumentException)
             {
                 throw new HiveWinFormsIntegrationException(
                     "hive.host.winforms.binding-inspection-failed",
                     "The data-surface binding could not be inspected.");
             }
-            catch (InvalidOperationException exception)
+            catch (InvalidOperationException)
             {
                 throw new HiveWinFormsIntegrationException(
                     "hive.host.winforms.binding-inspection-failed",
@@ -1700,13 +1700,13 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 ? Math.Max(0, grid.Rows.Count - 1)
                 : grid.Rows.Count;
         }
-        catch (ArgumentException exception)
+        catch (ArgumentException)
         {
             throw new HiveWinFormsIntegrationException(
                 "hive.host.winforms.binding-row-count-failed",
                 "The data-surface row count could not be determined from its binding.");
         }
-        catch (InvalidOperationException exception)
+        catch (InvalidOperationException)
         {
             throw new HiveWinFormsIntegrationException(
                 "hive.host.winforms.binding-row-count-failed",
