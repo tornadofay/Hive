@@ -256,6 +256,88 @@ public sealed class InputPreparationTests
         Assert.Equal(ErrorCategory.Validation, failure.Error.Category);
     }
 
+
+    [Fact]
+    public void SpreadsheetInput_RejectsAggregateUncompressedPackageExpansion()
+    {
+        const int entryCount = 5;
+        var entryBytes = new byte[13 * 1024 * 1024];
+        Array.Fill(entryBytes, (byte)'x');
+
+        using var memory = new MemoryStream();
+        using (var archive = new ZipArchive(
+                   memory,
+                   ZipArchiveMode.Create,
+                   leaveOpen: true))
+        {
+            for (var index = 0; index < entryCount; index++)
+            {
+                var entry = archive.CreateEntry(
+                    $"xl/expansion-{index}.xml",
+                    CompressionLevel.Fastest);
+                using var stream = entry.Open();
+                stream.Write(entryBytes);
+            }
+        }
+
+        var result = InputPreparationEngine.Prepare(
+            new InputSubmission(
+            [
+                new InputItem(
+                    "expanded.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    memory.ToArray())
+            ]),
+            Array.Empty<ExecutionTarget>());
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        var failure = Assert.Single(result.Value!.Failures);
+        Assert.Equal(
+            "hive.input.spreadsheet.archive-uncompressed-too-large",
+            failure.Error.Code);
+        Assert.Equal(ErrorCategory.Validation, failure.Error.Category);
+        Assert.Empty(result.Value.PreparedInputs);
+    }
+
+    [Fact]
+    public void SpreadsheetInput_RejectsAggregatePreparedRowOutput()
+    {
+        string[][] CreateRows(int count)
+        {
+            var rows = new string[count + 1][];
+            rows[0] = ["Name"];
+
+            for (var index = 0; index < count; index++)
+                rows[index + 1] = [$"Row-{index + 1}"];
+
+            return rows;
+        }
+
+        var workbook = CreateWorkbook(
+            ("First", CreateRows(5000)),
+            ("Second", CreateRows(5000)),
+            ("Third", CreateRows(1)));
+
+        var result = InputPreparationEngine.Prepare(
+            new InputSubmission(
+            [
+                new InputItem(
+                    "many-rows.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    workbook)
+            ]),
+            Array.Empty<ExecutionTarget>());
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        var failure = Assert.Single(result.Value!.Failures);
+        Assert.Equal(
+            "hive.input.spreadsheet.too-many-prepared-rows",
+            failure.Error.Code);
+        Assert.Equal(ErrorCategory.Validation, failure.Error.Category);
+        Assert.Null(failure.SourceLocation);
+        Assert.Empty(result.Value.PreparedInputs);
+    }
+
     [Fact]
     public void SpreadsheetInput_FileLimitIsReportedAsItemFailure()
     {
