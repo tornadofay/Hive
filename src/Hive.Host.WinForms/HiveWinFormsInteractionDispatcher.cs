@@ -210,6 +210,7 @@ internal sealed class HiveWinFormsInteractionDispatcher
     private static bool RequiresFreshCapture(
         HiveHostInteractionKind kind) =>
         kind is
+            HiveHostInteractionKind.ReadControl or
             HiveHostInteractionKind.SetControlValue or
             HiveHostInteractionKind.AddRow or
             HiveHostInteractionKind.EditRow or
