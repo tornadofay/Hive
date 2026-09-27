@@ -84,6 +84,28 @@ public sealed class EventOutboxPollerIntegrationTests
     }
 
     [Fact]
+    public async Task ProcessNext_RenewsLeaseForLongRunningDelivery()
+    {
+        var database = await PrepareDatabase("Hive_Test_OutboxLeaseRenewal");
+        var store = new SqlEventPersistenceStore(database.Options);
+        var eventEnvelope = CreateEvent("outbox.lease-renewal");
+        await AppendAsync(store, eventEnvelope);
+
+        var handler = new RecordingHandler(TimeSpan.FromMilliseconds(350));
+        var poller = new EventOutboxPoller(store, TimeSpan.FromMilliseconds(80));
+
+        var result = await poller.ProcessNextAsync(handler);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(eventEnvelope.EventId, result.Value!.Envelope.EventId);
+        Assert.Single(handler.EventIds);
+
+        var remaining = await store.GetOutboxAsync(eventEnvelope.EventId);
+        Assert.True(remaining.IsSuccess, remaining.Error?.Message);
+        Assert.Null(remaining.Value);
+    }
+
+    [Fact]
     public async Task ProcessNext_CancellationAfterClaimLeavesLeaseForRecovery()
     {
         var database = await PrepareDatabase("Hive_Test_OutboxCancellation");
