@@ -195,6 +195,43 @@ public sealed class HiveHostCompositionTests
     }
 
     [Fact]
+    public async Task ApplyPersistedConfiguration_WhenSqlPasswordConfigurationIsUnchanged_RecomposesForCredentialMaterialChanges()
+    {
+        var reference = new HiveBootstrapCredentialReference(SecretId.New());
+        var configuration = new HivePersistenceConfiguration(
+            HivePersistenceBackend.SqlServer,
+            "sql.example.test",
+            1433,
+            "Hive",
+            HiveSqlAuthenticationMode.SqlPassword,
+            "hive-user",
+            reference,
+            encrypt: true,
+            trustServerCertificate: false,
+            createDatabaseIfMissing: false);
+
+        var configurationStore = new InMemoryConfigurationStore(configuration);
+        var firstGraph = CreateGraph(configuration);
+        var secondGraph = CreateGraph(configuration);
+
+        using var composition = new HiveHostComposition(
+            configurationStore,
+            new ScriptedGraphFactory(
+                Result<HiveHostServiceGraph>.Success(firstGraph),
+                Result<HiveHostServiceGraph>.Success(secondGraph)));
+
+        var initialization = await composition.InitializeAsync();
+        Assert.True(initialization.IsSuccess, initialization.Error?.Message);
+
+        var apply = await composition.ApplyPersistedConfigurationAsync();
+
+        Assert.True(apply.IsSuccess, apply.Error?.Message);
+        Assert.Same(secondGraph, composition.Current);
+        Assert.NotSame(firstGraph, composition.Current);
+        Assert.True(firstGraph.IsDisposed);
+    }
+
+    [Fact]
     public async Task ApplyPersistedConfiguration_WhenPersistenceConfigurationChanges_ReplacesGraph()
     {
         var firstConfiguration = HivePersistenceConfiguration.LocalDevelopment(
