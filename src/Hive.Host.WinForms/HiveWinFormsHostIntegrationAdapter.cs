@@ -256,7 +256,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
             return Result<HiveHostContextDescriptor>.Success(descriptor);
         }
-        catch (HiveWinFormsIntegrationException)
+        catch (HiveWinFormsIntegrationException exception)
         {
             return Result<HiveHostContextDescriptor>.Failure(
                 new Error(
