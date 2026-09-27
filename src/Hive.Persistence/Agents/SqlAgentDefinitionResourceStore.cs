@@ -27,10 +27,14 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
         """;
 
     private readonly HiveDatabaseOptions _options;
+    private readonly IClock _clock;
 
-    public SqlAgentDefinitionResourceStore(HiveDatabaseOptions options)
+    public SqlAgentDefinitionResourceStore(
+        HiveDatabaseOptions options,
+        IClock? clock = null)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
+        _clock = clock ?? SystemClock.Instance;
     }
 
     public Task<Result<AgentDefinition>> CreateAgentDefinitionAsync(
@@ -338,7 +342,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                 var retired = new AgentDefinition(
                     current.Resource.TransitionLifecycle(
                         ResourceLifecycleStatus.Retired,
-                        DateTimeOffset.UtcNow),
+                        _clock.UtcNow),
                     current.Key,
                     current.DisplayName,
                     current.Generation,
@@ -408,7 +412,7 @@ public sealed class SqlAgentDefinitionResourceStore : IAgentDefinitionResourceSt
                 var active = new AgentDefinition(
                     current.Resource.TransitionLifecycle(
                         ResourceLifecycleStatus.Active,
-                        DateTimeOffset.UtcNow),
+                        _clock.UtcNow),
                     current.Key,
                     current.DisplayName,
                     current.Generation,
