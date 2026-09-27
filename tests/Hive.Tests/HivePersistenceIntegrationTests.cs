@@ -79,6 +79,20 @@ public sealed class HivePersistenceIntegrationTests
     }
 
     [Fact]
+    public async Task Migration_RejectsAlreadyCancelledCallerWithoutStartingWork()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        var options = HiveDatabaseOptions.LocalDevelopment(
+            $"Hive_Test_Migration_Cancelled_{Guid.NewGuid():N}");
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => new HiveDatabaseMigrator(options).MigrateAsync(
+                cancellation.Token));
+    }
+
+    [Fact]
     public async Task FutureSchemaVersion_IsRejectedBeforeMigration()
     {
         var database = new PersistenceTestDatabase("Hive_Test_FutureSchema");
