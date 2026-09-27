@@ -23,9 +23,14 @@ public interface IHiveWinFormsSemanticProvider
     IReadOnlyList<HiveHostBusinessOperationDescriptor> GetBusinessOperations();
 }
 
-public sealed class HiveWinFormsHostIntegrationAdapter :
-    IHiveHostIntegrationAdapter,
-    IDisposable
+/// <summary>
+    /// Concrete WinForms execution adapter. Its host operations are intentionally exposed through
+    /// <see cref="IHiveHostIntegrationAdapter"/> so application code uses the Management authorization
+    /// boundary instead of invoking low-level host execution directly on this concrete type.
+    /// </summary>
+    public sealed class HiveWinFormsHostIntegrationAdapter :
+        IHiveHostIntegrationAdapter,
+        IDisposable
 {
     private readonly HiveWinFormsHostContext _context;
     private readonly HiveWinFormsHostRegistration _registration;
@@ -85,7 +90,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
     public string AdapterId => "Hive.Host.WinForms";
 
-    public async Task<Result<HiveHostContextDescriptor>> CaptureAsync(
+    async Task<Result<HiveHostContextDescriptor>> IHiveHostIntegrationAdapter.CaptureAsync(
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default)
     {
@@ -144,7 +149,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         }
     }
 
-    public async Task<Result<HiveHostInteractionResult>> ExecuteInteractionAsync(
+    async Task<Result<HiveHostInteractionResult>> IHiveHostIntegrationAdapter.ExecuteInteractionAsync(
         HiveHostInteractionRequest request,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default)
@@ -171,7 +176,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             .ConfigureAwait(false);
     }
 
-    public async Task<Result<IReadOnlyList<HiveLookupOption>>> ResolveLookupAsync(
+    async Task<Result<IReadOnlyList<HiveLookupOption>>> IHiveHostIntegrationAdapter.ResolveLookupAsync(
         HiveLookupRequest request,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default)
