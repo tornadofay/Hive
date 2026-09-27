@@ -40,6 +40,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     private IReadOnlyDictionary<string, Control>? _currentControls;
     private IReadOnlyDictionary<string, DataGridView>? _currentSurfaces;
     private IReadOnlyDictionary<string, string>? _currentSurfacePaths;
+    private IReadOnlyDictionary<string, IReadOnlyList<Control>>? _currentTargetAncestry;
     private long _captureGeneration;
     private int _disposed;
 
@@ -245,6 +246,23 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 entry => entry.Path,
                 StringComparer.Ordinal);
 
+            var targetAncestryById =
+                new Dictionary<string, IReadOnlyList<Control>>(
+                    StringComparer.Ordinal);
+
+            foreach (var entry in capturedControls)
+            {
+                var controlId = controlIds[entry.Control];
+                targetAncestryById["control:" + controlId] =
+                    CaptureControlAncestry(entry.Control);
+            }
+
+            foreach (var entry in surfaceEntries)
+            {
+                targetAncestryById[entry.Surface.Id] =
+                    CaptureControlAncestry(entry.Grid);
+            }
+
             lock (_captureGate)
             {
                 if (captureGeneration != _captureGeneration)
@@ -259,6 +277,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 _currentControls = controlsById;
                 _currentSurfaces = surfacesById;
                 _currentSurfacePaths = surfacePathsById;
+                _currentTargetAncestry = targetAncestryById;
             }
 
             return Result<HiveHostContextDescriptor>.Success(descriptor);
@@ -527,6 +546,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         IReadOnlyDictionary<string, Control>? currentControls;
         IReadOnlyDictionary<string, DataGridView>? currentSurfaces;
         IReadOnlyDictionary<string, string>? currentSurfacePaths;
+        IReadOnlyDictionary<string, IReadOnlyList<Control>>? currentTargetAncestry;
 
         lock (_captureGate)
         {
@@ -534,12 +554,14 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             currentControls = _currentControls;
             currentSurfaces = _currentSurfaces;
             currentSurfacePaths = _currentSurfacePaths;
+            currentTargetAncestry = _currentTargetAncestry;
         }
 
         if (currentCapture is null ||
             currentControls is null ||
             currentSurfaces is null ||
-            currentSurfacePaths is null)
+            currentSurfacePaths is null ||
+            currentTargetAncestry is null)
         {
             return Error.Conflict(
                 "hive.host.winforms.capture-unavailable",
@@ -600,11 +622,18 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                         request.ControlId,
                         StringComparison.Ordinal));
 
-                if (!ReferenceEquals(currentControl, capturedControl) ||
+                if (!currentTargetAncestry.TryGetValue(
+                        request.ControlId,
+                        out var capturedControlAncestry) ||
+                    !ReferenceEquals(currentControl, capturedControl) ||
                     !string.Equals(
                         capturedControlDescriptor.Path,
                         currentControlPath,
-                        StringComparison.Ordinal))
+                        StringComparison.Ordinal) ||
+                    !AreSameControlAncestry(
+                        capturedControlAncestry,
+                        currentControl,
+                        cancellationToken))
                 {
                     return Error.Conflict(
                         "hive.host.winforms.target-stale",
