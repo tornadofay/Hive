@@ -365,6 +365,8 @@ public static class InputPreparationLimits
     public const long MaxSpreadsheetUncompressedPackageBytes = 64L * 1024 * 1024;
     public const int MaxPreparedSpreadsheetRows = 10_000;
     public const int MaxPreparedSpreadsheetValueMappings = 1_000_000;
+    public const int MaxPreparedSpreadsheetRowsPerSubmission = 20_000;
+    public const int MaxPreparedSpreadsheetValueMappingsPerSubmission = 2_000_000;
     public const int MaxZipEntries = 512;
     public const int MaxXmlEntryBytes = 16 * 1024 * 1024;
     public const long MaxXmlCharacters = 12000000;
