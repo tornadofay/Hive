@@ -350,6 +350,8 @@ Required crash-safety properties:
 - committed events cannot lose their corresponding outbox work;
 - rollback leaves neither the event nor its outbox work;
 - duplicate outbox delivery is safe;
+- an in-flight delivery keeps its outbox lease renewed until completion or cancellation;
+- loss of lease renewal cancels the delivery token and leaves the outbox item recoverable;
 - replay is deterministic where the contract requires it;
 - terminal execution state cannot be overwritten by late provider completion.
 
