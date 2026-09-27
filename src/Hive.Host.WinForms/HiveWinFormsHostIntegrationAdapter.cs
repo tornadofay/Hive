@@ -1486,9 +1486,9 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     private Control? FindControlById(
         string id,
         CancellationToken cancellationToken,
-        out string? path)
+        out string? currentPath)
     {
-        path = null;
+        currentPath = null;
 
         const string prefix = "control:";
 
@@ -1509,7 +1509,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var (control, depth, path) = stack.Pop();
+            var (control, depth, traversalPath) = stack.Pop();
 
             if (depth > _options.MaxDepth ||
                 visited.Count >= _options.MaxNodes)
@@ -1548,7 +1548,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 stack.Push((
                     control.Controls[index],
                     depth + 1,
-                    path + "/" + index));
+                    traversalPath + "/" + index));
             }
         }
 
