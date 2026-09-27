@@ -9,13 +9,16 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
 {
     private readonly HiveDatabaseOptions _options;
     private readonly JsonEventSerializer _serializer;
+    private readonly IClock _clock;
 
     public SqlEventPersistenceStore(
         HiveDatabaseOptions options,
-        JsonEventSerializer? serializer = null)
+        JsonEventSerializer? serializer = null,
+        IClock? clock = null)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _serializer = serializer ?? new JsonEventSerializer();
+        _clock = clock ?? SystemClock.Instance;
     }
 
     public async Task<Result<EventAppendResult>> AppendAsync(
@@ -386,7 +389,7 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
             throw new ArgumentOutOfRangeException(nameof(leaseDuration));
 
         var leaseId = Guid.NewGuid();
-        var now = DateTimeOffset.UtcNow;
+        var now = _clock.UtcNow;
         var expiresAt = now.Add(leaseDuration);
 
         try
@@ -483,7 +486,7 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
             command.Parameters.Add(
                 DateTimeParameter(
                     "@NowUtc",
-                    DateTimeOffset.UtcNow));
+                    _clock.UtcNow));
 
             var affected = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             return affected == 1
