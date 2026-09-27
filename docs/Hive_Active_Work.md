@@ -13,7 +13,7 @@ Correct the four concrete production findings identified in the 2026-09-27 repos
 ## Scope
 1. **Spreadsheet preparation resource bounds**
    - Add a workbook-wide uncompressed package byte budget.
-   - Add workbook-wide prepared-row and prepared-value-mapping budgets.
+   - Add workbook-wide and submission-wide prepared-row and prepared-value-mapping budgets.
    - Preserve per-item, per-worksheet, cancellation, and failure-isolation behavior.
    - Add focused boundary regressions.
 
@@ -42,7 +42,7 @@ Correct the four concrete production findings identified in the 2026-09-27 repos
 - No branch/PR creation.
 
 ## Verification Gate
-VERIFICATION FAILED / REMEDIATION REQUIRED — second revision found three in-scope completeness issues before developer verification: architecture revision metadata is stale, public WinForms control documentation omits the new Sensitive field metadata, and prepared spreadsheet output remains unbounded across multiple spreadsheet items in one InputSubmission. Remediation is limited to correcting those documentation gaps and adding a submission-wide prepared-output budget with focused regression coverage. Return to VERIFICATION PENDING after remediation.
+VERIFICATION PENDING — second-revision remediation is complete: architecture revision metadata is current, public WinForms documentation covers Sensitive field metadata, and submission-wide prepared spreadsheet output is bounded with focused regression coverage. Developer must rerun the focused tests and full Hive.Tests suite before slice closure.
 
 ## Handoff
 Example to run: existing host/integration examples are unchanged by this maintenance slice; no new externally meaningful capability is introduced.
