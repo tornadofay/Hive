@@ -2,6 +2,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using Hive.Core;
 using Hive.Host.WinForms;
+using Hive.Tests.TestInfrastructure;
 using Xunit;
 
 namespace Hive.Tests;
@@ -126,6 +127,23 @@ public sealed class HiveWinFormsHostContextTests
         Assert.Equal(
             "hive.host.context.registration-disposed",
             result.Error!.Code);
+    }
+
+    [Fact]
+    public async Task Capture_UsesInjectedClockForProvenance()
+    {
+        using var form = CreateFixtureForm();
+        var clock = new FakeClock(
+            new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero));
+        using var context = new HiveWinFormsHostContext(
+            CreateAccessContext(),
+            clock: clock);
+        using var registration = context.Register(form);
+
+        var result = await context.CaptureAsync(registration);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(clock.UtcNow, result.Value!.Provenance.CapturedAtUtc);
     }
 
     [Fact]
