@@ -781,7 +781,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
             JsonSerializer.SerializeToElement(document, SqlResourceStoreCommon.JsonOptions));
     }
 
-    private static EventEnvelope CreateEvent(
+    private EventEnvelope CreateEvent(
         string eventType,
         WorkItem workItem,
         WorkItemStatus? previousStatus,
