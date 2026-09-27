@@ -37,7 +37,7 @@ The developer ran the full `Hive.Tests` suite after the final remediation:
 
 ```
 ========== Starting test run ==========
-[xUnit.net 00:00:00.00] [xUnit.net VSTest Adapter v3.1.5+1b40a1c7a0b0 (64-bit .NET 10.0.1)
+[xUnit.net 00:00:00.00]   [xUnit.net VSTest Adapter v3.1.5+1b40a1c7a0b0 (64-bit .NET 10.0.1)
 [xUnit.net 00:00:00.33]   Starting:    Hive.Tests
 [xUnit.net 00:00:29.07]   Finished:    Hive.Tests
 ========== Test run finished: 347 Tests (347 Passed, 0 Failed, 0 Skipped) run in 29.1 sec ==========
