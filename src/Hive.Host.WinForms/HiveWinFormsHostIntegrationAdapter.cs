@@ -90,12 +90,6 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         cancellationToken.ThrowIfCancellationRequested();
 
         var captureGeneration = Interlocked.Increment(ref _captureGeneration);
-        lock (_captureGate)
-        {
-            _currentCapture = null;
-            _currentControls = null;
-            _currentSurfaces = null;
-        }
 
         if (_registration.Root.IsDisposed ||
             _registration.Root.Disposing)
@@ -716,9 +710,9 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         var stack = new Stack<(Control Control, int Depth, string Path)>();
         stack.Push((_registration.Root, 0, "0"));
 
-        var candidates = new List<(DataGridView Grid, string Identity)>();
         var visited = new HashSet<Control>(
             ReferenceEqualityComparer.Instance);
+        var entries = new List<(DataGridView Grid, string Name, string Path, string? ExplicitId)>();
 
         while (stack.Count > 0)
         {
@@ -741,18 +735,15 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
             if (control is DataGridView grid)
             {
-                var explicitId = grid is IHiveWinFormsDataSurface hiveSurface
-                    ? CleanOptional(hiveSurface.HiveDataSurface.SurfaceId)
-                    : null;
-
-                var identity = explicitId is not null
-                    ? "surface:" + explicitId
-                    : "surface:" +
-                      (!string.IsNullOrWhiteSpace(grid.Name)
-                          ? grid.Name.Trim()
-                          : path);
-
-                candidates.Add((grid, identity));
+                entries.Add(
+                    (
+                        grid,
+                        grid.Name,
+                        path,
+                        grid is IHiveWinFormsDataSurface hiveSurface
+                            ? CleanOptional(
+                                hiveSurface.HiveDataSurface.SurfaceId)
+                            : null));
             }
 
             if (depth >= _options.MaxDepth)
@@ -760,23 +751,46 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
             for (var index = control.Controls.Count - 1; index >= 0; index--)
             {
-                stack.Push((
-                    control.Controls[index],
-                    depth + 1,
-                    path + "/" + index));
+                stack.Push(
+                    (
+                        control.Controls[index],
+                        depth + 1,
+                        path + "/" + index));
             }
         }
 
-        var matches = candidates
-            .Where(candidate =>
-                string.Equals(
-                    candidate.Identity,
+        var namedCounts = entries
+            .Where(static entry => !string.IsNullOrWhiteSpace(entry.Name))
+            .GroupBy(
+                static entry => entry.Name,
+                StringComparer.Ordinal)
+            .ToDictionary(
+                static group => group.Key,
+                static group => group.Count(),
+                StringComparer.Ordinal);
+
+        var matches = entries
+            .Where(entry =>
+            {
+                var identity = entry.ExplicitId is not null
+                    ? "surface:" + entry.ExplicitId
+                    : "surface:" +
+                      (!string.IsNullOrWhiteSpace(entry.Name) &&
+                       namedCounts[entry.Name] == 1
+                          ? entry.Name.Trim()
+                          : entry.Path);
+
+                return string.Equals(
+                    identity,
                     surfaceId,
-                    StringComparison.Ordinal))
+                    StringComparison.Ordinal);
+            })
+            .Select(static entry => entry.Grid)
+            .Take(2)
             .ToArray();
 
         return matches.Length == 1
-            ? matches[0].Grid
+            ? matches[0]
             : null;
     }
 
