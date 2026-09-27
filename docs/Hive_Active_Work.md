@@ -42,7 +42,7 @@ Correct the four concrete production findings identified in the 2026-09-27 repos
 - No branch/PR creation.
 
 ## Verification Gate
-VERIFICATION FAILED / REMEDIATION REQUIRED — revision found two in-scope issues before developer verification: the new HiveHostFieldDescriptor constructor removed the original public constructor signature, risking binary compatibility for compiled consumers; and architecture wording overstated sensitive-value redaction beyond passive host-context/captured values. Remediation is limited to preserving the original constructor signature, narrowing the architecture wording, and adding regression coverage for the public contract shape. Return to VERIFICATION PENDING after remediation.
+VERIFICATION PENDING — revision remediation is complete: the original HiveHostFieldDescriptor constructor signature is preserved through an overload, sensitive-field architecture wording now matches passive host-context/captured-value behavior, and contract regression coverage verifies both constructor shapes and legacy value preservation. Developer must rerun the focused tests and full Hive.Tests suite before slice closure.
 
 ## Handoff
 Example to run: existing host/integration examples are unchanged by this maintenance slice; no new externally meaningful capability is introduced.
