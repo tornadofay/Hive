@@ -35,7 +35,8 @@ internal sealed class EventOutboxPollerExampleView : UserControl
     private async Task RunExampleAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var options = HiveDatabaseOptions.LocalDevelopment("Hive_Example_EventOutboxPoller");
+        var options = HiveDatabaseOptions.LocalDevelopment(
+            $"Hive_Example_EventOutboxPoller_{Guid.NewGuid():N}");
         var migration = await new HiveDatabaseMigrator(options).MigrateAsync(cancellationToken);
         EnsureSuccess(migration, "Hive database migration");
 
@@ -63,8 +64,20 @@ internal sealed class EventOutboxPollerExampleView : UserControl
         var second = await poller.ProcessNextAsync(handler, cancellationToken);
         EnsureSuccess(second, "Outbox retry");
 
+        if (second.Value?.Envelope.EventId != eventEnvelope.EventId)
+        {
+            throw new InvalidOperationException(
+                "The retry claimed a different outbox event; the example database was not isolated.");
+        }
+
         var remaining = await store.GetOutboxAsync(eventEnvelope.EventId, cancellationToken);
         EnsureSuccess(remaining, "Outbox lookup after delivery");
+
+        if (remaining.Value is not null)
+        {
+            throw new InvalidOperationException(
+                "The retried outbox event remained after successful acknowledgement.");
+        }
 
         _output.Write(
             "Transactional Outbox Poller",
