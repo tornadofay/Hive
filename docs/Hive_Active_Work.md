@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Slice: Maintenance — Review Medium-Finding Corrections
 
@@ -36,7 +36,7 @@ Correct the four concrete medium-severity findings from the repository review im
 
 ## Verification
 
-Status: REMEDIATION REQUIRED — REVISION FINDINGS
+Status: PENDING DEVELOPER VERIFICATION
 
 Required developer verification before closure:
 
@@ -48,6 +48,8 @@ Developer verification on 2026-09-27 reported compile errors in `HiveWinFormsHos
 
 Developer verification then reported compile error CS1061 in `EventOutboxPollerIntegrationTests.cs` line 126: `TaskCompletionSource<object?>` does not define `IsCompleted`. Same-slice remediation corrected the test assertion to inspect `RenewalStopped.Task.IsCompleted`, preserving the intended outbox lifecycle assertion without changing production behavior. Developer verification then reported 362 tests with 360 passed and 2 failed: `HiveWinFormsHostIntegrationTests.ConsequentialInteraction_FromBackgroundThread_IsRejectedBeforeFreshnessTraversal` expected captured text `Example` but received an empty value at line 1067; `EventOutboxPollerIntegrationTests.ProcessNext_HandlerFailureAwaitsLeaseRenewalShutdown` expected `InvalidOperationException` but no exception was thrown at line 119. Same-slice remediation updated the two regression tests within the existing contracts: the WinForms test now observes `TextChanged` mutation through a thread-safe counter instead of reading the control's `Text` property from the background continuation, and the outbox handler-failure test now asserts the established `Result` failure contract (`hive.outbox.handler`) because `ProcessNextAsync` converts handler exceptions to a failure result. No production behavior or authorized boundary was widened.
 
-Rerun targets after this developer-test-failure remediation: build all affected projects with Treat Warnings as Errors enabled; run the focused regression tests added by this slice; run the full `Hive.Tests` suite; manually run the affected Example Host scenarios for Outbox Poller, WinForms Host Integration / Dual Business-App Integration, and Provider Accounts / Security as applicable. Record exact developer results before closure.
+Requested Revision findings and remediation: the re-audit found that consequential target freshness checked control identity but did not reject reparenting of the same control/data-surface instance. The WinForms adapter now retains captured data-surface paths, compares current control/surface paths with the originating capture, and enforces the UI-thread check before freshness traversal; focused regressions cover reparented controls and data surfaces. The revision also found remaining raw exception diagnostics in shared UI controls, Host UI, Example Host, settings/error paths, clipboard handling, repository-link handling, and debug logging. These paths now use the existing sanitized UI error reporter/diagnostic formatter or generic user-facing messages. Credential redaction was further hardened for mixed quote content and unterminated quoted credential forms, with focused regression coverage. The outbox cancellation regression name was corrected to match the actual recovery semantics, and the warnings-as-errors static review removed unused catch variables introduced by the sanitization hardening. A cross-assembly sanitizer misuse caught during revision was corrected by routing the Example Overview failure through the public HiveUiErrorReporter instead. The revision introduced no roadmap capability or material public-contract expansion.
+
+Rerun targets after this Revision remediation: build all affected projects with Treat Warnings as Errors enabled; run the focused regression tests added by this slice; run the full `Hive.Tests` suite; manually run the affected Example Host scenarios for Outbox Poller, WinForms Host Integration / Dual Business-App Integration, and Provider Accounts / Security as applicable. Record exact developer results before closure.
 
 Do not close the slice until developer verification results are recorded.
