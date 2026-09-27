@@ -80,12 +80,7 @@ public sealed class EventOutboxPoller
         }
 
         if (handlerCancellation is not null)
-        {
-            if (cancellationToken.IsCancellationRequested)
-                throw handlerCancellation;
-
             throw handlerCancellation;
-        }
 
         if (delivery is null)
         {
