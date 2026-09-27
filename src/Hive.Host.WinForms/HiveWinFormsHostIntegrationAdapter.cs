@@ -1187,14 +1187,14 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
     private static int TryGetBoundRowCount(DataGridView grid)
     {
-        var dataSource = grid.DataSource;
-
-        if (dataSource is not null)
+        try
         {
-            var bindingContext = grid.BindingContext;
-            if (bindingContext is not null)
+            var dataSource = grid.DataSource;
+
+            if (dataSource is not null)
             {
-                try
+                var bindingContext = grid.BindingContext;
+                if (bindingContext is not null)
                 {
                     var manager = bindingContext[
                         dataSource,
@@ -1203,24 +1203,24 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     if (manager is not null)
                         return Math.Max(0, manager.Count);
                 }
-                catch (ArgumentException exception)
-                {
-                    throw new HiveWinFormsIntegrationException(
-                        "hive.host.winforms.binding-row-count-failed",
-                        $"The data-surface row count could not be determined from its binding: {exception.Message}");
-                }
-                catch (InvalidOperationException exception)
-                {
-                    throw new HiveWinFormsIntegrationException(
-                        "hive.host.winforms.binding-row-count-failed",
-                        $"The data-surface row count could not be determined from its binding: {exception.Message}");
-                }
             }
-        }
 
-        return grid.AllowUserToAddRows
-            ? Math.Max(0, grid.Rows.Count - 1)
-            : grid.Rows.Count;
+            return grid.AllowUserToAddRows
+                ? Math.Max(0, grid.Rows.Count - 1)
+                : grid.Rows.Count;
+        }
+        catch (ArgumentException exception)
+        {
+            throw new HiveWinFormsIntegrationException(
+                "hive.host.winforms.binding-row-count-failed",
+                $"The data-surface row count could not be determined from its binding: {exception.Message}");
+        }
+        catch (InvalidOperationException exception)
+        {
+            throw new HiveWinFormsIntegrationException(
+                "hive.host.winforms.binding-row-count-failed",
+                $"The data-surface row count could not be determined from its binding: {exception.Message}");
+        }
     }
 
     private static bool CanSetStandardValue(
