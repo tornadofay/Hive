@@ -934,39 +934,66 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
-    public async Task PasswordControl_IsNeverExposedAsValue()
+    public async Task PasswordControls_AreNeverExposedAsValueOrWritableCapability()
     {
         using var form = CreateFixtureForm();
+
+        var passwordChar = new TextBox
+        {
+            Name = "passwordChar",
+            Text = "secret-value-2",
+            PasswordChar = '*'
+        };
+
+        var maskedPassword = new MaskedTextBox
+        {
+            Name = "maskedPassword",
+            Text = "secret-value-3",
+            PasswordChar = '*'
+        };
+
+        form.Controls.Add(passwordChar);
+        form.Controls.Add(maskedPassword);
+
         var accessContext = CreateAccessContext();
         using var adapter = new HiveWinFormsHostIntegrationAdapter(
             form,
             accessContext);
 
         var descriptor = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
-        var password = descriptor.Controls
-            .Single(item => item.Name == "password");
-
-        Assert.Null(password.Field!.CurrentValue);
-        Assert.DoesNotContain(
-            password.Capabilities,
-            capability => capability.Kind == HiveHostCapabilityKind.SetControlValue);
-
         var service = new HiveHostIntegrationService(
             new AllowAllAuthorizer());
 
-        var read = await service.ExecuteInteractionAsync(
-            adapter,
-            new HiveHostInteractionRequest(
-                password.Capabilities.Single(capability =>
-                    capability.Kind == HiveHostCapabilityKind.ReadControl).Id,
-                HiveHostInteractionKind.ReadControl,
-                CorrelationId.New(),
-                controlId: password.Id,
-                captureId: descriptor.Provenance.CaptureId),
-            accessContext);
+        foreach (var controlName in new[]
+        {
+            "password",
+            "passwordChar",
+            "maskedPassword"
+        })
+        {
+            var password = descriptor.Controls
+                .Single(item => item.Name == controlName);
 
-        Assert.True(read.IsSuccess, read.Error?.Message);
-        Assert.Null(read.Value!.ResultValue);
+            Assert.NotNull(password.Field);
+            Assert.Null(password.Field!.CurrentValue);
+            Assert.DoesNotContain(
+                password.Capabilities,
+                capability => capability.Kind == HiveHostCapabilityKind.SetControlValue);
+
+            var read = await service.ExecuteInteractionAsync(
+                adapter,
+                new HiveHostInteractionRequest(
+                    password.Capabilities.Single(capability =>
+                        capability.Kind == HiveHostCapabilityKind.ReadControl).Id,
+                    HiveHostInteractionKind.ReadControl,
+                    CorrelationId.New(),
+                    controlId: password.Id,
+                    captureId: descriptor.Provenance.CaptureId),
+                accessContext);
+
+            Assert.True(read.IsSuccess, read.Error?.Message);
+            Assert.Null(read.Value!.ResultValue);
+        }
     }
 
     [Fact]
