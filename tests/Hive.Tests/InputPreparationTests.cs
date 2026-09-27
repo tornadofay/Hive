@@ -358,7 +358,11 @@ public sealed class InputPreparationTests
         var secondWorkbook = CreateWorkbook(
             ("Second", CreateRows(4999)));
         var thirdWorkbook = CreateWorkbook(
-            ("Third", CreateRows(3)));
+            ("Third", CreateRows(4999)));
+        var fourthWorkbook = CreateWorkbook(
+            ("Fourth", CreateRows(4999)));
+        var fifthWorkbook = CreateWorkbook(
+            ("Fifth", CreateRows(3)));
 
         var result = InputPreparationEngine.Prepare(
             new InputSubmission(
@@ -374,13 +378,21 @@ public sealed class InputPreparationTests
                 new InputItem(
                     "third.xlsx",
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    thirdWorkbook)
+                    thirdWorkbook),
+                new InputItem(
+                    "fourth.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fourthWorkbook),
+                new InputItem(
+                    "fifth.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fifthWorkbook)
             ]),
             Array.Empty<ExecutionTarget>());
 
         Assert.True(result.IsSuccess, result.Error?.Message);
         Assert.Equal(
-            InputPreparationLimits.MaxPreparedSpreadsheetRowsPerSubmission - 2,
+            InputPreparationLimits.MaxPreparedSpreadsheetRowsPerSubmission - 4,
             result.Value!.PreparedInputs.Count);
         var failure = Assert.Single(result.Value.Failures);
         Assert.Equal(
