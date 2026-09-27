@@ -140,8 +140,8 @@ public sealed class EventOutboxPollerIntegrationTests
         var eventEnvelope = CreateEvent("outbox.lease-renewal");
         await AppendAsync(store, eventEnvelope);
 
-        var handler = new RecordingHandler(TimeSpan.FromMilliseconds(350));
-        var poller = new EventOutboxPoller(store, TimeSpan.FromMilliseconds(80));
+        var handler = new RecordingHandler(TimeSpan.FromSeconds(3));
+        var poller = new EventOutboxPoller(store, TimeSpan.FromSeconds(1));
 
         var result = await poller.ProcessNextAsync(handler);
 
