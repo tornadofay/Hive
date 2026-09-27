@@ -742,11 +742,11 @@ internal sealed class HiveExampleHostForm : HiveForm
         try
         {
             var composition = _composition;
-        var graph = composition?.Current;
+            var graph = composition?.Current;
 
-        if (composition is null ||
-            graph is null ||
-            graph.IsDisposed)
+            if (composition is null ||
+                graph is null ||
+                graph.IsDisposed)
         {
             HiveUiErrorReporter.Report(
                 this,
