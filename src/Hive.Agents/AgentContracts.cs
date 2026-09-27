@@ -175,8 +175,8 @@ public class Agent
             Id,
             Generation,
             createdAtUtc ?? _clock.UtcNow,
-            clock ?? _clock,
-            delegation);
+            delegation,
+            clock ?? _clock);
     }
 }
 
@@ -267,8 +267,8 @@ public sealed class RuntimeInstance
         AgentId agentId,
         AgentGeneration generation,
         DateTimeOffset createdAtUtc,
-        IClock? clock,
-        IDelegationChannel? delegation)
+        IDelegationChannel? delegation,
+        IClock? clock = null)
     {
         var runtimeId = RuntimeId.New();
         var effectiveClock = clock ?? SystemClock.Instance;
