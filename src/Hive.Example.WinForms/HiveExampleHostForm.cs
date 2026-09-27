@@ -833,6 +833,7 @@ internal sealed class HiveExampleHostForm : HiveForm
                 _outputView,
                 _themeManager);
         }
+        }
         finally
         {
             Volatile.Write(ref _settingsOperationActive, 0);
