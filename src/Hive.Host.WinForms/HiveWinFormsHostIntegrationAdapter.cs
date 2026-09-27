@@ -801,7 +801,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     (
                         grid,
                         grid.Name,
-                        path,
+                        traversalPath,
                         grid is IHiveWinFormsDataSurface hiveSurface
                             ? CleanOptional(
                                 hiveSurface.HiveDataSurface.SurfaceId)
@@ -854,7 +854,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         if (matches.Length != 1)
             return null;
 
-        path = entries
+        currentPath = entries
             .Where(entry => ReferenceEquals(entry.Grid, matches[0]))
             .Select(entry => entry.Path)
             .Single();
