@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Current slice: Maintenance — Host/UI: Host Integration Contract Corrections
 
@@ -17,6 +17,10 @@ Exclusions respected:
 - No new host-integration capability beyond correcting existing behavior/contracts.
 - No unrelated persistence, dependency, or UI redesign work.
 
+Remediation target:
+- Remove optional parameter defaults from the explicit `IHiveHostIntegrationAdapter` method implementations; retain defaults on the public interface contract.
+- Reinspect the affected API surface and return to `VERIFICATION PENDING` with the exact developer rerun targets.
+
 Verification target:
 - Developer build with the repository's Treat-Warnings-as-Errors configuration.
 - Focused tests covering:
@@ -29,4 +33,4 @@ Verification target:
 Agent verification:
 - Static repository/source review completed.
 - Builds, tests, and manual Example Host execution were not run by the agent.
-- Slice remains open pending developer verification results; do not close or update Current Status until actual results are provided.
+- Developer compilation reported three CS1066 errors in `HiveWinFormsHostIntegrationAdapter.cs`: explicit interface implementation parameters cannot declare optional default values. These errors are inside the authorized explicit-interface boundary correction.
