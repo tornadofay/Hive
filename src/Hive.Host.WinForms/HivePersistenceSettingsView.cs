@@ -456,6 +456,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
             if (!IsDisposed && !Disposing)
             {
                 SetStatus(
+                    "Persistence configuration is invalid. See technical details.",
+                    HiveStatusTone.Error);
 
                 HiveUiErrorReporter.Report(
                     FindForm(),
@@ -732,7 +734,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
         {
             if (!IsDisposed && !Disposing)
             {
-                SetStatus(exception.Message, HiveStatusTone.Error);
+                SetStatus(
+                    "Operation failed. See technical details.",
+                    HiveStatusTone.Error);
 
                 HiveUiErrorReporter.Report(
                     FindForm(),
