@@ -232,6 +232,46 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task Capture_BoundRowCountInspectionFailureIsReportedAsTypedFailure()
+    {
+        using var form = new Form();
+        var binding = new BindingSource
+        {
+            DataSource = new[]
+            {
+                new { Id = 1, Name = "One" }
+            }
+        };
+
+        var grid = new DataGridView
+        {
+            Name = "orders",
+            DataSource = binding,
+            DataMember = "missing"
+        };
+        grid.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "Id",
+                DataPropertyName = "Id"
+            });
+        form.Controls.Add(grid);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var result = await adapter.CaptureAsync(accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.binding-row-count-failed",
+            result.Error!.Code);
+        Assert.Equal(ErrorCategory.Validation, result.Error.Category);
+    }
+
+    [Fact]
     public async Task Capture_ComputedBaseFieldDoesNotExposeWriteCapability()
     {
         using var form = new Form();
