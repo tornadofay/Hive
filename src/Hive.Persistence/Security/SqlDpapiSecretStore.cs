@@ -393,6 +393,31 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         if (row.IsFailure)
             return Result.Failure(row.Error!);
 
+        await using (var referenceCheck = CreateCommand(
+            connection,
+            """
+            SELECT TOP (1) 1
+            FROM [dbo].[HiveProviderAccounts]
+            WHERE [CredentialSecretId] = @SecretId;
+            """,
+            transaction))
+        {
+            referenceCheck.Parameters.Add(
+                GuidParameter("@SecretId", id.Value));
+
+            var referenced = await referenceCheck
+                .ExecuteScalarAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (referenced is not null)
+            {
+                return Result.Failure(
+                    Error.Conflict(
+                        "hive.secret.in-use",
+                        "The secret is still referenced by a provider account."));
+            }
+        }
+
         await using var command = CreateCommand(
             connection,
             """
