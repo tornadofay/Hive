@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Slice
 
@@ -23,7 +23,7 @@ Developer must run:
 - Manual Example Host verification of Overview / Getting Started / Example Configuration — Hive.Example.WinForms, specifically opening Settings, saving a SQL-password configuration, changing/replacing the bootstrap credential, applying Settings, and exercising cancellation/failure paths where practical.
 - Confirm Visual Studio Treat warnings as errors remains enabled with no new errors or warnings.
 
-Do not mark this slice complete, create a historical verification record, or claim test/manual verification until actual developer results are supplied.
+Latest developer verification attempt: 394 tests ran, 391 passed and 3 failed. The failures were confined to the newly added regression-test setup/assertions. Remediation has been applied within this same slice; verification must be rerun before closure.
 
 ## Exclusions
 
