@@ -229,15 +229,12 @@ internal sealed class ControlsCrudExampleView : UserControl
         object? sender,
         HiveCrudOperationFailedEventArgs e)
     {
-        HiveMessageBox.Show(
-            this,
-            new HiveMessageOptions(
-                "CRUD operation failed",
-                $"The {e.Operation.ToString().ToLowerInvariant()} operation could not be completed.",
-                HiveMessageType.Error,
-                MessageBoxButtons.OK,
-                e.Exception.ToString(),
-                DetailsExpanded: true),
+        HiveUiErrorReporter.Report(
+            FindForm(),
+            e.Exception,
+            "CRUD operation failed",
+            $"The {e.Operation.ToString().ToLowerInvariant()} operation could not be completed.",
+            null,
             _themeManager);
     }
 
