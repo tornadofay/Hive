@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IN PROGRESS
+Status: VERIFICATION PENDING
 
 ## Maintenance — Review Corrections
 
@@ -8,14 +8,16 @@ Opened: 2026-09-27
 
 Scope: Correct the concrete production problems identified by the 2026-09-27 repository-wide Review, without advancing the roadmap or introducing new capability.
 
-Authorized correction boundary:
-- bind host lookup authorization to the requested lookup identity;
-- make the existing host-version expectation contract either enforced or remove the unused expectation surface; retain meaningful host-version evidence where supported;
-- restore consistent production use of the existing `IClock` abstraction at affected time-sensitive boundaries and remove the identified wall-clock test polling;
-- enforce structural identity/capability uniqueness in neutral host contracts where ambiguity is invalid;
-- stop silently converting WinForms binding-inspection failures into incomplete semantic snapshots;
-- make `HiveHostValue` DateTime semantics deterministic and timezone-explicit;
-- preserve/update focused automated tests and relevant verification documentation for these corrections.
+Completed implementation boundary:
+- lookup authorization now carries and requires the specific `LookupId` for `ResolveLookup`;
+- unused `ExpectedHostVersion` request input was removed; host operations may still return meaningful `HostVersion` evidence when supplied by the host;
+- production time-sensitive boundaries use the existing injectable `IClock` with system-clock defaults;
+- Agent lifecycle transitions preserve the injected clock across immutable state transitions;
+- neutral host contracts reject duplicate semantic identities/capability IDs where ambiguity is invalid;
+- WinForms binding-inspection failures now surface as typed capture failures instead of silently producing incomplete metadata;
+- `HiveHostValue` DateTime serialization preserves the original `DateTimeKind` and no longer performs machine-local timezone conversion;
+- focused regression tests cover lookup authorization context, DateTime round-tripping, host contract uniqueness, deterministic Agent lifecycle time, deterministic WinForms provenance time, and binding-inspection failure;
+- UI test polling no longer uses arbitrary sleeps or wall-clock polling; it uses monotonic `Stopwatch` deadlines and yielding.
 
 Explicit exclusions:
 - no Phase 1.16+ implementation;
@@ -23,8 +25,20 @@ Explicit exclusions:
 - no unrelated refactoring or dependency upgrades;
 - no roadmap advancement.
 
-Checkpoint: main @ a778b2414704d76190eedeba94560503c3702ffa
+Starting checkpoint: main @ a778b2414704d76190eedeba94560503c3702ffa
 
-Verification state: IMPLEMENTATION IN PROGRESS
+Implementation commits are now on `main`; current source is awaiting developer verification.
 
-Verification gate: after implementation, return Active Work to VERIFICATION PENDING with exact developer rerun targets. Do not claim tests/builds/manual verification that were not actually performed.
+Required developer verification:
+- build the affected solution/projects with warnings treated as errors;
+- run the focused tests:
+  - `HiveHostIntegrationContractTests`
+  - `HiveWinFormsHostContextTests`
+  - `HiveWinFormsHostIntegrationTests`
+  - `AgentFactoryTests`
+  - `HiveWorkspaceLifecycleTests`
+  - `HiveUiPolishTests`
+- run the full `Hive.Tests` suite;
+- manually launch `Hive.Example.WinForms` and verify the affected Host/UI behavior remains correct where applicable.
+
+Verification state is pending because no builds/tests/manual launch were executed by the agent.
