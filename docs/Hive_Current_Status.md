@@ -1,6 +1,6 @@
 # Hive — Current Status
 
-Last updated: 2026-09-27
+Last updated: 2026-09-28
 
 ## Phase status
 
@@ -21,6 +21,7 @@ Last updated: 2026-09-27
   - **Maintenance — Host/UI: Host Integration Contract Corrections:** Complete and verified on 2026-09-27. Final developer verification after all bounded revisions: full `Hive.Tests` suite passed 373/373 (0 failed, 0 skipped); the Dual Business-App Integration Contract Example Host scenario was previously manually exercised successfully; the latest test-only revision explicitly exercised ReadControl for the Management capture-forwarding regression and proved the originating CaptureId reaches the capability authorizer. [Initial verification record](verification/maintenance/host-ui-host-integration-contract-corrections-2026-09-27.md) [Revision verification record](verification/maintenance/host-ui-host-integration-contract-corrections-revision-2026-09-27.md) [Latest revision verification record](verification/maintenance/host-ui-host-integration-contract-corrections-revision-2-2026-09-27.md)
   - **Maintenance — Review Finding Corrections:** Complete and verified on 2026-09-27 after Revision remediation, value-mapping coverage completion, and failure-isolation coverage. Final developer verification: full `Hive.Tests` suite passed 382/382 (0 failed, 0 skipped), including the corrected spreadsheet resource-boundary regressions. [Original verification record](verification/maintenance/review-finding-corrections-2026-09-27.md) [Resource-budget revision record](verification/maintenance/review-finding-corrections-revision-2026-09-27.md) [Value-mapping coverage revision record](verification/maintenance/review-finding-corrections-value-mapping-coverage-revision-2026-09-27.md) [Failure-isolation revision record](verification/maintenance/review-finding-corrections-value-mapping-failure-isolation-revision-2026-09-27.md)
   - **Maintenance — Review Finding Corrections (Five Remaining Production Findings):** Complete and verified on 2026-09-27. Developer verification: full `Hive.Tests` suite passed 389/389 (0 failed, 0 skipped) in 51.5 seconds. This slice corrected the five bounded production findings covering initial agent lifecycle persistence, host composition replacement/disposal, DbUp cancellation boundaries, DPAPI bootstrap credential replacement, and bounded WorkItem persistence-side paging. [Verification record](verification/maintenance/review-finding-corrections-five-findings-2026-09-27.md)
+  - **Maintenance — Review Finding Follow-Up:** Complete and verified on 2026-09-28. Developer verification: full `Hive.Tests` suite passed 390/390 (0 failed, 0 skipped) in 41.8 seconds. This bounded follow-up restored the missing historical verification record, aligned bounded WorkItem paging order with the legacy deterministic listing contract, added the supporting persistence index via schema migration 013, and added focused regression coverage. [Verification record](verification/maintenance/review-finding-follow-up-2026-09-28.md)
   - **1.16+:** Not authorized.
   
 Historical verification records are maintained under [`docs/verification/`](verification/).
