@@ -104,6 +104,31 @@ public sealed class EventOutboxPollerIntegrationTests
     }
 
     [Fact]
+    public async Task ProcessNext_HandlerFailureAwaitsLeaseRenewalShutdown()
+    {
+        var entry = new EventOutboxEntry(
+            new ResourceReference(ResourceKind.WorkItem, Guid.NewGuid()),
+            new ResourceVersion(1),
+            CreateEvent("outbox.handler-failure-renewal"));
+
+        var store = new RenewalTrackingStore(entry);
+        var poller = new EventOutboxPoller(
+            store,
+            TimeSpan.FromMinutes(1));
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            poller.ProcessNextAsync(new RenewalAwareThrowingHandler(store.RenewalStarted)));
+
+        Assert.Equal(
+            "Simulated handler failure.",
+            exception.Message);
+        Assert.True(
+            store.RenewalStopped.IsCompleted,
+            "The lease-renewal task must stop before ProcessNextAsync returns.");
+        Assert.False(store.Completed);
+    }
+
+    [Fact]
     public async Task ProcessNext_RenewsLeaseForLongRunningDelivery()
     {
         var database = await PrepareDatabase("Hive_Test_OutboxLeaseRenewal");
@@ -210,6 +235,71 @@ public sealed class EventOutboxPollerIntegrationTests
             """;
         command.Parameters.AddWithValue("@EventId", eventId.Value);
         Assert.Equal(1, await command.ExecuteNonQueryAsync());
+    }
+
+    private sealed class RenewalTrackingStore : IEventOutboxPollerStore
+    {
+        private readonly EventOutboxWorkItem _workItem;
+        public TaskCompletionSource<object?> RenewalStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource<object?> RenewalStopped { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public bool Completed { get; private set; }
+
+        public RenewalTrackingStore(EventOutboxEntry entry) =>
+            _workItem = new EventOutboxWorkItem(entry, Guid.NewGuid(), 1);
+
+        public Task<Result<EventOutboxWorkItem?>> ClaimNextOutboxAsync(
+            TimeSpan leaseDuration,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result<EventOutboxWorkItem?>.Success(_workItem));
+
+        public async Task<Result> RenewOutboxLeaseAsync(
+            EventOutboxWorkItem workItem,
+            TimeSpan leaseDuration,
+            CancellationToken cancellationToken = default)
+        {
+            RenewalStarted.TrySetResult(null);
+
+            try
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+                return Result.Success();
+            }
+            catch (OperationCanceledException)
+            {
+                return Result.Success();
+            }
+            finally
+            {
+                RenewalStopped.TrySetResult(null);
+            }
+        }
+
+        public Task<Result> CompleteOutboxAsync(
+            EventOutboxWorkItem workItem,
+            CancellationToken cancellationToken = default)
+        {
+            Completed = true;
+            return Task.FromResult(Result.Success());
+        }
+    }
+
+    private sealed class RenewalAwareThrowingHandler : IEventOutboxHandler
+    {
+        private readonly TaskCompletionSource<object?> _renewalStarted;
+
+        public RenewalAwareThrowingHandler(
+            TaskCompletionSource<object?> renewalStarted) =>
+            _renewalStarted = renewalStarted;
+
+        public async Task<Result> HandleAsync(
+            EventOutboxEntry entry,
+            CancellationToken cancellationToken = default)
+        {
+            await _renewalStarted.Task.WaitAsync(cancellationToken);
+            throw new InvalidOperationException("Simulated handler failure.");
+        }
     }
 
     private sealed class RecordingHandler : IEventOutboxHandler
