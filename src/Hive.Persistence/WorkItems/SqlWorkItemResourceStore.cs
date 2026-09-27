@@ -31,12 +31,16 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         """;
 
     private readonly HiveDatabaseOptions _options;
+    private readonly IClock _clock;
     private readonly SqlEventPersistenceStore _eventStore;
 
-    public SqlWorkItemResourceStore(HiveDatabaseOptions options)
+    public SqlWorkItemResourceStore(
+        HiveDatabaseOptions options,
+        IClock? clock = null)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
-        _eventStore = new SqlEventPersistenceStore(options);
+        _clock = clock ?? SystemClock.Instance;
+        _eventStore = new SqlEventPersistenceStore(options, clock: _clock);
     }
 
     public Task<Result<WorkItem>> CreateImageWorkItemAsync(
@@ -51,7 +55,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                 ArgumentNullException.ThrowIfNull(submission);
                 ValidateAccessContext(accessContext);
 
-                var now = DateTimeOffset.UtcNow;
+                var now = _clock.UtcNow;
                 var attachment = new WorkItemAttachmentMetadata(
                     submission.FileName,
                     submission.MediaType,
@@ -454,7 +458,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                             $"The WorkItem cannot transition from '{current.Status}' to '{nextStatus}'."));
                 }
 
-                var changedAt = DateTimeOffset.UtcNow;
+                var changedAt = _clock.UtcNow;
                 var updated = current.TransitionTo(nextStatus, changedAt);
 
                 await UpdateWorkItemAsync(
@@ -784,7 +788,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         string? reason) =>
         new JsonEventSerializer().CreateEnvelope(
             EventId.New(),
-            DateTimeOffset.UtcNow,
+            _clock.UtcNow,
             new EventType(eventType),
             new EventPayloadVersion(1),
             workItem.Resource.Provenance.CorrelationId,
