@@ -996,6 +996,35 @@ Within a captured host context, control identities, data-surface identities, and
 
 Base metadata is owned by the host control/form instance. Disposing the adapter or host-integration registration does not dispose host controls or forms and does not invalidate host-owned application lifecycle beyond the registration itself.
 
+## 17.7 WinForms adapter implementation responsibility boundary
+
+The concrete V1 WinForms implementation remains an internal implementation of the neutral host-integration contracts. The public adapter surface should stay a thin façade over cohesive internal boundaries rather than accumulating discovery, projection, target resolution, and interaction mechanics in one class.
+
+The implementation should maintain these responsibility boundaries:
+
+```
+public WinForms adapter
+        │
+        ├── captured-host state
+        ├── host capture / semantic projection
+        │       └── data-surface projection
+        ├── target resolution / capture-freshness validation
+        └── bounded interaction dispatch
+                └── standard control-value adapter registry
+```
+
+The captured-host state is one immutable representation of the current capture and its target maps. Replacing a capture therefore replaces one complete state object rather than independently updating several related caches.
+
+Host capture/projection owns immutable descriptor construction, deterministic identity projection, and standard WinForms metadata translation. Data-surface projection owns DataGridView field projection, primary-key semantics, generated/computed metadata, explicit field overrides, and explicit parent/child relationships. It must not become a host business-data or persistence implementation.
+
+Target resolution owns bounded live-control/data-surface lookup, path resolution, ancestry capture, and comparison of the current target against the captured target. Consequential interaction freshness checks remain centralized here so replacement, removal, or reparenting cannot bypass the capture boundary.
+
+Interaction dispatch owns the distinction between reusable standard-control interaction and host-provided semantic-provider operations, while preserving the existing capability and authorization boundaries. Standard control behavior remains behind the existing control-value adapter registry; new standard control families must be added there rather than as control-type branches in the public adapter.
+
+This decomposition is an internal maintainability boundary, not a new public host framework. No internal implementation type becomes a Hive.Core contract merely because it is useful to the WinForms adapter. Phase 7 must generalize only the proven semantic patterns required by a second materially different host.
+
+The public adapter should remain intentionally small. A substantial increase in its implementation size is a review signal that responsibility has leaked back into the façade.
+
 ## 18. Non-goals for V1
 
 
