@@ -220,6 +220,19 @@ public sealed class ProviderPersistenceIntegrationTests
         Assert.True(loaded.IsSuccess, loaded.Error?.Message);
         Assert.Equal(firstSecret, loaded.Value!.CredentialSecret);
 
+        var missingUpdate = await store.UpdateProviderAccountAsync(
+            loaded.Value.WithCredentialSecret(
+                new SecretReference(SecretId.New())),
+            context);
+
+        Assert.True(missingUpdate.IsFailure);
+        Assert.Equal(
+            "hive.provider-account.credential-secret-not-found",
+            missingUpdate.Error!.Code);
+        Assert.Equal(
+            ErrorCategory.NotFound,
+            missingUpdate.Error.Category);
+
         var secondSecret = CreateSecret(
             principal,
             tenant,
