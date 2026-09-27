@@ -2,9 +2,13 @@ using Hive.Core;
 
 namespace Hive.Management;
 
-public interface IHiveHostIntegrationService
-{
-    Task<Result<HiveHostContextDescriptor>> CaptureAsync(
+/// <summary>
+    /// Application-facing host integration boundary. Use this service for host operations so
+    /// capability authorization is evaluated before the adapter execution port is invoked.
+    /// </summary>
+    public interface IHiveHostIntegrationService
+    {
+        Task<Result<HiveHostContextDescriptor>> CaptureAsync(
         IHiveHostIntegrationAdapter adapter,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
