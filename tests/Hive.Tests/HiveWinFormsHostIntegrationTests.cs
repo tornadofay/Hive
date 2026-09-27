@@ -662,6 +662,63 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task ReadControl_RejectsReparentedControlWithoutRecapture()
+    {
+        using var form = new Form();
+
+        var originalContainer = new Panel
+        {
+            Name = "originalContainer"
+        };
+        var customer = new HiveTextBox
+        {
+            Name = "customer",
+            Text = "Original"
+        };
+        originalContainer.Controls.Add(customer);
+        form.Controls.Add(originalContainer);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var captured =
+            (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
+        var control = captured.Controls.Single(item => item.Name == "customer");
+        var readCapability = control.Capabilities.Single(
+            capability => capability.Kind == HiveHostCapabilityKind.ReadControl);
+
+        form.Controls.Remove(originalContainer);
+
+        var replacementContainer = new Panel
+        {
+            Name = "replacementContainer"
+        };
+        replacementContainer.Controls.Add(customer);
+        form.Controls.Add(replacementContainer);
+
+        var service = new HiveHostIntegrationService(
+            new AllowAllAuthorizer());
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                readCapability.Id,
+                HiveHostInteractionKind.ReadControl,
+                CorrelationId.New(),
+                controlId: control.Id,
+                captureId: captured.Provenance.CaptureId),
+            accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.target-stale",
+            result.Error!.Code);
+        Assert.Equal("Original", customer.Text);
+    }
+
+    [Fact]
     public void AdapterLowLevelOperationsAreExplicitInterfaceImplementations()
     {
         var publicMethodNames = typeof(HiveWinFormsHostIntegrationAdapter)

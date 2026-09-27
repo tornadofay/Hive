@@ -334,6 +334,7 @@ public sealed class HiveHostIntegrationContractTests
         Assert.True(result.IsSuccess, result.Error?.Message);
         Assert.Equal(1, adapter.InteractionCalls);
         Assert.Equal(correlation, result.Value!.CorrelationId);
+        Assert.Equal(captureId, authorizer.LastCaptureId);
     }
 
     [Fact]
@@ -519,12 +520,15 @@ public sealed class HiveHostIntegrationContractTests
 
         public string? LastLookupId { get; private set; }
 
+        public Guid? LastCaptureId { get; private set; }
+
         public Result Authorize(
             HiveHostCapabilityRequest request,
             ResourceAccessContext accessContext)
         {
             AuthorizationCalls++;
             LastLookupId = request.LookupId;
+            LastCaptureId = request.CaptureId;
             _onAuthorize?.Invoke();
 
             return request.CapabilityId == _deniedCapabilityId
