@@ -702,7 +702,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         string surfaceId,
         CancellationToken cancellationToken)
     {
-        const prefix = "surface:";
+        const string prefix = "surface:";
         if (!surfaceId.StartsWith(prefix, StringComparison.Ordinal))
             return null;
 
