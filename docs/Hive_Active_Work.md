@@ -18,7 +18,7 @@ Re-audit the immediately preceding Maintenance — Review Finding Corrections sl
 5. No roadmap advancement or unrelated refactoring.
 
 ## Verification Gate
-IMPLEMENTATION IN PROGRESS — revision has identified a concrete production resource-boundary defect. Developer re-verification will be required after remediation.
+VERIFICATION PENDING — revision corrected the spreadsheet submission-wide prepared-output boundary so remaining row/value-mapping capacity is enforced before each prepared row is materialized. Developer must rerun the focused InputPreparationTests resource-boundary coverage and the full Hive.Tests suite before this revision can close.
 
 ## Handoff
 Tests to run: InputPreparationTests focused resource-boundary coverage, then full Hive.Tests suite.
