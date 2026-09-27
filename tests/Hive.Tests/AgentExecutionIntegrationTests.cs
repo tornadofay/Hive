@@ -566,7 +566,7 @@ public sealed class AgentExecutionIntegrationTests
 
         Assert.Equal(
             ["agent.execution.started", "agent.execution.failed"],
-            store.Envelopes.Select(static envelope => envelope.EventType.Value).ToArray());
+            store.AttemptedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
         Assert.Equal(
             ExecutionStatus.Failed.ToString(),
             store.Envelopes[1].Payload.GetProperty("status").GetString());
@@ -615,12 +615,12 @@ public sealed class AgentExecutionIntegrationTests
             () => executionTask);
 
         Assert.Equal(
-            ["agent.execution.cancelled"],
-            store.Envelopes.Select(static envelope => envelope.EventType.Value).ToArray());
+            ["agent.execution.started", "agent.execution.cancelled"],
+            store.AttemptedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
         Assert.Equal(
             ExecutionStatus.Cancelled.ToString(),
-            store.Envelopes[0].Payload.GetProperty("status").GetString());
-        Assert.Null(store.Envelopes[0].CausationId);
+            store.AppendedEnvelopes[0].Payload.GetProperty("status").GetString());
+        Assert.Null(store.AppendedEnvelopes[0].CausationId);
     }
 
     [Fact]
@@ -965,12 +965,15 @@ public sealed class AgentExecutionIntegrationTests
         public TaskCompletionSource<bool> FirstAppendStarted { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        public List<EventEnvelope> Envelopes { get; } = [];
+        public List<EventEnvelope> AttemptedEnvelopes { get; } = [];
+        public List<EventEnvelope> AppendedEnvelopes { get; } = [];
 
         public async Task<Result<EventAppendResult>> AppendAsync(
             EventAppendRequest request,
             CancellationToken cancellationToken = default)
         {
+            AttemptedEnvelopes.Add(request.Envelope);
+
             if (Interlocked.Increment(ref _appendCount) == 1)
             {
                 FirstAppendStarted.TrySetResult(true);
@@ -986,7 +989,7 @@ public sealed class AgentExecutionIntegrationTests
                     return Result<EventAppendResult>.Failure(_firstAppendFailure);
             }
 
-            Envelopes.Add(request.Envelope);
+            AppendedEnvelopes.Add(request.Envelope);
 
             return Result<EventAppendResult>.Success(
                 new EventAppendResult(
