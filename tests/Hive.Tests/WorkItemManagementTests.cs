@@ -79,7 +79,7 @@ public sealed class WorkItemManagementTests
                 new WorkItemImageSubmission(
                     $"page-{index}.png",
                     "image/png",
-                    [1, 2, 3, 4]),
+                    new byte[] { 1, 2, 3, 4 }),
                 context);
 
             Assert.True(result.IsSuccess, result.Error?.Message);
