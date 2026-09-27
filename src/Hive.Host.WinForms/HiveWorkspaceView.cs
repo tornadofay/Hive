@@ -22,6 +22,10 @@ public sealed class HiveWorkspaceView : UserControl
     private readonly HiveButton _requestApprovalButton;
     private readonly HiveButton _approveButton;
     private readonly HiveButton _rejectButton;
+    private readonly HivePaginationBar _pagination;
+
+    private const int WorkItemPageSize = WorkItemListPage.DefaultPageSize;
+    private readonly List<WorkItemListCursor?> _pageCursors = [null];
 
     private WorkItem? _selectedWorkItem;
     private CancellationTokenSource? _operationCts;
@@ -46,6 +50,9 @@ public sealed class HiveWorkspaceView : UserControl
         _requestApprovalButton = CreateButton("Request approval", HiveButtonStyle.Secondary);
         _approveButton = CreateButton("Approve", HiveButtonStyle.Primary);
         _rejectButton = CreateButton("Reject", HiveButtonStyle.Danger);
+        _pagination = new HivePaginationBar();
+        _pagination.PreviousRequested += PaginationPreviousRequested;
+        _pagination.NextRequested += PaginationNextRequested;
 
         _refreshButton.Click += async (_, _) => await RefreshAsync();
         _addImageButton.Click += async (_, _) => await AddImageAsync();
@@ -106,6 +113,8 @@ public sealed class HiveWorkspaceView : UserControl
         if (disposing)
         {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
+            _pagination.PreviousRequested -= PaginationPreviousRequested;
+            _pagination.NextRequested -= PaginationNextRequested;
 
             var operationCts = Interlocked.Exchange(
                 ref _operationCts,
@@ -131,8 +140,30 @@ public sealed class HiveWorkspaceView : UserControl
 
     private async Task RefreshCoreAsync(CancellationToken token)
     {
-        var result = await _management.ListWorkItemsAsync(
+        _pageCursors.Clear();
+        _pageCursors.Add(null);
+        _pagination.PageNumber = 1;
+
+        await LoadWorkItemPageAsync(
+            pageNumber: 1,
+            token).ConfigureAwait(true);
+    }
+
+    private async Task LoadWorkItemPageAsync(
+        int pageNumber,
+        CancellationToken token)
+    {
+        if (pageNumber < 1)
+            return;
+
+        WorkItemListCursor? cursor = pageNumber - 1 < _pageCursors.Count
+            ? _pageCursors[pageNumber - 1]
+            : null;
+
+        var result = await _management.ListWorkItemsPageAsync(
             _accessContext,
+            pageSize: WorkItemPageSize,
+            cursor: cursor,
             cancellationToken: token).ConfigureAwait(true);
 
         if (token.IsCancellationRequested || IsDisposed || Disposing)
@@ -154,7 +185,7 @@ public sealed class HiveWorkspaceView : UserControl
         {
             _workItems.Items.Clear();
 
-            foreach (var item in result.Value!)
+            foreach (var item in result.Value.Items)
             {
                 var attachment = item.Attachment is null
                     ? "None"
@@ -175,8 +206,35 @@ public sealed class HiveWorkspaceView : UserControl
         }
 
         _selectedWorkItem = FindPreviouslySelected(
-            result.Value!,
+            result.Value!.Items,
             _selectedWorkItem?.Id);
+
+        if (pageNumber - 1 >= _pageCursors.Count)
+        {
+            while (_pageCursors.Count < pageNumber)
+                _pageCursors.Add(null);
+        }
+
+        if (result.Value.NextCursor is not null)
+        {
+            if (_pageCursors.Count == pageNumber)
+                _pageCursors.Add(result.Value.NextCursor);
+            else
+                _pageCursors[pageNumber] = result.Value.NextCursor;
+        }
+        else if (_pageCursors.Count > pageNumber)
+        {
+            _pageCursors.RemoveRange(
+                pageNumber,
+                _pageCursors.Count - pageNumber);
+        }
+
+        _pagination.PageNumber = pageNumber;
+        _pagination.CanGoPrevious = pageNumber > 1;
+        _pagination.CanGoNext = result.Value.HasNextPage;
+        _pagination.PageText = result.Value.HasNextPage || pageNumber > 1
+            ? $"Page {pageNumber}"
+            : "Page 1";
 
         if (token.IsCancellationRequested || IsDisposed || Disposing)
             return;
@@ -196,6 +254,26 @@ public sealed class HiveWorkspaceView : UserControl
             return;
 
         UpdateActionState();
+    }
+
+    private async void PaginationPreviousRequested(object? sender, EventArgs e) =>
+        await ChangeWorkItemPageAsync(-1).ConfigureAwait(true);
+
+    private async void PaginationNextRequested(object? sender, EventArgs e) =>
+        await ChangeWorkItemPageAsync(1).ConfigureAwait(true);
+
+    private async Task ChangeWorkItemPageAsync(int delta)
+    {
+        if (delta == 0 || _operationCts is not null)
+            return;
+
+        var targetPage = _pagination.PageNumber + delta;
+        if (targetPage < 1 ||
+            targetPage > _pageCursors.Count)
+            return;
+
+        await RunOperationAsync(
+            token => LoadWorkItemPageAsync(targetPage, token));
     }
 
     private async Task AddImageAsync()
@@ -607,6 +685,7 @@ public sealed class HiveWorkspaceView : UserControl
     {
         _refreshButton.Enabled = !busy;
         _addImageButton.Enabled = !busy;
+        _pagination.Enabled = !busy;
         _requestApprovalButton.Enabled = !busy && _requestApprovalButton.Enabled;
         _approveButton.Enabled = !busy && _approveButton.Enabled;
         _rejectButton.Enabled = !busy && _rejectButton.Enabled;
@@ -736,7 +815,22 @@ public sealed class HiveWorkspaceView : UserControl
             FixedPanel = FixedPanel.Panel2,
             Panel2MinSize = 0
         };
-        split.Panel1.Controls.Add(_workItems);
+        var workItemListLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        workItemListLayout.RowStyles.Add(
+            new RowStyle(SizeType.Percent, 100));
+        workItemListLayout.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, 44));
+        workItemListLayout.Controls.Add(_workItems, 0, 0);
+        workItemListLayout.Controls.Add(_pagination, 0, 1);
+
+        split.Panel1.Controls.Add(workItemListLayout);
         split.Panel2.Controls.Add(BuildDetailsPanel());
 
         split.SizeChanged += (_, _) =>
