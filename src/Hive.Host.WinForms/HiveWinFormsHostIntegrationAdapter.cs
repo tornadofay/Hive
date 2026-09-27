@@ -525,7 +525,6 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     candidate.Kind == capabilityKind);
         }
         else if (request.Kind is
-            HiveHostInteractionKind.ReadRow or
             HiveHostInteractionKind.AddRow or
             HiveHostInteractionKind.EditRow or
             HiveHostInteractionKind.DeleteRow)
