@@ -794,6 +794,85 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task ConsequentialInteraction_RejectsReplacedDataSurfaceWithoutRecapture()
+    {
+        using var form = new Form();
+        var original = new HiveDataGridView
+        {
+            Name = "orders",
+            AutoGenerateColumns = false
+        };
+        original.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "Id",
+                DataPropertyName = "Id"
+            });
+        original.HiveDataSurface.SurfaceId = "orders";
+        original.HiveDataSurface.AddCapability(
+            new HiveHostCapabilityDescriptor(
+                Guid.Parse("00000000-0000-0000-0000-000000000010"),
+                HiveHostCapabilityKind.EditRow,
+                "Edit order"));
+
+        form.Controls.Add(original);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext,
+            new AllowingSemanticProvider());
+
+        var captured = (await adapter.CaptureAsync(accessContext)).Value!;
+        var surface = captured.DataSurfaces.Single(
+            item => item.Id == "surface:orders");
+
+        form.Controls.Remove(original);
+        original.Dispose();
+
+        var replacement = new HiveDataGridView
+        {
+            Name = "orders",
+            AutoGenerateColumns = false
+        };
+        replacement.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "Id",
+                DataPropertyName = "Id"
+            });
+        replacement.HiveDataSurface.SurfaceId = "orders";
+        replacement.HiveDataSurface.AddCapability(
+            new HiveHostCapabilityDescriptor(
+                Guid.Parse("00000000-0000-0000-0000-000000000010"),
+                HiveHostCapabilityKind.EditRow,
+                "Edit order"));
+        form.Controls.Add(replacement);
+
+        var service = new HiveHostIntegrationService(
+            new AllowAllAuthorizer());
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                surface.Capabilities.Single(
+                    capability => capability.Kind == HiveHostCapabilityKind.EditRow).Id,
+                HiveHostInteractionKind.EditRow,
+                CorrelationId.New(),
+                surfaceId: surface.Id,
+                rowIdentity: new HiveHostRowIdentity("1"),
+                fieldName: "Quantity",
+                value: HiveHostValue.FromInt64(2),
+                captureId: captured.Provenance.CaptureId),
+            accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.target-stale",
+            result.Error!.Code);
+    }
+
+    [Fact]
     public async Task ConsequentialInteraction_RejectsReplacedControlWithoutRecapture()
     {
         using var form = new Form();
@@ -1217,6 +1296,47 @@ public sealed class HiveWinFormsHostIntegrationTests
                         ErrorCategory.Forbidden,
                         "The test authorizer denied the default base-control capability."))
                 : Result.Success();
+    }
+
+    private sealed class AllowingSemanticProvider :
+        IHiveWinFormsSemanticProvider
+    {
+        public bool TryDescribeDataSurface(
+            DataGridView grid,
+            string surfaceId,
+            out HiveHostDataSurfaceDescriptor descriptor)
+        {
+            descriptor = null!;
+            return false;
+        }
+
+        public Task<Result<HiveHostInteractionResult>> ExecuteInteractionAsync(
+            HiveHostInteractionRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(
+                Result<HiveHostInteractionResult>.Success(
+                    new HiveHostInteractionResult(
+                        request.CorrelationId,
+                        request.Kind)));
+        }
+
+        public Task<Result<IReadOnlyList<HiveLookupOption>>> ResolveLookupAsync(
+            HiveLookupRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(
+                Result<IReadOnlyList<HiveLookupOption>>.Success(
+                    Array.Empty<HiveLookupOption>()));
+        }
+
+        public IReadOnlyList<HiveHostBusinessOperationDescriptor>
+            GetBusinessOperations() =>
+            Array.Empty<HiveHostBusinessOperationDescriptor>();
     }
 
     private sealed class AllowAllAuthorizer :
