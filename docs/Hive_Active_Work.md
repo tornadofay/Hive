@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Current slice: Maintenance — Host/UI: Host Integration Contract Corrections
 
@@ -20,6 +20,13 @@ Exclusions respected:
 Remediation completed:
 - Removed optional parameter defaults from the three explicit `IHiveHostIntegrationAdapter` method implementations. Optional defaults remain on the public interface contract.
 - Static API-surface reinspection confirms the three corrected explicit signatures are present.
+
+Developer follow-up failure:
+- Two `Hive.Tests` compile errors (`CS1061`) remain at lines 67 and 87 of `HiveWinFormsHostIntegrationTests.cs` because those tests still call `CaptureAsync` directly on the concrete adapter type. This is inside the same explicit-interface correction boundary.
+
+Remediation target:
+- Route the two remaining test `CaptureAsync` calls through the `IHiveHostIntegrationAdapter` interface helper.
+- Reinspect the affected test file and return to `VERIFICATION PENDING` with the exact developer rerun targets.
 
 Verification target:
 - Developer build with the repository's Treat-Warnings-as-Errors configuration.
