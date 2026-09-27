@@ -799,7 +799,7 @@ public sealed record HiveHostCapabilityRequest
             CaptureId is null)
         {
             throw new ArgumentException(
-                "A host capture identity is required for consequential capability authorization.",
+                "A host capture identity is required for this capability authorization.",
                 nameof(captureId));
         }
 
@@ -899,7 +899,7 @@ public sealed record HiveHostInteractionRequest
             CaptureId is null)
         {
             throw new ArgumentException(
-                "A host capture identity is required for consequential interaction requests.",
+                "A host capture identity is required for this host interaction.",
                 nameof(captureId));
         }
 
@@ -937,6 +937,7 @@ public sealed record HiveHostInteractionRequest
     private static bool RequiresFreshCapture(
         HiveHostInteractionKind kind) =>
         kind is
+            HiveHostInteractionKind.ReadControl or
             HiveHostInteractionKind.SetControlValue or
             HiveHostInteractionKind.AddRow or
             HiveHostInteractionKind.EditRow or
@@ -1033,9 +1034,15 @@ public sealed record HiveBusinessOperationComposition
     public IReadOnlyList<HiveBusinessOperationImplementation> Stages { get; }
 }
 
-public interface IHiveHostIntegrationAdapter
-{
-    string AdapterId { get; }
+/// <summary>
+    /// Neutral host-execution port consumed by <see cref="Hive.Management.IHiveHostIntegrationService"/>.
+    /// This interface is an execution boundary, not an authorization boundary; callers should route
+    /// host interactions through the Management service so the configured capability authorizer is
+    /// applied before adapter execution.
+    /// </summary>
+    public interface IHiveHostIntegrationAdapter
+    {
+        string AdapterId { get; }
 
     Task<Result<HiveHostContextDescriptor>> CaptureAsync(
         ResourceAccessContext accessContext,
