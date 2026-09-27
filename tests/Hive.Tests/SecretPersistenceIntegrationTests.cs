@@ -182,6 +182,105 @@ public sealed class SecretPersistenceIntegrationTests
         Assert.Equal(ErrorCategory.NotFound, afterDelete.Error!.Category);
     }
 
+    [Fact]
+    public async Task SecretStore_RefusesDeletionWhileProviderAccountReferencesSecret()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_SecretInUse");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var secretStore = new SqlDpapiSecretStore(database.Options);
+        var providerStore = new SqlProviderResourceStore(database.Options);
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var secret = CreateSecret(
+            principal,
+            tenant,
+            $"in-use-secret-{Guid.NewGuid():N}");
+
+        using var material = SecretMaterial.Create("in-use-value");
+        var createdSecret = await secretStore.CreateAsync(
+            secret,
+            material,
+            context);
+
+        Assert.True(createdSecret.IsSuccess, createdSecret.Error?.Message);
+
+        var provider = new Provider(
+            new ResourceEnvelope<ProviderId>(
+                ResourceKind.Provider,
+                ProviderId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    DateTimeOffset.UtcNow,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(DateTimeOffset.UtcNow)),
+            $"in-use-provider-{Guid.NewGuid():N}",
+            "In-use Provider",
+            "openai-compatible");
+
+        Assert.True(
+            (await providerStore.CreateProviderAsync(provider, context)).IsSuccess);
+
+        var account = new ProviderAccount(
+            new ResourceEnvelope<ProviderAccountId>(
+                ResourceKind.ProviderAccount,
+                ProviderAccountId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    DateTimeOffset.UtcNow,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(DateTimeOffset.UtcNow)),
+            provider.Id,
+            $"in-use-account-{Guid.NewGuid():N}",
+            "In-use Account")
+            .WithCredentialSecret(new SecretReference(secret.Id));
+
+        var createdAccount = await providerStore.CreateProviderAccountAsync(
+            account,
+            context);
+
+        Assert.True(createdAccount.IsSuccess, createdAccount.Error?.Message);
+
+        var blockedDelete = await secretStore.DeleteAsync(
+            secret.Id,
+            context);
+
+        Assert.True(blockedDelete.IsFailure);
+        Assert.Equal(
+            "hive.secret.in-use",
+            blockedDelete.Error!.Code);
+        Assert.Equal(
+            ErrorCategory.Conflict,
+            blockedDelete.Error.Category);
+
+        var cleared = await providerStore.UpdateProviderAccountAsync(
+            createdAccount.Value!.WithCredentialSecret(null),
+            context);
+
+        Assert.True(cleared.IsSuccess, cleared.Error?.Message);
+
+        var deleted = await secretStore.DeleteAsync(
+            secret.Id,
+            context);
+
+        Assert.True(deleted.IsSuccess, deleted.Error?.Message);
+    }
+
     private static Secret CreateSecret(
         PrincipalId principal,
         TenantId tenant,
