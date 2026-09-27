@@ -42,7 +42,7 @@ Correct the four concrete production findings identified in the 2026-09-27 repos
 - No branch/PR creation.
 
 ## Verification Gate
-VERIFICATION PENDING — implementation and developer verification are complete only after the focused tests and full Hive.Tests suite are actually run. No execution is claimed by this agent.
+VERIFICATION FAILED / REMEDIATION REQUIRED — developer reported Hive.Core compile errors in InputPreparationEngine.cs. The failure is in-scope: SpreadsheetPackageWorkbookLimitException incorrectly derives from sealed SpreadsheetPackageLimitException. Remediation is limited to correcting this exception hierarchy and rechecking the affected source; return to VERIFICATION PENDING after the correction.
 
 ## Handoff
 Example to run: existing host/integration examples are unchanged by this maintenance slice; no new externally meaningful capability is introduced.
