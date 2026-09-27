@@ -185,7 +185,7 @@ public sealed class HiveWorkspaceView : UserControl
         {
             _workItems.Items.Clear();
 
-            foreach (var item in result.Value.Items)
+            foreach (var item in result.Value!.Items)
             {
                 var attachment = item.Attachment is null
                     ? "None"
