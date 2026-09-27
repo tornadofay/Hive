@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Slice: Maintenance — Review Medium-Finding Corrections
 
@@ -36,7 +36,7 @@ Correct the four concrete medium-severity findings from the repository review im
 
 ## Verification
 
-Status: PENDING DEVELOPER VERIFICATION
+Status: REMEDIATION REQUIRED — TEST COMPILE FAILURE
 
 Required developer verification before closure:
 
@@ -44,7 +44,7 @@ Example to run: existing affected Example Host scenarios for Outbox Poller, WinF
 
 Tests to run: focused regression tests added by this slice; full Hive.Tests suite.
 
-Developer verification on 2026-09-27 reported compile errors in `HiveWinFormsHostIntegrationAdapter.cs`, `EventOutboxPolling.cs`, `SqlProviderAccountStore.cs`, and `EventOutboxPollerExampleView.cs`. Same-slice remediation corrected those reported compile/type/nullability issues. Developer rerun is now required.
+Developer verification on 2026-09-27 reported compile errors in `HiveWinFormsHostIntegrationAdapter.cs`, `EventOutboxPolling.cs`, `SqlProviderAccountStore.cs`, and `EventOutboxPollerExampleView.cs`. Same-slice remediation corrected those reported compile/type/nullability issues. The subsequent developer compile reported two `ProviderPersistenceIntegrationTests.cs` assertion type mismatches (`Secret` compared with `SecretReference?`). Same-slice remediation is limited to correcting those test assertions.
 
 Rerun targets after remediation: build all affected projects with Treat Warnings as Errors enabled; run the focused regression tests added by this slice; run the full `Hive.Tests` suite; manually run the affected Example Host scenarios for Outbox Poller, WinForms Host Integration / Dual Business-App Integration, and Provider Accounts / Security as applicable. Record exact developer results before closure.
 
