@@ -94,11 +94,31 @@ public sealed class EventOutboxPoller
 
         var deliveryResult = delivery.Value;
         if (deliveryResult.IsFailure)
-            return Hive.Core.Result<EventOutboxEntry?>.Failure(deliveryResult.Error!);
+        {
+            deliveryCts.Cancel();
+            var renewalResult = await renewalTask.ConfigureAwait(false);
 
-        var completed = await _store.CompleteOutboxAsync(
-            workItem,
-            cancellationToken).ConfigureAwait(false);
+            if (renewalResult.IsFailure)
+                return Hive.Core.Result<EventOutboxEntry?>.Failure(renewalResult.Error!);
+
+            return Hive.Core.Result<EventOutboxEntry?>.Failure(deliveryResult.Error!);
+        }
+
+        Hive.Core.Result completed;
+        try
+        {
+            // Keep the lease renewal alive through acknowledgement. A successful
+            // handler must not lose its lease while CompleteOutboxAsync is still
+            // performing the durable acknowledgement.
+            completed = await _store.CompleteOutboxAsync(
+                workItem,
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            deliveryCts.Cancel();
+            await renewalTask.ConfigureAwait(false);
+        }
 
         if (completed.IsFailure)
             return Hive.Core.Result<EventOutboxEntry?>.Failure(completed.Error!);
