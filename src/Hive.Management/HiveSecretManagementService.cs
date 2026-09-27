@@ -13,14 +13,18 @@ internal sealed class HiveSecretManagementService : HiveManagementServiceBase
 {
 
     private readonly ISecretStore? _secrets;
+    private readonly IClock _clock;
 
 
 
-    internal HiveSecretManagementService(ISecretStore? secrets)
+    internal HiveSecretManagementService(
+        ISecretStore? secrets,
+        IClock? clock = null)
 
     {
 
         _secrets = secrets;
+        _clock = clock ?? SystemClock.Instance;
 
     }
 
