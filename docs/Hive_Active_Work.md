@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IN PROGRESS
+Status: VERIFICATION PENDING
 
 Current slice: **Revision — Maintenance Host/UI: Host Integration Contract Corrections**
 
@@ -16,9 +16,17 @@ Exclusions:
 - No material public-contract expansion beyond regression coverage.
 - No unrelated refactoring, persistence/schema changes, UI redesign, or roadmap advancement.
 
-Checkpoint:
-- The preceding slice is verified and closed.
-- Revision may modify only the bounded tests and required verification/archive documentation for the concrete gaps above.
-- Developer verification of the revised focused tests and full Hive.Tests suite is required before closure.
+Completed revision changes:
+- Added ReadControl_RejectsReparentedControlWithoutRecapture to HiveWinFormsHostIntegrationTests.
+- Extended the Management forwarding regression to assert the originating CaptureId reaches IHiveHostCapabilityAuthorizer.
+- Updated the test fake to retain the observed capability-request capture identity.
 
-Verification state: IMPLEMENTATION IN PROGRESS
+Verification state:
+- Revision implementation is complete.
+- Developer re-verification is required for the focused host-integration tests and the full Hive.Tests suite.
+- Do not modify implementation-affecting files while this gate is pending unless a real in-scope failure is recorded here first.
+
+Tests to run:
+- HiveHostIntegrationContractTests
+- HiveWinFormsHostIntegrationTests
+- full Hive.Tests suite
