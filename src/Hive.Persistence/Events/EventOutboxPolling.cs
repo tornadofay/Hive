@@ -67,23 +67,34 @@ public sealed class EventOutboxPoller
                         exception));
             }
         }
-        finally
+        catch (Exception exception)
         {
-            deliveryCts.Cancel();
-        }
-
-        var renewalResult = await renewalTask.ConfigureAwait(false);
-        if (renewalResult.IsFailure)
-        {
-            return Hive.Core.Result<EventOutboxEntry?>.Failure(
-                renewalResult.Error!);
+            delivery = Hive.Core.Result.Failure(
+                HivePersistenceError.Internal(
+                    "hive.outbox.handler",
+                    "Outbox delivery failed.",
+                    exception));
         }
 
         if (handlerCancellation is not null)
+        {
+            deliveryCts.Cancel();
+            var renewalAfterCancellation = await renewalTask.ConfigureAwait(false);
+
+            if (renewalAfterCancellation.IsFailure)
+                return Hive.Core.Result<EventOutboxEntry?>.Failure(renewalAfterCancellation.Error!);
+
             throw handlerCancellation;
+        }
 
         if (delivery is null)
         {
+            deliveryCts.Cancel();
+            var renewalAfterMissingResult = await renewalTask.ConfigureAwait(false);
+
+            if (renewalAfterMissingResult.IsFailure)
+                return Hive.Core.Result<EventOutboxEntry?>.Failure(renewalAfterMissingResult.Error!);
+
             return Hive.Core.Result<EventOutboxEntry?>.Failure(
                 HivePersistenceError.Internal(
                     "hive.outbox.delivery-result-missing",
@@ -96,10 +107,10 @@ public sealed class EventOutboxPoller
         if (deliveryResult.IsFailure)
         {
             deliveryCts.Cancel();
-            var renewalResult = await renewalTask.ConfigureAwait(false);
+            var renewalAfterFailure = await renewalTask.ConfigureAwait(false);
 
-            if (renewalResult.IsFailure)
-                return Hive.Core.Result<EventOutboxEntry?>.Failure(renewalResult.Error!);
+            if (renewalAfterFailure.IsFailure)
+                return Hive.Core.Result<EventOutboxEntry?>.Failure(renewalAfterFailure.Error!);
 
             return Hive.Core.Result<EventOutboxEntry?>.Failure(deliveryResult.Error!);
         }
