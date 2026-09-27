@@ -452,7 +452,7 @@ public sealed class InputPreparationTests
             result.Value.PreparedInputs[^1]);
         Assert.Equal("later.xlsx", laterPrepared.FileName);
         Assert.Equal("Later", laterPrepared.WorksheetName);
-        Assert.Equal(1, laterPrepared.RowNumber);
+        Assert.Equal(2, laterPrepared.RowNumber);
 
 
         var failure = Assert.Single(result.Value.Failures);
