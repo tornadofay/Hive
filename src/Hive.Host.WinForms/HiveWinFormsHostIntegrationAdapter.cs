@@ -35,6 +35,8 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveWinFormsSemanticProvider? _semanticProvider;
     private readonly HiveWinFormsHostContextOptions _options;
+    private readonly object _captureGate = new();
+    private Guid? _currentCaptureId;
     private int _disposed;
 
     public HiveWinFormsHostIntegrationAdapter(
@@ -205,23 +207,29 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
             var dataSurfaces = ApplyParentChildRelationships(surfaceEntries);
 
-            return Result<HiveHostContextDescriptor>.Success(
-                new HiveHostContextDescriptor(
+            var descriptor = new HiveHostContextDescriptor(
+                snapshot.Value.Provenance.RegistrationId,
+                GetHostName(
+                    snapshot.Value.RootName,
+                    snapshot.Value.RootRuntimeType),
+                new HiveHostProvenance(
                     snapshot.Value.Provenance.RegistrationId,
-                    GetHostName(
-                        snapshot.Value.RootName,
-                        snapshot.Value.RootRuntimeType),
-                    new HiveHostProvenance(
-                        snapshot.Value.Provenance.RegistrationId,
-                        snapshot.Value.Provenance.CaptureId,
-                        snapshot.Value.Provenance.CapturedAtUtc,
-                        CorrelationId.New(),
-                        AdapterId,
-                        accessContext),
-                    controls,
-                    dataSurfaces,
-                    _semanticProvider?.GetBusinessOperations()
-                        ?? Array.Empty<HiveHostBusinessOperationDescriptor>()));
+                    snapshot.Value.Provenance.CaptureId,
+                    snapshot.Value.Provenance.CapturedAtUtc,
+                    CorrelationId.New(),
+                    AdapterId,
+                    accessContext),
+                controls,
+                dataSurfaces,
+                _semanticProvider?.GetBusinessOperations()
+                    ?? Array.Empty<HiveHostBusinessOperationDescriptor>());
+
+            lock (_captureGate)
+            {
+                _currentCaptureId = descriptor.Provenance.CaptureId;
+            }
+
+            return Result<HiveHostContextDescriptor>.Success(descriptor);
         }
         catch (HiveWinFormsIntegrationException exception)
         {
@@ -259,6 +267,10 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         }
 
         cancellationToken.ThrowIfCancellationRequested();
+
+        var captureValidation = ValidateCaptureBinding(request);
+        if (captureValidation is not null)
+            return Result<HiveHostInteractionResult>.Failure(captureValidation);
 
         if (request.Kind is
             HiveHostInteractionKind.ReadRow or
@@ -446,6 +458,35 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         _registration.Dispose();
         _context.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    private Error? ValidateCaptureBinding(
+        HiveHostInteractionRequest request)
+    {
+        var captureId = request.CaptureId;
+        if (captureId is null)
+            return Error.Validation(
+                "hive.host.winforms.capture-required",
+                "A host capture identity is required for consequential interaction.");
+
+        Guid? currentCaptureId;
+        lock (_captureGate)
+        {
+            currentCaptureId = _currentCaptureId;
+        }
+
+        if (currentCaptureId is null)
+        {
+            return Error.Conflict(
+                "hive.host.winforms.capture-unavailable",
+                "No host capture is available for the requested interaction.");
+        }
+
+        return currentCaptureId == captureId.Value
+            ? null
+            : Error.Conflict(
+                "hive.host.winforms.capture-stale",
+                "The requested host interaction was created from a stale host capture.");
     }
 
     private async Task<Result<HiveHostInteractionResult>> ExecuteWithProviderAsync(
