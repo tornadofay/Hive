@@ -1,6 +1,6 @@
-using System.ComponentModel;
-using System.Windows.Forms;
 using Hive.Core;
+using Hive.Host.WinForms.UI.Controls;
+using System.ComponentModel;
 
 namespace Hive.Host.WinForms;
 

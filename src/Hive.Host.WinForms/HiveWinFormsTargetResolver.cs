@@ -1,6 +1,5 @@
-using System.Collections.Generic;
-using System.Windows.Forms;
 using Hive.Core;
+using Hive.Host.WinForms.UI.Controls;
 
 namespace Hive.Host.WinForms;
 
