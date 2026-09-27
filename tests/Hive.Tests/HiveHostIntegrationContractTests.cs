@@ -56,7 +56,7 @@ public sealed class HiveHostIntegrationContractTests
                 "control:1",
                 "0/1",
                 1,
-                typeof(TextBox).FullName!,
+                typeof(object).FullName!,
                 "Name",
                 null,
                 true,
@@ -103,6 +103,17 @@ public sealed class HiveHostIntegrationContractTests
                         false)
                 },
                 Array.Empty<HiveHostCapabilityDescriptor>()));
+    }
+
+    [Fact]
+    public void HostCapabilityRequest_RequiresLookupIdentityForLookupAuthorization()
+    {
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostCapabilityRequest(
+                Guid.NewGuid(),
+                HiveHostCapabilityKind.ResolveLookup,
+                CorrelationId.New(),
+                "ReferenceAdapter"));
     }
 
     [Fact]
