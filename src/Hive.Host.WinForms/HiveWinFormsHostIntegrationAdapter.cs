@@ -41,7 +41,8 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         Form root,
         ResourceAccessContext accessContext,
         IHiveWinFormsSemanticProvider? semanticProvider = null,
-        HiveWinFormsHostContextOptions? options = null)
+        HiveWinFormsHostContextOptions? options = null,
+        IClock? clock = null)
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(accessContext);
@@ -57,7 +58,10 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         _accessContext = accessContext;
         _semanticProvider = semanticProvider;
         _options = options ?? new HiveWinFormsHostContextOptions();
-        _context = new HiveWinFormsHostContext(accessContext, _options);
+        _context = new HiveWinFormsHostContext(
+            accessContext,
+            _options,
+            clock);
         _registration = _context.Register(root);
     }
 
