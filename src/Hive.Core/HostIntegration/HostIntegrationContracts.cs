@@ -280,8 +280,34 @@ public sealed record HiveHostFieldDescriptor
         bool generated,
         bool isPrimaryKey,
         HiveHostValue? currentValue = null,
-        HiveHostLookupDescriptor? lookup = null,
-        bool sensitive = false)
+        HiveHostLookupDescriptor? lookup = null)
+        : this(
+            name,
+            bindingMember,
+            valueType,
+            required,
+            readOnly,
+            computed,
+            generated,
+            isPrimaryKey,
+            currentValue,
+            lookup,
+            sensitive: false)
+    {
+    }
+
+    public HiveHostFieldDescriptor(
+        string name,
+        string? bindingMember,
+        string valueType,
+        bool required,
+        bool readOnly,
+        bool computed,
+        bool generated,
+        bool isPrimaryKey,
+        HiveHostValue? currentValue,
+        HiveHostLookupDescriptor? lookup,
+        bool sensitive)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(valueType);
