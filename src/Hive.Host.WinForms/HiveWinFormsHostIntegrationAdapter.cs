@@ -651,12 +651,12 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         }
         else
         {
-            var dataSource = grid.DataSource;
-            var bindingContext = grid.BindingContext;
-
-            if (dataSource is not null && bindingContext is not null)
+            try
             {
-                try
+                var dataSource = grid.DataSource;
+                var bindingContext = grid.BindingContext;
+
+                if (dataSource is not null && bindingContext is not null)
                 {
                     var manager = bindingContext[
                         dataSource,
@@ -685,18 +685,18 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                         }
                     }
                 }
-                catch (ArgumentException exception)
-                {
-                    throw new HiveWinFormsIntegrationException(
-                        "hive.host.winforms.binding-inspection-failed",
-                        $"The data-surface binding could not be inspected: {exception.Message}");
-                }
-                catch (InvalidOperationException exception)
-                {
-                    throw new HiveWinFormsIntegrationException(
-                        "hive.host.winforms.binding-inspection-failed",
-                        $"The data-surface binding could not be inspected: {exception.Message}");
-                }
+            }
+            catch (ArgumentException exception)
+            {
+                throw new HiveWinFormsIntegrationException(
+                    "hive.host.winforms.binding-inspection-failed",
+                    $"The data-surface binding could not be inspected: {exception.Message}");
+            }
+            catch (InvalidOperationException exception)
+            {
+                throw new HiveWinFormsIntegrationException(
+                    "hive.host.winforms.binding-inspection-failed",
+                    $"The data-surface binding could not be inspected: {exception.Message}");
             }
         }
 
