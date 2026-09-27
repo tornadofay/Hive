@@ -458,7 +458,9 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         object? sender,
         HiveCrudOperationFailedEventArgs e)
     {
-        _page.SetStatus(e.Exception.Message, HiveStatusTone.Error);
+        _page.SetStatus(
+            "Operation failed. See technical details.",
+            HiveStatusTone.Error);
 
         HiveUiErrorReporter.Report(
             FindForm(),
