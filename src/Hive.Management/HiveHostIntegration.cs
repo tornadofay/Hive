@@ -128,7 +128,8 @@ public sealed class HiveHostIntegrationService : IHiveHostIntegrationService
                 request.CapabilityId,
                 HiveHostCapabilityKind.ResolveLookup,
                 CorrelationId.New(),
-                adapter.AdapterId),
+                adapter.AdapterId,
+                lookupId: request.LookupId),
             accessContext);
 
         if (authorization.IsFailure)
