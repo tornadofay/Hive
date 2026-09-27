@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Current slice: Maintenance — Host/UI: Host Integration Contract Corrections
 
@@ -42,10 +42,10 @@ Developer verification failure:
 - `HiveWinFormsHostIntegrationTests.AdapterLowLevelOperationsAreExplicitInterfaceImplementations` failed because the reflection regression filtered `InterfaceMap.TargetMethods` by exact `MethodInfo.Name`, but explicit-interface target names are qualified and therefore produced zero matches instead of the expected three.
 - The failure is confined to the same explicit-interface API-shape regression and does not establish a production implementation failure.
 
-Remediation required:
-- Change the reflection regression to correlate `InterfaceMap.InterfaceMethods` with `TargetMethods` by index (or equivalent interface-method identity) and assert privacy only for the three named low-level interface operations.
-- Preserve the existing public `AdapterId` assertion.
-- Return this document to `VERIFICATION PENDING` after the corrective test change.
+Remediation completed:
+- Changed the reflection regression to correlate `InterfaceMap.InterfaceMethods` with the corresponding `TargetMethods` by index, then assert privacy only for the three named low-level interface operations.
+- Preserved the existing public `AdapterId` assertion.
+- Static reinspection confirms the corrected reflection mapping is present.
 
 Verification target:
 - Developer build with the repository's Treat-Warnings-as-Errors configuration.
@@ -59,4 +59,4 @@ Verification target:
 Agent verification:
 - Static repository/source review completed after the reported failure.
 - Builds, tests, and manual Example Host execution were not run by the agent.
-- Developer-reported 371/372 result is recorded as the current verification failure.
+- Developer-reported 371/372 result is recorded as a remediated verification failure; developer re-verification is still required.
