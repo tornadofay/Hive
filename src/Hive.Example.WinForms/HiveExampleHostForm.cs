@@ -733,9 +733,16 @@ internal sealed class HiveExampleHostForm : HiveForm
             _outputView.SetCollapsed(false);
     }
 
-    internal async void OpenHiveSettings()
+    private int _settingsOperationActive;
+
+    internal async Task OpenHiveSettingsAsync()
     {
-        var composition = _composition;
+        if (Interlocked.Exchange(ref _settingsOperationActive, 1) != 0)
+            return;
+
+        try
+        {
+            var composition = _composition;
         var graph = composition?.Current;
 
         if (composition is null ||
@@ -826,6 +833,10 @@ internal sealed class HiveExampleHostForm : HiveForm
                 "The Hive Settings changes could not be applied to the running host.",
                 _outputView,
                 _themeManager);
+        }
+        finally
+        {
+            Volatile.Write(ref _settingsOperationActive, 0);
         }
     }
 
