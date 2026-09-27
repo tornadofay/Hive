@@ -60,6 +60,29 @@ public sealed class HiveUiExceptionDiagnosticsTests
     }
 
     [Fact]
+    public void SanitizeMessage_RedactsBraceWrappedCredentialsAndEqualsAuthorization()
+    {
+        var message =
+            "Password={super;secret}; " +
+            "secret={nested-secret-value}; " +
+            "Authorization=Bearer bearer-secret; " +
+            "Authorization=Basic basic-secret; safe=value";
+
+        var sanitized = HiveUiExceptionDiagnostics.SanitizeMessage(message);
+
+        Assert.Contains("Password={[REDACTED]}", sanitized, StringComparison.Ordinal);
+        Assert.Contains("secret={[REDACTED]}", sanitized, StringComparison.Ordinal);
+        Assert.Contains("Authorization=Bearer [REDACTED]", sanitized, StringComparison.Ordinal);
+        Assert.Contains("Authorization=Basic [REDACTED]", sanitized, StringComparison.Ordinal);
+        Assert.Contains("safe=value", sanitized, StringComparison.Ordinal);
+
+        Assert.DoesNotContain("super;secret", sanitized, StringComparison.Ordinal);
+        Assert.DoesNotContain("nested-secret-value", sanitized, StringComparison.Ordinal);
+        Assert.DoesNotContain("bearer-secret", sanitized, StringComparison.Ordinal);
+        Assert.DoesNotContain("basic-secret", sanitized, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Format_DoesNotExposeStackTraceOrRawExceptionObject()
     {
         var exception = new InvalidOperationException(
