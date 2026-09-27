@@ -323,11 +323,10 @@ public sealed class HiveHostIntegrationContractTests
         var result = await service.ExecuteInteractionAsync(
             adapter,
             new HiveHostInteractionRequest(
-                adapter.EditCapabilityId,
-                HiveHostInteractionKind.SetControlValue,
+                adapter.ReadControlCapabilityId,
+                HiveHostInteractionKind.ReadControl,
                 correlation,
                 controlId: "control:0/0",
-                value: HiveHostValue.FromString("accepted"),
                 captureId: captureId),
             context);
 
@@ -556,6 +555,8 @@ public sealed class HiveHostIntegrationContractTests
 
         public Guid EditCapabilityId { get; } = Guid.NewGuid();
 
+        public Guid ReadControlCapabilityId { get; } = Guid.NewGuid();
+
         public Guid LookupCapabilityId { get; } = Guid.NewGuid();
 
         public int InteractionCalls { get; private set; }
@@ -687,7 +688,7 @@ public sealed class HiveHostIntegrationContractTests
                                 new[]
                                 {
                                     new HiveHostCapabilityDescriptor(
-                                        Guid.NewGuid(),
+                                        ReadControlCapabilityId,
                                         HiveHostCapabilityKind.ReadControl,
                                         "Read customer")
                                 })
