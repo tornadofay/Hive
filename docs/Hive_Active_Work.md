@@ -27,7 +27,7 @@ Explicit exclusions:
 
 Starting checkpoint: main @ a778b2414704d76190eedeba94560503c3702ffa
 
-Implementation commits are now on `main`; current source is awaiting developer verification.
+Implementation commits are now on `main`; current source is awaiting final developer verification.
 
 Required developer verification:
 - build the affected solution/projects with warnings treated as errors;
@@ -42,8 +42,12 @@ Required developer verification:
 - run the full `Hive.Tests` suite;
 - manually launch `Hive.Example.WinForms` and verify the affected Host/UI behavior remains correct where applicable.
 
-Verification state is pending because no builds/tests/manual launch were executed by the agent. No verification closure has been performed.
+Developer verification received on 2026-09-27:
+- full `Hive.Tests`: 347/347 passed, 0 failed, 0 skipped, 29.1 seconds;
+- `Hive.Example.WinForms`: manually launched successfully and the Example form runs correctly;
+- the focused test classes are included in the reported full `Hive.Tests` run and therefore were exercised by that run;
+- no warnings-as-errors build result was provided, so final verification remains pending and the slice is not closed.
 
-Developer verification failure received: `HiveWinFormsHostIntegrationTests.Capture_BindingInspectionFailureIsReportedInsteadOfReturningIncompleteSurface` initially failed with a raw `ArgumentException` from `DataGridView`/`BindingContext` access before the typed binding-inspection failure boundary. Same-slice remediation is complete: the full binding-inspection and bound-row-count paths are now inside their typed exception boundaries, with regression coverage for both. Developer verification also reported `CS1744` in `BaseAgentWorkProtocolsExampleView.cs` because the Example passed `clock` positionally before a named `delegation` argument after the compatibility-preserving signature reorder. Same-slice remediation corrected both Example call sites to `(now, delegation, clock)`.
+Developer verification failure received before final verification: `HiveWinFormsHostIntegrationTests.Capture_BindingInspectionFailureIsReportedInsteadOfReturningIncompleteSurface` initially failed with a raw `ArgumentException` from `DataGridView`/`BindingContext` access before the typed binding-inspection failure boundary. Same-slice remediation is complete: the full binding-inspection and bound-row-count paths are now inside their typed exception boundaries, with regression coverage for both. Developer verification also reported `CS1744` in `BaseAgentWorkProtocolsExampleView.cs` because the Example passed `clock` positionally before a named `delegation` argument after the compatibility-preserving signature reorder. Same-slice remediation corrected both Example call sites to `(now, delegation, clock)`.
 
 The revision also corrected `Agent.CreateRuntimeInstance` so the new optional `IClock` parameter remains after the existing `IDelegationChannel` parameter, preserving positional-call compatibility; corrected the internal `RuntimeInstance.Create` parameter order for the same reason; completed the bound-row-count binding exception boundary; added duplicate business-operation capability-identity validation and coverage; and made an explicitly supplied runtime clock control the runtime creation timestamp as well as subsequent lifecycle timestamps.
