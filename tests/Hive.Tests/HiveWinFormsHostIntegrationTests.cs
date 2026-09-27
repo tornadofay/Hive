@@ -167,6 +167,39 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task Capture_DuplicateExplicitSurfaceIdentityFailsInsteadOfAliasing()
+    {
+        using var form = new Form();
+        var first = new HiveDataGridView
+        {
+            Name = "orders",
+            AutoGenerateColumns = false
+        };
+        var second = new HiveDataGridView
+        {
+            Name = "orders2",
+            AutoGenerateColumns = false
+        };
+
+        first.HiveDataSurface.SurfaceId = "shared";
+        second.HiveDataSurface.SurfaceId = "shared";
+        form.Controls.Add(first);
+        form.Controls.Add(second);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var result = await adapter.CaptureAsync(accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.surface-identity-duplicate",
+            result.Error!.Code);
+    }
+
+    [Fact]
     public async Task Capture_RejectsMissingExplicitPrimaryKeyField()
     {
         using var form = new Form();
