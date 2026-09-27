@@ -116,12 +116,16 @@ public sealed class EventOutboxPollerIntegrationTests
             store,
             TimeSpan.FromMilliseconds(100));
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            poller.ProcessNextAsync(new RenewalAwareThrowingHandler(store.RenewalStarted)));
+        var result = await poller.ProcessNextAsync(
+            new RenewalAwareThrowingHandler(store.RenewalStarted));
 
+        Assert.True(result.IsFailure);
         Assert.Equal(
-            "Simulated handler failure.",
-            exception.Message);
+            "hive.outbox.handler",
+            result.Error!.Code);
+        Assert.Equal(
+            "Outbox delivery failed.",
+            result.Error.Message);
         Assert.True(
             store.RenewalStopped.Task.IsCompleted,
             "The lease-renewal task must stop before ProcessNextAsync returns.");
