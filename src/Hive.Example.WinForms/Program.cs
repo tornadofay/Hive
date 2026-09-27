@@ -18,20 +18,14 @@ internal static class Program
         object? sender,
         ThreadExceptionEventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine(e.Exception.ToString());
-
         var owner = Application.OpenForms.Count > 0
             ? Application.OpenForms[0]
             : null;
 
-        HiveMessageBox.Show(
+        HiveUiErrorReporter.Report(
             owner,
-            new HiveMessageOptions(
-                "Unhandled UI exception",
-                "An unexpected UI error occurred. The technical details are shown below.",
-                HiveMessageType.Error,
-                MessageBoxButtons.OK,
-                e.Exception.ToString(),
-                DetailsExpanded: true));
+            e.Exception,
+            "Unhandled UI exception",
+            "An unexpected UI error occurred. The technical details are shown below.");
     }
 }
