@@ -152,19 +152,7 @@ internal sealed class HiveWinFormsInteractionDispatcher
             "|" +
             capabilitySuffix);
 
-        if (state?.Capture.Controls
-                .Where(controlDescriptor =>
-                    string.Equals(
-                        controlDescriptor.Id,
-                        request.ControlId,
-                        StringComparison.Ordinal))
-                .SelectMany(controlDescriptor => controlDescriptor.Capabilities)
-                .Any(capability =>
-                    capability.Id == expectedCapabilityId &&
-                    capability.Kind == (request.Kind == HiveHostInteractionKind.ReadControl
-                        ? HiveHostCapabilityKind.ReadControl
-                        : HiveHostCapabilityKind.SetControlValue)) == false &&
-            request.Kind == HiveHostInteractionKind.SetControlValue)
+        if (expectedCapabilityId != request.CapabilityId)
         {
             return Result<HiveHostInteractionResult>.Failure(
                 new Error(
