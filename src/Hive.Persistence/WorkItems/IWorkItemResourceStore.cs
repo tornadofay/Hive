@@ -19,6 +19,13 @@ public interface IWorkItemResourceStore
         bool includeRetired = false,
         CancellationToken cancellationToken = default);
 
+    Task<Result<WorkItemListPage>> ListWorkItemsPageAsync(
+        ResourceAccessContext accessContext,
+        bool includeRetired = false,
+        WorkItemListCursor? cursor = null,
+        int pageSize = WorkItemListPage.DefaultPageSize,
+        CancellationToken cancellationToken = default);
+
     Task<Result<WorkItemAttachmentContent>> GetWorkItemAttachmentAsync(
         WorkItemId workItemId,
         ResourceAccessContext accessContext,
