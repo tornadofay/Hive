@@ -123,7 +123,7 @@ public sealed class EventOutboxPollerIntegrationTests
             "Simulated handler failure.",
             exception.Message);
         Assert.True(
-            store.RenewalStopped.IsCompleted,
+            store.RenewalStopped.Task.IsCompleted,
             "The lease-renewal task must stop before ProcessNextAsync returns.");
         Assert.False(store.Completed);
     }
