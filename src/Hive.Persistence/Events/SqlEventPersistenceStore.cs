@@ -464,6 +464,83 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
         }
     }
 
+    public async Task<Result> RenewOutboxLeaseAsync(
+        EventOutboxWorkItem workItem,
+        TimeSpan leaseDuration,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(workItem);
+
+        if (leaseDuration <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(leaseDuration));
+
+        var now = _clock.UtcNow;
+        var expiresAt = now.Add(leaseDuration);
+
+        try
+        {
+            await using var connection = await OpenConnectionAsync(
+                cancellationToken).ConfigureAwait(false);
+
+            await using var command = CreateCommand(
+                connection,
+                """
+                UPDATE [dbo].[HiveEventOutbox]
+                SET [LeaseExpiresAtUtc] = @LeaseExpiresAtUtc
+                WHERE [EventId] = @EventId
+                  AND [LeaseId] = @LeaseId
+                  AND [LeaseExpiresAtUtc] > @NowUtc;
+                """);
+
+            command.Parameters.Add(
+                GuidParameter(
+                    "@EventId",
+                    workItem.Entry.Envelope.EventId.Value));
+            command.Parameters.Add(
+                GuidParameter(
+                    "@LeaseId",
+                    workItem.LeaseId));
+            command.Parameters.Add(
+                DateTimeParameter(
+                    "@NowUtc",
+                    now));
+            command.Parameters.Add(
+                DateTimeParameter(
+                    "@LeaseExpiresAtUtc",
+                    expiresAt));
+
+            var affected = await command.ExecuteNonQueryAsync(
+                cancellationToken).ConfigureAwait(false);
+
+            return affected == 1
+                ? Result.Success()
+                : Result.Failure(
+                    Error.Concurrency(
+                        "hive.outbox.lease-lost",
+                        "The outbox lease was lost before it could be renewed."));
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (SqlException exception)
+        {
+            return Result.Failure(
+                HivePersistenceError.External(
+                    "hive.outbox.renew-sql",
+                    "The outbox lease renewal failed at the SQL Server boundary.",
+                    exception));
+        }
+        catch (Exception exception)
+        {
+            return Result.Failure(
+                HivePersistenceError.Internal(
+                    "hive.outbox.renew",
+                    "The outbox lease renewal failed.",
+                    exception));
+        }
+    }
+
     public async Task<Result> CompleteOutboxAsync(
         EventOutboxWorkItem workItem,
         CancellationToken cancellationToken = default)
