@@ -29,6 +29,24 @@ public sealed class HiveWinFormsBaseControlIntegrationTests
     }
 
     [Fact]
+    public void DataSurfaceFieldOverridesUseCaseInsensitiveKeys()
+    {
+        using var grid = new HiveDataGridView();
+
+        var metadata = grid.HiveDataSurface.ConfigureField("CustomerId");
+        metadata.Required = true;
+
+        var sameMetadata = grid.HiveDataSurface.ConfigureField("customerid");
+
+        Assert.Same(metadata, sameMetadata);
+        Assert.True(
+            grid.HiveDataSurface.TryGetFieldOverride(
+                "CUSTOMERID",
+                out var resolved));
+        Assert.Same(metadata, resolved);
+    }
+
+    [Fact]
     public void DataSurfaceRejectsDuplicateCapabilityIdentity()
     {
         using var grid = new HiveDataGridView();
