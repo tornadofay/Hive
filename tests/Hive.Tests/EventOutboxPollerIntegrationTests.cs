@@ -84,7 +84,7 @@ public sealed class EventOutboxPollerIntegrationTests
     }
 
     [Fact]
-    public async Task ProcessNext_HandlerCancellationDoesNotWaitForLeaseRenewalShutdown()
+    public async Task ProcessNext_HandlerCancellationLeavesLeaseForRecovery()
     {
         var database = await PrepareDatabase("Hive_Test_OutboxHandlerCancellation");
         var store = new SqlEventPersistenceStore(database.Options);
