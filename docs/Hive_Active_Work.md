@@ -20,7 +20,7 @@ The production submission-wide prepared-value-mapping limit is enforced during r
 4. No roadmap advancement or unrelated refactoring.
 
 ## Verification Gate
-IMPLEMENTATION IN PROGRESS — coverage gap identified during Revision. Developer re-verification will be required after the regression is added.
+VERIFICATION PENDING — added regression coverage for the submission-wide prepared-value-mapping limit. The test crosses 2,000,000 mappings through `InputPreparationEngine.Prepare` while remaining below the 20,000 prepared-row limit. Developer must rerun the focused InputPreparationTests resource-boundary coverage and the full Hive.Tests suite before this revision can close.
 
 ## Handoff
 Tests to run: focused InputPreparationTests resource-boundary coverage, then full Hive.Tests suite.
