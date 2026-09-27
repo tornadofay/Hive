@@ -580,8 +580,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             HiveHostInteractionKind.AddRow or
             HiveHostInteractionKind.EditRow or
             HiveHostInteractionKind.DeleteRow or
-            HiveHostInteractionKind.InvokeAction or
-            HiveHostInteractionKind.ReadRow;
+            HiveHostInteractionKind.InvokeAction;
 
     private async Task<Result<HiveHostInteractionResult>> ExecuteWithProviderAsync(
         HiveHostInteractionRequest request,
