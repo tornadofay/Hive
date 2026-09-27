@@ -60,6 +60,88 @@ public sealed class WorkItemManagementTests
     }
 
     [Fact]
+    public async Task WorkItemListing_UsesBoundedDeterministicPages()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_WorkItemPaging");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var management = CreateFacade(database.Options);
+        var context = CreateContext();
+
+        var created = new List<WorkItem>();
+
+        for (var index = 0; index < 5; index++)
+        {
+            var result = await management.CreateImageWorkItemAsync(
+                new WorkItemImageSubmission(
+                    $"page-{index}.png",
+                    "image/png",
+                    [1, 2, 3, 4]),
+                context);
+
+            Assert.True(result.IsSuccess, result.Error?.Message);
+            created.Add(result.Value!);
+        }
+
+        var first = await management.ListWorkItemsPageAsync(
+            context,
+            pageSize: 2);
+
+        Assert.True(first.IsSuccess, first.Error?.Message);
+        Assert.Equal(2, first.Value!.Items.Count);
+        Assert.True(first.Value.HasNextPage);
+
+        var second = await management.ListWorkItemsPageAsync(
+            context,
+            pageSize: 2,
+            cursor: first.Value.NextCursor);
+
+        Assert.True(second.IsSuccess, second.Error?.Message);
+        Assert.Equal(2, second.Value!.Items.Count);
+        Assert.True(second.Value.HasNextPage);
+
+        var third = await management.ListWorkItemsPageAsync(
+            context,
+            pageSize: 2,
+            cursor: second.Value.NextCursor);
+
+        Assert.True(third.IsSuccess, third.Error?.Message);
+        Assert.Single(third.Value!.Items);
+        Assert.False(third.Value.HasNextPage);
+
+        var ids = first.Value.Items
+            .Concat(second.Value.Items)
+            .Concat(third.Value.Items)
+            .Select(static item => item.Id)
+            .ToArray();
+
+        Assert.Equal(created.Count, ids.Distinct().Count());
+        Assert.Equal(
+            created.Select(static item => item.Id).OrderBy(static id => id.Value).ToArray(),
+            ids.OrderBy(static id => id.Value).ToArray());
+    }
+
+    [Fact]
+    public async Task WorkItemListing_RejectsInvalidPageSize()
+    {
+        var management = CreateFacade(HiveDatabaseOptions.LocalDevelopment());
+        var context = CreateContext();
+
+        var result = await management.ListWorkItemsPageAsync(
+            context,
+            pageSize: WorkItemListPage.MaxPageSize + 1);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.management.work-item.page-size-invalid",
+            result.Error!.Code);
+        Assert.Equal(ErrorCategory.Validation, result.Error.Category);
+    }
+
+    [Fact]
     public async Task WorkItemActivity_RejectsUndefinedStringStatus()
     {
         var database = new PersistenceTestDatabase("Hive_Test_WorkItemActivityInvalidStatus");
