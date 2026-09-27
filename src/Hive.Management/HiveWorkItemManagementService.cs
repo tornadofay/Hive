@@ -74,6 +74,33 @@ internal sealed class HiveWorkItemManagementService : HiveManagementServiceBase
                 includeRetired,
                 cancellationToken));
 
+    internal Task<Result<WorkItemListPage>> ListWorkItemsPageAsync(
+        ResourceAccessContext accessContext,
+        bool includeRetired = false,
+        WorkItemListCursor? cursor = null,
+        int pageSize = WorkItemListPage.DefaultPageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Failure<WorkItemListPage>(contextError);
+
+        if (pageSize <= 0 || pageSize > WorkItemListPage.MaxPageSize)
+        {
+            return Failure<WorkItemListPage>(
+                Error.Validation(
+                    "hive.management.work-item.page-size-invalid",
+                    $"WorkItem page size must be between 1 and {WorkItemListPage.MaxPageSize}."));
+        }
+
+        return _workItems.ListWorkItemsPageAsync(
+            accessContext,
+            includeRetired,
+            cursor,
+            pageSize,
+            cancellationToken);
+    }
+
 
     internal Task<Result<WorkItemAttachmentContent>> GetWorkItemAttachmentAsync(
         WorkItemId workItemId,
