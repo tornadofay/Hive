@@ -126,13 +126,12 @@ public sealed class HiveHostComposition : IDisposable
                 cancellationToken,
                 _lifetimeCts.Token);
             var operationToken = linkedCts.Token;
-        {
+
             await _reconfigurationGate
                 .WaitAsync(operationToken)
                 .ConfigureAwait(false);
             gateAcquired = true;
 
-        {
             operationToken.ThrowIfCancellationRequested();
 
             var configuration = await _configurationStore
@@ -223,7 +222,7 @@ public sealed class HiveHostComposition : IDisposable
                 {
                     previous.Dispose();
                 }
-                catch (Exception exception)
+                catch (Exception)
                 {
                     var warning = new Error(
                         "hive.host.previous-graph-dispose-failed",
