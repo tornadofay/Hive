@@ -23,7 +23,7 @@ Developer must run:
 - Manual Example Host verification of Overview / Getting Started / Example Configuration — Hive.Example.WinForms, specifically opening Settings, saving a SQL-password configuration, changing/replacing the bootstrap credential, applying Settings, and exercising cancellation/failure paths where practical.
 - Confirm Visual Studio Treat warnings as errors remains enabled with no new errors or warnings.
 
-Latest developer verification attempt: 394 tests ran, 391 passed and 3 failed. The failures were confined to the newly added regression-test setup/assertions. Remediation has been applied within this same slice; verification must be rerun before closure.
+Latest developer verification: full `Hive.Tests` suite passed 394/394 (0 failed, 0 skipped) in 45.3 seconds. The previously reported three regression-test failures were remediated within this same slice. Manual Example Host and warnings-as-errors verification remain pending before closure.
 
 ## Exclusions
 
