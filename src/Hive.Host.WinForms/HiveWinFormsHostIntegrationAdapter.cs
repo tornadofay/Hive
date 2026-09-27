@@ -760,9 +760,9 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     private DataGridView? FindDataSurfaceById(
         string surfaceId,
         CancellationToken cancellationToken,
-        out string? path)
+        out string? currentPath)
     {
-        path = null;
+        currentPath = null;
 
         const string prefix = "surface:";
         if (!surfaceId.StartsWith(prefix, StringComparison.Ordinal))
@@ -780,7 +780,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var (control, depth, path) = stack.Pop();
+            var (control, depth, traversalPath) = stack.Pop();
 
             if (depth > _options.MaxDepth ||
                 visited.Count >= _options.MaxNodes)
@@ -817,7 +817,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     (
                         control.Controls[index],
                         depth + 1,
-                        path + "/" + index));
+                        traversalPath + "/" + index));
             }
         }
 
@@ -1555,7 +1555,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         if (explicitMatch.Count == 1)
         {
             var result = explicitMatch[0];
-            path = FindControlPath(result, cancellationToken);
+            currentPath = FindControlPath(result, cancellationToken);
             return result;
         }
 
@@ -1568,7 +1568,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         if (namedMatch.Count == 1)
         {
             var result = namedMatch[0];
-            path = FindControlPath(result, cancellationToken);
+            currentPath = FindControlPath(result, cancellationToken);
             return result;
         }
 
@@ -1576,7 +1576,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             key.Contains('/', StringComparison.Ordinal))
         {
             var result = FindControl(key);
-            path = result is null ? null : key;
+            currentPath = result is null ? null : key;
             return result;
         }
 
