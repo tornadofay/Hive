@@ -92,7 +92,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
     async Task<Result<HiveHostContextDescriptor>> IHiveHostIntegrationAdapter.CaptureAsync(
         ResourceAccessContext accessContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
 
@@ -152,7 +152,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     async Task<Result<HiveHostInteractionResult>> IHiveHostIntegrationAdapter.ExecuteInteractionAsync(
         HiveHostInteractionRequest request,
         ResourceAccessContext accessContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(request);
@@ -179,7 +179,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     async Task<Result<IReadOnlyList<HiveLookupOption>>> IHiveHostIntegrationAdapter.ResolveLookupAsync(
         HiveLookupRequest request,
         ResourceAccessContext accessContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(request);
