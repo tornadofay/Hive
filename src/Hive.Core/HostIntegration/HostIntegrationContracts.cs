@@ -842,6 +842,7 @@ public sealed record HiveHostCapabilityRequest
     private static bool RequiresFreshCapture(
         HiveHostCapabilityKind capabilityKind) =>
         capabilityKind is
+            HiveHostCapabilityKind.ReadControl or
             HiveHostCapabilityKind.SetControlValue or
             HiveHostCapabilityKind.AddRow or
             HiveHostCapabilityKind.EditRow or
@@ -1035,14 +1036,14 @@ public sealed record HiveBusinessOperationComposition
 }
 
 /// <summary>
-    /// Neutral host-execution port consumed by <see cref="Hive.Management.IHiveHostIntegrationService"/>.
+    /// Neutral host-execution port used by the application-facing Management host-integration service.
     /// This interface is an execution boundary, not an authorization boundary; callers should route
     /// host interactions through the Management service so the configured capability authorizer is
     /// applied before adapter execution.
     /// </summary>
-    public interface IHiveHostIntegrationAdapter
-    {
-        string AdapterId { get; }
+public interface IHiveHostIntegrationAdapter
+{
+    string AdapterId { get; }
 
     Task<Result<HiveHostContextDescriptor>> CaptureAsync(
         ResourceAccessContext accessContext,
