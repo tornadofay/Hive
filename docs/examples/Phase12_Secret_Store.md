@@ -46,6 +46,7 @@ var deleted = await store.DeleteAsync(
 - \`SecretMaterial.ToString()\` is always \`[REDACTED]\`.
 - Replacement preserves the Secret identity and increments its \`ResourceVersion\`; stale expected versions fail with \`Concurrency\`.
 - Deletion physically removes the encrypted row so the persisted secret material is not retained as a normal retired resource.
+- A secret referenced by a ProviderAccount cannot be hard-deleted until the ProviderAccount reference is cleared; ProviderAccount writes also reject missing/inactive/inaccessible secret references.
 - Ownership and scope remain authoritative at the Secret Store boundary.
 - SQL duplicate-key failures are classified as \`Conflict\`.
 - DPAPI use is Windows-only; unsupported platforms return a typed \`Unsupported\` error.
