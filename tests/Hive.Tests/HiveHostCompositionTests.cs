@@ -452,6 +452,47 @@ public sealed class HiveHostCompositionTests
     }
 
     [Fact]
+    public async Task Replacement_PreviousGraphDisposalFailure_PreservesNewGraphAndReportsWarning()
+    {
+        var firstConfiguration =
+            HivePersistenceConfiguration.LocalDevelopment(
+                "Hive_Composition_PreviousDisposeFailure_1");
+        var secondConfiguration =
+            HivePersistenceConfiguration.LocalDevelopment(
+                "Hive_Composition_PreviousDisposeFailure_2");
+
+        var configurationStore = new InMemoryConfigurationStore(firstConfiguration);
+        var firstGraph = CreateGraph(
+            firstConfiguration,
+            new ThrowingDisposable());
+        var secondResource = new TrackingDisposable();
+        var secondGraph = CreateGraph(
+            secondConfiguration,
+            secondResource);
+
+        using var composition = new HiveHostComposition(
+            configurationStore,
+            new ScriptedGraphFactory(
+                Result<HiveHostServiceGraph>.Success(firstGraph),
+                Result<HiveHostServiceGraph>.Success(secondGraph)));
+
+        var initialized = await composition.InitializeAsync();
+        Assert.True(initialized.IsSuccess, initialized.Error?.Message);
+
+        configurationStore.Configuration = secondConfiguration;
+
+        var replacement = await composition.ReloadAsync();
+
+        Assert.True(replacement.IsSuccess, replacement.Error?.Message);
+        Assert.Same(secondGraph, composition.Current);
+        Assert.Equal(HiveHostCompositionState.Ready, composition.Status.State);
+        Assert.Equal(
+            "hive.host.previous-graph-dispose-failed",
+            composition.Status.LastError?.Code);
+        Assert.True(firstGraph.IsDisposed);
+    }
+
+    [Fact]
     public async Task ConcurrentCompositionRequests_SerializeCandidateConstruction()
     {
         var configurationStore = new InMemoryConfigurationStore(
