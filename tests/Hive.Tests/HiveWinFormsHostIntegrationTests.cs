@@ -684,8 +684,15 @@ public sealed class HiveWinFormsHostIntegrationTests
             ],
             StringComparer.Ordinal);
 
-        var lowLevelTargets = interfaceMap.TargetMethods
-            .Where(method => lowLevelMethodNames.Contains(method.Name))
+        var lowLevelTargets = interfaceMap.InterfaceMethods
+            .Select(
+                (interfaceMethod, index) => new
+                {
+                    InterfaceMethod = interfaceMethod,
+                    TargetMethod = interfaceMap.TargetMethods[index]
+                })
+            .Where(item => lowLevelMethodNames.Contains(item.InterfaceMethod.Name))
+            .Select(item => item.TargetMethod)
             .ToArray();
 
         Assert.Equal(3, lowLevelTargets.Length);
