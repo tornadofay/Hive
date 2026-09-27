@@ -24,7 +24,6 @@ public sealed class ProviderPersistenceIntegrationTests
                 : migration.Error.Message);
 
         var store = new SqlProviderResourceStore(database.Options);
-        var secretStore = new SqlDpapiSecretStore(database.Options);
         var principal = PrincipalId.New();
         var tenant = TenantId.New();
         var context = new ResourceAccessContext(
@@ -178,6 +177,7 @@ public sealed class ProviderPersistenceIntegrationTests
         Assert.True(migration.IsSuccess, migration.Error?.Message);
 
         var store = new SqlProviderResourceStore(database.Options);
+        var secretStore = new SqlDpapiSecretStore(database.Options);
         var principal = PrincipalId.New();
         var tenant = TenantId.New();
         var context = new ResourceAccessContext(
