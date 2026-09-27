@@ -1,23 +1,29 @@
 # Hive — Active Work
 
-Status: ACTIVE
+Status: VERIFICATION PENDING
 
 ## Slice
 
 **Maintenance — Review Finding Corrections (2026-09-28)**
 
-This is an explicitly requested bounded corrective slice opened with no previously active implementation slice. It restores or preserves existing Phase 1 behavior only; it does not advance Phase 1.16+.
+The explicitly requested bounded corrective slice is implementation-complete. It restores or preserves existing Phase 1 behavior only and does not advance Phase 1.16+.
 
-## Authorized scope
+## Completed implementation scope
 
-Correct all four concrete production findings identified by the immediately preceding read-only repository review:
+1. SQL-password Host Composition no longer reuses an apparently unchanged configuration graph when the referenced bootstrap credential material may have changed; ApplyPersistedConfigurationAsync recomposes that graph.
+2. Terminal Agent execution events now perform exact-event reconciliation after an append failure and retry once when the terminal event is not yet durable. Persistent failure returns an explicit terminal-persistence error rather than exposing an ordinary provider-success/failure result as if it were durably complete.
+3. The Example Host Settings operation now returns Task, is awaited by the Example Configuration view, and rejects overlapping Settings operations.
+4. Settings bootstrap-credential creation is tracked and cleanup uses a non-cancelled token plus a persisted-configuration reconciliation check, preventing cleanup from deleting a credential that may already be referenced after an ambiguous save cancellation/failure.
 
-1. Bootstrap credential replacement must not allow a mutable credential reference to leave an already-running Host Composition using stale credential material.
-2. Agent execution terminal persistence must have a bounded recovery path for terminal-event persistence failure and must return an explicit failure when durable terminal evidence still cannot be recorded.
-3. The Example Host Settings operation must not use a non-event async-void entry point.
-4. Settings bootstrap-credential creation must not leave an orphaned credential after cancellation/failure of the subsequent persistence-configuration save.
+## Focused verification boundary
 
-Required supporting work is limited to directly affected production code, focused regression tests, and owning verification documentation.
+Developer must run:
+- Hive.Tests full suite.
+- Focused classes: HiveHostCompositionTests, AgentExecutionIntegrationTests.
+- Manual Example Host verification of Overview / Getting Started / Example Configuration — Hive.Example.WinForms, specifically opening Settings, saving a SQL-password configuration, changing/replacing the bootstrap credential, applying Settings, and exercising cancellation/failure paths where practical.
+- Confirm Visual Studio Treat warnings as errors remains enabled with no new errors or warnings.
+
+Do not mark this slice complete, create a historical verification record, or claim test/manual verification until actual developer results are supplied.
 
 ## Exclusions
 
@@ -25,7 +31,3 @@ Required supporting work is limited to directly affected production code, focuse
 - No new provider, cognitive, tool, business-operation, vector, or persistence capability.
 - No unrelated refactoring or dependency upgrades.
 - No roadmap advancement.
-
-## Verification gate
-
-After implementation, set this file to VERIFICATION PENDING with the exact focused/full checks required from the developer. Do not claim build/test/manual execution until developer results are supplied.
