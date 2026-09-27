@@ -42,7 +42,7 @@ Correct the four concrete production findings identified in the 2026-09-27 repos
 - No branch/PR creation.
 
 ## Verification Gate
-VERIFICATION FAILED / REMEDIATION REQUIRED — developer reported Hive.Core compile errors in InputPreparationEngine.cs. The failure is in-scope: SpreadsheetPackageWorkbookLimitException incorrectly derives from sealed SpreadsheetPackageLimitException. Remediation is limited to correcting this exception hierarchy and rechecking the affected source; return to VERIFICATION PENDING after the correction.
+VERIFICATION PENDING — the in-scope exception hierarchy correction is applied. Developer must rerun the affected Hive.Core build/verification and then the focused tests and full Hive.Tests suite before slice closure.
 
 ## Handoff
 Example to run: existing host/integration examples are unchanged by this maintenance slice; no new externally meaningful capability is introduced.
