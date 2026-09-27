@@ -59,16 +59,17 @@ public static class HiveUiErrorReporter
 
 internal static class HiveUiExceptionDiagnostics
 {
-    private static readonly Regex[] SensitivePatterns =
+    private static readonly Regex[] SensitivePatterns
+    =
     [
         new(
-            @"(?<prefix>\b(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|refresh[_-]?token)\s*[:=]\s*)(?<value>[^\s;,\]\}"']+)",
+            @"(?<prefix>\b(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|refresh[_-]?token)\s*[:=]\s*[""'])(?<value>[^""']*)(?<suffix>[""'])",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+        new(
+            @"(?<prefix>\b(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|refresh[_-]?token)\s*[:=]\s*)(?<value>[^\s,;\]\}""']+)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
         new(
             @"(?<prefix>\b(?:authorization)\s*:\s*bearer\s+)(?<value>[^\s,;]+)",
-            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
-        new(
-            @"(?<prefix>\b(?:uid|user\s*id|username)\s*[:=]\s*)(?<value>[^\s;]+)(?<separator>\s*[;,]\s*)(?<password>password\s*=\s*)(?<secret>[^\s;]+)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
         new(
             @"(?<prefix>://[^/\s:@]+:)(?<value>[^@\s/]+)(?<suffix>@)",
@@ -116,12 +117,6 @@ internal static class HiveUiExceptionDiagnostics
                 result,
                 match =>
                 {
-                    if (!match.Groups["prefix"].Success ||
-                        !match.Groups["value"].Success)
-                    {
-                        return match.Value;
-                    }
-
                     var replacement = match.Groups["prefix"].Value +
                         "[REDACTED]";
 
