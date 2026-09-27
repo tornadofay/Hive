@@ -47,7 +47,8 @@ internal sealed class HiveWinFormsDataSurfaceDescriptorBuilder
                     existing.Generated,
                     true,
                     existing.CurrentValue,
-                    existing.Lookup);
+                    existing.Lookup,
+                    existing.Sensitive);
             }
         }
 
