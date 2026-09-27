@@ -24,6 +24,7 @@ public sealed class ProviderPersistenceIntegrationTests
                 : migration.Error.Message);
 
         var store = new SqlProviderResourceStore(database.Options);
+        var secretStore = new SqlDpapiSecretStore(database.Options);
         var principal = PrincipalId.New();
         var tenant = TenantId.New();
         var context = new ResourceAccessContext(
@@ -188,18 +189,29 @@ public sealed class ProviderPersistenceIntegrationTests
         Assert.True(
             (await store.CreateProviderAsync(provider, context)).IsSuccess);
 
-        var firstSecret = new SecretReference(SecretId.New());
+        var firstSecret = CreateSecret(
+            principal,
+            tenant,
+            "provider-credential-1");
+        using var firstMaterial = SecretMaterial.Create("provider-secret-1");
+        var createdSecret = await secretStore.CreateAsync(
+            firstSecret,
+            firstMaterial,
+            context);
+        Assert.True(createdSecret.IsSuccess, createdSecret.Error?.Message);
+
+        var firstReference = new SecretReference(firstSecret.Id);
         var account = CreateProviderAccount(
             provider.Id,
             principal,
-            tenant).WithCredentialSecret(firstSecret);
+            tenant).WithCredentialSecret(firstReference);
 
         var created = await store.CreateProviderAccountAsync(
             account,
             context);
 
         Assert.True(created.IsSuccess, created.Error?.Message);
-        Assert.Equal(firstSecret, created.Value!.CredentialSecret);
+        Assert.Equal(firstReference, created.Value!.CredentialSecret);
 
         var loaded = await store.GetProviderAccountAsync(
             account.Id,
@@ -208,13 +220,24 @@ public sealed class ProviderPersistenceIntegrationTests
         Assert.True(loaded.IsSuccess, loaded.Error?.Message);
         Assert.Equal(firstSecret, loaded.Value!.CredentialSecret);
 
-        var secondSecret = new SecretReference(SecretId.New());
+        var secondSecret = CreateSecret(
+            principal,
+            tenant,
+            "provider-credential-2");
+        using var secondMaterial = SecretMaterial.Create("provider-secret-2");
+        var createdSecondSecret = await secretStore.CreateAsync(
+            secondSecret,
+            secondMaterial,
+            context);
+        Assert.True(createdSecondSecret.IsSuccess, createdSecondSecret.Error?.Message);
+
+        var secondReference = new SecretReference(secondSecret.Id);
         var updated = await store.UpdateProviderAccountAsync(
-            loaded.Value.WithCredentialSecret(secondSecret),
+            loaded.Value.WithCredentialSecret(secondReference),
             context);
 
         Assert.True(updated.IsSuccess, updated.Error?.Message);
-        Assert.Equal(secondSecret, updated.Value!.CredentialSecret);
+        Assert.Equal(secondReference, updated.Value!.CredentialSecret);
 
         var reloaded = await store.GetProviderAccountAsync(
             account.Id,
@@ -222,6 +245,44 @@ public sealed class ProviderPersistenceIntegrationTests
 
         Assert.True(reloaded.IsSuccess, reloaded.Error?.Message);
         Assert.Equal(secondSecret, reloaded.Value!.CredentialSecret);
+    }
+
+    [Fact]
+    public async Task ProviderAccount_MissingCredentialSecretReference_IsRejected()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ProviderMissingCredential");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var store = new SqlProviderResourceStore(database.Options);
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var provider = CreateProvider(principal, tenant);
+        Assert.True(
+            (await store.CreateProviderAsync(provider, context)).IsSuccess);
+
+        var account = CreateProviderAccount(
+            provider.Id,
+            principal,
+            tenant).WithCredentialSecret(
+                new SecretReference(SecretId.New()));
+
+        var result = await store.CreateProviderAccountAsync(
+            account,
+            context);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.provider-account.credential-secret-not-found",
+            result.Error!.Code);
+        Assert.Equal(ErrorCategory.NotFound, result.Error.Category);
     }
 
     [Fact]
@@ -286,6 +347,29 @@ public sealed class ProviderPersistenceIntegrationTests
 
         Assert.True(loaded.IsFailure);
         Assert.Equal(ErrorCategory.Internal, loaded.Error!.Category);
+    }
+
+    private static Secret CreateSecret(
+        PrincipalId principal,
+        TenantId tenant,
+        string key)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        return new Secret(
+            new ResourceEnvelope<SecretId>(
+                ResourceKind.Secret,
+                SecretId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            key,
+            "Provider Credential Secret");
     }
 
     private static Provider CreateProvider(
