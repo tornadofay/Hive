@@ -355,6 +355,8 @@ After Phase 2 establishes persistent Hive membership and Swarm state, Workspace 
 
 For Phase 1.11, `WorkItem` is the authoritative durable user-visible aggregate. Its durable state is persisted as an event stream with a current snapshot, so status transitions, approval transitions, optimistic concurrency, activity, and outbox work share one transaction.
 
+The Workspace WorkItem list uses the bounded `ListWorkItemsPageAsync` Management operation. Persistence-side keyset paging is ordered by immutable WorkItem creation timestamp plus WorkItem identity, with a bounded page size and an opaque continuation cursor; the older unpaged list contract remains available for compatibility but should not be used by long-lived interactive list surfaces.
+
 The V1 application-facing Management contract exposes:
 
 - create an image-backed WorkItem;
