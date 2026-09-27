@@ -15,6 +15,7 @@ Last updated: 2026-09-27
   - **1.15 — Input Preparation & Routing:** Complete and verified on 2026-09-26. Developer verification: exact Example Host scenario confirmed the image and spreadsheet preparation/routing boundary with isolated unsupported input handling; the full `Hive.Tests` suite passed 333/333.
   - **Maintenance — Persistence Resource-Store Deduplication:** Complete and verified on 2026-09-27. Developer verification: full `Hive.Tests` suite passed 333/333. [Verification record](verification/maintenance/persistence-resource-store-deduplication-2026-09-27.md)
   - **Maintenance — Host/UI: WinForms Standard Control Value Adaptation Refactor:** Complete and verified on 2026-09-27. Developer verification: full `Hive.Tests` suite passed 336/336; the Example application was also reported running correctly after remediation. [Verification record](verification/maintenance/host-ui-winforms-standard-control-value-adaptation-refactor-2026-09-27.md)
+  - **Maintenance — Review Corrections:** Complete and verified on 2026-09-27. Developer verification: Visual Studio had **Treat warnings as errors** enabled with no errors or warnings reported in the Error List; the full `Hive.Tests` suite passed 347/347; and `Hive.Example.WinForms` was manually launched successfully. [Verification record](verification/maintenance/review-corrections-2026-09-27.md)
   - **1.16+:** Not authorized.
   
 Historical verification records are maintained under [`docs/verification/`](verification/).
