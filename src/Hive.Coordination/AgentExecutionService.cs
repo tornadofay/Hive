@@ -439,14 +439,11 @@ public sealed class AgentExecutionService
                 errorCategory = error.Category.ToString()
             });
 
-        var persisted = await _eventStore
-            .AppendAsync(
-                new EventAppendRequest(
-                    stream,
-                    ResourceVersion.Initial,
-                    envelope),
-                cancellationToken)
-            .ConfigureAwait(false);
+        var persisted = await PersistTerminalEventAsync(
+            new EventAppendRequest(
+                stream,
+                ResourceVersion.Initial,
+                envelope));
 
         if (persisted.IsFailure)
             return Result<AgentExecutionResult>.Failure(persisted.Error!);
@@ -505,14 +502,11 @@ public sealed class AgentExecutionService
         CorrelationId correlationId,
         CancellationToken cancellationToken)
     {
-        var persisted = await _eventStore
-            .AppendAsync(
-                new EventAppendRequest(
-                    stream,
-                    ResourceVersion.Initial,
-                    terminalEvent),
-                cancellationToken)
-            .ConfigureAwait(false);
+        var persisted = await PersistTerminalEventAsync(
+            new EventAppendRequest(
+                stream,
+                ResourceVersion.Initial,
+                terminalEvent));
 
         if (persisted.IsFailure)
             return Result<AgentExecutionResult>.Failure(persisted.Error!);
@@ -526,5 +520,102 @@ public sealed class AgentExecutionService
                 startedEvent.EventId,
                 terminalEvent.EventId,
                 providerResponseId));
+    }
+
+    private async Task<Result<EventAppendResult>> PersistTerminalEventAsync(
+        EventAppendRequest request)
+    {
+        Error? lastError = null;
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            try
+            {
+                var result = await _eventStore
+                    .AppendAsync(
+                        request,
+                        CancellationToken.None)
+                    .ConfigureAwait(false);
+
+                if (result.IsSuccess)
+                    return result;
+
+                lastError = new Error(
+                    "hive.agent.execution.terminal-persistence-failed",
+                    ErrorCategory.External,
+                    "The terminal execution event could not be persisted.");
+
+                var reconciled = await ReconcileTerminalEventAsync(request)
+                    .ConfigureAwait(false);
+
+                if (reconciled.IsSuccess)
+                    return reconciled;
+            }
+            catch (Exception)
+            {
+                lastError = new Error(
+                    "hive.agent.execution.terminal-persistence-failed",
+                    ErrorCategory.External,
+                    "The terminal execution event could not be persisted.");
+
+                var reconciled = await ReconcileTerminalEventAsync(request)
+                    .ConfigureAwait(false);
+
+                if (reconciled.IsSuccess)
+                    return reconciled;
+            }
+        }
+
+        return Result<EventAppendResult>.Failure(
+            lastError ??
+            new Error(
+                "hive.agent.execution.terminal-persistence-failed",
+                ErrorCategory.External,
+                "The terminal execution event could not be persisted."));
+    }
+
+    private async Task<Result<EventAppendResult>> ReconcileTerminalEventAsync(
+        EventAppendRequest request)
+    {
+        try
+        {
+            var events = await _eventStore
+                .ReadEventsAsync(
+                    request.Stream,
+                    request.ExpectedVersion ?? ResourceVersion.Initial,
+                    CancellationToken.None)
+                .ConfigureAwait(false);
+
+            if (events.IsFailure)
+                return Result<EventAppendResult>.Failure(events.Error!);
+
+            var persisted = events.Value!
+                .SingleOrDefault(
+                    item => item.Envelope.EventId == request.Envelope.EventId);
+
+            if (persisted is null)
+                return Result<EventAppendResult>.Failure(
+                    new Error(
+                        "hive.agent.execution.terminal-not-reconciled",
+                        ErrorCategory.NotFound,
+                        "The terminal execution event was not found during persistence reconciliation."));
+
+            return Result<EventAppendResult>.Success(
+                new EventAppendResult(
+                    persisted,
+                    snapshot: null,
+                    new EventOutboxEntry(
+                        persisted.Stream,
+                        persisted.StreamVersion,
+                        persisted.Envelope)));
+        }
+        catch (Exception)
+        {
+            return Result<EventAppendResult>.Failure(
+                new Error(
+                    "hive.agent.execution.terminal-reconciliation-failed",
+                    ErrorCategory.External,
+                    "The terminal execution event could not be reconciled."));
+        }
     }
 }
