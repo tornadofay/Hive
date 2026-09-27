@@ -125,6 +125,56 @@ public sealed class WorkItemManagementTests
     }
 
     [Fact]
+    public async Task WorkItemListing_PagedOrderMatchesLegacyOrderWhenTimestampsTie()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_WorkItemPagingOrder");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var clock = new FakeClock(
+            new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero));
+        var management = CreateFacade(database.Options, clock);
+        var context = CreateContext();
+
+        for (var index = 0; index < 5; index++)
+        {
+            var result = await management.CreateImageWorkItemAsync(
+                new WorkItemImageSubmission(
+                    $"ordered-{index}.png",
+                    "image/png",
+                    new byte[] { 1, 2, 3, 4 }),
+                context);
+
+            Assert.True(result.IsSuccess, result.Error?.Message);
+        }
+
+        var legacy = await management.ListWorkItemsAsync(context);
+        Assert.True(legacy.IsSuccess, legacy.Error?.Message);
+
+        var paged = new List<WorkItem>();
+        WorkItemListCursor? cursor = null;
+
+        do
+        {
+            var page = await management.ListWorkItemsPageAsync(
+                context,
+                pageSize: 2,
+                cursor: cursor);
+
+            Assert.True(page.IsSuccess, page.Error?.Message);
+            paged.AddRange(page.Value!.Items);
+            cursor = page.Value.NextCursor;
+        }
+        while (cursor is not null);
+
+        Assert.Equal(
+            legacy.Value!.Select(static item => item.Id).ToArray(),
+            paged.Select(static item => item.Id).ToArray());
+    }
+
+    [Fact]
     public async Task WorkItemListing_RejectsInvalidPageSize()
     {
         var management = CreateFacade(HiveDatabaseOptions.LocalDevelopment());
@@ -449,11 +499,12 @@ public sealed class WorkItemManagementTests
     }
 
     private static HiveManagementFacade CreateFacade(
-        HiveDatabaseOptions options) =>
+        HiveDatabaseOptions options,
+        IClock? clock = null) =>
         new(
             new SqlProviderResourceStore(options),
             new SqlAgentDefinitionResourceStore(options),
-            new SqlWorkItemResourceStore(options));
+            new SqlWorkItemResourceStore(options, clock));
 
     private static ResourceAccessContext CreateContext() =>
         new(
