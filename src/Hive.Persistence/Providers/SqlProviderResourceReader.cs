@@ -67,8 +67,10 @@ internal sealed class SqlProviderResourceReader : SqlResourceStoreBase
         [MetadataJson]
         """;
 
-    internal SqlProviderResourceReader(HiveDatabaseOptions options)
-        : base(options)
+    internal SqlProviderResourceReader(
+        HiveDatabaseOptions options,
+        IClock? clock = null)
+        : base(options, clock)
     {
     }
 
