@@ -744,7 +744,7 @@ Every consequential host operation and review must remain attributable to:
 - timestamps;
 - expected host version/concurrency token when available.
 
-A stale host context or disposed control must not silently receive a mutation.
+A stale host context or disposed control must not silently receive a mutation. Consequential interaction requests carry the originating capture identity, and the adapter rejects requests created from an older capture.
 
 The V1 neutral contract does not require an ETag/version token. A host may expose meaningful concurrency/version evidence when it has one, but a host without such evidence may use its ordinary save behavior.
 
@@ -988,7 +988,7 @@ For field identity, an explicit field name wins; otherwise a bound member is use
 
 For data-surface identity, an explicit surface identifier wins; otherwise a unique non-empty control name is used; otherwise the deterministic control path is used. A child surface may explicitly name its parent surface and the parent/child key fields. The adapter materializes the corresponding parent-side `HiveHostChildDataSurfaceDescriptor`; it does not infer arbitrary business relationships from layout.
 
-Capability identities generated from automatic behavior are deterministic for the canonical adapter/control/surface identity and capability kind. Capability identifiers remain identifiers, not authorization grants: Management authorization is still required before any consequential interaction.
+Capability identities generated from automatic behavior are deterministic for the canonical adapter/control/surface identity and capability kind. Capability identifiers remain identifiers, not authorization grants: Management authorization is still required before any consequential interaction. Consequential interaction requests are additionally bound to the capture identity from which their target and capability were obtained, so a replaced/recreated host target cannot inherit an older capture's mutation authority.
 
 Within a captured host context, control identities, data-surface identities, and business-operation capability identities must be unique where the neutral contract would otherwise make authorization or target selection ambiguous. Lookup identity is additionally carried into lookup authorization, so an authorized lookup capability is bound to the specific requested lookup.
 
