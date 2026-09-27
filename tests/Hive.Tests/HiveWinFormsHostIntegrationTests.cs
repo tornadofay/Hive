@@ -242,6 +242,8 @@ public sealed class HiveWinFormsHostIntegrationTests
             AutoGenerateColumns = false
         };
         parent.HiveDataSurface.SurfaceId = "invoice";
+        parent.HiveDataSurface.PrimaryKeyField = "id";
+        parent.HiveDataSurface.ConfigureField("id").Sensitive = true;
         parent.Columns.Add(
             new DataGridViewTextBoxColumn
             {
@@ -278,6 +280,10 @@ public sealed class HiveWinFormsHostIntegrationTests
         Assert.True(result.IsSuccess, result.Error?.Message);
         var invoice = result.Value!.DataSurfaces.Single(
             surface => surface.Id == "surface:invoice");
+        var invoiceId = invoice.Fields.Single(field => field.Name == "Id");
+        Assert.True(invoiceId.IsPrimaryKey);
+        Assert.True(invoiceId.Sensitive);
+        Assert.Null(invoiceId.CurrentValue);
         Assert.Contains(
             invoice.Children,
             relationship => relationship.ChildSurfaceId == "surface:lines" &&
