@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Current slice: Maintenance — Host/UI: Host Integration Contract Corrections
 
@@ -22,7 +22,7 @@ Remediation completed:
 - Static API-surface reinspection confirms the three corrected explicit signatures are present.
 
 Developer follow-up failure:
-- Two `Hive.Tests` compile errors (`CS1061`) remain at lines 67 and 87 of `HiveWinFormsHostIntegrationTests.cs` because those tests still call `CaptureAsync` directly on the concrete adapter type. This is inside the same explicit-interface correction boundary.
+- Two `Hive.Tests` compile errors (`CS1061`) remained at lines 67 and 87 of `HiveWinFormsHostIntegrationTests.cs` because those tests still called `CaptureAsync` directly on the concrete adapter type. This is inside the same explicit-interface correction boundary.
 
 Remediation completed:
 - Routed the two remaining test `CaptureAsync` calls through the `IHiveHostIntegrationAdapter` interface helper.
@@ -37,6 +37,16 @@ Remediation completed:
 - Corrected the xUnit `Assert.Contains` argument order in the explicit-adapter API regression test.
 - Static reinspection confirms the assertion now uses the expected-item-first overload.
 
+Developer verification failure:
+- Full `Hive.Tests` run completed with 372 tests: 371 passed, 1 failed.
+- `HiveWinFormsHostIntegrationTests.AdapterLowLevelOperationsAreExplicitInterfaceImplementations` failed because the reflection regression filtered `InterfaceMap.TargetMethods` by exact `MethodInfo.Name`, but explicit-interface target names are qualified and therefore produced zero matches instead of the expected three.
+- The failure is confined to the same explicit-interface API-shape regression and does not establish a production implementation failure.
+
+Remediation required:
+- Change the reflection regression to correlate `InterfaceMap.InterfaceMethods` with `TargetMethods` by index (or equivalent interface-method identity) and assert privacy only for the three named low-level interface operations.
+- Preserve the existing public `AdapterId` assertion.
+- Return this document to `VERIFICATION PENDING` after the corrective test change.
+
 Verification target:
 - Developer build with the repository's Treat-Warnings-as-Errors configuration.
 - Focused tests covering:
@@ -47,6 +57,6 @@ Verification target:
 - Existing relevant Hive.Example.WinForms host-integration scenario/manual launch.
 
 Agent verification:
-- Static repository/source review completed after remediation.
+- Static repository/source review completed after the reported failure.
 - Builds, tests, and manual Example Host execution were not run by the agent.
-- Developer-reported CS1066 errors are remediated in-slice; no new verification result has been supplied yet.
+- Developer-reported 371/372 result is recorded as the current verification failure.
