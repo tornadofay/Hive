@@ -475,7 +475,7 @@ public sealed class HiveExampleTestSurface : UserControl
         catch (Exception exception)
         {
             System.Diagnostics.Debug.WriteLine(
-                $"HiveExampleTestSurface cancellation callback failed while {reason}: {exception}");
+                $"HiveExampleTestSurface cancellation callback failed while {reason}:\n{HiveUiExceptionDiagnostics.Format(exception)}");
         }
     }
 
