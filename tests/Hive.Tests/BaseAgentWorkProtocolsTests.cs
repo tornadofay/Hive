@@ -541,8 +541,8 @@ public sealed class BaseAgentWorkProtocolsTests
 
         var runtime = agentResult.Value!.CreateRuntimeInstance(
             now,
-            clock,
-            delegation);
+            delegation,
+            clock);
 
         var runtimeContext = new ResourceAccessContext(
             deployment,
