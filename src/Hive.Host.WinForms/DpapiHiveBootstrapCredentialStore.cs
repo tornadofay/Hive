@@ -71,10 +71,20 @@ public sealed class DpapiHiveBootstrapCredentialStore :
                     encrypted,
                     cancellationToken).ConfigureAwait(false);
 
-                File.Move(
-                    temporaryPath,
-                    path,
-                    overwrite: true);
+                if (File.Exists(path))
+                {
+                    File.Replace(
+                        temporaryPath,
+                        path,
+                        destinationBackupFileName: null,
+                        ignoreMetadataErrors: true);
+                }
+                else
+                {
+                    File.Move(
+                        temporaryPath,
+                        path);
+                }
             }
             finally
             {
@@ -149,9 +159,33 @@ public sealed class DpapiHiveBootstrapCredentialStore :
 
         try
         {
-            encrypted = await File.ReadAllBytesAsync(
+            await using var stream = new FileStream(
                 path,
-                cancellationToken).ConfigureAwait(false);
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete,
+                bufferSize: 4096,
+                useAsync: true);
+
+            encrypted = new byte[stream.Length];
+            var offset = 0;
+
+            while (offset < encrypted.Length)
+            {
+                var read = await stream
+                    .ReadAsync(
+                        encrypted.AsMemory(offset),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (read == 0)
+                {
+                    throw new EndOfStreamException(
+                        "The bootstrap credential file ended before its declared content was read.");
+                }
+
+                offset += read;
+            }
 
             plaintext = ProtectedData.Unprotect(
                 encrypted,
