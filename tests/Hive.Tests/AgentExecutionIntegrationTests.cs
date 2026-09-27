@@ -1195,7 +1195,7 @@ public sealed class AgentExecutionIntegrationTests
                 .Where(eventItem =>
                     eventItem.Stream == stream &&
                     (afterVersion is null ||
-                     eventItem.StreamVersion > afterVersion.Value))
+                     eventItem.StreamVersion.Value > afterVersion.Value.Value))
                 .ToArray();
 
             return Task.FromResult(
