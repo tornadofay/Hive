@@ -31,7 +31,6 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     private readonly HiveWinFormsHostRegistration _registration;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveWinFormsSemanticProvider? _semanticProvider;
-    private readonly HiveWinFormsHostContextOptions _options;
     private readonly HiveWinFormsHostCaptureService _captureService;
     private readonly HiveWinFormsInteractionDispatcher _interactionDispatcher;
     private readonly object _captureGate = new();
@@ -59,16 +58,16 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
         _accessContext = accessContext;
         _semanticProvider = semanticProvider;
-        _options = options ?? new HiveWinFormsHostContextOptions();
+        var effectiveOptions = options ?? new HiveWinFormsHostContextOptions();
         _context = new HiveWinFormsHostContext(
             accessContext,
-            _options,
+            effectiveOptions,
             clock);
         _registration = _context.Register(root);
 
         var targetResolver = new HiveWinFormsTargetResolver(
             _registration.Root,
-            _options);
+            effectiveOptions);
 
         _captureService = new HiveWinFormsHostCaptureService(
             _context,
