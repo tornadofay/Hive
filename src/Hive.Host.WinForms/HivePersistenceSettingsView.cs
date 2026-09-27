@@ -239,7 +239,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             {
                 SetStatus(result.Error!.Message, HiveStatusTone.Error);
 
-                    // The reporter displays sanitized exception details; keep the status text generic.
+                HiveUiErrorReporter.Report(
                     FindForm(),
                     result.Error!.Message,
                     "Hive Persistence",
