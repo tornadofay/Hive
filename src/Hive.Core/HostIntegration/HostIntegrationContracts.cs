@@ -720,6 +720,15 @@ public sealed record HiveHostContextDescriptor
                 nameof(dataSurfaces));
         }
 
+        if (businessOperationItems.Select(static operation => operation.CapabilityId)
+            .Distinct()
+            .Count() != businessOperationItems.Length)
+        {
+            throw new ArgumentException(
+                "Business-operation capability identities must be unique within a host-context descriptor.",
+                nameof(businessOperations));
+        }
+
         RegistrationId = registrationId;
         HostName = hostName.Trim();
         Provenance = provenance;
