@@ -632,8 +632,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                         StringComparison.Ordinal) ||
                     !AreSameControlAncestry(
                         capturedControlAncestry,
-                        currentControl,
-                        cancellationToken))
+                        currentControl))
                 {
                     return Error.Conflict(
                         "hive.host.winforms.target-stale",
@@ -658,27 +657,37 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     candidate.Kind == capabilityKind);
 
             if (capability is not null &&
-                request.SurfaceId is not null &&
-                (!currentSurfaces.TryGetValue(
-                    request.SurfaceId,
-                    out var capturedSurface) ||
-                 !currentSurfacePaths.TryGetValue(
-                    request.SurfaceId,
-                    out var capturedSurfacePath) ||
-                 !ReferenceEquals(
-                     FindDataSurfaceById(
-                         request.SurfaceId,
-                         cancellationToken,
-                         out var currentSurfacePath),
-                     capturedSurface) ||
-                 !string.Equals(
-                    capturedSurfacePath,
-                    currentSurfacePath,
-                    StringComparison.Ordinal)))
+                request.SurfaceId is not null)
             {
-                return Error.Conflict(
-                    "hive.host.winforms.target-stale",
-                    "The requested WinForms data surface instance is no longer the one captured for this interaction.");
+                var currentSurface = FindDataSurfaceById(
+                    request.SurfaceId,
+                    cancellationToken,
+                    out var currentSurfacePath);
+
+                if (!currentSurfaces.TryGetValue(
+                        request.SurfaceId,
+                        out var capturedSurface) ||
+                    !currentSurfacePaths.TryGetValue(
+                        request.SurfaceId,
+                        out var capturedSurfacePath) ||
+                    !currentTargetAncestry.TryGetValue(
+                        request.SurfaceId,
+                        out var capturedSurfaceAncestry) ||
+                    !ReferenceEquals(
+                        currentSurface,
+                        capturedSurface) ||
+                    !string.Equals(
+                        capturedSurfacePath,
+                        currentSurfacePath,
+                        StringComparison.Ordinal) ||
+                    !AreSameControlAncestry(
+                        capturedSurfaceAncestry,
+                        currentSurface))
+                {
+                    return Error.Conflict(
+                        "hive.host.winforms.target-stale",
+                        "The requested WinForms data surface instance is no longer the one captured for this interaction.");
+                }
             }
         }
         else
@@ -736,50 +745,70 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
         if (request.Kind == HiveHostInteractionKind.InvokeAction)
         {
-            if (request.ControlId is not null &&
-                (!currentControls.TryGetValue(
-                    request.ControlId,
-                    out var capturedControl) ||
-                 !ReferenceEquals(
-                     FindControlById(
-                         request.ControlId,
-                         cancellationToken,
-                         out var currentControlPath),
-                     capturedControl) ||
-                 !string.Equals(
-                     currentCapture.Controls.Single(control => string.Equals(
-                         control.Id,
-                         request.ControlId,
-                         StringComparison.Ordinal)).Path,
-                     currentControlPath,
-                     StringComparison.Ordinal)))
+            if (request.ControlId is not null)
             {
-                return Error.Conflict(
-                    "hive.host.winforms.target-stale",
-                    "The requested WinForms action target is no longer the one captured for this interaction.");
+                var currentControl = FindControlById(
+                    request.ControlId,
+                    cancellationToken,
+                    out var currentControlPath);
+
+                if (!currentControls.TryGetValue(
+                        request.ControlId,
+                        out var capturedControl) ||
+                    !currentTargetAncestry.TryGetValue(
+                        request.ControlId,
+                        out var capturedControlAncestry) ||
+                    !ReferenceEquals(
+                        currentControl,
+                        capturedControl) ||
+                    !string.Equals(
+                        currentCapture.Controls.Single(control => string.Equals(
+                            control.Id,
+                            request.ControlId,
+                            StringComparison.Ordinal)).Path,
+                        currentControlPath,
+                        StringComparison.Ordinal) ||
+                    !AreSameControlAncestry(
+                        capturedControlAncestry,
+                        currentControl))
+                {
+                    return Error.Conflict(
+                        "hive.host.winforms.target-stale",
+                        "The requested WinForms action target is no longer the one captured for this interaction.");
+                }
             }
 
-            if (request.SurfaceId is not null &&
-                (!currentSurfaces.TryGetValue(
-                    request.SurfaceId,
-                    out var capturedSurface) ||
-                 !currentSurfacePaths.TryGetValue(
-                     request.SurfaceId,
-                     out var capturedSurfacePath) ||
-                 !ReferenceEquals(
-                     FindDataSurfaceById(
-                         request.SurfaceId,
-                         cancellationToken,
-                         out var currentSurfacePath),
-                     capturedSurface) ||
-                 !string.Equals(
-                     capturedSurfacePath,
-                     currentSurfacePath,
-                     StringComparison.Ordinal)))
+            if (request.SurfaceId is not null)
             {
-                return Error.Conflict(
-                    "hive.host.winforms.target-stale",
-                    "The requested WinForms action surface is no longer the one captured for this interaction.");
+                var currentSurface = FindDataSurfaceById(
+                    request.SurfaceId,
+                    cancellationToken,
+                    out var currentSurfacePath);
+
+                if (!currentSurfaces.TryGetValue(
+                        request.SurfaceId,
+                        out var capturedSurface) ||
+                    !currentSurfacePaths.TryGetValue(
+                        request.SurfaceId,
+                        out var capturedSurfacePath) ||
+                    !currentTargetAncestry.TryGetValue(
+                        request.SurfaceId,
+                        out var capturedSurfaceAncestry) ||
+                    !ReferenceEquals(
+                        currentSurface,
+                        capturedSurface) ||
+                    !string.Equals(
+                        capturedSurfacePath,
+                        currentSurfacePath,
+                        StringComparison.Ordinal) ||
+                    !AreSameControlAncestry(
+                        capturedSurfaceAncestry,
+                        currentSurface))
+                {
+                    return Error.Conflict(
+                        "hive.host.winforms.target-stale",
+                        "The requested WinForms action surface is no longer the one captured for this interaction.");
+                }
             }
         }
 
@@ -1503,6 +1532,48 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         control is IHiveWinFormsControl hiveControl
             ? CleanOptional(hiveControl.HiveIntegration.ControlId)
             : null;
+
+
+    private static IReadOnlyList<Control> CaptureControlAncestry(
+        Control control)
+    {
+        var ancestry = new List<Control>();
+
+        for (var current = control.Parent;
+             current is not null;
+             current = current.Parent)
+        {
+            ancestry.Add(current);
+        }
+
+        ancestry.Reverse();
+        return ancestry;
+    }
+
+    private static bool AreSameControlAncestry(
+        IReadOnlyList<Control> capturedAncestry,
+        Control? currentControl)
+    {
+        if (currentControl is null)
+            return false;
+
+        var currentAncestry = CaptureControlAncestry(currentControl);
+
+        if (capturedAncestry.Count != currentAncestry.Count)
+            return false;
+
+        for (var index = 0; index < capturedAncestry.Count; index++)
+        {
+            if (!ReferenceEquals(
+                    capturedAncestry[index],
+                    currentAncestry[index]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     private Control? FindControlById(
         string id,
