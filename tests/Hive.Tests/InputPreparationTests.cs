@@ -338,6 +338,58 @@ public sealed class InputPreparationTests
         Assert.Empty(result.Value.PreparedInputs);
     }
 
+
+    [Fact]
+    public void SpreadsheetInput_RejectsAggregatePreparedRowOutputAcrossSubmission()
+    {
+        string[][] CreateRows(int count)
+        {
+            var rows = new string[count + 1][];
+            rows[0] = ["Name"];
+
+            for (var index = 0; index < count; index++)
+                rows[index + 1] = [$"Row-{index + 1}"];
+
+            return rows;
+        }
+
+        var firstWorkbook = CreateWorkbook(
+            ("First", CreateRows(4999)));
+        var secondWorkbook = CreateWorkbook(
+            ("Second", CreateRows(4999)));
+        var thirdWorkbook = CreateWorkbook(
+            ("Third", CreateRows(3)));
+
+        var result = InputPreparationEngine.Prepare(
+            new InputSubmission(
+            [
+                new InputItem(
+                    "first.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    firstWorkbook),
+                new InputItem(
+                    "second.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    secondWorkbook),
+                new InputItem(
+                    "third.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    thirdWorkbook)
+            ]),
+            Array.Empty<ExecutionTarget>());
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(
+            InputPreparationLimits.MaxPreparedSpreadsheetRowsPerSubmission - 2,
+            result.Value!.PreparedInputs.Count);
+        var failure = Assert.Single(result.Value.Failures);
+        Assert.Equal(
+            "hive.input.spreadsheet.too-many-prepared-rows-submission",
+            failure.Error.Code);
+        Assert.Equal(ErrorCategory.Validation, failure.Error.Category);
+        Assert.Null(failure.SourceLocation);
+    }
+
     [Fact]
     public void SpreadsheetInput_FileLimitIsReportedAsItemFailure()
     {
