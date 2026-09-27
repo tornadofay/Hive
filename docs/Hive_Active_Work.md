@@ -1,23 +1,17 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: NONE
 
-Current slice: **Revision — Host Integration Contract Corrections Revision**
+Current slice: None
 
-Correction completed:
-- Changed the Management capture-forwarding regression to exercise ReadControl explicitly.
-- Added a dedicated fake ReadControl capability identity so the test proves Management forwards the originating CaptureId on the ReadControl authorization path.
+Latest closed slice:
+**Revision — Host Integration Contract Corrections Revision 2**
 
-Scope remains limited to the immediately preceding revision's test-coverage correction.
+Closure:
+- Developer full `Hive.Tests` verification passed: **373/373** (0 failed, 0 skipped).
+- The final correction was test-only and explicitly exercises the Management `ReadControl` capture-forwarding path, including preservation of the originating `CaptureId` to the capability authorizer.
+- Verification record: [`host-ui-host-integration-contract-corrections-revision-2-2026-09-27.md`](verification/maintenance/host-ui-host-integration-contract-corrections-revision-2-2026-09-27.md)
+- No production runtime changes, new host-integration capability, public-contract expansion, persistence/schema changes, UI redesign, unrelated refactoring, or roadmap advancement were introduced by the final correction.
+- **Phase 1.16+ remains not authorized.**
 
-Exclusions:
-- No production runtime changes.
-- No new host-integration capability.
-- No public-contract expansion.
-- No Phase 1.16+ work.
-- No unrelated refactoring, persistence/schema changes, UI redesign, or roadmap advancement.
-
-Verification:
-- Previous 373/373 result remains historical evidence for the prior revision state.
-- Developer re-verification is required for HiveHostIntegrationContractTests, HiveWinFormsHostIntegrationTests, and the full Hive.Tests suite.
-- No implementation-affecting changes may be made while this gate is pending unless a real in-scope failure is recorded here first.
+The current implementation authorization is owned exclusively by this file.
