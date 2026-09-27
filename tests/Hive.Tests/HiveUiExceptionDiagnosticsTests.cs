@@ -11,7 +11,8 @@ public sealed class HiveUiExceptionDiagnosticsTests
         var exception = new InvalidOperationException(
             "server=https://user:secret-pass@example.test; " +
             "Password=super-secret; api_key=api-secret; " +
-            "access_token: token-secret; Authorization: Bearer bearer-secret; " +
+            "access token: token-secret; client_secret=client-secret; " +
+            "Authorization: Bearer bearer-secret; Authorization: Basic basic-secret; " +
             "payload={\"password\":\"json-secret\"}",
             new InvalidOperationException("secret='inner-secret'"));
 
@@ -22,10 +23,24 @@ public sealed class HiveUiExceptionDiagnosticsTests
         Assert.DoesNotContain("super-secret", details, StringComparison.Ordinal);
         Assert.DoesNotContain("api-secret", details, StringComparison.Ordinal);
         Assert.DoesNotContain("token-secret", details, StringComparison.Ordinal);
+        Assert.DoesNotContain("client-secret", details, StringComparison.Ordinal);
         Assert.DoesNotContain("bearer-secret", details, StringComparison.Ordinal);
+        Assert.DoesNotContain("basic-secret", details, StringComparison.Ordinal);
         Assert.DoesNotContain("json-secret", details, StringComparison.Ordinal);
         Assert.DoesNotContain("inner-secret", details, StringComparison.Ordinal);
-        Assert.Equal(7, Count(details, "[REDACTED]"));
+        Assert.Equal(9, Count(details, "[REDACTED]"));
+    }
+
+    [Fact]
+    public void SanitizeMessage_RedactsCredentialContentAndPreservesSafeText()
+    {
+        var message = "Save failed for user=alice; password=top-secret; client_secret=client-value.";
+
+        var sanitized = HiveUiExceptionDiagnostics.SanitizeMessage(message);
+
+        Assert.Contains("Save failed for user=alice", sanitized, StringComparison.Ordinal);
+        Assert.DoesNotContain("top-secret", sanitized, StringComparison.Ordinal);
+        Assert.DoesNotContain("client-value", sanitized, StringComparison.Ordinal);
     }
 
     [Fact]
