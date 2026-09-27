@@ -224,7 +224,7 @@ public sealed class HiveWinFormsHostContext : IDisposable
                 Result<HiveWinFormsHostContextSnapshot>.Success(
                     CaptureCore(registration, cancellationToken)));
         }
-        catch (HiveWinFormsHostContextLimitException)
+        catch (HiveWinFormsHostContextLimitException exception)
         {
             return Task.FromResult(
                 Result<HiveWinFormsHostContextSnapshot>.Failure(
