@@ -264,13 +264,13 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
                             "hive.provider-account.not-found",
                             "The requested provider account does not exist."));
 
-                var accessError = ValidateAccess(
+                var currentAccessError = ValidateAccess(
                     current.Resource,
                     accessContext,
                     "provider account");
 
-                if (accessError is not null)
-                    return Result<ProviderAccount>.Failure(accessError);
+                if (currentAccessError is not null)
+                    return Result<ProviderAccount>.Failure(currentAccessError);
 
                 if (account.Resource.Version != current.Resource.Version)
                 {
