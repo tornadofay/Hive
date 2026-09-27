@@ -42,7 +42,7 @@ Correct the four concrete production findings identified in the 2026-09-27 repos
 - No branch/PR creation.
 
 ## Verification Gate
-VERIFICATION FAILED / REMEDIATION REQUIRED — developer reported 379 tests with 2 in-scope maintenance regression failures: Capture_ParentChildFieldMatchingIgnoresFieldNameCase fails during host-context capture, and SpreadsheetInput_RejectsAggregatePreparedRowOutput reaches the existing per-worksheet row limit before the new workbook-wide budget. Remediation is limited to correcting these regression fixtures/assertions and then returning to VERIFICATION PENDING.
+VERIFICATION PENDING — the two reported regression fixtures have been corrected within the same maintenance boundary. Developer must rerun the focused tests and full Hive.Tests suite before slice closure.
 
 ## Handoff
 Example to run: existing host/integration examples are unchanged by this maintenance slice; no new externally meaningful capability is introduced.
