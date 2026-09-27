@@ -21,7 +21,7 @@ The submission-wide prepared-value-mapping regression proves that the 2,000,000 
 5. No unrelated refactoring.
 
 ## Verification Gate
-IMPLEMENTATION IN PROGRESS — coverage gap identified during Revision. Developer re-verification will be required after the regression update.
+VERIFICATION PENDING — the value-mapping regression now proves failure isolation: after an overflowing workbook is rejected at the submission-wide mapping boundary, a later independent workbook can still prepare successfully, while the failed workbook's partial local preparation is not committed. No production code changed in this Revision. Developer must rerun focused InputPreparationTests resource-boundary coverage and the full Hive.Tests suite.
 
 ## Handoff
 Tests to run: focused InputPreparationTests resource-boundary coverage, then full Hive.Tests suite.
