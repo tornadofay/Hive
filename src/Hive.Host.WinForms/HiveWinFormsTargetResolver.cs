@@ -294,7 +294,7 @@ internal sealed class HiveWinFormsTargetResolver
         {
             return Error.Validation(
                 "hive.host.winforms.capture-required",
-                "A host capture identity is required for consequential interaction.");
+                "A host capture identity is required for this host interaction.");
         }
 
         if (state is null)
@@ -315,6 +315,8 @@ internal sealed class HiveWinFormsTargetResolver
 
         var capabilityKind = request.Kind switch
         {
+            HiveHostInteractionKind.ReadControl =>
+                HiveHostCapabilityKind.ReadControl,
             HiveHostInteractionKind.SetControlValue =>
                 HiveHostCapabilityKind.SetControlValue,
             HiveHostInteractionKind.AddRow =>
@@ -331,7 +333,9 @@ internal sealed class HiveWinFormsTargetResolver
 
         HiveHostCapabilityDescriptor? capability;
 
-        if (request.Kind == HiveHostInteractionKind.SetControlValue)
+        if (request.Kind is
+            HiveHostInteractionKind.ReadControl or
+            HiveHostInteractionKind.SetControlValue)
         {
             capability = currentCapture.Controls
                 .Where(control =>
