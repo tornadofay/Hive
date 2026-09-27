@@ -26,8 +26,11 @@ internal sealed class SqlProviderStore : SqlResourceStoreBase
         [MetadataJson]
         """;
 
-    internal SqlProviderStore(HiveDatabaseOptions options, SqlProviderResourceReader reader)
-        : base(options)
+    internal SqlProviderStore(
+        HiveDatabaseOptions options,
+        SqlProviderResourceReader reader,
+        IClock? clock = null)
+        : base(options, clock)
     {
         _reader = reader ?? throw new ArgumentNullException(nameof(reader));
     }
@@ -298,7 +301,7 @@ internal sealed class SqlProviderStore : SqlResourceStoreBase
                 var active = new Provider(
                     current.Resource.TransitionLifecycle(
                         ResourceLifecycleStatus.Active,
-                        DateTimeOffset.UtcNow),
+                        _clock.UtcNow),
                     current.Key,
                     current.DisplayName,
                     current.TransportKind);
@@ -356,7 +359,7 @@ internal sealed class SqlProviderStore : SqlResourceStoreBase
                 var retired = new Provider(
                     current.Resource.TransitionLifecycle(
                         ResourceLifecycleStatus.Retired,
-                        DateTimeOffset.UtcNow),
+                        _clock.UtcNow),
                     current.Key,
                     current.DisplayName,
                     current.TransportKind);
