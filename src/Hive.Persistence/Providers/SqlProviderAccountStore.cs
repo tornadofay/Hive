@@ -582,22 +582,30 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
                 scopeIdentity == accessContext.TenantId.Value.Value,
 
             ResourceScopeKind.User =>
+                accessContext.TenantId is not null &&
                 accessContext.UserId is not null &&
                 scopeIdentity == accessContext.UserId.Value.Value,
 
             ResourceScopeKind.Workspace =>
+                accessContext.TenantId is not null &&
                 accessContext.WorkspaceId is not null &&
                 scopeIdentity == accessContext.WorkspaceId.Value.Value,
 
             ResourceScopeKind.Agent =>
+                accessContext.TenantId is not null &&
                 accessContext.AgentId is not null &&
                 scopeIdentity == accessContext.AgentId.Value.Value,
 
             ResourceScopeKind.Runtime =>
+                accessContext.TenantId is not null &&
+                accessContext.AgentId is not null &&
                 accessContext.RuntimeId is not null &&
                 scopeIdentity == accessContext.RuntimeId.Value.Value,
 
             ResourceScopeKind.Execution =>
+                accessContext.TenantId is not null &&
+                accessContext.AgentId is not null &&
+                accessContext.RuntimeId is not null &&
                 accessContext.ExecutionId is not null &&
                 scopeIdentity == accessContext.ExecutionId.Value.Value,
 
