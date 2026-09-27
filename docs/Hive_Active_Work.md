@@ -23,7 +23,7 @@ Developer must run:
 - Manual Example Host verification of Overview / Getting Started / Example Configuration — Hive.Example.WinForms, specifically opening Settings, saving a SQL-password configuration, changing/replacing the bootstrap credential, applying Settings, and exercising cancellation/failure paths where practical.
 - Confirm Visual Studio Treat warnings as errors remains enabled with no new errors or warnings.
 
-Latest developer verification: full `Hive.Tests` suite passed 394/394 (0 failed, 0 skipped) in 45.3 seconds. The previously reported three regression-test failures were remediated within this same slice. Manual Example Host and warnings-as-errors verification remain pending before closure.
+Latest developer verification: full `Hive.Tests` suite passed 394/394 (0 failed, 0 skipped) in 45.3 seconds. A subsequent compile check reported CS1513/CS1524 in the Example Host Settings operation; the missing outer `try/finally` brace was corrected within this same slice. Manual Example Host, a clean compile, and warnings-as-errors verification remain pending before closure.
 
 ## Exclusions
 
