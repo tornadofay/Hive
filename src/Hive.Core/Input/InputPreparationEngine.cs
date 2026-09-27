@@ -1218,7 +1218,7 @@ public static class InputPreparationEngine
         }
     }
 
-    private sealed class SpreadsheetPackageLimitException : SpreadsheetPackageException
+    private class SpreadsheetPackageLimitException : SpreadsheetPackageException
     {
         public SpreadsheetPackageLimitException(
             string code,
