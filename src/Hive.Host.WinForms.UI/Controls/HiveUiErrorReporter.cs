@@ -71,6 +71,9 @@ internal static class HiveUiExceptionDiagnostics
             @"(?<prefix>\b(?:password|passwd|pwd|secret|api[\s_-]?key|access[\s_-]?token|refresh[\s_-]?token|client[\s_-]?secret)\s*[:=]\s*(?<quote>[""']))(?!\[REDACTED\])(?<value>(?:\\[\s\S]|(?!\k<quote>)[^\\\r\n;\]\}])*)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
         new(
+            @"(?<prefix>\b(?:password|passwd|pwd|secret|api[\s_-]?key|access[\s_-]?token|refresh[\s_-]?token|client[\s_-]?secret)\s*[:=]\s*\{)(?<value>[^\r\n\}]*)(?<suffix>\})",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+        new(
             @"(?<prefix>\b(?:password|passwd|pwd|secret|api[\s_-]?key|access[\s_-]?token|refresh[\s_-]?token|client[\s_-]?secret)\s*[:=]\s*)(?!(?:[""']|$))(?<value>[^\r\n,;\]\}]+?)(?=$|[\r\n,;\]\}])",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
         new(
@@ -78,6 +81,9 @@ internal static class HiveUiExceptionDiagnostics
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
         new(
             @"(?<prefix>\b(?:authorization)\s*:\s*(?:bearer|basic)\s+)(?<value>[^\s,;]+)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+        new(
+            @"(?<prefix>\b(?:authorization)\s*=\s*(?:bearer|basic)\s+)(?<value>[^\s,;]+)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
         new(
             @"(?<prefix>://[^/\s:@]+:)(?<value>[^@\s/]+)(?<suffix>@)",
