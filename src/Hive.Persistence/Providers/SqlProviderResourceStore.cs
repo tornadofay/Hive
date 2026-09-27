@@ -9,13 +9,16 @@ public sealed class SqlProviderResourceStore : IProviderResourceStore
     private readonly SqlExecutionTargetStore _executionTargets;
     private readonly SqlProviderResourceReader _reader;
 
-    public SqlProviderResourceStore(HiveDatabaseOptions options)
+    public SqlProviderResourceStore(
+        HiveDatabaseOptions options,
+        IClock? clock = null)
     {
         ArgumentNullException.ThrowIfNull(options);
-        _reader = new SqlProviderResourceReader(options);
-        _providers = new SqlProviderStore(options, _reader);
-        _accounts = new SqlProviderAccountStore(options, _reader);
-        _executionTargets = new SqlExecutionTargetStore(options, _reader);
+        var effectiveClock = clock ?? SystemClock.Instance;
+        _reader = new SqlProviderResourceReader(options, effectiveClock);
+        _providers = new SqlProviderStore(options, _reader, effectiveClock);
+        _accounts = new SqlProviderAccountStore(options, _reader, effectiveClock);
+        _executionTargets = new SqlExecutionTargetStore(options, _reader, effectiveClock);
     }
 
     public Task<Result<Provider>> CreateProviderAsync(Provider provider, ResourceAccessContext accessContext, CancellationToken cancellationToken = default) =>
