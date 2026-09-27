@@ -1035,6 +1035,41 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task ConsequentialInteraction_FromBackgroundThread_IsRejectedBeforeFreshnessTraversal()
+    {
+        using var form = CreateFixtureForm();
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+        _ = form.Handle;
+
+        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var control = descriptor.Controls.Single(item => item.Name == "customer");
+        var capability = control.Capabilities.Single(
+            item => item.Kind == HiveHostCapabilityKind.SetControlValue);
+
+        var result = await Task.Run(() =>
+            adapter.ExecuteInteractionAsync(
+                new HiveHostInteractionRequest(
+                    capability.Id,
+                    HiveHostInteractionKind.SetControlValue,
+                    CorrelationId.New(),
+                    controlId: control.Id,
+                    value: HiveHostValue.FromString("blocked"),
+                    captureId: descriptor.Provenance.CaptureId),
+                accessContext));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.ui-thread-required",
+            result.Error!.Code);
+        Assert.Equal(
+            "Example",
+            ((TextBox)FindControl(form, "customer")).Text);
+    }
+
+    [Fact]
     public async Task ExecuteInteraction_FromBackgroundThread_IsRejectedBeforeHostTraversal()
     {
         using var form = CreateFixtureForm();
