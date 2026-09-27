@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Reflection;
 using System.Windows.Forms;
 using Hive.Core;
 using Hive.Host.WinForms;
@@ -19,7 +20,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var result = await adapter.CaptureAsync(accessContext);
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
 
         Assert.True(result.IsSuccess, result.Error?.Message);
         var descriptor = result.Value!;
@@ -107,7 +108,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var result = await adapter.CaptureAsync(accessContext);
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
 
         Assert.True(result.IsSuccess, result.Error?.Message);
 
@@ -158,7 +159,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var result = await adapter.CaptureAsync(accessContext);
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
 
         Assert.True(result.IsFailure);
         Assert.Equal(
@@ -191,7 +192,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var result = await adapter.CaptureAsync(accessContext);
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
 
         Assert.True(result.IsFailure);
         Assert.Equal(
@@ -222,7 +223,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var result = await adapter.CaptureAsync(accessContext);
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
 
         Assert.True(result.IsFailure);
         Assert.Equal(
@@ -255,7 +256,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var result = await adapter.CaptureAsync(accessContext);
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
 
         Assert.True(result.IsFailure);
         Assert.Equal(
@@ -295,7 +296,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var result = await adapter.CaptureAsync(accessContext);
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
 
         Assert.True(result.IsFailure);
         Assert.Equal(
@@ -321,7 +322,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var result = await adapter.CaptureAsync(accessContext);
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
 
         Assert.True(result.IsSuccess, result.Error?.Message);
 
@@ -364,7 +365,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var descriptor = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var captured = descriptor.Controls
             .Single(control => control.Name == "customer");
 
@@ -380,7 +381,8 @@ public sealed class HiveWinFormsHostIntegrationTests
                 readCapability.Id,
                 HiveHostInteractionKind.ReadControl,
                 CorrelationId.New(),
-                controlId: captured.Id),
+                controlId: captured.Id,
+                captureId: descriptor.Provenance.CaptureId),
             accessContext);
 
         Assert.True(result.IsSuccess, result.Error?.Message);
@@ -398,7 +400,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var descriptor = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var captureId = descriptor.Provenance.CaptureId;
         var customer = descriptor.Controls.Single(control =>
             control.Name == "customer");
@@ -437,7 +439,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var descriptor = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var captureId = descriptor.Provenance.CaptureId;
         var control = descriptor.Controls
             .Single(item => item.Name == "customer");
@@ -472,7 +474,8 @@ public sealed class HiveWinFormsHostIntegrationTests
                 readCapability.Id,
                 HiveHostInteractionKind.ReadControl,
                 CorrelationId.New(),
-                controlId: control.Id),
+                controlId: control.Id,
+                captureId: descriptor.Provenance.CaptureId),
             accessContext);
 
         Assert.True(read.IsSuccess, read.Error?.Message);
@@ -490,7 +493,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var descriptor = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var control = descriptor.Controls
             .Single(item => item.Name == "customer");
         var service = new HiveHostIntegrationService(
@@ -502,13 +505,143 @@ public sealed class HiveWinFormsHostIntegrationTests
                 Guid.NewGuid(),
                 HiveHostInteractionKind.ReadControl,
                 CorrelationId.New(),
-                controlId: control.Id),
+                controlId: control.Id,
+                captureId: descriptor.Provenance.CaptureId),
             accessContext);
 
         Assert.True(result.IsFailure);
         Assert.Equal(
             "hive.host.winforms.capability-mismatch",
             result.Error!.Code);
+    }
+
+    [Fact]
+    public async Task ReadControl_RejectsStaleCaptureWithoutReadingReplacement()
+    {
+        using var form = new Form();
+
+        var original = new HiveTextBox
+        {
+            Name = "customer",
+            Text = "Original"
+        };
+        form.Controls.Add(original);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var first = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
+        var oldControl = first.Controls.Single(item => item.Name == "customer");
+        var oldReadCapability = oldControl.Capabilities.Single(
+            capability => capability.Kind == HiveHostCapabilityKind.ReadControl);
+
+        form.Controls.Remove(original);
+        original.Dispose();
+
+        var replacement = new HiveTextBox
+        {
+            Name = "customer",
+            Text = "Replacement"
+        };
+        form.Controls.Add(replacement);
+
+        var second = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
+
+        var service = new HiveHostIntegrationService(
+            new AllowAllAuthorizer());
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                oldReadCapability.Id,
+                HiveHostInteractionKind.ReadControl,
+                CorrelationId.New(),
+                controlId: oldControl.Id,
+                captureId: first.Provenance.CaptureId),
+            accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.capture-stale",
+            result.Error!.Code);
+        Assert.NotEqual(
+            first.Provenance.CaptureId,
+            second.Provenance.CaptureId);
+        Assert.Equal("Replacement", replacement.Text);
+    }
+
+    [Fact]
+    public async Task ReadControl_RejectsReplacedControlWithoutRecapture()
+    {
+        using var form = new Form();
+
+        var original = new HiveTextBox
+        {
+            Name = "customer",
+            Text = "Original"
+        };
+        form.Controls.Add(original);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var captured = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
+        var control = captured.Controls.Single(item => item.Name == "customer");
+        var readCapability = control.Capabilities.Single(
+            capability => capability.Kind == HiveHostCapabilityKind.ReadControl);
+
+        form.Controls.Remove(original);
+        original.Dispose();
+
+        var replacement = new HiveTextBox
+        {
+            Name = "customer",
+            Text = "Replacement"
+        };
+        form.Controls.Add(replacement);
+
+        var service = new HiveHostIntegrationService(
+            new AllowAllAuthorizer());
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                readCapability.Id,
+                HiveHostInteractionKind.ReadControl,
+                CorrelationId.New(),
+                controlId: control.Id,
+                captureId: captured.Provenance.CaptureId),
+            accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.target-stale",
+            result.Error!.Code);
+        Assert.Equal("Replacement", replacement.Text);
+    }
+
+    [Fact]
+    public void AdapterLowLevelOperationsAreExplicitInterfaceImplementations()
+    {
+        var publicMethodNames = typeof(HiveWinFormsHostIntegrationAdapter)
+            .GetMethods(BindingFlags.Instance | BindingFlags.Public)
+            .Select(method => method.Name)
+            .ToArray();
+
+        Assert.DoesNotContain(nameof(IHiveHostIntegrationAdapter.CaptureAsync), publicMethodNames);
+        Assert.DoesNotContain(nameof(IHiveHostIntegrationAdapter.ExecuteInteractionAsync), publicMethodNames);
+        Assert.DoesNotContain(nameof(IHiveHostIntegrationAdapter.ResolveLookupAsync), publicMethodNames);
+
+        var interfaceMap = typeof(HiveWinFormsHostIntegrationAdapter)
+            .GetInterfaceMap(typeof(IHiveHostIntegrationAdapter));
+
+        Assert.All(
+            interfaceMap.TargetMethods,
+            method => Assert.True(method.IsPrivate));
     }
 
     [Fact]
@@ -547,7 +680,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var captured = (await adapter.CaptureAsync(accessContext)).Value!;
+        var captured = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var captureId = captured.Provenance.CaptureId;
         Assert.Equal(
             typeof(bool).FullName,
@@ -629,7 +762,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var result = await adapter.CaptureAsync(accessContext);
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
 
         Assert.True(result.IsSuccess, result.Error?.Message);
 
@@ -661,7 +794,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var descriptor = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var captureId = descriptor.Provenance.CaptureId;
         var control = descriptor.Controls.Single(item => item.Name == "date");
         var capability = control.Capabilities.Single(item =>
@@ -708,7 +841,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var descriptor = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var captureId = descriptor.Provenance.CaptureId;
         var control = descriptor.Controls.Single(item => item.Name == "amount");
         var capability = control.Capabilities.Single(item =>
@@ -744,11 +877,14 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var descriptor = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var password = descriptor.Controls
             .Single(item => item.Name == "password");
 
         Assert.Null(password.Field!.CurrentValue);
+        Assert.DoesNotContain(
+            password.Capabilities,
+            capability => capability.Kind == HiveHostCapabilityKind.SetControlValue);
 
         var service = new HiveHostIntegrationService(
             new AllowAllAuthorizer());
@@ -760,7 +896,8 @@ public sealed class HiveWinFormsHostIntegrationTests
                     capability.Kind == HiveHostCapabilityKind.ReadControl).Id,
                 HiveHostInteractionKind.ReadControl,
                 CorrelationId.New(),
-                controlId: password.Id),
+                controlId: password.Id,
+                captureId: descriptor.Provenance.CaptureId),
             accessContext);
 
         Assert.True(read.IsSuccess, read.Error?.Message);
@@ -783,7 +920,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var first = (await adapter.CaptureAsync(accessContext)).Value!;
+        var first = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var oldControl = first.Controls.Single(item => item.Name == "customer");
         var oldCaptureId = first.Provenance.CaptureId;
         var oldSetCapability = oldControl.Capabilities.Single(
@@ -799,7 +936,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         };
         form.Controls.Add(replacement);
 
-        var second = (await adapter.CaptureAsync(accessContext)).Value!;
+        var second = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         Assert.NotEqual(oldCaptureId, second.Provenance.CaptureId);
 
         var service = new HiveHostIntegrationService(
@@ -853,7 +990,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             accessContext,
             new AllowingSemanticProvider());
 
-        var captured = (await adapter.CaptureAsync(accessContext)).Value!;
+        var captured = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var surface = captured.DataSurfaces.Single(
             item => item.Id == "surface:orders");
 
@@ -918,7 +1055,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var captured = (await adapter.CaptureAsync(accessContext)).Value!;
+        var captured = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var control = captured.Controls.Single(item => item.Name == "customer");
         var capability = control.Capabilities.Single(
             item => item.Kind == HiveHostCapabilityKind.SetControlValue);
@@ -976,7 +1113,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var captured = (await adapter.CaptureAsync(accessContext)).Value!;
+        var captured = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var control = captured.Controls.Single(item => item.Name == "customer");
         var capability = control.Capabilities.Single(
             item => item.Kind == HiveHostCapabilityKind.SetControlValue);
@@ -1047,7 +1184,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             accessContext,
             new AllowingSemanticProvider());
 
-        var captured = (await adapter.CaptureAsync(accessContext)).Value!;
+        var captured = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var surface = captured.DataSurfaces.Single(
             item => item.Id == "surface:orders");
         var capability = surface.Capabilities.Single(
@@ -1099,7 +1236,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             accessContext);
 
-        var first = (await adapter.CaptureAsync(accessContext)).Value!;
+        var first = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var oldControl = first.Controls.Single(item => item.Name == "customer");
         var oldCapability = oldControl.Capabilities.Single(
             capability => capability.Kind == HiveHostCapabilityKind.SetControlValue);
@@ -1115,7 +1252,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         };
         form.Controls.Add(replacement);
 
-        var second = (await adapter.CaptureAsync(accessContext)).Value!;
+        var second = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         Assert.DoesNotContain(
             second.Controls.Single(item => item.Name == "customer").Capabilities,
             capability => capability.Kind == HiveHostCapabilityKind.SetControlValue);
@@ -1150,7 +1287,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             form,
             registeredContext);
 
-        var result = await adapter.CaptureAsync(CreateAccessContext());
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(CreateAccessContext());
 
         Assert.True(result.IsFailure);
         Assert.Equal(
@@ -1173,7 +1310,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         adapter.Dispose();
 
         await Assert.ThrowsAsync<ObjectDisposedException>(
-            () => adapter.CaptureAsync(accessContext));
+            () => AsIntegrationAdapter(adapter).CaptureAsync(accessContext));
 
         form.Dispose();
     }
@@ -1207,14 +1344,14 @@ public sealed class HiveWinFormsHostIntegrationTests
         var textChangedCount = 0;
         customer.TextChanged += (_, _) => Interlocked.Increment(ref textChangedCount);
 
-        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var descriptor = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
         var control = descriptor.Controls.Single(item => item.Name == "customer");
         var capability = control.Capabilities.Single(
             item => item.Kind == HiveHostCapabilityKind.SetControlValue);
         var baselineTextChangedCount = Volatile.Read(ref textChangedCount);
 
         var result = await Task.Run(() =>
-            adapter.ExecuteInteractionAsync(
+            AsIntegrationAdapter(adapter).ExecuteInteractionAsync(
                 new HiveHostInteractionRequest(
                     capability.Id,
                     HiveHostInteractionKind.SetControlValue,
@@ -1251,13 +1388,16 @@ public sealed class HiveWinFormsHostIntegrationTests
             });
         }
 
+        var captured = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
+
         var result = await Task.Run(() =>
-            adapter.ExecuteInteractionAsync(
+            AsIntegrationAdapter(adapter).ExecuteInteractionAsync(
                 new HiveHostInteractionRequest(
                     Guid.NewGuid(),
                     HiveHostInteractionKind.ReadControl,
                     CorrelationId.New(),
-                    controlId: "control:missing"),
+                    controlId: "control:missing",
+                    captureId: captured.Provenance.CaptureId),
                 accessContext));
 
         Assert.True(result.IsFailure);
@@ -1277,7 +1417,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         _ = form.Handle;
 
         var result = await Task.Run(
-            () => adapter.CaptureAsync(accessContext));
+            () => AsIntegrationAdapter(adapter).CaptureAsync(accessContext));
 
         Assert.True(result.IsFailure);
         Assert.Equal(
@@ -1297,7 +1437,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         cancellation.Cancel();
 
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => adapter.CaptureAsync(
+            () => AsIntegrationAdapter(adapter).CaptureAsync(
                 accessContext,
                 cancellation.Token));
     }
@@ -1415,6 +1555,10 @@ public sealed class HiveWinFormsHostIntegrationTests
         throw new InvalidOperationException(
             $"Control '{name}' was not found in the test fixture.");
     }
+
+    private static IHiveHostIntegrationAdapter AsIntegrationAdapter(
+        HiveWinFormsHostIntegrationAdapter adapter) =>
+        adapter;
 
     private static Form CreateFixtureForm()
     {
