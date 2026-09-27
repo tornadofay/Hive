@@ -676,9 +676,26 @@ public sealed class HiveWinFormsHostIntegrationTests
         var interfaceMap = typeof(HiveWinFormsHostIntegrationAdapter)
             .GetInterfaceMap(typeof(IHiveHostIntegrationAdapter));
 
+        var lowLevelMethodNames = new HashSet<string>(
+            [
+                nameof(IHiveHostIntegrationAdapter.CaptureAsync),
+                nameof(IHiveHostIntegrationAdapter.ExecuteInteractionAsync),
+                nameof(IHiveHostIntegrationAdapter.ResolveLookupAsync)
+            ],
+            StringComparer.Ordinal);
+
+        var lowLevelTargets = interfaceMap.TargetMethods
+            .Where(method => lowLevelMethodNames.Contains(method.Name))
+            .ToArray();
+
+        Assert.Equal(3, lowLevelTargets.Length);
         Assert.All(
-            interfaceMap.TargetMethods,
+            lowLevelTargets,
             method => Assert.True(method.IsPrivate));
+
+        Assert.Contains(
+            publicMethodNames,
+            nameof(HiveWinFormsHostIntegrationAdapter.AdapterId));
     }
 
     [Fact]
@@ -1417,6 +1434,10 @@ public sealed class HiveWinFormsHostIntegrationTests
             accessContext);
         _ = form.Handle;
 
+        var capturedResult = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
+        Assert.True(capturedResult.IsSuccess, capturedResult.Error?.Message);
+        var captured = capturedResult.Value!;
+
         for (var index = 0; index < 600; index++)
         {
             form.Controls.Add(new Panel
@@ -1424,8 +1445,6 @@ public sealed class HiveWinFormsHostIntegrationTests
                 Name = $"padding{index}"
             });
         }
-
-        var captured = (await AsIntegrationAdapter(adapter).CaptureAsync(accessContext)).Value!;
 
         var result = await Task.Run(() =>
             AsIntegrationAdapter(adapter).ExecuteInteractionAsync(
