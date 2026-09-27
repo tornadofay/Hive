@@ -261,6 +261,58 @@ public sealed class ProviderPersistenceIntegrationTests
     }
 
     [Fact]
+    public async Task ProviderAccount_UpdateAuthorizesTargetBeforeValidatingCredentialSecret()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ProviderCredentialAuthorization");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var store = new SqlProviderResourceStore(database.Options);
+        var owner = PrincipalId.New();
+        var attacker = PrincipalId.New();
+        var tenant = TenantId.New();
+        var ownerContext = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            owner);
+        var attackerContext = new ResourceAccessContext(
+            ownerContext.DeploymentId,
+            tenant,
+            attacker);
+
+        var provider = CreateProvider(owner, tenant);
+        Assert.True(
+            (await store.CreateProviderAsync(provider, ownerContext)).IsSuccess);
+
+        var account = CreateProviderAccount(
+            provider.Id,
+            owner,
+            tenant);
+        var created = await store.CreateProviderAccountAsync(
+            account,
+            ownerContext);
+        Assert.True(created.IsSuccess, created.Error?.Message);
+
+        var attempted = await store.UpdateProviderAccountAsync(
+            new ProviderAccount(
+                account.Resource,
+                account.ProviderId,
+                account.Key,
+                account.DisplayName,
+                account.ExternalAccountId,
+                new SecretReference(SecretId.New())),
+            attackerContext);
+
+        Assert.True(attempted.IsFailure);
+        Assert.Equal(
+            "hive.resource.owner-forbidden",
+            attempted.Error!.Code);
+        Assert.Equal(ErrorCategory.Forbidden, attempted.Error.Category);
+    }
+
+    [Fact]
     public async Task ProviderAccount_MissingCredentialSecretReference_IsRejected()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ProviderMissingCredential");
