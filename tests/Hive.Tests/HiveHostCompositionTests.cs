@@ -211,8 +211,9 @@ public sealed class HiveHostCompositionTests
             createDatabaseIfMissing: false);
 
         var configurationStore = new InMemoryConfigurationStore(configuration);
-        var firstGraph = CreateGraph(configuration);
-        var secondGraph = CreateGraph(configuration);
+        using var credential = SecretMaterial.Create("host-composition-test-password");
+        var firstGraph = CreateGraph(configuration, credential);
+        var secondGraph = CreateGraph(configuration, credential);
 
         using var composition = new HiveHostComposition(
             configurationStore,
@@ -754,7 +755,17 @@ public sealed class HiveHostCompositionTests
         HivePersistenceConfiguration configuration,
         params IDisposable[] resources)
     {
-        var options = HiveDatabaseOptions.FromConfiguration(configuration);
+        return CreateGraph(configuration, credential: null, resources);
+    }
+
+    private static HiveHostServiceGraph CreateGraph(
+        HivePersistenceConfiguration configuration,
+        SecretMaterial? credential,
+        params IDisposable[] resources)
+    {
+        var options = HiveDatabaseOptions.FromConfiguration(
+            configuration,
+            credential);
         var facade = new HiveManagementFacade(
             new SqlProviderResourceStore(options),
             new SqlAgentDefinitionResourceStore(options),
