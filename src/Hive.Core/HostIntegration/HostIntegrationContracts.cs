@@ -763,7 +763,8 @@ public sealed record HiveHostCapabilityRequest
         HiveHostRowIdentity? rowIdentity = null,
         string? fieldName = null,
         HiveHostActionKind? action = null,
-        string? lookupId = null)
+        string? lookupId = null,
+        Guid? captureId = null)
     {
         if (capabilityId == Guid.Empty)
             throw new ArgumentException("Capability identity is required.", nameof(capabilityId));
@@ -792,6 +793,15 @@ public sealed record HiveHostCapabilityRequest
         ControlId = Clean(controlId);
         SurfaceId = Clean(surfaceId);
         LookupId = Clean(lookupId);
+        CaptureId = CleanGuid(captureId);
+
+        if (RequiresFreshCapture(capabilityKind) &&
+            CaptureId is null)
+        {
+            throw new ArgumentException(
+                "A host capture identity is required for consequential capability authorization.",
+                nameof(captureId));
+        }
 
         if (capabilityKind == HiveHostCapabilityKind.ResolveLookup &&
             LookupId is null)
@@ -827,6 +837,20 @@ public sealed record HiveHostCapabilityRequest
 
     public HiveHostActionKind? Action { get; }
 
+    public Guid? CaptureId { get; }
+
+    private static bool RequiresFreshCapture(
+        HiveHostCapabilityKind capabilityKind) =>
+        capabilityKind is
+            HiveHostCapabilityKind.SetControlValue or
+            HiveHostCapabilityKind.AddRow or
+            HiveHostCapabilityKind.EditRow or
+            HiveHostCapabilityKind.DeleteRow or
+            HiveHostCapabilityKind.InvokeAction;
+
+    private static Guid? CleanGuid(Guid? value) =>
+        value is { } id && id != Guid.Empty ? id : null;
+
     private static string? Clean(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
@@ -842,7 +866,8 @@ public sealed record HiveHostInteractionRequest
         HiveHostRowIdentity? rowIdentity = null,
         string? fieldName = null,
         HiveHostValue? value = null,
-        HiveHostActionKind? action = null)
+        HiveHostActionKind? action = null,
+        Guid? captureId = null)
     {
         if (capabilityId == Guid.Empty)
             throw new ArgumentException("Capability identity is required.", nameof(capabilityId));
@@ -863,6 +888,19 @@ public sealed record HiveHostInteractionRequest
             action is null)
         {
             throw new ArgumentException("An action is required for InvokeAction.", nameof(action));
+        }
+
+        CaptureId = captureId is { } suppliedCaptureId &&
+                    suppliedCaptureId != Guid.Empty
+            ? suppliedCaptureId
+            : null;
+
+        if (RequiresFreshCapture(kind) &&
+            CaptureId is null)
+        {
+            throw new ArgumentException(
+                "A host capture identity is required for consequential interaction requests.",
+                nameof(captureId));
         }
 
         CapabilityId = capabilityId;
@@ -893,6 +931,17 @@ public sealed record HiveHostInteractionRequest
     public HiveHostValue? Value { get; }
 
     public HiveHostActionKind? Action { get; }
+
+    public Guid? CaptureId { get; }
+
+    private static bool RequiresFreshCapture(
+        HiveHostInteractionKind kind) =>
+        kind is
+            HiveHostInteractionKind.SetControlValue or
+            HiveHostInteractionKind.AddRow or
+            HiveHostInteractionKind.EditRow or
+            HiveHostInteractionKind.DeleteRow or
+            HiveHostInteractionKind.InvokeAction;
 
     private static string? Clean(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
