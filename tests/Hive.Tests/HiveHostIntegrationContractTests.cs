@@ -253,10 +253,30 @@ public sealed class HiveHostIntegrationContractTests
     }
 
     [Fact]
+    public void ConsequentialInteraction_RequiresCaptureIdentity()
+    {
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostInteractionRequest(
+                Guid.NewGuid(),
+                HiveHostInteractionKind.SetControlValue,
+                CorrelationId.New(),
+                controlId: "control:0/0",
+                value: HiveHostValue.FromString("blocked")));
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostCapabilityRequest(
+                Guid.NewGuid(),
+                HiveHostCapabilityKind.SetControlValue,
+                CorrelationId.New(),
+                "TestAdapter"));
+    }
+
+    [Fact]
     public async Task Management_DeniesHostCapabilityBeforeAdapterInvocation()
     {
         var adapter = new FakeHostAdapter();
         var deniedCapability = Guid.NewGuid();
+        var captureId = Guid.NewGuid();
         var authorizer = new FakeAuthorizer(deniedCapability);
         var service = new HiveHostIntegrationService(authorizer);
         var context = CreateAccessContext();
@@ -268,7 +288,8 @@ public sealed class HiveHostIntegrationContractTests
                 HiveHostInteractionKind.SetControlValue,
                 CorrelationId.New(),
                 controlId: "control:0/0",
-                value: HiveHostValue.FromString("blocked")),
+                value: HiveHostValue.FromString("blocked"),
+                captureId: captureId),
             context);
 
         Assert.True(result.IsFailure);
@@ -284,6 +305,7 @@ public sealed class HiveHostIntegrationContractTests
         var service = new HiveHostIntegrationService(authorizer);
         var context = CreateAccessContext();
         var correlation = CorrelationId.New();
+        var captureId = Guid.NewGuid();
 
         var result = await service.ExecuteInteractionAsync(
             adapter,
@@ -292,7 +314,8 @@ public sealed class HiveHostIntegrationContractTests
                 HiveHostInteractionKind.SetControlValue,
                 correlation,
                 controlId: "control:0/0",
-                value: HiveHostValue.FromString("accepted")),
+                value: HiveHostValue.FromString("accepted"),
+                captureId: captureId),
             context);
 
         Assert.True(result.IsSuccess, result.Error?.Message);
