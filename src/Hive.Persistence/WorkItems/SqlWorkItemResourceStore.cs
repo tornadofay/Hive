@@ -235,6 +235,112 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
         }
     }
 
+    public async Task<Result<WorkItemListPage>> ListWorkItemsPageAsync(
+        ResourceAccessContext accessContext,
+        bool includeRetired = false,
+        WorkItemListCursor? cursor = null,
+        int pageSize = WorkItemListPage.DefaultPageSize,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateAccessContext(accessContext);
+
+        if (pageSize <= 0 || pageSize > WorkItemListPage.MaxPageSize)
+        {
+            return Result<WorkItemListPage>.Failure(
+                Error.Validation(
+                    "hive.work-item.page-size-invalid",
+                    $"WorkItem page size must be between 1 and {WorkItemListPage.MaxPageSize}."));
+        }
+
+        try
+        {
+            await using var connection =
+                await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+
+            await using var command = CreateCommand(
+                connection,
+                $"""
+                SELECT TOP (@PageSizePlusOne) {WorkItemColumns}
+                FROM [dbo].[HiveWorkItems]
+                WHERE [OwnerPrincipalId] = @PrincipalId
+                  AND {SqlResourceStoreCommon.ScopeAccessPredicate}
+                {(includeRetired
+                    ? string.Empty
+                    : "AND [LifecycleStatus] <> @RetiredLifecycle")}
+                  AND
+                  (
+                      @CursorCreatedAtUtc IS NULL
+                      OR [CreatedAtUtc] < @CursorCreatedAtUtc
+                      OR (
+                          [CreatedAtUtc] = @CursorCreatedAtUtc
+                          AND [WorkItemId] < @CursorWorkItemId
+                      )
+                  )
+                ORDER BY [CreatedAtUtc] DESC, [WorkItemId] DESC;
+                """);
+
+            SqlResourceStoreCommon.AddAccessParameters(command, accessContext);
+            command.Parameters.Add(
+                IntParameter(
+                    "@PageSizePlusOne",
+                    pageSize + 1));
+            command.Parameters.Add(
+                IntParameter(
+                    "@RetiredLifecycle",
+                    (int)ResourceLifecycleStatus.Retired));
+            command.Parameters.Add(
+                new SqlParameter("@CursorCreatedAtUtc", SqlDbType.DateTime2)
+                {
+                    Value = cursor is null
+                        ? DBNull.Value
+                        : cursor.CreatedAtUtc.UtcDateTime
+                });
+            command.Parameters.Add(
+                GuidParameter(
+                    "@CursorWorkItemId",
+                    cursor?.WorkItemId.Value));
+
+            var items = new List<WorkItem>(pageSize + 1);
+
+            await using var reader =
+                await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                var workItem = ReadWorkItem(reader);
+
+                if (ValidateAccess(workItem.Resource, accessContext) is null)
+                    items.Add(workItem);
+            }
+
+            WorkItemListCursor? nextCursor = null;
+
+            if (items.Count > pageSize)
+            {
+                items.RemoveAt(items.Count - 1);
+                var last = items[^1];
+                nextCursor = new WorkItemListCursor(
+                    last.Resource.Provenance.CreatedAtUtc,
+                    last.Id);
+            }
+
+            return Result<WorkItemListPage>.Success(
+                new WorkItemListPage(items, nextCursor));
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (SqlException exception)
+        {
+            return Result<WorkItemListPage>.Failure(ToSqlError(exception));
+        }
+        catch (Exception exception)
+        {
+            return Result<WorkItemListPage>.Failure(ToInvalidStateError(exception));
+        }
+    }
+
     public async Task<Result<WorkItemAttachmentContent>> GetWorkItemAttachmentAsync(
         WorkItemId workItemId,
         ResourceAccessContext accessContext,
