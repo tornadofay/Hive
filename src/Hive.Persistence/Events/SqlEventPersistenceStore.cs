@@ -474,71 +474,91 @@ public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOut
         if (leaseDuration <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(leaseDuration));
 
-        var now = _clock.UtcNow;
-        var expiresAt = now.Add(leaseDuration);
+        const int maxAttempts = 3;
 
-        try
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            await using var connection = await OpenConnectionAsync(
-                cancellationToken).ConfigureAwait(false);
+            var now = _clock.UtcNow;
+            var expiresAt = now.Add(leaseDuration);
 
-            await using var command = CreateCommand(
-                connection,
-                """
-                UPDATE [dbo].[HiveEventOutbox]
-                SET [LeaseExpiresAtUtc] = @LeaseExpiresAtUtc
-                WHERE [EventId] = @EventId
-                  AND [LeaseId] = @LeaseId
-                  AND [LeaseExpiresAtUtc] > @NowUtc;
-                """);
+            try
+            {
+                await using var connection = await OpenConnectionAsync(
+                    cancellationToken).ConfigureAwait(false);
 
-            command.Parameters.Add(
-                GuidParameter(
-                    "@EventId",
-                    workItem.Entry.Envelope.EventId.Value));
-            command.Parameters.Add(
-                GuidParameter(
-                    "@LeaseId",
-                    workItem.LeaseId));
-            command.Parameters.Add(
-                DateTimeParameter(
-                    "@NowUtc",
-                    now));
-            command.Parameters.Add(
-                DateTimeParameter(
-                    "@LeaseExpiresAtUtc",
-                    expiresAt));
+                await using var command = CreateCommand(
+                    connection,
+                    """
+                    UPDATE [dbo].[HiveEventOutbox]
+                    SET [LeaseExpiresAtUtc] = @LeaseExpiresAtUtc
+                    WHERE [EventId] = @EventId
+                      AND [LeaseId] = @LeaseId
+                      AND [LeaseExpiresAtUtc] > @NowUtc;
+                    """);
 
-            var affected = await command.ExecuteNonQueryAsync(
-                cancellationToken).ConfigureAwait(false);
+                command.Parameters.Add(
+                    GuidParameter(
+                        "@EventId",
+                        workItem.Entry.Envelope.EventId.Value));
+                command.Parameters.Add(
+                    GuidParameter(
+                        "@LeaseId",
+                        workItem.LeaseId));
+                command.Parameters.Add(
+                    DateTimeParameter(
+                        "@NowUtc",
+                        now));
+                command.Parameters.Add(
+                    DateTimeParameter(
+                        "@LeaseExpiresAtUtc",
+                        expiresAt));
 
-            return affected == 1
-                ? Result.Success()
-                : Result.Failure(
-                    Error.Concurrency(
-                        "hive.outbox.lease-lost",
-                        "The outbox lease was lost before it could be renewed."));
+                var affected = await command.ExecuteNonQueryAsync(
+                    cancellationToken).ConfigureAwait(false);
+
+                return affected == 1
+                    ? Result.Success()
+                    : Result.Failure(
+                        Error.Concurrency(
+                            "hive.outbox.lease-lost",
+                            "The outbox lease was lost before it could be renewed."));
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (SqlException exception) when (
+                exception.IsTransient &&
+                attempt < maxAttempts)
+            {
+                await Task.Delay(
+                    TimeSpan.FromMilliseconds(100 * attempt),
+                    cancellationToken).ConfigureAwait(false);
+            }
+            catch (SqlException exception)
+            {
+                return Result.Failure(
+                    HivePersistenceError.External(
+                        "hive.outbox.renew-sql",
+                        "The outbox lease renewal failed at the SQL Server boundary.",
+                        exception));
+            }
+            catch (Exception exception)
+            {
+                return Result.Failure(
+                    HivePersistenceError.Internal(
+                        "hive.outbox.renew",
+                        "The outbox lease renewal failed.",
+                        exception));
+            }
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (SqlException exception)
-        {
-            return Result.Failure(
-                HivePersistenceError.External(
-                    "hive.outbox.renew-sql",
-                    "The outbox lease renewal failed at the SQL Server boundary.",
-                    exception));
-        }
-        catch (Exception exception)
-        {
-            return Result.Failure(
-                HivePersistenceError.Internal(
-                    "hive.outbox.renew",
-                    "The outbox lease renewal failed.",
-                    exception));
-        }
+
+        return Result.Failure(
+            HivePersistenceError.Internal(
+                "hive.outbox.renew",
+                "The outbox lease renewal failed without a result.",
+                new InvalidOperationException(
+                    "The outbox lease renewal attempt loop completed unexpectedly.")));
     }
 
     public async Task<Result> CompleteOutboxAsync(
