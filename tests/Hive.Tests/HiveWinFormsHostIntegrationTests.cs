@@ -482,6 +482,36 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task ExecuteInteraction_ReadControlRejectsMismatchedCapability()
+    {
+        using var form = CreateFixtureForm();
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
+        var control = descriptor.Controls
+            .Single(item => item.Name == "customer");
+        var service = new HiveHostIntegrationService(
+            new AllowAllAuthorizer());
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                Guid.NewGuid(),
+                HiveHostInteractionKind.ReadControl,
+                CorrelationId.New(),
+                controlId: control.Id),
+            accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.capability-mismatch",
+            result.Error!.Code);
+    }
+
+    [Fact]
     public async Task ExecuteInteraction_SetsAndReadsStandardBooleanComboAndNumericControls()
     {
         using var form = new Form();
