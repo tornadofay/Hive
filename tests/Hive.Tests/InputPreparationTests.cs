@@ -314,9 +314,9 @@ public sealed class InputPreparationTests
         }
 
         var workbook = CreateWorkbook(
-            ("First", CreateRows(5000)),
-            ("Second", CreateRows(5000)),
-            ("Third", CreateRows(1)));
+            ("First", CreateRows(4999)),
+            ("Second", CreateRows(4999)),
+            ("Third", CreateRows(3)));
 
         var result = InputPreparationEngine.Prepare(
             new InputSubmission(
