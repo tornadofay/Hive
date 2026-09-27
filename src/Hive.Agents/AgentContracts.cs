@@ -168,8 +168,8 @@ public class Agent
 
     public RuntimeInstance CreateRuntimeInstance(
         DateTimeOffset? createdAtUtc = null,
-        IClock? clock = null,
-        IDelegationChannel? delegation = null)
+        IDelegationChannel? delegation = null,
+        IClock? clock = null)
     {
         return RuntimeInstance.Create(
             Id,
