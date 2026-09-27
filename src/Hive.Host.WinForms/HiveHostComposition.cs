@@ -24,6 +24,8 @@ public sealed class HiveHostComposition : IDisposable
     private readonly SemaphoreSlim _reconfigurationGate = new(1, 1);
     private readonly CancellationTokenSource _lifetimeCts = new();
     private readonly object _stateGate = new();
+    private int _activeCompositionOperations;
+    private bool _reconfigurationGateDisposed;
 
     private HiveHostServiceGraph? _current;
     private HiveHostCompositionStatus _status =
@@ -97,12 +99,14 @@ public sealed class HiveHostComposition : IDisposable
         finally
         {
             _lifetimeCts.Dispose();
+            DisposeReconfigurationGateIfIdle();
         }
 
         // Do not synchronously wait on the async reconfiguration gate here.
         // An in-flight ComposeAsync operation will observe the lifetime
-        // cancellation, unwind, and release the gate without blocking the
-        // WinForms shutdown path.
+        // cancellation, unwind, release the gate, and dispose it when the
+        // final composition operation exits without blocking the WinForms
+        // shutdown path.
 
         GC.SuppressFinalize(this);
     }
@@ -111,18 +115,21 @@ public sealed class HiveHostComposition : IDisposable
         CancellationToken cancellationToken,
         bool skipWhenUnchanged = false)
     {
-        ThrowIfDisposed();
+        EnterCompositionOperation();
 
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken,
             _lifetimeCts.Token);
         var operationToken = linkedCts.Token;
-
-        await _reconfigurationGate
-            .WaitAsync(operationToken)
-            .ConfigureAwait(false);
+        var gateAcquired = false;
 
         try
+        {
+            await _reconfigurationGate
+                .WaitAsync(operationToken)
+                .ConfigureAwait(false);
+            gateAcquired = true;
+
         {
             operationToken.ThrowIfCancellationRequested();
 
@@ -208,7 +215,22 @@ public sealed class HiveHostComposition : IDisposable
                 throw new OperationCanceledException(operationToken);
             }
 
-            previous?.Dispose();
+            if (previous is not null)
+            {
+                try
+                {
+                    previous.Dispose();
+                }
+                catch (Exception exception)
+                {
+                    var warning = new Error(
+                        "hive.host.previous-graph-dispose-failed",
+                        ErrorCategory.Internal,
+                        "The previous Hive host graph could not be fully disposed.");
+
+                    SetReadyWarning(warning);
+                }
+            }
 
             // Disposal can be triggered by disposal of a previous graph resource.
             // Treat that as a failed handoff rather than returning a graph that
@@ -238,7 +260,63 @@ public sealed class HiveHostComposition : IDisposable
         }
         finally
         {
-            _reconfigurationGate.Release();
+            if (gateAcquired)
+                _reconfigurationGate.Release();
+
+            ExitCompositionOperation();
+        }
+    }
+
+    private void EnterCompositionOperation()
+    {
+        lock (_stateGate)
+        {
+            if (_disposed != 0)
+                ObjectDisposedException.ThrowIf(
+                    true,
+                    this);
+
+            _activeCompositionOperations++;
+        }
+    }
+
+    private void ExitCompositionOperation()
+    {
+        DisposeReconfigurationGateIfIdle();
+    }
+
+    private void DisposeReconfigurationGateIfIdle()
+    {
+        var dispose = false;
+
+        lock (_stateGate)
+        {
+            if (_activeCompositionOperations > 0)
+                _activeCompositionOperations--;
+
+            if (_disposed != 0 &&
+                _activeCompositionOperations == 0 &&
+                !_reconfigurationGateDisposed)
+            {
+                _reconfigurationGateDisposed = true;
+                dispose = true;
+            }
+        }
+
+        if (dispose)
+            _reconfigurationGate.Dispose();
+    }
+
+    private void SetReadyWarning(Error error)
+    {
+        lock (_stateGate)
+        {
+            if (_disposed != 0)
+                return;
+
+            _status = new HiveHostCompositionStatus(
+                HiveHostCompositionState.Ready,
+                error);
         }
     }
 
