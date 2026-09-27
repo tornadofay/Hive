@@ -76,6 +76,38 @@ public sealed class HiveHostIntegrationContractTests
                         "Set")
                 }));
 
+        var duplicateBusinessCapabilityId = Guid.NewGuid();
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostContextDescriptor(
+                Guid.NewGuid(),
+                "Host",
+                new HiveHostProvenance(
+                    Guid.NewGuid(),
+                    Guid.NewGuid(),
+                    new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero),
+                    CorrelationId.New(),
+                    "TestAdapter",
+                    new ResourceAccessContext(
+                        DeploymentId.New(),
+                        TenantId.New(),
+                        PrincipalId.New())),
+                Array.Empty<HiveHostControlDescriptor>(),
+                Array.Empty<HiveHostDataSurfaceDescriptor>(),
+                new[]
+                {
+                    new HiveHostBusinessOperationDescriptor(
+                        duplicateBusinessCapabilityId,
+                        "Create",
+                        "Create",
+                        HiveBusinessOperationImplementation.Api),
+                    new HiveHostBusinessOperationDescriptor(
+                        duplicateBusinessCapabilityId,
+                        "Edit",
+                        "Edit",
+                        HiveBusinessOperationImplementation.Api)
+                }));
+
         Assert.Throws<ArgumentException>(
             () => new HiveHostDataSurfaceDescriptor(
                 "surface:1",
