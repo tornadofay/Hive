@@ -482,7 +482,7 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
             });
 
 
-    private static async Task<Error?> ValidateCredentialSecretReferenceAsync(
+    private async Task<Error?> ValidateCredentialSecretReferenceAsync(
         SqlConnection connection,
         SqlTransaction transaction,
         SecretReference? credentialSecret,
@@ -491,6 +491,8 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
     {
         if (credentialSecret is null)
             return null;
+
+        var reference = credentialSecret.Value;
 
         await using var command = CreateCommand(
             connection,
@@ -508,7 +510,7 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
         command.Parameters.Add(
             GuidParameter(
                 "@SecretId",
-                credentialSecret.Id.Value));
+                reference.Id.Value));
 
         await using var reader = await command.ExecuteReaderAsync(
                 CommandBehavior.SingleRow,
@@ -535,7 +537,7 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
 
         var scopeKind = (ResourceScopeKind)reader.GetInt32(
             reader.GetOrdinal("ScopeKind"));
-        var scopeIdentity = reader.IsDBNull(
+        Guid? scopeIdentity = reader.IsDBNull(
             reader.GetOrdinal("ScopeIdentity"))
             ? null
             : reader.GetGuid(reader.GetOrdinal("ScopeIdentity"));
