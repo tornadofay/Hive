@@ -1044,10 +1044,15 @@ public sealed class HiveWinFormsHostIntegrationTests
             accessContext);
         _ = form.Handle;
 
+        var customer = (TextBox)FindControl(form, "customer");
+        var textChangedCount = 0;
+        customer.TextChanged += (_, _) => Interlocked.Increment(ref textChangedCount);
+
         var descriptor = (await adapter.CaptureAsync(accessContext)).Value!;
         var control = descriptor.Controls.Single(item => item.Name == "customer");
         var capability = control.Capabilities.Single(
             item => item.Kind == HiveHostCapabilityKind.SetControlValue);
+        var baselineTextChangedCount = Volatile.Read(ref textChangedCount);
 
         var result = await Task.Run(() =>
             adapter.ExecuteInteractionAsync(
@@ -1065,8 +1070,8 @@ public sealed class HiveWinFormsHostIntegrationTests
             "hive.host.winforms.ui-thread-required",
             result.Error!.Code);
         Assert.Equal(
-            "Example",
-            ((TextBox)FindControl(form, "customer")).Text);
+            baselineTextChangedCount,
+            Volatile.Read(ref textChangedCount));
     }
 
     [Fact]
