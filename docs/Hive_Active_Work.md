@@ -71,6 +71,10 @@ Revision finding and correction:
 - Corrected the public API XML documentation and `v1-business-app-integration.md` so bounded host capture is explicitly described as discovery that validates the access context, while consequential interactions and bounded lookups remain capability-authorized through Management.
 - No runtime behavior change was required for this documentation correction.
 
+Revision coverage improvement:
+- The password-control implementation protects `TextBox.UseSystemPasswordChar`, `TextBox.PasswordChar`, and `MaskedTextBox.PasswordChar`.
+- Expanded the existing password regression to exercise all three representations, verifying no current value exposure, no writable capability advertisement, and no value returned by `ReadControl`.
+
 Agent verification:
 - Static repository/source review completed after the reported failure and during this revision.
 - Builds, tests, and manual Example Host execution were not run by the agent.
