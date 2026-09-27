@@ -794,6 +794,64 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task ConsequentialInteraction_CannotRebindOldCapabilityToCurrentCapture()
+    {
+        using var form = new Form();
+        var original = new HiveTextBox
+        {
+            Name = "customer",
+            Text = "Original"
+        };
+        form.Controls.Add(original);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var first = (await adapter.CaptureAsync(accessContext)).Value!;
+        var oldControl = first.Controls.Single(item => item.Name == "customer");
+        var oldCapability = oldControl.Capabilities.Single(
+            capability => capability.Kind == HiveHostCapabilityKind.SetControlValue);
+
+        form.Controls.Remove(original);
+        original.Dispose();
+
+        var replacement = new HiveTextBox
+        {
+            Name = "customer",
+            Text = "Replacement",
+            ReadOnly = true
+        };
+        form.Controls.Add(replacement);
+
+        var second = (await adapter.CaptureAsync(accessContext)).Value!;
+        Assert.DoesNotContain(
+            second.Controls.Single(item => item.Name == "customer").Capabilities,
+            capability => capability.Kind == HiveHostCapabilityKind.SetControlValue);
+
+        var service = new HiveHostIntegrationService(
+            new AllowAllAuthorizer());
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                oldCapability.Id,
+                HiveHostInteractionKind.SetControlValue,
+                CorrelationId.New(),
+                controlId: oldControl.Id,
+                value: HiveHostValue.FromString("Invalid rebind"),
+                captureId: second.Provenance.CaptureId),
+            accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.capability-mismatch",
+            result.Error!.Code);
+        Assert.Equal("Replacement", replacement.Text);
+    }
+
+    [Fact]
     public async Task AccessContextMismatch_IsRejected()
     {
         using var form = CreateFixtureForm();
