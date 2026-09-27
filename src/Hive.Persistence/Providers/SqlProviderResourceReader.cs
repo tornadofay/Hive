@@ -116,13 +116,18 @@ internal sealed class SqlProviderResourceReader : SqlResourceStoreBase
         SqlConnection connection,
         SqlTransaction transaction,
         ProviderAccountId providerAccountId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool lockForUpdate = true)
     {
+        var lockClause = lockForUpdate
+            ? " WITH (UPDLOCK, HOLDLOCK)"
+            : string.Empty;
+
         await using var command = CreateCommand(
             connection,
             $"""
             SELECT {ProviderAccountColumns}
-            FROM [dbo].[HiveProviderAccounts] WITH (UPDLOCK, HOLDLOCK)
+            FROM [dbo].[HiveProviderAccounts]{lockClause}
             WHERE [ProviderAccountId] = @ProviderAccountId;
             """,
             transaction);
