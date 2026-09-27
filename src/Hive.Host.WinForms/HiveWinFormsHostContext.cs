@@ -224,7 +224,7 @@ public sealed class HiveWinFormsHostContext : IDisposable
                 Result<HiveWinFormsHostContextSnapshot>.Success(
                     CaptureCore(registration, cancellationToken)));
         }
-        catch (HiveWinFormsHostContextLimitException exception)
+        catch (HiveWinFormsHostContextLimitException)
         {
             return Task.FromResult(
                 Result<HiveWinFormsHostContextSnapshot>.Failure(
@@ -233,7 +233,7 @@ public sealed class HiveWinFormsHostContext : IDisposable
                         ErrorCategory.Validation,
                         "The host-context limit was exceeded.")));
         }
-        catch (InvalidOperationException exception)
+        catch (InvalidOperationException)
         {
             return Task.FromResult(
                 Result<HiveWinFormsHostContextSnapshot>.Failure(
