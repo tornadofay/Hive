@@ -171,7 +171,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         catch (Exception exception)
         {
             System.Diagnostics.Debug.WriteLine(
-                $"HiveCrudPage operation cancellation callback failed while {reason}: {exception}");
+                $"HiveCrudPage operation cancellation callback failed while {reason}:\n{HiveUiExceptionDiagnostics.Format(exception)}");
         }
     }
 
