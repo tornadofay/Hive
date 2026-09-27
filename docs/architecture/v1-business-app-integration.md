@@ -381,6 +381,12 @@ display = "Product A"
 
 The model can choose an option; it cannot execute arbitrary lookup SQL or arbitrary host queries.
 
+### 7.1 Lookup authorization
+
+Lookup execution is authorized against both the lookup capability identity and the specific lookup identity. The neutral authorization request therefore carries `LookupId` whenever the capability kind is `ResolveLookup`. An implementation must not treat an authorized lookup capability as permission to resolve an arbitrary different lookup.
+
+The host application remains responsible for exposing the lookup implementation and bounded result set. Hive authorization remains responsible for deciding whether the caller may invoke the requested lookup capability for the identified lookup.
+
 ## 8. UI edit surfaces and operation capabilities
 
 UI configuration may describe how the host expects data entry to happen. The neutral contract should preserve the semantic distinction without publishing private host-specific mode names.
