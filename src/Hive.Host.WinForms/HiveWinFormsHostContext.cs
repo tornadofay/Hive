@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 using Hive.Core;
+using Hive.Host.WinForms.UI.Controls;
 
 namespace Hive.Host.WinForms;
 
@@ -446,6 +447,12 @@ public sealed class HiveWinFormsHostContext : IDisposable
 
     private string? GetSafeText(Control control)
     {
+        if (control is IHiveWinFormsFieldControl fieldControl &&
+            fieldControl.HiveField.Sensitive == true)
+        {
+            return "[redacted]";
+        }
+
         if (control is TextBox passwordBox &&
             (passwordBox.UseSystemPasswordChar ||
              passwordBox.PasswordChar != '\0'))
