@@ -54,6 +54,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     private bool _loadingConfiguredAgents;
     private Rectangle _lastOutputRevealButtonBounds;
     private readonly CancellationTokenSource _lifetimeCts = new();
+    private int _settingsOperationActive;
 
     public HiveExampleHostForm()
         : base(
@@ -732,8 +733,6 @@ internal sealed class HiveExampleHostForm : HiveForm
         if (_outputView.IsCollapsed)
             _outputView.SetCollapsed(false);
     }
-
-    private int _settingsOperationActive;
 
     internal async Task OpenHiveSettingsAsync()
     {
