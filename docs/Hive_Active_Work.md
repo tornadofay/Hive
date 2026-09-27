@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Maintenance — Review Corrections
 
@@ -38,9 +38,10 @@ Required developer verification:
   - `AgentFactoryTests`
   - `HiveWorkspaceLifecycleTests`
   - `HiveUiPolishTests`
+  - `BaseAgentWorkProtocolsTests`
 - run the full `Hive.Tests` suite;
 - manually launch `Hive.Example.WinForms` and verify the affected Host/UI behavior remains correct where applicable.
 
-Verification state is pending because no builds/tests/manual launch were executed by the agent.
+Verification state is pending because no builds/tests/manual launch were executed by the agent. No verification closure has been performed.
 
-Developer verification failure received: `HiveWinFormsHostIntegrationTests.Capture_BindingInspectionFailureIsReportedInsteadOfReturningIncompleteSurface` failed with a raw `ArgumentException` from `DataGridView`/`BindingContext` access before the typed binding-inspection failure boundary. Same-slice remediation is required. A review also identified the same uncovered `grid.BindingContext` access in `TryGetBoundRowCount` and will cover it with the same typed failure boundary.
+Developer verification failure received: `HiveWinFormsHostIntegrationTests.Capture_BindingInspectionFailureIsReportedInsteadOfReturningIncompleteSurface` initially failed with a raw `ArgumentException` from `DataGridView`/`BindingContext` access before the typed binding-inspection failure boundary. Same-slice remediation is complete: the full binding-inspection and bound-row-count paths are now inside their typed exception boundaries, with regression coverage for both. The revision also corrected `Agent.CreateRuntimeInstance` so the new optional `IClock` parameter remains after the existing `IDelegationChannel` parameter, preserving positional-call compatibility.
