@@ -925,6 +925,135 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task ConsequentialInteraction_RejectsReparentedControlWithoutRecapture()
+    {
+        using var form = new Form();
+
+        var originalContainer = new Panel
+        {
+            Name = "originalContainer"
+        };
+        var customer = new HiveTextBox
+        {
+            Name = "customer",
+            Text = "Original"
+        };
+        originalContainer.Controls.Add(customer);
+        form.Controls.Add(originalContainer);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var captured = (await adapter.CaptureAsync(accessContext)).Value!;
+        var control = captured.Controls.Single(item => item.Name == "customer");
+        var capability = control.Capabilities.Single(
+            item => item.Kind == HiveHostCapabilityKind.SetControlValue);
+
+        form.Controls.Remove(originalContainer);
+
+        var replacementContainer = new Panel
+        {
+            Name = "replacementContainer"
+        };
+        replacementContainer.Controls.Add(customer);
+        form.Controls.Add(replacementContainer);
+
+        var service = new HiveHostIntegrationService(
+            new AllowAllAuthorizer());
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                capability.Id,
+                HiveHostInteractionKind.SetControlValue,
+                CorrelationId.New(),
+                controlId: control.Id,
+                value: HiveHostValue.FromString("Invalid reparent"),
+                captureId: captured.Provenance.CaptureId),
+            accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.target-stale",
+            result.Error!.Code);
+        Assert.Equal("Original", customer.Text);
+    }
+
+    [Fact]
+    public async Task ConsequentialInteraction_RejectsReparentedDataSurfaceWithoutRecapture()
+    {
+        using var form = new Form();
+
+        var originalContainer = new Panel
+        {
+            Name = "originalContainer"
+        };
+        var grid = new HiveDataGridView
+        {
+            Name = "orders",
+            AutoGenerateColumns = false
+        };
+        grid.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "Id",
+                DataPropertyName = "Id"
+            });
+        grid.HiveDataSurface.SurfaceId = "orders";
+        grid.HiveDataSurface.AddCapability(
+            new HiveHostCapabilityDescriptor(
+                Guid.Parse("00000000-0000-0000-0000-000000000011"),
+                HiveHostCapabilityKind.EditRow,
+                "Edit order"));
+
+        originalContainer.Controls.Add(grid);
+        form.Controls.Add(originalContainer);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext,
+            new AllowingSemanticProvider());
+
+        var captured = (await adapter.CaptureAsync(accessContext)).Value!;
+        var surface = captured.DataSurfaces.Single(
+            item => item.Id == "surface:orders");
+        var capability = surface.Capabilities.Single(
+            item => item.Kind == HiveHostCapabilityKind.EditRow);
+
+        form.Controls.Remove(originalContainer);
+
+        var replacementContainer = new Panel
+        {
+            Name = "replacementContainer"
+        };
+        replacementContainer.Controls.Add(grid);
+        form.Controls.Add(replacementContainer);
+
+        var service = new HiveHostIntegrationService(
+            new AllowAllAuthorizer());
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                capability.Id,
+                HiveHostInteractionKind.EditRow,
+                CorrelationId.New(),
+                surfaceId: surface.Id,
+                rowIdentity: new HiveHostRowIdentity("1"),
+                value: HiveHostValue.FromInt64(2),
+                captureId: captured.Provenance.CaptureId),
+            accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.target-stale",
+            result.Error!.Code);
+    }
+
+    [Fact]
     public async Task ConsequentialInteraction_CannotRebindOldCapabilityToCurrentCapture()
     {
         using var form = new Form();
