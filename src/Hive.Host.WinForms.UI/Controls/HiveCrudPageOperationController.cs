@@ -119,7 +119,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
                     // must not turn the already-contained CRUD operation failure
                     // into an unhandled exception or suppress other observers.
                     System.Diagnostics.Debug.WriteLine(
-                        $"HiveCrudPage OperationFailed subscriber failed: {subscriberException}");
+                        $"HiveCrudPage OperationFailed subscriber failed:\n{HiveUiExceptionDiagnostics.Format(subscriberException)}");
                 }
             }
 
@@ -132,7 +132,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         // button/event path to escape as an unhandled async exception.
         try
         {
-            System.Diagnostics.Debug.WriteLine(exception.ToString());
+            System.Diagnostics.Debug.WriteLine(HiveUiExceptionDiagnostics.Format(exception));
 
             var owner = _owner.FindForm();
             if (owner is not null && !owner.IsDisposed && !owner.Disposing)
@@ -152,7 +152,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
             // failing presentation surface must not rethrow the original
             // operation failure from an async UI event path.
             System.Diagnostics.Debug.WriteLine(
-                $"HiveCrudPage operation error reporter failed: {reporterException}");
+                $"HiveCrudPage operation error reporter failed:\n{HiveUiExceptionDiagnostics.Format(reporterException)}");
         }
     }
 
