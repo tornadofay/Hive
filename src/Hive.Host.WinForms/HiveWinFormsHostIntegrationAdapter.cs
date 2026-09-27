@@ -262,7 +262,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 new Error(
                     exception.Code,
                     ErrorCategory.Validation,
-                    exception.Message));
+                    "The WinForms host-context snapshot could not be captured."));
         }
         catch (InvalidOperationException exception)
         {
@@ -270,7 +270,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 new Error(
                     "hive.host.winforms.capture-failed",
                     ErrorCategory.Conflict,
-                    $"WinForms host integration discovery could not be completed: {exception.Message}"));
+                    "WinForms host integration discovery could not be completed."));
         }
     }
 
@@ -444,7 +444,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             return Result<HiveHostInteractionResult>.Failure(
                 Error.Conflict(
                     "hive.host.winforms.interaction-conflict",
-                    exception.Message));
+                    "The requested standard-control interaction could not be completed."));
         }
     }
 
@@ -1060,13 +1060,13 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
             {
                 throw new HiveWinFormsIntegrationException(
                     "hive.host.winforms.binding-inspection-failed",
-                    $"The data-surface binding could not be inspected: {exception.Message}");
+                    "The data-surface binding could not be inspected.");
             }
             catch (InvalidOperationException exception)
             {
                 throw new HiveWinFormsIntegrationException(
                     "hive.host.winforms.binding-inspection-failed",
-                    $"The data-surface binding could not be inspected: {exception.Message}");
+                    "The data-surface binding could not be inspected.");
             }
         }
 
@@ -1583,13 +1583,13 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         {
             throw new HiveWinFormsIntegrationException(
                 "hive.host.winforms.binding-row-count-failed",
-                $"The data-surface row count could not be determined from its binding: {exception.Message}");
+                "The data-surface row count could not be determined from its binding.");
         }
         catch (InvalidOperationException exception)
         {
             throw new HiveWinFormsIntegrationException(
                 "hive.host.winforms.binding-row-count-failed",
-                $"The data-surface row count could not be determined from its binding: {exception.Message}");
+                "The data-surface row count could not be determined from its binding.");
         }
     }
 
