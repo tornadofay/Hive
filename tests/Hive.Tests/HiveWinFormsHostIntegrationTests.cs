@@ -794,6 +794,58 @@ public sealed class HiveWinFormsHostIntegrationTests
     }
 
     [Fact]
+    public async Task ConsequentialInteraction_RejectsReplacedControlWithoutRecapture()
+    {
+        using var form = new Form();
+        var original = new HiveTextBox
+        {
+            Name = "customer",
+            Text = "Original"
+        };
+        form.Controls.Add(original);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var captured = (await adapter.CaptureAsync(accessContext)).Value!;
+        var control = captured.Controls.Single(item => item.Name == "customer");
+        var capability = control.Capabilities.Single(
+            item => item.Kind == HiveHostCapabilityKind.SetControlValue);
+
+        form.Controls.Remove(original);
+        original.Dispose();
+
+        var replacement = new HiveTextBox
+        {
+            Name = "customer",
+            Text = "Replacement"
+        };
+        form.Controls.Add(replacement);
+
+        var service = new HiveHostIntegrationService(
+            new AllowAllAuthorizer());
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                capability.Id,
+                HiveHostInteractionKind.SetControlValue,
+                CorrelationId.New(),
+                controlId: control.Id,
+                value: HiveHostValue.FromString("Invalid rebind"),
+                captureId: captured.Provenance.CaptureId),
+            accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.target-stale",
+            result.Error!.Code);
+        Assert.Equal("Replacement", replacement.Text);
+    }
+
+    [Fact]
     public async Task ConsequentialInteraction_CannotRebindOldCapabilityToCurrentCapture()
     {
         using var form = new Form();
