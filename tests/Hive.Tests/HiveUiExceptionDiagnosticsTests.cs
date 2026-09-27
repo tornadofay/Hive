@@ -25,7 +25,7 @@ public sealed class HiveUiExceptionDiagnosticsTests
         Assert.DoesNotContain("bearer-secret", details, StringComparison.Ordinal);
         Assert.DoesNotContain("json-secret", details, StringComparison.Ordinal);
         Assert.DoesNotContain("inner-secret", details, StringComparison.Ordinal);
-        Assert.Equal(6, Count(details, "[REDACTED]"));
+        Assert.Equal(7, Count(details, "[REDACTED]"));
     }
 
     [Fact]
