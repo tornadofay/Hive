@@ -655,16 +655,17 @@ public sealed class HiveUiPolishTests
         Func<bool> condition,
         string timeoutMessage)
     {
-        var deadline = DateTime.UtcNow.AddSeconds(5);
+        var deadline = System.Diagnostics.Stopwatch.GetTimestamp() +
+            (long)(System.Diagnostics.Stopwatch.Frequency * 5.0);
 
         while (!condition())
         {
             Application.DoEvents();
 
-            if (DateTime.UtcNow >= deadline)
+            if (System.Diagnostics.Stopwatch.GetTimestamp() >= deadline)
                 throw new TimeoutException(timeoutMessage);
 
-            Thread.Sleep(10);
+            Thread.Yield();
         }
     }
 
