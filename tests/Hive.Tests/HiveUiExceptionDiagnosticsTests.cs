@@ -14,7 +14,8 @@ public sealed class HiveUiExceptionDiagnosticsTests
             "access token: token-secret; client_secret=client-secret; " +
             "Authorization: Bearer bearer-secret; Authorization: Basic basic-secret; " +
             "payload={\"password\":\"json-secret\"}; " +
-            "escaped={\"password\":\"escaped\\\"json-secret-tail\"}",
+            "escaped={\"password\":\"escaped\\\"json-secret-tail\"}; " +
+            "double-quote=\"foo'quoted-secret\"; single-quote='foo\"single-secret'",
             new InvalidOperationException("secret='inner-secret'"));
 
         var details = HiveUiExceptionDiagnostics.Format(exception);
@@ -29,6 +30,8 @@ public sealed class HiveUiExceptionDiagnosticsTests
         Assert.DoesNotContain("basic-secret", details, StringComparison.Ordinal);
         Assert.DoesNotContain("json-secret", details, StringComparison.Ordinal);
         Assert.DoesNotContain("json-secret-tail", details, StringComparison.Ordinal);
+        Assert.DoesNotContain("quoted-secret", details, StringComparison.Ordinal);
+        Assert.DoesNotContain("single-secret", details, StringComparison.Ordinal);
         Assert.DoesNotContain("inner-secret", details, StringComparison.Ordinal);
         Assert.Contains(
             "payload={\"password\":\"[REDACTED]\"}",
@@ -38,7 +41,7 @@ public sealed class HiveUiExceptionDiagnosticsTests
             "escaped={\"password\":\"[REDACTED]\"}",
             details,
             StringComparison.Ordinal);
-        Assert.Equal(10, Count(details, "[REDACTED]"));
+        Assert.Equal(12, Count(details, "[REDACTED]"));
     }
 
     [Fact]
