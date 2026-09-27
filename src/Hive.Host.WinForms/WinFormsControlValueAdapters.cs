@@ -105,22 +105,15 @@ internal sealed class TextBoxValueAdapter : WinFormsControlValueAdapterBase
 
     public override bool CanSet(Control control) =>
         control is TextBoxBase &&
-        !IsReadOnly(control);
+        !IsReadOnly(control) &&
+        !IsPasswordControl(control);
 
     public override string ValueTypeName =>
         typeof(string).FullName!;
 
     public override HiveHostValue? Read(Control control)
     {
-        if (control is TextBox passwordTextBox &&
-            (passwordTextBox.UseSystemPasswordChar ||
-             passwordTextBox.PasswordChar != '\0'))
-        {
-            return null;
-        }
-
-        if (control is MaskedTextBox maskedTextBox &&
-            maskedTextBox.PasswordChar != '\0')
+        if (IsPasswordControl(control))
         {
             return null;
         }
@@ -156,9 +149,7 @@ internal sealed class TextBoxValueAdapter : WinFormsControlValueAdapterBase
                     "A string value is required for a text control."));
         }
 
-        if (control is TextBox password &&
-            (password.UseSystemPasswordChar ||
-             password.PasswordChar != '\0'))
+        if (IsPasswordControl(control))
         {
             return Result<HiveHostInteractionResult>.Failure(
                 Error.Unsupported(
@@ -170,6 +161,17 @@ internal sealed class TextBoxValueAdapter : WinFormsControlValueAdapterBase
 
         return Success(control, request);
     }
+
+    private static bool IsPasswordControl(Control control) =>
+        control switch
+        {
+            TextBox textBox =>
+                textBox.UseSystemPasswordChar ||
+                textBox.PasswordChar != '\0',
+            MaskedTextBox maskedTextBox =>
+                maskedTextBox.PasswordChar != '\0',
+            _ => false
+        };
 
     private static bool IsReadOnly(Control control) =>
         control switch
