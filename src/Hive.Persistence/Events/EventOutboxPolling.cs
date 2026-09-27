@@ -87,11 +87,14 @@ public sealed class EventOutboxPoller
             return Hive.Core.Result<EventOutboxEntry?>.Failure(
                 HivePersistenceError.Internal(
                     "hive.outbox.delivery-result-missing",
-                    "Outbox delivery completed without a result."));
+                    "Outbox delivery completed without a result.",
+                    new InvalidOperationException(
+                        "The outbox handler returned without producing a Result.")));
         }
 
-        if (delivery.IsFailure)
-            return Hive.Core.Result<EventOutboxEntry?>.Failure(delivery.Error!);
+        var deliveryResult = delivery.Value;
+        if (deliveryResult.IsFailure)
+            return Hive.Core.Result<EventOutboxEntry?>.Failure(deliveryResult.Error!);
 
         var completed = await _store.CompleteOutboxAsync(
             workItem,
