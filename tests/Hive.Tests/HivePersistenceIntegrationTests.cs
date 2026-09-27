@@ -24,7 +24,7 @@ public sealed class HivePersistenceIntegrationTests
         Assert.Equal(HiveDatabaseMigrationStatus.Applied, first.Value.Status);
         Assert.Equal(0, first.Value.PreviousSchemaVersion);
         Assert.Equal(HiveDatabaseSchema.CurrentSchemaVersion, first.Value.CurrentSchemaVersion);
-        Assert.Equal(12, first.Value.AppliedMigrationCount);
+        Assert.Equal(13, first.Value.AppliedMigrationCount);
 
         var second = await migrator.MigrateAsync(CancellationToken.None);
         Assert.True(second.IsSuccess, second.Error is null ? "Repeat migration failed without an error." : $"Repeat migration failed: {second.Error.Code} [{second.Error.Category}] {second.Error.Message}");
@@ -60,6 +60,7 @@ public sealed class HivePersistenceIntegrationTests
         Assert.True(await IndexExistsAsync(options, "PK_HiveWorkItems", "HiveWorkItems"));
         Assert.True(await IndexExistsAsync(options, "IX_HiveWorkItems_OwnerScope", "HiveWorkItems"));
         Assert.True(await IndexExistsAsync(options, "IX_HiveWorkItems_OwnerStatus", "HiveWorkItems"));
+        Assert.True(await IndexExistsAsync(options, "IX_HiveWorkItems_OwnerCreated", "HiveWorkItems"));
         Assert.True(await IndexExistsAsync(options, "PK_HiveWorkItemAttachments", "HiveWorkItemAttachments"));
         Assert.True(
             await ColumnExistsAsync(
