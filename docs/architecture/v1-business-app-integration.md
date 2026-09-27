@@ -130,6 +130,32 @@ A host-specific adapter may use live host objects internally when required to pe
 
 Do not add a new universal host framework merely to support the first V1 host. Create only the Core-level ports and neutral contracts required by the actual V1 integration boundary. Host implementations are supplied by the application composition root.
 
+### 3.2 Authorization boundary and adapter execution port
+
+The application-facing authorization boundary is `Hive.Management`. Host integration requests that can affect or inspect the host are routed through the Management service, which constructs the corresponding Core capability request and invokes the configured capability authorizer before delegating to the adapter.
+
+The neutral `IHiveHostIntegrationAdapter` is an execution port, not an authorization boundary. Its operations perform the concrete host capture, interaction, and bounded lookup work after the caller has reached the appropriate application-facing policy boundary.
+
+The intended call path is:
+
+```
+Application
+    ↓
+HiveHostIntegrationService
+    ↓
+IHiveHostIntegrationAdapter
+    ↓
+host-specific adapter
+    ↓
+host controls / data surface
+```
+
+For the concrete WinForms adapter, the low-level adapter operations are intentionally explicit interface implementations. This keeps the required neutral adapter port available to Management while making accidental direct execution through the concrete adapter type harder. Applications should register the adapter with the Management service and invoke host operations through the Management boundary rather than treating the adapter as a general-purpose application service.
+
+A host capture establishes the bounded host state against which consequential host interactions are authorized and executed. `ReadControl` follows the same capture-binding rule as other control interactions: the request carries the originating capture identity, and the concrete adapter rejects stale or rebound control instances rather than silently reading a current control that was not part of the authorized capture.
+
+Capability advertisement remains descriptive. In particular, a host control must not advertise a writable standard-control capability when the concrete adapter cannot safely perform that write (for example, password controls).
+
 ## 4. Semantic control model
 
 A host control descriptor should expose semantic information rather than reproduce the host control's entire property bag.
