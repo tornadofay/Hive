@@ -293,6 +293,19 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         CancellationToken cancellationToken = default) =>
         _workItems.ListWorkItemsAsync(accessContext, includeRetired, cancellationToken);
 
+    public Task<Result<WorkItemListPage>> ListWorkItemsPageAsync(
+        ResourceAccessContext accessContext,
+        bool includeRetired = false,
+        WorkItemListCursor? cursor = null,
+        int pageSize = WorkItemListPage.DefaultPageSize,
+        CancellationToken cancellationToken = default) =>
+        _workItems.ListWorkItemsPageAsync(
+            accessContext,
+            includeRetired,
+            cursor,
+            pageSize,
+            cancellationToken);
+
     public Task<Result<WorkItemAttachmentContent>> GetWorkItemAttachmentAsync(
         WorkItemId workItemId,
         ResourceAccessContext accessContext,
