@@ -100,7 +100,7 @@ public readonly record struct HiveHostValue
     public static HiveHostValue FromDateTime(DateTime value) =>
         new(
             HiveHostValueKind.DateTime,
-            value.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+            value.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
 
     public static HiveHostValue FromGuid(Guid value)
     {
