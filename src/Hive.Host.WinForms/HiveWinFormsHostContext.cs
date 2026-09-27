@@ -231,7 +231,7 @@ public sealed class HiveWinFormsHostContext : IDisposable
                     new Error(
                         exception.Code,
                         ErrorCategory.Validation,
-                        exception.Message)));
+                        "The host-context limit was exceeded.")));
         }
         catch (InvalidOperationException exception)
         {
@@ -240,7 +240,7 @@ public sealed class HiveWinFormsHostContext : IDisposable
                     new Error(
                         "hive.host.context.capture-failed",
                         ErrorCategory.Conflict,
-                        $"WinForms host-context discovery could not be completed: {exception.Message}")));
+                        "WinForms host-context discovery could not be completed.")));
         }
     }
 
