@@ -36,13 +36,13 @@ public sealed class HiveUiExceptionDiagnosticsTests
     [Fact]
     public void SanitizeMessage_RedactsCredentialContentAndPreservesSafeText()
     {
-        var message = "Save failed for user=alice; password=top-secret; client_secret=client-value.";
+        var message = "Save failed for user=alice; password=top secret passphrase; client_secret=client value.";
 
         var sanitized = HiveUiExceptionDiagnostics.SanitizeMessage(message);
 
         Assert.Contains("Save failed for user=alice", sanitized, StringComparison.Ordinal);
-        Assert.DoesNotContain("top-secret", sanitized, StringComparison.Ordinal);
-        Assert.DoesNotContain("client-value", sanitized, StringComparison.Ordinal);
+        Assert.DoesNotContain("top secret passphrase", sanitized, StringComparison.Ordinal);
+        Assert.DoesNotContain("client value", sanitized, StringComparison.Ordinal);
     }
 
     [Fact]
