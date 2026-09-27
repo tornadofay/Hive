@@ -84,6 +84,26 @@ public sealed class EventOutboxPollerIntegrationTests
     }
 
     [Fact]
+    public async Task ProcessNext_HandlerCancellationDoesNotWaitForLeaseRenewalShutdown()
+    {
+        var database = await PrepareDatabase("Hive_Test_OutboxHandlerCancellation");
+        var store = new SqlEventPersistenceStore(database.Options);
+        var eventEnvelope = CreateEvent("outbox.handler-cancellation");
+        await AppendAsync(store, eventEnvelope);
+
+        var poller = new EventOutboxPoller(store, TimeSpan.FromSeconds(5));
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            poller.ProcessNextAsync(
+                new CancelingHandler(TimeSpan.FromMilliseconds(100)),
+                CancellationToken.None));
+
+        var claimed = await store.ClaimNextOutboxAsync(TimeSpan.FromMinutes(5));
+        Assert.True(claimed.IsSuccess, claimed.Error?.Message);
+        Assert.Null(claimed.Value);
+    }
+
+    [Fact]
     public async Task ProcessNext_RenewsLeaseForLongRunningDelivery()
     {
         var database = await PrepareDatabase("Hive_Test_OutboxLeaseRenewal");
@@ -234,7 +254,19 @@ public sealed class EventOutboxPollerIntegrationTests
 
     private sealed class CancelingHandler : IEventOutboxHandler
     {
-        public Task<Result> HandleAsync(EventOutboxEntry entry, CancellationToken cancellationToken = default) =>
-            throw new OperationCanceledException("Simulated worker termination after claiming the outbox row.");
+        private readonly TimeSpan _delay;
+
+        public CancelingHandler(TimeSpan delay = default) => _delay = delay;
+
+        public async Task<Result> HandleAsync(
+            EventOutboxEntry entry,
+            CancellationToken cancellationToken = default)
+        {
+            if (_delay > TimeSpan.Zero)
+                await Task.Delay(_delay, cancellationToken);
+
+            throw new OperationCanceledException(
+                "Simulated worker termination after claiming the outbox row.");
+        }
     }
 }
