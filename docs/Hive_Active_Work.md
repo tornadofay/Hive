@@ -42,7 +42,7 @@ Correct the four concrete production findings identified in the 2026-09-27 repos
 - No branch/PR creation.
 
 ## Verification Gate
-VERIFICATION FAILED / REMEDIATION REQUIRED — developer rerun on 2026-09-27 reported 380/381 tests passed and one in-scope failure in `InputPreparationTests.SpreadsheetInput_RejectsAggregatePreparedRowOutputAcrossSubmission`. The production submission-wide row budget correctly rejects once the submission would exceed 20,000 prepared rows, but the fixture supplied 19,999 rows, so the expected remaining prepared count of 19,996 was not reached. Same-slice remediation is limited to correcting the fifth-workbook fixture to 5 prepared rows so the submission reaches 20,001 and produces exactly one failure. No production behavior change is authorized or required. After correction, return to VERIFICATION PENDING and rerun the focused InputPreparationTests plus the full Hive.Tests suite.
+VERIFICATION PENDING — same-slice remediation corrected the submission row-budget regression fixture: four workbooks contribute 19,996 prepared rows and the fifth contributes 5, so the submission reaches 20,001 and should produce exactly one submission-wide row-limit failure. Developer must rerun the focused InputPreparationTests plus the full Hive.Tests suite before slice closure.
 
 ## Handoff
 Example to run: existing host/integration examples are unchanged by this maintenance slice; no new externally meaningful capability is introduced.
