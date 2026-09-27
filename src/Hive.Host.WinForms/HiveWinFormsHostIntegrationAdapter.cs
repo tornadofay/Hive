@@ -24,10 +24,10 @@ public interface IHiveWinFormsSemanticProvider
 }
 
 /// <summary>
-    /// Concrete WinForms execution adapter. Its host operations are intentionally exposed through
-    /// <see cref="IHiveHostIntegrationAdapter"/> so application code uses the Management authorization
-    /// boundary instead of invoking low-level host execution directly on this concrete type.
-    /// </summary>
+/// Concrete WinForms execution adapter. Its host operations are intentionally exposed through
+/// <see cref="IHiveHostIntegrationAdapter"/> so application code uses the Management authorization
+/// boundary instead of invoking low-level host execution directly on this concrete type.
+/// </summary>
 public sealed class HiveWinFormsHostIntegrationAdapter :
     IHiveHostIntegrationAdapter,
     IDisposable
