@@ -151,7 +151,7 @@ internal sealed class HiveWinFormsDataSurfaceDescriptorBuilder
                     string.Equals(
                         field.Name,
                         parentKeyField,
-                        StringComparison.Ordinal)))
+                        StringComparison.OrdinalIgnoreCase)))
             {
                 throw new HiveWinFormsIntegrationException(
                     "hive.host.winforms.child-parent-key-not-found",
@@ -162,7 +162,7 @@ internal sealed class HiveWinFormsDataSurfaceDescriptorBuilder
                     string.Equals(
                         field.Name,
                         childKeyField,
-                        StringComparison.Ordinal)))
+                        StringComparison.OrdinalIgnoreCase)))
             {
                 throw new HiveWinFormsIntegrationException(
                     "hive.host.winforms.child-key-not-found",
@@ -400,7 +400,8 @@ internal sealed class HiveWinFormsDataSurfaceDescriptorBuilder
             metadata?.Generated ?? false,
             metadata?.IsPrimaryKey ?? false,
             currentValue: null,
-            lookup: metadata?.Lookup);
+            lookup: metadata?.Lookup,
+            sensitive: metadata?.Sensitive == true);
     }
 
     private static int TryGetBoundRowCount(DataGridView grid)
