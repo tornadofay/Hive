@@ -1038,8 +1038,8 @@ public sealed record HiveBusinessOperationComposition
 /// <summary>
 /// Neutral host-execution port used by the application-facing Management host-integration service.
 /// This interface is an execution boundary, not an authorization boundary; callers should route
-/// host interactions through the Management service so the configured capability authorizer is
-/// applied before adapter execution.
+/// authorization-relevant host interactions through the Management service so the configured
+/// capability authorizer is applied before adapter execution.
 /// </summary>
 public interface IHiveHostIntegrationAdapter
 {
