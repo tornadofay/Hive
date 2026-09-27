@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-24 (rev 52 — final cognitive boundary and phase-order audit)
+Last updated: 2026-09-27 (rev 53 — review-correction resource and WinForms contract-boundary audit)
 
 
 
