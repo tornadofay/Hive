@@ -256,7 +256,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
             return Result<HiveHostContextDescriptor>.Success(descriptor);
         }
-        catch (HiveWinFormsIntegrationException exception)
+        catch (HiveWinFormsIntegrationException)
         {
             return Result<HiveHostContextDescriptor>.Failure(
                 new Error(
@@ -264,7 +264,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     ErrorCategory.Validation,
                     "The WinForms host-context snapshot could not be captured."));
         }
-        catch (InvalidOperationException exception)
+        catch (InvalidOperationException)
         {
             return Result<HiveHostContextDescriptor>.Failure(
                 new Error(
