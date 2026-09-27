@@ -60,7 +60,7 @@ public sealed class EventOutboxPoller
             }
             catch (Exception exception)
             {
-                return Hive.Core.Result<EventOutboxEntry?>.Failure(
+                delivery = Hive.Core.Result.Failure(
                     HivePersistenceError.External(
                         "hive.outbox.handler",
                         "Outbox delivery failed.",
