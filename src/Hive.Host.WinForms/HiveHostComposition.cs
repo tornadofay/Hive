@@ -150,7 +150,8 @@ public sealed class HiveHostComposition : IDisposable
 
             if (skipWhenUnchanged &&
                 current is not null &&
-                current.PersistenceConfiguration == configuration.Value)
+                current.PersistenceConfiguration == configuration.Value &&
+                configuration.Value.AuthenticationMode != HiveSqlAuthenticationMode.SqlPassword)
             {
                 operationToken.ThrowIfCancellationRequested();
 
