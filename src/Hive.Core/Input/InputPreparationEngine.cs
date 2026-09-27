@@ -383,6 +383,8 @@ public static class InputPreparationEngine
                                 "The worksheet XML is malformed.")));
                 }
             }
+
+            submissionPreparationBudget.ConsumeWorkbook(preparationBudget);
         }
         catch (OperationCanceledException)
         {
@@ -452,9 +454,6 @@ public static class InputPreparationEngine
                         ErrorCategory.Serialization,
                         "The spreadsheet could not be read safely.")));
             return;
-        }
-
-            submissionPreparationBudget.ConsumeWorkbook(preparationBudget);
         }
 
         prepared.AddRange(localPrepared);
