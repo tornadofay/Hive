@@ -253,7 +253,7 @@ public sealed class HiveHostIntegrationContractTests
     }
 
     [Fact]
-    public void ConsequentialInteraction_RequiresCaptureIdentity()
+    public void HostInteractions_RequireCaptureIdentity()
     {
         Assert.Throws<ArgumentException>(
             () => new HiveHostInteractionRequest(
