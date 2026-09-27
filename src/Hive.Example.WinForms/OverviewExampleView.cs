@@ -326,7 +326,7 @@ internal sealed class OverviewExampleView : UserControl
         catch (Exception exception)
         {
             System.Diagnostics.Debug.WriteLine(
-                $"Could not open Hive repository: {exception}");
+                $"Could not open Hive repository: {HiveUiExceptionDiagnostics.Format(exception)}");
         }
     }
 
