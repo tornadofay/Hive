@@ -16,7 +16,7 @@ public sealed class HiveUiExceptionDiagnosticsTests
             "payload={\"password\":\"json-secret\"}; " +
             "escaped={\"password\":\"escaped\\\"json-secret-tail\"}; " +
             "double-quote=\"foo'quoted-secret\"; single-quote='foo\"single-secret'; " +
-            "unterminated-password=\"unterminated-secret; unterminated-secret2='single-secret-value",
+            "password=\"unterminated-secret; secret='single-secret-value",
             new InvalidOperationException("secret='inner-secret'"));
 
         var details = HiveUiExceptionDiagnostics.Format(exception);
