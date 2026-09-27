@@ -147,6 +147,11 @@ public interface IEventOutboxPollerStore
         TimeSpan leaseDuration,
         CancellationToken cancellationToken = default);
 
+    Task<Result> RenewOutboxLeaseAsync(
+        EventOutboxWorkItem workItem,
+        TimeSpan leaseDuration,
+        CancellationToken cancellationToken = default);
+
     Task<Result> CompleteOutboxAsync(
         EventOutboxWorkItem workItem,
         CancellationToken cancellationToken = default);
