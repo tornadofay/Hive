@@ -67,7 +67,7 @@ internal sealed class ExampleConfigurationExampleView : UserControl
             Height = 38,
             Margin = new Padding(0, 18, 0, 18)
         };
-        _openSettingsButton.Click += (_, _) => OpenSettings();
+        _openSettingsButton.Click += async (_, _) => await OpenSettings();
 
         var root = new TableLayoutPanel
         {
@@ -106,11 +106,11 @@ internal sealed class ExampleConfigurationExampleView : UserControl
         base.Dispose(disposing);
     }
 
-    private void OpenSettings()
+    private async Task OpenSettings()
     {
         if (FindForm() is HiveExampleHostForm host)
         {
-            host.OpenHiveSettings();
+            await host.OpenHiveSettingsAsync();
             return;
         }
 
