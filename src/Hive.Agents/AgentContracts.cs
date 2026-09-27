@@ -259,7 +259,8 @@ public sealed class RuntimeInstance
                 RuntimeInstanceStatus.Stopped,
                 CreatedAtUtc,
                 stopped,
-                Work));
+                Work,
+                _clock));
     }
 
     internal static RuntimeInstance Create(
@@ -396,7 +397,8 @@ public sealed class Execution
             Generation,
             status,
             StartedAtUtc,
-            completedAtUtc);
+            completedAtUtc,
+            _clock);
 
     private static Result<Execution> InvalidTransition(
         string operation,
