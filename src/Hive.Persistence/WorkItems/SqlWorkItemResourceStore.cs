@@ -193,7 +193,7 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                 {(includeRetired
                     ? string.Empty
                     : "AND [LifecycleStatus] <> @RetiredLifecycle")}
-                ORDER BY [CreatedAtUtc] DESC, [WorkItemId];
+                ORDER BY [CreatedAtUtc] DESC, [WorkItemId] ASC;
                 """);
 
             SqlResourceStoreCommon.AddAccessParameters(command, accessContext);
@@ -273,10 +273,10 @@ public sealed class SqlWorkItemResourceStore : IWorkItemResourceStore
                       OR [CreatedAtUtc] < @CursorCreatedAtUtc
                       OR (
                           [CreatedAtUtc] = @CursorCreatedAtUtc
-                          AND [WorkItemId] < @CursorWorkItemId
+                          AND [WorkItemId] > @CursorWorkItemId
                       )
                   )
-                ORDER BY [CreatedAtUtc] DESC, [WorkItemId] DESC;
+                ORDER BY [CreatedAtUtc] DESC, [WorkItemId] ASC;
                 """);
 
             SqlResourceStoreCommon.AddAccessParameters(command, accessContext);
