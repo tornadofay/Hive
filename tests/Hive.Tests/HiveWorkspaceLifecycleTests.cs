@@ -57,8 +57,10 @@ public sealed class HiveWorkspaceLifecycleTests
         workspace.Dispose();
 
         proxy.WorkItemsCompletion.TrySetResult(
-            Result<IReadOnlyList<WorkItem>>.Success(
-                Array.Empty<WorkItem>()));
+            Result<WorkItemListPage>.Success(
+                new WorkItemListPage(
+                    Array.Empty<WorkItem>(),
+                    nextCursor: null)));
 
         WaitForTask(
             refresh,
@@ -109,13 +111,13 @@ public sealed class HiveWorkspaceLifecycleTests
     {
         private readonly TaskCompletionSource<bool> _workItemsRequested =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly TaskCompletionSource<Result<IReadOnlyList<WorkItem>>> _workItemsCompletion =
+        private readonly TaskCompletionSource<Result<WorkItemListPage>> _workItemsCompletion =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public TaskCompletionSource<bool> WorkItemsRequested =>
             _workItemsRequested;
 
-        public TaskCompletionSource<Result<IReadOnlyList<WorkItem>>> WorkItemsCompletion =>
+        public TaskCompletionSource<Result<WorkItemListPage>> WorkItemsCompletion =>
             _workItemsCompletion;
 
         public static (
@@ -132,7 +134,7 @@ public sealed class HiveWorkspaceLifecycleTests
             MethodInfo? targetMethod,
             object?[]? args)
         {
-            if (targetMethod?.Name == nameof(IHiveManagementFacade.ListWorkItemsAsync))
+            if (targetMethod?.Name == nameof(IHiveManagementFacade.ListWorkItemsPageAsync))
             {
                 _workItemsRequested.TrySetResult(true);
                 return _workItemsCompletion.Task;
