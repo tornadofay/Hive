@@ -419,6 +419,8 @@ public sealed class InputPreparationTests
         var thirdWorkbook = CreateCompactWideWorkbook(
             columnCount,
             ("Third", 2));
+        var laterWorkbook = CreateWorkbook(
+            ("Later", [["Name"], ["Later"]]));
 
         var result = InputPreparationEngine.Prepare(
             new InputSubmission(
@@ -434,14 +436,24 @@ public sealed class InputPreparationTests
                 new InputItem(
                     "third-wide.xlsx",
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    thirdWorkbook)
+                    thirdWorkbook),
+                new InputItem(
+                    "later.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    laterWorkbook)
             ]),
             Array.Empty<ExecutionTarget>());
 
         Assert.True(result.IsSuccess, result.Error?.Message);
         Assert.Equal(
-            2 * rowsPerSheet * 2,
+            2 * rowsPerSheet * 2 + 1,
             result.Value!.PreparedInputs.Count);
+        var laterPrepared = Assert.IsType<PreparedSpreadsheetRowInput>(
+            result.Value.PreparedInputs[^1]);
+        Assert.Equal("later.xlsx", laterPrepared.FileName);
+        Assert.Equal("Later", laterPrepared.WorksheetName);
+        Assert.Equal(1, laterPrepared.RowNumber);
+
 
         var failure = Assert.Single(result.Value.Failures);
         Assert.Equal(
