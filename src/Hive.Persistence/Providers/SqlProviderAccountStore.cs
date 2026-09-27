@@ -221,6 +221,27 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
                 if (validation is not null)
                     return Result<ProviderAccount>.Failure(validation);
 
+                var current = await _reader.LoadProviderAccountAsync(
+                    connection,
+                    transaction,
+                    account.Id,
+                    cancellationToken,
+                    lockForUpdate: false).ConfigureAwait(false);
+
+                if (current is null)
+                    return Result<ProviderAccount>.Failure(
+                        NotFound(
+                            "hive.provider-account.not-found",
+                            "The requested provider account does not exist."));
+
+                var accessError = ValidateAccess(
+                    current.Resource,
+                    accessContext,
+                    "provider account");
+
+                if (accessError is not null)
+                    return Result<ProviderAccount>.Failure(accessError);
+
                 var credentialError = await ValidateCredentialSecretReferenceAsync(
                     connection,
                     transaction,
@@ -231,7 +252,7 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
                 if (credentialError is not null)
                     return Result<ProviderAccount>.Failure(credentialError);
 
-                var current = await _reader.LoadProviderAccountAsync(
+                current = await _reader.LoadProviderAccountAsync(
                     connection,
                     transaction,
                     account.Id,
