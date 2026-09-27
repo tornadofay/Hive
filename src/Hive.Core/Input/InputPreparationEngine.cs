@@ -227,6 +227,22 @@ public static class InputPreparationEngine
                     "Spreadsheet package exceeds the maximum number of archive entries.");
             }
 
+            var totalUncompressedBytes = 0L;
+            foreach (var archiveEntry in archive.Entries)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (archiveEntry.Length < 0 ||
+                    archiveEntry.Length > InputPreparationLimits.MaxSpreadsheetUncompressedPackageBytes - totalUncompressedBytes)
+                {
+                    throw new SpreadsheetPackageWorkbookLimitException(
+                        "hive.input.spreadsheet.archive-uncompressed-too-large",
+                        $"Spreadsheet package exceeds the {InputPreparationLimits.MaxSpreadsheetUncompressedPackageBytes}-byte uncompressed package limit.");
+                }
+
+                totalUncompressedBytes += archiveEntry.Length;
+            }
+
             var workbookEntry = archive.GetEntry("xl/workbook.xml");
 
             if (workbookEntry is null)
@@ -271,6 +287,7 @@ public static class InputPreparationEngine
             var sharedStrings = ReadSharedStrings(
                 archive,
                 cancellationToken);
+            var preparationBudget = new SpreadsheetPreparationBudget();
 
             for (var worksheetIndex = 0;
                  worksheetIndex < worksheetTargets.Count;
@@ -312,12 +329,17 @@ public static class InputPreparationEngine
                         worksheet.Name,
                         worksheetDocument,
                         sharedStrings,
+                        preparationBudget,
                         failures,
                         cancellationToken);
 
                     localPrepared.AddRange(sheetRows);
                 }
                 catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (SpreadsheetPackageWorkbookLimitException)
                 {
                     throw;
                 }
@@ -439,6 +461,7 @@ public static class InputPreparationEngine
         string worksheetName,
         XDocument document,
         IReadOnlyList<string>? sharedStrings,
+        SpreadsheetPreparationBudget preparationBudget,
         List<InputPreparationFailure> failures,
         CancellationToken cancellationToken)
     {
@@ -542,11 +565,20 @@ public static class InputPreparationEngine
                         "Spreadsheet row contains values beyond the mapped header columns.");
                 }
 
+                var hasValue = headers.Names.Keys.Any(
+                    column => row.Cells.TryGetValue(
+                        column,
+                        out var cellValue) &&
+                        !string.IsNullOrWhiteSpace(cellValue));
+
+                if (!hasValue)
+                    continue;
+
+                preparationBudget.ConsumePreparedRow(headers.Names.Count);
+
                 var values = new Dictionary<string, string>(
                     headers.Names.Count,
                     StringComparer.OrdinalIgnoreCase);
-
-                var hasValue = false;
 
                 foreach (var headerEntry in headers.Names)
                 {
@@ -556,16 +588,10 @@ public static class InputPreparationEngine
                         ? cellValue
                         : string.Empty;
 
-                    if (!string.IsNullOrWhiteSpace(value))
-                        hasValue = true;
-
                     values.Add(
                         headerEntry.Value,
                         value);
                 }
-
-                if (!hasValue)
-                    continue;
 
                 result.Add(
                     new PreparedSpreadsheetRowInput(
@@ -1129,6 +1155,38 @@ public static class InputPreparationEngine
                 error));
     }
 
+    private sealed class SpreadsheetPreparationBudget
+    {
+        private int _preparedRows;
+        private long _preparedValueMappings;
+
+        public void ConsumePreparedRow(int valueMappingCount)
+        {
+            if (valueMappingCount <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(valueMappingCount));
+            }
+
+            if (_preparedRows >= InputPreparationLimits.MaxPreparedSpreadsheetRows)
+            {
+                throw new SpreadsheetPackageWorkbookLimitException(
+                    "hive.input.spreadsheet.too-many-prepared-rows",
+                    $"Spreadsheet preparation exceeds the {InputPreparationLimits.MaxPreparedSpreadsheetRows}-row output limit.");
+            }
+
+            if (_preparedValueMappings >
+                InputPreparationLimits.MaxPreparedSpreadsheetValueMappings - valueMappingCount)
+            {
+                throw new SpreadsheetPackageWorkbookLimitException(
+                    "hive.input.spreadsheet.too-many-prepared-values",
+                    $"Spreadsheet preparation exceeds the {InputPreparationLimits.MaxPreparedSpreadsheetValueMappings}-value mapping limit.");
+            }
+
+            _preparedRows++;
+            _preparedValueMappings += valueMappingCount;
+        }
+    }
+
     private sealed record WorksheetDescriptor(
         string Name,
         string Target);
@@ -1148,6 +1206,16 @@ public static class InputPreparationEngine
         }
 
         public string Code { get; }
+    }
+
+    private sealed class SpreadsheetPackageWorkbookLimitException : SpreadsheetPackageLimitException
+    {
+        public SpreadsheetPackageWorkbookLimitException(
+            string code,
+            string message)
+            : base(code, message)
+        {
+        }
     }
 
     private sealed class SpreadsheetPackageLimitException : SpreadsheetPackageException
