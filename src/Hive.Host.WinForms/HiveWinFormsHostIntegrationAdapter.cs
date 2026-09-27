@@ -681,11 +681,17 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                         }
                     }
                 }
-                catch (ArgumentException)
+                catch (ArgumentException exception)
                 {
+                    throw new HiveWinFormsIntegrationException(
+                        "hive.host.winforms.binding-inspection-failed",
+                        $"The data-surface binding could not be inspected: {exception.Message}");
                 }
-                catch (InvalidOperationException)
+                catch (InvalidOperationException exception)
                 {
+                    throw new HiveWinFormsIntegrationException(
+                        "hive.host.winforms.binding-inspection-failed",
+                        $"The data-surface binding could not be inspected: {exception.Message}");
                 }
             }
         }
@@ -1193,11 +1199,17 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                     if (manager is not null)
                         return Math.Max(0, manager.Count);
                 }
-                catch (ArgumentException)
+                catch (ArgumentException exception)
                 {
+                    throw new HiveWinFormsIntegrationException(
+                        "hive.host.winforms.binding-row-count-failed",
+                        $"The data-surface row count could not be determined from its binding: {exception.Message}");
                 }
-                catch (InvalidOperationException)
+                catch (InvalidOperationException exception)
                 {
+                    throw new HiveWinFormsIntegrationException(
+                        "hive.host.winforms.binding-row-count-failed",
+                        $"The data-surface row count could not be determined from its binding: {exception.Message}");
                 }
             }
         }
