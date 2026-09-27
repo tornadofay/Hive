@@ -48,29 +48,18 @@ public sealed class EventOutboxPoller
 
         try
         {
-            try
-            {
-                delivery = await handler.HandleAsync(
-                    workItem.Entry,
-                    deliveryCts.Token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException exception)
-            {
-                handlerCancellation = exception;
-            }
-            catch (Exception exception)
-            {
-                delivery = Hive.Core.Result.Failure(
-                    HivePersistenceError.External(
-                        "hive.outbox.handler",
-                        "Outbox delivery failed.",
-                        exception));
-            }
+            delivery = await handler.HandleAsync(
+                workItem.Entry,
+                deliveryCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException exception)
+        {
+            handlerCancellation = exception;
         }
         catch (Exception exception)
         {
             delivery = Hive.Core.Result.Failure(
-                HivePersistenceError.Internal(
+                HivePersistenceError.External(
                     "hive.outbox.handler",
                     "Outbox delivery failed.",
                     exception));
