@@ -472,14 +472,11 @@ public sealed class AgentExecutionService
                 status = execution.Status.ToString()
             });
 
-        var persisted = await _eventStore
-            .AppendAsync(
-                new EventAppendRequest(
-                    stream,
-                    ResourceVersion.Initial,
-                    envelope),
-                cancellationToken)
-            .ConfigureAwait(false);
+        var persisted = await PersistTerminalEventAsync(
+            new EventAppendRequest(
+                stream,
+                ResourceVersion.Initial,
+                envelope));
 
         if (persisted.IsFailure)
             return Result<AgentExecutionResult>.Failure(persisted.Error!);
