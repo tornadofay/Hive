@@ -321,7 +321,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
         }
         catch (ExternalException exception)
         {
-            Write("EXCEPTION", exception.ToString());
+            Write("EXCEPTION", HiveUiExceptionDiagnostics.Format(exception));
 
             HiveMessageBox.ShowError(
                 FindForm(),
