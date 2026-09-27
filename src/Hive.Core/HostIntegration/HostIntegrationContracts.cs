@@ -391,6 +391,13 @@ public sealed record HiveHostControlDescriptor
         if (items.Any(static item => item is null))
             throw new ArgumentException("Capabilities cannot contain null values.", nameof(capabilities));
 
+        if (items.Select(static item => item.Id).Distinct().Count() != items.Length)
+        {
+            throw new ArgumentException(
+                "Capability identities must be unique within a control descriptor.",
+                nameof(capabilities));
+        }
+
         return new ReadOnlyCollection<HiveHostCapabilityDescriptor>(items);
     }
 }
@@ -473,11 +480,32 @@ public sealed record HiveHostDataSurfaceDescriptor
         ArgumentNullException.ThrowIfNull(fields);
         ArgumentNullException.ThrowIfNull(capabilities);
 
+        var fieldItems = fields.ToArray();
+        var capabilityItems = capabilities.ToArray();
+
+        if (fieldItems.Select(static field => field.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count() != fieldItems.Length)
+        {
+            throw new ArgumentException(
+                "Field names must be unique within a data-surface descriptor.",
+                nameof(fields));
+        }
+
+        if (capabilityItems.Select(static capability => capability.Id)
+            .Distinct()
+            .Count() != capabilityItems.Length)
+        {
+            throw new ArgumentException(
+                "Capability identities must be unique within a data-surface descriptor.",
+                nameof(capabilities));
+        }
+
         Id = id.Trim();
         Name = name.Trim();
         RowCount = rowCount;
-        Fields = new ReadOnlyCollection<HiveHostFieldDescriptor>(fields.ToArray());
-        Capabilities = new ReadOnlyCollection<HiveHostCapabilityDescriptor>(capabilities.ToArray());
+        Fields = new ReadOnlyCollection<HiveHostFieldDescriptor>(fieldItems);
+        Capabilities = new ReadOnlyCollection<HiveHostCapabilityDescriptor>(capabilityItems);
         Children = new ReadOnlyCollection<HiveHostChildDataSurfaceDescriptor>(
             (children ?? Array.Empty<HiveHostChildDataSurfaceDescriptor>()).ToArray());
     }
@@ -670,12 +698,34 @@ public sealed record HiveHostContextDescriptor
         ArgumentNullException.ThrowIfNull(dataSurfaces);
         ArgumentNullException.ThrowIfNull(businessOperations);
 
+        var controlItems = controls.ToArray();
+        var surfaceItems = dataSurfaces.ToArray();
+        var businessOperationItems = businessOperations.ToArray();
+
+        if (controlItems.Select(static control => control.Id)
+            .Distinct(StringComparer.Ordinal)
+            .Count() != controlItems.Length)
+        {
+            throw new ArgumentException(
+                "Control identities must be unique within a host-context descriptor.",
+                nameof(controls));
+        }
+
+        if (surfaceItems.Select(static surface => surface.Id)
+            .Distinct(StringComparer.Ordinal)
+            .Count() != surfaceItems.Length)
+        {
+            throw new ArgumentException(
+                "Data-surface identities must be unique within a host-context descriptor.",
+                nameof(dataSurfaces));
+        }
+
         RegistrationId = registrationId;
         HostName = hostName.Trim();
         Provenance = provenance;
-        Controls = new ReadOnlyCollection<HiveHostControlDescriptor>(controls.ToArray());
-        DataSurfaces = new ReadOnlyCollection<HiveHostDataSurfaceDescriptor>(dataSurfaces.ToArray());
-        BusinessOperations = new ReadOnlyCollection<HiveHostBusinessOperationDescriptor>(businessOperations.ToArray());
+        Controls = new ReadOnlyCollection<HiveHostControlDescriptor>(controlItems);
+        DataSurfaces = new ReadOnlyCollection<HiveHostDataSurfaceDescriptor>(surfaceItems);
+        BusinessOperations = new ReadOnlyCollection<HiveHostBusinessOperationDescriptor>(businessOperationItems);
     }
 
     public Guid RegistrationId { get; }
@@ -700,6 +750,7 @@ public sealed record HiveHostCapabilityRequest
         string adapterId,
         ResourceReference? source = null,
         string? controlId = null,
+        string? lookupId = null,
         string? surfaceId = null,
         HiveHostRowIdentity? rowIdentity = null,
         string? fieldName = null,
@@ -731,6 +782,15 @@ public sealed record HiveHostCapabilityRequest
         Source = source;
         ControlId = Clean(controlId);
         SurfaceId = Clean(surfaceId);
+        LookupId = Clean(lookupId);
+
+        if (capabilityKind == HiveHostCapabilityKind.ResolveLookup &&
+            LookupId is null)
+        {
+            throw new ArgumentException(
+                "A lookup identity is required for ResolveLookup authorization.",
+                nameof(lookupId));
+        }
         RowIdentity = rowIdentity;
         FieldName = Clean(fieldName);
         Action = action;
@@ -749,6 +809,8 @@ public sealed record HiveHostCapabilityRequest
     public string? ControlId { get; }
 
     public string? SurfaceId { get; }
+
+    public string? LookupId { get; }
 
     public HiveHostRowIdentity? RowIdentity { get; }
 
@@ -771,8 +833,7 @@ public sealed record HiveHostInteractionRequest
         HiveHostRowIdentity? rowIdentity = null,
         string? fieldName = null,
         HiveHostValue? value = null,
-        HiveHostActionKind? action = null,
-        string? expectedHostVersion = null)
+        HiveHostActionKind? action = null)
     {
         if (capabilityId == Guid.Empty)
             throw new ArgumentException("Capability identity is required.", nameof(capabilityId));
@@ -804,7 +865,6 @@ public sealed record HiveHostInteractionRequest
         FieldName = Clean(fieldName);
         Value = value;
         Action = action;
-        ExpectedHostVersion = Clean(expectedHostVersion);
     }
 
     public Guid CapabilityId { get; }
@@ -824,8 +884,6 @@ public sealed record HiveHostInteractionRequest
     public HiveHostValue? Value { get; }
 
     public HiveHostActionKind? Action { get; }
-
-    public string? ExpectedHostVersion { get; }
 
     private static string? Clean(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
