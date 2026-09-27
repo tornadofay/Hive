@@ -264,7 +264,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             if (!IsDisposed && !Disposing)
             {
                 SetTestStatus(
-                    $"Connection test failed: {exception.Message}",
+                    "Connection test failed. See technical details.",
                     HiveStatusTone.Error);
                 HiveUiErrorReporter.Report(
                     this,
