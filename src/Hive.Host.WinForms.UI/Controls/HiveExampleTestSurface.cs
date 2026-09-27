@@ -702,7 +702,7 @@ public sealed class HiveExampleTestSurface : UserControl
                     "The code snippet could not be copied to the clipboard.",
                     HiveMessageType.Error,
                     MessageBoxButtons.OK,
-                    exception.ToString(),
+                    HiveUiExceptionDiagnostics.Format(exception),
                     DetailsExpanded: true),
                 FindHiveThemeManager());
         }
