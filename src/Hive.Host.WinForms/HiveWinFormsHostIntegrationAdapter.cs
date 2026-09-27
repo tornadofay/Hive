@@ -28,9 +28,9 @@ public interface IHiveWinFormsSemanticProvider
     /// <see cref="IHiveHostIntegrationAdapter"/> so application code uses the Management authorization
     /// boundary instead of invoking low-level host execution directly on this concrete type.
     /// </summary>
-    public sealed class HiveWinFormsHostIntegrationAdapter :
-        IHiveHostIntegrationAdapter,
-        IDisposable
+public sealed class HiveWinFormsHostIntegrationAdapter :
+    IHiveHostIntegrationAdapter,
+    IDisposable
 {
     private readonly HiveWinFormsHostContext _context;
     private readonly HiveWinFormsHostRegistration _registration;
