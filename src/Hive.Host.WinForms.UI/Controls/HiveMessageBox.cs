@@ -801,7 +801,7 @@ public static class HiveMessageBox
                         "The technical details could not be copied to the clipboard.",
                         HiveMessageType.Error,
                         MessageBoxButtons.OK,
-                        exception.ToString(),
+                        HiveUiExceptionDiagnostics.Format(exception),
                         DetailsExpanded: true),
                     _themeManager);
             }
