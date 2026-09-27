@@ -18,8 +18,8 @@ public static class HiveUiErrorReporter
         ArgumentNullException.ThrowIfNull(exception);
 
         var safeMessage = string.IsNullOrWhiteSpace(message)
-            ? exception.Message
-            : message;
+            ? "The requested operation failed."
+            : HiveUiExceptionDiagnostics.SanitizeMessage(message);
 
         var technicalDetails = HiveUiExceptionDiagnostics.Format(exception);
         output?.Write("EXCEPTION", technicalDetails);
@@ -45,6 +45,8 @@ public static class HiveUiErrorReporter
     {
         if (string.IsNullOrWhiteSpace(message))
             message = "The requested operation failed.";
+        else
+            message = HiveUiExceptionDiagnostics.SanitizeMessage(message);
 
         output?.Write("ERROR", message);
 
@@ -63,13 +65,13 @@ internal static class HiveUiExceptionDiagnostics
     =
     [
         new(
-            @"(?<prefix>\b(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|refresh[_-]?token)\s*[:=]\s*[""'])(?<value>[^""']*)(?<suffix>[""'])",
+            @"(?<prefix>\b(?:password|passwd|pwd|secret|api[\s_-]?key|access[\s_-]?token|refresh[\s_-]?token|client[\s_-]?secret)\s*[:=]\s*[""'])(?<value>[^""']*)(?<suffix>[""'])",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
         new(
             @"(?<prefix>\b(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|refresh[_-]?token)\s*[:=]\s*)(?<value>[^\s,;\]\}""']+)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
         new(
-            @"(?<prefix>\b(?:authorization)\s*:\s*bearer\s+)(?<value>[^\s,;]+)",
+            @"(?<prefix>\b(?:authorization)\s*:\s*(?:bearer|basic)\s+)(?<value>[^\s,;]+)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
         new(
             @"(?<prefix>://[^/\s:@]+:)(?<value>[^@\s/]+)(?<suffix>@)",
@@ -107,7 +109,7 @@ internal static class HiveUiExceptionDiagnostics
         return builder.ToString();
     }
 
-    private static string Redact(string text)
+    internal static string SanitizeMessage(string text)
     {
         var result = text;
 
