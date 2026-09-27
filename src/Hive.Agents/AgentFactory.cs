@@ -5,10 +5,14 @@ namespace Hive.Agents;
 public sealed class AgentFactory
 {
     private readonly IAgentCreationAuthorizer _authorizer;
+    private readonly IClock _clock;
 
-    public AgentFactory(IAgentCreationAuthorizer authorizer)
+    public AgentFactory(
+        IAgentCreationAuthorizer authorizer,
+        IClock? clock = null)
     {
         _authorizer = authorizer ?? throw new ArgumentNullException(nameof(authorizer));
+        _clock = clock ?? SystemClock.Instance;
     }
 
     public Result<TAgent> Create<TAgent>(
@@ -52,7 +56,8 @@ public sealed class AgentFactory
         var agent = new Agent(
             AgentId.New(),
             definition,
-            DateTimeOffset.UtcNow);
+            _clock.UtcNow,
+            _clock);
 
         return Result<TAgent>.Success((TAgent)(object)agent);
     }
