@@ -14,6 +14,8 @@ public sealed class DpapiHiveBootstrapCredentialStore :
     private static readonly byte[] AdditionalEntropy =
         Encoding.UTF8.GetBytes("Hive.BootstrapCredential.v1");
 
+    private const int MaxEncryptedCredentialBytes = 128 * 1024;
+
     private readonly string _rootPath;
 
     public DpapiHiveBootstrapCredentialStore(string? rootPath = null)
@@ -167,7 +169,14 @@ public sealed class DpapiHiveBootstrapCredentialStore :
                 bufferSize: 4096,
                 useAsync: true);
 
-            encrypted = new byte[stream.Length];
+            if (stream.Length <= 0 ||
+                stream.Length > MaxEncryptedCredentialBytes)
+            {
+                throw new InvalidDataException(
+                    "The bootstrap credential file size is invalid.");
+            }
+
+            encrypted = new byte[checked((int)stream.Length)];
             var offset = 0;
 
             while (offset < encrypted.Length)
