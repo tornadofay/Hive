@@ -123,11 +123,7 @@ public sealed class EventOutboxPoller
 
                 if (renewed.IsFailure)
                 {
-                    return Hive.Core.Result.Failure(
-                        HivePersistenceError.External(
-                            "hive.outbox.lease-renewal",
-                            "Outbox lease renewal failed.",
-                            renewed.Error));
+                    return Hive.Core.Result.Failure(renewed.Error!);
                 }
             }
 
