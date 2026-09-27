@@ -74,9 +74,9 @@ internal static class HiveUiExceptionDiagnostics
             @"(?<prefix>\b(?:password|passwd|pwd|secret|api[\s_-]?key|access[\s_-]?token|refresh[\s_-]?token|client[\s_-]?secret)\s*[:=]\s*)(?!(?:[""']|$))(?<value>[^\r\n,;\]\}]+?)(?=$|[\r\n,;\]\}])",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
         new(
-        new(
             @"(?<prefix>\b(?:double|single)[\s_-]?quote\s*=\s*(?<quote>[""']))(?<value>(?:\\[\s\S]|(?!\k<quote>)[^\\])*)(?<suffix>\k<quote>)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+        new(
             @"(?<prefix>\b(?:authorization)\s*:\s*(?:bearer|basic)\s+)(?<value>[^\s,;]+)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
         new(
