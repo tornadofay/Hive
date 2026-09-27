@@ -1,23 +1,23 @@
 # Hive — Active Work
 
-Status: IN PROGRESS
+Status: VERIFICATION PENDING
 
 Current slice: **Revision — Host Integration Contract Corrections Revision**
 
-Revision scope:
-- Re-audit the immediately preceding bounded revision.
-- Correct the remaining same-scope test gap: the Management capture-forwarding regression must explicitly exercise ReadControl and prove its originating CaptureId reaches the capability authorizer.
-- Preserve production behavior and existing architecture/contracts.
+Correction completed:
+- Changed the Management capture-forwarding regression to exercise ReadControl explicitly.
+- Added a dedicated fake ReadControl capability identity so the test proves Management forwards the originating CaptureId on the ReadControl authorization path.
+
+Scope remains limited to the immediately preceding revision's test-coverage correction.
 
 Exclusions:
-- No production runtime changes unless strictly required to correct an already-identified same-scope defect.
+- No production runtime changes.
 - No new host-integration capability.
-- No material public-contract expansion.
+- No public-contract expansion.
 - No Phase 1.16+ work.
 - No unrelated refactoring, persistence/schema changes, UI redesign, or roadmap advancement.
 
-Checkpoint:
-- Main is at df0668a3b20d717834aac694216bf8b0afd0b744.
-- Existing 373/373 verification remains historical evidence for the preceding revision.
-- This correction must return to VERIFICATION PENDING before closure.
-
+Verification:
+- Previous 373/373 result remains historical evidence for the prior revision state.
+- Developer re-verification is required for HiveHostIntegrationContractTests, HiveWinFormsHostIntegrationTests, and the full Hive.Tests suite.
+- No implementation-affecting changes may be made while this gate is pending unless a real in-scope failure is recorded here first.
