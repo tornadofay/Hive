@@ -526,6 +526,104 @@ public sealed class AgentExecutionIntegrationTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_StartedEventPersistenceFailure_PersistsInitialTerminalFailure()
+    {
+        var store = new ScriptedStartEventStore(
+            new Error(
+                "test.execution-start-persistence",
+                ErrorCategory.External,
+                "synthetic start persistence failure"));
+
+        using var httpClient = new HttpClient();
+        var service = new AgentExecutionService(
+            store,
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var agent = CreateAgent(context);
+        var runtime = agent.CreateRuntimeInstance();
+        var target = CreateTarget(
+            new Uri("https://example.invalid/v1"),
+            context.PrincipalId!.Value,
+            context.TenantId!.Value);
+
+        var result = await service.ExecuteAsync(
+            new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                context,
+                "Persist a terminal state when start persistence fails."));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "test.execution-start-persistence",
+            result.Error!.Code);
+
+        Assert.Equal(
+            ["agent.execution.started", "agent.execution.failed"],
+            store.Envelopes.Select(static envelope => envelope.EventType.Value).ToArray());
+        Assert.Equal(
+            ExecutionStatus.Failed.ToString(),
+            store.Envelopes[1].Payload.GetProperty("status").GetString());
+        Assert.Null(store.Envelopes[1].CausationId);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_CancellationDuringStartedEventPersistence_PersistsInitialCancellation()
+    {
+        var store = new ScriptedStartEventStore(
+            cancellationOnFirstAppend: true);
+
+        using var httpClient = new HttpClient();
+        var service = new AgentExecutionService(
+            store,
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var agent = CreateAgent(context);
+        var runtime = agent.CreateRuntimeInstance();
+        var target = CreateTarget(
+            new Uri("https://example.invalid/v1"),
+            context.PrincipalId!.Value,
+            context.TenantId!.Value);
+
+        using var cancellation = new CancellationTokenSource();
+
+        var executionTask = service.ExecuteAsync(
+            new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                context,
+                "Cancel during lifecycle persistence."),
+            cancellation.Token);
+
+        await store.FirstAppendStarted.Task.WaitAsync(
+            TimeSpan.FromSeconds(5));
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => executionTask);
+
+        Assert.Equal(
+            ["agent.execution.cancelled"],
+            store.Envelopes.Select(static envelope => envelope.EventType.Value).ToArray());
+        Assert.Equal(
+            ExecutionStatus.Cancelled.ToString(),
+            store.Envelopes[0].Payload.GetProperty("status").GetString());
+        Assert.Null(store.Envelopes[0].CausationId);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_TargetScopeMismatchFailsBeforeExecution()
     {
         var database = await PrepareDatabase("Hive_Test_AgentExecutionScope");
@@ -848,6 +946,81 @@ public sealed class AgentExecutionIntegrationTests
                     new CapabilityKey("text.generate"),
                     CapabilityState.Supported)
             ]);
+    }
+
+    private sealed class ScriptedStartEventStore : IEventPersistenceStore
+    {
+        private readonly Error? _firstAppendFailure;
+        private readonly bool _cancellationOnFirstAppend;
+        private int _appendCount;
+
+        public ScriptedStartEventStore(
+            Error? firstAppendFailure = null,
+            bool cancellationOnFirstAppend = false)
+        {
+            _firstAppendFailure = firstAppendFailure;
+            _cancellationOnFirstAppend = cancellationOnFirstAppend;
+        }
+
+        public TaskCompletionSource<bool> FirstAppendStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public List<EventEnvelope> Envelopes { get; } = [];
+
+        public async Task<Result<EventAppendResult>> AppendAsync(
+            EventAppendRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            if (Interlocked.Increment(ref _appendCount) == 1)
+            {
+                FirstAppendStarted.TrySetResult(true);
+
+                if (_cancellationOnFirstAppend)
+                {
+                    await Task.Delay(
+                        Timeout.InfiniteTimeSpan,
+                        cancellationToken);
+                }
+
+                if (_firstAppendFailure is not null)
+                    return Result<EventAppendResult>.Failure(_firstAppendFailure);
+            }
+
+            Envelopes.Add(request.Envelope);
+
+            return Result<EventAppendResult>.Success(
+                new EventAppendResult(
+                    new PersistedEvent(
+                        request.Stream,
+                        request.StreamVersion,
+                        request.Envelope),
+                    request.Snapshot,
+                    new EventOutboxEntry(
+                        request.Stream,
+                        request.StreamVersion,
+                        request.Envelope)));
+        }
+
+        public Task<Result<IReadOnlyList<PersistedEvent>>> ReadEventsAsync(
+            ResourceReference stream,
+            ResourceVersion? afterVersion = null,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<EventSnapshot?>> GetSnapshotAsync(
+            ResourceReference stream,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<IReadOnlyList<EventSnapshot>>> ListSnapshotsAsync(
+            ResourceKind streamKind,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<EventOutboxEntry?>> GetOutboxAsync(
+            EventId eventId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class ThrowingHttpMessageHandler : HttpMessageHandler
