@@ -37,6 +37,9 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     private readonly HiveWinFormsHostContextOptions _options;
     private readonly object _captureGate = new();
     private HiveHostContextDescriptor? _currentCapture;
+    private IReadOnlyDictionary<string, Control>? _currentControls;
+    private IReadOnlyDictionary<string, DataGridView>? _currentSurfaces;
+    private long _captureGeneration;
     private int _disposed;
 
     public HiveWinFormsHostIntegrationAdapter(
@@ -85,6 +88,14 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         }
 
         cancellationToken.ThrowIfCancellationRequested();
+
+        var captureGeneration = Interlocked.Increment(ref _captureGeneration);
+        lock (_captureGate)
+        {
+            _currentCapture = null;
+            _currentControls = null;
+            _currentSurfaces = null;
+        }
 
         if (_registration.Root.IsDisposed ||
             _registration.Root.Disposing)
@@ -224,9 +235,29 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 _semanticProvider?.GetBusinessOperations()
                     ?? Array.Empty<HiveHostBusinessOperationDescriptor>());
 
+            var controlsById = capturedControls.ToDictionary(
+                entry => "control:" + controlIds[entry.Control],
+                entry => entry.Control,
+                StringComparer.Ordinal);
+
+            var surfacesById = surfaceEntries.ToDictionary(
+                entry => entry.Surface.Id,
+                entry => entry.Grid,
+                StringComparer.Ordinal);
+
             lock (_captureGate)
             {
+                if (captureGeneration != _captureGeneration)
+                {
+                    return Result<HiveHostContextDescriptor>.Failure(
+                        Error.Conflict(
+                            "hive.host.winforms.capture-superseded",
+                            "The host capture was superseded by a newer capture."));
+                }
+
                 _currentCapture = descriptor;
+                _currentControls = controlsById;
+                _currentSurfaces = surfacesById;
             }
 
             return Result<HiveHostContextDescriptor>.Success(descriptor);
@@ -270,7 +301,9 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
         if (RequiresFreshCapture(request.Kind))
         {
-            var captureValidation = ValidateCaptureBinding(request);
+            var captureValidation = ValidateCaptureBinding(
+                request,
+                cancellationToken);
             if (captureValidation is not null)
                 return Result<HiveHostInteractionResult>.Failure(captureValidation);
         }
@@ -464,7 +497,8 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
     }
 
     private Error? ValidateCaptureBinding(
-        HiveHostInteractionRequest request)
+        HiveHostInteractionRequest request,
+        CancellationToken cancellationToken)
     {
         if (request.CaptureId is not { } captureId)
         {
@@ -474,16 +508,23 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         }
 
         HiveHostContextDescriptor? currentCapture;
+        IReadOnlyDictionary<string, Control>? currentControls;
+        IReadOnlyDictionary<string, DataGridView>? currentSurfaces;
+
         lock (_captureGate)
         {
             currentCapture = _currentCapture;
+            currentControls = _currentControls;
+            currentSurfaces = _currentSurfaces;
         }
 
-        if (currentCapture is null)
+        if (currentCapture is null ||
+            currentControls is null ||
+            currentSurfaces is null)
         {
             return Error.Conflict(
                 "hive.host.winforms.capture-unavailable",
-                "No host capture is available for the requested interaction.");
+                "No current host capture is available for the requested interaction.");
         }
 
         if (currentCapture.Provenance.CaptureId != captureId)
@@ -509,7 +550,7 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 "The interaction does not require a fresh capture.")
         };
 
-        HiveHostCapabilityDescriptor? capability = null;
+        HiveHostCapabilityDescriptor? capability;
 
         if (request.Kind == HiveHostInteractionKind.SetControlValue)
         {
@@ -523,6 +564,24 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 .SingleOrDefault(candidate =>
                     candidate.Id == request.CapabilityId &&
                     candidate.Kind == capabilityKind);
+
+            if (capability is not null &&
+                request.ControlId is not null &&
+                currentControls.TryGetValue(
+                    request.ControlId,
+                    out var capturedControl))
+            {
+                var currentControl = FindControlById(
+                    request.ControlId,
+                    cancellationToken);
+
+                if (!ReferenceEquals(currentControl, capturedControl))
+                {
+                    return Error.Conflict(
+                        "hive.host.winforms.target-stale",
+                        "The requested WinForms control instance is no longer the one captured for this interaction.");
+                }
+            }
         }
         else if (request.Kind is
             HiveHostInteractionKind.AddRow or
@@ -539,17 +598,55 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 .SingleOrDefault(candidate =>
                     candidate.Id == request.CapabilityId &&
                     candidate.Kind == capabilityKind);
+
+            if (capability is not null &&
+                request.SurfaceId is not null &&
+                currentSurfaces.TryGetValue(
+                    request.SurfaceId,
+                    out var capturedSurface) &&
+                !IsAttachedToRoot(capturedSurface))
+            {
+                return Error.Conflict(
+                    "hive.host.winforms.target-stale",
+                    "The requested WinForms data surface instance is no longer attached to the captured host.");
+            }
         }
         else
         {
-            capability = currentCapture.Controls
-                .SelectMany(control => control.Capabilities)
-                .Concat(
-                    currentCapture.DataSurfaces
-                        .SelectMany(surface => surface.Capabilities))
-                .SingleOrDefault(candidate =>
-                    candidate.Id == request.CapabilityId &&
-                    candidate.Kind == capabilityKind);
+            IEnumerable<HiveHostCapabilityDescriptor> candidates;
+
+            if (request.ControlId is not null)
+            {
+                candidates = currentCapture.Controls
+                    .Where(control =>
+                        string.Equals(
+                            control.Id,
+                            request.ControlId,
+                            StringComparison.Ordinal))
+                    .SelectMany(control => control.Capabilities);
+            }
+            else if (request.SurfaceId is not null)
+            {
+                candidates = currentCapture.DataSurfaces
+                    .Where(surface =>
+                        string.Equals(
+                            surface.Id,
+                            request.SurfaceId,
+                            StringComparison.Ordinal))
+                    .SelectMany(surface => surface.Capabilities);
+            }
+            else
+            {
+                candidates = currentCapture.Controls
+                    .SelectMany(control => control.Capabilities)
+                    .Concat(
+                        currentCapture.DataSurfaces
+                            .SelectMany(surface => surface.Capabilities));
+            }
+
+            capability = candidates.SingleOrDefault(candidate =>
+                candidate.Id == request.CapabilityId &&
+                candidate.Kind == capabilityKind);
         }
 
         if (capability is null)
@@ -567,7 +664,47 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 "The requested host capability is currently unsupported.");
         }
 
+        if (request.Kind == HiveHostInteractionKind.InvokeAction)
+        {
+            if (request.ControlId is not null &&
+                (!currentControls.TryGetValue(
+                    request.ControlId,
+                    out var capturedControl) ||
+                 !ReferenceEquals(
+                     FindControlById(
+                         request.ControlId,
+                         cancellationToken),
+                     capturedControl)))
+            {
+                return Error.Conflict(
+                    "hive.host.winforms.target-stale",
+                    "The requested WinForms action target is no longer the one captured for this interaction.");
+            }
+
+            if (request.SurfaceId is not null &&
+                (!currentSurfaces.TryGetValue(
+                    request.SurfaceId,
+                    out var capturedSurface) ||
+                 !IsAttachedToRoot(capturedSurface)))
+            {
+                return Error.Conflict(
+                    "hive.host.winforms.target-stale",
+                    "The requested WinForms action surface is no longer the one captured for this interaction.");
+            }
+        }
+
         return null;
+    }
+
+    private bool IsAttachedToRoot(Control control)
+    {
+        var current = control;
+
+        while (current.Parent is not null)
+            current = current.Parent;
+
+        return ReferenceEquals(current, _registration.Root) ||
+               ReferenceEquals(control, _registration.Root);
     }
 
     private static bool RequiresFreshCapture(
