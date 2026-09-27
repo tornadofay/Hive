@@ -990,6 +990,8 @@ For data-surface identity, an explicit surface identifier wins; otherwise a uniq
 
 Capability identities generated from automatic behavior are deterministic for the canonical adapter/control/surface identity and capability kind. Capability identifiers remain identifiers, not authorization grants: Management authorization is still required before any consequential interaction.
 
+Within a captured host context, control identities, data-surface identities, and business-operation capability identities must be unique where the neutral contract would otherwise make authorization or target selection ambiguous. Lookup identity is additionally carried into lookup authorization, so an authorized lookup capability is bound to the specific requested lookup.
+
 `HiveDataGridView` exposes field metadata and stable-row identity configuration, but it does not become a generic data-access or business-write engine. Row mutation, host validation/save behavior, lookup resolution, and business/application actions remain host-owned through the bounded semantic-provider/operation hooks. The base control only supplies reusable contract metadata and safe standard interaction plumbing.
 
 Base metadata is owned by the host control/form instance. Disposing the adapter or host-integration registration does not dispose host controls or forms and does not invalidate host-owned application lifecycle beyond the registration itself.
