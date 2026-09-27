@@ -114,7 +114,7 @@ public sealed class EventOutboxPollerIntegrationTests
         var store = new RenewalTrackingStore(entry);
         var poller = new EventOutboxPoller(
             store,
-            TimeSpan.FromMinutes(1));
+            TimeSpan.FromMilliseconds(100));
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             poller.ProcessNextAsync(new RenewalAwareThrowingHandler(store.RenewalStarted)));
