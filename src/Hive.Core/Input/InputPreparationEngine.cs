@@ -454,7 +454,9 @@ public static class InputPreparationEngine
             return;
         }
 
-        submissionPreparationBudget.ConsumeWorkbook(preparationBudget);
+            submissionPreparationBudget.ConsumeWorkbook(preparationBudget);
+        }
+
         prepared.AddRange(localPrepared);
     }
 
