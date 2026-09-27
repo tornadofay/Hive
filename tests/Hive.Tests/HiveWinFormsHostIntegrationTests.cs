@@ -694,8 +694,8 @@ public sealed class HiveWinFormsHostIntegrationTests
             method => Assert.True(method.IsPrivate));
 
         Assert.Contains(
-            publicMethodNames,
-            nameof(HiveWinFormsHostIntegrationAdapter.AdapterId));
+            nameof(HiveWinFormsHostIntegrationAdapter.AdapterId),
+            publicMethodNames);
     }
 
     [Fact]
