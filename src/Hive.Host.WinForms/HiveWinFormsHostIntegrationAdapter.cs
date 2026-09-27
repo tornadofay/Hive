@@ -601,14 +601,18 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
 
             if (capability is not null &&
                 request.SurfaceId is not null &&
-                currentSurfaces.TryGetValue(
+                (!currentSurfaces.TryGetValue(
                     request.SurfaceId,
-                    out var capturedSurface) &&
-                !IsAttachedToRoot(capturedSurface))
+                    out var capturedSurface) ||
+                 !ReferenceEquals(
+                     FindDataSurfaceById(
+                         request.SurfaceId,
+                         cancellationToken),
+                     capturedSurface)))
             {
                 return Error.Conflict(
                     "hive.host.winforms.target-stale",
-                    "The requested WinForms data surface instance is no longer attached to the captured host.");
+                    "The requested WinForms data surface instance is no longer the one captured for this interaction.");
             }
         }
         else
@@ -685,7 +689,11 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
                 (!currentSurfaces.TryGetValue(
                     request.SurfaceId,
                     out var capturedSurface) ||
-                 !IsAttachedToRoot(capturedSurface)))
+                 !ReferenceEquals(
+                     FindDataSurfaceById(
+                         request.SurfaceId,
+                         cancellationToken),
+                     capturedSurface)))
             {
                 return Error.Conflict(
                     "hive.host.winforms.target-stale",
@@ -696,15 +704,80 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         return null;
     }
 
-    private bool IsAttachedToRoot(Control control)
+    private DataGridView? FindDataSurfaceById(
+        string surfaceId,
+        CancellationToken cancellationToken)
     {
-        var current = control;
+        const prefix = "surface:";
+        if (!surfaceId.StartsWith(prefix, StringComparison.Ordinal))
+            return null;
 
-        while (current.Parent is not null)
-            current = current.Parent;
+        var key = surfaceId[prefix.Length..];
+        var stack = new Stack<(Control Control, int Depth, string Path)>();
+        stack.Push((_registration.Root, 0, "0"));
 
-        return ReferenceEquals(current, _registration.Root) ||
-               ReferenceEquals(control, _registration.Root);
+        var candidates = new List<(DataGridView Grid, string Identity)>();
+        var visited = new HashSet<Control>(
+            ReferenceEqualityComparer.Instance);
+
+        while (stack.Count > 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var (control, depth, path) = stack.Pop();
+
+            if (depth > _options.MaxDepth ||
+                visited.Count >= _options.MaxNodes)
+            {
+                continue;
+            }
+
+            if (!visited.Add(control) ||
+                control.IsDisposed ||
+                control.Disposing)
+            {
+                continue;
+            }
+
+            if (control is DataGridView grid)
+            {
+                var explicitId = grid is IHiveWinFormsDataSurface hiveSurface
+                    ? CleanOptional(hiveSurface.HiveDataSurface.SurfaceId)
+                    : null;
+
+                var identity = explicitId is not null
+                    ? "surface:" + explicitId
+                    : "surface:" +
+                      (!string.IsNullOrWhiteSpace(grid.Name)
+                          ? grid.Name.Trim()
+                          : path);
+
+                candidates.Add((grid, identity));
+            }
+
+            if (depth >= _options.MaxDepth)
+                continue;
+
+            for (var index = control.Controls.Count - 1; index >= 0; index--)
+            {
+                stack.Push((
+                    control.Controls[index],
+                    depth + 1,
+                    path + "/" + index));
+            }
+        }
+
+        var matches = candidates
+            .Where(candidate =>
+                string.Equals(
+                    candidate.Identity,
+                    surfaceId,
+                    StringComparison.Ordinal))
+            .ToArray();
+
+        return matches.Length == 1
+            ? matches[0].Grid
+            : null;
     }
 
     private static bool RequiresFreshCapture(
