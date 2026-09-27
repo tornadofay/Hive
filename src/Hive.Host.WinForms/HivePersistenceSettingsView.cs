@@ -261,13 +261,17 @@ internal sealed class HivePersistenceSettingsView : UserControl
     {
         SetStatus("Saving persistence configuration...", HiveStatusTone.Information);
 
-        HivePersistenceConfiguration? configuration;
+        HivePersistenceConfiguration configuration;
+        HiveBootstrapCredentialReference? createdBootstrapReference = null;
         var previousBootstrapReference = _loadedConfiguration?.BootstrapCredential;
 
         try
         {
-            configuration = await BuildConfigurationAsync(cancellationToken)
+            var built = await BuildConfigurationAsync(cancellationToken)
                 .ConfigureAwait(true);
+
+            configuration = built.Configuration;
+            createdBootstrapReference = built.CreatedBootstrapCredential;
         }
         catch (ArgumentException exception)
         {
@@ -289,23 +293,52 @@ internal sealed class HivePersistenceSettingsView : UserControl
             return;
         }
 
-        var result = await _management
-            .SavePersistenceConfigurationAsync(
-                configuration,
-                _accessContext,
-                cancellationToken)
-            .ConfigureAwait(true);
+        Result<HivePersistenceConfiguration> result;
+
+        try
+        {
+            result = await _management
+                .SavePersistenceConfigurationAsync(
+                    configuration,
+                    _accessContext,
+                    cancellationToken)
+                .ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            if (createdBootstrapReference is { } createdReference &&
+                createdReference != previousBootstrapReference)
+            {
+                await TryRemoveBootstrapCredentialAsync(
+                    createdReference,
+                    "The newly created bootstrap credential could not be removed after the save was cancelled.")
+                    .ConfigureAwait(true);
+            }
+
+            throw;
+        }
+        catch
+        {
+            if (createdBootstrapReference is { } createdReference &&
+                createdReference != previousBootstrapReference)
+            {
+                await TryRemoveBootstrapCredentialAsync(
+                    createdReference,
+                    "The newly created bootstrap credential could not be removed after the save failed.")
+                    .ConfigureAwait(true);
+            }
+
+            throw;
+        }
 
         if (result.IsFailure)
         {
-            if (configuration.BootstrapCredential is { } createdReference &&
+            if (createdBootstrapReference is { } createdReference &&
                 createdReference != previousBootstrapReference)
             {
-                await _management
-                    .RemoveBootstrapCredentialAsync(
-                        createdReference,
-                        _accessContext,
-                        cancellationToken)
+                await TryRemoveBootstrapCredentialAsync(
+                    createdReference,
+                    "The newly created bootstrap credential could not be removed after the save failed.")
                     .ConfigureAwait(true);
             }
 
@@ -446,10 +479,10 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         try
         {
-            configuration = await BuildConfigurationAsync(
+            configuration = (await BuildConfigurationAsync(
                     cancellationToken,
                     persistCredential: false)
-                .ConfigureAwait(true);
+                .ConfigureAwait(true)).Configuration;
         }
         catch (ArgumentException exception)
         {
@@ -513,7 +546,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
             "Hive Persistence");
     }
 
-    private async Task<HivePersistenceConfiguration> BuildConfigurationAsync(
+    private async Task<(
+        HivePersistenceConfiguration Configuration,
+        HiveBootstrapCredentialReference? CreatedBootstrapCredential)> BuildConfigurationAsync(
         CancellationToken cancellationToken,
         bool persistCredential = true)
     {
@@ -551,47 +586,66 @@ internal sealed class HivePersistenceSettingsView : UserControl
             timeout);
 
         if (authentication != HiveSqlAuthenticationMode.SqlPassword)
-            return configuration;
+            return (configuration, null);
 
-        if (!string.IsNullOrWhiteSpace(_passwordTextBox.Text))
+        HiveBootstrapCredentialReference? createdBootstrapCredential = null;
+
+        try
         {
-            if (!persistCredential)
+            if (!string.IsNullOrWhiteSpace(_passwordTextBox.Text))
             {
-                if (credential is null)
+                if (!persistCredential)
                 {
-                    throw new ArgumentException(
-                        "A saved SQL password credential is required for a non-destructive connection test.");
+                    if (credential is null)
+                    {
+                        throw new ArgumentException(
+                            "A saved SQL password credential is required for a non-destructive connection test.");
+                    }
+                }
+                else
+                {
+                    credential = await SaveCredentialAsync(
+                        _passwordTextBox.Text,
+                        existing: null,
+                        cancellationToken).ConfigureAwait(true);
+
+                    createdBootstrapCredential = credential;
+
+                    configuration = new HivePersistenceConfiguration(
+                        configuration.Backend,
+                        configuration.ServerName,
+                        configuration.Port,
+                        configuration.DatabaseName,
+                        configuration.AuthenticationMode,
+                        configuration.UserName,
+                        credential,
+                        configuration.Encrypt,
+                        configuration.TrustServerCertificate,
+                        configuration.CreateDatabaseIfMissing,
+                        configuration.CommandTimeoutSeconds);
                 }
             }
-            else
+
+            if (credential is null)
             {
-                credential = await SaveCredentialAsync(
-                    _passwordTextBox.Text,
-                    existing: null,
-                    cancellationToken).ConfigureAwait(true);
-
-                configuration = new HivePersistenceConfiguration(
-                    configuration.Backend,
-                    configuration.ServerName,
-                    configuration.Port,
-                    configuration.DatabaseName,
-                    configuration.AuthenticationMode,
-                    configuration.UserName,
-                    credential,
-                    configuration.Encrypt,
-                    configuration.TrustServerCertificate,
-                    configuration.CreateDatabaseIfMissing,
-                    configuration.CommandTimeoutSeconds);
+                throw new ArgumentException(
+                    "SQL password authentication requires a saved credential. Enter a password and save the settings first.");
             }
-        }
 
-        if (credential is null)
+            return (configuration, createdBootstrapCredential);
+        }
+        catch
         {
-            throw new ArgumentException(
-                "SQL password authentication requires a saved credential. Enter a password and save the settings first.");
-        }
+            if (createdBootstrapCredential is { } createdReference)
+            {
+                await TryRemoveBootstrapCredentialAsync(
+                    createdReference,
+                    "The newly created bootstrap credential could not be removed after configuration construction failed.")
+                    .ConfigureAwait(true);
+            }
 
-        return configuration;
+            throw;
+        }
     }
 
     private async Task<HiveBootstrapCredentialReference> SaveCredentialAsync(
@@ -661,6 +715,64 @@ internal sealed class HivePersistenceSettingsView : UserControl
         else
         {
             _credentialStatus.Text = "Saved credential: not configured.";
+        }
+    }
+
+    private async Task TryRemoveBootstrapCredentialAsync(
+        HiveBootstrapCredentialReference reference,
+        string cleanupFailureMessage)
+    {
+        try
+        {
+            var configuration = await _management
+                .GetPersistenceConfigurationAsync(
+                    _accessContext,
+                    CancellationToken.None)
+                .ConfigureAwait(true);
+
+            if (configuration.IsFailure)
+            {
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    cleanupFailureMessage,
+                    "Hive Persistence",
+                    _output,
+                    _themeManager);
+                return;
+            }
+
+            if (configuration.Value!.BootstrapCredential == reference)
+                return;
+
+            var cleanup = await _management
+                .RemoveBootstrapCredentialAsync(
+                    reference,
+                    _accessContext,
+                    CancellationToken.None)
+                .ConfigureAwait(true);
+
+            if (cleanup.IsSuccess || IsDisposed || Disposing)
+                return;
+
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                cleanupFailureMessage,
+                "Hive Persistence",
+                _output,
+                _themeManager);
+        }
+        catch (Exception exception)
+        {
+            if (!IsDisposed && !Disposing)
+            {
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    exception,
+                    "Hive Persistence",
+                    cleanupFailureMessage,
+                    _output,
+                    _themeManager);
+            }
         }
     }
 
