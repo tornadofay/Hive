@@ -85,6 +85,16 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
                             "A provider account cannot be created under a retired provider."));
                 }
 
+                var credentialError = await ValidateCredentialSecretReferenceAsync(
+                    connection,
+                    transaction,
+                    account.CredentialSecret,
+                    accessContext,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (credentialError is not null)
+                    return Result<ProviderAccount>.Failure(credentialError);
+
                 await InsertProviderAccountAsync(
                     connection,
                     transaction,
@@ -210,6 +220,16 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
 
                 if (validation is not null)
                     return Result<ProviderAccount>.Failure(validation);
+
+                var credentialError = await ValidateCredentialSecretReferenceAsync(
+                    connection,
+                    transaction,
+                    account.CredentialSecret,
+                    accessContext,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (credentialError is not null)
+                    return Result<ProviderAccount>.Failure(credentialError);
 
                 var current = await _reader.LoadProviderAccountAsync(
                     connection,
@@ -461,6 +481,129 @@ internal sealed class SqlProviderAccountStore : SqlResourceStoreBase
                 return Result<ProviderAccount>.Success(retired);
             });
 
+
+    private static async Task<Error?> ValidateCredentialSecretReferenceAsync(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        SecretReference? credentialSecret,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken)
+    {
+        if (credentialSecret is null)
+            return null;
+
+        await using var command = CreateCommand(
+            connection,
+            """
+            SELECT
+                [OwnerPrincipalId],
+                [ScopeKind],
+                [ScopeIdentity],
+                [LifecycleStatus]
+            FROM [dbo].[HiveSecrets] WITH (UPDLOCK, HOLDLOCK)
+            WHERE [SecretId] = @SecretId;
+            """,
+            transaction);
+
+        command.Parameters.Add(
+            GuidParameter(
+                "@SecretId",
+                credentialSecret.Id.Value));
+
+        await using var reader = await command.ExecuteReaderAsync(
+                CommandBehavior.SingleRow,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            return NotFound(
+                "hive.provider-account.credential-secret-not-found",
+                "The provider account credential secret does not exist.");
+        }
+
+        var owner = new PrincipalId(
+            reader.GetGuid(reader.GetOrdinal("OwnerPrincipalId")));
+
+        if (owner != accessContext.PrincipalId)
+        {
+            return new Error(
+                "hive.provider-account.credential-secret-forbidden",
+                ErrorCategory.Forbidden,
+                "The current principal cannot use the provider account credential secret.");
+        }
+
+        var scopeKind = (ResourceScopeKind)reader.GetInt32(
+            reader.GetOrdinal("ScopeKind"));
+        var scopeIdentity = reader.IsDBNull(
+            reader.GetOrdinal("ScopeIdentity"))
+            ? null
+            : reader.GetGuid(reader.GetOrdinal("ScopeIdentity"));
+
+        if (!ScopeMatches(scopeKind, scopeIdentity, accessContext))
+        {
+            return new Error(
+                "hive.provider-account.credential-secret-forbidden",
+                ErrorCategory.Forbidden,
+                "The current access context cannot use the provider account credential secret.");
+        }
+
+        var lifecycle = (ResourceLifecycleStatus)reader.GetInt32(
+            reader.GetOrdinal("LifecycleStatus"));
+
+        if (lifecycle != ResourceLifecycleStatus.Active)
+        {
+            return Conflict(
+                "hive.provider-account.credential-secret-inactive",
+                "The provider account credential secret is not active.");
+        }
+
+        return null;
+    }
+
+    private static bool ScopeMatches(
+        ResourceScopeKind scopeKind,
+        Guid? scopeIdentity,
+        ResourceAccessContext accessContext)
+    {
+        if (scopeKind == ResourceScopeKind.Global)
+            return scopeIdentity is null;
+
+        if (scopeIdentity is null ||
+            scopeIdentity.Value == Guid.Empty)
+        {
+            return false;
+        }
+
+        return scopeKind switch
+        {
+            ResourceScopeKind.Tenant =>
+                accessContext.TenantId is not null &&
+                scopeIdentity == accessContext.TenantId.Value.Value,
+
+            ResourceScopeKind.User =>
+                accessContext.UserId is not null &&
+                scopeIdentity == accessContext.UserId.Value.Value,
+
+            ResourceScopeKind.Workspace =>
+                accessContext.WorkspaceId is not null &&
+                scopeIdentity == accessContext.WorkspaceId.Value.Value,
+
+            ResourceScopeKind.Agent =>
+                accessContext.AgentId is not null &&
+                scopeIdentity == accessContext.AgentId.Value.Value,
+
+            ResourceScopeKind.Runtime =>
+                accessContext.RuntimeId is not null &&
+                scopeIdentity == accessContext.RuntimeId.Value.Value,
+
+            ResourceScopeKind.Execution =>
+                accessContext.ExecutionId is not null &&
+                scopeIdentity == accessContext.ExecutionId.Value.Value,
+
+            _ => false
+        };
+    }
 
     private async Task InsertProviderAccountAsync(
         SqlConnection connection,
