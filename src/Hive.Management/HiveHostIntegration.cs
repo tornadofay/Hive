@@ -95,7 +95,8 @@ public sealed class HiveHostIntegrationService : IHiveHostIntegrationService
                 surfaceId: request.SurfaceId,
                 rowIdentity: request.RowIdentity,
                 fieldName: request.FieldName,
-                action: request.Action),
+                action: request.Action,
+                captureId: request.CaptureId),
             accessContext);
 
         if (authorization.IsFailure)
