@@ -15,10 +15,14 @@ internal abstract class SqlResourceStoreBase
         SqlResourceStoreCommon.JsonOptions;
 
     protected readonly HiveDatabaseOptions _options;
+    protected readonly IClock _clock;
 
-    protected SqlResourceStoreBase(HiveDatabaseOptions options)
+    protected SqlResourceStoreBase(
+        HiveDatabaseOptions options,
+        IClock? clock = null)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
+        _clock = clock ?? SystemClock.Instance;
     }
 
     protected static IReadOnlyDictionary<string, string> DeserializeMetadata(
