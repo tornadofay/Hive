@@ -98,12 +98,12 @@ internal sealed class BaseAgentWorkProtocolsExampleView : UserControl
 
         var firstRuntime = agent.CreateRuntimeInstance(
             now,
-            clock,
-            delegation: delegation);
+            delegation,
+            clock);
         var secondRuntime = agent.CreateRuntimeInstance(
             now,
-            clock,
-            delegation: delegation);
+            delegation,
+            clock);
 
         var firstContext = new ResourceAccessContext(
             deployment,
