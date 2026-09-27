@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Current slice: Maintenance — Host/UI: Host Integration Contract Corrections
 
@@ -24,9 +24,9 @@ Remediation completed:
 Developer follow-up failure:
 - Two `Hive.Tests` compile errors (`CS1061`) remain at lines 67 and 87 of `HiveWinFormsHostIntegrationTests.cs` because those tests still call `CaptureAsync` directly on the concrete adapter type. This is inside the same explicit-interface correction boundary.
 
-Remediation target:
-- Route the two remaining test `CaptureAsync` calls through the `IHiveHostIntegrationAdapter` interface helper.
-- Reinspect the affected test file and return to `VERIFICATION PENDING` with the exact developer rerun targets.
+Remediation completed:
+- Routed the two remaining test `CaptureAsync` calls through the `IHiveHostIntegrationAdapter` interface helper.
+- Reinspected the affected test file; no remaining concrete-adapter calls to `CaptureAsync`, `ExecuteInteractionAsync`, or `ResolveLookupAsync` remain.
 
 Verification target:
 - Developer build with the repository's Treat-Warnings-as-Errors configuration.
