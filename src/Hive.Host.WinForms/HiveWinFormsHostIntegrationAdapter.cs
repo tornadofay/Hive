@@ -1232,7 +1232,8 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         IReadOnlyList<(
             DataGridView Grid,
             HiveWinFormsDataSurfaceMetadata? Metadata,
-            HiveHostDataSurfaceDescriptor Surface)> entries)
+            HiveHostDataSurfaceDescriptor Surface,
+            string Path)> entries)
     {
         var duplicateSurface = entries
             .GroupBy(
