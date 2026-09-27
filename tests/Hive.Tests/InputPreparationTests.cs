@@ -362,7 +362,7 @@ public sealed class InputPreparationTests
         var fourthWorkbook = CreateWorkbook(
             ("Fourth", CreateRows(4999)));
         var fifthWorkbook = CreateWorkbook(
-            ("Fifth", CreateRows(5)));
+            ("Fifth", CreateRows(3)));
 
         var result = InputPreparationEngine.Prepare(
             new InputSubmission(
