@@ -132,9 +132,9 @@ Do not add a new universal host framework merely to support the first V1 host. C
 
 ### 3.2 Authorization boundary and adapter execution port
 
-The application-facing authorization boundary is `Hive.Management`. Host integration requests that can affect or inspect the host are routed through the Management service, which constructs the corresponding Core capability request and invokes the configured capability authorizer before delegating to the adapter.
+The application-facing authorization boundary for authorization-relevant host operations is `Hive.Management`. Consequential host interactions and bounded lookup requests are routed through the Management service, which constructs the corresponding Core capability request and invokes the configured capability authorizer before delegating to the adapter. Host capture remains a bounded discovery operation; the Management capture method validates the access context but does not treat discovery itself as a mutable host capability.
 
-The neutral `IHiveHostIntegrationAdapter` is an execution port, not an authorization boundary. Its operations perform the concrete host capture, interaction, and bounded lookup work after the caller has reached the appropriate application-facing policy boundary.
+The neutral `IHiveHostIntegrationAdapter` is an execution port, not an authorization boundary. Its operations perform the concrete host capture, interaction, and bounded lookup work. Applications should use the Management service for authorization-relevant operations rather than treating the adapter as a general-purpose application service.
 
 The intended call path is:
 
