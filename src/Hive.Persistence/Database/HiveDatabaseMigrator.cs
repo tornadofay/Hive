@@ -31,12 +31,18 @@ public sealed class HiveDatabaseMigrator
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        // DbUp's SQL Server migration surface is synchronous. Run the complete
-        // migration on a worker thread so callers such as WinForms never block
-        // their UI thread while a database connection is opening or failing.
-        return Task.Run(
-            () => MigrateCoreAsync(cancellationToken),
-            cancellationToken);
+        // DbUp's SQL Server migration surface is synchronous. Keep that
+        // blocking dependency behind an explicit long-running execution boundary
+        // rather than using Task.Run as a generic blocking-work escape hatch.
+        // Cancellation is honored before and after the synchronous DbUp segment;
+        // DbUp itself has no cancellation-aware API and therefore is not
+        // interrupted while it is executing.
+        return Task.Factory.StartNew(
+                () => MigrateCoreAsync(cancellationToken),
+                CancellationToken.None,
+                TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning,
+                TaskScheduler.Default)
+            .Unwrap();
     }
 
     private async Task<Result<HiveDatabaseMigrationOutcome>> MigrateCoreAsync(
