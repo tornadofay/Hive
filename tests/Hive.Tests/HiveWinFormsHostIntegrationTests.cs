@@ -180,6 +180,111 @@ public sealed class HiveWinFormsHostIntegrationTests
         Assert.True(field.Required);
     }
 
+
+    [Fact]
+    public async Task Capture_RejectsSemanticProviderSurfaceIdentityMismatch()
+    {
+        using var form = new Form();
+        form.Controls.Add(
+            new DataGridView
+            {
+                Name = "orders"
+            });
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext,
+            new MismatchedSurfaceSemanticProvider());
+
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.winforms.semantic-surface-identity-mismatch",
+            result.Error!.Code);
+        Assert.Equal(ErrorCategory.Validation, result.Error.Category);
+    }
+
+    [Fact]
+    public async Task Capture_SensitiveFieldMetadataRedactsValueAndCurrentValue()
+    {
+        using var form = new Form();
+        var secret = new HiveTextBox
+        {
+            Name = "secret",
+            Text = "top-secret"
+        };
+        secret.HiveField.Sensitive = true;
+        form.Controls.Add(secret);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        var field = result.Value!.Controls.Single(item => item.Name == "secret").Field;
+        Assert.NotNull(field);
+        Assert.True(field!.Sensitive);
+        Assert.Null(field.CurrentValue);
+    }
+
+    [Fact]
+    public async Task Capture_ParentChildFieldMatchingIgnoresFieldNameCase()
+    {
+        using var form = new Form();
+        var parent = new HiveDataGridView
+        {
+            Name = "invoice",
+            AutoGenerateColumns = false
+        };
+        parent.HiveDataSurface.SurfaceId = "invoice";
+        parent.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "Id",
+                DataPropertyName = "Id"
+            });
+
+        var child = new HiveDataGridView
+        {
+            Name = "lines",
+            AutoGenerateColumns = false
+        };
+        child.HiveDataSurface.SurfaceId = "lines";
+        child.HiveDataSurface.ParentSurfaceId = "invoice";
+        child.HiveDataSurface.ParentKeyField = "id";
+        child.HiveDataSurface.ChildKeyField = "invoiceid";
+        child.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = "InvoiceId",
+                DataPropertyName = "InvoiceId"
+            });
+
+        form.Controls.Add(parent);
+        form.Controls.Add(child);
+
+        var accessContext = CreateAccessContext();
+        using var adapter = new HiveWinFormsHostIntegrationAdapter(
+            form,
+            accessContext);
+
+        var result = await AsIntegrationAdapter(adapter).CaptureAsync(accessContext);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        var invoice = result.Value!.DataSurfaces.Single(
+            surface => surface.Id == "surface:invoice");
+        Assert.Contains(
+            invoice.Children,
+            relationship => relationship.ChildSurfaceId == "surface:lines" &&
+                            relationship.ParentKeyField == "id" &&
+                            relationship.ChildKeyField == "invoiceid");
+    }
+
     [Fact]
     public async Task Capture_DuplicateExplicitControlIdentityFailsInsteadOfAliasing()
     {
@@ -1790,6 +1895,44 @@ public sealed class HiveWinFormsHostIntegrationTests
                         ErrorCategory.Forbidden,
                         "The test authorizer denied the default base-control capability."))
                 : Result.Success();
+    }
+
+    private sealed class MismatchedSurfaceSemanticProvider :
+        IHiveWinFormsSemanticProvider
+    {
+        public bool TryDescribeDataSurface(
+            DataGridView grid,
+            string surfaceId,
+            out HiveHostDataSurfaceDescriptor descriptor)
+        {
+            descriptor = new HiveHostDataSurfaceDescriptor(
+                surfaceId + "-wrong",
+                "orders",
+                0,
+                Array.Empty<HiveHostFieldDescriptor>(),
+                Array.Empty<HiveHostCapabilityDescriptor>());
+            return true;
+        }
+
+        public Task<Result<HiveHostInteractionResult>> ExecuteInteractionAsync(
+            HiveHostInteractionRequest request,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(
+                Result<HiveHostInteractionResult>.Failure(
+                    Error.Unsupported(
+                        "hive.tests.not-used",
+                        "The test semantic provider does not execute interactions.")));
+
+        public Task<Result<IReadOnlyList<HiveLookupOption>>> ResolveLookupAsync(
+            HiveLookupRequest request,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(
+                Result<IReadOnlyList<HiveLookupOption>>.Success(
+                    Array.Empty<HiveLookupOption>()));
+
+        public IReadOnlyList<HiveHostBusinessOperationDescriptor>
+            GetBusinessOperations() =>
+            Array.Empty<HiveHostBusinessOperationDescriptor>();
     }
 
     private sealed class AllowingSemanticProvider :
