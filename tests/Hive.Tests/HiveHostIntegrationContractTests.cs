@@ -6,6 +6,51 @@ namespace Hive.Tests;
 
 public sealed class HiveHostIntegrationContractTests
 {
+
+    [Fact]
+    public void HiveHostFieldDescriptor_PreservesOriginalAndSensitiveConstructorShapes()
+    {
+        var constructors = typeof(HiveHostFieldDescriptor)
+            .GetConstructors()
+            .Where(constructor => constructor.IsPublic)
+            .Select(constructor => constructor.GetParameters().Length)
+            .OrderBy(length => length)
+            .ToArray();
+
+        Assert.Contains(constructors, length => length == 10);
+        Assert.Contains(constructors, length => length == 11);
+
+        var legacy = new HiveHostFieldDescriptor(
+            "Legacy",
+            null,
+            typeof(string).FullName!,
+            false,
+            false,
+            false,
+            false,
+            false);
+
+        Assert.False(legacy.Sensitive);
+        Assert.Null(legacy.CurrentValue);
+
+        var sensitiveValue = HiveHostValue.FromString("secret");
+        var sensitive = new HiveHostFieldDescriptor(
+            "Sensitive",
+            null,
+            typeof(string).FullName!,
+            false,
+            false,
+            false,
+            false,
+            false,
+            sensitiveValue,
+            null,
+            true);
+
+        Assert.True(sensitive.Sensitive);
+        Assert.Null(sensitive.CurrentValue);
+    }
+
     [Fact]
     public void HostValues_PreserveSupportedScalarKindsWithoutHostObjects()
     {
