@@ -162,6 +162,35 @@ public sealed class AgentFactoryTests
     }
 
     [Fact]
+    public void Runtime_UsesExplicitClockForCreationWhenProvided()
+    {
+        var agentClock = new FakeClock(
+            new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero));
+        var runtimeClock = new FakeClock(
+            new DateTimeOffset(2040, 2, 3, 4, 5, 6, TimeSpan.Zero));
+
+        var agentResult = new AgentFactory(
+            new AllowBaseAgentCreationAuthorizer(),
+            agentClock)
+            .Create<Agent>(
+                new AgentDefinition("agent", "Agent"),
+                CreateContext());
+
+        Assert.True(agentResult.IsSuccess, agentResult.Error?.Message);
+
+        var runtime = agentResult.Value!.CreateRuntimeInstance(
+            clock: runtimeClock);
+
+        Assert.Equal(runtimeClock.UtcNow, runtime.CreatedAtUtc);
+
+        runtimeClock.Advance(TimeSpan.FromMinutes(1));
+        var execution = runtime.StartExecution();
+
+        Assert.True(execution.IsSuccess, execution.Error?.Message);
+        Assert.Equal(runtimeClock.UtcNow, execution.Value!.StartedAtUtc);
+    }
+
+    [Fact]
     public void Runtime_StopPreventsNewExecution()
     {
         var agentResult = new AgentFactory(
