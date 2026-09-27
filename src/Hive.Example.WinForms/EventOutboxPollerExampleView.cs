@@ -21,7 +21,7 @@ internal sealed class EventOutboxPollerExampleView : UserControl
         { Dock = DockStyle.Fill, RunButtonText = "Run outbox poller example" };
         _surface.SetInformation(
             "Creates an outbox event, simulates a failed first delivery, then retries after the lease expires.",
-            "The handler records the EventId before failing. The retry sees the same EventId, avoids duplicating the side effect, and the poller removes the row only after successful delivery.",
+            "The first delivery runs longer than its 75ms lease, so renewal keeps the claim alive before the simulated failure. The retry sees the same EventId, avoids duplicating the side effect, and the poller removes the row only after successful delivery.",
             "Scope",
             "Phase 1.8 outbox delivery only; no MAF execution, provider call, broker, or background host loop");
         _surface.CodeSnippet = """
@@ -53,7 +53,7 @@ internal sealed class EventOutboxPollerExampleView : UserControl
         var append = await store.AppendAsync(new EventAppendRequest(stream, null, eventEnvelope), cancellationToken);
         EnsureSuccess(append, "Event append");
 
-        var handler = new ExampleHandler();
+        var handler = new ExampleHandler(TimeSpan.FromMilliseconds(120));
         var poller = new EventOutboxPoller(store, TimeSpan.FromMilliseconds(75));
         var first = await poller.ProcessNextAsync(handler, cancellationToken);
         if (!first.IsFailure)
@@ -71,7 +71,7 @@ internal sealed class EventOutboxPollerExampleView : UserControl
             $"""
             Database: {options.DatabaseName}
             Event: {eventEnvelope.EventId}
-            First delivery: simulated failure; lease retained
+            First delivery: delayed beyond lease; renewal kept claim; simulated failure
             Retry delivery: success; event identity preserved
             Idempotent side effects: {handler.SideEffectCount}
             Outbox after processing: {(remaining.Value is null ? "none" : "still present")}
@@ -82,12 +82,23 @@ internal sealed class EventOutboxPollerExampleView : UserControl
     private sealed class ExampleHandler : IEventOutboxHandler
     {
         private readonly HashSet<EventId> _seenEvents = [];
+        private readonly TimeSpan _firstDeliveryDelay;
         private bool _failFirstDelivery = true;
         public int SideEffectCount { get; private set; }
 
-        public Task<Result> HandleAsync(EventOutboxEntry entry, CancellationToken cancellationToken = default)
+        public ExampleHandler(TimeSpan firstDeliveryDelay) =>
+            _firstDeliveryDelay = firstDeliveryDelay;
+
+        public async Task<Result> HandleAsync(
+            EventOutboxEntry entry,
+            CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            if (_failFirstDelivery && _firstDeliveryDelay > TimeSpan.Zero)
+                await Task.Delay(
+                    _firstDeliveryDelay,
+                    cancellationToken);
             if (_seenEvents.Add(entry.Envelope.EventId))
                 SideEffectCount++;
             if (_failFirstDelivery)
