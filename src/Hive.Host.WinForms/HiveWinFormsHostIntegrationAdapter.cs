@@ -497,8 +497,6 @@ public sealed class HiveWinFormsHostIntegrationAdapter :
         {
             HiveHostInteractionKind.SetControlValue =>
                 HiveHostCapabilityKind.SetControlValue,
-            HiveHostInteractionKind.ReadRow =>
-                HiveHostCapabilityKind.ReadRow,
             HiveHostInteractionKind.AddRow =>
                 HiveHostCapabilityKind.AddRow,
             HiveHostInteractionKind.EditRow =>
