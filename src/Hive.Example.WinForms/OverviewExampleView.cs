@@ -1,6 +1,6 @@
-using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
+using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 
 namespace Hive.Example.WinForms;
@@ -325,8 +325,13 @@ internal sealed class OverviewExampleView : UserControl
         }
         catch (Exception exception)
         {
-            System.Diagnostics.Debug.WriteLine(
-                $"Could not open Hive repository: {HiveUiExceptionDiagnostics.Format(exception)}");
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                exception,
+                "Open Hive repository",
+                "The Hive repository page could not be opened.",
+                null,
+                _themeManager);
         }
     }
 
