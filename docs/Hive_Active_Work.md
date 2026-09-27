@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Maintenance — Review Corrections
 
@@ -42,3 +42,5 @@ Required developer verification:
 - manually launch `Hive.Example.WinForms` and verify the affected Host/UI behavior remains correct where applicable.
 
 Verification state is pending because no builds/tests/manual launch were executed by the agent.
+
+Developer verification failure received: `HiveWinFormsHostIntegrationTests.Capture_BindingInspectionFailureIsReportedInsteadOfReturningIncompleteSurface` failed with a raw `ArgumentException` from `DataGridView`/`BindingContext` access before the typed binding-inspection failure boundary. Same-slice remediation is required. A review also identified the same uncovered `grid.BindingContext` access in `TryGetBoundRowCount` and will cover it with the same typed failure boundary.
