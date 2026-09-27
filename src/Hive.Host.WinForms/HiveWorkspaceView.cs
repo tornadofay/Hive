@@ -579,11 +579,13 @@ public sealed class HiveWorkspaceView : UserControl
                 !IsDisposed &&
                 !Disposing)
             {
-                ShowError(
-                    new Error(
-                        "hive.workspace.operation-failed",
-                        ErrorCategory.Internal,
-                        exception.Message));
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    exception,
+                    "Workspace operation failed",
+                    "The workspace operation could not be completed.",
+                    null,
+                    _themeManager);
             }
         }
         finally
