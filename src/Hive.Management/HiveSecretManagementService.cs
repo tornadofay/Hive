@@ -55,7 +55,7 @@ internal sealed class HiveSecretManagementService : HiveManagementServiceBase
                     "A tenant identity is required to create a Hive secret."));
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = _clock.UtcNow;
         Secret secret;
 
         try
