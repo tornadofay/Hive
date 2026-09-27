@@ -1,5 +1,6 @@
 using Hive.Agents;
 using Hive.Core;
+using Hive.Tests.TestInfrastructure;
 using Xunit;
 
 namespace Hive.Tests;
@@ -119,6 +120,45 @@ public sealed class AgentFactoryTests
         Assert.Equal(
             ExecutionStatus.Running,
             secondExecution.Value.Status);
+    }
+
+    [Fact]
+    public void AgentLifecycle_UsesInjectedClockAcrossRuntimeAndExecutionTransitions()
+    {
+        var clock = new FakeClock(new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero));
+        var factory = new AgentFactory(
+            new AllowBaseAgentCreationAuthorizer(),
+            clock);
+
+        var agentResult = factory.Create<Agent>(
+            new AgentDefinition("agent", "Agent"),
+            CreateContext());
+
+        Assert.True(agentResult.IsSuccess, agentResult.Error?.Message);
+        Assert.Equal(clock.UtcNow, agentResult.Value!.CreatedAtUtc);
+
+        clock.Advance(TimeSpan.FromMinutes(1));
+        var runtime = agentResult.Value.CreateRuntimeInstance();
+
+        Assert.Equal(clock.UtcNow, runtime.CreatedAtUtc);
+
+        clock.Advance(TimeSpan.FromMinutes(1));
+        var executionResult = runtime.StartExecution();
+
+        Assert.True(executionResult.IsSuccess, executionResult.Error?.Message);
+        Assert.Equal(clock.UtcNow, executionResult.Value!.StartedAtUtc);
+
+        clock.Advance(TimeSpan.FromMinutes(1));
+        var completed = executionResult.Value.Complete();
+
+        Assert.True(completed.IsSuccess, completed.Error?.Message);
+        Assert.Equal(clock.UtcNow, completed.Value!.CompletedAtUtc);
+
+        clock.Advance(TimeSpan.FromMinutes(1));
+        var stopped = runtime.Stop();
+
+        Assert.True(stopped.IsSuccess, stopped.Error?.Message);
+        Assert.Equal(clock.UtcNow, stopped.Value!.StoppedAtUtc);
     }
 
     [Fact]
