@@ -201,7 +201,15 @@ var total = new HiveTextBox
     Name = "total"
 };
 total.HiveField.Computed = true;
+
+var secret = new HiveTextBox
+{
+    Name = "secret"
+};
+secret.HiveField.Sensitive = true;
 ```
+
+Set `Sensitive = true` for field values that must not appear in passive host-context snapshots or captured current-value metadata. Sensitive values remain distinct from authorization; an explicit authorized `ReadControl` operation may still read the live control value when the host exposes that capability.
 
 For data surfaces, use `HiveDataSurface`:
 
