@@ -372,7 +372,7 @@ internal sealed class HiveExampleHostForm : HiveForm
         {
             candidateComposition?.Dispose();
             _viewTitle.Text = "Hive host unavailable";
-            _viewSubtitle.Text = exception.Message;
+            _viewSubtitle.Text = "The Hive host could not be initialized. See technical details.";
 
             HiveUiErrorReporter.Report(
                 this,
