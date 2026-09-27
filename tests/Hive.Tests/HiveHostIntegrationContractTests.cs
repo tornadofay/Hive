@@ -20,6 +20,7 @@ public sealed class HiveHostIntegrationContractTests
         Assert.Contains(constructors, length => length == 10);
         Assert.Contains(constructors, length => length == 11);
 
+        var legacyValue = HiveHostValue.FromString("legacy");
         var legacy = new HiveHostFieldDescriptor(
             "Legacy",
             null,
@@ -28,10 +29,11 @@ public sealed class HiveHostIntegrationContractTests
             false,
             false,
             false,
-            false);
+            false,
+            legacyValue);
 
         Assert.False(legacy.Sensitive);
-        Assert.Null(legacy.CurrentValue);
+        Assert.Equal("legacy", legacy.CurrentValue!.Value.AsString());
 
         var sensitiveValue = HiveHostValue.FromString("secret");
         var sensitive = new HiveHostFieldDescriptor(
