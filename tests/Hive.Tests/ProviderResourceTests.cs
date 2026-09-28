@@ -102,6 +102,52 @@ public sealed class ProviderResourceTests
                 []));
     }
 
+    [Theory]
+    [InlineData("api-key")]
+    [InlineData("api_key")]
+    [InlineData("apikey")]
+    [InlineData("access_token")]
+    [InlineData("authorization")]
+    [InlineData("client_secret")]
+    [InlineData("credential")]
+    [InlineData("key")]
+    [InlineData("password")]
+    [InlineData("secret")]
+    [InlineData("token")]
+    [InlineData("x-api-key")]
+    [InlineData("ocp-apim-subscription-key")]
+    [InlineData("x-amz-credential")]
+    public void ExecutionTarget_RejectsCredentialBearingQueryParameter(
+        string parameterName)
+    {
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+
+        Assert.Throws<ArgumentException>(
+            () => CreateTarget(
+                principal,
+                tenant,
+                [],
+                new Uri($"https://example.test/v1?{parameterName}=secret")));
+    }
+
+    [Fact]
+    public void ExecutionTarget_AllowsNonCredentialQueryParameters()
+    {
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var endpoint = new Uri(
+            "https://example.test/v1?api-version=2026-01-01");
+
+        var target = CreateTarget(
+            principal,
+            tenant,
+            [],
+            endpoint);
+
+        Assert.Equal(endpoint, target.Endpoint);
+    }
+
     [Fact]
     public void ExecutionTarget_RejectsDuplicateCapabilityKeys()
     {
@@ -222,7 +268,8 @@ public sealed class ProviderResourceTests
     private static ExecutionTarget CreateTarget(
         PrincipalId principal,
         TenantId tenant,
-        IReadOnlyList<CapabilityStateEntry> capabilities) =>
+        IReadOnlyList<CapabilityStateEntry> capabilities,
+        Uri? endpoint = null) =>
         new(
             CreateEnvelope(
                 ResourceKind.ExecutionTarget,
@@ -233,7 +280,7 @@ public sealed class ProviderResourceTests
             ProviderAccountId.New(),
             "target",
             "Target",
-            new Uri("https://example.test/v1"),
+            endpoint ?? new Uri("https://example.test/v1"),
             "example-model",
             null,
             capabilities);
