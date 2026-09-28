@@ -1121,21 +1121,24 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                     includeRetired: false,
                     cancellationToken).ConfigureAwait(false);
 
-                if (targets.IsSuccess)
+                if (targets.IsFailure)
                 {
-                    activeAutomaticTargets += targets.Value!
-                        .Count(target =>
-                        {
-                            try
-                            {
-                                return target.ManagementMode == ExecutionTargetManagementMode.Automatic;
-                            }
-                            catch (InvalidOperationException)
-                            {
-                                return false;
-                            }
-                        });
+                    errors.Add(targets.Error!);
+                    continue;
                 }
+
+                activeAutomaticTargets += targets.Value!
+                    .Count(target =>
+                    {
+                        try
+                        {
+                            return target.ManagementMode == ExecutionTargetManagementMode.Automatic;
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            return false;
+                        }
+                    });
             }
 
             return Result<ProviderSettingsOperationResult>.Success(
