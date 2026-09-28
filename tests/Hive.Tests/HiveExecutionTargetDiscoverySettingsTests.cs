@@ -94,7 +94,8 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             context,
             themeManager);
 
-        var panel = Assert.NotNull(editor.DiscoveryPanel);
+        Assert.NotNull(editor.DiscoveryPanel);
+        var panel = editor.DiscoveryPanel!;
 
         await panel.InitializeAsync();
 

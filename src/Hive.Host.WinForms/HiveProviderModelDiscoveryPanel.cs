@@ -180,8 +180,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
             return;
 
         _configurationChanged = true;
-        var requestVersion = Interlocked.Increment(ref _requestVersion);
-        _ = requestVersion;
+        Interlocked.Increment(ref _requestVersion);
         var discoveryCts = Interlocked.Exchange(ref _discoveryCts, null);
         discoveryCts?.Cancel();
 
@@ -557,12 +556,18 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
 
     private void ReportFailure(string message)
     {
-        HiveUiErrorReporter.Report(
-            FindForm(),
-            message,
-            "Provider Model Discovery",
-            _output,
-            _themeManager);
+        if (FindForm() is IWin32Window owner)
+        {
+            HiveUiErrorReporter.Report(
+                owner,
+                message,
+                "Provider Model Discovery",
+                _output,
+                _themeManager);
+            return;
+        }
+
+        _output?.Write("ERROR", $"Provider Model Discovery: {message}");
     }
 
     private void ThemeManagerOnChanged(object? sender, EventArgs e) =>
