@@ -318,9 +318,12 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
                             "The test discovery provider failed during refresh.")));
             }
 
-            var observedAt = DateTimeOffset.UtcNow;
+            var now = DateTimeOffset.UtcNow;
+            var observedAt = _staleFirst && CallCount == 1
+                ? now.AddMinutes(-1)
+                : now;
             var staleAfter = _staleFirst && CallCount == 1
-                ? observedAt.AddSeconds(-1)
+                ? now.AddSeconds(-1)
                 : observedAt.AddMinutes(5);
 
             var snapshot = new ProviderDiscoverySnapshot(
