@@ -620,7 +620,7 @@ public sealed class ProviderSettingsIntegrationTests
 
     private static TControl? FindControl<TControl>(Control root)
         where TControl : Control =>
-        FindControl(root, control => true);
+        FindControl<TControl>(root, static _ => true);
 
     private static TControl? FindControl<TControl>(
         Control root,
