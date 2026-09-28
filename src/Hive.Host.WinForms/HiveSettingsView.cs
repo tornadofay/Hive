@@ -20,9 +20,7 @@ public sealed class HiveSettingsView : UserControl
     private readonly Font _titleFont;
 
     private HiveSettingsOverviewView? _overviewView;
-    private HiveProviderConfigurationView? _providerConfigurationView;
-    private HiveProviderAccountsSettingsView? _providerAccountsView;
-    private HiveExecutionTargetsSettingsView? _executionTargetsView;
+    private HiveProvidersSettingsView? _providerConfigurationView;
     private HiveAgentSettingsView? _agentView;
     private HivePersistenceSettingsView? _persistenceView;
     private CancellationTokenSource? _lifetimeCts;
@@ -69,7 +67,7 @@ public sealed class HiveSettingsView : UserControl
             Dock = DockStyle.Top,
             Height = 34,
             Text =
-                "Global Hive package configuration for providers, accounts, execution targets, agents, and persistence.",
+                "Global Hive package configuration for providers, agents, and persistence.",
             Margin = new Padding(0, 4, 0, 10),
             Padding = Padding.Empty,
             AutoEllipsis = true
@@ -91,7 +89,7 @@ public sealed class HiveSettingsView : UserControl
             Dock = DockStyle.Fill,
             AccessibleName = "Hive Settings navigation",
             AccessibleDescription =
-                "Navigate Hive package configuration by Overview, Providers, Accounts / Credentials, Execution Targets, Agents, and Persistence."
+                "Navigate Hive package configuration by Overview, Providers, Agents, and Persistence."
         };
 
         var navigationRoot = new TreeNode("Hive Settings");
@@ -102,23 +100,11 @@ public sealed class HiveSettingsView : UserControl
             SettingsPageKey.Overview);
         navigationRoot.Nodes.Add(overviewNode);
 
-        var providersNode = new TreeNode("Providers");
-        providersNode.Nodes.Add(
+        navigationRoot.Nodes.Add(
             CreatePageNode(
-                "Provider Configuration",
-                "CRUD for Provider resource identity and transport configuration.",
+                "Providers",
+                "Configure built-in providers and refresh their automatically managed models and execution targets.",
                 SettingsPageKey.ProviderConfiguration));
-        providersNode.Nodes.Add(
-            CreatePageNode(
-                "Accounts / Credentials",
-                "CRUD for durable ProviderAccount resources and their Secret Store credential references.",
-                SettingsPageKey.ProviderAccounts));
-        providersNode.Nodes.Add(
-            CreatePageNode(
-                "Execution Targets",
-                "CRUD for concrete endpoint/model/deployment targets and capability declarations.",
-                SettingsPageKey.ExecutionTargets));
-
         navigationRoot.Nodes.Add(providersNode);
         navigationRoot.Nodes.Add(
             CreatePageNode(
@@ -169,19 +155,7 @@ public sealed class HiveSettingsView : UserControl
 
         _overviewView ??= new HiveSettingsOverviewView();
 
-        _providerConfigurationView ??= new HiveProviderConfigurationView(
-            _management,
-            _accessContext,
-            _themeManager,
-            _output);
-
-        _providerAccountsView ??= new HiveProviderAccountsSettingsView(
-            _management,
-            _accessContext,
-            _themeManager,
-            _output);
-
-        _executionTargetsView ??= new HiveExecutionTargetsSettingsView(
+        _providerConfigurationView ??= new HiveProvidersSettingsView(
             _management,
             _accessContext,
             _themeManager,
@@ -269,18 +243,6 @@ public sealed class HiveSettingsView : UserControl
                         .ConfigureAwait(true);
                     break;
 
-                case SettingsPageKey.ProviderAccounts:
-                    await _providerAccountsView!
-                        .InitializeAsync(operationCts.Token)
-                        .ConfigureAwait(true);
-                    break;
-
-                case SettingsPageKey.ExecutionTargets:
-                    await _executionTargetsView!
-                        .InitializeAsync(operationCts.Token)
-                        .ConfigureAwait(true);
-                    break;
-
                 case SettingsPageKey.Agents:
                     await _agentView!
                         .InitializeAsync(operationCts.Token)
@@ -339,8 +301,6 @@ public sealed class HiveSettingsView : UserControl
 
             DisposeDetachedPage(_overviewView);
             DisposeDetachedPage(_providerConfigurationView);
-            DisposeDetachedPage(_providerAccountsView);
-            DisposeDetachedPage(_executionTargetsView);
             DisposeDetachedPage(_agentView);
             DisposeDetachedPage(_persistenceView);
             _titleFont.Dispose();
@@ -437,18 +397,6 @@ public sealed class HiveSettingsView : UserControl
                     .ConfigureAwait(true);
                 break;
 
-            case SettingsPageKey.ProviderAccounts:
-                await _providerAccountsView!
-                    .InitializeAsync(cancellationToken)
-                    .ConfigureAwait(true);
-                break;
-
-            case SettingsPageKey.ExecutionTargets:
-                await _executionTargetsView!
-                    .InitializeAsync(cancellationToken)
-                    .ConfigureAwait(true);
-                break;
-
             case SettingsPageKey.Agents:
                 await _agentView!
                     .InitializeAsync(cancellationToken)
@@ -474,21 +422,7 @@ public sealed class HiveSettingsView : UserControl
             SettingsPageKey.Overview => _overviewView ??= new HiveSettingsOverviewView(),
 
             SettingsPageKey.ProviderConfiguration => _providerConfigurationView ??=
-                new HiveProviderConfigurationView(
-                    _management,
-                    _accessContext,
-                    _themeManager,
-                    _output),
-
-            SettingsPageKey.ProviderAccounts => _providerAccountsView ??=
-                new HiveProviderAccountsSettingsView(
-                    _management,
-                    _accessContext,
-                    _themeManager,
-                    _output),
-
-            SettingsPageKey.ExecutionTargets => _executionTargetsView ??=
-                new HiveExecutionTargetsSettingsView(
+                new HiveProvidersSettingsView(
                     _management,
                     _accessContext,
                     _themeManager,
@@ -551,8 +485,6 @@ public sealed class HiveSettingsView : UserControl
     {
         Overview,
         ProviderConfiguration,
-        ProviderAccounts,
-        ExecutionTargets,
         Agents,
         Persistence
     }
