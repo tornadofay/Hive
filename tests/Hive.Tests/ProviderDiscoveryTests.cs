@@ -8,6 +8,31 @@ namespace Hive.Tests;
 
 public sealed class ProviderDiscoveryTests
 {
+    [Theory]
+    [InlineData(ProviderDiscoveryState.Unsupported)]
+    [InlineData(ProviderDiscoveryState.Unknown)]
+    public void DiscoverySnapshot_NonSupportedEnumerationCannotContainModels(
+        ProviderDiscoveryState state)
+    {
+        var target = CreateTarget(Array.Empty<CapabilityStateEntry>());
+        var model = CreateModel(
+            target,
+            Capability("vision", CapabilityState.Supported));
+
+        Assert.Throws<ArgumentException>(
+            () => new ProviderDiscoverySnapshot(
+                target.ProviderId,
+                target.ProviderAccountId,
+                target.Endpoint,
+                new ProviderOperationalMetadata(
+                    ProviderAvailabilityStatus.Unknown,
+                    ProviderHealthStatus.Unknown,
+                    DateTimeOffset.UtcNow,
+                    DateTimeOffset.UtcNow.AddMinutes(5)),
+                state,
+                [model]));
+    }
+
     [Fact]
     public void CapabilityResolver_ConfiguredStateOverridesDiscoveredState()
     {
