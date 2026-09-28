@@ -221,7 +221,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                 target.Endpoint,
                 UriComponents.AbsoluteUri,
                 UriFormat.SafeUnescaped,
-                StringComparison.OrdinalIgnoreCase) != 0)
+                StringComparison.Ordinal) != 0)
         {
             return Error.Validation(
                 "hive.management.provider-discovery-result-mismatch",
