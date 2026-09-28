@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Hive.Core;
 using Hive.Management;
 using Hive.Persistence;
@@ -79,6 +80,96 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
         Assert.True(forbidden.IsFailure);
         Assert.Equal(ErrorCategory.Forbidden, forbidden.Error!.Category);
         Assert.Equal(2, discovery.CallCount);
+    }
+
+    [Fact]
+    public async Task Management_SecretReplacementInvalidatesDiscoveryCache()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoverySecretReplacement");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var provider = CreateProvider(principal, tenant);
+        var secret = CreateSecret(principal, tenant, $"discovery-secret-{Guid.NewGuid():N}");
+        var secretStore = new SqlDpapiSecretStore(database.Options);
+
+        using (var originalMaterial = SecretMaterial.Create("original-discovery-secret"))
+        {
+            var createdSecret = await secretStore.CreateAsync(
+                secret,
+                originalMaterial,
+                context);
+
+            Assert.True(createdSecret.IsSuccess, createdSecret.Error?.Message);
+        }
+
+        var account = CreateAccount(provider.Id, principal, tenant)
+            .WithCredentialSecret(new SecretReference(secret.Id));
+        var target = CreateTarget(provider.Id, account.Id, principal, tenant);
+        var providerStore = new SqlProviderResourceStore(database.Options);
+
+        Assert.True(
+            (await providerStore.CreateProviderAsync(provider, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateProviderAccountAsync(account, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateExecutionTargetAsync(target, context)).IsSuccess);
+
+        var discovery = new RecordingDiscovery();
+
+        using var facade = new HiveManagementFacade(
+            providerStore,
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            secretStore,
+            providerCapabilityDiscovery: discovery);
+
+        var first = await facade.GetProviderDiscoveryAsync(
+            target.Id,
+            context);
+
+        Assert.True(first.IsSuccess, first.Error?.Message);
+        Assert.Equal(1, discovery.CallCount);
+        Assert.Equal(
+            ["original-discovery-secret"],
+            discovery.Credentials);
+
+        var cached = await facade.GetProviderDiscoveryAsync(
+            target.Id,
+            context);
+
+        Assert.True(cached.IsSuccess, cached.Error?.Message);
+        Assert.Equal(1, discovery.CallCount);
+
+        using var replacementMaterial = SecretMaterial.Create("replacement-discovery-secret");
+
+        var replaced = await facade.ReplaceSecretAsync(
+            secret.Id,
+            replacementMaterial,
+            ResourceVersion.Initial,
+            context);
+
+        Assert.True(replaced.IsSuccess, replaced.Error?.Message);
+        Assert.Equal(2, replaced.Value!.Resource.Version.Value);
+
+        var refreshed = await facade.GetProviderDiscoveryAsync(
+            target.Id,
+            context);
+
+        Assert.True(refreshed.IsSuccess, refreshed.Error?.Message);
+        Assert.Equal(2, discovery.CallCount);
+        Assert.Equal(
+            ["original-discovery-secret", "replacement-discovery-secret"],
+            discovery.Credentials);
     }
 
     [Fact]
@@ -371,6 +462,29 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
         Assert.Equal(2, discovery.CallCount);
     }
 
+    private static Secret CreateSecret(
+        PrincipalId principal,
+        TenantId tenant,
+        string key)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        return new Secret(
+            new ResourceEnvelope<SecretId>(
+                ResourceKind.Secret,
+                SecretId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            key,
+            "Discovery Test Secret");
+    }
+
     private static Provider CreateProvider(
         PrincipalId principal,
         TenantId tenant)
@@ -456,6 +570,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
         private readonly bool _mismatchedResult;
         private readonly bool _mismatchedEndpointPathCase;
         private readonly TimeSpan? _delay;
+        private readonly ConcurrentQueue<string?> _credentials = new();
         private int _callCount;
 
         public RecordingDiscovery(
@@ -475,6 +590,9 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
         public int CallCount =>
             Volatile.Read(ref _callCount);
 
+        public IReadOnlyList<string?> Credentials =>
+            _credentials.ToArray();
+
         public async Task<Result<ProviderDiscoverySnapshot>> DiscoverAsync(
             Provider provider,
             ProviderAccount account,
@@ -482,7 +600,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             SecretMaterial? credential,
             CancellationToken cancellationToken = default)
         {
-            Assert.Null(credential);
+            _credentials.Enqueue(credential?.Reveal());
 
             var callNumber = Interlocked.Increment(ref _callCount);
 
