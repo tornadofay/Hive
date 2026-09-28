@@ -66,6 +66,23 @@ public interface IHiveManagementFacade
         bool forceRefresh = false,
         CancellationToken cancellationToken = default);
 
+    Task<Result<ProviderSettingsOperationResult>> ConfigureBuiltInProviderAsync(
+        string providerKey,
+        SecretMaterial? credential,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<ProviderSettingsOperationResult>> ReplaceBuiltInProviderCredentialAsync(
+        ProviderId providerId,
+        SecretMaterial credential,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<ProviderSettingsOperationResult>> RefreshProviderAsync(
+        ProviderId providerId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
     Task<Result<Provider>> CreateProviderAsync(
         Provider provider,
         ResourceAccessContext accessContext,
