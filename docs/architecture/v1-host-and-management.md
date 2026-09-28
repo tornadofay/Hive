@@ -454,7 +454,7 @@ HiveManagementFacade
 Config Secrets  Provider   Agent     WorkItem
 ```
 
-The internal components own the orchestration, validation, error translation, lifecycle/concurrency coordination, and cross-service dependencies for their domain. The facade is responsible for composing those components and preserving the stable public contract.
+The internal components own the orchestration, validation, error translation, lifecycle/concurrency coordination, and cross-service dependencies for their domain. The facade is responsible for composing those components and preserving the stable public contract. The `HiveManagementFacade` is also the Management lifetime boundary: disposal prevents new public operations from delegating into child services, while operations that were already admitted before disposal may complete according to their underlying service lifetime rules.
 
 Cross-domain behavior remains explicit. A provider operation may depend on secret resolution or execution services only through injected dependencies; an internal component must not reach back through the public facade to create a second management path.
 
