@@ -307,7 +307,7 @@ For V1, Workspace is the primary place where a user interacts with Hive. It supp
 
 The complete V1 Workspace target surface includes:
 
-- direct **LLM mode** with explicit model/ExecutionTarget selection;
+- direct **LLM mode** with explicit `ExecutionTarget` selection; the UI may display provider/model/deployment details for human readability;
 - **Agent mode** with explicit Agent selection;
 - conversation/chat and user command/objective submission;
 - application-wide Agent interaction;
@@ -323,8 +323,8 @@ V1 permits multiple Agents and runtimes to operate concurrently inside one host 
 
 Workspace mode semantics are:
 
-- In **LLM mode**, the user explicitly selects the model/ExecutionTarget subject to normal capability and authorization policy.
-- In **Agent mode**, the user selects an Agent; that Agent uses the normal Execution Planner and policy boundary to choose its ExecutionTarget. The user is not required to select the model for every Agent decision.
+- In **LLM mode**, the user explicitly selects an `ExecutionTarget` subject to normal capability and authorization policy; provider/model/deployment details are presentation data for that target.
+- In **Agent mode**, the user selects an Agent; that Agent uses the normal Execution Planner and policy boundary to choose its `ExecutionTarget`. The user is not required to select a target for every Agent decision.
 - Workspace may display the selected target and relevant diagnostics, but it does not become the authorization authority or execution engine.
 
 V1 Agent interaction can therefore follow a bounded application pattern such as:
@@ -517,6 +517,8 @@ The later Agent interaction/configuration slice owns the user-facing distinction
 - `Specific model/target` — pin the Agent to an exact existing execution target and fail clearly when that exact target becomes unusable rather than silently switching.
 
 The Agent configuration surface must therefore resolve friendly provider/model choices to the exact durable ExecutionTarget identity rather than persist only an ambiguous model-name string.
+
+Model name alone is never a durable Agent execution selection key because the same model identifier may exist under multiple providers, provider accounts, endpoints, or deployments. A human-readable option may therefore be shown as provider + model/deployment, while the persisted choice remains the exact `ExecutionTarget` identity.
 
 A configured Agent is therefore actual durable application configuration:
 
