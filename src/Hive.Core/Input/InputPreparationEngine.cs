@@ -20,6 +20,7 @@ public static class InputPreparationEngine
     public static Result<InputPreparationResult> Prepare(
         InputSubmission submission,
         IReadOnlyList<ExecutionTarget> executionTargets,
+        IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>? capabilityOverrides = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(submission);
@@ -152,7 +153,8 @@ public static class InputPreparationEngine
                             new CapabilityKey("vision"),
                             CapabilityRequirementKind.Required)
                     ],
-                    ExecutionTargetSelectionMode.Auto));
+                    ExecutionTargetSelectionMode.Auto),
+                capabilityOverrides);
         }
         catch (ArgumentException)
         {
