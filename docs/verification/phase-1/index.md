@@ -21,3 +21,5 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [1.14 Revision — Reusable WinForms Base Controls — 2026-09-26](1.14-revision-2026-09-26.md)
 - [1.14 — Boundary Implementation Concentration Corrective Refactor — 2026-09-26](1.14-boundary-concentration-corrective-refactor-2026-09-26.md)
 - [Production Lifecycle & Failure-Boundary Corrections — 2026-09-26](production-lifecycle-failure-boundary-corrections-2026-09-26.md)
+
+- [1.16 — Provider Settings UI — 2026-09-28](1.16-provider-settings-ui-closure-2026-09-28.md)
