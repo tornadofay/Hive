@@ -1,3 +1,5 @@
+using Hive.Core;
+
 namespace Hive.Persistence;
 
 public sealed class HiveEventPersistenceComposition
