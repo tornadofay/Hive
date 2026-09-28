@@ -173,6 +173,37 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
             forceRefresh,
             cancellationToken));
 
+    public Task<Result<ProviderSettingsOperationResult>> ConfigureBuiltInProviderAsync(
+        string providerKey,
+        SecretMaterial? credential,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _providers.ConfigureBuiltInProviderAsync(
+            providerKey,
+            credential,
+            accessContext,
+            cancellationToken));
+
+    public Task<Result<ProviderSettingsOperationResult>> ReplaceBuiltInProviderCredentialAsync(
+        ProviderId providerId,
+        SecretMaterial credential,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _providers.ReplaceBuiltInProviderCredentialAsync(
+            providerId,
+            credential,
+            accessContext,
+            cancellationToken));
+
+    public Task<Result<ProviderSettingsOperationResult>> RefreshProviderAsync(
+        ProviderId providerId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _providers.RefreshProviderAsync(
+            providerId,
+            accessContext,
+            cancellationToken));
+
     public Task<Result<Provider>> CreateProviderAsync(
         Provider provider,
         ResourceAccessContext accessContext,
