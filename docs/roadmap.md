@@ -353,29 +353,65 @@ Verify:
 - explicit capability override behavior;
 - no provider credentials or secrets appear in metadata/diagnostics.
 
-## 1.16 UI — Provider / Model Capability Discovery Settings Integration
-Objective: make the completed Phase 1.16 provider/model discovery capability directly usable from the global Hive Settings experience without moving discovery ownership into WinForms.
+## 1.16 UI — Provider Configuration, Discovery & Target Reconciliation
+Objective: make the completed Phase 1.16 provider/model discovery capability directly usable through a simple end-product Provider Settings experience, while preserving the underlying Provider → ProviderAccount → ExecutionTarget resource model for advanced administration.
 
-Scope:
-- integrate the existing Provider / Model Capability Discovery Management contract into the Settings Execution Target workflow;
-- begin discovery when the Provider Account, credential, and concrete ExecutionTarget endpoint are available; Provider creation alone does not contain enough endpoint information to perform model discovery;
-- automatically discover models when appropriate during ExecutionTarget configuration and provide an explicit Refresh action;
-- present discovered model identifiers plus supported operational metadata such as availability, health, and normalized capability state;
-- allow the user to select a discovered model for an ExecutionTarget while preserving explicit manual model entry when discovery is unsupported or unavailable;
-- present clear discovery/loading/stale/unsupported/failure states and remain cancellation-aware;
-- keep discovered metadata separate from durable ExecutionTarget configuration; discovery must not silently rewrite persisted target capability overrides or turn discovered information into configured authority;
-- preserve the existing Provider → ProviderAccount → ExecutionTarget hierarchy and route all provider access through Hive.Management;
-- never expose credentials or raw provider responses in the Settings UI, Output panel, or diagnostics.
+Normal Provider Settings:
+- present only the providers the user has configured;
+- use the existing shared Hive CRUD presentation rather than provider-specific cards or a per-row action column;
+- provide toolbar actions `Add Provider`, `Refresh`, and `Advanced`;
+- `Add Provider` opens a compact provider-configuration dialog using the built-in provider catalog and the provider's required credential input;
+- normal setup does not require users to create ProviderAccounts or ExecutionTargets manually;
+- credentials remain secret-backed and are never displayed or returned as plaintext;
+- `Refresh` requests fresh discovery for configured provider/account/endpoint contexts and reconciles the automatically managed ExecutionTargets before refreshing the provider list/summary;
+- provider status/model-count and other safe operational summary are presentation data, not a second configuration model.
+
+Built-in provider catalog:
+- is static application metadata, not persisted runtime configuration;
+- identifies supported provider choices, transport/authentication requirements, and default discovery endpoint behavior;
+- must not imply that every provider can be configured with an API key when its actual authentication requirements differ.
+
+Management-owned onboarding:
+- creates/enables the durable Provider;
+- creates the default ProviderAccount for normal setup;
+- stores credential material through the existing Secret Store boundary;
+- performs discovery/reconciliation outside the credential/configuration transaction;
+- preserves configured Provider/ProviderAccount state when discovery fails.
+
+Automatic target reconciliation:
+- consumes successful fresh ProviderDiscoverySnapshot evidence at ProviderAccount + endpoint scope;
+- must not create a fake/placeholder persisted ExecutionTarget solely to perform discovery;
+- materializes durable ExecutionTargets for discovered models/deployments;
+- gives automatic targets an explicit durable management origin/mode distinct from administrator-managed targets;
+- uses a stable reconciliation identity based on ProviderAccount, endpoint, and model/deployment identity so rediscovered models reuse their automatic target where possible;
+- retires missing automatic targets without physically deleting their durable identity;
+- may reactivate/reuse an automatic target when the same model/deployment returns and normal lifecycle/dependency validation succeeds;
+- never interprets failed/stale/unsupported discovery as an empty model catalog;
+- never overwrites administrator-managed target endpoint/model/deployment/capability configuration.
+
+Advanced Configuration:
+- is one generalized administrative entry point beside `Add Provider` and `Refresh`, not a provider-specific action;
+- opens the existing generalized Providers / Accounts / Credentials / Execution Targets administration pages;
+- may carry the current provider as an initial filter for convenience, but its contracts remain provider-neutral;
+- is the supported path for multiple accounts, custom/alternate endpoints, local/self-hosted OpenAI-compatible servers, manually configured models/deployments, explicit capability overrides, and administrative lifecycle/troubleshooting.
+
+UI and ownership constraints:
+- WinForms remains a thin presentation layer over Hive.Management;
+- no direct provider transport, Secret Store access, SQL, migration, or reconciliation logic lives in the UI;
+- the existing Phase 1.16 discovery freshness, cancellation, failure, concurrency, endpoint-identity, credential-invalidation, and secret-redaction rules remain authoritative;
+- discovered capability/operational metadata remains observational and does not silently rewrite durable configured capability overrides.
 
 Verify:
-- Settings can discover models for a configured supported provider/target and display their metadata;
-- discovered model selection populates the ExecutionTarget configuration correctly;
-- explicit configured capability overrides remain authoritative;
-- unsupported discovery and provider failures remain usable and clearly reported without fabricated capabilities;
-- refresh/stale behavior is correct and cancellation does not leave stale UI state applied;
-- credential secrecy is preserved;
-- the complete Settings workflow is manually verified in the Example Host;
-- focused automated coverage exercises the Settings-to-Management discovery integration and relevant failure/cancellation paths.
+- configured built-in providers can be added through the normal Provider page with the required credential input;
+- Add Provider creates the expected Provider/ProviderAccount relationship and initiates the discovery/reconciliation boundary without exposing secrets;
+- Refresh performs fresh discovery/reconciliation and updates the provider-facing operational summary;
+- newly discovered models materialize as automatic targets;
+- removed models cause only the corresponding automatic targets to retire/reconcile and do not erase durable identity;
+- failed, stale, unsupported, cancelled, and authentication-failing discovery preserves existing targets and reports the operational condition;
+- administrator-managed/advanced targets are not overwritten by automatic reconciliation;
+- Advanced opens the generalized resource-management surface and supports local/self-hosted/custom configuration paths;
+- the complete Provider Settings workflow is manually verified in the Example Host;
+- focused automated coverage exercises onboarding, refresh/reconciliation, lifecycle, concurrency/idempotency, failure/cancellation, and credential secrecy boundaries.
 
 ## 1.17 — Structured Extraction & Validation
 Objective: produce typed candidate business data from supported input capabilities and apply required-field, type, and domain validation.
@@ -483,6 +519,9 @@ Objective: extend the Workspace foundation with Agent-directed interaction and a
 
 Scope:
 - Agent mode with explicit Agent selection;
+- Agent execution configuration with `Auto` or an exact selected model/ExecutionTarget;
+- `Auto` uses the existing authoritative capability-aware execution-target selection/planning boundary;
+- an exact selected model/ExecutionTarget is pinned and must fail clearly when that target becomes unusable rather than silently switching;
 - user commands/objectives submitted to an Agent;
 - application-wide Agent support;
 - application-scoped role/context such as a Manager Agent;
