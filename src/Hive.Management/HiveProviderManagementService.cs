@@ -22,6 +22,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
     private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, DiscoveryGate> _discoveryLocks = new();
 
     private const int MaxCachedDiscoveries = 128;
+    private long _discoveryGeneration;
 
     internal HiveProviderManagementService(
         IProviderResourceStore providerResources,
@@ -104,6 +105,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                     "Provider capability discovery requires an active provider and provider account."));
         }
 
+        var discoveryGeneration = Volatile.Read(ref _discoveryGeneration);
         var cacheKey = new ProviderDiscoveryCacheKey(
             provider.Value!.Id,
             provider.Value.Resource.Version,
@@ -111,7 +113,8 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
             account.Value.Resource.Version,
             target.Value.Id,
             target.Value.Resource.Version,
-            target.Value.Endpoint.AbsoluteUri);
+            target.Value.Endpoint.AbsoluteUri,
+            discoveryGeneration);
 
         if (!forceRefresh &&
             _discoveryCache.TryGetValue(cacheKey, out var cached))
@@ -184,8 +187,11 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                     return Result<ProviderDiscoverySnapshot>.Failure(validationError);
                 }
 
-                _discoveryCache[cacheKey] = discovered.Value!;
-                TrimDiscoveryCache(cacheKey);
+                if (Volatile.Read(ref _discoveryGeneration) == discoveryGeneration)
+                {
+                    _discoveryCache[cacheKey] = discovered.Value!;
+                    TrimDiscoveryCache(cacheKey);
+                }
 
                 return discovered;
             }
@@ -269,11 +275,28 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         }
     }
 
+    internal void InvalidateProviderDiscoveryCache()
+    {
+        Interlocked.Increment(ref _discoveryGeneration);
+        _discoveryCache.Clear();
+    }
+
     private void TrimDiscoveryCache(
         ProviderDiscoveryCacheKey preferredKey)
     {
         while (_discoveryCache.Count > MaxCachedDiscoveries)
         {
+            var currentGeneration = Volatile.Read(ref _discoveryGeneration);
+            foreach (var key in _discoveryCache.Keys)
+            {
+                if (key.DiscoveryGeneration != currentGeneration &&
+                    _discoveryCache.TryRemove(key, out _))
+                {
+                    if (_discoveryCache.Count <= MaxCachedDiscoveries)
+                        return;
+                }
+            }
+
             var removed = false;
 
             foreach (var key in _discoveryCache.Keys)
@@ -791,5 +814,6 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         ResourceVersion ProviderAccountVersion,
         ExecutionTargetId ExecutionTargetId,
         ResourceVersion ExecutionTargetVersion,
-        string Endpoint);
+        string Endpoint,
+        long DiscoveryGeneration);
 }
