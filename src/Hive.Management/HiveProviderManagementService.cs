@@ -672,8 +672,9 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         if (catalog is null)
         {
             return Result<ProviderSettingsOperationResult>.Failure(
-                Error.NotFound(
+                new Error(
                     "hive.management.provider-catalog-provider-not-found",
+                    ErrorCategory.NotFound,
                     "The selected provider is not available in the built-in provider catalog."));
         }
 
