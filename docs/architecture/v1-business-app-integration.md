@@ -547,9 +547,16 @@ Extraction evidence such as source location, mapping provenance, execution ident
 
 Phase 1.17 must make mapping and candidate results reviewable, including per-item failures and source linkage. A UI may let the user open the original image/file and correct mappings or candidate values.
 
-A future/governance-enabled processing checkpoint may authorize a selected batch as one unit, rather than requiring one authorization per image solely because each image requires an individual model call. This is distinct from the later authorization required for a consequential business-operation proposal.
+### Batch review and authorization separation
 
-Generic human-intervention `Approve / Reject` semantics remain owned by the Phase 1.22 governance boundary. Phase 1.17 does not create a parallel authorization system.
+Phase 1.17 has two user-facing checkpoints around interpretation work:
+
+1. **Processing authorization:** the selected Single File or Folder batch may be authorized as one processing unit when policy permits it. Each image may still result in its own model call, but that does not by itself require a separate human approval per image.
+2. **Candidate/mapping authorization:** after processing, Hive presents the spreadsheet mappings and extracted image candidates with per-item success/failure. The user can inspect the original source, correct mappings or candidate values, and authorize the accepted result set for downstream use.
+
+The second checkpoint is deliberately before consequential host mutation. It confirms the data Hive is proposing to carry forward; it does not itself execute or authorize the later business operation.
+
+Generic human-intervention `Approve / Reject` semantics remain owned by the Phase 1.22 governance boundary. Phase 1.17 defines the reviewable checkpoints/artifacts but does not create a parallel authorization state machine.
 ## 11. Business operation proposal
 
 A consequential business operation should be represented as a structured proposal before execution. The host application registers or exposes the logical operation capability through the Hive boundary; the model does not invent an arbitrary business operation name and gain permission merely by requesting it.
