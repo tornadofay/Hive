@@ -375,7 +375,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             "Settings Discovery Account");
     }
 
-    private sealed class DiscoveryManagementProxy : DispatchProxy
+    private class DiscoveryManagementProxy : DispatchProxy
     {
         private readonly List<ProviderDiscoverySnapshot> _snapshots = new();
         private readonly TaskCompletionSource<bool> _firstStarted =
