@@ -502,6 +502,54 @@ The implementation mechanism is transparent to authorization and audit.
 
 When API and UI paths are combined, one operation correlation identity must cover the complete logical operation.
 
+## Phase 1.17 — Structured Candidate Boundary
+
+Phase 1.17 sits between input preparation/routing and the later business-operation proposal. It produces a source-neutral candidate that can be consumed without knowing whether the source was an image, spreadsheet, or another supported input.
+
+### Target semantic fields
+
+The host/business boundary supplies the target fields needed by extraction and mapping. A target field has a stable semantic identity plus the metadata needed to interpret candidate data, such as:
+
+- stable field key/identity;
+- human-readable display name;
+- expected type;
+- requiredness;
+- parent/child placement;
+- bounded lookup/reference semantics where applicable.
+
+Database column names, WinForms control names, and display labels may be included as descriptive evidence when useful, but they are never the durable semantic identity used by the extraction/mapping contract.
+
+### Spreadsheet semantic mapping
+
+For spreadsheet inputs, Hive first reads the workbook structure through the existing bounded Phase 1.15 preparation boundary. A bounded mapping context contains worksheet/header information and a representative sample of row values.
+
+The LLM is used once to propose a mapping from source columns to the target semantic field identities. Hive then validates the proposed mapping deterministically. The mapping is a reviewable/editable artifact. Once accepted, it is reused deterministically for all applicable rows in that mapping context; Hive does not invoke the LLM once per row merely to rediscover the same mapping.
+
+A mapping must retain enough source context and provenance to explain which source column was mapped to which semantic target. The same display name or database field name may appear in different targets and therefore cannot be treated as a globally unique mapping key.
+
+### Image extraction
+
+An image is interpreted against the same target semantic field contract. The already-selected/routed vision-capable ExecutionTarget provides the concrete model execution boundary. Each image produces an independent extraction result/candidate or a typed failure.
+
+A selected batch may contain one image or many images, and may also contain spreadsheets and other supported file types. Batch processing is an operational grouping; each source item retains independent status, provenance, execution identity, and failure information.
+
+### Structured candidate and validation
+
+`StructuredCandidate` is the source-neutral result consumed by later business-operation planning. It may contain parent data and child collections, with field-level values, validation state, and provenance.
+
+Required-field and type validation can be performed deterministically by Hive. Domain/business validation remains owned by the host/business semantic boundary and is not recreated in the generic extraction layer.
+
+Malformed model output must fail closed as a typed extraction/serialization failure. Invalid or incomplete fields remain explicit so the user can review or correct them instead of Hive silently discarding them.
+
+Extraction evidence such as source location, mapping provenance, execution identity, and optional confidence may be retained. Confidence never grants authorization and never replaces validation.
+
+### Batch review and authorization separation
+
+Phase 1.17 must make mapping and candidate results reviewable, including per-item failures and source linkage. A UI may let the user open the original image/file and correct mappings or candidate values.
+
+A future/governance-enabled processing checkpoint may authorize a selected batch as one unit, rather than requiring one authorization per image solely because each image requires an individual model call. This is distinct from the later authorization required for a consequential business-operation proposal.
+
+Generic human-intervention `Approve / Reject` semantics remain owned by the Phase 1.22 governance boundary. Phase 1.17 does not create a parallel authorization system.
 ## 11. Business operation proposal
 
 A consequential business operation should be represented as a structured proposal before execution. The host application registers or exposes the logical operation capability through the Hive boundary; the model does not invent an arbitrary business operation name and gain permission merely by requesting it.
