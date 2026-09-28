@@ -6,6 +6,17 @@ Phase 1.17 turns the completed Phase 1.15 prepared-input boundary into a source-
 
 The phase covers practical batch intake, semantic field mapping, image/vision extraction, candidate normalization, validation, provenance, and human-reviewable results. It does not mutate the host business application.
 
+## Resolved design decisions
+
+- **Target schema source:** Phase 1.17 consumes a target semantic-field schema supplied by the existing host/business semantic boundary. It does not invent a database schema and it does not require Phase 1.17 to define the later business-operation capability itself.
+- **Mapping unit:** the durable semantic mapping context is the combination of one source table-like region (normally one worksheet/table region with its headers) and one target semantic-field schema. A workbook may therefore contain multiple independent mapping contexts.
+- **Cross-file mapping reuse:** different Excel files or worksheets may reuse an existing mapping only after Hive deterministically establishes compatible source structure and the same target semantic-field schema. Otherwise a new mapping context is created and mapped once.
+- **Mapping durability:** once accepted, the mapping and its review state are retained with the associated durable Hive work/batch state so a restart does not force the LLM to remap the same source context or erase the user's corrections.
+- **Candidate durability:** extracted/reviewed candidates and per-item processing results are retained with the associated durable work state while they are awaiting downstream use. This is Hive-owned state, not host business data.
+- **Image execution:** each image has an independent extraction attempt against the applicable target schema and ExecutionTarget. The batch orchestrates many attempts, but a model request is not required to combine multiple images into one call; per-image independence is preserved for failure isolation and provenance.
+- **Human correction:** mapping edits and candidate-value edits are deterministic user changes recorded as part of the reviewable state; the LLM is not called again merely because the user corrected a mapping/value.
+- **Accepted set:** the second human checkpoint applies to an explicit accepted subset of the batch. Failed, rejected, or still-uncertain items remain outside that accepted set until resolved.
+
 ## Phase boundary
 
 The flow is:
