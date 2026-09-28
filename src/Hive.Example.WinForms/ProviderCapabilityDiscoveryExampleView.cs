@@ -3,7 +3,6 @@ using System.Net.Sockets;
 using System.Text;
 using Hive.Core;
 using Hive.Host.WinForms.UI.Controls;
-using Hive.Persistence;
 using Hive.Management;
 
 namespace Hive.Example.WinForms;
@@ -357,7 +356,7 @@ internal sealed class ProviderCapabilityDiscoveryExampleView : UserControl
                         await WriteResponseAsync(
                             stream,
                             HttpStatusCode.NotFound,
-                            "{"error":"not-found"}",
+                            """{"error":"not-found"}""",
                             _stop.Token).ConfigureAwait(false);
                         continue;
                     }
