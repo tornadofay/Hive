@@ -234,6 +234,53 @@ public sealed class ProviderDiscoveryTests
     }
 
     [Fact]
+    public async Task Adapter_ListModels_ConflictingNormalizedCapabilitySignalsBecomeUnknown()
+    {
+        var handler = new RecordingHandler(
+            _ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """
+                    {
+                      "data": [
+                        {
+                          "id": "conflicting-model",
+                          "supports_vision": false,
+                          "supports_tools": false,
+                          "supports_function_calling": true,
+                          "capabilities": {
+                            "vision": true
+                          }
+                        }
+                      ]
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            });
+
+        using var client = new HttpClient(handler);
+        var adapter = new OpenAICompatibleProviderAdapter(
+            client,
+            new OpenAICompatibleProviderOptions(
+                new Uri("https://example.test/v1/")));
+
+        var result = await adapter.ListModelsAsync();
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var model = Assert.Single(result.Value!.Models);
+        Assert.Equal(
+            CapabilityState.Unknown,
+            model.Capabilities.Single(
+                item => item.Key == "vision").State);
+        Assert.Equal(
+            CapabilityState.Unknown,
+            model.Capabilities.Single(
+                item => item.Key == "tool.calling").State);
+    }
+
+    [Fact]
     public async Task OpenAICompatibleDiscovery_MapsCatalogToProviderNeutralSnapshot()
     {
         var handler = new RecordingHandler(
