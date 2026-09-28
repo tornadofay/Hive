@@ -6,13 +6,13 @@ namespace Hive.Management;
 internal sealed class HiveInputPreparationManagementService :
     HiveManagementServiceBase
 {
-    private readonly IProviderResourceStore _providerResources;
+    private readonly HiveProviderManagementService _providers;
 
     internal HiveInputPreparationManagementService(
-        IProviderResourceStore providerResources)
+        HiveProviderManagementService providers)
     {
-        _providerResources = providerResources
-            ?? throw new ArgumentNullException(nameof(providerResources));
+        _providers = providers
+            ?? throw new ArgumentNullException(nameof(providers));
     }
 
     internal async Task<Result<InputPreparationResult>> PrepareInputAsync(
@@ -35,7 +35,7 @@ internal sealed class HiveInputPreparationManagementService :
 
         if (InputPreparationEngine.RequiresVisionTargetRouting(submission))
         {
-            var targets = await _providerResources
+            var targets = await _providers
                 .ListExecutionTargetsAsync(
                     accessContext,
                     includeRetired: false,
@@ -49,6 +49,25 @@ internal sealed class HiveInputPreparationManagementService :
             }
 
             executionTargets = targets.Value!;
+
+            var capabilityOverrides = await _providers
+                .GetExecutionTargetCapabilityOverridesAsync(
+                    executionTargets,
+                    accessContext,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (capabilityOverrides.IsFailure)
+            {
+                return Result<InputPreparationResult>.Failure(
+                    capabilityOverrides.Error!);
+            }
+
+            return InputPreparationEngine.Prepare(
+                submission,
+                executionTargets,
+                capabilityOverrides.Value!,
+                cancellationToken);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
