@@ -39,6 +39,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
             providerConnectionTester,
             secrets,
             providerCapabilityDiscovery,
+            _secrets,
             clock);
         _agents = new HiveAgentManagementService(
             agentDefinitions,
