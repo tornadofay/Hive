@@ -20,11 +20,11 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         IWorkItemResourceStore workItems,
         ISecretStore? secrets = null,
         IProviderConnectionTester? providerConnectionTester = null,
-        IProviderCapabilityDiscovery? providerCapabilityDiscovery = null,
         IHiveConfigurationStore? configurationStore = null,
         IHivePersistenceConnectionTester? persistenceConnectionTester = null,
         IHiveBootstrapCredentialStore? bootstrapCredentials = null,
-        AgentExecutionService? agentExecution = null)
+        AgentExecutionService? agentExecution = null,
+        IProviderCapabilityDiscovery? providerCapabilityDiscovery = null)
     {
         _configuration = new HiveConfigurationManagementService(
             configurationStore,
