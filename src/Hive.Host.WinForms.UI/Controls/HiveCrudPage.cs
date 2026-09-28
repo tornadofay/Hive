@@ -416,6 +416,19 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public string AddButtonText
+    {
+        get => _addButton.Text;
+        set
+        {
+            var text = string.IsNullOrWhiteSpace(value) ? "Add" : value.Trim();
+            _addButton.Text = text;
+            _addButton.AccessibleName = text;
+            _addButton.AccessibleDescription = $"Create a new {text.Replace("Add ", string.Empty, StringComparison.OrdinalIgnoreCase)}.";
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool AllowEdit
     {
         get => _editButton.Visible;
