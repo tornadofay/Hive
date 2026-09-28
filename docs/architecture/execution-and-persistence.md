@@ -99,7 +99,7 @@ Model capability information is represented separately from the configured Execu
 1. an explicitly configured target capability is authoritative and overrides discovered information;
 2. a discovered capability is used only when the target has no configured entry for that capability;
 3. a stale discovery observation contributes no effective capability, so the resulting state remains Unknown;
-4. a missing model or an unsupported model-enumeration endpoint does not fabricate capabilities.
+4. a missing model or an unsupported model-enumeration endpoint does not fabricate capabilities; an unsupported enumeration route does not imply provider availability or health, so those operational states remain Unknown.
 
 The existing ExecutionTargetSelector remains the authoritative capability policy boundary. Phase 1.16 permits Management/input preparation to supply an ephemeral effective capability set to that selector without mutating the persisted target.
 
