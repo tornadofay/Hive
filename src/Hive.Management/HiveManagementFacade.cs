@@ -383,4 +383,18 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         string reason,
         CancellationToken cancellationToken = default) =>
         _workItems.RejectWorkItemAsync(workItemId, expectedVersion, accessContext, reason, cancellationToken);
+    private Task<Result<T>> Run<T>(Func<Task<Result<T>>> operation)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+
+        return Volatile.Read(ref _disposed) != 0
+            ? Task.FromResult(Result<T>.Failure(DisposedError()))
+            : operation();
+    }
+
+    private static Error DisposedError() =>
+        Error.Unsupported(
+            "hive.management.disposed",
+            "The Hive management facade has been disposed.");
+
 }
