@@ -13,6 +13,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
     private readonly HiveAgentManagementService _agents;
     private readonly HiveWorkItemManagementService _workItems;
     private readonly HiveInputPreparationManagementService _inputPreparation;
+    private readonly object _lifetimeGate = new();
     private int _disposed;
 
     public HiveManagementFacade(
@@ -50,8 +51,13 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
 
     public void Dispose()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) != 0)
-            return;
+        lock (_lifetimeGate)
+        {
+            if (_disposed != 0)
+                return;
+
+            _disposed = 1;
+        }
 
         _configuration.Dispose();
         GC.SuppressFinalize(this);
@@ -107,16 +113,26 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         CancellationToken cancellationToken = default) => Run(() =>
         _secrets.GetSecretDescriptorAsync(secretId, accessContext, cancellationToken)));
 
-    public async Task<Result<Secret>> ReplaceSecretAsync(
+    public Task<Result<Secret>> ReplaceSecretAsync(
         SecretId secretId,
         SecretMaterial replacement,
         ResourceVersion expectedVersion,
         ResourceAccessContext accessContext,
-        CancellationToken cancellationToken = default)
-    {
-        if (Volatile.Read(ref _disposed) != 0)
-            return Result<Secret>.Failure(DisposedError());
+        CancellationToken cancellationToken = default) =>
+        Run(() => ReplaceSecretCoreAsync(
+            secretId,
+            replacement,
+            expectedVersion,
+            accessContext,
+            cancellationToken));
 
+    private async Task<Result<Secret>> ReplaceSecretCoreAsync(
+        SecretId secretId,
+        SecretMaterial replacement,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken)
+    {
         try
         {
             var result = await _secrets
@@ -387,9 +403,12 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
     {
         ArgumentNullException.ThrowIfNull(operation);
 
-        return Volatile.Read(ref _disposed) != 0
-            ? Task.FromResult(Result<T>.Failure(DisposedError()))
-            : operation();
+        lock (_lifetimeGate)
+        {
+            return _disposed != 0
+                ? Task.FromResult(Result<T>.Failure(DisposedError()))
+                : operation();
+        }
     }
 
     private static Error DisposedError() =>
