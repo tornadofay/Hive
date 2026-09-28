@@ -52,14 +52,6 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         bool forceRefresh = false,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(requiredCapability.Value))
-        {
-            return Result<ExecutionTargetCapabilityOverridesResult>.Failure(
-                Error.Validation(
-                    "hive.management.execution-target-capability-required",
-                    "A required execution target capability is required."));
-        }
-
         var contextError = ValidateAccessContext(accessContext);
         if (contextError is not null)
             return Result<ProviderDiscoverySnapshot>.Failure(contextError);
@@ -339,9 +331,17 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
     {
         ArgumentNullException.ThrowIfNull(targets);
 
+        if (string.IsNullOrWhiteSpace(requiredCapability.Value))
+        {
+            return Result<ExecutionTargetCapabilityOverridesResult>.Failure(
+                Error.Validation(
+                    "hive.management.execution-target-capability-required",
+                    "A required execution target capability is required."));
+        }
+
         if (targets.Any(static target => target is null))
         {
-            return Result<IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>>.Failure(
+            return Result<ExecutionTargetCapabilityOverridesResult>.Failure(
                 Error.Validation(
                     "hive.management.execution-targets-invalid",
                     "Execution target routing input cannot contain null targets."));
@@ -350,7 +350,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         var contextError = ValidateAccessContext(accessContext);
         if (contextError is not null)
         {
-            return Result<IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>>.Failure(
+            return Result<ExecutionTargetCapabilityOverridesResult>.Failure(
                 contextError);
         }
 
@@ -369,13 +369,13 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
         foreach (var target in targets)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (target.Capabilities.Any(
                     capability => capability.Capability == requiredCapability))
             {
                 continue;
             }
-        {
-            cancellationToken.ThrowIfCancellationRequested();
 
             var discovery = await GetProviderDiscoveryAsync(
                 target.Id,
