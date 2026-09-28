@@ -229,6 +229,23 @@ Operational availability/health remains distinct from capability. Before an Agen
 No V1 workflow, MAF orchestration, business-operation write, Tool authorization, Review, cognition, or future-phase behavior is part of the provider configuration/discovery/reconciliation boundary.
 ## Phase 1.17 Structured Extraction & Validation Boundary
 
+Target-schema source and mapping context:
+- Phase 1.17 consumes a target semantic-field schema from the existing host/business semantic boundary. It does not define the later business-operation capability or invent a replacement host schema.
+- A mapping context is one source table-like region (normally a worksheet/table region with its headers) plus one target semantic-field schema. A workbook may therefore produce multiple mapping contexts.
+- Multiple files or worksheets may reuse a mapping only after Hive deterministically establishes compatible source structure and identical target schema. Otherwise they are mapped independently.
+
+Durability:
+- Accepted spreadsheet mappings, mapping-review state, extracted/reviewed candidates, and per-item processing outcomes are retained in durable Hive work/batch state so restart/recovery does not erase user corrections or require repeated LLM mapping.
+- This state is Hive-owned processing state, not a copy of host business records and not the host application's database.
+
+Image execution:
+- Each image has an independent extraction attempt against the applicable target semantic schema and concrete ExecutionTarget.
+- A batch may orchestrate many image attempts, but images do not need to be combined into one provider request. Independent attempts preserve per-image failure isolation, execution attribution, and source provenance.
+
+Human correction:
+- User mapping/candidate edits are explicit deterministic state changes. A correction does not trigger another LLM mapping/extraction call unless the user explicitly requests a new interpretation.
+- The candidate authorization checkpoint applies to an explicit accepted subset; failed, rejected, or uncertain items remain outside the accepted set until resolved.
+
 Phase 1.17 consumes the completed Phase 1.15 PreparedInput boundary and produces a source-neutral structured candidate. It is an interpretation/validation boundary, not a host business-operation boundary.
 
 Input selection and batching:
