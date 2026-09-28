@@ -28,7 +28,7 @@ Phase 1.17 structured extraction/validation and all later V1 phases remain outsi
 
 ## Verification boundary
 
-Same-slice remediation is complete for the reported Example Host transport failure. The source is now **VERIFICATION PENDING**. The developer previously reported 415/415 automated tests passing before this remediation; that result does not verify the revised Example Host fixture.
+Same-slice remediation is complete for the reported Example Host transport failure. The developer has now manually exercised the matching Example Host scenario successfully. The source remains **VERIFICATION PENDING** only because the latest full automated suite result predates the final Example Host fixture correction.
 
 Required verification follows the Phase 1.16 roadmap gate:
 
@@ -51,7 +51,7 @@ Example to run: Providers / Target Selection / Capability Discovery / Provider /
 
 Tests to run after remediation: `tests/Hive.Tests/ProviderDiscoveryTests.cs`; `tests/Hive.Tests/ProviderDiscoveryManagementIntegrationTests.cs`; full `Hive.Tests` suite. Then exercise the matching Example Host scenario again.
 
-Failure evidence is preserved in [Phase 1.16 Example Host failure record](verification/phase-1/1.16-provider-model-capability-discovery-example-failure-2026-09-28.md). The remediation is complete; developer re-verification is required before closure.
+Failure evidence is preserved in [Phase 1.16 Example Host failure record](verification/phase-1/1.16-provider-model-capability-discovery-example-failure-2026-09-28.md). The remediation is complete and the Example Host scenario has been successfully exercised. The developer's latest automated result still predates the fixture correction, so one final full-suite rerun is required before closure.
 
 ## Handoff status
 
