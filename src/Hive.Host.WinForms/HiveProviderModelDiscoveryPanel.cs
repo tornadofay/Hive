@@ -236,7 +236,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
                 ClearModels();
                 var error = result.Error!;
                 SetStatus(
-                    $"Discovery failed: {error.Message} Manual model entry remains available.",
+                    $"Discovery failed ({error.Code}). Manual model entry remains available.",
                     HiveStatusTone.Error);
                 _metadataLabel.Text = "Operational metadata is unavailable because discovery failed.";
                 _capabilitiesLabel.Text = "No discovered model metadata is currently available.";
@@ -333,7 +333,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
             var error = result.Error!;
             ClearModels();
             SetStatus(
-                $"Discovery failed: {error.Message} Manual model entry remains available.",
+                $"Discovery failed ({error.Code}). Manual model entry remains available.",
                 HiveStatusTone.Error);
             _metadataLabel.Text = "Operational metadata is unavailable because discovery failed.";
             _capabilitiesLabel.Text = "No discovered model metadata is currently available.";

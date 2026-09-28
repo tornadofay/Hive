@@ -86,7 +86,6 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             context);
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
 
-        using var owner = new Form();
         using var editor = new HiveExecutionTargetEditorForm(
             target,
             provider,
@@ -95,13 +94,19 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             context,
             themeManager);
 
-        owner.Controls.Add(editor);
-        owner.Show();
+        editor.Show();
 
-        await proxy.FirstStarted.Task;
+        try
+        {
+            await proxy.FirstStarted.Task;
 
-        Assert.Equal(1, proxy.DiscoveryInvocationCount);
-        Assert.NotNull(editor.DiscoveryPanel);
+            Assert.Equal(1, proxy.DiscoveryInvocationCount);
+            Assert.NotNull(editor.DiscoveryPanel);
+        }
+        finally
+        {
+            editor.Close();
+        }
     }
 
     [Fact]
