@@ -253,7 +253,7 @@ public sealed class EventAppendResult
     public EventOutboxEntry Outbox { get; }
 }
 
-public interface IEventPersistenceStore
+internal interface IEventPersistenceStore : IEventOutboxPollerStore
 {
     Task<Result<EventAppendResult>> AppendAsync(
         EventAppendRequest request,
