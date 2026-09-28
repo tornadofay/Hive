@@ -149,7 +149,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         var (management, _) = DiscoveryManagementProxy.CreateFailure(
             new Error(
                 "hive.tests.discovery-failed",
-                ErrorCategory.Transport,
+                ErrorCategory.External,
                 "The provider discovery request failed safely."));
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
 
