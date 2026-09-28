@@ -595,11 +595,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
             _useModelButton.Click -= UseModelButtonOnClick;
 
             var discoveryCts = Interlocked.Exchange(ref _discoveryCts, null);
-            if (discoveryCts is not null)
-            {
-                discoveryCts.Cancel();
-                discoveryCts.Dispose();
-            }
+            discoveryCts?.Cancel();
         }
 
         base.Dispose(disposing);

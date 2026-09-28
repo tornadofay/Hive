@@ -73,6 +73,63 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
     }
 
     [Fact]
+    public async Task Editor_AppliesSelectedDiscoveredModelToEditableModelField()
+    {
+        var target = CreateTarget();
+        var snapshot = CreateSnapshot(target);
+        var (management, _) = DiscoveryManagementProxy.Create(snapshot);
+        var context = CreateContext();
+        var provider = CreateProvider(target.ProviderId, context);
+        var account = CreateAccount(
+            target.ProviderAccountId,
+            target.ProviderId,
+            context);
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var editor = new HiveExecutionTargetEditorForm(
+            target,
+            provider,
+            account,
+            management,
+            context,
+            themeManager);
+
+        var panel = Assert.NotNull(editor.DiscoveryPanel);
+
+        await panel.InitializeAsync();
+
+        panel.ModelSelector.SelectedIndex = 0;
+        panel.UseModelButton.PerformClick();
+
+        Assert.Equal("vision-model", editor.ModelTextBox.Text);
+    }
+
+    [Fact]
+    public async Task DiscoveryPanel_FailureLeavesManualEntryAvailable()
+    {
+        var target = CreateTarget();
+        var (management, _) = DiscoveryManagementProxy.CreateFailure(
+            new Error(
+                "hive.tests.discovery-failed",
+                ErrorCategory.Transport,
+                "The provider discovery request failed safely."));
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var panel = new HiveProviderModelDiscoveryPanel(
+            management,
+            target,
+            CreateContext(),
+            themeManager);
+
+        await panel.InitializeAsync();
+
+        Assert.Empty(panel.Models);
+        Assert.Contains("Discovery failed:", panel.StatusLabel.Text);
+        Assert.Contains("Manual model entry remains available.", panel.StatusLabel.Text);
+        Assert.False(panel.ModelSelector.Enabled);
+    }
+
+    [Fact]
     public async Task DiscoveryPanel_UnsupportedEnumerationLeavesManualEntryAvailable()
     {
         var target = CreateTarget();
@@ -160,7 +217,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         panel.MarkEndpointConfigurationChanged();
         await panel.RefreshAsync();
 
-        Assert.Single(proxy.DiscoveryInvocationCount);
+        Assert.Equal(1, proxy.DiscoveryInvocationCount);
         Assert.Contains("Save the target", panel.StatusLabel.Text);
         Assert.Empty(panel.Models);
     }
@@ -235,6 +292,50 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             TenantId.New(),
             PrincipalId.New());
 
+
+    private static Provider CreateProvider(ProviderId providerId, ResourceAccessContext context)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return new Provider(
+            new ResourceEnvelope<ProviderId>(
+                ResourceKind.Provider,
+                providerId,
+                context.PrincipalId!.Value,
+                ResourceScope.Tenant(context.TenantId!.Value),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    context.PrincipalId.Value,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            "settings-discovery-provider",
+            "Settings Discovery Provider",
+            "openai-compatible");
+    }
+
+    private static ProviderAccount CreateAccount(
+        ProviderAccountId accountId,
+        ProviderId providerId,
+        ResourceAccessContext context)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return new ProviderAccount(
+            new ResourceEnvelope<ProviderAccountId>(
+                ResourceKind.ProviderAccount,
+                accountId,
+                context.PrincipalId!.Value,
+                ResourceScope.Tenant(context.TenantId!.Value),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    context.PrincipalId.Value,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            providerId,
+            "settings-discovery-account",
+            "Settings Discovery Account");
+    }
+
     private sealed class DiscoveryManagementProxy : DispatchProxy
     {
         private readonly List<ProviderDiscoverySnapshot> _snapshots = new();
@@ -244,6 +345,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly TaskCompletionSource<Result<ProviderDiscoverySnapshot>> _secondCompletion =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private Error? _failure;
         private int _discoveryInvocationCount;
 
         public TaskCompletionSource<bool> FirstStarted => _firstStarted;
@@ -269,6 +371,18 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             return (management, proxy);
         }
 
+        public static (
+            IHiveManagementFacade Management,
+            DiscoveryManagementProxy Proxy) CreateFailure(
+            Error error)
+        {
+            var management =
+                (IHiveManagementFacade)Create<IHiveManagementFacade, DiscoveryManagementProxy>();
+            var proxy = (DiscoveryManagementProxy)(object)management;
+            proxy._failure = error ?? throw new ArgumentNullException(nameof(error));
+            return (management, proxy);
+        }
+
         protected override object Invoke(
             System.Reflection.MethodInfo? targetMethod,
             object?[]? args)
@@ -276,6 +390,12 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             if (targetMethod?.Name == nameof(IHiveManagementFacade.GetProviderDiscoveryAsync))
             {
                 var invocation = Interlocked.Increment(ref _discoveryInvocationCount);
+
+                if (_failure is not null)
+                {
+                    return Task.FromResult(
+                        Result<ProviderDiscoverySnapshot>.Failure(_failure));
+                }
                 _firstStarted.TrySetResult(true);
 
                 if (_snapshots.Count == 1)
