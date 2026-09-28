@@ -77,7 +77,11 @@ internal sealed class HiveProvidersSettingsView : UserControl
         _page.StatusSelector = item => item.Provider.Resource.Lifecycle.Status.ToString();
         _page.CanEditItem = item =>
             item.Provider.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active &&
-            BuiltInProviderCatalog.Find(item.Provider.Key)?.NormalOnboardingSupported == true;
+            BuiltInProviderCatalog.Find(item.Provider.Key) is
+            {
+                NormalOnboardingSupported: true,
+                CredentialKind: BuiltInProviderCredentialKind.ApiKey
+            };
         _page.CanDeleteItem = item =>
             item.Provider.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active;
         _page.CanActivateItem = item =>
@@ -98,6 +102,8 @@ internal sealed class HiveProvidersSettingsView : UserControl
         _refreshButton.Click += async (_, _) => await RefreshProvidersAsync();
         _advancedButton.Click += (_, _) => OpenAdvanced();
 
+        _advancedButton.Dock = DockStyle.Right;
+        _refreshButton.Dock = DockStyle.Right;
         _page.ActionBarPanel.Controls.Add(_advancedButton);
         _page.ActionBarPanel.Controls.Add(_refreshButton);
         _page.OperationFailed += PageOperationFailed;
@@ -519,8 +525,6 @@ internal sealed class HiveProvidersSettingsView : UserControl
             refreshCts?.Cancel();
             refreshCts?.Dispose();
 
-            _refreshButton.Dispose();
-            _advancedButton.Dispose();
         }
 
         base.Dispose(disposing);
