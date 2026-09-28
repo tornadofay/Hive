@@ -122,10 +122,14 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
             target.Value.Endpoint.AbsoluteUri,
             discoveryGeneration);
 
+        _discoveryCache.TryGetValue(
+            cacheKey,
+            out var cachedAtRequest);
+
         if (!forceRefresh &&
-            _discoveryCache.TryGetValue(cacheKey, out var cached))
+            cachedAtRequest is not null)
         {
-            return Result<ProviderDiscoverySnapshot>.Success(cached);
+            return Result<ProviderDiscoverySnapshot>.Success(cachedAtRequest);
         }
 
         var gate = AcquireDiscoveryGate(cacheKey);
@@ -139,8 +143,19 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
             gateEntered = true;
 
+            if (forceRefresh &&
+                _discoveryCache.TryGetValue(
+                    cacheKey,
+                    out var cachedAfterWait) &&
+                (cachedAtRequest is null ||
+                 !ReferenceEquals(cachedAfterWait, cachedAtRequest)))
+            {
+                return Result<ProviderDiscoverySnapshot>.Success(
+                    cachedAfterWait);
+            }
+
             if (!forceRefresh &&
-                _discoveryCache.TryGetValue(cacheKey, out cached))
+                _discoveryCache.TryGetValue(cacheKey, out var cached))
             {
                 return Result<ProviderDiscoverySnapshot>.Success(cached);
             }
