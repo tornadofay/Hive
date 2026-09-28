@@ -53,7 +53,7 @@ internal sealed class ExampleConfigurationExampleView : UserControl
 
         _settingsFlow = CreateSection(
             "Advanced resources",
-            "Accounts / Credentials and Execution Targets are administrative resources, not provider login screens. An API key is stored as a Hive Secret Store reference; you do not create or sign into a separate Hive user account for every provider. The AgentDefinition then references the selected ExecutionTarget rather than duplicating provider or credential details.");
+            "Accounts / Credentials and Execution Targets are administrative resources, not provider login screens. An API key is stored as a Hive Secret Store reference; you do not create or sign into a separate Hive user account for every provider. The AgentDefinition then references the selected ExecutionTarget rather than duplicating provider or credential details. When a saved ExecutionTarget is opened, Hive automatically discovers provider models through Hive.Management; Refresh requests fresh metadata, and selecting a discovered model populates the editable Model field. Manual model entry remains available when discovery is unsupported or unavailable.");
 
         _futureText = CreateSection(
             "Configuration grows with Hive",
