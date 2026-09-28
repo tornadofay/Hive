@@ -125,6 +125,22 @@ public sealed record OpenAICompatibleChatResponse(
     string Content,
     JsonElement? StructuredContent);
 
+public sealed record OpenAICompatibleCapabilityDescriptor(
+    string Key,
+    CapabilityState State);
+
+public sealed record OpenAICompatibleModelDescriptor(
+    string Id,
+    string? OwnedBy,
+    DateTimeOffset? CreatedAtUtc,
+    ProviderAvailabilityStatus Availability,
+    ProviderHealthStatus Health,
+    IReadOnlyList<OpenAICompatibleCapabilityDescriptor> Capabilities);
+
+public sealed record OpenAICompatibleModelCatalog(
+    IReadOnlyList<OpenAICompatibleModelDescriptor> Models,
+    int? RateLimitRemaining);
+
 public sealed class OpenAICompatibleProviderOptions
 {
     public OpenAICompatibleProviderOptions(
