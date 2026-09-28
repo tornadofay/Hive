@@ -49,11 +49,11 @@ internal sealed class ExampleConfigurationExampleView : UserControl
 
         _providerFlow = CreateSection(
             "Provider configuration",
-            "Start with a provider such as OpenAI, Groq, NVIDIA, or another supported integration. In the normal setup flow you configure the credential and the model/endpoint you want to use. Hive keeps the underlying Provider, ProviderAccount, and ExecutionTarget resources separate so advanced hosts can manage multiple credentials, models, endpoints, deployments, and capability-specific targets.");
+            "Start on the Providers page. Add Provider opens a built-in provider catalog; select the provider and enter its required credential. Hive creates the underlying ProviderAccount and uses the provider's discovery configuration to create or refresh automatic ExecutionTargets.");
 
         _settingsFlow = CreateSection(
             "Advanced resources",
-            "Accounts / Credentials and Execution Targets are administrative resources, not provider login screens. An API key is stored as a Hive Secret Store reference; you do not create or sign into a separate Hive user account for every provider. The AgentDefinition then references the selected ExecutionTarget rather than duplicating provider or credential details. When a saved ExecutionTarget is opened, Hive automatically discovers provider models through Hive.Management; Refresh requests fresh metadata, and selecting a discovered model populates the editable Model field. Manual model entry remains available when discovery is unsupported or unavailable.");
+            "Use Advanced from the Providers page when you need multiple accounts, custom or local endpoints, manually configured models/deployments, explicit capability overrides, or lifecycle troubleshooting. These pages operate on the same underlying Provider, ProviderAccount, and ExecutionTarget resources; they are not a second configuration system.");
 
         _futureText = CreateSection(
             "Configuration grows with Hive",
