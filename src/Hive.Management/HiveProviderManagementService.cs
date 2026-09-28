@@ -3,11 +3,16 @@ using System.Collections.ObjectModel;
 using Hive.Core;
 using Hive.Persistence;
 
-
-
 namespace Hive.Management;
 
+internal sealed record ExecutionTargetCapabilityOverridesResult(
+    IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>> Overrides,
+    IReadOnlyList<ProviderDiscoveryRoutingFailure> DiscoveryFailures);
 
+internal sealed record ProviderDiscoveryRoutingFailure(
+    ExecutionTargetId TargetId,
+    string TargetKey,
+    Error Error);
 
 internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
@@ -47,6 +52,14 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         bool forceRefresh = false,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(requiredCapability.Value))
+        {
+            return Result<ExecutionTargetCapabilityOverridesResult>.Failure(
+                Error.Validation(
+                    "hive.management.execution-target-capability-required",
+                    "A required execution target capability is required."));
+        }
+
         var contextError = ValidateAccessContext(accessContext);
         if (contextError is not null)
             return Result<ProviderDiscoverySnapshot>.Failure(contextError);
@@ -114,8 +127,6 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
             provider.Value.Resource.Version,
             account.Value!.Id,
             account.Value.Resource.Version,
-            target.Value.Id,
-            target.Value.Resource.Version,
             target.Value.Endpoint.AbsoluteUri,
             discoveryGeneration);
 
@@ -319,9 +330,10 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         }
     }
 
-    internal async Task<Result<IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>>>
+    internal async Task<Result<ExecutionTargetCapabilityOverridesResult>>
         GetExecutionTargetCapabilityOverridesAsync(
             IReadOnlyList<ExecutionTarget> targets,
+            CapabilityKey requiredCapability,
             ResourceAccessContext accessContext,
             CancellationToken cancellationToken = default)
     {
@@ -344,15 +356,24 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
         if (_providerCapabilityDiscovery is null || targets.Count == 0)
         {
-            return Result<IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>>.Success(
-                new ReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>(
-                    new Dictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>()));
+            return Result<ExecutionTargetCapabilityOverridesResult>.Success(
+                new ExecutionTargetCapabilityOverridesResult(
+                    new ReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>(
+                        new Dictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>()),
+                    Array.Empty<ProviderDiscoveryRoutingFailure>()));
         }
 
         var overrides =
             new Dictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>();
+        var discoveryFailures = new List<ProviderDiscoveryRoutingFailure>();
 
         foreach (var target in targets)
+        {
+            if (target.Capabilities.Any(
+                    capability => capability.Capability == requiredCapability))
+            {
+                continue;
+            }
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -362,7 +383,14 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                 cancellationToken: cancellationToken).ConfigureAwait(false);
 
             if (discovery.IsFailure)
+            {
+                discoveryFailures.Add(
+                    new ProviderDiscoveryRoutingFailure(
+                        target.Id,
+                        target.Key,
+                        discovery.Error!));
                 continue;
+            }
 
             var snapshot = discovery.Value!;
 
@@ -375,7 +403,14 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                     cancellationToken: cancellationToken).ConfigureAwait(false);
 
                 if (discovery.IsFailure)
+                {
+                    discoveryFailures.Add(
+                        new ProviderDiscoveryRoutingFailure(
+                            target.Id,
+                            target.Key,
+                            discovery.Error!));
                     continue;
+                }
 
                 snapshot = discovery.Value!;
 
@@ -392,8 +427,10 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                 overrides[target.Id] = effective;
         }
 
-        return Result<IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>>.Success(
-            new ReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>(overrides));
+        return Result<ExecutionTargetCapabilityOverridesResult>.Success(
+            new ExecutionTargetCapabilityOverridesResult(
+                new ReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>(overrides),
+                discoveryFailures));
     }
 
     internal async Task<Result<ProviderConnectionTestResult>> TestExecutionTargetConnectionAsync(
@@ -815,8 +852,6 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         ResourceVersion ProviderVersion,
         ProviderAccountId ProviderAccountId,
         ResourceVersion ProviderAccountVersion,
-        ExecutionTargetId ExecutionTargetId,
-        ResourceVersion ExecutionTargetVersion,
         string Endpoint,
         long DiscoveryGeneration);
 }
