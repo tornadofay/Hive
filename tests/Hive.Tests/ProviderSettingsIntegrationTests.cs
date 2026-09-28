@@ -484,6 +484,71 @@ public sealed class ProviderSettingsIntegrationTests
     }
 
     [Fact]
+    public void ExecutionTargetEditor_AppliesSelectedManagementModeToNewTarget()
+    {
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var now = new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero);
+
+        var provider = new Provider(
+            CreateEnvelope(
+                ResourceKind.Provider,
+                ProviderId.New(),
+                context,
+                new FakeClock(now)),
+            "revision-provider",
+            "Revision Provider",
+            "openai-compatible");
+
+        var account = new ProviderAccount(
+            CreateEnvelope(
+                ResourceKind.ProviderAccount,
+                ProviderAccountId.New(),
+                context,
+                new FakeClock(now)),
+            provider.Id,
+            "default",
+            "Default Account");
+
+        var (management, _) = HiveWorkspaceLifecycleTests.ManagementFacadeProxy.Create();
+        using var editor = new HiveExecutionTargetEditorForm(
+            target: null,
+            provider,
+            account,
+            management,
+            context,
+            new HiveThemeManager(HiveThemeMode.Light));
+
+        editor.ManagementModeSelector.SelectedItem =
+            ExecutionTargetManagementMode.Automatic;
+
+        Assert.NotNull(editor.AcceptButton);
+        ((IButtonControl)editor.AcceptButton!).PerformClick();
+
+        Assert.NotNull(editor.Definition);
+        Assert.Equal(
+            ExecutionTargetManagementMode.Automatic,
+            editor.Definition!.ManagementMode);
+    }
+
+    [Fact]
+    public void ProviderSetupEditor_UsesActualLineBreaksInProviderDetails()
+    {
+        using var editor = new HiveProviderSetupEditorForm(
+            existing: null,
+            new HiveThemeManager(HiveThemeMode.Light));
+
+        var details = FindControl<Label>(editor, label =>
+            label.Text.StartsWith("Endpoint:", StringComparison.Ordinal));
+
+        Assert.NotNull(details);
+        Assert.Contains(Environment.NewLine, details!.Text);
+        Assert.DoesNotContain(@"\r\n", details.Text);
+    }
+
+    [Fact]
     public async Task ProvidersSettings_NoCredentialProviderShowsCredentialAsNotRequired()
     {
         var database = CreateDatabase("Hive_Test_ProviderSettingsNoCredentialStatus");
@@ -554,14 +619,20 @@ public sealed class ProviderSettingsIntegrationTests
     }
 
     private static TControl? FindControl<TControl>(Control root)
+        where TControl : Control =>
+        FindControl(root, control => true);
+
+    private static TControl? FindControl<TControl>(
+        Control root,
+        Func<TControl, bool> predicate)
         where TControl : Control
     {
         foreach (Control child in root.Controls)
         {
-            if (child is TControl match)
+            if (child is TControl match && predicate(match))
                 return match;
 
-            var nested = FindControl<TControl>(child);
+            var nested = FindControl(child, predicate);
             if (nested is not null)
                 return nested;
         }
