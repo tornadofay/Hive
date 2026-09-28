@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-27 (rev 53 — review-correction resource and WinForms contract-boundary audit)
+Last updated: 2026-09-28 (rev 54 — event persistence public-boundary hardening)
 
 
 
