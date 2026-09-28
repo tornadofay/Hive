@@ -601,6 +601,20 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
 
     internal Task<Result<IReadOnlyList<ExecutionTarget>>> ListExecutionTargetsAsync(
+        ResourceAccessContext accessContext,
+        bool includeRetired = false,
+        CancellationToken cancellationToken = default) =>
+        List(
+            false,
+            accessContext,
+            "execution target",
+            () => _providerResources.ListExecutionTargetsAsync(
+                accessContext,
+                includeRetired,
+                cancellationToken));
+
+
+    internal Task<Result<IReadOnlyList<ExecutionTarget>>> ListExecutionTargetsAsync(
         ProviderAccountId providerAccountId,
         ResourceAccessContext accessContext,
         bool includeRetired = false,
