@@ -1,5 +1,8 @@
 using System.Collections.Concurrent;
+using System.Windows.Forms;
 using Hive.Core;
+using Hive.Host.WinForms;
+using Hive.Host.WinForms.UI.Theme;
 using Hive.Management;
 using Hive.Persistence;
 using Hive.Tests.TestInfrastructure;
@@ -481,6 +484,51 @@ public sealed class ProviderSettingsIntegrationTests
     }
 
     [Fact]
+    public async Task ProvidersSettings_NoCredentialProviderShowsCredentialAsNotRequired()
+    {
+        var database = CreateDatabase("Hive_Test_ProviderSettingsNoCredentialStatus");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var (context, providerStore, secretStore) = CreateInfrastructure(database);
+        var clock = new FakeClock(
+            new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero));
+        var discovery = new SettingsDiscovery(
+            ModelSet("local-model"),
+            clock);
+
+        using var facade = new HiveManagementFacade(
+            providerStore,
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            secretStore,
+            providerCapabilityDiscovery: discovery,
+            clock: clock);
+
+        var configured = await facade.ConfigureBuiltInProviderAsync(
+            "ollama",
+            credential: null,
+            context);
+
+        Assert.True(configured.IsSuccess, configured.Error?.Message);
+
+        using var view = new HiveProvidersSettingsView(
+            facade,
+            context,
+            new HiveThemeManager(HiveThemeMode.Light));
+
+        await view.InitializeAsync();
+
+        var list = FindControl<ListView>(view);
+
+        Assert.NotNull(list);
+        var row = Assert.Single(list!.Items.Cast<ListViewItem>());
+        Assert.Equal("Not required", row.SubItems[2].Text);
+    }
+
+    [Fact]
     public void ExecutionTargetManagementModeDefaultsToManual()
     {
         var context = new ResourceAccessContext(
@@ -503,6 +551,22 @@ public sealed class ProviderSettingsIntegrationTests
             Array.Empty<CapabilityStateEntry>());
 
         Assert.Equal(ExecutionTargetManagementMode.Manual, target.ManagementMode);
+    }
+
+    private static TControl? FindControl<TControl>(Control root)
+        where TControl : Control
+    {
+        foreach (Control child in root.Controls)
+        {
+            if (child is TControl match)
+                return match;
+
+            var nested = FindControl<TControl>(child);
+            if (nested is not null)
+                return nested;
+        }
+
+        return null;
     }
 
     private static PersistenceTestDatabase CreateDatabase(string name) =>
