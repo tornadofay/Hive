@@ -80,7 +80,7 @@ For the planned V1 business-write/review examples across Phases 1.23–1.25, the
 
 Planned V1 interaction and operations examples should also cover:
 - Provider/model capability discovery and operational metadata → `Providers / Target Selection / Capability Discovery`;
-- planned normal Provider Settings onboarding, Refresh/reconciliation, and generalized Advanced Configuration → the real `Overview / Getting Started / Example Configuration` Settings flow;
+- Phase 1.16 Provider Settings onboarding, Refresh/reconciliation, and generalized Advanced Configuration → the real `Overview / Getting Started / Example Configuration` Settings flow;
 - Agent execution configuration (`Auto` / exact `ExecutionTarget`) is part of `Workspace / Agent Interaction`, not Provider Settings. The UI may display provider/model/deployment details, but the saved choice is the exact durable `ExecutionTarget` identity; model name alone is never sufficient.
 - V1 Workspace foundation and direct LLM interaction → `Workspace / Direct LLM`;
 - Agent-directed Workspace interaction, including application-wide and form-associated specialist Agents → `Workspace / Agent Interaction`;
