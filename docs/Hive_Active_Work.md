@@ -13,7 +13,7 @@ This is a bounded corrective revision of the immediately preceding Phase 1.16 im
 - enforce the Phase 1.16 discovery snapshot invariant that non-Supported model enumeration states cannot carry discovered models;
 - validate discovery results at the Hive.Management boundary before caching or returning them;
 - normalize conflicting provider fields that map to the same Hive capability conservatively as `Unknown`, independent of provider JSON field order;
-- add focused regression coverage for contradictory/mismatched discovery results and conflicting capability signals;
+- add focused regression coverage for contradictory/mismatched discovery results, conflicting capability signals, and concurrent discovery-cache access;
 - preserve existing Provider → ProviderAccount → ExecutionTarget ownership, capability authority, caching, cancellation, and Example Host behavior.
 
 ### Out of scope
