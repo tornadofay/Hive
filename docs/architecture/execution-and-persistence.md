@@ -270,9 +270,11 @@ StructuredCandidate:
 - Relevant execution, mapping, source, and evidence/confidence metadata may be retained; confidence is evidence, never authorization.
 
 Review and governance boundary:
-- Phase 1.17 makes mappings and candidates reviewable/editable and preserves per-item failure information so the user can inspect the original source where the UI surface supports it.
-- A later governance boundary may authorize processing of an entire selected batch as one intervention rather than requiring one authorization per image.
-- Mapping acceptance/candidate review must remain distinguishable from authorization to perform a consequential business-app write.
+Review and governance boundary:
+- Phase 1.17 defines two distinct human checkpoints: authorization to process the selected input batch, and authorization to proceed with the reviewed/corrected candidate and mapping results.
+- The processing checkpoint may cover an entire selected batch rather than requiring one authorization per image solely because each image causes an individual model call.
+- The second checkpoint occurs after extraction/mapping results are available. The user can inspect failures, open original sources, edit mappings/candidate values, and then authorize the accepted candidate set to proceed. This is approval of the interpreted data for downstream use, not approval of the eventual host mutation.
+- The later business-operation proposal has its own authorization boundary before consequential host mutation.
 - The generalized Approve / Reject intervention state machine belongs to Phase 1.22 and must not be recreated inside the extraction subsystem.
 
 Result and provenance:
