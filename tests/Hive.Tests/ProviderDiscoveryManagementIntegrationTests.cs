@@ -83,6 +83,63 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     }
 
     [Fact]
+    public async Task Management_DiscoveryCacheIsSharedAcrossTargetsWithSameProviderAccountAndEndpoint()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoverySharedCache");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var provider = CreateProvider(principal, tenant);
+        var account = CreateAccount(provider.Id, principal, tenant);
+        var firstTarget = CreateTarget(provider.Id, account.Id, principal, tenant);
+        var secondTarget = CreateTarget(provider.Id, account.Id, principal, tenant);
+
+        var providerStore = new SqlProviderResourceStore(database.Options);
+
+        Assert.True(
+            (await providerStore.CreateProviderAsync(provider, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateProviderAccountAsync(account, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateExecutionTargetAsync(firstTarget, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateExecutionTargetAsync(secondTarget, context)).IsSuccess);
+
+        var discovery = new RecordingDiscovery();
+
+        using var facade = new HiveManagementFacade(
+            providerStore,
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            providerCapabilityDiscovery: discovery);
+
+        var first = await facade.GetProviderDiscoveryAsync(
+            firstTarget.Id,
+            context);
+
+        Assert.True(first.IsSuccess, first.Error?.Message);
+
+        var second = await facade.GetProviderDiscoveryAsync(
+            secondTarget.Id,
+            context);
+
+        Assert.True(second.IsSuccess, second.Error?.Message);
+        Assert.Equal(1, discovery.CallCount);
+        Assert.Equal(
+            first.Value!.Operational.ObservedAtUtc,
+            second.Value!.Operational.ObservedAtUtc);
+    }
+
+    [Fact]
     public async Task Management_SecretReplacementInvalidatesDiscoveryCache()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoverySecretReplacement");
@@ -558,6 +615,129 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             ErrorCategory.Unsupported,
             failure.Error.Category);
         Assert.Equal(2, discovery.CallCount);
+    }
+
+    [Fact]
+    public async Task Management_InputPreparationPreservesDiscoveryFailure_WhenDiscoveryPreventsVisionRouting()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryInputFailure");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var provider = CreateProvider(principal, tenant);
+        var account = CreateAccount(provider.Id, principal, tenant);
+        var target = CreateTarget(provider.Id, account.Id, principal, tenant);
+        var providerStore = new SqlProviderResourceStore(database.Options);
+
+        Assert.True(
+            (await providerStore.CreateProviderAsync(provider, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateProviderAccountAsync(account, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateExecutionTargetAsync(target, context)).IsSuccess);
+
+        var discovery = new RecordingDiscovery(failOnCall: 1);
+
+        using var facade = new HiveManagementFacade(
+            providerStore,
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            providerCapabilityDiscovery: discovery);
+
+        var prepared = await facade.PrepareInputAsync(
+            new InputSubmission(
+            [
+                new InputItem(
+                    "discovery-failure-image.png",
+                    "image/png",
+                    new byte[] { 1, 2, 3 })
+            ]),
+            context);
+
+        Assert.True(prepared.IsSuccess, prepared.Error?.Message);
+        Assert.Empty(prepared.Value!.PreparedInputs);
+        Assert.Equal(1, discovery.CallCount);
+
+        Assert.Contains(
+            prepared.Value.Failures,
+            failure =>
+                failure.Error.Code == "hive.provider.discovery.test-failure" &&
+                failure.Error.Category == ErrorCategory.External &&
+                failure.SourceLocation == $"Provider discovery: {target.Key}");
+
+        Assert.Contains(
+            prepared.Value.Failures,
+            failure =>
+                failure.Error.Code == "hive.execution-target.selection.no-qualifying-target" &&
+                failure.Error.Category == ErrorCategory.Unsupported);
+    }
+
+    [Fact]
+    public async Task Management_InputPreparationDoesNotDiscoverExplicitlyConfiguredRequiredCapability()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryConfiguredVision");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var provider = CreateProvider(principal, tenant);
+        var account = CreateAccount(provider.Id, principal, tenant);
+        var target = CreateTarget(provider.Id, account.Id, principal, tenant)
+            .WithCapabilities(
+            [
+                new CapabilityStateEntry(
+                    new CapabilityKey("vision"),
+                    CapabilityState.Supported)
+            ]);
+
+        var providerStore = new SqlProviderResourceStore(database.Options);
+
+        Assert.True(
+            (await providerStore.CreateProviderAsync(provider, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateProviderAccountAsync(account, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateExecutionTargetAsync(target, context)).IsSuccess);
+
+        var discovery = new RecordingDiscovery(failOnCall: 1);
+
+        using var facade = new HiveManagementFacade(
+            providerStore,
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            providerCapabilityDiscovery: discovery);
+
+        var prepared = await facade.PrepareInputAsync(
+            new InputSubmission(
+            [
+                new InputItem(
+                    "configured-vision-image.png",
+                    "image/png",
+                    new byte[] { 1, 2, 3 })
+            ]),
+            context);
+
+        Assert.True(prepared.IsSuccess, prepared.Error?.Message);
+        Assert.Single(prepared.Value!.PreparedInputs);
+        Assert.Empty(prepared.Value.Failures);
+        Assert.Equal(0, discovery.CallCount);
     }
 
     [Fact]
