@@ -68,7 +68,7 @@ Examples:
 - OpenAI-compatible provider transport example → `Providers / Provider Transport`
 - Hive.Management CRUD facade example → `Management / Facade`
 - V1 Workspace / WorkItem operations example → `Workspace / WorkItem Operations`
-- Durable event log/snapshot/outbox example → `Persistence / Events / Event Persistence`
+- Transactional outbox poller example → `Persistence / Events / Outbox Poller`
 - Image input and WinForms host-context discovery example → `Host / WinForms Integration`
 
 The Phase 1.13 WinForms host-context example uses a deterministic fixture Form and the checked-in image fixture so it does not require a real business application or real provider account. Discovery returns read-only metadata snapshots; it never grants control-action authority.
