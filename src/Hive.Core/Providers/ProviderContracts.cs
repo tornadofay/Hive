@@ -263,6 +263,13 @@ public sealed record ExecutionTarget
                 nameof(endpoint));
         }
 
+        if (ContainsCredentialBearingQueryParameter(endpoint))
+        {
+            throw new ArgumentException(
+                "Execution target endpoints must not contain credential-bearing query parameters.",
+                nameof(endpoint));
+        }
+
         Model = NormalizeOptional(model, nameof(model), 512);
         Deployment = NormalizeOptional(deployment, nameof(deployment), 512);
 
@@ -401,6 +408,63 @@ public sealed record ExecutionTarget
         }
 
         return normalized;
+    }
+
+    private static bool ContainsCredentialBearingQueryParameter(Uri endpoint)
+    {
+        var query = endpoint.GetComponents(
+            UriComponents.Query,
+            UriFormat.UriEscaped);
+
+        if (string.IsNullOrEmpty(query))
+            return false;
+
+        var sensitiveNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "api-key",
+            "api_key",
+            "apikey",
+            "authorization",
+            "auth-token",
+            "auth_token",
+            "bearer",
+            "client-secret",
+            "client_secret",
+            "credential",
+            "credentials",
+            "key",
+            "password",
+            "passwd",
+            "secret",
+            "sig",
+            "signature",
+            "subscription-key",
+            "token",
+            "access-token",
+            "access_token",
+            "x-api-key",
+            "ocp-apim-subscription-key",
+            "x-amz-credential",
+            "x-amz-signature",
+            "x-amz-security-token"
+        };
+
+        foreach (var component in query.Split(
+                     ['&', ';'],
+                     StringSplitOptions.RemoveEmptyEntries))
+        {
+            var equalsIndex = component.IndexOf('=');
+            var rawName = equalsIndex >= 0
+                ? component[..equalsIndex]
+                : component;
+
+            var name = Uri.UnescapeDataString(rawName).Trim();
+
+            if (sensitiveNames.Contains(name))
+                return true;
+        }
+
+        return false;
     }
 
     private static IReadOnlyList<CapabilityStateEntry> NormalizeCapabilities(
