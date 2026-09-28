@@ -16,7 +16,8 @@ This is a bounded corrective slice opened from the repository-wide Review findin
 2. Preserve actionable provider-discovery failure information during capability-aware input routing rather than collapsing provider operational failures into only a generic no-qualifying-target result, while still allowing independent targets to qualify.
 3. Correct the current provider-discovery caching/routing shape where the same ProviderAccount + endpoint can cause repeated model-catalog discovery across multiple ExecutionTargets; keep target/model capability resolution and the existing authoritative ExecutionTargetSelector boundary intact.
 4. Add focused regression coverage for security, failure classification/diagnostics, cancellation/stale handling where affected, cache reuse, and deterministic behavior.
-5. Update the owning architecture/usage documentation only where the corrected behavior establishes or clarifies an existing invariant.
+5. Normalize the duplicate roadmap heading for the completed Provider / Model Discovery slice and planned UI follow-on without changing roadmap order or authorization.
+6. Update the owning architecture/usage documentation only where the corrected behavior establishes or clarifies an existing invariant.
 
 ### Explicit exclusions
 
