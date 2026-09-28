@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Authorized slice
 
@@ -79,6 +79,10 @@ Source/diff review complete at `9d73fe444e70864d3d93f653b0f15158303301fe` (main,
 ## Verification incident — test compilation
 
 Developer verification found in-scope compilation/analyzer failures in the Phase 1.16 Provider Settings test coverage and the existing ExecutionTarget discovery settings test. Same-slice remediation corrected the discovery-test fixture constructor ambiguity, aligned failure fixtures with the existing `ErrorCategory` values, and replaced analyzer-reported `Assert.Single(...Where(...))` patterns with the predicate overload. Source review found no remaining instances of the reported patterns; no build or test run was performed by the agent.
+
+## Verification incident — developer test run
+
+Developer verification on 2026-09-28 produced 470 tests with 458 passed and 12 failed. The failures are in-scope for this Phase 1.16 slice: two Provider Settings fixture-order failures, one superseded Settings navigation expectation, one invalid sealed `DispatchProxy` test fixture, and the remaining legacy discovery-panel tests blocked by that same proxy fixture. Same-slice remediation is limited to aligning these tests with the current provider-first Settings structure and existing runtime contracts.
 
 ## Example / test handoff
 
