@@ -76,4 +76,4 @@ The example uses no provider credentials.
 
 ## Verification
 
-Phase 1.16 remains incomplete until the active-work verification boundary has been executed. The required automated and manual verification is recorded in `docs/Hive_Active_Work.md`.
+Phase 1.16 Provider / Model Capability Discovery is complete and its baseline plus bounded Revisions 1–7 are verified. This documentation also reflects the later bounded corrective maintenance slice for endpoint credential-query rejection, routing-failure preservation, and shared discovery caching. Its verification boundary is recorded in `docs/Hive_Active_Work.md` while that corrective slice is pending developer verification.
