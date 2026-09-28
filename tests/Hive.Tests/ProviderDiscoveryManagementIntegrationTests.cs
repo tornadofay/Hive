@@ -441,12 +441,11 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
 
             if (_failOnCall == callNumber)
             {
-                return Task.FromResult(
-                    Result<ProviderDiscoverySnapshot>.Failure(
-                        new Error(
-                            "hive.provider.discovery.test-failure",
-                            ErrorCategory.External,
-                            "The test discovery provider failed during refresh.")));
+                return Result<ProviderDiscoverySnapshot>.Failure(
+                    new Error(
+                        "hive.provider.discovery.test-failure",
+                        ErrorCategory.External,
+                        "The test discovery provider failed during refresh."));
             }
 
             var now = DateTimeOffset.UtcNow;
@@ -481,8 +480,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
                         ])
                 ]);
 
-            return Task.FromResult(
-                Result<ProviderDiscoverySnapshot>.Success(snapshot));
+            return Result<ProviderDiscoverySnapshot>.Success(snapshot);
         }
     }
 }
