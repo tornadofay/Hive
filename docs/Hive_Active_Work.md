@@ -1,6 +1,8 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+
+Developer verification reported active C# compiler errors in `src/Hive.Management/HiveManagementFacade.cs` (CS1002, CS1519, CS0411), all within the new facade operation-wrapper syntax.
 
 ## Current slice
 
