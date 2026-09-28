@@ -107,7 +107,7 @@ One image failure does not discard successful images in the same batch.
 
 Extraction results are normalized into a source-neutral StructuredCandidate.
 
-Ther candidate supports:
+The candidate supports:
 - typed field values;
 - parent/child data;
 - field/item validation state;
@@ -136,7 +136,7 @@ For image failures, the UI should show the image file name and safe failure info
 
 The user can edit mappings and candidate values before downstream business-operation work.
 
-Ther result handed forward is a stable, reviewable candidate set. It contains no host mutation.
+The result handed forward is a stable, reviewable candidate set. It contains no host mutation.
 
 ## Human-review and authorization model
 
