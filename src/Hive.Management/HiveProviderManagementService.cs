@@ -95,6 +95,15 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         if (provider.IsFailure)
             return Result<ProviderDiscoverySnapshot>.Failure(provider.Error!);
 
+        if (account.Value!.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active ||
+            provider.Value!.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        {
+            return Result<ProviderDiscoverySnapshot>.Failure(
+                Error.Conflict(
+                    "hive.management.provider-discovery-resource-inactive",
+                    "Provider capability discovery requires an active provider and provider account."));
+        }
+
         var cacheKey = new ProviderDiscoveryCacheKey(
             provider.Value!.Id,
             provider.Value.Resource.Version,
