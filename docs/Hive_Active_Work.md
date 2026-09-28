@@ -22,7 +22,9 @@ No new provider transport, capability vocabulary, workflow behavior, structured 
 
 ## Verification boundary
 
-**VERIFICATION PENDING.**
+**VERIFICATION FAILED / REMEDIATION REQUIRED.**
+
+Developer verification on 2026-09-28 reported the matching Example Host scenario successful, but the full `Hive.Tests` suite failed: **419/420 passed, 1 failed, 0 skipped**. The failing test is `ProviderDiscoveryTests.Adapter_ListModels_NormalizesExplicitCapabilitiesAndMetadata` at line 205, with `The provider returned a malformed or unsupported model catalog.` Remediation is required within this slice before verification can return to pending.
 
 The previous Phase 1.16 revision was fully verified before this corrective revision. This revision changes production code and tests, so the previous 418/418 result does not verify the revised source.
 
