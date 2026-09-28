@@ -1,8 +1,8 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
-Developer verification still reports CS0411 in `src/Hive.Management/HiveManagementFacade.cs` at the non-generic `Task<Result>` wrappers for `RemoveBootstrapCredentialAsync` and `InitializePersistenceAsync`. The current `Run<T>` overload only accepts `Task<Result<T>>`.
+The reported CS0411 errors were remediated by adding a matching non-generic `Run(Func<Task<Result>>)` lifetime wrapper for facade operations that return `Task<Result>`. Source-level re-audit confirms both generic and non-generic wrapper overloads are present and the affected methods bind to the non-generic boundary.
 
 ## Current slice
 
