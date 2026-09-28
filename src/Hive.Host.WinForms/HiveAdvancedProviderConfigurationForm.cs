@@ -110,7 +110,7 @@ internal sealed class HiveAdvancedProviderConfigurationForm : HiveForm
     private async Task InitializeSelectedTabAsync()
     {
         var index = _tabs.SelectedIndex;
-        if (index < 0 || !_initializedTabs.Add(index))
+        if (index < 0 || _initializedTabs.Contains(index))
             return;
 
         var token = (_lifetimeCts ??= new CancellationTokenSource()).Token;
@@ -133,6 +133,8 @@ internal sealed class HiveAdvancedProviderConfigurationForm : HiveForm
                 throw new InvalidOperationException(
                     $"Unknown advanced provider configuration tab '{index}'.");
         }
+
+        _initializedTabs.Add(index);
     }
 
     private void AddTab(string title, Control page)
