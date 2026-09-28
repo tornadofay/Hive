@@ -469,10 +469,11 @@ Batch semantics:
 - batch grouping must never erase per-item provenance, validation state, or recovery/audit identity.
 
 Human-review checkpoints:
-- **Processing checkpoint:** later governance may authorize processing of the selected batch as one intervention, rather than requiring one authorization per image;
-- **Mapping/candidate checkpoint:** the user can inspect/edit the one-time spreadsheet mapping and extracted candidate results, with per-item failures visible;
-- **Business-operation authorization:** the later business-operation proposal is authorized separately before host mutation;
-- the processing/mapping concepts above are part of the Phase 1.17 product design, but their generalized authoritative Approve/Reject state machine belongs to Phase 1.22.
+Human-review checkpoints:
+- **Processing authorization checkpoint:** after Single File or Folder selection, the user may authorize the selected processing batch as one unit. This authorization covers the planned extraction work and its associated model/provider processing; it does not need to be repeated for every image in the batch when policy permits batch authorization.
+- **Candidate/mapping authorization checkpoint:** after processing completes, Hive presents the resulting spreadsheet mappings and image-extracted candidates for human inspection and correction. The user may edit incorrect mappings/values and then authorize the accepted candidate set to proceed to the next stage. This checkpoint authorizes use of the reviewed candidate data; it is not yet the consequential host business write.
+- **Business-operation authorization:** the later Phase 1.23 business-operation proposal is authorized separately before consequential host mutation.
+- Phase 1.17 defines these checkpoints and the reviewable artifacts, but the generalized authoritative Approve/Reject intervention state machine belongs to Phase 1.22. Phase 1.17 must not implement a parallel authorization subsystem.
 
 Non-goals:
 - no host business mutation;
