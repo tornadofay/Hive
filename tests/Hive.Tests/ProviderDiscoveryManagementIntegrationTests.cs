@@ -188,7 +188,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             new InputItem(
                 "discovery-image.png",
                 "image/png",
-                [1, 2, 3])
+                new byte[] { 1, 2, 3 })
         ]);
 
         var prepared = await facade.PrepareInputAsync(
