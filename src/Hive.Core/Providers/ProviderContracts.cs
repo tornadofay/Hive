@@ -461,7 +461,7 @@ public sealed record ExecutionTarget
 
             var name = Uri.UnescapeDataString(rawName).Trim();
 
-            if (sensitiveNames.Contains(name))
+            if (CredentialBearingQueryParameterNames.Contains(name))
                 return true;
         }
 
