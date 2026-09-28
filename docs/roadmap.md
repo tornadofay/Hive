@@ -359,6 +359,8 @@ Objective: make the completed Phase 1.16 provider/model discovery capability dir
 Normal Provider Settings:
 - present only the providers the user has configured;
 - use the existing shared Hive CRUD presentation rather than provider-specific cards or a per-row action column;
+- use normal CRUD Edit to replace the configured provider's protected API key/credential; provider identity/transport changes belong only to Advanced;
+- use the existing Provider lifecycle behavior for Retire, preserving durable provider identity/history and preventing use/reactivation of dependent resources while the provider is inactive;
 - provide toolbar actions `Add Provider`, `Refresh`, and `Advanced`;
 - `Add Provider` opens a compact provider-configuration dialog using the built-in provider catalog and the provider's required credential input;
 - normal setup does not require users to create ProviderAccounts or ExecutionTargets manually;
@@ -382,7 +384,7 @@ Automatic target reconciliation:
 - consumes successful fresh ProviderDiscoverySnapshot evidence at ProviderAccount + endpoint scope;
 - must not create a fake/placeholder persisted ExecutionTarget solely to perform discovery;
 - materializes durable ExecutionTargets for discovered models/deployments;
-- gives automatic targets an explicit durable management origin/mode distinct from administrator-managed targets;
+- gives automatic targets an explicit durable `ExecutionTargetManagementMode` (`Automatic` / `Manual`) distinct from administrator-managed targets;
 - uses a stable reconciliation identity based on ProviderAccount, endpoint, and model/deployment identity so rediscovered models reuse their automatic target where possible;
 - retires missing automatic targets without physically deleting their durable identity;
 - may reactivate/reuse an automatic target when the same model/deployment returns and normal lifecycle/dependency validation succeeds;
@@ -391,6 +393,7 @@ Automatic target reconciliation:
 
 Advanced Configuration:
 - is one generalized administrative entry point beside `Add Provider` and `Refresh`, not a provider-specific action;
+- is independent of row selection or provider selection;
 - opens the existing generalized Providers / Accounts / Credentials / Execution Targets administration pages;
 - may carry the current provider as an initial filter for convenience, but its contracts remain provider-neutral;
 - is the supported path for multiple accounts, custom/alternate endpoints, local/self-hosted OpenAI-compatible servers, manually configured models/deployments, explicit capability overrides, and administrative lifecycle/troubleshooting.
