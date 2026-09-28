@@ -82,6 +82,71 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     }
 
     [Fact]
+    public async Task Management_FailedForceRefreshLeavesLastSuccessfulDiscoveryCached()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryRefreshFailure");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var provider = CreateProvider(principal, tenant);
+        var account = CreateAccount(provider.Id, principal, tenant);
+        var target = CreateTarget(provider.Id, account.Id, principal, tenant);
+        var providerStore = new SqlProviderResourceStore(database.Options);
+
+        Assert.True(
+            (await providerStore.CreateProviderAsync(provider, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateProviderAccountAsync(account, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateExecutionTargetAsync(target, context)).IsSuccess);
+
+        var discovery = new RecordingDiscovery(
+            target,
+            failOnCall: 2);
+
+        using var facade = new HiveManagementFacade(
+            providerStore,
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            providerCapabilityDiscovery: discovery);
+
+        var first = await facade.GetProviderDiscoveryAsync(
+            target.Id,
+            context);
+
+        Assert.True(first.IsSuccess, first.Error?.Message);
+        Assert.Equal(1, discovery.CallCount);
+
+        var failedRefresh = await facade.GetProviderDiscoveryAsync(
+            target.Id,
+            context,
+            forceRefresh: true);
+
+        Assert.True(failedRefresh.IsFailure);
+        Assert.Equal(ErrorCategory.External, failedRefresh.Error!.Category);
+        Assert.Equal(2, discovery.CallCount);
+
+        var cached = await facade.GetProviderDiscoveryAsync(
+            target.Id,
+            context);
+
+        Assert.True(cached.IsSuccess, cached.Error?.Message);
+        Assert.Equal(2, discovery.CallCount);
+        Assert.Equal(
+            first.Value!.Operational.ObservedAtUtc,
+            cached.Value!.Operational.ObservedAtUtc);
+    }
+
+    [Fact]
     public async Task Management_InputPreparationRefreshesStaleDiscovery_AndUsesDiscoveredVision()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryInput");
@@ -223,13 +288,16 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     {
         private readonly ExecutionTarget _target;
         private readonly bool _staleFirst;
+        private readonly int? _failOnCall;
 
         public RecordingDiscovery(
             ExecutionTarget target,
-            bool staleFirst = false)
+            bool staleFirst = false,
+            int? failOnCall = null)
         {
             _target = target;
             _staleFirst = staleFirst;
+            _failOnCall = failOnCall;
         }
 
         public int CallCount { get; private set; }
@@ -244,6 +312,16 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             Assert.Null(credential);
 
             CallCount++;
+
+            if (_failOnCall == CallCount)
+            {
+                return Task.FromResult(
+                    Result<ProviderDiscoverySnapshot>.Failure(
+                        new Error(
+                            "hive.provider.discovery.test-failure",
+                            ErrorCategory.External,
+                            "The test discovery provider failed during refresh.")));
+            }
 
             var observedAt = DateTimeOffset.UtcNow;
             var staleAfter = _staleFirst && CallCount == 1
