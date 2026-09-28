@@ -166,6 +166,8 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
 
     internal Label StatusLabel => _statusLabel;
 
+    internal Label MetadataLabel => _metadataLabel;
+
     internal IReadOnlyList<ProviderModelMetadata> Models => _models;
 
     internal async Task InitializeAsync(CancellationToken cancellationToken = default) =>
