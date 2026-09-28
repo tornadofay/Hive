@@ -103,7 +103,7 @@ Model capability information is represented separately from the configured Execu
 
 The existing ExecutionTargetSelector remains the authoritative capability policy boundary. Phase 1.16 permits Management/input preparation to supply an ephemeral effective capability set to that selector without mutating the persisted target.
 
-Discovery normalizes only provider capability fields that have a defined Hive capability mapping. Provider fields that cannot be normalized are ignored rather than guessed. Supported/Unsupported/Unknown remain explicit states. Model availability and health are reported only when the provider explicitly supplies those fields; a successful metadata request alone is not treated as proof that a model is healthy.
+Discovery normalizes only provider capability fields that have a defined Hive capability mapping. Provider fields that cannot be normalized are ignored rather than guessed. When multiple provider fields normalize to the same Hive capability, agreeing states are preserved and conflicting states resolve conservatively to `Unknown` rather than depending on provider field order. Supported/Unsupported/Unknown remain explicit states. Model availability and health are reported only when the provider explicitly supplies those fields; a successful metadata request alone is not treated as proof that a model is healthy.
 
 Operational metadata may include bounded rate-limit information when the provider reports it. Quota, rate limits, health, availability, capacity, and cost remain operational dimensions separate from configured capability state and are not used as hidden capability grants.
 
