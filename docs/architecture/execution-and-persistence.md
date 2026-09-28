@@ -227,7 +227,7 @@ Agent configuration is a separate Agent-owned concern. The existing AgentDefinit
 Operational availability/health remains distinct from capability. Before an Agent Auto selection is executed, the execution-planning boundary must exclude targets that are explicitly ineligible under the current operational state; it must not reinterpret health or availability as a capability grant. The exact operational-eligibility policy belongs to execution planning, not Provider Settings.
 
 No V1 workflow, MAF orchestration, business-operation write, Tool authorization, Review, cognition, or future-phase behavior is part of the provider configuration/discovery/reconciliation boundary.
-### Phase 1.17 Structured Extraction & Validation Boundary
+## Phase 1.17 Structured Extraction & Validation Boundary
 
 Phase 1.17 consumes the completed Phase 1.15 PreparedInput boundary and produces a source-neutral structured candidate. It is an interpretation/validation boundary, not a host business-operation boundary.
 
