@@ -231,6 +231,7 @@ Phase 1.17 Example Host scenario should demonstrate:
 - failed extraction shown with the source file name and safe error information, with the original image openable when the UI surface permits;
 - source-neutral StructuredCandidate output with parent/child data where applicable;
 - required/type validation and provenance preservation;
+- the processing and candidate/mapping human-review checkpoints, without requiring one processing authorization per image;
 - no host business mutation.
 
 The example should demonstrate reviewability of mappings and candidates without creating a second authorization system. Generalized Approve / Reject authorization remains a Phase 1.22 governance concern.
