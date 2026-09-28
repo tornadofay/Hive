@@ -504,6 +504,19 @@ When API and UI paths are combined, one operation correlation identity must cove
 
 ## Phase 1.17 — Structured Candidate Boundary
 
+### Target-schema source and mapping context
+
+Phase 1.17 consumes a target semantic-field schema from the existing host/business semantic boundary. The host supplies the semantic fields that a candidate may populate; Phase 1.17 does not invent the host database schema or define the later business-operation capability.
+
+A spreadsheet mapping context is one source table-like region, normally one worksheet/table region with its headers, plus one target semantic-field schema. A workbook can therefore contain multiple independent mapping contexts. Compatible source regions may reuse a previously accepted mapping only when Hive deterministically confirms the same source structure and target schema.
+
+Accepted mappings, candidate-review state, and per-item processing outcomes are retained as durable Hive processing state so restart does not lose human corrections or force the same mapping to be recreated by the LLM.
+
+An image has its own extraction attempt and result. Batch orchestration may process many images together, but images remain independent execution/provenance units; combining several images into one provider request is not required.
+
+Human mapping/candidate edits are explicit deterministic changes. They do not trigger another LLM call merely because the user corrected an earlier result.
+
+
 Phase 1.17 sits between input preparation/routing and the later business-operation proposal. It produces a source-neutral candidate that can be consumed without knowing whether the source was an image, spreadsheet, or another supported input.
 
 ### Target semantic fields
