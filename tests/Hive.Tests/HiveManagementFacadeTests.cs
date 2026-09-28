@@ -58,6 +58,42 @@ public sealed class HiveManagementFacadeTests
     }
 
     [Fact]
+    public async Task DisposedFacade_RejectsProviderAgentWorkItemAndInputOperationsBeforeDelegation()
+    {
+        var configuration = HivePersistenceConfiguration.LocalDevelopment(
+            "Hive_Test_ManagementDisposeBoundary");
+
+        using var facade = new HiveManagementFacade(
+            new SqlProviderResourceStore(
+                HiveDatabaseOptions.FromConfiguration(configuration)),
+            new SqlAgentDefinitionResourceStore(
+                HiveDatabaseOptions.FromConfiguration(configuration)),
+            new SqlWorkItemResourceStore(
+                HiveDatabaseOptions.FromConfiguration(configuration)));
+
+        var context = CreateContext();
+        facade.Dispose();
+
+        var provider = await facade.ListProvidersAsync(context);
+        var agentDefinitions = await facade.ListAgentDefinitionsAsync(context);
+        var workItems = await facade.ListWorkItemsAsync(context);
+        var input = await facade.PrepareInputAsync(
+            new InputSubmission(
+            [
+                new InputItem(
+                    "invoice.png",
+                    "image/png",
+                    new byte[] { 1, 2, 3 })
+            ]),
+            context);
+
+        AssertDisposed(provider);
+        AssertDisposed(agentDefinitions);
+        AssertDisposed(workItems);
+        AssertDisposed(input);
+    }
+
+    [Fact]
     public async Task CrudFacade_PersistsProviderGraphAndAgentDefinition()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ManagementCrud");
@@ -884,6 +920,17 @@ public sealed class HiveManagementFacadeTests
             Configuration = configuration;
             return Result<HivePersistenceConfiguration>.Success(configuration);
         }
+    }
+
+    private static void AssertDisposed<T>(Result<T> result)
+    {
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.management.disposed",
+            result.Error!.Code);
+        Assert.Equal(
+            ErrorCategory.Unsupported,
+            result.Error.Category);
     }
 
     private static HiveManagementFacade CreateFacade(
