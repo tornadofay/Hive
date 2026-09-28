@@ -393,7 +393,8 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         _metadataLabel.Text = BuildOperationalMetadata(snapshot.Operational);
         _capabilitiesLabel.Text = _models.Count == 0
             ? "No models were returned. Manual model entry remains available."
-            : "Select a discovered model, then choose Use selected model. Discovered capabilities do not overwrite configured target capabilities.";
+            : "Select a discovered model, then choose Use selected model. " +
+              "Discovered capabilities do not overwrite configured target capabilities.";
         UpdateSelectionState();
     }
 
@@ -425,7 +426,8 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         else if (_models.Count > 0)
         {
             _capabilitiesLabel.Text =
-                "Select a discovered model, then choose Use selected model. Discovered capabilities do not overwrite configured target capabilities.";
+                "Select a discovered model, then choose Use selected model. " +
+                "Discovered capabilities do not overwrite configured target capabilities.";
         }
     }
 

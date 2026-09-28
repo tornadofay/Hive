@@ -150,7 +150,8 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
         editor.AddField(
             "Capabilities",
-            "One entry per line using capability=Supported, capability=Unsupported, or capability=Unknown. These are explicit configured overrides.",
+            "One entry per line using capability=Supported, capability=Unsupported, or capability=Unknown. " +
+            "These are explicit configured overrides.",
             _capabilitiesTextBox,
             118);
 
@@ -159,7 +160,9 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             _discoveryPanel.ModelSelected += DiscoveryPanelOnModelSelected;
             editor.AddField(
                 "Model discovery",
-                "Discovers provider model identifiers and operational metadata through Hive.Management. Selecting a discovered model only changes the editable Model field; discovered capabilities never overwrite configured capability overrides.",
+                "Discovers provider model identifiers and operational metadata through Hive.Management. " +
+                "Selecting a discovered model only changes the editable Model field; discovered capabilities " +
+                "never overwrite configured capability overrides.",
                 _discoveryPanel,
                 250);
         }
