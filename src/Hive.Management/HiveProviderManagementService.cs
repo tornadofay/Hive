@@ -1523,7 +1523,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         ExecutionTarget left,
         ExecutionTarget right) =>
         string.Equals(left.DisplayName, right.DisplayName, StringComparison.Ordinal) &&
-        Uri.Equals(left.Endpoint, right.Endpoint) &&
+        left.Endpoint.Equals(right.Endpoint) &&
         string.Equals(left.Model, right.Model, StringComparison.Ordinal) &&
         string.Equals(left.Deployment, right.Deployment, StringComparison.Ordinal) &&
         left.Capabilities.SequenceEqual(right.Capabilities);
