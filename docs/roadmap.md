@@ -417,6 +417,8 @@ Verify:
 - focused automated coverage exercises onboarding, refresh/reconciliation, lifecycle, concurrency/idempotency, failure/cancellation, and credential secrecy boundaries.
 
 ## 1.17 — Structured Extraction & Validation
+Detailed implementation plan: [Phase 1.17 Structured Extraction & Validation](plan/Phase1.17_Structured_Extraction_Validation.md)
+
 Objective: turn the completed Phase 1.15 prepared-input boundary into a source-neutral, typed StructuredCandidate boundary for later business-operation proposals, with bounded batch processing, one-time semantic mapping where required, human-reviewable extraction/mapping results, validation, and provenance. Phase 1.17 never mutates the host business application.
 
 Phase 1.17 implementation slices, in order:
