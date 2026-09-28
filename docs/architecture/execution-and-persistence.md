@@ -335,6 +335,8 @@ Phase 1.7 establishes the durable persistence primitive inside `Hive.Persistence
 
 The durable event store remains generic. It does not own Agent execution, workflow scheduling, polling, provider transport, or management policy.
 
+The raw event persistence port and SQL implementation are infrastructure-internal. `IEventPersistenceStore` and `SqlEventPersistenceStore` are not public application contracts, so callers cannot bypass Hive.Management authorization by operating arbitrary event streams directly. Trusted Hive composition uses the opaque `HiveEventPersistenceComposition` created by `HiveEventPersistence.CreateSql(...)`; that handle exposes only the bounded public operations needed for trusted composition, such as creation of an `EventOutboxPoller`.
+
 Snapshot reconstruction is a separate deterministic contract over `EventEnvelope` values. A registered reducer handles a known event type and current payload schema; older supported payloads are normalized through the existing Core upcaster registry before reduction. Historical events are never rewritten during upcasting or folding.
 
 When deferred follow-up work is required:
