@@ -50,24 +50,68 @@ internal sealed class HiveInputPreparationManagementService :
 
             executionTargets = targets.Value!;
 
-            var capabilityOverrides = await _providers
+            var capabilityResolution = await _providers
                 .GetExecutionTargetCapabilityOverridesAsync(
                     executionTargets,
+                    new CapabilityKey("vision"),
                     accessContext,
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            if (capabilityOverrides.IsFailure)
+            if (capabilityResolution.IsFailure)
             {
                 return Result<InputPreparationResult>.Failure(
-                    capabilityOverrides.Error!);
+                    capabilityResolution.Error!);
             }
 
-            return InputPreparationEngine.Prepare(
+            var preparation = InputPreparationEngine.Prepare(
                 submission,
                 executionTargets,
                 cancellationToken,
-                capabilityOverrides.Value!);
+                capabilityResolution.Value!.Overrides);
+
+            if (preparation.IsFailure ||
+                capabilityResolution.Value.DiscoveryFailures.Count == 0)
+            {
+                return preparation;
+            }
+
+            var preparedImageItemIndexes = preparation.Value!
+                .PreparedInputs
+                .OfType<PreparedImageInput>()
+                .Select(static input => input.ItemIndex)
+                .ToHashSet();
+
+            var failures = preparation.Value.Failures.ToList();
+
+            for (var itemIndex = 0; itemIndex < submission.Items.Count; itemIndex++)
+            {
+                var item = submission.Items[itemIndex];
+
+                if (!item.MediaType.StartsWith(
+                        "image/",
+                        StringComparison.OrdinalIgnoreCase) ||
+                    preparedImageItemIndexes.Contains(itemIndex))
+                {
+                    continue;
+                }
+
+                foreach (var discoveryFailure in capabilityResolution.Value.DiscoveryFailures)
+                {
+                    failures.Add(
+                        new InputPreparationFailure(
+                            itemIndex,
+                            item.FileName,
+                            $"Provider discovery: {discoveryFailure.TargetKey}",
+                            discoveryFailure.Error));
+                }
+            }
+
+            return Result<InputPreparationResult>.Success(
+                new InputPreparationResult(
+                    preparation.Value.SubmissionId,
+                    preparation.Value.PreparedInputs,
+                    failures));
         }
 
         cancellationToken.ThrowIfCancellationRequested();
