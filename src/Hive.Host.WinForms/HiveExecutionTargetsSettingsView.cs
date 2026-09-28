@@ -402,11 +402,15 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
             return null;
         }
 
-        var saved = await _management.CreateOrUpdateExecutionTargetAsync(
+        var saved = target is null
+            ? await _management.CreateExecutionTargetAsync(
                 editor.Definition,
                 _accessContext,
-                cancellationToken)
-            .ConfigureAwait(true);
+                cancellationToken).ConfigureAwait(true)
+            : await _management.UpdateExecutionTargetAsync(
+                editor.Definition,
+                _accessContext,
+                cancellationToken).ConfigureAwait(true);
 
         if (saved.IsFailure)
             throw new InvalidOperationException(saved.Error!.Message);
