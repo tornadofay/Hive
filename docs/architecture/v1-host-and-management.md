@@ -510,7 +510,13 @@ After Hive.Persistence is available, Hive-owned resource credentials continue to
 
 AgentDefinition configuration may reference an existing ExecutionTarget without duplicating provider/account/endpoint/model data. The ExecutionTarget remains the authoritative source of concrete execution details.
 
-The first configured-host flow may use one explicit configured target reference. More advanced target selection remains owned by the existing execution-target selection architecture.
+The durable relationship established by the earlier Settings contract remains the foundation. Agent-specific execution policy is not owned by Provider Settings.
+
+The later Agent interaction/configuration slice owns the user-facing distinction between:
+- `Auto` — select an eligible target through the existing authoritative execution-target selection/planning boundary;
+- `Specific model/target` — pin the Agent to an exact existing execution target and fail clearly when that exact target becomes unusable rather than silently switching.
+
+The Agent configuration surface must therefore resolve friendly provider/model choices to the exact durable ExecutionTarget identity rather than persist only an ambiguous model-name string.
 
 A configured Agent is therefore actual durable application configuration:
 
@@ -572,18 +578,34 @@ Running executions use their already-established effective configuration snapsho
 
 The Example Host is the first concrete application-level consumer of this boundary. It exposes the real Hive Settings center through the Overview → Getting Started → Example Configuration leaf, whose primary action opens the host-level Settings window. The Settings UI uses the reusable Hive.Host.WinForms.UI foundation.
 
-The Settings resource hierarchy exposes Providers with three distinct resource-management leaves beneath them, plus Agents and Persistence:
+The normal Settings experience presents configured providers as the user-facing provider service configuration, while the underlying ProviderAccount and ExecutionTarget resources remain available through one generalized Advanced Configuration surface:
 
 ```text
-Providers
-├── Provider Configuration      → Provider CRUD
-├── Accounts / Credentials     → ProviderAccount CRUD, scoped by Provider
-└── Execution Targets          → ExecutionTarget CRUD, scoped by Provider + ProviderAccount
-Agents                          → AgentDefinition CRUD
-Persistence                    → one global configuration editor
+Hive Settings
+├── Providers
+├── Agents
+└── Persistence
+
+Providers page toolbar
+[ Add Provider ] [ Refresh ] [ Advanced ]
+
+Advanced Configuration
+├── Providers
+├── Accounts / Credentials
+└── Execution Targets
 ```
 
-Provider is the durable provider identity/transport resource. ProviderAccount is a durable credential/resource record, not a provider login screen. ExecutionTarget is the concrete endpoint/model/deployment/capability resource and remains the authoritative target referenced by AgentDefinition. These domains must not be collapsed into one combined form when separate Management CRUD contracts already exist.
+The Providers page uses the shared Hive CRUD presentation rather than a provider-specific card/action framework. It lists only configured Provider resources and presents masked credential status plus useful operational summary such as readiness/model count where available. There is no per-row action column; normal CRUD interaction remains the established page behavior.
+
+`Add Provider` is a Management-owned onboarding operation. The dialog selects a built-in provider catalog entry and collects the provider's required credential material. Hive.Management creates/enables the durable Provider, creates the default ProviderAccount, stores the credential through ISecretStore, and then initiates the discovery/reconciliation path. The UI does not create the resource graph directly.
+
+`Refresh` is a Provider Settings operation, not merely a visual reload. It requests fresh discovery for configured provider/account/endpoint contexts and reconciles automatically managed ExecutionTargets. Successful fresh discovery may create/reactivate/retire automatic targets according to the reconciliation contract. Discovery failure preserves existing durable targets and reports the operational condition instead of interpreting failure as an empty model catalog.
+
+`Advanced` is a generalized administrative entry point, not a provider-specific editor. It opens the existing resource-management pages for Providers, Accounts / Credentials, and Execution Targets. The entry point may carry the current provider as an initial filter, but the screen contracts and behavior remain provider-neutral. This is where multiple accounts, custom endpoints, local/self-hosted configurations, manual models/deployments, explicit capability overrides, and administrative lifecycle/troubleshooting belong.
+
+Provider is the durable provider identity/transport resource. ProviderAccount is a durable credential/resource record. ExecutionTarget is the concrete endpoint/model/deployment/capability resource and remains the authoritative concrete execution resource. The normal UI hides that graph for simple setup; Advanced does not create a second resource model.
+
+Automatic and manually managed ExecutionTargets must have an explicit durable management distinction. Discovery/reconciliation owns only automatic targets. Administrator-maintained targets are never overwritten by discovery. Lifecycle changes, retirement, reactivation, and reset-to-automatic are Management operations subject to the existing dependency, authorization, and concurrency rules.
 
 Persistence is not a resource collection. It edits one global HivePersistenceConfiguration, so its leaf is intentionally an editor rather than a CRUD page. Its Server / instance control is a free-form text field. It accepts local servers, named instances, remote hosts, IP addresses, and online SQL Server targets. Hive does not currently define an authoritative SQL Server discovery/catalog contract, so the Settings UI does not enumerate installed SQL Server instances. The Database value is Hive-owned and assigned automatically by the Settings surface.
 
