@@ -1,4 +1,5 @@
 using Hive.Core;
+using Hive.Management;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Persistence;
 
@@ -20,12 +21,13 @@ internal sealed class EventOutboxPollerExampleView : UserControl
         _surface = new HiveExampleTestSurface
         { Dock = DockStyle.Fill, RunButtonText = "Run outbox poller example" };
         _surface.SetInformation(
-            "Creates an outbox event, simulates a failed first delivery, then retries after the lease expires.",
-            "The first delivery runs longer than its 75ms lease, so renewal keeps the claim alive before the simulated failure. The retry sees the same EventId, avoids duplicating the side effect, and the poller removes the row only after successful delivery.",
+            "Creates a WorkItem through Hive.Management so its durable creation produces the transactional outbox entry, then simulates a failed first delivery and retries it.",
+            "The first delivery runs longer than its 75ms lease, so renewal keeps the claim alive before the simulated failure. The retry sees the same EventId, avoids duplicating the side effect, and the poller acknowledges the row only after successful delivery.",
             "Scope",
             "Phase 1.8 outbox delivery only; no MAF execution, provider call, broker, or background host loop");
         _surface.CodeSnippet = """
-            var poller = new EventOutboxPoller(store);
+            var persistence = HiveEventPersistence.CreateSql(options);
+            var poller = persistence.CreateOutboxPoller();
             var result = await poller.ProcessNextAsync(handler, cancellationToken);
             """;
         _surface.ConfigureRun(RunExampleAsync, _output, FindForm());
@@ -40,38 +42,72 @@ internal sealed class EventOutboxPollerExampleView : UserControl
         var migration = await new HiveDatabaseMigrator(options).MigrateAsync(cancellationToken);
         EnsureSuccess(migration, "Hive database migration");
 
-        var store = new SqlEventPersistenceStore(options);
-        var serializer = new JsonEventSerializer();
-        var eventEnvelope = serializer.CreateEnvelope(
-            EventId.New(),
-            DateTimeOffset.UtcNow,
-            new EventType("example.outbox.poller"),
-            new EventPayloadVersion(1),
-            CorrelationId.New(), null,
-            new { message = "Deliver me once." });
-        var stream = new ResourceReference(ResourceKind.WorkItem, Guid.NewGuid());
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
 
-        var append = await store.AppendAsync(new EventAppendRequest(stream, null, eventEnvelope), cancellationToken);
-        EnsureSuccess(append, "Event append");
+        using var management = new HiveManagementFacade(
+            new SqlProviderResourceStore(options),
+            new SqlAgentDefinitionResourceStore(options),
+            new SqlWorkItemResourceStore(options));
 
+        var workItem = await management.CreateImageWorkItemAsync(
+            new WorkItemImageSubmission(
+                "outbox-example.png",
+                "image/png",
+                [1, 2, 3, 4]),
+            context,
+            cancellationToken);
+
+        EnsureSuccess(workItem, "WorkItem creation");
+
+        var activity = await management.GetWorkItemActivityAsync(
+            workItem.Value!.Id,
+            context,
+            cancellationToken);
+
+        EnsureSuccess(activity, "WorkItem activity read");
+
+        var createdActivity = activity.Value!
+            .Single(static item => item.EventType == "work-item.created");
+
+        var eventId = createdActivity.EventId;
+
+        var persistence = HiveEventPersistence.CreateSql(options);
+        var poller = persistence.CreateOutboxPoller(
+            TimeSpan.FromMilliseconds(75));
         var handler = new ExampleHandler(TimeSpan.FromMilliseconds(120));
-        var poller = new EventOutboxPoller(store, TimeSpan.FromMilliseconds(75));
-        var first = await poller.ProcessNextAsync(handler, cancellationToken);
-        if (!first.IsFailure)
-            throw new InvalidOperationException("The simulated first delivery unexpectedly succeeded.");
 
-        await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
-        var second = await poller.ProcessNextAsync(handler, cancellationToken);
+        var first = await poller.ProcessNextAsync(
+            handler,
+            cancellationToken);
+
+        if (!first.IsFailure)
+            throw new InvalidOperationException(
+                "The simulated first delivery unexpectedly succeeded.");
+
+        await Task.Delay(
+            TimeSpan.FromMilliseconds(100),
+            cancellationToken);
+
+        var second = await poller.ProcessNextAsync(
+            handler,
+            cancellationToken);
+
         EnsureSuccess(second, "Outbox retry");
 
-        if (second.Value?.Envelope.EventId != eventEnvelope.EventId)
+        if (second.Value?.Envelope.EventId != eventId)
         {
             throw new InvalidOperationException(
                 "The retry claimed a different outbox event; the example database was not isolated.");
         }
 
-        var remaining = await store.GetOutboxAsync(eventEnvelope.EventId, cancellationToken);
-        EnsureSuccess(remaining, "Outbox lookup after delivery");
+        var remaining = await poller.ProcessNextAsync(
+            handler,
+            cancellationToken);
+
+        EnsureSuccess(remaining, "Outbox empty check");
 
         if (remaining.Value is not null)
         {
@@ -83,7 +119,8 @@ internal sealed class EventOutboxPollerExampleView : UserControl
             "Transactional Outbox Poller",
             $"""
             Database: {options.DatabaseName}
-            Event: {eventEnvelope.EventId}
+            WorkItem: {workItem.Value.Id}
+            Event: {eventId}
             First delivery: delayed beyond lease; renewal kept claim; simulated failure
             Retry delivery: success; event identity preserved
             Idempotent side effects: {handler.SideEffectCount}
