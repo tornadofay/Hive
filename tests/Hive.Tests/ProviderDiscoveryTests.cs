@@ -61,6 +61,35 @@ public sealed class ProviderDiscoveryTests
         Assert.Single(target.Capabilities);
     }
 
+    [Theory]
+    [InlineData(
+        "https://example.test/v1/?mode=FAST",
+        "HTTPS://EXAMPLE.TEST/v1/?mode=FAST",
+        true)]
+    [InlineData(
+        "https://example.test/v1/?mode=FAST",
+        "https://example.test/v1/?mode=fast",
+        false)]
+    [InlineData(
+        "https://example.test:443/v1/",
+        "https://example.test:443/v1/",
+        true)]
+    [InlineData(
+        "https://example.test/v1/",
+        "https://example.test:8443/v1/",
+        false)]
+    public void ProviderEndpointIdentity_AppliesAuthorityAndPathQuerySemantics(
+        string left,
+        string right,
+        bool expected)
+    {
+        Assert.Equal(
+            expected,
+            ProviderEndpointIdentity.Equals(
+                new Uri(left),
+                new Uri(right)));
+    }
+
     [Fact]
     public void CapabilityResolver_DifferentEndpointPathCaseDoesNotMatch()
     {
