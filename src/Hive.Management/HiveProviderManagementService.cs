@@ -223,8 +223,9 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
             if (gate.ReferenceCount != 0)
                 return;
 
-            if (((ICollection<KeyValuePair<ProviderDiscoveryCacheKey, DiscoveryGate>>)_discoveryLocks)
-                .Remove(new KeyValuePair<ProviderDiscoveryCacheKey, DiscoveryGate>(key, gate)))
+            if (_discoveryLocks.TryGetValue(key, out var currentGate) &&
+                ReferenceEquals(currentGate, gate) &&
+                _discoveryLocks.TryRemove(key, out _))
             {
                 gate.Retired = true;
                 gate.Semaphore.Dispose();
