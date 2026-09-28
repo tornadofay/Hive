@@ -1,12 +1,14 @@
 # Phase 1.9 — First Real Agent Execution
 
-This example connects a Hive Base Agent to Microsoft Agent Framework for one request, using the selected OpenAI-compatible ExecutionTarget and the existing Hive event store.
+This example connects a Hive Base Agent to Microsoft Agent Framework for one request, using the selected OpenAI-compatible ExecutionTarget and Hive's internal durable execution event boundary.
 
 ```csharp
+var persistence = HiveEventPersistence.CreateSql(options);
+
 using var httpClient = new HttpClient();
 
 var service = new AgentExecutionService(
-    eventStore,
+    persistence,
     httpClient);
 
 var result = await service.ExecuteAsync(
@@ -26,7 +28,7 @@ The request creates the Hive `Execution`, records `agent.execution.started`, run
 - `agent.execution.failed`
 - `agent.execution.cancelled`
 
-The same `CorrelationId` is retained across the lifecycle; the terminal event uses the started event as its causation.
+The same `CorrelationId` is retained across the lifecycle; the terminal event uses the started event as its causation when the started event was durably persisted.
 
 The selected `ExecutionTarget` must be active and inside the supplied access scope. The provider credential is resolved by the caller; this service does not persist or log secret material.
 
