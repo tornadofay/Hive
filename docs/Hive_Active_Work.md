@@ -13,7 +13,7 @@ The explicitly requested bounded corrective slice is implementation-complete. It
 1. SQL-password Host Composition no longer reuses an apparently unchanged configuration graph when the referenced bootstrap credential material may have changed; ApplyPersistedConfigurationAsync recomposes that graph.
 2. Terminal Agent execution events now perform exact-event reconciliation after an append failure and retry once when the terminal event is not yet durable. Persistent failure returns an explicit terminal-persistence error rather than exposing an ordinary provider-success/failure result as if it were durably complete.
 3. The Example Host Settings operation now returns Task, is awaited by the Example Configuration view, and rejects overlapping Settings operations.
-4. Settings bootstrap-credential creation is tracked and cleanup uses a non-cancelled token plus a persisted-configuration reconciliation check, preventing cleanup from deleting a credential that may already be referenced after an ambiguous save cancellation/failure.
+4. Settings bootstrap-credential creation is tracked and cleanup uses a non-cancelled token plus a persisted-configuration reconciliation check, preventing cleanup from deleting a credential that may already be referenced after an ambiguous save cancellation/failure. Cleanup of a previous credential now also completes after a successful configuration save even when the UI cancellation token is later signalled.
 
 ## Focused verification boundary
 
@@ -23,7 +23,7 @@ Developer must run:
 - Manual Example Host verification of Overview / Getting Started / Example Configuration — Hive.Example.WinForms, specifically opening Settings, saving a SQL-password configuration, changing/replacing the bootstrap credential, applying Settings, and exercising cancellation/failure paths where practical.
 - Confirm Visual Studio Treat warnings as errors remains enabled with no new errors or warnings.
 
-Latest developer verification: full `Hive.Tests` suite passed 394/394 (0 failed, 0 skipped) in 45.3 seconds. A subsequent compile check reported CS1513/CS1524 in the Example Host Settings operation; the missing outer `try/finally` brace was corrected within this same slice. Developer has manually confirmed that `Hive.Example.WinForms` now runs correctly and the persistence configuration flow is working correctly. A clean compile result and explicit Visual Studio warnings-as-errors confirmation remain pending before closure.
+Latest developer verification before this revision: full `Hive.Tests` suite passed 394/394 (0 failed, 0 skipped) in 45.3 seconds; the Example Host was manually confirmed running correctly and the persistence configuration flow was working correctly. This revision changed the post-save credential-cleanup cancellation boundary, so the full suite and relevant manual checks must be rerun for the revised code. Clean compile and explicit Visual Studio warnings-as-errors confirmation remain pending.
 
 ## Exclusions
 
