@@ -524,14 +524,26 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
         Assert.True(
             (await providerStore.CreateExecutionTargetAsync(target, context)).IsSuccess);
 
+        var clock = new FakeClock(
+            new DateTimeOffset(
+                2030,
+                1,
+                2,
+                3,
+                4,
+                5,
+                TimeSpan.Zero));
+
         var discovery = new RecordingDiscovery(
-            staleFirst: true);
+            staleFirst: true,
+            clock: clock);
 
         using var facade = new HiveManagementFacade(
             providerStore,
             new SqlAgentDefinitionResourceStore(database.Options),
             new SqlWorkItemResourceStore(database.Options),
-            providerCapabilityDiscovery: discovery);
+            providerCapabilityDiscovery: discovery,
+            clock: clock);
 
         var submission = new InputSubmission(
         [
@@ -662,6 +674,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
         private readonly bool _mismatchedResult;
         private readonly bool _mismatchedEndpointPathCase;
         private readonly TimeSpan? _delay;
+        private readonly IClock? _clock;
         private readonly TaskCompletionSource<bool>? _started;
         private readonly TaskCompletionSource<bool>? _release;
         private readonly ConcurrentQueue<string?> _credentials = new();
@@ -673,6 +686,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             bool mismatchedResult = false,
             bool mismatchedEndpointPathCase = false,
             TimeSpan? delay = null,
+            IClock? clock = null,
             TaskCompletionSource<bool>? started = null,
             TaskCompletionSource<bool>? release = null)
         {
@@ -681,6 +695,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             _mismatchedResult = mismatchedResult;
             _mismatchedEndpointPathCase = mismatchedEndpointPathCase;
             _delay = delay;
+            _clock = clock;
             _started = started;
             _release = release;
         }
@@ -727,7 +742,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
                         "The test discovery provider failed during refresh."));
             }
 
-            var now = DateTimeOffset.UtcNow;
+            var now = _clock?.UtcNow ?? DateTimeOffset.UtcNow;
             var observedAt = _staleFirst && callNumber == 1
                 ? now.AddMinutes(-1)
                 : now;
