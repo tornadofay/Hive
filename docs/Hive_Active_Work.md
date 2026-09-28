@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Authorized slice
 
@@ -83,6 +83,10 @@ Developer verification found in-scope compilation/analyzer failures in the Phase
 ## Verification incident — developer test run
 
 Developer verification on 2026-09-28 produced 470 tests with 458 passed and 12 failed. The failures are in-scope for this Phase 1.16 slice: two Provider Settings fixture-order failures, one superseded Settings navigation expectation, one invalid sealed `DispatchProxy` test fixture, and the remaining legacy discovery-panel tests blocked by that same proxy fixture. Same-slice remediation is limited to aligning these tests with the current provider-first Settings structure and existing runtime contracts.
+
+## Verification incident — developer test run (470 tests)
+
+Developer verification after the previous remediation produced 470 tests: 468 passed, 2 failed, 0 skipped. Both failures are in the legacy HiveProviderModelDiscoveryPanel test coverage and are expectation mismatches: the failure status includes the typed error code in parentheses, and operational availability/health are rendered in the metadata label rather than the status label. Same-slice remediation is limited to aligning those tests with the panel's implemented presentation contract.
 
 ## Example / test handoff
 
