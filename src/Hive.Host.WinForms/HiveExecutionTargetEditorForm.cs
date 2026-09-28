@@ -24,6 +24,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
     private readonly TextBox _capabilitiesTextBox;
     private readonly Label _testStatus;
     private readonly HiveButton _testButton;
+    private readonly HiveProviderModelDiscoveryPanel? _discoveryPanel;
     private HiveStatusTone _testStatusTone = HiveStatusTone.Neutral;
     private CancellationTokenSource? _testCts;
 
@@ -81,6 +82,16 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             BorderStyle = BorderStyle.FixedSingle,
             Height = 100
         };
+        if (target is not null)
+        {
+            _discoveryPanel = new HiveProviderModelDiscoveryPanel(
+                _management,
+                target,
+                _accessContext,
+                themeManager,
+                _output);
+        }
+
         _testStatus = new Label
         {
             AutoSize = false,
@@ -99,6 +110,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         if (target is not null)
         {
             SetReadOnlyVisualState(_keyTextBox, themeManager);
+            _endpointTextBox.TextChanged += EndpointTextBoxOnTextChanged;
         }
 
         editor.AddField(
@@ -138,9 +150,19 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
         editor.AddField(
             "Capabilities",
-            "One entry per line using capability=Supported, capability=Unsupported, or capability=Unknown.",
+            "One entry per line using capability=Supported, capability=Unsupported, or capability=Unknown. These are explicit configured overrides.",
             _capabilitiesTextBox,
             118);
+
+        if (_discoveryPanel is not null)
+        {
+            _discoveryPanel.ModelSelected += DiscoveryPanelOnModelSelected;
+            editor.AddField(
+                "Model discovery",
+                "Discovers provider model identifiers and operational metadata through Hive.Management. Selecting a discovered model only changes the editable Model field; discovered capabilities never overwrite configured capability overrides.",
+                _discoveryPanel,
+                250);
+        }
 
         var save = editor.AddActionButton(
             target is null ? "Create" : "Save",
@@ -181,12 +203,37 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
         BodyPanel.Controls.Add(editor);
         ThemeManager.Apply(BodyPanel);
+
+        Load += async (_, _) =>
+        {
+            if (_discoveryPanel is not null)
+                await _discoveryPanel.InitializeAsync();
+        };
     }
 
     public ExecutionTarget? Definition { get; private set; }
 
+    internal HiveProviderModelDiscoveryPanel? DiscoveryPanel => _discoveryPanel;
+
+    internal TextBox ModelTextBox => _modelTextBox;
+
     protected override void OnThemeChanged(HiveThemeDefinition theme) =>
         ApplyTestStatusVisual(theme);
+
+    private void DiscoveryPanelOnModelSelected(
+        object? sender,
+        ProviderModelSelectedEventArgs e)
+    {
+        _modelTextBox.Text = e.Model.ModelId;
+    }
+
+    private void EndpointTextBoxOnTextChanged(
+        object? sender,
+        EventArgs e)
+    {
+        _discoveryPanel?.MarkEndpointConfigurationChanged();
+        _endpointTextBox.TextChanged -= EndpointTextBoxOnTextChanged;
+    }
 
     private void SetTestStatus(string text, HiveStatusTone tone)
     {
@@ -398,6 +445,9 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         {
             _testCts?.Cancel();
             _testCts = null;
+
+            if (_discoveryPanel is not null)
+                _discoveryPanel.ModelSelected -= DiscoveryPanelOnModelSelected;
         }
 
         base.Dispose(disposing);

@@ -384,11 +384,88 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
             return null;
         }
 
+        var provider = _selectedProvider
+            ?? throw new InvalidOperationException("Provider is required.");
+
+        if (target is not null)
+        {
+            return await EditExistingExecutionTargetAsync(
+                target,
+                provider,
+                _selectedAccount,
+                cancellationToken).ConfigureAwait(true);
+        }
+
+        using (var editor = new HiveExecutionTargetEditorForm(
+                   null,
+                   provider,
+                   _selectedAccount,
+                   _management,
+                   _accessContext,
+                   _themeManager,
+                   _output))
+        {
+            if (editor.ShowDialog(FindForm()) != DialogResult.OK ||
+                editor.Definition is null)
+            {
+                return null;
+            }
+
+            var created = await _management.CreateExecutionTargetAsync(
+                    editor.Definition,
+                    _accessContext,
+                    cancellationToken)
+                .ConfigureAwait(true);
+
+            if (created.IsFailure)
+                throw new InvalidOperationException(created.Error!.Message);
+
+            if (created.Value is null)
+                return null;
+
+            target = created.Value;
+        }
+
+        // The Management discovery contract requires a persisted ExecutionTarget
+        // identity. Reopen the editor immediately after creation so the new target
+        // enters the same automatic discovery workflow as an existing target.
+        using var configuredEditor = new HiveExecutionTargetEditorForm(
+            target,
+            provider,
+            _selectedAccount,
+            _management,
+            _accessContext,
+            _themeManager,
+            _output);
+
+        if (configuredEditor.ShowDialog(FindForm()) != DialogResult.OK ||
+            configuredEditor.Definition is null)
+        {
+            return target;
+        }
+
+        var updated = await _management.UpdateExecutionTargetAsync(
+                configuredEditor.Definition,
+                _accessContext,
+                cancellationToken)
+            .ConfigureAwait(true);
+
+        if (updated.IsFailure)
+            throw new InvalidOperationException(updated.Error!.Message);
+
+        return updated.Value;
+    }
+
+    private async Task<ExecutionTarget?> EditExistingExecutionTargetAsync(
+        ExecutionTarget target,
+        Provider provider,
+        ProviderAccount account,
+        CancellationToken cancellationToken)
+    {
         using var editor = new HiveExecutionTargetEditorForm(
             target,
-            _selectedProvider
-                ?? throw new InvalidOperationException("Provider is required."),
-            _selectedAccount,
+            provider,
+            account,
             _management,
             _accessContext,
             _themeManager,
@@ -397,23 +474,19 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         if (editor.ShowDialog(FindForm()) != DialogResult.OK ||
             editor.Definition is null)
         {
-            return null;
+            return target;
         }
 
-        var result = target is null
-            ? await _management.CreateExecutionTargetAsync(
+        var updated = await _management.UpdateExecutionTargetAsync(
                 editor.Definition,
                 _accessContext,
                 cancellationToken)
-            : await _management.UpdateExecutionTargetAsync(
-                editor.Definition,
-                _accessContext,
-                cancellationToken);
+            .ConfigureAwait(true);
 
-        if (result.IsFailure)
-            throw new InvalidOperationException(result.Error!.Message);
+        if (updated.IsFailure)
+            throw new InvalidOperationException(updated.Error!.Message);
 
-        return result.Value;
+        return updated.Value;
     }
 
     private async Task DeleteAsync(
