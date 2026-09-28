@@ -11,6 +11,5 @@
     <ProjectReference Include="../Hive.Persistence/Hive.Persistence.csproj" />
     <ProjectReference Include="../Hive.Coordination/Hive.Coordination.csproj" />
     <ProjectReference Include="../Hive.Tools/Hive.Tools.csproj" />
-    <ProjectReference Include="../Hive.Providers.OpenAICompatible/Hive.Providers.OpenAICompatible.csproj" />
   </ItemGroup>
 </Project>
