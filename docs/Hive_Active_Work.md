@@ -1,8 +1,8 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
-The reported C# compiler errors in `src/Hive.Management/HiveManagementFacade.cs` were remediated by correcting the `Run(...)` wrapper closing syntax. Source-level checks found no remaining `)));` wrapper syntax and the facade structure is balanced.
+Developer verification still reports CS0411 in `src/Hive.Management/HiveManagementFacade.cs` at the non-generic `Task<Result>` wrappers for `RemoveBootstrapCredentialAsync` and `InitializePersistenceAsync`. The current `Run<T>` overload only accepts `Task<Result<T>>`.
 
 ## Current slice
 
