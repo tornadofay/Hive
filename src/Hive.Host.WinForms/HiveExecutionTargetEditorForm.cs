@@ -241,6 +241,8 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
     internal TextBox ModelTextBox => _modelTextBox;
 
+    internal ComboBox ManagementModeSelector => _managementModeComboBox;
+
     protected override void OnThemeChanged(HiveThemeDefinition theme) =>
         ApplyTestStatusVisual(theme);
 
@@ -374,6 +376,8 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
             var capabilities = ParseCapabilities(_capabilitiesTextBox.Text);
 
+            var managementMode = GetSelectedManagementMode();
+
             Definition = _existing is null
                 ? new ExecutionTarget(
                     HiveSettingsResourceFactory.CreateEnvelope(
@@ -388,13 +392,14 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
                     NormalizeOptional(_modelTextBox.Text),
                     NormalizeOptional(_deploymentTextBox.Text),
                     capabilities)
+                    .WithManagementMode(managementMode)
                 : _existing
                     .WithDisplayName(name)
                     .WithEndpoint(endpoint)
                     .WithModel(NormalizeOptional(_modelTextBox.Text))
                     .WithDeployment(NormalizeOptional(_deploymentTextBox.Text))
                     .WithCapabilities(capabilities)
-                    .WithManagementMode(GetSelectedManagementMode());
+                    .WithManagementMode(managementMode);
 
             DialogResult = DialogResult.OK;
             Close();
