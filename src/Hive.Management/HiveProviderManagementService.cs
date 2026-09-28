@@ -1246,7 +1246,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                             "The provider account references a credential but the Secret Store is not configured."));
                 }
 
-                var secret = await _secrets.GetSecretReadAsync(
+                var secret = await _secrets.GetAsync(
                     reference.Id,
                     accessContext,
                     cancellationToken).ConfigureAwait(false);
@@ -1355,7 +1355,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         var automaticTargets = allTargets
             .Where(IsAutomaticTarget)
             .Where(target => target.ProviderId == provider.Id)
-            .Where(target => Uri.Equals(target.Endpoint, snapshot.Endpoint))
+            .Where(target => target.Endpoint.Equals(snapshot.Endpoint))
             .ToList();
 
         var discoveredModelIds = snapshot.Models
@@ -1384,7 +1384,8 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                     account,
                     snapshot.Endpoint,
                     model,
-                    accessContext);
+                    accessContext,
+                    _clock.UtcNow);
 
                 var createResult = await CreateExecutionTargetAsync(
                     createdTarget,
@@ -1466,7 +1467,8 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         ProviderAccount account,
         Uri endpoint,
         ProviderModelMetadata model,
-        ResourceAccessContext accessContext)
+        ResourceAccessContext accessContext,
+        DateTimeOffset now)
     {
         var identity = $"{account.Id.Value:N}|{endpoint.AbsoluteUri}|model:{model.ModelId}";
         var hash = Convert.ToHexString(
@@ -1474,7 +1476,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                 System.Text.Encoding.UTF8.GetBytes(identity)))
             .ToLowerInvariant();
 
-        var now = DateTimeOffset.UtcNow;
+        now = now.ToUniversalTime();
         var scope = accessContext.TenantId is { } tenantId
             ? ResourceScope.Tenant(tenantId)
             : ResourceScope.Global();
