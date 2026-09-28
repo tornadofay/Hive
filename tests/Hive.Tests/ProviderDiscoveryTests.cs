@@ -492,6 +492,53 @@ public sealed class ProviderDiscoveryTests
     }
 
     [Fact]
+    public async Task OpenAICompatibleDiscovery_UsesInjectedClockForObservationWindow()
+    {
+        var now = new DateTimeOffset(
+            2030,
+            1,
+            2,
+            3,
+            4,
+            5,
+            TimeSpan.Zero);
+
+        var handler = new RecordingHandler(
+            _ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{"data":[{"id":"clock-model"}]}""",
+                    Encoding.UTF8,
+                    "application/json")
+            });
+
+        using var client = new HttpClient(handler);
+        var discovery = new OpenAICompatibleProviderCapabilityDiscovery(
+            client,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromMinutes(7),
+            new FakeClock(now));
+
+        var target = CreateTarget(Array.Empty<CapabilityStateEntry>());
+        var provider = CreateProviderFor(target);
+        var account = CreateAccountFor(provider, target);
+
+        var result = await discovery.DiscoverAsync(
+            provider,
+            account,
+            target,
+            null);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(
+            now,
+            result.Value!.Operational.ObservedAtUtc);
+        Assert.Equal(
+            now.AddMinutes(7),
+            result.Value.Operational.StaleAfterUtc);
+    }
+
+    [Fact]
     public async Task OpenAICompatibleDiscovery_UnsupportedEndpointDoesNotFabricateModels()
     {
         var handler = new RecordingHandler(
