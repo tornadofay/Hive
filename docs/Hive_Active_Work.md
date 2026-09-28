@@ -1,11 +1,34 @@
 # Hive — Active Work
 
-Status: NO ACTIVE WORK
+Status: IN PROGRESS
 
-There is currently no authorized implementation slice.
+## Current slice
 
-The most recently completed slice is **Phase 1.16 — Provider / Model Capability Discovery & Operational Metadata**, verified on 2026-09-28. Final developer verification reported full `Hive.Tests` at 415/415 passed, 0 failed, 0 skipped in 43.5 seconds, and the matching Example Host scenario was manually exercised successfully.
+**Phase 1.16 Revision — Provider / Model Capability Discovery & Operational Metadata**
 
-Closure verification record: [Phase 1.16 closure verification](verification/phase-1/1.16-provider-model-capability-discovery-closure-2026-09-28.md)
+This is a bounded corrective revision of the immediately preceding Phase 1.16 implementation. It does not advance the roadmap.
 
-No Phase 1.17 or later roadmap work is authorized. A new roadmap slice requires explicit user authorization such as `Hive: Start Phase X.Y`.
+### Scope
+
+- enforce the Phase 1.16 discovery snapshot invariant that non-Supported model enumeration states cannot carry discovered models;
+- validate discovery results at the Hive.Management boundary before caching or returning them;
+- add focused regression coverage for contradictory/mismatched discovery results;
+- preserve existing Provider → ProviderAccount → ExecutionTarget ownership, capability authority, caching, cancellation, and Example Host behavior.
+
+### Out of scope
+
+No new provider transport, capability vocabulary, workflow behavior, structured extraction/validation, business-app write, Tool authorization, Review, cognition, Workspace expansion, or Phase 1.17 work.
+
+## Verification boundary
+
+**VERIFICATION PENDING.**
+
+The preceding Phase 1.16 implementation was fully verified before this revision. This revision changes production contracts and tests, so the previous 415/415 result does not verify the revised source.
+
+### Handoff
+
+Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Capability Discovery — Hive.Example.WinForms
+
+Tests to run: `tests/Hive.Tests/ProviderDiscoveryTests.cs`; `tests/Hive.Tests/ProviderDiscoveryManagementIntegrationTests.cs`; full `Hive.Tests` suite; then re-exercise the matching Example Host scenario.
+
+No Phase 1.17 work is authorized or started.
