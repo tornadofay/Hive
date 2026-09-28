@@ -353,6 +353,30 @@ Verify:
 - explicit capability override behavior;
 - no provider credentials or secrets appear in metadata/diagnostics.
 
+## 1.16-UI — Provider / Model Capability Discovery Settings Integration
+Objective: make the completed Phase 1.16 provider/model discovery capability directly usable from the global Hive Settings experience without moving discovery ownership into WinForms.
+
+Scope:
+- integrate the existing Provider / Model Capability Discovery Management contract into the Settings Execution Target workflow;
+- begin discovery when the Provider Account, credential, and concrete ExecutionTarget endpoint are available; Provider creation alone does not contain enough endpoint information to perform model discovery;
+- automatically discover models when appropriate during ExecutionTarget configuration and provide an explicit Refresh action;
+- present discovered model identifiers plus supported operational metadata such as availability, health, and normalized capability state;
+- allow the user to select a discovered model for an ExecutionTarget while preserving explicit manual model entry when discovery is unsupported or unavailable;
+- present clear discovery/loading/stale/unsupported/failure states and remain cancellation-aware;
+- keep discovered metadata separate from durable ExecutionTarget configuration; discovery must not silently rewrite persisted target capability overrides or turn discovered information into configured authority;
+- preserve the existing Provider → ProviderAccount → ExecutionTarget hierarchy and route all provider access through Hive.Management;
+- never expose credentials or raw provider responses in the Settings UI, Output panel, or diagnostics.
+
+Verify:
+- Settings can discover models for a configured supported provider/target and display their metadata;
+- discovered model selection populates the ExecutionTarget configuration correctly;
+- explicit configured capability overrides remain authoritative;
+- unsupported discovery and provider failures remain usable and clearly reported without fabricated capabilities;
+- refresh/stale behavior is correct and cancellation does not leave stale UI state applied;
+- credential secrecy is preserved;
+- the complete Settings workflow is manually verified in the Example Host;
+- focused automated coverage exercises the Settings-to-Management discovery integration and relevant failure/cancellation paths.
+
 ## 1.17 — Structured Extraction & Validation
 Objective: produce typed candidate business data from supported input capabilities and apply required-field, type, and domain validation.
 
