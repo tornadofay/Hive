@@ -497,7 +497,7 @@ Objective: establish the real human-facing Workspace as the common interaction a
 Scope:
 - Workspace becomes a first-class V1 interaction surface, not only a WorkItem monitor;
 - common Workspace shell and conversation/history model;
-- direct LLM mode with explicit model/ExecutionTarget selection;
+- direct LLM mode with explicit ExecutionTarget selection; the UI may display provider/model/deployment details for human readability.
 - conversation/chat submission and display;
 - active execution/runtime context;
 - WorkItem/job visibility;
@@ -510,7 +510,7 @@ Scope:
 Verify:
 - Workspace opens as the normal user-facing interaction surface;
 - direct LLM conversation;
-- explicit model/ExecutionTarget selection;
+- explicit ExecutionTarget selection; the UI may display provider/model/deployment details for human readability;
 - active execution/runtime visibility;
 - conversation/history behavior;
 - WorkItem/job visibility;
@@ -522,9 +522,10 @@ Objective: extend the Workspace foundation with Agent-directed interaction and a
 
 Scope:
 - Agent mode with explicit Agent selection;
-- Agent execution configuration with `Auto` or an exact selected model/ExecutionTarget;
+- Agent execution configuration with `Auto` or an exact selected `ExecutionTarget`;
 - `Auto` uses the existing authoritative capability-aware execution-target selection/planning boundary;
-- an exact selected model/ExecutionTarget is pinned and must fail clearly when that target becomes unusable rather than silently switching;
+- an exact selected `ExecutionTarget` is pinned and must fail clearly when that target becomes unusable rather than silently switching;
+- the Agent configuration UI may show provider/model/deployment details as the human-readable label, but the persisted selection is the exact durable `ExecutionTarget` identity; model name alone is never a selection key;
 - user commands/objectives submitted to an Agent;
 - application-wide Agent support;
 - application-scoped role/context such as a Manager Agent;
