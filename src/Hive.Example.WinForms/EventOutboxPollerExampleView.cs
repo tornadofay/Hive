@@ -56,7 +56,7 @@ internal sealed class EventOutboxPollerExampleView : UserControl
             new WorkItemImageSubmission(
                 "outbox-example.png",
                 "image/png",
-                [1, 2, 3, 4]),
+                new byte[] { 1, 2, 3, 4 }),
             context,
             cancellationToken);
 
