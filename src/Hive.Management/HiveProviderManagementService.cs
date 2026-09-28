@@ -23,6 +23,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
     private readonly IProviderConnectionTester? _providerConnectionTester;
     private readonly IProviderCapabilityDiscovery? _providerCapabilityDiscovery;
     private readonly ISecretStore? _secrets;
+    private readonly HiveSecretManagementService _secretManagement;
     private readonly IClock _clock;
     private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, ProviderDiscoveryCacheEntry> _discoveryCache = new();
     private long _discoveryCompletionSequence;
@@ -37,12 +38,14 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         IProviderConnectionTester? providerConnectionTester,
         ISecretStore? secrets,
         IProviderCapabilityDiscovery? providerCapabilityDiscovery,
+        HiveSecretManagementService secretManagement,
         IClock? clock = null)
     {
         _providerResources = providerResources ?? throw new ArgumentNullException(nameof(providerResources));
         _providerConnectionTester = providerConnectionTester;
         _providerCapabilityDiscovery = providerCapabilityDiscovery;
         _secrets = secrets;
+        _secretManagement = secretManagement ?? throw new ArgumentNullException(nameof(secretManagement));
         _clock = clock ?? SystemClock.Instance;
     }
 
@@ -1179,7 +1182,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
         if (account.CredentialSecret is { } existingReference)
         {
-            var descriptor = await _secrets.GetSecretDescriptorAsync(
+            var descriptor = await _secretManagement.GetSecretDescriptorAsync(
                 existingReference.Id,
                 accessContext,
                 cancellationToken).ConfigureAwait(false);
@@ -1187,7 +1190,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
             if (descriptor.IsFailure)
                 return Result<ProviderAccount>.Failure(descriptor.Error!);
 
-            var replaced = await _secrets.ReplaceSecretAsync(
+            var replaced = await _secretManagement.ReplaceSecretAsync(
                 existingReference.Id,
                 credential,
                 descriptor.Value!.Resource.Version,
@@ -1201,7 +1204,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         }
 
         var key = $"provider-{provider.Key}-api-key";
-        var secretResult = await _secrets.CreateSecretAsync(
+        var secretResult = await _secretManagement.CreateSecretAsync(
             key,
             $"{provider.DisplayName} API Key",
             credential,
