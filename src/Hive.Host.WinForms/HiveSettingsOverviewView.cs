@@ -53,8 +53,8 @@ internal sealed class HiveSettingsOverviewView : UserControl
             MaximumSize = new Size(820, 0),
             Text =
                 "Hive Settings is the central place for the Hive configuration owned by your application. " +
-                "Start with Providers, then configure Accounts / Credentials and Execution Targets. " +
-                "Agents reference those configured targets, while Persistence controls the Hive package database.",
+                "Start with Providers. Hive creates and maintains the underlying Accounts / Credentials and Execution Targets automatically. " +
+                "Agents use those targets, while Persistence controls the Hive package database.",
             Margin = new Padding(0, 8, 0, 20),
             Padding = Padding.Empty
         };
@@ -70,23 +70,13 @@ internal sealed class HiveSettingsOverviewView : UserControl
 
         AddCard(
             "Providers",
-            "Define provider identity and transport configuration.",
-            "Start here when adding a new provider.");
-
-        AddCard(
-            "Accounts / Credentials",
-            "Connect providers to durable account records and secure credential references.",
-            "Credentials are managed through Hive's Secret Store boundary.");
-
-        AddCard(
-            "Execution Targets",
-            "Define concrete endpoint, model, or deployment targets and their declared capabilities.",
-            "Agents use these targets for execution.");
+            "Configure built-in providers and their protected credentials.",
+            "Hive discovers models and maintains automatic execution targets.");
 
         AddCard(
             "Agents",
             "Define the persisted AgentDefinitions used by configured-host execution.",
-            "Agents reference configured Execution Targets.");
+            "Agents use exact targets; Agent Auto selection is configured in the later Agent interaction workflow.");
 
         AddCard(
             "Persistence",
