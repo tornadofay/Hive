@@ -29,8 +29,8 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.Single(panel.Models);
         Assert.Equal("vision-model", panel.ModelSelector.Items[0]!.ToString());
         Assert.Contains("Discovered 1 model(s).", panel.StatusLabel.Text);
-        Assert.Contains("Available", panel.StatusLabel.Text);
-        Assert.Contains("Healthy", panel.StatusLabel.Text);
+        Assert.Contains("Available", panel.MetadataLabel.Text);
+        Assert.Contains("Healthy", panel.MetadataLabel.Text);
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         await panel.InitializeAsync();
 
         Assert.Empty(panel.Models);
-        Assert.Contains("Discovery failed:", panel.StatusLabel.Text);
+        Assert.Contains("Discovery failed (hive.tests.discovery-failed).", panel.StatusLabel.Text);
         Assert.Contains("Manual model entry remains available.", panel.StatusLabel.Text);
         Assert.False(panel.ModelSelector.Enabled);
     }
