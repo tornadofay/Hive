@@ -54,7 +54,7 @@ public sealed class AgentExecutionIntegrationTests
         var secretStore = new SqlDpapiSecretStore(database.Options);
         using var httpClient = new HttpClient();
         var executionService = new AgentExecutionService(
-            eventStore,
+            new HiveEventPersistenceComposition(eventStore),
             httpClient,
             TimeSpan.FromSeconds(5));
 
@@ -163,7 +163,7 @@ public sealed class AgentExecutionIntegrationTests
 
         using var httpClient = new HttpClient();
         var executionService = new AgentExecutionService(
-            eventStore,
+            new HiveEventPersistenceComposition(eventStore),
             httpClient,
             TimeSpan.FromSeconds(5));
 
@@ -211,7 +211,7 @@ public sealed class AgentExecutionIntegrationTests
 
         using var httpClient = new HttpClient();
         var executionService = new AgentExecutionService(
-            eventStore,
+            new HiveEventPersistenceComposition(eventStore),
             httpClient,
             TimeSpan.FromSeconds(5));
 
