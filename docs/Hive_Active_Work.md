@@ -28,7 +28,7 @@ Phase 1.17 structured extraction/validation and all later V1 phases remain outsi
 
 ## Verification boundary
 
-The revised source is **VERIFICATION FAILED / REMEDIATION REQUIRED**. The developer reported the full `Hive.Tests` suite at **415/415 passed, 0 failed, 0 skipped** on 2026-09-28 in 43.2 seconds, but the matching Example Host scenario then failed with `hive.provider.openai-compatible.transport-failed` while reading the discovery response. Same-slice remediation is required for this failure boundary.
+Same-slice remediation is complete for the reported Example Host transport failure. The source is now **VERIFICATION PENDING**. The developer previously reported 415/415 automated tests passing before this remediation; that result does not verify the revised Example Host fixture.
 
 Required verification follows the Phase 1.16 roadmap gate:
 
@@ -51,7 +51,7 @@ Example to run: Providers / Target Selection / Capability Discovery / Provider /
 
 Tests to run after remediation: `tests/Hive.Tests/ProviderDiscoveryTests.cs`; `tests/Hive.Tests/ProviderDiscoveryManagementIntegrationTests.cs`; full `Hive.Tests` suite. Then exercise the matching Example Host scenario again.
 
-Failure evidence from the 2026-09-28 Example Host run: `Provider discovery failed: hive.provider.openai-compatible.transport-failed [External] The provider model-discovery response could not be read.` Do not treat the previous 415/415 automated result as sufficient until this Example Host failure is remediated and re-verified.
+Failure evidence is preserved in [Phase 1.16 Example Host failure record](verification/phase-1/1.16-provider-model-capability-discovery-example-failure-2026-09-28.md). The remediation is complete; developer re-verification is required before closure.
 
 ## Handoff status
 
