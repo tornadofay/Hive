@@ -78,6 +78,39 @@ Deferred until a measured requirement exists: Temporal, Dapr, PostgreSQL/pgvecto
 
 
 
+## Phase 1.16 Provider / Model Discovery Boundary
+
+Provider/model discovery is a provider-platform operation exposed through Hive.Management; it is not a second orchestration path and it does not bypass the existing Provider → ProviderAccount → ExecutionTarget ownership boundary.
+
+Discovery uses the existing Core provider contract:
+
+```csharp
+IProviderCapabilityDiscovery
+```
+
+Management resolves the authorized Provider, ProviderAccount, and ExecutionTarget and resolves the ProviderAccount credential through ISecretStore. Credential material is passed only to the concrete provider adapter. Discovery results, diagnostics, and Example Host output never contain credential values or secret references.
+
+The first implementation is a single OpenAI-compatible discovery implementation that uses the existing OpenAI-compatible transport adapter to call the provider's `/models` endpoint. Compatible vendors remain configurations of the shared adapter; adding another OpenAI-compatible vendor does not create another transport implementation.
+
+Discovery is an operational read model. Provider/target configuration remains the durable authority and is not rewritten by a discovery refresh. Phase 1.16 uses a bounded process-local discovery cache keyed by the provider/account/target endpoint configuration. A cached observation carries its observation and stale times so callers can distinguish fresh data from stale data. A forced refresh replaces the cache only after a successful discovery. A failed refresh leaves the last successful observation intact and returns a typed failure.
+
+Model capability information is represented separately from the configured ExecutionTarget.Capabilities. Effective capability state is resolved conservatively:
+
+1. an explicitly configured target capability is authoritative and overrides discovered information;
+2. a discovered capability is used only when the target has no configured entry for that capability;
+3. a stale discovery observation contributes no effective capability, so the resulting state remains Unknown;
+4. a missing model or an unsupported model-enumeration endpoint does not fabricate capabilities.
+
+The existing ExecutionTargetSelector remains the authoritative capability policy boundary. Phase 1.16 permits Management/input preparation to supply an ephemeral effective capability set to that selector without mutating the persisted target.
+
+Discovery normalizes only provider capability fields that have a defined Hive capability mapping. Provider fields that cannot be normalized are ignored rather than guessed. Supported/Unsupported/Unknown remain explicit states. Model availability and health are reported only when the provider explicitly supplies those fields; a successful metadata request alone is not treated as proof that a model is healthy.
+
+Operational metadata may include bounded rate-limit information when the provider reports it. Quota, rate limits, health, availability, capacity, and cost remain operational dimensions separate from configured capability state and are not used as hidden capability grants.
+
+Discovery is cancellation-aware and bounded by the provider timeout. Transport failures, timeouts, authentication failures, rate limits, malformed responses, and unsupported `/models` endpoints remain typed outcomes. No discovery error includes a credential, authorization header, or raw provider response body.
+
+No V1 workflow, MAF orchestration, business-operation write, Tool authorization, Review, cognition, or future-phase behavior is part of this boundary.
+
 ## 6. Generic Resource Model
 
 All Hive-owned persistent resources share a common identity/ownership envelope:
