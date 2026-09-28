@@ -28,7 +28,7 @@ Phase 1.17 structured extraction/validation and all later V1 phases remain outsi
 
 ## Verification boundary
 
-The revised source is **automated-verified**: the developer reported the full `Hive.Tests` suite at **415/415 passed, 0 failed, 0 skipped** on 2026-09-28 in 43.2 seconds. The supplied capability-aware execution-selection diagnostics also confirm the existing selector behavior. The matching Phase 1.16 discovery Example Host scenario has not been explicitly reported as exercised yet.
+The revised source is **VERIFICATION FAILED / REMEDIATION REQUIRED**. The developer reported the full `Hive.Tests` suite at **415/415 passed, 0 failed, 0 skipped** on 2026-09-28 in 43.2 seconds, but the matching Example Host scenario then failed with `hive.provider.openai-compatible.transport-failed` while reading the discovery response. Same-slice remediation is required for this failure boundary.
 
 Required verification follows the Phase 1.16 roadmap gate:
 
@@ -49,9 +49,9 @@ Revision verification record: [Phase 1.16 revision verification](verification/ph
 
 Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Capability Discovery — Hive.Example.WinForms
 
-Tests to run: `tests/Hive.Tests/ProviderDiscoveryTests.cs`; `tests/Hive.Tests/ProviderDiscoveryManagementIntegrationTests.cs`; full `Hive.Tests` suite after focused verification passes. Then exercise the matching Example Host scenario.
+Tests to run after remediation: `tests/Hive.Tests/ProviderDiscoveryTests.cs`; `tests/Hive.Tests/ProviderDiscoveryManagementIntegrationTests.cs`; full `Hive.Tests` suite. Then exercise the matching Example Host scenario again.
 
-The 2026-09-28 revised full-suite result is recorded above from developer-provided execution output. No matching Phase 1.16 discovery Example Host verification is claimed until the developer explicitly reports that scenario.
+Failure evidence from the 2026-09-28 Example Host run: `Provider discovery failed: hive.provider.openai-compatible.transport-failed [External] The provider model-discovery response could not be read.` Do not treat the previous 415/415 automated result as sufficient until this Example Host failure is remediated and re-verified.
 
 ## Handoff status
 
