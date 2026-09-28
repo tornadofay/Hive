@@ -5,7 +5,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Hive.Persistence;
 
-public sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOutboxPollerStore
+internal sealed class SqlEventPersistenceStore : IEventPersistenceStore, IEventOutboxPollerStore
 {
     private readonly HiveDatabaseOptions _options;
     private readonly JsonEventSerializer _serializer;
