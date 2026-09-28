@@ -194,13 +194,13 @@ internal sealed class HiveProviderSetupEditorForm : HiveForm
             _credentialTextBox.Clear();
             _credentialTextBox.PlaceholderText = "No credential required";
             _detailsLabel.Text =
-                $"Endpoint: {definition.DefaultEndpoint}\\r\\nThis provider uses local/default configuration.";
+                $"Endpoint: {definition.DefaultEndpoint}\r\nThis provider uses local/default configuration.";
         }
         else
         {
             _credentialTextBox.PlaceholderText = "API key";
             _detailsLabel.Text =
-                $"Endpoint: {definition.DefaultEndpoint}\\r\\nThe API key is stored as protected secret material.";
+                $"Endpoint: {definition.DefaultEndpoint}\r\nThe API key is stored as protected secret material.";
         }
 
         _saveButton.Enabled = true;
