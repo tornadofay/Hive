@@ -13,7 +13,7 @@ Discovery is operational evidence. Persisted Provider, ProviderAccount, and Exec
 - loads the access-scoped Provider, ProviderAccount, and active ExecutionTarget;
 - resolves the account credential through the existing Secret Store boundary when a credential reference exists;
 - invokes the configured provider discovery implementation;
-- caches successful observations in a bounded process-local cache keyed by the relevant provider/account/target configuration;
+- caches successful observations in a bounded process-local cache keyed by Provider + ProviderAccount + endpoint configuration, allowing ExecutionTargets that share the same account and endpoint to reuse one model catalog;
 - exposes stale observations as stale instead of silently converting them into current state;
 - supports forced refresh; a failed refresh does not replace the last successful observation;
 - invalidates the process-local discovery cache generation after a successful provider-credential replacement through Hive.Management, preventing credential-dependent observations from being reused under the previous credential state;
@@ -58,9 +58,9 @@ Configured ExecutionTarget capabilities remain authoritative. Discovered capabil
 
 Discovery observations are timestamped and become stale after a bounded freshness interval. Stale observations do not grant new effective capabilities.
 
-Input preparation explicitly refreshes stale discovery before using discovered capability information. If refresh fails, the previous successful observation remains cached and the routing path does not silently fabricate support.
+Input preparation explicitly refreshes stale discovery before using discovered capability information. Targets with an explicit configured value for the required routing capability do not require discovery for that capability. If discovery fails for an otherwise-needed target, the previous successful observation remains cached and the typed discovery failure is preserved with the affected image-routing result; another independent target may still qualify. The routing path does not silently fabricate support.
 
-Transport failures, timeout, cancellation, malformed model catalogs, unsupported model enumeration, and authentication/HTTP failures remain typed outcomes. Error messages do not include credentials, authorization headers, or raw provider response bodies.
+Transport failures, timeout, cancellation, malformed model catalogs, unsupported model enumeration, and authentication/HTTP failures remain typed outcomes. Error messages do not include credentials, authorization headers, or raw provider response bodies. ExecutionTarget endpoints also reject credential-bearing URI query parameters; non-secret provider query parameters remain supported and preserved.
 
 A provider that does not implement `/models` is represented as model-enumeration unsupported rather than as an invented model list.
 
