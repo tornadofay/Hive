@@ -101,13 +101,27 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         CancellationToken cancellationToken = default) =>
         _secrets.GetSecretDescriptorAsync(secretId, accessContext, cancellationToken);
 
-    public Task<Result<Secret>> ReplaceSecretAsync(
+    public async Task<Result<Secret>> ReplaceSecretAsync(
         SecretId secretId,
         SecretMaterial replacement,
         ResourceVersion expectedVersion,
         ResourceAccessContext accessContext,
-        CancellationToken cancellationToken = default) =>
-        _secrets.ReplaceSecretAsync(secretId, replacement, expectedVersion, accessContext, cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _secrets
+            .ReplaceSecretAsync(
+                secretId,
+                replacement,
+                expectedVersion,
+                accessContext,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (result.IsSuccess)
+            _providers.InvalidateProviderDiscoveryCache();
+
+        return result;
+    }
 
     public Task<Result<ProviderConnectionTestResult>> TestExecutionTargetConnectionAsync(
         ExecutionTargetId executionTargetId,
