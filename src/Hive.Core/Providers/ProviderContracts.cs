@@ -213,6 +213,37 @@ public sealed record ProviderAccount
 
 public sealed record ExecutionTarget
 {
+    private static readonly HashSet<string> CredentialBearingQueryParameterNames =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "api-key",
+            "api_key",
+            "apikey",
+            "authorization",
+            "auth-token",
+            "auth_token",
+            "bearer",
+            "client-secret",
+            "client_secret",
+            "credential",
+            "credentials",
+            "key",
+            "password",
+            "passwd",
+            "secret",
+            "sig",
+            "signature",
+            "subscription-key",
+            "token",
+            "access-token",
+            "access_token",
+            "x-api-key",
+            "ocp-apim-subscription-key",
+            "x-amz-credential",
+            "x-amz-signature",
+            "x-amz-security-token"
+        };
+
     public ExecutionTarget(
         ResourceEnvelope<ExecutionTargetId> resource,
         ProviderId providerId,
@@ -418,36 +449,6 @@ public sealed record ExecutionTarget
 
         if (string.IsNullOrEmpty(query))
             return false;
-
-        var sensitiveNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "api-key",
-            "api_key",
-            "apikey",
-            "authorization",
-            "auth-token",
-            "auth_token",
-            "bearer",
-            "client-secret",
-            "client_secret",
-            "credential",
-            "credentials",
-            "key",
-            "password",
-            "passwd",
-            "secret",
-            "sig",
-            "signature",
-            "subscription-key",
-            "token",
-            "access-token",
-            "access_token",
-            "x-api-key",
-            "ocp-apim-subscription-key",
-            "x-amz-credential",
-            "x-amz-signature",
-            "x-amz-security-token"
-        };
 
         foreach (var component in query.Split(
                      ['&', ';'],
