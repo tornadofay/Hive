@@ -99,9 +99,9 @@ public sealed class SqlHiveHostServiceGraphFactory :
             }
 
             var secretStore = new SqlDpapiSecretStore(options);
-            var eventStore = new SqlEventPersistenceStore(options);
+            var eventPersistence = HiveEventPersistence.CreateSql(options);
             var agentExecution = new AgentExecutionService(
-                eventStore,
+                eventPersistence,
                 SharedHttpClient);
 
             management = new HiveManagementFacade(
