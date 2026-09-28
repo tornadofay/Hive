@@ -92,14 +92,14 @@ Management resolves the authorized Provider, ProviderAccount, and ExecutionTarge
 
 The first implementation is a single OpenAI-compatible discovery implementation that uses the existing OpenAI-compatible transport adapter to call the provider's `/models` endpoint. Compatible vendors remain configurations of the shared adapter; adding another OpenAI-compatible vendor does not create another transport implementation.
 
-Discovery is an operational read model. Provider/target configuration remains the durable authority and is not rewritten by a discovery refresh. Phase 1.16 uses a bounded process-local discovery cache keyed by the provider/account/target endpoint configuration. A cached observation carries its observation and stale times so callers can distinguish fresh data from stale data. A forced refresh replaces the cache only after a successful discovery. A failed refresh leaves the last successful observation intact and returns a typed failure.
+Discovery is an operational read model. Provider/target configuration remains the durable authority and is not rewritten by a discovery refresh. Hive.Management validates that returned discovery metadata still identifies the requested Provider, ProviderAccount, and ExecutionTarget endpoint before it can be cached or returned. Phase 1.16 uses a bounded process-local discovery cache keyed by the provider/account/target endpoint configuration. A cached observation carries its observation and stale times so callers can distinguish fresh data from stale data. A forced refresh replaces the cache only after a successful discovery. A failed refresh leaves the last successful observation intact and returns a typed failure.
 
 Model capability information is represented separately from the configured ExecutionTarget.Capabilities. Effective capability state is resolved conservatively:
 
 1. an explicitly configured target capability is authoritative and overrides discovered information;
 2. a discovered capability is used only when the target has no configured entry for that capability;
 3. a stale discovery observation contributes no effective capability, so the resulting state remains Unknown;
-4. a missing model or an unsupported model-enumeration endpoint does not fabricate capabilities; an unsupported enumeration route does not imply provider availability or health, so those operational states remain Unknown.
+4. a missing model or an unsupported model-enumeration endpoint does not fabricate capabilities; an unsupported enumeration route does not imply provider availability or health, so those operational states remain Unknown; discovery snapshots with `Unsupported` or `Unknown` model-enumeration state cannot contain discovered models.
 
 The existing ExecutionTargetSelector remains the authoritative capability policy boundary. Phase 1.16 permits Management/input preparation to supply an ephemeral effective capability set to that selector without mutating the persisted target.
 
