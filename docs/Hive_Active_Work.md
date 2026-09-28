@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IN PROGRESS
+Status: VERIFICATION PENDING
 
 ## Authorized slice
 
@@ -36,12 +36,29 @@ Integrate the completed Provider / Model Capability Discovery Management contrac
 - no future roadmap phase work;
 - no unrelated UI toolkit/refactoring.
 
+## Implementation state
+
+Implementation is complete and source-reviewed at checkpoint `baa3d2524edd2e3b37c6e29b1837d62f9490a201`.
+
+Implemented:
+- Provider Model Discovery panel in the Execution Target editor using only `IHiveManagementFacade`;
+- automatic discovery for persisted targets, explicit forced Refresh, stale/unsupported/failure/cancellation handling, and obsolete-result suppression;
+- discovered model selection into the editable Model field without changing configured capability overrides;
+- saved-endpoint invalidation when the endpoint is edited, and post-create reopen so a new persisted target can enter discovery;
+- focused automated tests plus Example Configuration and UI documentation updates;
+- defensive error presentation that does not place raw Management error messages in the visible discovery status.
+
 ## Verification boundary
 
-Required before closure:
-- focused automated tests for the Settings discovery integration and relevant edge/cancellation paths;
+Developer verification required before closure:
+- `tests/Hive.Tests/HiveExecutionTargetDiscoverySettingsTests.cs`;
+- full `Hive.Tests` suite;
 - exact Example Host Settings scenario: `Overview / Getting Started / Example Configuration` → real Settings → `Providers / Execution Targets`;
-- manual developer verification of discovery, model selection, refresh/stale/failure presentation, and credential secrecy;
-- developer build/test verification with the repository's standing Treat Warnings as Errors configuration.
+- manual verification of supported discovery, discovered-model selection/save, Refresh/stale behavior, unsupported/failure handling, cancellation, endpoint-change invalidation, and credential/raw-response secrecy;
+- standing Visual Studio Treat Warnings as Errors / zero-warning build configuration.
 
-Until developer results arrive, implementation verification is **PENDING**.
+Agent verification performed:
+- repository/source inspection and post-write diff review only;
+- no build, test run, application launch, or external provider call was executed.
+
+Verification remains **PENDING** until developer results are recorded.
