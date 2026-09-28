@@ -1,12 +1,12 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Authorized slice
 
 **Phase 1.16 — UI — Provider Configuration, Discovery & Target Reconciliation**
 
-Checkpoint: `9d73fe444e70864d3d93f653b0f15158303301fe` (main, 2026-09-28)
+Checkpoint: `6b07bbdc40a35563def5bdfa6a9c00c21f9520ea` (main, 2026-09-28)
 
 ## Objective
 
@@ -74,7 +74,7 @@ Settings navigation:
 
 ## Implementation state
 
-Source/diff review complete at `9d73fe444e70864d3d93f653b0f15158303301fe` (main, 2026-09-28). Same-slice remediation corrected the reported test compilation/analyzer failures; no build, test run, application launch, or external provider call was performed by the agent.
+Source/diff review complete at `6b07bbdc40a35563def5bdfa6a9c00c21f9520ea` (main, 2026-09-28). Developer-run test failures were remediated within the recorded Phase 1.16 boundary; no build or test run was performed by the agent.
 
 ## Verification incident — test compilation
 
@@ -99,6 +99,6 @@ Required developer verification before closure:
 
 ## Verification incident
 
-Developer verification found an in-scope runtime failure in the normal Add Provider dialog: `HiveProviderSetupEditorForm.UpdateDetails()` throws `NullReferenceException` during constructor-time provider selection because the selection-change handler can run before the action buttons are initialized. This is a same-slice UI initialization defect; remediation is limited to the affected dialog initialization order.
+Developer verification found an in-scope runtime failure in the normal Add Provider dialog: `HiveProviderSetupEditorForm.UpdateDetails()` throws `NullReferenceException` during constructor-time provider selection because the selection-change handler can run before the action buttons are initialized. Same-slice remediation moved the handler subscription until after button initialization.
 
 Agent verification boundary: source/diff review only unless explicitly authorized otherwise. No build/test/launch/provider call is claimed by the agent.
