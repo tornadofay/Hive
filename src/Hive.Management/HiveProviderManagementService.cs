@@ -18,6 +18,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
     private readonly IProviderConnectionTester? _providerConnectionTester;
     private readonly IProviderCapabilityDiscovery? _providerCapabilityDiscovery;
     private readonly ISecretStore? _secrets;
+    private readonly IClock _clock;
     private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, ProviderDiscoverySnapshot> _discoveryCache = new();
     private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, DiscoveryGate> _discoveryLocks = new();
 
@@ -28,12 +29,14 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         IProviderResourceStore providerResources,
         IProviderConnectionTester? providerConnectionTester,
         ISecretStore? secrets,
-        IProviderCapabilityDiscovery? providerCapabilityDiscovery)
+        IProviderCapabilityDiscovery? providerCapabilityDiscovery,
+        IClock? clock = null)
     {
         _providerResources = providerResources ?? throw new ArgumentNullException(nameof(providerResources));
         _providerConnectionTester = providerConnectionTester;
         _providerCapabilityDiscovery = providerCapabilityDiscovery;
         _secrets = secrets;
+        _clock = clock ?? SystemClock.Instance;
     }
 
 
@@ -363,7 +366,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
             var snapshot = discovery.Value!;
 
-            if (snapshot.IsStale(DateTimeOffset.UtcNow))
+            if (snapshot.IsStale(_clock.UtcNow))
             {
                 discovery = await GetProviderDiscoveryAsync(
                     target.Id,
