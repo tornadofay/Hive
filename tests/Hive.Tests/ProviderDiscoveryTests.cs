@@ -180,8 +180,6 @@ public sealed class ProviderDiscoveryTests
                                 "tool_calling": false,
                                 "structured_output": "supported",
                                 "vendor_only_capability": true
-                              },
-                              "supports_vision": false
                             }
                           ]
                         }
