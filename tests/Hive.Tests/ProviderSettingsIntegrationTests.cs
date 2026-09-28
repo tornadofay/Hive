@@ -10,6 +10,45 @@ namespace Hive.Tests;
 public sealed class ProviderSettingsIntegrationTests
 {
     [Fact]
+    public async Task ConfigureBuiltInProvider_RejectsUnknownAndAdvancedOnlyCatalogEntries()
+    {
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        using var credential = SecretMaterial.Create("catalog-secret");
+
+        var database = CreateDatabase("Hive_Test_ProviderSettingsCatalog");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var providerStore = new SqlProviderResourceStore(database.Options);
+
+        using var facade = new HiveManagementFacade(
+            providerStore,
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options));
+
+        var unknown = await facade.ConfigureBuiltInProviderAsync(
+            "does-not-exist",
+            credential,
+            context);
+        Assert.True(unknown.IsFailure);
+        Assert.Equal(ErrorCategory.NotFound, unknown.Error!.Category);
+
+        using var cloudflareCredential = SecretMaterial.Create("cloudflare-secret");
+        var advanced = await facade.ConfigureBuiltInProviderAsync(
+            "cloudflare",
+            cloudflareCredential,
+            context);
+        Assert.True(advanced.IsFailure);
+        Assert.Equal(ErrorCategory.Unsupported, advanced.Error!.Category);
+    }
+
+    [Fact]
     public async Task ConfigureBuiltInProvider_CreatesDefaultAccountAndAutomaticTargets()
     {
         var database = CreateDatabase("Hive_Test_ProviderSettingsOnboarding");
