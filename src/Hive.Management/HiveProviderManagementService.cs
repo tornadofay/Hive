@@ -1,5 +1,6 @@
+using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 using Hive.Core;
-
 using Hive.Persistence;
 
 
@@ -15,24 +16,238 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
     private readonly IProviderResourceStore _providerResources;
 
     private readonly IProviderConnectionTester? _providerConnectionTester;
-
+    private readonly IProviderCapabilityDiscovery? _providerCapabilityDiscovery;
     private readonly ISecretStore? _secrets;
+    private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, ProviderDiscoverySnapshot> _discoveryCache = new();
+    private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, SemaphoreSlim> _discoveryLocks = new();
 
-
-
-    internal HiveProviderManagementService(IProviderResourceStore providerResources, IProviderConnectionTester? providerConnectionTester, ISecretStore? secrets)
-
+    internal HiveProviderManagementService(
+        IProviderResourceStore providerResources,
+        IProviderConnectionTester? providerConnectionTester,
+        ISecretStore? secrets,
+        IProviderCapabilityDiscovery? providerCapabilityDiscovery)
     {
-
         _providerResources = providerResources ?? throw new ArgumentNullException(nameof(providerResources));
-
         _providerConnectionTester = providerConnectionTester;
-
+        _providerCapabilityDiscovery = providerCapabilityDiscovery;
         _secrets = secrets;
-
     }
 
 
+
+    internal async Task<Result<ProviderDiscoverySnapshot>> GetProviderDiscoveryAsync(
+        ExecutionTargetId executionTargetId,
+        ResourceAccessContext accessContext,
+        bool forceRefresh = false,
+        CancellationToken cancellationToken = default)
+    {
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Result<ProviderDiscoverySnapshot>.Failure(contextError);
+
+        if (executionTargetId == default)
+        {
+            return Result<ProviderDiscoverySnapshot>.Failure(
+                Error.Validation(
+                    "hive.management.execution-target.identity-required",
+                    "The execution target identity is required."));
+        }
+
+        if (_providerCapabilityDiscovery is null)
+        {
+            return Result<ProviderDiscoverySnapshot>.Failure(
+                Error.Unsupported(
+                    "hive.management.provider-discovery-unavailable",
+                    "Provider capability discovery is not configured."));
+        }
+
+        var target = await _providerResources.GetExecutionTargetAsync(
+            executionTargetId,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (target.IsFailure)
+            return Result<ProviderDiscoverySnapshot>.Failure(target.Error!);
+
+        if (target.Value!.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        {
+            return Result<ProviderDiscoverySnapshot>.Failure(
+                Error.Conflict(
+                    "hive.management.execution-target-inactive",
+                    "Provider discovery requires an active execution target."));
+        }
+
+        var account = await _providerResources.GetProviderAccountAsync(
+            target.Value.ProviderAccountId,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (account.IsFailure)
+            return Result<ProviderDiscoverySnapshot>.Failure(account.Error!);
+
+        var provider = await _providerResources.GetProviderAsync(
+            target.Value.ProviderId,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (provider.IsFailure)
+            return Result<ProviderDiscoverySnapshot>.Failure(provider.Error!);
+
+        var cacheKey = new ProviderDiscoveryCacheKey(
+            provider.Value!.Id,
+            provider.Value.Resource.Version,
+            account.Value!.Id,
+            account.Value.Resource.Version,
+            target.Value.Id,
+            target.Value.Resource.Version,
+            target.Value.Endpoint.AbsoluteUri);
+
+        if (!forceRefresh &&
+            _discoveryCache.TryGetValue(cacheKey, out var cached))
+        {
+            return Result<ProviderDiscoverySnapshot>.Success(cached);
+        }
+
+        var gate = _discoveryLocks.GetOrAdd(
+            cacheKey,
+            static _ => new SemaphoreSlim(1, 1));
+
+        await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            if (!forceRefresh &&
+                _discoveryCache.TryGetValue(cacheKey, out cached))
+            {
+                return Result<ProviderDiscoverySnapshot>.Success(cached);
+            }
+
+            SecretMaterial? material = null;
+
+            try
+            {
+                if (account.Value.CredentialSecret is not null)
+                {
+                    if (_secrets is null)
+                    {
+                        return Result<ProviderDiscoverySnapshot>.Failure(
+                            Error.Unsupported(
+                                "hive.management.secret-store-unavailable",
+                                "The provider account references a credential but the Secret Store is not configured."));
+                    }
+
+                    var secret = await _secrets.GetAsync(
+                        account.Value.CredentialSecret.Value.Id,
+                        accessContext,
+                        cancellationToken).ConfigureAwait(false);
+
+                    if (secret.IsFailure)
+                        return Result<ProviderDiscoverySnapshot>.Failure(secret.Error!);
+
+                    material = secret.Value!.Material;
+                }
+
+                var discovered = await _providerCapabilityDiscovery
+                    .DiscoverAsync(
+                        provider.Value,
+                        account.Value,
+                        target.Value,
+                        material,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (discovered.IsSuccess)
+                    _discoveryCache[cacheKey] = discovered.Value!;
+
+                return discovered;
+            }
+            finally
+            {
+                material?.Dispose();
+            }
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    internal async Task<Result<IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>>>
+        GetExecutionTargetCapabilityOverridesAsync(
+            IReadOnlyList<ExecutionTarget> targets,
+            ResourceAccessContext accessContext,
+            CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(targets);
+
+        if (targets.Any(static target => target is null))
+        {
+            return Result<IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>>.Failure(
+                Error.Validation(
+                    "hive.management.execution-targets-invalid",
+                    "Execution target routing input cannot contain null targets."));
+        }
+
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+        {
+            return Result<IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>>.Failure(
+                contextError);
+        }
+
+        if (_providerCapabilityDiscovery is null || targets.Count == 0)
+        {
+            return Result<IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>>.Success(
+                new ReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>(
+                    new Dictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>()));
+        }
+
+        var overrides =
+            new Dictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>();
+
+        foreach (var target in targets)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var discovery = await GetProviderDiscoveryAsync(
+                target.Id,
+                accessContext,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (discovery.IsFailure)
+                continue;
+
+            var snapshot = discovery.Value!;
+
+            if (snapshot.IsStale(DateTimeOffset.UtcNow))
+            {
+                discovery = await GetProviderDiscoveryAsync(
+                    target.Id,
+                    accessContext,
+                    forceRefresh: true,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                if (discovery.IsFailure)
+                    continue;
+
+                snapshot = discovery.Value!;
+
+                if (snapshot.IsStale(DateTimeOffset.UtcNow))
+                    continue;
+            }
+
+            var effective = ExecutionTargetCapabilityResolver.ResolveCapabilities(
+                target,
+                snapshot,
+                DateTimeOffset.UtcNow);
+
+            if (effective.Count != target.Capabilities.Count)
+                overrides[target.Id] = effective;
+        }
+
+        return Result<IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>>.Success(
+            new ReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>(overrides));
+    }
 
     internal async Task<Result<ProviderConnectionTestResult>> TestExecutionTargetConnectionAsync(
         ExecutionTargetId executionTargetId,
@@ -421,4 +636,14 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                 cancellationToken));
 
 
+
+
+    private readonly record struct ProviderDiscoveryCacheKey(
+        ProviderId ProviderId,
+        ResourceVersion ProviderVersion,
+        ProviderAccountId ProviderAccountId,
+        ResourceVersion ProviderAccountVersion,
+        ExecutionTargetId ExecutionTargetId,
+        ResourceVersion ExecutionTargetVersion,
+        string Endpoint);
 }
