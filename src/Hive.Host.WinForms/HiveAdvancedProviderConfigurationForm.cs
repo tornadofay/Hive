@@ -16,6 +16,7 @@ internal sealed class HiveAdvancedProviderConfigurationForm : HiveForm
     private readonly HiveProviderAccountsSettingsView _accounts;
     private readonly HiveExecutionTargetsSettingsView _targets;
     private CancellationTokenSource? _lifetimeCts;
+    private readonly HashSet<int> _initializedTabs = new();
 
     public HiveAdvancedProviderConfigurationForm(
         IHiveManagementFacade management,
@@ -70,10 +71,68 @@ internal sealed class HiveAdvancedProviderConfigurationForm : HiveForm
         AddTab("Accounts / Credentials", _accounts);
         AddTab("Execution Targets", _targets);
 
+        _tabs.SelectedIndexChanged += TabsOnSelectedIndexChanged;
+
         BodyPanel.Controls.Add(_tabs);
         ThemeManager.Apply(BodyPanel);
 
         Load += async (_, _) => await InitializeAsync();
+    }
+
+    private async void TabsOnSelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (IsDisposed || Disposing)
+            return;
+
+        try
+        {
+            await InitializeSelectedTabAsync().ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+            when (_lifetimeCts?.IsCancellationRequested == true || IsDisposed || Disposing)
+        {
+        }
+        catch (Exception exception)
+        {
+            if (!IsDisposed && !Disposing)
+            {
+                HiveUiErrorReporter.Report(
+                    this,
+                    exception,
+                    "Advanced Provider Configuration",
+                    "The selected advanced configuration page could not be initialized.",
+                    _output,
+                    _themeManager);
+            }
+        }
+    }
+
+    private async Task InitializeSelectedTabAsync()
+    {
+        var index = _tabs.SelectedIndex;
+        if (index < 0 || !_initializedTabs.Add(index))
+            return;
+
+        var token = (_lifetimeCts ??= new CancellationTokenSource()).Token;
+
+        switch (index)
+        {
+            case 0:
+                await _providers.InitializeAsync(token).ConfigureAwait(true);
+                break;
+
+            case 1:
+                await _accounts.InitializeAsync(token).ConfigureAwait(true);
+                break;
+
+            case 2:
+                await _targets.InitializeAsync(token).ConfigureAwait(true);
+                break;
+
+            default:
+                throw new InvalidOperationException(
+                    $"Unknown advanced provider configuration tab '{index}'.");
+        }
     }
 
     private void AddTab(string title, Control page)
@@ -97,7 +156,7 @@ internal sealed class HiveAdvancedProviderConfigurationForm : HiveForm
 
         try
         {
-            await _providers.InitializeAsync(_lifetimeCts.Token).ConfigureAwait(true);
+            await InitializeSelectedTabAsync().ConfigureAwait(true);
         }
         catch (OperationCanceledException)
             when (_lifetimeCts.IsCancellationRequested)
@@ -124,9 +183,7 @@ internal sealed class HiveAdvancedProviderConfigurationForm : HiveForm
             cts?.Cancel();
             cts?.Dispose();
 
-            _providers.Dispose();
-            _accounts.Dispose();
-            _targets.Dispose();
+            _tabs.SelectedIndexChanged -= TabsOnSelectedIndexChanged;
         }
 
         base.Dispose(disposing);
