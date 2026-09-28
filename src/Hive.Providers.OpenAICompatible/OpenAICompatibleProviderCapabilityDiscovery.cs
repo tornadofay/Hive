@@ -115,7 +115,7 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
                         account.Id,
                         target.Endpoint,
                         new ProviderOperationalMetadata(
-                            ProviderAvailabilityStatus.Available,
+                            ProviderAvailabilityStatus.Unknown,
                             ProviderHealthStatus.Unknown,
                             observedAt,
                             observedAt.Add(_freshness),
