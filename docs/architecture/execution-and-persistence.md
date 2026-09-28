@@ -80,37 +80,153 @@ Deferred until a measured requirement exists: Temporal, Dapr, PostgreSQL/pgvecto
 
 ## Phase 1.16 Provider / Model Discovery Boundary
 
-Provider/model discovery is a provider-platform operation exposed through Hive.Management; it is not a second orchestration path and it does not bypass the existing Provider → ProviderAccount → ExecutionTarget ownership boundary.
+Provider/model discovery is a provider-platform operation exposed through Hive.Management. Discovery is operational evidence; it is not configuration, authorization, or a second orchestration path.
 
-Discovery uses the existing Core provider contract:
+The durable resource model remains:
 
-```csharp
-IProviderCapabilityDiscovery
+```text
+Provider
+   ↓
+ProviderAccount
+   ↓
+ExecutionTarget
 ```
 
-Management resolves the authorized Provider, ProviderAccount, and ExecutionTarget and resolves the ProviderAccount credential through ISecretStore. Credential material is passed only to the concrete provider adapter. Discovery results, diagnostics, and Example Host output never contain credential values or secret references.
+ProviderAccount remains the credential/account boundary. ExecutionTarget remains the concrete capability-bearing execution resource. Discovery does not require those concepts to be collapsed.
 
-The first implementation is a single OpenAI-compatible discovery implementation that uses the existing OpenAI-compatible transport adapter to call the provider's `/models` endpoint. Compatible vendors remain configurations of the shared adapter; adding another OpenAI-compatible vendor does not create another transport implementation.
+The existing `IProviderCapabilityDiscovery` contract is target-aware because the completed Phase 1.16 implementation validates Provider, ProviderAccount, and endpoint identity together. Its cache is already keyed by Provider + ProviderAccount + endpoint rather than by target identity. The product-level provider onboarding/reconciliation boundary must preserve that endpoint/account scope. A normal Provider setup flow must not create a fake or placeholder persisted ExecutionTarget merely to obtain discovery data. Where the discovery contract is extended for onboarding, its natural input is the authorized Provider + ProviderAccount + discovery endpoint context, with the existing target-aware contract retained or adapted where the concrete target editor still needs it.
 
-Discovery is an operational read model. Provider/target configuration remains the durable authority and is not rewritten by a discovery refresh. Hive.Management validates that returned discovery metadata still identifies the requested Provider, ProviderAccount, and ExecutionTarget endpoint before it can be cached or returned. Endpoint identity follows URI authority semantics for scheme, host, and port while keeping the HTTP path and query case-sensitive. It does not treat a path such as `/v1/Models` as the same endpoint as `/v1/models`, but equivalent authority casing remains equivalent. Phase 1.16 uses a bounded process-local discovery cache keyed by the Provider + ProviderAccount + endpoint configuration rather than the ExecutionTarget identity. A model catalog is endpoint/account-scoped operational evidence, so multiple ExecutionTargets that share the same provider account and endpoint reuse one discovery observation; target/model capability resolution remains separate and uses the selected target after the shared snapshot is obtained. A cached observation carries its observation and stale times so callers can distinguish fresh data from stale data. A forced refresh replaces the cache only after a successful discovery. A failed refresh leaves the last successful observation intact and returns a typed failure. Overlapping forced refresh requests for the same cache key are coalesced after a successful forced refresh, so an overlapping forced caller reuses that fresh observation rather than issuing a duplicate provider request; an overlapping non-forced discovery does not satisfy a forced refresh, and failed refreshes remain retryable. Observation and freshness timing uses the existing injectable IClock boundary, with SystemClock as the production default, so stale decisions are deterministic under test. A successful provider-credential replacement through Hive.Management invalidates the process-local discovery cache generation so credential-dependent observations are not reused under the previous credential state. A cancellation during credential replacement also invalidates the cache because the underlying transaction may have committed before cancellation was observed.
+The first implementation is a shared OpenAI-compatible discovery implementation using the existing OpenAI-compatible transport to enumerate the provider model catalog. Compatible vendors remain configurations of that transport; adding another OpenAI-compatible vendor does not create another provider transport implementation.
 
-Model capability information is represented separately from the configured ExecutionTarget.Capabilities. Effective capability state is resolved conservatively:
+Discovery remains conservative and ephemeral:
 
-1. an explicitly configured target capability is authoritative and overrides discovered information;
-2. a discovered capability is used only when the target has no configured entry for that capability;
-3. a stale discovery observation contributes no effective capability, so the resulting state remains Unknown;
-4. a missing model or an unsupported model-enumeration endpoint does not fabricate capabilities; an unsupported enumeration route does not imply provider availability or health, so those operational states remain Unknown; discovery snapshots with `Unsupported` or `Unknown` model-enumeration state cannot contain discovered models.
+1. a successful fresh observation may be cached and consumed by Management/UI/reconciliation;
+2. a failed, cancelled, stale, unsupported, malformed, rate-limited, or authentication-failing discovery never means zero models;
+3. a failed refresh leaves the last successful observation intact;
+4. discovered capability information never silently rewrites configured ExecutionTarget capability overrides;
+5. stale discovery contributes no effective discovered capability;
+6. provider/model availability and health remain operational metadata, not capability grants.
 
-The existing ExecutionTargetSelector remains the authoritative capability policy boundary. Phase 1.16 permits Management/input preparation to supply an ephemeral effective capability set to that selector without mutating the persisted target.
+The existing Phase 1.16 cache/freshness/concurrency/security rules remain authoritative, including endpoint identity checks, forced-refresh semantics, credential-cache invalidation, bounded retention, cancellation, typed failures, and secret/raw-response redaction.
 
-Discovery normalizes only provider capability fields that have a defined Hive capability mapping. Provider fields that cannot be normalized are ignored rather than guessed. Hive capability keys use canonical lowercase semantic identity, so configured and discovered keys compare consistently regardless of input casing. When multiple provider fields normalize to the same Hive capability, agreeing states are preserved and conflicting states resolve conservatively to `Unknown` rather than depending on provider field order. Supported/Unsupported/Unknown remain explicit states. Model availability and health are reported only when the provider explicitly supplies those fields; a successful metadata request alone is not treated as proof that a model is healthy.
+### Provider Configuration and Automatic Target Reconciliation
 
-Operational metadata may include bounded rate-limit information when the provider reports it. Quota, rate limits, health, availability, capacity, and cost remain operational dimensions separate from configured capability state and are not used as hidden capability grants.
+The normal Settings product experience is provider-centric rather than resource-graph-centric.
 
-Discovery is cancellation-aware and bounded by the provider timeout. Transport failures, timeouts, authentication failures, rate limits, malformed responses, and unsupported `/models` endpoints remain typed outcomes. No discovery error includes a credential, authorization header, or raw provider response body. During capability-aware input routing, a discovery failure for an otherwise-needed target is preserved as typed item-level diagnostic information when it contributes to an unavailable candidate set; independent targets are still allowed to qualify, and unrelated discovery failures do not invalidate a successful route.
+The built-in provider catalog is static application metadata describing supported provider choices, transport/authentication requirements, default discovery endpoint behavior, and any provider-specific onboarding requirements. A catalog entry is not itself a persisted Provider resource.
 
-No V1 workflow, MAF orchestration, business-operation write, Tool authorization, Review, cognition, or future-phase behavior is part of this boundary.
+Normal onboarding is:
 
+```text
+Add Provider
+    ↓
+select built-in provider
+    ↓
+supply required credential material
+    ↓
+Hive.Management creates/enables the Provider
+    ↓
+creates the default ProviderAccount
+    ↓
+stores credential material through ISecretStore
+    ↓
+discovery
+    ↓
+target reconciliation
+```
+
+The credential is never persisted in the Provider record or returned to the Settings UI. The normal Add/Edit surface therefore exposes only the credential operation required by the configured provider. For providers whose normal contract is not API-key based, onboarding may use the catalog-defined authentication input rather than pretending every provider is API-key-only.
+
+The durable ProviderAccount resource still exists even though normal users do not manage it directly. This preserves the ability to support multiple accounts/projects/credentials through Advanced Configuration without creating a second configuration model.
+
+Successful provider configuration and external discovery are separate failure boundaries. Durable Provider/ProviderAccount/credential state may be committed before network discovery begins; network discovery must not run inside a database transaction. If discovery fails after configuration is saved, Hive preserves the configuration and reports the operational failure, allowing Refresh/retry. The same rule applies to credential replacement: invalidate affected discovery evidence, then perform the fresh discovery/reconciliation outside the credential transaction.
+
+Successful discovery is consumed by a dedicated reconciliation boundary:
+
+```text
+Provider + ProviderAccount + endpoint
+            ↓
+   ProviderDiscoverySnapshot
+            ↓
+   ExecutionTarget Reconciler
+            ↓
+automatic ExecutionTargets
+```
+
+Automatic target reconciliation is durable, idempotent, and concurrency-safe. Each automatically materialized target has an explicit management origin/mode whose semantics distinguish system-maintained targets from administrator-maintained targets. The exact field name is a contract decision for the implementation, but the distinction must be durable and explicit; it must never be inferred from a display name, metadata convention, or edit history.
+
+An automatic target represents the stable execution identity of one discovered model/deployment under one ProviderAccount and endpoint. Reconciliation uses a stable identity/reconciliation key based on the provider account, endpoint, and model/deployment identity so a rediscovered model reuses its existing automatic target where possible. Display names and diagnostics are not identity.
+
+Example:
+
+```text
+discovered: A, B, C
+targets:    A, B, C
+
+later discovered: A, C, D
+result:            A, B(retired), C, D
+```
+
+A model that disappears from a successful fresh enumeration causes its automatic target to transition to the existing retired/unavailable lifecycle rather than being physically deleted. If the same model later returns under the same reconciliation identity, Hive may reactivate/reuse the existing automatic target after normal dependency and lifecycle validation. Automatic reconciliation must never erase durable identity merely because provider enumeration changed.
+
+A successfully enumerated model that is temporarily reported unavailable or unhealthy is not treated as a missing model. Enumeration determines catalog membership; operational availability/health remains separate metadata. Only the explicit lifecycle/reconciliation rules may retire an automatic target.
+
+Administrator-managed targets are outside automatic reconciliation ownership. Discovery may report evidence relevant to them, but reconciliation must not rewrite their endpoint, model/deployment, capability overrides, or lifecycle. Returning a target to automatic management is an explicit Management operation; after that operation, the target again becomes eligible for reconciliation. The implementation must preserve enough stable identity/reconciliation information to make that transition deterministic.
+
+Automatic and manual targets may coexist when their concrete execution identities differ. A manual administrator target must not block discovery of a separate automatic target merely because its model name matches. Exact resource identity is determined by the complete target identity, not model display text alone.
+
+Reconciliation is triggered by successful discovery events such as initial provider configuration, explicit Provider Settings Refresh, and credential changes. Periodic/background refresh is an operational scheduling concern and must not be silently invented by the Settings UI. Runtime auto-selection must not rely on an assumption that the catalog is permanently fresh; stale/unknown operational state must remain explicit until an authorized refresh/reconciliation path obtains current evidence.
+
+All reconciliation writes pass through Hive.Management and the existing persistence/resource lifecycle/concurrency boundaries. WinForms does not create ProviderAccount/ExecutionTarget records directly, call provider transport, store secrets, or implement reconciliation logic.
+
+### Advanced Configuration Boundary
+
+Advanced Configuration is a single generalized administrative surface:
+
+```text
+Advanced Configuration
+├── Providers
+├── Accounts / Credentials
+└── Execution Targets
+```
+
+It is not provider-specific. The Advanced entry point may optionally open with a selected provider/account filter for convenience, but the underlying pages and contracts remain generalized.
+
+Advanced Configuration exists for cases that the normal Provider onboarding intentionally hides:
+
+- multiple ProviderAccounts or credentials;
+- custom or alternate endpoints;
+- local and self-hosted OpenAI-compatible servers;
+- manually configured models/deployments;
+- explicit capability overrides;
+- unusual provider/account/target relationships;
+- administrative lifecycle management and troubleshooting.
+
+The normal Settings page therefore represents the user-facing service configuration, while Advanced Configuration represents the underlying resource administration. They are two presentation levels over the same authoritative Management contracts, not two competing configuration systems.
+
+### Capability and Selection Boundary
+
+The effective capability model remains:
+
+```text
+configured ExecutionTarget capabilities
+              +
+current discovery evidence
+              ↓
+effective capability view
+              ↓
+authoritative ExecutionTargetSelector
+```
+
+Configured capability entries remain authoritative; discovery fills only missing evidence and never mutates durable overrides.
+
+The existing `ExecutionTargetSelector` remains the single capability-selection policy boundary. It supports the existing internal Auto/Preferred/Fixed selection contract and deterministic tie-breaking. The normal Provider Settings UI does not expose target-selection policy.
+
+Agent configuration is a separate Agent-owned concern. The existing AgentDefinition → ExecutionTarget relationship remains the durable foundation established earlier. A later Agent interaction/configuration slice owns the user-facing distinction between `Auto` and an exact selected execution target/model, including the rule that a fixed selection must not silently switch to another target when the pinned target becomes unusable.
+
+Operational availability/health remains distinct from capability. Before an Agent Auto selection is executed, the execution-planning boundary must exclude targets that are explicitly ineligible under the current operational state; it must not reinterpret health or availability as a capability grant. The exact operational-eligibility policy belongs to execution planning, not Provider Settings.
+
+No V1 workflow, MAF orchestration, business-operation write, Tool authorization, Review, cognition, or future-phase behavior is part of the provider configuration/discovery/reconciliation boundary.
 ## 6. Generic Resource Model
 
 All Hive-owned persistent resources share a common identity/ownership envelope:
