@@ -1,54 +1,19 @@
 # Phase 1.7 — Event Log, Snapshot & Transactional Outbox
 
-The Phase 1.7 public persistence boundary is exposed through Hive.Persistence.
+The Phase 1.7 event log, snapshot, and transactional outbox primitive is an internal Hive persistence boundary. Application-facing consumers must not construct or call the raw event persistence store directly because that would bypass the `Hive.Management` authorization boundary.
 
-Example Host path: Persistence / Events / Event Persistence / Event Log + Snapshot + Outbox
+Trusted Hive composition uses the opaque event-persistence composition handle:
 
 ```csharp
-var options = HiveDatabaseOptions.LocalDevelopment(
-    "Hive_Example_EventPersistence");
-
-var migration = await new HiveDatabaseMigrator(options)
-    .MigrateAsync(cancellationToken);
-
-if (migration.IsFailure)
-    throw new InvalidOperationException(migration.Error?.Message);
-
-var store = new SqlEventPersistenceStore(options);
-var stream = new ResourceReference(
-    ResourceKind.WorkItem,
-    Guid.NewGuid());
-
-var serializer = new JsonEventSerializer();
-
-var envelope = serializer.CreateEnvelope(
-    EventId.New(),
-    DateTimeOffset.UtcNow,
-    new EventType("example.work-item.created"),
-    new EventPayloadVersion(1),
-    CorrelationId.New(),
-    null,
-    new { status = "Created" });
-
-var snapshot = new EventSnapshot(
-    stream,
-    ResourceVersion.Initial,
-    new EventPayloadVersion(1),
-    JsonSerializer.SerializeToElement(new { status = "Created" }));
-
-var append = await store.AppendAsync(
-    new EventAppendRequest(
-        stream,
-        expectedVersion: null,
-        envelope,
-        snapshot),
-    cancellationToken);
+var persistence = HiveEventPersistence.CreateSql(options);
 ```
 
-A successful append writes the event, optional current snapshot, and corresponding outbox row in one SQL transaction.
+The composition handle does not expose `IEventPersistenceStore` or `SqlEventPersistenceStore`. Hive's Management and Coordination layers use that internal persistence port to perform authorized application operations and execution lifecycle persistence.
 
-The next append must provide the stream's current ResourceVersion as expectedVersion. A stale expected version is returned as a Concurrency error rather than silently creating a conflicting stream version.
+A successful internal append writes the event, optional current snapshot, and corresponding outbox row in one SQL transaction.
 
-Events can be read in stream order and folded through a registered IEventStateReducer<TState>. Older supported payloads are upcast through the existing JsonEventSerializer and IEventUpcasterRegistry before the reducer sees them.
+The next append must provide the stream's current `ResourceVersion` as its expected version. A stale expected version is returned as a Concurrency error rather than silently creating a conflicting stream version.
 
-Phase 1.7 does not process or dispatch outbox rows. Outbox polling/processing belongs to Phase 1.8.
+Events can be read in stream order and folded through a registered `IEventStateReducer<TState>`. Older supported payloads are upcast through the existing `JsonEventSerializer` and `IEventUpcasterRegistry` before the reducer sees them.
+
+Phase 1.7 does not expose arbitrary event-stream reads or writes as a public application API. Public examples exercise the durable event behavior through owning Management/Coordination operations. Outbox delivery is demonstrated separately by the Phase 1.8 public poller boundary.
