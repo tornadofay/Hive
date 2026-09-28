@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Authorized slice
 
@@ -88,5 +88,9 @@ Required developer verification before closure:
 - full `Hive.Tests` suite;
 - exact Example Host Provider Settings workflow manually verified;
 - Treat Warnings as Errors / zero-warning confirmation using the standing Visual Studio configuration.
+
+## Verification incident
+
+Developer verification found an in-scope runtime failure in the normal Add Provider dialog: `HiveProviderSetupEditorForm.UpdateDetails()` throws `NullReferenceException` during constructor-time provider selection because the selection-change handler can run before the action buttons are initialized. This is a same-slice UI initialization defect; remediation is limited to the affected dialog initialization order.
 
 Agent verification boundary: source/diff review only unless explicitly authorized otherwise. No build/test/launch/provider call is claimed by the agent.
