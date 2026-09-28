@@ -40,6 +40,7 @@ internal sealed class HiveProvidersSettingsView : UserControl
             AllowAdd = true,
             AllowEdit = true,
             AllowDelete = true,
+            AddButtonText = "Add Provider",
             ShowRefresh = false,
             ShowSearch = true,
             SearchPlaceholder = "Search providers..."
@@ -194,9 +195,15 @@ internal sealed class HiveProvidersSettingsView : UserControl
                         ? "Configured"
                         : "Configured — discovery pending";
 
+        var credentialStatus = catalog?.CredentialKind == BuiltInProviderCredentialKind.None
+            ? "Not required"
+            : credentialConfigured
+                ? "Configured"
+                : "Not configured";
+
         return new ConfiguredProviderRow(
             provider,
-            credentialConfigured ? "Configured" : "Not configured",
+            credentialStatus,
             automaticTargets,
             status);
     }
