@@ -234,7 +234,7 @@ public sealed class HiveUiPolishTests
         Assert.NotNull(navigation!.SelectedNode);
         Assert.Equal("Overview", navigation.SelectedNode!.Text);
         Assert.Equal(
-            "Navigate Hive package configuration by Overview, Providers, Accounts / Credentials, Execution Targets, Agents, and Persistence.",
+            "Navigate Hive package configuration by Overview, Providers, Agents, and Persistence.",
             navigation.AccessibleDescription);
         Assert.NotNull(FindLabel(view, "Configuration flow"));
     }
@@ -265,7 +265,7 @@ public sealed class HiveUiPolishTests
 
         var root = navigation!.Nodes[0];
         var overview = root.Nodes[0];
-        var providerPage = root.Nodes[1].Nodes[0];
+        var providerPage = root.Nodes[1];
 
         navigation.SelectedNode = providerPage;
         WaitForUi(
