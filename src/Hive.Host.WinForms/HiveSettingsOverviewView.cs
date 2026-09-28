@@ -96,7 +96,7 @@ internal sealed class HiveSettingsOverviewView : UserControl
         {
             AutoSize = true,
             MaximumSize = new Size(820, 0),
-            Text = "Providers  →  Accounts / Credentials  →  Execution Targets  →  Agents",
+            Text = "Providers  →  automatic model discovery / target reconciliation  →  Agents",
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
