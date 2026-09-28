@@ -496,6 +496,71 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     }
 
     [Fact]
+    public async Task Management_StaleRefreshDoesNotUseSystemClockForEffectiveCapabilities()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryClockBoundary");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var provider = CreateProvider(principal, tenant);
+        var account = CreateAccount(provider.Id, principal, tenant);
+        var target = CreateTarget(provider.Id, account.Id, principal, tenant);
+        var providerStore = new SqlProviderResourceStore(database.Options);
+
+        Assert.True(
+            (await providerStore.CreateProviderAsync(provider, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateProviderAccountAsync(account, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateExecutionTargetAsync(target, context)).IsSuccess);
+
+        var clock = new FakeClock(DateTimeOffset.UtcNow.AddDays(1));
+        var discovery = new RecordingDiscovery(
+            alwaysStale: true,
+            clock: clock);
+
+        using var facade = new HiveManagementFacade(
+            providerStore,
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            providerCapabilityDiscovery: discovery,
+            clock: clock);
+
+        var submission = new InputSubmission(
+        [
+            new InputItem(
+                "stale-discovery-image.png",
+                "image/png",
+                new byte[] { 1, 2, 3 })
+        ]);
+
+        var prepared = await facade.PrepareInputAsync(
+            submission,
+            context);
+
+        Assert.True(prepared.IsSuccess, prepared.Error?.Message);
+        Assert.Empty(prepared.Value!.PreparedInputs);
+
+        var failure = Assert.Single(prepared.Value.Failures);
+        Assert.Equal(
+            "hive.execution-target.selection.no-qualifying-target",
+            failure.Error.Code);
+        Assert.Equal(
+            ErrorCategory.Unsupported,
+            failure.Error.Category);
+        Assert.Equal(2, discovery.CallCount);
+    }
+
+    [Fact]
     public async Task Management_InputPreparationRefreshesStaleDiscovery_AndUsesDiscoveredVision()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryInput");
@@ -670,6 +735,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     private sealed class RecordingDiscovery : IProviderCapabilityDiscovery
     {
         private readonly bool _staleFirst;
+        private readonly bool _alwaysStale;
         private readonly int? _failOnCall;
         private readonly bool _mismatchedResult;
         private readonly bool _mismatchedEndpointPathCase;
@@ -682,6 +748,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
 
         public RecordingDiscovery(
             bool staleFirst = false,
+            bool alwaysStale = false,
             int? failOnCall = null,
             bool mismatchedResult = false,
             bool mismatchedEndpointPathCase = false,
@@ -691,6 +758,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             TaskCompletionSource<bool>? release = null)
         {
             _staleFirst = staleFirst;
+            _alwaysStale = alwaysStale;
             _failOnCall = failOnCall;
             _mismatchedResult = mismatchedResult;
             _mismatchedEndpointPathCase = mismatchedEndpointPathCase;
@@ -743,10 +811,12 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             }
 
             var now = _clock?.UtcNow ?? DateTimeOffset.UtcNow;
-            var observedAt = _staleFirst && callNumber == 1
+            var isStale = _alwaysStale ||
+                          (_staleFirst && callNumber == 1);
+            var observedAt = isStale
                 ? now.AddMinutes(-1)
                 : now;
-            var staleAfter = _staleFirst && callNumber == 1
+            var staleAfter = isStale
                 ? now.AddSeconds(-1)
                 : observedAt.AddMinutes(5);
 
