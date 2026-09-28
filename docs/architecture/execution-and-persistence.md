@@ -135,7 +135,7 @@ discovery
 target reconciliation
 ```
 
-The credential is never persisted in the Provider record or returned to the Settings UI. The normal Add/Edit surface therefore exposes only the credential operation required by the configured provider. For providers whose normal contract is not API-key based, onboarding may use the catalog-defined authentication input rather than pretending every provider is API-key-only.
+The credential is never persisted in the Provider record or returned to the Settings UI. For the normal built-in hosted-provider workflow, Add collects the API key and normal Edit replaces that API key; Provider catalog identity and transport configuration are not edited through the normal surface. Authentication requirements remain catalog-defined so a future built-in provider with a different simple credential shape can use the appropriate protected credential input rather than forcing an incorrect API-key model.
 
 The durable ProviderAccount resource still exists even though normal users do not manage it directly. This preserves the ability to support multiple accounts/projects/credentials through Advanced Configuration without creating a second configuration model.
 
@@ -153,7 +153,7 @@ Provider + ProviderAccount + endpoint
 automatic ExecutionTargets
 ```
 
-Automatic target reconciliation is durable, idempotent, and concurrency-safe. Each automatically materialized target has an explicit management origin/mode whose semantics distinguish system-maintained targets from administrator-maintained targets. The exact field name is a contract decision for the implementation, but the distinction must be durable and explicit; it must never be inferred from a display name, metadata convention, or edit history.
+Automatic target reconciliation is durable, idempotent, and concurrency-safe. Each ExecutionTarget has an explicit durable `ExecutionTargetManagementMode` with at least `Automatic` and `Manual` values. `Automatic` means Hive owns the target's model/catalog synchronization; `Manual` means administrator configuration owns it and discovery/reconciliation must not overwrite it. Management mode is semantic state, not UI metadata, and must never be inferred from a display name, metadata convention, or edit history.
 
 An automatic target represents the stable execution identity of one discovered model/deployment under one ProviderAccount and endpoint. Reconciliation uses a stable identity/reconciliation key based on the provider account, endpoint, and model/deployment identity so a rediscovered model reuses its existing automatic target where possible. Display names and diagnostics are not identity.
 
@@ -167,7 +167,7 @@ later discovered: A, C, D
 result:            A, B(retired), C, D
 ```
 
-A model that disappears from a successful fresh enumeration causes its automatic target to transition to the existing retired/unavailable lifecycle rather than being physically deleted. If the same model later returns under the same reconciliation identity, Hive may reactivate/reuse the existing automatic target after normal dependency and lifecycle validation. Automatic reconciliation must never erase durable identity merely because provider enumeration changed.
+A model that disappears from a successful fresh enumeration causes its automatic target to transition to the existing retired lifecycle rather than being physically deleted. If the same model later returns under the same reconciliation identity, Hive may reactivate/reuse the existing automatic target after normal dependency and lifecycle validation. Automatic reconciliation must never erase durable identity merely because provider enumeration changed.
 
 A successfully enumerated model that is temporarily reported unavailable or unhealthy is not treated as a missing model. Enumeration determines catalog membership; operational availability/health remains separate metadata. Only the explicit lifecycle/reconciliation rules may retire an automatic target.
 
