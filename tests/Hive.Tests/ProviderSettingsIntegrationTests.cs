@@ -213,7 +213,8 @@ public sealed class ProviderSettingsIntegrationTests
         var discovery = new SettingsDiscovery(
             [
                 ModelSet("model-a", "model-b"),
-                ModelSet(new[] { "model-a", "model-c" }, "vision")
+                ModelSet(new[] { "model-a", "model-c" }, "vision"),
+                ModelSet("model-a", "model-b")
             ],
             clock);
 
@@ -322,6 +323,26 @@ public sealed class ProviderSettingsIntegrationTests
             capability =>
                 capability.Capability.Value == "vision" &&
                 capability.State == CapabilityState.Unsupported);
+
+        var returned = await facade.RefreshProviderAsync(
+            provider.Id,
+            context);
+        Assert.True(returned.IsSuccess, returned.Error?.Message);
+        Assert.Equal(1, returned.Value!.AutomaticTargetsReactivated);
+
+        var thirdTargets = await facade.ListExecutionTargetsAsync(
+            account.Id,
+            context,
+            includeRetired: true);
+        Assert.True(thirdTargets.IsSuccess, thirdTargets.Error?.Message);
+
+        var reactivatedB = Assert.Single(
+            thirdTargets.Value!.Where(target => target.Id == automaticB.Id));
+        Assert.Equal(ResourceLifecycleStatus.Active, reactivatedB.Resource.Lifecycle.Status);
+
+        var retiredC = Assert.Single(
+            thirdTargets.Value!.Where(target => target.Model == "model-c"));
+        Assert.Equal(ResourceLifecycleStatus.Retired, retiredC.Resource.Lifecycle.Status);
     }
 
     [Fact]
