@@ -28,7 +28,7 @@ Phase 1.17 structured extraction/validation and all later V1 phases remain outsi
 
 ## Verification boundary
 
-The implementation is **VERIFICATION PENDING**.
+Automated verification is **COMPLETE**: the developer reported the full `Hive.Tests` suite at 415/415 passed, 0 failed, 0 skipped on 2026-09-28. The phase is not yet fully closed because the matching Example Host handoff still needs explicit developer exercise.
 
 Required verification follows the Phase 1.16 roadmap gate:
 
@@ -41,14 +41,16 @@ Required verification follows the Phase 1.16 roadmap gate:
 - no provider credentials or secrets in metadata/diagnostics;
 - Example Host scenario and focused automated coverage.
 
+Automated verification record: [Phase 1.16 verification](verification/phase-1/1.16-provider-model-capability-discovery-2026-09-28.md)
+
 ### Handoff
 
 Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Capability Discovery — Hive.Example.WinForms
 
 Tests to run: `tests/Hive.Tests/ProviderDiscoveryTests.cs`; `tests/Hive.Tests/ProviderDiscoveryManagementIntegrationTests.cs`; full `Hive.Tests` suite after focused verification passes.
 
-No build, test, or verification claim is recorded here until the developer provides actual execution results.
+The 2026-09-28 full-suite result is recorded above from developer-provided execution output. No manual Example Host verification is claimed until the developer explicitly reports it.
 
 ## Handoff status
 
-Do not start Phase 1.17 from this file. Close Phase 1.16 only after the required verification evidence is supplied and the current status/verification archive are updated.
+Do not start Phase 1.17 from this file. Phase 1.16 remains active only for the explicit Example Host verification handoff; close the phase after that evidence is supplied and the current status/verification archive are finalized.
