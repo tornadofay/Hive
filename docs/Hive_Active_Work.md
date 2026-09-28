@@ -23,13 +23,13 @@ No new provider transport, capability vocabulary, workflow behavior, structured 
 
 ## Verification boundary
 
-**VERIFICATION FAILED / REMEDIATION REQUIRED.**
+**VERIFICATION PENDING.**
 
-Developer verification on 2026-09-28 produced **431 tests: 430 passed, 1 failed, 0 skipped**. The matching Example Host scenario passed and the failure is isolated to `ProviderDiscoveryTests.OpenAICompatibleDiscovery_UsesInjectedClockForObservationWindow` with `The execution target does not belong to the supplied provider.`
+Developer verification on 2026-09-28 produced **431 tests: 430 passed, 1 failed, 0 skipped**. The matching Example Host scenario passed. The single failure was isolated to `ProviderDiscoveryTests.OpenAICompatibleDiscovery_UsesInjectedClockForObservationWindow` with `The execution target does not belong to the supplied provider.`
 
-Failure boundary: the new deterministic clock regression test constructs a provider/account from the source target but passes the original source target, whose ProviderId does not match the newly constructed provider. This is test-fixture ownership setup only; no production discovery behavior failure was reported.
+Root cause was the new regression test fixture passing the original source target after constructing a new provider/account, leaving the supplied Provider → ProviderAccount → ExecutionTarget ownership relationship inconsistent. The fixture has been corrected to create a target owned by the constructed provider/account. No production discovery behavior failure was reported.
 
-Remediation is limited to correcting that test fixture so the supplied Provider → ProviderAccount → ExecutionTarget relationship is valid.
+The remediation is complete within the recorded failure boundary. A fresh developer verification is required before this revision can close.
 
 The previous Phase 1.16 Revision 5 was fully verified at **428/428 passed, 0 failed, 0 skipped** with the matching Provider / Model Capability Discovery Example Host scenario manually exercised successfully. This revision changes capability-key normalization and adds regression coverage, so previous verification does not verify the revised source.
 
@@ -37,6 +37,6 @@ The previous Phase 1.16 Revision 5 was fully verified at **428/428 passed, 0 fai
 
 Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Capability Discovery — Hive.Example.WinForms
 
-Tests to run: `tests/Hive.Tests/ProviderDiscoveryTests.cs`; focused provider-resource capability normalization coverage; full `Hive.Tests` suite; then re-exercise the matching Example Host scenario.
+Tests to run: `tests/Hive.Tests/ProviderDiscoveryTests.cs`; `tests/Hive.Tests/ProviderResourceTests.cs`; `tests/Hive.Tests/ProviderDiscoveryManagementIntegrationTests.cs`; full `Hive.Tests` suite; then re-exercise the matching Example Host scenario.
 
 No Phase 1.17 work is authorized or started.
