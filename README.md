@@ -88,27 +88,9 @@ A member Agent inside a Hive normally requests missing specialties from the pare
 
 `Hive.Workspace` is the human-facing operational surface over `Hive.Management`.
 
-For **V1**, Workspace is the primary human interaction surface for Hive and covers direct LLM interaction, Agent interaction, and V1 work operations:
+The current V1 implementation provides the WorkItem-oriented Workspace surface for supported image input, WorkItem listing and paging, activity inspection, approval actions, and related V1 operations. It does not yet represent the complete Workspace roadmap.
 
-- direct **LLM mode** with explicit model/ExecutionTarget selection;
-- **Agent mode** with explicit Agent selection;
-- conversation/chat and user command/objective submission;
-- application-wide and specialized host-associated Agents;
-- visibility into active Agent/runtime/execution context;
-- submit supported inputs and associated attachments;
-- assign and monitor work performed by multiple independent Agents;
-- track WorkItem status, activity, notifications, approvals, and Review state;
-- direct **LLM mode** with explicit model/ExecutionTarget selection;
-- **Agent mode** with explicit Agent selection;
-- conversation/chat and user command/objective submission;
-- application-wide and specialized host-associated Agents;
-- visibility into active Agent/runtime/execution context;
-- assignment and monitoring of work performed by multiple independent Agents;
-- WorkItem/job status, activity, notifications, approvals, and Review state as the owning V1 phases land.
-
-V1 permits multiple independent Agents and runtimes to operate concurrently inside one host application. This does not create persistent Hive membership or Swarm state.
-
-After Phase 2 establishes persistent Hive membership and Swarm state, Workspace can extend with Hive organization/topology, active Swarm visibility, and Hive-dependent Agentic coordination.
+The broader Workspace foundation planned for Phase 1.20 adds direct LLM interaction, explicit ExecutionTarget selection, conversation/history, active runtime context, restart/reload handling, and the full user-facing interaction model. Agent interaction and application/form-associated Agent workflows are planned for Phase 1.21. Governed tools and generalized human intervention are planned for Phase 1.22. Later phases add business-operation execution, receipts/reconciliation, post-write Review, multi-Agent execution, recovery, diagnostics, and observability.
 
 A business application can register a host context with a bounded API such as:
 
@@ -118,7 +100,7 @@ ai.Register(this);
 
 Registration may bind or reuse a specialized Agent. It does not automatically create an Agent or Hive, and multiple open forms do not automatically become a Hive merely because they are visible at the same time.
 
-For V1, business-app integration supports **both API/service and bounded UI integration**. They are not mutually exclusive: a WorkItem or individual operation may use the API, the UI, or both. The V1 WinForms UI path can discover the application's Form hierarchy, UserControls, `Control`-derived and custom controls, containers such as Panels and GroupBoxes, nested controls, and relevant runtime/data-source context. Discovery provides context only; it never grants permission to click, edit, invoke, or otherwise mutate a control.
+For V1, business-app integration supports **both API/service and bounded UI integration**. They are not mutually exclusive: a WorkItem or individual operation may use the API, the UI, or both. The implemented WinForms UI path can discover the application's Form hierarchy, UserControls, `Control`-derived and custom controls, containers such as Panels and GroupBoxes, nested controls, and relevant runtime/data-source context. Discovery provides context only; it never grants permission to click, edit, invoke, or otherwise mutate a control.
 
 ## V1 work-unit semantics
 
@@ -312,7 +294,7 @@ The solution and project files are the implementation source for the actual proj
 
 **Phase 0 — Foundations: Complete.**
 
-**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1): 1.1–1.15 complete and verified.** The latest Hive UI and Phase 1.15 verification passes are complete; Phase 1.16+ is not currently authorized. Authoritative current status and implementation scope remain in `docs/Hive_Current_Status.md` and `docs/Hive_Active_Work.md`.
+**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1): 1.1–1.15 complete and verified.** Subsequent bounded maintenance and review-correction slices through 2026-09-28 are also complete and verified. The latest recorded full `Hive.Tests` result is **400/400 passed, 0 failed, 0 skipped**. Phase 1.16+ is not currently authorized. The authoritative current status and implementation scope remain in `docs/Hive_Current_Status.md` and `docs/Hive_Active_Work.md`.
 
 See [Architecture](docs/architecture.md) and [Roadmap](docs/roadmap.md).
 
