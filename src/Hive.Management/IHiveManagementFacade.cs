@@ -60,6 +60,12 @@ public interface IHiveManagementFacade
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
 
+    Task<Result<ProviderDiscoverySnapshot>> GetProviderDiscoveryAsync(
+        ExecutionTargetId executionTargetId,
+        ResourceAccessContext accessContext,
+        bool forceRefresh = false,
+        CancellationToken cancellationToken = default);
+
     Task<Result<Provider>> CreateProviderAsync(
         Provider provider,
         ResourceAccessContext accessContext,
