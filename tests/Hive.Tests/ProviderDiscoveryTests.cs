@@ -61,6 +61,44 @@ public sealed class ProviderDiscoveryTests
         Assert.Single(target.Capabilities);
     }
 
+    [Fact]
+    public void CapabilityResolver_ConfiguredOverrideUsesCanonicalCapabilityIdentity()
+    {
+        var target = CreateTarget(
+        [
+            Capability("VISION", CapabilityState.Unsupported)
+        ]);
+
+        var discovery = CreateDiscovery(
+            target,
+            DateTimeOffset.UtcNow.AddMinutes(5),
+            Capability("vision", CapabilityState.Supported));
+
+        var effective = ExecutionTargetCapabilityResolver.ResolveCapabilities(
+            target,
+            discovery,
+            DateTimeOffset.UtcNow);
+
+        var vision = Assert.Single(
+            effective,
+            capability => capability.Capability == new CapabilityKey("vision"));
+
+        Assert.Equal(
+            CapabilityState.Unsupported,
+            vision.State);
+        Assert.Single(effective);
+    }
+
+    [Fact]
+    public void CapabilityKey_CanonicalizesSemanticIdentity()
+    {
+        var upper = new CapabilityKey("  VISION  ");
+        var lower = new CapabilityKey("vision");
+
+        Assert.Equal("vision", upper.Value);
+        Assert.Equal(lower, upper);
+    }
+
     [Theory]
     [InlineData(
         "https://example.test/v1/?mode=FAST",
