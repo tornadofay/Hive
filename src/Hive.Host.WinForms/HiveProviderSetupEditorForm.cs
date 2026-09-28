@@ -58,7 +58,6 @@ internal sealed class HiveProviderSetupEditorForm : HiveForm
         foreach (var definition in BuiltInProviderCatalog.All)
             _providerComboBox.Items.Add(new ProviderChoice(definition));
 
-        _providerComboBox.SelectedIndexChanged += ProviderComboBoxOnSelectedIndexChanged;
 
         _credentialTextBox = new TextBox
         {
@@ -147,6 +146,8 @@ internal sealed class HiveProviderSetupEditorForm : HiveForm
         };
 
         _saveButton.Click += (_, _) => Save();
+
+        _providerComboBox.SelectedIndexChanged += ProviderComboBoxOnSelectedIndexChanged;
 
         AcceptButton = _saveButton;
         CancelButton = _cancelButton;
