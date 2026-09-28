@@ -295,7 +295,7 @@ Execution Target
     ↓
 MAF execution / model call
 
-LLM mode is a V1 Workspace interaction path where the user chooses the execution target. Agent mode selects an Agent, which uses this planner on behalf of that Agent; after Phase 2 adds persistent Hive/Swarm coordination, Hive-level Agentic behavior extends the same planner boundary.
+LLM mode is a V1 Workspace interaction path where the user chooses the execution target. Agent mode selects an Agent, which uses this planner on behalf of that Agent; after Phase 2 adds persistent Hive/Swarm coordination, Hive-level Agentic behavior extends the same planner boundary. Any explicitly pinned Agent target is the exact durable `ExecutionTarget` identity, not a model-name string.
 ```
 
 A required capability must be explicitly supported. Unknown capability evidence does not qualify for a hard requirement.
