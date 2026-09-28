@@ -292,12 +292,21 @@ public sealed record ExecutionTargetSelectionResult
 public static class ExecutionTargetSelector
 {
     public static Result<ExecutionTargetSelectionResult> Select(
-        ExecutionTargetSelectionRequest request)
+        ExecutionTargetSelectionRequest request,
+        IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>? capabilityOverrides = null)
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        var overrideValidation = ValidateCapabilityOverrides(
+            request,
+            capabilityOverrides);
+        if (overrideValidation is not null)
+        {
+            return Result<ExecutionTargetSelectionResult>.Failure(overrideValidation);
+        }
+
         var evaluations = request.Targets
-            .Select(target => Evaluate(target, request.Requirements))
+            .Select(target => Evaluate(target, request.Requirements, capabilityOverrides))
             .ToList();
 
         var diagnostics = evaluations
@@ -370,9 +379,15 @@ public static class ExecutionTargetSelector
 
     private static ExecutionTargetEvaluation Evaluate(
         ExecutionTarget target,
-        IReadOnlyList<CapabilityRequirement> requirements)
+        IReadOnlyList<CapabilityRequirement> requirements,
+        IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>? capabilityOverrides)
     {
-        var states = target.Capabilities.ToDictionary(
+        var capabilities = capabilityOverrides is not null &&
+                           capabilityOverrides.TryGetValue(target.Id, out var overrideCapabilities)
+            ? overrideCapabilities
+            : target.Capabilities;
+
+        var states = capabilities.ToDictionary(
             capability => capability.Capability,
             capability => capability.State);
 
@@ -492,6 +507,60 @@ public static class ExecutionTargetSelector
             .ThenBy(candidate => candidate.Target.Key, StringComparer.Ordinal)
             .ThenBy(candidate => candidate.Target.Id.Value)
             .First();
+
+    private static Error? ValidateCapabilityOverrides(
+        ExecutionTargetSelectionRequest request,
+        IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>? capabilityOverrides)
+    {
+        if (capabilityOverrides is null)
+            return null;
+
+        var targetIds = request.Targets
+            .Select(target => target.Id)
+            .ToHashSet();
+
+        foreach (var pair in capabilityOverrides)
+        {
+            if (pair.Key == default || !targetIds.Contains(pair.Key))
+            {
+                return Error(
+                    "hive.execution-target.selection.capability-override-target-invalid",
+                    ErrorCategory.Validation,
+                    $"Capability override target '{pair.Key}' is not part of the selection request.");
+            }
+
+            if (pair.Value is null)
+            {
+                return Error(
+                    "hive.execution-target.selection.capability-override-null",
+                    ErrorCategory.Validation,
+                    "Capability override entries cannot be null.");
+            }
+
+            var keys = new HashSet<CapabilityKey>();
+
+            foreach (var capability in pair.Value)
+            {
+                if (capability is null)
+                {
+                    return Error(
+                        "hive.execution-target.selection.capability-override-null-entry",
+                        ErrorCategory.Validation,
+                        "Capability override entries cannot contain null capability states.");
+                }
+
+                if (!keys.Add(capability.Capability))
+                {
+                    return Error(
+                        "hive.execution-target.selection.capability-override-duplicate",
+                        ErrorCategory.Validation,
+                        $"Capability override for target '{pair.Key}' contains duplicate capability '{capability.Capability}'.");
+                }
+            }
+        }
+
+        return null;
+    }
 
     private static Error Error(
         string code,
