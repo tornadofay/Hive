@@ -1,12 +1,12 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Authorized slice
 
 **Phase 1.16 — UI — Provider Configuration, Discovery & Target Reconciliation**
 
-Checkpoint: `5c7f21c433379cb771965e09b1e8e6d68bb59d99` (main, 2026-09-28)
+Checkpoint: `9eab46fa0f161252bc037fe088b5c29b1ed66879` (main, 2026-09-28)
 
 ## Objective
 
@@ -74,7 +74,7 @@ Settings navigation:
 
 ## Implementation state
 
-Source/diff review complete at `5de6a0fd8c221bbe6b37420f2180c445a07f7d14` (main, 2026-09-28). The revised Provider Settings implementation is complete at the agent verification boundary; no build, test run, application launch, or external provider call was performed by the agent.
+Source/diff review complete at `9eab46fa0f161252bc037fe088b5c29b1ed66879` (main, 2026-09-28). Same-slice remediation corrected constructor-time provider-selection event ordering in `HiveProviderSetupEditorForm`; no build, test run, application launch, or external provider call was performed by the agent.
 
 ## Example / test handoff
 
