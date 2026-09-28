@@ -23,7 +23,13 @@ No new provider transport, capability vocabulary, workflow behavior, structured 
 
 ## Verification boundary
 
-**VERIFICATION PENDING.**
+**VERIFICATION FAILED / REMEDIATION REQUIRED.**
+
+Developer verification on 2026-09-28 produced **431 tests: 430 passed, 1 failed, 0 skipped**. The matching Example Host scenario passed and the failure is isolated to `ProviderDiscoveryTests.OpenAICompatibleDiscovery_UsesInjectedClockForObservationWindow` with `The execution target does not belong to the supplied provider.`
+
+Failure boundary: the new deterministic clock regression test constructs a provider/account from the source target but passes the original source target, whose ProviderId does not match the newly constructed provider. This is test-fixture ownership setup only; no production discovery behavior failure was reported.
+
+Remediation is limited to correcting that test fixture so the supplied Provider → ProviderAccount → ExecutionTarget relationship is valid.
 
 The previous Phase 1.16 Revision 5 was fully verified at **428/428 passed, 0 failed, 0 skipped** with the matching Provider / Model Capability Discovery Example Host scenario manually exercised successfully. This revision changes capability-key normalization and adds regression coverage, so previous verification does not verify the revised source.
 
