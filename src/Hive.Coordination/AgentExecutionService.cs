@@ -327,8 +327,21 @@ public sealed class AgentExecutionService
         CorrelationId correlationId,
         CausationId? causationId,
         object payload) =>
-        new JsonEventSerializer().CreateEnvelope(
+        CreateLifecycleEvent(
             EventId.New(),
+            eventType,
+            correlationId,
+            causationId,
+            payload);
+
+    private EventEnvelope CreateLifecycleEvent(
+        EventId eventId,
+        string eventType,
+        CorrelationId correlationId,
+        CausationId? causationId,
+        object payload) =>
+        new JsonEventSerializer().CreateEnvelope(
+            eventId,
             _clock.UtcNow,
             new EventType(eventType),
             new EventPayloadVersion(1),
@@ -400,6 +413,7 @@ public sealed class AgentExecutionService
                 eventItem => eventItem.Envelope.EventId == startedEvent.EventId);
 
             var terminalEnvelope = CreateLifecycleEvent(
+                terminalEventId,
                 eventType,
                 correlationId,
                 startedPersisted
