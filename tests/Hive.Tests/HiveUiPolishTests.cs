@@ -186,6 +186,31 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
+    public void HiveCrudPage_AllowsProviderSpecificAddActionCaption()
+    {
+        using var page = new HiveCrudPage<TestItem>
+        {
+            EditItemAsync = (_, _) =>
+                Task.FromResult<TestItem?>(new TestItem("created"))
+        };
+
+        page.AddButtonText = "Add Provider";
+
+        var addButton = page.ActionBarPanel
+            .Controls
+            .OfType<TableLayoutPanel>()
+            .SelectMany(static layout => layout.Controls.Cast<Control>())
+            .OfType<FlowLayoutPanel>()
+            .SelectMany(static flow => flow.Controls.Cast<Control>())
+            .OfType<HiveButton>()
+            .Single(button => string.Equals(button.Text, "Add Provider", StringComparison.Ordinal));
+
+        Assert.Equal("Add Provider", addButton.Text);
+        Assert.Equal("Add Provider", addButton.AccessibleName);
+        Assert.Contains("new Provider", addButton.AccessibleDescription, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void HiveCrudPage_AlignsStatusFilterWhenToolbarBecomesCompact()
     {
         using var page = new HiveCrudPage<TestItem>();
