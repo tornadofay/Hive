@@ -37,7 +37,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
         Assert.True(
             (await providerStore.CreateExecutionTargetAsync(target, context)).IsSuccess);
 
-        var discovery = new RecordingDiscovery(target);
+        var discovery = new RecordingDiscovery();
         using var facade = new HiveManagementFacade(
             providerStore,
             new SqlAgentDefinitionResourceStore(database.Options),
@@ -110,7 +110,6 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             (await providerStore.CreateExecutionTargetAsync(target, context)).IsSuccess);
 
         var discovery = new RecordingDiscovery(
-            target,
             failOnCall: 2);
 
         using var facade = new HiveManagementFacade(
@@ -176,7 +175,6 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             (await providerStore.CreateExecutionTargetAsync(target, context)).IsSuccess);
 
         var discovery = new RecordingDiscovery(
-            target,
             staleFirst: true);
 
         using var facade = new HiveManagementFacade(
@@ -290,7 +288,6 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
         private readonly int? _failOnCall;
 
         public RecordingDiscovery(
-            ExecutionTarget target,
             bool staleFirst = false,
             int? failOnCall = null)
         {
