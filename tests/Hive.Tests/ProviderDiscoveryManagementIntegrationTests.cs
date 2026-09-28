@@ -82,6 +82,70 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     }
 
     [Fact]
+    public async Task Management_RejectsMismatchedDiscoveryResult_AndDoesNotCacheIt()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryResultMismatch");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var provider = CreateProvider(principal, tenant);
+        var account = CreateAccount(provider.Id, principal, tenant);
+        var target = CreateTarget(provider.Id, account.Id, principal, tenant);
+
+        var providerStore = new SqlProviderResourceStore(database.Options);
+
+        Assert.True(
+            (await providerStore.CreateProviderAsync(provider, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateProviderAccountAsync(account, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateExecutionTargetAsync(target, context)).IsSuccess);
+
+        var discovery = new RecordingDiscovery(
+            mismatchedResult: true);
+
+        using var facade = new HiveManagementFacade(
+            providerStore,
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            providerCapabilityDiscovery: discovery);
+
+        var first = await facade.GetProviderDiscoveryAsync(
+            target.Id,
+            context);
+
+        Assert.True(first.IsFailure);
+        Assert.Equal(
+            ErrorCategory.Validation,
+            first.Error!.Category);
+        Assert.Equal(
+            "hive.management.provider-discovery-result-mismatch",
+            first.Error.Code);
+        Assert.Equal(1, discovery.CallCount);
+
+        var second = await facade.GetProviderDiscoveryAsync(
+            target.Id,
+            context);
+
+        Assert.True(second.IsFailure);
+        Assert.Equal(
+            ErrorCategory.Validation,
+            second.Error!.Category);
+        Assert.Equal(
+            2,
+            discovery.CallCount);
+    }
+
+    [Fact]
     public async Task Management_FailedForceRefreshLeavesLastSuccessfulDiscoveryCached()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryRefreshFailure");
@@ -286,13 +350,16 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     {
         private readonly bool _staleFirst;
         private readonly int? _failOnCall;
+        private readonly bool _mismatchedResult;
 
         public RecordingDiscovery(
             bool staleFirst = false,
-            int? failOnCall = null)
+            int? failOnCall = null,
+            bool mismatchedResult = false)
         {
             _staleFirst = staleFirst;
             _failOnCall = failOnCall;
+            _mismatchedResult = mismatchedResult;
         }
 
         public int CallCount { get; private set; }
@@ -327,7 +394,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
                 : observedAt.AddMinutes(5);
 
             var snapshot = new ProviderDiscoverySnapshot(
-                provider.Id,
+                _mismatchedResult ? ProviderId.New() : provider.Id,
                 account.Id,
                 target.Endpoint,
                 new ProviderOperationalMetadata(
