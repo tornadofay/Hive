@@ -100,7 +100,7 @@ internal sealed class HiveProvidersSettingsView : UserControl
             "Open generalized Provider, Account / Credential, and Execution Target administration.");
 
         _refreshButton.Click += async (_, _) => await RefreshProvidersAsync();
-        _advancedButton.Click += (_, _) => OpenAdvanced();
+        _advancedButton.Click += async (_, _) => await OpenAdvancedAsync();
 
         _advancedButton.Dock = DockStyle.Right;
         _refreshButton.Dock = DockStyle.Right;
@@ -454,14 +454,36 @@ internal sealed class HiveProvidersSettingsView : UserControl
             _themeManager);
     }
 
-    private void OpenAdvanced()
+    private async Task OpenAdvancedAsync()
     {
         using var form = new HiveAdvancedProviderConfigurationForm(
             _management,
             _accessContext,
             _themeManager,
             _output);
+
         form.ShowDialog(FindForm());
+
+        if (IsDisposed || Disposing)
+            return;
+
+        try
+        {
+            await _page.RefreshAsync().ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            if (!IsDisposed && !Disposing)
+            {
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    exception,
+                    "Providers",
+                    "The Providers page could not be refreshed after closing Advanced Configuration.",
+                    _output,
+                    _themeManager);
+            }
+        }
     }
 
     private static SecretMaterial? CreateCredential(string value) =>
