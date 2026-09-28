@@ -1,15 +1,35 @@
 # Hive — Active Work
 
-Status: NO ACTIVE WORK
+Status: IN PROGRESS
 
-There is currently no authorized implementation slice.
+## Current slice
 
-The most recently completed work is **Phase 1.16 Revision 3 — Provider / Model Capability Discovery & Operational Metadata**, verified on 2026-09-28.
+**Phase 1.16 Revision 4 — Provider / Model Capability Discovery & Operational Metadata**
 
-Final developer verification for Revision 3:
-- the matching Provider / Model Capability Discovery Example Host scenario was manually exercised successfully;
-- the full `Hive.Tests` suite passed **422/422**, with **0 failed** and **0 skipped**, in 53.8 seconds.
+This is a bounded corrective revision of the immediately preceding Phase 1.16 implementation. It does not advance the roadmap.
 
-Revision 3 closure verification record: [Phase 1.16 Revision 3 closure verification](verification/phase-1/1.16-provider-model-capability-discovery-revision-3-closure-2026-09-28.md)
+### Scope
 
-No Phase 1.17 or later roadmap work is authorized. A new roadmap slice requires explicit user authorization such as `Hive: Start Phase X.Y`.
+- correct discovery endpoint identity comparison so scheme/host/port use URI authority semantics while HTTP path/query matching remains case-sensitive;
+- centralize that endpoint identity rule in the existing Core ownership boundary without adding a public API;
+- apply the same identity rule in Hive.Management discovery-result validation;
+- add focused regression coverage for equivalent authority casing and distinct path casing;
+- preserve the existing Provider → ProviderAccount → ExecutionTarget ownership boundary, cache/version semantics, capability authority, stale handling, cancellation, and Example Host behavior.
+
+### Out of scope
+
+No new provider transport, capability vocabulary, workflow behavior, structured extraction/validation, business-app write, Tool authorization, Review, cognition, Workspace expansion, or Phase 1.17 work.
+
+## Verification boundary
+
+**VERIFICATION PENDING.**
+
+The previous Phase 1.16 Revision 3 was fully verified at **422/422 passed, 0 failed, 0 skipped** with the Example Host scenario manually exercised successfully. This revision changes endpoint identity handling and adds regression coverage, so the previous verification does not verify the revised source.
+
+### Handoff
+
+Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Capability Discovery — Hive.Example.WinForms
+
+Tests to run: `tests/Hive.Tests/ProviderDiscoveryTests.cs`; `tests/Hive.Tests/ProviderDiscoveryManagementIntegrationTests.cs`; full `Hive.Tests` suite; then re-exercise the matching Example Host scenario.
+
+No Phase 1.17 work is authorized or started.
