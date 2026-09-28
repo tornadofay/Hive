@@ -626,7 +626,7 @@ public sealed class AgentExecutionIntegrationTests
             new ResourceVersion(2),
             store.AppendedEvents[1].StreamVersion);
         Assert.Equal(
-            store.AppendedEvents[0].Envelope.EventId,
+            store.AppendedEvents[0].Envelope.EventId.Value,
             store.AppendedEvents[1].Envelope.CausationId!.Value.Value);
         Assert.Equal(
             ExecutionStatus.Failed.ToString(),
@@ -789,7 +789,7 @@ public sealed class AgentExecutionIntegrationTests
             new ResourceVersion(2),
             store.AppendedEvents[1].StreamVersion);
         Assert.Equal(
-            store.AppendedEvents[0].Envelope.EventId,
+            store.AppendedEvents[0].Envelope.EventId.Value,
             store.AppendedEvents[1].Envelope.CausationId!.Value.Value);
         Assert.Equal(
             ExecutionStatus.Cancelled.ToString(),
