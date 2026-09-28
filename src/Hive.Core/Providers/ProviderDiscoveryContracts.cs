@@ -267,7 +267,7 @@ public static class ExecutionTargetCapabilityResolver
                 target.Endpoint,
                 UriComponents.AbsoluteUri,
                 UriFormat.SafeUnescaped,
-                StringComparison.OrdinalIgnoreCase).Equals(0))
+                StringComparison.OrdinalIgnoreCase) != 0)
         {
             return target.Capabilities;
         }
@@ -284,18 +284,6 @@ public static class ExecutionTargetCapabilityResolver
 
         if (model is null)
             return target.Capabilities;
-
-        var effective = target.Capabilities.ToDictionary(
-            capability => capability.Capability,
-            capability => capability.State);
-
-        foreach (var discovered in model.DiscoveredCapabilities)
-        {
-            if (!effective.ContainsKey(discovered.Capability))
-                effective.Add(
-                    discovered.Capability,
-                    discovered.State);
-        }
 
         var result = target.Capabilities.ToList();
 
