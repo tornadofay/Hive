@@ -51,8 +51,9 @@ public sealed class ProviderResourceTests
         Assert.Throws<ArgumentException>(
             () => new CapabilityKey(new string('x', 129)));
 
-        var key = new CapabilityKey(new string('x', 128));
+        var key = new CapabilityKey(new string('X', 128));
         Assert.Equal(128, key.Value.Length);
+        Assert.All(key.Value, character => Assert.True(char.IsLower(character)));
     }
 
     [Fact]
@@ -113,8 +114,8 @@ public sealed class ProviderResourceTests
                 principal,
                 tenant,
                 [
-                    new CapabilityStateEntry(key, CapabilityState.Supported),
-                    new CapabilityStateEntry(key, CapabilityState.Unknown)
+                    new CapabilityStateEntry(new CapabilityKey("TEXT.GENERATE"), CapabilityState.Supported),
+                    new CapabilityStateEntry(new CapabilityKey("text.generate"), CapabilityState.Unknown)
                 ]));
     }
 
