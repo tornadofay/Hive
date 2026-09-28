@@ -107,6 +107,7 @@ public sealed class ProviderResourceTests
     [InlineData("api_key")]
     [InlineData("apikey")]
     [InlineData("access_token")]
+    [InlineData("accessToken")]
     [InlineData("authorization")]
     [InlineData("client_secret")]
     [InlineData("credential")]
@@ -129,6 +130,20 @@ public sealed class ProviderResourceTests
                 tenant,
                 [],
                 new Uri($"https://example.test/v1?{parameterName}=secret")));
+    }
+
+    [Fact]
+    public void ExecutionTarget_RejectsPercentEncodedCredentialQueryParameterName()
+    {
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+
+        Assert.Throws<ArgumentException>(
+            () => CreateTarget(
+                principal,
+                tenant,
+                [],
+                new Uri("https://example.test/v1?api%2Dkey=secret")));
     }
 
     [Fact]
