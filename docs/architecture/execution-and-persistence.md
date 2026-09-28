@@ -235,13 +235,14 @@ Input selection and batching:
 - Single File and Folder are explicit user selection modes.
 - A single file becomes a one-item InputSubmission; a folder becomes one bounded batch of discovered input items.
 - Folder batches may contain multiple Excel files, multiple images, and unsupported file types together.
-- Folder recursion behavior is explicit. Enumeration is bounded by depth, item count, file size, total size, and cancellation/resource limits.
+- Folder enumeration is non-recursive by default. An explicit Include Subfolders option may enable bounded recursive enumeration with depth, item count, file size, total size, and cancellation/resource limits.
 - Unsupported items are recorded as per-item failures and do not make safe supported items fail as a group.
 
 Target semantic schema:
 - Extraction and mapping operate against a source-neutral target field contract supplied by the owning host/business boundary.
 - Target fields have stable semantic identity; database column names, control names, and display labels are not durable field identity.
-- The contract may describe display name, expected type, requiredness, parent/child structure, and bounded lookup/reference semantics required to construct a candidate.
+- The contract may describe display name, expected type, requiredness, parent/child structure, data-source identity, optional database-field reference, and bounded lookup/reference semantics required to construct a candidate.
+- Data-source/database-field metadata is descriptive evidence for mapping and extraction; stable semantic field identity remains authoritative.
 - Host database schema and private host types remain behind the existing host semantic contract.
 
 Spreadsheet interpretation:
@@ -273,7 +274,7 @@ Review and governance boundary:
 Review and governance boundary:
 - Phase 1.17 defines two distinct human checkpoints: authorization to process the selected input batch, and authorization to proceed with the reviewed/corrected candidate and mapping results.
 - The processing checkpoint may cover an entire selected batch rather than requiring one authorization per image solely because each image causes an individual model call.
-- The second checkpoint occurs after extraction/mapping results are available. The user can inspect failures, open original sources, edit mappings/candidate values, and then authorize the accepted candidate set to proceed. This is approval of the interpreted data for downstream use, not approval of the eventual host mutation.
+- The second checkpoint occurs after extraction/mapping results are available. The user can inspect failures, open original sources, edit mappings/candidate values, exclude failed or uncertain items, and then authorize the accepted candidate set to proceed. This is approval of the interpreted data for downstream use, not approval of the eventual host mutation.
 - The later business-operation proposal has its own authorization boundary before consequential host mutation.
 - The generalized Approve / Reject intervention state machine belongs to Phase 1.22 and must not be recreated inside the extraction subsystem.
 
