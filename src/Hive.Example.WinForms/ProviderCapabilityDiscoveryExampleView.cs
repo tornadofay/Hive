@@ -37,7 +37,7 @@ internal sealed class ProviderCapabilityDiscoveryExampleView : UserControl
 
         _surface.SetInformation(
             "Discovers provider models through Hive Management using a local deterministic OpenAI-compatible endpoint, then applies discovered model capabilities to the existing ExecutionTarget selection boundary.",
-            "The configured vision state starts as Unknown. Discovery reports vision as Supported, so selection succeeds without mutating the stored target. A second selection demonstrates that an explicit Unsupported configuration remains authoritative over discovered Supported data.",
+            "The target has no configured vision capability, so its effective state begins as Unknown. Discovery reports vision as Supported, so selection succeeds without mutating the stored target. A second selection demonstrates that an explicit Unsupported configuration remains authoritative over discovered Supported data.",
             "Providers / Target Selection / Capability Discovery",
             "Uses a local TCP test endpoint; no provider credentials or vendor accounts are required.");
 
@@ -172,7 +172,7 @@ internal sealed class ProviderCapabilityDiscoveryExampleView : UserControl
                     ", ",
                     model.DiscoveredCapabilities.Select(
                         capability => $"{capability.Capability}={capability.State}"))}
-                Configured vision before discovery: Unknown
+                Configured vision before discovery: absent (effective Unknown)
                 Effective vision after fresh discovery: {effective.Single(
                     capability => capability.Capability == new CapabilityKey("vision")).State}
                 Selection: {selected.Value!.SelectedTarget.Key}
@@ -278,11 +278,7 @@ internal sealed class ProviderCapabilityDiscoveryExampleView : UserControl
             endpoint,
             "vision-model",
             null,
-            [
-                new CapabilityStateEntry(
-                    new CapabilityKey("vision"),
-                    CapabilityState.Unknown)
-            ]);
+            []);
     }
 
     private static void EnsureSuccess<T>(
