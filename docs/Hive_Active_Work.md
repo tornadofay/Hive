@@ -6,7 +6,7 @@ Status: VERIFICATION PENDING
 
 ### Maintenance — Backend: Provider Discovery Review Corrections
 
-Checkpoint: `7930172a4619e658bd0643b9b4872ccca59cbcf8`
+Checkpoint: `e144b9ea2d0637a0cd8b490310a4452a1de3aa2f0`
 
 This is a bounded corrective slice opened from the repository-wide Review findings. It restores/preserves existing Provider / ProviderAccount / ExecutionTarget discovery and input-routing behavior; it does not advance the roadmap.
 
@@ -28,7 +28,7 @@ This is a bounded corrective slice opened from the repository-wide Review findin
 - No unrelated refactoring, dependency upgrades, or roadmap advancement.
 - No material expansion of Hive's authorization model or host-integration surface.
 
-### Verification boundary
+## Verification boundary
 
 Developer verification required before closure:
 - focused provider/discovery/security/input-routing tests covering the corrected boundaries;
@@ -46,13 +46,20 @@ Example to run: Settings / Providers / Execution Targets — Execution Target en
 
 Tests to run: `tests/Hive.Tests/ProviderResourceTests.cs`; `tests/Hive.Tests/ProviderDiscoveryTests.cs`; `tests/Hive.Tests/ProviderDiscoveryManagementIntegrationTests.cs`; then the full `Hive.Tests` suite.
 
-Manual verification:
+Automated verification reported:
+- Full `Hive.Tests`: **452 Tests (452 Passed, 0 Failed, 0 Skipped)** in 57.5 seconds.
+- Runtime: .NET 10.0.1.
+- The supplied full-suite result covers the focused provider/discovery/security/input-routing tests within the authoritative `Hive.Tests` project.
+
+Manual verification remains outstanding because this corrective implementation changes the existing Execution Target validation/error behavior:
 - an ExecutionTarget endpoint containing credential-bearing query parameters is rejected and reported through the existing UI error path;
 - a non-secret provider query such as `api-version` remains accepted;
 - configured vision capability does not require provider discovery;
 - image routing preserves the provider discovery error when discovery prevents a target from being evaluated;
 - equivalent Provider + ProviderAccount + endpoint targets reuse one discovery request.
 
-Developer verification has not yet been reported for this corrective slice. Do not record closure until the requested checks are actually run and their results are supplied.
+Visual Studio Treat Warnings as Errors / zero-warning confirmation has not been separately reported for this corrective slice.
+
+Do not record closure until the outstanding developer verification results are actually supplied.
 
 Until those results are reported, this slice remains open and must not be advanced to another roadmap slice.
