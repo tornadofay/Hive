@@ -74,27 +74,31 @@ internal sealed class ProviderCapabilityDiscoveryExampleView : UserControl
     {
         await using var server = new DiscoveryExampleServer();
 
-        var provider = CreateProvider();
-        var providerResult = await _management
-            .CreateProviderAsync(provider, _context, cancellationToken);
-        EnsureSuccess(providerResult, "Provider creation");
-
-        var account = CreateAccount(provider.Id);
-        var accountResult = await _management
-            .CreateProviderAccountAsync(account, _context, cancellationToken);
-        EnsureSuccess(accountResult, "ProviderAccount creation");
-
-        var target = CreateTarget(
-            provider.Id,
-            account.Id,
-            server.BaseUri);
-
-        var targetResult = await _management
-            .CreateExecutionTargetAsync(target, _context, cancellationToken);
-        EnsureSuccess(targetResult, "ExecutionTarget creation");
+        Provider? provider = null;
+        ProviderAccount? account = null;
+        ExecutionTarget? target = null;
 
         try
         {
+            provider = CreateProvider();
+            var providerResult = await _management
+                .CreateProviderAsync(provider, _context, cancellationToken);
+            EnsureSuccess(providerResult, "Provider creation");
+
+            account = CreateAccount(provider.Id);
+            var accountResult = await _management
+                .CreateProviderAccountAsync(account, _context, cancellationToken);
+            EnsureSuccess(accountResult, "ProviderAccount creation");
+
+            target = CreateTarget(
+                provider.Id,
+                account.Id,
+                server.BaseUri);
+
+            var targetResult = await _management
+                .CreateExecutionTargetAsync(target, _context, cancellationToken);
+            EnsureSuccess(targetResult, "ExecutionTarget creation");
+
             var discovery = await _management
                 .GetProviderDiscoveryAsync(
                     target.Id,
@@ -182,29 +186,38 @@ internal sealed class ProviderCapabilityDiscoveryExampleView : UserControl
         }
         finally
         {
-            var retiredTarget = await _management
-                .DeleteExecutionTargetAsync(
-                    target.Id,
-                    _context,
-                    cancellationToken);
+            if (target is not null)
+            {
+                var retiredTarget = await _management
+                    .DeleteExecutionTargetAsync(
+                        target.Id,
+                        _context,
+                        CancellationToken.None);
 
-            EnsureSuccess(retiredTarget, "ExecutionTarget retirement");
+                EnsureSuccess(retiredTarget, "ExecutionTarget retirement");
+            }
 
-            var retiredAccount = await _management
-                .DeleteProviderAccountAsync(
-                    account.Id,
-                    _context,
-                    cancellationToken);
+            if (account is not null)
+            {
+                var retiredAccount = await _management
+                    .DeleteProviderAccountAsync(
+                        account.Id,
+                        _context,
+                        CancellationToken.None);
 
-            EnsureSuccess(retiredAccount, "ProviderAccount retirement");
+                EnsureSuccess(retiredAccount, "ProviderAccount retirement");
+            }
 
-            var retiredProvider = await _management
-                .DeleteProviderAsync(
-                    provider.Id,
-                    _context,
-                    cancellationToken);
+            if (provider is not null)
+            {
+                var retiredProvider = await _management
+                    .DeleteProviderAsync(
+                        provider.Id,
+                        _context,
+                        CancellationToken.None);
 
-            EnsureSuccess(retiredProvider, "Provider retirement");
+                EnsureSuccess(retiredProvider, "Provider retirement");
+            }
         }
     }
 
