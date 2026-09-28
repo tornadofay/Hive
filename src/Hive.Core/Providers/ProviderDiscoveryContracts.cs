@@ -198,6 +198,14 @@ public sealed record ProviderDiscoverySnapshot
 
         ArgumentNullException.ThrowIfNull(models);
 
+        if (modelEnumerationState != ProviderDiscoveryState.Supported &&
+            models.Count != 0)
+        {
+            throw new ArgumentException(
+                "Unsupported or unknown model enumeration cannot contain discovered models.",
+                nameof(models));
+        }
+
         var modelList = new List<ProviderModelMetadata>(models.Count);
         var modelIds = new HashSet<string>(StringComparer.Ordinal);
 
