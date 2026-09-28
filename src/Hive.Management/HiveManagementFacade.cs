@@ -66,38 +66,38 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
     public Task<Result<HivePersistenceConfiguration>> GetPersistenceConfigurationAsync(
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _configuration.GetPersistenceConfigurationAsync(accessContext, cancellationToken)));
+        _configuration.GetPersistenceConfigurationAsync(accessContext, cancellationToken));
 
     public Task<Result<HivePersistenceConfiguration>> SavePersistenceConfigurationAsync(
         HivePersistenceConfiguration configuration,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _configuration.SavePersistenceConfigurationAsync(configuration, accessContext, cancellationToken)));
+        _configuration.SavePersistenceConfigurationAsync(configuration, accessContext, cancellationToken));
 
     public Task<Result<HiveBootstrapCredentialReference>> SaveBootstrapCredentialAsync(
         SecretMaterial material,
         HiveBootstrapCredentialReference? existingReference,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _configuration.SaveBootstrapCredentialAsync(material, existingReference, accessContext, cancellationToken)));
+        _configuration.SaveBootstrapCredentialAsync(material, existingReference, accessContext, cancellationToken));
 
     public Task<Result> RemoveBootstrapCredentialAsync(
         HiveBootstrapCredentialReference reference,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _configuration.RemoveBootstrapCredentialAsync(reference, accessContext, cancellationToken)));
+        _configuration.RemoveBootstrapCredentialAsync(reference, accessContext, cancellationToken));
 
     public Task<Result<HivePersistenceConnectionTest>> TestPersistenceConnectionAsync(
         HivePersistenceConfiguration configuration,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _configuration.TestPersistenceConnectionAsync(configuration, accessContext, cancellationToken)));
+        _configuration.TestPersistenceConnectionAsync(configuration, accessContext, cancellationToken));
 
     public Task<Result> InitializePersistenceAsync(
         HivePersistenceConfiguration configuration,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _configuration.InitializePersistenceAsync(configuration, accessContext, cancellationToken)));
+        _configuration.InitializePersistenceAsync(configuration, accessContext, cancellationToken));
 
     public Task<Result<Secret>> CreateSecretAsync(
         string key,
@@ -105,13 +105,13 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         SecretMaterial material,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _secrets.CreateSecretAsync(key, displayName, material, accessContext, cancellationToken)));
+        _secrets.CreateSecretAsync(key, displayName, material, accessContext, cancellationToken));
 
     public Task<Result<Secret>> GetSecretDescriptorAsync(
         SecretId secretId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _secrets.GetSecretDescriptorAsync(secretId, accessContext, cancellationToken)));
+        _secrets.GetSecretDescriptorAsync(secretId, accessContext, cancellationToken));
 
     public Task<Result<Secret>> ReplaceSecretAsync(
         SecretId secretId,
@@ -160,7 +160,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         ExecutionTargetId executionTargetId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.TestExecutionTargetConnectionAsync(executionTargetId, accessContext, cancellationToken)));
+        _providers.TestExecutionTargetConnectionAsync(executionTargetId, accessContext, cancellationToken));
 
     public Task<Result<ProviderDiscoverySnapshot>> GetProviderDiscoveryAsync(
         ExecutionTargetId executionTargetId,
@@ -171,160 +171,160 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
             executionTargetId,
             accessContext,
             forceRefresh,
-            cancellationToken)));
+            cancellationToken));
 
     public Task<Result<Provider>> CreateProviderAsync(
         Provider provider,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.CreateProviderAsync(provider, accessContext, cancellationToken)));
+        _providers.CreateProviderAsync(provider, accessContext, cancellationToken));
 
     public Task<Result<Provider>> GetProviderAsync(
         ProviderId providerId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.GetProviderAsync(providerId, accessContext, cancellationToken)));
+        _providers.GetProviderAsync(providerId, accessContext, cancellationToken));
 
     public Task<Result<IReadOnlyList<Provider>>> ListProvidersAsync(
         ResourceAccessContext accessContext,
         bool includeRetired = false,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.ListProvidersAsync(accessContext, includeRetired, cancellationToken)));
+        _providers.ListProvidersAsync(accessContext, includeRetired, cancellationToken));
 
     public Task<Result<Provider>> UpdateProviderAsync(
         Provider provider,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.UpdateProviderAsync(provider, accessContext, cancellationToken)));
+        _providers.UpdateProviderAsync(provider, accessContext, cancellationToken));
 
     public Task<Result<Provider>> DeleteProviderAsync(
         ProviderId providerId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.DeleteProviderAsync(providerId, accessContext, cancellationToken)));
+        _providers.DeleteProviderAsync(providerId, accessContext, cancellationToken));
 
     public Task<Result<Provider>> ReactivateProviderAsync(
         ProviderId providerId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.ReactivateProviderAsync(providerId, accessContext, cancellationToken)));
+        _providers.ReactivateProviderAsync(providerId, accessContext, cancellationToken));
 
     public Task<Result<ProviderAccount>> CreateProviderAccountAsync(
         ProviderAccount account,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.CreateProviderAccountAsync(account, accessContext, cancellationToken)));
+        _providers.CreateProviderAccountAsync(account, accessContext, cancellationToken));
 
     public Task<Result<ProviderAccount>> GetProviderAccountAsync(
         ProviderAccountId providerAccountId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.GetProviderAccountAsync(providerAccountId, accessContext, cancellationToken)));
+        _providers.GetProviderAccountAsync(providerAccountId, accessContext, cancellationToken));
 
     public Task<Result<IReadOnlyList<ProviderAccount>>> ListProviderAccountsAsync(
         ProviderId providerId,
         ResourceAccessContext accessContext,
         bool includeRetired = false,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.ListProviderAccountsAsync(providerId, accessContext, includeRetired, cancellationToken)));
+        _providers.ListProviderAccountsAsync(providerId, accessContext, includeRetired, cancellationToken));
 
     public Task<Result<ProviderAccount>> UpdateProviderAccountAsync(
         ProviderAccount account,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.UpdateProviderAccountAsync(account, accessContext, cancellationToken)));
+        _providers.UpdateProviderAccountAsync(account, accessContext, cancellationToken));
 
     public Task<Result<ProviderAccount>> DeleteProviderAccountAsync(
         ProviderAccountId providerAccountId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.DeleteProviderAccountAsync(providerAccountId, accessContext, cancellationToken)));
+        _providers.DeleteProviderAccountAsync(providerAccountId, accessContext, cancellationToken));
 
     public Task<Result<ProviderAccount>> ReactivateProviderAccountAsync(
         ProviderAccountId providerAccountId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.ReactivateProviderAccountAsync(providerAccountId, accessContext, cancellationToken)));
+        _providers.ReactivateProviderAccountAsync(providerAccountId, accessContext, cancellationToken));
 
     public Task<Result<ExecutionTarget>> CreateExecutionTargetAsync(
         ExecutionTarget target,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.CreateExecutionTargetAsync(target, accessContext, cancellationToken)));
+        _providers.CreateExecutionTargetAsync(target, accessContext, cancellationToken));
 
     public Task<Result<ExecutionTarget>> GetExecutionTargetAsync(
         ExecutionTargetId executionTargetId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.GetExecutionTargetAsync(executionTargetId, accessContext, cancellationToken)));
+        _providers.GetExecutionTargetAsync(executionTargetId, accessContext, cancellationToken));
 
     public Task<Result<IReadOnlyList<ExecutionTarget>>> ListExecutionTargetsAsync(
         ProviderAccountId providerAccountId,
         ResourceAccessContext accessContext,
         bool includeRetired = false,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.ListExecutionTargetsAsync(providerAccountId, accessContext, includeRetired, cancellationToken)));
+        _providers.ListExecutionTargetsAsync(providerAccountId, accessContext, includeRetired, cancellationToken));
 
     public Task<Result<ExecutionTarget>> UpdateExecutionTargetAsync(
         ExecutionTarget target,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.UpdateExecutionTargetAsync(target, accessContext, cancellationToken)));
+        _providers.UpdateExecutionTargetAsync(target, accessContext, cancellationToken));
 
     public Task<Result<ExecutionTarget>> DeleteExecutionTargetAsync(
         ExecutionTargetId executionTargetId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.DeleteExecutionTargetAsync(executionTargetId, accessContext, cancellationToken)));
+        _providers.DeleteExecutionTargetAsync(executionTargetId, accessContext, cancellationToken));
 
     public Task<Result<ExecutionTarget>> ReactivateExecutionTargetAsync(
         ExecutionTargetId executionTargetId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _providers.ReactivateExecutionTargetAsync(executionTargetId, accessContext, cancellationToken)));
+        _providers.ReactivateExecutionTargetAsync(executionTargetId, accessContext, cancellationToken));
 
     public Task<Result<AgentDefinition>> CreateAgentDefinitionAsync(
         AgentDefinition definition,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _agents.CreateAgentDefinitionAsync(definition, accessContext, cancellationToken)));
+        _agents.CreateAgentDefinitionAsync(definition, accessContext, cancellationToken));
 
     public Task<Result<AgentDefinition>> GetAgentDefinitionAsync(
         AgentDefinitionId agentDefinitionId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _agents.GetAgentDefinitionAsync(agentDefinitionId, accessContext, cancellationToken)));
+        _agents.GetAgentDefinitionAsync(agentDefinitionId, accessContext, cancellationToken));
 
     public Task<Result<IReadOnlyList<AgentDefinition>>> ListAgentDefinitionsAsync(
         ResourceAccessContext accessContext,
         bool includeRetired = false,
         CancellationToken cancellationToken = default) => Run(() =>
-        _agents.ListAgentDefinitionsAsync(accessContext, includeRetired, cancellationToken)));
+        _agents.ListAgentDefinitionsAsync(accessContext, includeRetired, cancellationToken));
 
     public Task<Result<AgentDefinition>> UpdateAgentDefinitionAsync(
         AgentDefinition definition,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _agents.UpdateAgentDefinitionAsync(definition, accessContext, cancellationToken)));
+        _agents.UpdateAgentDefinitionAsync(definition, accessContext, cancellationToken));
 
     public Task<Result<AgentDefinition>> DeleteAgentDefinitionAsync(
         AgentDefinitionId agentDefinitionId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _agents.DeleteAgentDefinitionAsync(agentDefinitionId, accessContext, cancellationToken)));
+        _agents.DeleteAgentDefinitionAsync(agentDefinitionId, accessContext, cancellationToken));
 
     public Task<Result<AgentDefinition>> ReactivateAgentDefinitionAsync(
         AgentDefinitionId agentDefinitionId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _agents.ReactivateAgentDefinitionAsync(agentDefinitionId, accessContext, cancellationToken)));
+        _agents.ReactivateAgentDefinitionAsync(agentDefinitionId, accessContext, cancellationToken));
 
     public Task<Result<AgentExecutionResult>> ExecuteConfiguredAgentAsync(
         AgentDefinitionId agentDefinitionId,
         ResourceAccessContext accessContext,
         string userMessage,
         CancellationToken cancellationToken = default) => Run(() =>
-        _agents.ExecuteConfiguredAgentAsync(agentDefinitionId, accessContext, userMessage, cancellationToken)));
+        _agents.ExecuteConfiguredAgentAsync(agentDefinitionId, accessContext, userMessage, cancellationToken));
 
     public Task<Result<InputPreparationResult>> PrepareInputAsync(
         InputSubmission submission,
@@ -333,25 +333,25 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         _inputPreparation.PrepareInputAsync(
             submission,
             accessContext,
-            cancellationToken)));
+            cancellationToken));
 
     public Task<Result<WorkItem>> CreateImageWorkItemAsync(
         WorkItemImageSubmission submission,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _workItems.CreateImageWorkItemAsync(submission, accessContext, cancellationToken)));
+        _workItems.CreateImageWorkItemAsync(submission, accessContext, cancellationToken));
 
     public Task<Result<WorkItem>> GetWorkItemAsync(
         WorkItemId workItemId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _workItems.GetWorkItemAsync(workItemId, accessContext, cancellationToken)));
+        _workItems.GetWorkItemAsync(workItemId, accessContext, cancellationToken));
 
     public Task<Result<IReadOnlyList<WorkItem>>> ListWorkItemsAsync(
         ResourceAccessContext accessContext,
         bool includeRetired = false,
         CancellationToken cancellationToken = default) => Run(() =>
-        _workItems.ListWorkItemsAsync(accessContext, includeRetired, cancellationToken)));
+        _workItems.ListWorkItemsAsync(accessContext, includeRetired, cancellationToken));
 
     public Task<Result<WorkItemListPage>> ListWorkItemsPageAsync(
         ResourceAccessContext accessContext,
@@ -364,33 +364,33 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
             includeRetired,
             cursor,
             pageSize,
-            cancellationToken)));
+            cancellationToken));
 
     public Task<Result<WorkItemAttachmentContent>> GetWorkItemAttachmentAsync(
         WorkItemId workItemId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _workItems.GetWorkItemAttachmentAsync(workItemId, accessContext, cancellationToken)));
+        _workItems.GetWorkItemAttachmentAsync(workItemId, accessContext, cancellationToken));
 
     public Task<Result<IReadOnlyList<WorkItemActivity>>> GetWorkItemActivityAsync(
         WorkItemId workItemId,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _workItems.GetWorkItemActivityAsync(workItemId, accessContext, cancellationToken)));
+        _workItems.GetWorkItemActivityAsync(workItemId, accessContext, cancellationToken));
 
     public Task<Result<WorkItem>> RequestWorkItemApprovalAsync(
         WorkItemId workItemId,
         ResourceVersion expectedVersion,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _workItems.RequestWorkItemApprovalAsync(workItemId, expectedVersion, accessContext, cancellationToken)));
+        _workItems.RequestWorkItemApprovalAsync(workItemId, expectedVersion, accessContext, cancellationToken));
 
     public Task<Result<WorkItem>> ApproveWorkItemAsync(
         WorkItemId workItemId,
         ResourceVersion expectedVersion,
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
-        _workItems.ApproveWorkItemAsync(workItemId, expectedVersion, accessContext, cancellationToken)));
+        _workItems.ApproveWorkItemAsync(workItemId, expectedVersion, accessContext, cancellationToken));
 
     public Task<Result<WorkItem>> RejectWorkItemAsync(
         WorkItemId workItemId,
@@ -399,6 +399,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         string reason,
         CancellationToken cancellationToken = default) => Run(() =>
         _workItems.RejectWorkItemAsync(workItemId, expectedVersion, accessContext, reason, cancellationToken));
+
     private Task<Result<T>> Run<T>(Func<Task<Result<T>>> operation)
     {
         ArgumentNullException.ThrowIfNull(operation);
