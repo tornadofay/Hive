@@ -326,6 +326,109 @@ public sealed class ProviderDiscoveryTests
     }
 
     [Fact]
+    public async Task OpenAICompatibleDiscovery_UnsupportedEndpointDoesNotFabricateModels()
+    {
+        var handler = new RecordingHandler(
+            _ => new HttpResponseMessage(HttpStatusCode.NotFound));
+
+        using var client = new HttpClient(handler);
+        var discovery = new OpenAICompatibleProviderCapabilityDiscovery(
+            client,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromMinutes(2));
+
+        var target = CreateTarget(Array.Empty<CapabilityStateEntry>());
+        var provider = CreateProviderFor(target);
+        var account = CreateAccountFor(provider, target);
+
+        var result = await discovery.DiscoverAsync(
+            provider,
+            account,
+            CreateTargetFor(provider, account, target),
+            null);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(
+            ProviderDiscoveryState.Unsupported,
+            result.Value!.ModelEnumerationState);
+        Assert.Empty(result.Value.Models);
+    }
+
+    private static Provider CreateProviderFor(ExecutionTarget target)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        return new Provider(
+            new ResourceEnvelope<ProviderId>(
+                ResourceKind.Provider,
+                ProviderId.New(),
+                target.Resource.Owner,
+                target.Resource.Scope,
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    target.Resource.Provenance.CreatedBy,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            "example-provider",
+            "Provider",
+            "openai-compatible");
+    }
+
+    private static ProviderAccount CreateAccountFor(
+        Provider provider,
+        ExecutionTarget target)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        return new ProviderAccount(
+            new ResourceEnvelope<ProviderAccountId>(
+                ResourceKind.ProviderAccount,
+                ProviderAccountId.New(),
+                target.Resource.Owner,
+                target.Resource.Scope,
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    target.Resource.Provenance.CreatedBy,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            provider.Id,
+            "account",
+            "Account",
+            "example");
+    }
+
+    private static ExecutionTarget CreateTargetFor(
+        Provider provider,
+        ProviderAccount account,
+        ExecutionTarget source)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        return new ExecutionTarget(
+            new ResourceEnvelope<ExecutionTargetId>(
+                ResourceKind.ExecutionTarget,
+                ExecutionTargetId.New(),
+                source.Resource.Owner,
+                source.Resource.Scope,
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    source.Resource.Provenance.CreatedBy,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            provider.Id,
+            account.Id,
+            "target",
+            "Target",
+            source.Endpoint,
+            source.Model,
+            source.Deployment,
+            source.Capabilities);
+    }
+
+    [Fact]
     public async Task Adapter_ListModels_UnsupportedEndpointIsTyped()
     {
         var handler = new RecordingHandler(
