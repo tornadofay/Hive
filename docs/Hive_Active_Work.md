@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IMPLEMENTATION IN PROGRESS
+Status: VERIFICATION PENDING
 
 ## Current slice
 
@@ -38,7 +38,7 @@ Developer verification required before closure:
 
 ## Implementation state
 
-Implementation is in progress. No verification claim is made yet.
+Implementation is complete and the corrected result has been re-audited at source level. No developer verification is claimed yet.
 
 ## Verification handoff
 
