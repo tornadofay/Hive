@@ -387,49 +387,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         var provider = _selectedProvider
             ?? throw new InvalidOperationException("Provider is required.");
 
-        if (target is not null)
-        {
-            return await EditExistingExecutionTargetAsync(
-                target,
-                provider,
-                _selectedAccount,
-                cancellationToken).ConfigureAwait(true);
-        }
-
-        using (var editor = new HiveExecutionTargetEditorForm(
-                   null,
-                   provider,
-                   _selectedAccount,
-                   _management,
-                   _accessContext,
-                   _themeManager,
-                   _output))
-        {
-            if (editor.ShowDialog(FindForm()) != DialogResult.OK ||
-                editor.Definition is null)
-            {
-                return null;
-            }
-
-            var created = await _management.CreateExecutionTargetAsync(
-                    editor.Definition,
-                    _accessContext,
-                    cancellationToken)
-                .ConfigureAwait(true);
-
-            if (created.IsFailure)
-                throw new InvalidOperationException(created.Error!.Message);
-
-            if (created.Value is null)
-                return null;
-
-            target = created.Value;
-        }
-
-        // The Management discovery contract requires a persisted ExecutionTarget
-        // identity. Reopen the editor immediately after creation so the new target
-        // enters the same automatic discovery workflow as an existing target.
-        using var configuredEditor = new HiveExecutionTargetEditorForm(
+        using var editor = new HiveExecutionTargetEditorForm(
             target,
             provider,
             _selectedAccount,
@@ -438,22 +396,22 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
             _themeManager,
             _output);
 
-        if (configuredEditor.ShowDialog(FindForm()) != DialogResult.OK ||
-            configuredEditor.Definition is null)
+        if (editor.ShowDialog(FindForm()) != DialogResult.OK ||
+            editor.Definition is null)
         {
-            return target;
+            return null;
         }
 
-        var updated = await _management.UpdateExecutionTargetAsync(
-                configuredEditor.Definition,
+        var saved = await _management.CreateOrUpdateExecutionTargetAsync(
+                editor.Definition,
                 _accessContext,
                 cancellationToken)
             .ConfigureAwait(true);
 
-        if (updated.IsFailure)
-            throw new InvalidOperationException(updated.Error!.Message);
+        if (saved.IsFailure)
+            throw new InvalidOperationException(saved.Error!.Message);
 
-        return updated.Value;
+        return saved.Value;
     }
 
     private async Task<ExecutionTarget?> EditExistingExecutionTargetAsync(
