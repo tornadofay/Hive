@@ -1,7 +1,5 @@
 # Hive — Active Work
 
-# Hive — Active Work
-
 Status: NO ACTIVE WORK
 
 There is currently no authorized implementation slice.
