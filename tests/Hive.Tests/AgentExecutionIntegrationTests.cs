@@ -686,6 +686,60 @@ public sealed class AgentExecutionIntegrationTests
 
 
     [Fact]
+    public async Task ExecuteAsync_AmbiguousInitialTerminalPersistence_ReconcilesTerminalEventByEventId()
+    {
+        var store = new ScriptedStartEventStore(
+            new Error(
+                "test.execution-start-persistence",
+                ErrorCategory.External,
+                "synthetic ambiguous start persistence failure"),
+            failureAppendNumbers: [1, 2],
+            persistBeforeFailureAppendNumbers: [2]);
+
+        using var httpClient = new HttpClient();
+        var service = new AgentExecutionService(
+            new HiveEventPersistenceComposition(store),
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var agent = CreateAgent(context);
+        var runtime = agent.CreateRuntimeInstance();
+        var target = CreateTarget(
+            new Uri("https://example.invalid/v1"),
+            context.PrincipalId!.Value,
+            context.TenantId!.Value);
+
+        var result = await service.ExecuteAsync(
+            new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                context,
+                "Recover an ambiguously committed initial terminal event."));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "test.execution-start-persistence",
+            result.Error!.Code);
+
+        Assert.Equal(
+            ["agent.execution.started", "agent.execution.failed"],
+            store.AttemptedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
+        Assert.Single(store.AppendedEvents);
+        Assert.Equal(
+            "agent.execution.failed",
+            store.AppendedEvents[0].Envelope.EventType.Value);
+        Assert.Equal(
+            new ResourceVersion(1),
+            store.AppendedEvents[0].StreamVersion);
+        Assert.Null(store.AppendedEvents[0].Envelope.CausationId);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_AmbiguousStartedEventCancellation_ReconcilesStartedEventBeforeTerminalCompensation()
     {
         var store = new ScriptedStartEventStore(
