@@ -204,3 +204,4 @@ Tests to run: <focused test class/file>; broader-suite requirement if applicable
 Keep the exact Example path in `docs/Hive_Active_Work.md` while verification is pending.
 
 - V1 Input Preparation & Routing example → `Workspace / WorkItem Operations / Input Preparation & Routing`
+- Phase 1.16 Provider / Model Capability Discovery example → `Providers / Target Selection / Capability Discovery / Provider / Model Capability Discovery`
