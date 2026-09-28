@@ -216,12 +216,9 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
         if (snapshot.ProviderId != provider.Id ||
             snapshot.ProviderAccountId != account.Id ||
-            Uri.Compare(
+            !ProviderEndpointIdentity.Equals(
                 snapshot.Endpoint,
-                target.Endpoint,
-                UriComponents.AbsoluteUri,
-                UriFormat.SafeUnescaped,
-                StringComparison.Ordinal) != 0)
+                target.Endpoint))
         {
             return Error.Validation(
                 "hive.management.provider-discovery-result-mismatch",
