@@ -546,11 +546,12 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             results,
             result => Assert.True(result.IsSuccess, result.Error?.Message));
         Assert.Equal(2, discovery.CallCount);
+        Assert.NotSame(initial.Value, results[0].Value);
         Assert.All(
             results,
-            result => Assert.Equal(
-                initial.Value!.Operational.ObservedAtUtc.AddMinutes(1),
-                result.Value!.Operational.ObservedAtUtc));
+            result => Assert.Same(
+                results[0].Value,
+                result.Value));
     }
 
     [Fact]
