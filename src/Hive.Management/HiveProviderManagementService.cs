@@ -21,6 +21,8 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
     private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, ProviderDiscoverySnapshot> _discoveryCache = new();
     private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, SemaphoreSlim> _discoveryLocks = new();
 
+    private const int MaxCachedDiscoveries = 128;
+
     internal HiveProviderManagementService(
         IProviderResourceStore providerResources,
         IProviderConnectionTester? providerConnectionTester,
@@ -157,7 +159,10 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                     .ConfigureAwait(false);
 
                 if (discovered.IsSuccess)
+                {
                     _discoveryCache[cacheKey] = discovered.Value!;
+                    TrimDiscoveryCache(cacheKey);
+                }
 
                 return discovered;
             }
@@ -169,6 +174,30 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         finally
         {
             gate.Release();
+        }
+    }
+
+    private void TrimDiscoveryCache(
+        ProviderDiscoveryCacheKey preferredKey)
+    {
+        while (_discoveryCache.Count > MaxCachedDiscoveries)
+        {
+            var removed = false;
+
+            foreach (var key in _discoveryCache.Keys)
+            {
+                if (key.Equals(preferredKey))
+                    continue;
+
+                if (_discoveryCache.TryRemove(key, out _))
+                {
+                    removed = true;
+                    break;
+                }
+            }
+
+            if (!removed)
+                return;
         }
     }
 
