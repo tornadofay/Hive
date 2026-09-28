@@ -215,4 +215,22 @@ Tests to run: <focused test class/file>; broader-suite requirement if applicable
 Keep the exact Example path in `docs/Hive_Active_Work.md` while verification is pending.
 
 - V1 Input Preparation & Routing example → `Workspace / WorkItem Operations / Input Preparation & Routing`
+- Phase 1.17 Structured Extraction & Validation example → `Workspace / WorkItem Operations / Structured Extraction & Validation`
 - Phase 1.16 Provider / Model Capability Discovery example → `Providers / Target Selection / Capability Discovery / Provider / Model Capability Discovery`
+
+Phase 1.17 Example Host scenario should demonstrate:
+
+- `Single File` and `Folder` input selection;
+- a mixed folder containing multiple Excel files, multiple images, and at least one unsupported file;
+- bounded folder enumeration and per-item failure isolation;
+- spreadsheet workbook/header/sample inspection;
+- one LLM mapping proposal for an applicable spreadsheet mapping context;
+- deterministic mapping validation and human-editable mapping;
+- deterministic reuse of the accepted mapping across rows without per-row remapping;
+- batch image extraction with independent per-image results;
+- failed extraction shown with the source file name and safe error information, with the original image openable when the UI surface permits;
+- source-neutral StructuredCandidate output with parent/child data where applicable;
+- required/type validation and provenance preservation;
+- no host business mutation.
+
+The example should demonstrate reviewability of mappings and candidates without creating a second authorization system. Generalized Approve / Reject authorization remains a Phase 1.22 governance concern.
