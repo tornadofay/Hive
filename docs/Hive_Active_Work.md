@@ -39,4 +39,4 @@ Developer verification required before closure:
 
 ## Implementation state
 
-Revision implementation is pending.
+Revision implementation is complete and the corrected forced/non-forced coalescing invariant plus archive metadata were re-audited at source level. Developer verification remains pending.
