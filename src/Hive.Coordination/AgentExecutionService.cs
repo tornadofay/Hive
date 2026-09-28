@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Hive.Agents;
 using Hive.Core;
@@ -16,12 +17,13 @@ public sealed class AgentExecutionService
     private readonly IClock _clock;
 
     public AgentExecutionService(
-        IEventPersistenceStore eventStore,
+        HiveEventPersistenceComposition persistence,
         HttpClient httpClient,
         TimeSpan? providerTimeout = null,
         IClock? clock = null)
     {
-        _eventStore = eventStore ?? throw new ArgumentNullException(nameof(eventStore));
+        ArgumentNullException.ThrowIfNull(persistence);
+        _eventStore = persistence.EventStore;
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _clock = clock ?? SystemClock.Instance;
 
@@ -97,6 +99,7 @@ public sealed class AgentExecutionService
                     cancelled.Value!,
                     stream,
                     correlationId,
+                    startedEnvelope,
                     "agent.execution.cancelled",
                     error: null)
                     .ConfigureAwait(false);
@@ -115,6 +118,7 @@ public sealed class AgentExecutionService
                     failed.Value!,
                     stream,
                     correlationId,
+                    startedEnvelope,
                     "agent.execution.failed",
                     Error.Validation(
                         "hive.agent.execution.start-persistence-failed",
@@ -140,6 +144,7 @@ public sealed class AgentExecutionService
                     failed.Value!,
                     stream,
                     correlationId,
+                    startedEnvelope,
                     "agent.execution.failed",
                     started.Error)
                     .ConfigureAwait(false);
@@ -331,20 +336,75 @@ public sealed class AgentExecutionService
             causationId,
             JsonSerializer.SerializeToElement(payload));
 
-    private async Task TryPersistInitialTerminalAsync(
+    private async Task<Result> TryPersistInitialTerminalAsync(
         AgentExecutionRequest request,
         Execution execution,
         ResourceReference stream,
         CorrelationId correlationId,
+        EventEnvelope startedEvent,
         string eventType,
         Error? error)
     {
-        try
+        var terminalEventId = EventId.New();
+        Error? lastError = null;
+
+        for (var attempt = 0; attempt < 2; attempt++)
         {
-            var envelope = CreateLifecycleEvent(
+            Result<IReadOnlyList<PersistedEvent>> events;
+
+            try
+            {
+                events = await _eventStore
+                    .ReadEventsAsync(
+                        stream,
+                        cancellationToken: CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                lastError = new Error(
+                    "hive.agent.execution.initial-terminal-reconciliation-failed",
+                    ErrorCategory.External,
+                    "The agent execution could not reconcile its initial lifecycle persistence.");
+
+                Trace.WriteLine(
+                    $"Hive initial terminal reconciliation read failed: {lastError.Code} [{lastError.Category}] {exception.GetType().FullName}");
+                continue;
+            }
+
+            if (events.IsFailure)
+            {
+                lastError = new Error(
+                    "hive.agent.execution.initial-terminal-reconciliation-failed",
+                    ErrorCategory.External,
+                    "The agent execution could not reconcile its initial lifecycle persistence.");
+
+                Trace.WriteLine(
+                    $"Hive initial terminal reconciliation read failed: {events.Error?.Code} [{events.Error?.Category}]");
+                continue;
+            }
+
+            var persistedEvents = events.Value!;
+            var existingTerminal = persistedEvents.FirstOrDefault(
+                eventItem => eventItem.Envelope.EventId == terminalEventId);
+
+            if (existingTerminal is not null)
+                return Result.Success();
+
+            var currentVersion = persistedEvents
+                .OrderByDescending(static eventItem => eventItem.StreamVersion.Value)
+                .Select(static eventItem => (ResourceVersion?)eventItem.StreamVersion)
+                .FirstOrDefault();
+
+            var startedPersisted = persistedEvents.Any(
+                eventItem => eventItem.Envelope.EventId == startedEvent.EventId);
+
+            var terminalEnvelope = CreateLifecycleEvent(
                 eventType,
                 correlationId,
-                null,
+                startedPersisted
+                    ? new CausationId(startedEvent.EventId.Value)
+                    : null,
                 new
                 {
                     executionId = execution.Id.Value,
@@ -356,20 +416,46 @@ public sealed class AgentExecutionService
                     errorCategory = error?.Category.ToString()
                 });
 
-            await _eventStore
-                .AppendAsync(
-                    new EventAppendRequest(
-                        stream,
-                        null,
-                        envelope),
-                    CancellationToken.None)
-                .ConfigureAwait(false);
+            try
+            {
+                var append = await _eventStore
+                    .AppendAsync(
+                        new EventAppendRequest(
+                            stream,
+                            currentVersion,
+                            terminalEnvelope),
+                        CancellationToken.None)
+                    .ConfigureAwait(false);
+
+                if (append.IsSuccess)
+                    return Result.Success();
+
+                lastError = new Error(
+                    "hive.agent.execution.initial-terminal-persistence-failed",
+                    ErrorCategory.External,
+                    "The initial terminal execution event could not be persisted.");
+
+                Trace.WriteLine(
+                    $"Hive initial terminal persistence append failed: {append.Error?.Code} [{append.Error?.Category}]");
+            }
+            catch (Exception exception)
+            {
+                lastError = new Error(
+                    "hive.agent.execution.initial-terminal-persistence-failed",
+                    ErrorCategory.External,
+                    "The initial terminal execution event could not be persisted.");
+
+                Trace.WriteLine(
+                    $"Hive initial terminal persistence append failed: {lastError.Code} [{lastError.Category}] {exception.GetType().FullName}");
+            }
         }
-        catch
-        {
-            // The original start-persistence failure/cancellation remains authoritative.
-            // This best-effort terminal event closes the durable lifecycle when possible.
-        }
+
+        return Result.Failure(
+            lastError ??
+            new Error(
+                "hive.agent.execution.initial-terminal-recovery-failed",
+                ErrorCategory.External,
+                "The agent execution could not establish a terminal lifecycle outcome after initial persistence failed."));
     }
 
     private async Task<Result<AgentExecutionResult>> PersistTerminalSuccessAsync(
