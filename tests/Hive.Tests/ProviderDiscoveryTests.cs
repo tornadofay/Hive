@@ -18,7 +18,7 @@ public sealed class ProviderDiscoveryTests
 
         var discovery = CreateDiscovery(
             target,
-            staleAfterUtc: DateTimeOffset.UtcNow.AddMinutes(5),
+            DateTimeOffset.UtcNow.AddMinutes(5),
             Capability("vision", CapabilityState.Supported),
             Capability("tool.calling", CapabilityState.Supported));
 
@@ -42,7 +42,7 @@ public sealed class ProviderDiscoveryTests
         var target = CreateTarget(Array.Empty<CapabilityStateEntry>());
         var discovery = CreateDiscovery(
             target,
-            staleAfterUtc: DateTimeOffset.UtcNow.AddSeconds(-1),
+            DateTimeOffset.UtcNow.AddSeconds(-1),
             Capability("vision", CapabilityState.Supported));
 
         var effective = ExecutionTargetCapabilityResolver.ResolveCapabilities(
@@ -63,7 +63,7 @@ public sealed class ProviderDiscoveryTests
 
         var discovery = CreateDiscovery(
             target,
-            staleAfterUtc: DateTimeOffset.UtcNow.AddMinutes(5),
+            DateTimeOffset.UtcNow.AddMinutes(5),
             Capability("vision", CapabilityState.Supported));
 
         var effective = ExecutionTargetCapabilityResolver.ResolveCapabilities(
@@ -117,7 +117,9 @@ public sealed class ProviderDiscoveryTests
             [Capability("vision", CapabilityState.Supported)]);
 
         var result = ExecutionTargetSelector.Select(
-            new ExecutionTargetSelectionRequest([target], Array.Empty<CapabilityRequirement>()),
+            new ExecutionTargetSelectionRequest(
+                [target],
+                Array.Empty<CapabilityRequirement>()),
             new Dictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>
             {
                 [ExecutionTargetId.New()] =
@@ -237,38 +239,63 @@ public sealed class ProviderDiscoveryTests
             TimeSpan.FromSeconds(5),
             TimeSpan.FromMinutes(2));
 
-        var target = CreateTarget(Array.Empty<CapabilityStateEntry>());
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var now = DateTimeOffset.UtcNow;
+
         var provider = new Provider(
-            target.Resource with
-            {
-                Kind = ResourceKind.Provider,
-                Identity = ProviderId.New()
-            },
+            new ResourceEnvelope<ProviderId>(
+                ResourceKind.Provider,
+                ProviderId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
             "example-provider",
             "Provider",
             "openai-compatible");
 
         var account = new ProviderAccount(
-            target.Resource with
-            {
-                Kind = ResourceKind.ProviderAccount,
-                Identity = ProviderAccountId.New()
-            },
+            new ResourceEnvelope<ProviderAccountId>(
+                ResourceKind.ProviderAccount,
+                ProviderAccountId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
             provider.Id,
             "account",
             "Account",
             "example");
 
-        target = new ExecutionTarget(
-            target.Resource,
+        var target = new ExecutionTarget(
+            new ResourceEnvelope<ExecutionTargetId>(
+                ResourceKind.ExecutionTarget,
+                ExecutionTargetId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
             provider.Id,
             account.Id,
-            target.Key,
-            target.DisplayName,
-            target.Endpoint,
-            target.Model,
-            target.Deployment,
-            target.Capabilities);
+            "target",
+            "Target",
+            new Uri("https://example.test/v1/"),
+            "vision-model",
+            null,
+            Array.Empty<CapabilityStateEntry>());
 
         var result = await discovery.DiscoverAsync(
             provider,
@@ -277,16 +304,25 @@ public sealed class ProviderDiscoveryTests
             null);
 
         Assert.True(result.IsSuccess, result.Error?.Message);
-        Assert.Equal(ProviderDiscoveryState.Supported, result.Value!.ModelEnumerationState);
+        Assert.Equal(
+            ProviderDiscoveryState.Supported,
+            result.Value!.ModelEnumerationState);
+
         var model = Assert.Single(result.Value.Models);
         Assert.Equal("vision-model", model.ModelId);
-        Assert.Equal(ProviderAvailabilityStatus.Unavailable, model.Availability);
-        Assert.Equal(ProviderHealthStatus.Degraded, model.Health);
+        Assert.Equal(
+            ProviderAvailabilityStatus.Unavailable,
+            model.Availability);
+        Assert.Equal(
+            ProviderHealthStatus.Degraded,
+            model.Health);
         Assert.Equal(
             CapabilityState.Supported,
             model.DiscoveredCapabilities.Single().State);
-        Assert.Equal(2, result.Value.Operational.StaleAfterUtc.Subtract(
-            result.Value.Operational.ObservedAtUtc).TotalMinutes, precision: 1);
+        Assert.Equal(
+            TimeSpan.FromMinutes(2),
+            result.Value.Operational.StaleAfterUtc -
+            result.Value.Operational.ObservedAtUtc);
     }
 
     [Fact]
@@ -313,12 +349,13 @@ public sealed class ProviderDiscoveryTests
     [Fact]
     public async Task Adapter_ListModels_MalformedCatalogIsTypedWithoutResponseEcho()
     {
-        var secret = "super-secret-value";
+        const string secret = "super-secret-value";
+
         var handler = new RecordingHandler(
             _ => new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(
-                    $"{{"data":[{{"id":{System.Text.Json.JsonSerializer.Serialize(secret)}}}]",
+                    $$"""{"data":[{"id":"{{secret}}"}]""",
                     Encoding.UTF8,
                     "application/json")
             });
@@ -356,7 +393,29 @@ public sealed class ProviderDiscoveryTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
             () => adapter.ListModelsAsync(cancellation.Token));
+
         Assert.Null(handler.Request);
+    }
+
+    [Fact]
+    public async Task Adapter_ListModels_TimeoutIsTyped()
+    {
+        using var client = new HttpClient(
+            new BlockingHandler());
+
+        var adapter = new OpenAICompatibleProviderAdapter(
+            client,
+            new OpenAICompatibleProviderOptions(
+                new Uri("https://example.test/v1/"),
+                timeout: TimeSpan.FromMilliseconds(20)));
+
+        var result = await adapter.ListModelsAsync();
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorCategory.Timeout, result.Error!.Category);
+        Assert.Equal(
+            "hive.provider.openai-compatible.timeout",
+            result.Error.Code);
     }
 
     private static ProviderModelMetadata CreateModel(
@@ -445,6 +504,20 @@ public sealed class ProviderDiscoveryTests
         {
             Request = request;
             return Task.FromResult(_factory(request));
+        }
+    }
+
+    private sealed class BlockingHandler : HttpMessageHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            await Task.Delay(
+                Timeout.InfiniteTimeSpan,
+                cancellationToken);
+
+            return new HttpResponseMessage(HttpStatusCode.OK);
         }
     }
 }
