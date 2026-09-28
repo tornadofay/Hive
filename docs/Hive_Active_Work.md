@@ -1,15 +1,33 @@
 # Hive — Active Work
 
-Status: NO ACTIVE WORK
+Status: IN PROGRESS
 
-There is currently no authorized implementation slice.
+## Current slice
 
-The most recently completed work is **Phase 1.16 Revision 4 — Provider / Model Capability Discovery & Operational Metadata**, verified on 2026-09-28.
+**Phase 1.16 Revision 5 — Provider / Model Capability Discovery & Operational Metadata**
 
-Final developer verification for Revision 4:
-- the matching Provider / Model Capability Discovery Example Host scenario was manually exercised successfully;
-- the full `Hive.Tests` suite passed **426/426**, with **0 failed** and **0 skipped**, in 54.1 seconds.
+This is a bounded corrective revision of the immediately preceding Phase 1.16 Revision 4. It does not advance the roadmap.
 
-Revision 4 closure verification record: [Phase 1.16 Revision 4 closure verification](verification/phase-1/1.16-provider-model-capability-discovery-revision-4-closure-2026-09-28.md)
+### Scope
 
-No Phase 1.17 or later roadmap work is authorized. A new roadmap slice requires explicit user authorization such as `Hive: Start Phase X.Y`.
+- align the process-local discovery cache key with the established provider endpoint identity semantics so identity-equivalent URIs do not create duplicate cache entries;
+- preserve the existing Provider → ProviderAccount → ExecutionTarget ownership boundary, resource-version cache partitioning, capability authority, stale handling, cancellation, and Example Host behavior;
+- add focused regression coverage for identity-equivalent endpoint cache reuse, including URI fragment differences that do not participate in endpoint identity.
+
+### Out of scope
+
+No new provider transport, capability vocabulary, workflow behavior, structured extraction/validation, business-app write, Tool authorization, Review, cognition, Workspace expansion, or Phase 1.17 work.
+
+## Verification boundary
+
+**VERIFICATION PENDING.**
+
+The previous Phase 1.16 Revision 4 was fully verified at **426/426 passed, 0 failed, 0 skipped** with the Example Host scenario manually exercised successfully. This revision changes cache-key construction and adds regression coverage, so previous verification does not verify the revised source.
+
+### Handoff
+
+Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Capability Discovery — Hive.Example.WinForms
+
+Tests to run: `tests/Hive.Tests/ProviderDiscoveryTests.cs`; `tests/Hive.Tests/ProviderDiscoveryManagementIntegrationTests.cs`; full `Hive.Tests` suite; then re-exercise the matching Example Host scenario.
+
+No Phase 1.17 work is authorized or started.
