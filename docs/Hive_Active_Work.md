@@ -23,7 +23,7 @@ Developer must run:
 - Manual Example Host verification of Overview / Getting Started / Example Configuration — Hive.Example.WinForms, specifically opening Settings, saving a SQL-password configuration, changing/replacing the bootstrap credential, applying Settings, and exercising cancellation/failure paths where practical.
 - Confirm Visual Studio Treat warnings as errors remains enabled with no new errors or warnings.
 
-Latest developer verification before this revision: full `Hive.Tests` suite passed 394/394 (0 failed, 0 skipped) in 45.3 seconds; the Example Host was manually confirmed running correctly and the persistence configuration flow was working correctly. This revision changed the post-save credential-cleanup cancellation boundary, so the full suite and relevant manual checks must be rerun for the revised code. Clean compile and explicit Visual Studio warnings-as-errors confirmation remain pending.
+Latest developer verification of the revised code: full `Hive.Tests` suite passed 394/394 (0 failed, 0 skipped) in 46.6 seconds. Developer also confirmed that `Hive.Example.WinForms` and the persistence configuration flow are running correctly after the revision. Explicit Visual Studio Treat warnings as errors confirmation remains pending before closure.
 
 ## Exclusions
 
