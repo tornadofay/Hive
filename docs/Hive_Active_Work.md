@@ -1,12 +1,12 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Authorized slice
 
 **Phase 1.16 — UI — Provider Configuration, Discovery & Target Reconciliation**
 
-Checkpoint: `6b07bbdc40a35563def5bdfa6a9c00c21f9520ea` (main, 2026-09-28)
+Checkpoint: `69f9762533b0525f571bd94cf7631d94ea47138e` (main, 2026-09-28)
 
 ## Objective
 
@@ -74,7 +74,7 @@ Settings navigation:
 
 ## Implementation state
 
-Source/diff review complete at `6b07bbdc40a35563def5bdfa6a9c00c21f9520ea` (main, 2026-09-28). Developer-run test failures were remediated within the recorded Phase 1.16 boundary; no build or test run was performed by the agent.
+Source/diff review complete at `69f9762533b0525f571bd94cf7631d94ea47138e` (main, 2026-09-28). The 470-test verification failures were remediated within scope; the latest two discovery-panel assertion mismatches are also corrected. No build or test run was performed by the agent.
 
 ## Verification incident — test compilation
 
