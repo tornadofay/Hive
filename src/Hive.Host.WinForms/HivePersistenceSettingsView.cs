@@ -357,9 +357,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
             return;
         }
 
-        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
-            return;
-
         _loadedConfiguration = result.Value!;
         if (previousBootstrapReference is { } previousReference &&
             previousReference != _loadedConfiguration.BootstrapCredential)
@@ -368,7 +365,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 .RemoveBootstrapCredentialAsync(
                     previousReference,
                     _accessContext,
-                    cancellationToken)
+                    CancellationToken.None)
                 .ConfigureAwait(true);
 
             if (cleanup.IsFailure)
