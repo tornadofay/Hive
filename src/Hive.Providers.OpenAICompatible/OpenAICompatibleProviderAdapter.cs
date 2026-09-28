@@ -590,7 +590,7 @@ public sealed class OpenAICompatibleProviderAdapter
                         continue;
 
                     var state = ParseCapabilityState(property.Value);
-                    states[key] = state;
+                    MergeCapabilityState(states, key, state);
                 }
             }
             else if (capabilities.ValueKind == JsonValueKind.Array)
@@ -602,7 +602,12 @@ public sealed class OpenAICompatibleProviderAdapter
 
                     var key = NormalizeCapabilityKey(item.GetString() ?? string.Empty);
                     if (key is not null)
-                        states[key] = CapabilityState.Supported;
+                    {
+                        MergeCapabilityState(
+                            states,
+                            key,
+                            CapabilityState.Supported);
+                    }
                 }
             }
         }
@@ -627,12 +632,35 @@ public sealed class OpenAICompatibleProviderAdapter
 
         if (value.ValueKind == JsonValueKind.True)
         {
-            states[capabilityKey] = CapabilityState.Supported;
+            MergeCapabilityState(
+                states,
+                capabilityKey,
+                CapabilityState.Supported);
         }
         else if (value.ValueKind == JsonValueKind.False)
         {
-            states[capabilityKey] = CapabilityState.Unsupported;
+            MergeCapabilityState(
+                states,
+                capabilityKey,
+                CapabilityState.Unsupported);
         }
+    }
+
+    private static void MergeCapabilityState(
+        Dictionary<string, CapabilityState> states,
+        string capabilityKey,
+        CapabilityState discoveredState)
+    {
+        if (!states.TryGetValue(capabilityKey, out var existingState))
+        {
+            states[capabilityKey] = discoveredState;
+            return;
+        }
+
+        if (existingState == discoveredState)
+            return;
+
+        states[capabilityKey] = CapabilityState.Unknown;
     }
 
     private static CapabilityState ParseCapabilityState(
