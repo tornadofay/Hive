@@ -8,7 +8,7 @@ Complete and verified after same-slice remediation and developer verification.
 
 Starting checkpoint: `9ebcf5a7e18376c495bf271bbd18063446783d60`
 
-Final implementation checkpoint: `main @ 15dff6b2b0c55ce3a98af6d1ce4e78eced0c4e0f`
+Final implementation checkpoint: `main @ b569ae7d0c762e7d5d0eaecbf37f2d21cd7c997d`
 
 ## Scope completed
 
