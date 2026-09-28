@@ -173,6 +173,98 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     }
 
     [Fact]
+    public async Task Management_InFlightDiscoveryBeforeSecretReplacementDoesNotRepopulateCurrentCache()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoverySecretReplacementInFlight");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var provider = CreateProvider(principal, tenant);
+        var secret = CreateSecret(principal, tenant, $"discovery-secret-inflight-{Guid.NewGuid():N}");
+        var secretStore = new SqlDpapiSecretStore(database.Options);
+
+        using (var originalMaterial = SecretMaterial.Create("original-inflight-secret"))
+        {
+            var createdSecret = await secretStore.CreateAsync(
+                secret,
+                originalMaterial,
+                context);
+
+            Assert.True(createdSecret.IsSuccess, createdSecret.Error?.Message);
+        }
+
+        var account = CreateAccount(provider.Id, principal, tenant)
+            .WithCredentialSecret(new SecretReference(secret.Id));
+        var target = CreateTarget(provider.Id, account.Id, principal, tenant);
+        var providerStore = new SqlProviderResourceStore(database.Options);
+
+        Assert.True(
+            (await providerStore.CreateProviderAsync(provider, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateProviderAccountAsync(account, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateExecutionTargetAsync(target, context)).IsSuccess);
+
+        var started = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var discovery = new RecordingDiscovery(
+            started: started,
+            release: release);
+
+        using var facade = new HiveManagementFacade(
+            providerStore,
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            secretStore,
+            providerCapabilityDiscovery: discovery);
+
+        var inFlight = facade.GetProviderDiscoveryAsync(
+            target.Id,
+            context);
+
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        using var replacementMaterial = SecretMaterial.Create("replacement-inflight-secret");
+
+        var replaced = await facade.ReplaceSecretAsync(
+            secret.Id,
+            replacementMaterial,
+            ResourceVersion.Initial,
+            context);
+
+        Assert.True(replaced.IsSuccess, replaced.Error?.Message);
+
+        release.TrySetResult(true);
+
+        var first = await inFlight;
+        Assert.True(first.IsSuccess, first.Error?.Message);
+        Assert.Equal(
+            ["original-inflight-secret"],
+            discovery.Credentials);
+
+        var current = await facade.GetProviderDiscoveryAsync(
+            target.Id,
+            context);
+
+        Assert.True(current.IsSuccess, current.Error?.Message);
+        Assert.Equal(2, discovery.CallCount);
+        Assert.Equal(
+            ["original-inflight-secret", "replacement-inflight-secret"],
+            discovery.Credentials);
+    }
+
+    [Fact]
     public async Task Management_RejectsMismatchedDiscoveryResult_AndDoesNotCacheIt()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryResultMismatch");
@@ -570,6 +662,8 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
         private readonly bool _mismatchedResult;
         private readonly bool _mismatchedEndpointPathCase;
         private readonly TimeSpan? _delay;
+        private readonly TaskCompletionSource<bool>? _started;
+        private readonly TaskCompletionSource<bool>? _release;
         private readonly ConcurrentQueue<string?> _credentials = new();
         private int _callCount;
 
@@ -578,13 +672,17 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             int? failOnCall = null,
             bool mismatchedResult = false,
             bool mismatchedEndpointPathCase = false,
-            TimeSpan? delay = null)
+            TimeSpan? delay = null,
+            TaskCompletionSource<bool>? started = null,
+            TaskCompletionSource<bool>? release = null)
         {
             _staleFirst = staleFirst;
             _failOnCall = failOnCall;
             _mismatchedResult = mismatchedResult;
             _mismatchedEndpointPathCase = mismatchedEndpointPathCase;
             _delay = delay;
+            _started = started;
+            _release = release;
         }
 
         public int CallCount =>
@@ -603,6 +701,15 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             _credentials.Enqueue(credential?.Reveal());
 
             var callNumber = Interlocked.Increment(ref _callCount);
+
+            _started?.TrySetResult(true);
+
+            if (_release is not null)
+            {
+                await _release.Task
+                    .WaitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
 
             if (_delay is { } delay)
             {
