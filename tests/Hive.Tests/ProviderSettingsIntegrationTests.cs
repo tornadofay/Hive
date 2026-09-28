@@ -151,6 +151,13 @@ public sealed class ProviderSettingsIntegrationTests
             context);
         Assert.True(configured.IsSuccess, configured.Error?.Message);
 
+        discovery.EnqueueResult(
+            Result<ProviderDiscoverySnapshot>.Failure(
+                new Error(
+                    "hive.provider.discovery.test-failure",
+                    ErrorCategory.External,
+                    "The test discovery provider failed.")));
+
         var accountResult = await facade.ListProviderAccountsAsync(
             configured.Value!.Provider.Id,
             context,
@@ -213,8 +220,6 @@ public sealed class ProviderSettingsIntegrationTests
         var discovery = new SettingsDiscovery(
             ModelSet("model-a", "model-b"),
             clock);
-        discovery.EnqueueModels(ModelSet(new[] { "model-a", "model-c" }, "vision"));
-        discovery.EnqueueModels(ModelSet("model-a", "model-b"));
 
         using var facade = new HiveManagementFacade(
             providerStore,
@@ -231,6 +236,9 @@ public sealed class ProviderSettingsIntegrationTests
             credential,
             context);
         Assert.True(configured.IsSuccess, configured.Error?.Message);
+
+        discovery.EnqueueModels(ModelSet(new[] { "model-a", "model-c" }, "vision"));
+        discovery.EnqueueModels(ModelSet("model-a", "model-b"));
 
         var provider = configured.Value!.Provider;
         var accounts = await facade.ListProviderAccountsAsync(
@@ -354,12 +362,6 @@ public sealed class ProviderSettingsIntegrationTests
         var discovery = new SettingsDiscovery(
             ModelSet("model-a"),
             clock);
-        discovery.EnqueueResult(
-            Result<ProviderDiscoverySnapshot>.Failure(
-                new Error(
-                    "hive.provider.discovery.test-failure",
-                    ErrorCategory.External,
-                    "The test discovery provider failed.")));
 
         using var facade = new HiveManagementFacade(
             providerStore,
