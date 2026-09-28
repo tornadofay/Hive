@@ -13,6 +13,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
     private readonly HiveAgentManagementService _agents;
     private readonly HiveWorkItemManagementService _workItems;
     private readonly HiveInputPreparationManagementService _inputPreparation;
+    private int _disposed;
 
     public HiveManagementFacade(
         IProviderResourceStore providerResources,
@@ -49,6 +50,9 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
 
     public void Dispose()
     {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return;
+
         _configuration.Dispose();
         GC.SuppressFinalize(this);
     }
@@ -110,6 +114,9 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default)
     {
+        if (Volatile.Read(ref _disposed) != 0)
+            return Result<Secret>.Failure(DisposedError());
+
         try
         {
             var result = await _secrets
