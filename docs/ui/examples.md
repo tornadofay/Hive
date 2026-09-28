@@ -141,7 +141,7 @@ The normal Providers page is the user-facing service-configuration surface. It u
 
 `Add Provider` uses the built-in provider catalog and collects the provider's required credential input. Hive.Management creates the durable Provider and default ProviderAccount, stores the credential through the Secret Store, and then discovers/reconciles automatically managed ExecutionTargets. The user does not normally administer ProviderAccount or ExecutionTarget resources.
 
-`Refresh` is a real provider-catalog refresh/reconciliation operation, not only a list reload. It requests fresh discovery for configured provider/account/endpoint contexts and updates automatic ExecutionTargets. Failed or stale discovery preserves existing targets.
+`Refresh` is a real provider-catalog refresh/reconciliation operation, not only a list reload. It requests fresh discovery for active configured provider/account/endpoint contexts and updates automatic ExecutionTargets. Failed or stale discovery preserves existing targets. Retired providers are not refreshed until reactivated through normal lifecycle administration.
 
 `Advanced` is a generalized administrative entry point beside Add Provider and Refresh. It opens the existing Providers / Accounts / Credentials / Execution Targets resource-management pages. It is not tied to one provider and is the supported path for multiple accounts, custom endpoints, local/self-hosted models, manual targets, explicit capability overrides, and administrative lifecycle management.
 
