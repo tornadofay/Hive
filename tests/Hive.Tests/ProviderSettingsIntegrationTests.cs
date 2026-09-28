@@ -41,8 +41,7 @@ public sealed class ProviderSettingsIntegrationTests
             context);
 
         Assert.True(configured.IsSuccess, configured.Error?.Message);
-        Assert.Equal(1, configured.Value!.AutomaticTargetsCreated);
-        Assert.Equal(1, configured.Value.AutomaticTargetsCreated);
+        Assert.Equal(2, configured.Value!.AutomaticTargetsCreated);
         Assert.Equal(2, configured.Value.ActiveAutomaticTargetCount);
         Assert.Equal(1, discovery.CallCount);
         Assert.Equal(["onboarding-secret"], discovery.Credentials);
@@ -80,6 +79,84 @@ public sealed class ProviderSettingsIntegrationTests
         Assert.DoesNotContain(
             targets.Value!,
             target => target.Model == "discovery-probe");
+    }
+
+    [Fact]
+    public async Task ReplaceBuiltInProviderCredential_RefreshesUsingNewCredentialAndPreservesTargetIdentity()
+    {
+        var database = CreateDatabase("Hive_Test_ProviderSettingsCredentialReplacement");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var (context, providerStore, secretStore) = CreateInfrastructure(database);
+        var clock = new FakeClock(
+            new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero));
+        var discovery = new SettingsDiscovery(
+            ModelSet("model-a"),
+            clock);
+
+        using var facade = new HiveManagementFacade(
+            providerStore,
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            secretStore,
+            providerCapabilityDiscovery: discovery,
+            clock: clock);
+
+        using var firstCredential = SecretMaterial.Create("first-secret");
+        var configured = await facade.ConfigureBuiltInProviderAsync(
+            "openai",
+            firstCredential,
+            context);
+        Assert.True(configured.IsSuccess, configured.Error?.Message);
+
+        var accountResult = await facade.ListProviderAccountsAsync(
+            configured.Value!.Provider.Id,
+            context,
+            includeRetired: false);
+        Assert.True(accountResult.IsSuccess, accountResult.Error?.Message);
+        var account = Assert.Single(accountResult.Value!);
+
+        var firstTargets = await facade.ListExecutionTargetsAsync(
+            account.Id,
+            context,
+            includeRetired: true);
+        Assert.True(firstTargets.IsSuccess, firstTargets.Error?.Message);
+        var firstTarget = Assert.Single(firstTargets.Value!);
+        var firstReference = account.CredentialSecret!.Value;
+
+        using var secondCredential = SecretMaterial.Create("second-secret");
+        var replaced = await facade.ReplaceBuiltInProviderCredentialAsync(
+            configured.Value.Provider.Id,
+            secondCredential,
+            context);
+
+        Assert.True(replaced.IsSuccess, replaced.Error?.Message);
+        Assert.Equal(2, discovery.CallCount);
+        Assert.Equal(
+            ["first-secret", "second-secret"],
+            discovery.Credentials);
+
+        var accountAfterResult = await facade.ListProviderAccountsAsync(
+            configured.Value.Provider.Id,
+            context,
+            includeRetired: false);
+        Assert.True(accountAfterResult.IsSuccess, accountAfterResult.Error?.Message);
+        var accountAfter = Assert.Single(accountAfterResult.Value!);
+        Assert.Equal(firstReference, accountAfter.CredentialSecret!.Value);
+
+        var secondTargets = await facade.ListExecutionTargetsAsync(
+            account.Id,
+            context,
+            includeRetired: true);
+        Assert.True(secondTargets.IsSuccess, secondTargets.Error?.Message);
+        var secondTarget = Assert.Single(secondTargets.Value!);
+        Assert.Equal(firstTarget.Id, secondTarget.Id);
+        Assert.Equal(
+            ExecutionTargetManagementMode.Automatic,
+            secondTarget.ManagementMode);
     }
 
     [Fact]
