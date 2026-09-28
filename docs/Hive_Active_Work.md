@@ -11,6 +11,7 @@ This is a bounded corrective revision of the immediately preceding Phase 1.16 Re
 ### Scope
 
 - invalidate cached provider/model discovery observations when a referenced provider credential is successfully replaced through the Hive.Management facade;
+- invalidate the discovery cache on cancellation-ambiguous credential replacement so a commit that may have completed cannot leave prior observations current;
 - prevent an in-flight discovery started under the pre-replacement state from becoming the current cache entry after invalidation;
 - preserve existing Provider → ProviderAccount → ExecutionTarget ownership, cache bounds/version semantics, capability authority, stale handling, cancellation, and Example Host behavior;
 - add focused regression coverage for credential replacement and discovery-cache invalidation.
