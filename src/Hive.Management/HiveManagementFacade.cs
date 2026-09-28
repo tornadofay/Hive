@@ -20,6 +20,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         IWorkItemResourceStore workItems,
         ISecretStore? secrets = null,
         IProviderConnectionTester? providerConnectionTester = null,
+        IProviderCapabilityDiscovery? providerCapabilityDiscovery = null,
         IHiveConfigurationStore? configurationStore = null,
         IHivePersistenceConnectionTester? persistenceConnectionTester = null,
         IHiveBootstrapCredentialStore? bootstrapCredentials = null,
@@ -33,14 +34,15 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         _providers = new HiveProviderManagementService(
             providerResources,
             providerConnectionTester,
-            secrets);
+            secrets,
+            providerCapabilityDiscovery);
         _agents = new HiveAgentManagementService(
             agentDefinitions,
             providerResources,
             secrets,
             agentExecution);
         _workItems = new HiveWorkItemManagementService(workItems);
-        _inputPreparation = new HiveInputPreparationManagementService(providerResources);
+        _inputPreparation = new HiveInputPreparationManagementService(_providers);
     }
 
     public void Dispose()
@@ -112,6 +114,17 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) =>
         _providers.TestExecutionTargetConnectionAsync(executionTargetId, accessContext, cancellationToken);
+
+    public Task<Result<ProviderDiscoverySnapshot>> GetProviderDiscoveryAsync(
+        ExecutionTargetId executionTargetId,
+        ResourceAccessContext accessContext,
+        bool forceRefresh = false,
+        CancellationToken cancellationToken = default) =>
+        _providers.GetProviderDiscoveryAsync(
+            executionTargetId,
+            accessContext,
+            forceRefresh,
+            cancellationToken);
 
     public Task<Result<Provider>> CreateProviderAsync(
         Provider provider,
