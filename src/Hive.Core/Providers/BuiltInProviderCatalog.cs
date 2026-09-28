@@ -27,7 +27,12 @@ public sealed record BuiltInProviderDefinition
             throw new ArgumentException("Provider transport kind is required.", nameof(transportKind));
 
         if (!Enum.IsDefined(credentialKind))
-            throw new ArgumentOutOfRangeException(nameof(credentialKind), credentialKind);
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(credentialKind),
+                credentialKind,
+                "Built-in provider credential kind is invalid.");
+        }
 
         if (normalOnboardingSupported && defaultEndpoint is null)
             throw new ArgumentException(
