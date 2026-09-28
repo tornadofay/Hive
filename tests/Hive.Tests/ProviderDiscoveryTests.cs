@@ -62,6 +62,34 @@ public sealed class ProviderDiscoveryTests
     }
 
     [Fact]
+    public void CapabilityResolver_DifferentEndpointPathCaseDoesNotMatch()
+    {
+        var target = CreateTarget(Array.Empty<CapabilityStateEntry>());
+        var discovery = new ProviderDiscoverySnapshot(
+            target.ProviderId,
+            target.ProviderAccountId,
+            new Uri("https://example.test/V1/"),
+            new ProviderOperationalMetadata(
+                ProviderAvailabilityStatus.Available,
+                ProviderHealthStatus.Unknown,
+                DateTimeOffset.UtcNow.AddMinutes(-1),
+                DateTimeOffset.UtcNow.AddMinutes(5)),
+            ProviderDiscoveryState.Supported,
+            [
+                CreateModel(
+                    target,
+                    Capability("vision", CapabilityState.Supported))
+            ]);
+
+        var effective = ExecutionTargetCapabilityResolver.ResolveCapabilities(
+            target,
+            discovery,
+            DateTimeOffset.UtcNow);
+
+        Assert.Empty(effective);
+    }
+
+    [Fact]
     public void CapabilityResolver_StaleDiscoveryDoesNotProvideEffectiveCapability()
     {
         var target = CreateTarget(Array.Empty<CapabilityStateEntry>());
