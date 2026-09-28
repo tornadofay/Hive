@@ -520,9 +520,10 @@ public sealed class ProviderDiscoveryTests
             TimeSpan.FromMinutes(7),
             new FakeClock(now));
 
-        var target = CreateTarget(Array.Empty<CapabilityStateEntry>());
-        var provider = CreateProviderFor(target);
-        var account = CreateAccountFor(provider, target);
+        var sourceTarget = CreateTarget(Array.Empty<CapabilityStateEntry>());
+        var provider = CreateProviderFor(sourceTarget);
+        var account = CreateAccountFor(provider, sourceTarget);
+        var target = CreateTargetFor(provider, account, sourceTarget);
 
         var result = await discovery.DiscoverAsync(
             provider,
