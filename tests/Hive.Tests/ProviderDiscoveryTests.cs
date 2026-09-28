@@ -351,6 +351,12 @@ public sealed class ProviderDiscoveryTests
         Assert.Equal(
             ProviderDiscoveryState.Unsupported,
             result.Value!.ModelEnumerationState);
+        Assert.Equal(
+            ProviderAvailabilityStatus.Unknown,
+            result.Value.Operational.Availability);
+        Assert.Equal(
+            ProviderHealthStatus.Unknown,
+            result.Value.Operational.Health);
         Assert.Empty(result.Value.Models);
     }
 
