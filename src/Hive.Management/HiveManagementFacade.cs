@@ -381,8 +381,8 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         ResourceVersion expectedVersion,
         ResourceAccessContext accessContext,
         string reason,
-        CancellationToken cancellationToken = default) =>
-        _workItems.RejectWorkItemAsync(workItemId, expectedVersion, accessContext, reason, cancellationToken);
+        CancellationToken cancellationToken = default) => Run(() =>
+        _workItems.RejectWorkItemAsync(workItemId, expectedVersion, accessContext, reason, cancellationToken));
     private Task<Result<T>> Run<T>(Func<Task<Result<T>>> operation)
     {
         ArgumentNullException.ThrowIfNull(operation);
