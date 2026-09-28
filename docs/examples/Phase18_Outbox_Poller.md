@@ -1,13 +1,19 @@
 # Phase 1.8 — Transactional Outbox Poller
 
-The Phase 1.8 public persistence boundary is exposed through `Hive.Persistence`.
+The transactional outbox delivery boundary is public through the poller and its handler contract. The SQL event persistence implementation itself remains internal.
 
 Example Host path: Persistence / Events / Outbox Poller / Transactional Outbox Poller
 
 ```csharp
-var poller = new EventOutboxPoller(store);
-var result = await poller.ProcessNextAsync(handler, cancellationToken);
+var persistence = HiveEventPersistence.CreateSql(options);
+var poller = persistence.CreateOutboxPoller();
+
+var result = await poller.ProcessNextAsync(
+    handler,
+    cancellationToken);
 ```
+
+Use an application-facing Management operation or another owning Hive boundary to cause the durable state change that creates the outbox row. Do not call the raw event store from application code.
 
 Implement `IEventOutboxHandler` at the delivery boundary and use `entry.Envelope.EventId` as the idempotency key.
 
