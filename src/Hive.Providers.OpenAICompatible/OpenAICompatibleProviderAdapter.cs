@@ -197,6 +197,157 @@ public sealed class OpenAICompatibleProviderAdapter
         }
     }
 
+    public async Task<Result<OpenAICompatibleModelCatalog>> ListModelsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        using var timeoutCts =
+            CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(_options.Timeout);
+
+        using var httpRequest = new HttpRequestMessage(
+            HttpMethod.Get,
+            BuildModelsUri(_options.BaseUri));
+
+        httpRequest.Headers.Accept.Add(
+            new MediaTypeWithQualityHeaderValue("application/json"));
+
+        if (_options.ApiKey is not null)
+        {
+            try
+            {
+                httpRequest.Headers.Authorization =
+                    new AuthenticationHeaderValue(
+                        "Bearer",
+                        _options.ApiKey.Reveal());
+            }
+            catch (ArgumentException)
+            {
+                return Result<OpenAICompatibleModelCatalog>.Failure(
+                    new Error(
+                        "hive.provider.openai-compatible.invalid-credential",
+                        ErrorCategory.Validation,
+                        "The supplied provider credential cannot be used in an Authorization header."));
+            }
+            catch (FormatException)
+            {
+                return Result<OpenAICompatibleModelCatalog>.Failure(
+                    new Error(
+                        "hive.provider.openai-compatible.invalid-credential",
+                        ErrorCategory.Validation,
+                        "The supplied provider credential cannot be used in an Authorization header."));
+            }
+        }
+
+        HttpResponseMessage response;
+
+        try
+        {
+            response = await _httpClient.SendAsync(
+                    httpRequest,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    timeoutCts.Token)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+            when (!cancellationToken.IsCancellationRequested)
+        {
+            return Result<OpenAICompatibleModelCatalog>.Failure(
+                new Error(
+                    "hive.provider.openai-compatible.timeout",
+                    ErrorCategory.Timeout,
+                    "The provider model-discovery request timed out."));
+        }
+        catch (OperationCanceledException)
+        {
+            throw new OperationCanceledException(
+                "The provider model-discovery request was cancelled by the caller.",
+                cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+            return Result<OpenAICompatibleModelCatalog>.Failure(
+                new Error(
+                    "hive.provider.openai-compatible.transport-failed",
+                    ErrorCategory.External,
+                    "The provider model-discovery request failed at the transport boundary."));
+        }
+
+        using (response)
+        {
+            if (response.StatusCode is
+                HttpStatusCode.NotFound or
+                HttpStatusCode.MethodNotAllowed or
+                HttpStatusCode.NotImplemented)
+            {
+                return Result<OpenAICompatibleModelCatalog>.Failure(
+                    Error.Unsupported(
+                        "hive.provider.openai-compatible.model-enumeration-unsupported",
+                        "The provider does not expose an OpenAI-compatible model enumeration endpoint."));
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return Result<OpenAICompatibleModelCatalog>.Failure(
+                    MapHttpFailure(response.StatusCode));
+            }
+
+            try
+            {
+                var responseBody = await ReadResponseBodyAsync(
+                        response.Content,
+                        timeoutCts.Token)
+                    .ConfigureAwait(false);
+
+                if (responseBody.IsFailure)
+                {
+                    return Result<OpenAICompatibleModelCatalog>.Failure(
+                        responseBody.Error!);
+                }
+
+                return ParseModelCatalog(
+                    responseBody.Value!,
+                    TryGetRateLimitRemaining(response));
+            }
+            catch (OperationCanceledException)
+                when (!cancellationToken.IsCancellationRequested)
+            {
+                return Result<OpenAICompatibleModelCatalog>.Failure(
+                    new Error(
+                        "hive.provider.openai-compatible.timeout",
+                        ErrorCategory.Timeout,
+                        "The provider model-discovery response timed out."));
+            }
+            catch (OperationCanceledException)
+            {
+                throw new OperationCanceledException(
+                    "The provider model-discovery response read was cancelled by the caller.",
+                    cancellationToken);
+            }
+            catch (HttpRequestException)
+            {
+                return Result<OpenAICompatibleModelCatalog>.Failure(
+                    new Error(
+                        "hive.provider.openai-compatible.transport-failed",
+                        ErrorCategory.External,
+                        "The provider model-discovery response could not be read."));
+            }
+            catch (IOException)
+            {
+                return Result<OpenAICompatibleModelCatalog>.Failure(
+                    new Error(
+                        "hive.provider.openai-compatible.transport-failed",
+                        ErrorCategory.External,
+                        "The provider model-discovery response could not be read."));
+            }
+            catch (DecoderFallbackException)
+            {
+                return ModelSerializationFailure();
+            }
+        }
+    }
+
     private static async Task<Result<string>> ReadResponseBodyAsync(
         HttpContent content,
         CancellationToken cancellationToken)
@@ -279,6 +430,18 @@ public sealed class OpenAICompatibleProviderAdapter
         }
     }
 
+    private static Uri BuildModelsUri(Uri baseUri)
+    {
+        var path = baseUri.GetLeftPart(UriPartial.Path);
+
+        if (!path.EndsWith("/", StringComparison.Ordinal))
+            path += "/";
+
+        return new Uri(
+            path + "models" + baseUri.Query + baseUri.Fragment,
+            UriKind.Absolute);
+    }
+
     private static Uri BuildChatCompletionsUri(Uri baseUri)
     {
         var path = baseUri.GetLeftPart(UriPartial.Path);
@@ -289,6 +452,311 @@ public sealed class OpenAICompatibleProviderAdapter
         return new Uri(
             path + "chat/completions" + baseUri.Query + baseUri.Fragment,
             UriKind.Absolute);
+    }
+
+    private static Result<OpenAICompatibleModelCatalog> ParseModelCatalog(
+        string responseJson,
+        int? rateLimitRemaining)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(responseJson);
+            var root = document.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object ||
+                !root.TryGetProperty("data", out var data) ||
+                data.ValueKind != JsonValueKind.Array)
+            {
+                return ModelSerializationFailure();
+            }
+
+            var models = new List<OpenAICompatibleModelDescriptor>();
+            var modelIds = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (var model in data.EnumerateArray())
+            {
+                if (model.ValueKind != JsonValueKind.Object ||
+                    !model.TryGetProperty("id", out var idElement) ||
+                    idElement.ValueKind != JsonValueKind.String)
+                {
+                    return ModelSerializationFailure();
+                }
+
+                var id = idElement.GetString();
+                if (string.IsNullOrWhiteSpace(id) || id.Length > OpenAICompatibleChatRequest.MaxModelLength)
+                    return ModelSerializationFailure();
+
+                id = id.Trim();
+
+                if (!modelIds.Add(id))
+                    return ModelSerializationFailure();
+
+                var ownedBy = TryGetString(model, "owned_by");
+                if (ownedBy is not null && ownedBy.Length > 200)
+                    return ModelSerializationFailure();
+
+                DateTimeOffset? createdAtUtc = null;
+                if (model.TryGetProperty("created", out var createdElement) &&
+                    createdElement.ValueKind == JsonValueKind.Number &&
+                    createdElement.TryGetInt64(out var createdUnixSeconds) &&
+                    createdUnixSeconds >= 0)
+                {
+                    try
+                    {
+                        createdAtUtc = DateTimeOffset
+                            .FromUnixTimeSeconds(createdUnixSeconds);
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        return ModelSerializationFailure();
+                    }
+                }
+
+                var availability = model.TryGetProperty("available", out var availableElement)
+                    && availableElement.ValueKind == JsonValueKind.False
+                    ? ProviderAvailabilityStatus.Unavailable
+                    : model.TryGetProperty("available", out availableElement)
+                        && availableElement.ValueKind == JsonValueKind.True
+                            ? ProviderAvailabilityStatus.Available
+                            : ProviderAvailabilityStatus.Unknown;
+
+                var health = ParseHealth(model);
+
+                var capabilities = ParseCapabilities(model);
+
+                models.Add(
+                    new OpenAICompatibleModelDescriptor(
+                        id,
+                        ownedBy,
+                        createdAtUtc,
+                        availability,
+                        health,
+                        capabilities));
+            }
+
+            models.Sort(static (left, right) =>
+                StringComparer.Ordinal.Compare(left.Id, right.Id));
+
+            return Result<OpenAICompatibleModelCatalog>.Success(
+                new OpenAICompatibleModelCatalog(
+                    models,
+                    rateLimitRemaining));
+        }
+        catch (JsonException)
+        {
+            return ModelSerializationFailure();
+        }
+        catch (ArgumentException)
+        {
+            return ModelSerializationFailure();
+        }
+    }
+
+    private static IReadOnlyList<OpenAICompatibleCapabilityDescriptor> ParseCapabilities(
+        JsonElement model)
+    {
+        var states = new Dictionary<string, CapabilityState>(
+            StringComparer.Ordinal);
+
+        AddBooleanCapability(
+            model,
+            "supports_vision",
+            "vision",
+            states);
+        AddBooleanCapability(
+            model,
+            "supports_tools",
+            "tool.calling",
+            states);
+        AddBooleanCapability(
+            model,
+            "supports_function_calling",
+            "tool.calling",
+            states);
+        AddBooleanCapability(
+            model,
+            "supports_structured_output",
+            "structured.output",
+            states);
+
+        if (model.TryGetProperty("capabilities", out var capabilities))
+        {
+            if (capabilities.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var property in capabilities.EnumerateObject())
+                {
+                    var key = NormalizeCapabilityKey(property.Name);
+                    if (key is null)
+                        continue;
+
+                    var state = ParseCapabilityState(property.Value);
+                    states[key] = state;
+                }
+            }
+            else if (capabilities.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in capabilities.EnumerateArray())
+                {
+                    if (item.ValueKind != JsonValueKind.String)
+                        continue;
+
+                    var key = NormalizeCapabilityKey(item.GetString() ?? string.Empty);
+                    if (key is not null)
+                        states[key] = CapabilityState.Supported;
+                }
+            }
+        }
+
+        return states
+            .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+            .Select(pair =>
+                new OpenAICompatibleCapabilityDescriptor(
+                    pair.Key,
+                    pair.Value))
+            .ToArray();
+    }
+
+    private static void AddBooleanCapability(
+        JsonElement model,
+        string propertyName,
+        string capabilityKey,
+        Dictionary<string, CapabilityState> states)
+    {
+        if (!model.TryGetProperty(propertyName, out var value))
+            return;
+
+        if (value.ValueKind == JsonValueKind.True)
+        {
+            states[capabilityKey] = CapabilityState.Supported;
+        }
+        else if (value.ValueKind == JsonValueKind.False)
+        {
+            states[capabilityKey] = CapabilityState.Unsupported;
+        }
+    }
+
+    private static CapabilityState ParseCapabilityState(
+        JsonElement value)
+    {
+        if (value.ValueKind == JsonValueKind.True)
+            return CapabilityState.Supported;
+
+        if (value.ValueKind == JsonValueKind.False)
+            return CapabilityState.Unsupported;
+
+        if (value.ValueKind != JsonValueKind.String)
+            return CapabilityState.Unknown;
+
+        return value.GetString()?.Trim().ToLowerInvariant() switch
+        {
+            "supported" or "support" or "true" or "yes" => CapabilityState.Supported,
+            "unsupported" or "false" or "no" => CapabilityState.Unsupported,
+            _ => CapabilityState.Unknown
+        };
+    }
+
+    private static string? NormalizeCapabilityKey(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        var normalized = value
+            .Trim()
+            .ToLowerInvariant()
+            .Replace('_', '.')
+            .Replace('-', '.')
+            .Replace('/', '.')
+            .Replace(' ', '.');
+
+        normalized = string.Join(
+            ".",
+            normalized.Split(
+                '.',
+                StringSplitOptions.RemoveEmptyEntries));
+
+        return normalized switch
+        {
+            "text.generate" or
+            "text.generation" or
+            "chat" or
+            "chat.completions" or
+            "completion" or
+            "completions" => "text.generate",
+
+            "vision" or
+            "vision.input" or
+            "image.input" or
+            "multimodal.vision" => "vision",
+
+            "structured.output" or
+            "structured.outputs" or
+            "json.schema" or
+            "json.mode" => "structured.output",
+
+            "tool.calling" or
+            "tool.call" or
+            "tools" or
+            "function.calling" or
+            "function.calls" or
+            "function.call" => "tool.calling",
+
+            _ => null
+        };
+    }
+
+    private static ProviderHealthStatus ParseHealth(JsonElement model)
+    {
+        if (!model.TryGetProperty("health", out var value) ||
+            value.ValueKind != JsonValueKind.String)
+        {
+            return ProviderHealthStatus.Unknown;
+        }
+
+        return value.GetString()?.Trim().ToLowerInvariant() switch
+        {
+            "healthy" => ProviderHealthStatus.Healthy,
+            "degraded" or "degrading" => ProviderHealthStatus.Degraded,
+            "unhealthy" or "failed" => ProviderHealthStatus.Unhealthy,
+            _ => ProviderHealthStatus.Unknown
+        };
+    }
+
+    private static string? TryGetString(
+        JsonElement element,
+        string propertyName)
+    {
+        if (!element.TryGetProperty(propertyName, out var value) ||
+            value.ValueKind != JsonValueKind.String)
+        {
+            return null;
+        }
+
+        var result = value.GetString();
+
+        return string.IsNullOrWhiteSpace(result)
+            ? null
+            : result.Trim();
+    }
+
+    private static int? TryGetRateLimitRemaining(
+        HttpResponseMessage response)
+    {
+        if (!response.Headers.TryGetValues(
+                "x-ratelimit-remaining-requests",
+                out var values))
+        {
+            return null;
+        }
+
+        var value = values.FirstOrDefault();
+
+        return int.TryParse(
+                value,
+                System.Globalization.NumberStyles.Integer,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var remaining) && remaining >= 0
+            ? remaining
+            : null;
     }
 
     private static object BuildPayload(OpenAICompatibleChatRequest request)
@@ -503,6 +971,13 @@ public sealed class OpenAICompatibleProviderAdapter
     private sealed class RequestBodyTooLargeException : Exception
     {
     }
+
+    private static Result<OpenAICompatibleModelCatalog> ModelSerializationFailure() =>
+        Result<OpenAICompatibleModelCatalog>.Failure(
+            new Error(
+                "hive.provider.openai-compatible.malformed-model-catalog",
+                ErrorCategory.Serialization,
+                "The provider returned a malformed or unsupported model catalog."));
 
     private static Result<OpenAICompatibleChatResponse> SerializationFailure() =>
         Result<OpenAICompatibleChatResponse>.Failure(
