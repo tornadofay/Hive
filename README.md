@@ -294,7 +294,7 @@ The solution and project files are the implementation source for the actual proj
 
 **Phase 0 — Foundations: Complete.**
 
-**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1): 1.1–1.15 complete and verified; 1.16 implementation and Example Host handoff are verified, with a final full-suite rerun still pending after the last Example Host fixture correction.** The prior revised full `Hive.Tests` result was **415/415 passed, 0 failed, 0 skipped** in 43.2 seconds on 2026-09-28. The authoritative current status and implementation scope remain in `docs/Hive_Current_Status.md` and `docs/Hive_Active_Work.md`.
+**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1): 1.1–1.16 complete and verified.** Final developer verification for Phase 1.16 reported the full `Hive.Tests` suite at **415/415 passed, 0 failed, 0 skipped** in 43.5 seconds on 2026-09-28, after the final Example Host fixture correction. The matching Provider / Model Capability Discovery Example Host scenario was also manually exercised successfully. The authoritative current status and implementation scope remain in `docs/Hive_Current_Status.md` and `docs/Hive_Active_Work.md`.
 
 See [Architecture](docs/architecture.md) and [Roadmap](docs/roadmap.md).
 
