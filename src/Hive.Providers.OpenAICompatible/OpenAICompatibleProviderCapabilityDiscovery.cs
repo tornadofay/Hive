@@ -14,11 +14,13 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
     private readonly HttpClient _httpClient;
     private readonly TimeSpan _timeout;
     private readonly TimeSpan _freshness;
+    private readonly IClock _clock;
 
     public OpenAICompatibleProviderCapabilityDiscovery(
         HttpClient httpClient,
         TimeSpan? timeout = null,
-        TimeSpan? freshness = null)
+        TimeSpan? freshness = null,
+        IClock? clock = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
@@ -39,6 +41,8 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
                 _freshness,
                 "Discovery freshness must be greater than zero and no more than one day.");
         }
+
+        _clock = clock ?? SystemClock.Instance;
     }
 
     public async Task<Result<ProviderDiscoverySnapshot>> DiscoverAsync(
@@ -107,7 +111,7 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
             if (catalog.Error?.Code ==
                 "hive.provider.openai-compatible.model-enumeration-unsupported")
             {
-                var observedAt = DateTimeOffset.UtcNow;
+                var observedAt = _clock.UtcNow;
 
                 return Result<ProviderDiscoverySnapshot>.Success(
                     new ProviderDiscoverySnapshot(
@@ -128,7 +132,7 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
                 catalog.Error!);
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = _clock.UtcNow;
 
         var models = catalog.Value!.Models
             .Select(model =>
