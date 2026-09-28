@@ -105,7 +105,6 @@ public sealed class HiveSettingsView : UserControl
                 "Providers",
                 "Configure built-in providers and refresh their automatically managed models and execution targets.",
                 SettingsPageKey.ProviderConfiguration));
-        navigationRoot.Nodes.Add(providersNode);
         navigationRoot.Nodes.Add(
             CreatePageNode(
                 "Agents",
