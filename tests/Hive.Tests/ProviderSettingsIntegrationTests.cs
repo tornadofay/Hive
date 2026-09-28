@@ -151,13 +151,6 @@ public sealed class ProviderSettingsIntegrationTests
             context);
         Assert.True(configured.IsSuccess, configured.Error?.Message);
 
-        discovery.EnqueueResult(
-            Result<ProviderDiscoverySnapshot>.Failure(
-                new Error(
-                    "hive.provider.discovery.test-failure",
-                    ErrorCategory.External,
-                    "The test discovery provider failed.")));
-
         var accountResult = await facade.ListProviderAccountsAsync(
             configured.Value!.Provider.Id,
             context,
@@ -378,6 +371,13 @@ public sealed class ProviderSettingsIntegrationTests
             credential,
             context);
         Assert.True(configured.IsSuccess, configured.Error?.Message);
+
+        discovery.EnqueueResult(
+            Result<ProviderDiscoverySnapshot>.Failure(
+                new Error(
+                    "hive.provider.discovery.test-failure",
+                    ErrorCategory.External,
+                    "The test discovery provider failed.")));
 
         var accountResult = await facade.ListProviderAccountsAsync(
             configured.Value!.Provider.Id,
