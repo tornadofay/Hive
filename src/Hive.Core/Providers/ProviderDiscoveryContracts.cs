@@ -270,12 +270,9 @@ public static class ExecutionTargetCapabilityResolver
             discovery.IsStale(nowUtc) ||
             discovery.ProviderId != target.ProviderId ||
             discovery.ProviderAccountId != target.ProviderAccountId ||
-            Uri.Compare(
+            !ProviderEndpointIdentity.Equals(
                 discovery.Endpoint,
-                target.Endpoint,
-                UriComponents.AbsoluteUri,
-                UriFormat.SafeUnescaped,
-                StringComparison.Ordinal) != 0)
+                target.Endpoint))
         {
             return target.Capabilities;
         }
