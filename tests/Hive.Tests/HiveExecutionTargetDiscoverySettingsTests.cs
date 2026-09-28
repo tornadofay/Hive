@@ -73,6 +73,38 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
     }
 
     [Fact]
+    public async Task Editor_AutomaticallyStartsDiscoveryWhenOpenedForPersistedTarget()
+    {
+        var target = CreateTarget();
+        var snapshot = CreateSnapshot(target);
+        var (management, proxy) = DiscoveryManagementProxy.Create(snapshot);
+        var context = CreateContext();
+        var provider = CreateProvider(target.ProviderId, context);
+        var account = CreateAccount(
+            target.ProviderAccountId,
+            target.ProviderId,
+            context);
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var owner = new Form();
+        using var editor = new HiveExecutionTargetEditorForm(
+            target,
+            provider,
+            account,
+            management,
+            context,
+            themeManager);
+
+        owner.Controls.Add(editor);
+        owner.Show();
+
+        await proxy.FirstStarted.Task;
+
+        Assert.Equal(1, proxy.DiscoveryInvocationCount);
+        Assert.NotNull(editor.DiscoveryPanel);
+    }
+
+    [Fact]
     public async Task Editor_AppliesSelectedDiscoveredModelToEditableModelField()
     {
         var target = CreateTarget();
