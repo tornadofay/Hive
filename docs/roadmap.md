@@ -417,26 +417,83 @@ Verify:
 - focused automated coverage exercises onboarding, refresh/reconciliation, lifecycle, concurrency/idempotency, failure/cancellation, and credential secrecy boundaries.
 
 ## 1.17 — Structured Extraction & Validation
-Objective: produce typed candidate business data from supported input capabilities and apply required-field, type, and domain validation.
+Objective: turn the completed Phase 1.15 prepared-input boundary into a source-neutral, typed StructuredCandidate boundary for later business-operation proposals, with bounded batch processing, one-time semantic mapping where required, human-reviewable extraction/mapping results, validation, and provenance. Phase 1.17 never mutates the host business application.
 
-Scope:
-- image/vision extraction;
-- spreadsheet-derived structured candidate input;
-- source-neutral candidate contract;
-- parent/child candidate structure when required by the target operation;
-- required/type/domain validation;
-- malformed extraction result handling;
-- candidate provenance and source linkage;
-- no host mutation.
+Phase 1.17 implementation slices, in order:
+1. **Input Selection & Batch Construction**
+   - support explicit Single File and Folder selection;
+   - normalize both selection modes into the existing InputSubmission/InputItem model;
+   - allow mixed supported file types and multiple files in one folder batch;
+   - enumerate folders with explicit recursive/non-recursive behavior and bounded depth/item/resource limits;
+   - identify unsupported files without preventing safe supported items from continuing.
+2. **Target Schema & Semantic Field Contract**
+   - expose the target operation's source-neutral semantic fields needed for extraction and mapping;
+   - use stable semantic field identity, not database-field names as the durable mapping key;
+   - include human-readable field name, expected type, requiredness, parent/child structure, and bounded lookup/reference semantics where required;
+   - keep host database schema and private host types behind the existing host semantic boundary.
+3. **Spreadsheet Profiling & One-Time Mapping**
+   - use the existing bounded .xlsx preparation boundary for workbook/worksheet/row mechanics;
+   - inspect workbook structure, headers, and a bounded representative sample of row values to build a mapping context;
+   - use the LLM once to propose source-column → target-semantic-field mappings for a workbook/mapping context;
+   - validate the proposed mapping deterministically through Hive before it is applied;
+   - make the mapping human-reviewable and editable;
+   - after the mapping is accepted, apply it deterministically to all applicable rows without an LLM call per row;
+   - preserve mapping provenance/evidence and the mapping's source context.
+4. **Vision Extraction**
+   - route each image to an eligible vision-capable ExecutionTarget using the existing authoritative routing/selection boundary;
+   - extract each image against the target semantic-field contract;
+   - process multiple images as one bounded batch while retaining independent per-image status/result/provenance;
+   - isolate a failed image from successful images and preserve the original source identity for later review.
+5. **Candidate Normalization, Validation & Provenance**
+   - parse model output into a typed, source-neutral StructuredCandidate;
+   - support parent/child candidate structure;
+   - perform deterministic required-field/type validation and apply host/domain validation through the appropriate owning contract;
+   - represent field/item validation failures explicitly rather than silently dropping invalid data;
+   - reject malformed model output safely;
+   - preserve source linkage, extraction/mapping provenance, execution identity, and relevant evidence/confidence metadata without treating confidence as authorization.
+6. **Reviewable Results & Handoff**
+   - provide a batch-level result view with per-file/per-item outcomes;
+   - show failed extraction/mapping/validation items with safe error information and source file identity;
+   - allow the user to open the original image/file for inspection where the host/UI surface permits;
+   - allow correction of mappings and candidate values before downstream business-operation work;
+   - produce a stable, reviewable candidate result ready for the later governance/business-operation pipeline.
+   - generalized Approve / Reject authorization remains owned by the Phase 1.22 human-intervention boundary; Phase 1.17 must not invent a second authorization system.
+
+Batch semantics:
+- a single file is a one-item submission;
+- a folder is an input-selection scope that becomes one bounded batch of input items;
+- multiple Excel files may coexist with images and other supported inputs in one batch;
+- each input retains its own item identity and result/failure even when grouped in one batch;
+- batch grouping must never erase per-item provenance, validation state, or recovery/audit identity.
+
+Human-review checkpoints:
+- **Processing checkpoint:** later governance may authorize processing of the selected batch as one intervention, rather than requiring one authorization per image;
+- **Mapping/candidate checkpoint:** the user can inspect/edit the one-time spreadsheet mapping and extracted candidate results, with per-item failures visible;
+- **Business-operation authorization:** the later business-operation proposal is authorized separately before host mutation;
+- the processing/mapping concepts above are part of the Phase 1.17 product design, but their generalized authoritative Approve/Reject state machine belongs to Phase 1.22.
+
+Non-goals:
+- no host business mutation;
+- no business-operation proposal or receipt;
+- no generic Approve/Reject implementation beyond already-existing boundaries;
+- no per-row LLM mapping calls after a mapping is established;
+- no model-name-only durable mapping identity;
+- no direct SQL/database access to host business data;
+- no requirement for one human approval per image.
 
 Verify:
-- valid candidate;
-- missing fields;
-- invalid types;
+- single-file and folder selection/batch construction, including mixed supported file types;
+- bounded folder enumeration and cancellation/failure isolation;
+- semantic target-field schema and stable field identity;
+- one-time spreadsheet mapping proposal, deterministic mapping validation, human-editable mapping, and deterministic reuse across rows/files in the applicable mapping context;
+- image extraction with independent per-image success/failure;
+- valid candidate parsing;
+- missing required fields and invalid types;
 - malformed model output;
 - parent/child candidate structure;
-- invalid/rejected candidate path;
-- provenance preservation.
+- provenance/source linkage preservation;
+- reviewable failed-item reporting and source inspection path;
+- no host mutation.
 
 ## 1.18 — Durable Base-Agent Work State
 Objective: make the already-defined Base-Agent work mechanisms durable across runtime lifetimes.
