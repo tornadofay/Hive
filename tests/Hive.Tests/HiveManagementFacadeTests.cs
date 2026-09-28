@@ -74,6 +74,7 @@ public sealed class HiveManagementFacadeTests
         var context = CreateContext();
         facade.Dispose();
 
+        using var replacementMaterial = SecretMaterial.Create("replacement");
         var provider = await facade.ListProvidersAsync(context);
         var agentDefinitions = await facade.ListAgentDefinitionsAsync(context);
         var workItems = await facade.ListWorkItemsAsync(context);
@@ -85,6 +86,11 @@ public sealed class HiveManagementFacadeTests
                     "image/png",
                     new byte[] { 1, 2, 3 })
             ]),
+            context);
+        var replacement = await facade.ReplaceSecretAsync(
+            SecretId.New(),
+            replacementMaterial,
+            ResourceVersion.Initial,
             context);
 
         AssertDisposed(provider);
