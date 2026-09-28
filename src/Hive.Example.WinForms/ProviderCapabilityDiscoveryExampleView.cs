@@ -358,11 +358,11 @@ internal sealed class ProviderCapabilityDiscoveryExampleView : UserControl
                         .ConfigureAwait(false);
 
                     await using var stream = client.GetStream();
-                    var requestLine = await ReadRequestLineAsync(
+                    var request = await ReadRequestAsync(
                         stream,
                         _stop.Token).ConfigureAwait(false);
 
-                    if (!requestLine.EndsWith(
+                    if (!request.RequestLine.EndsWith(
                             " /v1/models HTTP/1.1",
                             StringComparison.Ordinal))
                     {
@@ -414,11 +414,13 @@ internal sealed class ProviderCapabilityDiscoveryExampleView : UserControl
             }
         }
 
-        private static async Task<string> ReadRequestLineAsync(
+        private static async Task<ExampleHttpRequest> ReadRequestAsync(
             NetworkStream stream,
             CancellationToken cancellationToken)
         {
-            var buffer = new List<byte>(256);
+            var requestBuffer = new List<byte>(2048);
+            var headerTerminator = new byte[] { 13, 10, 13, 10 };
+            var matched = 0;
 
             while (true)
             {
@@ -429,21 +431,39 @@ internal sealed class ProviderCapabilityDiscoveryExampleView : UserControl
 
                 if (read == 0)
                     throw new IOException(
-                        "The example client closed the connection before the request line was received.");
+                        "The example client closed the connection before the HTTP request was received.");
 
-                if (value[0] == (byte)'\n')
-                    break;
+                requestBuffer.Add(value[0]);
 
-                if (value[0] != (byte)'\r')
-                    buffer.Add(value[0]);
-
-                if (buffer.Count > 2048)
+                if (requestBuffer.Count > 16 * 1024)
                     throw new InvalidOperationException(
-                        "The example request line exceeded the safety limit.");
+                        "The example HTTP request exceeded the safety limit.");
+
+                if (value[0] == headerTerminator[matched])
+                {
+                    matched++;
+                    if (matched == headerTerminator.Length)
+                        break;
+                }
+                else
+                {
+                    matched = value[0] == headerTerminator[0] ? 1 : 0;
+                }
             }
 
-            return Encoding.ASCII.GetString(buffer.ToArray());
+            var requestText = Encoding.ASCII.GetString(requestBuffer.ToArray());
+            var firstLineEnd = requestText.IndexOf("\r\n", StringComparison.Ordinal);
+
+            if (firstLineEnd <= 0)
+                throw new InvalidOperationException(
+                    "The example HTTP request did not contain a valid request line.");
+
+            return new ExampleHttpRequest(
+                requestText[..firstLineEnd]);
         }
+
+        private readonly record struct ExampleHttpRequest(
+            string RequestLine);
 
         private static async Task WriteResponseAsync(
             NetworkStream stream,
