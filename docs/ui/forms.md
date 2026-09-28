@@ -90,6 +90,12 @@ Single File selects one input item. Folder selects an input scope that becomes o
 
 The UI should present processing at the batch level while retaining per-file/per-item identity and status. Unsupported or failed items remain visible without hiding successful items.
 
+Before processing begins, the selected batch is subject to the processing authorization checkpoint when policy requires it. One batch-level authorization can cover many image model calls; there is no inherent one-authorization-per-image requirement.
+
+After processing, the UI should present a second candidate/mapping checkpoint. Spreadsheet mappings and image-extracted candidates are shown for review; the user can correct mappings and candidate values, inspect failed items, open original sources where supported, and then authorize the accepted candidate set for downstream use.
+
+This second authorization does not perform the host business write. Consequential host mutation remains the later business-operation boundary.
+
 For spreadsheet extraction, the UI should show the detected workbook/worksheet/header/sample context and the proposed column-to-target-field mapping before downstream use. The mapping must be editable. After the mapping is accepted, it is reused deterministically rather than asking the LLM to remap every row.
 
 For image extraction, the UI should present batch progress and independent per-image outcomes. A failed image should show its file name and a safe failure reason; selecting it should open the original image where the host surface permits.
