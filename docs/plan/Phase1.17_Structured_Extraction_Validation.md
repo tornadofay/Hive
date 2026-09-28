@@ -50,7 +50,7 @@ A folder may contain:
 - multiple Excel files;
 - supported and unsupported file types together.
 
-Folder enumeration must have explicit recursion behavior and bounded resource limits. Unsupported files are reported at item level and must not discard safe supported items.
+Folder enumeration is non-recursive by default. An explicit Include Subfolders choice may opt into bounded recursive enumeration; resource limits and cancellation still apply. Unsupported files are reported at item level and must not discard safe supported items.
 
 The existing InputSubmission / InputItem model remains the normalized internal boundary.
 
@@ -64,9 +64,11 @@ A target field may expose:
 - expected type;
 - requiredness;
 - parent/child placement;
+- data-source identity;
+- optional database-field reference;
 - bounded lookup/reference semantics where applicable.
 
-Database column names, control names, and display labels can be supporting evidence, but they are not durable semantic identity.
+Data-source identity, database column names, control names, and display labels can be supporting evidence, but they are never durable semantic identity; stable semantic field identity is the mapping key.
 
 ### 3. Spreadsheet Profiling & One-Time Semantic Mapping
 
@@ -84,7 +86,7 @@ The mapping is then validated deterministically by Hive and presented as a revie
 
 Once accepted, the mapping is applied deterministically to all applicable rows in that mapping context. Hive must not call the LLM once per row to rediscover the same mapping.
 
-A mapping context is normally one workbook structure. Multiple Excel files in one batch may share one mapping when their compatible structure can be established; otherwise each distinct structure receives its own mapping.
+A mapping context is normally one workbook structure plus the target semantic-field schema. Multiple Excel files in one batch may share one mapping only after Hive deterministically establishes compatible source structure and target context; otherwise each distinct structure receives its own mapping.
 
 The mapping retains source context/provenance and the stable target semantic-field identities.
 
@@ -134,7 +136,7 @@ The user can review:
 
 For image failures, the UI should show the image file name and safe failure information and permit opening the original image where supported.
 
-The user can edit mappings and candidate values before downstream business-operation work.
+The user can edit mappings and candidate values before downstream business-operation work, exclude failed or uncertain items from the accepted set, and authorize that accepted set for downstream use.
 
 The result handed forward is a stable, reviewable candidate set. It contains no host mutation.
 
