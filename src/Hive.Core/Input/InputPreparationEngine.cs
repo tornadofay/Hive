@@ -20,8 +20,8 @@ public static class InputPreparationEngine
     public static Result<InputPreparationResult> Prepare(
         InputSubmission submission,
         IReadOnlyList<ExecutionTarget> executionTargets,
-        IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>? capabilityOverrides = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>? capabilityOverrides = null)
     {
         ArgumentNullException.ThrowIfNull(submission);
         ArgumentNullException.ThrowIfNull(executionTargets);
