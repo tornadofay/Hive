@@ -1,12 +1,12 @@
 # Hive — Active Work
 
-Status: IN PROGRESS
+Status: VERIFICATION PENDING
 
 ## Current slice
 
 ### Maintenance — Backend: Provider Discovery Review Corrections
 
-Checkpoint: `e5c381d6269e087b84e62479c6eed5af04095357`
+Checkpoint: `7930172a4619e658bd0643b9b4872ccca59cbcf8`
 
 This is a bounded corrective slice opened from the repository-wide Review findings. It restores/preserves existing Provider / ProviderAccount / ExecutionTarget discovery and input-routing behavior; it does not advance the roadmap.
 
@@ -35,5 +35,24 @@ Developer verification required before closure:
 - full `Hive.Tests` suite;
 - no manual UI verification required unless the implementation changes user-visible behavior;
 - Visual Studio Treat Warnings as Errors / zero warning confirmation remains a developer-run verification item if applicable.
+
+## Implementation state
+
+The bounded corrective implementation is complete and the result has been re-audited at source level. No further implementation changes are authorized while this slice is at the verification gate.
+
+## Verification handoff
+
+Example to run: Settings / Providers / Execution Targets — Execution Target endpoint validation and capability routing — Hive.Example.WinForms
+
+Tests to run: `tests/Hive.Tests/ProviderResourceTests.cs`; `tests/Hive.Tests/ProviderDiscoveryTests.cs`; `tests/Hive.Tests/ProviderDiscoveryManagementIntegrationTests.cs`; then the full `Hive.Tests` suite.
+
+Manual verification:
+- an ExecutionTarget endpoint containing credential-bearing query parameters is rejected and reported through the existing UI error path;
+- a non-secret provider query such as `api-version` remains accepted;
+- configured vision capability does not require provider discovery;
+- image routing preserves the provider discovery error when discovery prevents a target from being evaluated;
+- equivalent Provider + ProviderAccount + endpoint targets reuse one discovery request.
+
+Developer verification has not yet been reported for this corrective slice. Do not record closure until the requested checks are actually run and their results are supplied.
 
 Until those results are reported, this slice remains open and must not be advanced to another roadmap slice.
