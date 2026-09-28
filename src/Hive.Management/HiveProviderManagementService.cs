@@ -379,14 +379,14 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
                 snapshot = discovery.Value!;
 
-                if (snapshot.IsStale(DateTimeOffset.UtcNow))
+                if (snapshot.IsStale(_clock.UtcNow))
                     continue;
             }
 
             var effective = ExecutionTargetCapabilityResolver.ResolveCapabilities(
                 target,
                 snapshot,
-                DateTimeOffset.UtcNow);
+                _clock.UtcNow);
 
             if (effective.Count != target.Capabilities.Count)
                 overrides[target.Id] = effective;
