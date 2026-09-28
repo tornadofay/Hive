@@ -22,6 +22,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
     private readonly TextBox _modelTextBox;
     private readonly TextBox _deploymentTextBox;
     private readonly TextBox _capabilitiesTextBox;
+    private readonly ComboBox _managementModeComboBox;
     private readonly Label _testStatus;
     private readonly HiveButton _testButton;
     private readonly HiveProviderModelDiscoveryPanel? _discoveryPanel;
@@ -82,6 +83,20 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             BorderStyle = BorderStyle.FixedSingle,
             Height = 100
         };
+
+        _managementModeComboBox = new ComboBox
+        {
+            Dock = DockStyle.Fill,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Height = 32,
+            IntegralHeight = false
+        };
+
+        foreach (var mode in Enum.GetValues<ExecutionTargetManagementMode>())
+            _managementModeComboBox.Items.Add(mode);
+
+        _managementModeComboBox.SelectedItem =
+            target?.ManagementMode ?? ExecutionTargetManagementMode.Manual;
         if (target is not null)
         {
             _discoveryPanel = new HiveProviderModelDiscoveryPanel(
@@ -154,6 +169,12 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             "These are explicit configured overrides.",
             _capabilitiesTextBox,
             118);
+
+        editor.AddField(
+            "Management",
+            "Automatic targets are maintained from successful provider discovery. Manual targets are never overwritten. " +
+            "Choose Manual when administrator configuration should own the target.",
+            _managementModeComboBox);
 
         if (_discoveryPanel is not null)
         {
@@ -372,7 +393,8 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
                     .WithEndpoint(endpoint)
                     .WithModel(NormalizeOptional(_modelTextBox.Text))
                     .WithDeployment(NormalizeOptional(_deploymentTextBox.Text))
-                    .WithCapabilities(capabilities);
+                    .WithCapabilities(capabilities)
+                    .WithManagementMode(GetSelectedManagementMode());
 
             DialogResult = DialogResult.OK;
             Close();
@@ -436,6 +458,17 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             Environment.NewLine,
             capabilities.Select(
                 item => $"{item.Capability.Value}={item.State}"));
+
+    private ExecutionTargetManagementMode GetSelectedManagementMode()
+    {
+        if (_managementModeComboBox.SelectedItem is not ExecutionTargetManagementMode mode)
+        {
+            throw new InvalidOperationException(
+                "Execution target management mode is required.");
+        }
+
+        return mode;
+    }
 
     private static string? NormalizeOptional(string text) =>
         string.IsNullOrWhiteSpace(text)
