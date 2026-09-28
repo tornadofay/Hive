@@ -275,7 +275,7 @@ public static class ExecutionTargetCapabilityResolver
                 target.Endpoint,
                 UriComponents.AbsoluteUri,
                 UriFormat.SafeUnescaped,
-                StringComparison.OrdinalIgnoreCase) != 0)
+                StringComparison.Ordinal) != 0)
         {
             return target.Capabilities;
         }
