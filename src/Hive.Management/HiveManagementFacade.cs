@@ -412,6 +412,18 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         }
     }
 
+    private Task<Result> Run(Func<Task<Result>> operation)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+
+        lock (_lifetimeGate)
+        {
+            return _disposed != 0
+                ? Task.FromResult(Result.Failure(DisposedError()))
+                : operation();
+        }
+    }
+
     private static Error DisposedError() =>
         Error.Unsupported(
             "hive.management.disposed",
