@@ -16,7 +16,8 @@ Discovery is operational evidence. Persisted Provider, ProviderAccount, and Exec
 - caches successful observations in a bounded process-local cache keyed by the relevant provider/account/target configuration;
 - exposes stale observations as stale instead of silently converting them into current state;
 - supports forced refresh; a failed refresh does not replace the last successful observation;
-- invalidates the process-local discovery cache generation after a successful provider-credential replacement through Hive.Management, preventing credential-dependent observations from being reused under the previous credential state.
+- invalidates the process-local discovery cache generation after a successful provider-credential replacement through Hive.Management, preventing credential-dependent observations from being reused under the previous credential state;
+- also invalidates the cache when credential replacement is cancelled because the underlying transaction may have committed before cancellation was observed.
 
 Provider discovery is represented by `IProviderCapabilityDiscovery` in Hive.Core. The first implementation is `OpenAICompatibleProviderCapabilityDiscovery`, which uses the existing OpenAI-compatible HTTP transport and calls the OpenAI-compatible `/models` endpoint.
 
