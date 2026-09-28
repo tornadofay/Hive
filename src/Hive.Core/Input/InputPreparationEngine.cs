@@ -56,7 +56,8 @@ public static class InputPreparationEngine
                         item,
                         executionTargets,
                         prepared,
-                        failures);
+                        failures,
+                        capabilityOverrides);
                     continue;
                 }
 
@@ -113,7 +114,8 @@ public static class InputPreparationEngine
         InputItem item,
         IReadOnlyList<ExecutionTarget> executionTargets,
         List<PreparedInput> prepared,
-        List<InputPreparationFailure> failures)
+        List<InputPreparationFailure> failures,
+        IReadOnlyDictionary<ExecutionTargetId, IReadOnlyList<CapabilityStateEntry>>? capabilityOverrides)
     {
         if (item.Content.Length > WorkItemImageSubmission.MaxContentBytes)
         {
