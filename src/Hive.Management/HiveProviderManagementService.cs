@@ -170,11 +170,22 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                         cancellationToken)
                     .ConfigureAwait(false);
 
-                if (discovered.IsSuccess)
+                if (discovered.IsFailure)
+                    return discovered;
+
+                var validationError = ValidateDiscoverySnapshot(
+                    discovered.Value!,
+                    provider.Value,
+                    account.Value,
+                    target.Value);
+
+                if (validationError is not null)
                 {
-                    _discoveryCache[cacheKey] = discovered.Value!;
-                    TrimDiscoveryCache(cacheKey);
+                    return Result<ProviderDiscoverySnapshot>.Failure(validationError);
                 }
+
+                _discoveryCache[cacheKey] = discovered.Value!;
+                TrimDiscoveryCache(cacheKey);
 
                 return discovered;
             }
@@ -190,6 +201,34 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
             ReleaseDiscoveryGate(cacheKey, gate);
         }
+    }
+
+    private static Error? ValidateDiscoverySnapshot(
+        ProviderDiscoverySnapshot snapshot,
+        Provider provider,
+        ProviderAccount account,
+        ExecutionTarget target)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(provider);
+        ArgumentNullException.ThrowIfNull(account);
+        ArgumentNullException.ThrowIfNull(target);
+
+        if (snapshot.ProviderId != provider.Id ||
+            snapshot.ProviderAccountId != account.Id ||
+            Uri.Compare(
+                snapshot.Endpoint,
+                target.Endpoint,
+                UriComponents.AbsoluteUri,
+                UriFormat.SafeUnescaped,
+                StringComparison.OrdinalIgnoreCase) != 0)
+        {
+            return Error.Validation(
+                "hive.management.provider-discovery-result-mismatch",
+                "The provider discovery implementation returned metadata for a different provider, account, or execution target.");
+        }
+
+        return null;
     }
 
     private DiscoveryGate AcquireDiscoveryGate(
