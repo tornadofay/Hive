@@ -80,6 +80,8 @@ For the planned V1 business-write/review examples across Phases 1.23–1.25, the
 
 Planned V1 interaction and operations examples should also cover:
 - Provider/model capability discovery and operational metadata → `Providers / Target Selection / Capability Discovery`;
+- planned normal Provider Settings onboarding, Refresh/reconciliation, and generalized Advanced Configuration → the real `Overview / Getting Started / Example Configuration` Settings flow;
+- Agent execution configuration (`Auto` / exact model target) is part of `Workspace / Agent Interaction`, not Provider Settings.
 - V1 Workspace foundation and direct LLM interaction → `Workspace / Direct LLM`;
 - Agent-directed Workspace interaction, including application-wide and form-associated specialist Agents → `Workspace / Agent Interaction`;
 - multiple independent Agents assigned concurrent WorkItems without Hive/Swarm membership → `Workspace / Multi-Agent Work Assignment`;
@@ -127,14 +129,23 @@ Current Settings resource hierarchy:
 
 ```
 Providers
-├── Provider Configuration
-├── Accounts / Credentials
-└── Execution Targets
 Agents
 Persistence
 ```
 
-Provider Configuration, Accounts / Credentials, and Execution Targets are separate CRUD Settings pages because their Management contracts are separate resources. Accounts / Credentials are not provider login screens; they identify durable credential/resource records used by execution targets. Execution Targets own the concrete endpoint/model/deployment/capability configuration used for execution. Agents are also a separate CRUD page that references an ExecutionTarget. Persistence is different: it is a single global configuration editor rather than a CRUD collection.
+The normal Providers page is the user-facing service-configuration surface. It uses the established Hive CRUD presentation and has toolbar actions:
+
+```text
+[ Add Provider ]   [ Refresh ]   [ Advanced ]
+```
+
+`Add Provider` uses the built-in provider catalog and collects the provider's required credential input. Hive.Management creates the durable Provider and default ProviderAccount, stores the credential through the Secret Store, and then discovers/reconciles automatically managed ExecutionTargets. The user does not normally administer ProviderAccount or ExecutionTarget resources.
+
+`Refresh` is a real provider-catalog refresh/reconciliation operation, not only a list reload. It requests fresh discovery for configured provider/account/endpoint contexts and updates automatic ExecutionTargets. Failed or stale discovery preserves existing targets.
+
+`Advanced` is a generalized administrative entry point beside Add Provider and Refresh. It opens the existing Providers / Accounts / Credentials / Execution Targets resource-management pages. It is not tied to one provider and is the supported path for multiple accounts, custom endpoints, local/self-hosted models, manual targets, explicit capability overrides, and administrative lifecycle management.
+
+ProviderAccount and ExecutionTarget remain authoritative durable resources behind this presentation. Automatic and administrator-managed ExecutionTargets have distinct management ownership so discovery never overwrites advanced/manual configuration. Persistence is different: it is a single global configuration editor rather than a CRUD collection.
 
 Later durable configuration such as Runtime / Execution Defaults, Cognition, Knowledge, Skills, and Phase 5 semantic Memory extends the same Settings center only after its authoritative contract exists. V1 Tools, Policy / Permissions, and Base-Agent work state remain under their V1 Management and persistence boundaries.
 
