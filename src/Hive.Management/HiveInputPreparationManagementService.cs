@@ -66,8 +66,8 @@ internal sealed class HiveInputPreparationManagementService :
             return InputPreparationEngine.Prepare(
                 submission,
                 executionTargets,
-                capabilityOverrides.Value!,
-                cancellationToken);
+                cancellationToken,
+                capabilityOverrides.Value!);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
