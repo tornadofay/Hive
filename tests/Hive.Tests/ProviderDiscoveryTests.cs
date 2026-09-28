@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text;
 using Hive.Core;
 using Hive.Providers.OpenAICompatible;
@@ -208,6 +207,89 @@ public sealed class ProviderDiscoveryTests
     }
 
     [Fact]
+    public async Task OpenAICompatibleDiscovery_MapsCatalogToProviderNeutralSnapshot()
+    {
+        var handler = new RecordingHandler(
+            _ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """
+                    {
+                      "data": [
+                        {
+                          "id": "vision-model",
+                          "available": false,
+                          "health": "degraded",
+                          "capabilities": {
+                            "vision": true
+                          }
+                        }
+                      ]
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
+            });
+
+        using var client = new HttpClient(handler);
+        var discovery = new OpenAICompatibleProviderCapabilityDiscovery(
+            client,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromMinutes(2));
+
+        var target = CreateTarget(Array.Empty<CapabilityStateEntry>());
+        var provider = new Provider(
+            target.Resource with
+            {
+                Kind = ResourceKind.Provider,
+                Identity = ProviderId.New()
+            },
+            "example-provider",
+            "Provider",
+            "openai-compatible");
+
+        var account = new ProviderAccount(
+            target.Resource with
+            {
+                Kind = ResourceKind.ProviderAccount,
+                Identity = ProviderAccountId.New()
+            },
+            provider.Id,
+            "account",
+            "Account",
+            "example");
+
+        target = new ExecutionTarget(
+            target.Resource,
+            provider.Id,
+            account.Id,
+            target.Key,
+            target.DisplayName,
+            target.Endpoint,
+            target.Model,
+            target.Deployment,
+            target.Capabilities);
+
+        var result = await discovery.DiscoverAsync(
+            provider,
+            account,
+            target,
+            null);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(ProviderDiscoveryState.Supported, result.Value!.ModelEnumerationState);
+        var model = Assert.Single(result.Value.Models);
+        Assert.Equal("vision-model", model.ModelId);
+        Assert.Equal(ProviderAvailabilityStatus.Unavailable, model.Availability);
+        Assert.Equal(ProviderHealthStatus.Degraded, model.Health);
+        Assert.Equal(
+            CapabilityState.Supported,
+            model.DiscoveredCapabilities.Single().State);
+        Assert.Equal(2, result.Value.Operational.StaleAfterUtc.Subtract(
+            result.Value.Operational.ObservedAtUtc).TotalMinutes, precision: 1);
+    }
+
+    [Fact]
     public async Task Adapter_ListModels_UnsupportedEndpointIsTyped()
     {
         var handler = new RecordingHandler(
@@ -279,7 +361,6 @@ public sealed class ProviderDiscoveryTests
 
     private static ProviderModelMetadata CreateModel(
         ExecutionTarget target,
-        DateTimeOffset staleAfterUtc,
         params CapabilityStateEntry[] capabilities) =>
         new(
             target.Model ?? target.Deployment!,
@@ -307,7 +388,7 @@ public sealed class ProviderDiscoveryTests
                 staleAfterUtc),
             ProviderDiscoveryState.Supported,
             [
-                CreateModel(target, staleAfterUtc, capabilities)
+                CreateModel(target, capabilities)
             ]);
     }
 
