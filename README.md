@@ -212,9 +212,11 @@ Generic cross-host integration remains later; the initial UI discovery contract 
 
 V1 starts with:
 
-1. Providers / Provider Accounts / Execution Targets
+1. Providers — simple configured-provider Settings with Add Provider / Refresh and generalized Advanced Configuration
 2. Agents
 3. V1 WorkItems / Operational Workspace
+
+The Provider resource model still contains Provider → ProviderAccount → ExecutionTarget. Normal Settings hides that graph for simple onboarding; Advanced Configuration exposes the underlying generalized resource administration when required.
 
 Later areas are added when their owning phase lands: Hive Membership and Governance, CognitiveAgent/CognitiveHive capabilities, Knowledge/Skills/Learning resources, broader storage/deployment portability, configuration import/export, additional host surfaces, and the generic host-integration/operations extensions that remain outside V1.
 
@@ -294,7 +296,7 @@ The solution and project files are the implementation source for the actual proj
 
 **Phase 0 — Foundations: Complete.**
 
-**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1):** Phase 1.16 Provider / Model Capability Discovery and bounded Revisions 1–7 are complete and verified. The final developer verification for Phase 1.16 Revision 7 on 2026-09-28 reported the full `Hive.Tests` suite at **432/432 passed, 0 failed, 0 skipped** in 56.7 seconds, with the matching Provider / Model Capability Discovery Example Host scenario manually exercised successfully. The follow-on **Phase 1.16 — UI — Provider / Model Capability Discovery Settings Integration** is planned but not started or authorized. The authoritative current status and implementation scope remain in `docs/Hive_Current_Status.md` and `docs/Hive_Active_Work.md`.
+**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1):** Phase 1.16 Provider / Model Capability Discovery and bounded Revisions 1–7 are complete and verified. The final developer verification for Phase 1.16 Revision 7 on 2026-09-28 reported the full `Hive.Tests` suite at **432/432 passed, 0 failed, 0 skipped** in 56.7 seconds, with the matching Provider / Model Capability Discovery Example Host scenario manually exercised successfully. The follow-on **Phase 1.16 — UI — Provider Configuration, Discovery & Target Reconciliation** is planned; its prior target-first UI scope has been superseded by the revised architecture and no revised implementation is currently authorized. The authoritative current status and implementation scope remain in `docs/Hive_Current_Status.md` and `docs/Hive_Active_Work.md`.
 
 See [Architecture](docs/architecture.md) and [Roadmap](docs/roadmap.md).
 
