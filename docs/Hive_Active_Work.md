@@ -13,7 +13,8 @@ This is a bounded corrective revision of the immediately preceding Phase 1.16 Re
 - make capability-key identity canonical at the existing Core `CapabilityKey` ownership boundary so configured and discovered semantic keys compare consistently;
 - preserve configured ExecutionTarget capability authority when a configured capability uses different casing from the normalized discovered key;
 - reject duplicate configured capability declarations that differ only by casing;
-- add focused regression coverage for canonical capability-key identity and configured Unsupported override authority;
+- make Phase 1.16 observation timestamps and stale decisions use the existing injectable IClock boundary;
+- add focused regression coverage for canonical capability-key identity, configured Unsupported override authority, and deterministic discovery freshness;
 - preserve Provider → ProviderAccount → ExecutionTarget ownership, discovery/cache semantics, stale handling, cancellation, credential isolation, and Example Host behavior.
 
 ### Out of scope
