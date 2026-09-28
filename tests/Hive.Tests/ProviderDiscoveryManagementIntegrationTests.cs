@@ -286,7 +286,6 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
 
     private sealed class RecordingDiscovery : IProviderCapabilityDiscovery
     {
-        private readonly ExecutionTarget _target;
         private readonly bool _staleFirst;
         private readonly int? _failOnCall;
 
@@ -295,7 +294,6 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             bool staleFirst = false,
             int? failOnCall = null)
         {
-            _target = target;
             _staleFirst = staleFirst;
             _failOnCall = failOnCall;
         }
