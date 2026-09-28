@@ -222,6 +222,7 @@ Phase 1.17 Example Host scenario should demonstrate:
 
 - `Single File` and `Folder` input selection;
 - a mixed folder containing multiple Excel files, multiple images, and at least one unsupported file;
+- non-recursive folder enumeration by default, with bounded Include Subfolders behavior;
 - bounded folder enumeration and per-item failure isolation;
 - spreadsheet workbook/header/sample inspection;
 - one LLM mapping proposal for an applicable spreadsheet mapping context;
@@ -232,6 +233,7 @@ Phase 1.17 Example Host scenario should demonstrate:
 - source-neutral StructuredCandidate output with parent/child data where applicable;
 - required/type validation and provenance preservation;
 - the processing and candidate/mapping human-review checkpoints, without requiring one processing authorization per image;
+- the candidate/mapping checkpoint can exclude failed or uncertain items before the accepted set proceeds;
 - no host business mutation.
 
 The example should demonstrate reviewability of mappings and candidates without creating a second authorization system. Generalized Approve / Reject authorization remains a Phase 1.22 governance concern.
