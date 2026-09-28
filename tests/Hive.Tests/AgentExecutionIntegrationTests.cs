@@ -313,7 +313,7 @@ public sealed class AgentExecutionIntegrationTests
 
         using var httpClient = new HttpClient();
         var service = new AgentExecutionService(
-            store,
+            new HiveEventPersistenceComposition(store),
             httpClient,
             TimeSpan.FromSeconds(5));
 
@@ -405,7 +405,7 @@ public sealed class AgentExecutionIntegrationTests
 
         using var httpClient = new HttpClient();
         var service = new AgentExecutionService(
-            store,
+            new HiveEventPersistenceComposition(store),
             httpClient,
             TimeSpan.FromSeconds(5));
 
@@ -466,7 +466,7 @@ public sealed class AgentExecutionIntegrationTests
             new ThrowingHttpMessageHandler(
                 "secret transport implementation detail"));
         var service = new AgentExecutionService(
-            store,
+            new HiveEventPersistenceComposition(store),
             httpClient,
             TimeSpan.FromSeconds(5));
 
@@ -536,7 +536,7 @@ public sealed class AgentExecutionIntegrationTests
 
         using var httpClient = new HttpClient();
         var service = new AgentExecutionService(
-            store,
+            new HiveEventPersistenceComposition(store),
             httpClient,
             TimeSpan.FromSeconds(5));
 
@@ -573,6 +573,66 @@ public sealed class AgentExecutionIntegrationTests
         Assert.Null(store.AppendedEnvelopes[0].CausationId);
     }
 
+
+    [Fact]
+    public async Task ExecuteAsync_AmbiguousStartedEventPersistenceFailure_ReconcilesStartedEventBeforeTerminalCompensation()
+    {
+        var store = new ScriptedStartEventStore(
+            new Error(
+                "test.execution-start-persistence",
+                ErrorCategory.External,
+                "synthetic ambiguous start persistence failure"),
+            failureAppendNumbers: [1],
+            persistBeforeFailureAppendNumbers: [1]);
+
+        using var httpClient = new HttpClient();
+        var service = new AgentExecutionService(
+            new HiveEventPersistenceComposition(store),
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var agent = CreateAgent(context);
+        var runtime = agent.CreateRuntimeInstance();
+        var target = CreateTarget(
+            new Uri("https://example.invalid/v1"),
+            context.PrincipalId!.Value,
+            context.TenantId!.Value);
+
+        var result = await service.ExecuteAsync(
+            new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                context,
+                "Recover an ambiguously committed started event."));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "test.execution-start-persistence",
+            result.Error!.Code);
+
+        Assert.Equal(
+            ["agent.execution.started", "agent.execution.failed"],
+            store.AttemptedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
+        Assert.Equal(2, store.AppendedEvents.Count);
+        Assert.Equal(
+            new ResourceVersion(1),
+            store.AppendedEvents[0].StreamVersion);
+        Assert.Equal(
+            new ResourceVersion(2),
+            store.AppendedEvents[1].StreamVersion);
+        Assert.Equal(
+            store.AppendedEvents[0].Envelope.EventId,
+            store.AppendedEvents[1].Envelope.CausationId!.Value.Value);
+        Assert.Equal(
+            ExecutionStatus.Failed.ToString(),
+            store.AppendedEnvelopes[1].Payload.GetProperty("status").GetString());
+    }
+
     [Fact]
     public async Task ExecuteAsync_CancellationDuringStartedEventPersistence_PersistsInitialCancellation()
     {
@@ -581,7 +641,7 @@ public sealed class AgentExecutionIntegrationTests
 
         using var httpClient = new HttpClient();
         var service = new AgentExecutionService(
-            store,
+            new HiveEventPersistenceComposition(store),
             httpClient,
             TimeSpan.FromSeconds(5));
 
@@ -624,6 +684,64 @@ public sealed class AgentExecutionIntegrationTests
     }
 
 
+
+    [Fact]
+    public async Task ExecuteAsync_AmbiguousStartedEventCancellation_ReconcilesStartedEventBeforeTerminalCompensation()
+    {
+        var store = new ScriptedStartEventStore(
+            cancellationOnFirstAppend: true,
+            persistBeforeCancellationOnFirstAppend: true);
+
+        using var httpClient = new HttpClient();
+        var service = new AgentExecutionService(
+            new HiveEventPersistenceComposition(store),
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var agent = CreateAgent(context);
+        var runtime = agent.CreateRuntimeInstance();
+        var target = CreateTarget(
+            new Uri("https://example.invalid/v1"),
+            context.PrincipalId!.Value,
+            context.TenantId!.Value);
+
+        using var cancellation = new CancellationTokenSource();
+
+        var executionTask = service.ExecuteAsync(
+            new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                context,
+                "Cancel after the started event has committed."),
+            cancellation.Token);
+
+        await store.FirstAppendStarted.Task.WaitAsync(
+            TimeSpan.FromSeconds(5));
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => executionTask);
+
+        Assert.Equal(
+            ["agent.execution.started", "agent.execution.cancelled"],
+            store.AttemptedEnvelopes.Select(static envelope => envelope.EventType.Value).ToArray());
+        Assert.Equal(2, store.AppendedEvents.Count);
+        Assert.Equal(
+            new ResourceVersion(2),
+            store.AppendedEvents[1].StreamVersion);
+        Assert.Equal(
+            store.AppendedEvents[0].Envelope.EventId,
+            store.AppendedEvents[1].Envelope.CausationId!.Value.Value);
+        Assert.Equal(
+            ExecutionStatus.Cancelled.ToString(),
+            store.AppendedEnvelopes[1].Payload.GetProperty("status").GetString());
+    }
+
     [Fact]
     public async Task ExecuteAsync_TerminalEventPersistence_ReconcilesAlreadyPersistedFailure()
     {
@@ -641,7 +759,7 @@ public sealed class AgentExecutionIntegrationTests
 
         using var httpClient = new HttpClient();
         var service = new AgentExecutionService(
-            store,
+            new HiveEventPersistenceComposition(store),
             httpClient,
             TimeSpan.FromSeconds(5));
 
@@ -689,7 +807,7 @@ public sealed class AgentExecutionIntegrationTests
 
         using var httpClient = new HttpClient();
         var service = new AgentExecutionService(
-            store,
+            new HiveEventPersistenceComposition(store),
             httpClient,
             TimeSpan.FromSeconds(5));
 
@@ -737,7 +855,7 @@ public sealed class AgentExecutionIntegrationTests
 
         using var httpClient = new HttpClient();
         var service = new AgentExecutionService(
-            store,
+            new HiveEventPersistenceComposition(store),
             httpClient,
             TimeSpan.FromSeconds(5));
 
@@ -784,7 +902,7 @@ public sealed class AgentExecutionIntegrationTests
 
         using var httpClient = new HttpClient();
         var service = new AgentExecutionService(
-            store,
+            new HiveEventPersistenceComposition(store),
             httpClient,
             TimeSpan.FromSeconds(5));
 
@@ -854,7 +972,7 @@ public sealed class AgentExecutionIntegrationTests
 
         using var httpClient = new HttpClient();
         var service = new AgentExecutionService(
-            store,
+            new HiveEventPersistenceComposition(store),
             httpClient,
             TimeSpan.FromSeconds(5));
 
@@ -1103,16 +1221,19 @@ public sealed class AgentExecutionIntegrationTests
         private readonly HashSet<int> _failureAppendNumbers;
         private readonly HashSet<int> _persistBeforeFailureAppendNumbers;
         private readonly bool _cancellationOnFirstAppend;
+        private readonly bool _persistBeforeCancellationOnFirstAppend;
         private int _appendCount;
 
         public ScriptedStartEventStore(
             Error? appendFailure = null,
             bool cancellationOnFirstAppend = false,
+            bool persistBeforeCancellationOnFirstAppend = false,
             IEnumerable<int>? failureAppendNumbers = null,
             IEnumerable<int>? persistBeforeFailureAppendNumbers = null)
         {
             _appendFailure = appendFailure;
             _cancellationOnFirstAppend = cancellationOnFirstAppend;
+            _persistBeforeCancellationOnFirstAppend = persistBeforeCancellationOnFirstAppend;
             _failureAppendNumbers =
                 (failureAppendNumbers ?? (appendFailure is null ? [] : [1]))
                 .ToHashSet();
@@ -1142,6 +1263,18 @@ public sealed class AgentExecutionIntegrationTests
 
                 if (_cancellationOnFirstAppend)
                 {
+                    if (_persistBeforeCancellationOnFirstAppend)
+                    {
+                        var persistedBeforeCancellation =
+                            new PersistedEvent(
+                                request.Stream,
+                                request.StreamVersion,
+                                request.Envelope);
+
+                        AppendedEnvelopes.Add(request.Envelope);
+                        AppendedEvents.Add(persistedBeforeCancellation);
+                    }
+
                     await Task.Delay(
                         Timeout.InfiniteTimeSpan,
                         cancellationToken);
@@ -1184,6 +1317,22 @@ public sealed class AgentExecutionIntegrationTests
                         request.StreamVersion,
                         request.Envelope)));
         }
+
+        public Task<Result<EventOutboxWorkItem?>> ClaimNextOutboxAsync(
+            TimeSpan leaseDuration,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result> RenewOutboxLeaseAsync(
+            EventOutboxWorkItem workItem,
+            TimeSpan leaseDuration,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result> CompleteOutboxAsync(
+            EventOutboxWorkItem workItem,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
 
         public Task<Result<IReadOnlyList<PersistedEvent>>> ReadEventsAsync(
             ResourceReference stream,
