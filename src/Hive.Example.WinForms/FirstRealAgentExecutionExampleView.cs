@@ -38,8 +38,9 @@ internal sealed class FirstRealAgentExecutionExampleView : UserControl
             "Phase 1.9 first real Base Agent execution only; one request, one provider call, durable started/terminal lifecycle events");
 
         _surface.CodeSnippet = """
+            var persistence = HiveEventPersistence.CreateSql(options);
             var service = new AgentExecutionService(
-                eventStore,
+                persistence,
                 httpClient);
 
             var result = await service.ExecuteAsync(
@@ -77,7 +78,7 @@ internal sealed class FirstRealAgentExecutionExampleView : UserControl
 
         EnsureSuccess(migration, "Hive database migration");
 
-        var eventStore = new SqlEventPersistenceStore(options);
+        var persistence = HiveEventPersistence.CreateSql(options);
 
         var principal = PrincipalId.New();
         var deployment = DeploymentId.New();
@@ -110,7 +111,7 @@ internal sealed class FirstRealAgentExecutionExampleView : UserControl
         using var httpClient = new HttpClient();
 
         var service = new AgentExecutionService(
-            eventStore,
+            persistence,
             httpClient,
             TimeSpan.FromSeconds(5));
 
@@ -127,15 +128,6 @@ internal sealed class FirstRealAgentExecutionExampleView : UserControl
         EnsureSuccess(result, "Agent execution");
 
         var execution = result.Value!;
-        var stream = new ResourceReference(
-            ResourceKind.Execution,
-            execution.Execution.Id.Value);
-
-        var events = await eventStore.ReadEventsAsync(
-            stream,
-            cancellationToken: cancellationToken);
-
-        EnsureSuccess(events, "Execution lifecycle read");
 
         _output.Write(
             "First Real Agent Execution",
@@ -146,11 +138,9 @@ internal sealed class FirstRealAgentExecutionExampleView : UserControl
             Execution: {execution.Execution.Id}; status={execution.Execution.Status}
             Target: {target.Id}; model={target.Model}
             Response: {execution.ResponseText}
-            Lifecycle event count: {events.Value!.Count}
-            Event 1: {events.Value[0].Envelope.EventType}; version={events.Value[0].StreamVersion}
-            Event 2: {events.Value[1].Envelope.EventType}; version={events.Value[1].StreamVersion}
+            Started event: {execution.StartedEventId}
+            Terminal event: {execution.TerminalEventId}
             Correlation: {execution.CorrelationId}
-            Causation: {events.Value[1].Envelope.CausationId}
             Provider credentials: none
             Provider endpoint: local fake HTTP server
             MAF workflow/orchestration: none
