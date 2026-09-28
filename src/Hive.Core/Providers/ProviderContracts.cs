@@ -16,7 +16,9 @@ public readonly record struct CapabilityKey
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Capability key is required.", nameof(value));
 
-        var normalized = value.Trim();
+        var normalized = value
+            .Trim()
+            .ToLowerInvariant();
 
         if (normalized.Length > 128)
             throw new ArgumentException(
