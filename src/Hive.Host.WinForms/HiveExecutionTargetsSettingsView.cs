@@ -474,7 +474,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl
         if (editor.ShowDialog(FindForm()) != DialogResult.OK ||
             editor.Definition is null)
         {
-            return target;
+            return null;
         }
 
         var updated = await _management.UpdateExecutionTargetAsync(
