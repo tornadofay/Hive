@@ -353,7 +353,7 @@ Verify:
 - explicit capability override behavior;
 - no provider credentials or secrets appear in metadata/diagnostics.
 
-## 1.16-UI — Provider / Model Capability Discovery Settings Integration
+## 1.16 — UI — Provider / Model Capability Discovery Settings Integration
 Objective: make the completed Phase 1.16 provider/model discovery capability directly usable from the global Hive Settings experience without moving discovery ownership into WinForms.
 
 Scope:
