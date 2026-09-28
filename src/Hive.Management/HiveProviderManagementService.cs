@@ -27,6 +27,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
     private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, ProviderDiscoveryCacheEntry> _discoveryCache = new();
     private long _discoveryCompletionSequence;
     private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, DiscoveryGate> _discoveryLocks = new();
+    private readonly ConcurrentDictionary<ProviderId, SemaphoreSlim> _providerRefreshLocks = new();
 
     private const int MaxCachedDiscoveries = 128;
     private long _discoveryGeneration;
@@ -647,6 +648,889 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                 providerId,
                 accessContext,
                 cancellationToken));
+
+
+    internal async Task<Result<ProviderSettingsOperationResult>> ConfigureBuiltInProviderAsync(
+        string providerKey,
+        SecretMaterial? credential,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Result<ProviderSettingsOperationResult>.Failure(contextError);
+
+        if (string.IsNullOrWhiteSpace(providerKey))
+        {
+            return Result<ProviderSettingsOperationResult>.Failure(
+                Error.Validation(
+                    "hive.management.provider-catalog-key-required",
+                    "A built-in provider catalog key is required."));
+        }
+
+        var catalog = BuiltInProviderCatalog.Find(providerKey);
+        if (catalog is null)
+        {
+            return Result<ProviderSettingsOperationResult>.Failure(
+                Error.NotFound(
+                    "hive.management.provider-catalog-provider-not-found",
+                    "The selected provider is not available in the built-in provider catalog."));
+        }
+
+        if (!catalog.NormalOnboardingSupported)
+        {
+            return Result<ProviderSettingsOperationResult>.Failure(
+                Error.Unsupported(
+                    "hive.management.provider-catalog-advanced-required",
+                    catalog.OnboardingNote ?? "This provider requires Advanced Configuration."));
+        }
+
+        if (catalog.RequiresCredential && credential is null)
+        {
+            return Result<ProviderSettingsOperationResult>.Failure(
+                Error.Validation(
+                    "hive.management.provider-credential-required",
+                    "The selected provider requires credential material."));
+        }
+
+        var providers = await _providerResources
+            .ListProvidersAsync(
+                accessContext,
+                includeRetired: true,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (providers.IsFailure)
+            return Result<ProviderSettingsOperationResult>.Failure(providers.Error!);
+
+        var provider = providers.Value!.FirstOrDefault(
+            item => string.Equals(item.Key, catalog.Key, StringComparison.OrdinalIgnoreCase));
+
+        if (provider is not null &&
+            provider.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active)
+        {
+            return Result<ProviderSettingsOperationResult>.Failure(
+                Error.Conflict(
+                    "hive.management.provider-already-configured",
+                    $"Provider '{catalog.DisplayName}' is already configured."));
+        }
+
+        if (provider is not null)
+        {
+            var reactivated = await ReactivateProviderAsync(
+                provider.Id,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+            if (reactivated.IsFailure)
+                return Result<ProviderSettingsOperationResult>.Failure(reactivated.Error!);
+
+            provider = reactivated.Value!;
+        }
+        else
+        {
+            var now = _clock.UtcNow;
+            provider = new Provider(
+                new ResourceEnvelope<ProviderId>(
+                    ResourceKind.Provider,
+                    ProviderId.New(),
+                    accessContext.PrincipalId!.Value,
+                    accessContext.TenantId is { } tenantId
+                        ? ResourceScope.Tenant(tenantId)
+                        : ResourceScope.Global(),
+                    ResourceVersion.Initial,
+                    new ResourceProvenance(
+                        accessContext.PrincipalId.Value,
+                        now,
+                        CorrelationId.New()),
+                    ResourceLifecycle.Active(now)),
+                catalog.Key,
+                catalog.DisplayName,
+                catalog.TransportKind);
+
+            var created = await CreateProviderAsync(
+                provider,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+            if (created.IsFailure)
+                return Result<ProviderSettingsOperationResult>.Failure(created.Error!);
+
+            provider = created.Value!;
+        }
+
+        var accounts = await ListProviderAccountsAsync(
+            provider.Id,
+            accessContext,
+            includeRetired: true,
+            cancellationToken).ConfigureAwait(false);
+
+        if (accounts.IsFailure)
+            return Result<ProviderSettingsOperationResult>.Failure(accounts.Error!);
+
+        var account = accounts.Value!.FirstOrDefault(
+            item => string.Equals(item.Key, "default", StringComparison.OrdinalIgnoreCase));
+
+        if (account is null)
+        {
+            var now = _clock.UtcNow;
+            account = new ProviderAccount(
+                new ResourceEnvelope<ProviderAccountId>(
+                    ResourceKind.ProviderAccount,
+                    ProviderAccountId.New(),
+                    accessContext.PrincipalId!.Value,
+                    accessContext.TenantId is { } tenantId
+                        ? ResourceScope.Tenant(tenantId)
+                        : ResourceScope.Global(),
+                    ResourceVersion.Initial,
+                    new ResourceProvenance(
+                        accessContext.PrincipalId.Value,
+                        now,
+                        CorrelationId.New()),
+                    ResourceLifecycle.Active(now)),
+                provider.Id,
+                "default",
+                "Default Account");
+
+            var created = await CreateProviderAccountAsync(
+                account,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+            if (created.IsFailure)
+                return Result<ProviderSettingsOperationResult>.Failure(created.Error!);
+
+            account = created.Value!;
+        }
+        else if (account.Resource.Lifecycle.Status == ResourceLifecycleStatus.Retired)
+        {
+            var reactivated = await ReactivateProviderAccountAsync(
+                account.Id,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+            if (reactivated.IsFailure)
+                return Result<ProviderSettingsOperationResult>.Failure(reactivated.Error!);
+
+            account = reactivated.Value!;
+        }
+
+        if (catalog.RequiresCredential)
+        {
+            var credentialResult = await SetAccountCredentialAsync(
+                provider,
+                account,
+                credential!,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+            if (credentialResult.IsFailure)
+                return Result<ProviderSettingsOperationResult>.Failure(credentialResult.Error!);
+
+            account = credentialResult.Value!;
+        }
+
+        InvalidateProviderDiscoveryCache();
+
+        var refreshed = await RefreshProviderCoreAsync(
+            provider,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        return refreshed.IsFailure
+            ? Result<ProviderSettingsOperationResult>.Failure(refreshed.Error!)
+            : refreshed;
+    }
+
+
+    internal async Task<Result<ProviderSettingsOperationResult>> ReplaceBuiltInProviderCredentialAsync(
+        ProviderId providerId,
+        SecretMaterial credential,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(credential);
+
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Result<ProviderSettingsOperationResult>.Failure(contextError);
+
+        if (providerId == default)
+        {
+            return Result<ProviderSettingsOperationResult>.Failure(
+                Error.Validation(
+                    "hive.management.provider.identity-required",
+                    "The provider identity is required."));
+        }
+
+        var providerResult = await _providerResources
+            .GetProviderAsync(providerId, accessContext, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (providerResult.IsFailure)
+            return Result<ProviderSettingsOperationResult>.Failure(providerResult.Error!);
+
+        var provider = providerResult.Value!;
+        var catalog = BuiltInProviderCatalog.Find(provider.Key);
+
+        if (catalog is null || !catalog.NormalOnboardingSupported)
+        {
+            return Result<ProviderSettingsOperationResult>.Failure(
+                Error.Unsupported(
+                    "hive.management.provider-advanced-credential-replacement-required",
+                    "This provider's credential is not managed by the normal Provider Settings surface."));
+        }
+
+        if (provider.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        {
+            return Result<ProviderSettingsOperationResult>.Failure(
+                Error.Conflict(
+                    "hive.management.provider-inactive",
+                    "Provider credential replacement requires an active provider."));
+        }
+
+        var accounts = await ListProviderAccountsAsync(
+            provider.Id,
+            accessContext,
+            includeRetired: true,
+            cancellationToken).ConfigureAwait(false);
+
+        if (accounts.IsFailure)
+            return Result<ProviderSettingsOperationResult>.Failure(accounts.Error!);
+
+        var account = accounts.Value!.FirstOrDefault(
+            item => string.Equals(item.Key, "default", StringComparison.OrdinalIgnoreCase));
+
+        if (account is null)
+        {
+            var now = _clock.UtcNow;
+            account = new ProviderAccount(
+                new ResourceEnvelope<ProviderAccountId>(
+                    ResourceKind.ProviderAccount,
+                    ProviderAccountId.New(),
+                    accessContext.PrincipalId!.Value,
+                    accessContext.TenantId is { } tenantId
+                        ? ResourceScope.Tenant(tenantId)
+                        : ResourceScope.Global(),
+                    ResourceVersion.Initial,
+                    new ResourceProvenance(
+                        accessContext.PrincipalId.Value,
+                        now,
+                        CorrelationId.New()),
+                    ResourceLifecycle.Active(now)),
+                provider.Id,
+                "default",
+                "Default Account");
+
+            var created = await CreateProviderAccountAsync(
+                account,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+            if (created.IsFailure)
+                return Result<ProviderSettingsOperationResult>.Failure(created.Error!);
+
+            account = created.Value!;
+        }
+        else if (account.Resource.Lifecycle.Status == ResourceLifecycleStatus.Retired)
+        {
+            var reactivated = await ReactivateProviderAccountAsync(
+                account.Id,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+            if (reactivated.IsFailure)
+                return Result<ProviderSettingsOperationResult>.Failure(reactivated.Error!);
+
+            account = reactivated.Value!;
+        }
+
+        var credentialResult = await SetAccountCredentialAsync(
+            provider,
+            account,
+            credential,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (credentialResult.IsFailure)
+            return Result<ProviderSettingsOperationResult>.Failure(credentialResult.Error!);
+
+        InvalidateProviderDiscoveryCache();
+
+        var refreshed = await RefreshProviderCoreAsync(
+            provider,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        return refreshed.IsFailure
+            ? Result<ProviderSettingsOperationResult>.Failure(refreshed.Error!)
+            : refreshed;
+    }
+
+
+    internal async Task<Result<ProviderSettingsOperationResult>> RefreshProviderAsync(
+        ProviderId providerId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Result<ProviderSettingsOperationResult>.Failure(contextError);
+
+        if (providerId == default)
+        {
+            return Result<ProviderSettingsOperationResult>.Failure(
+                Error.Validation(
+                    "hive.management.provider.identity-required",
+                    "The provider identity is required."));
+        }
+
+        var provider = await _providerResources
+            .GetProviderAsync(providerId, accessContext, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (provider.IsFailure)
+            return Result<ProviderSettingsOperationResult>.Failure(provider.Error!);
+
+        return await RefreshProviderCoreAsync(
+            provider.Value!,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+
+    private async Task<Result<ProviderSettingsOperationResult>> RefreshProviderCoreAsync(
+        Provider provider,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken)
+    {
+        if (provider.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        {
+            return Result<ProviderSettingsOperationResult>.Failure(
+                Error.Conflict(
+                    "hive.management.provider-inactive",
+                    "Provider discovery refresh requires an active provider."));
+        }
+
+        var refreshGate = _providerRefreshLocks.GetOrAdd(
+            provider.Id,
+            static _ => new SemaphoreSlim(1, 1));
+
+        await refreshGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            var catalog = BuiltInProviderCatalog.Find(provider.Key);
+            var accounts = await ListProviderAccountsAsync(
+                provider.Id,
+                accessContext,
+                includeRetired: false,
+                cancellationToken).ConfigureAwait(false);
+
+            if (accounts.IsFailure)
+                return Result<ProviderSettingsOperationResult>.Failure(accounts.Error!);
+
+            var errors = new List<Error>();
+            var attempted = 0;
+            var succeeded = 0;
+            var models = 0;
+            var created = 0;
+            var reactivated = 0;
+            var retired = 0;
+
+            foreach (var account in accounts.Value!)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var targets = await ListExecutionTargetsAsync(
+                    account.Id,
+                    accessContext,
+                    includeRetired: true,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (targets.IsFailure)
+                {
+                    errors.Add(targets.Error!);
+                    continue;
+                }
+
+                var endpoints = targets.Value!
+                    .Select(target => target.Endpoint)
+                    .Concat(
+                        catalog?.DefaultEndpoint is { } defaultEndpoint
+                            ? [defaultEndpoint]
+                            : Array.Empty<Uri>())
+                    .Distinct()
+                    .ToArray();
+
+                foreach (var endpoint in endpoints)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    attempted++;
+
+                    var discovered = await DiscoverEndpointAsync(
+                        provider,
+                        account,
+                        endpoint,
+                        accessContext,
+                        cancellationToken).ConfigureAwait(false);
+
+                    if (discovered.IsFailure)
+                    {
+                        errors.Add(discovered.Error!);
+                        continue;
+                    }
+
+                    succeeded++;
+                    var snapshot = discovered.Value!;
+
+                    if (snapshot.ModelEnumerationState != ProviderDiscoveryState.Supported ||
+                        snapshot.IsStale(_clock.UtcNow))
+                    {
+                        continue;
+                    }
+
+                    models += snapshot.Models.Count;
+
+                    var reconciled = await ReconcileAutomaticTargetsAsync(
+                        provider,
+                        account,
+                        snapshot,
+                        accessContext,
+                        cancellationToken).ConfigureAwait(false);
+
+                    if (reconciled.IsFailure)
+                    {
+                        errors.Add(reconciled.Error!);
+                        continue;
+                    }
+
+                    created += reconciled.Value!.Created;
+                    reactivated += reconciled.Value.Reactivated;
+                    retired += reconciled.Value.Retired;
+                }
+            }
+
+            var activeAutomaticTargets = 0;
+            foreach (var account in accounts.Value!)
+            {
+                var targets = await ListExecutionTargetsAsync(
+                    account.Id,
+                    accessContext,
+                    includeRetired: false,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (targets.IsSuccess)
+                {
+                    activeAutomaticTargets += targets.Value!
+                        .Count(target =>
+                        {
+                            try
+                            {
+                                return target.ManagementMode == ExecutionTargetManagementMode.Automatic;
+                            }
+                            catch (InvalidOperationException)
+                            {
+                                return false;
+                            }
+                        });
+                }
+            }
+
+            return Result<ProviderSettingsOperationResult>.Success(
+                new ProviderSettingsOperationResult(
+                    provider,
+                    attempted,
+                    succeeded,
+                    models,
+                    created,
+                    reactivated,
+                    retired,
+                    errors)
+                {
+                    ActiveAutomaticTargetCount = activeAutomaticTargets
+                });
+        }
+        finally
+        {
+            refreshGate.Release();
+        }
+    }
+
+
+    private async Task<Result<ProviderAccount>> SetAccountCredentialAsync(
+        Provider provider,
+        ProviderAccount account,
+        SecretMaterial credential,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken)
+    {
+        if (_secrets is null)
+        {
+            return Result<ProviderAccount>.Failure(
+                Error.Unsupported(
+                    "hive.management.secret-store-unavailable",
+                    "The Hive Secret Store is not configured."));
+        }
+
+        if (account.CredentialSecret is { } existingReference)
+        {
+            var descriptor = await _secrets.GetSecretDescriptorAsync(
+                existingReference.Id,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+            if (descriptor.IsFailure)
+                return Result<ProviderAccount>.Failure(descriptor.Error!);
+
+            var replaced = await _secrets.ReplaceSecretAsync(
+                existingReference.Id,
+                credential,
+                descriptor.Value!.Resource.Version,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+            if (replaced.IsFailure)
+                return Result<ProviderAccount>.Failure(replaced.Error!);
+
+            return Result<ProviderAccount>.Success(account);
+        }
+
+        var key = $"provider-{provider.Key}-api-key";
+        var secretResult = await _secrets.CreateSecretAsync(
+            key,
+            $"{provider.DisplayName} API Key",
+            credential,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (secretResult.IsFailure)
+            return Result<ProviderAccount>.Failure(secretResult.Error!);
+
+        var updated = account.WithCredentialSecret(
+            new SecretReference(secretResult.Value!.Id));
+
+        return await UpdateProviderAccountAsync(
+            updated,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+
+    private async Task<Result<ProviderDiscoverySnapshot>> DiscoverEndpointAsync(
+        Provider provider,
+        ProviderAccount account,
+        Uri endpoint,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken)
+    {
+        if (_providerCapabilityDiscovery is null)
+        {
+            return Result<ProviderDiscoverySnapshot>.Failure(
+                Error.Unsupported(
+                    "hive.management.provider-discovery-unavailable",
+                    "Provider capability discovery is not configured."));
+        }
+
+        SecretMaterial? material = null;
+
+        try
+        {
+            if (account.CredentialSecret is { } reference)
+            {
+                if (_secrets is null)
+                {
+                    return Result<ProviderDiscoverySnapshot>.Failure(
+                        Error.Unsupported(
+                            "hive.management.secret-store-unavailable",
+                            "The provider account references a credential but the Secret Store is not configured."));
+                }
+
+                var secret = await _secrets.GetSecretReadAsync(
+                    reference.Id,
+                    accessContext,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (secret.IsFailure)
+                    return Result<ProviderDiscoverySnapshot>.Failure(secret.Error!);
+
+                material = secret.Value!.Material;
+            }
+
+            var probe = CreateDiscoveryProbeTarget(
+                provider,
+                account,
+                endpoint,
+                accessContext);
+
+            var discovered = await _providerCapabilityDiscovery
+                .DiscoverAsync(
+                    provider,
+                    account,
+                    probe,
+                    material,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (discovered.IsFailure)
+                return discovered;
+
+            var validationError = ValidateDiscoverySnapshot(
+                discovered.Value!,
+                provider,
+                account,
+                probe);
+
+            if (validationError is not null)
+                return Result<ProviderDiscoverySnapshot>.Failure(validationError);
+
+            if (discovered.Value!.IsStale(_clock.UtcNow))
+            {
+                return Result<ProviderDiscoverySnapshot>.Failure(
+                    Error.Conflict(
+                        "hive.management.provider-discovery-stale",
+                        "Fresh provider discovery returned stale operational metadata."));
+            }
+
+            return discovered;
+        }
+        finally
+        {
+            material?.Dispose();
+        }
+    }
+
+
+    private ExecutionTarget CreateDiscoveryProbeTarget(
+        Provider provider,
+        ProviderAccount account,
+        Uri endpoint,
+        ResourceAccessContext accessContext)
+    {
+        var now = _clock.UtcNow;
+        var scope = accessContext.TenantId is { } tenantId
+            ? ResourceScope.Tenant(tenantId)
+            : ResourceScope.Global();
+
+        return new ExecutionTarget(
+            new ResourceEnvelope<ExecutionTargetId>(
+                ResourceKind.ExecutionTarget,
+                ExecutionTargetId.New(),
+                accessContext.PrincipalId!.Value,
+                scope,
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    accessContext.PrincipalId.Value,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            provider.Id,
+            account.Id,
+            "discovery-probe",
+            "Provider Discovery Probe",
+            endpoint,
+            "discovery-probe",
+            null,
+            Array.Empty<CapabilityStateEntry>());
+    }
+
+
+    private async Task<Result<ReconciliationCounts>> ReconcileAutomaticTargetsAsync(
+        Provider provider,
+        ProviderAccount account,
+        ProviderDiscoverySnapshot snapshot,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken)
+    {
+        var targetsResult = await ListExecutionTargetsAsync(
+            account.Id,
+            accessContext,
+            includeRetired: true,
+            cancellationToken).ConfigureAwait(false);
+
+        if (targetsResult.IsFailure)
+            return Result<ReconciliationCounts>.Failure(targetsResult.Error!);
+
+        var allTargets = targetsResult.Value!;
+        var automaticTargets = allTargets
+            .Where(IsAutomaticTarget)
+            .Where(target => target.ProviderId == provider.Id)
+            .Where(target => Uri.Equals(target.Endpoint, snapshot.Endpoint))
+            .ToList();
+
+        var discoveredModelIds = snapshot.Models
+            .Select(model => model.ModelId)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var created = 0;
+        var reactivated = 0;
+        var retired = 0;
+
+        foreach (var model in snapshot.Models)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var matching = automaticTargets
+                .Where(target =>
+                    string.Equals(target.Model, model.ModelId, StringComparison.Ordinal) &&
+                    target.Deployment is null)
+                .OrderBy(target => target.Id.Value)
+                .FirstOrDefault();
+
+            if (matching is null)
+            {
+                var createdTarget = CreateAutomaticTarget(
+                    provider,
+                    account,
+                    snapshot.Endpoint,
+                    model,
+                    accessContext);
+
+                var createResult = await CreateExecutionTargetAsync(
+                    createdTarget,
+                    accessContext,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (createResult.IsFailure)
+                    return Result<ReconciliationCounts>.Failure(createResult.Error!);
+
+                created++;
+                continue;
+            }
+
+            var current = matching;
+
+            if (current.Resource.Lifecycle.Status == ResourceLifecycleStatus.Retired)
+            {
+                var activated = await ReactivateExecutionTargetAsync(
+                    current.Id,
+                    accessContext,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (activated.IsFailure)
+                    return Result<ReconciliationCounts>.Failure(activated.Error!);
+
+                current = activated.Value!;
+                reactivated++;
+            }
+
+            var desired = current
+                .WithDisplayName(model.ModelId)
+                .WithEndpoint(snapshot.Endpoint)
+                .WithModel(model.ModelId)
+                .WithDeployment(null)
+                .WithCapabilities(model.DiscoveredCapabilities)
+                .WithManagementMode(ExecutionTargetManagementMode.Automatic);
+
+            if (!ExecutionTargetEquivalent(current, desired))
+            {
+                var updated = await UpdateExecutionTargetAsync(
+                    desired,
+                    accessContext,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (updated.IsFailure)
+                    return Result<ReconciliationCounts>.Failure(updated.Error!);
+            }
+        }
+
+        foreach (var target in automaticTargets)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var modelId = target.Model ?? target.Deployment;
+            if (modelId is null || discoveredModelIds.Contains(modelId))
+                continue;
+
+            if (target.Resource.Lifecycle.Status == ResourceLifecycleStatus.Retired)
+                continue;
+
+            var retiredResult = await DeleteExecutionTargetAsync(
+                target.Id,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+            if (retiredResult.IsFailure)
+                return Result<ReconciliationCounts>.Failure(retiredResult.Error!);
+
+            retired++;
+        }
+
+        return Result<ReconciliationCounts>.Success(
+            new ReconciliationCounts(created, reactivated, retired));
+    }
+
+
+    private static ExecutionTarget CreateAutomaticTarget(
+        Provider provider,
+        ProviderAccount account,
+        Uri endpoint,
+        ProviderModelMetadata model,
+        ResourceAccessContext accessContext)
+    {
+        var identity = $"{account.Id.Value:N}|{endpoint.AbsoluteUri}|model:{model.ModelId}";
+        var hash = Convert.ToHexString(
+            System.Security.Cryptography.SHA256.HashData(
+                System.Text.Encoding.UTF8.GetBytes(identity)))
+            .ToLowerInvariant();
+
+        var now = DateTimeOffset.UtcNow;
+        var scope = accessContext.TenantId is { } tenantId
+            ? ResourceScope.Tenant(tenantId)
+            : ResourceScope.Global();
+
+        var target = new ExecutionTarget(
+            new ResourceEnvelope<ExecutionTargetId>(
+                ResourceKind.ExecutionTarget,
+                ExecutionTargetId.New(),
+                accessContext.PrincipalId!.Value,
+                scope,
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    accessContext.PrincipalId.Value,
+                    now,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(now)),
+            provider.Id,
+            account.Id,
+            $"auto-{hash[..32]}",
+            model.ModelId,
+            endpoint,
+            model.ModelId,
+            null,
+            model.DiscoveredCapabilities);
+
+        return target.WithManagementMode(ExecutionTargetManagementMode.Automatic);
+    }
+
+
+    private static bool IsAutomaticTarget(ExecutionTarget target)
+    {
+        try
+        {
+            return target.ManagementMode == ExecutionTargetManagementMode.Automatic;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
+
+    private static bool ExecutionTargetEquivalent(
+        ExecutionTarget left,
+        ExecutionTarget right) =>
+        string.Equals(left.DisplayName, right.DisplayName, StringComparison.Ordinal) &&
+        Uri.Equals(left.Endpoint, right.Endpoint) &&
+        string.Equals(left.Model, right.Model, StringComparison.Ordinal) &&
+        string.Equals(left.Deployment, right.Deployment, StringComparison.Ordinal) &&
+        left.Capabilities.SequenceEqual(right.Capabilities);
+    
+
+    private readonly record struct ReconciliationCounts(
+        int Created,
+        int Reactivated,
+        int Retired);
 
 
     internal Task<Result<ProviderAccount>> CreateProviderAccountAsync(
