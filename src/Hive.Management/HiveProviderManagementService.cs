@@ -24,7 +24,8 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
     private readonly IProviderCapabilityDiscovery? _providerCapabilityDiscovery;
     private readonly ISecretStore? _secrets;
     private readonly IClock _clock;
-    private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, ProviderDiscoverySnapshot> _discoveryCache = new();
+    private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, ProviderDiscoveryCacheEntry> _discoveryCache = new();
+    private long _discoveryCompletionSequence;
     private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, DiscoveryGate> _discoveryLocks = new();
 
     private const int MaxCachedDiscoveries = 128;
@@ -122,14 +123,18 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
             target.Value.Endpoint.AbsoluteUri,
             discoveryGeneration);
 
-        _discoveryCache.TryGetValue(
-            cacheKey,
-            out var cachedAtRequest);
+        var cachedCompletionSequenceAtRequest =
+            _discoveryCache.TryGetValue(
+                cacheKey,
+                out var cachedAtRequest)
+                ? cachedAtRequest.CompletionSequence
+                : 0;
 
         if (!forceRefresh &&
             cachedAtRequest is not null)
         {
-            return Result<ProviderDiscoverySnapshot>.Success(cachedAtRequest);
+            return Result<ProviderDiscoverySnapshot>.Success(
+                cachedAtRequest.Snapshot);
         }
 
         var gate = AcquireDiscoveryGate(cacheKey);
@@ -147,17 +152,18 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                 _discoveryCache.TryGetValue(
                     cacheKey,
                     out var cachedAfterWait) &&
-                (cachedAtRequest is null ||
-                 !ReferenceEquals(cachedAfterWait, cachedAtRequest)))
+                cachedAfterWait.WasForcedRefresh &&
+                cachedAfterWait.CompletionSequence > cachedCompletionSequenceAtRequest)
             {
                 return Result<ProviderDiscoverySnapshot>.Success(
-                    cachedAfterWait);
+                    cachedAfterWait.Snapshot);
             }
 
             if (!forceRefresh &&
                 _discoveryCache.TryGetValue(cacheKey, out var cached))
             {
-                return Result<ProviderDiscoverySnapshot>.Success(cached);
+                return Result<ProviderDiscoverySnapshot>.Success(
+                    cached.Snapshot);
             }
 
             SecretMaterial? material = null;
@@ -210,7 +216,15 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
                 if (Volatile.Read(ref _discoveryGeneration) == discoveryGeneration)
                 {
-                    _discoveryCache[cacheKey] = discovered.Value!;
+                    var completionSequence =
+                        Interlocked.Increment(ref _discoveryCompletionSequence);
+
+                    _discoveryCache[cacheKey] =
+                        new ProviderDiscoveryCacheEntry(
+                            discovered.Value!,
+                            completionSequence,
+                            forceRefresh);
+
                     TrimDiscoveryCache(cacheKey);
                 }
 
@@ -850,6 +864,11 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
 
 
+
+    private sealed record ProviderDiscoveryCacheEntry(
+        ProviderDiscoverySnapshot Snapshot,
+        long CompletionSequence,
+        bool WasForcedRefresh);
 
     private sealed class DiscoveryGate
     {
