@@ -146,6 +146,58 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     }
 
     [Fact]
+    public async Task Management_ConcurrentDiscoveryRequestsShareOneInFlightDiscovery()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryConcurrency");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var provider = CreateProvider(principal, tenant);
+        var account = CreateAccount(provider.Id, principal, tenant);
+        var target = CreateTarget(provider.Id, account.Id, principal, tenant);
+        var providerStore = new SqlProviderResourceStore(database.Options);
+
+        Assert.True(
+            (await providerStore.CreateProviderAsync(provider, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateProviderAccountAsync(account, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateExecutionTargetAsync(target, context)).IsSuccess);
+
+        var discovery = new RecordingDiscovery(
+            delay: TimeSpan.FromMilliseconds(100));
+
+        using var facade = new HiveManagementFacade(
+            providerStore,
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            providerCapabilityDiscovery: discovery);
+
+        var requests = Enumerable
+            .Range(0, 8)
+            .Select(_ => facade.GetProviderDiscoveryAsync(
+                target.Id,
+                context))
+            .ToArray();
+
+        var results = await Task.WhenAll(requests);
+
+        Assert.All(
+            results,
+            result => Assert.True(result.IsSuccess, result.Error?.Message));
+        Assert.Equal(1, discovery.CallCount);
+    }
+
+    [Fact]
     public async Task Management_FailedForceRefreshLeavesLastSuccessfulDiscoveryCached()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryRefreshFailure");
@@ -351,20 +403,25 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
         private readonly bool _staleFirst;
         private readonly int? _failOnCall;
         private readonly bool _mismatchedResult;
+        private readonly TimeSpan? _delay;
+        private int _callCount;
 
         public RecordingDiscovery(
             bool staleFirst = false,
             int? failOnCall = null,
-            bool mismatchedResult = false)
+            bool mismatchedResult = false,
+            TimeSpan? delay = null)
         {
             _staleFirst = staleFirst;
             _failOnCall = failOnCall;
             _mismatchedResult = mismatchedResult;
+            _delay = delay;
         }
 
-        public int CallCount { get; private set; }
+        public int CallCount =>
+            Volatile.Read(ref _callCount);
 
-        public Task<Result<ProviderDiscoverySnapshot>> DiscoverAsync(
+        public async Task<Result<ProviderDiscoverySnapshot>> DiscoverAsync(
             Provider provider,
             ProviderAccount account,
             ExecutionTarget target,
@@ -373,9 +430,16 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
         {
             Assert.Null(credential);
 
-            CallCount++;
+            var callNumber = Interlocked.Increment(ref _callCount);
 
-            if (_failOnCall == CallCount)
+            if (_delay is { } delay)
+            {
+                await Task.Delay(
+                    delay,
+                    cancellationToken);
+            }
+
+            if (_failOnCall == callNumber)
             {
                 return Task.FromResult(
                     Result<ProviderDiscoverySnapshot>.Failure(
@@ -386,10 +450,10 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
             }
 
             var now = DateTimeOffset.UtcNow;
-            var observedAt = _staleFirst && CallCount == 1
+            var observedAt = _staleFirst && callNumber == 1
                 ? now.AddMinutes(-1)
                 : now;
-            var staleAfter = _staleFirst && CallCount == 1
+            var staleAfter = _staleFirst && callNumber == 1
                 ? now.AddSeconds(-1)
                 : observedAt.AddMinutes(5);
 
