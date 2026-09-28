@@ -28,7 +28,7 @@ Phase 1.17 structured extraction/validation and all later V1 phases remain outsi
 
 ## Verification boundary
 
-Previous automated verification was **415/415 passed, 0 failed, 0 skipped** on 2026-09-28. The revision changed production code, the Example Host, tests, and architecture documentation, so that result does not verify the revised source. Developer re-verification is now required.
+The revised source is **automated-verified**: the developer reported the full `Hive.Tests` suite at **415/415 passed, 0 failed, 0 skipped** on 2026-09-28 in 43.2 seconds. The supplied capability-aware execution-selection diagnostics also confirm the existing selector behavior. The matching Phase 1.16 discovery Example Host scenario has not been explicitly reported as exercised yet.
 
 Required verification follows the Phase 1.16 roadmap gate:
 
@@ -41,7 +41,9 @@ Required verification follows the Phase 1.16 roadmap gate:
 - no provider credentials or secrets in metadata/diagnostics;
 - Example Host scenario and focused automated coverage.
 
-Previous automated verification record: [Phase 1.16 verification](verification/phase-1/1.16-provider-model-capability-discovery-2026-09-28.md)
+Initial verification record: [Phase 1.16 verification](verification/phase-1/1.16-provider-model-capability-discovery-2026-09-28.md)
+
+Revision verification record: [Phase 1.16 revision verification](verification/phase-1/1.16-provider-model-capability-discovery-revision-2026-09-28.md)
 
 ### Handoff
 
@@ -49,7 +51,7 @@ Example to run: Providers / Target Selection / Capability Discovery / Provider /
 
 Tests to run: `tests/Hive.Tests/ProviderDiscoveryTests.cs`; `tests/Hive.Tests/ProviderDiscoveryManagementIntegrationTests.cs`; full `Hive.Tests` suite after focused verification passes. Then exercise the matching Example Host scenario.
 
-The 2026-09-28 full-suite result is recorded above from developer-provided execution output. No manual Example Host verification is claimed until the developer explicitly reports it.
+The 2026-09-28 revised full-suite result is recorded above from developer-provided execution output. No matching Phase 1.16 discovery Example Host verification is claimed until the developer explicitly reports that scenario.
 
 ## Handoff status
 
