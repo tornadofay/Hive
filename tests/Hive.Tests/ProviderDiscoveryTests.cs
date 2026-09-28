@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using Hive.Core;
 using Hive.Providers.OpenAICompatible;
+using Hive.Tests.TestInfrastructure;
 using Xunit;
 
 namespace Hive.Tests;
