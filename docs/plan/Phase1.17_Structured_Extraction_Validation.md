@@ -140,13 +140,15 @@ The result handed forward is a stable, reviewable candidate set. It contains no 
 
 ## Human-review and authorization model
 
-Phase 1.17 distinguishes three concepts:
+Phase 1.17 has two processing-stage human checkpoints, followed later by the business-operation authorization:
 
-1. Processing authorization — permission to perform the selected processing work, potentially for an entire selected batch.
-2. Mapping/candidate review — inspection and correction of interpretation results before downstream use.
-3. Business-operation authorization — later permission to perform the consequential host mutation.
+1. **Processing authorization checkpoint** — after Single File or Folder selection, the user may authorize the selected batch as one processing unit when policy requires it. This can cover many image model calls; there is no inherent requirement for one authorization per image.
+2. **Candidate/mapping authorization checkpoint** — after processing, Hive presents the spreadsheet mappings and image-extracted candidates, per-item failures, and provenance. The user can inspect the original source, edit mappings/candidate values, and authorize the accepted result set to proceed to downstream use.
+3. **Business-operation authorization** — later permission to perform the consequential host mutation. This is not part of the Phase 1.17 extraction boundary.
 
-Phase 1.17 defines the artifacts and review points needed for these distinctions, but the generalized authoritative Approve / Reject intervention state machine remains owned by Phase 1.22. Phase 1.17 must not introduce a second parallel authorization subsystem.
+The second checkpoint approves the interpreted data for downstream use; it does not write to the host application. The actual business-operation proposal and host mutation remain later-phase concerns.
+
+Phase 1.17 defines the artifacts and checkpoints needed for this flow, but the generalized authoritative Approve / Reject intervention state machine remains owned by Phase 1.22. Phase 1.17 must not introduce a second parallel authorization subsystem.
 
 ## Safety and determinism
 
