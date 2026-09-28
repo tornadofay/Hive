@@ -19,7 +19,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
     private readonly IProviderCapabilityDiscovery? _providerCapabilityDiscovery;
     private readonly ISecretStore? _secrets;
     private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, ProviderDiscoverySnapshot> _discoveryCache = new();
-    private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, SemaphoreSlim> _discoveryLocks = new();
+    private readonly ConcurrentDictionary<ProviderDiscoveryCacheKey, DiscoveryGate> _discoveryLocks = new();
 
     private const int MaxCachedDiscoveries = 128;
 
@@ -119,14 +119,17 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
             return Result<ProviderDiscoverySnapshot>.Success(cached);
         }
 
-        var gate = _discoveryLocks.GetOrAdd(
-            cacheKey,
-            static _ => new SemaphoreSlim(1, 1));
-
-        await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var gate = AcquireDiscoveryGate(cacheKey);
+        var gateEntered = false;
 
         try
         {
+            await gate.Semaphore
+                .WaitAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            gateEntered = true;
+
             if (!forceRefresh &&
                 _discoveryCache.TryGetValue(cacheKey, out cached))
             {
@@ -182,7 +185,50 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         }
         finally
         {
-            gate.Release();
+            if (gateEntered)
+                gate.Semaphore.Release();
+
+            ReleaseDiscoveryGate(cacheKey, gate);
+        }
+    }
+
+    private DiscoveryGate AcquireDiscoveryGate(
+        ProviderDiscoveryCacheKey key)
+    {
+        while (true)
+        {
+            var gate = _discoveryLocks.GetOrAdd(
+                key,
+                static _ => new DiscoveryGate());
+
+            lock (gate.SyncRoot)
+            {
+                if (gate.Retired)
+                    continue;
+
+                gate.ReferenceCount++;
+                return gate;
+            }
+        }
+    }
+
+    private void ReleaseDiscoveryGate(
+        ProviderDiscoveryCacheKey key,
+        DiscoveryGate gate)
+    {
+        lock (gate.SyncRoot)
+        {
+            gate.ReferenceCount--;
+
+            if (gate.ReferenceCount != 0)
+                return;
+
+            if (((ICollection<KeyValuePair<ProviderDiscoveryCacheKey, DiscoveryGate>>)_discoveryLocks)
+                .Remove(new KeyValuePair<ProviderDiscoveryCacheKey, DiscoveryGate>(key, gate)))
+            {
+                gate.Retired = true;
+                gate.Semaphore.Dispose();
+            }
         }
     }
 
@@ -689,6 +735,17 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
 
 
+
+    private sealed class DiscoveryGate
+    {
+        public readonly object SyncRoot = new();
+
+        public readonly SemaphoreSlim Semaphore = new(1, 1);
+
+        public int ReferenceCount;
+
+        public bool Retired;
+    }
 
     private readonly record struct ProviderDiscoveryCacheKey(
         ProviderId ProviderId,
