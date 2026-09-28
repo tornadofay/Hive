@@ -113,7 +113,9 @@ public sealed class SqlHiveHostServiceGraphFactory :
                 _configurationStore,
                 new HivePersistenceConnectionTester(),
                 _bootstrapCredentials,
-                agentExecution);
+                agentExecution,
+                new OpenAICompatibleProviderCapabilityDiscovery(
+                    SharedHttpClient));
 
             var graph = new HiveHostServiceGraph(
                 configuration,
