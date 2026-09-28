@@ -225,6 +225,8 @@ Phase 1.17 Example Host scenario should demonstrate:
 - non-recursive folder enumeration by default, with bounded Include Subfolders behavior;
 - bounded folder enumeration and per-item failure isolation;
 - spreadsheet workbook/header/sample inspection;
+- target semantic-field schema supplied by the host/business integration boundary;
+- multiple mapping contexts when one workbook contains different worksheet/table structures;
 - one LLM mapping proposal for an applicable spreadsheet mapping context;
 - deterministic mapping validation and human-editable mapping;
 - deterministic reuse of the accepted mapping across rows without per-row remapping;
