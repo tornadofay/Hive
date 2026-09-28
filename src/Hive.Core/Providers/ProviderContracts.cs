@@ -211,8 +211,16 @@ public sealed record ProviderAccount
     }
 }
 
+public enum ExecutionTargetManagementMode
+{
+    Automatic,
+    Manual
+}
+
 public sealed record ExecutionTarget
 {
+    public const string ManagementModeMetadataKey = "hive.execution-target.management-mode";
+
     private static readonly HashSet<string> CredentialBearingQueryParameterNames =
         new(StringComparer.OrdinalIgnoreCase)
         {
@@ -348,6 +356,67 @@ public sealed record ExecutionTarget
     public string? Deployment { get; }
 
     public IReadOnlyList<CapabilityStateEntry> Capabilities { get; }
+
+    public ExecutionTargetManagementMode ManagementMode
+    {
+        get
+        {
+            if (!Resource.Metadata.TryGetValue(ManagementModeMetadataKey, out var value))
+                return ExecutionTargetManagementMode.Manual;
+
+            if (!Enum.TryParse<ExecutionTargetManagementMode>(value, ignoreCase: true, out var mode) ||
+                !Enum.IsDefined(mode))
+            {
+                throw new InvalidOperationException(
+                    "Execution target management mode metadata is invalid.");
+            }
+
+            return mode;
+        }
+    }
+
+    public ExecutionTarget WithManagementMode(
+        ExecutionTargetManagementMode managementMode)
+    {
+        if (!Enum.IsDefined(managementMode))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(managementMode),
+                managementMode,
+                "Execution target management mode is invalid.");
+        }
+
+        if (ManagementMode == managementMode)
+            return this;
+
+        var metadata = new Dictionary<string, string>(
+            Resource.Metadata,
+            StringComparer.Ordinal)
+        {
+            [ManagementModeMetadataKey] = managementMode.ToString()
+        };
+
+        var envelope = new ResourceEnvelope<ExecutionTargetId>(
+            Resource.Kind,
+            Resource.Identity,
+            Resource.Owner,
+            Resource.Scope,
+            Resource.Version,
+            Resource.Provenance,
+            Resource.Lifecycle,
+            metadata);
+
+        return new ExecutionTarget(
+            envelope,
+            ProviderId,
+            ProviderAccountId,
+            Key,
+            DisplayName,
+            Endpoint,
+            Model,
+            Deployment,
+            Capabilities);
+    }
 
     public ExecutionTarget WithDisplayName(string displayName) =>
         new(
