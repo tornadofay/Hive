@@ -209,7 +209,7 @@ internal sealed class ProviderCapabilityDiscoveryExampleView : UserControl
         }
     }
 
-    private static Provider CreateProvider()
+    private Provider CreateProvider()
     {
         var now = DateTimeOffset.UtcNow;
 
@@ -217,11 +217,11 @@ internal sealed class ProviderCapabilityDiscoveryExampleView : UserControl
             new ResourceEnvelope<ProviderId>(
                 ResourceKind.Provider,
                 ProviderId.New(),
-                PrincipalId.Parse("00000000-0000-0000-0000-000000000001"),
-                ResourceScope.Global(),
+                _context.PrincipalId!.Value,
+                ResourceScope.Tenant(_context.TenantId!.Value),
                 ResourceVersion.Initial,
                 new ResourceProvenance(
-                    PrincipalId.Parse("00000000-0000-0000-0000-000000000001"),
+                    _context.PrincipalId.Value,
                     now,
                     CorrelationId.New()),
                 ResourceLifecycle.Active(now)),
