@@ -72,6 +72,11 @@ Settings navigation:
 - Do not introduce periodic/background discovery scheduling in the Settings UI.
 - Do not discard the existing advanced resource pages.
 
+## Example / test handoff
+
+Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
+Tests to run: ProviderSettingsIntegrationTests.cs; full Hive.Tests suite
+
 ## Verification gate
 
 Required developer verification before closure:
