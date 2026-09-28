@@ -86,13 +86,13 @@ Phase 1.17 uses explicit input selection modes:
 [ Single File ]   [ Folder ]
 ```
 
-Single File selects one input item. Folder selects an input scope that becomes one bounded batch. A folder may contain multiple Excel files, multiple images, and unsupported files together. Folder recursion behavior must be explicit and bounded.
+Single File selects one input item. Folder selects an input scope that becomes one bounded batch. A folder may contain multiple Excel files, multiple images, and unsupported files together. Folder enumeration is non-recursive by default; an explicit Include Subfolders option may enable bounded recursive enumeration.
 
 The UI should present processing at the batch level while retaining per-file/per-item identity and status. Unsupported or failed items remain visible without hiding successful items.
 
 Before processing begins, the selected batch is subject to the processing authorization checkpoint when policy requires it. One batch-level authorization can cover many image model calls; there is no inherent one-authorization-per-image requirement.
 
-After processing, the UI should present a second candidate/mapping checkpoint. Spreadsheet mappings and image-extracted candidates are shown for review; the user can correct mappings and candidate values, inspect failed items, open original sources where supported, and then authorize the accepted candidate set for downstream use.
+After processing, the UI should present a second candidate/mapping checkpoint. Spreadsheet mappings and image-extracted candidates are shown for review; the user can correct mappings and candidate values, exclude failed or uncertain items, inspect failed items, open original sources where supported, and then authorize the accepted candidate set for downstream use.
 
 This second authorization does not perform the host business write. Consequential host mutation remains the later business-operation boundary.
 

@@ -517,7 +517,7 @@ The host/business boundary supplies the target fields needed by extraction and m
 - parent/child placement;
 - bounded lookup/reference semantics where applicable.
 
-Database column names, WinForms control names, and display labels may be included as descriptive evidence when useful, but they are never the durable semantic identity used by the extraction/mapping contract.
+Data-source identity, database field/column reference, WinForms control names, and display labels may be included as descriptive evidence when useful, but they are never the durable semantic identity used by the extraction/mapping contract.
 
 ### Spreadsheet semantic mapping
 
@@ -552,7 +552,7 @@ Phase 1.17 must make mapping and candidate results reviewable, including per-ite
 Phase 1.17 has two user-facing checkpoints around interpretation work:
 
 1. **Processing authorization:** the selected Single File or Folder batch may be authorized as one processing unit when policy permits it. Each image may still result in its own model call, but that does not by itself require a separate human approval per image.
-2. **Candidate/mapping authorization:** after processing, Hive presents the spreadsheet mappings and extracted image candidates with per-item success/failure. The user can inspect the original source, correct mappings or candidate values, and authorize the accepted result set for downstream use.
+2. **Candidate/mapping authorization:** after processing, Hive presents the spreadsheet mappings and extracted image candidates with per-item success/failure. The user can inspect the original source, correct mappings or candidate values, exclude failed or uncertain items, and authorize the accepted result set for downstream use.
 
 The second checkpoint is deliberately before consequential host mutation. It confirms the data Hive is proposing to carry forward; it does not itself execute or authorize the later business operation.
 

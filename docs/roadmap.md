@@ -426,12 +426,13 @@ Phase 1.17 implementation slices, in order:
    - support explicit Single File and Folder selection;
    - normalize both selection modes into the existing InputSubmission/InputItem model;
    - allow mixed supported file types and multiple files in one folder batch;
-   - enumerate folders with explicit recursive/non-recursive behavior and bounded depth/item/resource limits;
+   - folder selection is non-recursive by default; an explicit Include Subfolders choice may opt into bounded recursive enumeration;
    - identify unsupported files without preventing safe supported items from continuing.
 2. **Target Schema & Semantic Field Contract**
    - expose the target operation's source-neutral semantic fields needed for extraction and mapping;
-   - use stable semantic field identity, not database-field names as the durable mapping key;
-   - include human-readable field name, expected type, requiredness, parent/child structure, and bounded lookup/reference semantics where required;
+   - use stable semantic field identity, not database-field names, control names, or display labels as the durable mapping key;
+   - include human-readable field name, expected type, requiredness, parent/child structure, data-source identity, optional database-field reference, and bounded lookup/reference semantics where required;
+   - data-source/database-field metadata is descriptive mapping evidence only; stable semantic field identity remains authoritative;
    - keep host database schema and private host types behind the existing host semantic boundary.
 3. **Spreadsheet Profiling & One-Time Mapping**
    - use the existing bounded .xlsx preparation boundary for workbook/worksheet/row mechanics;

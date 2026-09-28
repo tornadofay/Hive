@@ -6,7 +6,7 @@ Status: VERIFICATION PENDING
 
 **Phase 1.16 — UI — Provider Configuration, Discovery & Target Reconciliation**
 
-Checkpoint: `9eab46fa0f161252bc037fe088b5c29b1ed66879` (main, 2026-09-28)
+Checkpoint: `9d73fe444e70864d3d93f653b0f15158303301fe` (main, 2026-09-28)
 
 ## Objective
 
@@ -74,7 +74,11 @@ Settings navigation:
 
 ## Implementation state
 
-Source/diff review complete at `9eab46fa0f161252bc037fe088b5c29b1ed66879` (main, 2026-09-28). Same-slice remediation corrected constructor-time provider-selection event ordering in `HiveProviderSetupEditorForm`; no build, test run, application launch, or external provider call was performed by the agent.
+Source/diff review complete at `9d73fe444e70864d3d93f653b0f15158303301fe` (main, 2026-09-28). Same-slice remediation corrected the reported test compilation/analyzer failures; no build, test run, application launch, or external provider call was performed by the agent.
+
+## Verification incident — test compilation
+
+Developer verification found in-scope compilation/analyzer failures in the Phase 1.16 Provider Settings test coverage and the existing ExecutionTarget discovery settings test. Same-slice remediation corrected the discovery-test fixture constructor ambiguity, aligned failure fixtures with the existing `ErrorCategory` values, and replaced analyzer-reported `Assert.Single(...Where(...))` patterns with the predicate overload. Source review found no remaining instances of the reported patterns; no build or test run was performed by the agent.
 
 ## Example / test handoff
 

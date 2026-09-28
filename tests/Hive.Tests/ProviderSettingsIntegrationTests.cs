@@ -211,12 +211,10 @@ public sealed class ProviderSettingsIntegrationTests
         var clock = new FakeClock(
             new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero));
         var discovery = new SettingsDiscovery(
-            [
-                ModelSet("model-a", "model-b"),
-                ModelSet(new[] { "model-a", "model-c" }, "vision"),
-                ModelSet("model-a", "model-b")
-            ],
+            ModelSet("model-a", "model-b"),
             clock);
+        discovery.EnqueueModels(ModelSet(new[] { "model-a", "model-c" }, "vision"));
+        discovery.EnqueueModels(ModelSet("model-a", "model-b"));
 
         using var facade = new HiveManagementFacade(
             providerStore,
@@ -248,10 +246,8 @@ public sealed class ProviderSettingsIntegrationTests
             includeRetired: true);
         Assert.True(firstTargets.IsSuccess, firstTargets.Error?.Message);
 
-        var automaticA = Assert.Single(
-            firstTargets.Value!.Where(target => target.Model == "model-a"));
-        var automaticB = Assert.Single(
-            firstTargets.Value!.Where(target => target.Model == "model-b"));
+        var automaticA = Assert.Single(firstTargets.Value!, target => target.Model == "model-a");
+        var automaticB = Assert.Single(firstTargets.Value!, target => target.Model == "model-b");
 
         var manual = new ExecutionTarget(
             CreateEnvelope(
@@ -291,9 +287,10 @@ public sealed class ProviderSettingsIntegrationTests
         Assert.True(secondTargets.IsSuccess, secondTargets.Error?.Message);
 
         var currentAutomaticA = Assert.Single(
-            secondTargets.Value!.Where(target =>
+            secondTargets.Value!,
+            target =>
                 target.ManagementMode == ExecutionTargetManagementMode.Automatic &&
-                target.Model == "model-a"));
+                target.Model == "model-a");
         Assert.Equal(automaticA.Id, currentAutomaticA.Id);
         Assert.Contains(
             currentAutomaticA.Capabilities,
@@ -301,20 +298,19 @@ public sealed class ProviderSettingsIntegrationTests
                 capability.Capability.Value == "vision" &&
                 capability.State == CapabilityState.Supported);
 
-        var retiredB = Assert.Single(
-            secondTargets.Value!.Where(target => target.Id == automaticB.Id));
+        var retiredB = Assert.Single(secondTargets.Value!, target => target.Id == automaticB.Id);
         Assert.Equal(ResourceLifecycleStatus.Retired, retiredB.Resource.Lifecycle.Status);
 
         var automaticC = Assert.Single(
-            secondTargets.Value!.Where(target =>
+            secondTargets.Value!,
+            target =>
                 target.ManagementMode == ExecutionTargetManagementMode.Automatic &&
-                target.Model == "model-c"));
+                target.Model == "model-c");
         Assert.Equal(
             ResourceLifecycleStatus.Active,
             automaticC.Resource.Lifecycle.Status);
 
-        var unchangedManual = Assert.Single(
-            secondTargets.Value!.Where(target => target.Id == manual.Id));
+        var unchangedManual = Assert.Single(secondTargets.Value!, target => target.Id == manual.Id);
         Assert.Equal(ExecutionTargetManagementMode.Manual, unchangedManual.ManagementMode);
         Assert.Equal(ResourceLifecycleStatus.Active, unchangedManual.Resource.Lifecycle.Status);
         Assert.Equal("Manual Model A", unchangedManual.DisplayName);
@@ -336,12 +332,10 @@ public sealed class ProviderSettingsIntegrationTests
             includeRetired: true);
         Assert.True(thirdTargets.IsSuccess, thirdTargets.Error?.Message);
 
-        var reactivatedB = Assert.Single(
-            thirdTargets.Value!.Where(target => target.Id == automaticB.Id));
+        var reactivatedB = Assert.Single(thirdTargets.Value!, target => target.Id == automaticB.Id);
         Assert.Equal(ResourceLifecycleStatus.Active, reactivatedB.Resource.Lifecycle.Status);
 
-        var retiredC = Assert.Single(
-            thirdTargets.Value!.Where(target => target.Model == "model-c"));
+        var retiredC = Assert.Single(thirdTargets.Value!, target => target.Model == "model-c");
         Assert.Equal(ResourceLifecycleStatus.Retired, retiredC.Resource.Lifecycle.Status);
     }
 
@@ -358,15 +352,14 @@ public sealed class ProviderSettingsIntegrationTests
         var clock = new FakeClock(
             new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero));
         var discovery = new SettingsDiscovery(
-            [
-                ModelSet("model-a"),
-                Result<ProviderDiscoverySnapshot>.Failure(
-                    new Error(
-                        "hive.provider.discovery.test-failure",
-                        ErrorCategory.External,
-                        "The test discovery provider failed."))
-            ],
+            ModelSet("model-a"),
             clock);
+        discovery.EnqueueResult(
+            Result<ProviderDiscoverySnapshot>.Failure(
+                new Error(
+                    "hive.provider.discovery.test-failure",
+                    ErrorCategory.External,
+                    "The test discovery provider failed.")));
 
         using var facade = new HiveManagementFacade(
             providerStore,
@@ -476,9 +469,10 @@ public sealed class ProviderSettingsIntegrationTests
         Assert.True(targetResult.IsSuccess, targetResult.Error?.Message);
 
         var automatic = Assert.Single(
-            targetResult.Value!.Where(target =>
+            targetResult.Value!,
+            target =>
                 target.ManagementMode == ExecutionTargetManagementMode.Automatic &&
-                target.Model == "model-a"));
+                target.Model == "model-a");
 
         Assert.Equal(ResourceLifecycleStatus.Active, automatic.Resource.Lifecycle.Status);
         Assert.Equal(5, discovery.CallCount);
@@ -593,15 +587,6 @@ public sealed class ProviderSettingsIntegrationTests
             Clock = clock;
         }
 
-        public SettingsDiscovery(
-            IReadOnlyList<Result<ProviderDiscoverySnapshot>> results,
-            IClock clock)
-        {
-            _results = new ConcurrentQueue<Result<ProviderDiscoverySnapshot>>(results);
-            _fallbackModels = Array.Empty<ProviderModelMetadata>();
-            Clock = clock;
-        }
-
         public IClock Clock { get; }
 
         public int CallCount => Volatile.Read(ref _callCount);
@@ -616,6 +601,26 @@ public sealed class ProviderSettingsIntegrationTests
                 }
             }
         }
+
+        public void EnqueueModels(IReadOnlyList<ProviderModelMetadata> models)
+        {
+            _results.Enqueue(
+                Result<ProviderDiscoverySnapshot>.Success(
+                    new ProviderDiscoverySnapshot(
+                        ProviderId.New(),
+                        ProviderAccountId.New(),
+                        new Uri("https://example.test/v1"),
+                        new ProviderOperationalMetadata(
+                            ProviderAvailabilityStatus.Available,
+                            ProviderHealthStatus.Healthy,
+                            Clock.UtcNow,
+                            Clock.UtcNow.AddMinutes(5)),
+                        ProviderDiscoveryState.Supported,
+                        models)));
+        }
+
+        public void EnqueueResult(Result<ProviderDiscoverySnapshot> result) =>
+            _results.Enqueue(result);
 
         public Task<Result<ProviderDiscoverySnapshot>> DiscoverAsync(
             Provider provider,
