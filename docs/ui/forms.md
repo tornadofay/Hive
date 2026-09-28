@@ -77,3 +77,21 @@ Settings pages call the appropriate public Management/application boundaries. Se
 Provider/model discovery is primarily surfaced from the normal Providers Settings page. The page offers explicit `Refresh`, which requests fresh provider/account/endpoint discovery for active configured providers and reconciles automatically managed ExecutionTargets. The UI presents configured providers and safe operational summary; it does not expose ProviderAccount or ExecutionTarget administration during normal onboarding. Advanced Configuration exposes the generalized Providers / Accounts / Credentials / Execution Targets administration pages when an administrator needs multiple accounts, custom endpoints, local/self-hosted models, manual targets, or explicit capability overrides. Discovered availability, health, rate-limit metadata, and normalized capability states remain observational; configured ExecutionTarget capability overrides remain authoritative. Failed or stale discovery preserves existing durable targets and must never be interpreted as an empty model catalog.
 
 The Persistence Server / instance field is a normal free-form text box. It accepts local servers, named instances, remote hosts, IP addresses, and online SQL Server targets. Hive currently has no authoritative server-discovery/catalog contract, so the UI does not attempt to enumerate installed SQL Server instances. The Database field is read-only and assigned automatically to Hive's package database name. Save and Test are non-destructive. The `Initialize Hive` action is the explicit lifecycle operation that may create the configured database when allowed and applies Hive schema migrations; it must not be used as an implicit side effect of Save, Test, or normal Settings-page navigation.
+
+## Structured extraction and batch input UI
+
+Phase 1.17 uses explicit input selection modes:
+
+```text
+[ Single File ]   [ Folder ]
+```
+
+Single File selects one input item. Folder selects an input scope that becomes one bounded batch. A folder may contain multiple Excel files, multiple images, and unsupported files together. Folder recursion behavior must be explicit and bounded.
+
+The UI should present processing at the batch level while retaining per-file/per-item identity and status. Unsupported or failed items remain visible without hiding successful items.
+
+For spreadsheet extraction, the UI should show the detected workbook/worksheet/header/sample context and the proposed column-to-target-field mapping before downstream use. The mapping must be editable. After the mapping is accepted, it is reused deterministically rather than asking the LLM to remap every row.
+
+For image extraction, the UI should present batch progress and independent per-image outcomes. A failed image should show its file name and a safe failure reason; selecting it should open the original image where the host surface permits.
+
+Candidate review should allow inspection/correction of extracted values before downstream business-operation work. Mapping/candidate review is distinct from authorization to perform a consequential host operation. The generic Approve / Reject intervention UI belongs to the later governance boundary.
