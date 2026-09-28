@@ -489,6 +489,75 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     }
 
     [Fact]
+    public async Task Management_ForcedRefreshDoesNotReuseOverlappingNonForcedDiscovery()
+    {
+        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryForcedAfterNonForced");
+        database.Reset();
+
+        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
+        Assert.True(migration.IsSuccess, migration.Error?.Message);
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var provider = CreateProvider(principal, tenant);
+        var account = CreateAccount(provider.Id, principal, tenant);
+        var target = CreateTarget(provider.Id, account.Id, principal, tenant);
+        var providerStore = new SqlProviderResourceStore(database.Options);
+
+        Assert.True(
+            (await providerStore.CreateProviderAsync(provider, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateProviderAccountAsync(account, context)).IsSuccess);
+        Assert.True(
+            (await providerStore.CreateExecutionTargetAsync(target, context)).IsSuccess);
+
+        var firstDiscoveryStarted =
+            new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFirstDiscovery =
+            new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var discovery = new RecordingDiscovery(
+            started: firstDiscoveryStarted,
+            release: releaseFirstDiscovery);
+
+        using var facade = new HiveManagementFacade(
+            providerStore,
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            providerCapabilityDiscovery: discovery);
+
+        var nonForced = facade.GetProviderDiscoveryAsync(
+            target.Id,
+            context);
+
+        await firstDiscoveryStarted.Task;
+
+        var forced = facade.GetProviderDiscoveryAsync(
+            target.Id,
+            context,
+            forceRefresh: true);
+
+        Assert.False(forced.IsCompleted);
+
+        releaseFirstDiscovery.TrySetResult(true);
+
+        var nonForcedResult = await nonForced;
+        var forcedResult = await forced;
+
+        Assert.True(nonForcedResult.IsSuccess, nonForcedResult.Error?.Message);
+        Assert.True(forcedResult.IsSuccess, forcedResult.Error?.Message);
+        Assert.Equal(2, discovery.CallCount);
+        Assert.NotSame(nonForcedResult.Value, forcedResult.Value);
+    }
+
+    [Fact]
     public async Task Management_ConcurrentForcedRefreshRequestsShareOneSuccessfulRefresh()
     {
         var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryForcedRefreshConcurrency");
