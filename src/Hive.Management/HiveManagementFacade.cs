@@ -24,7 +24,8 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         IHivePersistenceConnectionTester? persistenceConnectionTester = null,
         IHiveBootstrapCredentialStore? bootstrapCredentials = null,
         AgentExecutionService? agentExecution = null,
-        IProviderCapabilityDiscovery? providerCapabilityDiscovery = null)
+        IProviderCapabilityDiscovery? providerCapabilityDiscovery = null,
+        IClock? clock = null)
     {
         _configuration = new HiveConfigurationManagementService(
             configurationStore,
@@ -35,7 +36,8 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
             providerResources,
             providerConnectionTester,
             secrets,
-            providerCapabilityDiscovery);
+            providerCapabilityDiscovery,
+            clock);
         _agents = new HiveAgentManagementService(
             agentDefinitions,
             providerResources,
