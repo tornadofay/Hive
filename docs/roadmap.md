@@ -431,6 +431,7 @@ Phase 1.17 implementation slices, in order:
 2. **Target Schema & Semantic Field Contract**
    - expose the target operation's source-neutral semantic fields needed for extraction and mapping;
    - use stable semantic field identity, not database-field names, control names, or display labels as the durable mapping key;
+   - consume the target semantic-field schema from the existing host/business semantic boundary rather than inventing a database schema;
    - include human-readable field name, expected type, requiredness, parent/child structure, data-source identity, optional database-field reference, and bounded lookup/reference semantics where required;
    - data-source/database-field metadata is descriptive mapping evidence only; stable semantic field identity remains authoritative;
    - keep host database schema and private host types behind the existing host semantic boundary.
