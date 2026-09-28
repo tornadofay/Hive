@@ -287,7 +287,7 @@ prepared spreadsheet-row inputs
 Phase 1.17 structured extraction/validation
 ```
 
-Image preparation performs capability-aware target routing only in Phase 1.15. It requires `vision` to be explicitly `Supported`; `Unsupported` and `Unknown` targets do not qualify. No provider request is made by the preparation boundary. Provider/model interpretation of the selected image belongs to the later extraction boundary.
+Image preparation performs capability-aware target routing only in Phase 1.15. It requires `vision` to be explicitly `Supported`; `Unsupported` and `Unknown` targets do not qualify. Phase 1.16 may supply ephemeral discovered capability evidence for targets with no explicit configured vision entry. Provider discovery failures remain typed and attributable to the affected image-routing attempt when they prevent that target from being evaluated; a separate target that qualifies can still satisfy the image. No provider request is made by the preparation boundary itself beyond the Phase 1.16 discovery operation. Provider/model interpretation of the selected image belongs to the later extraction boundary.
 
 Spreadsheet preparation supports OOXML `.xlsx` workbooks. The first configured header row is the worksheet's column mapping boundary; data rows become independent prepared inputs with deterministic column-name/value mappings. Formatting, formulas, dates, and business semantics are not interpreted into typed domain values in this phase. The parser uses bounded workbook, worksheet, row, column, archive-entry, shared-string, and cell-content limits and rejects unsafe/malformed package structures rather than silently truncating data.
 
