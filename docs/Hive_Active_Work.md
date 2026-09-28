@@ -51,15 +51,15 @@ Automated verification reported:
 - Runtime: .NET 10.0.1.
 - The supplied full-suite result covers the focused provider/discovery/security/input-routing tests within the authoritative `Hive.Tests` project.
 
-Manual verification remains outstanding because this corrective implementation changes the existing Execution Target validation/error behavior:
-- an ExecutionTarget endpoint containing credential-bearing query parameters is rejected and reported through the existing UI error path;
-- a non-secret provider query such as `api-version` remains accepted;
-- configured vision capability does not require provider discovery;
-- image routing preserves the provider discovery error when discovery prevents a target from being evaluated;
-- equivalent Provider + ProviderAccount + endpoint targets reuse one discovery request.
+Developer-supplied manual verification:
+- `Settings / Providers / Execution Targets` was exercised in `Hive.Example.WinForms`.
+- Provider/Execution Target configuration, save, and test flows were reported working correctly; the user reported that the tested behavior "looks fine."
+- No implementation failure was reported from the manual verification.
+
+The focused corrective checks remain tracked at the verification boundary; the supplied manual result is recorded as confirmation of the affected Settings / Providers / Execution Targets UI flow rather than as separate evidence for each internal security, failure-routing, and cache-observation assertion.
 
 Visual Studio Treat Warnings as Errors / zero-warning confirmation has not been separately reported for this corrective slice.
 
-Do not record closure until the outstanding developer verification results are actually supplied.
+Do not record closure until the remaining developer verification result is actually supplied.
 
 Until those results are reported, this slice remains open and must not be advanced to another roadmap slice.
