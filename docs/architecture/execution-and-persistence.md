@@ -227,6 +227,59 @@ Agent configuration is a separate Agent-owned concern. The existing AgentDefinit
 Operational availability/health remains distinct from capability. Before an Agent Auto selection is executed, the execution-planning boundary must exclude targets that are explicitly ineligible under the current operational state; it must not reinterpret health or availability as a capability grant. The exact operational-eligibility policy belongs to execution planning, not Provider Settings.
 
 No V1 workflow, MAF orchestration, business-operation write, Tool authorization, Review, cognition, or future-phase behavior is part of the provider configuration/discovery/reconciliation boundary.
+### Phase 1.17 Structured Extraction & Validation Boundary
+
+Phase 1.17 consumes the completed Phase 1.15 PreparedInput boundary and produces a source-neutral structured candidate. It is an interpretation/validation boundary, not a host business-operation boundary.
+
+Input selection and batching:
+- Single File and Folder are explicit user selection modes.
+- A single file becomes a one-item InputSubmission; a folder becomes one bounded batch of discovered input items.
+- Folder batches may contain multiple Excel files, multiple images, and unsupported file types together.
+- Folder recursion behavior is explicit. Enumeration is bounded by depth, item count, file size, total size, and cancellation/resource limits.
+- Unsupported items are recorded as per-item failures and do not make safe supported items fail as a group.
+
+Target semantic schema:
+- Extraction and mapping operate against a source-neutral target field contract supplied by the owning host/business boundary.
+- Target fields have stable semantic identity; database column names, control names, and display labels are not durable field identity.
+- The contract may describe display name, expected type, requiredness, parent/child structure, and bounded lookup/reference semantics required to construct a candidate.
+- Host database schema and private host types remain behind the existing host semantic contract.
+
+Spreadsheet interpretation:
+- Reuse the existing bounded .xlsx preparation implementation for workbook/worksheet/row mechanics rather than introducing a second spreadsheet-reading stack without a concrete requirement.
+- Build a bounded mapping context from workbook structure, header rows, and a representative sample of row values.
+- The LLM proposes source-column to target-semantic-field mappings once per applicable workbook/mapping context, not once per row.
+- Hive validates the mapping deterministically before it is applied.
+- The mapping is a reviewable artifact that a human can inspect and edit before downstream use.
+- Once accepted, the mapping is applied deterministically to all applicable rows/files sharing that mapping context.
+- Mapping identity/provenance records the source context and target semantic-field identities; a column display name or database field name alone is never the durable mapping key.
+
+Vision interpretation:
+- Images continue to use the existing capability-aware routing boundary to identify an eligible vision-capable ExecutionTarget.
+- Each image is interpreted against the target semantic-field contract and produces its own extraction result/candidate or typed failure.
+- A batch may process many images under one processing plan while preserving independent per-image status, source identity, execution identity, and provenance.
+- One failed image never requires successful images in the same batch to be discarded.
+- An image is not required to have its own human authorization merely because it requires an individual model call; batch-level processing authorization may cover the selected processing plan when policy permits.
+
+StructuredCandidate:
+- Model output is parsed into a typed, source-neutral candidate contract.
+- Candidate structure supports parent data and child collections where the later target operation requires them.
+- Required-field and type validation are deterministic Hive concerns.
+- Domain validation remains owned by the applicable host/business semantic contract; Hive must not duplicate the host's business rules merely to validate extraction.
+- Malformed output is rejected as a typed extraction/serialization failure.
+- Candidate fields/items can carry validation state and provenance instead of silently dropping unusable values.
+- Relevant execution, mapping, source, and evidence/confidence metadata may be retained; confidence is evidence, never authorization.
+
+Review and governance boundary:
+- Phase 1.17 makes mappings and candidates reviewable/editable and preserves per-item failure information so the user can inspect the original source where the UI surface supports it.
+- A later governance boundary may authorize processing of an entire selected batch as one intervention rather than requiring one authorization per image.
+- Mapping acceptance/candidate review must remain distinguishable from authorization to perform a consequential business-app write.
+- The generalized Approve / Reject intervention state machine belongs to Phase 1.22 and must not be recreated inside the extraction subsystem.
+
+Result and provenance:
+- A batch is an operational grouping only; every input item retains its own source identity, result/failure, provenance, and downstream correlation.
+- A stable mapping can be applied repeatedly within its defined source context without requiring repeated LLM interpretation.
+- Successful candidates and rejected/failed candidates remain attributable to their exact source item.
+- Phase 1.17 does not mutate host state, create business-operation receipts, or perform the later governed business write.
 ## 6. Generic Resource Model
 
 All Hive-owned persistent resources share a common identity/ownership envelope:
