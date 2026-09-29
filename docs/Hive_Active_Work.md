@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -100,3 +100,16 @@ Remediation boundary:
 - update the existing OpenAI-compatible adapter's OpenRouter-compatible parsing so these provider-reported fields populate the existing normalized model profile and known capability states;
 - retain Unknown when OpenRouter does not report a particular capability; do not infer capabilities merely from model names or descriptions;
 - add deterministic adapter regression coverage using the documented OpenRouter response shape.
+
+Latest remediation:
+- restored `src/Hive.Example.WinForms/ProviderCapabilityDiscoveryExampleView.cs` to the pre-misdiagnosis fixture implementation because the reported transport exception was caused by an unconfigured Ollama provider, not by that fixture;
+- extended the existing OpenAI-compatible adapter to parse OpenRouter's documented general Models API shape: nested `architecture.input_modalities` / `output_modalities` and `supported_parameters`;
+- normalized OpenRouter provider-reported evidence into the existing Hive capabilities without model-name inference: image input -> `vision`, text output -> `text.generate`, `tools` -> `tool.calling`, `structured_outputs` -> `structured.output`, and `reasoning` -> `reasoning`;
+- reused the existing limits/pricing normalization for OpenRouter's top-level `context_length`, `top_provider.max_completion_tokens`, and `pricing.prompt/completion` fields;
+- added deterministic regression coverage for the documented OpenRouter response shape and preserved the raw `architecture` / `supported_parameters` fields as bounded extension evidence;
+- revision inspection confirmed production changes are confined to the existing OpenAI-compatible model metadata parser and focused Phase 1.16 test coverage.
+
+Verification boundary:
+- developer must rerun the focused Phase 1.16 discovery/model-information tests and the broader `Hive.Tests` suite;
+- rerun the affected Provider / Model Capability Discovery Example Host scenario only as a capability-discovery regression check;
+- verify the real configured OpenRouter account in Model Information and confirm its reported modalities/capabilities are now populated.
