@@ -833,6 +833,20 @@ public sealed class OpenAICompatibleProviderAdapter
                 break;
         }
 
+        if (values.Count == 0 &&
+            model.TryGetProperty("modalities", out var modalities) &&
+            modalities.ValueKind == JsonValueKind.Object)
+        {
+            var nestedPropertyNames =
+                propertyNames.Any(
+                    name => name.Contains("input", StringComparison.OrdinalIgnoreCase))
+                    ? new[] { "input", "inputs" }
+                    : new[] { "output", "outputs" };
+
+            foreach (var name in nestedPropertyNames)
+                AddStringValues(modalities, name, values);
+        }
+
         return values
             .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
             .Take(32)
