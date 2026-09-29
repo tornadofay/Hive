@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -67,3 +67,9 @@ Verification boundary:
 - required tests: focused Phase 1.16 discovery/model-information tests plus the broader-suite result supplied by the developer.
 
 Do not start later roadmap work or broaden this slice without an explicit new authorization.
+
+Latest verification failure:
+- developer reported a same-slice runtime exception: `hive.provider.openai-compatible.transport-failed: The provider model-discovery request failed at the transport boundary.`.
+
+Remediation boundary:
+- trace the provider model-discovery transport path used by the Phase 1.16 verification/example; correct only the deterministic local discovery transport/test fixture or directly implicated same-slice integration boundary so the discovery request completes reliably, without weakening production transport error handling or introducing a second provider transport.
