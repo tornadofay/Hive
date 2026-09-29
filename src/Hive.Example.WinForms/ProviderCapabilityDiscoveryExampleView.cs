@@ -362,7 +362,10 @@ internal sealed class ProviderCapabilityDiscoveryExampleView : UserControl
                         stream,
                         _stop.Token).ConfigureAwait(false);
 
-                    if (!request.RequestLine.EndsWith(
+                    if (request is null)
+                        continue;
+
+                    if (!request.Value.RequestLine.EndsWith(
                             " /v1/models HTTP/1.1",
                             StringComparison.Ordinal))
                     {
@@ -414,52 +417,70 @@ internal sealed class ProviderCapabilityDiscoveryExampleView : UserControl
             }
         }
 
-        private static async Task<ExampleHttpRequest> ReadRequestAsync(
+        private static async Task<ExampleHttpRequest?> ReadRequestAsync(
             NetworkStream stream,
             CancellationToken cancellationToken)
         {
-            var requestBuffer = new List<byte>(2048);
-            var headerTerminator = new byte[] { 13, 10, 13, 10 };
-            var matched = 0;
+            using var requestBuffer = new MemoryStream(capacity: 2048);
+            var buffer = new byte[4096];
 
             while (true)
             {
-                var value = new byte[1];
-                var read = await stream.ReadAsync(
-                    value,
-                    cancellationToken).ConfigureAwait(false);
+                var read = await stream
+                    .ReadAsync(buffer, cancellationToken)
+                    .ConfigureAwait(false);
 
                 if (read == 0)
-                    throw new IOException(
-                        "The example client closed the connection before the HTTP request was received.");
+                    return null;
 
-                requestBuffer.Add(value[0]);
+                requestBuffer.Write(buffer, 0, read);
 
-                if (requestBuffer.Count > 16 * 1024)
+                if (requestBuffer.Length > 16 * 1024)
                     throw new InvalidOperationException(
                         "The example HTTP request exceeded the safety limit.");
 
-                if (value[0] == headerTerminator[matched])
+                var bytes = requestBuffer.GetBuffer();
+                var headerEnd = FindHeaderEnd(
+                    bytes,
+                    checked((int)requestBuffer.Length));
+
+                if (headerEnd < 0)
+                    continue;
+
+                var requestText = Encoding.ASCII.GetString(
+                    bytes,
+                    0,
+                    headerEnd);
+
+                var firstLineEnd = requestText.IndexOf(
+                    "\r\n",
+                    StringComparison.Ordinal);
+
+                if (firstLineEnd <= 0)
+                    throw new InvalidOperationException(
+                        "The example HTTP request did not contain a valid request line.");
+
+                return new ExampleHttpRequest(
+                    requestText[..firstLineEnd]);
+            }
+        }
+
+        private static int FindHeaderEnd(
+            byte[] bytes,
+            int length)
+        {
+            for (var index = 0; index <= length - 4; index++)
+            {
+                if (bytes[index] == (byte)'\r' &&
+                    bytes[index + 1] == (byte)'\n' &&
+                    bytes[index + 2] == (byte)'\r' &&
+                    bytes[index + 3] == (byte)'\n')
                 {
-                    matched++;
-                    if (matched == headerTerminator.Length)
-                        break;
-                }
-                else
-                {
-                    matched = value[0] == headerTerminator[0] ? 1 : 0;
+                    return index;
                 }
             }
 
-            var requestText = Encoding.ASCII.GetString(requestBuffer.ToArray());
-            var firstLineEnd = requestText.IndexOf("\r\n", StringComparison.Ordinal);
-
-            if (firstLineEnd <= 0)
-                throw new InvalidOperationException(
-                    "The example HTTP request did not contain a valid request line.");
-
-            return new ExampleHttpRequest(
-                requestText[..firstLineEnd]);
+            return -1;
         }
 
         private readonly record struct ExampleHttpRequest(
