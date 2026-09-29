@@ -257,7 +257,18 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         ProviderModelSelectedEventArgs e)
     {
         _modelTextBox.Text = e.Model.ModelId;
-        _capabilityEditor.SetDiscovery(e.Model);
+
+        if (GetSelectedManagementMode() == ExecutionTargetManagementMode.Automatic)
+        {
+            _capabilityEditor.Configure(
+                e.Model.DiscoveredCapabilities,
+                e.Model,
+                automatic: true);
+        }
+        else
+        {
+            _capabilityEditor.SetDiscovery(e.Model);
+        }
     }
 
     private void ManagementModeOnChanged(
