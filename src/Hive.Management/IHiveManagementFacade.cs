@@ -65,6 +65,13 @@ public interface IHiveManagementFacade
         ResourceAccessContext accessContext,
         bool forceRefresh = false,
         CancellationToken cancellationToken = default);
+    Task<Result<ProviderDiscoverySnapshot>> GetProviderDiscoveryAsync(
+        ProviderId providerId,
+        ProviderAccountId providerAccountId,
+        Uri endpoint,
+        ResourceAccessContext accessContext,
+        bool forceRefresh = false,
+        CancellationToken cancellationToken = default);
 
     Task<Result<ProviderSettingsOperationResult>> ConfigureBuiltInProviderAsync(
         string providerKey,
