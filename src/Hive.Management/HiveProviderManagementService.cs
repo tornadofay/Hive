@@ -922,12 +922,12 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
             account = reactivated.Value!;
         }
 
-        if (catalog.RequiresCredential)
+        if (credential is not null)
         {
             var credentialResult = await SetAccountCredentialAsync(
                 provider,
                 account,
-                credential!,
+                credential,
                 accessContext,
                 cancellationToken).ConfigureAwait(false);
 
