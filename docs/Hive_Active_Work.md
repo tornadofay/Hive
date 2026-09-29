@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -84,3 +84,19 @@ Verification boundary:
 - developer must rerun the focused Phase 1.16 discovery/model-information tests and the broader `Hive.Tests` suite;
 - additionally rerun the affected Example Host capability-discovery scenario: `Example to run: Providers / Target Selection / Capability Discovery — Hive.Example.WinForms`;
 - the required new-slice handoff remains: `Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms`.
+
+Latest verification finding:
+- developer clarified that the reported transport exception occurred while **Ollama was not configured**, so the prior diagnosis of a defective deterministic loopback Example Host transport fixture was incorrect; no production transport fault was established by that exception.
+
+Remediation boundary:
+- revert only the immediately preceding deterministic Example Host HTTP-reader change because it was based on the incorrect diagnosis;
+- separately correct the established OpenRouter model-information integration gap within the current Provider Model Metadata Discovery boundary: parse OpenRouter's documented `/api/v1/models` model metadata, including nested architecture modalities and supported parameters, into the existing normalized discovery contract;
+- do not add another transport, probe individual OpenRouter models, or broaden beyond provider-reported model metadata.
+
+Latest verification finding:
+- OpenRouter models are returning with no normalized capabilities in Hive even though OpenRouter's documented Models API exposes `architecture.input_modalities`, `architecture.output_modalities`, `supported_parameters`, context limits, pricing, name, and description.
+
+Remediation boundary:
+- update the existing OpenAI-compatible adapter's OpenRouter-compatible parsing so these provider-reported fields populate the existing normalized model profile and known capability states;
+- retain Unknown when OpenRouter does not report a particular capability; do not infer capabilities merely from model names or descriptions;
+- add deterministic adapter regression coverage using the documented OpenRouter response shape.
