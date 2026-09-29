@@ -6,7 +6,7 @@ using Hive.Management;
 
 namespace Hive.Host.WinForms;
 
-internal sealed class HiveExecutionTargetsSettingsView : UserControl
+internal sealed class HiveExecutionTargetsSettingsView : UserControl, IHiveAdvancedConfigurationPage
 {
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
