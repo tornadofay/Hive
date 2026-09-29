@@ -161,7 +161,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _accountComboBox.SelectedIndexChanged += AccountChanged;
         _endpointComboBox.SelectedIndexChanged += EndpointChanged;
         _endpointComboBox.TextChanged += EndpointTextChanged;
-        _refreshButton.Click += async (_, _) => await RefreshDiscoveryAsync(forceRefresh: true);
+        _refreshButton.Click += RefreshButtonOnClick;
 
         _modelsList.SelectedIndexChanged += ModelsListSelected;
 
@@ -250,6 +250,24 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             ReportError(
                 exception,
                 "The endpoint context could not be loaded.");
+        }
+    }
+
+    private async void RefreshButtonOnClick(object? sender, EventArgs e)
+    {
+        try
+        {
+            await RefreshDiscoveryAsync(forceRefresh: true).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+            when (IsDisposed || Disposing)
+        {
+        }
+        catch (Exception exception)
+        {
+            ReportError(
+                exception,
+                "Provider model information could not be refreshed.");
         }
     }
 
@@ -863,7 +881,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _accountComboBox.SelectedIndexChanged -= AccountChanged;
             _endpointComboBox.SelectedIndexChanged -= EndpointChanged;
             _endpointComboBox.TextChanged -= EndpointTextChanged;
-            _refreshButton.Click -= async (_, _) => await RefreshDiscoveryAsync(forceRefresh: true);
+            _refreshButton.Click -= RefreshButtonOnClick;
             _modelsList.SelectedIndexChanged -= ModelsListSelected;
             CancelOperation();
         }
