@@ -21,11 +21,13 @@ Explicit exclusions:
 - no unrelated provider/settings refactor.
 
 Latest verification failure:
-- developer reported 16 failed tests after the prior compile remediation: one modality-order assertion, two sealed DispatchProxy fixture failures, one outdated optional-credential status assertion, and 12 Management discovery failures caused by the transient discovery probe intentionally having no model identity.
+- developer reported four remaining failed tests: one thinking-option ordering assertion, one Model Information UI rendering assertion with an empty details box, one stale-refresh assertion that expected only the no-qualifying-target failure, and one stale-refresh input-routing assertion with no prepared image.
 
 Remediation boundary:
-- keep the transient Management discovery probe model-less; do not reintroduce fake model identity into production discovery;
-- update only the affected deterministic tests/fixtures and the credential-status expectation within this same Phase 1.16 follow-up.
+- preserve deterministic thinking-option normalization without imposing an inappropriate lexical order on semantically ordered thinking levels;
+- ensure the Model Information page renders the first discovered model's details when it auto-selects the first model, even when a test/control handle has not raised the selection event;
+- keep the transient Management discovery probe model-less and make the shared deterministic discovery fixture provide a model identity that matches the test target without reading the probe's model field;
+- update only the affected deterministic tests/fixture expectations and same-slice UI behavior within this Phase 1.16 follow-up.
 
 Latest remediation:
 - updated the rich metadata test to assert the adapter's deterministic case-insensitive modality ordering;
