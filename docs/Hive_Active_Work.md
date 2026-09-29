@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -20,24 +20,14 @@ Explicit exclusions:
 - no Agent-selection or Workspace redesign;
 - no unrelated provider/settings refactor.
 
-Verification failure boundary:
-- developer reported same-slice compile errors in the Phase 1.16 Follow-Up implementation;
-- remediation is limited to correcting those reported compile defects and directly necessary supporting code in the affected files;
-- after remediation, Active Work returns to **VERIFICATION PENDING** for developer re-verification.
+Latest remediation:
+- corrected the reported same-slice compile defects in Model Information, including interface accessibility, theming, endpoint comparison, duplicate locals, collection population, endpoint scheme pattern syntax, nullable flow, and error-owner typing;
+- removed a redundant optional-parameter discovery overload that made zero-argument LoadCachedOrDiscoverAsync() calls ambiguous;
+- revision inspection found no additional concrete defect requiring further code changes within this slice.
 
-Reported failures:
-- `HiveModelInformationSettingsView.InitializeAsync(CancellationToken)` was not public for interface implementation;
-- missing `ApplyTheme`;
-- inaccessible `ProviderEndpointIdentity` from the WinForms project;
-- duplicate `rateLimit` / `remaining` locals;
-- `ICollection<string>.AddRange` usage;
-- constant-pattern errors in the endpoint scheme check;
-- possible null argument passed to `ComboBox.ObjectCollection.Add`;
-- `Form ?? HiveModelInformationSettingsView` incompatible null-coalescing operands;
-- unassigned `remaining` flow resulting from the duplicate declaration.
-
-Verification handoff after remediation:
-- required Example: `Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms`;
+Verification boundary:
+- developer verification is now required before closure;
+- required handoff: `Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms`;
 - required tests: focused Phase 1.16 discovery/model-information tests plus the broader-suite result supplied by the developer.
 
 Do not start later roadmap work or broaden this slice without an explicit new authorization.
