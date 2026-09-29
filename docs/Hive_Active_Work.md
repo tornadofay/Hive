@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -21,10 +21,9 @@ Explicit exclusions:
 - no unrelated provider/settings refactor.
 
 Latest remediation:
-- The prior compile remediation had already returned the slice to verification pending; the latest developer report reopened the same verification boundary for four additional compiler defects.
-- corrected the reported same-slice compile defects in Model Information, including interface accessibility, theming, endpoint comparison, duplicate locals, collection population, endpoint scheme pattern syntax, nullable flow, and error-owner typing;
-- removed a redundant optional-parameter discovery overload that made zero-argument LoadCachedOrDiscoverAsync() calls ambiguous;
-- revision inspection found no additional concrete defect requiring further code changes within this slice.
+- corrected the three nullable `SystemFonts.MessageBoxFont` constructor arguments by using the repository's existing non-null font fallback pattern;
+- replaced the incompatible `Form` versus `HiveModelInformationSettingsView` conditional expression with an explicit nullable `IWin32Window` owner variable and null-coalescing assignment;
+- revision inspection confirmed the affected files contain no remaining direct `new Font(SystemFonts.MessageBoxFont, ...)` calls and no remaining mixed-form/control owner conditional.
 
 Verification boundary:
 - developer reported four additional same-slice compiler errors: three nullable SystemFonts.MessageBoxFont prototype arguments and one conditional-expression type mismatch between Form and HiveModelInformationSettingsView;
