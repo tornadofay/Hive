@@ -6,7 +6,7 @@ This document contains the detailed implementation plan referenced by the roadma
 
 **1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
-The follow-up extends the existing Phase 1.16 provider/model discovery boundary and makes the richer discovered information understandable through the Advanced Configuration UI. It does not create a durable Model resource or replace the Provider → ProviderAccount → ExecutionTarget resource model.
+The follow-up extends the existing Phase 1.16 provider/model discovery boundary and makes the richer discovered information understandable through the Advanced Configuration UI. It does not create a durable Model resource or replace the Provider → ProviderAccount → ExecutionTarget resource model. The normal Provider Settings onboarding remains intentionally minimal: the Add Provider dialog selects a built-in provider from the catalog and collects credential material only; endpoint, account, model, and target administration remains in Advanced Configuration.
 
 ## 1. Scope
 
@@ -116,11 +116,11 @@ Provider-specific capability evidence that Hive does not understand may remain v
 
 ### Credential semantics used by Provider Settings
 
-Provider catalog authentication metadata must distinguish:
+Provider catalog authentication metadata must distinguish exactly:
 
-- credential not used/required;
-- credential optional;
-- credential required.
+- **No credential**;
+- **Optional credential**;
+- **Required credential**.
 
 A provider not requiring a credential must not be shown as though credential entry is forbidden merely because its normal flow can succeed without one.
 
