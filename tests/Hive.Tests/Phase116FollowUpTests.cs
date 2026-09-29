@@ -154,6 +154,35 @@ public sealed class Phase116FollowUpTests
     }
 
     [Fact]
+    public void ProviderModelMetadata_AllowsBoundedLongDescription()
+    {
+        var description = new string('d', 1024);
+
+        var metadata = new ProviderModelMetadata(
+            "long-description-model",
+            "example",
+            null,
+            ProviderAvailabilityStatus.Available,
+            ProviderHealthStatus.Healthy,
+            [],
+            description: description);
+
+        Assert.Equal(description, metadata.Description);
+
+        var tooLong = new string('d', 4097);
+
+        Assert.Throws<ArgumentException>(
+            () => new ProviderModelMetadata(
+                "too-long-description-model",
+                "example",
+                null,
+                ProviderAvailabilityStatus.Available,
+                ProviderHealthStatus.Healthy,
+                [],
+                description: tooLong));
+    }
+
+    [Fact]
     public async Task OpenAICompatibleAdapter_MissingPricingIsUnknown_WhileExplicitFreeEvidenceIsPreserved()
     {
         using var missingPriceClient = new HttpClient(
