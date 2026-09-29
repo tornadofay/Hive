@@ -30,6 +30,8 @@ public sealed class Phase116FollowUpTests
                       "type": "chat",
                       "category": "multimodal",
                       "version": "1.0",
+                      "name": "Rich Model",
+                      "description": "Deterministic rich model fixture.",
                       "state": "active",
                       "input_modalities": ["text", "image", "audio"],
                       "output_modalities": ["text"],
@@ -92,6 +94,8 @@ public sealed class Phase116FollowUpTests
         Assert.Equal("chat", model.ModelType);
         Assert.Equal("multimodal", model.Category);
         Assert.Equal("1.0", model.Version);
+        Assert.Equal("Rich Model", model.DisplayName);
+        Assert.Equal("Deterministic rich model fixture.", model.Description);
         Assert.Equal("active", model.OperationalState);
 
         Assert.Equal(
