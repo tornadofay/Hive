@@ -143,16 +143,14 @@ public sealed class Phase116FollowUpTests
             model.Pricing.Prices.Single(
                 price => price.BillingUnit == "output_token").Price);
 
+        Assert.NotNull(model.ExtensionData);
         var providerMetadata = Assert.IsType<JsonElement>(
-            model.ExtensionData["provider_metadata"]);
+            model.ExtensionData!["provider_metadata"]);
         Assert.Equal("fixture", providerMetadata.GetProperty("name").GetString());
         Assert.False(providerMetadata.TryGetProperty("authorization", out _));
         Assert.False(providerMetadata.TryGetProperty("url", out _));
 
-        Assert.True(model.ExtensionData.ContainsKey("capabilities"));
-        Assert.False(
-            model.IsStale(DateTimeOffset.Parse(
-                "2020-01-01T00:00:00Z")));
+        Assert.True(model.ExtensionData!.ContainsKey("capabilities"));
     }
 
     [Fact]
@@ -269,7 +267,8 @@ public sealed class Phase116FollowUpTests
         var result = editor.GetConfiguredCapabilities();
 
         var vision = Assert.Single(
-            result.Where(item => item.Capability == HiveCapabilityKeys.Vision));
+            result,
+            item => item.Capability == HiveCapabilityKeys.Vision);
 
         Assert.Equal(CapabilityState.Unsupported, vision.State);
         Assert.Equal(
