@@ -160,6 +160,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _providerComboBox.SelectedIndexChanged += ProviderChanged;
         _accountComboBox.SelectedIndexChanged += AccountChanged;
         _endpointComboBox.SelectedIndexChanged += EndpointChanged;
+        _endpointComboBox.TextChanged += EndpointTextChanged;
         _refreshButton.Click += async (_, _) => await RefreshDiscoveryAsync(forceRefresh: true);
 
         _modelsList.SelectedIndexChanged += ModelsListSelected;
@@ -250,6 +251,27 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 exception,
                 "The endpoint context could not be loaded.");
         }
+    }
+
+    private void EndpointTextChanged(object? sender, EventArgs e)
+    {
+        if (_initializingContext || IsDisposed || Disposing)
+            return;
+
+        var parsed = TryParseEndpoint(_endpointComboBox.Text);
+        if (parsed is not null &&
+            _selectedEndpoint is not null &&
+            ProviderEndpointIdentity.Equals(parsed, _selectedEndpoint))
+        {
+            return;
+        }
+
+        _selectedEndpoint = null;
+        ClearObservation();
+        UpdateContextLabel();
+        SetStatus(
+            "Endpoint changed. Refresh to inspect model information for the entered endpoint.",
+            HiveStatusTone.Information);
     }
 
     private void EndpointChanged(object? sender, EventArgs e)
@@ -837,6 +859,12 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         if (disposing)
         {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
+            _providerComboBox.SelectedIndexChanged -= ProviderChanged;
+            _accountComboBox.SelectedIndexChanged -= AccountChanged;
+            _endpointComboBox.SelectedIndexChanged -= EndpointChanged;
+            _endpointComboBox.TextChanged -= EndpointTextChanged;
+            _refreshButton.Click -= async (_, _) => await RefreshDiscoveryAsync(forceRefresh: true);
+            _modelsList.SelectedIndexChanged -= ModelsListSelected;
             CancelOperation();
         }
 
