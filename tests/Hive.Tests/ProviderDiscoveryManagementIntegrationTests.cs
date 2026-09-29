@@ -742,13 +742,19 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
         Assert.True(prepared.IsSuccess, prepared.Error?.Message);
         Assert.Empty(prepared.Value!.PreparedInputs);
 
-        var failure = Assert.Single(prepared.Value.Failures);
-        Assert.Equal(
-            "hive.execution-target.selection.no-qualifying-target",
-            failure.Error.Code);
-        Assert.Equal(
-            ErrorCategory.Unsupported,
-            failure.Error.Category);
+        Assert.Contains(
+            prepared.Value.Failures,
+            failure =>
+                failure.Error.Code == "hive.execution-target.selection.no-qualifying-target" &&
+                failure.Error.Category == ErrorCategory.Unsupported);
+
+        Assert.Contains(
+            prepared.Value.Failures,
+            failure =>
+                failure.Error.Code == "hive.management.provider-discovery-stale" &&
+                failure.Error.Category == ErrorCategory.Conflict &&
+                failure.SourceLocation == $"Provider discovery: {target.Key}");
+
         Assert.Equal(2, discovery.CallCount);
     }
 
@@ -1153,7 +1159,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
                 ProviderDiscoveryState.Supported,
                 [
                     new ProviderModelMetadata(
-                        "discovered-model",
+                        "vision-model",
                         "example",
                         null,
                         ProviderAvailabilityStatus.Available,
