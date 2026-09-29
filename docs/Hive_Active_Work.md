@@ -30,12 +30,11 @@ Remediation boundary:
 - update only the affected deterministic tests/fixture expectations and same-slice UI behavior within this Phase 1.16 follow-up.
 
 Latest remediation:
-- updated the rich metadata test to assert the adapter's deterministic case-insensitive modality ordering;
-- removed `sealed` from the two Phase 1.16 test `DispatchProxy` fixtures;
-- updated the Provider Settings test to exercise the actual Ollama **Optional credential** semantics rather than the obsolete No-credential expectation;
-- changed the shared Management `RecordingDiscovery` fixture to use its own deterministic discovered model identity, preserving the production rule that the transient discovery probe has no model identity;
-- removed `sealed` from the Model Information Example Host `DispatchProxy` fixture so the manually required example path can instantiate its proxy;
-- revision inspection confirmed the affected test and example proxies are proxy-generation compatible and no same-slice residual pattern was found.
+- changed thinking-option normalization to preserve the provider-reported option order while deduplicating case-insensitively and retaining deterministic bounded output; semantic levels such as low / medium / high are therefore not reordered lexically;
+- updated Model Information snapshot application to render the first discovered model details explicitly when it auto-selects the first model, so the details surface does not depend on a WinForms selection event being raised;
+- updated the stale-refresh test to assert both the no-qualifying-target failure and the surfaced stale provider-discovery failure returned by the documented input-preparation boundary;
+- changed the shared Management `RecordingDiscovery` fixture to return the deterministic `vision-model` identity used by the test target without reading the transient probe's model field, preserving capability correlation while keeping the production probe model-less;
+- revision inspection compared the remediation against the prior verification checkpoint and found only the Active Work update plus the Model Information, provider adapter, and affected Management test changes.
 
 Historical remediation:
 - guarded nullable `ExtensionData` access before indexing and used the proven null-forgiving boundary after the assertion;
