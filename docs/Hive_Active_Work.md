@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -21,7 +21,11 @@ Explicit exclusions:
 - no unrelated provider/settings refactor.
 
 Latest verification failure:
-- developer reported two nullable/test-contract compiler issues in `Phase116FollowUpTests.cs` and one xUnit analyzer violation; remediation was restricted to the affected test assertions.
+- developer reported 16 failed tests after the prior compile remediation: one modality-order assertion, two sealed DispatchProxy fixture failures, one outdated optional-credential status assertion, and 12 Management discovery failures caused by the transient discovery probe intentionally having no model identity.
+
+Remediation boundary:
+- keep the transient Management discovery probe model-less; do not reintroduce fake model identity into production discovery;
+- update only the affected deterministic tests/fixtures and the credential-status expectation within this same Phase 1.16 follow-up.
 
 Latest remediation:
 - guarded nullable `ExtensionData` access before indexing and used the proven null-forgiving boundary after the assertion;
