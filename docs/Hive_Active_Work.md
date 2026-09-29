@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -19,6 +19,9 @@ Explicit exclusions:
 - no duplication of rich discovery metadata into durable ExecutionTarget configuration;
 - no Agent-selection or Workspace redesign;
 - no unrelated provider/settings refactor.
+
+Latest verification failure:
+- developer reported two nullable/test-contract compiler issues in `Phase116FollowUpTests.cs` and one xUnit analyzer violation; remediation is restricted to the affected test assertions.
 
 Latest remediation:
 - corrected the three nullable `SystemFonts.MessageBoxFont` constructor arguments by using the repository's existing non-null font fallback pattern;
