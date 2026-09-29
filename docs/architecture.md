@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-28 (rev 54 — event persistence public-boundary hardening)
+Last updated: 2026-09-29 (rev 55 — complete provider model metadata discovery boundary)
 
 
 
@@ -118,6 +118,36 @@ Tenant
 ```
 
 Not every deployment must use every level.
+
+### Provider model discovery architecture
+
+Provider/model discovery is a provider-platform evidence boundary. It is provider-neutral and must describe the model information the provider actually exposes without confusing missing metadata with lack of capability.
+
+A discovered model is represented by a normalized model metadata profile within the discovery snapshot. The profile is not a new durable `Model` resource. The durable execution-resource graph remains:
+
+```
+Provider
+   ↓
+ProviderAccount
+   ↓
+ExecutionTarget
+```
+
+The normalized model profile covers these semantic areas when reported by the provider:
+
+- **Identity and descriptive metadata:** model/deployment identity, ownership, family/type, version/creation metadata, and other descriptive model information that is useful for selection or presentation.
+- **Input modalities:** all provider-reported model input modalities, including text, image, audio, video, and other provider-defined inputs.
+- **Output modalities:** all provider-reported model output modalities, including text, image, audio, embeddings, video, and other provider-defined outputs.
+- **Capabilities:** provider-reported features such as tool calling, structured output, reasoning, thinking, and other machine-readable capabilities. Reasoning and thinking remain distinct concepts; thinking may also carry provider-reported levels/options/defaults.
+- **Limits:** model-scoped limits such as context window, maximum input tokens, maximum output tokens, and other provider-reported model constraints. Provider/account rate limits remain separate operational metadata.
+- **Pricing/economics:** provider-reported pricing entries with their billing unit, including input/output pricing and separately reported reasoning/thinking, cached, image/audio, request, or other billable units. A model is marked free only from explicit zero-cost/free evidence; missing pricing is not interpreted as free.
+- **Operational metadata:** availability, health, and discovery/observation timing and freshness.
+
+The discovery boundary must ingest the complete machine-readable model metadata exposed by the provider contract. Hive normalizes common semantic fields into the provider-neutral profile and preserves additional provider-specific model metadata/evidence in an extensible form rather than silently discarding fields that are not yet modeled by Hive. Provider-specific extensions must remain non-authoritative evidence, must not contain secrets, and must not bypass the normalized capability/selection contracts.
+
+Absence of model metadata means **not reported / Unknown**, not zero capabilities, zero modalities, unsupported features, unlimited capacity, or free pricing. An enumerated model with no recognized normalized capability evidence remains a valid discovered model; the absence of evidence is a metadata-state distinction, not a statement that the model has no capabilities.
+
+Discovery metadata is operational evidence and may be cached with freshness rules. It is not configuration, authorization, or a replacement for configured `ExecutionTarget` state. Later phases may choose to persist a reusable model catalog if a durable cross-restart catalog requirement is demonstrated; that would be a separate architecture decision and must not be introduced implicitly by provider discovery.
 
 
 
@@ -248,7 +278,7 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 9. Hive's database is isolated from host business data.
 10. Capability state is Supported / Unsupported / Unknown.
 11. Capability requirements are Required / Preferred / Optional / Forbidden.
-12. Quota, rate, health, capacity, cost, and capability remain separate concerns.
+12. Quota, rate, health, capacity, cost, modality, model limits, and capability remain separate concerns.
 13. Secrets are encrypted at rest and redacted from diagnostics.
 14. The LLM is a reasoning/request component, never an authorization authority.
 15. Authorization is enforced in code.
