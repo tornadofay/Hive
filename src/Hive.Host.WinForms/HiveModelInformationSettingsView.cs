@@ -894,9 +894,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         cts?.Dispose();
     }
 
-    private Task LoadCachedOrDiscoverAsync(bool forceRefresh = false) =>
-        RefreshDiscoveryAsync(forceRefresh);
-
     protected override void Dispose(bool disposing)
     {
         if (disposing)
