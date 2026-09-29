@@ -111,7 +111,7 @@ public sealed record ProviderModelLimits
         ValidateLimit(maxInputTokens, nameof(maxInputTokens));
         ValidateLimit(maxOutputTokens, nameof(maxOutputTokens));
 
-        ArgumentNullException.ThrowIfNull(additionalConstraints);
+        additionalConstraints ??= new Dictionary<string, JsonElement>(StringComparer.Ordinal);
 
         if (additionalConstraints.Count > MaxAdditionalConstraintCount)
         {
@@ -430,7 +430,7 @@ public sealed record ProviderModelMetadata
                 nameof(staleAfterUtc));
         }
 
-        ArgumentNullException.ThrowIfNull(extensionData);
+        extensionData ??= new Dictionary<string, JsonElement>(StringComparer.Ordinal);
         ExtensionData = NormalizeExtensionData(extensionData);
 
         ModelId = normalizedModelId;
