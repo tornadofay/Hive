@@ -268,7 +268,7 @@ internal sealed class ProviderModelInformationExampleView : UserControl
         public IHiveManagementFacade Management { get; }
     }
 
-    private sealed class ModelInformationManagementProxy : DispatchProxy
+    private class ModelInformationManagementProxy : DispatchProxy
     {
         private Provider? _provider;
         private ProviderAccount? _account;
