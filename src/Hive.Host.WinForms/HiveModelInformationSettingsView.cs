@@ -555,10 +555,14 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             ? $" • Rate limit remaining: {remaining}"
             : string.Empty;
 
+        var rateLimit = _snapshot.Operational.RateLimitRemaining is { } remaining
+            ? $"  •  Provider rate limit remaining: {remaining}"
+            : string.Empty;
+
         _contextLabel.Text =
             $"Provider: {_selectedProvider?.DisplayName ?? "—"}  •  " +
             $"Account: {_selectedAccount?.DisplayName ?? "—"}  •  " +
-            $"Endpoint: {_selectedEndpoint?.AbsoluteUri ?? "—"}";
+            $"Endpoint: {_selectedEndpoint?.AbsoluteUri ?? "—"}{rateLimit}";
 
         if (_snapshot.Models.Count == 0)
         {
