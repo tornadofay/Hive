@@ -566,7 +566,6 @@ public sealed class OpenAICompatibleProviderAdapter
                         category,
                         version,
                         operationalState,
-                        outputModalities,
                         thinking.Options,
                         thinking.Default,
                         limits,
