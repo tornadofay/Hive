@@ -266,7 +266,7 @@ internal sealed class HiveCapabilityEditor : UserControl
         entries.FirstOrDefault(item => item.Capability == key);
 
     private static string FormatState(CapabilityStateEntry? state) =>
-        state is null ? "Not reported" : state.Value.State.ToString();
+        state is null ? "Not reported" : state.State.ToString();
 
     private void AddHeader(string text, int column)
     {
