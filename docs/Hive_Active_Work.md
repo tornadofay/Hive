@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -73,3 +73,14 @@ Latest verification failure:
 
 Remediation boundary:
 - trace the provider model-discovery transport path used by the Phase 1.16 verification/example; correct only the deterministic local discovery transport/test fixture or directly implicated same-slice integration boundary so the discovery request completes reliably, without weakening production transport error handling or introducing a second provider transport.
+
+Latest remediation:
+- hardened the deterministic loopback Provider / Model Capability Discovery example's HTTP request reader to consume bounded header blocks in chunks rather than allocating and reading one byte at a time;
+- treated a client-side connection close before a complete request as a normal abandoned connection instead of faulting the example server task;
+- preserved the existing 16 KiB request-header bound, OpenAI-compatible request-path validation, production adapter transport error handling, and single provider transport implementation;
+- revision inspection compared the remediation with the recorded transport failure checkpoint and found the code change isolated to the deterministic Example Host fixture.
+
+Verification boundary:
+- developer must rerun the focused Phase 1.16 discovery/model-information tests and the broader `Hive.Tests` suite;
+- additionally rerun the affected Example Host capability-discovery scenario: `Example to run: Providers / Target Selection / Capability Discovery — Hive.Example.WinForms`;
+- the required new-slice handoff remains: `Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms`.
