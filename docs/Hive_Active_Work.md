@@ -20,6 +20,13 @@ Explicit exclusions:
 - no Agent-selection or Workspace redesign;
 - no unrelated provider/settings refactor.
 
+Latest verification failure:
+- developer reported a new same-slice runtime exception: `Optional model metadata cannot exceed 256 characters. (Parameter 'description')`.
+
+Remediation boundary:
+- retain bounded validation for provider-reported normalized metadata, but do not apply the short identifier/display-field limit to model descriptions;
+- change only the affected model-description normalization boundary and supporting same-slice regression coverage/documentation.
+
 Latest remediation:
 - extended credential-bearing URI redaction to recognize the underscore-form `api_key` query parameter used by the deterministic rich-metadata fixture;
 - moved stale-result rejection to the Management discovery-core boundary so direct discovery still rejects stale fresh results, while the internal capability-routing path may inspect the first stale observation and then issue a forced refresh;
