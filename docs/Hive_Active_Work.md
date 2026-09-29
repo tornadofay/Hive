@@ -10,7 +10,7 @@ This revision re-audits the immediately preceding Phase 1.16 UI slice and correc
 
 ## Verification failure / remediation
 
-Developer verification reported that `ProviderSettingsIntegrationTests` hangs and does not terminate. The reported failure was traced to the newly added no-credential presentation test crossing SQL + Management + WinForms async layers for a presentation-only assertion. The test was narrowed to deterministic in-memory Management data, preserving the UI assertion without the unnecessary database dependency. Developer re-verification is pending.
+Developer verification reported that `ProviderSettingsIntegrationTests` hangs and does not terminate. The newly added no-credential presentation test crosses SQL + Management + WinForms async layers for a presentation-only assertion, making it an unnecessarily broad and potentially fragile test boundary for this behavior. The test was narrowed to deterministic in-memory Management data, preserving the UI assertion without the database dependency. The agent did not independently reproduce the hang, so the runtime root cause remains unverified. Developer re-verification is pending.
 
 ## Revision findings and remediation
 
