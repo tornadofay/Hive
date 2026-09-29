@@ -524,6 +524,11 @@ public sealed class OpenAICompatibleProviderAdapter
                             : ProviderAvailabilityStatus.Unknown;
 
                 var health = ParseHealth(model);
+                var operationalState = TryGetString(model, "state", "status", "lifecycle_state", "model_state");
+                var family = TryGetString(model, "family", "model_family", "modelFamily");
+                var modelType = TryGetString(model, "type", "model_type", "modelType");
+                var category = TryGetString(model, "category", "model_category", "modelCategory");
+                var version = TryGetString(model, "version", "model_version", "modelVersion");
                 var capabilities = ParseCapabilities(model);
                 var inputModalities = ParseStringList(
                     model,
@@ -551,6 +556,11 @@ public sealed class OpenAICompatibleProviderAdapter
                         health,
                         capabilities,
                         inputModalities,
+                        family,
+                        modelType,
+                        category,
+                        version,
+                        operationalState,
                         outputModalities,
                         thinking.Options,
                         thinking.Default,
@@ -960,7 +970,14 @@ public sealed class OpenAICompatibleProviderAdapter
                 if (additional.Count >= 32)
                     break;
 
-                additional[property.Name] = property.Value.Clone();
+                if (TrySanitizeExtensionValue(
+                        property.Value,
+                        property.Name,
+                        depth: 0,
+                        out var sanitized))
+                {
+                    additional[property.Name] = sanitized;
+                }
             }
         }
 
