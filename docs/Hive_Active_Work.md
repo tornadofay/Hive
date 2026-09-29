@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -21,9 +21,12 @@ Explicit exclusions:
 - no unrelated provider/settings refactor.
 
 Latest verification failure:
-- developer reported two nullable/test-contract compiler issues in `Phase116FollowUpTests.cs` and one xUnit analyzer violation; remediation is restricted to the affected test assertions.
+- developer reported two nullable/test-contract compiler issues in `Phase116FollowUpTests.cs` and one xUnit analyzer violation; remediation was restricted to the affected test assertions.
 
 Latest remediation:
+- guarded nullable `ExtensionData` access before indexing and used the proven null-forgiving boundary after the assertion;
+- removed the invalid descriptor-level `IsStale` assertion because freshness belongs to normalized provider metadata/snapshot contracts, not `OpenAICompatibleModelDescriptor`;
+- changed filtered `Assert.Single(result.Where(...))` to xUnit's predicate overload.
 - corrected the three nullable `SystemFonts.MessageBoxFont` constructor arguments by using the repository's existing non-null font fallback pattern;
 - replaced the incompatible `Form` versus `HiveModelInformationSettingsView` conditional expression with an explicit nullable `IWin32Window` owner variable and null-coalescing assignment;
 - revision inspection confirmed the affected files contain no remaining direct `new Font(SystemFonts.MessageBoxFont, ...)` calls and no remaining mixed-form/control owner conditional.
