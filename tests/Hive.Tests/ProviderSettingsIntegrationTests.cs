@@ -585,7 +585,7 @@ public sealed class ProviderSettingsIntegrationTests
     }
 
     [Fact]
-    public async Task ProvidersSettings_NoCredentialProviderShowsCredentialAsNotRequired()
+    public async Task ProvidersSettings_OptionalCredentialProviderShowsOptionalStatusWhenNotConfigured()
     {
         var context = new ResourceAccessContext(
             DeploymentId.New(),
@@ -649,7 +649,7 @@ public sealed class ProviderSettingsIntegrationTests
 
         Assert.NotNull(list);
         var row = Assert.Single(list!.Items.Cast<ListViewItem>());
-        Assert.Equal("Not required", row.SubItems[2].Text);
+        Assert.Equal("Optional — not configured", row.SubItems[2].Text);
     }
 
     [Fact]
