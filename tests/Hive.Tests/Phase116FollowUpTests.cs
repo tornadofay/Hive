@@ -193,6 +193,28 @@ public sealed class Phase116FollowUpTests
     }
 
     [Fact]
+    public async Task OpenAICompatibleAdapter_ZeroPricedEntryCountsAsExplicitFreeEvidence()
+    {
+        using var client = new HttpClient(
+            new FixedResponseHandler(
+                """
+                {"data":[{"id":"free-by-price","pricing":{"input":0,"output":0}}]}
+                """));
+
+        var adapter = new OpenAICompatibleProviderAdapter(
+            client,
+            new OpenAICompatibleProviderOptions(
+                new Uri("https://example.test/v1/")));
+
+        var result = await adapter.ListModelsAsync();
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.True(
+            Assert.Single(result.Value!.Models)
+                .Pricing!.ExplicitFreeEvidence);
+    }
+
+    [Fact]
     public void BuiltInProviderCatalog_DistinguishesNoOptionalAndRequiredCredentialRequirements()
     {
         var ollama = Assert.IsType<BuiltInProviderDefinition>(
