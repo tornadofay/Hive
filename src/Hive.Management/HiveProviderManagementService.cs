@@ -55,7 +55,8 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         ExecutionTargetId executionTargetId,
         ResourceAccessContext accessContext,
         bool forceRefresh = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool allowStale = false)
     {
         var contextError = ValidateAccessContext(accessContext);
         if (contextError is not null)
@@ -116,7 +117,8 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
             target.Value.Endpoint,
             accessContext,
             forceRefresh,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken,
+            allowStale).ConfigureAwait(false);
     }
 
     internal async Task<Result<ProviderDiscoverySnapshot>> GetProviderDiscoveryAsync(
@@ -198,7 +200,8 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
             endpoint,
             accessContext,
             forceRefresh,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken,
+            allowStale: false).ConfigureAwait(false);
     }
 
     private async Task<Result<ProviderDiscoverySnapshot>> GetProviderDiscoveryCoreAsync(
@@ -207,7 +210,8 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         Uri endpoint,
         ResourceAccessContext accessContext,
         bool forceRefresh,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool allowStale)
     {
         if (_providerCapabilityDiscovery is null)
         {
@@ -278,6 +282,15 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
             if (discovered.IsFailure)
                 return discovered;
+
+            if (!allowStale &&
+                discovered.Value!.IsStale(_clock.UtcNow))
+            {
+                return Result<ProviderDiscoverySnapshot>.Failure(
+                    Error.Conflict(
+                        "hive.management.provider-discovery-stale",
+                        "Fresh provider discovery returned stale operational metadata."));
+            }
 
             if (Volatile.Read(ref _discoveryGeneration) == discoveryGeneration)
             {
@@ -469,7 +482,8 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
             var discovery = await GetProviderDiscoveryAsync(
                 target.Id,
                 accessContext,
-                cancellationToken: cancellationToken).ConfigureAwait(false);
+                cancellationToken: cancellationToken,
+                allowStale: true).ConfigureAwait(false);
 
             if (discovery.IsFailure)
             {
@@ -1346,14 +1360,6 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
             if (validationError is not null)
                 return Result<ProviderDiscoverySnapshot>.Failure(validationError);
-
-            if (discovered.Value!.IsStale(_clock.UtcNow))
-            {
-                return Result<ProviderDiscoverySnapshot>.Failure(
-                    Error.Conflict(
-                        "hive.management.provider-discovery-stale",
-                        "Fresh provider discovery returned stale operational metadata."));
-            }
 
             return discovered;
         }
