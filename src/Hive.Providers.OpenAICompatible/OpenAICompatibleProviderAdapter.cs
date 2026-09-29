@@ -1100,6 +1100,8 @@ public sealed class OpenAICompatibleProviderAdapter
             }
         }
 
+        explicitFree |= prices.Values.Any(price => price.Price == 0);
+
         if (prices.Count == 0 && !explicitFree)
             return null;
 
