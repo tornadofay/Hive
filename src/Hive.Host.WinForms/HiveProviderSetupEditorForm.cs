@@ -187,9 +187,9 @@ internal sealed class HiveProviderSetupEditorForm : HiveForm
         }
 
         _credentialTextBox.Enabled =
-            definition.CredentialKind != BuiltInProviderCredentialKind.None;
+            definition.CredentialRequirement != BuiltInProviderCredentialRequirement.None;
 
-        if (definition.CredentialKind == BuiltInProviderCredentialKind.None)
+        if (definition.CredentialRequirement == BuiltInProviderCredentialRequirement.None)
         {
             _credentialTextBox.Clear();
             _credentialTextBox.PlaceholderText = "No credential required";
@@ -198,9 +198,15 @@ internal sealed class HiveProviderSetupEditorForm : HiveForm
         }
         else
         {
-            _credentialTextBox.PlaceholderText = "API key";
+            _credentialTextBox.PlaceholderText =
+                definition.CredentialRequirement == BuiltInProviderCredentialRequirement.Optional
+                    ? "API key (optional)"
+                    : "API key";
+
             _detailsLabel.Text =
-                $"Endpoint: {definition.DefaultEndpoint}\r\nThe API key is stored as protected secret material.";
+                definition.CredentialRequirement == BuiltInProviderCredentialRequirement.Optional
+                    ? $"Endpoint: {definition.DefaultEndpoint}\r\nAn API key may be supplied and is stored as protected secret material."
+                    : $"Endpoint: {definition.DefaultEndpoint}\r\nThe API key is stored as protected secret material.";
         }
 
         _saveButton.Enabled = true;
