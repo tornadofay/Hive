@@ -218,6 +218,7 @@ Keep the exact Example path in `docs/Hive_Active_Work.md` while verification is 
 - V1 Input Preparation & Routing example → `Workspace / WorkItem Operations / Input Preparation & Routing`
 - Phase 1.17 Structured Extraction & Validation example → `Workspace / WorkItem Operations / Structured Extraction & Validation`
 - Phase 1.16 Provider / Model Capability Discovery example → `Providers / Target Selection / Capability Discovery / Provider / Model Capability Discovery`
+- Phase 1.16 Follow-Up Model Information example → `Providers / Target Selection / Capability Discovery / Provider / Model Information`
 
 Phase 1.17 Example Host scenario should demonstrate:
 
