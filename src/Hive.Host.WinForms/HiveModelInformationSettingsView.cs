@@ -595,6 +595,11 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         AddSection(lines, "Identity", [
             $"Model: {model.ModelId}",
             $"Owner / provider attribution: {model.OwnedBy ?? "Not reported"}",
+            $"Family: {model.Family ?? "Not reported"}",
+            $"Model type: {model.ModelType ?? "Not reported"}",
+            $"Category: {model.Category ?? "Not reported"}",
+            $"Version: {model.Version ?? "Not reported"}",
+            $"Operational state: {model.OperationalState ?? "Not reported"}",
             $"Created: {(model.CreatedAtUtc is { } created ? created.ToString("O") : "Not reported")}"
         ]);
 
