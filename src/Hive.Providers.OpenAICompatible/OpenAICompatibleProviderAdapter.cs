@@ -857,7 +857,8 @@ public sealed class OpenAICompatibleProviderAdapter
     private static (IReadOnlyList<string> Options, string? Default) ParseThinking(
         JsonElement model)
     {
-        var options = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var options = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         string? defaultValue = null;
 
         foreach (var propertyName in new[]
@@ -868,14 +869,14 @@ public sealed class OpenAICompatibleProviderAdapter
             "supported_reasoning_efforts"
         })
         {
-            AddStringValues(model, propertyName, options);
+            AddOrderedStringValues(model, propertyName, options, seen);
         }
 
         if (model.TryGetProperty("thinking", out var thinking) &&
             thinking.ValueKind == JsonValueKind.Object)
         {
             foreach (var propertyName in new[] { "options", "levels", "supported_levels" })
-                AddStringValues(thinking, propertyName, options);
+                AddOrderedStringValues(thinking, propertyName, options, seen);
 
             defaultValue =
                 TryGetString(thinking, "default") ??
@@ -888,16 +889,59 @@ public sealed class OpenAICompatibleProviderAdapter
 
         var reasoningEffort = TryGetString(model, "reasoning_effort");
         if (!string.IsNullOrWhiteSpace(reasoningEffort))
-            options.Add(reasoningEffort);
+            AddOrderedStringValue(reasoningEffort, options, seen);
 
         return (
             options
-                .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
                 .Take(32)
                 .ToArray(),
             string.IsNullOrWhiteSpace(defaultValue)
                 ? null
                 : defaultValue.Trim());
+    }
+
+    private static void AddOrderedStringValues(
+        JsonElement element,
+        string propertyName,
+        List<string> target,
+        HashSet<string> seen)
+    {
+        if (!element.TryGetProperty(propertyName, out var property))
+            return;
+
+        if (property.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in property.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.String)
+                {
+                    var value = item.GetString();
+                    if (!string.IsNullOrWhiteSpace(value) &&
+                        value.Length <= 128)
+                    {
+                        AddOrderedStringValue(value.Trim(), target, seen);
+                    }
+                }
+            }
+        }
+        else if (property.ValueKind == JsonValueKind.String)
+        {
+            var value = property.GetString();
+            if (!string.IsNullOrWhiteSpace(value) &&
+                value.Length <= 128)
+            {
+                AddOrderedStringValue(value.Trim(), target, seen);
+            }
+        }
+    }
+
+    private static void AddOrderedStringValue(
+        string value,
+        List<string> target,
+        HashSet<string> seen)
+    {
+        if (seen.Add(value))
+            target.Add(value);
     }
 
     private static void AddStringValues(
