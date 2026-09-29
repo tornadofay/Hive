@@ -23,3 +23,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [Production Lifecycle & Failure-Boundary Corrections — 2026-09-26](production-lifecycle-failure-boundary-corrections-2026-09-26.md)
 
 - [1.16 — Provider Settings UI — 2026-09-28](1.16-provider-settings-ui-closure-2026-09-28.md)
+- [Revision — Phase 1.16 UI — Provider Configuration, Discovery & Target Reconciliation — 2026-09-29](1.16-provider-settings-ui-revision-closure-2026-09-29.md)
