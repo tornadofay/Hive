@@ -524,6 +524,8 @@ public sealed class OpenAICompatibleProviderAdapter
                             : ProviderAvailabilityStatus.Unknown;
 
                 var health = ParseHealth(model);
+                var displayName = TryGetString(model, "name", "display_name", "displayName");
+                var description = TryGetString(model, "description", "model_description", "modelDescription");
                 var operationalState = TryGetString(model, "state", "status", "lifecycle_state", "model_state");
                 var family = TryGetString(model, "family", "model_family", "modelFamily");
                 var modelType = TryGetString(model, "type", "model_type", "modelType");
@@ -556,6 +558,9 @@ public sealed class OpenAICompatibleProviderAdapter
                         health,
                         capabilities,
                         inputModalities,
+                        outputModalities,
+                        displayName,
+                        description,
                         family,
                         modelType,
                         category,
@@ -1200,6 +1205,12 @@ public sealed class OpenAICompatibleProviderAdapter
             "id",
             "object",
             "owned_by",
+            "name",
+            "display_name",
+            "displayName",
+            "description",
+            "model_description",
+            "modelDescription",
             "created",
             "available",
             "health",
