@@ -873,9 +873,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     private void ReportError(Exception exception, string message)
     {
-        var owner = FindForm() is Form form
-            ? form
-            : this;
+        IWin32Window? owner = FindForm();
+        owner ??= this;
 
         HiveUiErrorReporter.Report(
             owner,
