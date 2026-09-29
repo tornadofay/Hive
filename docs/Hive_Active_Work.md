@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Authorized revision
 
@@ -10,7 +10,7 @@ This revision re-audits the immediately preceding Phase 1.16 UI slice and correc
 
 ## Verification failure / remediation
 
-Developer verification reported that `ProviderSettingsIntegrationTests` hangs and does not terminate. The newly added no-credential presentation test was narrowed to deterministic in-memory Management data. Developer verification then reported two concrete test defects: the new `ProvidersSettingsManagementProxy` was declared `sealed`, which `DispatchProxy` rejects, and the new-target management-mode test clicked Save without populating the form's required endpoint/model/name/key fields, causing the UI error path to block the test. Both defects are limited to the focused regression tests.
+Developer verification reported that `ProviderSettingsIntegrationTests` hangs and does not terminate. The newly added no-credential presentation test was narrowed to deterministic in-memory Management data. Developer verification then reported two concrete test defects: the new `ProvidersSettingsManagementProxy` was declared `sealed`, which `DispatchProxy` rejects, and the new-target management-mode test clicked Save without populating the form's required endpoint/model/name/key fields, causing the UI error path to block the test. Both defects were limited to the focused regression tests and were corrected without changing production code.
 
 ## Revision findings and remediation
 
@@ -33,4 +33,4 @@ Developer verification reported that `ProviderSettingsIntegrationTests` hangs an
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
 Tests to run: ProviderSettingsIntegrationTests.cs; HiveUiPolishTests.cs; full Hive.Tests suite
 
-Developer verification failure was recorded before remediation. The following test corrections are authorized within the same revision boundary; agent did not run a build, test suite, or application launch.
+Source/diff review updated at `d858429da18803f160901b368e10e6d6187c5a30` (main, 2026-09-29). The focused regression test defects are remediated within the same revision boundary. Agent did not run a build, test suite, or application launch; developer re-verification is pending.
