@@ -385,13 +385,20 @@ public sealed record ProviderModelMetadata
             MaxModalityLength,
             nameof(inputModalities));
 
-        DisplayName = NormalizeOptionalMetadata(displayName, nameof(displayName));
-        Description = NormalizeOptionalMetadata(description, nameof(description));
-        Family = NormalizeOptionalMetadata(family, nameof(family));
-        ModelType = NormalizeOptionalMetadata(modelType, nameof(modelType));
-        Category = NormalizeOptionalMetadata(category, nameof(category));
-        Version = NormalizeOptionalMetadata(version, nameof(version));
-        OperationalState = NormalizeOptionalMetadata(operationalState, nameof(operationalState));
+        var normalizedDisplayName =
+            NormalizeOptionalMetadata(displayName, nameof(displayName));
+        var normalizedDescription =
+            NormalizeOptionalMetadata(description, nameof(description));
+        var normalizedFamily =
+            NormalizeOptionalMetadata(family, nameof(family));
+        var normalizedModelType =
+            NormalizeOptionalMetadata(modelType, nameof(modelType));
+        var normalizedCategory =
+            NormalizeOptionalMetadata(category, nameof(category));
+        var normalizedVersion =
+            NormalizeOptionalMetadata(version, nameof(version));
+        var normalizedOperationalState =
+            NormalizeOptionalMetadata(operationalState, nameof(operationalState));
 
         OutputModalities = NormalizeStrings(
             outputModalities,
@@ -451,8 +458,13 @@ public sealed record ProviderModelMetadata
         ModelId = normalizedModelId;
         OwnedBy = ownedBy;
         CreatedAtUtc = createdAtUtc;
-        DisplayName = DisplayName;
-        Description = Description;
+        DisplayName = normalizedDisplayName;
+        Description = normalizedDescription;
+        Family = normalizedFamily;
+        ModelType = normalizedModelType;
+        Category = normalizedCategory;
+        Version = normalizedVersion;
+        OperationalState = normalizedOperationalState;
         Availability = availability;
         Health = health;
         DiscoveredCapabilities = new ReadOnlyCollection<CapabilityStateEntry>(capabilities);
