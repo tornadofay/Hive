@@ -431,6 +431,8 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
 
         if (_modelSelector.SelectedItem is ModelChoice choice)
         {
+            SelectedModel = choice.Value;
+
             _capabilitiesLabel.Text =
                 $"Availability: {choice.Value.Availability} • Health: {choice.Value.Health} • " +
                 $"Capabilities: {BuildCapabilities(choice.Value.DiscoveredCapabilities)}";
