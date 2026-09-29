@@ -592,9 +592,11 @@ Providers page toolbar
 [ Add Provider ] [ Refresh ] [ Advanced ]
 
 Advanced Configuration
+├── Overview
 ├── Providers
 ├── Accounts / Credentials
-└── Execution Targets
+├── Execution Targets
+└── Model Information
 ```
 
 The Providers page uses the shared Hive CRUD presentation rather than a provider-specific card/action framework. It lists configured Provider resources and presents masked credential status plus useful operational summary such as readiness/model count where available. There is no per-row action column; normal CRUD interaction remains the established page behavior. For a normal built-in provider, Edit is limited to replacing its protected API key/credential; changing provider identity or transport belongs in Advanced.
