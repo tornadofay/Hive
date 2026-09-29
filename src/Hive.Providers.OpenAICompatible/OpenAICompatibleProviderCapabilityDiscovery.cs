@@ -152,6 +152,8 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
                         .ToArray(),
                     model.InputModalities,
                     model.OutputModalities,
+                    model.DisplayName,
+                    model.Description,
                     model.Family,
                     model.ModelType,
                     model.Category,
