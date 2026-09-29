@@ -135,7 +135,14 @@ public sealed record OpenAICompatibleModelDescriptor(
     DateTimeOffset? CreatedAtUtc,
     ProviderAvailabilityStatus Availability,
     ProviderHealthStatus Health,
-    IReadOnlyList<OpenAICompatibleCapabilityDescriptor> Capabilities);
+    IReadOnlyList<OpenAICompatibleCapabilityDescriptor> Capabilities,
+    IReadOnlyList<string>? InputModalities = null,
+    IReadOnlyList<string>? OutputModalities = null,
+    IReadOnlyList<string>? ThinkingOptions = null,
+    string? DefaultThinkingLevel = null,
+    ProviderModelLimits? Limits = null,
+    ProviderModelPricing? Pricing = null,
+    IReadOnlyDictionary<string, JsonElement>? ExtensionData = null);
 
 public sealed record OpenAICompatibleModelCatalog(
     IReadOnlyList<OpenAICompatibleModelDescriptor> Models,
