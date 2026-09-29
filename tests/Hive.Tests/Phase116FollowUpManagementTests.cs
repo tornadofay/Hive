@@ -119,9 +119,9 @@ public sealed class Phase116FollowUpManagementTests
     {
         public int CallCount { get; private set; }
 
-        public ProviderId ProviderIdSeen { get; private set; }
+        public ProviderId ProviderIdSeen { get; private set; } = default;
 
-        public ProviderAccountId ProviderAccountIdSeen { get; private set; }
+        public ProviderAccountId ProviderAccountIdSeen { get; private set; } = default;
 
         public Uri? EndpointSeen { get; private set; }
 
