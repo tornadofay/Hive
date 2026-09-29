@@ -69,14 +69,6 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                     "The execution target identity is required."));
         }
 
-        if (_providerCapabilityDiscovery is null)
-        {
-            return Result<ProviderDiscoverySnapshot>.Failure(
-                Error.Unsupported(
-                    "hive.management.provider-discovery-unavailable",
-                    "Provider capability discovery is not configured."));
-        }
-
         var target = await _providerResources.GetExecutionTargetAsync(
             executionTargetId,
             accessContext,
@@ -118,13 +110,120 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                     "Provider capability discovery requires an active provider and provider account."));
         }
 
+        return await GetProviderDiscoveryCoreAsync(
+            provider.Value!,
+            account.Value!,
+            target.Value.Endpoint,
+            accessContext,
+            forceRefresh,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    internal async Task<Result<ProviderDiscoverySnapshot>> GetProviderDiscoveryAsync(
+        ProviderId providerId,
+        ProviderAccountId providerAccountId,
+        Uri endpoint,
+        ResourceAccessContext accessContext,
+        bool forceRefresh = false,
+        CancellationToken cancellationToken = default)
+    {
+        var contextError = ValidateAccessContext(accessContext);
+        if (contextError is not null)
+            return Result<ProviderDiscoverySnapshot>.Failure(contextError);
+
+        if (providerId == default)
+        {
+            return Result<ProviderDiscoverySnapshot>.Failure(
+                Error.Validation(
+                    "hive.management.provider.identity-required",
+                    "The provider identity is required."));
+        }
+
+        if (providerAccountId == default)
+        {
+            return Result<ProviderDiscoverySnapshot>.Failure(
+                Error.Validation(
+                    "hive.management.provider-account.identity-required",
+                    "The provider account identity is required."));
+        }
+
+        ArgumentNullException.ThrowIfNull(endpoint);
+
+        if (!endpoint.IsAbsoluteUri ||
+            (endpoint.Scheme != Uri.UriSchemeHttp &&
+             endpoint.Scheme != Uri.UriSchemeHttps))
+        {
+            return Result<ProviderDiscoverySnapshot>.Failure(
+                Error.Validation(
+                    "hive.management.provider-discovery-endpoint-invalid",
+                    "Discovery endpoint must be an absolute HTTP or HTTPS URI."));
+        }
+
+        var provider = await _providerResources.GetProviderAsync(
+            providerId,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (provider.IsFailure)
+            return Result<ProviderDiscoverySnapshot>.Failure(provider.Error!);
+
+        var account = await _providerResources.GetProviderAccountAsync(
+            providerAccountId,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (account.IsFailure)
+            return Result<ProviderDiscoverySnapshot>.Failure(account.Error!);
+
+        if (account.Value!.ProviderId != provider.Value!.Id)
+        {
+            return Result<ProviderDiscoverySnapshot>.Failure(
+                Error.Validation(
+                    "hive.management.provider-discovery.account-provider-mismatch",
+                    "The provider account does not belong to the supplied provider."));
+        }
+
+        if (provider.Value.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active ||
+            account.Value.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        {
+            return Result<ProviderDiscoverySnapshot>.Failure(
+                Error.Conflict(
+                    "hive.management.provider-discovery-resource-inactive",
+                    "Provider capability discovery requires an active provider and provider account."));
+        }
+
+        return await GetProviderDiscoveryCoreAsync(
+            provider.Value,
+            account.Value,
+            endpoint,
+            accessContext,
+            forceRefresh,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<Result<ProviderDiscoverySnapshot>> GetProviderDiscoveryCoreAsync(
+        Provider provider,
+        ProviderAccount account,
+        Uri endpoint,
+        ResourceAccessContext accessContext,
+        bool forceRefresh,
+        CancellationToken cancellationToken)
+    {
+        if (_providerCapabilityDiscovery is null)
+        {
+            return Result<ProviderDiscoverySnapshot>.Failure(
+                Error.Unsupported(
+                    "hive.management.provider-discovery-unavailable",
+                    "Provider capability discovery is not configured."));
+        }
+
         var discoveryGeneration = Volatile.Read(ref _discoveryGeneration);
         var cacheKey = new ProviderDiscoveryCacheKey(
-            provider.Value!.Id,
-            provider.Value.Resource.Version,
-            account.Value!.Id,
-            account.Value.Resource.Version,
-            target.Value.Endpoint.AbsoluteUri,
+            provider.Id,
+            provider.Resource.Version,
+            account.Id,
+            account.Resource.Version,
+            endpoint.AbsoluteUri,
             discoveryGeneration);
 
         var cachedCompletionSequenceAtRequest =
@@ -174,7 +273,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
             try
             {
-                if (account.Value.CredentialSecret is not null)
+                if (account.CredentialSecret is not null)
                 {
                     if (_secrets is null)
                     {
@@ -185,7 +284,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                     }
 
                     var secret = await _secrets.GetAsync(
-                        account.Value.CredentialSecret.Value.Id,
+                        account.CredentialSecret.Value.Id,
                         accessContext,
                         cancellationToken).ConfigureAwait(false);
 
@@ -195,11 +294,17 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                     material = secret.Value!.Material;
                 }
 
+                var probe = CreateDiscoveryProbeTarget(
+                    provider,
+                    account,
+                    endpoint,
+                    accessContext);
+
                 var discovered = await _providerCapabilityDiscovery
                     .DiscoverAsync(
-                        provider.Value,
-                        account.Value,
-                        target.Value,
+                        provider,
+                        account,
+                        probe,
                         material,
                         cancellationToken)
                     .ConfigureAwait(false);
@@ -209,14 +314,12 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
 
                 var validationError = ValidateDiscoverySnapshot(
                     discovered.Value!,
-                    provider.Value,
-                    account.Value,
-                    target.Value);
+                    provider,
+                    account,
+                    probe);
 
                 if (validationError is not null)
-                {
                     return Result<ProviderDiscoverySnapshot>.Failure(validationError);
-                }
 
                 if (Volatile.Read(ref _discoveryGeneration) == discoveryGeneration)
                 {
