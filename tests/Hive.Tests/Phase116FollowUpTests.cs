@@ -220,6 +220,39 @@ public sealed class Phase116FollowUpTests
     }
 
     [Fact]
+    public void StructuredCapabilityEditor_PreservesConfiguredOverridesAndDiscoveryEvidence()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        using var editor = new HiveCapabilityEditor(themeManager);
+
+        var configured = new[]
+        {
+            new CapabilityStateEntry(
+                HiveCapabilityKeys.Vision,
+                CapabilityState.Unsupported)
+        };
+
+        var discovery = CreateFixture().Model;
+
+        editor.Configure(
+            configured,
+            discovery,
+            automatic: false);
+
+        var result = editor.GetConfiguredCapabilities();
+
+        var vision = Assert.Single(
+            result.Where(item => item.Capability == HiveCapabilityKeys.Vision));
+
+        Assert.Equal(CapabilityState.Unsupported, vision.State);
+        Assert.Equal(
+            CapabilityState.Supported,
+            discovery.DiscoveredCapabilities
+                .Single(item => item.Capability == HiveCapabilityKeys.Vision)
+                .State);
+    }
+
+    [Fact]
     public void AdvancedConfigurationTree_UsesOverviewAndModelInformationLeaves()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
@@ -299,6 +332,37 @@ public sealed class Phase116FollowUpTests
         return DispatchProxy.Create<
             IHiveManagementFacade,
             ThrowingManagementProxy>();
+    }
+
+    private sealed record TestModelFixture(ProviderModelMetadata Model);
+
+    private static TestModelFixture CreateRichModelFixture()
+    {
+        var model = new ProviderModelMetadata(
+            "rich-model",
+            "example-provider",
+            new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero),
+            ProviderAvailabilityStatus.Available,
+            ProviderHealthStatus.Healthy,
+            [
+                new CapabilityStateEntry(HiveCapabilityKeys.TextGeneration, CapabilityState.Supported),
+                new CapabilityStateEntry(HiveCapabilityKeys.Vision, CapabilityState.Supported),
+                new CapabilityStateEntry(HiveCapabilityKeys.ToolCalling, CapabilityState.Supported),
+                new CapabilityStateEntry(HiveCapabilityKeys.StructuredOutput, CapabilityState.Supported),
+                new CapabilityStateEntry(HiveCapabilityKeys.Reasoning, CapabilityState.Supported),
+                new CapabilityStateEntry(HiveCapabilityKeys.Thinking, CapabilityState.Supported)
+            ],
+            ["text"],
+            ["text"],
+            family: "example-family",
+            modelType: "chat",
+            category: "multimodal",
+            version: "1.0",
+            operationalState: "active",
+            thinkingOptions: ["low", "medium", "high"],
+            defaultThinkingLevel: "medium");
+
+        return new TestModelFixture(model);
     }
 
     private static ModelInformationFixture CreateFixture()
