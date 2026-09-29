@@ -15,13 +15,15 @@ internal sealed class HiveAdvancedOverviewPage : UserControl, IHiveAdvancedConfi
         Margin = Padding.Empty;
         Padding = new Padding(20);
 
+        var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+
         var title = new Label
         {
             Dock = DockStyle.Top,
             AutoSize = false,
             Height = 42,
             Text = "Advanced Configuration",
-            Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
+            Font = new Font(fallbackFont, FontStyle.Bold),
             AccessibleName = "Advanced Configuration overview"
         };
 
@@ -96,6 +98,8 @@ internal sealed class HiveAdvancedOverviewPage : UserControl, IHiveAdvancedConfi
 
     private Control CreateSection(string heading, string text)
     {
+        var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+
         var panel = new Panel
         {
             Dock = DockStyle.Top,
@@ -109,7 +113,7 @@ internal sealed class HiveAdvancedOverviewPage : UserControl, IHiveAdvancedConfi
             Dock = DockStyle.Top,
             Height = 28,
             Text = heading,
-            Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold)
+            Font = new Font(fallbackFont, FontStyle.Bold)
         };
 
         var bodyLabel = new Label
