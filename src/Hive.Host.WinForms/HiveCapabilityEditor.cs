@@ -63,6 +63,8 @@ internal sealed class HiveCapabilityEditor : UserControl
         _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 24f));
         _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 24f));
         _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 24f));
+        _table.RowCount = 1;
+        _table.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
 
         AddHeader("Capability", 0);
         AddHeader("Discovered", 1);
@@ -168,7 +170,7 @@ internal sealed class HiveCapabilityEditor : UserControl
             row.Discovered.Text = FormatState(discovered);
             row.Configured.SelectedItem = configuredState is null
                 ? "Not configured"
-                : configuredState.Value;
+                : configuredState.State;
             row.Configured.Enabled = !_automatic;
 
             var effective = _automatic
