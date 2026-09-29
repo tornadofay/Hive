@@ -174,7 +174,7 @@ internal sealed class HiveCapabilityEditor : UserControl
             row.Configured.Enabled = !_automatic;
 
             var effective = _automatic
-                ? configuredState?.State ?? discovered?.State ?? CapabilityState.Unknown
+                ? discovered?.State ?? configuredState?.State ?? CapabilityState.Unknown
                 : configuredState?.State ?? discovered?.State ?? CapabilityState.Unknown;
 
             row.Effective.Text = effective.ToString();
