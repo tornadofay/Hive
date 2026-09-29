@@ -21,11 +21,20 @@ Explicit exclusions:
 - no unrelated provider/settings refactor.
 
 Latest verification failure:
-- developer reported a new same-slice runtime exception: `Optional model metadata cannot exceed 256 characters. (Parameter 'description')`.
+- developer reported a same-slice runtime exception: `Optional model metadata cannot exceed 256 characters. (Parameter 'description')`.
 
 Remediation boundary:
 - retain bounded validation for provider-reported normalized metadata, but do not apply the short identifier/display-field limit to model descriptions;
 - change only the affected model-description normalization boundary and supporting same-slice regression coverage/documentation.
+
+Latest remediation:
+- added a dedicated 4,096-character bound for normalized provider model descriptions while retaining the existing 256-character bound for shorter optional metadata fields;
+- added deterministic regression coverage proving a 1,024-character description is preserved and a 4,097-character description is rejected;
+- revision inspection confirmed the change is isolated to the Phase 1.16 Core metadata contract and its focused regression test.
+
+Verification boundary:
+- developer must rerun the focused Phase 1.16 discovery/model-information tests and the broader `Hive.Tests` suite;
+- required Example Host handoff remains: `Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms`.
 
 Latest remediation:
 - extended credential-bearing URI redaction to recognize the underscore-form `api_key` query parameter used by the deterministic rich-metadata fixture;
