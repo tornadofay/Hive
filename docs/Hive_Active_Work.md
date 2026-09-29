@@ -20,14 +20,15 @@ Explicit exclusions:
 - no Agent-selection or Workspace redesign;
 - no unrelated provider/settings refactor.
 
-Latest verification failure:
-- developer reported three remaining failed tests: one nested extension-URI redaction assertion, one stale-refresh assertion showing only one discovery call, and one stale-refresh input-routing assertion with no prepared image.
+Latest remediation:
+- extended credential-bearing URI redaction to recognize the underscore-form `api_key` query parameter used by the deterministic rich-metadata fixture;
+- moved stale-result rejection to the Management discovery-core boundary so direct discovery still rejects stale fresh results, while the internal capability-routing path may inspect the first stale observation and then issue a forced refresh;
+- preserved the intentionally model-less transient discovery probe and the deterministic `vision-model` fixture correlation;
+- revision inspection compared the remediation with the preceding verification checkpoint and found only the Active Work record plus the provider adapter and Management stale-routing changes.
 
-Remediation boundary:
-- extend existing credential-bearing URI redaction to cover underscore-form query keys such as `api_key`;
-- preserve the public/direct discovery contract that a fresh provider discovery returning already-stale operational metadata is rejected, while allowing the internal capability-routing path to inspect the stale observation and trigger a forced refresh;
-- keep the transient Management discovery probe model-less and preserve deterministic model correlation in the test fixture;
-- update only same-slice provider redaction, Management stale-refresh control flow, and the affected tests/documentation within this Phase 1.16 follow-up.
+Verification boundary:
+- developer must rerun the focused Phase 1.16 discovery/model-information tests and the broader `Hive.Tests` suite;
+- required Example Host handoff remains: `Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms`.
 
 Latest remediation:
 - changed thinking-option normalization to preserve the provider-reported option order while deduplicating case-insensitively and retaining deterministic bounded output; semantic levels such as low / medium / high are therefore not reordered lexically;
