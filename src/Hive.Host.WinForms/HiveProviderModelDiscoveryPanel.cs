@@ -305,10 +305,10 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
             if (!IsDisposed && !Disposing &&
                 requestVersion == Volatile.Read(ref _requestVersion))
             {
-                DiscoveryUpdated?.Invoke(this, EventArgs.Empty);
-
-        SetBusyState(false);
+                    DiscoveryUpdated?.Invoke(this, EventArgs.Empty);
             }
+
+            SetBusyState(false);
         }
     }
 
@@ -375,6 +375,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         }
 
         CurrentSnapshot = snapshot;
+        SelectedModel = null;
         _models = snapshot.Models;
         _modelSelector.BeginUpdate();
         try
@@ -443,6 +444,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         if (_modelSelector.SelectedItem is not ModelChoice choice)
             return;
 
+        SelectedModel = choice.Value;
         ModelSelected?.Invoke(this, new ProviderModelSelectedEventArgs(choice.Value));
     }
 
