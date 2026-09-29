@@ -79,6 +79,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _providerComboBox = CreateSelector("Provider");
         _accountComboBox = CreateSelector("Account / Credential");
         _endpointComboBox = CreateSelector("Discovery endpoint");
+        _endpointComboBox.DropDownStyle = ComboBoxStyle.DropDown;
 
         _refreshButton = new HiveButton
         {
@@ -98,7 +99,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Dock = DockStyle.Top,
             AutoSize = false,
             Height = 34,
-            Text = "Select a Provider, Account, and endpoint to inspect discovered models.",
+            Text = "Select a Provider and Account, choose a saved endpoint, or enter an HTTP/HTTPS endpoint, then Refresh.",
             AutoEllipsis = true,
             Padding = new Padding(4, 6, 4, 4)
         };
@@ -386,6 +387,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     private async Task RefreshDiscoveryAsync(bool forceRefresh)
     {
+        _selectedEndpoint = TryParseEndpoint(_endpointComboBox.Text);
+
         if (_selectedProvider is null ||
             _selectedAccount is null ||
             _selectedEndpoint is null)
@@ -582,10 +585,12 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     private void UpdateContextLabel()
     {
+        _selectedEndpoint = TryParseEndpoint(_endpointComboBox.Text);
+
         _contextLabel.Text =
             $"Provider: {_selectedProvider?.DisplayName ?? "—"}  •  " +
             $"Account: {_selectedAccount?.DisplayName ?? "—"}  •  " +
-            $"Endpoint: {((_endpointComboBox.SelectedItem as EndpointChoice)?.Endpoint.AbsoluteUri ?? "—")}";
+            $"Endpoint: {_selectedEndpoint?.AbsoluteUri ?? "—"}";
     }
 
     private static string FormatModel(ProviderModelMetadata model)
@@ -717,6 +722,22 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         return string.Join(
             "; ",
             values.Select(pair => $"{pair.Key}={pair.Value.GetRawText()}"));
+    }
+
+    private static Uri? TryParseEndpoint(string? text)
+    {
+        if (!Uri.TryCreate(
+                text?.Trim(),
+                UriKind.Absolute,
+                out var endpoint))
+        {
+            return null;
+        }
+
+        return endpoint.Scheme is Uri.UriSchemeHttp or Uri.UriSchemeHttps &&
+               string.IsNullOrEmpty(endpoint.UserInfo)
+            ? endpoint
+            : null;
     }
 
     private static ComboBox CreateSelector(string name) =>
