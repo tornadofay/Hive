@@ -1376,18 +1376,31 @@ public sealed class OpenAICompatibleProviderAdapter
     {
         var normalized = name.Trim().ToLowerInvariant();
 
-        return normalized.Contains("authorization", StringComparison.Ordinal) ||
-               normalized.Contains("access_token", StringComparison.Ordinal) ||
-               normalized.Contains("token", StringComparison.Ordinal) ||
-               normalized.Contains("secret", StringComparison.Ordinal) ||
-               normalized.Contains("password", StringComparison.Ordinal) ||
-               normalized.Contains("credential", StringComparison.Ordinal) ||
-               normalized.Contains("privatekey", StringComparison.Ordinal) ||
-               normalized.Contains("private_key", StringComparison.Ordinal) ||
-               normalized.Contains("clientsecret", StringComparison.Ordinal) ||
-               normalized.Contains("client_secret", StringComparison.Ordinal) ||
-               normalized.Contains("cookie", StringComparison.Ordinal) ||
-               normalized.Contains("webhook", StringComparison.Ordinal);
+        return normalized == "authorization" ||
+               normalized.EndsWith("_authorization", StringComparison.Ordinal) ||
+               normalized == "api_key" ||
+               normalized == "apikey" ||
+               normalized.EndsWith("_api_key", StringComparison.Ordinal) ||
+               normalized.EndsWith("_apikey", StringComparison.Ordinal) ||
+               normalized == "access_token" ||
+               normalized == "refresh_token" ||
+               normalized == "id_token" ||
+               normalized == "token" ||
+               normalized.EndsWith("_token", StringComparison.Ordinal) ||
+               normalized == "secret" ||
+               normalized.EndsWith("_secret", StringComparison.Ordinal) ||
+               normalized == "password" ||
+               normalized.EndsWith("_password", StringComparison.Ordinal) ||
+               normalized == "credential" ||
+               normalized.EndsWith("_credential", StringComparison.Ordinal) ||
+               normalized == "privatekey" ||
+               normalized == "private_key" ||
+               normalized == "clientsecret" ||
+               normalized == "client_secret" ||
+               normalized == "cookie" ||
+               normalized.EndsWith("_cookie", StringComparison.Ordinal) ||
+               normalized == "webhook" ||
+               normalized.EndsWith("_webhook", StringComparison.Ordinal);
     }
 
     private static bool ContainsCredentialBearingUri(string value)
