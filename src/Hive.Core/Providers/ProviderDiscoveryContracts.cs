@@ -317,6 +317,8 @@ public sealed record ProviderModelMetadata
         IReadOnlyList<CapabilityStateEntry> discoveredCapabilities,
         IReadOnlyList<string>? inputModalities = null,
         IReadOnlyList<string>? outputModalities = null,
+        string? displayName = null,
+        string? description = null,
         string? family = null,
         string? modelType = null,
         string? category = null,
@@ -383,6 +385,8 @@ public sealed record ProviderModelMetadata
             MaxModalityLength,
             nameof(inputModalities));
 
+        DisplayName = NormalizeOptionalMetadata(displayName, nameof(displayName));
+        Description = NormalizeOptionalMetadata(description, nameof(description));
         Family = NormalizeOptionalMetadata(family, nameof(family));
         ModelType = NormalizeOptionalMetadata(modelType, nameof(modelType));
         Category = NormalizeOptionalMetadata(category, nameof(category));
@@ -447,6 +451,8 @@ public sealed record ProviderModelMetadata
         ModelId = normalizedModelId;
         OwnedBy = ownedBy;
         CreatedAtUtc = createdAtUtc;
+        DisplayName = DisplayName;
+        Description = Description;
         Availability = availability;
         Health = health;
         DiscoveredCapabilities = new ReadOnlyCollection<CapabilityStateEntry>(capabilities);
@@ -468,6 +474,10 @@ public sealed record ProviderModelMetadata
     public ProviderHealthStatus Health { get; }
 
     public IReadOnlyList<CapabilityStateEntry> DiscoveredCapabilities { get; }
+
+    public string? DisplayName { get; }
+
+    public string? Description { get; }
 
     public string? Family { get; }
 
