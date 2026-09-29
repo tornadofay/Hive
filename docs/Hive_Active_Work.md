@@ -1,12 +1,16 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Authorized revision
 
 **Revision — Phase 1.16 UI — Provider Configuration, Discovery & Target Reconciliation**
 
 This revision re-audits the immediately preceding Phase 1.16 UI slice and corrects only concrete same-slice defects.
+
+## Verification failure
+
+Developer verification reported that `ProviderSettingsIntegrationTests` hangs and does not terminate. The reported failure occurred during verification of this revision; remediation is limited to correcting the newly added test so it does not introduce a broad SQL + WinForms async integration dependency for a presentation-only assertion.
 
 ## Revision findings and remediation
 
@@ -29,4 +33,4 @@ This revision re-audits the immediately preceding Phase 1.16 UI slice and correc
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
 Tests to run: ProviderSettingsIntegrationTests.cs; HiveUiPolishTests.cs; full Hive.Tests suite
 
-Source/diff review complete at `cda2b6ed4863108a263c3a6abfbaf201ce64b735` (main, 2026-09-28). The revision findings are remediated; developer verification is pending. Agent did not run a build, test suite, or application launch.
+Source/diff review complete at `cda2b6ed4863108a263c3a6abfbaf201ce64b735` (main, 2026-09-28). Developer verification reported a hanging `ProviderSettingsIntegrationTests` run. The newly added presentation-status test is being narrowed to deterministic in-memory Management data; agent did not run a build, test suite, or application launch.
