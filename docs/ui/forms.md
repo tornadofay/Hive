@@ -76,6 +76,27 @@ Settings pages call the appropriate public Management/application boundaries. Se
 
 Provider/model discovery is primarily surfaced from the normal Providers Settings page. The page offers explicit `Refresh`, which requests fresh provider/account/endpoint discovery for active configured providers and reconciles automatically managed ExecutionTargets. The UI presents configured providers and safe operational summary; it does not expose ProviderAccount or ExecutionTarget administration during normal onboarding. Advanced Configuration exposes the generalized Providers / Accounts / Credentials / Execution Targets administration pages when an administrator needs multiple accounts, custom endpoints, local/self-hosted models, manual targets, or explicit capability overrides. Discovered availability, health, rate-limit metadata, and normalized capability states remain observational; configured ExecutionTarget capability overrides remain authoritative. Failed or stale discovery preserves existing durable targets and must never be interpreted as an empty model catalog.
 
+### Planned Phase 1.16 Follow-Up — Advanced Model Information
+
+The planned rich-discovery follow-up extends the Advanced Configuration window into a tree-based administrative surface with an internal Overview page and a read-only Model Information page:
+
+```text
+Advanced Configuration
+├── Overview
+├── Providers
+├── Accounts / Credentials
+├── Execution Targets
+└── Model Information
+```
+
+The Advanced Overview is the landing page for the tree and explains the Provider → ProviderAccount → ExecutionTarget relationship, automatic versus manual target ownership, and the distinction between discovery evidence and durable configuration.
+
+Model Information presents the discovered provider/model profile without becoming a configuration store. It presents normalized identity, inputs, outputs, capabilities, reasoning/thinking, limits, pricing/economics, operational state, and bounded provider-specific evidence when reported. Missing information remains explicitly not reported/Unknown.
+
+The planned target capability editor is structured rather than free-form. It uses bounded Hive capability identities and Supported / Unsupported / Unknown states, and distinguishes Discovered, Configured Override, and Effective values. Automatic targets present discovery-managed capability information; manual targets expose the explicit configuration surface.
+
+This is planned behavior for the Phase 1.16 follow-up, not a statement that the follow-up is implemented. See [Phase 1.16 Follow-Up — Model Information](../plan/Phase1.16_FollowUp_Model_Information.md) for the detailed scope and verification contract.
+
 The Persistence Server / instance field is a normal free-form text box. It accepts local servers, named instances, remote hosts, IP addresses, and online SQL Server targets. Hive currently has no authoritative server-discovery/catalog contract, so the UI does not attempt to enumerate installed SQL Server instances. The Database field is read-only and assigned automatically to Hive's package database name. Save and Test are non-destructive. The `Initialize Hive` action is the explicit lifecycle operation that may create the configured database when allowed and applies Hive schema migrations; it must not be used as an implicit side effect of Save, Test, or normal Settings-page navigation.
 
 ## Structured extraction and batch input UI
