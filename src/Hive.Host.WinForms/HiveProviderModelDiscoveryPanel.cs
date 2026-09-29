@@ -162,6 +162,12 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
 
     internal ComboBox ModelSelector => _modelSelector;
 
+    internal event EventHandler? DiscoveryUpdated;
+
+    internal ProviderDiscoverySnapshot? CurrentSnapshot { get; private set; }
+
+    internal ProviderModelMetadata? SelectedModel { get; private set; }
+
     internal HiveButton UseModelButton => _useModelButton;
 
     internal Label StatusLabel => _statusLabel;
