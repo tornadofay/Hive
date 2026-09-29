@@ -1439,8 +1439,8 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
             "discovery-probe",
             "Provider Discovery Probe",
             endpoint,
-            "discovery-probe",
             null,
+            "discovery-probe",
             Array.Empty<CapabilityStateEntry>());
     }
 
