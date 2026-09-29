@@ -303,6 +303,7 @@ public sealed record ProviderModelMetadata
     private const int MaxModalityLength = 64;
     private const int MaxThinkingOptionCount = 32;
     private const int MaxThinkingOptionLength = 128;
+    private const int MaxModelDescriptionLength = 4096;
     private const int MaxExtensionPropertyCount = 128;
     private const int MaxExtensionKeyLength = 128;
     private const int MaxExtensionPropertyBytes = 16 * 1024;
@@ -388,7 +389,10 @@ public sealed record ProviderModelMetadata
         var normalizedDisplayName =
             NormalizeOptionalMetadata(displayName, nameof(displayName));
         var normalizedDescription =
-            NormalizeOptionalMetadata(description, nameof(description));
+            NormalizeOptionalMetadata(
+                description,
+                nameof(description),
+                MaxModelDescriptionLength);
         var normalizedFamily =
             NormalizeOptionalMetadata(family, nameof(family));
         var normalizedModelType =
@@ -531,7 +535,8 @@ public sealed record ProviderModelMetadata
 
     private static string? NormalizeOptionalMetadata(
         string? value,
-        string parameterName)
+        string parameterName,
+        int maxLength = 256)
     {
         if (value is null)
             return null;
@@ -542,10 +547,10 @@ public sealed record ProviderModelMetadata
                 parameterName);
 
         var normalized = value.Trim();
-        if (normalized.Length > 256)
+        if (normalized.Length > maxLength)
         {
             throw new ArgumentException(
-                "Optional model metadata cannot exceed 256 characters.",
+                $"Optional model metadata cannot exceed {maxLength} characters.",
                 parameterName);
         }
 
