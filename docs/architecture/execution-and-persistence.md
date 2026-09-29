@@ -100,9 +100,9 @@ The first implementation is a shared OpenAI-compatible discovery implementation 
 
 #### Complete model metadata profile
 
-Every successfully enumerated model is a valid discovery result even when the provider does not report normalized capability evidence. Model discovery is therefore a **complete provider-reported metadata ingestion boundary**, not a bounded capability-list probe.
+Every successfully enumerated model is a valid discovery result even when the provider does not report normalized capability evidence. Model discovery is therefore a **complete useful provider-reported metadata ingestion boundary within Hive's bounded and security-controlled contract**, not a bounded capability-list probe.
 
-The normalized model metadata profile covers:
+The normalized model metadata profile covers all applicable fields from the following semantic areas that the provider actually reports:
 
 1. **Identity and descriptive metadata**
    - model/deployment identifier;
@@ -139,7 +139,7 @@ The normalized model metadata profile covers:
    - cached input, image/audio, request, or other provider-defined billing units where reported;
    - explicit free/zero-cost indication.
 
-   Missing pricing is **not** interpreted as free. Pricing is discovery evidence, not a cost-policy decision.
+   Free pricing evidence requires an explicit zero-cost/free indication for the relevant provider-reported billable unit(s). Free pricing evidence does not guarantee zero user/account cost under every provider plan, routing arrangement, quota, or policy. Missing pricing is **not** interpreted as free. Pricing is discovery evidence, not a cost-policy decision.
 
 7. **Operational metadata**
    - availability;
@@ -147,7 +147,7 @@ The normalized model metadata profile covers:
    - discovery observation timestamp and freshness;
    - other provider-reported operational state that belongs to the model rather than the provider/account.
 
-Hive normalizes common semantics into the provider-neutral profile, but the discovery adapter must not discard useful machine-readable provider metadata merely because Hive does not yet have a dedicated first-class field for it. Additional provider-specific metadata/evidence is retained in an extensible non-secret form for future use. It remains descriptive evidence and cannot bypass Hive's normalized capability, authorization, selection, or policy boundaries. Raw provider responses remain subject to the existing secret/redaction rules.
+Hive normalizes common semantics into the provider-neutral profile, but the discovery adapter must not discard useful machine-readable provider metadata merely because Hive does not yet have a dedicated first-class field for it. Additional provider-specific metadata/evidence is retained in a structured, bounded, extensible, non-secret form for future use. Extension data is discovery evidence only; it cannot bypass Hive's normalized capability, authorization, selection, policy, or budget boundaries, and consumers must not treat an extension they do not understand as an authoritative contract. Raw provider responses remain subject to the existing response-size, validation, cancellation, and secret/redaction rules.
 
 Absence has explicit semantics:
 
@@ -157,9 +157,9 @@ Absence has explicit semantics:
 - no reported pricing ≠ free;
 - no reported operational state ≠ healthy/available.
 
-Configured `ExecutionTarget` capability overrides remain authoritative for effective target capability resolution. Discovery may provide the missing evidence used by selection, display, reconciliation, and later features, but discovery never mutates those configured overrides.
+Configured `ExecutionTarget` capability overrides remain authoritative for effective target capability resolution. Discovery may provide the missing evidence used by selection, display, reconciliation, and later features, but discovery never mutates those configured overrides. The complete model profile remains discovery evidence; automatic target reconciliation copies only the target state explicitly owned by the ExecutionTarget contract (including stable execution identity and applicable discovered capability state) rather than treating the model profile as durable target configuration.
 
-No separate durable `Model` resource is introduced by this boundary. The discovery snapshot remains the reusable source for the complete observed model profile. A durable cross-restart model catalog, if later required, is a separate architectural decision and must not be inferred from the existence of discovery.
+No separate durable `Model` resource is introduced by this boundary. The discovery snapshot remains the reusable source for the complete observed model profile. A discovered profile is correlated to a durable ExecutionTarget only through the deterministic ProviderAccount + endpoint + model/deployment identity boundary used by reconciliation; model name alone is never sufficient identity. Pricing, modalities, descriptive metadata, model limits, and other rich profile fields do not become duplicated durable target configuration merely because an automatic target exists. A durable cross-restart model catalog, if later required, is a separate architectural decision and must not be inferred from the existence of discovery.
 
 Discovery remains conservative and ephemeral:
 
