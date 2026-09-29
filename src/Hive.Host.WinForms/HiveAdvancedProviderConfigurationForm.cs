@@ -6,7 +6,7 @@ using Hive.Management;
 
 namespace Hive.Host.WinForms;
 
-internal sealed class HiveAdvancedProviderConfigurationForm : HiveForm
+public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
 {
     private enum AdvancedPage
     {
@@ -31,7 +31,6 @@ internal sealed class HiveAdvancedProviderConfigurationForm : HiveForm
     private CancellationTokenSource? _pageCts;
     private Control? _currentPage;
     private int _pageRequestVersion;
-    private bool _initializing;
 
     public HiveAdvancedProviderConfigurationForm(
         IHiveManagementFacade management,
@@ -131,8 +130,7 @@ internal sealed class HiveAdvancedProviderConfigurationForm : HiveForm
 
     private async void NavigationAfterSelect(object? sender, TreeViewEventArgs e)
     {
-        if (_initializing ||
-            IsDisposed ||
+        if (IsDisposed ||
             Disposing)
         {
             return;
