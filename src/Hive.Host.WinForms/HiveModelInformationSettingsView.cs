@@ -595,6 +595,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         AddSection(lines, "Identity", [
             $"Model: {model.ModelId}",
             $"Owner / provider attribution: {model.OwnedBy ?? "Not reported"}",
+            $"Display name: {model.DisplayName ?? "Not reported"}",
+            $"Description: {model.Description ?? "Not reported"}",
             $"Family: {model.Family ?? "Not reported"}",
             $"Model type: {model.ModelType ?? "Not reported"}",
             $"Category: {model.Category ?? "Not reported"}",
