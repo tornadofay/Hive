@@ -174,6 +174,21 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
             forceRefresh,
             cancellationToken));
 
+    public Task<Result<ProviderDiscoverySnapshot>> GetProviderDiscoveryAsync(
+        ProviderId providerId,
+        ProviderAccountId providerAccountId,
+        Uri endpoint,
+        ResourceAccessContext accessContext,
+        bool forceRefresh = false,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _providers.GetProviderDiscoveryAsync(
+            providerId,
+            providerAccountId,
+            endpoint,
+            accessContext,
+            forceRefresh,
+            cancellationToken));
+
     public Task<Result<ProviderSettingsOperationResult>> ConfigureBuiltInProviderAsync(
         string providerKey,
         SecretMaterial? credential,
