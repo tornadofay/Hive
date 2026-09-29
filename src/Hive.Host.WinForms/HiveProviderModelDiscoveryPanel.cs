@@ -305,7 +305,9 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
             if (!IsDisposed && !Disposing &&
                 requestVersion == Volatile.Read(ref _requestVersion))
             {
-                SetBusyState(false);
+                DiscoveryUpdated?.Invoke(this, EventArgs.Empty);
+
+        SetBusyState(false);
             }
         }
     }
@@ -372,6 +374,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
             return;
         }
 
+        CurrentSnapshot = snapshot;
         _models = snapshot.Models;
         _modelSelector.BeginUpdate();
         try
@@ -593,6 +596,12 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
                     capability => $"{capability.Capability.Value}={capability.State}"));
 
     public event EventHandler<ProviderModelSelectedEventArgs>? ModelSelected;
+
+    public event EventHandler? DiscoveryUpdated;
+
+    internal ProviderDiscoverySnapshot? CurrentSnapshot { get; private set; }
+
+    internal ProviderModelMetadata? SelectedModel { get; private set; }
 
     protected override void Dispose(bool disposing)
     {
