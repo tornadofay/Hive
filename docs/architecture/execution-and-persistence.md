@@ -98,13 +98,76 @@ The existing `IProviderCapabilityDiscovery` contract is target-aware because the
 
 The first implementation is a shared OpenAI-compatible discovery implementation using the existing OpenAI-compatible transport to enumerate the provider model catalog. Compatible vendors remain configurations of that transport; adding another OpenAI-compatible vendor does not create another provider transport implementation.
 
+#### Complete model metadata profile
+
+Every successfully enumerated model is a valid discovery result even when the provider does not report normalized capability evidence. Model discovery is therefore a **complete provider-reported metadata ingestion boundary**, not a bounded capability-list probe.
+
+The normalized model metadata profile covers:
+
+1. **Identity and descriptive metadata**
+   - model/deployment identifier;
+   - ownership/provider model attribution where reported;
+   - family/type/category, version, creation metadata, and other descriptive model information where reported.
+
+2. **Input modalities**
+   - all provider-reported input modalities, including text, image, audio, video, and other provider-defined modalities.
+
+3. **Output modalities**
+   - all provider-reported output modalities, including text, image, video, embeddings, and other provider-defined outputs.
+
+4. **Capabilities**
+   - tool calling;
+   - structured output;
+   - reasoning;
+   - thinking;
+   - provider-reported effort/level options and defaults where applicable;
+   - other provider-reported machine-readable capabilities.
+
+   Reasoning and thinking are separate semantic concepts. Thinking configuration may include levels/options/defaults when the provider exposes them.
+
+5. **Model-scoped limits**
+   - context window;
+   - maximum input tokens;
+   - maximum output tokens;
+   - additional model-specific limits and constraints where reported.
+
+   Provider/account quotas and rate limits remain separate operational metadata and are not copied into the model limit set unless the provider explicitly identifies a limit as model-scoped.
+
+6. **Pricing and economics**
+   - input and output pricing;
+   - separately priced reasoning/thinking tokens where reported;
+   - cached input, image/audio, request, or other provider-defined billing units where reported;
+   - explicit free/zero-cost indication.
+
+   Missing pricing is **not** interpreted as free. Pricing is discovery evidence, not a cost-policy decision.
+
+7. **Operational metadata**
+   - availability;
+   - health;
+   - discovery observation timestamp and freshness;
+   - other provider-reported operational state that belongs to the model rather than the provider/account.
+
+Hive normalizes common semantics into the provider-neutral profile, but the discovery adapter must not discard useful machine-readable provider metadata merely because Hive does not yet have a dedicated first-class field for it. Additional provider-specific metadata/evidence is retained in an extensible non-secret form for future use. It remains descriptive evidence and cannot bypass Hive's normalized capability, authorization, selection, or policy boundaries. Raw provider responses remain subject to the existing secret/redaction rules.
+
+Absence has explicit semantics:
+
+- no reported modality ≠ no modality;
+- no reported capability ≠ Unsupported;
+- no reported limit ≠ unlimited;
+- no reported pricing ≠ free;
+- no reported operational state ≠ healthy/available.
+
+Configured `ExecutionTarget` capability overrides remain authoritative for effective target capability resolution. Discovery may provide the missing evidence used by selection, display, reconciliation, and later features, but discovery never mutates those configured overrides.
+
+No separate durable `Model` resource is introduced by this boundary. The discovery snapshot remains the reusable source for the complete observed model profile. A durable cross-restart model catalog, if later required, is a separate architectural decision and must not be inferred from the existence of discovery.
+
 Discovery remains conservative and ephemeral:
 
-1. a successful fresh observation may be cached and consumed by Management/UI/reconciliation;
+1. a successful fresh observation may be cached and consumed by Management/UI/reconciliation and other authorized provider-platform consumers;
 2. a failed, cancelled, stale, unsupported, malformed, rate-limited, or authentication-failing discovery never means zero models;
 3. a failed refresh leaves the last successful observation intact;
-4. discovered capability information never silently rewrites configured ExecutionTarget capability overrides;
-5. stale discovery contributes no effective discovered capability;
+4. discovered model metadata never silently rewrites configured ExecutionTarget capability overrides;
+5. stale discovery contributes no effective discovered capability or other stale model evidence to current selection;
 6. provider/model availability and health remain operational metadata, not capability grants.
 
 The existing Phase 1.16 cache/freshness/concurrency/security rules remain authoritative, including endpoint identity checks, forced-refresh semantics, credential-cache invalidation, bounded retention, cancellation, typed failures, and secret/raw-response redaction.
