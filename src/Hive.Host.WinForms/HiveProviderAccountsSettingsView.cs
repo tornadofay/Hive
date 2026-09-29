@@ -6,7 +6,7 @@ using Hive.Management;
 
 namespace Hive.Host.WinForms;
 
-internal sealed class HiveProviderAccountsSettingsView : UserControl
+internal sealed class HiveProviderAccountsSettingsView : UserControl, IHiveAdvancedConfigurationPage
 {
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
