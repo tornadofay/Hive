@@ -151,6 +151,11 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
                                 capability.State))
                         .ToArray(),
                     model.InputModalities,
+                    model.Family,
+                    model.ModelType,
+                    model.Category,
+                    model.Version,
+                    model.OperationalState,
                     model.OutputModalities,
                     model.ThinkingOptions,
                     model.DefaultThinkingLevel,
