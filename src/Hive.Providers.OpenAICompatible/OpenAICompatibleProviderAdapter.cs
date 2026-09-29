@@ -539,12 +539,25 @@ public sealed class OpenAICompatibleProviderAdapter
                     "inputModalities",
                     "modalities_input",
                     "supported_input_modalities");
+                if (inputModalities.Count == 0)
+                {
+                    inputModalities = ParseArchitectureModalities(
+                        model,
+                        "input_modalities");
+                }
+
                 var outputModalities = ParseStringList(
                     model,
                     "output_modalities",
                     "outputModalities",
                     "modalities_output",
                     "supported_output_modalities");
+                if (outputModalities.Count == 0)
+                {
+                    outputModalities = ParseArchitectureModalities(
+                        model,
+                        "output_modalities");
+                }
                 var thinking = ParseThinking(model);
                 var limits = ParseLimits(model);
                 var pricing = ParsePricing(model);
@@ -650,6 +663,63 @@ public sealed class OpenAICompatibleProviderAdapter
                             CapabilityState.Supported);
                     }
                 }
+            }
+        }
+
+        if (model.TryGetProperty("architecture", out var architecture) &&
+            architecture.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var modality in ParseStringList(
+                         architecture,
+                         "input_modalities"))
+            {
+                if (string.Equals(
+                        modality,
+                        "image",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    MergeCapabilityState(
+                        states,
+                        "vision",
+                        CapabilityState.Supported);
+                }
+            }
+
+            foreach (var modality in ParseStringList(
+                         architecture,
+                         "output_modalities"))
+            {
+                if (string.Equals(
+                        modality,
+                        "text",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    MergeCapabilityState(
+                        states,
+                        "text.generate",
+                        CapabilityState.Supported);
+                }
+            }
+        }
+
+        if (model.TryGetProperty("supported_parameters", out var supportedParameters) &&
+            supportedParameters.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var parameter in supportedParameters.EnumerateArray())
+            {
+                if (parameter.ValueKind != JsonValueKind.String)
+                    continue;
+
+                var key = NormalizeCapabilityKey(
+                    parameter.GetString() ?? string.Empty);
+
+                if (key is null)
+                    continue;
+
+                MergeCapabilityState(
+                    states,
+                    key,
+                    CapabilityState.Supported);
             }
         }
 
@@ -798,6 +868,23 @@ public sealed class OpenAICompatibleProviderAdapter
 
             _ => null
         };
+    }
+
+    private static IReadOnlyList<string> ParseArchitectureModalities(
+        JsonElement model,
+        string propertyName)
+    {
+        if (!model.TryGetProperty(
+                "architecture",
+                out var architecture) ||
+            architecture.ValueKind != JsonValueKind.Object)
+        {
+            return Array.Empty<string>();
+        }
+
+        return ParseStringList(
+            architecture,
+            propertyName);
     }
 
     private static IReadOnlyList<string> ParseStringList(
