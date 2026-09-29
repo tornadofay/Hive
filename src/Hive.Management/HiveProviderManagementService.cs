@@ -269,78 +269,31 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
                     cached.Snapshot);
             }
 
-            SecretMaterial? material = null;
+            var discovered = await DiscoverEndpointAsync(
+                provider,
+                account,
+                endpoint,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
 
-            try
-            {
-                if (account.CredentialSecret is not null)
-                {
-                    if (_secrets is null)
-                    {
-                        return Result<ProviderDiscoverySnapshot>.Failure(
-                            Error.Unsupported(
-                                "hive.management.secret-store-unavailable",
-                                "The provider account references a credential but the Secret Store is not configured."));
-                    }
-
-                    var secret = await _secrets.GetAsync(
-                        account.CredentialSecret.Value.Id,
-                        accessContext,
-                        cancellationToken).ConfigureAwait(false);
-
-                    if (secret.IsFailure)
-                        return Result<ProviderDiscoverySnapshot>.Failure(secret.Error!);
-
-                    material = secret.Value!.Material;
-                }
-
-                var probe = CreateDiscoveryProbeTarget(
-                    provider,
-                    account,
-                    endpoint,
-                    accessContext);
-
-                var discovered = await _providerCapabilityDiscovery
-                    .DiscoverAsync(
-                        provider,
-                        account,
-                        probe,
-                        material,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (discovered.IsFailure)
-                    return discovered;
-
-                var validationError = ValidateDiscoverySnapshot(
-                    discovered.Value!,
-                    provider,
-                    account,
-                    probe);
-
-                if (validationError is not null)
-                    return Result<ProviderDiscoverySnapshot>.Failure(validationError);
-
-                if (Volatile.Read(ref _discoveryGeneration) == discoveryGeneration)
-                {
-                    var completionSequence =
-                        Interlocked.Increment(ref _discoveryCompletionSequence);
-
-                    _discoveryCache[cacheKey] =
-                        new ProviderDiscoveryCacheEntry(
-                            discovered.Value!,
-                            completionSequence,
-                            forceRefresh);
-
-                    TrimDiscoveryCache(cacheKey);
-                }
-
+            if (discovered.IsFailure)
                 return discovered;
-            }
-            finally
+
+            if (Volatile.Read(ref _discoveryGeneration) == discoveryGeneration)
             {
-                material?.Dispose();
+                var completionSequence =
+                    Interlocked.Increment(ref _discoveryCompletionSequence);
+
+                _discoveryCache[cacheKey] =
+                    new ProviderDiscoveryCacheEntry(
+                        discovered.Value!,
+                        completionSequence,
+                        forceRefresh);
+
+                TrimDiscoveryCache(cacheKey);
             }
+
+            return discovered;
         }
         finally
         {
