@@ -551,36 +551,59 @@ public sealed class ProviderSettingsIntegrationTests
     [Fact]
     public async Task ProvidersSettings_NoCredentialProviderShowsCredentialAsNotRequired()
     {
-        var database = CreateDatabase("Hive_Test_ProviderSettingsNoCredentialStatus");
-        database.Reset();
-
-        var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
-        Assert.True(migration.IsSuccess, migration.Error?.Message);
-
-        var (context, providerStore, secretStore) = CreateInfrastructure(database);
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
         var clock = new FakeClock(
             new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero));
-        var discovery = new SettingsDiscovery(
-            ModelSet("local-model"),
-            clock);
 
-        using var facade = new HiveManagementFacade(
-            providerStore,
-            new SqlAgentDefinitionResourceStore(database.Options),
-            new SqlWorkItemResourceStore(database.Options),
-            secretStore,
-            providerCapabilityDiscovery: discovery,
-            clock: clock);
-
-        var configured = await facade.ConfigureBuiltInProviderAsync(
+        var provider = new Provider(
+            CreateEnvelope(
+                ResourceKind.Provider,
+                ProviderId.New(),
+                context,
+                clock),
             "ollama",
-            credential: null,
-            context);
+            "Ollama",
+            "openai-compatible");
 
-        Assert.True(configured.IsSuccess, configured.Error?.Message);
+        var account = new ProviderAccount(
+            CreateEnvelope(
+                ResourceKind.ProviderAccount,
+                ProviderAccountId.New(),
+                context,
+                clock),
+            provider.Id,
+            "default",
+            "Default Account");
+
+        var target = new ExecutionTarget(
+            CreateEnvelope(
+                ResourceKind.ExecutionTarget,
+                ExecutionTargetId.New(),
+                context,
+                clock),
+            provider.Id,
+            account.Id,
+            "auto-local-model",
+            "local-model",
+            new Uri("http://localhost:11434/v1"),
+            "local-model",
+            null,
+            [
+                new CapabilityStateEntry(
+                    new CapabilityKey("text.generate"),
+                    CapabilityState.Supported)
+            ]).WithManagementMode(ExecutionTargetManagementMode.Automatic);
+
+        var (management, _) = ProvidersSettingsManagementProxy.Create(
+            provider,
+            account,
+            target);
 
         using var view = new HiveProvidersSettingsView(
-            facade,
+            management,
             context,
             new HiveThemeManager(HiveThemeMode.Light));
 
@@ -707,6 +730,59 @@ public sealed class ProviderSettingsIntegrationTests
                                 CapabilityState.Supported)
                         ]))
             .ToArray();
+
+    private sealed class ProvidersSettingsManagementProxy : DispatchProxy
+    {
+        private Provider _provider = null!;
+        private ProviderAccount _account = null!;
+        private ExecutionTarget _target = null!;
+
+        public static (
+            IHiveManagementFacade Management,
+            ProvidersSettingsManagementProxy Proxy) Create(
+            Provider provider,
+            ProviderAccount account,
+            ExecutionTarget target)
+        {
+            var management =
+                (IHiveManagementFacade)Create<
+                    IHiveManagementFacade,
+                    ProvidersSettingsManagementProxy>();
+
+            var proxy = (ProvidersSettingsManagementProxy)(object)management;
+            proxy._provider = provider;
+            proxy._account = account;
+            proxy._target = target;
+
+            return (management, proxy);
+        }
+
+        protected override object Invoke(
+            MethodInfo? targetMethod,
+            object?[]? args)
+        {
+            return targetMethod?.Name switch
+            {
+                nameof(IHiveManagementFacade.ListProvidersAsync) =>
+                    Task.FromResult(
+                        Result<IReadOnlyList<Provider>>.Success(
+                            [_provider])),
+
+                nameof(IHiveManagementFacade.ListProviderAccountsAsync) =>
+                    Task.FromResult(
+                        Result<IReadOnlyList<ProviderAccount>>.Success(
+                            [_account])),
+
+                nameof(IHiveManagementFacade.ListExecutionTargetsAsync) =>
+                    Task.FromResult(
+                        Result<IReadOnlyList<ExecutionTarget>>.Success(
+                            [_target])),
+
+                _ => throw new NotSupportedException(
+                    $"The provider settings test proxy does not implement '{targetMethod?.Name}'.")
+            };
+        }
+    }
 
     private sealed class SettingsDiscovery : IProviderCapabilityDiscovery
     {
