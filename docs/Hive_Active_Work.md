@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IN PROGRESS
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -20,9 +20,24 @@ Explicit exclusions:
 - no Agent-selection or Workspace redesign;
 - no unrelated provider/settings refactor.
 
-Verification boundary:
-- implementation remains **VERIFICATION PENDING** until developer verification is supplied;
-- required handoff at verification: `Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms`;
-- required test handoff: focused Phase 1.16 discovery/model-information tests plus the broader-suite result supplied by the developer.
+Verification failure boundary:
+- developer reported same-slice compile errors in the Phase 1.16 Follow-Up implementation;
+- remediation is limited to correcting those reported compile defects and directly necessary supporting code in the affected files;
+- after remediation, Active Work returns to **VERIFICATION PENDING** for developer re-verification.
+
+Reported failures:
+- `HiveModelInformationSettingsView.InitializeAsync(CancellationToken)` was not public for interface implementation;
+- missing `ApplyTheme`;
+- inaccessible `ProviderEndpointIdentity` from the WinForms project;
+- duplicate `rateLimit` / `remaining` locals;
+- `ICollection<string>.AddRange` usage;
+- constant-pattern errors in the endpoint scheme check;
+- possible null argument passed to `ComboBox.ObjectCollection.Add`;
+- `Form ?? HiveModelInformationSettingsView` incompatible null-coalescing operands;
+- unassigned `remaining` flow resulting from the duplicate declaration.
+
+Verification handoff after remediation:
+- required Example: `Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms`;
+- required tests: focused Phase 1.16 discovery/model-information tests plus the broader-suite result supplied by the developer.
 
 Do not start later roadmap work or broaden this slice without an explicit new authorization.
