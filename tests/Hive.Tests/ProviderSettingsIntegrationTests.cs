@@ -525,6 +525,41 @@ public sealed class ProviderSettingsIntegrationTests
         editor.ManagementModeSelector.SelectedItem =
             ExecutionTargetManagementMode.Automatic;
 
+        var keyTextBox = FindControl<TextBox>(
+            editor,
+            box => string.Equals(
+                box.PlaceholderText,
+                "e.g. llama-production",
+                StringComparison.Ordinal));
+        var nameTextBox = FindControl<TextBox>(
+            editor,
+            box => string.Equals(
+                box.PlaceholderText,
+                "e.g. Production Llama",
+                StringComparison.Ordinal));
+        var endpointTextBox = FindControl<TextBox>(
+            editor,
+            box => string.Equals(
+                box.PlaceholderText,
+                "https://api.example.com/v1",
+                StringComparison.Ordinal));
+        var modelTextBox = FindControl<TextBox>(
+            editor,
+            box => string.Equals(
+                box.PlaceholderText,
+                "e.g. meta/llama-3.3-70b-instruct",
+                StringComparison.Ordinal));
+
+        Assert.NotNull(keyTextBox);
+        Assert.NotNull(nameTextBox);
+        Assert.NotNull(endpointTextBox);
+        Assert.NotNull(modelTextBox);
+
+        keyTextBox!.Text = "automatic-target";
+        nameTextBox!.Text = "Automatic Target";
+        endpointTextBox!.Text = "https://example.test/v1";
+        modelTextBox!.Text = "model-a";
+
         Assert.NotNull(editor.AcceptButton);
         ((IButtonControl)editor.AcceptButton!).PerformClick();
 
@@ -732,7 +767,7 @@ public sealed class ProviderSettingsIntegrationTests
                         ]))
             .ToArray();
 
-    private sealed class ProvidersSettingsManagementProxy : DispatchProxy
+    private class ProvidersSettingsManagementProxy : DispatchProxy
     {
         private Provider _provider = null!;
         private ProviderAccount _account = null!;
