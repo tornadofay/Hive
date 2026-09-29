@@ -580,7 +580,7 @@ Running executions use their already-established effective configuration snapsho
 
 The Example Host is the first concrete application-level consumer of this boundary. It exposes the real Hive Settings center through the Overview → Getting Started → Example Configuration leaf, whose primary action opens the host-level Settings window. The Settings UI uses the reusable Hive.Host.WinForms.UI foundation.
 
-The normal Settings experience presents configured providers as the user-facing provider service configuration, while the underlying ProviderAccount and ExecutionTarget resources remain available through one generalized Advanced Configuration surface:
+The normal Settings experience presents configured providers as the user-facing provider service configuration, while the underlying ProviderAccount and ExecutionTarget resources remain available through one generalized Advanced Configuration surface. The Advanced window is a tree-based administrative surface with its own Overview landing page and, after the planned rich-discovery follow-up, a read-only Model Information page:
 
 ```text
 Hive Settings
@@ -601,7 +601,7 @@ Advanced Configuration
 
 The Providers page uses the shared Hive CRUD presentation rather than a provider-specific card/action framework. It lists configured Provider resources and presents masked credential status plus useful operational summary such as readiness/model count where available. There is no per-row action column; normal CRUD interaction remains the established page behavior. For a normal built-in provider, Edit is limited to replacing its protected API key/credential; changing provider identity or transport belongs in Advanced.
 
-`Add Provider` is a Management-owned onboarding operation. The dialog selects a built-in provider catalog entry and collects the provider's required credential material. Hive.Management creates/enables the durable Provider, creates the default ProviderAccount, stores the credential through ISecretStore, and then initiates the discovery/reconciliation path. The UI does not create the resource graph directly.
+`Add Provider` is a Management-owned onboarding operation. The normal dialog selects a built-in provider catalog entry and remains minimal, collecting only credential material according to the catalog's No credential / Optional credential / Required credential mode. Endpoint, account, model, deployment, and target administration belongs to Advanced Configuration. Hive.Management creates/enables the durable Provider, creates the default ProviderAccount, stores the credential through ISecretStore, and then initiates the discovery/reconciliation path. The UI does not create the resource graph directly.
 
 `Refresh` is a Provider Settings operation, not merely a visual reload. It requests fresh discovery for active configured provider/account/endpoint contexts and reconciles automatically managed ExecutionTargets. Successful fresh discovery may create/reactivate/retire automatic targets according to the reconciliation contract. Retired providers are not refreshed for model discovery. Discovery failure preserves existing durable targets and reports the operational condition instead of interpreting failure as an empty model catalog.
 
