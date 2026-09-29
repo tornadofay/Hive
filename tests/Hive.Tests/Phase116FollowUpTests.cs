@@ -14,6 +14,113 @@ namespace Hive.Tests;
 public sealed class Phase116FollowUpTests
 {
     [Fact]
+    public async Task OpenAICompatibleAdapter_ParsesOpenRouterModelMetadata()
+    {
+        using var client = new HttpClient(
+            new FixedResponseHandler(
+                """
+                {
+                  "data": [
+                    {
+                      "id": "openai/gpt-4",
+                      "canonical_slug": "openai/gpt-4",
+                      "name": "GPT-4",
+                      "description": "A multimodal model.",
+                      "created": 1692901234,
+                      "architecture": {
+                        "input_modalities": ["text", "image"],
+                        "modality": "text+image->text",
+                        "output_modalities": ["text"],
+                        "instruct_type": "chatml",
+                        "tokenizer": "GPT"
+                      },
+                      "context_length": 8192,
+                      "pricing": {
+                        "completion": "0.00006",
+                        "prompt": "0.00003",
+                        "image": "0",
+                        "request": "0"
+                      },
+                      "supported_parameters": [
+                        "temperature",
+                        "tools",
+                        "structured_outputs",
+                        "reasoning"
+                      ],
+                      "top_provider": {
+                        "is_moderated": true,
+                        "context_length": 8192,
+                        "max_completion_tokens": 4096
+                      }
+                    }
+                  ]
+                }
+                """));
+
+        var adapter = new OpenAICompatibleProviderAdapter(
+            client,
+            new OpenAICompatibleProviderOptions(
+                new Uri("https://openrouter.ai/api/v1/")));
+
+        var result = await adapter.ListModelsAsync();
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var model = Assert.Single(result.Value!.Models);
+
+        Assert.Equal("openai/gpt-4", model.Id);
+        Assert.Equal("GPT-4", model.DisplayName);
+        Assert.Equal("A multimodal model.", model.Description);
+        Assert.Equal(
+            ["image", "text"],
+            model.InputModalities);
+        Assert.Equal(
+            ["text"],
+            model.OutputModalities);
+
+        Assert.Contains(
+            model.Capabilities,
+            capability =>
+                capability.Key == "vision" &&
+                capability.State == CapabilityState.Supported);
+        Assert.Contains(
+            model.Capabilities,
+            capability =>
+                capability.Key == "text.generate" &&
+                capability.State == CapabilityState.Supported);
+        Assert.Contains(
+            model.Capabilities,
+            capability =>
+                capability.Key == "tool.calling" &&
+                capability.State == CapabilityState.Supported);
+        Assert.Contains(
+            model.Capabilities,
+            capability =>
+                capability.Key == "structured.output" &&
+                capability.State == CapabilityState.Supported);
+        Assert.Contains(
+            model.Capabilities,
+            capability =>
+                capability.Key == "reasoning" &&
+                capability.State == CapabilityState.Supported);
+
+        Assert.Equal(8192, model.Limits!.ContextWindowTokens);
+        Assert.Equal(4096, model.Limits.MaxOutputTokens);
+        Assert.Equal(
+            0.00003m,
+            model.Pricing!.Prices.Single(
+                price => price.BillingUnit == "input_token").Price);
+        Assert.Equal(
+            0.00006m,
+            model.Pricing.Prices.Single(
+                price => price.BillingUnit == "output_token").Price);
+
+        Assert.NotNull(model.ExtensionData);
+        Assert.True(model.ExtensionData!.ContainsKey("architecture"));
+        Assert.True(model.ExtensionData.ContainsKey("supported_parameters"));
+    }
+
+    [Fact]
     public async Task OpenAICompatibleAdapter_PreservesRichModelMetadata_AndRedactsSensitiveExtensionEvidence()
     {
         using var client = new HttpClient(
