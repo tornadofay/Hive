@@ -100,7 +100,7 @@ public sealed class Phase116FollowUpTests
         Assert.Equal("active", model.OperationalState);
 
         Assert.Equal(
-            ["text", "image", "audio"],
+            ["audio", "image", "text"],
             model.InputModalities);
         Assert.Equal(
             ["text"],
@@ -540,7 +540,7 @@ public sealed class Phase116FollowUpTests
         ResourceAccessContext Context,
         IHiveManagementFacade Management);
 
-    private sealed class ThrowingManagementProxy : DispatchProxy
+    private class ThrowingManagementProxy : DispatchProxy
     {
         protected override object? Invoke(
             System.Reflection.MethodInfo? targetMethod,
@@ -549,7 +549,7 @@ public sealed class Phase116FollowUpTests
                 $"No management operation is expected for the Advanced Overview fixture: {targetMethod?.Name}");
     }
 
-    private sealed class ModelInformationManagementProxy : DispatchProxy
+    private class ModelInformationManagementProxy : DispatchProxy
     {
         private Provider? _provider;
         private ProviderAccount? _account;
