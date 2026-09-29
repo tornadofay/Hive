@@ -232,7 +232,7 @@ public sealed class Phase116FollowUpTests
                 CapabilityState.Unsupported)
         };
 
-        var discovery = CreateFixture().Model;
+        var discovery = CreateRichModelFixture().Model;
 
         editor.Configure(
             configured,
