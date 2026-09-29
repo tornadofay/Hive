@@ -81,7 +81,7 @@ internal sealed class HiveProvidersSettingsView : UserControl
             BuiltInProviderCatalog.Find(item.Provider.Key) is
             {
                 NormalOnboardingSupported: true,
-                CredentialKind: BuiltInProviderCredentialKind.ApiKey
+                CredentialRequirement: not BuiltInProviderCredentialRequirement.None
             };
         _page.CanDeleteItem = item =>
             item.Provider.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active;
@@ -189,17 +189,22 @@ internal sealed class HiveProvidersSettingsView : UserControl
             ? "Retired"
             : catalog is null
                 ? "Advanced configuration"
-                : catalog.NormalOnboardingSupported && catalog.RequiresCredential && !credentialConfigured
+                : catalog.CredentialRequirement == BuiltInProviderCredentialRequirement.Required &&
+                  !credentialConfigured
                     ? "Credential missing"
                     : automaticTargets > 0
                         ? "Configured"
                         : "Configured — discovery pending";
 
-        var credentialStatus = catalog?.CredentialKind == BuiltInProviderCredentialKind.None
-            ? "Not required"
-            : credentialConfigured
-                ? "Configured"
-                : "Not configured";
+        var credentialStatus = catalog?.CredentialRequirement switch
+        {
+            BuiltInProviderCredentialRequirement.None => "Not required",
+            BuiltInProviderCredentialRequirement.Optional when !credentialConfigured => "Optional — not configured",
+            BuiltInProviderCredentialRequirement.Optional => "Optional — configured",
+            BuiltInProviderCredentialRequirement.Required when credentialConfigured => "Configured",
+            BuiltInProviderCredentialRequirement.Required => "Required — missing",
+            _ => "Unknown"
+        };
 
         return new ConfiguredProviderRow(
             provider,
@@ -254,8 +259,15 @@ internal sealed class HiveProvidersSettingsView : UserControl
         }
 
         using var replacement = CreateCredential(editor.Credential);
-        if (replacement is null)
+
+        if (replacement is null &&
+            catalog.CredentialRequirement == BuiltInProviderCredentialRequirement.Required)
+        {
             throw new InvalidOperationException("Enter a replacement API key.");
+        }
+
+        if (replacement is null)
+            return row;
 
         var replaced = await _management
             .ReplaceBuiltInProviderCredentialAsync(
