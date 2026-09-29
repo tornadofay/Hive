@@ -270,13 +270,15 @@ internal sealed class HiveCapabilityEditor : UserControl
 
     private void AddHeader(string text, int column)
     {
+        var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+
         _table.Controls.Add(
             new Label
             {
                 Dock = DockStyle.Fill,
                 AutoSize = false,
                 Text = text,
-                Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
+                Font = new Font(fallbackFont, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleLeft,
                 Padding = new Padding(4, 0, 4, 0)
             },
