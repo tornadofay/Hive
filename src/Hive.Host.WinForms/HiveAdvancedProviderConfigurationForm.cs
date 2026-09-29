@@ -25,7 +25,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
     private readonly IHiveExampleOutput? _output;
-    private readonly TreeView _navigation;
+    private readonly HiveNavigationTree _navigation;
     private readonly Panel _contentHost;
     private readonly Dictionary<AdvancedPage, TreeNode> _nodes = new();
     private CancellationTokenSource? _pageCts;
@@ -59,7 +59,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
 
         SetBodyPadding(new Padding(12));
 
-        _navigation = new TreeView
+        _navigation = new HiveNavigationTree
         {
             Dock = DockStyle.Fill,
             BorderStyle = BorderStyle.None,
