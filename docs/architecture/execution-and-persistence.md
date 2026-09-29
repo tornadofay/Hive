@@ -176,7 +176,7 @@ The existing Phase 1.16 cache/freshness/concurrency/security rules remain author
 
 The normal Settings product experience is provider-centric rather than resource-graph-centric.
 
-The built-in provider catalog is static application metadata describing supported provider choices, transport/authentication requirements, default discovery endpoint behavior, and any provider-specific onboarding requirements. A catalog entry is not itself a persisted Provider resource.
+The built-in provider catalog is static application metadata describing supported provider choices, transport/authentication requirements, default discovery endpoint behavior, and any provider-specific onboarding requirements. Its authentication metadata distinguishes **No credential**, **Optional credential**, and **Required credential**. A catalog entry is not itself a persisted Provider resource.
 
 Normal onboarding is:
 
@@ -185,7 +185,7 @@ Add Provider
     ↓
 select built-in provider
     ↓
-supply required credential material
+supply credential material according to its catalog authentication mode
     ↓
 Hive.Management creates/enables the Provider
     ↓
@@ -198,7 +198,7 @@ discovery
 target reconciliation
 ```
 
-The credential is never persisted in the Provider record or returned to the Settings UI. For the normal built-in hosted-provider workflow, Add collects the API key and normal Edit replaces that API key; Provider catalog identity and transport configuration are not edited through the normal surface. Authentication requirements remain catalog-defined so a future built-in provider with a different simple credential shape can use the appropriate protected credential input rather than forcing an incorrect API-key model.
+The credential is never persisted in the Provider record or returned to the Settings UI. The normal Add Provider dialog remains intentionally minimal: it selects a built-in provider and collects only its credential material; it does not expose endpoint, account, model, deployment, or target administration. For providers using the normal simple credential workflow, Add collects the API key and normal Edit replaces that API key; Provider catalog identity and transport configuration are not edited through the normal surface. Providers that require account-specific or non-universal endpoint configuration use Advanced Configuration for the additional setup. Authentication requirements remain catalog-defined so a future built-in provider with a different simple credential shape can use the appropriate protected credential input rather than forcing an incorrect API-key model.
 
 The durable ProviderAccount resource still exists even though normal users do not manage it directly. This preserves the ability to support multiple accounts/projects/credentials through Advanced Configuration without creating a second configuration model.
 
