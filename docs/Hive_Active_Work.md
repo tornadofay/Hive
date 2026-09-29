@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Authorized revision
 
@@ -10,7 +10,7 @@ This revision re-audits the immediately preceding Phase 1.16 UI slice and correc
 
 ## Verification failure / remediation
 
-Developer verification reported that `ProviderSettingsIntegrationTests` hangs and does not terminate. The newly added no-credential presentation test crosses SQL + Management + WinForms async layers for a presentation-only assertion, making it an unnecessarily broad and potentially fragile test boundary for this behavior. The test was narrowed to deterministic in-memory Management data, preserving the UI assertion without the database dependency. The agent did not independently reproduce the hang, so the runtime root cause remains unverified. Developer re-verification is pending.
+Developer verification reported that `ProviderSettingsIntegrationTests` hangs and does not terminate. The newly added no-credential presentation test was narrowed to deterministic in-memory Management data. Developer verification then reported two concrete test defects: the new `ProvidersSettingsManagementProxy` was declared `sealed`, which `DispatchProxy` rejects, and the new-target management-mode test clicked Save without populating the form's required endpoint/model/name/key fields, causing the UI error path to block the test. Both defects are limited to the focused regression tests.
 
 ## Revision findings and remediation
 
@@ -33,4 +33,4 @@ Developer verification reported that `ProviderSettingsIntegrationTests` hangs an
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
 Tests to run: ProviderSettingsIntegrationTests.cs; HiveUiPolishTests.cs; full Hive.Tests suite
 
-Source/diff review updated at `703ee4b4e8f708ec0f32f3b2c0934ca74255cf12` (main, 2026-09-29). The reported test hang was remediated within the recorded failure boundary by isolating the presentation-only test from SQL-backed persistence. Agent did not run a build, test suite, or application launch.
+Developer verification failure was recorded before remediation. The following test corrections are authorized within the same revision boundary; agent did not run a build, test suite, or application launch.
