@@ -1505,6 +1505,7 @@ public sealed class OpenAICompatibleProviderAdapter
                 name.Contains("secret", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(name, "key", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(name, "api-key", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(name, "api_key", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(name, "apikey", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(name, "authorization", StringComparison.OrdinalIgnoreCase))
             {
