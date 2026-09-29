@@ -1153,7 +1153,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
                 ProviderDiscoveryState.Supported,
                 [
                     new ProviderModelMetadata(
-                        target.Model!,
+                        "discovered-model",
                         "example",
                         null,
                         ProviderAvailabilityStatus.Available,
