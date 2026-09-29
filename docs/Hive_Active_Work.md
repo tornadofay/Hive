@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Authorized revision
 
@@ -8,9 +8,9 @@ Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 This revision re-audits the immediately preceding Phase 1.16 UI slice and corrects only concrete same-slice defects.
 
-## Verification failure
+## Verification failure / remediation
 
-Developer verification reported that `ProviderSettingsIntegrationTests` hangs and does not terminate. The reported failure occurred during verification of this revision; remediation is limited to correcting the newly added test so it does not introduce a broad SQL + WinForms async integration dependency for a presentation-only assertion.
+Developer verification reported that `ProviderSettingsIntegrationTests` hangs and does not terminate. The reported failure was traced to the newly added no-credential presentation test crossing SQL + Management + WinForms async layers for a presentation-only assertion. The test was narrowed to deterministic in-memory Management data, preserving the UI assertion without the unnecessary database dependency. Developer re-verification is pending.
 
 ## Revision findings and remediation
 
@@ -33,4 +33,4 @@ Developer verification reported that `ProviderSettingsIntegrationTests` hangs an
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
 Tests to run: ProviderSettingsIntegrationTests.cs; HiveUiPolishTests.cs; full Hive.Tests suite
 
-Source/diff review complete at `cda2b6ed4863108a263c3a6abfbaf201ce64b735` (main, 2026-09-28). Developer verification reported a hanging `ProviderSettingsIntegrationTests` run. The newly added presentation-status test is being narrowed to deterministic in-memory Management data; agent did not run a build, test suite, or application launch.
+Source/diff review updated at `703ee4b4e8f708ec0f32f3b2c0934ca74255cf12` (main, 2026-09-29). The reported test hang was remediated within the recorded failure boundary by isolating the presentation-only test from SQL-backed persistence. Agent did not run a build, test suite, or application launch.
