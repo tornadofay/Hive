@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -28,6 +28,14 @@ Remediation boundary:
 - update only the affected deterministic tests/fixtures and the credential-status expectation within this same Phase 1.16 follow-up.
 
 Latest remediation:
+- updated the rich metadata test to assert the adapter's deterministic case-insensitive modality ordering;
+- removed `sealed` from the two Phase 1.16 test `DispatchProxy` fixtures;
+- updated the Provider Settings test to exercise the actual Ollama **Optional credential** semantics rather than the obsolete No-credential expectation;
+- changed the shared Management `RecordingDiscovery` fixture to use its own deterministic discovered model identity, preserving the production rule that the transient discovery probe has no model identity;
+- removed `sealed` from the Model Information Example Host `DispatchProxy` fixture so the manually required example path can instantiate its proxy;
+- revision inspection confirmed the affected test and example proxies are proxy-generation compatible and no same-slice residual pattern was found.
+
+Historical remediation:
 - guarded nullable `ExtensionData` access before indexing and used the proven null-forgiving boundary after the assertion;
 - removed the invalid descriptor-level `IsStale` assertion because freshness belongs to normalized provider metadata/snapshot contracts, not `OpenAICompatibleModelDescriptor`;
 - changed filtered `Assert.Single(result.Where(...))` to xUnit's predicate overload.
