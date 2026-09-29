@@ -1,6 +1,6 @@
 # Phase 1.16 Follow-Up — Model Information
 
-Status: planned, not authorized
+Status: in progress — authorized 2026-09-29
 
 This document contains the detailed implementation plan referenced by the roadmap entry:
 
