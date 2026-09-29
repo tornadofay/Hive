@@ -580,7 +580,7 @@ Running executions use their already-established effective configuration snapsho
 
 The Example Host is the first concrete application-level consumer of this boundary. It exposes the real Hive Settings center through the Overview → Getting Started → Example Configuration leaf, whose primary action opens the host-level Settings window. The Settings UI uses the reusable Hive.Host.WinForms.UI foundation.
 
-The normal Settings experience presents configured providers as the user-facing provider service configuration, while the underlying ProviderAccount and ExecutionTarget resources remain available through one generalized Advanced Configuration surface. The Advanced window is a tree-based administrative surface with its own Overview landing page and, after the planned rich-discovery follow-up, a read-only Model Information page:
+The normal Settings experience presents configured providers as the user-facing provider service configuration, while the underlying ProviderAccount and ExecutionTarget resources remain available through one generalized Advanced Configuration surface. The Advanced window is a tree-based administrative surface with its own Overview landing page and a read-only Model Information page for the authorized rich-discovery follow-up:
 
 ```text
 Hive Settings
