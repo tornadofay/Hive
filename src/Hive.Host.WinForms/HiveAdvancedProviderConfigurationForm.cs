@@ -8,16 +8,30 @@ namespace Hive.Host.WinForms;
 
 internal sealed class HiveAdvancedProviderConfigurationForm : HiveForm
 {
+    private enum AdvancedPage
+    {
+        Overview,
+        Providers,
+        Accounts,
+        ExecutionTargets,
+        ModelInformation
+    }
+
+    private sealed record NavigationEntry(
+        string Title,
+        AdvancedPage Page);
+
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
     private readonly IHiveExampleOutput? _output;
-    private readonly TabControl _tabs;
-    private readonly HiveProviderConfigurationView _providers;
-    private readonly HiveProviderAccountsSettingsView _accounts;
-    private readonly HiveExecutionTargetsSettingsView _targets;
-    private CancellationTokenSource? _lifetimeCts;
-    private readonly HashSet<int> _initializedTabs = new();
+    private readonly TreeView _navigation;
+    private readonly Panel _contentHost;
+    private readonly Dictionary<AdvancedPage, TreeNode> _nodes = new();
+    private CancellationTokenSource? _pageCts;
+    private Control? _currentPage;
+    private int _pageRequestVersion;
+    private bool _initializing;
 
     public HiveAdvancedProviderConfigurationForm(
         IHiveManagementFacade management,
@@ -25,10 +39,10 @@ internal sealed class HiveAdvancedProviderConfigurationForm : HiveForm
         IHiveThemeManager themeManager,
         IHiveExampleOutput? output = null)
         : base(
-            "Advanced Provider Configuration",
-            "Advanced administration of Providers, Accounts / Credentials, and Execution Targets.",
-            new Size(1060, 720),
-            new Size(820, 560),
+            "Advanced Configuration",
+            "Administrative Provider, Account / Credential, Execution Target, and Model Information management.",
+            new Size(1160, 760),
+            new Size(900, 620),
             themeManager)
     {
         _management = management ?? throw new ArgumentNullException(nameof(management));
@@ -46,51 +60,90 @@ internal sealed class HiveAdvancedProviderConfigurationForm : HiveForm
 
         SetBodyPadding(new Padding(12));
 
-        _providers = new HiveProviderConfigurationView(
-            _management,
-            _accessContext,
-            _themeManager,
-            _output);
-        _accounts = new HiveProviderAccountsSettingsView(
-            _management,
-            _accessContext,
-            _themeManager,
-            _output);
-        _targets = new HiveExecutionTargetsSettingsView(
-            _management,
-            _accessContext,
-            _themeManager,
-            _output);
-
-        _tabs = new TabControl
+        _navigation = new TreeView
         {
             Dock = DockStyle.Fill,
-            Padding = new Point(12, 6)
+            BorderStyle = BorderStyle.None,
+            HideSelection = false,
+            FullRowSelect = true,
+            ShowLines = false,
+            ShowPlusMinus = false,
+            ShowRootLines = false,
+            AccessibleName = "Advanced Configuration navigation"
         };
 
-        AddTab("Providers", _providers);
-        AddTab("Accounts / Credentials", _accounts);
-        AddTab("Execution Targets", _targets);
+        AddNavigation(new NavigationEntry("Overview", AdvancedPage.Overview));
+        AddNavigation(new NavigationEntry("Providers", AdvancedPage.Providers));
+        AddNavigation(new NavigationEntry("Accounts / Credentials", AdvancedPage.Accounts));
+        AddNavigation(new NavigationEntry("Execution Targets", AdvancedPage.ExecutionTargets));
+        AddNavigation(new NavigationEntry("Model Information", AdvancedPage.ModelInformation));
 
-        _tabs.SelectedIndexChanged += TabsOnSelectedIndexChanged;
+        _contentHost = new Panel
+        {
+            Dock = DockStyle.Fill,
+            Padding = new Padding(16, 0, 0, 0)
+        };
 
-        BodyPanel.Controls.Add(_tabs);
+        var split = new SplitContainer
+        {
+            Dock = DockStyle.Fill,
+            Orientation = Orientation.Vertical,
+            FixedPanel = FixedPanel.Panel1,
+            IsSplitterFixed = true,
+            SplitterWidth = 1,
+            SplitterDistance = 230
+        };
+        split.Panel1.Padding = new Padding(4);
+        split.Panel2.Padding = new Padding(4);
+        split.Panel1.Controls.Add(_navigation);
+        split.Panel2.Controls.Add(_contentHost);
+
+        BodyPanel.Controls.Add(split);
         ThemeManager.Apply(BodyPanel);
 
-        Load += async (_, _) => await InitializeAsync();
+        _navigation.AfterSelect += NavigationAfterSelect;
+        _themeManager.ThemeChanged += ThemeManagerOnChanged;
+
+        if (_nodes.TryGetValue(AdvancedPage.Overview, out var overviewNode))
+            _navigation.SelectedNode = overviewNode;
+
+        Load += async (_, _) => await SelectCurrentPageAsync().ConfigureAwait(true);
     }
 
-    private async void TabsOnSelectedIndexChanged(object? sender, EventArgs e)
+    internal TreeView NavigationTree => _navigation;
+
+    internal Panel ContentHost => _contentHost;
+
+    private void AddNavigation(NavigationEntry entry)
     {
-        if (IsDisposed || Disposing)
+        var node = new TreeNode(entry.Title)
+        {
+            Tag = entry.Page,
+            Name = entry.Page.ToString(),
+            ToolTipText = entry.Page == AdvancedPage.ModelInformation
+                ? "Read-only provider model discovery information."
+                : entry.Title
+        };
+
+        _nodes.Add(entry.Page, node);
+        _navigation.Nodes.Add(node);
+    }
+
+    private async void NavigationAfterSelect(object? sender, TreeViewEventArgs e)
+    {
+        if (_initializing ||
+            IsDisposed ||
+            Disposing)
+        {
             return;
+        }
 
         try
         {
-            await InitializeSelectedTabAsync().ConfigureAwait(true);
+            await SelectCurrentPageAsync().ConfigureAwait(true);
         }
         catch (OperationCanceledException)
-            when (_lifetimeCts?.IsCancellationRequested == true || IsDisposed || Disposing)
+            when (_pageCts?.IsCancellationRequested == true || IsDisposed || Disposing)
         {
         }
         catch (Exception exception)
@@ -100,93 +153,132 @@ internal sealed class HiveAdvancedProviderConfigurationForm : HiveForm
                 HiveUiErrorReporter.Report(
                     this,
                     exception,
-                    "Advanced Provider Configuration",
-                    "The selected advanced configuration page could not be initialized.",
+                    "Advanced Configuration",
+                    "The selected advanced configuration page could not be displayed.",
                     _output,
                     _themeManager);
             }
         }
     }
 
-    private async Task InitializeSelectedTabAsync()
-    {
-        var index = _tabs.SelectedIndex;
-        if (index < 0 || _initializedTabs.Contains(index))
-            return;
-
-        var token = (_lifetimeCts ??= new CancellationTokenSource()).Token;
-
-        switch (index)
-        {
-            case 0:
-                await _providers.InitializeAsync(token).ConfigureAwait(true);
-                break;
-
-            case 1:
-                await _accounts.InitializeAsync(token).ConfigureAwait(true);
-                break;
-
-            case 2:
-                await _targets.InitializeAsync(token).ConfigureAwait(true);
-                break;
-
-            default:
-                throw new InvalidOperationException(
-                    $"Unknown advanced provider configuration tab '{index}'.");
-        }
-
-        _initializedTabs.Add(index);
-    }
-
-    private void AddTab(string title, Control page)
-    {
-        var tab = new TabPage(title)
-        {
-            Padding = new Padding(8),
-            UseVisualStyleBackColor = false
-        };
-        tab.Controls.Add(page);
-        page.Dock = DockStyle.Fill;
-        _tabs.TabPages.Add(tab);
-    }
-
-    private async Task InitializeAsync()
+    private async Task SelectCurrentPageAsync()
     {
         if (IsDisposed || Disposing)
             return;
 
-        _lifetimeCts ??= new CancellationTokenSource();
+        if (_navigation.SelectedNode?.Tag is not AdvancedPage page)
+            return;
+
+        var version = Interlocked.Increment(ref _pageRequestVersion);
+        var pageCts = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref _pageCts, pageCts);
+        previous?.Cancel();
+
+        DisposeCurrentPage();
 
         try
         {
-            await InitializeSelectedTabAsync().ConfigureAwait(true);
+            var view = CreatePage(page);
+            if (view is null)
+                throw new InvalidOperationException($"No Advanced Configuration page is registered for '{page}'.");
+
+            view.Dock = DockStyle.Fill;
+            _contentHost.Controls.Add(view);
+            _currentPage = view;
+            _themeManager.Apply(view);
+
+            if (view is IHiveAdvancedConfigurationPage initializable)
+            {
+                await initializable
+                    .InitializeAsync(pageCts.Token)
+                    .ConfigureAwait(true);
+            }
+
+            if (version != Volatile.Read(ref _pageRequestVersion) ||
+                pageCts.IsCancellationRequested ||
+                IsDisposed ||
+                Disposing)
+            {
+                return;
+            }
         }
-        catch (OperationCanceledException)
-            when (_lifetimeCts.IsCancellationRequested)
+        catch
         {
+            DisposeCurrentPage();
+            throw;
         }
-        catch (Exception exception)
+        finally
         {
-            HiveUiErrorReporter.Report(
-                this,
-                exception,
-                "Advanced Provider Configuration",
-                "The advanced provider configuration could not be initialized.",
-                _output,
-                _themeManager);
+            if (ReferenceEquals(_pageCts, pageCts))
+                Interlocked.CompareExchange(ref _pageCts, null, pageCts);
+
+            pageCts.Dispose();
         }
+    }
+
+    private Control CreatePage(AdvancedPage page) =>
+        page switch
+        {
+            AdvancedPage.Overview => new HiveAdvancedOverviewPage(_themeManager),
+            AdvancedPage.Providers => new HiveProviderConfigurationView(
+                _management,
+                _accessContext,
+                _themeManager,
+                _output),
+            AdvancedPage.Accounts => new HiveProviderAccountsSettingsView(
+                _management,
+                _accessContext,
+                _themeManager,
+                _output),
+            AdvancedPage.ExecutionTargets => new HiveExecutionTargetsSettingsView(
+                _management,
+                _accessContext,
+                _themeManager,
+                _output),
+            AdvancedPage.ModelInformation => new HiveModelInformationSettingsView(
+                _management,
+                _accessContext,
+                _themeManager,
+                _output),
+            _ => throw new ArgumentOutOfRangeException(nameof(page), page, null)
+        };
+
+    private void DisposeCurrentPage()
+    {
+        var page = Interlocked.Exchange(ref _currentPage, null);
+        if (page is null)
+            return;
+
+        if (_contentHost.Controls.Contains(page))
+            _contentHost.Controls.Remove(page);
+
+        page.Dispose();
+    }
+
+    private void ThemeManagerOnChanged(object? sender, EventArgs e)
+    {
+        if (IsDisposed || Disposing)
+            return;
+
+        _themeManager.Apply(_navigation);
+        _themeManager.Apply(_contentHost);
+
+        if (_currentPage is not null)
+            _themeManager.Apply(_currentPage);
     }
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
-            var cts = _lifetimeCts;
-            _lifetimeCts = null;
+            _navigation.AfterSelect -= NavigationAfterSelect;
+            _themeManager.ThemeChanged -= ThemeManagerOnChanged;
+
+            var cts = Interlocked.Exchange(ref _pageCts, null);
             cts?.Cancel();
             cts?.Dispose();
 
-            _tabs.SelectedIndexChanged -= TabsOnSelectedIndexChanged;
+            DisposeCurrentPage();
         }
 
         base.Dispose(disposing);
