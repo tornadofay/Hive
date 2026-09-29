@@ -21,13 +21,13 @@ Explicit exclusions:
 - no unrelated provider/settings refactor.
 
 Latest verification failure:
-- developer reported four remaining failed tests: one thinking-option ordering assertion, one Model Information UI rendering assertion with an empty details box, one stale-refresh assertion that expected only the no-qualifying-target failure, and one stale-refresh input-routing assertion with no prepared image.
+- developer reported three remaining failed tests: one nested extension-URI redaction assertion, one stale-refresh assertion showing only one discovery call, and one stale-refresh input-routing assertion with no prepared image.
 
 Remediation boundary:
-- preserve deterministic thinking-option normalization without imposing an inappropriate lexical order on semantically ordered thinking levels;
-- ensure the Model Information page renders the first discovered model's details when it auto-selects the first model, even when a test/control handle has not raised the selection event;
-- keep the transient Management discovery probe model-less and make the shared deterministic discovery fixture provide a model identity that matches the test target without reading the probe's model field;
-- update only the affected deterministic tests/fixture expectations and same-slice UI behavior within this Phase 1.16 follow-up.
+- extend existing credential-bearing URI redaction to cover underscore-form query keys such as `api_key`;
+- preserve the public/direct discovery contract that a fresh provider discovery returning already-stale operational metadata is rejected, while allowing the internal capability-routing path to inspect the stale observation and trigger a forced refresh;
+- keep the transient Management discovery probe model-less and preserve deterministic model correlation in the test fixture;
+- update only same-slice provider redaction, Management stale-refresh control flow, and the affected tests/documentation within this Phase 1.16 follow-up.
 
 Latest remediation:
 - changed thinking-option normalization to preserve the provider-reported option order while deduplicating case-insensitively and retaining deterministic bounded output; semantic levels such as low / medium / high are therefore not reordered lexically;
