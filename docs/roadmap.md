@@ -330,18 +330,20 @@ Input-specific processing must converge on the common prepared-input boundary ra
 Verify: image routing, spreadsheet workbook/worksheet/row handling, multiple WorkItems from one submission, bounded file/workbook/row processing, cancellation, input failure isolation, and unsupported-input handling.
 
 ## 1.16 — Provider / Model Capability Discovery & Operational Metadata
-Objective: complete the Provider platform with automatic discovery of provider/model metadata and normalized capability state.
+Objective: establish the initial Provider/model discovery boundary with provider-neutral capability evidence and operational metadata.
 
 Scope:
 - provider/account connection and metadata discovery through the existing provider/Management boundary;
 - model/target enumeration when a provider supports it;
-- normalization of provider-specific model capabilities into Hive capability keys;
+- normalization of provider-reported model capabilities into Hive capability keys;
 - discovered `Supported / Unsupported / Unknown` capability state;
 - refresh and stale-discovery handling;
 - provider/model availability and health metadata;
 - discovery failures remain typed and do not silently fabricate capabilities;
 - explicit configured capability overrides remain distinguishable from discovered capability information;
 - capability-aware ExecutionTarget selection continues to use the existing authoritative capability boundary.
+
+This slice establishes the initial discovery contract. A later bounded 1.16 follow-up expands that contract to the complete useful provider-reported model metadata profile defined by the architecture.
 
 Verify:
 - supported provider discovery;
@@ -415,6 +417,53 @@ Verify:
 - Advanced opens the generalized resource-management surface and supports local/self-hosted/custom configuration paths;
 - the complete Provider Settings workflow is manually verified in the Example Host;
 - focused automated coverage exercises onboarding, refresh/reconciliation, lifecycle, concurrency/idempotency, failure/cancellation, and credential secrecy boundaries.
+
+## 1.16 Follow-Up — Complete Provider Model Metadata Discovery
+Objective: extend the established Phase 1.16 discovery boundary so every successfully enumerated model exposes a complete useful provider-reported model profile within Hive's existing security, validation, response-size, cancellation, and bounded-processing constraints.
+
+This is a Provider-platform discovery follow-up, not a new durable resource model. The durable Provider → ProviderAccount → ExecutionTarget graph remains unchanged.
+
+Scope:
+- extend the provider-neutral model metadata contract beyond the initial capability/operational fields;
+- discover and normalize all applicable provider-reported model identity and descriptive metadata;
+- discover all provider-reported input modalities;
+- discover all provider-reported output modalities;
+- discover model capabilities including structured output, tool calling, reasoning, thinking, and other machine-readable capabilities;
+- discover thinking levels/options/defaults when reported;
+- discover model-scoped limits including context window, maximum input tokens, maximum output tokens, and other model-specific constraints where reported;
+- discover structured pricing/economic metadata including input/output pricing, separately priced reasoning/thinking or other billable units, and explicit free-pricing evidence where reported;
+- preserve additional useful provider-specific model metadata in a structured, bounded, non-secret extension/evidence form rather than silently discarding it;
+- preserve explicit distinction between not-reported/Unknown and Unsupported, zero, unlimited, healthy/available, or free;
+- keep provider/account quotas and rate limits separate from model-scoped limits;
+- keep rich model discovery evidence separate from durable ExecutionTarget configuration;
+- correlate discovered model profiles to targets through ProviderAccount + endpoint + model/deployment identity, never model name alone;
+- retain configured ExecutionTarget capability overrides as the authoritative configured capability layer;
+- do not introduce a durable `Model` resource as part of this follow-up;
+- do not create provider-per-vendor transport implementations for compatible providers.
+
+Non-goals:
+- no new durable Model resource;
+- no replacement of the Provider → ProviderAccount → ExecutionTarget resource model;
+- no second provider transport architecture;
+- no automatic copying of pricing, modalities, limits, or descriptive model metadata into durable ExecutionTarget configuration;
+- no Agent target-selection redesign;
+- no periodic/background discovery scheduling.
+
+Verify:
+- deterministic normalization of all supported common model metadata fields;
+- input/output modality discovery and preservation;
+- structured/tool/reasoning/thinking capability discovery, including provider-reported thinking options where available;
+- context/input/output limit discovery and distinction from provider/account rate limits;
+- pricing/economics normalization and explicit free-pricing semantics;
+- provider-specific extension metadata is bounded, non-secret, and remains non-authoritative evidence;
+- unknown/unreported metadata is never converted into unsupported, zero, unlimited, healthy/available, or free semantics;
+- malformed, oversized, cancelled, failed, unsupported, and authentication-failing responses preserve existing safe discovery behavior;
+- rich model metadata remains discovery evidence and is not duplicated into durable targets;
+- automatic target reconciliation continues to use stable ProviderAccount + endpoint + model/deployment identity;
+- configured target capability overrides remain authoritative;
+- existing Phase 1.16 discovery freshness, caching, concurrency, credential invalidation, cancellation, error classification, and secret-redaction behavior remain intact;
+- focused provider/discovery/Management regression coverage plus the complete `Hive.Tests` suite;
+- matching `Hive.Example.WinForms` discovery scenario demonstrates the richer model profile without using a real vendor account.
 
 ## 1.17 — Structured Extraction & Validation
 Detailed implementation plan: [Phase 1.17 Structured Extraction & Validation](plan/Phase1.17_Structured_Extraction_Validation.md)
