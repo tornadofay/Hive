@@ -179,7 +179,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     internal TextBox DetailsBox => _detailsBox;
 
-    internal async Task InitializeAsync(CancellationToken cancellationToken = default)
+    public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -279,7 +279,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         var parsed = TryParseEndpoint(_endpointComboBox.Text);
         if (parsed is not null &&
             _selectedEndpoint is not null &&
-            ProviderEndpointIdentity.Equals(parsed, _selectedEndpoint))
+            EndpointsEqual(parsed, _selectedEndpoint))
         {
             return;
         }
@@ -592,10 +592,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         var operational = _snapshot.Operational;
         var rateLimit = operational.RateLimitRemaining is { } remaining
-            ? $" • Rate limit remaining: {remaining}"
-            : string.Empty;
-
-        var rateLimit = _snapshot.Operational.RateLimitRemaining is { } remaining
             ? $"  •  Provider rate limit remaining: {remaining}"
             : string.Empty;
 
@@ -736,6 +732,21 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             lines);
     }
 
+    private static bool EndpointsEqual(Uri left, Uri right) =>
+        Uri.Compare(
+            left,
+            right,
+            UriComponents.SchemeAndServer,
+            UriFormat.SafeUnescaped,
+            StringComparison.OrdinalIgnoreCase) == 0
+        &&
+        Uri.Compare(
+            left,
+            right,
+            UriComponents.PathAndQuery,
+            UriFormat.SafeUnescaped,
+            StringComparison.Ordinal) == 0;
+
     private static string FindCapability(
         ProviderModelMetadata model,
         CapabilityKey key) =>
@@ -754,7 +765,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     {
         lines.Add(heading);
         lines.Add(new string('-', heading.Length));
-        lines.AddRange(content);
+        foreach (var line in content)
+            lines.Add(line);
     }
 
     private static string FormatJsonDictionary(
@@ -778,7 +790,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             return null;
         }
 
-        return endpoint.Scheme is Uri.UriSchemeHttp or Uri.UriSchemeHttps &&
+        return endpoint.Scheme is "http" or "https" &&
                string.IsNullOrEmpty(endpoint.UserInfo)
             ? endpoint
             : null;
@@ -807,6 +819,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private static void SetItems<T>(
         ComboBox comboBox,
         IEnumerable<T> values)
+        where T : notnull
     {
         comboBox.BeginUpdate();
         try
@@ -846,14 +859,26 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     private void ThemeManagerOnChanged(object? sender, EventArgs e)
     {
+        ApplyTheme();
+    }
+
+    private void ApplyTheme()
+    {
+        if (IsDisposed || Disposing)
+            return;
+
         _themeManager.Apply(this);
         ApplyStatusTheme();
     }
 
     private void ReportError(Exception exception, string message)
     {
+        var owner = FindForm() is Form form
+            ? form
+            : this;
+
         HiveUiErrorReporter.Report(
-            FindForm() ?? this,
+            owner,
             exception,
             "Model Information",
             message,
