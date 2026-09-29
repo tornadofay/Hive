@@ -1433,19 +1433,23 @@ public sealed class OpenAICompatibleProviderAdapter
 
     private static string? TryGetString(
         JsonElement element,
-        string propertyName)
+        params string[] propertyNames)
     {
-        if (!element.TryGetProperty(propertyName, out var value) ||
-            value.ValueKind != JsonValueKind.String)
+        foreach (var propertyName in propertyNames)
         {
-            return null;
+            if (!element.TryGetProperty(propertyName, out var value) ||
+                value.ValueKind != JsonValueKind.String)
+            {
+                continue;
+            }
+
+            var result = value.GetString();
+
+            if (!string.IsNullOrWhiteSpace(result))
+                return result.Trim();
         }
 
-        var result = value.GetString();
-
-        return string.IsNullOrWhiteSpace(result)
-            ? null
-            : result.Trim();
+        return null;
     }
 
     private static int? TryGetRateLimitRemaining(
