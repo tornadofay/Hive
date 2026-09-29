@@ -134,6 +134,8 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
 
         var now = _clock.UtcNow;
 
+        var staleAfter = now.Add(_freshness);
+
         var models = catalog.Value!.Models
             .Select(model =>
                 new ProviderModelMetadata(
@@ -147,7 +149,16 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
                             new CapabilityStateEntry(
                                 new CapabilityKey(capability.Key),
                                 capability.State))
-                        .ToArray()))
+                        .ToArray(),
+                    model.InputModalities,
+                    model.OutputModalities,
+                    model.ThinkingOptions,
+                    model.DefaultThinkingLevel,
+                    model.Limits,
+                    model.Pricing,
+                    model.ExtensionData,
+                    now,
+                    staleAfter))
             .ToArray();
 
         return Result<ProviderDiscoverySnapshot>.Success(
@@ -159,7 +170,7 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
                     ProviderAvailabilityStatus.Available,
                     ProviderHealthStatus.Unknown,
                     now,
-                    now.Add(_freshness),
+                    staleAfter,
                     catalog.Value.RateLimitRemaining),
                 ProviderDiscoveryState.Supported,
                 models));
