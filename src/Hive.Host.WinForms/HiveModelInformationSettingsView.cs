@@ -567,9 +567,17 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         }
 
         if (_modelsList.Items.Count > 0)
-            _modelsList.Items[0].Selected = true;
+        {
+            var firstItem = _modelsList.Items[0];
+            firstItem.Selected = true;
+
+            if (firstItem.Tag is ProviderModelMetadata firstModel)
+                _detailsBox.Text = FormatModel(firstModel);
+        }
         else
+        {
             _detailsBox.Clear();
+        }
 
         ApplyOperationalContext();
     }
