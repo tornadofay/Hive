@@ -316,6 +316,11 @@ public sealed record ProviderModelMetadata
         ProviderHealthStatus health,
         IReadOnlyList<CapabilityStateEntry> discoveredCapabilities,
         IReadOnlyList<string>? inputModalities = null,
+        string? family = null,
+        string? modelType = null,
+        string? category = null,
+        string? version = null,
+        string? operationalState = null,
         IReadOnlyList<string>? outputModalities = null,
         IReadOnlyList<string>? thinkingOptions = null,
         string? defaultThinkingLevel = null,
@@ -377,6 +382,12 @@ public sealed record ProviderModelMetadata
             MaxModalityCount,
             MaxModalityLength,
             nameof(inputModalities));
+
+        Family = NormalizeOptionalMetadata(family, nameof(family));
+        ModelType = NormalizeOptionalMetadata(modelType, nameof(modelType));
+        Category = NormalizeOptionalMetadata(category, nameof(category));
+        Version = NormalizeOptionalMetadata(version, nameof(version));
+        OperationalState = NormalizeOptionalMetadata(operationalState, nameof(operationalState));
 
         OutputModalities = NormalizeStrings(
             outputModalities,
@@ -458,6 +469,16 @@ public sealed record ProviderModelMetadata
 
     public IReadOnlyList<CapabilityStateEntry> DiscoveredCapabilities { get; }
 
+    public string? Family { get; }
+
+    public string? ModelType { get; }
+
+    public string? Category { get; }
+
+    public string? Version { get; }
+
+    public string? OperationalState { get; }
+
     public IReadOnlyList<string> InputModalities { get; } = Array.Empty<string>();
 
     public IReadOnlyList<string> OutputModalities { get; } = Array.Empty<string>();
@@ -484,6 +505,29 @@ public sealed record ProviderModelMetadata
             return false;
 
         return nowUtc.ToUniversalTime() >= staleAfter;
+    }
+
+    private static string? NormalizeOptionalMetadata(
+        string? value,
+        string parameterName)
+    {
+        if (value is null)
+            return null;
+
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException(
+                "Optional model metadata cannot be empty when supplied.",
+                parameterName);
+
+        var normalized = value.Trim();
+        if (normalized.Length > 256)
+        {
+            throw new ArgumentException(
+                "Optional model metadata cannot exceed 256 characters.",
+                parameterName);
+        }
+
+        return normalized;
     }
 
     private static IReadOnlyList<string> NormalizeStrings(
