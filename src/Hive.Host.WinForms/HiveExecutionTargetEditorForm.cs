@@ -21,7 +21,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
     private readonly TextBox _endpointTextBox;
     private readonly TextBox _modelTextBox;
     private readonly TextBox _deploymentTextBox;
-    private readonly TextBox _capabilitiesTextBox;
+    private readonly HiveCapabilityEditor _capabilityEditor;
     private readonly ComboBox _managementModeComboBox;
     private readonly Label _testStatus;
     private readonly HiveButton _testButton;
@@ -75,14 +75,11 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         _modelTextBox.PlaceholderText = "e.g. meta/llama-3.3-70b-instruct";
         _deploymentTextBox = CreateTextBox();
         _deploymentTextBox.PlaceholderText = "Optional deployment name";
-        _capabilitiesTextBox = new TextBox
-        {
-            Multiline = true,
-            ScrollBars = ScrollBars.Vertical,
-            Dock = DockStyle.Fill,
-            BorderStyle = BorderStyle.FixedSingle,
-            Height = 100
-        };
+        _capabilityEditor = new HiveCapabilityEditor(themeManager);
+        _capabilityEditor.Configure(
+            target?.Capabilities ?? Array.Empty<CapabilityStateEntry>(),
+            discovery: null,
+            automatic: target?.ManagementMode == ExecutionTargetManagementMode.Automatic);
 
         _managementModeComboBox = new ComboBox
         {
@@ -119,14 +116,14 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         _endpointTextBox.Text = target?.Endpoint.ToString() ?? string.Empty;
         _modelTextBox.Text = target?.Model ?? string.Empty;
         _deploymentTextBox.Text = target?.Deployment ?? string.Empty;
-        _capabilitiesTextBox.Text = FormatCapabilities(
-            target?.Capabilities ?? Array.Empty<CapabilityStateEntry>());
 
         if (target is not null)
         {
             SetReadOnlyVisualState(_keyTextBox, themeManager);
             _endpointTextBox.TextChanged += EndpointTextBoxOnTextChanged;
         }
+
+        _managementModeComboBox.SelectedIndexChanged += ManagementModeOnChanged;
 
         editor.AddField(
             "Provider",
@@ -165,10 +162,11 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
         editor.AddField(
             "Capabilities",
-            "One entry per line using capability=Supported, capability=Unsupported, or capability=Unknown. " +
-            "These are explicit configured overrides.",
-            _capabilitiesTextBox,
-            118);
+            "Known Hive capabilities are configured with structured Supported / Unsupported / Unknown states. " +
+            "Discovered, configured override, and effective states are shown separately. " +
+            "Automatic targets are discovery-managed.",
+            _capabilityEditor,
+            260);
 
         editor.AddField(
             "Management",
@@ -231,7 +229,13 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         Load += async (_, _) =>
         {
             if (_discoveryPanel is not null)
+            {
                 await _discoveryPanel.InitializeAsync();
+                _capabilityEditor.Configure(
+                    _existing!.Capabilities,
+                    _discoveryPanel.SelectedModel,
+                    GetSelectedManagementMode() == ExecutionTargetManagementMode.Automatic);
+            }
         };
     }
 
@@ -243,6 +247,8 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
     internal ComboBox ManagementModeSelector => _managementModeComboBox;
 
+    internal HiveCapabilityEditor CapabilityEditor => _capabilityEditor;
+
     protected override void OnThemeChanged(HiveThemeDefinition theme) =>
         ApplyTestStatusVisual(theme);
 
@@ -251,6 +257,23 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         ProviderModelSelectedEventArgs e)
     {
         _modelTextBox.Text = e.Model.ModelId;
+        _capabilityEditor.SetDiscovery(e.Model);
+    }
+
+    private void ManagementModeOnChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (_existing is null)
+            return;
+
+        var automatic = GetSelectedManagementMode() ==
+                        ExecutionTargetManagementMode.Automatic;
+
+        _capabilityEditor.Configure(
+            _existing.Capabilities,
+            _discoveryPanel?.SelectedModel,
+            automatic);
     }
 
     private void EndpointTextBoxOnTextChanged(
@@ -374,7 +397,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
                 throw new InvalidOperationException(
                     "Endpoint must be an absolute HTTP or HTTPS URI.");
 
-            var capabilities = ParseCapabilities(_capabilitiesTextBox.Text);
+            var capabilities = _capabilityEditor.GetConfiguredCapabilities();
 
             var managementMode = GetSelectedManagementMode();
 
@@ -416,54 +439,6 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         }
     }
 
-    private static IReadOnlyList<CapabilityStateEntry> ParseCapabilities(
-        string text)
-    {
-        var entries = new List<CapabilityStateEntry>();
-        var keys = new HashSet<string>(StringComparer.Ordinal);
-
-        foreach (var rawLine in text.Split(
-                     new[] { '\r', '\n' },
-                     StringSplitOptions.RemoveEmptyEntries))
-        {
-            var line = rawLine.Trim();
-            var separator = line.IndexOf('=');
-
-            if (separator <= 0 || separator == line.Length - 1)
-                throw new InvalidOperationException(
-                    $"Invalid capability entry '{line}'. Use capability=State.");
-
-            var keyText = line[..separator].Trim();
-            var stateText = line[(separator + 1)..].Trim();
-
-            if (!Enum.TryParse<CapabilityState>(
-                    stateText,
-                    ignoreCase: true,
-                    out var state))
-            {
-                throw new InvalidOperationException(
-                    $"Invalid capability state '{stateText}'. Use Supported, Unsupported, or Unknown.");
-            }
-
-            var capability = new CapabilityKey(keyText);
-
-            if (!keys.Add(capability.Value))
-                throw new InvalidOperationException(
-                    $"Capability '{capability.Value}' is listed more than once.");
-
-            entries.Add(new CapabilityStateEntry(capability, state));
-        }
-
-        return entries;
-    }
-
-    private static string FormatCapabilities(
-        IReadOnlyList<CapabilityStateEntry> capabilities) =>
-        string.Join(
-            Environment.NewLine,
-            capabilities.Select(
-                item => $"{item.Capability.Value}={item.State}"));
-
     private ExecutionTargetManagementMode GetSelectedManagementMode()
     {
         if (_managementModeComboBox.SelectedItem is not ExecutionTargetManagementMode mode)
@@ -486,6 +461,8 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         {
             _testCts?.Cancel();
             _testCts = null;
+
+            _managementModeComboBox.SelectedIndexChanged -= ManagementModeOnChanged;
 
             if (_discoveryPanel is not null)
                 _discoveryPanel.ModelSelected -= DiscoveryPanelOnModelSelected;
