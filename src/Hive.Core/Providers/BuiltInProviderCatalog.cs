@@ -3,7 +3,15 @@ namespace Hive.Core;
 public enum BuiltInProviderCredentialKind
 {
     None,
-    ApiKey
+    ApiKey,
+    OptionalApiKey
+}
+
+public enum BuiltInProviderCredentialRequirement
+{
+    None,
+    Optional,
+    Required
 }
 
 public sealed record BuiltInProviderDefinition
@@ -75,7 +83,20 @@ public sealed record BuiltInProviderDefinition
 
     public string? OnboardingNote { get; }
 
-    public bool RequiresCredential => CredentialKind != BuiltInProviderCredentialKind.None;
+    public BuiltInProviderCredentialRequirement CredentialRequirement =>
+        CredentialKind switch
+        {
+            BuiltInProviderCredentialKind.None => BuiltInProviderCredentialRequirement.None,
+            BuiltInProviderCredentialKind.OptionalApiKey => BuiltInProviderCredentialRequirement.Optional,
+            BuiltInProviderCredentialKind.ApiKey => BuiltInProviderCredentialRequirement.Required,
+            _ => throw new InvalidOperationException("Built-in provider credential kind is invalid.")
+        };
+
+    public bool RequiresCredential =>
+        CredentialRequirement == BuiltInProviderCredentialRequirement.Required;
+
+    public bool AllowsOptionalCredential =>
+        CredentialRequirement == BuiltInProviderCredentialRequirement.Optional;
 }
 
 public static class BuiltInProviderCatalog
@@ -122,13 +143,13 @@ public static class BuiltInProviderCatalog
             "ollama",
             "Ollama",
             "openai-compatible",
-            BuiltInProviderCredentialKind.None,
+            BuiltInProviderCredentialKind.OptionalApiKey,
             new Uri("http://localhost:11434/v1")),
         new(
             "lm-studio",
             "LM Studio",
             "openai-compatible",
-            BuiltInProviderCredentialKind.None,
+            BuiltInProviderCredentialKind.OptionalApiKey,
             new Uri("http://localhost:1234/v1")),
         new(
             "cloudflare",
