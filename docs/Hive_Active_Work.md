@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -21,12 +21,13 @@ Explicit exclusions:
 - no unrelated provider/settings refactor.
 
 Latest remediation:
+- The prior compile remediation had already returned the slice to verification pending; the latest developer report reopened the same verification boundary for four additional compiler defects.
 - corrected the reported same-slice compile defects in Model Information, including interface accessibility, theming, endpoint comparison, duplicate locals, collection population, endpoint scheme pattern syntax, nullable flow, and error-owner typing;
 - removed a redundant optional-parameter discovery overload that made zero-argument LoadCachedOrDiscoverAsync() calls ambiguous;
 - revision inspection found no additional concrete defect requiring further code changes within this slice.
 
 Verification boundary:
-- developer verification is now required before closure;
+- developer reported four additional same-slice compiler errors: three nullable SystemFonts.MessageBoxFont prototype arguments and one conditional-expression type mismatch between Form and HiveModelInformationSettingsView;
 - required handoff: `Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms`;
 - required tests: focused Phase 1.16 discovery/model-information tests plus the broader-suite result supplied by the developer.
 
