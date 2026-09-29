@@ -605,12 +605,6 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
 
     public event EventHandler<ProviderModelSelectedEventArgs>? ModelSelected;
 
-    public event EventHandler? DiscoveryUpdated;
-
-    internal ProviderDiscoverySnapshot? CurrentSnapshot { get; private set; }
-
-    internal ProviderModelMetadata? SelectedModel { get; private set; }
-
     protected override void Dispose(bool disposing)
     {
         if (disposing)
