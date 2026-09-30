@@ -19,7 +19,10 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
 
         using var panel = new HiveProviderModelDiscoveryPanel(
             management,
-            target,
+            target.ProviderId,
+            target.ProviderAccountId,
+            target.Endpoint,
+            target.Model,
             CreateContext(),
             themeManager);
 
@@ -55,7 +58,10 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
 
         using var panel = new HiveProviderModelDiscoveryPanel(
             management,
-            target,
+            target.ProviderId,
+            target.ProviderAccountId,
+            target.Endpoint,
+            target.Model,
             CreateContext(),
             themeManager);
 
@@ -65,12 +71,98 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         await panel.InitializeAsync();
 
         panel.ModelSelector.SelectedIndex = 0;
-        panel.UseModelButton.PerformClick();
 
         Assert.Equal("vision-model", selectedModel);
         Assert.Equal(
             CapabilityState.Unsupported,
             target.Capabilities.Single().State);
+    }
+
+    [Fact]
+    public async Task Editor_AddPrefillsBuiltInProviderEndpointAndUsesEditableModelCombo()
+    {
+        var context = CreateContext();
+        var providerId = ProviderId.New();
+        var accountId = ProviderAccountId.New();
+        var provider = CreateProvider(providerId, context);
+        var account = CreateAccount(accountId, providerId, context);
+        var snapshot = new ProviderDiscoverySnapshot(
+            providerId,
+            accountId,
+            new Uri("https://api.openai.com/v1"),
+            CreateOperationalMetadata(),
+            ProviderDiscoveryState.Supported,
+            [
+                new ProviderModelMetadata(
+                    "vision-model",
+                    "example",
+                    null,
+                    ProviderAvailabilityStatus.Available,
+                    ProviderHealthStatus.Healthy,
+                    [])
+            ]);
+        var (management, _) = DiscoveryManagementProxy.Create(snapshot);
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var editor = new HiveExecutionTargetEditorForm(
+            null,
+            provider,
+            account,
+            management,
+            context,
+            themeManager);
+
+        Assert.Equal(
+            "https://api.openai.com/v1/",
+            editor.EndpointTextBox.Text);
+        Assert.Equal(
+            ComboBoxStyle.DropDown,
+            editor.ModelSelector.DropDownStyle);
+
+        await editor.DiscoveryPanel!.InitializeAsync();
+
+        editor.ModelSelector.SelectedIndex = 0;
+        Assert.Equal("vision-model", editor.ModelSelector.Text);
+
+        editor.ModelSelector.Text = "custom-model";
+        Assert.Equal("custom-model", editor.ModelSelector.Text);
+    }
+
+    [Fact]
+    public void Editor_ConnectionTestStatusLivesInFooterActionBar()
+    {
+        var target = CreateTarget();
+        var snapshot = CreateSnapshot(target);
+        var (management, _) = DiscoveryManagementProxy.Create(snapshot);
+        var context = CreateContext();
+        var provider = CreateProvider(target.ProviderId, context);
+        var account = CreateAccount(
+            target.ProviderAccountId,
+            target.ProviderId,
+            context);
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var editor = new HiveExecutionTargetEditorForm(
+            target,
+            provider,
+            account,
+            management,
+            context,
+            themeManager);
+
+        var footer = editor.BodyPanel.Controls
+            .OfType<HiveEditorLayout>()
+            .Single()
+            .FooterPanel;
+
+        Assert.Contains(
+            editor.TestStatusLabel,
+            footer.Controls.Cast<Control>()
+                .SelectMany(control =>
+                    control is Panel panel
+                        ? panel.Controls.Cast<Control>()
+                        : Enumerable.Empty<Control>()));
+        Assert.Contains(editor.TestButton, footer.Controls.Cast<Control>());
     }
 
     [Fact]
@@ -138,9 +230,8 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         await panel.InitializeAsync();
 
         panel.ModelSelector.SelectedIndex = 0;
-        panel.UseModelButton.PerformClick();
 
-        Assert.Equal("vision-model", editor.ModelTextBox.Text);
+        Assert.Equal("vision-model", editor.ModelSelector.Text);
     }
 
     [Fact]
@@ -156,7 +247,10 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
 
         using var panel = new HiveProviderModelDiscoveryPanel(
             management,
-            target,
+            target.ProviderId,
+            target.ProviderAccountId,
+            target.Endpoint,
+            target.Model,
             CreateContext(),
             themeManager);
 
@@ -184,7 +278,10 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
 
         using var panel = new HiveProviderModelDiscoveryPanel(
             management,
-            target,
+            target.ProviderId,
+            target.ProviderAccountId,
+            target.Endpoint,
+            target.Model,
             CreateContext(),
             themeManager);
 
@@ -217,7 +314,10 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
 
         using var panel = new HiveProviderModelDiscoveryPanel(
             management,
-            target,
+            target.ProviderId,
+            target.ProviderAccountId,
+            target.Endpoint,
+            target.Model,
             CreateContext(),
             themeManager);
 
@@ -248,7 +348,10 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
 
         using var panel = new HiveProviderModelDiscoveryPanel(
             management,
-            target,
+            target.ProviderId,
+            target.ProviderAccountId,
+            target.Endpoint,
+            target.Model,
             CreateContext(),
             themeManager);
 
