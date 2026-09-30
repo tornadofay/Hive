@@ -756,7 +756,7 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
             return Result<ProviderSettingsOperationResult>.Failure(
                 Error.Unsupported(
                     "hive.management.provider-catalog-advanced-required",
-                    catalog.OnboardingNote ?? "This provider requires Advanced Configuration."));
+                    catalog.OnboardingNote ?? "This provider requires Advanced Provider Configuration."));
         }
 
         if (catalog.RequiresCredential && credential is null)
