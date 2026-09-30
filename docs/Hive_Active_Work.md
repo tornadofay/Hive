@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -181,3 +181,11 @@ Latest remediation:
 Verification boundary:
 - developer must rerun the focused Phase 1.16 discovery/model-information tests and the full Hive.Tests suite;
 - recheck the built-in provider Model Information flows after the test project compiles.
+
+
+Latest verification failure:
+- developer reported 12 same-slice compiler errors in `tests/Hive.Tests/ProviderModelMetadataProviderTests.cs`: the focused tests reference `CapabilityStateEntry.Key`, but the existing contract exposes the capability key as `CapabilityStateEntry.Capability` (a `CapabilityKey`).
+
+Remediation boundary:
+- correct only the 12 focused test predicates to use the existing `CapabilityStateEntry.Capability` contract with the repository's existing `CapabilityKey` comparison pattern;
+- do not add a duplicate `Key` production property or alter capability contracts/metadata semantics.
