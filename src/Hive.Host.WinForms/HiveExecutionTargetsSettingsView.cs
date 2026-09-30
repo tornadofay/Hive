@@ -313,12 +313,21 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl, IHiveAdvan
                 foreach (var account in _accounts)
                     _accountComboBox.Items.Add(new AccountChoice(account));
 
-                _accountComboBox.SelectedIndex =
-                    _accountComboBox.Items.Count > 0 ? 0 : -1;
-                _selectedAccount =
-                    _accountComboBox.SelectedIndex >= 0
-                        ? _accounts[_accountComboBox.SelectedIndex]
-                        : null;
+                var defaultAccountIndex = _accounts
+                    .Select((account, index) => (account, index))
+                    .Where(item =>
+                        string.Equals(
+                            item.account.Key,
+                            "default",
+                            StringComparison.OrdinalIgnoreCase))
+                    .Select(item => item.index)
+                    .DefaultIfEmpty(_accounts.Count > 0 ? 0 : -1)
+                    .First();
+
+                _accountComboBox.SelectedIndex = defaultAccountIndex;
+                _selectedAccount = defaultAccountIndex >= 0
+                    ? _accounts[defaultAccountIndex]
+                    : null;
             }
             finally
             {
