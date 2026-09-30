@@ -92,7 +92,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
             IsSplitterFixed = true,
             SplitterWidth = 1,
             Panel1MinSize = 320,
-            Panel2MinSize = 520,
+            Panel2MinSize = 300,
             SplitterDistance = 320
         };
         _navigationSplit.Panel1.Padding = new Padding(4);
