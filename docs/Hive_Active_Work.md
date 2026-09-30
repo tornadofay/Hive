@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -295,3 +295,12 @@ Latest remediation:
 Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full `Hive.Tests` suite after the test-coverage correction;
 - final manual verification remains required for `Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms`, including Advanced Provider Configuration and the updated Execution Targets page/dialog layout.
+
+
+Latest remediation:
+- corrected the focused footer-status UI test to locate the existing `HiveEditorLayout` through the editor's public WinForms control tree instead of accessing protected `HiveForm.BodyPanel`;
+- no production UI visibility or architecture was changed.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full `Hive.Tests` suite;
+- the requested next UI polish remains blocked until that rerun clears this verification gate.
