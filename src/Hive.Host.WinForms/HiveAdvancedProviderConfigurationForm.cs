@@ -38,7 +38,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
         IHiveThemeManager themeManager,
         IHiveExampleOutput? output = null)
         : base(
-            "Advanced Configuration",
+            "Advanced Provider Configuration",
             "Administrative Provider, Account / Credential, Execution Target, and Model Information management.",
             new Size(1160, 760),
             new Size(900, 620),
@@ -68,7 +68,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
             ShowLines = false,
             ShowPlusMinus = false,
             ShowRootLines = false,
-            AccessibleName = "Advanced Configuration navigation"
+            AccessibleName = "Advanced Provider Configuration navigation"
         };
 
         AddNavigation(new NavigationEntry("Overview", AdvancedPage.Overview));
@@ -90,7 +90,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
             FixedPanel = FixedPanel.Panel1,
             IsSplitterFixed = true,
             SplitterWidth = 1,
-            SplitterDistance = 230
+            SplitterDistance = 280
         };
         split.Panel1.Padding = new Padding(4);
         split.Panel2.Padding = new Padding(4);
@@ -151,7 +151,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
                 HiveUiErrorReporter.Report(
                     this,
                     exception,
-                    "Advanced Configuration",
+                    "Advanced Provider Configuration",
                     "The selected advanced configuration page could not be displayed.",
                     _output,
                     _themeManager);
