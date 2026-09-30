@@ -9,7 +9,6 @@ namespace Hive.Host.WinForms;
 internal sealed class HiveProviderModelDiscoveryPanel : UserControl
 {
     private readonly IHiveManagementFacade _management;
-    private ExecutionTarget? _target;
     private readonly ProviderId _providerId;
     private readonly ProviderAccountId _providerAccountId;
     private readonly Uri? _endpoint;
@@ -26,25 +25,6 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
     private int _requestVersion;
     private bool _configurationChanged;
 
-    public HiveProviderModelDiscoveryPanel(
-        IHiveManagementFacade management,
-        ExecutionTarget target,
-        ResourceAccessContext accessContext,
-        IHiveThemeManager themeManager,
-        IHiveExampleOutput? output = null)
-        : this(
-            management,
-            target.ProviderId,
-            target.ProviderAccountId,
-            target.Endpoint,
-            target.Model,
-            accessContext,
-            themeManager,
-            output)
-    {
-        _target = target ?? throw new ArgumentNullException(nameof(target));
-    }
-
     internal HiveProviderModelDiscoveryPanel(
         IHiveManagementFacade management,
         ProviderId providerId,
@@ -56,10 +36,17 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         IHiveExampleOutput? output = null)
     {
         _management = management ?? throw new ArgumentNullException(nameof(management));
+
         if (providerId == default)
-            throw new ArgumentException("Provider identity is required.", nameof(providerId));
+            throw new ArgumentException(
+                "Provider identity is required.",
+                nameof(providerId));
+
         if (providerAccountId == default)
-            throw new ArgumentException("Provider account identity is required.", nameof(providerAccountId));
+            throw new ArgumentException(
+                "Provider account identity is required.",
+                nameof(providerAccountId));
+
         if (endpoint is not null &&
             (!endpoint.IsAbsoluteUri ||
              (endpoint.Scheme != Uri.UriSchemeHttp &&
@@ -84,16 +71,6 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         Margin = Padding.Empty;
         Padding = new Padding(0, 2, 0, 2);
         MinimumSize = new Size(0, 138);
-        _management = management ?? throw new ArgumentNullException(nameof(management));
-        _target = target ?? throw new ArgumentNullException(nameof(target));
-        _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
-        _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
-        _output = output;
-
-        Dock = DockStyle.Fill;
-        Margin = Padding.Empty;
-        Padding = new Padding(0, 4, 0, 4);
-        MinimumSize = new Size(0, 224);
 
         _statusLabel = new Label
         {
@@ -126,7 +103,8 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
             Height = 32,
             Margin = new Padding(0, 4, 0, 4),
             AccessibleName = "Provider model",
-            AccessibleDescription = "Select a discovered model or type a custom model identifier."
+            AccessibleDescription =
+                "Select a discovered model or type a custom model identifier."
         };
         _modelSelector.SelectedIndexChanged += ModelSelectorOnSelectedIndexChanged;
         _modelSelector.TextChanged += ModelSelectorOnTextChanged;
@@ -147,7 +125,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         {
             Dock = DockStyle.Top,
             AutoSize = false,
-            Height = 38,
+            Height = 34,
             Margin = new Padding(0, 4, 0, 0),
             Padding = Padding.Empty,
             Text = "Provider availability: Unknown • Health: Unknown",
@@ -160,7 +138,9 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
             AutoEllipsis = true,
             Margin = new Padding(0, 4, 0, 0),
             Padding = Padding.Empty,
-            Text = "Save the Execution Target before discovering provider models.",
+            Text = _endpoint is null
+                ? "Enter an endpoint to load provider model suggestions."
+                : "Loading provider model suggestions...",
             AccessibleName = "Discovered model capabilities"
         };
 
@@ -170,7 +150,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
             ColumnCount = 1,
             RowCount = 4,
             Margin = Padding.Empty,
-            Padding = new Padding(0, 4, 0, 4)
+            Padding = new Padding(0, 2, 0, 2)
         };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
@@ -188,6 +168,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         ApplyTheme(_themeManager.Theme);
         SetNoDiscoveryState();
     }
+
 
     internal ComboBox ModelSelector => _modelSelector;
 
@@ -221,10 +202,10 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
 
         ClearModels();
         SetStatus(
-            "The endpoint has unsaved changes. Save the target before refreshing model discovery.",
+            "The endpoint changed. Save and reopen the target to load model suggestions for the new endpoint.",
             HiveStatusTone.Warning);
         _metadataLabel.Text = "Model suggestions apply to the endpoint being edited.";
-        _capabilitiesLabel.Text = "Save and reopen the target to load suggestions for the new endpoint."
+        _capabilitiesLabel.Text = "Save and reopen the target to load suggestions for the new endpoint.";
     }
 
     private async Task DiscoverAsync(
@@ -256,23 +237,15 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
                 return;
             }
 
-            var result = _target is not null
-                ? await _management
-                    .GetProviderDiscoveryAsync(
-                        _target.Id,
-                        _accessContext,
-                        forceRefresh,
-                        discoveryCts.Token)
-                    .ConfigureAwait(true)
-                : await _management
-                    .GetProviderDiscoveryAsync(
-                        _providerId,
-                        _providerAccountId,
-                        _endpoint,
-                        _accessContext,
-                        forceRefresh,
-                        discoveryCts.Token)
-                    .ConfigureAwait(true);
+            var result = await _management
+                .GetProviderDiscoveryAsync(
+                    _providerId,
+                    _providerAccountId,
+                    _endpoint,
+                    _accessContext,
+                    forceRefresh,
+                    discoveryCts.Token)
+                .ConfigureAwait(true);
 
             if (discoveryCts.IsCancellationRequested ||
                 IsDisposed ||
@@ -368,23 +341,15 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         if (_endpoint is null)
             return;
 
-        var result = _target is not null
-            ? await _management
-                .GetProviderDiscoveryAsync(
-                    _target.Id,
-                    _accessContext,
-                    forceRefresh: true,
-                    discoveryCts.Token)
-                .ConfigureAwait(true)
-            : await _management
-                .GetProviderDiscoveryAsync(
-                    _providerId,
-                    _providerAccountId,
-                    _endpoint,
-                    _accessContext,
-                    forceRefresh: true,
-                    discoveryCts.Token)
-                .ConfigureAwait(true);
+        var result = await _management
+            .GetProviderDiscoveryAsync(
+                _providerId,
+                _providerAccountId,
+                _endpoint,
+                _accessContext,
+                forceRefresh: true,
+                discoveryCts.Token)
+            .ConfigureAwait(true);
 
         if (discoveryCts.IsCancellationRequested ||
             IsDisposed ||
@@ -503,7 +468,6 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         if (_modelSelector.SelectedItem is ModelChoice choice)
         {
             SelectedModel = choice.Value;
-
             _capabilitiesLabel.Text =
                 $"Availability: {choice.Value.Availability} • Health: {choice.Value.Health} • " +
                 $"Capabilities: {BuildCapabilities(choice.Value.DiscoveredCapabilities)}";
