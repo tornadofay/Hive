@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -113,3 +113,14 @@ Verification boundary:
 - developer must rerun the focused Phase 1.16 discovery/model-information tests and the broader `Hive.Tests` suite;
 - rerun the affected Provider / Model Capability Discovery Example Host scenario only as a capability-discovery regression check;
 - verify the real configured OpenRouter account in Model Information and confirm its reported modalities/capabilities are now populated.
+
+Latest authorization:
+- developer authorized expanding the current Phase 1.16 Follow-Up work from the OpenRouter-specific remediation to a bounded provider-by-provider metadata audit and implementation for every built-in provider;
+- the expanded goal is to map authoritative provider-reported model metadata into the existing normalized Hive model profile wherever the provider exposes it, while retaining Unknown for fields not reported and keeping a single OpenAI-compatible inference transport;
+- no static model-capability catalog, model-name inference, periodic probing, or second inference transport is authorized.
+
+Expanded implementation boundary:
+- built-in providers currently cataloged as OpenAI, Groq, OpenRouter, Cerebras, NVIDIA, Google Gemini, Ollama, LM Studio, and Cloudflare;
+- inspect each provider's current authoritative model-information surface and implement only evidence supported by that surface;
+- reuse the existing ProviderModelMetadata / capability normalization contract and bounded redaction rules;
+- add deterministic coverage for each provider-specific response shape that is implemented.
