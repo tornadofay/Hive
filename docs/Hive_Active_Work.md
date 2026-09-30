@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -241,3 +241,13 @@ Remediation boundary:
 - correct only the deterministic provider metadata test fixture so the Provider resource uses the same provider key that the production routing contract expects;
 - do not weaken provider routing, add aliases for test-only keys, or alter provider metadata parsing because of the fixture mismatch;
 - preserve the existing provider-specific endpoint selections and normalized metadata semantics.
+
+
+Latest remediation:
+- corrected the deterministic provider metadata test fixture so the Provider resource key is exactly the built-in `providerKey`; provider-specific routing therefore exercises the intended Cerebras, Gemini, LM Studio, Ollama, and Cloudflare model-information paths;
+- left production provider routing and parser behavior unchanged;
+- source inspection confirmed the helper now passes `providerKey` consistently as the Provider key and display name.
+
+Verification boundary:
+- developer must rerun the focused Phase 1.16 provider metadata tests and the full `Hive.Tests` suite;
+- recheck the built-in provider Model Information flows after the provider-specific routing tests pass.
