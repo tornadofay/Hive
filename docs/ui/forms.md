@@ -70,18 +70,18 @@ var form = new HiveSettingsForm(
 form.ShowDialog(owner);
 ```
 
-`HiveSettingsForm` owns window/header composition only. `HiveSettingsView` owns global Settings navigation and page composition. The normal Providers page is the user-facing CRUD surface for configured Provider resources. ProviderAccount and ExecutionTarget remain separate durable resource domains, but their administrative CRUD pages live under the generalized Advanced Configuration entry point rather than as child leaves of the normal Providers page. AgentDefinition remains its own Settings domain. Persistence is different: it is one global configuration document, so its leaf uses a dedicated editor rather than CRUD.
+`HiveSettingsForm` owns window/header composition only. `HiveSettingsView` owns global Settings navigation and page composition. The normal Providers page is the user-facing CRUD surface for configured Provider resources. ProviderAccount and ExecutionTarget remain separate durable resource domains, but their administrative CRUD pages live under the generalized Advanced Provider Configuration entry point rather than as child leaves of the normal Providers page. AgentDefinition remains its own Settings domain. Persistence is different: it is one global configuration document, so its leaf uses a dedicated editor rather than CRUD.
 
 Settings pages call the appropriate public Management/application boundaries. Settings pages do not construct or own the host Hive service graph; host composition/lifetime remains outside the UI. Future durable Hive configuration domains extend this same Settings center rather than creating parallel top-level settings forms.
 
-Provider/model discovery is primarily surfaced from the normal Providers Settings page. The page offers explicit `Refresh`, which requests fresh provider/account/endpoint discovery for active configured providers and reconciles automatically managed ExecutionTargets. The UI presents configured providers and safe operational summary; it does not expose ProviderAccount or ExecutionTarget administration during normal onboarding. Advanced Configuration exposes the generalized Providers / Accounts / Credentials / Execution Targets administration pages when an administrator needs multiple accounts, custom endpoints, local/self-hosted models, manual targets, or explicit capability overrides. Discovered availability, health, rate-limit metadata, and normalized capability states remain observational; configured ExecutionTarget capability overrides remain authoritative. Failed or stale discovery preserves existing durable targets and must never be interpreted as an empty model catalog.
+Provider/model discovery is primarily surfaced from the normal Providers Settings page. The page offers explicit `Refresh`, which requests fresh provider/account/endpoint discovery for active configured providers and reconciles automatically managed ExecutionTargets. The UI presents configured providers and safe operational summary; it does not expose ProviderAccount or ExecutionTarget administration during normal onboarding. Advanced Provider Configuration exposes the generalized Providers / Accounts / Credentials / Execution Targets administration pages when an administrator needs multiple accounts, custom endpoints, local/self-hosted models, manual targets, or explicit capability overrides. Discovered availability, health, rate-limit metadata, and normalized capability states remain observational; configured ExecutionTarget capability overrides remain authoritative. Failed or stale discovery preserves existing durable targets and must never be interpreted as an empty model catalog.
 
 ### Planned Phase 1.16 Follow-Up — Advanced Model Information
 
-The planned rich-discovery follow-up extends the Advanced Configuration window into a tree-based administrative surface with an internal Overview page and a read-only Model Information page:
+The planned rich-discovery follow-up extends the Advanced Provider Configuration window into a tree-based administrative surface with an internal Overview page and a read-only Model Information page:
 
 ```text
-Advanced Configuration
+Advanced Provider Configuration
 ├── Overview
 ├── Providers
 ├── Accounts / Credentials
