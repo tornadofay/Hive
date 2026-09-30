@@ -1619,6 +1619,7 @@ public sealed class OpenAICompatibleProviderAdapter
             model,
             "max_output_tokens",
             "max_completion_tokens",
+            "max_output_length",
             "max_tokens");
 
         var additional = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
@@ -1642,6 +1643,7 @@ public sealed class OpenAICompatibleProviderAdapter
                 limits,
                 "max_output_tokens",
                 "max_completion_tokens",
+                "max_output_length",
                 "max_tokens");
 
             foreach (var property in limits.EnumerateObject())
@@ -1654,6 +1656,7 @@ public sealed class OpenAICompatibleProviderAdapter
                     property.NameEquals("max_prompt_tokens") ||
                     property.NameEquals("max_output_tokens") ||
                     property.NameEquals("max_completion_tokens") ||
+                    property.NameEquals("max_output_length") ||
                     property.NameEquals("max_tokens"))
                 {
                     continue;
@@ -1951,6 +1954,7 @@ public sealed class OpenAICompatibleProviderAdapter
             "max_prompt_tokens",
             "max_output_tokens",
             "max_completion_tokens",
+            "max_output_length",
             "max_tokens",
             "pricing",
             "prices",
