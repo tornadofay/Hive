@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -312,3 +312,11 @@ Latest verification failure:
 Remediation boundary:
 - correct only the focused test to use an available local control-tree traversal or direct child lookup;
 - do not alter production UI visibility or add a production testing-only API.
+
+
+Latest remediation:
+- added the missing focused-test `FindControl<TControl>` helper used by the footer-status regression;
+- the helper is test-local and does not change production UI contracts.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full `Hive.Tests` suite before further Phase 1.16 UI polish changes.
