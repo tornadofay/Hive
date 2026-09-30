@@ -566,6 +566,22 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             displayName);
     }
 
+    private static TControl? FindControl<TControl>(Control root)
+        where TControl : Control
+    {
+        foreach (Control child in root.Controls)
+        {
+            if (child is TControl match)
+                return match;
+
+            var nested = FindControl<TControl>(child);
+            if (nested is not null)
+                return nested;
+        }
+
+        return null;
+    }
+
     private sealed class ExecutionTargetsManagementProxy : DispatchProxy
     {
         private IReadOnlyList<Provider> _providers = [];
