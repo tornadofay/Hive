@@ -437,7 +437,7 @@ public sealed class ProviderModelMetadataProviderTests
                         now,
                         CorrelationId.New()),
                     ResourceLifecycle.Active(now)),
-                $"provider-{providerKey}",
+                providerKey,
                 providerKey,
                 "openai-compatible");
 
