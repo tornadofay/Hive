@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -163,3 +163,11 @@ Latest remediation:
 Verification boundary:
 - developer must rerun the focused Phase 1.16 discovery/model-information tests and the full `Hive.Tests` suite;
 - recheck the built-in provider Model Information flows after compilation, including the provider-specific endpoint routing introduced in this slice.
+
+
+Latest verification failure:
+- developer reported same-slice compiler error CS1061 in `tests/Hive.Tests/ProviderModelMetadataProviderTests.cs`: the focused provider metadata tests reference `ProviderModelMetadata.Capabilities`, but the normalized contract exposes this collection as `DiscoveredCapabilities`; the error occurs at 15 test references.
+
+Remediation boundary:
+- correct only the focused provider metadata test references to the existing `ProviderModelMetadata.DiscoveredCapabilities` contract;
+- do not add a duplicate `Capabilities` production property or alter provider metadata semantics, normalization, or routing.
