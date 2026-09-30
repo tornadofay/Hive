@@ -98,7 +98,7 @@ internal sealed class HiveProvidersSettingsView : UserControl
         _advancedButton = CreateToolbarButton(
             "Advanced",
             HiveButtonStyle.Secondary,
-            "Open generalized Provider, Account / Credential, and Execution Target administration.");
+            "Open Advanced Provider Configuration for Provider, Account / Credential, and Execution Target administration.");
 
         _refreshButton.Click += async (_, _) => await RefreshProvidersAsync();
         _advancedButton.Click += async (_, _) => await OpenAdvancedAsync();
