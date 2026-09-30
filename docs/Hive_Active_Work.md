@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -261,3 +261,9 @@ Latest verification failure:
 Remediation boundary:
 - correct only `BuildGeminiModelsUri` so it constructs the native Gemini model-list URI from the endpoint's authority and normalized path without introducing an extra leading slash;
 - preserve the existing provider-specific route selection and single transport.
+
+
+Latest remediation:
+- corrected `BuildGeminiModelsUri` to construct the Gemini native model-list URI with `UriBuilder`, using the endpoint's scheme, host, port, and normalized model path;
+- this removes the extra authority/path slash that produced an absolute path beginning with `//generativelanguage.googleapis.com/...`;
+- provider selection, authentication, parsing, and transport behavior remain unchanged.
