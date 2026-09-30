@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -220,3 +220,7 @@ Latest remediation:
 Verification boundary:
 - developer must rerun the focused Phase 1.16 provider metadata tests and the full `Hive.Tests` suite;
 - recheck the built-in provider Model Information flows after the tests pass.
+
+
+Latest verification failure:
+- developer reported seven CS8999 compiler errors in `tests/Hive.Tests/ProviderModelMetadataProviderTests.cs`; the repaired raw JSON fixture root-closing `}` lines were inserted without the 12-space indentation required by the surrounding C# raw string literal.
