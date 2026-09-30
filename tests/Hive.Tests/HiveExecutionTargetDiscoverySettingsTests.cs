@@ -341,7 +341,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.Empty(panel.Models);
         Assert.Contains("Discovery failed (hive.tests.discovery-failed).", panel.StatusLabel.Text);
         Assert.Contains("Manual model entry remains available.", panel.StatusLabel.Text);
-        Assert.False(panel.ModelSelector.Enabled);
+        Assert.True(panel.ModelSelector.Enabled);
     }
 
     [WinFormsFact]
@@ -371,7 +371,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
 
         Assert.Empty(panel.Models);
         Assert.Contains("not supported", panel.StatusLabel.Text);
-        Assert.False(panel.ModelSelector.Enabled);
+        Assert.True(panel.ModelSelector.Enabled);
     }
 
     [WinFormsFact]
