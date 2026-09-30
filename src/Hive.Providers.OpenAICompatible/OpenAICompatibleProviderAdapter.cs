@@ -8,6 +8,17 @@ using System.Text.Json.Serialization;
 
 namespace Hive.Providers.OpenAICompatible;
 
+internal enum OpenAICompatibleModelCatalogFormat
+{
+    Standard,
+    OpenRouter,
+    CerebrasOpenRouter,
+    CloudflareOpenRouter,
+    Gemini,
+    LmStudio,
+    Ollama
+}
+
 public sealed class OpenAICompatibleProviderAdapter
 {
     private const int MaxRequestBodyBytes = 4 * 1024 * 1024;
@@ -198,9 +209,19 @@ public sealed class OpenAICompatibleProviderAdapter
         }
     }
 
-    public async Task<Result<OpenAICompatibleModelCatalog>> ListModelsAsync(
+    public Task<Result<OpenAICompatibleModelCatalog>> ListModelsAsync(
+        CancellationToken cancellationToken = default) =>
+        ListModelsAsync(
+            BuildModelsUri(_options.BaseUri),
+            OpenAICompatibleModelCatalogFormat.Standard,
+            cancellationToken);
+
+    internal async Task<Result<OpenAICompatibleModelCatalog>> ListModelsAsync(
+        Uri modelsUri,
+        OpenAICompatibleModelCatalogFormat format,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(modelsUri);
         cancellationToken.ThrowIfCancellationRequested();
 
         using var timeoutCts =
@@ -209,7 +230,7 @@ public sealed class OpenAICompatibleProviderAdapter
 
         using var httpRequest = new HttpRequestMessage(
             HttpMethod.Get,
-            BuildModelsUri(_options.BaseUri));
+            modelsUri);
 
         httpRequest.Headers.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/json"));
@@ -218,26 +239,29 @@ public sealed class OpenAICompatibleProviderAdapter
         {
             try
             {
-                httpRequest.Headers.Authorization =
-                    new AuthenticationHeaderValue(
-                        "Bearer",
+                if (format == OpenAICompatibleModelCatalogFormat.Gemini)
+                {
+                    httpRequest.Headers.TryAddWithoutValidation(
+                        "x-goog-api-key",
                         _options.ApiKey.Reveal());
+                }
+                else
+                {
+                    httpRequest.Headers.Authorization =
+                        new AuthenticationHeaderValue(
+                            "Bearer",
+                            _options.ApiKey.Reveal());
+                }
             }
             catch (ArgumentException)
             {
                 return Result<OpenAICompatibleModelCatalog>.Failure(
-                    new Error(
-                        "hive.provider.openai-compatible.invalid-credential",
-                        ErrorCategory.Validation,
-                        "The supplied provider credential cannot be used in an Authorization header."));
+                    InvalidCredentialFailure());
             }
             catch (FormatException)
             {
                 return Result<OpenAICompatibleModelCatalog>.Failure(
-                    new Error(
-                        "hive.provider.openai-compatible.invalid-credential",
-                        ErrorCategory.Validation,
-                        "The supplied provider credential cannot be used in an Authorization header."));
+                    InvalidCredentialFailure());
             }
         }
 
@@ -285,7 +309,7 @@ public sealed class OpenAICompatibleProviderAdapter
                 return Result<OpenAICompatibleModelCatalog>.Failure(
                     Error.Unsupported(
                         "hive.provider.openai-compatible.model-enumeration-unsupported",
-                        "The provider does not expose an OpenAI-compatible model enumeration endpoint."));
+                        "The provider does not expose a supported model enumeration endpoint."));
             }
 
             if (!response.IsSuccessStatusCode)
@@ -307,9 +331,41 @@ public sealed class OpenAICompatibleProviderAdapter
                         responseBody.Error!);
                 }
 
-                return ParseModelCatalog(
-                    responseBody.Value!,
-                    TryGetRateLimitRemaining(response));
+                return format switch
+                {
+                    OpenAICompatibleModelCatalogFormat.Standard
+                        or OpenAICompatibleModelCatalogFormat.OpenRouter
+                        or OpenAICompatibleModelCatalogFormat.CerebrasOpenRouter
+                        => ParseModelCatalog(
+                            responseBody.Value!,
+                            TryGetRateLimitRemaining(response)),
+
+                    OpenAICompatibleModelCatalogFormat.CloudflareOpenRouter
+                        => ParseWrappedModelCatalog(
+                            responseBody.Value!,
+                            "result",
+                            TryGetRateLimitRemaining(response)),
+
+                    OpenAICompatibleModelCatalogFormat.Gemini
+                        => ParseGeminiModelCatalog(
+                            responseBody.Value!,
+                            TryGetRateLimitRemaining(response)),
+
+                    OpenAICompatibleModelCatalogFormat.LmStudio
+                        => ParseLmStudioModelCatalog(
+                            responseBody.Value!,
+                            TryGetRateLimitRemaining(response)),
+
+                    OpenAICompatibleModelCatalogFormat.Ollama
+                        => ParseOllamaModelCatalog(
+                            responseBody.Value!,
+                            TryGetRateLimitRemaining(response)),
+
+                    _ => throw new ArgumentOutOfRangeException(
+                        nameof(format),
+                        format,
+                        "The model catalog response format is invalid.")
+                };
             }
             catch (OperationCanceledException)
                 when (!cancellationToken.IsCancellationRequested)
@@ -344,10 +400,17 @@ public sealed class OpenAICompatibleProviderAdapter
             }
             catch (DecoderFallbackException)
             {
-                return ModelSerializationFailure();
+                return Result<OpenAICompatibleModelCatalog>.Failure(
+                    ModelSerializationFailure());
             }
         }
     }
+
+    private static Error InvalidCredentialFailure() =>
+        new(
+            "hive.provider.openai-compatible.invalid-credential",
+            ErrorCategory.Validation,
+            "The supplied provider credential cannot be used for model discovery.");
 
     private static async Task<Result<string>> ReadResponseBodyAsync(
         HttpContent content,
@@ -455,6 +518,479 @@ public sealed class OpenAICompatibleProviderAdapter
             UriKind.Absolute);
     }
 
+    private static Result<OpenAICompatibleModelCatalog> ParseWrappedModelCatalog(
+        string responseJson,
+        string arrayPropertyName,
+        int? rateLimitRemaining)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(responseJson);
+            var root = document.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object ||
+                !root.TryGetProperty(arrayPropertyName, out var models) ||
+                models.ValueKind != JsonValueKind.Array)
+            {
+                return ModelSerializationFailure();
+            }
+
+            var normalized = JsonSerializer.Serialize(
+                new
+                {
+                    data = models
+                });
+
+            return ParseModelCatalog(
+                normalized,
+                rateLimitRemaining);
+        }
+        catch (JsonException)
+        {
+            return ModelSerializationFailure();
+        }
+    }
+
+    private static Result<OpenAICompatibleModelCatalog> ParseGeminiModelCatalog(
+        string responseJson,
+        int? rateLimitRemaining)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(responseJson);
+            var root = document.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object ||
+                !root.TryGetProperty("models", out var models) ||
+                models.ValueKind != JsonValueKind.Array)
+            {
+                return ModelSerializationFailure();
+            }
+
+            var descriptors = new List<OpenAICompatibleModelDescriptor>();
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (var model in models.EnumerateArray())
+            {
+                if (model.ValueKind != JsonValueKind.Object ||
+                    !model.TryGetProperty("name", out var nameElement) ||
+                    nameElement.ValueKind != JsonValueKind.String)
+                {
+                    return ModelSerializationFailure();
+                }
+
+                var id = nameElement.GetString()?.Trim();
+                if (string.IsNullOrWhiteSpace(id))
+                    return ModelSerializationFailure();
+
+                if (id.StartsWith("models/", StringComparison.OrdinalIgnoreCase))
+                    id = id["models/".Length..];
+
+                if (id.Length > OpenAICompatibleChatRequest.MaxModelLength ||
+                    !ids.Add(id))
+                {
+                    return ModelSerializationFailure();
+                }
+
+                var capabilities = new Dictionary<string, CapabilityState>(
+                    StringComparer.Ordinal);
+
+                if (model.TryGetProperty(
+                        "supportedGenerationMethods",
+                        out var methods) &&
+                    methods.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var method in methods.EnumerateArray())
+                    {
+                        if (method.ValueKind != JsonValueKind.String)
+                            continue;
+
+                        switch (method.GetString())
+                        {
+                            case "generateContent":
+                            case "streamGenerateContent":
+                                capabilities["text.generate"] =
+                                    CapabilityState.Supported;
+                                break;
+                        }
+                    }
+                }
+
+                if (model.TryGetProperty("thinking", out var thinking) &&
+                    thinking.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                {
+                    var state = thinking.GetBoolean()
+                        ? CapabilityState.Supported
+                        : CapabilityState.Unsupported;
+
+                    capabilities["reasoning"] = state;
+                    capabilities["thinking"] = state;
+                }
+
+                var inputLimit = FirstNonNegativeInt64(
+                    model,
+                    "inputTokenLimit");
+                var outputLimit = FirstNonNegativeInt64(
+                    model,
+                    "outputTokenLimit");
+
+                ProviderModelLimits? limits =
+                    inputLimit is null && outputLimit is null
+                        ? null
+                        : new ProviderModelLimits(
+                            inputLimit,
+                            inputLimit,
+                            outputLimit);
+
+                var extensionData = ParseExtensionData(model);
+
+                descriptors.Add(
+                    new OpenAICompatibleModelDescriptor(
+                        id,
+                        ownedBy: null,
+                        createdAtUtc: null,
+                        ProviderAvailabilityStatus.Unknown,
+                        ProviderHealthStatus.Unknown,
+                        capabilities
+                            .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                            .Select(
+                                pair => new OpenAICompatibleCapabilityDescriptor(
+                                    pair.Key,
+                                    pair.Value))
+                            .ToArray(),
+                        DisplayName: TryGetString(
+                            model,
+                            "displayName"),
+                        Description: TryGetString(
+                            model,
+                            "description"),
+                        Family: TryGetString(
+                            model,
+                            "baseModelId"),
+                        ModelType: "gemini",
+                        Category: null,
+                        Version: TryGetString(
+                            model,
+                            "version"),
+                        OperationalState: null,
+                        ThinkingOptions: null,
+                        DefaultThinkingLevel: null,
+                        Limits: limits,
+                        Pricing: null,
+                        ExtensionData: extensionData));
+            }
+
+            descriptors.Sort(
+                static (left, right) =>
+                    StringComparer.Ordinal.Compare(left.Id, right.Id));
+
+            return Result<OpenAICompatibleModelCatalog>.Success(
+                new OpenAICompatibleModelCatalog(
+                    descriptors,
+                    rateLimitRemaining));
+        }
+        catch (JsonException)
+        {
+            return ModelSerializationFailure();
+        }
+        catch (ArgumentException)
+        {
+            return ModelSerializationFailure();
+        }
+    }
+
+    private static Result<OpenAICompatibleModelCatalog> ParseLmStudioModelCatalog(
+        string responseJson,
+        int? rateLimitRemaining)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(responseJson);
+            var root = document.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object ||
+                !root.TryGetProperty("models", out var models) ||
+                models.ValueKind != JsonValueKind.Array)
+            {
+                return ModelSerializationFailure();
+            }
+
+            var descriptors = new List<OpenAICompatibleModelDescriptor>();
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (var model in models.EnumerateArray())
+            {
+                if (model.ValueKind != JsonValueKind.Object ||
+                    !model.TryGetProperty("key", out var keyElement) ||
+                    keyElement.ValueKind != JsonValueKind.String)
+                {
+                    return ModelSerializationFailure();
+                }
+
+                var id = keyElement.GetString()?.Trim();
+
+                if (string.IsNullOrWhiteSpace(id) ||
+                    id.Length > OpenAICompatibleChatRequest.MaxModelLength ||
+                    !ids.Add(id))
+                {
+                    return ModelSerializationFailure();
+                }
+
+                var capabilities = new Dictionary<string, CapabilityState>(
+                    StringComparer.Ordinal);
+
+                if (model.TryGetProperty("capabilities", out var capabilityObject) &&
+                    capabilityObject.ValueKind == JsonValueKind.Object)
+                {
+                    if (capabilityObject.TryGetProperty("vision", out var vision) &&
+                        vision.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                    {
+                        capabilities["vision"] =
+                            vision.GetBoolean()
+                                ? CapabilityState.Supported
+                                : CapabilityState.Unsupported;
+                    }
+
+                    if (capabilityObject.TryGetProperty(
+                            "trained_for_tool_use",
+                            out var toolUse) &&
+                        toolUse.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                    {
+                        capabilities["tool.calling"] =
+                            toolUse.GetBoolean()
+                                ? CapabilityState.Supported
+                                : CapabilityState.Unsupported;
+                    }
+
+                    if (capabilityObject.TryGetProperty(
+                            "reasoning",
+                            out var reasoning) &&
+                        reasoning.ValueKind == JsonValueKind.Object)
+                    {
+                        capabilities["reasoning"] =
+                            CapabilityState.Supported;
+                    }
+                }
+
+                var thinking = ParseLmStudioThinking(
+                    model);
+
+                if (thinking.Options.Count > 0)
+                    capabilities["thinking"] =
+                        CapabilityState.Supported;
+
+                var contextLimit = FirstNonNegativeInt64(
+                    model,
+                    "max_context_length");
+
+                var extensionData = ParseExtensionData(model);
+
+                descriptors.Add(
+                    new OpenAICompatibleModelDescriptor(
+                        id,
+                        OwnedBy: TryGetString(model, "publisher"),
+                        CreatedAtUtc: null,
+                        Availability: ProviderAvailabilityStatus.Available,
+                        Health: ProviderHealthStatus.Unknown,
+                        Capabilities: capabilities
+                            .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                            .Select(
+                                pair => new OpenAICompatibleCapabilityDescriptor(
+                                    pair.Key,
+                                    pair.Value))
+                            .ToArray(),
+                        InputModalities: null,
+                        OutputModalities: null,
+                        DisplayName: TryGetString(model, "display_name"),
+                        Description: TryGetString(model, "description"),
+                        Family: TryGetString(model, "architecture"),
+                        ModelType: TryGetString(model, "type"),
+                        Category: null,
+                        Version: null,
+                        OperationalState: null,
+                        ThinkingOptions: thinking.Options,
+                        DefaultThinkingLevel: thinking.Default,
+                        Limits: contextLimit is null
+                            ? null
+                            : new ProviderModelLimits(
+                                contextLimit,
+                                contextLimit,
+                                null),
+                        Pricing: null,
+                        ExtensionData: extensionData));
+            }
+
+            descriptors.Sort(
+                static (left, right) =>
+                    StringComparer.Ordinal.Compare(left.Id, right.Id));
+
+            return Result<OpenAICompatibleModelCatalog>.Success(
+                new OpenAICompatibleModelCatalog(
+                    descriptors,
+                    rateLimitRemaining));
+        }
+        catch (JsonException)
+        {
+            return ModelSerializationFailure();
+        }
+        catch (ArgumentException)
+        {
+            return ModelSerializationFailure();
+        }
+    }
+
+    private static (IReadOnlyList<string> Options, string? Default) ParseLmStudioThinking(
+        JsonElement model)
+    {
+        if (!model.TryGetProperty("capabilities", out var capabilities) ||
+            capabilities.ValueKind != JsonValueKind.Object ||
+            !capabilities.TryGetProperty("reasoning", out var reasoning) ||
+            reasoning.ValueKind != JsonValueKind.Object)
+        {
+            return (Array.Empty<string>(), null);
+        }
+
+        var options = ParseStringList(
+            reasoning,
+            "allowed_options");
+
+        var defaultValue =
+            TryGetString(reasoning, "default");
+
+        return (options, defaultValue);
+    }
+
+    private static Result<OpenAICompatibleModelCatalog> ParseOllamaModelCatalog(
+        string responseJson,
+        int? rateLimitRemaining)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(responseJson);
+            var root = document.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object ||
+                !root.TryGetProperty("models", out var models) ||
+                models.ValueKind != JsonValueKind.Array)
+            {
+                return ModelSerializationFailure();
+            }
+
+            var descriptors = new List<OpenAICompatibleModelDescriptor>();
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (var model in models.EnumerateArray())
+            {
+                if (model.ValueKind != JsonValueKind.Object)
+                    return ModelSerializationFailure();
+
+                var id =
+                    TryGetString(
+                        model,
+                        "name",
+                        "model");
+
+                if (string.IsNullOrWhiteSpace(id) ||
+                    id.Length > OpenAICompatibleChatRequest.MaxModelLength ||
+                    !ids.Add(id))
+                {
+                    return ModelSerializationFailure();
+                }
+
+                var details =
+                    model.TryGetProperty("details", out var detailsElement) &&
+                    detailsElement.ValueKind == JsonValueKind.Object
+                        ? detailsElement
+                        : default;
+
+                var family = details.ValueKind == JsonValueKind.Object
+                    ? TryGetString(details, "family")
+                    : null;
+
+                var modelType = details.ValueKind == JsonValueKind.Object
+                    ? TryGetString(details, "format")
+                    : null;
+
+                var extensionData = ParseExtensionData(model);
+
+                if (details.ValueKind == JsonValueKind.Object)
+                {
+                    var detailsExtension =
+                        details.EnumerateObject()
+                            .Where(property =>
+                                !string.Equals(
+                                    property.Name,
+                                    "family",
+                                    StringComparison.OrdinalIgnoreCase) &&
+                                !string.Equals(
+                                    property.Name,
+                                    "format",
+                                    StringComparison.OrdinalIgnoreCase))
+                            .Take(32)
+                            .ToDictionary(
+                                property => property.Name,
+                                property => property.Value.Clone(),
+                                StringComparer.Ordinal);
+
+                    if (detailsExtension.Count > 0)
+                    {
+                        var combined =
+                            new Dictionary<string, JsonElement>(
+                                extensionData,
+                                StringComparer.Ordinal);
+
+                        foreach (var property in detailsExtension)
+                            combined.TryAdd(property.Key, property.Value);
+
+                        extensionData =
+                            new ReadOnlyDictionary<string, JsonElement>(
+                                combined);
+                    }
+                }
+
+                descriptors.Add(
+                    new OpenAICompatibleModelDescriptor(
+                        id,
+                        OwnedBy: null,
+                        CreatedAtUtc: null,
+                        Availability: ProviderAvailabilityStatus.Available,
+                        Health: ProviderHealthStatus.Unknown,
+                        Capabilities: Array.Empty<OpenAICompatibleCapabilityDescriptor>(),
+                        InputModalities: null,
+                        OutputModalities: null,
+                        DisplayName: id,
+                        Description: null,
+                        Family: family,
+                        ModelType: modelType,
+                        Category: null,
+                        Version: null,
+                        OperationalState: null,
+                        ThinkingOptions: null,
+                        DefaultThinkingLevel: null,
+                        Limits: null,
+                        Pricing: null,
+                        ExtensionData: extensionData));
+            }
+
+            descriptors.Sort(
+                static (left, right) =>
+                    StringComparer.Ordinal.Compare(left.Id, right.Id));
+
+            return Result<OpenAICompatibleModelCatalog>.Success(
+                new OpenAICompatibleModelCatalog(
+                    descriptors,
+                    rateLimitRemaining));
+        }
+        catch (JsonException)
+        {
+            return ModelSerializationFailure();
+        }
+        catch (ArgumentException)
+        {
+            return ModelSerializationFailure();
+        }
+    }
+
     private static Result<OpenAICompatibleModelCatalog> ParseModelCatalog(
         string responseJson,
         int? rateLimitRemaining)
@@ -522,7 +1058,13 @@ public sealed class OpenAICompatibleProviderAdapter
                         : model.TryGetProperty("available", out availableElement) &&
                           availableElement.ValueKind == JsonValueKind.True
                             ? ProviderAvailabilityStatus.Available
-                            : ProviderAvailabilityStatus.Unknown;
+                            : model.TryGetProperty("active", out var activeElement) &&
+                              activeElement.ValueKind == JsonValueKind.False
+                                ? ProviderAvailabilityStatus.Unavailable
+                                : model.TryGetProperty("active", out activeElement) &&
+                                  activeElement.ValueKind == JsonValueKind.True
+                                    ? ProviderAvailabilityStatus.Available
+                                    : ProviderAvailabilityStatus.Unknown;
 
                 var health = ParseHealth(model);
                 var displayName = TryGetString(model, "name", "display_name", "displayName");
