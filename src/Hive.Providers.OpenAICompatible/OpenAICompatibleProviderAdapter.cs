@@ -1684,6 +1684,29 @@ public sealed class OpenAICompatibleProviderAdapter
             }
         }
 
+        if (model.TryGetProperty("top_provider", out var topProvider) &&
+            topProvider.ValueKind == JsonValueKind.Object)
+        {
+            context ??= FirstNonNegativeInt64(
+                topProvider,
+                "context_window_tokens",
+                "context_window",
+                "context_length",
+                "max_context_tokens");
+
+            maxInput ??= FirstNonNegativeInt64(
+                topProvider,
+                "max_input_tokens",
+                "max_prompt_tokens");
+
+            maxOutput ??= FirstNonNegativeInt64(
+                topProvider,
+                "max_output_tokens",
+                "max_completion_tokens",
+                "max_output_length",
+                "max_tokens");
+        }
+
         if (context is null && maxInput is null && maxOutput is null && additional.Count == 0)
             return null;
 
