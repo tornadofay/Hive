@@ -313,9 +313,12 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl, IHiveAdvan
                 foreach (var account in _accounts)
                     _accountComboBox.Items.Add(new AccountChoice(account));
 
-                _accountComboBox.SelectedIndex = -1;
-                _accountComboBox.Text = "Select an Account...";
-                _selectedAccount = null;
+                _accountComboBox.SelectedIndex =
+                    _accountComboBox.Items.Count > 0 ? 0 : -1;
+                _selectedAccount =
+                    _accountComboBox.SelectedIndex >= 0
+                        ? _accounts[_accountComboBox.SelectedIndex]
+                        : null;
             }
             finally
             {
@@ -505,6 +508,10 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl, IHiveAdvan
             _output,
             _themeManager);
     }
+
+    internal ComboBox ProviderSelector => _providerComboBox;
+
+    internal ComboBox AccountSelector => _accountComboBox;
 
     private static ComboBox CreateComboBox() =>
         new()
