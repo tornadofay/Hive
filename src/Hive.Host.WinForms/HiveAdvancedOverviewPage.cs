@@ -22,9 +22,9 @@ internal sealed class HiveAdvancedOverviewPage : UserControl, IHiveAdvancedConfi
             Dock = DockStyle.Top,
             AutoSize = false,
             Height = 42,
-            Text = "Advanced Configuration",
+            Text = "Advanced Provider Configuration",
             Font = new Font(fallbackFont, FontStyle.Bold),
-            AccessibleName = "Advanced Configuration overview"
+            AccessibleName = "Advanced Provider Configuration overview"
         };
 
         var description = new Label
@@ -33,7 +33,7 @@ internal sealed class HiveAdvancedOverviewPage : UserControl, IHiveAdvancedConfi
             AutoSize = false,
             Height = 70,
             Text =
-                "Advanced Configuration is the administrative view of the Provider → ProviderAccount → ExecutionTarget graph. " +
+                "Advanced Provider Configuration is the administrative view of the Provider → ProviderAccount → ExecutionTarget graph. " +
                 "Normal Providers onboarding remains the simplified entry point.",
             Padding = new Padding(0, 4, 0, 12)
         };
