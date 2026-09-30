@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -333,3 +333,14 @@ Remediation boundary:
 - make the affected WinForms-focused tests run under the repository's existing STA test mechanism or add the minimal test-only STA fixture mechanism required by the current test infrastructure;
 - unseal only the failing test proxy type required by `DispatchProxy`;
 - do not weaken production WinForms or HiveForm visibility contracts and do not alter unrelated behavior.
+
+
+Latest remediation:
+- added `Xunit.StaFact 1.2.69` test support compatible with the repository's xUnit v2 test project and marked the WinForms-focused tests with `WinFormsFact` so WinForms controls run with the required STA context;
+- unsealed the focused `ExecutionTargetsManagementProxy` test proxy so `DispatchProxy` can generate its proxy type;
+- widened the Advanced Provider Configuration navigation pane to a 320px splitter target with explicit panel minimums and applied the splitter distance after the initial layout pass;
+- aligned the Advanced Configuration navigation regression assertion with the new 320px width.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full `Hive.Tests` suite;
+- the next requested capability-layout polish remains blocked until this rerun passes.
