@@ -158,7 +158,7 @@ public static class BuiltInProviderCatalog
             BuiltInProviderCredentialKind.ApiKey,
             null,
             normalOnboardingSupported: false,
-            onboardingNote: "Requires an account-specific endpoint. Configure it through Advanced Configuration.")
+            onboardingNote: "Requires an account-specific endpoint. Configure it through Advanced Provider Configuration.")
     ];
 
     public static IReadOnlyList<BuiltInProviderDefinition> All => Definitions;
