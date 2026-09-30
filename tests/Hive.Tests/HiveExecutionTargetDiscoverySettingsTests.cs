@@ -84,7 +84,11 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         var context = CreateContext();
         var providerId = ProviderId.New();
         var accountId = ProviderAccountId.New();
-        var provider = CreateProvider(providerId, context);
+        var provider = CreateProvider(
+            providerId,
+            context,
+            "openai",
+            "OpenAI");
         var account = CreateAccount(accountId, providerId, context);
         var snapshot = new ProviderDiscoverySnapshot(
             providerId,
@@ -113,7 +117,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             themeManager);
 
         Assert.Equal(
-            "https://api.openai.com/v1/",
+            "https://api.openai.com/v1",
             editor.EndpointTextBox.Text);
         Assert.Equal(
             ComboBoxStyle.DropDown,
@@ -163,6 +167,45 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
                         ? panel.Controls.Cast<Control>()
                         : Enumerable.Empty<Control>()));
         Assert.Contains(editor.TestButton, footer.Controls.Cast<Control>());
+    }
+
+    [Fact]
+    public async Task ExecutionTargetsView_SelectingProviderSelectsDefaultAccount()
+    {
+        var context = CreateContext();
+        var provider = CreateProvider(
+            ProviderId.New(),
+            context);
+        var secondary = CreateAccount(
+            ProviderAccountId.New(),
+            provider.Id,
+            context,
+            key: "secondary",
+            displayName: "Secondary Account");
+        var @default = CreateAccount(
+            ProviderAccountId.New(),
+            provider.Id,
+            context,
+            key: "default",
+            displayName: "Default Account");
+
+        var management = ExecutionTargetsManagementProxy.Create(
+            [provider],
+            [secondary, @default]);
+
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var view = new HiveExecutionTargetsSettingsView(
+            management,
+            context,
+            themeManager);
+
+        await view.InitializeAsync();
+
+        view.ProviderSelector.SelectedIndex = 0;
+
+        Assert.Equal("Default Account", view.AccountSelector.Text);
+        Assert.Contains("Default Account", view.AccountSelector.Text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -435,7 +478,11 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             PrincipalId.New());
 
 
-    private static Provider CreateProvider(ProviderId providerId, ResourceAccessContext context)
+    private static Provider CreateProvider(
+        ProviderId providerId,
+        ResourceAccessContext context,
+        string key = "settings-discovery-provider",
+        string? displayName = null)
     {
         var now = DateTimeOffset.UtcNow;
         return new Provider(
@@ -450,15 +497,17 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
                     now,
                     CorrelationId.New()),
                 ResourceLifecycle.Active(now)),
-            "settings-discovery-provider",
-            "Settings Discovery Provider",
+            key,
+            displayName ?? "Settings Discovery Provider",
             "openai-compatible");
     }
 
     private static ProviderAccount CreateAccount(
         ProviderAccountId accountId,
         ProviderId providerId,
-        ResourceAccessContext context)
+        ResourceAccessContext context,
+        string key = "settings-discovery-account",
+        string displayName = "Settings Discovery Account")
     {
         var now = DateTimeOffset.UtcNow;
         return new ProviderAccount(
@@ -474,8 +523,57 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
                     CorrelationId.New()),
                 ResourceLifecycle.Active(now)),
             providerId,
-            "settings-discovery-account",
-            "Settings Discovery Account");
+            key,
+            displayName);
+    }
+
+    private sealed class ExecutionTargetsManagementProxy : DispatchProxy
+    {
+        private IReadOnlyList<Provider> _providers = [];
+        private IReadOnlyList<ProviderAccount> _accounts = [];
+
+        public static IHiveManagementFacade Create(
+            IReadOnlyList<Provider> providers,
+            IReadOnlyList<ProviderAccount> accounts)
+        {
+            ArgumentNullException.ThrowIfNull(providers);
+            ArgumentNullException.ThrowIfNull(accounts);
+
+            var management =
+                (IHiveManagementFacade)DispatchProxy.Create<
+                    IHiveManagementFacade,
+                    ExecutionTargetsManagementProxy>();
+            var proxy = (ExecutionTargetsManagementProxy)(object)management;
+            proxy._providers = providers;
+            proxy._accounts = accounts;
+            return management;
+        }
+
+        protected override object Invoke(
+            System.Reflection.MethodInfo? targetMethod,
+            object?[]? args)
+        {
+            return targetMethod?.Name switch
+            {
+                nameof(IHiveManagementFacade.ListProvidersAsync) =>
+                    Task.FromResult(
+                        Result<IReadOnlyList<Provider>>.Success(
+                            _providers)),
+
+                nameof(IHiveManagementFacade.ListProviderAccountsAsync) =>
+                    Task.FromResult(
+                        Result<IReadOnlyList<ProviderAccount>>.Success(
+                            _accounts)),
+
+                nameof(IHiveManagementFacade.ListExecutionTargetsAsync) =>
+                    Task.FromResult(
+                        Result<IReadOnlyList<ExecutionTarget>>.Success(
+                            [])),
+
+                _ => throw new NotSupportedException(
+                    $"The Execution Targets UI test proxy does not implement '{targetMethod?.Name}'.")
+            };
+        }
     }
 
     private class DiscoveryManagementProxy : DispatchProxy
