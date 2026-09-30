@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -149,3 +149,9 @@ Verification boundary:
 - developer must rerun the focused Phase 1.16 discovery/model-information tests and the full `Hive.Tests` suite;
 - manually inspect configured provider Model Information for OpenRouter, Cerebras, Google Gemini, LM Studio, Ollama, Cloudflare, Groq, OpenAI, and NVIDIA where configurations are available;
 - confirm Ollama bulk discovery makes no per-model `/api/show` calls and that providers without capability evidence remain Unknown rather than inferred.
+
+Latest verification failure:
+- developer reported two same-slice compiler errors in `OpenAICompatibleProviderAdapter.cs`: CS1503 from passing the `ModelSerializationFailure()` result into `Result<OpenAICompatibleModelCatalog>.Failure`, and CS1739 from using lowercase named arguments that do not match the `OpenAICompatibleModelDescriptor` constructor parameter names.
+
+Remediation boundary:
+- correct only those two compile errors in the provider-specific model metadata implementation; do not alter provider routing or metadata semantics.
