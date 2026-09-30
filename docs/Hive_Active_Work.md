@@ -267,3 +267,19 @@ Latest remediation:
 - corrected `BuildGeminiModelsUri` to construct the Gemini native model-list URI with `UriBuilder`, using the endpoint's scheme, host, port, and normalized model path;
 - this removes the extra authority/path slash that produced an absolute path beginning with `//generativelanguage.googleapis.com/...`;
 - provider selection, authentication, parsing, and transport behavior remain unchanged.
+
+
+Authorized UI polish extension within Phase 1.16 Follow-Up:
+- rename the visible **Advanced Configuration** surface to **Advanced Provider Configuration** and widen the left navigation tree to fit its existing labels;
+- make Execution Targets prefer the Provider Account keyed `default`, falling back to the first available account when a provider is selected;
+- redesign Add/Edit Execution Target so Provider and Account are compact read-only context in one row, Model is one editable/selectable ComboBox with no separate Select Model or Refresh actions, Add pre-populates a known built-in provider endpoint, capabilities use a more compact organized layout, and connection-test status shares the footer action bar with Test / Cancel / Save;
+- preserve existing Management ownership, discovery semantics, manual/automatic target authority, endpoint validation, cancellation, theming, accessibility, and CRUD behavior.
+
+Implementation checkpoint:
+- the requested UI polish has been implemented across the Advanced Provider Configuration form, Execution Targets view/editor, model discovery panel, and capability editor;
+- focused regression coverage was updated/added for the renamed surface, navigation width, default-account selection, editable model selection, Add endpoint prefill, custom-model capability reset, and footer test-status placement;
+- current UI guidance and user-facing provider configuration strings were aligned with the new Advanced Provider Configuration name.
+
+UI verification boundary:
+- developer must rerun the focused UI/discovery tests and the full `Hive.Tests` suite;
+- manually exercise `Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms`, including Advanced Provider Configuration and the Execution Targets page/dialog in the updated layout.
