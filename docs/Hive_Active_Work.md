@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -124,3 +124,19 @@ Expanded implementation boundary:
 - inspect each provider's current authoritative model-information surface and implement only evidence supported by that surface;
 - reuse the existing ProviderModelMetadata / capability normalization contract and bounded redaction rules;
 - add deterministic coverage for each provider-specific response shape that is implemented.
+
+Latest remediation:
+- completed the authorized built-in-provider model metadata audit over the existing shared OpenAI-compatible discovery implementation;
+- retained the common standard `/models` path for OpenAI, Groq, and NVIDIA, with Groq's provider-reported `active` and `context_window` metadata now normalized without inferring capabilities from documentation or model names;
+- added provider-specific authoritative model metadata sources for Cerebras (public OpenRouter-format model catalog), Google Gemini (native Models API), LM Studio (native `/api/v1/models`), Ollama (bulk `/api/tags`), and Cloudflare Workers AI (account model search with marketplace/OpenRouter format);
+- mapped provider-reported capabilities, modalities, thinking/reasoning, limits, pricing, availability, descriptions, and other metadata into the existing normalized profile where those fields are actually exposed;
+- preserved the single shared HTTP/inference transport implementation; provider-specific work changes model-metadata endpoint selection and response normalization only;
+- added deterministic `ProviderModelMetadataProviderTests` coverage for Groq, Cerebras, Gemini, LM Studio, Ollama, Cloudflare, and basic OpenAI/NVIDIA behavior;
+- intentionally did not infer capabilities for OpenAI/NVIDIA from model documentation, and intentionally did not call Ollama `/api/show` for every listed model because its current bulk endpoint does not reliably include capabilities and N+1 per-model probing remains outside the authorized boundary;
+- revision inspection corrected the earlier misdiagnosed loopback fixture change and found the provider-metadata implementation confined to the OpenAI-compatible provider adapter, capability-discovery routing, focused provider tests, and Active Work documentation.
+
+Verification boundary:
+- developer must rerun the focused Phase 1.16 discovery/model-information tests plus the broader `Hive.Tests` suite;
+- verify configured OpenRouter, Cerebras, Google Gemini, LM Studio, Ollama, and Cloudflare accounts where available;
+- confirm model information displays provider-reported capabilities/metadata and that OpenAI/NVIDIA legitimately show Unknown where their API does not report those fields;
+- required handoff remains: `Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms`.
