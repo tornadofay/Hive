@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -155,3 +155,11 @@ Latest verification failure:
 
 Remediation boundary:
 - correct only those two compile errors in the provider-specific model metadata implementation; do not alter provider routing or metadata semantics.
+
+Latest remediation:
+- corrected the two developer-reported compiler errors in the provider-specific model metadata parser: the decoder-fallback branch now returns the existing model-catalog serialization failure directly, and the model descriptor named arguments now match the constructor parameter names;
+- source-level inspection found no additional lowercase named arguments against the `OpenAICompatibleModelDescriptor` constructor in the newly added provider parsers.
+
+Verification boundary:
+- developer must rerun the focused Phase 1.16 discovery/model-information tests and the full `Hive.Tests` suite;
+- recheck the built-in provider Model Information flows after compilation, including the provider-specific endpoint routing introduced in this slice.
