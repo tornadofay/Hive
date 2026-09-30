@@ -26,6 +26,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
     private readonly IHiveThemeManager _themeManager;
     private readonly IHiveExampleOutput? _output;
     private readonly HiveNavigationTree _navigation;
+    private readonly SplitContainer _navigationSplit;
     private readonly Panel _contentHost;
     private readonly Dictionary<AdvancedPage, TreeNode> _nodes = new();
     private CancellationTokenSource? _pageCts;
@@ -83,7 +84,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
             Padding = new Padding(16, 0, 0, 0)
         };
 
-        var split = new SplitContainer
+        _navigationSplit = new SplitContainer
         {
             Dock = DockStyle.Fill,
             Orientation = Orientation.Vertical,
@@ -92,12 +93,12 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
             SplitterWidth = 1,
             SplitterDistance = 280
         };
-        split.Panel1.Padding = new Padding(4);
-        split.Panel2.Padding = new Padding(4);
-        split.Panel1.Controls.Add(_navigation);
-        split.Panel2.Controls.Add(_contentHost);
+        _navigationSplit.Panel1.Padding = new Padding(4);
+        _navigationSplit.Panel2.Padding = new Padding(4);
+        _navigationSplit.Panel1.Controls.Add(_navigation);
+        _navigationSplit.Panel2.Controls.Add(_contentHost);
 
-        BodyPanel.Controls.Add(split);
+        BodyPanel.Controls.Add(_navigationSplit);
         ThemeManager.Apply(BodyPanel);
 
         _navigation.AfterSelect += NavigationAfterSelect;
@@ -110,6 +111,8 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
     }
 
     internal TreeView NavigationTree => _navigation;
+
+    internal int NavigationSplitterDistance => _navigationSplit.SplitterDistance;
 
     internal Panel ContentHost => _contentHost;
 
@@ -178,7 +181,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
         {
             var view = CreatePage(page);
             if (view is null)
-                throw new InvalidOperationException($"No Advanced Configuration page is registered for '{page}'.");
+                throw new InvalidOperationException($"No Advanced Provider Configuration page is registered for '{page}'.");
 
             view.Dock = DockStyle.Fill;
             _contentHost.Controls.Add(view);
