@@ -484,7 +484,7 @@ public sealed class ProviderSettingsIntegrationTests
         Assert.Equal(5, discovery.CallCount);
     }
 
-    [Fact]
+    [WinFormsFact]
     public void ExecutionTargetEditor_AppliesSelectedManagementModeToNewTarget()
     {
         var context = new ResourceAccessContext(
