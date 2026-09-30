@@ -1,0 +1,215 @@
+using System.Windows.Forms;
+using Hive.Host.WinForms.UI.Theme;
+
+namespace Hive.Host.WinForms.UI.Controls;
+
+internal sealed class HiveCrudPageOperationController : IDisposable
+{
+    private readonly Control _owner;
+    private readonly ListView _list;
+    private readonly TextBox _searchBox;
+    private readonly ComboBox _statusFilterBox;
+    private readonly HivePaginationBar _pagination;
+    private readonly Action _updateActionState;
+    private readonly Action<string, HiveStatusTone> _setStatus;
+    private readonly Func<IHiveThemeManager?> _themeManagerProvider;
+    private readonly object _eventSender;
+    private CancellationTokenSource? _operationCancellation;
+    private bool _busy;
+
+    internal HiveCrudPageOperationController(
+        Control owner,
+        ListView list,
+        TextBox searchBox,
+        ComboBox statusFilterBox,
+        HivePaginationBar pagination,
+        Action updateActionState,
+        Action<string, HiveStatusTone> setStatus,
+        Func<IHiveThemeManager?> themeManagerProvider,
+        object eventSender)
+    {
+        _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+        _list = list ?? throw new ArgumentNullException(nameof(list));
+        _searchBox = searchBox ?? throw new ArgumentNullException(nameof(searchBox));
+        _statusFilterBox = statusFilterBox ?? throw new ArgumentNullException(nameof(statusFilterBox));
+        _pagination = pagination ?? throw new ArgumentNullException(nameof(pagination));
+        _updateActionState = updateActionState ?? throw new ArgumentNullException(nameof(updateActionState));
+        _setStatus = setStatus ?? throw new ArgumentNullException(nameof(setStatus));
+        _themeManagerProvider = themeManagerProvider ?? throw new ArgumentNullException(nameof(themeManagerProvider));
+        _eventSender = eventSender ?? throw new ArgumentNullException(nameof(eventSender));
+    }
+
+    internal event EventHandler<HiveCrudOperationFailedEventArgs>? OperationFailed;
+    internal bool IsBusy => _busy;
+
+    internal async Task ExecuteAsync(
+        HiveCrudOperation operation,
+        Func<CancellationToken, Task> action,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        if (_owner.IsDisposed || _owner.Disposing)
+            return;
+
+        var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var previous = Interlocked.Exchange(
+            ref _operationCancellation,
+            source);
+        CancelSafely(previous, "superseding a CRUD operation");
+        SetBusy(true);
+
+        try
+        {
+            await action(source.Token);
+        }
+        catch (OperationCanceledException) when (source.IsCancellationRequested)
+        {
+            if (!_owner.IsDisposed && !_owner.Disposing)
+                _setStatus("Cancelled.", HiveStatusTone.Warning);
+        }
+        catch (Exception exception)
+        {
+            if (!_owner.IsDisposed && !_owner.Disposing)
+            {
+                _setStatus("Operation failed.", HiveStatusTone.Error);
+                RaiseOperationFailed(operation, exception);
+            }
+        }
+        finally
+        {
+            var isCurrentOperation = ReferenceEquals(
+                _operationCancellation,
+                source);
+
+            if (isCurrentOperation)
+                _operationCancellation = null;
+
+            source.Dispose();
+
+            if (isCurrentOperation && !_owner.IsDisposed && !_owner.Disposing)
+                SetBusy(false);
+        }
+    }
+
+
+    private void RaiseOperationFailed(
+        HiveCrudOperation operation,
+        Exception exception)
+    {
+        var handler = OperationFailed;
+        if (handler is not null)
+        {
+            var eventArgs = new HiveCrudOperationFailedEventArgs(
+                operation,
+                exception);
+
+            foreach (var subscriber in handler.GetInvocationList())
+            {
+                if (subscriber is not EventHandler<HiveCrudOperationFailedEventArgs> callback)
+                    continue;
+
+                try
+                {
+                    callback(_eventSender, eventArgs);
+                }
+                catch (Exception subscriberException)
+                {
+                    // Failure notification is an observer boundary. A subscriber
+                    // must not turn the already-contained CRUD operation failure
+                    // into an unhandled exception or suppress other observers.
+                    System.Diagnostics.Debug.WriteLine(
+                        $"HiveCrudPage OperationFailed subscriber failed:\n{HiveUiExceptionDiagnostics.Format(subscriberException)}");
+                }
+            }
+
+            return;
+        }
+
+        // OperationFailed is an extension point, not a requirement for safe
+        // reusable-control behavior. Without a subscriber, keep the failure
+        // inside the UI operation instead of allowing an exception from a
+        // button/event path to escape as an unhandled async exception.
+        try
+        {
+            System.Diagnostics.Debug.WriteLine(HiveUiExceptionDiagnostics.Format(exception));
+
+            var owner = _owner.FindForm();
+            if (owner is not null && !owner.IsDisposed && !owner.Disposing)
+            {
+                HiveUiErrorReporter.Report(
+                    owner,
+                    exception,
+                    "CRUD operation failed",
+                    $"The {operation.ToString().ToLowerInvariant()} operation could not be completed.",
+                    null,
+                    _themeManagerProvider());
+            }
+        }
+        catch (Exception reporterException)
+        {
+            // Error reporting is also an observer boundary: teardown or a
+            // failing presentation surface must not rethrow the original
+            // operation failure from an async UI event path.
+            System.Diagnostics.Debug.WriteLine(
+                $"HiveCrudPage operation error reporter failed:\n{HiveUiExceptionDiagnostics.Format(reporterException)}");
+        }
+    }
+
+
+    private static void CancelSafely(
+        CancellationTokenSource? source,
+        string reason)
+    {
+        if (source is null)
+            return;
+
+        try
+        {
+            source.Cancel();
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"HiveCrudPage operation cancellation callback failed while {reason}:\n{HiveUiExceptionDiagnostics.Format(exception)}");
+        }
+    }
+
+    private void SetBusy(bool busy)
+    {
+        _busy = busy;
+        _list.Enabled = !busy;
+        _searchBox.Enabled = !busy;
+        _statusFilterBox.Enabled = !busy;
+
+        if (_owner.FindForm() is HiveForm hiveForm)
+        {
+            var theme = hiveForm.ThemeManager.Theme;
+            _searchBox.BackColor = busy
+                ? theme.Palette.DisabledBackground
+                : theme.Palette.InputBackground;
+            _searchBox.ForeColor = busy
+                ? theme.Palette.DisabledText
+                : theme.Palette.Text;
+            _statusFilterBox.BackColor = busy
+                ? theme.Palette.DisabledBackground
+                : theme.Palette.InputBackground;
+            _statusFilterBox.ForeColor = busy
+                ? theme.Palette.DisabledText
+                : theme.Palette.Text;
+        }
+
+        _pagination.Enabled = !busy;
+        _updateActionState();
+    }
+
+
+    public void Dispose()
+    {
+        var operationCancellation = Interlocked.Exchange(ref _operationCancellation, null);
+        CancelSafely(operationCancellation, "disposing the CRUD operation controller");
+        operationCancellation?.Dispose();
+        _busy = false;
+        OperationFailed = null;
+    }
+}

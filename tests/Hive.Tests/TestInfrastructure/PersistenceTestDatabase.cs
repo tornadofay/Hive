@@ -1,0 +1,84 @@
+using DbUp;
+using DbUp.Engine.Output;
+using Hive.Persistence;
+using Microsoft.Data.SqlClient;
+
+namespace Hive.Tests.TestInfrastructure;
+
+internal sealed class PersistenceTestDatabase
+{
+    public PersistenceTestDatabase(string databaseName)
+    {
+        if (string.IsNullOrWhiteSpace(databaseName))
+            throw new ArgumentException("Database name is required.", nameof(databaseName));
+
+        var builder = new SqlConnectionStringBuilder(
+            HivePersistenceTestConfiguration.ConnectionString)
+        {
+            InitialCatalog = databaseName,
+            ApplicationName = "Hive.Tests"
+        };
+
+        Options = new HiveDatabaseOptions(
+            builder.ConnectionString,
+            createDatabaseIfMissing: true);
+
+        EnsureDatabase.For.SqlDatabase(
+            Options.ConnectionString,
+            new NoOpUpgradeLog());
+    }
+
+    public HiveDatabaseOptions Options { get; }
+
+    public void Reset()
+    {
+        using var connection = new SqlConnection(Options.ConnectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            IF OBJECT_ID(N'dbo.TR_HiveEventLog_RollbackProbe', N'TR') IS NOT NULL
+                DROP TRIGGER [dbo].[TR_HiveEventLog_RollbackProbe];
+
+            IF OBJECT_ID(N'dbo.HiveWorkItemAttachments', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveWorkItemAttachments];
+
+            IF OBJECT_ID(N'dbo.HiveWorkItems', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveWorkItems];
+
+            IF OBJECT_ID(N'dbo.HiveEventOutbox', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveEventOutbox];
+
+            IF OBJECT_ID(N'dbo.HiveEventSnapshots', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveEventSnapshots];
+
+            IF OBJECT_ID(N'dbo.HiveEventLog', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveEventLog];
+
+            IF OBJECT_ID(N'dbo.HiveAgentDefinitions', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveAgentDefinitions];
+
+            IF OBJECT_ID(N'dbo.HiveSecrets', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveSecrets];
+
+            IF OBJECT_ID(N'dbo.HiveExecutionTargets', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveExecutionTargets];
+
+            IF OBJECT_ID(N'dbo.HiveProviderAccounts', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveProviderAccounts];
+
+            IF OBJECT_ID(N'dbo.HiveProviders', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveProviders];
+
+            IF OBJECT_ID(N'dbo.HiveMigrationJournal', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveMigrationJournal];
+
+            IF OBJECT_ID(N'dbo.HiveSchemaVersion', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveSchemaVersion];
+
+            IF OBJECT_ID(N'dbo.HiveMigrationFailureProbe', N'U') IS NOT NULL
+                DROP TABLE [dbo].[HiveMigrationFailureProbe];
+            """;
+        command.ExecuteNonQuery();
+    }
+}

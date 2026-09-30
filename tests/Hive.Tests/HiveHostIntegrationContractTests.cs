@@ -1,0 +1,789 @@
+using Hive.Core;
+using Hive.Management;
+using Xunit;
+
+namespace Hive.Tests;
+
+public sealed class HiveHostIntegrationContractTests
+{
+
+    [Fact]
+    public void HiveHostFieldDescriptor_PreservesOriginalAndSensitiveConstructorShapes()
+    {
+        var constructors = typeof(HiveHostFieldDescriptor)
+            .GetConstructors()
+            .Where(constructor => constructor.IsPublic)
+            .Select(constructor => constructor.GetParameters().Length)
+            .OrderBy(length => length)
+            .ToArray();
+
+        Assert.Contains(constructors, length => length == 10);
+        Assert.Contains(constructors, length => length == 11);
+
+        var legacyValue = HiveHostValue.FromString("legacy");
+        var legacy = new HiveHostFieldDescriptor(
+            "Legacy",
+            null,
+            typeof(string).FullName!,
+            false,
+            false,
+            false,
+            false,
+            false,
+            legacyValue);
+
+        Assert.False(legacy.Sensitive);
+        Assert.Equal("legacy", legacy.CurrentValue!.Value.AsString());
+
+        var sensitiveValue = HiveHostValue.FromString("secret");
+        var sensitive = new HiveHostFieldDescriptor(
+            "Sensitive",
+            null,
+            typeof(string).FullName!,
+            false,
+            false,
+            false,
+            false,
+            false,
+            sensitiveValue,
+            null,
+            true);
+
+        Assert.True(sensitive.Sensitive);
+        Assert.Null(sensitive.CurrentValue);
+    }
+
+    [Fact]
+    public void HostValues_PreserveSupportedScalarKindsWithoutHostObjects()
+    {
+        var text = HiveHostValue.FromString("Invoice");
+        var boolean = HiveHostValue.FromBoolean(true);
+        var integer = HiveHostValue.FromInt64(42);
+        var decimalValue = HiveHostValue.FromDecimal(12.50m);
+        var date = HiveHostValue.FromDateTime(
+            new DateTime(2026, 9, 25, 10, 20, 0, DateTimeKind.Utc));
+
+        Assert.Equal(HiveHostValueKind.String, text.Kind);
+        Assert.Equal("Invoice", text.AsString());
+        Assert.True(boolean.TryGetBoolean(out var booleanResult));
+        Assert.True(booleanResult);
+        Assert.True(integer.TryGetInt64(out var integerResult));
+        Assert.Equal(42, integerResult);
+        Assert.True(decimalValue.TryGetDecimal(out var decimalResult));
+        Assert.Equal(12.50m, decimalResult);
+        Assert.True(date.TryGetDateTime(out var dateResult));
+        Assert.Equal(DateTimeKind.Utc, dateResult.Kind);
+    }
+
+    [Theory]
+    [InlineData(DateTimeKind.Utc)]
+    [InlineData(DateTimeKind.Local)]
+    [InlineData(DateTimeKind.Unspecified)]
+    public void HostValues_DateTimeRoundTripsWithoutMachineTimezoneConversion(
+        DateTimeKind kind)
+    {
+        var value = DateTime.SpecifyKind(
+            new DateTime(2026, 9, 25, 10, 20, 30, 123, DateTimeKind.Unspecified),
+            kind);
+
+        var hostValue = HiveHostValue.FromDateTime(value);
+
+        Assert.True(hostValue.TryGetDateTime(out var result));
+        Assert.Equal(value, result);
+        Assert.Equal(kind, result.Kind);
+    }
+
+    [Fact]
+    public void HostContracts_RejectDuplicateSemanticIdentities()
+    {
+        var duplicateCapabilityId = Guid.NewGuid();
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostControlDescriptor(
+                "control:1",
+                "0/1",
+                1,
+                typeof(object).FullName!,
+                "Name",
+                null,
+                true,
+                true,
+                false,
+                false,
+                null,
+                new[]
+                {
+                    new HiveHostCapabilityDescriptor(
+                        duplicateCapabilityId,
+                        HiveHostCapabilityKind.ReadControl,
+                        "Read"),
+                    new HiveHostCapabilityDescriptor(
+                        duplicateCapabilityId,
+                        HiveHostCapabilityKind.SetControlValue,
+                        "Set")
+                }));
+
+        var duplicateBusinessCapabilityId = Guid.NewGuid();
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostContextDescriptor(
+                Guid.NewGuid(),
+                "Host",
+                new HiveHostProvenance(
+                    Guid.NewGuid(),
+                    Guid.NewGuid(),
+                    new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero),
+                    CorrelationId.New(),
+                    "TestAdapter",
+                    new ResourceAccessContext(
+                        DeploymentId.New(),
+                        TenantId.New(),
+                        PrincipalId.New())),
+                Array.Empty<HiveHostControlDescriptor>(),
+                Array.Empty<HiveHostDataSurfaceDescriptor>(),
+                new[]
+                {
+                    new HiveHostBusinessOperationDescriptor(
+                        duplicateBusinessCapabilityId,
+                        "Create",
+                        "Create",
+                        HiveBusinessOperationImplementation.Api),
+                    new HiveHostBusinessOperationDescriptor(
+                        duplicateBusinessCapabilityId,
+                        "Edit",
+                        "Edit",
+                        HiveBusinessOperationImplementation.Api)
+                }));
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostDataSurfaceDescriptor(
+                "surface:1",
+                "Rows",
+                0,
+                new[]
+                {
+                    new HiveHostFieldDescriptor(
+                        "Id",
+                        "Id",
+                        typeof(long).FullName!,
+                        false,
+                        true,
+                        false,
+                        false,
+                        true),
+                    new HiveHostFieldDescriptor(
+                        "Id",
+                        "OtherId",
+                        typeof(long).FullName!,
+                        false,
+                        true,
+                        false,
+                        false,
+                        false)
+                },
+                Array.Empty<HiveHostCapabilityDescriptor>()));
+    }
+
+    [Fact]
+    public void HostCapabilityRequest_RequiresLookupIdentityForLookupAuthorization()
+    {
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostCapabilityRequest(
+                Guid.NewGuid(),
+                HiveHostCapabilityKind.ResolveLookup,
+                CorrelationId.New(),
+                "ReferenceAdapter"));
+    }
+
+    [Fact]
+    public void RowIdentity_IsOpaqueAndIndependentFromPosition()
+    {
+        var first = new HiveHostRow(
+            new HiveHostRowIdentity("101"),
+            0,
+            new Dictionary<string, HiveHostValue>
+            {
+                ["Id"] = HiveHostValue.FromInt64(101)
+            });
+
+        var moved = new HiveHostRow(
+            first.Identity,
+            4,
+            new Dictionary<string, HiveHostValue>
+            {
+                ["Id"] = HiveHostValue.FromInt64(101)
+            });
+
+        Assert.Equal(first.Identity, moved.Identity);
+        Assert.NotEqual(first.Position, moved.Position);
+    }
+
+    [Fact]
+    public void ParentChildSurfaceAndGeneratedComputedFieldSemanticsAreExplicit()
+    {
+        var parent = new HiveHostDataSurfaceDescriptor(
+            "invoice",
+            "Invoices",
+            1,
+            new[]
+            {
+                new HiveHostFieldDescriptor(
+                    "Id",
+                    "Id",
+                    typeof(long).FullName!,
+                    true,
+                    true,
+                    false,
+                    false,
+                    true),
+                new HiveHostFieldDescriptor(
+                    "InvoiceNumber",
+                    "InvoiceNumber",
+                    typeof(string).FullName!,
+                    true,
+                    true,
+                    false,
+                    true,
+                    false),
+                new HiveHostFieldDescriptor(
+                    "Total",
+                    "Total",
+                    typeof(decimal).FullName!,
+                    true,
+                    true,
+                    true,
+                    false,
+                    false)
+            },
+            Array.Empty<HiveHostCapabilityDescriptor>(),
+            new[]
+            {
+                new HiveHostChildDataSurfaceDescriptor(
+                    "invoice",
+                    "invoice-lines",
+                    "Id",
+                    "InvoiceId")
+            });
+
+        Assert.True(parent.Fields.Single(field => field.Name == "Id").IsPrimaryKey);
+        Assert.True(parent.Fields.Single(field => field.Name == "InvoiceNumber").Generated);
+        Assert.True(parent.Fields.Single(field => field.Name == "Total").Computed);
+        Assert.Single(parent.Children);
+        Assert.Equal("InvoiceId", parent.Children[0].ChildKeyField);
+    }
+
+    [Theory]
+    [InlineData(
+        HiveBusinessOperationImplementation.Api,
+        1)]
+    [InlineData(
+        HiveBusinessOperationImplementation.Ui,
+        1)]
+    [InlineData(
+        HiveBusinessOperationImplementation.ApiAndUi,
+        2)]
+    public void BusinessOperationComposition_MapsImplementationToStages(
+        HiveBusinessOperationImplementation implementation,
+        int stageCount)
+    {
+        var correlation = CorrelationId.New();
+        var composition = new HiveBusinessOperationComposition(
+            "SaveInvoice",
+            implementation,
+            correlation,
+            "ReferenceAdapter");
+
+        Assert.Equal(correlation, composition.CorrelationId);
+        Assert.Equal("ReferenceAdapter", composition.AdapterId);
+        Assert.Equal(stageCount, composition.Stages.Count);
+        Assert.Equal(implementation, composition.Implementation);
+    }
+
+    [Fact]
+    public void HostInteractions_RequireCaptureIdentity()
+    {
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostInteractionRequest(
+                Guid.NewGuid(),
+                HiveHostInteractionKind.ReadControl,
+                CorrelationId.New(),
+                controlId: "control:0/0"));
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostInteractionRequest(
+                Guid.NewGuid(),
+                HiveHostInteractionKind.SetControlValue,
+                CorrelationId.New(),
+                controlId: "control:0/0",
+                value: HiveHostValue.FromString("blocked")));
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostCapabilityRequest(
+                Guid.NewGuid(),
+                HiveHostCapabilityKind.ReadControl,
+                CorrelationId.New(),
+                "TestAdapter"));
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveHostCapabilityRequest(
+                Guid.NewGuid(),
+                HiveHostCapabilityKind.SetControlValue,
+                CorrelationId.New(),
+                "TestAdapter"));
+    }
+    [Fact]
+    public async Task Management_DeniesHostCapabilityBeforeAdapterInvocation()
+    {
+        var adapter = new FakeHostAdapter();
+        var deniedCapability = Guid.NewGuid();
+        var captureId = Guid.NewGuid();
+        var authorizer = new FakeAuthorizer(deniedCapability);
+        var service = new HiveHostIntegrationService(authorizer);
+        var context = CreateAccessContext();
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                deniedCapability,
+                HiveHostInteractionKind.SetControlValue,
+                CorrelationId.New(),
+                controlId: "control:0/0",
+                value: HiveHostValue.FromString("blocked"),
+                captureId: captureId),
+            context);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorCategory.Forbidden, result.Error!.Category);
+        Assert.Equal(0, adapter.InteractionCalls);
+    }
+
+    [Fact]
+    public async Task Management_ForwardsAuthorizedInteractionAndPreservesCorrelation()
+    {
+        var adapter = new FakeHostAdapter();
+        var authorizer = new FakeAuthorizer();
+        var service = new HiveHostIntegrationService(authorizer);
+        var context = CreateAccessContext();
+        var correlation = CorrelationId.New();
+        var captureId = Guid.NewGuid();
+
+        var result = await service.ExecuteInteractionAsync(
+            adapter,
+            new HiveHostInteractionRequest(
+                adapter.ReadControlCapabilityId,
+                HiveHostInteractionKind.ReadControl,
+                correlation,
+                controlId: "control:0/0",
+                captureId: captureId),
+            context);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(1, adapter.InteractionCalls);
+        Assert.Equal(correlation, result.Value!.CorrelationId);
+        Assert.Equal(captureId, authorizer.LastCaptureId);
+    }
+
+    [Fact]
+    public async Task Management_RequiresAuthorizedDependentLookup()
+    {
+        var adapter = new FakeHostAdapter();
+        var authorizer = new FakeAuthorizer();
+        var service = new HiveHostIntegrationService(authorizer);
+        var context = CreateAccessContext();
+
+        var request = new HiveLookupRequest(
+            "products",
+            adapter.LookupCapabilityId,
+            new Dictionary<string, HiveHostValue>
+            {
+                ["CategoryId"] = HiveHostValue.FromInt64(10)
+            });
+
+        var result = await service.ResolveLookupAsync(
+            adapter,
+            request,
+            context);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Single(result.Value!);
+        Assert.Equal(10L, adapter.LastLookupCategoryId);
+        Assert.Equal("products", authorizer.LastLookupId);
+    }
+
+    [Fact]
+    public async Task Management_LookupCancellationAfterAuthorizationStopsBeforeAdapterInvocation()
+    {
+        var adapter = new FakeHostAdapter();
+        using var cancellation = new CancellationTokenSource();
+        var service = new HiveHostIntegrationService(
+            new FakeAuthorizer(
+                onAuthorize: cancellation.Cancel));
+        var context = CreateAccessContext();
+
+        var request = new HiveLookupRequest(
+            "products",
+            adapter.LookupCapabilityId);
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => service.ResolveLookupAsync(
+                adapter,
+                request,
+                context,
+                cancellation.Token));
+
+        Assert.Equal(0, adapter.LookupCalls);
+    }
+
+    [Fact]
+    public async Task Management_BusinessOperationCaptureCancellationStopsBeforeAuthorization()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var adapter = new FakeHostAdapter(
+            onCapture: cancellation.Cancel);
+        var authorizer = new FakeAuthorizer();
+        var service = new HiveHostIntegrationService(authorizer);
+        var context = CreateAccessContext();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => service.PrepareBusinessOperationAsync(
+                adapter,
+                "SaveInvoice",
+                CorrelationId.New(),
+                context,
+                cancellation.Token));
+
+        Assert.Equal(0, authorizer.AuthorizationCalls);
+    }
+
+    [Fact]
+    public async Task Management_PreparesApiUiCompositionWithoutExecutingBusinessWrite()
+    {
+        var adapter = new FakeHostAdapter();
+        var authorizer = new FakeAuthorizer();
+        var service = new HiveHostIntegrationService(authorizer);
+        var context = CreateAccessContext();
+        var correlation = CorrelationId.New();
+
+        var result = await service.PrepareBusinessOperationAsync(
+            adapter,
+            "SaveInvoice",
+            correlation,
+            context);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(
+            HiveBusinessOperationImplementation.ApiAndUi,
+            result.Value!.Implementation);
+        Assert.Equal(correlation, result.Value.CorrelationId);
+        Assert.Equal(0, adapter.BusinessWriteCalls);
+    }
+
+    [Fact]
+    public async Task Management_RejectsAmbiguousDuplicateBusinessOperationTypes()
+    {
+        var adapter = new FakeHostAdapter(
+            duplicateBusinessOperationTypes: true);
+        var service = new HiveHostIntegrationService(new FakeAuthorizer());
+        var context = CreateAccessContext();
+
+        var result = await service.PrepareBusinessOperationAsync(
+            adapter,
+            "SaveInvoice",
+            CorrelationId.New(),
+            context);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.business-operation-ambiguous",
+            result.Error!.Code);
+        Assert.Equal(
+            ErrorCategory.Conflict,
+            result.Error.Category);
+        Assert.Equal(0, adapter.BusinessWriteCalls);
+    }
+
+    [Fact]
+    public async Task Management_CancellationStopsBeforeHostInvocation()
+    {
+        var adapter = new FakeHostAdapter();
+        var service = new HiveHostIntegrationService(new FakeAuthorizer());
+        var context = CreateAccessContext();
+
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => service.ExecuteInteractionAsync(
+                adapter,
+                new HiveHostInteractionRequest(
+                    adapter.EditCapabilityId,
+                    HiveHostInteractionKind.ReadControl,
+                    CorrelationId.New(),
+                    controlId: "control:0/0",
+                    captureId: Guid.NewGuid()),
+                context,
+                cancellation.Token));
+
+        Assert.Equal(0, adapter.InteractionCalls);
+    }
+
+    [Fact]
+    public async Task Management_RejectsMissingDeploymentOrPrincipalIdentity()
+    {
+        var adapter = new FakeHostAdapter();
+        var service = new HiveHostIntegrationService(new FakeAuthorizer());
+
+        var result = await service.CaptureAsync(
+            adapter,
+            new ResourceAccessContext());
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.integration.identity-required",
+            result.Error!.Code);
+    }
+
+    private static ResourceAccessContext CreateAccessContext() =>
+        new(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+    private sealed class FakeAuthorizer : IHiveHostCapabilityAuthorizer
+    {
+        private readonly Guid? _deniedCapabilityId;
+        private readonly Action? _onAuthorize;
+
+        public FakeAuthorizer(
+            Guid? deniedCapabilityId = null,
+            Action? onAuthorize = null)
+        {
+            _deniedCapabilityId = deniedCapabilityId;
+            _onAuthorize = onAuthorize;
+        }
+
+        public int AuthorizationCalls { get; private set; }
+
+        public string? LastLookupId { get; private set; }
+
+        public Guid? LastCaptureId { get; private set; }
+
+        public Result Authorize(
+            HiveHostCapabilityRequest request,
+            ResourceAccessContext accessContext)
+        {
+            AuthorizationCalls++;
+            LastLookupId = request.LookupId;
+            LastCaptureId = request.CaptureId;
+            _onAuthorize?.Invoke();
+
+            return request.CapabilityId == _deniedCapabilityId
+                ? Result.Failure(
+                    new Error(
+                        "hive.tests.host-capability-forbidden",
+                        ErrorCategory.Forbidden,
+                        "The test authorizer denied the host capability."))
+                : Result.Success();
+        }
+    }
+
+    private sealed class FakeHostAdapter : IHiveHostIntegrationAdapter
+    {
+        private readonly bool _duplicateBusinessOperationTypes;
+        private readonly Action? _onCapture;
+
+        public FakeHostAdapter(
+            bool duplicateBusinessOperationTypes = false,
+            Action? onCapture = null)
+        {
+            _duplicateBusinessOperationTypes = duplicateBusinessOperationTypes;
+            _onCapture = onCapture;
+        }
+
+        public Guid EditCapabilityId { get; } = Guid.NewGuid();
+
+        public Guid ReadControlCapabilityId { get; } = Guid.NewGuid();
+
+        public Guid LookupCapabilityId { get; } = Guid.NewGuid();
+
+        public int InteractionCalls { get; private set; }
+
+        public int BusinessWriteCalls { get; private set; }
+
+        public int LookupCalls { get; private set; }
+
+        public long LastLookupCategoryId { get; private set; }
+
+        public string AdapterId => "Hive.Tests.ReferenceHost";
+
+        public Task<Result<HiveHostContextDescriptor>> CaptureAsync(
+            ResourceAccessContext accessContext,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            _onCapture?.Invoke();
+
+            var lookup = new HiveHostLookupDescriptor(
+                "products",
+                LookupCapabilityId,
+                "Name",
+                "Id",
+                new[] { "CategoryId" });
+
+            var lineSurface = new HiveHostDataSurfaceDescriptor(
+                "invoice-lines",
+                "Invoice lines",
+                2,
+                new[]
+                {
+                    new HiveHostFieldDescriptor(
+                        "Id",
+                        "Id",
+                        typeof(long).FullName!,
+                        true,
+                        true,
+                        false,
+                        false,
+                        true),
+                    new HiveHostFieldDescriptor(
+                        "CategoryId",
+                        "CategoryId",
+                        typeof(long).FullName!,
+                        true,
+                        false,
+                        false,
+                        false,
+                        false),
+                    new HiveHostFieldDescriptor(
+                        "ProductId",
+                        "ProductId",
+                        typeof(long).FullName!,
+                        true,
+                        false,
+                        false,
+                        false,
+                        false,
+                        lookup: lookup)
+                },
+                new[]
+                {
+                    new HiveHostCapabilityDescriptor(
+                        EditCapabilityId,
+                        HiveHostCapabilityKind.EditRow,
+                        "Edit invoice line")
+                });
+
+            var correlation = CorrelationId.New();
+
+            var saveInvoiceOperations = _duplicateBusinessOperationTypes
+                ? new[]
+                {
+                    new HiveHostBusinessOperationDescriptor(
+                        Guid.NewGuid(),
+                        "SaveInvoice",
+                        "Save invoice",
+                        HiveBusinessOperationImplementation.ApiAndUi),
+                    new HiveHostBusinessOperationDescriptor(
+                        Guid.NewGuid(),
+                        "SaveInvoice",
+                        "Duplicate save invoice",
+                        HiveBusinessOperationImplementation.Api)
+                }
+                : new[]
+                {
+                    new HiveHostBusinessOperationDescriptor(
+                        Guid.NewGuid(),
+                        "SaveInvoice",
+                        "Save invoice",
+                        HiveBusinessOperationImplementation.ApiAndUi)
+                };
+
+            return Task.FromResult(
+                Result<HiveHostContextDescriptor>.Success(
+                    new HiveHostContextDescriptor(
+                        Guid.NewGuid(),
+                        "Reference Host",
+                        new HiveHostProvenance(
+                            Guid.NewGuid(),
+                            Guid.NewGuid(),
+                            DateTimeOffset.UtcNow,
+                            correlation,
+                            "ReferenceAdapter",
+                            accessContext),
+                        new[]
+                        {
+                            new HiveHostControlDescriptor(
+                                "control:0/0",
+                                "0/0",
+                                1,
+                                typeof(System.Windows.Forms.TextBox).FullName!,
+                                "customer",
+                                "Customer",
+                                true,
+                                true,
+                                false,
+                                false,
+                                new HiveHostFieldDescriptor(
+                                    "Customer",
+                                    "Customer",
+                                    typeof(string).FullName!,
+                                    false,
+                                    false,
+                                    false,
+                                    false,
+                                    false),
+                                new[]
+                                {
+                                    new HiveHostCapabilityDescriptor(
+                                        ReadControlCapabilityId,
+                                        HiveHostCapabilityKind.ReadControl,
+                                        "Read customer")
+                                })
+                        },
+                        new[] { lineSurface },
+                        saveInvoiceOperations)));
+        }
+
+        public Task<Result<HiveHostInteractionResult>> ExecuteInteractionAsync(
+            HiveHostInteractionRequest request,
+            ResourceAccessContext accessContext,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            InteractionCalls++;
+
+            return Task.FromResult(
+                Result<HiveHostInteractionResult>.Success(
+                    new HiveHostInteractionResult(
+                        request.CorrelationId,
+                        request.Kind)));
+        }
+
+        public Task<Result<IReadOnlyList<HiveLookupOption>>> ResolveLookupAsync(
+            HiveLookupRequest request,
+            ResourceAccessContext accessContext,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            LookupCalls++;
+
+            if (request.CurrentValues.TryGetValue(
+                    "CategoryId",
+                    out var category))
+            {
+                category.TryGetInt64(out var categoryId);
+                LastLookupCategoryId = categoryId;
+            }
+
+            return Task.FromResult(
+                Result<IReadOnlyList<HiveLookupOption>>.Success(
+                    new[]
+                    {
+                        new HiveLookupOption(
+                            new HiveHostRowIdentity("1"),
+                            HiveHostValue.FromInt64(1),
+                            "Product A")
+                    }));
+        }
+    }
+}
