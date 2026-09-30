@@ -242,6 +242,10 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
     internal TextBox EndpointTextBox => _endpointTextBox;
 
+    internal HiveButton TestButton => _testButton;
+
+    internal Label TestStatusLabel => _testStatus;
+
     internal ComboBox ManagementModeSelector => _managementModeComboBox;
 
     internal HiveCapabilityEditor CapabilityEditor => _capabilityEditor;
