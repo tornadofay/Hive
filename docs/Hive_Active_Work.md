@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -304,3 +304,11 @@ Latest remediation:
 Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full `Hive.Tests` suite;
 - the requested next UI polish remains blocked until that rerun clears this verification gate.
+
+
+Latest verification failure:
+- developer reported compile error CS0103 in `Hive.Tests/HiveExecutionTargetDiscoverySettingsTests.cs`: the footer-status regression calls `FindControl<HiveEditorLayout>`, but that helper is not defined in this test class.
+
+Remediation boundary:
+- correct only the focused test to use an available local control-tree traversal or direct child lookup;
+- do not alter production UI visibility or add a production testing-only API.
