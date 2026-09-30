@@ -400,8 +400,7 @@ public sealed class OpenAICompatibleProviderAdapter
             }
             catch (DecoderFallbackException)
             {
-                return Result<OpenAICompatibleModelCatalog>.Failure(
-                    ModelSerializationFailure());
+                return ModelSerializationFailure();
             }
         }
     }
@@ -647,8 +646,8 @@ public sealed class OpenAICompatibleProviderAdapter
                 descriptors.Add(
                     new OpenAICompatibleModelDescriptor(
                         id,
-                        ownedBy: null,
-                        createdAtUtc: null,
+                        OwnedBy: null,
+                        CreatedAtUtc: null,
                         ProviderAvailabilityStatus.Unknown,
                         ProviderHealthStatus.Unknown,
                         capabilities
