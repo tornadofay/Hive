@@ -380,7 +380,7 @@ public sealed class Phase116FollowUpTests
             cloudflare.CredentialRequirement);
     }
 
-    [Fact]
+    [WinFormsFact]
     public void StructuredCapabilityEditor_PreservesConfiguredOverridesAndDiscoveryEvidence()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
@@ -414,7 +414,7 @@ public sealed class Phase116FollowUpTests
                 .State);
     }
 
-    [Fact]
+    [WinFormsFact]
     public void AdvancedConfigurationTree_UsesOverviewAndModelInformationLeaves()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
@@ -452,7 +452,7 @@ public sealed class Phase116FollowUpTests
         Assert.Equal("Overview", form.NavigationTree.SelectedNode?.Text);
     }
 
-    [Fact]
+    [WinFormsFact]
     public async Task ModelInformationView_RendersRichDiscoveryProfile()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
