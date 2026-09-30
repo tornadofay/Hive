@@ -430,7 +430,7 @@ public sealed class Phase116FollowUpTests
             "Advanced Provider Configuration",
             form.Text);
         Assert.Equal(
-            280,
+            320,
             form.NavigationSplitterDistance);
 
         var names = form.NavigationTree
