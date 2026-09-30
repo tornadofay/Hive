@@ -344,3 +344,21 @@ Latest remediation:
 Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full `Hive.Tests` suite;
 - the next requested capability-layout polish remains blocked until this rerun passes.
+
+Latest verification failure:
+- developer reran Hive.Tests: 496 Tests (492 Passed, 4 Failed, 0 Skipped).
+- HiveExecutionTargetDiscoverySettingsTests.Editor_AutomaticTargetClearsStaleDiscoveredCapabilitiesWhenModelBecomesCustom reports two capability entries after switching to a custom model where the regression expects no stale configured capabilities.
+- HiveExecutionTargetDiscoverySettingsTests.DiscoveryPanel_UnsupportedEnumerationLeavesManualEntryAvailable reports the model selector disabled when manual entry is expected to remain enabled.
+- HiveExecutionTargetDiscoverySettingsTests.DiscoveryPanel_FailureLeavesManualEntryAvailable reports the model selector disabled when manual entry is expected to remain enabled.
+- Phase116FollowUpTests.AdvancedConfigurationTree_UsesOverviewAndModelInformationLeaves throws InvalidOperationException during form construction because the requested 320px splitter distance exceeds the effective available width once the panel minimum sizes are applied.
+
+Remediation boundary:
+- correct only the stale automatic-target capability clearing behavior exercised by the failing execution-target regression;
+- preserve manual model entry when discovery is unsupported or fails, without weakening discovery error handling or cancellation semantics;
+- make the Advanced Provider Configuration navigation width deterministic within the form minimum-size/layout constraints so the tree is genuinely wider without violating SplitContainer bounds;
+- do not alter unrelated provider metadata behavior or begin the requested capability-layout polish until this verification boundary is cleared.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
+- the requested capability-layout polish remains blocked until this rerun passes;
+- required Example Host handoff remains: Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms.
