@@ -101,15 +101,15 @@ public sealed class ProviderModelMetadataProviderTests
         Assert.Equal(
             CapabilityState.Supported,
             model.DiscoveredCapabilities.Single(
-                capability => capability.Key == "tool.calling").State);
+                capability => capability.Capability == new CapabilityKey("tool.calling")).State);
         Assert.Equal(
             CapabilityState.Supported,
             model.DiscoveredCapabilities.Single(
-                capability => capability.Key == "structured.output").State);
+                capability => capability.Capability == new CapabilityKey("structured.output")).State);
         Assert.Equal(
             CapabilityState.Supported,
             model.DiscoveredCapabilities.Single(
-                capability => capability.Key == "reasoning").State);
+                capability => capability.Capability == new CapabilityKey("reasoning")).State);
         Assert.Equal(
             131072,
             model.Limits!.ContextWindowTokens);
@@ -166,15 +166,15 @@ public sealed class ProviderModelMetadataProviderTests
         Assert.Equal(
             CapabilityState.Supported,
             model.DiscoveredCapabilities.Single(
-                capability => capability.Key == "text.generate").State);
+                capability => capability.Capability == new CapabilityKey("text.generate")).State);
         Assert.Equal(
             CapabilityState.Supported,
             model.DiscoveredCapabilities.Single(
-                capability => capability.Key == "reasoning").State);
+                capability => capability.Capability == new CapabilityKey("reasoning")).State);
         Assert.Equal(
             CapabilityState.Supported,
             model.DiscoveredCapabilities.Single(
-                capability => capability.Key == "thinking").State);
+                capability => capability.Capability == new CapabilityKey("thinking")).State);
         Assert.Equal(
             1048576,
             model.Limits!.ContextWindowTokens);
@@ -235,19 +235,19 @@ public sealed class ProviderModelMetadataProviderTests
         Assert.Equal(
             CapabilityState.Supported,
             model.DiscoveredCapabilities.Single(
-                capability => capability.Key == "vision").State);
+                capability => capability.Capability == new CapabilityKey("vision")).State);
         Assert.Equal(
             CapabilityState.Supported,
             model.DiscoveredCapabilities.Single(
-                capability => capability.Key == "tool.calling").State);
+                capability => capability.Capability == new CapabilityKey("tool.calling")).State);
         Assert.Equal(
             CapabilityState.Supported,
             model.DiscoveredCapabilities.Single(
-                capability => capability.Key == "reasoning").State);
+                capability => capability.Capability == new CapabilityKey("reasoning")).State);
         Assert.Equal(
             CapabilityState.Supported,
             model.DiscoveredCapabilities.Single(
-                capability => capability.Key == "thinking").State);
+                capability => capability.Capability == new CapabilityKey("thinking")).State);
         Assert.Equal(
             ["off", "on", "low", "medium", "high"],
             model.ThinkingOptions);
@@ -360,11 +360,11 @@ public sealed class ProviderModelMetadataProviderTests
         Assert.Equal(
             CapabilityState.Supported,
             model.DiscoveredCapabilities.Single(
-                capability => capability.Key == "tool.calling").State);
+                capability => capability.Capability == new CapabilityKey("tool.calling")).State);
         Assert.Equal(
             CapabilityState.Supported,
             model.DiscoveredCapabilities.Single(
-                capability => capability.Key == "structured.output").State);
+                capability => capability.Capability == new CapabilityKey("structured.output")).State);
         Assert.True(model.Pricing!.ExplicitFreeEvidence);
     }
 
