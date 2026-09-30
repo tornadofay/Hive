@@ -108,7 +108,7 @@ internal sealed class HiveProviderSetupEditorForm : HiveForm
                         BuiltInProviderCredentialKind.ApiKey,
                         null,
                         normalOnboardingSupported: false,
-                        "This provider is managed through Advanced Configuration.")));
+                        "This provider is managed through Advanced Provider Configuration.")));
             _providerComboBox.SelectedIndex = _providerComboBox.Items.Count - 1;
             _providerComboBox.Enabled = false;
         }
@@ -181,7 +181,7 @@ internal sealed class HiveProviderSetupEditorForm : HiveForm
         {
             _detailsLabel.Text =
                 definition.OnboardingNote ??
-                "This provider requires Advanced Configuration.";
+                "This provider requires Advanced Provider Configuration.";
             _saveButton.Enabled = false;
             return;
         }
@@ -222,7 +222,7 @@ internal sealed class HiveProviderSetupEditorForm : HiveForm
             if (!definition.NormalOnboardingSupported)
                 throw new InvalidOperationException(
                     definition.OnboardingNote ??
-                    "This provider must be configured through Advanced Configuration.");
+                    "This provider must be configured through Advanced Provider Configuration.");
 
             if (definition.RequiresCredential &&
                 string.IsNullOrWhiteSpace(_credentialTextBox.Text))
