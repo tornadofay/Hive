@@ -171,3 +171,13 @@ Latest verification failure:
 Remediation boundary:
 - correct only the focused provider metadata test references to the existing `ProviderModelMetadata.DiscoveredCapabilities` contract;
 - do not add a duplicate `Capabilities` production property or alter provider metadata semantics, normalization, or routing.
+
+
+Latest remediation:
+- corrected the 15 focused provider metadata test references from ProviderModelMetadata.Capabilities to ProviderModelMetadata.DiscoveredCapabilities, matching the existing normalized contract;
+- left production metadata types and provider discovery behavior unchanged;
+- source inspection confirmed no remaining .Capabilities references in ProviderModelMetadataProviderTests.cs.
+
+Verification boundary:
+- developer must rerun the focused Phase 1.16 discovery/model-information tests and the full Hive.Tests suite;
+- recheck the built-in provider Model Information flows after the test project compiles.
