@@ -220,6 +220,9 @@ internal sealed class HiveCapabilityEditor : UserControl
 
     public void SetDiscovery(ProviderModelMetadata? discovery)
     {
+        if (_automatic)
+            _automaticCapabilities = Array.Empty<CapabilityStateEntry>();
+
         _discovered = discovery?.DiscoveredCapabilities ?? Array.Empty<CapabilityStateEntry>();
 
         foreach (var row in _rows)
