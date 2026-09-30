@@ -140,3 +140,12 @@ Verification boundary:
 - verify configured OpenRouter, Cerebras, Google Gemini, LM Studio, Ollama, and Cloudflare accounts where available;
 - confirm model information displays provider-reported capabilities/metadata and that OpenAI/NVIDIA legitimately show Unknown where their API does not report those fields;
 - required handoff remains: `Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms`.
+
+Latest remediation:
+- preserved the provider-reported ordering of LM Studio reasoning options instead of passing those semantic levels through lexical modality normalization.
+- revision inspection confirmed this correction remains confined to the provider metadata parser and does not alter inference request behavior.
+
+Verification boundary:
+- developer must rerun the focused Phase 1.16 discovery/model-information tests and the full `Hive.Tests` suite;
+- manually inspect configured provider Model Information for OpenRouter, Cerebras, Google Gemini, LM Studio, Ollama, Cloudflare, Groq, OpenAI, and NVIDIA where configurations are available;
+- confirm Ollama bulk discovery makes no per-model `/api/show` calls and that providers without capability evidence remain Unknown rather than inferred.
