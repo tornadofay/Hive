@@ -329,5 +329,5 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
         Uri Uri,
         OpenAICompatibleModelCatalogFormat Format);
 
-    }
+    
 }
