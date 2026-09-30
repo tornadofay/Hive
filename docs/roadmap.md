@@ -393,7 +393,7 @@ Automatic target reconciliation:
 - never interprets failed/stale/unsupported discovery as an empty model catalog;
 - never overwrites administrator-managed target endpoint/model/deployment/capability configuration.
 
-Advanced Configuration:
+Advanced Provider Configuration:
 - is one generalized administrative entry point beside `Add Provider` and `Refresh`, not a provider-specific action;
 - is independent of row selection or provider selection;
 - opens the existing generalized Providers / Accounts / Credentials / Execution Targets administration pages;
@@ -421,11 +421,11 @@ Verify:
 ## 1.16 Follow-Up — Complete Provider Model Metadata Discovery
 Detailed implementation plan: [Phase 1.16 Follow-Up — Model Information](plan/Phase1.16_FollowUp_Model_Information.md)
 
-Objective: extend the established Phase 1.16 discovery boundary to preserve the complete useful provider-reported model profile within Hive's existing security, validation, response-size, cancellation, and bounded-processing constraints, and expose that information through the Advanced Configuration **Model Information** page.
+Objective: extend the established Phase 1.16 discovery boundary to preserve the complete useful provider-reported model profile within Hive's existing security, validation, response-size, cancellation, and bounded-processing constraints, and expose that information through the Advanced Provider Configuration **Model Information** page.
 
 Scope and non-goals are defined in the detailed plan. The durable Provider → ProviderAccount → ExecutionTarget graph remains unchanged; no durable Model resource, second provider transport architecture, Agent target-selection redesign, automatic all-model probing, or periodic/background discovery is introduced.
 
-Verify: rich model metadata normalization and absence semantics; modalities, capabilities, reasoning/thinking and options, limits, pricing/free evidence, operational metadata, bounded provider-specific evidence, failure/cancellation/security behavior, stable reconciliation and override authority, structured capability UI, credential semantics, Advanced Configuration tree/Overview/Model Information navigation, and matching Example Host verification.
+Verify: rich model metadata normalization and absence semantics; modalities, capabilities, reasoning/thinking and options, limits, pricing/free evidence, operational metadata, bounded provider-specific evidence, failure/cancellation/security behavior, stable reconciliation and override authority, structured capability UI, credential semantics, Advanced Provider Configuration tree/Overview/Model Information navigation, and matching Example Host verification.
 
 ## 1.17 — Structured Extraction & Validation
 Detailed implementation plan: [Phase 1.17 Structured Extraction & Validation](plan/Phase1.17_Structured_Extraction_Validation.md)

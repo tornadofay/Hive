@@ -6,7 +6,7 @@ This document contains the detailed implementation plan referenced by the roadma
 
 **1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
-The follow-up extends the existing Phase 1.16 provider/model discovery boundary and makes the richer discovered information understandable through the Advanced Configuration UI. It does not create a durable Model resource or replace the Provider → ProviderAccount → ExecutionTarget resource model. The normal Provider Settings onboarding remains intentionally minimal: the Add Provider dialog selects a built-in provider from the catalog and collects credential material only; endpoint, account, model, and target administration remains in Advanced Configuration.
+The follow-up extends the existing Phase 1.16 provider/model discovery boundary and makes the richer discovered information understandable through the Advanced Provider Configuration UI. It does not create a durable Model resource or replace the Provider → ProviderAccount → ExecutionTarget resource model. The normal Provider Settings onboarding remains intentionally minimal: the Add Provider dialog selects a built-in provider from the catalog and collects credential material only; endpoint, account, model, and target administration remains in Advanced Provider Configuration.
 
 ## 1. Scope
 
@@ -33,12 +33,12 @@ Provider/account quotas and rate limits remain separate from model-scoped limits
 
 Discovery remains evidence rather than configuration or authorization. Automatic target reconciliation may use applicable discovered capability evidence, but rich model metadata is not copied into durable ExecutionTarget configuration. Configured target capability overrides remain authoritative.
 
-### Advanced Configuration navigation
+### Advanced Provider Configuration navigation
 
-The existing Advanced Configuration window becomes a proper tree-based administrative surface with an Overview page and selectable resource/information pages:
+The existing Advanced Provider Configuration window becomes a proper tree-based administrative surface with an Overview page and selectable resource/information pages:
 
 ```
-Advanced Configuration
+Advanced Provider Configuration
 ├── Overview
 ├── Providers
 ├── Accounts / Credentials
@@ -54,7 +54,7 @@ The tree is the navigation mechanism; individual pages are replaceable content v
 
 ### Model Information page
 
-**Model Information** is a read-only discovery-information page in Advanced Configuration. It does not become a second model configuration store.
+**Model Information** is a read-only discovery-information page in Advanced Provider Configuration. It does not become a second model configuration store.
 
 The page should allow the administrator to identify the relevant provider/account/endpoint discovery context and inspect successfully discovered models. It should distinguish discovery evidence from durable target configuration and show freshness/observation state so an administrator does not mistake stale or missing information for authoritative configuration.
 
@@ -163,10 +163,10 @@ Automated verification should cover:
 - read-only Model Information presentation over deterministic discovery fixtures;
 - no duplication of rich model metadata into durable target configuration.
 
-Manual Example Host verification should exercise the real Advanced Configuration surface, including:
+Manual Example Host verification should exercise the real Advanced Provider Configuration surface, including:
 
 ```
-Advanced Configuration
+Advanced Provider Configuration
 ├── Overview
 ├── Providers
 ├── Accounts / Credentials

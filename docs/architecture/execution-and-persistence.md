@@ -202,9 +202,9 @@ discovery
 target reconciliation
 ```
 
-The credential is never persisted in the Provider record or returned to the Settings UI. The normal Add Provider dialog remains intentionally minimal: it selects a built-in provider and collects only its credential material; it does not expose endpoint, account, model, deployment, or target administration. For providers using the normal simple credential workflow, Add collects the API key and normal Edit replaces that API key; Provider catalog identity and transport configuration are not edited through the normal surface. Providers that require account-specific or non-universal endpoint configuration use Advanced Configuration for the additional setup. Authentication requirements remain catalog-defined so a future built-in provider with a different simple credential shape can use the appropriate protected credential input rather than forcing an incorrect API-key model.
+The credential is never persisted in the Provider record or returned to the Settings UI. The normal Add Provider dialog remains intentionally minimal: it selects a built-in provider and collects only its credential material; it does not expose endpoint, account, model, deployment, or target administration. For providers using the normal simple credential workflow, Add collects the API key and normal Edit replaces that API key; Provider catalog identity and transport configuration are not edited through the normal surface. Providers that require account-specific or non-universal endpoint configuration use Advanced Provider Configuration for the additional setup. Authentication requirements remain catalog-defined so a future built-in provider with a different simple credential shape can use the appropriate protected credential input rather than forcing an incorrect API-key model.
 
-The durable ProviderAccount resource still exists even though normal users do not manage it directly. This preserves the ability to support multiple accounts/projects/credentials through Advanced Configuration without creating a second configuration model.
+The durable ProviderAccount resource still exists even though normal users do not manage it directly. This preserves the ability to support multiple accounts/projects/credentials through Advanced Provider Configuration without creating a second configuration model.
 
 Successful provider configuration and external discovery are separate failure boundaries. Durable Provider/ProviderAccount/credential state may be committed before network discovery begins; network discovery must not run inside a database transaction. If discovery fails after configuration is saved, Hive preserves the configuration and reports the operational failure, allowing Refresh/retry. The same rule applies to credential replacement: invalidate affected discovery evidence, then perform the fresh discovery/reconciliation outside the credential transaction.
 
@@ -246,12 +246,12 @@ Reconciliation is triggered by successful discovery events such as initial provi
 
 All reconciliation writes pass through Hive.Management and the existing persistence/resource lifecycle/concurrency boundaries. WinForms does not create ProviderAccount/ExecutionTarget records directly, call provider transport, store secrets, or implement reconciliation logic.
 
-### Advanced Configuration Boundary
+### Advanced Provider Configuration Boundary
 
-Advanced Configuration is a single generalized administrative surface:
+Advanced Provider Configuration is a single generalized administrative surface:
 
 ```text
-Advanced Configuration
+Advanced Provider Configuration
 ├── Providers
 ├── Accounts / Credentials
 └── Execution Targets
@@ -259,7 +259,7 @@ Advanced Configuration
 
 It is not provider-specific. The Advanced entry point may optionally open with a selected provider/account filter for convenience, but the underlying pages and contracts remain generalized.
 
-Advanced Configuration exists for cases that the normal Provider onboarding intentionally hides:
+Advanced Provider Configuration exists for cases that the normal Provider onboarding intentionally hides:
 
 - multiple ProviderAccounts or credentials;
 - custom or alternate endpoints;
@@ -269,7 +269,7 @@ Advanced Configuration exists for cases that the normal Provider onboarding inte
 - unusual provider/account/target relationships;
 - administrative lifecycle management and troubleshooting.
 
-The normal Settings page therefore represents the user-facing service configuration, while Advanced Configuration represents the underlying resource administration. They are two presentation levels over the same authoritative Management contracts, not two competing configuration systems.
+The normal Settings page therefore represents the user-facing service configuration, while Advanced Provider Configuration represents the underlying resource administration. They are two presentation levels over the same authoritative Management contracts, not two competing configuration systems.
 
 ### Capability and Selection Boundary
 
