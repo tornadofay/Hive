@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -229,3 +229,15 @@ Latest verification failure:
 Latest remediation:
 - corrected the seven affected JSON root-closing lines in `ProviderModelMetadataProviderTests.cs` to use the 12-space indentation required by the surrounding C# raw string literals;
 - source inspection confirmed all seven affected lines now match the raw-string closing indentation.
+
+
+Latest verification failure:
+- developer reran the full `Hive.Tests` suite: 492 tests, 487 passed, 5 failed.
+- the remaining four provider-specific catalog failures (Cloudflare, LM Studio, Gemini, Ollama) were routed through the standard `/v1/models` path because the deterministic test provider resource key is constructed as `provider-{providerKey}`, while provider-specific routing intentionally matches the built-in provider keys themselves.
+- the Cerebras test consequently received the standard `/v1/models` path instead of the already implemented public `/public/v1/models?format=openrouter` path.
+- current official Cerebras documentation confirms the public model metadata endpoint is `GET /public/v1/models` with an optional `format=openrouter`; Cloudflare's model search returns its marketplace data in the `result` array when `format=openrouter` is requested. LM Studio's current native list endpoint is `GET /api/v1/models`, and Gemini's native list endpoint is `GET /v1beta/models`. citeturn615836search1turn503108search0turn418391search0turn418391search8
+
+Remediation boundary:
+- correct only the deterministic provider metadata test fixture so the Provider resource uses the same provider key that the production routing contract expects;
+- do not weaken provider routing, add aliases for test-only keys, or alter provider metadata parsing because of the fixture mismatch;
+- preserve the existing provider-specific endpoint selections and normalized metadata semantics.
