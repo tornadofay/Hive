@@ -188,7 +188,7 @@ internal sealed class HiveProvidersSettingsView : UserControl
         var status = provider.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active
             ? "Retired"
             : catalog is null
-                ? "Advanced configuration"
+                ? "Advanced Provider Configuration"
                 : catalog.CredentialRequirement == BuiltInProviderCredentialRequirement.Required &&
                   !credentialConfigured
                     ? "Credential missing"
@@ -255,7 +255,7 @@ internal sealed class HiveProvidersSettingsView : UserControl
         if (catalog?.NormalOnboardingSupported != true)
         {
             throw new InvalidOperationException(
-                "This provider must be edited through Advanced Configuration.");
+                "This provider must be edited through Advanced Provider Configuration.");
         }
 
         using var replacement = CreateCredential(editor.Credential);
