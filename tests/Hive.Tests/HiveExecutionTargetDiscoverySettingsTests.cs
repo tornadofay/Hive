@@ -10,7 +10,7 @@ namespace Hive.Tests;
 
 public sealed class HiveExecutionTargetDiscoverySettingsTests
 {
-    [Fact]
+    [WinFormsFact]
     public async Task DiscoveryPanel_UsesManagementAndPresentsDiscoveredModelsAndMetadata()
     {
         var target = CreateTarget();
@@ -37,7 +37,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.Contains("Healthy", panel.MetadataLabel.Text);
     }
 
-    [Fact]
+    [WinFormsFact]
     public async Task DiscoveryPanel_SelectionRaisesModelWithoutChangingConfiguredCapabilityOverrides()
     {
         var target = CreateTarget(
@@ -79,7 +79,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             target.Capabilities.Single().State);
     }
 
-    [Fact]
+    [WinFormsFact]
     public async Task Editor_AddPrefillsBuiltInProviderEndpointAndUsesEditableModelCombo()
     {
         var context = CreateContext();
@@ -133,7 +133,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.Equal("custom-model", editor.ModelSelector.Text);
     }
 
-    [Fact]
+    [WinFormsFact]
     public async Task Editor_AutomaticTargetClearsStaleDiscoveredCapabilitiesWhenModelBecomesCustom()
     {
         var target = CreateTarget(
@@ -171,7 +171,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.Empty(editor.CapabilityEditor.GetConfiguredCapabilities());
     }
 
-    [Fact]
+    [WinFormsFact]
     public void Editor_ConnectionTestStatusLivesInFooterActionBar()
     {
         var target = CreateTarget();
@@ -209,7 +209,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.Contains(editor.TestButton, footer.Controls.Cast<Control>());
     }
 
-    [Fact]
+    [WinFormsFact]
     public async Task ExecutionTargetsView_SelectingProviderSelectsDefaultAccount()
     {
         var context = CreateContext();
@@ -247,7 +247,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.Equal("Default Account", view.AccountSelector.SelectedItem?.ToString());
     }
 
-    [Fact]
+    [WinFormsFact]
     public async Task Editor_AutomaticallyStartsDiscoveryWhenOpenedForPersistedTarget()
     {
         var target = CreateTarget();
@@ -284,7 +284,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         }
     }
 
-    [Fact]
+    [WinFormsFact]
     public async Task Editor_AppliesSelectedDiscoveredModelToEditableModelField()
     {
         var target = CreateTarget();
@@ -316,7 +316,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.Equal("vision-model", editor.ModelSelector.Text);
     }
 
-    [Fact]
+    [WinFormsFact]
     public async Task DiscoveryPanel_FailureLeavesManualEntryAvailable()
     {
         var target = CreateTarget();
@@ -344,7 +344,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.False(panel.ModelSelector.Enabled);
     }
 
-    [Fact]
+    [WinFormsFact]
     public async Task DiscoveryPanel_UnsupportedEnumerationLeavesManualEntryAvailable()
     {
         var target = CreateTarget();
@@ -374,7 +374,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.False(panel.ModelSelector.Enabled);
     }
 
-    [Fact]
+    [WinFormsFact]
     public async Task DiscoveryPanel_SupersededCancellationDoesNotApplyOlderResult()
     {
         var target = CreateTarget();
@@ -420,7 +420,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.Contains("Discovered 1 model(s).", panel.StatusLabel.Text);
     }
 
-    [Fact]
+    [WinFormsFact]
     public async Task DiscoveryPanel_EndpointChangePreventsRefreshUntilSaved()
     {
         var target = CreateTarget();
@@ -582,7 +582,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         return null;
     }
 
-    private sealed class ExecutionTargetsManagementProxy : DispatchProxy
+    private class ExecutionTargetsManagementProxy : DispatchProxy
     {
         private IReadOnlyList<Provider> _providers = [];
         private IReadOnlyList<ProviderAccount> _accounts = [];
