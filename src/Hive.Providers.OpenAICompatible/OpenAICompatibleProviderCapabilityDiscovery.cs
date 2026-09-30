@@ -93,6 +93,16 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
 
         cancellationToken.ThrowIfCancellationRequested();
 
+        var endpointResult = ResolveModelCatalogEndpoint(
+            provider.Key,
+            target.Endpoint);
+
+        if (endpointResult.IsFailure)
+            return Result<ProviderDiscoverySnapshot>.Failure(
+                endpointResult.Error!);
+
+        var endpoint = endpointResult.Value!;
+
         var options = new OpenAICompatibleProviderOptions(
             target.Endpoint,
             credential,
@@ -103,7 +113,10 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
             options);
 
         var catalog = await adapter
-            .ListModelsAsync(cancellationToken)
+            .ListModelsAsync(
+                endpoint.Uri,
+                endpoint.Format,
+                cancellationToken)
             .ConfigureAwait(false);
 
         if (catalog.IsFailure)
@@ -181,5 +194,138 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
                     catalog.Value.RateLimitRemaining),
                 ProviderDiscoveryState.Supported,
                 models));
+    private static Result<ModelCatalogEndpoint> ResolveModelCatalogEndpoint(
+        string providerKey,
+        Uri baseEndpoint)
+    {
+        ArgumentNullException.ThrowIfNull(baseEndpoint);
+
+        var key = providerKey?.Trim().ToLowerInvariant();
+
+        return key switch
+        {
+            "cerebras" => Result<ModelCatalogEndpoint>.Success(
+                new ModelCatalogEndpoint(
+                    BuildCerebrasModelsUri(baseEndpoint),
+                    OpenAICompatibleModelCatalogFormat.CerebrasOpenRouter)),
+
+            "google-gemini" => Result<ModelCatalogEndpoint>.Success(
+                new ModelCatalogEndpoint(
+                    BuildGeminiModelsUri(baseEndpoint),
+                    OpenAICompatibleModelCatalogFormat.Gemini)),
+
+            "lm-studio" => Result<ModelCatalogEndpoint>.Success(
+                new ModelCatalogEndpoint(
+                    BuildLmStudioModelsUri(baseEndpoint),
+                    OpenAICompatibleModelCatalogFormat.LmStudio)),
+
+            "ollama" => Result<ModelCatalogEndpoint>.Success(
+                new ModelCatalogEndpoint(
+                    BuildOllamaModelsUri(baseEndpoint),
+                    OpenAICompatibleModelCatalogFormat.Ollama)),
+
+            "cloudflare" => BuildCloudflareModelsEndpoint(baseEndpoint),
+
+            "openrouter" => Result<ModelCatalogEndpoint>.Success(
+                new ModelCatalogEndpoint(
+                    BuildModelsUri(baseEndpoint),
+                    OpenAICompatibleModelCatalogFormat.OpenRouter)),
+
+            _ => Result<ModelCatalogEndpoint>.Success(
+                new ModelCatalogEndpoint(
+                    BuildModelsUri(baseEndpoint),
+                    OpenAICompatibleModelCatalogFormat.Standard))
+        };
+    }
+
+    private static Uri BuildModelsUri(Uri baseEndpoint)
+    {
+        var path = baseEndpoint.GetLeftPart(UriPartial.Path);
+
+        if (!path.EndsWith("/", StringComparison.Ordinal))
+            path += "/";
+
+        return new Uri(
+            path + "models",
+            UriKind.Absolute);
+    }
+
+    private static Uri BuildCerebrasModelsUri(Uri baseEndpoint) =>
+        new Uri(
+            baseEndpoint.GetLeftPart(UriPartial.Authority) +
+            "/public/v1/models?format=openrouter",
+            UriKind.Absolute);
+
+    private static Uri BuildGeminiModelsUri(Uri baseEndpoint)
+    {
+        var path = baseEndpoint.GetLeftPart(UriPartial.Path)
+            .TrimEnd('/');
+
+        var openAiSegment = path.LastIndexOf(
+            "/openai",
+            StringComparison.OrdinalIgnoreCase);
+
+        var modelsPath = openAiSegment >= 0
+            ? path[..openAiSegment] + "/models"
+            : "/v1beta/models";
+
+        return new Uri(
+            baseEndpoint.GetLeftPart(UriPartial.Authority) +
+            modelsPath,
+            UriKind.Absolute);
+    }
+
+    private static Uri BuildLmStudioModelsUri(Uri baseEndpoint) =>
+        new Uri(
+            baseEndpoint.GetLeftPart(UriPartial.Authority) +
+            "/api/v1/models",
+            UriKind.Absolute);
+
+    private static Uri BuildOllamaModelsUri(Uri baseEndpoint) =>
+        new Uri(
+            baseEndpoint.GetLeftPart(UriPartial.Authority) +
+            "/api/tags",
+            UriKind.Absolute);
+
+    private static Result<ModelCatalogEndpoint> BuildCloudflareModelsEndpoint(
+        Uri baseEndpoint)
+    {
+        var segments = baseEndpoint.AbsolutePath
+            .Split(
+                '/',
+                StringSplitOptions.RemoveEmptyEntries);
+
+        var accountIndex = Array.FindIndex(
+            segments,
+            segment => string.Equals(
+                segment,
+                "accounts",
+                StringComparison.OrdinalIgnoreCase));
+
+        if (accountIndex < 0 ||
+            accountIndex + 1 >= segments.Length ||
+            string.IsNullOrWhiteSpace(segments[accountIndex + 1]))
+        {
+            return Result<ModelCatalogEndpoint>.Failure(
+                Error.Validation(
+                    "hive.provider.discovery.cloudflare-account-endpoint-required",
+                    "A Cloudflare Workers AI endpoint must include the account identifier in its path."));
+        }
+
+        var accountId = segments[accountIndex + 1];
+
+        return Result<ModelCatalogEndpoint>.Success(
+            new ModelCatalogEndpoint(
+                new Uri(
+                    baseEndpoint.GetLeftPart(UriPartial.Authority) +
+                    $"/client/v4/accounts/{Uri.EscapeDataString(accountId)}/ai/models/search?format=openrouter&per_page=100",
+                    UriKind.Absolute),
+                OpenAICompatibleModelCatalogFormat.CloudflareOpenRouter));
+    }
+
+    private sealed record ModelCatalogEndpoint(
+        Uri Uri,
+        OpenAICompatibleModelCatalogFormat Format);
+
     }
 }
