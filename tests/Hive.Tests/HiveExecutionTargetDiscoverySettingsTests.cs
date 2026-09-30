@@ -133,6 +133,44 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
     }
 
     [Fact]
+    [Fact]
+    public async Task Editor_AutomaticTargetClearsStaleDiscoveredCapabilitiesWhenModelBecomesCustom()
+    {
+        var target = CreateTarget(
+            [
+                new CapabilityStateEntry(
+                    HiveCapabilityKeys.Vision,
+                    CapabilityState.Supported)
+            ])
+            .WithManagementMode(ExecutionTargetManagementMode.Automatic);
+        var snapshot = CreateSnapshot(target);
+        var (management, _) = DiscoveryManagementProxy.Create(snapshot);
+        var context = CreateContext();
+        var provider = CreateProvider(target.ProviderId, context);
+        var account = CreateAccount(
+            target.ProviderAccountId,
+            target.ProviderId,
+            context);
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var editor = new HiveExecutionTargetEditorForm(
+            target,
+            provider,
+            account,
+            management,
+            context,
+            themeManager);
+
+        await editor.DiscoveryPanel!.InitializeAsync();
+
+        editor.ModelSelector.SelectedIndex = 0;
+        Assert.Single(editor.CapabilityEditor.GetConfiguredCapabilities());
+
+        editor.ModelSelector.Text = "custom-model";
+
+        Assert.Empty(editor.CapabilityEditor.GetConfiguredCapabilities());
+    }
+
     public void Editor_ConnectionTestStatusLivesInFooterActionBar()
     {
         var target = CreateTarget();
