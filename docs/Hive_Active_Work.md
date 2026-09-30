@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -320,3 +320,16 @@ Latest remediation:
 
 Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full `Hive.Tests` suite before further Phase 1.16 UI polish changes.
+
+
+Latest verification failure:
+- developer reran `Hive.Tests`: **496 Tests (482 Passed, 14 Failed, 0 Skipped)**.
+- `Phase116FollowUpTests.AdvancedConfigurationTree_UsesOverviewAndModelInformationLeaves` expects navigation splitter distance 280 but the instantiated form reports 124, so the current test assertion does not match the effective WinForms layout.
+- multiple new `HiveExecutionTargetDiscoverySettingsTests` and the related Provider Settings editor test fail before exercising behavior because WinForms `ComboBox.AutoCompleteMode` requires an STA thread.
+- `ExecutionTargetsView_SelectingProviderSelectsDefaultAccount` fails because its `DispatchProxy` base test proxy is sealed.
+
+Remediation boundary:
+- correct the navigation-width assertion/implementation boundary so the left tree is genuinely wide enough for the requested labels and the test measures the intended width;
+- make the affected WinForms-focused tests run under the repository's existing STA test mechanism or add the minimal test-only STA fixture mechanism required by the current test infrastructure;
+- unseal only the failing test proxy type required by `DispatchProxy`;
+- do not weaken production WinForms or HiveForm visibility contracts and do not alter unrelated behavior.
