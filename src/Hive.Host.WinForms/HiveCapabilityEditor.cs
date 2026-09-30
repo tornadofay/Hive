@@ -39,13 +39,13 @@ internal sealed class HiveCapabilityEditor : UserControl
         _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
 
         Dock = DockStyle.Fill;
-        MinimumSize = new Size(0, 206);
+        MinimumSize = new Size(0, 184);
 
         _description = new Label
         {
             Dock = DockStyle.Top,
             AutoSize = false,
-            Height = 42,
+            Height = 34,
             Text =
                 "Known Hive capabilities use structured Supported / Unsupported / Unknown states. " +
                 "Automatic targets are discovery-managed; Manual targets can define explicit overrides."
@@ -59,16 +59,16 @@ internal sealed class HiveCapabilityEditor : UserControl
             ColumnCount = 4,
             Padding = new Padding(0, 2, 0, 0)
         };
-        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28f));
-        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 24f));
-        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 24f));
-        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 24f));
+        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30f));
+        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22f));
+        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 26f));
+        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22f));
         _table.RowCount = 1;
-        _table.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        _table.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
 
         AddHeader("Capability", 0);
         AddHeader("Discovered", 1);
-        AddHeader("Configured Override", 2);
+        AddHeader("Override", 2);
         AddHeader("Effective", 3);
 
         foreach (var (key, name) in KnownCapabilities)
@@ -130,8 +130,8 @@ internal sealed class HiveCapabilityEditor : UserControl
         {
             Dock = DockStyle.Top,
             AutoSize = false,
-            Height = 38,
-            Padding = new Padding(4, 8, 4, 4),
+            Height = 34,
+            Padding = new Padding(4, 6, 4, 4),
             Text = "No additional capability evidence."
         };
 
