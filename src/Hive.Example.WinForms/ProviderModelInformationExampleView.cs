@@ -36,7 +36,7 @@ internal sealed class ProviderModelInformationExampleView : UserControl
         };
 
         _surface.SetInformation(
-            "Opens the real Advanced Configuration surface with a deterministic provider/model discovery fixture. Select Model Information in the tree to inspect a complete normalized model profile without a vendor network call or real credential.",
+            "Opens the real Advanced Provider Configuration surface with a deterministic provider/model discovery fixture. Select Model Information in the tree to inspect a complete normalized model profile without a vendor network call or real credential.",
             "The fixture demonstrates identity, modalities, known capability states, reasoning/thinking options, model-scoped limits, pricing/economic evidence, operational state, freshness, and bounded provider-specific evidence. The information is observational and does not create a durable Model resource.",
             "Providers / Target Selection / Capability Discovery / Provider / Model Information",
             "Uses a deterministic in-process Management facade fixture; no database, provider account, API key, or external network call is required.");
@@ -76,7 +76,7 @@ internal sealed class ProviderModelInformationExampleView : UserControl
         _output.Write(
             "Provider / Model Information",
             """
-            Advanced Configuration opened with deterministic discovery data.
+            Advanced Provider Configuration opened with deterministic discovery data.
             Select: Model Information
             Model fixture: rich-model
             Profile sections: Identity / Inputs / Outputs / Capabilities / Reasoning / Thinking / Limits / Pricing / Operational state / Additional provider information
