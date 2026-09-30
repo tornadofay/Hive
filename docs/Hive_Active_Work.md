@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -210,3 +210,13 @@ Remediation boundary:
 - correct only the malformed deterministic JSON fixtures in `ProviderModelMetadataProviderTests.cs`;
 - extend the existing shared model-limit parser to read provider-reported `top_provider` limit fields without changing the normalized contract or adding provider-name inference;
 - retain all existing provider routing, capability semantics, bounds, and single-transport behavior.
+
+
+Latest remediation:
+- repaired the seven malformed deterministic JSON response fixtures in `ProviderModelMetadataProviderTests.cs` by restoring their missing closing object/array delimiters; the production catalog parser correctly remains strict about malformed JSON.
+- extended the existing shared `ParseLimits` normalization to inspect provider-reported nested `top_provider` limit fields, including `max_completion_tokens`, so the existing OpenRouter metadata regression now maps the documented nested output limit into Hive's normalized model limits;
+- preserved the existing bounds, provider-neutral parsing approach, capability semantics, routing, and single HTTP transport.
+
+Verification boundary:
+- developer must rerun the focused Phase 1.16 provider metadata tests and the full `Hive.Tests` suite;
+- recheck the built-in provider Model Information flows after the tests pass.
