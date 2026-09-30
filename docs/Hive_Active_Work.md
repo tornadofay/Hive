@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -199,3 +199,14 @@ Latest remediation:
 Verification boundary:
 - developer must rerun the focused Phase 1.16 discovery/model-information tests and the full `Hive.Tests` suite;
 - recheck the built-in provider Model Information flows after the test project compiles.
+
+
+Latest verification failure:
+- developer reported 492 tests with 9 failures in the Phase 1.16 provider metadata verification.
+- eight `ProviderModelMetadataProviderTests` failures return "The provider returned a malformed or unsupported model catalog." for Groq, Cerebras, Gemini, LM Studio, Ollama, Cloudflare, OpenAI, and NVIDIA; source inspection shows the corresponding deterministic JSON test fixtures omit the closing array/object delimiters.
+- the existing OpenRouter regression separately fails because `top_provider.max_completion_tokens` is provider-reported model limit evidence but the shared `ParseLimits` normalization does not currently inspect the nested `top_provider` object.
+
+Remediation boundary:
+- correct only the malformed deterministic JSON fixtures in `ProviderModelMetadataProviderTests.cs`;
+- extend the existing shared model-limit parser to read provider-reported `top_provider` limit fields without changing the normalized contract or adding provider-name inference;
+- retain all existing provider routing, capability semantics, bounds, and single-transport behavior.
