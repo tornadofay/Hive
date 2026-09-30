@@ -362,3 +362,15 @@ Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
 - the requested capability-layout polish remains blocked until this rerun passes;
 - required Example Host handoff remains: Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms.
+
+
+Latest remediation:
+- corrected the discovery model ComboBox text-change boundary so entering a custom model identifier clears the stale discovered selection instead of allowing the previous discovered item to remain selected;
+- aligned the two discovery tests with the documented/manual-entry behavior: provider discovery failure and unsupported enumeration keep manual model entry enabled;
+- reduced the Advanced Provider Configuration content minimum from 520px to 300px while retaining a 320px navigation splitter target, making the requested wider navigation feasible at the form's effective width without violating SplitContainer bounds;
+- revision inspection compared the remediation with the recorded four-failure checkpoint and found only the focused discovery selection behavior, navigation sizing, and corresponding test assertions changed.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
+- the requested Management-before-Capabilities reorder and simplified capability editor layout remain blocked until this rerun passes;
+- required Example Host handoff remains: Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms.
