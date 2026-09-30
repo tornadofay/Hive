@@ -212,11 +212,11 @@ Generic cross-host integration remains later; the initial UI discovery contract 
 
 V1 starts with:
 
-1. Providers — simple configured-provider Settings with Add Provider / Refresh and generalized Advanced Configuration
+1. Providers — simple configured-provider Settings with Add Provider / Refresh and generalized Advanced Provider Configuration
 2. Agents
 3. V1 WorkItems / Operational Workspace
 
-The Provider resource model still contains Provider → ProviderAccount → ExecutionTarget. Normal Settings hides that graph for simple onboarding; Advanced Configuration exposes the underlying generalized resource administration when required.
+The Provider resource model still contains Provider → ProviderAccount → ExecutionTarget. Normal Settings hides that graph for simple onboarding; Advanced Provider Configuration exposes the underlying generalized resource administration when required.
 
 Later areas are added when their owning phase lands: Hive Membership and Governance, CognitiveAgent/CognitiveHive capabilities, Knowledge/Skills/Learning resources, broader storage/deployment portability, configuration import/export, additional host surfaces, and the generic host-integration/operations extensions that remain outside V1.
 
@@ -296,7 +296,7 @@ The solution and project files are the implementation source for the actual proj
 
 **Phase 0 — Foundations: Complete.**
 
-**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1):** Phase 1.16 Provider / Model Capability Discovery and bounded Revisions 1–7 are complete and verified. The initial **Phase 1.16 — UI — Provider Configuration, Discovery & Target Reconciliation** slice and its bounded same-slice revision are complete and verified. Final developer verification of the revision on 2026-09-29 reported the matching **Overview / Getting Started / Example Configuration** workflow running successfully and the full `Hive.Tests` suite passing **474/474** (0 failed, 0 skipped). The **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery** is in progress. Its detailed scope is tracked in [the follow-up plan](docs/plan/Phase1.16_FollowUp_Model_Information.md), including rich provider/model metadata normalization, Advanced Configuration Overview / Model Information navigation, structured capability configuration, and No / Optional / Required credential semantics.
+**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1):** Phase 1.16 Provider / Model Capability Discovery and bounded Revisions 1–7 are complete and verified. The initial **Phase 1.16 — UI — Provider Configuration, Discovery & Target Reconciliation** slice and its bounded same-slice revision are complete and verified. Final developer verification of the revision on 2026-09-29 reported the matching **Overview / Getting Started / Example Configuration** workflow running successfully and the full `Hive.Tests` suite passing **474/474** (0 failed, 0 skipped). The **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery** is in progress. Its detailed scope is tracked in [the follow-up plan](docs/plan/Phase1.16_FollowUp_Model_Information.md), including rich provider/model metadata normalization, Advanced Provider Configuration Overview / Model Information navigation, structured capability configuration, and No / Optional / Required credential semantics.
 
 See [Architecture](docs/architecture.md) and [Roadmap](docs/roadmap.md).
 
