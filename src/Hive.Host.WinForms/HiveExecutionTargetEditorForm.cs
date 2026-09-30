@@ -180,7 +180,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             _managementModeComboBox);
 
         var save = editor.AddActionButton(
-            target is null ? "Create" : "Save",
+            "Save",
             HiveButtonStyle.Primary,
             96);
         var cancel = editor.AddActionButton(
@@ -236,7 +236,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
     public ExecutionTarget? Definition { get; private set; }
 
-    internal HiveProviderModelDiscoveryPanel? DiscoveryPanel => _discoveryPanel;
+    internal HiveProviderModelDiscoveryPanel DiscoveryPanel => _discoveryPanel;
 
     internal ComboBox ModelSelector => _discoveryPanel.ModelSelector;
 
@@ -282,7 +282,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
         _capabilityEditor.Configure(
             _existing.Capabilities,
-            _discoveryPanel?.SelectedModel,
+            _discoveryPanel.SelectedModel,
             automatic);
     }
 
