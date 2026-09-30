@@ -194,6 +194,8 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
                     catalog.Value.RateLimitRemaining),
                 ProviderDiscoveryState.Supported,
                 models));
+    }
+
     private static Result<ModelCatalogEndpoint> ResolveModelCatalogEndpoint(
         string providerKey,
         Uri baseEndpoint)
