@@ -260,8 +260,7 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
 
     private static Uri BuildGeminiModelsUri(Uri baseEndpoint)
     {
-        var path = baseEndpoint.GetLeftPart(UriPartial.Path)
-            .TrimEnd('/');
+        var path = baseEndpoint.AbsolutePath.TrimEnd('/');
 
         var openAiSegment = path.LastIndexOf(
             "/openai",
@@ -271,10 +270,13 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
             ? path[..openAiSegment] + "/models"
             : "/v1beta/models";
 
-        return new Uri(
-            baseEndpoint.GetLeftPart(UriPartial.Authority) +
-            modelsPath,
-            UriKind.Absolute);
+        var builder = new UriBuilder(baseEndpoint.Scheme, baseEndpoint.Host)
+        {
+            Port = baseEndpoint.IsDefaultPort ? -1 : baseEndpoint.Port,
+            Path = modelsPath
+        };
+
+        return builder.Uri;
     }
 
     private static Uri BuildLmStudioModelsUri(Uri baseEndpoint) =>
