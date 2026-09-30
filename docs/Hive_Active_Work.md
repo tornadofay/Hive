@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -251,3 +251,13 @@ Latest remediation:
 Verification boundary:
 - developer must rerun the focused Phase 1.16 provider metadata tests and the full `Hive.Tests` suite;
 - recheck the built-in provider Model Information flows after the provider-specific routing tests pass.
+
+
+Latest verification failure:
+- developer reran the full `Hive.Tests` suite: 492 tests, 491 passed, 1 failed.
+- the sole failure is `GeminiDiscovery_UsesNativeModelsApiAndMapsThinkingAndLimits`: the expected Gemini model-list path is `/v1beta/models`, but `BuildGeminiModelsUri` constructs an invalid URI whose parsed absolute path begins with `//generativelanguage.googleapis.com/v1beta...`.
+- the defect is isolated to Gemini model-catalog URI construction; provider metadata parsing and the other provider discovery tests now pass.
+
+Remediation boundary:
+- correct only `BuildGeminiModelsUri` so it constructs the native Gemini model-list URI from the endpoint's authority and normalized path without introducing an extra leading slash;
+- preserve the existing provider-specific route selection and single transport.
