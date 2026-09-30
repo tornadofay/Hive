@@ -426,6 +426,13 @@ public sealed class Phase116FollowUpTests
             context,
             themeManager);
 
+        Assert.Equal(
+            "Advanced Provider Configuration",
+            form.Text);
+        Assert.Equal(
+            280,
+            form.NavigationSplitterDistance);
+
         var names = form.NavigationTree
             .Nodes
             .Cast<TreeNode>()
