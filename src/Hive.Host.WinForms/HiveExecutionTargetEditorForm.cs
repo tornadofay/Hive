@@ -14,18 +14,16 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveExampleOutput? _output;
-    private readonly TextBox _providerTextBox;
-    private readonly TextBox _accountTextBox;
+    private readonly Control _providerAccountSummary;
     private readonly TextBox _keyTextBox;
     private readonly TextBox _nameTextBox;
     private readonly TextBox _endpointTextBox;
-    private readonly TextBox _modelTextBox;
     private readonly TextBox _deploymentTextBox;
     private readonly HiveCapabilityEditor _capabilityEditor;
     private readonly ComboBox _managementModeComboBox;
     private readonly Label _testStatus;
     private readonly HiveButton _testButton;
-    private readonly HiveProviderModelDiscoveryPanel? _discoveryPanel;
+    private readonly HiveProviderModelDiscoveryPanel _discoveryPanel;
     private HiveStatusTone _testStatusTone = HiveStatusTone.Neutral;
     private CancellationTokenSource? _testCts;
 
@@ -59,20 +57,20 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             allowHelp: false,
             allowThemeToggle: true);
 
-        SetBodyPadding(new Padding(20));
+        SetBodyPadding(new Padding(16));
 
         var editor = new HiveEditorLayout();
 
-        _providerTextBox = CreateReadOnlyTextBox(_provider.DisplayName, themeManager);
-        _accountTextBox = CreateReadOnlyTextBox(_account.DisplayName, themeManager);
+        _providerAccountSummary = CreateProviderAccountSummary(
+            _provider.DisplayName,
+            _account.DisplayName,
+            themeManager);
         _keyTextBox = CreateTextBox();
         _keyTextBox.PlaceholderText = "e.g. llama-production";
         _nameTextBox = CreateTextBox();
         _nameTextBox.PlaceholderText = "e.g. Production Llama";
         _endpointTextBox = CreateTextBox();
         _endpointTextBox.PlaceholderText = "https://api.example.com/v1";
-        _modelTextBox = CreateTextBox();
-        _modelTextBox.PlaceholderText = "e.g. meta/llama-3.3-70b-instruct";
         _deploymentTextBox = CreateTextBox();
         _deploymentTextBox.PlaceholderText = "Optional deployment name";
         _capabilityEditor = new HiveCapabilityEditor(themeManager);
@@ -94,46 +92,52 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
         _managementModeComboBox.SelectedItem =
             target?.ManagementMode ?? ExecutionTargetManagementMode.Manual;
-        if (target is not null)
-        {
-            _discoveryPanel = new HiveProviderModelDiscoveryPanel(
-                _management,
-                target,
-                _accessContext,
-                themeManager,
-                _output);
-        }
+        var initialEndpoint =
+            target?.Endpoint ??
+            BuiltInProviderCatalog.Find(_provider.Key)?.DefaultEndpoint;
+
+        _discoveryPanel = new HiveProviderModelDiscoveryPanel(
+            _management,
+            _provider.Id,
+            _account.Id,
+            initialEndpoint,
+            target?.Model,
+            _accessContext,
+            themeManager,
+            _output);
 
         _testStatus = new Label
         {
             AutoSize = false,
-            Dock = DockStyle.Bottom,
-            Height = 22
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            AutoEllipsis = true,
+            Margin = Padding.Empty,
+            Padding = new Padding(0, 0, 8, 0)
         };
 
         _keyTextBox.Text = target?.Key ?? string.Empty;
         _nameTextBox.Text = target?.DisplayName ?? string.Empty;
-        _endpointTextBox.Text = target?.Endpoint.ToString() ?? string.Empty;
-        _modelTextBox.Text = target?.Model ?? string.Empty;
+        _endpointTextBox.Text =
+            target?.Endpoint.ToString() ??
+            BuiltInProviderCatalog.Find(_provider.Key)?.DefaultEndpoint?.ToString() ??
+            string.Empty;
         _deploymentTextBox.Text = target?.Deployment ?? string.Empty;
 
         if (target is not null)
-        {
             SetReadOnlyVisualState(_keyTextBox, themeManager);
-            _endpointTextBox.TextChanged += EndpointTextBoxOnTextChanged;
-        }
+
+        _endpointTextBox.TextChanged += EndpointTextBoxOnTextChanged;
+        _discoveryPanel.ModelSelected += DiscoveryPanelOnModelSelected;
+        _discoveryPanel.ModelSelector.TextChanged += ModelSelectorTextChanged;
 
         _managementModeComboBox.SelectedIndexChanged += ManagementModeOnChanged;
 
         editor.AddField(
-            "Provider",
-            "Fixed parent Provider selected by the Settings page. This relationship is read-only.",
-            _providerTextBox);
-
-        editor.AddField(
-            "Provider Account",
-            "Fixed credential/account boundary selected by the Settings page. This relationship is read-only.",
-            _accountTextBox);
+            "Provider / Account",
+            "The Provider and Provider Account selected by the Execution Targets page. Both relationships are read-only here.",
+            _providerAccountSummary,
+            52);
 
         editor.AddField(
             "Resource key",
@@ -152,8 +156,9 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
         editor.AddField(
             "Model",
-            "Model identifier. Either Model or Deployment must be supplied.",
-            _modelTextBox);
+            "Select a discovered model or type a custom model identifier. Either Model or Deployment must be supplied.",
+            _discoveryPanel,
+            168);
 
         editor.AddField(
             "Deployment",
@@ -174,18 +179,6 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             "Choose Manual when administrator configuration should own the target.",
             _managementModeComboBox);
 
-        if (_discoveryPanel is not null)
-        {
-            _discoveryPanel.ModelSelected += DiscoveryPanelOnModelSelected;
-            editor.AddField(
-                "Model discovery",
-                "Discovers provider model identifiers and operational metadata through Hive.Management. " +
-                "Selecting a discovered model only changes the editable Model field; discovered capabilities " +
-                "never overwrite configured capability overrides.",
-                _discoveryPanel,
-                250);
-        }
-
         var save = editor.AddActionButton(
             target is null ? "Create" : "Save",
             HiveButtonStyle.Primary,
@@ -195,15 +188,25 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             HiveButtonStyle.Secondary,
             96);
         _testButton = editor.AddActionButton(
-            "Test connection",
+            "Test",
             HiveButtonStyle.Secondary,
-            124);
-        _testButton.Visible = target is not null;
+            86);
+        _testButton.Enabled = target is not null;
         _testButton.Click += async (_, _) => await TestConnectionAsync();
+
+        var testStatusHost = new Panel
+        {
+            Width = 300,
+            Height = 36,
+            Margin = new Padding(8, 0, 0, 0),
+            Padding = Padding.Empty
+        };
+        testStatusHost.Controls.Add(_testStatus);
+        editor.FooterPanel.Controls.Add(testStatusHost);
 
         SetTestStatus(
             target is null
-                ? "Save the target before testing its connection."
+                ? "Save the target before testing the connection."
                 : "Connection test not run.",
             HiveStatusTone.Neutral);
 
@@ -213,12 +216,6 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             Close();
         };
         save.Click += (_, _) => Save();
-
-        editor.AddField(
-            "Test status",
-            "Tests run through Hive.Management using this target and its referenced credential.",
-            _testStatus,
-            62);
 
         AcceptButton = save;
         CancelButton = cancel;
@@ -243,7 +240,9 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
     internal HiveProviderModelDiscoveryPanel? DiscoveryPanel => _discoveryPanel;
 
-    internal TextBox ModelTextBox => _modelTextBox;
+    internal ComboBox ModelSelector => _discoveryPanel.ModelSelector;
+
+    internal TextBox EndpointTextBox => _endpointTextBox;
 
     internal ComboBox ManagementModeSelector => _managementModeComboBox;
 
@@ -256,8 +255,6 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         object? sender,
         ProviderModelSelectedEventArgs e)
     {
-        _modelTextBox.Text = e.Model.ModelId;
-
         if (GetSelectedManagementMode() == ExecutionTargetManagementMode.Automatic)
         {
             _capabilityEditor.Configure(
@@ -291,8 +288,16 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         object? sender,
         EventArgs e)
     {
-        _discoveryPanel?.MarkEndpointConfigurationChanged();
+        _discoveryPanel.MarkEndpointConfigurationChanged();
         _endpointTextBox.TextChanged -= EndpointTextBoxOnTextChanged;
+    }
+
+    private void ModelSelectorTextChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (_discoveryPanel.SelectedModel is null)
+            _capabilityEditor.SetDiscovery(null);
     }
 
     private void SetTestStatus(string text, HiveStatusTone tone)
@@ -423,14 +428,14 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
                     key,
                     name,
                     endpoint,
-                    NormalizeOptional(_modelTextBox.Text),
+                    NormalizeOptional(_discoveryPanel.ModelSelector.Text),
                     NormalizeOptional(_deploymentTextBox.Text),
                     capabilities)
                     .WithManagementMode(managementMode)
                 : _existing
                     .WithDisplayName(name)
                     .WithEndpoint(endpoint)
-                    .WithModel(NormalizeOptional(_modelTextBox.Text))
+                    .WithModel(NormalizeOptional(_discoveryPanel.ModelSelector.Text))
                     .WithDeployment(NormalizeOptional(_deploymentTextBox.Text))
                     .WithCapabilities(capabilities)
                     .WithManagementMode(managementMode);
@@ -475,8 +480,9 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
             _managementModeComboBox.SelectedIndexChanged -= ManagementModeOnChanged;
 
-            if (_discoveryPanel is not null)
-                _discoveryPanel.ModelSelected -= DiscoveryPanelOnModelSelected;
+            _discoveryPanel.ModelSelected -= DiscoveryPanelOnModelSelected;
+            _discoveryPanel.ModelSelector.TextChanged -= ModelSelectorTextChanged;
+            _endpointTextBox.TextChanged -= EndpointTextBoxOnTextChanged;
         }
 
         base.Dispose(disposing);
@@ -490,15 +496,62 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             BorderStyle = BorderStyle.FixedSingle
         };
 
-    private static TextBox CreateReadOnlyTextBox(
-        string value,
+    private static Control CreateProviderAccountSummary(
+        string provider,
+        string account,
         IHiveThemeManager themeManager)
     {
-        var box = CreateTextBox();
-        box.Text = value;
-        SetReadOnlyVisualState(box, themeManager);
-        return box;
+        var panel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 4,
+            RowCount = 1,
+            Margin = Padding.Empty,
+            Padding = new Padding(0, 8, 0, 8)
+        };
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 64));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 64));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+
+        panel.Controls.Add(CreateContextLabel("Provider", themeManager), 0, 0);
+        panel.Controls.Add(CreateContextValueLabel(provider, themeManager), 1, 0);
+        panel.Controls.Add(CreateContextLabel("Account", themeManager), 2, 0);
+        panel.Controls.Add(CreateContextValueLabel(account, themeManager), 3, 0);
+
+        return panel;
     }
+
+    private static Label CreateContextLabel(
+        string text,
+        IHiveThemeManager themeManager) =>
+        new()
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            Text = text,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = new Font(
+                SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
+                FontStyle.Bold),
+            ForeColor = themeManager.Theme.Palette.Text,
+            Margin = Padding.Empty
+        };
+
+    private static Label CreateContextValueLabel(
+        string text,
+        IHiveThemeManager themeManager) =>
+        new()
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            Text = text,
+            TextAlign = ContentAlignment.MiddleLeft,
+            AutoEllipsis = true,
+            ForeColor = themeManager.Theme.Palette.MutedText,
+            Margin = Padding.Empty,
+            Padding = new Padding(4, 0, 12, 0)
+        };
 
     private static void SetReadOnlyVisualState(
         TextBox textBox,
