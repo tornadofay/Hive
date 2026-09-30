@@ -133,7 +133,6 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
     }
 
     [Fact]
-    [Fact]
     public async Task Editor_AutomaticTargetClearsStaleDiscoveredCapabilitiesWhenModelBecomesCustom()
     {
         var target = CreateTarget(
@@ -171,6 +170,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.Empty(editor.CapabilityEditor.GetConfiguredCapabilities());
     }
 
+    [Fact]
     public void Editor_ConnectionTestStatusLivesInFooterActionBar()
     {
         var target = CreateTarget();
