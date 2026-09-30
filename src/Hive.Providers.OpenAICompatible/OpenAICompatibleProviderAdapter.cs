@@ -850,14 +850,23 @@ public sealed class OpenAICompatibleProviderAdapter
             return (Array.Empty<string>(), null);
         }
 
-        var options = ParseStringList(
+        var options = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        AddOrderedStringValues(
             reasoning,
-            "allowed_options");
+            "allowed_options",
+            options,
+            seen);
 
         var defaultValue =
             TryGetString(reasoning, "default");
 
-        return (options, defaultValue);
+        return (
+            options
+                .Take(32)
+                .ToArray(),
+            defaultValue);
     }
 
     private static Result<OpenAICompatibleModelCatalog> ParseOllamaModelCatalog(
