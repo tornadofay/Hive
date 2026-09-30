@@ -498,7 +498,7 @@ internal sealed class HiveProvidersSettingsView : UserControl
                     FindForm(),
                     exception,
                     "Providers",
-                    "The Providers page could not be refreshed after closing Advanced Configuration.",
+                    "The Providers page could not be refreshed after closing Advanced Provider Configuration.",
                     _output,
                     _themeManager);
             }
