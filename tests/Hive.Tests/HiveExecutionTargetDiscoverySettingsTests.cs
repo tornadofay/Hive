@@ -193,10 +193,11 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             context,
             themeManager);
 
-        var footer = editor.BodyPanel.Controls
-            .OfType<HiveEditorLayout>()
-            .Single()
-            .FooterPanel;
+        var editorLayout = FindControl<HiveEditorLayout>(editor);
+
+        Assert.NotNull(editorLayout);
+
+        var footer = editorLayout!.FooterPanel;
 
         Assert.Contains(
             editor.TestStatusLabel,
