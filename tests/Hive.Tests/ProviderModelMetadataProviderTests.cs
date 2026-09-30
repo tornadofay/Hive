@@ -26,7 +26,7 @@ public sealed class ProviderModelMetadataProviderTests
                   "max_completion_tokens": 8192
                 }
               ]
-}
+            }
             """);
 
         var result = await DiscoverAsync(
@@ -81,7 +81,7 @@ public sealed class ProviderModelMetadataProviderTests
                   }
                 }
               ]
-}
+            }
             """);
 
         var result = await DiscoverAsync(
@@ -143,7 +143,7 @@ public sealed class ProviderModelMetadataProviderTests
                   "thinking": true
                 }
               ]
-}
+            }
             """);
 
         var result = await DiscoverAsync(
@@ -211,7 +211,7 @@ public sealed class ProviderModelMetadataProviderTests
                   "description": "Local multimodal model."
                 }
               ]
-}
+            }
             """);
 
         var result = await DiscoverAsync(
@@ -290,7 +290,7 @@ public sealed class ProviderModelMetadataProviderTests
                   }
                 }
               ]
-}
+            }
             """);
 
         var result = await DiscoverAsync(
@@ -343,7 +343,7 @@ public sealed class ProviderModelMetadataProviderTests
                   }
                 }
               ]
-}
+            }
             """);
 
         var result = await DiscoverAsync(
@@ -390,7 +390,7 @@ public sealed class ProviderModelMetadataProviderTests
                   "owned_by": "provider"
                 }
               ]
-}
+            }
             """);
 
         var result = await DiscoverAsync(
