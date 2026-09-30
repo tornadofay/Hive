@@ -225,14 +225,12 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
         Load += async (_, _) =>
         {
-            if (_discoveryPanel is not null)
-            {
-                await _discoveryPanel.InitializeAsync();
-                _capabilityEditor.Configure(
-                    _existing!.Capabilities,
-                    _discoveryPanel.SelectedModel,
-                    GetSelectedManagementMode() == ExecutionTargetManagementMode.Automatic);
-            }
+            await _discoveryPanel.InitializeAsync();
+
+            _capabilityEditor.Configure(
+                _existing?.Capabilities ?? Array.Empty<CapabilityStateEntry>(),
+                _discoveryPanel.SelectedModel,
+                GetSelectedManagementMode() == ExecutionTargetManagementMode.Automatic);
         };
     }
 
