@@ -543,22 +543,17 @@ public sealed class ProviderSettingsIntegrationTests
                 box.PlaceholderText,
                 "https://api.example.com/v1",
                 StringComparison.Ordinal));
-        var modelTextBox = FindControl<TextBox>(
-            editor,
-            box => string.Equals(
-                box.PlaceholderText,
-                "e.g. meta/llama-3.3-70b-instruct",
-                StringComparison.Ordinal));
+        var modelSelector = editor.ModelSelector;
 
         Assert.NotNull(keyTextBox);
         Assert.NotNull(nameTextBox);
         Assert.NotNull(endpointTextBox);
-        Assert.NotNull(modelTextBox);
+        Assert.Equal(ComboBoxStyle.DropDown, modelSelector.DropDownStyle);
 
         keyTextBox!.Text = "automatic-target";
         nameTextBox!.Text = "Automatic Target";
         endpointTextBox!.Text = "https://example.test/v1";
-        modelTextBox!.Text = "model-a";
+        modelSelector.Text = "model-a";
 
         Assert.NotNull(editor.AcceptButton);
         ((IButtonControl)editor.AcceptButton!).PerformClick();
