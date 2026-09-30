@@ -204,8 +204,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
 
         view.ProviderSelector.SelectedIndex = 0;
 
-        Assert.Equal("Default Account", view.AccountSelector.Text);
-        Assert.Contains("Default Account", view.AccountSelector.Text, StringComparison.Ordinal);
+        Assert.Equal("Default Account", view.AccountSelector.SelectedItem?.ToString());
     }
 
     [Fact]
