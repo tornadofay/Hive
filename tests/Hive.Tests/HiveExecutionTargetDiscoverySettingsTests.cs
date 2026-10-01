@@ -258,6 +258,47 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.All(
             selectors,
             selector => Assert.Equal(selectorColumn, table.GetColumn(selector)));
+
+        var visionSelector = Assert.Single(
+            selectors,
+            selector => selector.Tag is CapabilityKey key &&
+                         key == HiveCapabilityKeys.Vision);
+        Assert.Equal(
+            CapabilityState.Unsupported,
+            visionSelector.SelectedItem);
+
+        var visionCurrent = Assert.Single(
+            table.Controls.Cast<Control>(),
+            control => control is Label label &&
+                       label.AccessibleName == "Vision current capability state");
+        Assert.Equal(
+            "Unsupported • override",
+            visionCurrent.Text);
+
+        var discovery = new ProviderModelMetadata(
+            "vision-model",
+            "example",
+            null,
+            ProviderAvailabilityStatus.Available,
+            ProviderHealthStatus.Healthy,
+            [
+                new CapabilityStateEntry(
+                    HiveCapabilityKeys.Vision,
+                    CapabilityState.Supported)
+            ]);
+
+        editor.Configure(
+            Array.Empty<CapabilityStateEntry>(),
+            discovery,
+            automatic: true);
+
+        Assert.False(visionSelector.Enabled);
+        Assert.Equal(
+            "Managed by discovery",
+            visionSelector.SelectedItem);
+        Assert.Equal(
+            "Supported • discovered",
+            visionCurrent.Text);
     }
 
     [WinFormsFact]
