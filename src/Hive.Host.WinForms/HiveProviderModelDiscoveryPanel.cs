@@ -500,10 +500,6 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         {
             return;
         }
-
-        if (_modelSelector.SelectedIndex >= 0)
-            _modelSelector.SelectedIndex = -1;
-
         SelectedModel = null;
     }
 
