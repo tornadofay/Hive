@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Hive.Core;
+using Hive.Example.WinForms;
 using Hive.Host.WinForms;
 using Hive.Management;
 using Hive.Host.WinForms.UI.Controls;
@@ -774,7 +775,7 @@ public sealed class HiveUiPolishTests
     [WinFormsFact]
     public void HiveAdvancedOverview_UsesHiveScrollHost()
     {
-        using var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
         using var view = new HiveAdvancedOverviewPage(themeManager);
 
         Assert.False(view.AutoScroll);
