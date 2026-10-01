@@ -212,7 +212,9 @@ The visible field must not depend on native ComboBox painting. The current WinFo
 
 ## Host-integration and public-control boundary
 
-Phase 1.14 already provides `HiveComboBox : ComboBox, IHiveWinFormsFieldControl` for host integration metadata and bounded host semantics. This slice evolves that exact control rather than creating a second ComboBox type.
+Phase 1.14 established the public Hive field-integration role for `HiveComboBox`. This slice preserves that role and evolves the concrete presentation control; it does not create a second Hive ComboBox type.
+
+The Phase 1.14 historical inheritance assertion is superseded by this plan's deliberate control-architecture change. Historical verification remains valid for the implementation that was verified at the time; it does not constrain the future first-class visual-control architecture.
 
 The public compatibility target remains the conventional ComboBox programming model where practical. The implementation must deliberately preserve the semantics required by existing Hive consumers for `Items`, data binding, `DisplayMember`, `ValueMember`, `SelectedIndex`, `SelectedItem`, `SelectedValue`, enabled/read-only behavior where applicable, and selection-change notification. Any intentionally unsupported native behavior must be documented and covered by tests before existing Hive surfaces are migrated.
 
@@ -279,7 +281,9 @@ The filtering model must remain generic and independent of Provider / Model / Ex
 
 ## Scrolling
 
-Long popup lists should reuse `HiveScrollHost` / `HiveScrollBar` rather than implementing another scrollbar renderer. The popup's visual scroll surface and scrollbar must participate in the same theme and lifecycle boundary.
+Long popup lists must reuse `HiveScrollHost` / `HiveScrollBar` rather than implementing another scrollbar renderer. The popup's visual scroll surface and scrollbar must participate in the same theme and lifecycle boundary.
+
+The popup owns its scroll-host lifetime. Closing the popup detaches/disposes the popup-owned scrolling surface safely without disposing caller-owned item data. Reopening creates or reuses only internal visual resources; it never recreates or mutates the caller's item source merely because the popup was reopened.
 
 The popup therefore becomes a direct consumer of Slice 1 infrastructure.
 
@@ -345,7 +349,9 @@ The tab header renderer should support:
 
 ## Tab control implementation strategy
 
-`HiveTabControl` should be implemented as a Hive-owned composite control with a dedicated header surface and a conventional `TabPage` content area. This makes the header fully Hive-rendered without depending on the native header renderer.
+`HiveTabControl` is a Hive-owned composite control with a dedicated header surface and a conventional `TabPage` content area. It is not a `TabControl` subclass whose native header is merely recolored. This makes the header fully Hive-rendered without depending on the native header renderer.
+
+The public compatibility target is the conventional tab/page behavior actually needed by Hive: tab-page collection, selected tab/index, programmatic selection, selection-change notification, page preservation, keyboard navigation, and deterministic disposal. APIs that specifically require `HiveTabControl` to be assignable to the native `TabControl` are not part of the compatibility guarantee and must be migrated explicitly before adoption.
 
 WinForms owner-draw support exists for `TabControl`, but it is fixed-size and applies to tab headers only. It therefore does not provide the flexible header and overflow presentation required by this plan.
 
@@ -393,6 +399,8 @@ Focused automated coverage should cover:
 - keyboard navigation;
 - focus behavior;
 - disabled tabs;
+- accessibility name, role, state, and selected-value exposure;
+
 - programmatic selection;
 - page hosting;
 - disposal;
@@ -430,9 +438,9 @@ Existing domain validation and business logic remain outside the control.
 
 ## Existing TabControl integration
 
-Identify existing Hive surfaces using native TabControl where the tab presentation is visibly inconsistent with Hive.
+The current repository search does not identify an existing production `TabControl` consumer comparable to the existing ComboBox usage. Slice 4 must therefore treat `HiveTabControl` as a reusable foundation first and migrate real existing consumers when they are actually present.
 
-Replace only the presentation that benefits from `HiveTabControl`.
+Where an existing Hive surface later uses native `TabControl` and its header rendering violates the Hive theme contract, migrate that surface to `HiveTabControl` after its public tab/page compatibility requirements are covered.
 
 Do not introduce unnecessary TabControl replacements where native behavior already meets the established Hive contract.
 
@@ -495,6 +503,18 @@ The broader `Hive.Tests` suite remains the regression gate when the integration 
 
 ---
 
+## Accessibility and keyboard contract
+
+All four components are interactive Windows controls and therefore require explicit keyboard and accessibility behavior rather than relying on visual similarity alone.
+
+`HiveComboBox` must expose an accessible name, role, selected/current value, expanded/collapsed state, enabled/disabled state, and meaningful keyboard focus. Its popup filter and result list must remain navigable without requiring mouse interaction.
+
+`HiveTabControl` must expose the selected tab, tab count, selected/disabled state, and keyboard navigation through its accessibility tree. Header focus must remain distinguishable from page content focus.
+
+`HiveScrollBar` and scrollable surfaces must expose orientation, current position, and usable range to accessibility clients where WinForms accessibility supports those concepts. Keyboard scrolling must remain available even when the visual scrollbar is not focused.
+
+The custom rendering must never create a visually complete but accessibility-incomplete replacement for the corresponding native interaction surface.
+
 # Cross-Slice Public Compatibility Rule
 
 These controls are first-class Hive presentation components, not cosmetic wrappers. Their visible rendering is Hive-owned, but their public compatibility target remains conventional WinForms behavior where practical.
@@ -551,7 +571,8 @@ Slice 4 depends on the stable reusable contracts from the preceding slices.
 
 # Expected Public UI Surface
 
-The final reusable UI surface should remain small:
+The final reusable UI surface should remain small. The concrete public contracts must be documented in `docs/ui/controls.md` when each component is implemented:
+
 
 - `HiveScrollBar`
 - `HiveScrollHost`
