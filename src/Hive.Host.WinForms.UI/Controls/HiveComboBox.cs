@@ -1177,6 +1177,37 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             0,
             enabled: false);
 
+    internal static int CalculatePopupHighlightScrollForTesting(
+        int currentScroll,
+        int rowTop,
+        int rowHeight,
+        int viewportSize) =>
+        CalculatePopupHighlightScroll(
+            currentScroll,
+            rowTop,
+            rowHeight,
+            viewportSize);
+
+    private static int CalculatePopupHighlightScroll(
+        int currentScroll,
+        int rowTop,
+        int rowHeight,
+        int viewportSize)
+    {
+        if (viewportSize <= 0)
+            return currentScroll;
+
+        var rowBottom = rowTop + Math.Max(1, rowHeight);
+
+        if (rowTop < currentScroll)
+            return rowTop;
+
+        if (rowBottom > currentScroll + viewportSize)
+            return rowBottom - viewportSize;
+
+        return currentScroll;
+    }
+
     protected override AccessibleObject CreateAccessibilityInstance() =>
         new HiveComboBoxAccessibleObject(this);
 
@@ -1649,24 +1680,12 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             if (highlightedIndex < 0)
                 return;
 
-            var rowTop = _list.GetHighlightedY();
-            var rowBottom = rowTop + _list.RowHeight;
             var current = _scrollHost.VerticalScrollPosition;
-            var viewport = _scrollHost.VerticalScrollState.ViewportSize;
-
-            if (viewport <= 0)
-                return;
-
-            var target = current;
-
-            if (rowTop < current)
-            {
-                target = rowTop;
-            }
-            else if (rowBottom > current + viewport)
-            {
-                target = rowBottom - viewport;
-            }
+            var target = CalculatePopupHighlightScroll(
+                current,
+                _list.GetHighlightedY(),
+                _list.RowHeight,
+                _scrollHost.VerticalScrollState.ViewportSize);
 
             if (target != current)
             {
