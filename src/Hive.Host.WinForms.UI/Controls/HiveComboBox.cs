@@ -1247,11 +1247,15 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             }
         }
 
-        public int Add(object? item)
+            public int Add(object? item)
         {
             EnsureUnbound();
+
+            var previousSelected = _owner.CaptureSelectedItem();
+            var hadSelection = _owner.HasSelection;
+
             _items.Add(item);
-            _owner.SourceCollectionChanged();
+            _owner.SourceCollectionChanged(previousSelected, hadSelection);
             return _items.Count - 1;
         }
 
