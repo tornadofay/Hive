@@ -465,6 +465,10 @@ public sealed class Phase116FollowUpTests
 
         await view.InitializeAsync();
 
+        Assert.IsType<HiveComboBox>(view.ProviderSelector);
+        Assert.IsType<HiveComboBox>(view.AccountSelector);
+        Assert.IsType<HiveComboBox>(view.EndpointSelector);
+
         Assert.Single(view.ModelsList.Items);
         Assert.Equal(
             "rich-model",
