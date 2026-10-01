@@ -133,6 +133,27 @@ public sealed class HiveComboBoxTests
     }
 
     [Fact]
+    public void TextChange_RaisesTextChangedForProgrammaticEditableText()
+    {
+        using var combo = new HiveComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDown
+        };
+
+        combo.Items.Add("vision-model");
+        combo.SelectedIndex = 0;
+
+        var changeCount = 0;
+        combo.TextChanged += (_, _) => changeCount++;
+
+        combo.Text = "custom-model";
+
+        Assert.Equal(1, changeCount);
+        Assert.Equal("custom-model", combo.Text);
+        Assert.Equal(0, combo.SelectedIndex);
+    }
+
+    [Fact]
     public void Filtering_IsOrdinalCaseInsensitiveAndPreservesSourceOrder()
     {
         using var combo = new HiveComboBox
