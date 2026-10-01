@@ -30,6 +30,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     private int _itemHeight = DefaultItemHeight;
     private bool _synchronizingFieldText;
     private bool _synchronizingSelection;
+    private bool _suppressBaseTextChanged;
     private object? _selectedItemIdentity;
     private bool _hasSelectedItemIdentity;
     private HiveThemeDefinition? _theme;
@@ -251,16 +252,27 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             if (string.Equals(_fieldEditor.Text, value, StringComparison.Ordinal))
                 return;
 
+            _suppressBaseTextChanged = true;
+            try
+            {
+                base.Text = value;
+            }
+            finally
+            {
+                _suppressBaseTextChanged = false;
+            }
+
             _synchronizingFieldText = true;
             try
             {
                 _fieldEditor.Text = value;
-                base.Text = value;
             }
             finally
             {
                 _synchronizingFieldText = false;
             }
+
+            OnTextChanged(EventArgs.Empty);
         }
     }
 
@@ -729,20 +741,9 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
 
     private void UpdateDisplayedText()
     {
-        var text = HasSelection
+        Text = HasSelection
             ? GetDisplayText(SelectedItem)
             : string.Empty;
-
-        _synchronizingFieldText = true;
-        try
-        {
-            _fieldEditor.Text = text;
-            base.Text = text;
-        }
-        finally
-        {
-            _synchronizingFieldText = false;
-        }
 
         AccessibleName =
             string.IsNullOrWhiteSpace(Name)
@@ -995,10 +996,18 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         if (_synchronizingFieldText)
             return;
 
-        base.Text = _fieldEditor.Text;
+        Text = _fieldEditor.Text;
 
         if (DroppedDown)
             RefreshPopup();
+    }
+
+    protected override void OnTextChanged(EventArgs e)
+    {
+        if (_suppressBaseTextChanged)
+            return;
+
+        base.OnTextChanged(e);
     }
 
     private void FieldEditorOnFocusChanged(object? sender, EventArgs e)
