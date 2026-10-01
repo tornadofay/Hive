@@ -1,6 +1,7 @@
 using System.Collections;
 using System.ComponentModel;
 using System.Drawing.Drawing2D;
+using Hive.Host.WinForms.UI.Theme;
 
 namespace Hive.Host.WinForms.UI.Controls;
 
