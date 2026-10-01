@@ -644,17 +644,13 @@ public sealed class HiveScrollBar : Control
             trackStart,
             maxStart);
 
-        var ratio = (clampedStart - trackStart) /
-                    (double)travel;
-
-        var range =
-            _state.EffectiveMaximum -
-            _state.Minimum;
-
-        var target = _state.Minimum +
-                     (int)Math.Round(
-                         ratio * range,
-                         MidpointRounding.AwayFromZero);
+        var target = HiveScrollMetrics.CalculateValueFromThumbPosition(
+            clampedStart,
+            trackStart,
+            GetAxisLength(track),
+            GetAxisLength(thumb),
+            _state.Minimum,
+            _state.EffectiveMaximum);
 
         SetValue(target);
     }
@@ -698,39 +694,21 @@ public sealed class HiveScrollBar : Control
 
         var contentExtent = state.ContentExtent;
         var viewport = Math.Max(0, state.ViewportSize);
-
         var minimumThumb = LogicalToDevice(_minimumThumbSize);
-        var thumbLength = contentExtent <= 0
-            ? trackLength
-            : (int)Math.Round(
-                trackLength * (viewport /
-                               (double)contentExtent),
-                MidpointRounding.AwayFromZero);
 
-        thumbLength = Math.Clamp(
+        var thumbLength = HiveScrollMetrics.CalculateThumbLength(
+            trackLength,
+            contentExtent,
+            viewport,
+            minimumThumb);
+
+        var start = HiveScrollMetrics.CalculateThumbPosition(
+            GetAxisStart(track),
+            trackLength,
             thumbLength,
-            Math.Min(minimumThumb, trackLength),
-            trackLength);
-
-        var range =
-            state.EffectiveMaximum -
-            state.Minimum;
-
-        var travel = Math.Max(
-            0,
-            trackLength - thumbLength);
-
-        var position = range <= 0 || travel == 0
-            ? 0
-            : (int)Math.Round(
-                travel *
-                ((state.Value - state.Minimum) /
-                 (double)range),
-                MidpointRounding.AwayFromZero);
-
-        var start =
-            GetAxisStart(track) +
-            position;
+            state.Minimum,
+            state.EffectiveMaximum,
+            state.Value);
 
         return Orientation == Orientation.Vertical
             ? new Rectangle(
