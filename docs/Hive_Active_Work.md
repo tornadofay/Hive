@@ -10,7 +10,7 @@ Authorization: explicit user command `Hive: start` against `docs/plan/Phase1/Cus
 
 Repository checkpoint before implementation: `de46b3e74b20c1eb83a8a453ff8b8fd8080c48a8` on `main`.
 
-Current implementation head: `79ef6a76205f4254bea6ba9e4ec914b5dfc03b5a` on `main`.
+Current implementation head: `6a2c63f962d5b1625aeacc288334d919688f4a19` on `main`.
 
 ## Scope
 
@@ -31,19 +31,18 @@ Do not implement or activate Slice 2 (`HiveComboBox` filtering), Slice 3 (`HiveT
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
-Developer-reported compile failures in `HiveScrollHost.cs`:
-- `CS8602`: possible null dereference at the detach event-unsubscription lines using `_content` after a local null check.
-- `CS8604`: possible null argument when passing `e.Control` to `HookContentControls(Control)`.
-- `CS8604`: possible null argument when passing `e.Control` to `UnhookContentControls(Control)`.
-- `CS0160`: `ObjectDisposedException` catch is unreachable because the preceding `InvalidOperationException` catch already catches its base type.
+Developer-reported compile failures in `HiveScrollHost.cs` were remediated within the same slice:
+- `CS8602`: detach now uses the null-checked local `content` rather than dereferencing nullable field `_content`.
+- `CS8604`: descendant add/remove handlers now null-guard `e.Control` before hooking or unhooking.
+- `CS0160`: `ObjectDisposedException` is now caught before `InvalidOperationException`, making both exception paths reachable.
 
-Remediation is limited to null-safe local capture/guards and correcting the catch ordering; no scope expansion is authorized.
+No scope expansion was made. Developer rerun is required.
 
 Required developer handoff:
 
 Example to run: UI / Foundation / Scroll Infrastructure — Hive.Example.WinForms
 Tests to run: HiveScrollBarTests.cs and HiveScrollHostTests.cs; broader-suite requirement: full Hive.Tests suite after focused coverage passes.
 
-Agent did not run the build or tests. After remediation, developer rerun is required: build `Hive.Host.WinForms.UI` / full solution if preferred, then `HiveScrollBarTests.cs` and `HiveScrollHostTests.cs`, followed by the full `Hive.Tests` suite and the Example Host scenario.
+Agent did not run the build or tests. Required developer rerun after remediation: build `Hive.Host.WinForms.UI` / full solution if preferred, then `HiveScrollBarTests.cs` and `HiveScrollHostTests.cs`, followed by the full `Hive.Tests` suite and the Example Host scenario.
