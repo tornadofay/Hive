@@ -59,6 +59,7 @@ For a new Example:
 Examples:
 - UI control/theme/dialog/CRUD example → `UI / Foundation`
 - HiveComboBox filtering and first-class selection UI example → `UI / Foundation / HiveComboBox`;
+- Custom UI integration/hardening → the real `Overview / Getting Started / Example Configuration` Settings flow, with representative Provider Settings and Advanced Provider Configuration selectors using the shared Hive UI controls.
 - Base Agent / AgentFactory example → `Agents / Base Agent`
 - Base Agent work protocols example → `Agents / Base Agent`
 - First real MAF-backed Base Agent execution example → `Agents / Base Agent`
