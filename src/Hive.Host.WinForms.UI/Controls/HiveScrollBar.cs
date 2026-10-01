@@ -234,6 +234,10 @@ public sealed class HiveScrollBar : Control
         var oldThumb = GetThumbBounds(_state);
 
         _state = normalized;
+
+        if (Enabled != normalized.Enabled)
+            Enabled = normalized.Enabled;
+
         UpdateCursor();
 
         if (!changed)
@@ -506,6 +510,27 @@ public sealed class HiveScrollBar : Control
     {
         base.OnDpiChangedAfterParent(e);
         Invalidate();
+    }
+
+    protected override Size GetPreferredSizeCore(Size proposedSize)
+    {
+        var thickness = LogicalToDevice(_thickness);
+        var length = LogicalToDevice(64);
+
+        if (Orientation == Orientation.Vertical)
+        {
+            return new Size(
+                thickness,
+                proposedSize.Height > 0
+                    ? proposedSize.Height
+                    : length);
+        }
+
+        return new Size(
+            proposedSize.Width > 0
+                ? proposedSize.Width
+                : length,
+            thickness);
     }
 
     protected override void OnPaint(PaintEventArgs e)
