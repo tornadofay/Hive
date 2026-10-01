@@ -285,6 +285,7 @@ public sealed class HiveComboBoxTests
 
         Assert.True(combo.DroppedDown);
         Assert.True(combo.PopupVerticalScrollStateForTesting.CanScroll);
+        Assert.Equal(0, combo.PopupVerticalScrollStateForTesting.Value);
 
         combo.HideDropDown();
         Assert.False(combo.DroppedDown);
