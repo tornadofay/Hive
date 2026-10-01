@@ -828,7 +828,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         IEnumerable<T> values)
         where T : notnull
     {
-        comboBox.BeginUpdate();
+        comboBox.SuspendLayout();
         try
         {
             comboBox.Items.Clear();
@@ -837,7 +837,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         }
         finally
         {
-            comboBox.EndUpdate();
+            comboBox.ResumeLayout(true);
         }
     }
 
