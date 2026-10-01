@@ -20,7 +20,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
     private readonly TextBox _endpointTextBox;
     private readonly TextBox _deploymentTextBox;
     private readonly HiveCapabilityEditor _capabilityEditor;
-    private readonly ComboBox _managementModeComboBox;
+    private readonly HiveComboBox _managementModeComboBox;
     private readonly Label _testStatus;
     private readonly HiveButton _testButton;
     private readonly HiveProviderModelDiscoveryPanel _discoveryPanel;
@@ -79,7 +79,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             discovery: null,
             automatic: target?.ManagementMode == ExecutionTargetManagementMode.Automatic);
 
-        _managementModeComboBox = new ComboBox
+        _managementModeComboBox = new HiveComboBox
         {
             Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDownList,
@@ -235,7 +235,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
     internal HiveProviderModelDiscoveryPanel DiscoveryPanel => _discoveryPanel;
 
-    internal ComboBox ModelSelector => _discoveryPanel.ModelSelector;
+    internal HiveComboBox ModelSelector => _discoveryPanel.ModelSelector;
 
     internal TextBox EndpointTextBox => _endpointTextBox;
 
@@ -243,7 +243,7 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
 
     internal Label TestStatusLabel => _testStatus;
 
-    internal ComboBox ManagementModeSelector => _managementModeComboBox;
+    internal HiveComboBox ManagementModeSelector => _managementModeComboBox;
 
     internal HiveCapabilityEditor CapabilityEditor => _capabilityEditor;
 
