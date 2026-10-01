@@ -108,6 +108,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
                 "Select a discovered model or type a custom model identifier."
         };
         _modelSelector.SelectedIndexChanged += ModelSelectorOnSelectedIndexChanged;
+        _modelSelector.SelectionChangeCommitted += ModelSelectorOnSelectionChangeCommitted;
         _modelSelector.TextChanged += ModelSelectorOnTextChanged;
 
         var selectionRow = new TableLayoutPanel
@@ -466,13 +467,18 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
     {
         UpdateSelectionState();
 
+        if (_customModelEntry)
+        {
+            SelectedModel = null;
+            return;
+        }
+
         if (_modelSelector.SelectedItem is ModelChoice choice &&
             string.Equals(
                 choice.Value.ModelId,
                 _modelSelector.Text,
                 StringComparison.Ordinal))
         {
-            _customModelEntry = false;
             SelectedModel = choice.Value;
             _capabilitiesLabel.Text =
                 $"Availability: {choice.Value.Availability} • Health: {choice.Value.Health} • " +
@@ -492,6 +498,14 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
                     "Type a custom model identifier or select a discovered model.";
             }
         }
+    }
+
+    private void ModelSelectorOnSelectionChangeCommitted(
+        object? sender,
+        EventArgs e)
+    {
+        _customModelEntry = false;
+        ModelSelectorOnSelectedIndexChanged(sender, e);
     }
 
     private void ModelSelectorOnTextChanged(
