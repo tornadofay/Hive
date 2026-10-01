@@ -1533,9 +1533,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
                 return;
 
             _scrollHost.Synchronize();
-            _scrollHost.SetScrollPosition(
-                _scrollHost.HorizontalScrollPosition,
-                _list.GetHighlightedY());
+            EnsureHighlightedItemVisible();
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -1642,9 +1640,40 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             object? sender,
             EventArgs e)
         {
-            _scrollHost.SetScrollPosition(
-                _scrollHost.HorizontalScrollPosition,
-                _list.GetHighlightedY());
+            EnsureHighlightedItemVisible();
+        }
+
+        private void EnsureHighlightedItemVisible()
+        {
+            var highlightedIndex = _list.GetHighlightedSourceIndex();
+            if (highlightedIndex < 0)
+                return;
+
+            var rowTop = _list.GetHighlightedY();
+            var rowBottom = rowTop + _list.RowHeight;
+            var current = _scrollHost.VerticalScrollPosition;
+            var viewport = _scrollHost.VerticalScrollState.ViewportSize;
+
+            if (viewport <= 0)
+                return;
+
+            var target = current;
+
+            if (rowTop < current)
+            {
+                target = rowTop;
+            }
+            else if (rowBottom > current + viewport)
+            {
+                target = rowBottom - viewport;
+            }
+
+            if (target != current)
+            {
+                _scrollHost.SetScrollPosition(
+                    _scrollHost.HorizontalScrollPosition,
+                    target);
+            }
         }
 
         private void UpdateListSize()
