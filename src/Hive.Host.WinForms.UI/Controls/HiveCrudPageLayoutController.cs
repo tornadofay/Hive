@@ -24,7 +24,7 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
     private readonly Label _searchLabel;
     private readonly TextBox _searchBox;
     private readonly Label _statusFilterLabel;
-    private readonly ComboBox _statusFilterBox;
+    private readonly HiveComboBox _statusFilterBox;
     private readonly TableLayoutPanel _actionLayout;
     private readonly FlowLayoutPanel _searchPanel;
     private readonly FlowLayoutPanel _actionButtons;
@@ -54,7 +54,7 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         Label searchLabel,
         TextBox searchBox,
         Label statusFilterLabel,
-        ComboBox statusFilterBox,
+        HiveComboBox statusFilterBox,
         TableLayoutPanel actionLayout,
         FlowLayoutPanel searchPanel,
         FlowLayoutPanel actionButtons,
