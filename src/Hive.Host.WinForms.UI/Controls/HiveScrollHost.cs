@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Theme;
+using System.ComponentModel;
 
 namespace Hive.Host.WinForms.UI.Controls;
 
@@ -70,12 +71,14 @@ public sealed class HiveScrollHost : UserControl
     public HiveScrollState VerticalScrollState =>
         _verticalScrollBar.State;
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public int HorizontalScrollPosition
     {
         get => _horizontalScrollBar.Value;
         set => SetScrollPosition(value, VerticalScrollPosition);
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public int VerticalScrollPosition
     {
         get => _verticalScrollBar.Value;
