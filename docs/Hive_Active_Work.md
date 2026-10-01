@@ -53,17 +53,16 @@ Post-handoff corrections within Slice 4:
 - the Controls / CRUD example's scroll content was changed to intrinsic sizing for reliable `HiveScrollHost` measurement;
 - regression coverage now verifies the migrated Example Host pages have no native `AutoScroll` and are hosted by `HiveScrollHost`.
 
+## Verification Remediation
+
+The reported Slice 4 verification failures were remediated:
+- `Hive.Tests` now references `Hive.Example.WinForms`, and the Example Host exposes its existing internal views to `Hive.Tests` through `InternalsVisibleTo`; no production view visibility was widened.
+- `HiveScrollHostTests.ZeroSizedHost_DoesNotThrowDuringSynchronization` now asserts the normalized zero-sized viewport state instead of applying `Assert.NotNull` to the value-type `HiveScrollState`.
+- `HiveUiPolishTests.HiveAdvancedOverview_UsesHiveScrollHost` no longer treats the non-disposable `HiveThemeManager` as an `IDisposable` resource.
+
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
-
-Developer verification reported these in-scope compile/analyzer failures before implementation remediation:
-- `HiveUiPolishTests` references the five migrated `Hive.Example.WinForms` page types, but `Hive.Tests` does not reference `Hive.Example.WinForms`, and those page types are internal to the Example Host assembly.
-- `HiveScrollHostTests.ZeroSizedHost_DoesNotThrowDuringSynchronization` uses `Assert.NotNull` against the value-type `HiveScrollState`, triggering xUnit analyzer `xUnit2002`.
-- `HiveUiPolishTests.HiveAdvancedOverview_UsesHiveScrollHost` declares `HiveThemeManager` with `using`, but `HiveThemeManager` does not implement `IDisposable`.
-
-Remediation boundary: correct only these Slice 4 verification/compile issues and return this state to `VERIFICATION PENDING` with the same focused rerun targets.
-
+Status: VERIFICATION PENDING
 
 Developer handoff:
 
