@@ -133,13 +133,40 @@ var save = layout.AddActionButton("Save", HiveButtonStyle.Primary);
 
 Members: `FieldsPanel`, `FooterPanel`, `LabelColumnWidth`, `ClearFields()`, `AddField(...)`, `AddActionButton(...)`. Field descriptions use the shared tooltip when their visible text is ellipsized.
 - `ClearFields()` disposes the field containers and editors previously added to the layout.
-- single-line editors use a 32px compact layout slot; native controls such as ComboBox retain their platform-defined control height and are vertically centered within that slot, while controls such as TextBox use the full slot height. Composite fields that embed native editors must preserve the same compact input sizing explicitly.
+- single-line editors use a compact layout slot; `HiveComboBox` uses the Hive-owned composite field sizing while ordinary native ComboBox retains its platform-defined control height and is vertically centered within the slot. Composite fields that embed native editors must preserve the same compact input sizing explicitly.
 
 ## HivePaginationBar
 
 Properties: `PageNumber`, `CanGoPrevious`, `CanGoNext`, `PageText`.
 
 Events: `PreviousRequested`, `NextRequested`.
+
+## HiveComboBox
+
+`HiveComboBox` is the single public Hive selection control. Its visible field, dropdown arrow, popup surface, filter field, result rows, selection visuals, and popup scrolling are Hive-rendered; it is no longer required to derive from native `ComboBox`.
+
+```csharp
+var combo = new HiveComboBox
+{
+    DisplayMember = nameof(Option.Name),
+    ValueMember = nameof(Option.Id),
+    DropDownStyle = ComboBoxStyle.DropDownList
+};
+
+combo.DataSource = options;
+combo.SelectedValue = 42;
+
+combo.SelectedIndexChanged += (_, _) => { /* selection changed */ };
+combo.ShowDropDown();
+```
+
+Public selection/data members include `Items`, `DataSource`, `DisplayMember`, `ValueMember`, `SelectedIndex`, `SelectedItem`, `SelectedValue`, `Text`, `DropDownStyle`, `ReadOnly`, `DropDownWidth`, `MaxDropDownItems`, and `ItemHeight`.
+
+The control preserves deterministic source ordering. Popup filtering is transient UI state, uses ordinal case-insensitive matching, and does not mutate the caller's item collection or overwrite the committed selection. Display text and selection identity are separate, so duplicate display text remains unambiguous when `ValueMember` identifies the underlying item.
+
+Long popup lists reuse `HiveScrollHost` / `HiveScrollBar`. Keyboard interaction supports opening/closing, filtering, Up/Down navigation, PageUp/PageDown, Home/End, Enter commit, and Escape cancel. Popup placement is bounded to the current screen working area and flips above the field when there is insufficient room below.
+
+The existing `HiveIntegration` and `HiveField` metadata properties remain part of the public control contract. Ordinary native WinForms `ComboBox` controls remain supported independently by the host integration adapter path.
 
 ## HiveScrollBar
 
@@ -217,7 +244,7 @@ void Append(string value);
 
 ## WinForms host-integration base controls
 
-Phase 1.14 provides a bounded set of native-control-derived integration bases:
+Phase 1.14 provides a bounded set of Hive-owned integration bases. Most remain native-control-derived; `HiveComboBox` is now the first exception because Slice 2 gives it a Hive-owned composite presentation:
 
 ```csharp
 HiveForm
@@ -229,7 +256,7 @@ HiveNumericUpDown
 HiveDataGridView
 ```
 
-They preserve the normal WinForms control API while exposing Hive-owned integration metadata. Hosts do not need one-off wrappers merely to obtain the common integration behavior.
+The integration bases expose Hive-owned metadata without moving host business semantics into the UI controls. `HiveComboBox` retains that metadata contract while owning its visible field and popup presentation.
 
 For field controls, use `HiveField` for explicit semantic overrides:
 
