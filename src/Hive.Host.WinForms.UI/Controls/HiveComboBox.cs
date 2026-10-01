@@ -1231,8 +1231,11 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             ArgumentNullException.ThrowIfNull(items);
             EnsureUnbound();
 
+            var previousSelected = _owner.CaptureSelectedItem();
+            var hadSelection = _owner.HasSelection;
+
             _items.AddRange(items);
-            _owner.SourceCollectionChanged();
+            _owner.SourceCollectionChanged(previousSelected, hadSelection);
         }
 
         public void Insert(int index, object? item)
