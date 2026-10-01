@@ -71,7 +71,6 @@ internal sealed class HiveCapabilityEditor : UserControl
         AddHeader("Set state", 1);
         AddHeader("Current", 2);
 
-
         foreach (var (key, name) in KnownCapabilities)
         {
             var configured = new ComboBox
