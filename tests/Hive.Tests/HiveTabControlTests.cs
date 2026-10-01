@@ -234,6 +234,37 @@ public sealed class HiveTabControlTests
     }
 
     [Fact]
+    public void HeaderKeyboardFocus_NavigatesWithLeftAndRight()
+    {
+        using var form = new Form
+        {
+            Size = new Size(420, 220)
+        };
+        using var tabs = new HiveTabControl
+        {
+            Location = new Point(8, 8),
+            Size = new Size(360, 140)
+        };
+
+        tabs.TabPages.Add("First");
+        tabs.TabPages.Add("Second");
+        tabs.TabPages.Add("Third");
+
+        form.Controls.Add(tabs);
+        form.CreateControl();
+        tabs.CreateControl();
+
+        tabs.FocusHeaderForTesting();
+        tabs.ProcessKeyForTesting(Keys.Right);
+
+        Assert.Equal(1, tabs.SelectedIndex);
+
+        tabs.ProcessKeyForTesting(Keys.Left);
+
+        Assert.Equal(0, tabs.SelectedIndex);
+    }
+
+    [Fact]
     public void CtrlTabNavigation_UsesNextAndPreviousTab()
     {
         using var tabs = new HiveTabControl();
