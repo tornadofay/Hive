@@ -39,7 +39,7 @@ Slice 3 implementation is in progress. The Hive-owned `HiveTabControl` composite
 
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Required developer handoff:
 
