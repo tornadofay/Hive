@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IN PROGRESS
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Authorized Slice
 
@@ -33,17 +33,19 @@ Do not implement Slice 4 broad existing-UI integration/hardening, later roadmap 
 
 No existing native TabControl consumer is being migrated unless repository evidence identifies a concrete inheritance-dependent consumer during this slice.
 
-## Implementation Checkpoint
+## Verification Failure
 
-Slice 3 implementation is in progress. The Hive-owned `HiveTabControl` composite, custom header surface, Hive horizontal overflow hosting, focused tests, theme-manager integration, and `UI / Foundation / HiveTabControl` Example Host scenario are committed. A verification compile pass identified two same-slice issues: `ICollection<TabPage>.Add` required a void return type, and the clear regression test called `HiveTabControl.Clear()` instead of `TabPages.Clear()`. Both were corrected without scope expansion. Documentation has been updated for the public control contract.
+Developer verification reported 555 total tests with 545 passed, 10 failed, 0 skipped. All ten failures originate from the same production defect: `HiveTabControl.AddTabPage` attempts to parent a `System.Windows.Forms.TabPage` to a plain `Panel`, which WinForms rejects because `TabPage` instances can only be parented by `TabControl` instances.
+
+This is a same-slice implementation defect in the required conventional `TabPage` hosting contract. Remediation is limited to providing a private native `TabControl` page host inside the Hive-owned composite while retaining Hive-owned/custom tab headers and selection/navigation behavior. No native `TabControl` migration or broader UI integration is authorized.
 
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
-Required developer handoff:
+Developer handoff after remediation:
 
 Example to run: UI / Foundation / HiveTabControl — Hive.Example.WinForms
 Tests to run: HiveTabControlTests.cs; broader-suite requirement: full Hive.Tests suite after focused coverage passes.
 
-Agent has not run the build or tests. Developer verification is required after implementation, including the matching Example Host scenario.
+Agent has not run the build or tests. Developer verification is required after remediation.
