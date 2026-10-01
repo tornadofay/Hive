@@ -12,8 +12,8 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl, IHiveAdvan
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
     private readonly IHiveExampleOutput? _output;
-    private readonly ComboBox _providerComboBox;
-    private readonly ComboBox _accountComboBox;
+    private readonly HiveComboBox _providerComboBox;
+    private readonly HiveComboBox _accountComboBox;
     private readonly HiveCrudPage<ExecutionTarget> _page;
 
     private IReadOnlyList<Provider> _providers = Array.Empty<Provider>();
@@ -518,15 +518,14 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl, IHiveAdvan
             _themeManager);
     }
 
-    internal ComboBox ProviderSelector => _providerComboBox;
+    internal HiveComboBox ProviderSelector => _providerComboBox;
 
-    internal ComboBox AccountSelector => _accountComboBox;
+    internal HiveComboBox AccountSelector => _accountComboBox;
 
-    private static ComboBox CreateComboBox() =>
+    private static HiveComboBox CreateComboBox() =>
         new()
         {
             Height = 32,
-            IntegralHeight = false,
             Anchor = AnchorStyles.Left | AnchorStyles.Right,
             DropDownStyle = ComboBoxStyle.DropDownList,
             Margin = new Padding(0, 4, 0, 4)
