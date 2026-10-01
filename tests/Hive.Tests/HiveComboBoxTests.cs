@@ -32,7 +32,7 @@ public sealed class HiveComboBoxTests
         };
 
         combo.PerformLayout();
-        Assert.Equal(1, combo.Controls.Count);
+        Assert.Single(combo.Controls);
         Assert.True(combo.Controls[0].Width > 0);
         Assert.True(combo.Controls[0].Height > 0);
     }
