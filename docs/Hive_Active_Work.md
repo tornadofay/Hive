@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: IN PROGRESS
 
 ## Authorized Slice
 
@@ -33,15 +33,17 @@ Do not implement Slice 4 broad existing-UI integration/hardening, later roadmap 
 
 No existing native TabControl consumer is being migrated unless repository evidence identifies a concrete inheritance-dependent consumer during this slice.
 
-## Verification Failure
+## Remediation Checkpoint
 
-Developer verification reported 555 total tests with 545 passed, 10 failed, 0 skipped. All ten failures originate from the same production defect: `HiveTabControl.AddTabPage` attempts to parent a `System.Windows.Forms.TabPage` to a plain `Panel`, which WinForms rejects because `TabPage` instances can only be parented by `TabControl` instances.
+Developer verification reported 555 total tests with 545 passed, 10 failed, 0 skipped. All ten failures shared the same production defect: `HiveTabControl.AddTabPage` attempted to parent `System.Windows.Forms.TabPage` to a plain `Panel`.
 
-This is a same-slice implementation defect in the required conventional `TabPage` hosting contract. Remediation is limited to providing a private native `TabControl` page host inside the Hive-owned composite while retaining Hive-owned/custom tab headers and selection/navigation behavior. No native `TabControl` migration or broader UI integration is authorized.
+The defect has been remediated within Slice 3 by using a private WinForms `TabControl` only as the required `TabPage` parent. Hive continues to own the public composite control and its custom tab-header rendering, selection/navigation, accessibility, and Hive scroll infrastructure. A focused test now also verifies that conventional `TabPage` instances are parented by a WinForms `TabControl`. No native `TabControl` migration or broader UI integration was introduced.
+
+Latest implementation commit: 601fb84fedd2489cd24cbc71cf05c51092523810 on `main`.
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Developer handoff after remediation:
 
