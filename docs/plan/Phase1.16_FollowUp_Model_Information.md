@@ -52,6 +52,10 @@ The tree is the navigation mechanism; individual pages are replaceable content v
 
 **Providers**, **Accounts / Credentials**, and **Execution Targets** retain their existing generalized CRUD/resource-management responsibilities.
 
+### Execution Target editor order
+
+The Execution Target editor presents Management before Capabilities. The management choice establishes whether capability state is provider/discovery-managed or administrator-configured before the administrator reaches the capability controls.
+
 ### Model Information page
 
 **Model Information** is a read-only discovery-information page in Advanced Provider Configuration. It does not become a second model configuration store.
@@ -78,37 +82,22 @@ The existing free-form capability textbox is replaced by a structured capability
 
 The editor uses known Hive capability identities and bounded state choices rather than allowing arbitrary capability keys or values to be typed.
 
-For a manually managed target, the UI presents rows such as:
+The structured capability editor uses one consistent state-selector column for every known capability:
 
 ```
-Capability           Configured
-Text generation      Supported ▼
-Vision               Unknown ▼
-Tool calling         Unsupported ▼
-Structured output    Supported ▼
+Capability           Set state                 Current
+Text generation      Supported ▼              Supported • override
+Vision               Not configured ▼         Supported • discovered
+Tool calling         Unsupported ▼            Unsupported • override
+Structured output    Supported ▼              Supported • discovered
 ...
 ```
 
-Where discovery evidence is available, the UI distinguishes:
+**Current** is the effective capability state and identifies its source as `discovered`, `override`, or `not reported`. This keeps discovery evidence visible without turning it into a second configuration surface.
 
-```
-Discovered
-Configured override
-Effective
-```
+For an automatically managed target, the state selector is disabled and displays **Managed by discovery**. The Current value remains the discovered/effective state. For a manually managed target, the administrator can select Supported / Unsupported / Unknown as an explicit override or choose Not configured so applicable discovery evidence remains the effective state.
 
-Example:
-
-```
-Vision
-  Discovered: Supported
-  Configured override: None
-  Effective: Supported
-```
-
-An explicit configured override remains authoritative even when discovery reports a different value.
-
-For an automatically managed target, capabilities are presented as provider/discovery-managed information. The UI must not present the automatic capability set as an unrestricted free-form editor. The administrator is shown the discovered state and the resulting effective state, with a clear management-mode path when an explicit manual override is required.
+An explicit configured override remains authoritative even when discovery reports a different value. Unknown/unreported capability evidence remains distinct from Unsupported. Provider-specific capability evidence that Hive does not understand remains observational and is not editable through the normalized capability selector.
 
 Unknown/unreported capability evidence must be presented as Unknown or not reported, never as zero capabilities.
 
