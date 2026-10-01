@@ -71,6 +71,9 @@ internal sealed class HiveCapabilityEditor : UserControl
         AddHeader("Set state", 1);
         AddHeader("Current", 2);
 
+        _table.RowStyles[0] = new RowStyle(SizeType.Absolute, 30);
+
+
         foreach (var (key, name) in KnownCapabilities)
         {
             var configured = new ComboBox
@@ -310,7 +313,7 @@ internal sealed class HiveCapabilityEditor : UserControl
                 Padding = new Padding(4, 0, 4, 0)
             },
             column,
-            _table.RowCount);
+            0);
     }
 
     private void ThemeManagerOnChanged(object? sender, EventArgs e) => ApplyTheme();
