@@ -7,13 +7,15 @@ namespace Hive.Host.WinForms.UI.Controls;
 
 public sealed class HiveTabControl : UserControl
 {
-    private const int DefaultHeaderHeight = 42;
-    private const int HorizontalPadding = 16;
-    private const int MinimumTabWidth = 88;
-    private const int MaximumTabWidth = 320;
+    private const int DefaultHeaderHeight = 40;
+    private const int HorizontalPadding = 12;
+    private const int MinimumTabWidth = 72;
+    private const int MaximumTabWidth = 240;
+    private const int PageHostChromeBleed = 4;
 
     private readonly HiveScrollHost _headerScrollHost;
     private readonly HiveTabHeaderSurface _headerSurface;
+    private readonly Panel _pageSurface;
     private readonly TabControl _pageHost;
     private readonly HiveTabPageCollection _tabPages;
 
@@ -41,20 +43,31 @@ public sealed class HiveTabControl : UserControl
 
         _tabPages = new HiveTabPageCollection(this);
 
-        _pageHost = new TabControl
+        _pageSurface = new Panel
         {
             Dock = DockStyle.Fill,
             Margin = Padding.Empty,
-            Padding = new Point(0, 0),
+            Padding = Padding.Empty,
+            BackColor = SystemColors.Window,
+            AutoScroll = false
+        };
+
+        _pageHost = new TabControl
+        {
+            Location = new Point(-PageHostChromeBleed, -PageHostChromeBleed),
+            Margin = Padding.Empty,
+            Padding = Point.Empty,
             BackColor = SystemColors.Window,
             SizeMode = TabSizeMode.Fixed,
             ItemSize = new Size(1, 1),
             Multiline = true,
             TabStop = false,
-            DrawMode = TabDrawMode.OwnerDrawFixed
+            DrawMode = TabDrawMode.OwnerDrawFixed,
+            Appearance = TabAppearance.FlatButtons
         };
         _pageHost.DrawItem += PageHostOnDrawItem;
         _pageHost.SelectedIndexChanged += PageHostOnSelectedIndexChanged;
+        _pageSurface.Controls.Add(_pageHost);
 
         _headerScrollHost = new HiveScrollHost
         {
@@ -76,9 +89,10 @@ public sealed class HiveTabControl : UserControl
 
         _headerScrollHost.Attach(_headerSurface);
 
-        Controls.Add(_pageHost);
+        Controls.Add(_pageSurface);
         Controls.Add(_headerScrollHost);
 
+        UpdatePageHostLayout();
         UpdateHeaderLayout();
     }
 
@@ -158,7 +172,14 @@ public sealed class HiveTabControl : UserControl
         _theme = theme;
         BackColor = theme.Palette.Surface;
         ForeColor = theme.Palette.Text;
+        _pageSurface.BackColor = theme.Palette.Surface;
         _pageHost.BackColor = theme.Palette.Surface;
+        foreach (TabPage page in _tabPages)
+        {
+            page.BackColor = theme.Palette.Surface;
+            page.ForeColor = theme.Palette.Text;
+        }
+
         _headerScrollHost.ApplyTheme(theme);
         _headerSurface.ApplyTheme(theme);
 
@@ -168,6 +189,7 @@ public sealed class HiveTabControl : UserControl
     protected override void OnResize(EventArgs e)
     {
         base.OnResize(e);
+        UpdatePageHostLayout();
         UpdateHeaderLayout();
         EnsureSelectedTabVisible();
     }
@@ -297,6 +319,11 @@ public sealed class HiveTabControl : UserControl
 
         _tabPages.InsertCore(index, page);
         page.Dock = DockStyle.Fill;
+        if (_theme is not null)
+        {
+            page.BackColor = _theme.Palette.Surface;
+            page.ForeColor = _theme.Palette.Text;
+        }
 
         _synchronizingPageHostSelection = true;
         try
@@ -391,7 +418,7 @@ public sealed class HiveTabControl : UserControl
         if (!_tabPages[index].Enabled)
             return;
 
-        Focus();
+        _headerSurface.Focus();
         SetSelectedIndexCore(index, userInitiated: true);
     }
 
@@ -507,7 +534,6 @@ public sealed class HiveTabControl : UserControl
             var index = Mod(start + delta * offset, _tabPages.Count);
             if (_tabPages[index].Enabled)
             {
-                Focus();
                 SetSelectedIndexCore(index, userInitiated: true);
                 return;
             }
@@ -542,6 +568,21 @@ public sealed class HiveTabControl : UserControl
     {
         var result = value % modulus;
         return result < 0 ? result + modulus : result;
+    }
+
+    private void UpdatePageHostLayout()
+    {
+        if (IsDisposed ||
+            _pageSurface.ClientSize.Width <= 0 ||
+            _pageSurface.ClientSize.Height <= 0)
+            return;
+
+        var bleed = LogicalToDevice(PageHostChromeBleed);
+        _pageHost.SetBounds(
+            -bleed,
+            -bleed,
+            _pageSurface.ClientSize.Width + bleed * 2,
+            _pageSurface.ClientSize.Height + bleed * 2);
     }
 
     private void RefreshHeaders()
@@ -921,9 +962,8 @@ public sealed class HiveTabControl : UserControl
             var text = theme?.Palette.Text ?? SystemColors.ControlText;
             var hover = theme?.VisualStates.NavigationHover ?? SystemColors.ControlLight;
             var pressed = theme?.VisualStates.NavigationPressed ?? SystemColors.ControlDark;
-            var selected = theme?.VisualStates.NavigationSelected ?? SystemColors.Highlight;
-            var selectedText = theme?.VisualStates.NavigationSelectedText ?? SystemColors.HighlightText;
-            var border = theme?.Palette.Border ?? SystemColors.ControlDark;
+            var selectedText = theme?.Palette.Accent ?? SystemColors.Highlight;
+            var navigationBorder = theme?.VisualStates.NavigationBorder ?? theme?.Palette.Border ?? SystemColors.ControlDark;
             var accent = theme?.Palette.Accent ?? SystemColors.Highlight;
             var disabledText = theme?.Palette.DisabledText ?? SystemColors.GrayText;
 
@@ -941,13 +981,11 @@ public sealed class HiveTabControl : UserControl
                 var isPressed = index == _pressedIndex;
                 var enabled = _owner.Enabled && page.Enabled;
 
-                var background = isSelected
-                    ? selected
-                    : isPressed
-                        ? pressed
-                        : isHovered && enabled
-                            ? hover
-                            : surface;
+                var background = isPressed
+                    ? pressed
+                    : isHovered && enabled
+                        ? hover
+                        : surface;
 
                 var foreground = !enabled
                     ? disabledText
@@ -972,25 +1010,15 @@ public sealed class HiveTabControl : UserControl
                 if (isSelected)
                 {
                     using var indicator = new SolidBrush(accent);
+                    var indicatorHeight = LogicalToDevice(2);
                     e.Graphics.FillRectangle(
                         indicator,
                         bounds.Left,
                         Math.Max(
-                            bounds.Bottom - LogicalToDevice(3),
+                            bounds.Bottom - indicatorHeight,
                             bounds.Top),
                         bounds.Width,
-                        LogicalToDevice(3));
-                }
-
-                if (index < _tabBounds.Length - 1)
-                {
-                    using var separator = new Pen(border);
-                    e.Graphics.DrawLine(
-                        separator,
-                        bounds.Right - 1,
-                        bounds.Top + LogicalToDevice(8),
-                        bounds.Right - 1,
-                        bounds.Bottom - LogicalToDevice(8));
+                        indicatorHeight);
                 }
             }
 
@@ -1014,7 +1042,7 @@ public sealed class HiveTabControl : UserControl
                     focusBounds.Height - 1);
             }
 
-            using var bottomBorder = new Pen(border);
+            using var bottomBorder = new Pen(navigationBorder);
             e.Graphics.DrawLine(
                 bottomBorder,
                 0,
