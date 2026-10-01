@@ -7,6 +7,9 @@ namespace Hive.Host.WinForms;
 
 internal sealed class HiveCapabilityEditor : UserControl
 {
+    private const string NotConfiguredText = "Not configured";
+    private const string ManagedByDiscoveryText = "Managed by discovery";
+
     private static readonly (CapabilityKey Key, string Name)[] KnownCapabilities =
     [
         (HiveCapabilityKeys.TextGeneration, "Text generation"),
@@ -19,9 +22,8 @@ internal sealed class HiveCapabilityEditor : UserControl
 
     private sealed record CapabilityRow(
         CapabilityKey Key,
-        Label Discovered,
         ComboBox Configured,
-        Label Effective);
+        Label Current);
 
     private readonly IHiveThemeManager _themeManager;
     private readonly TableLayoutPanel _table;
@@ -39,16 +41,16 @@ internal sealed class HiveCapabilityEditor : UserControl
         _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
 
         Dock = DockStyle.Fill;
-        MinimumSize = new Size(0, 184);
+        MinimumSize = new Size(0, 220);
 
         _description = new Label
         {
             Dock = DockStyle.Top,
             AutoSize = false,
-            Height = 34,
+            Height = 42,
+            Padding = new Padding(4, 2, 4, 4),
             Text =
-                "Known Hive capabilities use structured Supported / Unsupported / Unknown states. " +
-                "Automatic targets are discovery-managed; Manual targets can define explicit overrides."
+                "Set the capability state on the right. Current shows the effective state and its source."
         };
 
         _table = new TableLayoutPanel
@@ -56,53 +58,48 @@ internal sealed class HiveCapabilityEditor : UserControl
             Dock = DockStyle.Top,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            ColumnCount = 4,
+            ColumnCount = 3,
             Padding = new Padding(0, 2, 0, 0)
         };
-        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30f));
-        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22f));
-        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 26f));
-        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22f));
+        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 48f));
+        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32f));
+        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20f));
         _table.RowCount = 1;
-        _table.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+        _table.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
 
         AddHeader("Capability", 0);
-        AddHeader("Discovered", 1);
-        AddHeader("Override", 2);
-        AddHeader("Effective", 3);
+        AddHeader("Set state", 1);
+        AddHeader("Current", 2);
 
         foreach (var (key, name) in KnownCapabilities)
         {
-            var discovered = new Label
-            {
-                Dock = DockStyle.Fill,
-                AutoSize = false,
-                Text = "Not reported",
-                TextAlign = ContentAlignment.MiddleLeft,
-                Padding = new Padding(4, 0, 4, 0)
-            };
-
             var configured = new ComboBox
             {
                 Dock = DockStyle.Fill,
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 IntegralHeight = false,
                 Height = 32,
-                Tag = key
+                Tag = key,
+                AccessibleName = $"{name} capability state",
+                AccessibleDescription =
+                    "Choose Not configured, Supported, Unsupported, or Unknown for this capability."
             };
-            configured.Items.Add("Not configured");
+            configured.Items.Add(NotConfiguredText);
             foreach (var state in Enum.GetValues<CapabilityState>())
                 configured.Items.Add(state);
+            configured.Items.Add(ManagedByDiscoveryText);
             configured.SelectedIndex = 0;
             configured.SelectedIndexChanged += ConfiguredOnChanged;
 
-            var effective = new Label
+            var current = new Label
             {
                 Dock = DockStyle.Fill,
                 AutoSize = false,
-                Text = "Unknown",
+                Text = "Unknown • not reported",
                 TextAlign = ContentAlignment.MiddleLeft,
-                Padding = new Padding(4, 0, 4, 0)
+                AutoEllipsis = true,
+                Padding = new Padding(4, 0, 4, 0),
+                AccessibleName = $"{name} current capability state"
             };
 
             _table.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
@@ -118,11 +115,10 @@ internal sealed class HiveCapabilityEditor : UserControl
                 },
                 0,
                 _table.RowCount);
-            _table.Controls.Add(discovered, 1, _table.RowCount);
-            _table.Controls.Add(configured, 2, _table.RowCount);
-            _table.Controls.Add(effective, 3, _table.RowCount);
+            _table.Controls.Add(configured, 1, _table.RowCount);
+            _table.Controls.Add(current, 2, _table.RowCount);
 
-            _rows.Add(new CapabilityRow(key, discovered, configured, effective));
+            _rows.Add(new CapabilityRow(key, configured, current));
             _table.RowCount++;
         }
 
@@ -130,9 +126,10 @@ internal sealed class HiveCapabilityEditor : UserControl
         {
             Dock = DockStyle.Top,
             AutoSize = false,
-            Height = 34,
+            Height = 42,
             Padding = new Padding(4, 6, 4, 4),
-            Text = "No additional capability evidence."
+            AutoEllipsis = true,
+            Text = "No additional provider-specific capability evidence."
         };
 
         Controls.Add(_additionalLabel);
@@ -167,33 +164,37 @@ internal sealed class HiveCapabilityEditor : UserControl
             var discovered = FindState(_discovered, row.Key);
             var configuredState = FindState(configured, row.Key);
 
-            row.Discovered.Text = FormatState(discovered);
-            row.Configured.SelectedItem = configuredState is null
-                ? "Not configured"
-                : configuredState.State;
-            row.Configured.Enabled = !_automatic;
+            if (_automatic)
+            {
+                row.Configured.SelectedItem = ManagedByDiscoveryText;
+                row.Configured.Enabled = false;
+            }
+            else
+            {
+                row.Configured.Enabled = true;
+                row.Configured.SelectedItem = configuredState is null
+                    ? NotConfiguredText
+                    : configuredState.State;
+            }
 
-            var effective = _automatic
+            var currentState = _automatic
                 ? discovered?.State ?? configuredState?.State ?? CapabilityState.Unknown
                 : configuredState?.State ?? discovered?.State ?? CapabilityState.Unknown;
 
-            row.Effective.Text = effective.ToString();
+            row.Current.Text = FormatCurrentState(
+                currentState,
+                _automatic
+                    ? discovered is not null
+                    : configuredState is not null
+                        ? false
+                        : discovered is not null);
         }
 
-        var unknownDiscovered = _discovered
-            .Where(item => !knownKeys.Contains(item.Capability))
-            .Select(item => $"{item.Capability}={item.State}")
-            .ToArray();
-
-        _additionalLabel.Text = unknownDiscovered.Length == 0
-            ? _preservedUnknown.Count == 0
-                ? "No additional provider-specific capability evidence."
-                : $"Additional configured capability entries are preserved but not editable here: {string.Join(", ", _preservedUnknown.Select(item => item.Capability.Value))}"
-            : $"Provider-specific capability evidence (read-only): {string.Join(", ", unknownDiscovered)}";
+        UpdateAdditionalEvidence();
 
         _description.Text = _automatic
-            ? "Automatic target: capability state is maintained by successful discovery. Change Management to Manual to define explicit overrides."
-            : "Manual target: select a state or Not configured for each known capability. Not configured leaves discovery evidence available for the effective state.";
+            ? "Automatic target: provider discovery controls the capability state. Change Management to Manual to set an override."
+            : "Manual target: choose a state to override discovery, or Not configured to use discovery when available.";
 
         ApplyTheme();
     }
@@ -208,9 +209,7 @@ internal sealed class HiveCapabilityEditor : UserControl
         foreach (var row in _rows)
         {
             if (row.Configured.SelectedItem is CapabilityState state)
-            {
                 result.Add(new CapabilityStateEntry(row.Key, state));
-            }
         }
 
         return result
@@ -225,10 +224,42 @@ internal sealed class HiveCapabilityEditor : UserControl
 
         _discovered = discovery?.DiscoveredCapabilities ?? Array.Empty<CapabilityStateEntry>();
 
-        foreach (var row in _rows)
-            row.Discovered.Text = FormatState(FindState(_discovered, row.Key));
+        UpdateAdditionalEvidence();
+        UpdateCurrentStates();
+    }
 
-        var knownKeys = KnownCapabilities.Select(item => item.Key).ToHashSet();
+    private void ConfiguredOnChanged(object? sender, EventArgs e)
+    {
+        if (_automatic)
+            return;
+
+        UpdateCurrentStates();
+    }
+
+    private void UpdateCurrentStates()
+    {
+        foreach (var row in _rows)
+        {
+            var configured = row.Configured.SelectedItem is CapabilityState state
+                ? state
+                : (CapabilityState?)null;
+            var discovered = FindState(_discovered, row.Key);
+
+            var current = configured ?? discovered?.State ?? CapabilityState.Unknown;
+            var discoveredIsSource = configured is null && discovered is not null;
+
+            row.Current.Text = FormatCurrentState(
+                current,
+                discoveredIsSource);
+        }
+    }
+
+    private void UpdateAdditionalEvidence()
+    {
+        var knownKeys = KnownCapabilities
+            .Select(item => item.Key)
+            .ToHashSet();
+
         var unknownDiscovered = _discovered
             .Where(item => !knownKeys.Contains(item.Capability))
             .Select(item => $"{item.Capability}={item.State}")
@@ -239,28 +270,6 @@ internal sealed class HiveCapabilityEditor : UserControl
                 ? "No additional provider-specific capability evidence."
                 : $"Additional configured capability entries are preserved but not editable here: {string.Join(", ", _preservedUnknown.Select(item => item.Capability.Value))}"
             : $"Provider-specific capability evidence (read-only): {string.Join(", ", unknownDiscovered)}";
-
-        UpdateEffectiveStates();
-    }
-
-    private void ConfiguredOnChanged(object? sender, EventArgs e)
-    {
-        if (_automatic)
-            return;
-
-        UpdateEffectiveStates();
-    }
-
-    private void UpdateEffectiveStates()
-    {
-        foreach (var row in _rows)
-        {
-            var configured = row.Configured.SelectedItem is CapabilityState state
-                ? state
-                : (CapabilityState?)null;
-            var discovered = FindState(_discovered, row.Key)?.State;
-            row.Effective.Text = (configured ?? discovered ?? CapabilityState.Unknown).ToString();
-        }
     }
 
     private static CapabilityStateEntry? FindState(
@@ -268,8 +277,14 @@ internal sealed class HiveCapabilityEditor : UserControl
         CapabilityKey key) =>
         entries.FirstOrDefault(item => item.Capability == key);
 
-    private static string FormatState(CapabilityStateEntry? state) =>
-        state is null ? "Not reported" : state.State.ToString();
+    private static string FormatCurrentState(
+        CapabilityState state,
+        bool discoveredSource) =>
+        discoveredSource
+            ? $"{state} • discovered"
+            : state == CapabilityState.Unknown
+                ? "Unknown • not reported"
+                : $"{state} • override";
 
     private void AddHeader(string text, int column)
     {
