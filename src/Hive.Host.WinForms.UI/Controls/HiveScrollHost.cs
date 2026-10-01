@@ -333,10 +333,6 @@ public sealed class HiveScrollHost : UserControl
 
         _viewport.BackColor = theme.Palette.Surface;
         BackColor = theme.Palette.Surface;
-
-        _horizontalScrollBar.ApplyTheme(theme);
-        _verticalScrollBar.ApplyTheme(theme);
-
         Invalidate();
     }
 
