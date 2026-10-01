@@ -609,10 +609,9 @@ public sealed class HiveTabControl : UserControl
 
         bool ICollection<TabPage>.IsReadOnly => false;
 
-        public int Add(TabPage page)
+        public void Add(TabPage page)
         {
             _owner.AddTabPage(page, _pages.Count);
-            return _pages.Count - 1;
         }
 
         public TabPage Add(string text)
