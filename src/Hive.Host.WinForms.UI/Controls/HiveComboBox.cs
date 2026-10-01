@@ -1523,7 +1523,19 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
                 Show(form);
 
             Activate();
+            SynchronizeInitialScrollPosition();
             _filterEditor.Focus();
+        }
+
+        private void SynchronizeInitialScrollPosition()
+        {
+            if (_list.Count == 0)
+                return;
+
+            _scrollHost.Synchronize();
+            _scrollHost.SetScrollPosition(
+                _scrollHost.HorizontalScrollPosition,
+                _list.GetHighlightedY());
         }
 
         protected override void OnPaint(PaintEventArgs e)
