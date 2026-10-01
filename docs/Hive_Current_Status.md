@@ -34,6 +34,8 @@ Last updated: 2026-10-01
   - **1.16 — Provider Settings UI — 2026-09-28:** Initial UI slice complete and verified on 2026-09-28. Developer verification: full `Hive.Tests` suite passed **470/470** (0 failed, 0 skipped) in approximately 1.1 minutes; Visual Studio **Treat Warnings as Errors / zero-warning** was confirmed; and the Example Host **Overview / Getting Started / Example Configuration** workflow was manually confirmed working, including save and edit behavior. [Verification record](verification/phase-1/1.16-provider-settings-ui-closure-2026-09-28.md)
   - **Revision — Phase 1.16 UI — Provider Configuration, Discovery & Target Reconciliation:** Complete and verified on 2026-09-29. Developer verification: the matching Example Host **Overview / Getting Started / Example Configuration** workflow was manually exercised successfully; the full `Hive.Tests` suite passed **474/474** (0 failed, 0 skipped) in 59 seconds. [Verification record](verification/phase-1/1.16-provider-settings-ui-revision-closure-2026-09-29.md)
 
+  - **Phase 1 Custom UI Components — Slice 1: Custom Scroll Infrastructure:** Complete and verified on 2026-10-01. Developer verification: full `Hive.Tests` suite passed **524/524** (0 failed, 0 skipped); the matching `Hive.Example.WinForms` Scroll Infrastructure scenario was manually confirmed working correctly. The slice establishes reusable Hive-owned scroll infrastructure and integrates it with `HiveEditorLayout`; broader replacement of existing native scrolling remains outside this slice. [Closure verification record](verification/phase-1/custom-ui-scroll-infrastructure-closure-2026-10-01.md)
+
   - **1.17+:** Not authorized.
   
 Historical verification records are maintained under [`docs/verification/`](verification/).
