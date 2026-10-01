@@ -138,7 +138,8 @@ public sealed class HiveScrollBar : Control
             ControlStyles.AllPaintingInWmPaint |
             ControlStyles.OptimizedDoubleBuffer |
             ControlStyles.ResizeRedraw |
-            ControlStyles.Selectable,
+            ControlStyles.Selectable |
+            ControlStyles.SupportsTransparentBackColor,
             true);
 
         TabStop = true;
