@@ -374,3 +374,17 @@ Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
 - the requested Management-before-Capabilities reorder and simplified capability editor layout remain blocked until this rerun passes;
 - required Example Host handoff remains: Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms.
+
+Latest verification failure:
+- developer reran Hive.Tests: 496 Tests (493 Passed, 3 Failed, 0 Skipped).
+- HiveExecutionTargetDiscoverySettingsTests.Editor_AutomaticTargetClearsStaleDiscoveredCapabilitiesWhenModelBecomesCustom still retains two discovered capability entries after custom model text is entered.
+- HiveExecutionTargetDiscoverySettingsTests.Editor_AddPrefillsBuiltInProviderEndpointAndUsesEditableModelCombo now loses the typed custom model text and reports an empty ComboBox text.
+- Phase116FollowUpTests.AdvancedConfigurationTree_UsesOverviewAndModelInformationLeaves still throws InvalidOperationException while constructing the Advanced Provider Configuration form because SplitterDistance is assigned before SplitContainer has a valid laid-out width.
+
+Remediation boundary:
+- fix the custom-model text/selection synchronization without clearing the user's typed text, while ensuring automatic-target discovered capabilities are cleared when the selected model becomes custom;
+- defer Advanced Provider Configuration splitter-distance assignment until the split container has a valid size, while preserving the requested 320px navigation width and feasible content minimum;
+- do not change unrelated discovery, capability semantics, or begin the requested capability-layout polish until this verification boundary is cleared.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full Hive.Tests suite.
