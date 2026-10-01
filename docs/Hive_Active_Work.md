@@ -399,3 +399,12 @@ Latest remediation:
 Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
 - the requested Management-before-Capabilities reorder and simplified capability editor layout remain blocked until this rerun passes;
+
+Latest remediation:
+- made the automatic execution-target custom-model reset explicit in HiveExecutionTargetEditorForm: when the model text no longer matches the selected discovered model, Automatic mode reconfigures the capability editor with an empty discovery-owned capability set instead of relying on an indirect SetDiscovery side effect; Manual mode continues to preserve configured overrides while clearing discovery evidence;
+- removed Panel1MinSize and Panel2MinSize assignments from Advanced Provider Configuration construction so WinForms cannot reject them against the not-yet-laid-out SplitContainer width; the fixed 320px navigation splitter is now assigned only after the containing controls have completed their initial layout;
+- revision inspection confirmed the remediation is confined to custom-model capability synchronization and Advanced Provider Configuration navigation sizing.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
+- the requested Management-before-Capabilities reorder and simplified capability editor layout remain blocked until this rerun passes.
