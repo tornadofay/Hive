@@ -535,6 +535,7 @@ public sealed class HiveTabControl : UserControl
             if (_tabPages[index].Enabled)
             {
                 SetSelectedIndexCore(index, userInitiated: true);
+                RestoreHeaderKeyboardFocus();
                 return;
             }
         }
@@ -547,6 +548,7 @@ public sealed class HiveTabControl : UserControl
             if (_tabPages[index].Enabled)
             {
                 SetSelectedIndexCore(index, userInitiated: true);
+                RestoreHeaderKeyboardFocus();
                 return;
             }
         }
@@ -559,9 +561,16 @@ public sealed class HiveTabControl : UserControl
             if (_tabPages[index].Enabled)
             {
                 SetSelectedIndexCore(index, userInitiated: true);
+                RestoreHeaderKeyboardFocus();
                 return;
             }
         }
+    }
+
+    private void RestoreHeaderKeyboardFocus()
+    {
+        if (_headerSurface.CanFocus && _headerSurface.TabStop && !_headerSurface.HasKeyboardFocus)
+            _headerSurface.Focus();
     }
 
     private static int Mod(int value, int modulus)
