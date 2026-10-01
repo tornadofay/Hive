@@ -31,13 +31,19 @@ Do not implement or activate Slice 2 (`HiveComboBox` filtering), Slice 3 (`HiveT
 
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
-Developer-reported compile failure `CS0115` in `HiveScrollBar.cs` was remediated within the same slice by replacing the invalid `GetPreferredSizeCore(Size)` override with the public `GetPreferredSize(Size)` override. Developer rerun is required.
+Developer-reported compile failures in `HiveScrollHost.cs`:
+- `CS8602`: possible null dereference at the detach event-unsubscription lines using `_content` after a local null check.
+- `CS8604`: possible null argument when passing `e.Control` to `HookContentControls(Control)`.
+- `CS8604`: possible null argument when passing `e.Control` to `UnhookContentControls(Control)`.
+- `CS0160`: `ObjectDisposedException` catch is unreachable because the preceding `InvalidOperationException` catch already catches its base type.
+
+Remediation is limited to null-safe local capture/guards and correcting the catch ordering; no scope expansion is authorized.
 
 Required developer handoff:
 
 Example to run: UI / Foundation / Scroll Infrastructure — Hive.Example.WinForms
 Tests to run: HiveScrollBarTests.cs and HiveScrollHostTests.cs; broader-suite requirement: full Hive.Tests suite after focused coverage passes.
 
-Agent did not run the build or tests. Required developer rerun after remediation: build `Hive.Host.WinForms.UI` / full solution if preferred, then `HiveScrollBarTests.cs` and `HiveScrollHostTests.cs`, followed by the full `Hive.Tests` suite and the Example Host scenario.
+Agent did not run the build or tests. After remediation, developer rerun is required: build `Hive.Host.WinForms.UI` / full solution if preferred, then `HiveScrollBarTests.cs` and `HiveScrollHostTests.cs`, followed by the full `Hive.Tests` suite and the Example Host scenario.
