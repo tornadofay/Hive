@@ -3,6 +3,15 @@
 Status: IMPLEMENTATION IN PROGRESS
 
 Latest UI correction:
+- reduced the Advanced Provider Configuration navigation tree splitter from 320px to 160px, exactly half the previous width;
+- updated the focused form regression test to require the new 160px navigation width;
+- no page content, navigation entries, or execution-target behavior changed.
+
+Verification boundary:
+- developer must rerun the focused Advanced Provider Configuration UI tests and the full Hive.Tests suite;
+- manually inspect the Advanced Provider Configuration form and confirm the left navigation is approximately half its previous width while all existing labels remain usable.
+
+Latest UI correction:
 - corrected the capability editor table header placement so Capability, Set state, and Current occupy row 0 and the first capability (Text generation) starts on row 1; this removes the observed header/capability overlap.
 - added regression coverage asserting the three headers remain on row 0 and the Text generation label/selector remain paired on row 1 in columns 0/1.
 - no capability semantics, discovery ownership, or execution-target behavior changed.
