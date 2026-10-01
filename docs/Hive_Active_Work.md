@@ -10,7 +10,7 @@ Authorization: explicit user command `Hive: start` against `docs/plan/Phase1/Cus
 
 Repository checkpoint before implementation: `de46b3e74b20c1eb83a8a453ff8b8fd8080c48a8` on `main`.
 
-Current implementation head: `6a2c63f962d5b1625aeacc288334d919688f4a19` on `main`.
+Current implementation head: `5a4b6959625d750f19ff35070ac3c45c8c7b9510` on `main`.
 
 ## Scope
 
@@ -31,18 +31,19 @@ Do not implement or activate Slice 2 (`HiveComboBox` filtering), Slice 3 (`HiveT
 
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
-Developer-reported compile failures in `HiveScrollHost.cs` were remediated within the same slice:
-- `CS8602`: detach now uses the null-checked local `content` rather than dereferencing nullable field `_content`.
-- `CS8604`: descendant add/remove handlers now null-guard `e.Control` before hooking or unhooking.
-- `CS0160`: `ObjectDisposedException` is now caught before `InvalidOperationException`, making both exception paths reachable.
+Developer-reported runtime failure while instantiating/using the new scroll infrastructure:
 
-No scope expansion was made. Developer rerun is required.
+`System.ArgumentException: Control does not support transparent background colors.`
+
+The current `HiveScrollBar` constructor assigns `BackColor = Color.Transparent`, but the custom `Control` has not enabled WinForms transparent-background support.
+
+Remediation is limited to making the Hive-owned scrollbar explicitly support transparent background rendering before assigning that color. No scope expansion is authorized.
 
 Required developer handoff:
 
 Example to run: UI / Foundation / Scroll Infrastructure — Hive.Example.WinForms
 Tests to run: HiveScrollBarTests.cs and HiveScrollHostTests.cs; broader-suite requirement: full Hive.Tests suite after focused coverage passes.
 
-Agent did not run the build or tests. Required developer rerun after remediation: build `Hive.Host.WinForms.UI` / full solution if preferred, then `HiveScrollBarTests.cs` and `HiveScrollHostTests.cs`, followed by the full `Hive.Tests` suite and the Example Host scenario.
+Agent did not run the build or tests. After remediation, developer rerun is required: build `Hive.Host.WinForms.UI` / full solution if preferred, then `HiveScrollBarTests.cs` and `HiveScrollHostTests.cs`, followed by the full `Hive.Tests` suite and the Example Host scenario.
