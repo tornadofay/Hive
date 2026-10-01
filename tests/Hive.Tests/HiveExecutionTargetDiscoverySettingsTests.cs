@@ -262,7 +262,7 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
 
         var selectors = table.Controls
             .Cast<Control>()
-            .OfType<ComboBox>()
+            .OfType<HiveComboBox>()
             .Where(control => control.Tag is CapabilityKey)
             .ToArray();
 
