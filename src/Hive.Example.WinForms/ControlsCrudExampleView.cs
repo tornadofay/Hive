@@ -43,8 +43,9 @@ internal sealed class ControlsCrudExampleView : UserControl
             RowCount = 3,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
-            AutoSize = false,
-            AutoScroll = true
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            AutoScroll = false
         };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -164,7 +165,15 @@ internal sealed class ControlsCrudExampleView : UserControl
         root.Controls.Add(_controls, 0, 1);
         root.Controls.Add(_crud, 0, 2);
 
-        Controls.Add(root);
+        var scrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            AccessibleName = "Controls and CRUD example content"
+        };
+        scrollHost.Attach(root);
+        Controls.Add(scrollHost);
 
         _themeManager.Apply(this);
         _ = _crud.RefreshAsync();
