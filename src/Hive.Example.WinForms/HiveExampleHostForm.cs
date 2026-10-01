@@ -934,7 +934,7 @@ internal sealed class HiveExampleHostForm : HiveForm
 
             selected ??= definitions.FirstOrDefault();
 
-            _configuredAgentSelector.BeginUpdate();
+            _configuredAgentSelector.SuspendLayout();
             try
             {
                 _configuredAgentSelector.Items.Clear();
@@ -947,7 +947,7 @@ internal sealed class HiveExampleHostForm : HiveForm
             }
             finally
             {
-                _configuredAgentSelector.EndUpdate();
+                _configuredAgentSelector.ResumeLayout(true);
             }
 
             _configuredAgentSelector.Enabled = definitions.Count > 0;
