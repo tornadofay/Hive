@@ -31,6 +31,27 @@ public sealed class HiveScrollHostTests
     }
 
     [Fact]
+    public void ZeroSizedHost_DoesNotThrowDuringSynchronization()
+    {
+        using var host = new HiveScrollHost
+        {
+            Size = new Size(1, 1)
+        };
+        using var content = new Panel
+        {
+            Size = new Size(500, 600)
+        };
+
+        host.Attach(content);
+
+        host.SetBounds(0, 0, 0, 0);
+        host.Synchronize();
+
+        Assert.NotNull(host.HorizontalScrollState);
+        Assert.NotNull(host.VerticalScrollState);
+    }
+
+    [Fact]
     public void NonScrollableContent_HasNoActiveScrollbar()
     {
         using var host = new HiveScrollHost
