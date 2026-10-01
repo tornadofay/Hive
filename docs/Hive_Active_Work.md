@@ -55,7 +55,15 @@ Post-handoff corrections within Slice 4:
 
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+
+Developer verification reported these in-scope compile/analyzer failures before implementation remediation:
+- `HiveUiPolishTests` references the five migrated `Hive.Example.WinForms` page types, but `Hive.Tests` does not reference `Hive.Example.WinForms`, and those page types are internal to the Example Host assembly.
+- `HiveScrollHostTests.ZeroSizedHost_DoesNotThrowDuringSynchronization` uses `Assert.NotNull` against the value-type `HiveScrollState`, triggering xUnit analyzer `xUnit2002`.
+- `HiveUiPolishTests.HiveAdvancedOverview_UsesHiveScrollHost` declares `HiveThemeManager` with `using`, but `HiveThemeManager` does not implement `IDisposable`.
+
+Remediation boundary: correct only these Slice 4 verification/compile issues and return this state to `VERIFICATION PENDING` with the same focused rerun targets.
+
 
 Developer handoff:
 
