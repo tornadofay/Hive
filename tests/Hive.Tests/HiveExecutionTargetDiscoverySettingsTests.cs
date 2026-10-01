@@ -266,6 +266,9 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.Equal(
             CapabilityState.Unsupported,
             visionSelector.SelectedItem);
+        Assert.DoesNotContain(
+            "Managed by discovery",
+            visionSelector.Items.Cast<object>());
 
         var visionCurrent = Assert.Single(
             table.Controls.Cast<Control>(),
@@ -296,6 +299,9 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         Assert.Equal(
             "Managed by discovery",
             visionSelector.SelectedItem);
+        Assert.Contains(
+            "Managed by discovery",
+            visionSelector.Items.Cast<object>());
         Assert.Equal(
             "Supported • discovered",
             visionCurrent.Text);
