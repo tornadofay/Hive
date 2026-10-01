@@ -174,7 +174,7 @@ Manual Example Host verification should demonstrate the reusable scrollbar again
 
 ---
 
-# Slice 2 — HiveFilteredComboBox with Filtering
+# Slice 2 — HiveComboBox with Filtering
 
 ## Objective
 
@@ -183,6 +183,20 @@ Use the existing HiveComboBox as the first-class Hive UI ComboBox control, provi
 The existing `HiveComboBox` remains the single public ComboBox control. Its Hive presentation is not a separate opt-in control and does not replace its Phase 1.14 host-integration contract.
 
 The control must be reusable for general Hive UI configuration and must not contain provider-specific behavior.
+
+## Control implementation strategy
+
+`HiveComboBox` remains the single public Hive ComboBox type, but its visible surface is Hive-owned rather than delegated to the native WinForms ComboBox renderer.
+
+The implementation should use a Hive-owned visible field and a Hive-owned popup surface. A native WinForms ComboBox may be retained internally only as a non-user-visible compatibility or data-binding backend when that materially reduces compatibility risk; it must not remain responsible for the visible field, popup, filtering UI, or scrollbar.
+
+This is an intentional first-class control implementation, not a thin color/style wrapper. The public compatibility target is the conventional selection/data-binding behavior used by existing Hive consumers, not preservation of every implementation detail of the native ComboBox window.
+
+Before implementation, inventory whether any existing Hive or Example Host consumer relies on HiveComboBox being assignable to ComboBox. Such inheritance-dependent consumers require an explicit migration path if the public implementation changes its base type; this must not become an accidental breaking change.
+
+The visible field must not depend on native ComboBox painting. The current WinForms ComboBox implementation disables ControlStyles.UserPaint, and its owner-draw support is centered on drawing list elements rather than replacing the complete field and popup presentation.
+
+`HiveComboBox` therefore owns its field, popup, filter box, result rows, selection visuals, disabled/error states, and popup scrolling.
 
 ## Host-integration and public-control boundary
 
