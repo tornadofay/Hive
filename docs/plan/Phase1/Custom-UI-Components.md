@@ -152,7 +152,7 @@ Manual Example Host verification should demonstrate the reusable scrollbar again
 
 ---
 
-# Slice 2 — HiveComboBox with Filtering
+# Slice 2 — HiveFilteredComboBox with Filtering
 
 ## Objective
 
