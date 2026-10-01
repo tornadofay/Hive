@@ -653,6 +653,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
             _modelSelector.SelectedIndexChanged -= ModelSelectorOnSelectedIndexChanged;
+            _modelSelector.SelectionChangeCommitted -= ModelSelectorOnSelectionChangeCommitted;
             _modelSelector.TextChanged -= ModelSelectorOnTextChanged;
 
             var discoveryCts = Interlocked.Exchange(ref _discoveryCts, null);
