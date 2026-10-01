@@ -13,7 +13,7 @@ Before repository changes:
 
 1. Read `AGENTS.md`.
 2. Read Current Status and Active Work.
-3. Read the relevant roadmap and architecture sections.
+3. Read the relevant roadmap slice and its linked detailed plan under `docs/plan/`, then read the relevant architecture sections.
 4. Read relevant `docs/ui/` guidance for UI/Example work.
 5. Inspect affected source, projects, tests, examples, configuration, references, and responsibility owners.
 6. Establish the repository checkpoint from evidence.
