@@ -1,10 +1,8 @@
+using Hive.Host.WinForms.UI.Theme;
 using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing.Drawing2D;
-using System.Windows.Forms;
-using Hive.Core;
-using Hive.Host.WinForms.UI.Theme;
 
 namespace Hive.Host.WinForms.UI.Controls;
 
@@ -189,6 +187,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public object? SelectedItem
     {
         get => _selectedIndex >= 0
@@ -197,6 +196,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         set => SetSelectedItem(value);
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public object? SelectedValue
     {
         get
