@@ -9,6 +9,14 @@ namespace Hive.Tests;
 public sealed class HiveScrollBarTests
 {
     [Fact]
+    public void Constructor_AllowsTransparentBackground()
+    {
+        using var scrollbar = new HiveScrollBar();
+
+        Assert.Equal(Color.Transparent, scrollbar.BackColor);
+    }
+
+    [Fact]
     public void State_DerivesEffectiveMaximumFromContentExtentAndViewport()
     {
         var state = HiveScrollState.Create(
