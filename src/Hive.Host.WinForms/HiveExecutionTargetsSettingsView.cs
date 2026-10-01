@@ -277,7 +277,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl, IHiveAdvan
         _accountComboBox.Enabled = false;
         try
         {
-            _accountComboBox.BeginUpdate();
+            _accountComboBox.SuspendLayout();
             try
             {
                 _accountComboBox.Items.Clear();
@@ -331,7 +331,7 @@ internal sealed class HiveExecutionTargetsSettingsView : UserControl, IHiveAdvan
             }
             finally
             {
-                _accountComboBox.EndUpdate();
+                _accountComboBox.ResumeLayout(true);
             }
         }
         finally
