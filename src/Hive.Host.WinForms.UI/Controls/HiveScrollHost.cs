@@ -9,6 +9,7 @@ public sealed class HiveScrollHost : UserControl
     private readonly Panel _viewport;
     private readonly HiveScrollBar _horizontalScrollBar;
     private readonly HiveScrollBar _verticalScrollBar;
+    private readonly HashSet<Control> _hookedContentControls = new();
 
     private Control? _content;
     private ContentPresentation? _contentPresentation;
@@ -96,6 +97,13 @@ public sealed class HiveScrollHost : UserControl
             return;
         }
 
+        if (content.Parent is not null &&
+            !ReferenceEquals(content.Parent, _viewport))
+        {
+            throw new InvalidOperationException(
+                "The scroll content must not already have a parent. Detach it from its current parent before attaching it to HiveScrollHost.");
+        }
+
         Detach();
 
         _content = content;
@@ -106,9 +114,10 @@ public sealed class HiveScrollHost : UserControl
 
         content.Dock = DockStyle.None;
         content.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-        content.Margin = Padding.Empty;
 
         _viewport.Controls.Add(content);
+
+        HookContentControls(content);
 
         content.Resize += ContentChanged;
         content.Layout += ContentChanged;
@@ -127,6 +136,7 @@ public sealed class HiveScrollHost : UserControl
         _content.Layout -= ContentChanged;
         _content.SizeChanged -= ContentChanged;
 
+        UnhookContentControls(content);
         _viewport.Controls.Remove(content);
 
         var presentation = _contentPresentation;
@@ -302,6 +312,7 @@ public sealed class HiveScrollHost : UserControl
                 _content.Resize -= ContentChanged;
                 _content.Layout -= ContentChanged;
                 _content.SizeChanged -= ContentChanged;
+                UnhookContentControls(_content);
             }
         }
 
@@ -352,6 +363,69 @@ public sealed class HiveScrollHost : UserControl
         object? sender,
         EventArgs e) =>
         RequestSynchronization();
+
+    private void ContentMouseWheel(
+        object? sender,
+        MouseEventArgs e)
+    {
+        if (_content is null ||
+            _scrolling ||
+            !_verticalScrollBar.State.CanScroll)
+            return;
+
+        var steps = e.Delta / SystemInformation.MouseWheelScrollDelta;
+        if (steps == 0)
+            steps = Math.Sign(e.Delta);
+
+        SetScrollPosition(
+            _horizontalScrollBar.Value,
+            _verticalScrollBar.Value -
+            steps * Math.Max(
+                1,
+                _verticalScrollBar.State.SmallChange));
+    }
+
+    private void HookContentControls(Control control)
+    {
+        if (!_hookedContentControls.Add(control))
+            return;
+
+        control.MouseWheel += ContentMouseWheel;
+        control.ControlAdded += DescendantControlAdded;
+        control.ControlRemoved += DescendantControlRemoved;
+
+        foreach (Control child in control.Controls)
+            HookContentControls(child);
+    }
+
+    private void UnhookContentControls(Control control)
+    {
+        if (!_hookedContentControls.Remove(control))
+            return;
+
+        control.MouseWheel -= ContentMouseWheel;
+        control.ControlAdded -= DescendantControlAdded;
+        control.ControlRemoved -= DescendantControlRemoved;
+
+        foreach (Control child in control.Controls)
+            UnhookContentControls(child);
+    }
+
+    private void DescendantControlAdded(
+        object? sender,
+        ControlEventArgs e)
+    {
+        HookContentControls(e.Control);
+        RequestSynchronization();
+    }
+
+    private void DescendantControlRemoved(
+        object? sender,
+        ControlEventArgs e)
+    {
+        UnhookContentControls(e.Control);
+        RequestSynchronization();
+    }
 
     private void ContentContainerChanged(
         object? sender,
