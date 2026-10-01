@@ -31,13 +31,26 @@ Do not implement later roadmap work, redesign Provider/Agent/Workspace/business 
 
 Do not migrate Example Host fixture/example controls merely because they are native when they intentionally demonstrate ordinary WinForms behavior.
 
+## Implementation Checkpoint
+
+Slice 4 implementation is complete on `main`.
+
+Implemented integration:
+- Settings/configuration selection surfaces now use `HiveComboBox` where the interaction is selection-oriented, including provider onboarding, provider/account and execution-target selectors, model selection, capability state selection, Agent target/generation selection, Persistence authentication selection, and the shared CRUD status filter;
+- the Example Host configured-agent selector now uses `HiveComboBox`;
+- the editable/autocomplete Provider transport field remains native because its existing native autocomplete semantics do not fit the first-class HiveComboBox contract;
+- no existing native production TabControl consumer was found, so `HiveTabControl` remains a reusable foundation with no migration;
+- Settings Overview and Advanced Provider Configuration Overview now use `HiveScrollHost` for their intrinsically-sized content;
+- focused regression coverage was updated for the migrated controls and the new scroll-host integrations;
+- UI control and Example Host guidance documents now describe the Slice 4 integration boundary.
+
 ## Verification State
 
-Status: IMPLEMENTATION IN PROGRESS
+Status: VERIFICATION PENDING
 
-Required handoff after implementation:
+Developer handoff:
 
-Example to run: Settings / Providers / Advanced Provider Configuration / representative integrated settings controls — Hive.Example.WinForms
-Tests to run: focused Slice 4 integration/regression tests; broader-suite requirement: full Hive.Tests suite after focused coverage passes.
+Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
+Tests to run: HiveUiPolishTests.cs; HiveExecutionTargetDiscoverySettingsTests.cs; Phase116FollowUpTests.cs; ProviderSettingsIntegrationTests.cs; broader-suite requirement: full Hive.Tests suite after focused coverage passes.
 
-Agent has not run the build or tests. Developer verification is required after implementation.
+Agent has not run the build or tests. Developer verification is required.
