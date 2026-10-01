@@ -341,12 +341,11 @@ public sealed class HiveUiPolishTests
             .SelectMany(static layout => layout.Controls.Cast<Control>())
             .OfType<FlowLayoutPanel>()
             .SelectMany(static flow => flow.Controls.Cast<Control>())
-            .OfType<ComboBox>()
+            .OfType<HiveComboBox>()
             .FirstOrDefault();
 
         Assert.NotNull(statusFilter);
         Assert.Equal(new Padding(0, 4, 0, 4), statusFilter!.Margin);
-        Assert.False(statusFilter.IntegralHeight);
     }
 
     [Fact]
@@ -377,7 +376,7 @@ public sealed class HiveUiPolishTests
         using var owner = new Panel();
         using var list = new ListView();
         using var searchBox = new TextBox();
-        using var statusFilterBox = new ComboBox();
+        using var statusFilterBox = new HiveComboBox();
         using var pagination = new HivePaginationBar();
         using var controller = new HiveCrudPageOperationController(
             owner,
@@ -736,6 +735,27 @@ public sealed class HiveUiPolishTests
             throw new NotSupportedException(
                 $"The Settings test proxy does not implement '{targetMethod?.Name}'.");
         }
+    }
+
+    [Fact]
+    public void HiveSettingsOverview_UsesHiveScrollHost()
+    {
+        using var view = new HiveSettingsOverviewView();
+
+        Assert.False(view.AutoScroll);
+        var host = Assert.Single(view.Controls.OfType<HiveScrollHost>());
+        Assert.NotNull(host.Content);
+    }
+
+    [Fact]
+    public void HiveAdvancedOverview_UsesHiveScrollHost()
+    {
+        using var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        using var view = new HiveAdvancedOverviewPage(themeManager);
+
+        Assert.False(view.AutoScroll);
+        var host = Assert.Single(view.Controls.OfType<HiveScrollHost>());
+        Assert.NotNull(host.Content);
     }
 
     private sealed record TestItem(string Name);
