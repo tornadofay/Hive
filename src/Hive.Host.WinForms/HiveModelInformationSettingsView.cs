@@ -809,7 +809,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDownList,
-            IntegralHeight = false,
             Height = 32,
             AccessibleName = name
         };
