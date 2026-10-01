@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Windows.Forms;
+using Hive.Host.WinForms.UI.Controls;
 
 namespace Hive.Host.WinForms;
 
@@ -15,7 +16,7 @@ internal sealed class HiveSettingsOverviewView : UserControl
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
         Padding = new Padding(4, 0, 4, 4);
-        AutoScroll = true;
+        AutoScroll = false;
 
         var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
         _headingFont = new Font(
@@ -107,7 +108,15 @@ internal sealed class HiveSettingsOverviewView : UserControl
         root.Controls.Add(flowHeading, 0, 3);
         root.Controls.Add(flow, 0, 4);
 
-        Controls.Add(root);
+        var scrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            AccessibleName = "Settings overview content"
+        };
+        scrollHost.Attach(root);
+        Controls.Add(scrollHost);
     }
 
     protected override void Dispose(bool disposing)
