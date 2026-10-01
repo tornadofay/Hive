@@ -1015,10 +1015,10 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             {
                 BeginInvoke(new MethodInvoker(FocusField));
             }
-            catch (InvalidOperationException)
+            catch (ObjectDisposedException)
             {
             }
-            catch (ObjectDisposedException)
+            catch (InvalidOperationException)
             {
             }
         }
@@ -1135,6 +1135,21 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
 
     internal int FilteredCountForTesting =>
         _filteredItems.Count;
+
+    internal void ApplyFilterForTesting(string filter) =>
+        BuildFilteredItems(filter ?? string.Empty);
+
+    internal IReadOnlyList<string> FilteredDisplayValuesForTesting =>
+        _filteredItems.Select(static item => item.Display).ToArray();
+
+    internal HiveScrollState PopupVerticalScrollStateForTesting =>
+        _popup?.VerticalScrollStateForTesting ?? HiveScrollState.Create(
+            Orientation.Vertical,
+            0,
+            0,
+            0,
+            0,
+            enabled: false);
 
     protected override AccessibleObject CreateAccessibilityInstance() =>
         new HiveComboBoxAccessibleObject(this);
@@ -1568,9 +1583,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             _owner.SetPopupFilter(_filterText);
         }
 
-        private void ListOnItemInvoked(
-            object? sender,
-            int sourceIndex)
+        private void ListOnItemInvoked(int sourceIndex)
         {
             _owner.CommitPopupSelection(sourceIndex);
         }
@@ -1620,27 +1633,54 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
                 workArea.Height - _owner.LogicalToDevice(8));
             desiredHeight = Math.Min(desiredHeight, maxHeight);
 
-            var x = Math.Clamp(
-                anchor.X,
-                workArea.Left,
-                Math.Max(workArea.Left, workArea.Right - width));
+            var ownerBounds = new Rectangle(
+                _owner.PointToScreen(Point.Empty),
+                _owner.Size);
 
-            var y = anchor.Y;
-            if (y + desiredHeight > workArea.Bottom)
+            Bounds = CalculatePopupBounds(
+                ownerBounds,
+                workArea,
+                width,
+                desiredHeight);
+        }
+
+        internal static Rectangle CalculatePopupBounds(
+            Rectangle ownerBounds,
+            Rectangle workArea,
+            int popupWidth,
+            int popupHeight)
+        {
+            var width = Math.Clamp(
+                popupWidth,
+                1,
+                Math.Max(1, workArea.Width));
+
+            var height = Math.Clamp(
+                popupHeight,
+                1,
+                Math.Max(1, workArea.Height));
+
+            var belowY = ownerBounds.Bottom;
+            var aboveY = ownerBounds.Top - height;
+            var y = belowY;
+
+            if (belowY + height > workArea.Bottom &&
+                aboveY >= workArea.Top)
             {
-                y = _owner.PointToScreen(Point.Empty).Y - desiredHeight;
+                y = aboveY;
             }
 
             y = Math.Clamp(
                 y,
                 workArea.Top,
-                Math.Max(workArea.Top, workArea.Bottom - desiredHeight));
+                Math.Max(workArea.Top, workArea.Bottom - height));
 
-            Bounds = new Rectangle(
-                x,
-                y,
-                width,
-                desiredHeight);
+            var x = Math.Clamp(
+                ownerBounds.Left,
+                workArea.Left,
+                Math.Max(workArea.Left, workArea.Right - width));
+
+            return new Rectangle(x, y, width, height);
         }
 
         private int LogicalToDevice(int value) =>
