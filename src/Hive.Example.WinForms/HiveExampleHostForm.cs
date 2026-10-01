@@ -29,7 +29,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     private readonly Label _viewTitle;
     private readonly Label _viewSubtitle;
     private readonly Label _configuredAgentLabel;
-    private readonly ComboBox _configuredAgentSelector;
+    private readonly HiveComboBox _configuredAgentSelector;
     private readonly Panel _viewHost;
     private readonly TableLayoutPanel _contentLayout;
     private readonly TableLayoutPanel _shell;
@@ -234,13 +234,12 @@ internal sealed class HiveExampleHostForm : HiveForm
             AccessibleName = "Configured Agent label"
         };
 
-        _configuredAgentSelector = new ComboBox
+        _configuredAgentSelector = new HiveComboBox
         {
             Anchor = AnchorStyles.Left | AnchorStyles.Right,
             DropDownStyle = ComboBoxStyle.DropDownList,
             Width = 420,
             Margin = new Padding(0, 3, 0, 3),
-            FormattingEnabled = true,
             Enabled = false,
             AccessibleName = "Configured Agent selector",
             AccessibleDescription =
