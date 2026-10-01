@@ -316,7 +316,15 @@ public sealed class HiveEditorLayout : UserControl
         editor.AutoSize = false;
         editor.Margin = Padding.Empty;
 
-        if (editor is ComboBox comboBox)
+        if (editor is HiveComboBox hiveComboBox)
+        {
+            hiveComboBox.Dock = DockStyle.Fill;
+            hiveComboBox.MinimumSize = new Size(
+                hiveComboBox.MinimumSize.Width,
+                Math.Max(hiveComboBox.MinimumSize.Height, editorHeight));
+            hiveComboBox.Height = editorHeight;
+        }
+        else if (editor is ComboBox comboBox)
         {
             // Normal WinForms ComboBox styles use the native OS control for their
             // edit-field height. Keep that native height and center the control in
@@ -342,6 +350,7 @@ public sealed class HiveEditorLayout : UserControl
         editor switch
         {
             TextBoxBase textBox => !textBox.Multiline,
+            HiveComboBox => true,
             ComboBox => true,
             NumericUpDown => true,
             DomainUpDown => true,
