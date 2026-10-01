@@ -33,6 +33,10 @@ Do not implement Slice 3 (`HiveTabControl`), Slice 4 broad existing-UI integrati
 
 Existing native `ComboBox` instances in Hive production surfaces remain native unless they are an actual `HiveComboBox` consumer or a migration is required by this slice's concrete inheritance audit. Broad replacement of existing native ComboBox usage belongs to Slice 4.
 
+## Implementation Checkpoint
+
+Current implementation includes the Hive-owned composite control, explicit host value adapter, theme-manager/editor-layout integration, focused contract coverage, and the deterministic `UI / Foundation / HiveComboBox` Example Host scenario.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
