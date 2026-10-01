@@ -506,3 +506,14 @@ Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full Hive.Tests suite after the final UI refinement;
 - manually exercise the updated Execution Target dialog and Advanced Provider Configuration in the required Example Host scenario;
 - required handoff: Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms.
+
+Latest UI refinement:
+- changed the capability state-selector column from percentage sizing to a fixed 190px column so Text generation and every other capability selector occupy the same horizontal position regardless of available dialog width;
+- retained the Capability and Current columns around that fixed selector column;
+- added focused regression coverage proving the selector column is fixed-width and that Text generation's label and selector occupy the same row;
+- no capability authority or discovery semantics changed.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
+- manually inspect the Execution Target dialog to confirm the capability rows are visually aligned and the first Text generation selector sits directly in the intended state column;
+- required handoff: Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms.
