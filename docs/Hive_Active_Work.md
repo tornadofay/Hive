@@ -482,3 +482,17 @@ Current UI polish implementation scope:
 Verification boundary after implementation:
 - developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
 - required Example Host handoff remains: Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms.
+
+Latest implementation:
+- developer verification cleared the prior remediation gate with Hive.Tests 496/496 passed.
+- moved Management before Capabilities in the Execution Target editor so ownership mode is established before capability configuration;
+- replaced the four-column capability presentation with a simpler three-column Capability / Set state / Current layout where every capability uses the same state-selector column;
+- Automatic targets show a disabled Managed by discovery selector and the effective Current state; Manual targets can choose Supported / Unsupported / Unknown or Not configured, with Current indicating whether the effective state comes from an override, discovery, or is not reported;
+- preserved configured override authority, automatic discovery ownership, unknown/unreported semantics, additional provider-specific evidence, accessibility, theming, and existing CRUD behavior;
+- added focused regression coverage for Management-before-Capabilities ordering and consistent capability-selector placement/source presentation;
+- updated the owning UI/Phase 1.16 guidance from planned capability-layout language to the implemented presentation.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full Hive.Tests suite after this UI polish;
+- manually exercise the updated Execution Target dialog and Advanced Provider Configuration in the required Example Host scenario;
+- required handoff: Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms.
