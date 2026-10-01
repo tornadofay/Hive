@@ -53,9 +53,6 @@ public sealed class HiveScrollHost : UserControl
         _horizontalScrollBar.ValueChanged += ScrollBarValueChanged;
         _verticalScrollBar.ValueChanged += ScrollBarValueChanged;
 
-        _viewport.ControlAdded += ContentContainerChanged;
-        _viewport.ControlRemoved += ContentContainerChanged;
-
         Controls.Add(_viewport);
         Controls.Add(_horizontalScrollBar);
         Controls.Add(_verticalScrollBar);
@@ -304,9 +301,6 @@ public sealed class HiveScrollHost : UserControl
             _horizontalScrollBar.ValueChanged -= ScrollBarValueChanged;
             _verticalScrollBar.ValueChanged -= ScrollBarValueChanged;
 
-            _viewport.ControlAdded -= ContentContainerChanged;
-            _viewport.ControlRemoved -= ContentContainerChanged;
-
             if (_content is not null)
             {
                 _content.Resize -= ContentChanged;
@@ -422,11 +416,6 @@ public sealed class HiveScrollHost : UserControl
         UnhookContentControls(e.Control);
         RequestSynchronization();
     }
-
-    private void ContentContainerChanged(
-        object? sender,
-        ControlEventArgs e) =>
-        RequestSynchronization();
 
     private void RequestSynchronization()
     {
