@@ -13,6 +13,8 @@ internal sealed class ScrollInfrastructureExampleView : UserControl
     private readonly Label _state;
     private readonly Panel _contentSurface;
     private readonly Label _footer;
+    private readonly Font _contentTitleFont;
+    private readonly Font _markerTitleFont;
 
     public ScrollInfrastructureExampleView(
         IHiveThemeManager themeManager)
@@ -20,6 +22,15 @@ internal sealed class ScrollInfrastructureExampleView : UserControl
         ArgumentNullException.ThrowIfNull(themeManager);
 
         _themeManager = themeManager;
+
+        _contentTitleFont = new Font(
+            themeManager.Theme.Typography.FontFamily,
+            14f,
+            FontStyle.Bold);
+        _markerTitleFont = new Font(
+            themeManager.Theme.Typography.FontFamily,
+            10f,
+            FontStyle.Bold);
 
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
@@ -91,15 +102,18 @@ internal sealed class ScrollInfrastructureExampleView : UserControl
 
         Controls.Add(root);
 
-        ThemeManagerApply();
         UpdateStateText();
     }
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
+        {
             _scrollHost.ScrollPositionChanged -=
                 ScrollHostOnScrollPositionChanged;
+            _contentTitleFont.Dispose();
+            _markerTitleFont.Dispose();
+        }
 
         base.Dispose(disposing);
     }
@@ -118,10 +132,7 @@ internal sealed class ScrollInfrastructureExampleView : UserControl
         {
             AutoSize = true,
             Location = new Point(28, 28),
-            Font = new Font(
-                _themeManager.Theme.Typography.FontFamily,
-                14f,
-                FontStyle.Bold),
+            Font = _contentTitleFont,
             Text = "Hive scroll viewport"
         };
 
@@ -192,10 +203,6 @@ internal sealed class ScrollInfrastructureExampleView : UserControl
         var titleLabel = new Label
         {
             AutoSize = true,
-            Font = new Font(
-                surface.Font.FontFamily,
-                10f,
-                FontStyle.Bold),
             Text = title,
             Location = new Point(14, 12)
         };
@@ -229,9 +236,4 @@ internal sealed class ScrollInfrastructureExampleView : UserControl
             $"{_scrollHost.VerticalScrollState.EffectiveMaximum}";
     }
 
-    private void ThemeManagerApply()
-    {
-        _themeManager.Apply(this);
-        _scrollHost.Synchronize();
-    }
 }
