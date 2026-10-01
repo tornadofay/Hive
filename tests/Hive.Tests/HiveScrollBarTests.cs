@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Controls;
@@ -37,6 +38,18 @@ public sealed class HiveScrollBarTests
 
         Assert.Equal(300, state.EffectiveMaximum);
         Assert.Equal(300, state.Value);
+    }
+
+    [Fact]
+    public void State_RejectsInvalidOrientation()
+    {
+        Assert.Throws<InvalidEnumArgumentException>(
+            () => HiveScrollState.Create(
+                (Orientation)999,
+                minimum: 0,
+                maximum: 10,
+                value: 0,
+                viewportSize: 1));
     }
 
     [Fact]
