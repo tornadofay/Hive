@@ -319,8 +319,6 @@ public sealed class HiveScrollHost : UserControl
     internal HiveScrollBar VerticalScrollBarForTesting =>
         _verticalScrollBar;
 
-    internal Panel ViewportForTesting => _viewport;
-
     internal void ApplyTheme(HiveThemeDefinition theme)
     {
         ArgumentNullException.ThrowIfNull(theme);
@@ -525,18 +523,22 @@ public sealed class HiveScrollHost : UserControl
         var width = Math.Max(
             viewportSize.Width,
             Math.Max(
-                currentSize.Width,
+                _content.MinimumSize.Width,
+                Math.Max(
+                    currentSize.Width,
                 Math.Max(
                     unboundedPreferred.Width,
-                    viewportPreferred.Width)));
+                    viewportPreferred.Width))));
 
         var height = Math.Max(
             viewportSize.Height,
             Math.Max(
-                currentSize.Height,
+                _content.MinimumSize.Height,
+                Math.Max(
+                    currentSize.Height,
                 Math.Max(
                     unboundedPreferred.Height,
-                    viewportPreferred.Height)));
+                    viewportPreferred.Height))));
 
         if (_content.MaximumSize.Width > 0)
             width = Math.Min(width, _content.MaximumSize.Width);
@@ -580,8 +582,16 @@ public sealed class HiveScrollHost : UserControl
             verticalWidth,
             Math.Max(0, ClientSize.Height - horizontalHeight));
 
-        _horizontalScrollBar.SetBounds(horizontalBounds);
-        _verticalScrollBar.SetBounds(verticalBounds);
+        _horizontalScrollBar.SetBounds(
+            horizontalBounds.X,
+            horizontalBounds.Y,
+            horizontalBounds.Width,
+            horizontalBounds.Height);
+        _verticalScrollBar.SetBounds(
+            verticalBounds.X,
+            verticalBounds.Y,
+            verticalBounds.Width,
+            verticalBounds.Height);
 
         if (_horizontalScrollBar.Visible)
             _horizontalScrollBar.BringToFront();
