@@ -90,9 +90,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
             Orientation = Orientation.Vertical,
             FixedPanel = FixedPanel.Panel1,
             IsSplitterFixed = true,
-            SplitterWidth = 1,
-            Panel1MinSize = 320,
-            Panel2MinSize = 300
+            SplitterWidth = 1
         };
         _navigationSplit.Panel1.Padding = new Padding(4);
         _navigationSplit.Panel2.Padding = new Padding(4);
@@ -102,7 +100,11 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
         BodyPanel.Controls.Add(_navigationSplit);
         BodyPanel.PerformLayout();
         _navigationSplit.PerformLayout();
-        _navigationSplit.SplitterDistance = 320;
+
+        var availableWidth = _navigationSplit.ClientSize.Width;
+        if (availableWidth > 321)
+            _navigationSplit.SplitterDistance = 320;
+
         ThemeManager.Apply(BodyPanel);
 
         _navigation.AfterSelect += NavigationAfterSelect;
