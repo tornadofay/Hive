@@ -132,9 +132,9 @@ public sealed class HiveScrollHost : UserControl
         if (content is null)
             return null;
 
-        _content.Resize -= ContentChanged;
-        _content.Layout -= ContentChanged;
-        _content.SizeChanged -= ContentChanged;
+        content.Resize -= ContentChanged;
+        content.Layout -= ContentChanged;
+        content.SizeChanged -= ContentChanged;
 
         UnhookContentControls(content);
         _viewport.Controls.Remove(content);
@@ -304,12 +304,13 @@ public sealed class HiveScrollHost : UserControl
             _horizontalScrollBar.ValueChanged -= ScrollBarValueChanged;
             _verticalScrollBar.ValueChanged -= ScrollBarValueChanged;
 
-            if (_content is not null)
+            var content = _content;
+            if (content is not null)
             {
-                _content.Resize -= ContentChanged;
-                _content.Layout -= ContentChanged;
-                _content.SizeChanged -= ContentChanged;
-                UnhookContentControls(_content);
+                content.Resize -= ContentChanged;
+                content.Layout -= ContentChanged;
+                content.SizeChanged -= ContentChanged;
+                UnhookContentControls(content);
             }
         }
 
@@ -412,7 +413,9 @@ public sealed class HiveScrollHost : UserControl
         object? sender,
         ControlEventArgs e)
     {
-        HookContentControls(e.Control);
+        if (e.Control is Control control)
+            HookContentControls(control);
+
         RequestSynchronization();
     }
 
@@ -420,7 +423,9 @@ public sealed class HiveScrollHost : UserControl
         object? sender,
         ControlEventArgs e)
     {
-        UnhookContentControls(e.Control);
+        if (e.Control is Control control)
+            UnhookContentControls(control);
+
         RequestSynchronization();
     }
 
@@ -451,11 +456,11 @@ public sealed class HiveScrollHost : UserControl
                 Synchronize();
             }));
         }
-        catch (InvalidOperationException)
+        catch (ObjectDisposedException)
         {
             _synchronizationPending = false;
         }
-        catch (ObjectDisposedException)
+        catch (InvalidOperationException)
         {
             _synchronizationPending = false;
         }
