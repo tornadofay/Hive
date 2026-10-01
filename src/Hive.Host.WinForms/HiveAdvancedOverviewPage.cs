@@ -41,10 +41,12 @@ internal sealed class HiveAdvancedOverviewPage : UserControl, IHiveAdvancedConfi
 
         var body = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 1,
             RowCount = 5,
-            AutoScroll = false,
+            Margin = Padding.Empty,
             Padding = new Padding(0, 4, 0, 0)
         };
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
