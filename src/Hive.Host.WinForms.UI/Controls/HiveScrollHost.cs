@@ -363,6 +363,12 @@ public sealed class HiveScrollHost : UserControl
             !_verticalScrollBar.State.CanScroll)
             return;
 
+        if (sender is TextBoxBase ||
+            sender is ListControl ||
+            sender is DataGridView ||
+            sender is TreeView)
+            return;
+
         var steps = e.Delta / SystemInformation.MouseWheelScrollDelta;
         if (steps == 0)
             steps = Math.Sign(e.Delta);
