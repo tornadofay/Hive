@@ -12,7 +12,7 @@ internal sealed class HiveCrudPageListController<TItem>
     private readonly HivePaginationBar _pagination;
     private readonly Label _statusLabel;
     private readonly Label _emptyStateLabel;
-    private readonly ComboBox _statusFilterBox;
+    private readonly HiveComboBox _statusFilterBox;
     private readonly Action _applyStatusColor;
     private readonly Action _updateActionState;
     private readonly Func<bool> _isBusy;
