@@ -54,8 +54,6 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         AutoScaleMode = AutoScaleMode.Dpi;
         Margin = Padding.Empty;
         Padding = new Padding(1);
-        MinimumSize = new Size(0, DefaultFieldHeight);
-        Size = new Size(240, DefaultFieldHeight);
         TabStop = true;
         Cursor = Cursors.Default;
         AccessibleRole = AccessibleRole.ComboBox;
@@ -88,6 +86,12 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         _fieldEditor.LostFocus += FieldEditorOnFocusChanged;
 
         Controls.Add(_fieldEditor);
+
+        // Size changes can raise OnResize during UserControl construction.
+        // Establish the child editor before assigning the initial bounds.
+        MinimumSize = new Size(0, DefaultFieldHeight);
+        Size = new Size(240, DefaultFieldHeight);
+
         UpdateFieldEditorState();
         RebuildPaintResources();
         UpdateFieldLayout();
@@ -1049,6 +1053,9 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
 
     private void UpdateFieldLayout()
     {
+        if (_fieldEditor is null || _fieldEditor.IsDisposed)
+            return;
+
         var arrowWidth = LogicalToDevice(ArrowAreaWidth);
         var fieldHeight = Math.Max(0, ClientSize.Height - 2);
         var fieldWidth = Math.Max(0, ClientSize.Width - arrowWidth - 2);
