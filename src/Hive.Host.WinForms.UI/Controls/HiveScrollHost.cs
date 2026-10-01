@@ -197,7 +197,9 @@ public sealed class HiveScrollHost : UserControl
                 return;
             }
 
-            var viewportSize = _viewport.ClientSize;
+            var viewportSize = new Size(
+                Math.Max(0, _viewport.ClientSize.Width),
+                Math.Max(0, _viewport.ClientSize.Height));
             var contentSize = MeasureContentSize(viewportSize);
 
             var horizontal = HiveScrollState.Create(
