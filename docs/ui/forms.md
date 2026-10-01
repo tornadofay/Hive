@@ -74,7 +74,7 @@ form.ShowDialog(owner);
 
 Settings pages call the appropriate public Management/application boundaries. Settings pages do not construct or own the host Hive service graph; host composition/lifetime remains outside the UI. Future durable Hive configuration domains extend this same Settings center rather than creating parallel top-level settings forms.
 
-Provider/model discovery is primarily surfaced from the normal Providers Settings page. The page offers explicit `Refresh`, which requests fresh provider/account/endpoint discovery for active configured providers and reconciles automatically managed ExecutionTargets. The UI presents configured providers and safe operational summary; it does not expose ProviderAccount or ExecutionTarget administration during normal onboarding. Advanced Provider Configuration exposes the generalized Providers / Accounts / Credentials / Execution Targets administration pages when an administrator needs multiple accounts, custom endpoints, local/self-hosted models, manual targets, or explicit capability overrides. Discovered availability, health, rate-limit metadata, and normalized capability states remain observational; configured ExecutionTarget capability overrides remain authoritative. Failed or stale discovery preserves existing durable targets and must never be interpreted as an empty model catalog.
+Execution Target editors present **Management before Capabilities** so target ownership is established before the capability controls are read. Provider/model discovery is primarily surfaced from the normal Providers Settings page. The page offers explicit `Refresh`, which requests fresh provider/account/endpoint discovery for active configured providers and reconciles automatically managed ExecutionTargets. The UI presents configured providers and safe operational summary; it does not expose ProviderAccount or ExecutionTarget administration during normal onboarding. Advanced Provider Configuration exposes the generalized Providers / Accounts / Credentials / Execution Targets administration pages when an administrator needs multiple accounts, custom endpoints, local/self-hosted models, manual targets, or explicit capability overrides. Discovered availability, health, rate-limit metadata, and normalized capability states remain observational; configured ExecutionTarget capability overrides remain authoritative. Failed or stale discovery preserves existing durable targets and must never be interpreted as an empty model catalog.
 
 ### Planned Phase 1.16 Follow-Up — Advanced Model Information
 
@@ -93,7 +93,16 @@ The Advanced Overview is the landing page for the tree and explains the Provider
 
 Model Information presents the discovered provider/model profile without becoming a configuration store. It presents normalized identity, inputs, outputs, capabilities, reasoning/thinking, limits, pricing/economics, operational state, and bounded provider-specific evidence when reported. Missing information remains explicitly not reported/Unknown.
 
-The planned target capability editor is structured rather than free-form. It uses bounded Hive capability identities and Supported / Unsupported / Unknown states, and distinguishes Discovered, Configured Override, and Effective values. Automatic targets present discovery-managed capability information; manual targets expose the explicit configuration surface.
+The target capability editor is structured rather than free-form. It uses bounded Hive capability identities and Supported / Unsupported / Unknown states. The first-look layout is:
+
+```text
+Capability           Set state                 Current
+Text generation      Supported ▼              Supported • override
+Vision               Not configured ▼         Supported • discovered
+Tool calling         Unsupported ▼            Unsupported • override
+```
+
+Every known capability uses the same state-selector column. **Current** is the effective state and briefly identifies its source as discovered, override, or not reported. For Automatic targets the selector is disabled and displays **Managed by discovery**; the Current value remains the provider/discovery-managed effective state. Manual targets can choose a state override or leave the capability Not configured so applicable discovery evidence supplies the effective state. Unknown/unreported capability evidence remains distinct from Unsupported.
 
 This is planned behavior for the Phase 1.16 follow-up, not a statement that the follow-up is implemented. See [Phase 1.16 Follow-Up — Model Information](../plan/Phase1.16_FollowUp_Model_Information.md) for the detailed scope and verification contract.
 
