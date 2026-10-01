@@ -10,7 +10,7 @@ Authorization: explicit user command `Hive: start` against `docs/plan/Phase1/Cus
 
 Repository checkpoint before implementation: `de46b3e74b20c1eb83a8a453ff8b8fd8080c48a8` on `main`.
 
-Current implementation head: `5a4b6959625d750f19ff35070ac3c45c8c7b9510` on `main`.
+Current implementation head: `9eb53ce1655513bc3f6a1672fb682cf89b55e2d0` on `main`.
 
 ## Scope
 
@@ -33,7 +33,7 @@ Do not implement or activate Slice 2 (`HiveComboBox` filtering), Slice 3 (`HiveT
 
 Status: VERIFICATION PENDING
 
-Developer verification found one failing detach test: 522/523. The failure was in the test setup, which attempted to preserve `DockStyle.Fill` and a four-sided `Anchor` simultaneously. WinForms treats Dock and Anchor as mutually exclusive layout modes, so the test now covers the valid anchored state and a separate valid docked state. citeturn638252view0
+Developer verification found one failing detach test: 522/523. The failure was in the test setup, which attempted to preserve `DockStyle.Fill` and a four-sided `Anchor` simultaneously. WinForms treats Dock and Anchor as mutually exclusive layout modes, so the test now covers the valid anchored state and a separate valid docked state.
 
 No production scope expansion was made. Developer rerun is required.
 
