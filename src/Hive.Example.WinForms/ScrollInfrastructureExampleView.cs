@@ -203,6 +203,7 @@ internal sealed class ScrollInfrastructureExampleView : UserControl
         var titleLabel = new Label
         {
             AutoSize = true,
+            Font = _markerTitleFont,
             Text = title,
             Location = new Point(14, 12)
         };
