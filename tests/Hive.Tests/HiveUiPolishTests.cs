@@ -737,7 +737,7 @@ public sealed class HiveUiPolishTests
         }
     }
 
-    [Fact]
+    [WinFormsFact]
     public void ExampleScrollablePages_UseHiveScrollHostWithoutNativeAutoScroll()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
@@ -761,7 +761,7 @@ public sealed class HiveUiPolishTests
         Assert.IsType<HiveScrollHost>(Assert.Single(configuration.Controls));
     }
 
-    [Fact]
+    [WinFormsFact]
     public void HiveSettingsOverview_UsesHiveScrollHost()
     {
         using var view = new HiveSettingsOverviewView();
@@ -771,7 +771,7 @@ public sealed class HiveUiPolishTests
         Assert.NotNull(host.Content);
     }
 
-    [Fact]
+    [WinFormsFact]
     public void HiveAdvancedOverview_UsesHiveScrollHost()
     {
         using var themeManager = new HiveThemeManager(HiveThemeMode.Light);
