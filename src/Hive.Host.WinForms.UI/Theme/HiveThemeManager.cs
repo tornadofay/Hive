@@ -285,6 +285,10 @@ public sealed class HiveThemeManager : IHiveThemeManager
             case HiveComboBox comboBox:
                 comboBox.ApplyTheme(theme);
                 break;
+
+            case HiveTabControl tabControl:
+                tabControl.ApplyTheme(theme);
+                break;
         }
     }
 
