@@ -40,7 +40,11 @@ public sealed class HiveComboBoxTests
     [Fact]
     public void Items_SelectionAndNotificationsRemainDeterministic()
     {
-        using var combo = new HiveComboBox();
+        using var combo = new HiveComboBox
+        {
+            DisplayMember = nameof(Option.Name),
+            ValueMember = nameof(Option.Id)
+        };
 
         var first = new Option(1, "First");
         var second = new Option(2, "Second");
@@ -61,7 +65,7 @@ public sealed class HiveComboBoxTests
 
         Assert.Equal(1, combo.SelectedIndex);
         Assert.Same(second, combo.SelectedItem);
-        Assert.Same(second, combo.SelectedValue);
+        Assert.Equal(2, combo.SelectedValue);
         Assert.Equal("Second", combo.Text);
         Assert.Equal(1, selectedIndexChanged);
         Assert.Equal(1, selectedItemChanged);
