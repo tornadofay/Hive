@@ -32,6 +32,8 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     private int _itemHeight = DefaultItemHeight;
     private bool _synchronizingFieldText;
     private bool _synchronizingSelection;
+    private object? _selectedItemIdentity;
+    private bool _hasSelectedItemIdentity;
     private HiveThemeDefinition? _theme;
     private HiveComboBoxPopupForm? _popup;
     private SolidBrush? _backgroundBrush;
@@ -112,8 +114,16 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             var previousSelected = CaptureSelectedItem();
             var hadSelection = HasSelection;
 
-            _dataSource = value;
-            _bindingSource.DataSource = value;
+            _synchronizingSelection = true;
+            try
+            {
+                _dataSource = value;
+                _bindingSource.DataSource = value;
+            }
+            finally
+            {
+                _synchronizingSelection = false;
+            }
 
             RefreshSelectionAfterSourceChange(previousSelected, hadSelection);
             RefreshPopup();
@@ -629,6 +639,33 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         SelectedIndex = -1;
     }
 
+    private void BindingSourceOnListChanged(object? sender, ListChangedEventArgs e)
+    {
+        if (_synchronizingSelection)
+            return;
+
+        var previousSelected = _hasSelectedItemIdentity
+            ? _selectedItemIdentity
+            : CaptureSelectedItem();
+        var hadSelection = _hasSelectedItemIdentity || HasSelection;
+        RefreshSelectionAfterSourceChange(previousSelected, hadSelection);
+    }
+
+    private void BindingSourceOnCurrentChanged(object? sender, EventArgs e)
+    {
+        if (_synchronizingSelection || _dataSource is null)
+            return;
+
+        var position = _bindingSource.Position;
+        if (position < -1 || position >= SourceCount)
+            position = -1;
+
+        SetSelectedIndexCore(
+            position,
+            updateDataSourcePosition: false,
+            userCommit: false);
+    }
+
     private void SetSelectedIndexCore(
         int value,
         bool updateDataSourcePosition,
@@ -637,7 +674,6 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         if (_selectedIndex == value)
             return;
 
-        var oldIndex = _selectedIndex;
         var oldItem = CaptureSelectedItem();
         var oldValue = GetValueForItem(oldItem);
         _selectedIndex = value;
@@ -672,6 +708,9 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
 
         if (userCommit)
             SelectionChangeCommitted?.Invoke(this, EventArgs.Empty);
+
+        _selectedItemIdentity = SelectedItem;
+        _hasSelectedItemIdentity = _selectedIndex >= 0;
     }
 
     private object? GetValueForItem(object? item)
@@ -710,6 +749,8 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     private void RefreshSelectionAfterSourceChange(object? previousSelected, bool hadSelection)
     {
         var previousIndex = _selectedIndex;
+        var previousItem = hadSelection ? previousSelected : null;
+        var previousValue = GetValueForItem(previousItem);
 
         _selectedIndex = hadSelection
             ? FindSourceIndex(previousSelected)
@@ -718,20 +759,42 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         if (_selectedIndex >= 0 && _selectedIndex >= SourceCount)
             _selectedIndex = -1;
 
+        var newItem = SelectedItem;
+        var newValue = SelectedValue;
+
+        UpdateDisplayedText();
+
         if (_selectedIndex != previousIndex)
-        {
-            UpdateDisplayedText();
             SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
 
-            var newItem = SelectedItem;
-            if (!Equals(previousSelected, newItem))
-                SelectedItemChanged?.Invoke(this, EventArgs.Empty);
+        if (!Equals(previousItem, newItem))
+            SelectedItemChanged?.Invoke(this, EventArgs.Empty);
+
+        if (!Equals(previousValue, newValue))
+            SelectedValueChanged?.Invoke(this, EventArgs.Empty);
+
+        _selectedItemIdentity = newItem;
+        _hasSelectedItemIdentity = _selectedIndex >= 0;
+
+        if (_dataSource is not null &&
+            _selectedIndex >= 0 &&
+            _selectedIndex < _bindingSource.Count)
+        {
+            _synchronizingSelection = true;
+            try
+            {
+                _bindingSource.Position = _selectedIndex;
+            }
+            finally
+            {
+                _synchronizingSelection = false;
+            }
         }
 
         RefreshPopup();
     }
 
-    private int FindSourceIndex(object item)
+    private int FindSourceIndex(object? item)
     {
         for (var index = 0; index < SourceCount; index++)
         {
@@ -1037,8 +1100,6 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
 
         _backgroundBrush = new SolidBrush(theme.Palette.InputBackground);
         _disabledBrush = new SolidBrush(theme.Palette.DisabledBackground);
-        _arrowBrush = new SolidBrush(theme.Palette.MutedText);
-
         _borderPen = new Pen(theme.Palette.Border);
         _hoverBorderPen = new Pen(theme.Palette.AccentHover);
         _focusPen = new Pen(theme.VisualStates.FocusedBorder, 2f);
@@ -1048,14 +1109,12 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     {
         _backgroundBrush?.Dispose();
         _disabledBrush?.Dispose();
-        _arrowBrush?.Dispose();
         _borderPen?.Dispose();
         _hoverBorderPen?.Dispose();
         _focusPen?.Dispose();
 
         _backgroundBrush = null;
         _disabledBrush = null;
-        _arrowBrush = null;
         _borderPen = null;
         _hoverBorderPen = null;
         _focusPen = null;
@@ -1079,6 +1138,38 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
 
     protected override AccessibleObject CreateAccessibilityInstance() =>
         new HiveComboBoxAccessibleObject(this);
+
+    private sealed class HiveComboBoxAccessibleObject : ControlAccessibleObject
+    {
+        private readonly HiveComboBox _owner;
+
+        public HiveComboBoxAccessibleObject(HiveComboBox owner)
+            : base(owner)
+        {
+            _owner = owner;
+        }
+
+        public override AccessibleRole Role =>
+            AccessibleRole.ComboBox;
+
+        public override AccessibleStates State
+        {
+            get
+            {
+                var state = base.State;
+
+                if (_owner.DroppedDown)
+                    state |= AccessibleStates.Expanded;
+                else
+                    state |= AccessibleStates.Collapsed;
+
+                return state;
+            }
+        }
+
+        public override string? Value =>
+            _owner.Text;
+    }
 
     private readonly record struct HiveComboBoxItem(
         int SourceIndex,
@@ -1585,7 +1676,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             TabStop = false;
         }
 
-        public event EventHandler<int>? ItemInvoked;
+        public event Action<int>? ItemInvoked;
 
         public event EventHandler? HighlightedItemChanged;
 
@@ -1708,7 +1799,6 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
                 return;
 
             ItemInvoked?.Invoke(
-                this,
                 _items[index].SourceIndex);
         }
 
