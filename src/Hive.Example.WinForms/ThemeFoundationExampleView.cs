@@ -31,7 +31,7 @@ internal sealed class ThemeFoundationExampleView : UserControl
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
         Padding = Padding.Empty;
-        AutoScroll = true;
+        AutoScroll = false;
 
         var root = new TableLayoutPanel
         {
@@ -138,7 +138,15 @@ internal sealed class ThemeFoundationExampleView : UserControl
         root.Controls.Add(_themeState, 0, 2);
         root.Controls.Add(_preview, 0, 3);
 
-        Controls.Add(root);
+        var scrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            AccessibleName = "Theme foundation example content"
+        };
+        scrollHost.Attach(root);
+        Controls.Add(scrollHost);
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         ApplyTheme();
