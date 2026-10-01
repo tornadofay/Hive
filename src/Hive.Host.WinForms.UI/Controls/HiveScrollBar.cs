@@ -538,7 +538,7 @@ public sealed class HiveScrollBar : Control
         Invalidate();
     }
 
-    protected override Size GetPreferredSizeCore(Size proposedSize)
+    public override Size GetPreferredSize(Size proposedSize)
     {
         var thickness = LogicalToDevice(_thickness);
         var length = LogicalToDevice(64);
