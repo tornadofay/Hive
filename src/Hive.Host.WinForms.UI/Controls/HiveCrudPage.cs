@@ -46,7 +46,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private readonly Label _searchLabel;
     private readonly TextBox _searchBox;
     private readonly Label _statusFilterLabel;
-    private readonly ComboBox _statusFilterBox;
+    private readonly HiveComboBox _statusFilterBox;
     private readonly TableLayoutPanel _actionLayout;
     private readonly FlowLayoutPanel _searchPanel;
     private readonly FlowLayoutPanel _actionButtons;
@@ -180,11 +180,10 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Visible = false
         };
 
-        _statusFilterBox = new ComboBox
+        _statusFilterBox = new HiveComboBox
         {
             Width = 132,
             Height = 32,
-            IntegralHeight = false,
             DropDownStyle = ComboBoxStyle.DropDownList,
             Margin = new Padding(0, 4, 0, 4),
             Visible = false,
