@@ -39,7 +39,7 @@ internal sealed class OverviewExampleView : UserControl
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
         Padding = Padding.Empty;
-        AutoScroll = true;
+        AutoScroll = false;
 
         var family = themeManager.Theme.Typography.FontFamily;
         _eyebrowFont = new Font(family, 9f, FontStyle.Bold);
@@ -78,7 +78,15 @@ internal sealed class OverviewExampleView : UserControl
         root.Controls.Add(_architectureSection, 0, 3);
         root.Controls.Add(_projectSection, 0, 4);
 
-        Controls.Add(root);
+        var scrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            AccessibleName = "Overview example content"
+        };
+        scrollHost.Attach(root);
+        Controls.Add(scrollHost);
 
         _projectText = FindCardBody(_cards, 0);
         _hostText = FindCardBody(_cards, 1);
