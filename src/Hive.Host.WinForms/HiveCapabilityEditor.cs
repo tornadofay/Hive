@@ -71,8 +71,6 @@ internal sealed class HiveCapabilityEditor : UserControl
         AddHeader("Set state", 1);
         AddHeader("Current", 2);
 
-        _table.RowStyles[0] = new RowStyle(SizeType.Absolute, 30);
-
 
         foreach (var (key, name) in KnownCapabilities)
         {
