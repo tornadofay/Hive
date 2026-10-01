@@ -22,7 +22,7 @@ internal sealed class HiveCapabilityEditor : UserControl
 
     private sealed record CapabilityRow(
         CapabilityKey Key,
-        ComboBox Configured,
+        HiveComboBox Configured,
         Label Current);
 
     private readonly IHiveThemeManager _themeManager;
@@ -73,11 +73,10 @@ internal sealed class HiveCapabilityEditor : UserControl
 
         foreach (var (key, name) in KnownCapabilities)
         {
-            var configured = new ComboBox
+            var configured = new HiveComboBox
             {
                 Dock = DockStyle.Fill,
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                IntegralHeight = false,
                 Height = 32,
                 Tag = key,
                 AccessibleName = $"{name} capability state",
