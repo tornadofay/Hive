@@ -16,7 +16,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly TextBox _serverTextBox;
     private readonly TextBox _portTextBox;
     private readonly TextBox _databaseTextBox;
-    private readonly ComboBox _authenticationComboBox;
+    private readonly HiveComboBox _authenticationComboBox;
     private readonly TextBox _userNameTextBox;
     private readonly TextBox _passwordTextBox;
     private readonly Label _credentialStatus;
@@ -57,7 +57,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _serverTextBox = CreateTextBox();
         _portTextBox = CreateTextBox();
         _databaseTextBox = CreateTextBox();
-        _authenticationComboBox = new ComboBox
+        _authenticationComboBox = new HiveComboBox
         {
             DropDownStyle = ComboBoxStyle.DropDownList
         };
