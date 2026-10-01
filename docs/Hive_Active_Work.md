@@ -45,11 +45,13 @@ Latest implementation commit: 601fb84fedd2489cd24cbc71cf05c51092523810 on `main`
 
 Developer verification now reports a single focused Slice 3 failure: `HiveTabControlTests.HeaderKeyboardFocus_NavigatesWithLeftAndRight` fails because the test's header-focus assertion reports `ContainsFocus == false`.
 
-This is a same-slice keyboard/focus behavior defect. Remediation must make the Hive-owned header surface reliably focusable through the production focus path in a WinForms host while preserving the existing custom-header architecture. No broader UI integration is authorized.
+This is a same-slice keyboard/focus verification issue. The failing test established controls with `CreateControl()` but did not activate the WinForms host before asserting actual focus. The test setup has been corrected to show and activate the host and process pending UI messages before exercising the production focus path. No broader UI integration was introduced.
+
+Latest implementation/test remediation commit: d2250ee65197014db386007ca16f5a845bd564f5 on `main`.
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Developer handoff after remediation:
 
