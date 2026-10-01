@@ -403,7 +403,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         CurrentSnapshot = snapshot;
         SelectedModel = null;
         _models = snapshot.Models;
-        _modelSelector.BeginUpdate();
+        _modelSelector.SuspendLayout();
         try
         {
             _modelSelector.Items.Clear();
@@ -429,7 +429,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         }
         finally
         {
-            _modelSelector.EndUpdate();
+            _modelSelector.ResumeLayout(true);
         }
 
         var stale = snapshot.IsStale(DateTimeOffset.UtcNow);
