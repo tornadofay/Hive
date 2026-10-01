@@ -18,7 +18,7 @@ internal sealed class DialogsExampleView : UserControl
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
         Padding = Padding.Empty;
-        AutoScroll = true;
+        AutoScroll = false;
 
         _description = new Label
         {
@@ -84,8 +84,31 @@ internal sealed class DialogsExampleView : UserControl
 
         _buttons.Controls.Add(details);
 
-        Controls.Add(_buttons);
-        Controls.Add(_description);
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.Controls.Add(_description, 0, 0);
+        root.Controls.Add(_buttons, 0, 1);
+
+        var scrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            AccessibleName = "Dialogs example content"
+        };
+        scrollHost.Attach(root);
+        Controls.Add(scrollHost);
 
         _themeManager.Apply(this);
     }
