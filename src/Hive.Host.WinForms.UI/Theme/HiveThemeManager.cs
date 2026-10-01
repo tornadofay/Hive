@@ -281,6 +281,10 @@ public sealed class HiveThemeManager : IHiveThemeManager
             case HiveScrollBar scrollBar:
                 scrollBar.ApplyTheme(theme);
                 break;
+
+            case HiveComboBox comboBox:
+                comboBox.ApplyTheme(theme);
+                break;
         }
     }
 
