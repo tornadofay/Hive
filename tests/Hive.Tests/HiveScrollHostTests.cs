@@ -170,6 +170,28 @@ public sealed class HiveScrollHostTests
     }
 
     [Fact]
+    public void Attach_DisablesNativeAutoScrollAndDetachRestoresIt()
+    {
+        using var host = new HiveScrollHost
+        {
+            Size = new Size(200, 200)
+        };
+        using var content = new Panel
+        {
+            Size = new Size(500, 600),
+            AutoScroll = true
+        };
+
+        host.Attach(content);
+
+        Assert.False(content.AutoScroll);
+
+        host.Detach();
+
+        Assert.True(content.AutoScroll);
+    }
+
+    [Fact]
     public void Detach_RestoresCallerLayoutAndLeavesContentOwnedByCaller()
     {
         using var host = new HiveScrollHost
