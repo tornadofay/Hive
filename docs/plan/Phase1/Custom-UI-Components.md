@@ -120,6 +120,18 @@ The normalized model must distinguish content extent from viewport extent and cu
 
 Create the reusable synchronization/hosting layer around a scrollable control or content surface.
 
+## HiveScrollHost public contract
+
+The host exposes a small presentation contract rather than a control-specific adapter API:
+
+- attach or detach one scrollable content surface;
+- expose normalized horizontal and vertical scroll state;
+- accept user-facing scroll position changes;
+- synchronize after content or viewport changes;
+- preserve the supplied content control's ownership semantics when detached or replaced.
+
+The native synchronization adapter remains internal. Existing Hive forms must never need to know whether synchronization is implemented through WinForms properties, native messages, or a control-specific adapter.
+
 ### Responsibilities
 
 - Host exactly one scrollable child/content surface and overlay the Hive scrollbar without disrupting content layout.
@@ -331,7 +343,15 @@ The tab header renderer should support:
 - DPI-aware sizing.
 - Optional close/auxiliary actions only if later consumers require them; they are not required for the initial contract.
 
+## Tab control implementation strategy
+
+`HiveTabControl` should be implemented as a Hive-owned composite control with a dedicated header surface and a conventional `TabPage` content area. This makes the header fully Hive-rendered without depending on the native header renderer.
+
+WinForms owner-draw support exists for `TabControl`, but it is fixed-size and applies to tab headers only. It therefore does not provide the flexible header and overflow presentation required by this plan.
+
 ## Page hosting and public compatibility
+
+Use the normal WinForms `TabPage` content model through the Hive-owned control. The public control should preserve the conventional tab concepts Hive consumers reasonably depend on, including tab-page collection, selected index/tab, programmatic selection, and selection-change notification.
 
 Use the normal WinForms `TabControl` / `TabPage` page-hosting model where practical. The Hive control must preserve the public tab concepts existing Hive consumers reasonably depend on, including tab-page collection, selected index/tab, programmatic selection, and selection-change notification.
 
@@ -339,7 +359,7 @@ Use the normal WinForms `TabControl` / `TabPage` page-hosting model where practi
 - page instances remain stable when switching tabs;
 - Hive owns the header visual/interaction surface, not the content controls' business semantics;
 - disposal follows normal WinForms page/control lifecycle expectations;
-- the component must not introduce a second page-navigation framework;
+- the component must not introduce a second application-wide navigation framework; its internal page-hosting mechanism is limited to managing its own tab pages;
 - any native TabControl behavior intentionally changed by the custom header implementation must be explicit and covered by tests.
 
 ## Keyboard and interaction behavior
@@ -523,7 +543,7 @@ HiveComboBox      HiveTabControl
 
 Slice 2 depends on Slice 1 because long ComboBox popups should reuse the Hive scrollbar.
 
-Slice 2 evolves the existing Phase 1.14 `HiveComboBox` into the first-class Hive-rendered control. Its host-integration contract remains intact; the visual implementation is no longer a separate presentation type.
+Slice 2 evolves the existing Phase 1.14 `HiveComboBox` into the first-class Hive-rendered control. Its host-integration contract remains intact; the visual implementation is part of that same control.
 
 Slice 3 may consume Slice 1 for tab-header overflow scrolling, but its core tab presentation does not depend on scrollbar support.
 
