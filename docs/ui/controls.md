@@ -141,6 +141,50 @@ Properties: `PageNumber`, `CanGoPrevious`, `CanGoNext`, `PageText`.
 
 Events: `PreviousRequested`, `NextRequested`.
 
+## HiveScrollBar
+
+`HiveScrollBar` is the reusable Hive-painted scroll surface used by `HiveScrollHost`.
+
+```csharp
+var scrollbar = new HiveScrollBar
+{
+    Orientation = Orientation.Vertical,
+    MinimumThumbSize = 20
+};
+
+scrollbar.SetState(
+    HiveScrollState.Create(
+        Orientation.Vertical,
+        minimum: 0,
+        maximum: contentHeight,
+        value: currentPosition,
+        viewportSize: viewportHeight,
+        smallChange: 16,
+        largeChange: viewportHeight));
+```
+
+The normalized state treats `Maximum` as the content extent endpoint and derives the effective scroll maximum from `Maximum - ViewportSize`. `Value` is clamped to that effective maximum. The control supports vertical/horizontal orientation, proportional and minimum thumb sizing, track paging, dragging, wheel input, and keyboard navigation. Theme resources are owned and disposed by the control.
+
+## HiveScrollHost
+
+Use `HiveScrollHost` for Hive-owned scrollable content where custom scrolling can be controlled without replacing a specialized native control's viewport behavior.
+
+```csharp
+var host = new HiveScrollHost();
+host.Attach(content);
+
+host.SetScrollPosition(
+    horizontal: 0,
+    vertical: 120);
+
+var state = host.VerticalScrollState;
+```
+
+Members: `Content`, `HorizontalScrollState`, `VerticalScrollState`, `HorizontalScrollPosition`, `VerticalScrollPosition`, `Attach(Control)`, `Detach()`, `Synchronize()`, `SetScrollPosition(...)`, and `ScrollPositionChanged`.
+
+The host accepts one explicit content control and does not dispose a detached/replaced control. While content is attached, normal WinForms parent/child disposal semantics apply. Attaching content that already belongs to another parent is rejected rather than silently reparenting it. The host overlays Hive scrollbars without reserving layout space for them, synchronizes after resize/content changes, forwards mouse-wheel input from the attached control subtree, and prevents scrollbar/content feedback loops.
+
+`HiveEditorLayout` uses `HiveScrollHost` for its field region. Native `TreeView` and `ListView` scrolling remains native unless a later control-specific integration proves reliable viewport synchronization.
 ## HiveNavigationTree
 
 Use for Example Host hierarchical navigation.
