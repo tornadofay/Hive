@@ -16,7 +16,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
     private readonly IHiveExampleOutput? _output;
-    private readonly ComboBox _modelSelector;
+    private readonly HiveComboBox _modelSelector;
     private readonly Label _statusLabel;
     private readonly Label _metadataLabel;
     private readonly Label _capabilitiesLabel;
@@ -94,13 +94,10 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         statusRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         statusRow.Controls.Add(_statusLabel, 0, 0);
 
-        _modelSelector = new ComboBox
+        _modelSelector = new HiveComboBox
         {
             Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDown,
-            AutoCompleteMode = AutoCompleteMode.SuggestAppend,
-            AutoCompleteSource = AutoCompleteSource.ListItems,
-            IntegralHeight = false,
             Height = 32,
             Margin = new Padding(0, 4, 0, 4),
             AccessibleName = "Provider model",
@@ -172,7 +169,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
     }
 
 
-    internal ComboBox ModelSelector => _modelSelector;
+    internal HiveComboBox ModelSelector => _modelSelector;
 
     internal event EventHandler? DiscoveryUpdated;
 
