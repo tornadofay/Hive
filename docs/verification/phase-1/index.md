@@ -27,3 +27,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 
 - [Phase 1 Custom UI Components — Slice 1: Custom Scroll Infrastructure — 2026-10-01](custom-ui-scroll-infrastructure-closure-2026-10-01.md)
 - [Phase 1 Custom UI Components — Slice 2: HiveComboBox with Filtering — 2026-10-01](custom-ui-combobox-filtering-closure-2026-10-01.md)
+- [Phase 1 Custom UI Components — Slice 3: HiveTabControl — 2026-10-01](custom-ui-tabcontrol-closure-2026-10-01.md)
