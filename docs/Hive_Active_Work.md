@@ -40,7 +40,11 @@ Current implementation includes the Hive-owned composite control, explicit host 
 
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+
+Developer-reported compile failure in `HiveComboBox.cs`: `CS8604` at the `SelectedValue` member path because nullable `SelectedItem` is passed to `GetMemberValue(object item, string memberName)`.
+
+Remediation is limited to correcting nullable flow in this existing selection/value path. No scope expansion is authorized.
 
 Required developer handoff:
 
