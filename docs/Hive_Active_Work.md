@@ -40,11 +40,11 @@ Current implementation includes the Hive-owned composite control, explicit host 
 
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
-Developer-reported compile failure `CS8604` in the `SelectedValue` member path was remediated within the same slice. `GetMemberValue` now accepts a nullable item and returns null for a null source item, preserving the existing selection/value contract. Focused coverage was added for null items with `ValueMember`.
+Developer-reported compile failure `CS8604` in the `SelectedValue` member path was remediated within the same slice. A subsequent runtime verification failure reported `System.NullReferenceException` from `HiveComboBox.UpdateFieldLayout()` at line 1056. Remediation is required within this slice before verification can return to pending.
 
-No scope expansion was made. Developer rerun is required.
+No scope expansion is authorized.
 
 Required developer handoff:
 
