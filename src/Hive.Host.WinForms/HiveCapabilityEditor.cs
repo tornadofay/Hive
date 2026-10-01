@@ -61,9 +61,9 @@ internal sealed class HiveCapabilityEditor : UserControl
             ColumnCount = 3,
             Padding = new Padding(0, 2, 0, 0)
         };
-        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 48f));
-        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32f));
-        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20f));
+        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
+        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190));
+        _table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         _table.RowCount = 1;
         _table.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
 
