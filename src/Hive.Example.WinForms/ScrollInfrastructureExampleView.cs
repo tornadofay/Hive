@@ -187,7 +187,7 @@ internal sealed class ScrollInfrastructureExampleView : UserControl
         return surface;
     }
 
-    private static void AddMarker(
+    private void AddMarker(
         Panel surface,
         Point location,
         string title,
