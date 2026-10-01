@@ -84,7 +84,6 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDownList,
             Height = 32,
-            IntegralHeight = false
         };
 
         foreach (var mode in Enum.GetValues<ExecutionTargetManagementMode>())
