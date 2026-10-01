@@ -540,7 +540,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
     private void ClearModels()
     {
         _models = Array.Empty<ProviderModelMetadata>();
-        _modelSelector.BeginUpdate();
+        _modelSelector.SuspendLayout();
         try
         {
             _modelSelector.Items.Clear();
@@ -548,7 +548,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
         }
         finally
         {
-            _modelSelector.EndUpdate();
+            _modelSelector.ResumeLayout(true);
         }
 
         UpdateSelectionState();
