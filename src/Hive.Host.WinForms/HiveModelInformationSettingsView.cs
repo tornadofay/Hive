@@ -28,9 +28,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
     private readonly IHiveExampleOutput? _output;
-    private readonly ComboBox _providerComboBox;
-    private readonly ComboBox _accountComboBox;
-    private readonly ComboBox _endpointComboBox;
+    private readonly HiveComboBox _providerComboBox;
+    private readonly HiveComboBox _accountComboBox;
+    private readonly HiveComboBox _endpointComboBox;
     private readonly HiveButton _refreshButton;
     private readonly Label _statusLabel;
     private readonly ListView _modelsList;
@@ -169,11 +169,11 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         ApplyTheme();
     }
 
-    internal ComboBox ProviderSelector => _providerComboBox;
+    internal HiveComboBox ProviderSelector => _providerComboBox;
 
-    internal ComboBox AccountSelector => _accountComboBox;
+    internal HiveComboBox AccountSelector => _accountComboBox;
 
-    internal ComboBox EndpointSelector => _endpointComboBox;
+    internal HiveComboBox EndpointSelector => _endpointComboBox;
 
     internal ListView ModelsList => _modelsList;
 
@@ -804,7 +804,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             : null;
     }
 
-    private static ComboBox CreateSelector(string name) =>
+    private static HiveComboBox CreateSelector(string name) =>
         new()
         {
             Dock = DockStyle.Fill,
@@ -825,7 +825,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         };
 
     private static void SetItems<T>(
-        ComboBox comboBox,
+        HiveComboBox comboBox,
         IEnumerable<T> values)
         where T : notnull
     {
