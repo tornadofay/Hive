@@ -37,6 +37,14 @@ public readonly record struct HiveScrollState(
         int largeChange = 64,
         bool enabled = true)
     {
+        if (!Enum.IsDefined(orientation))
+        {
+            throw new InvalidEnumArgumentException(
+                nameof(orientation),
+                (int)orientation,
+                typeof(Orientation));
+        }
+
         if (maximum < minimum)
         {
             throw new ArgumentOutOfRangeException(
