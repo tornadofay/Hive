@@ -272,6 +272,20 @@ public sealed class HiveScrollHostTests
     }
 
     [Fact]
+    public void HiveEditorLayout_UsesCustomScrollHostForFieldRegion()
+    {
+        using var layout = new HiveEditorLayout();
+
+        Assert.NotEmpty(layout.Controls);
+
+        var root = Assert.IsType<TableLayoutPanel>(
+            layout.Controls[0]);
+
+        Assert.IsType<HiveScrollHost>(root.Controls[0]);
+        Assert.False(layout.FieldsPanel.AutoScroll);
+    }
+
+    [Fact]
     public void ScrollbarChangesDoNotReenterHostSynchronizationLoop()
     {
         using var host = new HiveScrollHost
