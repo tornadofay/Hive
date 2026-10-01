@@ -221,7 +221,7 @@ public sealed class HiveTabControlTests
 
         tabs.TabPages.Add(first);
         tabs.TabPages.Add(second);
-        tabs.Clear();
+        tabs.TabPages.Clear();
 
         Assert.Empty(tabs.TabPages);
         Assert.Equal(-1, tabs.SelectedIndex);
