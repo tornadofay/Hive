@@ -35,11 +35,11 @@ No existing native TabControl consumer is being migrated unless repository evide
 
 ## Implementation Checkpoint
 
-Slice 3 implementation is in progress. The Hive-owned `HiveTabControl` composite, custom header surface, Hive horizontal overflow hosting, focused tests, theme-manager integration, and `UI / Foundation / HiveTabControl` Example Host scenario are now committed. Documentation has been updated for the public control contract.
+Slice 3 implementation is in progress. The Hive-owned `HiveTabControl` composite, custom header surface, Hive horizontal overflow hosting, focused tests, theme-manager integration, and `UI / Foundation / HiveTabControl` Example Host scenario are committed. A verification compile pass identified two same-slice issues: `ICollection<TabPage>.Add` required a void return type, and the clear regression test called `HiveTabControl.Clear()` instead of `TabPages.Clear()`. Both were corrected without scope expansion. Documentation has been updated for the public control contract.
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Required developer handoff:
 
