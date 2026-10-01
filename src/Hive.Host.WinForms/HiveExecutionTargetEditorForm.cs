@@ -166,18 +166,15 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
             _deploymentTextBox);
 
         editor.AddField(
-            "Capabilities",
-            "Known Hive capabilities are configured with structured Supported / Unsupported / Unknown states. " +
-            "Discovered, configured override, and effective states are shown separately. " +
-            "Automatic targets are discovery-managed.",
-            _capabilityEditor,
-            260);
+            "Management",
+            "Automatic targets use provider discovery to maintain capabilities. Manual targets let you define explicit overrides.",
+            _managementModeComboBox);
 
         editor.AddField(
-            "Management",
-            "Automatic targets are maintained from successful provider discovery. Manual targets are never overwritten. " +
-            "Choose Manual when administrator configuration should own the target.",
-            _managementModeComboBox);
+            "Capabilities",
+            "Choose a state for each known capability. Automatic targets show discovery-managed state; Manual targets can set overrides.",
+            _capabilityEditor,
+            260);
 
         var save = editor.AddActionButton(
             "Save",
