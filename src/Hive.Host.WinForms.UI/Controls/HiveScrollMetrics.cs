@@ -65,8 +65,7 @@ internal static class HiveScrollMetrics
         int trackLength,
         int thumbLength,
         int minimum,
-        int maximum,
-        int position)
+        int maximum)
     {
         var effectiveMaximum = Math.Max(minimum, maximum);
         var range = effectiveMaximum - minimum;
