@@ -104,7 +104,7 @@ Tool calling         Unsupported ▼            Unsupported • override
 
 Every known capability uses the same state-selector column. **Current** is the effective state and briefly identifies its source as discovered, override, or not reported. For Automatic targets the selector is disabled and displays **Managed by discovery**; the Current value remains the provider/discovery-managed effective state. Manual targets can choose a state override or leave the capability Not configured so applicable discovery evidence supplies the effective state. Unknown/unreported capability evidence remains distinct from Unsupported.
 
-This is the implemented Phase 1.16 follow-up capability presentation. See [Phase 1.16 Follow-Up — Model Information](../plan/Phase1.16_FollowUp_Model_Information.md) for the detailed scope and verification contract.
+This is the implemented Phase 1.16 follow-up capability presentation. See [Phase 1.16 Follow-Up — Model Information](../plan/Phase1/1.16-Follow-Up.md) for the detailed scope and verification contract.
 
 The Persistence Server / instance field is a normal free-form text box. It accepts local servers, named instances, remote hosts, IP addresses, and online SQL Server targets. Hive currently has no authoritative server-discovery/catalog contract, so the UI does not attempt to enumerate installed SQL Server instances. The Database field is read-only and assigned automatically to Hive's package database name. Save and Test are non-destructive. The `Initialize Hive` action is the explicit lifecycle operation that may create the configured database when allowed and applies Hive schema migrations; it must not be used as an implicit side effect of Save, Test, or normal Settings-page navigation.
 
