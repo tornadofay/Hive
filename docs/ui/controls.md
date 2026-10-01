@@ -212,7 +212,7 @@ Public members include TabPages, SelectedIndex, SelectedTab, HeaderHeight, Selec
 
 The control preserves TabPage instances while switching pages. Page controls remain ordinary WinForms controls, and removing/clearing pages does not dispose those caller-owned page instances. Selecting a disabled page is ignored for user navigation; programmatic SelectedIndex changes remain available.
 
-Headers support Hive Light/Dark/System rendering, normal/hover/selected/focused/pressed/disabled states, DPI-aware sizing, keyboard navigation, and deterministic horizontal overflow. Overflow uses HiveScrollHost / HiveScrollBar; selecting a tab keeps its header visible without forcing the user's scroll position to move merely because the mouse hovers another header.
+Headers support Hive Light/Dark/System rendering, normal/hover/selected/focused/pressed/disabled states, DPI-aware sizing, keyboard navigation, and deterministic horizontal overflow. The selected state uses the shared surface with accent text and a restrained bottom indicator rather than a filled native-style tab, while hover/pressed states provide lightweight feedback. Overflow uses HiveScrollHost / HiveScrollBar; selecting a tab keeps its header visible without forcing the user's scroll position to move merely because the mouse hovers another header. Conventional TabPage content is hosted by an internal WinForms TabControl required by the framework, with its native tab/page chrome kept outside the visible Hive page surface.
 
 Accessibility exposes the control as a page-tab list and reports the selected tab text as its accessible value. The control is not assignable to native TabControl; existing native TabControl consumers remain supported separately until a later explicitly authorized migration.
 
