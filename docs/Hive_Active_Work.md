@@ -437,3 +437,14 @@ Remediation boundary:
 - make custom-model state authoritative inside HiveProviderModelDiscoveryPanel so once visible text diverges from the selected discovered model, later selection notifications cannot reassert the stale discovered model;
 - preserve editable custom model text and existing discovered-model behavior;
 - do not alter provider discovery transport, capability semantics, or unrelated UI.
+
+Latest remediation:
+- made custom model text authoritative inside HiveProviderModelDiscoveryPanel with an explicit custom-entry state;
+- selection-change processing now ignores stale ComboBox index notifications while custom entry is active, preventing discovered capabilities from being re-applied after custom text is entered;
+- explicit user selection from the discovered-model list clears custom-entry state and reapplies the selected model through the existing ModelSelected path;
+- disposed the new selection-commit event handler with the control;
+- revision inspection confirmed the change is confined to the model selector event state machine.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
+- the requested Management-before-Capabilities reorder and simplified capability editor layout remain blocked until this verification passes.
