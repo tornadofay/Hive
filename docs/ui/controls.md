@@ -192,6 +192,10 @@ scrollbar.SetState(
 
 The normalized state treats `Maximum` as the content extent endpoint and derives the effective scroll maximum from `Maximum - ViewportSize`. `Value` is clamped to that effective maximum. The control supports vertical/horizontal orientation, proportional and minimum thumb sizing, track paging, dragging, wheel input, and keyboard navigation. Theme resources are owned and disposed by the control.
 
+## Slice 4 integration
+
+Existing Hive Settings/configuration selectors and the shared `HiveCrudPage` status filter use `HiveComboBox` where the interaction is selection-oriented. Free-form fields that depend on native editable/autocomplete behavior remain native. The Example Host's configured-agent selector also uses `HiveComboBox` because it is a selection surface. Settings Overview and Advanced Provider Configuration overview content use `HiveScrollHost`; specialized ListView, TreeView, and DataGridView scrolling remains native where no bounded control-specific replacement is required.
+
 ## HiveTabControl
 
 HiveTabControl is the single public Hive tab-selection control. It is a Hive-owned composite rather than a native TabControl subclass: the tab headers are fully Hive-rendered while conventional TabPage instances remain the page/content model.
