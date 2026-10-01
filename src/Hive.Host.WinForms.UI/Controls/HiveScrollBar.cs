@@ -359,11 +359,23 @@ public sealed class HiveScrollBar : Control
 
         if (coordinate < thumbStart)
         {
-            SetValue(_state.Value - EffectiveLargeChange());
+            SetValue(
+                HiveScrollMetrics.CalculatePageTarget(
+                    _state.Value,
+                    _state.Minimum,
+                    _state.EffectiveMaximum,
+                    EffectiveLargeChange(),
+                    forward: false));
         }
         else if (coordinate > thumbEnd)
         {
-            SetValue(_state.Value + EffectiveLargeChange());
+            SetValue(
+                HiveScrollMetrics.CalculatePageTarget(
+                    _state.Value,
+                    _state.Minimum,
+                    _state.EffectiveMaximum,
+                    EffectiveLargeChange(),
+                    forward: true));
         }
 
         _pressed = true;
