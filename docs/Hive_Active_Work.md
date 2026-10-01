@@ -496,3 +496,13 @@ Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full Hive.Tests suite after this UI polish;
 - manually exercise the updated Execution Target dialog and Advanced Provider Configuration in the required Example Host scenario;
 - required handoff: Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms.
+
+Latest implementation refinement:
+- Manual capability selectors now remove the Managed by discovery option entirely; only Automatic targets expose that disabled state.
+- focused UI coverage now proves the Manual selector excludes Managed by discovery, while Automatic exposes it disabled and shows the discovered Current state.
+- revision inspection found no changes outside the authorized Execution Target capability UI, its focused tests, and the owning documentation.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full Hive.Tests suite after the final UI refinement;
+- manually exercise the updated Execution Target dialog and Advanced Provider Configuration in the required Example Host scenario;
+- required handoff: Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms.
