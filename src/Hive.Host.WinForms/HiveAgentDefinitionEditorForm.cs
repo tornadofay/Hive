@@ -14,8 +14,8 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
     private readonly IHiveExampleOutput? _output;
     private readonly TextBox _keyTextBox;
     private readonly TextBox _displayNameTextBox;
-    private readonly ComboBox _generationComboBox;
-    private readonly ComboBox _targetComboBox;
+    private readonly HiveComboBox _generationComboBox;
+    private readonly HiveComboBox _targetComboBox;
     private readonly HiveButton _saveButton;
     private readonly HiveButton _cancelButton;
 
@@ -57,7 +57,7 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
         _displayNameTextBox = CreateTextBox();
         _displayNameTextBox.PlaceholderText = "e.g. Customer Support Agent";
 
-        _generationComboBox = new ComboBox
+        _generationComboBox = new HiveComboBox
         {
             Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDownList
@@ -65,7 +65,7 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
         foreach (var generation in Enum.GetValues<AgentGeneration>())
             _generationComboBox.Items.Add(generation);
 
-        _targetComboBox = new ComboBox
+        _targetComboBox = new HiveComboBox
         {
             Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDownList
