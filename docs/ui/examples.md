@@ -58,6 +58,7 @@ For a new Example:
 
 Examples:
 - UI control/theme/dialog/CRUD example → `UI / Foundation`
+- HiveComboBox filtering and first-class selection UI example → `UI / Foundation / HiveComboBox`;
 - Base Agent / AgentFactory example → `Agents / Base Agent`
 - Base Agent work protocols example → `Agents / Base Agent`
 - First real MAF-backed Base Agent execution example → `Agents / Base Agent`
