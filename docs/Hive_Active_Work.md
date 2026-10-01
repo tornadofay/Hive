@@ -35,7 +35,7 @@ No existing native TabControl consumer is being migrated unless repository evide
 
 ## Implementation Checkpoint
 
-Slice 3 implementation has just been opened. No code changes for this slice have been made yet.
+Slice 3 implementation is in progress. The Hive-owned `HiveTabControl` composite, custom header surface, Hive horizontal overflow hosting, focused tests, theme-manager integration, and `UI / Foundation / HiveTabControl` Example Host scenario are now committed. Documentation has been updated for the public control contract.
 
 ## Verification State
 
