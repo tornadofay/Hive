@@ -1042,21 +1042,21 @@ Hive's reusable base controls and forms are Hive-owned implementation types. Hos
 
 ### 17.6 Concrete WinForms base integration surface
 
-The preferred WinForms path uses a small, bounded set of Hive-owned native-control-derived types. These types add integration metadata and safe conventions; they do not replace the WinForms control model or move host business logic into Hive.
+The preferred WinForms path uses a small, bounded set of Hive-owned integration controls. Most remain native-control-derived types that add integration metadata and safe conventions without moving host business logic into Hive. `HiveComboBox` is the deliberate first composite exception: its integration metadata remains part of the public contract while its visible field and popup presentation are Hive-owned.
 
-The Phase 1.14 V1 base types are:
+The current V1 integration types are:
 
 ```
 HiveForm : Form
 HiveTextBox : TextBox
-HiveComboBox : ComboBox
+HiveComboBox : Hive-owned UserControl composite
 HiveCheckBox : CheckBox
 HiveDateTimePicker : DateTimePicker
 HiveNumericUpDown : NumericUpDown
 HiveDataGridView : DataGridView
 ```
 
-Each base type exposes Hive-owned integration metadata while preserving the normal WinForms API. A base type therefore does not require a host-side wrapper whose only purpose is to obtain Hive integration behavior.
+Each control exposes the bounded Hive-owned integration metadata required by the host-integration contract. The concrete `HiveComboBox` architecture is intentionally not assignable to native `ComboBox`; ordinary native `ComboBox` controls remain valid for business applications that do not use the Hive-specific presentation control.
 
 The metadata surface is intentionally bounded:
 
