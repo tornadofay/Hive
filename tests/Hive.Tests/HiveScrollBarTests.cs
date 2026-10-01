@@ -242,6 +242,6 @@ public sealed class HiveScrollBarTests
 
         Assert.False(scrollbar.Enabled);
         Assert.False(scrollbar.CanScroll);
-        Assert.Empty(scrollbar.GetThumbBoundsForTesting());
+        Assert.Equal(Rectangle.Empty, scrollbar.GetThumbBoundsForTesting());
     }
 }
