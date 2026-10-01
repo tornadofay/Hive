@@ -262,6 +262,7 @@ public sealed class HiveTabControlTests
         tabs.ProcessKeyForTesting(Keys.Right);
 
         Assert.Equal(1, tabs.SelectedIndex);
+        Assert.True(tabs.ContainsFocus);
 
         tabs.ProcessKeyForTesting(Keys.Left);
 
