@@ -457,3 +457,12 @@ Latest verification finding:
 Remediation boundary:
 - correct only the focused regression assertion so it verifies the intended Automatic discovery state before testing the custom-model transition;
 - do not alter production capability or model-selection semantics.
+
+Latest remediation:
+- corrected the sole failing regression assertion: the Automatic target test now explicitly verifies the two provider-discovered capabilities from its fixture (vision=Supported and tool.calling=Supported) before entering custom model text;
+- the existing final assertion that custom model entry clears the automatic discovery-owned capability set remains unchanged;
+- revision inspection confirms no production code was changed for this failure; the remediation is limited to the focused test assertion and Active Work record.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
+- the requested Management-before-Capabilities reorder and simplified capability editor layout remain blocked until this verification passes.
