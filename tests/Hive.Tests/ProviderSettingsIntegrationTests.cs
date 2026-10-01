@@ -577,6 +577,7 @@ public sealed class ProviderSettingsIntegrationTests
             label.Text.StartsWith("Endpoint:", StringComparison.Ordinal));
 
         Assert.NotNull(details);
+        Assert.NotNull(FindControl<HiveComboBox>(editor));
         Assert.Contains(Environment.NewLine, details!.Text);
         Assert.DoesNotContain(@"\r\n", details.Text);
     }
