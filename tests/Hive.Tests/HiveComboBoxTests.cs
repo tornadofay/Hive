@@ -23,6 +23,20 @@ public sealed class HiveComboBoxTests
     }
 
     [Fact]
+    public void ConstructionAndResize_KeepFieldLayoutUsable()
+    {
+        using var combo = new HiveComboBox
+        {
+            Size = new Size(320, 42)
+        };
+
+        combo.PerformLayout();
+        Assert.Equal(1, combo.Controls.Count);
+        Assert.True(combo.Controls[0].Width > 0);
+        Assert.True(combo.Controls[0].Height > 0);
+    }
+
+    [Fact]
     public void Items_SelectionAndNotificationsRemainDeterministic()
     {
         using var combo = new HiveComboBox();
