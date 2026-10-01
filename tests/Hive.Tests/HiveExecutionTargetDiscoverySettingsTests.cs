@@ -412,6 +412,9 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
 
         await view.InitializeAsync();
 
+        Assert.IsType<HiveComboBox>(view.ProviderSelector);
+        Assert.IsType<HiveComboBox>(view.AccountSelector);
+
         view.ProviderSelector.SelectedIndex = 0;
 
         Assert.Equal("Default Account", view.AccountSelector.SelectedItem?.ToString());
