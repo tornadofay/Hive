@@ -166,11 +166,19 @@ internal sealed class HiveCapabilityEditor : UserControl
 
             if (_automatic)
             {
+                if (!row.Configured.Items.Contains(ManagedByDiscoveryText))
+                    row.Configured.Items.Add(ManagedByDiscoveryText);
+
                 row.Configured.SelectedItem = ManagedByDiscoveryText;
                 row.Configured.Enabled = false;
             }
             else
             {
+                var managedIndex =
+                    row.Configured.Items.IndexOf(ManagedByDiscoveryText);
+                if (managedIndex >= 0)
+                    row.Configured.Items.RemoveAt(managedIndex);
+
                 row.Configured.Enabled = true;
                 row.Configured.SelectedItem = configuredState is null
                     ? NotConfiguredText
