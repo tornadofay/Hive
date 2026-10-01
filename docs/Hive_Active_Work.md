@@ -60,18 +60,20 @@ The reported Slice 4 verification failures were remediated:
 - `HiveScrollHostTests.ZeroSizedHost_DoesNotThrowDuringSynchronization` now asserts the normalized zero-sized viewport state instead of applying `Assert.NotNull` to the value-type `HiveScrollState`.
 - `HiveUiPolishTests.HiveAdvancedOverview_UsesHiveScrollHost` no longer treats the non-disposable `HiveThemeManager` as an `IDisposable` resource.
 
+## Verification Remediation
+
+The reported automatic-target verification failure was remediated:
+- `HiveComboBox.Text` now preserves the control's base text state before synchronizing the visible field editor, suppresses the intermediate base notification, and raises one reliable `TextChanged` notification after the editable text is committed.
+- This restores deterministic model-selection state synchronization when an editable model changes from a discovered model to custom text, allowing the execution-target editor to clear stale discovery-managed capabilities.
+- `HiveComboBoxTests.TextChange_RaisesTextChangedForProgrammaticEditableText` provides focused regression coverage for the underlying control contract.
+
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
-
-Developer verification reported one in-scope Slice 4 failure:
-- `HiveExecutionTargetDiscoverySettingsTests.Editor_AutomaticTargetClearsStaleDiscoveredCapabilitiesWhenModelBecomesCustom` failed because changing the editable model selector text to `custom-model` left the previously discovered automatic capability entries in the capability editor.
-
-Remediation boundary: correct the editable `HiveComboBox` / provider model selection state synchronization responsible for clearing stale discovery state; add focused regression coverage; return this state to `VERIFICATION PENDING`.
+Status: VERIFICATION PENDING
 
 Developer handoff:
 
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
-Tests to run: HiveUiPolishTests.cs; HiveExecutionTargetDiscoverySettingsTests.cs; Phase116FollowUpTests.cs; ProviderSettingsIntegrationTests.cs; broader-suite requirement: full Hive.Tests suite after focused coverage passes.
+Tests to run: HiveExecutionTargetDiscoverySettingsTests.cs; HiveComboBoxTests.cs; HiveUiPolishTests.cs; Phase116FollowUpTests.cs; ProviderSettingsIntegrationTests.cs; broader-suite requirement: full Hive.Tests suite after focused coverage passes.
 
 Agent has not run the build or tests. Developer verification is required.
