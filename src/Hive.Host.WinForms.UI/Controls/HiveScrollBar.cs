@@ -219,7 +219,7 @@ public sealed class HiveScrollBar : Control
 
     public int Value => _state.Value;
 
-    public bool CanScroll => _state.CanScroll;
+    public bool CanScroll => Enabled && _state.CanScroll;
 
     public event EventHandler? ValueChanged;
 
@@ -563,7 +563,7 @@ public sealed class HiveScrollBar : Control
         if (trackBrush is not null)
             e.Graphics.FillPath(trackBrush, trackPath);
 
-        if (!_state.CanScroll)
+        if (!CanScroll)
             return;
 
         var thumb = GetThumbBounds(_state);
@@ -692,7 +692,7 @@ public sealed class HiveScrollBar : Control
 
     private Rectangle GetThumbBounds(HiveScrollState state)
     {
-        if (!state.CanScroll)
+        if (!CanScroll || !state.CanScroll)
             return Rectangle.Empty;
 
         var track = GetTrackBounds();
