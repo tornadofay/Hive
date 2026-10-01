@@ -31,11 +31,11 @@ Do not implement or activate Slice 2 (`HiveComboBox` filtering), Slice 3 (`HiveT
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
-Developer verification result: 522/523 focused/full test run, with one failure in `HiveScrollHostTests.Detach_RestoresCallerLayoutAndLeavesContentOwnedByCaller`.
+Developer verification found one failing detach test: 522/523. The failure was in the test setup, which attempted to preserve `DockStyle.Fill` and a four-sided `Anchor` simultaneously. WinForms treats Dock and Anchor as mutually exclusive layout modes, so the test now covers the valid anchored state and a separate valid docked state. citeturn638252view0
 
-Failure: expected the caller's original `DockStyle.Fill` after `Detach()`, but the detached content had `DockStyle.None`. Remediation is limited to preserving/restoring the caller-owned layout contract during detachment. No scope expansion is authorized.
+No production scope expansion was made. Developer rerun is required.
 
 Required developer handoff:
 
