@@ -9,13 +9,6 @@ public class HiveTextBox : TextBox, IHiveWinFormsFieldControl
     public HiveWinFormsFieldMetadata HiveField { get; } = new();
 }
 
-public class HiveComboBox : ComboBox, IHiveWinFormsFieldControl
-{
-    public HiveWinFormsControlMetadata HiveIntegration { get; } = new();
-
-    public HiveWinFormsFieldMetadata HiveField { get; } = new();
-}
-
 public class HiveCheckBox : CheckBox, IHiveWinFormsFieldControl
 {
     public HiveWinFormsControlMetadata HiveIntegration { get; } = new();
