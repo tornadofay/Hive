@@ -31,7 +31,9 @@ Do not implement or activate Slice 2 (`HiveComboBox` filtering), Slice 3 (`HiveT
 
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+
+Developer-reported compile failure: `CS0115` in `HiveScrollBar.cs` because `GetPreferredSizeCore(Size)` is not overridable from the consuming `Hive.Host.WinForms.UI` assembly. The remediation is limited to replacing that invalid override with the public `GetPreferredSize(Size)` override; no scope expansion is authorized.
 
 Required developer handoff:
 
