@@ -36,6 +36,8 @@ public sealed class HiveTabControlTests
         Assert.Same(first, tabs.SelectedTab);
         Assert.True(first.Visible);
         Assert.False(second.Visible);
+        Assert.IsType<TabControl>(first.Parent);
+        Assert.IsType<TabControl>(second.Parent);
 
         tabs.SelectedIndex = 1;
 
