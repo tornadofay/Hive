@@ -101,9 +101,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
         BodyPanel.PerformLayout();
         _navigationSplit.PerformLayout();
 
-        var availableWidth = _navigationSplit.ClientSize.Width;
-        if (availableWidth > 321)
-            _navigationSplit.SplitterDistance = 320;
+        _navigationSplit.SplitterDistance = 320;
 
         ThemeManager.Apply(BodyPanel);
 
