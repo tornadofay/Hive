@@ -9,7 +9,7 @@ Status: IN PROGRESS
 Authorization: explicit user command `Hive: start the next ui slice` following the completed Slice 1 and `docs/plan/Phase1/Custom-UI-Components.md`.
 
 Repository checkpoint before implementation: `846b7c26b579c6b540a7748f09863b06604c49eb` on `main`.
-Current implementation head: `ed8729b93516f88dc4f6b2960c90a13a4b4331fe` on `main`.
+Current implementation head: `c973f26a19a787f012be2b8723c5f689dcdefa8c` on `main`.
 
 ## Scope
 
@@ -40,13 +40,13 @@ Current implementation includes the Hive-owned composite control, explicit host 
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Developer-reported compile failure `CS8604` in the `SelectedValue` member path was remediated within the same slice. A subsequent runtime verification failure reported `System.NullReferenceException` from `HiveComboBox.UpdateFieldLayout()` at line 1056; remediation established the child field editor before initial size changes and added a defensive layout guard with focused construction/resize coverage. A developer analyzer failure `xUnit2013` was remediated by using `Assert.Single`. Focused verification then reported two failures: popup keyboard navigation did not advance the highlight through the field key path, and an unbound selection test expected a display/value contract without configuring the corresponding members. Both were remediated within Slice 2: open-popup `Down/Up` now moves the popup highlight, and the selection test now configures `DisplayMember`/`ValueMember` before asserting the intended display/value behavior.
 
-Developer-reported Example Host verification now exposes a UI defect: the HiveComboBox popup list opens scrolled to the end instead of its expected initial selection/top position. Remediation is required within this slice.
+Developer-reported Example Host verification exposed a UI defect: the HiveComboBox popup list opened scrolled to the end instead of its expected initial selection/top position. Remediation now synchronizes the popup scroll host after the popup has a real viewport and positions it at the highlighted item; focused regression coverage asserts an initial value of zero for the first selected item.
 
-No scope expansion is authorized.
+No scope expansion was made. Developer rerun is required.
 
 Required developer handoff:
 
