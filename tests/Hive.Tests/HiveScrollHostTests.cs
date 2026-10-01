@@ -47,8 +47,8 @@ public sealed class HiveScrollHostTests
         host.SetBounds(0, 0, 0, 0);
         host.Synchronize();
 
-        Assert.NotNull(host.HorizontalScrollState);
-        Assert.NotNull(host.VerticalScrollState);
+        Assert.Equal(0, host.HorizontalScrollState.ViewportSize);
+        Assert.Equal(0, host.VerticalScrollState.ViewportSize);
     }
 
     [Fact]
