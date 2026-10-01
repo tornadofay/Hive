@@ -147,7 +147,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl, IHiveAdvan
         _loadingProviders = true;
         try
         {
-            _providerComboBox.BeginUpdate();
+            _providerComboBox.SuspendLayout();
             try
             {
                 _providerComboBox.Items.Clear();
@@ -161,7 +161,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl, IHiveAdvan
             }
             finally
             {
-                _providerComboBox.EndUpdate();
+                _providerComboBox.ResumeLayout(true);
             }
         }
         finally
