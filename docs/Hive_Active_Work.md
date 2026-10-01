@@ -31,11 +31,11 @@ Do not implement or activate Slice 2 (`HiveComboBox` filtering), Slice 3 (`HiveT
 
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
-Developer-reported runtime failure `System.ArgumentException: Control does not support transparent background colors.` was remediated within the same slice. `HiveScrollBar` now enables WinForms `SupportsTransparentBackColor` before assigning its transparent background, and focused coverage was added for the constructor contract.
+Developer verification result: 522/523 focused/full test run, with one failure in `HiveScrollHostTests.Detach_RestoresCallerLayoutAndLeavesContentOwnedByCaller`.
 
-No scope expansion was made. Developer rerun is required.
+Failure: expected the caller's original `DockStyle.Fill` after `Detach()`, but the detached content had `DockStyle.None`. Remediation is limited to preserving/restoring the caller-owned layout contract during detachment. No scope expansion is authorized.
 
 Required developer handoff:
 
