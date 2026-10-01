@@ -298,7 +298,15 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         object? sender,
         EventArgs e)
     {
-        if (_discoveryPanel.SelectedModel is null)
+        var selectedModel = _discoveryPanel.SelectedModel;
+        var isSelectedModelText =
+            selectedModel is not null &&
+            string.Equals(
+                selectedModel.ModelId,
+                _discoveryPanel.ModelSelector.Text,
+                StringComparison.Ordinal);
+
+        if (!isSelectedModelText)
             _capabilityEditor.SetDiscovery(null);
     }
 
