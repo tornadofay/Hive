@@ -184,6 +184,83 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
     }
 
     [WinFormsFact]
+    public void Editor_ManagementFieldAppearsBeforeCapabilitiesField()
+    {
+        var target = CreateTarget();
+        var snapshot = CreateSnapshot(target);
+        var (management, _) = DiscoveryManagementProxy.Create(snapshot);
+        var context = CreateContext();
+        var provider = CreateProvider(target.ProviderId, context);
+        var account = CreateAccount(
+            target.ProviderAccountId,
+            target.ProviderId,
+            context);
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var editor = new HiveExecutionTargetEditorForm(
+            target,
+            provider,
+            account,
+            management,
+            context,
+            themeManager);
+
+        var layout = FindControl<HiveEditorLayout>(editor);
+        Assert.NotNull(layout);
+
+        var fields = layout!.FieldsPanel.Controls.Cast<Control>().ToArray();
+        var managementIndex = FindFieldControlIndex(fields, "Management");
+        var capabilitiesIndex = FindFieldControlIndex(fields, "Capabilities");
+
+        Assert.True(managementIndex >= 0);
+        Assert.True(capabilitiesIndex >= 0);
+        Assert.True(managementIndex < capabilitiesIndex);
+    }
+
+    [WinFormsFact]
+    public void CapabilityEditor_UsesOneConsistentStateColumn()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        using var editor = new HiveCapabilityEditor(themeManager);
+
+        var configured = new[]
+        {
+            new CapabilityStateEntry(
+                HiveCapabilityKeys.Vision,
+                CapabilityState.Unsupported)
+        };
+
+        editor.Configure(configured, discovery: null, automatic: false);
+
+        var table = FindControl<TableLayoutPanel>(editor);
+        Assert.NotNull(table);
+        Assert.Equal(3, table!.ColumnCount);
+
+        Assert.Contains(
+            table.Controls.Cast<Control>(),
+            control => control is Label label && label.Text == "Capability");
+        Assert.Contains(
+            table.Controls.Cast<Control>(),
+            control => control is Label label && label.Text == "Set state");
+        Assert.Contains(
+            table.Controls.Cast<Control>(),
+            control => control is Label label && label.Text == "Current");
+
+        var selectors = table.Controls
+            .Cast<Control>()
+            .OfType<ComboBox>()
+            .Where(control => control.Tag is CapabilityKey)
+            .ToArray();
+
+        Assert.Equal(6, selectors.Length);
+        var selectorColumn = table.GetColumn(selectors[0]);
+
+        Assert.All(
+            selectors,
+            selector => Assert.Equal(selectorColumn, table.GetColumn(selector)));
+    }
+
+    [WinFormsFact]
     public void Editor_ConnectionTestStatusLivesInFooterActionBar()
     {
         var target = CreateTarget();
@@ -576,6 +653,39 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             providerId,
             key,
             displayName);
+    }
+
+    private static int FindFieldControlIndex(
+        IReadOnlyList<Control> fields,
+        string title)
+    {
+        for (var index = 0; index < fields.Count; index++)
+        {
+            if (FindLabelWithText(fields[index], title) is not null)
+                return index;
+        }
+
+        return -1;
+    }
+
+    private static Label? FindLabelWithText(
+        Control root,
+        string text)
+    {
+        foreach (Control child in root.Controls)
+        {
+            if (child is Label label &&
+                string.Equals(label.Text, text, StringComparison.Ordinal))
+            {
+                return label;
+            }
+
+            var nested = FindLabelWithText(child, text);
+            if (nested is not null)
+                return nested;
+        }
+
+        return null;
     }
 
     private static TControl? FindControl<TControl>(Control root)
