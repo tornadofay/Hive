@@ -180,7 +180,7 @@ Manual Example Host verification should demonstrate the reusable scrollbar again
 
 Use the existing HiveComboBox as the first-class Hive UI ComboBox control, providing a fully Hive-themed selection field and popup rather than relying on the native ComboBox renderer.
 
-The custom UI control must be a distinct opt-in presentation control and must not alter, replace, or take ownership of the Phase 1.14 host-integration `HiveComboBox` contract.
+The existing `HiveComboBox` remains the single public ComboBox control. Its Hive presentation is not a separate opt-in control and does not replace its Phase 1.14 host-integration contract.
 
 The control must be reusable for general Hive UI configuration and must not contain provider-specific behavior.
 
@@ -190,11 +190,11 @@ Phase 1.14 already provides `HiveComboBox : ComboBox, IHiveWinFormsFieldControl`
 
 The public compatibility target remains the conventional ComboBox programming model where practical. The implementation must deliberately preserve the semantics required by existing Hive consumers for `Items`, data binding, `DisplayMember`, `ValueMember`, `SelectedIndex`, `SelectedItem`, `SelectedValue`, enabled/read-only behavior where applicable, and selection-change notification. Any intentionally unsupported native behavior must be documented and covered by tests before existing Hive surfaces are migrated.
 
-Host-integration metadata remains part of the same control and must not be lost or replaced by the visual implementation. The custom rendering layer is therefore presentation internals of HiveComboBox, not a separate opt-in control.
+Host-integration metadata remains part of the same control and must not be lost or replaced by the visual implementation. Its existing `HiveIntegration` and `HiveField` properties remain public and behave as before; the custom field/popup/filter rendering is internal presentation behavior of `HiveComboBox`.
 
 ## Field presentation
 
-The custom control should retain the conventional selection-oriented behavior expected from a ComboBox where practical, including stable selected-item/value access and programmatic selection. Domain-specific code must not depend on the popup implementation.
+`HiveComboBox` should retain the conventional selection-oriented behavior expected from a ComboBox where practical, including stable selected-item/value access and programmatic selection. Domain-specific code must not depend on the popup implementation.
 
 The closed field should provide:
 
@@ -382,7 +382,7 @@ This slice is not an opportunity for unrelated UI redesign.
 
 Identify existing Hive surfaces using native ComboBox where the native field/dropdown appearance conflicts with Hive theming.
 
-Replace those instances with the separate custom Hive UI ComboBox control where the semantic behavior fits. Do not replace host-integration `HiveComboBox` merely to obtain the custom presentation.
+Migrate appropriate native `ComboBox` instances to the first-class Hive `HiveComboBox` where the semantic behavior fits. Existing `HiveComboBox` consumers already use the correct type; they gain the Hive-owned presentation without changing their integration contract.
 
 Particular attention should be paid to:
 
