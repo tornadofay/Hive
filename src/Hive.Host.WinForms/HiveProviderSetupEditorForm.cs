@@ -52,7 +52,6 @@ internal sealed class HiveProviderSetupEditorForm : HiveForm
             Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDownList,
             Height = 32,
-            IntegralHeight = false
         };
 
         foreach (var definition in BuiltInProviderCatalog.All)
