@@ -433,7 +433,7 @@ public sealed class HiveUiPolishTests
         using var owner = new Panel();
         using var list = new ListView();
         using var searchBox = new TextBox();
-        using var statusFilterBox = new ComboBox();
+        using var statusFilterBox = new HiveComboBox();
         using var pagination = new HivePaginationBar();
         var controller = new HiveCrudPageOperationController(
             owner,
