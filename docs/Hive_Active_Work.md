@@ -51,15 +51,15 @@ Latest implementation/test remediation commit: d2250ee65197014db386007ca16f5a845
 
 ## Current Verification Failure
 
-Developer verification reports 555 total tests with 554 passed, 1 failed, 0 skipped. `HiveTabControlTests.HeaderKeyboardFocus_NavigatesWithLeftAndRight` fails because `SelectRelative()` currently calls `Focus()` on the parent `HiveTabControl`, causing subsequent arrow-key navigation to leave the header-focus path.
+Developer verification reported 555 total tests with 554 passed, 1 failed, 0 skipped. `HiveTabControlTests.HeaderKeyboardFocus_NavigatesWithLeftAndRight` failed because `SelectRelative()` moved focus from the Hive header surface to the parent control, causing the second arrow key to leave the header-navigation path.
 
-The developer also reported a Slice 3 visual/UX defect: the private native `TabControl` used for required `TabPage` hosting visibly contributes a native white page border/frame. Remediation will keep the native control internal while removing its visible native tab/page chrome from the user-facing surface and preserving Hive-rendered headers and conventional `TabPage` instances.
+The developer also reported that the initial selected-tab/header treatment and visible native page frame were not visually strong enough for the intended modern Hive UI. Same-slice remediation now keeps keyboard focus on the Hive-owned header surface during arrow navigation and mouse selection, changes selected tabs to surface + accent text + restrained underline, removes header separators, tightens tab width limits, and clips the internal WinForms page host's native chrome outside the visible page surface. Conventional `TabPage` hosting remains intact.
 
-Both issues are same-slice remediation. No Slice 4 work, broad migration, or unrelated refactoring is authorized.
+No Slice 4 work, broad migration, or unrelated refactoring is authorized.
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Developer handoff after remediation:
 
