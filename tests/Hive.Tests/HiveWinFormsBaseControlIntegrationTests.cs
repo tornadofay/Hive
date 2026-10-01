@@ -8,15 +8,20 @@ namespace Hive.Tests;
 public sealed class HiveWinFormsBaseControlIntegrationTests
 {
     [Fact]
-    public void BaseControlsExposeExpectedNativeInheritance()
+    public void BaseControlsPreserveNativeInheritanceExceptHiveOwnedComboBox()
     {
         Assert.True(typeof(TextBox).IsAssignableFrom(typeof(HiveTextBox)));
-        Assert.True(typeof(ComboBox).IsAssignableFrom(typeof(HiveComboBox)));
+        Assert.False(typeof(ComboBox).IsAssignableFrom(typeof(HiveComboBox)));
+        Assert.True(typeof(Control).IsAssignableFrom(typeof(HiveComboBox)));
         Assert.True(typeof(CheckBox).IsAssignableFrom(typeof(HiveCheckBox)));
         Assert.True(typeof(DateTimePicker).IsAssignableFrom(typeof(HiveDateTimePicker)));
         Assert.True(typeof(NumericUpDown).IsAssignableFrom(typeof(HiveNumericUpDown)));
         Assert.True(typeof(DataGridView).IsAssignableFrom(typeof(HiveDataGridView)));
         Assert.True(typeof(Form).IsAssignableFrom(typeof(HiveForm)));
+
+        using var combo = new HiveComboBox();
+        Assert.NotNull(combo.HiveIntegration);
+        Assert.NotNull(combo.HiveField);
     }
 
     [Fact]
