@@ -9,7 +9,7 @@ Status: IN PROGRESS
 Authorization: explicit user command `Hive: start the next ui slice` following the completed Slice 1 and `docs/plan/Phase1/Custom-UI-Components.md`.
 
 Repository checkpoint before implementation: `846b7c26b579c6b540a7748f09863b06604c49eb` on `main`.
-Current implementation head: `c973f26a19a787f012be2b8723c5f689dcdefa8c` on `main`.
+Current implementation head: `97b87ec82a2d3a6478d987624faad86eb7bb67c4` on `main`.
 
 ## Scope
 
@@ -40,13 +40,13 @@ Current implementation includes the Hive-owned composite control, explicit host 
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Developer-reported compile failure `CS8604` in the `SelectedValue` member path was remediated within the same slice. A subsequent runtime verification failure reported `System.NullReferenceException` from `HiveComboBox.UpdateFieldLayout()` at line 1056; remediation established the child field editor before initial size changes and added a defensive layout guard with focused construction/resize coverage. A developer analyzer failure `xUnit2013` was remediated by using `Assert.Single`. Focused verification then reported two failures: popup keyboard navigation did not advance the highlight through the field key path, and an unbound selection test expected a display/value contract without configuring the corresponding members. Both were remediated within Slice 2: open-popup `Down/Up` now moves the popup highlight, and the selection test now configures `DisplayMember`/`ValueMember` before asserting the intended display/value behavior.
 
-Developer-reported Example Host verification now exposes a second popup-scrolling defect: moving the mouse into the popup forces the list down and subsequent manual scrolling jumps back down. Root cause analysis identifies the highlight-change handler as forcing the highlighted row to a fixed scroll position on every mouse move. Remediation is required within this slice.
+Developer-reported Example Host verification exposed a second popup-scrolling defect: moving the mouse into the popup forced the list down and subsequent manual scrolling jumped back down. The cause was the highlight-change handler forcing the highlighted row to a fixed scroll position on every mouse move. Remediation now scrolls only when the highlighted row is outside the visible viewport, preserving manual scrollbar/wheel position while still keeping keyboard-highlighted items visible. Focused regression coverage was added for the visibility calculation.
 
-No scope expansion is authorized.
+No scope expansion was made. Developer rerun is required.
 
 Required developer handoff:
 
