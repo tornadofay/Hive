@@ -388,3 +388,14 @@ Remediation boundary:
 
 Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full Hive.Tests suite.
+
+
+Latest remediation:
+- removed the attempt to clear ComboBox SelectedIndex from the model TextChanged handler, which was mutating the user's custom model text;
+- changed the execution-target editor's text synchronization to treat any text that does not exactly match the currently selected discovered model as custom input and clear discovery-owned capability state through the existing capability editor boundary;
+- removed the premature Advanced Provider Configuration SplitterDistance assignment from the SplitContainer initializer and retained the 320px assignment only after the containing layout has been established;
+- revision inspection confirmed the remediation is confined to the two model-selection UI handlers, Advanced Provider Configuration splitter construction, and the existing same-slice Active Work record.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
+- the requested Management-before-Capabilities reorder and simplified capability editor layout remain blocked until this rerun passes;
