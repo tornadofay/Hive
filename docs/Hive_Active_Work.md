@@ -31,15 +31,11 @@ Do not implement or activate Slice 2 (`HiveComboBox` filtering), Slice 3 (`HiveT
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
-Developer-reported runtime failure while instantiating/using the new scroll infrastructure:
+Developer-reported runtime failure `System.ArgumentException: Control does not support transparent background colors.` was remediated within the same slice. `HiveScrollBar` now enables WinForms `SupportsTransparentBackColor` before assigning its transparent background, and focused coverage was added for the constructor contract.
 
-`System.ArgumentException: Control does not support transparent background colors.`
-
-The current `HiveScrollBar` constructor assigns `BackColor = Color.Transparent`, but the custom `Control` has not enabled WinForms transparent-background support.
-
-Remediation is limited to making the Hive-owned scrollbar explicitly support transparent background rendering before assigning that color. No scope expansion is authorized.
+No scope expansion was made. Developer rerun is required.
 
 Required developer handoff:
 
