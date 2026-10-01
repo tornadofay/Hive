@@ -14,6 +14,7 @@ public sealed class HiveEditorLayout : UserControl
 
     private readonly TableLayoutPanel _root;
     private readonly TableLayoutPanel _fields;
+    private readonly HiveScrollHost _fieldsScrollHost;
     private readonly TableLayoutPanel _footerRoot;
     private readonly FlowLayoutPanel _footer;
     private readonly Panel _footerSeparator;
@@ -64,7 +65,7 @@ public sealed class HiveEditorLayout : UserControl
         _fields = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            AutoScroll = true,
+            AutoScroll = false,
             ColumnCount = 2,
             RowCount = 0,
             Margin = Padding.Empty,
@@ -106,7 +107,15 @@ public sealed class HiveEditorLayout : UserControl
 
         _footerRoot.Controls.Add(_footerSeparator, 0, 0);
         _footerRoot.Controls.Add(_footer, 0, 1);
-        _root.Controls.Add(_fields, 0, 0);
+        _fieldsScrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        _fieldsScrollHost.Attach(_fields);
+
+        _root.Controls.Add(_fieldsScrollHost, 0, 0);
         _root.Controls.Add(_footerRoot, 0, 1);
         Controls.Add(_root);
         _layoutInitialized = true;
