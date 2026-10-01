@@ -40,7 +40,7 @@ Current implementation includes the Hive-owned composite control, explicit host 
 
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Developer-reported compile failure `CS8604` in the `SelectedValue` member path was remediated within the same slice. A subsequent runtime verification failure reported `System.NullReferenceException` from `HiveComboBox.UpdateFieldLayout()` at line 1056; remediation established the child field editor before initial size changes and added a defensive layout guard with focused construction/resize coverage. A developer analyzer failure `xUnit2013` was remediated by using `Assert.Single`. Focused verification then reported two failures: popup keyboard navigation did not advance the highlight through the field key path, and an unbound `SelectedValue` assertion expected a property value without configuring `ValueMember`. Both were remediated within Slice 2: open-popup `Down/Up` now moves the popup highlight, and the test now asserts the selected object when `ValueMember` is empty.
 
