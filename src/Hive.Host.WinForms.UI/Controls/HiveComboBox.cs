@@ -1133,6 +1133,20 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     internal void CommitPopupSelectionForTesting(int sourceIndex) =>
         CommitPopupSelection(sourceIndex);
 
+    internal void ProcessKeyForTesting(Keys keyData) =>
+        HandleFieldKey(new KeyEventArgs(keyData));
+
+    internal static Rectangle CalculatePopupBoundsForTesting(
+        Rectangle ownerBounds,
+        Rectangle workArea,
+        int popupWidth,
+        int popupHeight) =>
+        HiveComboBoxPopupForm.CalculatePopupBounds(
+            ownerBounds,
+            workArea,
+            popupWidth,
+            popupHeight);
+
     internal int FilteredCountForTesting =>
         _filteredItems.Count;
 
