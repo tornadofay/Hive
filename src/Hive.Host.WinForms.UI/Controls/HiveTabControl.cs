@@ -14,12 +14,13 @@ public sealed class HiveTabControl : UserControl
 
     private readonly HiveScrollHost _headerScrollHost;
     private readonly HiveTabHeaderSurface _headerSurface;
-    private readonly Panel _pageHost;
+    private readonly TabControl _pageHost;
     private readonly HiveTabPageCollection _tabPages;
 
     private int _selectedIndex = -1;
     private HiveThemeDefinition? _theme;
     private bool _layouting;
+    private bool _synchronizingPageHostSelection;
 
     public HiveTabControl()
     {
@@ -40,13 +41,20 @@ public sealed class HiveTabControl : UserControl
 
         _tabPages = new HiveTabPageCollection(this);
 
-        _pageHost = new Panel
+        _pageHost = new TabControl
         {
             Dock = DockStyle.Fill,
             Margin = Padding.Empty,
-            Padding = Padding.Empty,
-            BackColor = SystemColors.Window
+            Padding = new Point(0, 0),
+            BackColor = SystemColors.Window,
+            SizeMode = TabSizeMode.Fixed,
+            ItemSize = new Size(1, 1),
+            Multiline = true,
+            TabStop = false,
+            DrawMode = TabDrawMode.OwnerDrawFixed
         };
+        _pageHost.DrawItem += PageHostOnDrawItem;
+        _pageHost.SelectedIndexChanged += PageHostOnSelectedIndexChanged;
 
         _headerScrollHost = new HiveScrollHost
         {
@@ -225,6 +233,8 @@ public sealed class HiveTabControl : UserControl
         {
             _headerSurface.TabInvoked -= HeaderOnTabInvoked;
             _headerSurface.HeaderFocusChanged -= HeaderOnFocusChanged;
+            _pageHost.DrawItem -= PageHostOnDrawItem;
+            _pageHost.SelectedIndexChanged -= PageHostOnSelectedIndexChanged;
         }
 
         base.Dispose(disposing);
@@ -287,8 +297,16 @@ public sealed class HiveTabControl : UserControl
 
         _tabPages.InsertCore(index, page);
         page.Dock = DockStyle.Fill;
-        page.Visible = false;
-        _pageHost.Controls.Add(page);
+
+        _synchronizingPageHostSelection = true;
+        try
+        {
+            _pageHost.TabPages.Insert(index, page);
+        }
+        finally
+        {
+            _synchronizingPageHostSelection = false;
+        }
 
         if (_selectedIndex < 0)
         {
@@ -311,7 +329,17 @@ public sealed class HiveTabControl : UserControl
 
         var wasSelected = index == _selectedIndex;
         _tabPages.RemoveCoreAt(index);
-        _pageHost.Controls.Remove(page);
+
+        _synchronizingPageHostSelection = true;
+        try
+        {
+            _pageHost.TabPages.Remove(page);
+        }
+        finally
+        {
+            _synchronizingPageHostSelection = false;
+        }
+
         page.Visible = false;
 
         if (_tabPages.Count == 0)
@@ -337,11 +365,18 @@ public sealed class HiveTabControl : UserControl
     {
         var pages = _tabPages.ToArray();
 
-        foreach (var page in pages)
+        _synchronizingPageHostSelection = true;
+        try
         {
-            _pageHost.Controls.Remove(page);
-            page.Visible = false;
+            _pageHost.TabPages.Clear();
         }
+        finally
+        {
+            _synchronizingPageHostSelection = false;
+        }
+
+        foreach (var page in pages)
+            page.Visible = false;
 
         _tabPages.ClearCore();
         SetSelectedIndexCore(-1, userInitiated: false);
@@ -365,6 +400,46 @@ public sealed class HiveTabControl : UserControl
         _headerSurface.Invalidate();
     }
 
+    private void PageHostOnDrawItem(object? sender, DrawItemEventArgs e)
+    {
+        // HiveTabControl owns tab-header rendering. The internal TabControl exists
+        // only because WinForms requires TabPage instances to be parented by TabControl.
+    }
+
+    private void PageHostOnSelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (_synchronizingPageHostSelection ||
+            _pageHost.SelectedIndex == _selectedIndex)
+            return;
+
+        var index = _pageHost.SelectedIndex;
+        if (index >= 0 &&
+            index < _tabPages.Count &&
+            _tabPages[index].Enabled)
+        {
+            SetSelectedIndexCore(index, userInitiated: true);
+            return;
+        }
+
+        SynchronizePageHostSelection();
+    }
+
+    private void SynchronizePageHostSelection()
+    {
+        if (_pageHost.SelectedIndex == _selectedIndex)
+            return;
+
+        _synchronizingPageHostSelection = true;
+        try
+        {
+            _pageHost.SelectedIndex = _selectedIndex;
+        }
+        finally
+        {
+            _synchronizingPageHostSelection = false;
+        }
+    }
+
     private void SetSelectedIndexCore(int value, bool userInitiated)
     {
         if (_selectedIndex == value)
@@ -384,6 +459,7 @@ public sealed class HiveTabControl : UserControl
 
         var previous = _selectedIndex;
         _selectedIndex = value;
+        SynchronizePageHostSelection();
 
         UpdateSelectedPageVisibility();
         RefreshHeaders();
