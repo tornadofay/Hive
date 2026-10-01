@@ -1,5 +1,6 @@
 using System.Windows.Forms;
 using Hive.Core;
+using Hive.Host.WinForms.UI.Controls;
 
 namespace Hive.Host.WinForms;
 
@@ -219,7 +220,12 @@ internal sealed class CheckBoxValueAdapter : WinFormsControlValueAdapterBase
 
         checkBox.Checked = boolean;
 
-        retuinternal sealed class HiveComboBoxValueAdapter : WinFormsControlValueAdapterBase
+        return Success(control, request);
+    }
+
+}
+
+internal sealed class HiveComboBoxValueAdapter : WinFormsControlValueAdapterBase
 {
     public override bool CanHandle(Control control) =>
         control is HiveComboBox;
