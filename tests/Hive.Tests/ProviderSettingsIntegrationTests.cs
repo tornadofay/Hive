@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Windows.Forms;
 using Hive.Core;
 using Hive.Host.WinForms;
+using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 using Hive.Management;
 using Hive.Persistence;
@@ -549,6 +550,7 @@ public sealed class ProviderSettingsIntegrationTests
         Assert.NotNull(nameTextBox);
         Assert.NotNull(endpointTextBox);
         Assert.Equal(ComboBoxStyle.DropDown, modelSelector.DropDownStyle);
+        Assert.IsType<HiveComboBox>(modelSelector);
 
         keyTextBox!.Text = "automatic-target";
         nameTextBox!.Text = "Automatic Target";
