@@ -8,7 +8,7 @@ namespace Hive.Host.WinForms;
 internal sealed class HiveProviderSetupEditorForm : HiveForm
 {
     private readonly BuiltInProviderDefinition? _existingCatalog;
-    private readonly ComboBox _providerComboBox;
+    private readonly HiveComboBox _providerComboBox;
     private readonly TextBox _credentialTextBox;
     private readonly Label _detailsLabel;
     private readonly HiveButton _saveButton;
@@ -47,7 +47,7 @@ internal sealed class HiveProviderSetupEditorForm : HiveForm
 
         var editor = new HiveEditorLayout();
 
-        _providerComboBox = new ComboBox
+        _providerComboBox = new HiveComboBox
         {
             Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDownList,
