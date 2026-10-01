@@ -192,6 +192,30 @@ scrollbar.SetState(
 
 The normalized state treats `Maximum` as the content extent endpoint and derives the effective scroll maximum from `Maximum - ViewportSize`. `Value` is clamped to that effective maximum. The control supports vertical/horizontal orientation, proportional and minimum thumb sizing, track paging, dragging, wheel input, and keyboard navigation. Theme resources are owned and disposed by the control.
 
+## HiveTabControl
+
+HiveTabControl is the single public Hive tab-selection control. It is a Hive-owned composite rather than a native TabControl subclass: the tab headers are fully Hive-rendered while conventional TabPage instances remain the page/content model.
+
+```csharp
+var tabs = new HiveTabControl();
+
+var overview = tabs.TabPages.Add("Overview");
+var details = tabs.TabPages.Add("Details");
+
+tabs.SelectedIndex = 0;
+tabs.SelectedTab = details;
+
+tabs.SelectedIndexChanged += (_, _) => { /* selection changed */ };
+```
+
+Public members include TabPages, SelectedIndex, SelectedTab, HeaderHeight, SelectNextTab(), SelectPreviousTab(), SelectedIndexChanged, and SelectedTabChanged.
+
+The control preserves TabPage instances while switching pages. Page controls remain ordinary WinForms controls, and removing/clearing pages does not dispose those caller-owned page instances. Selecting a disabled page is ignored for user navigation; programmatic SelectedIndex changes remain available.
+
+Headers support Hive Light/Dark/System rendering, normal/hover/selected/focused/pressed/disabled states, DPI-aware sizing, keyboard navigation, and deterministic horizontal overflow. Overflow uses HiveScrollHost / HiveScrollBar; selecting a tab keeps its header visible without forcing the user's scroll position to move merely because the mouse hovers another header.
+
+Accessibility exposes the control as a page-tab list and reports the selected tab text as its accessible value. The control is not assignable to native TabControl; existing native TabControl consumers remain supported separately until a later explicitly authorized migration.
+
 ## HiveScrollHost
 
 Use `HiveScrollHost` for Hive-owned scrollable content where custom scrolling can be controlled without replacing a specialized native control's viewport behavior.
