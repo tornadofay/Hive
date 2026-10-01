@@ -26,7 +26,7 @@ internal sealed class ExampleConfigurationExampleView : UserControl
             ?? throw new ArgumentNullException(nameof(themeManager));
 
         Dock = DockStyle.Fill;
-        AutoScroll = true;
+        AutoScroll = false;
         Padding = new Padding(2, 2, 2, 18);
 
         var family = themeManager.Theme.Typography.FontFamily;
@@ -87,7 +87,15 @@ internal sealed class ExampleConfigurationExampleView : UserControl
         root.Controls.Add(_settingsFlow, 0, 4);
         root.Controls.Add(_futureText, 0, 5);
 
-        Controls.Add(root);
+        var scrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            AccessibleName = "Example Configuration content"
+        };
+        scrollHost.Attach(root);
+        Controls.Add(scrollHost);
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         ApplyTheme(_themeManager.Theme);
