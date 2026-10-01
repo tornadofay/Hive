@@ -448,3 +448,12 @@ Latest remediation:
 Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
 - the requested Management-before-Capabilities reorder and simplified capability editor layout remain blocked until this verification passes.
+
+Latest verification finding:
+- developer reran Hive.Tests: 496 Tests (495 Passed, 1 Failed, 0 Skipped).
+- the sole failure occurs at the first assertion in HiveExecutionTargetDiscoverySettingsTests.Editor_AutomaticTargetClearsStaleDiscoveredCapabilitiesWhenModelBecomesCustom, before custom model text is entered;
+- CreateSnapshot supplies two discovered capabilities (vision=Supported and tool.calling=Supported), and Automatic mode intentionally loads the discovered capability set, so Assert.Single is inconsistent with the test fixture and current Automatic semantics.
+
+Remediation boundary:
+- correct only the focused regression assertion so it verifies the intended Automatic discovery state before testing the custom-model transition;
+- do not alter production capability or model-selection semantics.
