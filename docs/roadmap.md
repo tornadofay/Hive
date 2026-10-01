@@ -1,6 +1,6 @@
 # Hive — Roadmap
 
-This is the ordered slice-level implementation plan. `docs/architecture.md` is the architectural source of truth; this file defines implementation order. Status belongs in `Hive_Current_Status.md`.
+This is the ordered slice-level roadmap and navigation index. Each slice links to its detailed plan under `docs/plan/`. `docs/architecture.md` is the architectural source of truth; this file defines implementation order. Status belongs in `Hive_Current_Status.md`.
 
 ## Slice completion gate
 
