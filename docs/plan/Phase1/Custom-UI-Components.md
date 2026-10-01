@@ -178,7 +178,7 @@ Manual Example Host verification should demonstrate the reusable scrollbar again
 
 ## Objective
 
-Create a separate Hive UI ComboBox control that provides a fully Hive-themed selection field and popup rather than relying on the native ComboBox popup renderer.
+Use the existing HiveComboBox as the first-class Hive UI ComboBox control, providing a fully Hive-themed selection field and popup rather than relying on the native ComboBox renderer.
 
 The custom UI control must be a distinct opt-in presentation control and must not alter, replace, or take ownership of the Phase 1.14 host-integration `HiveComboBox` contract.
 
