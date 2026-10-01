@@ -235,6 +235,14 @@ public sealed class HiveScrollBar : Control
 
         _state = normalized;
 
+        if (!normalized.CanScroll)
+        {
+            _hovered = false;
+            _pressed = false;
+            _dragging = false;
+            Capture = false;
+        }
+
         if (Enabled != normalized.Enabled)
             Enabled = normalized.Enabled;
 
