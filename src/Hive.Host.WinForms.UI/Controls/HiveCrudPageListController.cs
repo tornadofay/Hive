@@ -30,7 +30,7 @@ internal sealed class HiveCrudPageListController<TItem>
         HivePaginationBar pagination,
         Label statusLabel,
         Label emptyStateLabel,
-        ComboBox statusFilterBox,
+        HiveComboBox statusFilterBox,
         Action applyStatusColor,
         Action updateActionState,
         Func<bool> isBusy)
