@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: IMPLEMENTATION IN PROGRESS
 
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
@@ -466,3 +466,19 @@ Latest remediation:
 Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
 - the requested Management-before-Capabilities reorder and simplified capability editor layout remain blocked until this verification passes.
+
+
+Latest developer verification:
+- developer reran the full Hive.Tests suite after the final Phase 1.16 remediation: 496 Tests (496 Passed, 0 Failed, 0 Skipped) in 54.4 seconds.
+- this clears the verification gate for the already-authorized Execution Targets UI polish within the current Phase 1.16 Follow-Up slice.
+
+Current UI polish implementation scope:
+- move Management before Capabilities in the Execution Target editor;
+- simplify the structured capability editor so every known capability uses one consistent state-selector column, with compact current/evidence presentation instead of the four-column Discovered / Override / Effective grid;
+- preserve Manual/Automatic authority, configured overrides, discovered evidence, Unknown semantics, accessibility, theming, and existing CRUD behavior;
+- add focused UI regression coverage for field order and consistent capability-selector layout;
+- update the owning Phase 1.16 UI guidance to describe the implemented first-look capability presentation.
+
+Verification boundary after implementation:
+- developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
+- required Example Host handoff remains: Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms.
