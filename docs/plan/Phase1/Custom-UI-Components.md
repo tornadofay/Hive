@@ -156,19 +156,23 @@ Manual Example Host verification should demonstrate the reusable scrollbar again
 
 ## Objective
 
-Create a Hive-owned ComboBox control that provides a fully Hive-themed selection field and popup rather than relying on the native ComboBox popup renderer.
+Create a separate Hive UI ComboBox control that provides a fully Hive-themed selection field and popup rather than relying on the native ComboBox popup renderer.
+
+The custom UI control must be a distinct opt-in presentation control and must not alter, replace, or take ownership of the Phase 1.14 host-integration `HiveComboBox` contract.
 
 The control must be reusable for general Hive UI configuration and must not contain provider-specific behavior.
 
-## Existing HiveComboBox boundary
+## Host-integration boundary
 
-Hive already has a public `HiveComboBox : ComboBox, IHiveWinFormsFieldControl` in `Hive.Host.WinForms.UI`. This slice must **evolve that existing control**, not create a second `HiveComboBox` type or parallel ComboBox contract.
+Phase 1.14 already provides `HiveComboBox : ComboBox, IHiveWinFormsFieldControl` for host integration metadata and bounded host semantics. That control remains unchanged by this UI slice.
 
-The existing `HiveIntegration` and `HiveField` metadata properties remain part of the control's public contract and must continue to behave unchanged. The custom visual/popup/filter behavior is an extension of the existing control.
+The custom UI ComboBox must be a separate Hive UI control owned by the presentation layer. A host application that uses the Phase 1.14 `HiveComboBox` must not receive the custom popup, filtering, or Hive-specific rendering merely because it references the Hive library.
+
+Hive's own UI surfaces may explicitly choose the custom control where the Hive visual contract is desired.
 
 ## Field presentation
 
-The control should retain the conventional selection-oriented WinForms API already provided by the existing `ComboBox` inheritance where practical, including stable selected-item/value access and programmatic selection. Domain-specific code must not depend on the popup implementation.
+The custom control should retain the conventional selection-oriented behavior expected from a ComboBox where practical, including stable selected-item/value access and programmatic selection. Domain-specific code must not depend on the popup implementation.
 
 The closed field should provide:
 
@@ -351,7 +355,7 @@ This slice is not an opportunity for unrelated UI redesign.
 
 Identify existing Hive surfaces using native ComboBox where the native field/dropdown appearance conflicts with Hive theming.
 
-Replace those instances with `HiveComboBox` where the semantic behavior fits.
+Replace those instances with the separate custom Hive UI ComboBox control where the semantic behavior fits. Do not replace host-integration `HiveComboBox` merely to obtain the custom presentation.
 
 Particular attention should be paid to:
 
@@ -466,7 +470,7 @@ HiveComboBox      HiveTabControl
 
 Slice 2 depends on Slice 1 because long ComboBox popups should reuse the Hive scrollbar.
 
-Slice 2 must extend the existing HiveComboBox integration control rather than introducing a replacement type.
+Slice 2 must not modify the existing Phase 1.14 HiveComboBox integration control. The custom ComboBox is a separate presentation control used explicitly by Hive UI surfaces.
 
 Slice 3 may consume Slice 1 for tab-header overflow scrolling, but its core tab presentation does not depend on scrollbar support.
 
@@ -478,8 +482,10 @@ The final reusable UI surface should remain small:
 
 - `HiveScrollBar`
 - `HiveScrollHost`
-- the existing `HiveComboBox`, extended by this plan with filtered Hive-themed popup behavior
+- a separate Hive UI filtered ComboBox control
 - `HiveTabControl`
+
+The existing Phase 1.14 `HiveComboBox` remains a host-integration control and is not part of the custom visual-control contract.
 
 Implementation helpers for popup rendering, scroll synchronization, tab measurement, filtering, or state management should remain internal unless a concrete consumer-facing contract is required.
 
