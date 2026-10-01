@@ -239,6 +239,33 @@ public sealed class HiveTabControl : UserControl
     internal int HeaderHorizontalScrollPositionForTesting =>
         _headerScrollHost.HorizontalScrollPosition;
 
+    internal void ProcessKeyForTesting(Keys keyData)
+    {
+        var keyCode = keyData & Keys.KeyCode;
+        var modifiers = keyData & Keys.Modifiers;
+
+        if (keyCode == Keys.Tab && modifiers == (Keys.Control | Keys.Shift))
+        {
+            SelectRelative(-1);
+            return;
+        }
+
+        if (keyCode == Keys.Tab && modifiers == Keys.Control)
+        {
+            SelectRelative(1);
+            return;
+        }
+
+        if (keyCode == Keys.Left)
+            SelectRelative(-1);
+        else if (keyCode == Keys.Right)
+            SelectRelative(1);
+        else if (keyCode == Keys.Home)
+            SelectFirstEnabledTab();
+        else if (keyCode == Keys.End)
+            SelectLastEnabledTab();
+    }
+
     internal int CalculateHeaderScrollForTesting(int index) =>
         CalculateHeaderScrollForSelectedTab(index);
 
