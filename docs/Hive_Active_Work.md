@@ -420,3 +420,12 @@ Remediation boundary:
 
 Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full Hive.Tests suite.
+
+Latest remediation:
+- guarded HiveExecutionTargetEditorForm.ModelSelected synchronization so a discovered model's capability evidence is applied only when its model id still exactly matches the ComboBox's visible text; stale selection notifications during custom-model entry are therefore ignored;
+- preserved the explicit automatic-target reset for custom model text and all existing discovery/capability semantics;
+- revision inspection confirmed the production change is isolated to the execution-target model-selection synchronization boundary.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
+- the requested Management-before-Capabilities reorder and simplified capability editor layout remain blocked until this verification passes.
