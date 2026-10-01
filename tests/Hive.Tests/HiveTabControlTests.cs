@@ -253,8 +253,9 @@ public sealed class HiveTabControlTests
         tabs.TabPages.Add("Third");
 
         form.Controls.Add(tabs);
-        form.CreateControl();
-        tabs.CreateControl();
+        form.Show();
+        form.Activate();
+        Application.DoEvents();
 
         tabs.FocusHeaderForTesting();
         Assert.True(tabs.ContainsFocus);
