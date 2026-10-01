@@ -259,6 +259,25 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             selectors,
             selector => Assert.Equal(selectorColumn, table.GetColumn(selector)));
 
+        Assert.Equal(
+            SizeType.Absolute,
+            table.ColumnStyles[selectorColumn].SizeType);
+        Assert.Equal(
+            190,
+            table.ColumnStyles[selectorColumn].Width);
+
+        var textGenerationSelector = Assert.Single(
+            selectors,
+            selector => selector.Tag is CapabilityKey key &&
+                         key == HiveCapabilityKeys.TextGeneration);
+        Assert.Equal(
+            table.GetRow(
+                table.Controls
+                    .Cast<Control>()
+                    .Single(control => control is Label label &&
+                                       label.AccessibleName == "Text generation capability")),
+            table.GetRow(textGenerationSelector));
+
         var visionSelector = Assert.Single(
             selectors,
             selector => selector.Tag is CapabilityKey key &&
