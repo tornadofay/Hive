@@ -1421,6 +1421,9 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
 
         public string FilterText => _filterText;
 
+        internal HiveScrollState VerticalScrollStateForTesting =>
+            _scrollHost.VerticalScrollState;
+
         public void SetItems(
             IReadOnlyList<HiveComboBoxItem> items,
             int selectedSourceIndex)
