@@ -8,7 +8,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
     private readonly Control _owner;
     private readonly ListView _list;
     private readonly TextBox _searchBox;
-    private readonly ComboBox _statusFilterBox;
+    private readonly HiveComboBox _statusFilterBox;
     private readonly HivePaginationBar _pagination;
     private readonly Action _updateActionState;
     private readonly Action<string, HiveStatusTone> _setStatus;
@@ -21,7 +21,7 @@ internal sealed class HiveCrudPageOperationController : IDisposable
         Control owner,
         ListView list,
         TextBox searchBox,
-        ComboBox statusFilterBox,
+        HiveComboBox statusFilterBox,
         HivePaginationBar pagination,
         Action updateActionState,
         Action<string, HiveStatusTone> setStatus,
