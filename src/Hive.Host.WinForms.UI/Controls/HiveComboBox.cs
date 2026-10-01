@@ -961,6 +961,8 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
                 return;
             }
 
+            var delta = e.KeyCode == Keys.Down ? 1 : -1;
+            _popup?.MoveHighlight(delta);
             return;
         }
 
@@ -1478,6 +1480,11 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             var sourceIndex = _list.GetHighlightedSourceIndex();
             if (sourceIndex >= 0)
                 _owner.CommitPopupSelection(sourceIndex);
+        }
+
+        public void MoveHighlight(int delta)
+        {
+            _list.MoveHighlight(delta);
         }
 
         public void ApplyTheme(HiveThemeDefinition? theme)
