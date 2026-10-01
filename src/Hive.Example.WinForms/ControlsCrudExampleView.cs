@@ -38,7 +38,7 @@ internal sealed class ControlsCrudExampleView : UserControl
 
         var root = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
             ColumnCount = 1,
             RowCount = 3,
             Margin = Padding.Empty,
@@ -50,7 +50,7 @@ internal sealed class ControlsCrudExampleView : UserControl
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         _description = new Label
         {
@@ -132,7 +132,7 @@ internal sealed class ControlsCrudExampleView : UserControl
 
         _crud = new HiveCrudPage<CrudExampleItem>
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
             Height = 480,
             MinimumSize = new Size(520, 420),
             Margin = new Padding(0, 18, 0, 12),
