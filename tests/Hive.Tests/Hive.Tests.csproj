@@ -27,5 +27,6 @@
     <ProjectReference Include="../../src/Hive.Management/Hive.Management.csproj" />
     <ProjectReference Include="../../src/Hive.Host.WinForms/Hive.Host.WinForms.csproj" />
     <ProjectReference Include="../../src/Hive.Host.WinForms.UI/Hive.Host.WinForms.UI.csproj" />
+    <ProjectReference Include="../../src/Hive.Example.WinForms/Hive.Example.WinForms.csproj" />
   </ItemGroup>
 </Project>
