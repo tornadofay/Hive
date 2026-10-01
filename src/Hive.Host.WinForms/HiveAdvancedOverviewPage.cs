@@ -1,4 +1,5 @@
 using System.Drawing;
+using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 
 namespace Hive.Host.WinForms;
@@ -43,7 +44,7 @@ internal sealed class HiveAdvancedOverviewPage : UserControl, IHiveAdvancedConfi
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 5,
-            AutoScroll = true,
+            AutoScroll = false,
             Padding = new Padding(0, 4, 0, 0)
         };
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
@@ -82,7 +83,15 @@ internal sealed class HiveAdvancedOverviewPage : UserControl, IHiveAdvancedConfi
             0,
             4);
 
-        Controls.Add(body);
+        var scrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            AccessibleName = "Advanced Provider Configuration overview content"
+        };
+        scrollHost.Attach(body);
+        Controls.Add(scrollHost);
         Controls.Add(description);
         Controls.Add(title);
 
