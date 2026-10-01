@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using Hive.Core;
@@ -35,7 +36,6 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     private HiveComboBoxPopupForm? _popup;
     private SolidBrush? _backgroundBrush;
     private SolidBrush? _disabledBrush;
-    private SolidBrush? _arrowBrush;
     private Pen? _borderPen;
     private Pen? _hoverBorderPen;
     private Pen? _focusPen;
@@ -110,11 +110,12 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
                 return;
 
             var previousSelected = CaptureSelectedItem();
+            var hadSelection = HasSelection;
 
             _dataSource = value;
             _bindingSource.DataSource = value;
 
-            RefreshSelectionAfterSourceChange(previousSelected);
+            RefreshSelectionAfterSourceChange(previousSelected, hadSelection);
             RefreshPopup();
         }
     }
@@ -706,30 +707,26 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
                 : Name;
     }
 
-    private void RefreshSelectionAfterSourceChange(object? previousSelected)
+    private void RefreshSelectionAfterSourceChange(object? previousSelected, bool hadSelection)
     {
         var previousIndex = _selectedIndex;
 
-        if (_dataSource is null)
-        {
-            _selectedIndex = previousSelected is null
-                ? (_selectedIndex < _items.CountInternal ? _selectedIndex : -1)
-                : FindSourceIndex(previousSelected);
-        }
-        else if (previousSelected is not null)
-        {
-            _selectedIndex = FindSourceIndex(previousSelected);
-        }
-        else
-        {
-            _selectedIndex = -1;
-        }
+        _selectedIndex = hadSelection
+            ? FindSourceIndex(previousSelected)
+            : -1;
 
         if (_selectedIndex >= 0 && _selectedIndex >= SourceCount)
             _selectedIndex = -1;
 
         if (_selectedIndex != previousIndex)
+        {
             UpdateDisplayedText();
+            SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
+
+            var newItem = SelectedItem;
+            if (!Equals(previousSelected, newItem))
+                SelectedItemChanged?.Invoke(this, EventArgs.Empty);
+        }
 
         RefreshPopup();
     }
@@ -788,15 +785,27 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             : currentText;
     }
 
-    private void RefreshPopup()
+    private void RefreshPopup(string? filter = null)
     {
         if (_popup is null || _popup.IsDisposed)
             return;
 
-        var filter = _popup.FilterText;
-        BuildFilteredItems(filter);
+        var query = filter ?? _popup.FilterText;
+        BuildFilteredItems(query);
         _popup.SetItems(_filteredItems, _selectedIndex);
-        _popup.SetFilterText(filter);
+
+        if (!string.Equals(_popup.FilterText, query, StringComparison.Ordinal))
+            _popup.SetFilterText(query);
+    }
+
+    private void SetPopupFilter(string filter)
+    {
+        RefreshPopup(filter);
+    }
+
+    private void SourceCollectionChanged(object? previousSelected, bool hadSelection)
+    {
+        RefreshSelectionAfterSourceChange(previousSelected, hadSelection);
     }
 
     private void ToggleDropDown()
@@ -1068,13 +1077,15 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     internal int FilteredCountForTesting =>
         _filteredItems.Count;
 
+    protected override AccessibleObject CreateAccessibilityInstance() =>
+        new HiveComboBoxAccessibleObject(this);
+
     private readonly record struct HiveComboBoxItem(
         int SourceIndex,
         object? Item,
         string Display);
 
-    [DesignerSerializerCategory(Code)]
-    public sealed class HiveComboBoxItemCollection : IEnumerable<object?>
+        public sealed class HiveComboBoxItemCollection : IEnumerable<object?>
     {
         private readonly HiveComboBox _owner;
         private readonly List<object?> _items = new();
@@ -1108,8 +1119,11 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
                 if (index < 0 || index >= _items.Count)
                     throw new ArgumentOutOfRangeException(nameof(index));
 
+                var previousSelected = _owner.CaptureSelectedItem();
+                var hadSelection = _owner.HasSelection;
+
                 _items[index] = value;
-                _owner.SourceCollectionChanged();
+                _owner.SourceCollectionChanged(previousSelected, hadSelection);
             }
         }
 
@@ -1133,24 +1147,33 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         public void Insert(int index, object? item)
         {
             EnsureUnbound();
+            var previousSelected = _owner.CaptureSelectedItem();
+            var hadSelection = _owner.HasSelection;
+
             _items.Insert(index, item);
-            _owner.SourceCollectionChanged();
+            _owner.SourceCollectionChanged(previousSelected, hadSelection);
         }
 
         public void RemoveAt(int index)
         {
             EnsureUnbound();
+            var previousSelected = _owner.CaptureSelectedItem();
+            var hadSelection = _owner.HasSelection;
+
             _items.RemoveAt(index);
-            _owner.SourceCollectionChanged();
+            _owner.SourceCollectionChanged(previousSelected, hadSelection);
         }
 
         public bool Remove(object? item)
         {
             EnsureUnbound();
 
+            var previousSelected = _owner.CaptureSelectedItem();
+            var hadSelection = _owner.HasSelection;
+
             var removed = _items.Remove(item);
             if (removed)
-                _owner.SourceCollectionChanged();
+                _owner.SourceCollectionChanged(previousSelected, hadSelection);
 
             return removed;
         }
@@ -1180,8 +1203,11 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             if (_items.Count == 0)
                 return;
 
+            var previousSelected = _owner.CaptureSelectedItem();
+            var hadSelection = _owner.HasSelection;
+
             _items.Clear();
-            _owner.SourceCollectionChanged();
+            _owner.SourceCollectionChanged(previousSelected, hadSelection);
         }
 
         public void CopyTo(object?[] array, int arrayIndex)
@@ -1493,7 +1519,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             var desiredHeight =
                 _owner.LogicalToDevice(34) +
                 _owner.LogicalToDevice(2) +
-                _owner._itemHeight * rows;
+                _owner.LogicalToDevice(_owner._itemHeight) * rows;
 
             var maxHeight = Math.Max(
                 _owner.LogicalToDevice(80),
