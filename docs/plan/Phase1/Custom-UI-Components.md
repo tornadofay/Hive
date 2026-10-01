@@ -9,11 +9,29 @@ Define the standalone implementation plan for the next reusable Hive WinForms UI
 3. HiveTabControl
 4. Existing Hive UI Integration, Consistency & Hardening
 
-The goal is to provide production-quality Hive-owned presentation for controls whose native WinForms rendering does not reliably match Hive's Light / Dark / System visual contract, while preserving normal WinForms behavior where practical.
+The goal is not cosmetic restyling. These components become first-class Hive-owned presentation controls where native WinForms rendering cannot reliably participate in Hive's Light / Dark / System visual contract. Conventional WinForms behavior remains the compatibility target where practical, while the visible field/popup/tab presentation is fully Hive-rendered.
 
 This document is a plan only. It does not authorize implementation and does not activate any roadmap slice.
 
 ## Design Principles
+
+## Shared UI subsystem contract
+
+The four components form one Hive UI subsystem over the existing theme manager and design-token model:
+
+```text
+HiveThemeManager
+      ↓
+HiveThemeDefinition
+      ├── HiveScrollBar / HiveScrollHost
+      ├── HiveComboBox
+      └── HiveTabControl
+
+HiveComboBox → HiveScrollBar / HiveScrollHost for popup overflow
+HiveTabControl → HiveScrollBar / HiveScrollHost when tab-header overflow is required
+```
+
+The subsystem owns the visual surfaces that native WinForms does not reliably theme: ComboBox field and popup, filtered list, TabControl headers, and the custom scrollbar. It does not replace ordinary controls or introduce a new rendering/theme authority.
 
 ### Hive-owned visual contract
 
@@ -21,7 +39,9 @@ All four components consume the existing `IHiveThemeManager` / `HiveThemeDefinit
 
 ### Native behavior where it is reliable
 
-Hive should replace the presentation only where native rendering is insufficient. Existing native scrolling, page hosting, keyboard behavior, and framework mechanisms should be reused where they remain reliable rather than reimplemented unnecessarily.
+Hive owns the visible presentation of these controls, but should reuse reliable WinForms behavior underneath rather than rebuild framework mechanisms unnecessarily. This means normal page hosting, selection semantics, focus semantics, data binding, and native scrolling APIs may be reused where they do not conflict with the Hive visual contract.
+
+For these controls, reusing native behavior does not mean accepting native rendering. The entire visible ComboBox field/popup and TabControl header are Hive-owned presentation.
 
 ### Overlay-first scrolling
 
@@ -49,7 +69,9 @@ Create the reusable scrolling foundation consisting of `HiveScrollBar` and `Hive
 
 The scrollbar owns the Hive visual presentation. The scroll host is the reusable composition container that hosts a scrollable child/content surface and overlays the Hive scrollbar(s) without consuming content space. A small internal control-specific adapter boundary may translate the hosted control's native scroll state and requests. Native controls remain responsible for their actual scrolling where practical.
 
-The public host contract must not require callers to implement per-control scrolling logic. Control-specific adapters are internal implementation details and are introduced only where a supported control actually requires them.
+HiveScrollHost hosts one explicit scrollable content surface. The hosted control remains caller-owned when detached or replaced; the host does not silently dispose externally supplied content merely because the visual hosting relationship changed. While attached, normal WinForms parent/child disposal semantics apply.
+
+The public host contract must not require callers to implement per-control scrolling logic. The host exposes normalized scroll state and user-facing scroll requests; control-specific synchronization adapters remain internal implementation details and are introduced only where a supported control actually requires them.
 
 ## HiveScrollBar
 
@@ -82,7 +104,7 @@ Create a reusable Hive-owned scrollbar supporting vertical and horizontal orient
 
 ### State contract
 
-The scrollbar needs an explicit scroll-state model sufficient to represent:
+The scrollbar needs an explicit normalized scroll-state model sufficient to represent:
 
 - minimum;
 - maximum;
@@ -92,7 +114,7 @@ The scrollbar needs an explicit scroll-state model sufficient to represent:
 - enabled/disabled;
 - orientation.
 
-The implementation must tolerate content that is not scrollable and avoid displaying a misleading active thumb.
+The normalized model must distinguish content extent from viewport extent and current logical position. The effective maximum scroll position must be derived from those extents rather than copied blindly from WinForms Maximum/LargeChange semantics. The implementation must tolerate content that is not scrollable and avoid displaying a misleading active thumb.
 
 ## HiveScrollHost
 
@@ -100,7 +122,7 @@ Create the reusable synchronization/hosting layer around a scrollable control or
 
 ### Responsibilities
 
-- Host a scrollable child/content surface and overlay the Hive scrollbar without disrupting content layout.
+- Host exactly one scrollable child/content surface and overlay the Hive scrollbar without disrupting content layout.
 - Observe effective content and viewport dimensions.
 - Convert the hosted surface's native scroll state to normalized scrollbar state.
 - Convert scrollbar value changes back into native scrolling requests.
@@ -162,13 +184,13 @@ The custom UI control must be a distinct opt-in presentation control and must no
 
 The control must be reusable for general Hive UI configuration and must not contain provider-specific behavior.
 
-## Host-integration boundary
+## Host-integration and public-control boundary
 
-Phase 1.14 already provides `HiveComboBox : ComboBox, IHiveWinFormsFieldControl` for host integration metadata and bounded host semantics. That control remains unchanged by this UI slice.
+Phase 1.14 already provides `HiveComboBox : ComboBox, IHiveWinFormsFieldControl` for host integration metadata and bounded host semantics. This slice evolves that exact control rather than creating a second ComboBox type.
 
-The custom UI ComboBox must be a separate Hive UI control owned by the presentation layer. A host application that uses the Phase 1.14 `HiveComboBox` must not receive the custom popup, filtering, or Hive-specific rendering merely because it references the Hive library.
+The public compatibility target remains the conventional ComboBox programming model where practical. The implementation must deliberately preserve the semantics required by existing Hive consumers for `Items`, data binding, `DisplayMember`, `ValueMember`, `SelectedIndex`, `SelectedItem`, `SelectedValue`, enabled/read-only behavior where applicable, and selection-change notification. Any intentionally unsupported native behavior must be documented and covered by tests before existing Hive surfaces are migrated.
 
-Hive's own UI surfaces may explicitly choose the custom control where the Hive visual contract is desired.
+Host-integration metadata remains part of the same control and must not be lost or replaced by the visual implementation. The custom rendering layer is therefore presentation internals of HiveComboBox, not a separate opt-in control.
 
 ## Field presentation
 
@@ -183,8 +205,9 @@ The closed field should provide:
 - Clear dropdown affordance.
 - DPI-aware sizing.
 - A defined distinction between the displayed selected value and the transient filter query so filtering does not corrupt the committed selection.
-- Correct accessibility name/role/value reporting.
+- Correct accessibility name/role/value reporting while retaining the control's existing host-integration metadata.
 - Keyboard focus behavior consistent with normal WinForms expectations.
+- Normal programmatic selection/binding must update the visible field without opening the popup or changing the filter state.
 
 ## Popup presentation
 
@@ -211,7 +234,9 @@ It should provide:
 
 ## Filtering behavior
 
-Filtering should be incremental and deterministic:
+Filtering should be incremental and deterministic. The filter is transient UI state and must never overwrite the committed selected item/value.
+
+Use ordinal case-insensitive matching unless an existing consumer contract requires another documented comparison rule. Search text should come from the configured display representation rather than arbitrary object `ToString()` behavior when `DisplayMember`/binding semantics provide a stable display value.
 
 - typing updates the filter;
 - matching is case-insensitive;
@@ -220,13 +245,15 @@ Filtering should be incremental and deterministic:
 - no-match state is explicit;
 - filtering must not mutate the underlying item collection;
 - selection remains valid when the current item remains in the filtered set;
-- a disappearing selected item must not produce an invalid selection state.
+- a disappearing selected item must not produce an invalid committed selection state.
+- duplicate display text must not make selection ambiguous; underlying item identity remains the selection identity.
+- null/empty display text remains representable and does not break filtering.
 
 The filtering model must remain generic and independent of Provider / Model / ExecutionTarget domain types.
 
 ## Scrolling
 
-Long popup lists should reuse `HiveScrollBar` rather than implementing another scrollbar renderer.
+Long popup lists should reuse `HiveScrollHost` / `HiveScrollBar` rather than implementing another scrollbar renderer. The popup's visual scroll surface and scrollbar must participate in the same theme and lifecycle boundary.
 
 The popup therefore becomes a direct consumer of Slice 1 infrastructure.
 
@@ -272,9 +299,9 @@ Manual Example Host verification should demonstrate a filtered ComboBox in Light
 
 ## Objective
 
-Create a Hive-owned tab control presentation that replaces the native TabControl header rendering while retaining conventional WinForms page/content hosting.
+Create `HiveTabControl` as a first-class Hive UI control that owns the visible tab-header rendering while retaining conventional WinForms tab-page/content hosting.
 
-The goal is full Hive visual consistency without rebuilding a complete page-management framework.
+The control should preserve the useful public TabControl model rather than introduce a separate page/navigation framework. Hive owns the header presentation because native TabControl rendering cannot reliably satisfy the Hive visual contract.
 
 ## Tab header presentation
 
@@ -290,16 +317,16 @@ The tab header renderer should support:
 - DPI-aware sizing.
 - Optional close/auxiliary actions only if later consumers require them; they are not required for the initial contract.
 
-## Page hosting
+## Page hosting and public compatibility
 
-Keep the page/content model conventional and predictable:
+Use the normal WinForms `TabControl` / `TabPage` page-hosting model where practical. The Hive control must preserve the public tab concepts existing Hive consumers reasonably depend on, including tab-page collection, selected index/tab, programmatic selection, and selection-change notification.
 
-- ordinary WinForms controls can remain the content;
-- only the tab presentation/header interaction is Hive-owned;
-- the public contract should expose conventional tab concepts such as tab-page collection, selected index/tab, and programmatic selection where those concepts are part of the final control surface;
-- changing tabs must preserve page instances and expected lifecycle behavior;
-- disposal must be deterministic;
-- the component must not introduce a second page-navigation framework.
+- ordinary WinForms controls remain valid tab content;
+- page instances remain stable when switching tabs;
+- Hive owns the header visual/interaction surface, not the content controls' business semantics;
+- disposal follows normal WinForms page/control lifecycle expectations;
+- the component must not introduce a second page-navigation framework;
+- any native TabControl behavior intentionally changed by the custom header implementation must be explicit and covered by tests.
 
 ## Keyboard and interaction behavior
 
@@ -319,7 +346,7 @@ Theme changes must not unexpectedly change the selected tab or active page.
 
 The control must define deterministic behavior when tab headers do not fit.
 
-The preferred approach is bounded horizontal tab scrolling using reusable Hive scrolling infrastructure rather than silently compressing tabs until labels become unusable.
+The preferred approach is bounded horizontal tab scrolling using reusable Hive scrolling infrastructure rather than silently compressing tabs until labels become unusable. The active-tab indicator and selected-tab visibility must remain stable when the header viewport changes.
 
 Where overflow scrolling is introduced, it should reuse `HiveScrollBar` / `HiveScrollHost` instead of creating separate scroll mechanics.
 
@@ -434,6 +461,18 @@ The broader `Hive.Tests` suite remains the regression gate when the integration 
 
 ---
 
+# Cross-Slice Public Compatibility Rule
+
+These controls are first-class Hive presentation components, not cosmetic wrappers. Their visible rendering is Hive-owned, but their public compatibility target remains conventional WinForms behavior where practical.
+
+For `HiveComboBox`, this means the existing Phase 1.14 type and host-integration metadata remain intact while the field, popup, filtering surface, selection visuals, and scrollbar are Hive-rendered.
+
+For `HiveTabControl`, this means ordinary `TabPage` content hosting and conventional tab selection remain intact while tab headers and overflow presentation are Hive-rendered.
+
+For `HiveScrollHost`, this means it provides a reusable visual/synchronization host without requiring feature forms to know control-specific scrolling internals.
+
+When native behavior cannot be preserved without undermining the Hive visual contract, the deviation must be explicit, narrowly scoped, documented, and covered by focused tests rather than left as an accidental side effect.
+
 # Cross-Slice Non-Goals
 
 These slices do not include:
@@ -470,7 +509,7 @@ HiveComboBox      HiveTabControl
 
 Slice 2 depends on Slice 1 because long ComboBox popups should reuse the Hive scrollbar.
 
-Slice 2 must not modify the existing Phase 1.14 HiveComboBox integration control. The custom ComboBox is a separate presentation control used explicitly by Hive UI surfaces.
+Slice 2 evolves the existing Phase 1.14 `HiveComboBox` into the first-class Hive-rendered control. Its host-integration contract remains intact; the visual implementation is no longer a separate presentation type.
 
 Slice 3 may consume Slice 1 for tab-header overflow scrolling, but its core tab presentation does not depend on scrollbar support.
 
@@ -482,10 +521,10 @@ The final reusable UI surface should remain small:
 
 - `HiveScrollBar`
 - `HiveScrollHost`
-- a separate Hive UI filtered ComboBox control
+- `HiveComboBox` — first-class Hive-rendered field, popup, filtering, and selection control; also retains the Phase 1.14 host-integration contract
 - `HiveTabControl`
 
-The existing Phase 1.14 `HiveComboBox` remains a host-integration control and is not part of the custom visual-control contract.
+There is no separate `HiveFilteredComboBox` or other parallel ComboBox type. Popup/filter helpers and rendering infrastructure remain internal implementation details unless a concrete consumer-facing contract is required.
 
 Implementation helpers for popup rendering, scroll synchronization, tab measurement, filtering, or state management should remain internal unless a concrete consumer-facing contract is required.
 
@@ -505,6 +544,7 @@ Tests to run: <exact focused test class/file>; broader-suite requirement if appl
 The overall custom UI component effort is complete only when:
 
 - all four slices have passed their focused verification;
+- `HiveComboBox` is the single public ComboBox type used by Hive UI surfaces where Hive-specific selection UI is required; no parallel filtered ComboBox type exists;
 - integrated Hive surfaces no longer rely on native ComboBox or TabControl rendering where it violates the Hive theme contract;
 - custom scrollbars behave correctly without breaking native scrolling;
 - Light / Dark / System transitions preserve relevant interaction state;
