@@ -61,7 +61,7 @@ public sealed class HiveComboBoxTests
 
         Assert.Equal(1, combo.SelectedIndex);
         Assert.Same(second, combo.SelectedItem);
-        Assert.Equal(2, combo.SelectedValue);
+        Assert.Same(second, combo.SelectedValue);
         Assert.Equal("Second", combo.Text);
         Assert.Equal(1, selectedIndexChanged);
         Assert.Equal(1, selectedItemChanged);
