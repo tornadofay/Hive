@@ -246,6 +246,20 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
             table.Controls.Cast<Control>(),
             control => control is Label label && label.Text == "Current");
 
+        var capabilityHeader = Assert.Single(
+            table.Controls.Cast<Control>(),
+            control => control is Label label && label.Text == "Capability");
+        var setStateHeader = Assert.Single(
+            table.Controls.Cast<Control>(),
+            control => control is Label label && label.Text == "Set state");
+        var currentHeader = Assert.Single(
+            table.Controls.Cast<Control>(),
+            control => control is Label label && label.Text == "Current");
+
+        Assert.Equal(0, table.GetRow(capabilityHeader));
+        Assert.Equal(0, table.GetRow(setStateHeader));
+        Assert.Equal(0, table.GetRow(currentHeader));
+
         var selectors = table.Controls
             .Cast<Control>()
             .OfType<ComboBox>()
@@ -277,6 +291,19 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
                     .Single(control => control is Label label &&
                                        label.AccessibleName == "Text generation capability")),
             table.GetRow(textGenerationSelector));
+
+        var textGenerationLabel = Assert.Single(
+            table.Controls.Cast<Control>(),
+            control => control is Label label && label.Text == "Text generation");
+        var textGenerationSelector = Assert.Single(
+            selectors,
+            selector => selector.Tag is CapabilityKey key &&
+                         key == HiveCapabilityKeys.TextGeneration);
+
+        Assert.Equal(1, table.GetRow(textGenerationLabel));
+        Assert.Equal(1, table.GetRow(textGenerationSelector));
+        Assert.Equal(0, table.GetColumn(textGenerationLabel));
+        Assert.Equal(1, table.GetColumn(textGenerationSelector));
 
         var visionSelector = Assert.Single(
             selectors,
