@@ -2,6 +2,17 @@
 
 Status: IMPLEMENTATION IN PROGRESS
 
+Latest UI correction:
+- corrected the capability editor table header placement so Capability, Set state, and Current occupy row 0 and the first capability (Text generation) starts on row 1; this removes the observed header/capability overlap.
+- added regression coverage asserting the three headers remain on row 0 and the Text generation label/selector remain paired on row 1 in columns 0/1.
+- no capability semantics, discovery ownership, or execution-target behavior changed.
+
+Verification boundary:
+- developer must rerun the focused Execution Target / capability UI tests and the full Hive.Tests suite;
+- manually inspect the Execution Target dialog and confirm the capability section reads as aligned Capability | Set state | Current, with each capability on its own row;
+- required handoff remains: Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms.
+
+
 Authorized task: **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery**
 
 Authorized scope:
