@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using Hive.Host.WinForms;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 using Xunit;
@@ -301,6 +302,58 @@ public sealed class HiveComboBoxTests
         Assert.True(
             accessible.State.HasFlag(AccessibleStates.Collapsed));
         Assert.Equal("Selected value", accessible.Value);
+    }
+
+    [Fact]
+    public void HostValueAdapter_HandlesHiveComboBoxExplicitly()
+    {
+        using var combo = new HiveComboBox();
+        combo.Text = "Adapter value";
+
+        Assert.True(
+            WinFormsControlValueAdapters.TryGet(
+                combo,
+                out var adapter));
+        Assert.IsType<HiveComboBoxValueAdapter>(adapter);
+        Assert.Equal(
+            typeof(string).FullName,
+            adapter.ValueTypeName);
+
+        var request = new HiveHostInteractionRequest(
+            Guid.NewGuid(),
+            HiveHostInteractionKind.SetControlValue,
+            CorrelationId.New(),
+            controlId: "combo",
+            value: HiveHostValue.FromString("Updated"),
+            captureId: Guid.NewGuid());
+
+        var result = WinFormsControlValueAdapters.SetControlValue(
+            combo,
+            request);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal("Updated", combo.Text);
+    }
+
+    [Fact]
+    public void Filtering_ReportsNoMatchWithoutMutatingItems()
+    {
+        using var combo = new HiveComboBox
+        {
+            DisplayMember = nameof(Option.Name)
+        };
+
+        combo.Items.AddRange(
+        [
+            new Option(1, "Alpha"),
+            new Option(2, "Beta")
+        ]);
+
+        combo.ApplyFilterForTesting("missing");
+
+        Assert.Equal(0, combo.FilteredCountForTesting);
+        Assert.Empty(combo.FilteredDisplayValuesForTesting);
+        Assert.Equal(2, combo.Items.Count);
     }
 
     [Fact]
