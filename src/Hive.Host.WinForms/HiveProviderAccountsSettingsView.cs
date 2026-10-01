@@ -12,7 +12,7 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl, IHiveAdvan
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
     private readonly IHiveExampleOutput? _output;
-    private readonly ComboBox _providerComboBox;
+    private readonly HiveComboBox _providerComboBox;
     private readonly HiveCrudPage<ProviderAccount> _page;
 
     private IReadOnlyList<Provider> _providers = Array.Empty<Provider>();
@@ -34,11 +34,10 @@ internal sealed class HiveProviderAccountsSettingsView : UserControl, IHiveAdvan
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
 
-        _providerComboBox = new ComboBox
+        _providerComboBox = new HiveComboBox
         {
             Width = 360,
             Height = 32,
-            IntegralHeight = false,
             DropDownStyle = ComboBoxStyle.DropDownList,
             Margin = new Padding(0, 4, 0, 4)
         };
