@@ -306,8 +306,20 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
                 _discoveryPanel.ModelSelector.Text,
                 StringComparison.Ordinal);
 
-        if (!isSelectedModelText)
+        if (isSelectedModelText)
+            return;
+
+        if (GetSelectedManagementMode() == ExecutionTargetManagementMode.Automatic)
+        {
+            _capabilityEditor.Configure(
+                Array.Empty<CapabilityStateEntry>(),
+                discovery: null,
+                automatic: true);
+        }
+        else
+        {
             _capabilityEditor.SetDiscovery(null);
+        }
     }
 
     private void SetTestStatus(string text, HiveStatusTone tone)
