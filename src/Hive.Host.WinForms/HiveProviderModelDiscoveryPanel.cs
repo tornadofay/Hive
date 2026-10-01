@@ -24,6 +24,7 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
     private IReadOnlyList<ProviderModelMetadata> _models = Array.Empty<ProviderModelMetadata>();
     private int _requestVersion;
     private bool _configurationChanged;
+    private bool _customModelEntry;
 
     internal HiveProviderModelDiscoveryPanel(
         IHiveManagementFacade management,
@@ -465,8 +466,13 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
     {
         UpdateSelectionState();
 
-        if (_modelSelector.SelectedItem is ModelChoice choice)
+        if (_modelSelector.SelectedItem is ModelChoice choice &&
+            string.Equals(
+                choice.Value.ModelId,
+                _modelSelector.Text,
+                StringComparison.Ordinal))
         {
+            _customModelEntry = false;
             SelectedModel = choice.Value;
             _capabilitiesLabel.Text =
                 $"Availability: {choice.Value.Availability} • Health: {choice.Value.Health} • " +
@@ -498,8 +504,11 @@ internal sealed class HiveProviderModelDiscoveryPanel : UserControl
                 _modelSelector.Text,
                 StringComparison.Ordinal))
         {
+            _customModelEntry = false;
             return;
         }
+
+        _customModelEntry = true;
         SelectedModel = null;
     }
 
