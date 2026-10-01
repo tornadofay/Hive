@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Hive.Core;
 using Hive.Host.WinForms;
+using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 using Hive.Management;
 using Hive.Providers.OpenAICompatible;
