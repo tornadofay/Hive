@@ -160,9 +160,15 @@ Create a Hive-owned ComboBox control that provides a fully Hive-themed selection
 
 The control must be reusable for general Hive UI configuration and must not contain provider-specific behavior.
 
+## Existing HiveComboBox boundary
+
+Hive already has a public `HiveComboBox : ComboBox, IHiveWinFormsFieldControl` in `Hive.Host.WinForms.UI`. This slice must **evolve that existing control**, not create a second `HiveComboBox` type or parallel ComboBox contract.
+
+The existing `HiveIntegration` and `HiveField` metadata properties remain part of the control's public contract and must continue to behave unchanged. The custom visual/popup/filter behavior is an extension of the existing control.
+
 ## Field presentation
 
-The control should retain a conventional selection-oriented WinForms API surface where practical, including stable selected-item/value access and programmatic selection. Domain-specific code must not depend on the popup implementation.
+The control should retain the conventional selection-oriented WinForms API already provided by the existing `ComboBox` inheritance where practical, including stable selected-item/value access and programmatic selection. Domain-specific code must not depend on the popup implementation.
 
 The closed field should provide:
 
@@ -460,6 +466,8 @@ HiveComboBox      HiveTabControl
 
 Slice 2 depends on Slice 1 because long ComboBox popups should reuse the Hive scrollbar.
 
+Slice 2 must extend the existing HiveComboBox integration control rather than introducing a replacement type.
+
 Slice 3 may consume Slice 1 for tab-header overflow scrolling, but its core tab presentation does not depend on scrollbar support.
 
 Slice 4 depends on the stable reusable contracts from the preceding slices.
@@ -470,7 +478,7 @@ The final reusable UI surface should remain small:
 
 - `HiveScrollBar`
 - `HiveScrollHost`
-- `HiveComboBox`
+- the existing `HiveComboBox`, extended by this plan with filtered Hive-themed popup behavior
 - `HiveTabControl`
 
 Implementation helpers for popup rendering, scroll synchronization, tab measurement, filtering, or state management should remain internal unless a concrete consumer-facing contract is required.
