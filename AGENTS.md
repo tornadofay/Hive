@@ -26,7 +26,7 @@ Read, in order:
 1. this file;
 2. `docs/Hive_Current_Status.md`;
 3. `docs/Hive_Active_Work.md`;
-4. the relevant roadmap section;
+4. the relevant roadmap section and the linked detailed phase/slice plan under `docs/plan/`;
 5. the relevant architecture sections;
 6. relevant UI guidance for UI/Example work.
 
