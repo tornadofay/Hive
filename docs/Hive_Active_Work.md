@@ -62,7 +62,12 @@ The reported Slice 4 verification failures were remediated:
 
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+
+Developer verification reported one in-scope Slice 4 failure:
+- `HiveExecutionTargetDiscoverySettingsTests.Editor_AutomaticTargetClearsStaleDiscoveredCapabilitiesWhenModelBecomesCustom` failed because changing the editable model selector text to `custom-model` left the previously discovered automatic capability entries in the capability editor.
+
+Remediation boundary: correct the editable `HiveComboBox` / provider model selection state synchronization responsible for clearing stale discovery state; add focused regression coverage; return this state to `VERIFICATION PENDING`.
 
 Developer handoff:
 
