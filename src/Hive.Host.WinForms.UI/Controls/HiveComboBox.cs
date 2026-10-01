@@ -1078,8 +1078,11 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             System.Globalization.CultureInfo.CurrentCulture) ?? string.Empty;
     }
 
-    private static object? GetMemberValue(object item, string memberName)
+    private static object? GetMemberValue(object? item, string memberName)
     {
+        if (item is null)
+            return null;
+
         if (item is IDictionary dictionary &&
             dictionary.Contains(memberName))
         {
