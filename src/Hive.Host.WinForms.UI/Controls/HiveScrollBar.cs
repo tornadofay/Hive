@@ -386,8 +386,6 @@ public sealed class HiveScrollBar : Control
                     forward: true));
         }
 
-        _pressed = true;
-        UpdateCursor();
         InvalidateThumbTransition();
     }
 
