@@ -9,7 +9,7 @@ Status: IN PROGRESS
 Authorization: explicit user command `Hive: start the next ui slice` following the completed Slice 1 and `docs/plan/Phase1/Custom-UI-Components.md`.
 
 Repository checkpoint before implementation: `846b7c26b579c6b540a7748f09863b06604c49eb` on `main`.
-Current implementation head: `f9fe6e0a7aaec39de57d04f35940f9792fb57358` on `main`.
+Current implementation head: `7bccdaff37db87fed16359f5894d45cf6a227675` on `main`.
 
 ## Scope
 
@@ -40,9 +40,9 @@ Current implementation includes the Hive-owned composite control, explicit host 
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
-Developer-reported compile failure `CS8604` in the `SelectedValue` member path was remediated within the same slice. A subsequent runtime verification failure reported `System.NullReferenceException` from `HiveComboBox.UpdateFieldLayout()` at line 1056. Remediation established the child field editor before initial size changes and added a defensive layout guard for early/disposal-time resize callbacks, with focused construction/resize coverage. A developer analyzer failure `xUnit2013` in that regression test was also remediated by using `Assert.Single` for the control collection.
+Developer-reported compile failure `CS8604` in the `SelectedValue` member path was remediated within the same slice. A subsequent runtime verification failure reported `System.NullReferenceException` from `HiveComboBox.UpdateFieldLayout()` at line 1056; remediation established the child field editor before initial size changes and added a defensive layout guard with focused construction/resize coverage. A developer analyzer failure `xUnit2013` was remediated by using `Assert.Single`. Focused verification then reported two failures: popup keyboard navigation did not advance the highlight through the field key path, and an unbound `SelectedValue` assertion expected a property value without configuring `ValueMember`. Both were remediated within Slice 2: open-popup `Down/Up` now moves the popup highlight, and the test now asserts the selected object when `ValueMember` is empty.
 
 No scope expansion was made. Developer rerun is required.
 
