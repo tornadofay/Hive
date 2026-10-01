@@ -164,7 +164,19 @@ public sealed class HiveExecutionTargetDiscoverySettingsTests
         await editor.DiscoveryPanel!.InitializeAsync();
 
         editor.ModelSelector.SelectedIndex = 0;
-        Assert.Single(editor.CapabilityEditor.GetConfiguredCapabilities());
+
+        var automaticCapabilities =
+            editor.CapabilityEditor.GetConfiguredCapabilities();
+
+        Assert.Equal(2, automaticCapabilities.Count);
+        Assert.Contains(
+            automaticCapabilities,
+            item => item.Capability == HiveCapabilityKeys.Vision &&
+                    item.State == CapabilityState.Supported);
+        Assert.Contains(
+            automaticCapabilities,
+            item => item.Capability == HiveCapabilityKeys.ToolCalling &&
+                    item.State == CapabilityState.Supported);
 
         editor.ModelSelector.Text = "custom-model";
 
