@@ -526,9 +526,9 @@ public sealed class HiveScrollHost : UserControl
                 _content.MinimumSize.Width,
                 Math.Max(
                     currentSize.Width,
-                Math.Max(
-                    unboundedPreferred.Width,
-                    viewportPreferred.Width))));
+                    Math.Max(
+                        unboundedPreferred.Width,
+                        viewportPreferred.Width))));
 
         var height = Math.Max(
             viewportSize.Height,
@@ -536,9 +536,9 @@ public sealed class HiveScrollHost : UserControl
                 _content.MinimumSize.Height,
                 Math.Max(
                     currentSize.Height,
-                Math.Max(
-                    unboundedPreferred.Height,
-                    viewportPreferred.Height))));
+                    Math.Max(
+                        unboundedPreferred.Height,
+                        viewportPreferred.Height))));
 
         if (_content.MaximumSize.Width > 0)
             width = Math.Min(width, _content.MaximumSize.Width);
