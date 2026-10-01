@@ -273,6 +273,14 @@ public sealed class HiveThemeManager : IHiveThemeManager
             case HiveExampleOutputView exampleOutputView:
                 exampleOutputView.ApplyTheme(theme);
                 break;
+
+            case HiveScrollHost scrollHost:
+                scrollHost.ApplyTheme(theme);
+                break;
+
+            case HiveScrollBar scrollBar:
+                scrollBar.ApplyTheme(theme);
+                break;
         }
     }
 
