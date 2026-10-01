@@ -257,6 +257,14 @@ internal sealed class HiveExecutionTargetEditorForm : HiveForm
         object? sender,
         ProviderModelSelectedEventArgs e)
     {
+        if (!string.Equals(
+                e.Model.ModelId,
+                _discoveryPanel.ModelSelector.Text,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
         if (GetSelectedManagementMode() == ExecutionTargetManagementMode.Automatic)
         {
             _capabilityEditor.Configure(
