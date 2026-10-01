@@ -166,6 +166,25 @@ public sealed class HiveComboBoxTests
     }
 
     [Fact]
+    public void SelectedValue_IgnoresNullItemsWhenResolvingValueMember()
+    {
+        using var combo = new HiveComboBox
+        {
+            DisplayMember = nameof(Option.Name),
+            ValueMember = nameof(Option.Id)
+        };
+
+        combo.Items.Add(null);
+        combo.Items.Add(new Option(42, "Answer"));
+
+        combo.SelectedValue = 42;
+
+        Assert.Equal(1, combo.SelectedIndex);
+        Assert.Equal(42, combo.SelectedValue);
+        Assert.Equal("Answer", combo.Text);
+    }
+
+    [Fact]
     public void SelectedValue_UsesStableItemIdentityWhenDisplayTextDuplicates()
     {
         using var combo = new HiveComboBox
