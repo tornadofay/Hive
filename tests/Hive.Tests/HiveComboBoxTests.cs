@@ -298,9 +298,8 @@ public sealed class HiveComboBoxTests
         var accessible = combo.AccessibilityObject;
 
         Assert.Equal(AccessibleRole.ComboBox, accessible.Role);
-        Assert.Contains(
-            AccessibleStates.Collapsed,
-            accessible.State);
+        Assert.True(
+            accessible.State.HasFlag(AccessibleStates.Collapsed));
         Assert.Equal("Selected value", accessible.Value);
     }
 
