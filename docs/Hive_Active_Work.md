@@ -31,13 +31,13 @@ Do not implement or activate Slice 2 (`HiveComboBox` filtering), Slice 3 (`HiveT
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
-Developer-reported compile failure: `CS0115` in `HiveScrollBar.cs` because `GetPreferredSizeCore(Size)` is not overridable from the consuming `Hive.Host.WinForms.UI` assembly. The remediation is limited to replacing that invalid override with the public `GetPreferredSize(Size)` override; no scope expansion is authorized.
+Developer-reported compile failure `CS0115` in `HiveScrollBar.cs` was remediated within the same slice by replacing the invalid `GetPreferredSizeCore(Size)` override with the public `GetPreferredSize(Size)` override. Developer rerun is required.
 
 Required developer handoff:
 
 Example to run: UI / Foundation / Scroll Infrastructure — Hive.Example.WinForms
 Tests to run: HiveScrollBarTests.cs and HiveScrollHostTests.cs; broader-suite requirement: full Hive.Tests suite after focused coverage passes.
 
-No build, test run, or manual Example Host verification has been performed by the agent.
+Agent did not run the build or tests. Required developer rerun after remediation: build `Hive.Host.WinForms.UI` / full solution if preferred, then `HiveScrollBarTests.cs` and `HiveScrollHostTests.cs`, followed by the full `Hive.Tests` suite and the Example Host scenario.
