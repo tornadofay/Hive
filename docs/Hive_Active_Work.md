@@ -408,3 +408,15 @@ Latest remediation:
 Verification boundary:
 - developer must rerun the focused UI/discovery tests and the full Hive.Tests suite;
 - the requested Management-before-Capabilities reorder and simplified capability editor layout remain blocked until this rerun passes.
+
+Latest verification failure:
+- developer reran Hive.Tests: 496 Tests (495 Passed, 1 Failed, 0 Skipped).
+- HiveExecutionTargetDiscoverySettingsTests.Editor_AutomaticTargetClearsStaleDiscoveredCapabilitiesWhenModelBecomesCustom still retains two discovered capability entries after custom model text is entered; the remaining issue is the ordering of ComboBox selection/text notifications around the custom-model transition.
+
+Remediation boundary:
+- guard the execution-target editor from applying a discovered-model capability set when the currently visible model text no longer matches that discovered model;
+- keep custom model input authoritative for the automatic-target capability reset without changing provider discovery or capability semantics;
+- do not broaden scope beyond this final same-slice failure.
+
+Verification boundary:
+- developer must rerun the focused UI/discovery tests and the full Hive.Tests suite.
