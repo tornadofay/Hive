@@ -49,9 +49,17 @@ This is a same-slice keyboard/focus verification issue. The failing test establi
 
 Latest implementation/test remediation commit: d2250ee65197014db386007ca16f5a845bd564f5 on `main`.
 
+## Current Verification Failure
+
+Developer verification reports 555 total tests with 554 passed, 1 failed, 0 skipped. `HiveTabControlTests.HeaderKeyboardFocus_NavigatesWithLeftAndRight` fails because `SelectRelative()` currently calls `Focus()` on the parent `HiveTabControl`, causing subsequent arrow-key navigation to leave the header-focus path.
+
+The developer also reported a Slice 3 visual/UX defect: the private native `TabControl` used for required `TabPage` hosting visibly contributes a native white page border/frame. Remediation will keep the native control internal while removing its visible native tab/page chrome from the user-facing surface and preserving Hive-rendered headers and conventional `TabPage` instances.
+
+Both issues are same-slice remediation. No Slice 4 work, broad migration, or unrelated refactoring is authorized.
+
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Developer handoff after remediation:
 
