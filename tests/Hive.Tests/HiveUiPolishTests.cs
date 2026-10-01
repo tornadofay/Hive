@@ -738,6 +738,30 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
+    public void ExampleScrollablePages_UseHiveScrollHostWithoutNativeAutoScroll()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var overview = new OverviewExampleView(themeManager);
+        using var dialogs = new DialogsExampleView(themeManager);
+        using var crud = new ControlsCrudExampleView(themeManager);
+        using var theme = new ThemeFoundationExampleView(themeManager);
+        using var configuration = new ExampleConfigurationExampleView(themeManager);
+
+        Assert.False(overview.AutoScroll);
+        Assert.False(dialogs.AutoScroll);
+        Assert.False(crud.AutoScroll);
+        Assert.False(theme.AutoScroll);
+        Assert.False(configuration.AutoScroll);
+
+        Assert.IsType<HiveScrollHost>(Assert.Single(overview.Controls));
+        Assert.IsType<HiveScrollHost>(Assert.Single(dialogs.Controls));
+        Assert.IsType<HiveScrollHost>(Assert.Single(crud.Controls));
+        Assert.IsType<HiveScrollHost>(Assert.Single(theme.Controls));
+        Assert.IsType<HiveScrollHost>(Assert.Single(configuration.Controls));
+    }
+
+    [Fact]
     public void HiveSettingsOverview_UsesHiveScrollHost()
     {
         using var view = new HiveSettingsOverviewView();
