@@ -10,6 +10,8 @@ Authorization: explicit user command `Hive: start` against `docs/plan/Phase1/Cus
 
 Repository checkpoint before implementation: `de46b3e74b20c1eb83a8a453ff8b8fd8080c48a8` on `main`.
 
+Current implementation head: `79ef6a76205f4254bea6ba9e4ec914b5dfc03b5a` on `main`.
+
 ## Scope
 
 Implement only the first bounded slice from the linked plan:
