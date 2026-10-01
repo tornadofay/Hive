@@ -211,24 +211,46 @@ public sealed class HiveScrollHostTests
         };
 
         var autoScroll = content.AutoScroll;
+        var originalDock = content.Dock;
+        var originalAnchor = content.Anchor;
 
         host.Attach(content);
         var detached = host.Detach();
 
         Assert.Same(content, detached);
         Assert.Null(content.Parent);
-        Assert.Equal(DockStyle.Fill, content.Dock);
-        Assert.Equal(
-            AnchorStyles.Left |
-            AnchorStyles.Right |
-            AnchorStyles.Top |
-            AnchorStyles.Bottom,
-            content.Anchor);
+        Assert.Equal(originalDock, content.Dock);
+        Assert.Equal(originalAnchor, content.Anchor);
         Assert.Equal(new Point(12, 14), content.Location);
         Assert.Equal(new Size(500, 600), content.Size);
         Assert.False(content.AutoSize);
         Assert.Equal(autoScroll, content.AutoScroll);
         Assert.Null(host.Content);
+    }
+
+
+    [Fact]
+    public void Detach_RestoresCallerDockLayout()
+    {
+        using var host = new HiveScrollHost
+        {
+            Size = new Size(200, 200)
+        };
+        using var content = new Panel
+        {
+            Dock = DockStyle.Fill,
+            Location = new Point(12, 14),
+            Size = new Size(500, 600),
+            AutoSize = false
+        };
+
+        var originalDock = content.Dock;
+
+        host.Attach(content);
+        host.Detach();
+
+        Assert.Equal(originalDock, content.Dock);
+        Assert.Null(content.Parent);
     }
 
     [Fact]
