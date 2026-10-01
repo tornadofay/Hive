@@ -159,7 +159,7 @@ internal sealed class HiveCrudPageListController<TItem>
             .ToList();
 
         _updatingStatusFilter = true;
-        _statusFilterBox.BeginUpdate();
+        _statusFilterBox.SuspendLayout();
         try
         {
             _statusFilterBox.Items.Clear();
@@ -177,7 +177,7 @@ internal sealed class HiveCrudPageListController<TItem>
         }
         finally
         {
-            _statusFilterBox.EndUpdate();
+            _statusFilterBox.ResumeLayout(true);
             _updatingStatusFilter = false;
         }
     }
