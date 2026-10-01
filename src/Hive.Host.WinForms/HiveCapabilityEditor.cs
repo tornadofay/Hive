@@ -183,11 +183,8 @@ internal sealed class HiveCapabilityEditor : UserControl
 
             row.Current.Text = FormatCurrentState(
                 currentState,
-                _automatic
-                    ? discovered is not null
-                    : configuredState is not null
-                        ? false
-                        : discovered is not null);
+                discoveredSource: discovered is not null,
+                overrideSource: !_automatic && configuredState is not null);
         }
 
         UpdateAdditionalEvidence();
@@ -250,7 +247,8 @@ internal sealed class HiveCapabilityEditor : UserControl
 
             row.Current.Text = FormatCurrentState(
                 current,
-                discoveredIsSource);
+                discoveredSource: discoveredIsSource,
+                overrideSource: configured is not null);
         }
     }
 
@@ -279,12 +277,15 @@ internal sealed class HiveCapabilityEditor : UserControl
 
     private static string FormatCurrentState(
         CapabilityState state,
-        bool discoveredSource) =>
-        discoveredSource
-            ? $"{state} • discovered"
-            : state == CapabilityState.Unknown
-                ? "Unknown • not reported"
-                : $"{state} • override";
+        bool discoveredSource,
+        bool overrideSource) =>
+        overrideSource
+            ? $"{state} • override"
+            : discoveredSource
+                ? $"{state} • discovered"
+                : state == CapabilityState.Unknown
+                    ? "Unknown • not reported"
+                    : $"{state} • current";
 
     private void AddHeader(string text, int column)
     {
