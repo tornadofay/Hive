@@ -210,13 +210,24 @@ The visible field must not depend on native ComboBox painting. The current WinFo
 
 `HiveComboBox` therefore owns its field, popup, filter box, result rows, selection visuals, disabled/error states, and popup scrolling.
 
+## Required migration impact
+
+The implementation changes the concrete control architecture from the current `HiveComboBox : ComboBox` inheritance to the Hive-owned composite implementation. That impact must be handled deliberately in the same bounded UI effort.
+
+- replace the current native-inheritance assertion in `HiveWinFormsBaseControlIntegrationTests` with tests for the new public `HiveComboBox` contract;
+- update `WinFormsControlValueAdapters` so `HiveComboBox` is handled explicitly rather than relying only on `control is ComboBox`;
+- preserve `IHiveWinFormsFieldControl`, `HiveIntegration`, and `HiveField` metadata capture and authorization paths;
+- audit any API, collection, helper, designer, or host integration that requires a concrete `ComboBox` base type and migrate it explicitly;
+- preserve ordinary native `ComboBox` handling for business applications that are not using `HiveComboBox`;
+- update `docs/ui/controls.md` and the applicable architecture/Example Host guidance when the new public contract is implemented.
+
 ## Host-integration and public-control boundary
 
 Phase 1.14 established the public Hive field-integration role for `HiveComboBox`. This slice preserves that role and evolves the concrete presentation control; it does not create a second Hive ComboBox type.
 
 The Phase 1.14 historical inheritance assertion is superseded by this plan's deliberate control-architecture change. Historical verification remains valid for the implementation that was verified at the time; it does not constrain the future first-class visual-control architecture.
 
-The public compatibility target remains the conventional ComboBox programming model where practical. The implementation must deliberately preserve the semantics required by existing Hive consumers for `Items`, data binding, `DisplayMember`, `ValueMember`, `SelectedIndex`, `SelectedItem`, `SelectedValue`, enabled/read-only behavior where applicable, and selection-change notification. Any intentionally unsupported native behavior must be documented and covered by tests before existing Hive surfaces are migrated.
+The public compatibility target is the subset of conventional ComboBox behavior actually required by Hive consumers. At minimum the new control contract must define and test `Items`, data binding, `DisplayMember`, `ValueMember`, `SelectedIndex`, `SelectedItem`, `SelectedValue`, `Text`, enabled/read-only behavior where applicable, and selection-change notification. Any unsupported native member or behavior must be explicitly documented before existing Hive surfaces are migrated.
 
 Host-integration metadata remains part of the same control and must not be lost or replaced by the visual implementation. Its existing `HiveIntegration` and `HiveField` properties remain public and behave as before; the custom field/popup/filter rendering is internal presentation behavior of `HiveComboBox`.
 
@@ -321,7 +332,7 @@ Focused automated coverage should cover:
 - popup bounds near screen edges;
 - disposal and repeated use.
 
-Manual Example Host verification should demonstrate a filtered ComboBox in Light and Dark modes, including a long list using the Hive scrollbar.
+Manual Example Host verification should demonstrate the first-class `HiveComboBox` in Light, Dark, and System modes, including a long filtered list using the Hive scrollbar and keyboard-only selection.
 
 ---
 
@@ -408,7 +419,7 @@ Focused automated coverage should cover:
 - header overflow behavior;
 - scrolling integration when overflow exists.
 
-Manual Example Host verification should demonstrate tabs in Light and Dark modes, including selected/hover/focused states and overflow behavior if represented by the example.
+Manual Example Host verification should demonstrate `HiveTabControl` in Light, Dark, and System modes, including selected/hover/focused/disabled states, keyboard navigation, page preservation, and overflow behavior when represented by the example.
 
 ---
 
@@ -576,7 +587,7 @@ The final reusable UI surface should remain small. The concrete public contracts
 
 - `HiveScrollBar`
 - `HiveScrollHost`
-- `HiveComboBox` — first-class Hive-rendered field, popup, filtering, and selection control; also retains the Phase 1.14 host-integration contract
+- `HiveComboBox` — first-class Hive-rendered field, popup, filtering, and selection control; retains the Phase 1.14 host-integration contract but is no longer required to derive from native `ComboBox`.
 - `HiveTabControl`
 
 There is no separate `HiveFilteredComboBox` or other parallel ComboBox type. Popup/filter helpers and rendering infrastructure remain internal implementation details unless a concrete consumer-facing contract is required.
@@ -599,7 +610,8 @@ Tests to run: <exact focused test class/file>; broader-suite requirement if appl
 The overall custom UI component effort is complete only when:
 
 - all four slices have passed their focused verification;
-- `HiveComboBox` is the single public ComboBox type used by Hive UI surfaces where Hive-specific selection UI is required; no parallel filtered ComboBox type exists;
+- `HiveComboBox` is the single public Hive ComboBox type used by Hive UI surfaces where Hive-specific selection UI is required; no parallel filtered ComboBox type exists;
+- the intentional removal of native `ComboBox` inheritance has been migrated through all affected Hive consumers, adapters, tests, and documentation;
 - integrated Hive surfaces no longer rely on native ComboBox or TabControl rendering where it violates the Hive theme contract;
 - custom scrollbars behave correctly without breaking native scrolling;
 - Light / Dark / System transitions preserve relevant interaction state;
