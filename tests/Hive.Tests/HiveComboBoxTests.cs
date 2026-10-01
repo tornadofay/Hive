@@ -292,6 +292,34 @@ public sealed class HiveComboBoxTests
     }
 
     [Fact]
+    public void PopupHighlightScrollOnlyMovesWhenHighlightIsOutsideViewport()
+    {
+        Assert.Equal(
+            200,
+            HiveComboBox.CalculatePopupHighlightScrollForTesting(
+                currentScroll: 200,
+                rowTop: 260,
+                rowHeight: 34,
+                viewportSize: 240));
+
+        Assert.Equal(
+            220,
+            HiveComboBox.CalculatePopupHighlightScrollForTesting(
+                currentScroll: 200,
+                rowTop: 420,
+                rowHeight: 40,
+                viewportSize: 240));
+
+        Assert.Equal(
+            150,
+            HiveComboBox.CalculatePopupHighlightScrollForTesting(
+                currentScroll: 200,
+                rowTop: 150,
+                rowHeight: 40,
+                viewportSize: 240));
+    }
+
+    [Fact]
     public void PopupBounds_FlipAboveOwnerWhenThereIsNoRoomBelow()
     {
         var ownerBounds = new Rectangle(100, 700, 240, 34);
