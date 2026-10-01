@@ -24,6 +24,7 @@ internal static class WinFormsControlValueAdapters
     [
         new TextBoxValueAdapter(),
         new CheckBoxValueAdapter(),
+        new HiveComboBoxValueAdapter(),
         new ComboBoxValueAdapter(),
         new DateTimePickerValueAdapter(),
         new NumericUpDownValueAdapter()
@@ -218,9 +219,60 @@ internal sealed class CheckBoxValueAdapter : WinFormsControlValueAdapterBase
 
         checkBox.Checked = boolean;
 
+        retuinternal sealed class HiveComboBoxValueAdapter : WinFormsControlValueAdapterBase
+{
+    public override bool CanHandle(Control control) =>
+        control is HiveComboBox;
+
+    public override bool CanSet(Control control) =>
+        control is HiveComboBox comboBox &&
+        comboBox.DropDownStyle != ComboBoxStyle.DropDownList &&
+        !comboBox.ReadOnly;
+
+    public override string ValueTypeName =>
+        typeof(string).FullName!;
+
+    public override HiveHostValue? Read(Control control) =>
+        control is HiveComboBox comboBox
+            ? HiveHostValue.FromString(comboBox.Text)
+            : null;
+
+    public override Result<HiveHostInteractionResult> Set(
+        Control control,
+        HiveHostInteractionRequest request)
+    {
+        if (control is not HiveComboBox comboBox)
+            return Unsupported();
+
+        if (comboBox.ReadOnly)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Conflict(
+                    "hive.host.winforms.control-read-only",
+                    "The requested Hive ComboBox is read-only."));
+        }
+
+        if (comboBox.DropDownStyle == ComboBoxStyle.DropDownList)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Unsupported(
+                    "hive.host.winforms.combo-selection-requires-lookup",
+                    "Selection in a drop-down list must use the bounded lookup contract."));
+        }
+
+        if (request.Value is not { } value ||
+            value.Kind != HiveHostValueKind.String)
+        {
+            return Result<HiveHostInteractionResult>.Failure(
+                Error.Validation(
+                    "hive.host.winforms.value-type-invalid",
+                    "A string value is required for a combo box."));
+        }
+
+        comboBox.Text = value.AsString()!;
+
         return Success(control, request);
     }
-
 }
 
 internal sealed class ComboBoxValueAdapter : WinFormsControlValueAdapterBase
