@@ -24,78 +24,74 @@ A decision gate may have documentation/architecture acceptance instead of automa
 # Phase 0 — Foundations
 
 ## 0.1 — Solution & project scaffolding
-Objective: create the complete initial solution structure:
-- `Hive.Core`;
-- `Hive.Agents`;
-- `Hive.Persistence`;
-- `Hive.Coordination`;
-- `Hive.Tools`;
-- `Hive.Providers.OpenAICompatible`;
-- `Hive.Management`;
-- `Hive.Host.WinForms`;
-- `Hive.Host.WinForms.UI`;
-- `Hive.Example.WinForms`;
-- `Hive.Tests`.
 
-Establish the dependency direction from the beginning. `Hive.Host.WinForms.UI` owns the Hive WinForms presentation implementation, `Hive.Host.WinForms` consumes the UI foundation, and `Hive.Example.WinForms` consumes public platform contracts plus the WinForms/UI layers. No core/platform project may depend on the Example host.
+Detailed implementation plan: [0.1 — Solution & project scaffolding](plan/Phase0/0.1.md)
 
-Verify: solution builds; forbidden references are absent; the Hive UI implementation remains behind `Hive.Host.WinForms.UI`; the Example host is isolated from test-framework internals.
+Objective: create the complete initial Hive solution structure and establish the dependency direction between the core, platform, WinForms, Example Host, and test projects.
+
+Scope and non-goals: foundation scaffolding only; the Example Host remains a consumer and never becomes a platform dependency, while Hive.Host.WinForms.UI remains the owner of Hive presentation implementation.
+
+Verify: solution builds; forbidden references are absent; Hive UI implementation stays behind Hive.Host.WinForms.UI; the Example Host is isolated from test-framework internals.
 
 ## 0.2 — Common infrastructure
-Objective: IDs, immutable value objects, typed errors/results, `IClock`, event envelope with event type and payload schema version, correlation/causation IDs, event upcasting compatibility boundary, and one JSON serialization stack.
-Verify: normal/invalid/boundary unit tests, JSON round-trip, older-event payload upcast tests, and rejection of unsupported event schema versions.
+
+Detailed implementation plan: [0.2 — Common infrastructure](plan/Phase0/0.2.md)
+
+Objective: establish shared IDs/value objects, typed errors/results, IClock, versioned event envelopes, correlation/causation identity, event upcasting, and one JSON serialization stack.
+
+Scope and non-goals: common infrastructure only; domain-specific persistence, orchestration, and later-generation cognition are not pulled into this foundation slice.
+
+Verify: normal, invalid, and boundary behavior; JSON round trips; older-event payload upcasting; unsupported event-schema versions are rejected.
 
 ## 0.3 — Identity, WorkItem & Resource foundation
-Objective: Deployment/Tenant/Principal/User/Session/Workspace/Agent/Hive/Runtime/Execution/WorkItem identity, Resource envelope, ownership, scope, provenance, lifecycle/version metadata.
-V1 work-unit rule: a WorkItem is the durable unit of user-visible work and represents one logical business operation when a business operation is required. A single input submission may produce one or multiple independent WorkItems. A submission/batch is an operational grouping, not a replacement for WorkItem identity, lifecycle, provenance, authorization, or any applicable operation receipt or Review state.
-Verify: scope matrix, missing-identity fail-closed cases, immutable identity snapshots, WorkItem lifecycle and provenance isolation.
+
+Detailed implementation plan: [0.3 — Identity, WorkItem & Resource foundation](plan/Phase0/0.3.md)
+
+Objective: establish stable typed identity, ResourceEnvelope, ownership, scope, provenance, lifecycle, and version metadata for Hive resources and WorkItems.
+
+Scope and non-goals: identity/resource contracts remain neutral and durable; a WorkItem is the durable user-visible work unit, while submission/batch grouping never replaces WorkItem identity, lifecycle, provenance, authorization, or later Review/receipt state.
+
+Verify: scope matrix; missing-identity fail-closed behavior; immutable identity snapshots; WorkItem lifecycle and provenance isolation.
 
 ## 0.4 — Persistence bootstrap
-Objective: Hive-owned SQL Server database, LocalDB development setup, DbUp migrations, schema-version tracking, indexes.
-Verify: clean install, repeat migration, failed migration, incompatible future schema.
+
+Detailed implementation plan: [0.4 — Persistence bootstrap](plan/Phase0/0.4.md)
+
+Objective: establish the Hive-owned SQL Server persistence foundation, LocalDB development setup, DbUp migrations, schema-version tracking, and required indexes.
+
+Scope and non-goals: persistence bootstrap only; later domain persistence does not become part of this slice.
+
+Verify: clean installation; repeat migration; failed migration handling; incompatible future-schema handling.
 
 ## 0.5 — Test harness
-Objective: xUnit scaffolding, fake provider infrastructure, fake clock, test-database strategy, deterministic event-test conventions.
-Verify: baseline tests pass and automated tests make no real vendor/network calls.
+
+Detailed implementation plan: [0.5 — Test harness](plan/Phase0/0.5.md)
+
+Objective: establish the authoritative xUnit test harness, fake provider infrastructure, fake clock, test-database strategy, and deterministic event-test conventions.
+
+Scope and non-goals: test infrastructure only; automated tests must not depend on real vendor accounts or external network services.
+
+Verify: baseline tests pass and automated tests remain isolated from real vendor/network calls.
 
 ## 0.6 — WinForms UI/UX Foundation
-Objective: establish the shared WinForms visual foundation used by Hive.Host.WinForms and Hive.Example.WinForms. Hive owns the theme contract, semantic design tokens, and the small set of Hive-specific controls required by consumers. The current implementation uses native WinForms controls and custom System.Drawing rendering; application forms consume Hive-owned contracts.
 
-The initial foundation includes:
-- Light / Dark / System theme modes;
-- Hive-owned palette, typography, spacing, and common visual-state tokens;
-- HiveForm as the reusable application-window shell;
-- HiveButton with Primary / Secondary / Navigation styles;
-- HiveMessageBox with semantic message types and optional technical details;
-- Hive-specific controls only where Hive needs behavior or styling beyond ordinary WinForms controls;
-- native WinForms controls and custom `System.Drawing` rendering owned by `Hive.Host.WinForms.UI`;
-- reusable data-page composition primitives: a header/action/content list layout and an optional pagination bar;
-- `HiveCrudPage<TItem>` for generic Add/Edit/Delete/Refresh UI orchestration over consumer-supplied callbacks, including compact toolbar layout and an integrated `HivePaginationBar` footer;
-- the CRUD presentation standard: clear title/description hierarchy, optional search, primary Add action separated from contextual Edit/Delete actions, predictable loading/empty/no-match states, keyboard-friendly list interaction, and compact record-count/status feedback;
-- reusable editor-layout composition for repeated labeled-field and action-footer patterns; `HiveEditorLayout` supplies presentation only and does not own field semantics or validation, while standardizing field rhythm and action-footer alignment;
-- domain pages keep their own schemas, columns, filters, validation, authorization, specialized editors, and persistence behavior.
+Detailed implementation plan: [0.6 — WinForms UI/UX Foundation](plan/Phase0/0.6.md)
 
-Do not create a complete replacement control toolkit or wrap every WinForms control merely to rename it. Keep rendering implementation details inside `Hive.Host.WinForms.UI` so consuming forms depend only on Hive-owned UI contracts. A different renderer may be introduced later only through an explicit architectural decision.
+Objective: establish the shared Hive WinForms visual foundation, including Light/Dark/System themes, semantic design tokens, HiveForm, HiveButton, HiveMessageBox, reusable list/editor composition, CRUD/pagination primitives, and the small set of justified Hive-specific controls.
 
-Verify: a representative sample form renders in Light and Dark modes, shared styling is consistent, consuming forms use only Hive-owned UI contracts, and the UI implementation can evolve without changing consumer-facing Hive UI contracts.
+Scope and non-goals: presentation foundation only; do not build a replacement control toolkit or wrap ordinary WinForms controls merely to rename them. Rendering stays inside Hive.Host.WinForms.UI, while domain pages retain their own schemas, validation, authorization, and persistence behavior.
+
+Verify: representative forms render correctly in Light and Dark modes; shared styling is consistent; consuming forms use Hive-owned UI contracts; the implementation can evolve without changing consumer-facing UI contracts.
 
 ## 0.7 — First-Class Example Host Shell
-Objective: make `Hive.Example.WinForms` a permanent developer-facing application rather than a temporary demonstration.
 
-The shell uses scalable navigation:
-- Category;
-- Subcategory;
-- Example.
+Detailed implementation plan: [0.7 — First-Class Example Host Shell](plan/Phase0/0.7.md)
 
-Use a left-side tree/list navigation surface and a right-side replaceable example `UserControl`. Do not use nested Category → Subcategory → Example TabPages as the primary navigation model.
+Objective: make Hive.Example.WinForms a permanent developer-facing application with scalable Category → Subcategory → Example discovery and replaceable example views.
 
-Define a small discovery contract such as `IHiveExample` with category, subcategory, title, and a `CreateView(IServiceProvider services)` factory. Discover only designated example assemblies so adding an example requires implementing the contract without manual shell wiring.
+Scope and non-goals: the Example Host is a consumer/test surface, not a platform dependency. Navigation uses a left-side tree/list and a replaceable right-side UserControl rather than nested feature TabPages; examples are discovered through the designated example contract/assembly boundary.
 
-Examples are grouped by feature area and grow with the platform. The shell itself uses only Hive-owned UI contracts.
-
-Verify: adding one new example implementation makes it appear in navigation without additional shell wiring; selecting an example replaces the content view correctly; navigation remains usable with many examples; Light/Dark/System theme changes preserve navigation selection and scroll position; representative CRUD and dialog surfaces remain readable and consistent at supported compact and normal window sizes; no avoidable UI warnings or resource-lifetime regressions are introduced.
-
----
+Verify: adding an example requires no shell wiring; selecting examples replaces the content view correctly; navigation scales; theme changes preserve navigation state; representative CRUD/dialog surfaces remain usable at supported sizes; no avoidable UI/resource-lifetime regressions are introduced.
 
 # Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1)
 
