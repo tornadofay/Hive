@@ -34,7 +34,7 @@ public sealed class HiveTabControl : UserControl
         AutoScaleMode = AutoScaleMode.Dpi;
         Margin = Padding.Empty;
         Padding = Padding.Empty;
-        TabStop = true;
+        TabStop = false;
         AccessibleRole = AccessibleRole.PageTabList;
         AccessibleName = "Tab control";
 
@@ -239,6 +239,11 @@ public sealed class HiveTabControl : UserControl
     internal int HeaderHorizontalScrollPositionForTesting =>
         _headerScrollHost.HorizontalScrollPosition;
 
+    internal void FocusHeaderForTesting()
+    {
+        _headerSurface.Focus();
+    }
+
     internal void ProcessKeyForTesting(Keys keyData)
     {
         var keyCode = keyData & Keys.KeyCode;
@@ -371,8 +376,7 @@ public sealed class HiveTabControl : UserControl
 
     private void HeaderOnFocusChanged(bool focused)
     {
-        if (focused && !Focused)
-            Focus();
+        _headerSurface.Invalidate();
     }
 
     private void SetSelectedIndexCore(int value, bool userInitiated)
@@ -708,7 +712,7 @@ public sealed class HiveTabControl : UserControl
                 ControlStyles.Selectable,
                 true);
 
-            TabStop = false;
+            TabStop = true;
             AccessibleRole = AccessibleRole.PageTabList;
             AccessibleName = "Tab headers";
         }
@@ -827,7 +831,7 @@ public sealed class HiveTabControl : UserControl
             if (index < 0 || !_pages[index].Enabled)
                 return;
 
-            _owner.Focus();
+            _owner._headerSurface.Focus();
             _pressedIndex = index;
             Invalidate();
         }
