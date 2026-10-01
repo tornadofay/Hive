@@ -44,6 +44,15 @@ Implemented integration:
 - focused regression coverage was updated for the migrated controls and the new scroll-host integrations;
 - UI control and Example Host guidance documents now describe the Slice 4 integration boundary.
 
+
+## Implementation Corrections
+
+Post-handoff corrections within Slice 4:
+- `HiveScrollHost.Synchronize()` now clamps transiently negative viewport dimensions to zero before constructing `HiveScrollState`, preventing layout-time `ArgumentOutOfRangeException` failures;
+- the five Example Host pages that used native `AutoScroll` now use `HiveScrollHost` instead, so their visible scrollbars are Hive-owned;
+- the Controls / CRUD example's scroll content was changed to intrinsic sizing for reliable `HiveScrollHost` measurement;
+- regression coverage now verifies the migrated Example Host pages have no native `AutoScroll` and are hosted by `HiveScrollHost`.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
