@@ -26,3 +26,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [Revision — Phase 1.16 UI — Provider Configuration, Discovery & Target Reconciliation — 2026-09-29](1.16-provider-settings-ui-revision-closure-2026-09-29.md)
 
 - [Phase 1 Custom UI Components — Slice 1: Custom Scroll Infrastructure — 2026-10-01](custom-ui-scroll-infrastructure-closure-2026-10-01.md)
+- [Phase 1 Custom UI Components — Slice 2: HiveComboBox with Filtering — 2026-10-01](custom-ui-combobox-filtering-closure-2026-10-01.md)
