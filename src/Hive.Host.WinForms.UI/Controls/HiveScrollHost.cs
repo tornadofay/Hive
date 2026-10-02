@@ -113,12 +113,8 @@ public sealed class HiveScrollHost : UserControl
             ? new HiveNativeScrollAdapter()
             : null;
 
-        if (_nativeScrollAdapter is not null)
-        {
-            if (content is TextBoxBase textBox)
-                textBox.ScrollBars = textBox.ScrollBars;
-        }
-        else if (content is ScrollableControl scrollable)
+        if (_nativeScrollAdapter is null &&
+            content is ScrollableControl scrollable)
         {
             scrollable.AutoScroll = false;
         }
