@@ -25,6 +25,7 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
     private readonly HiveButton _toggleButton;
     private readonly Panel _outputFrame;
     private readonly TextBox _output;
+    private readonly HiveScrollHost _outputScrollHost;
     private Font _titleFont;
     private Font _metaFont;
     private Font _outputFont;
@@ -179,7 +180,15 @@ public sealed class HiveExampleOutputView : UserControl, IHiveExampleOutput
             Padding = new Padding(8, 6, 8, 6),
         };
 
-        _outputFrame.Controls.Add(_output);
+        _outputScrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            AccessibleName = "Example output scroll area",
+            AccessibleDescription = "Scroll the example output using Hive scrollbars."
+        };
+        _outputScrollHost.Attach(_output);
+        _outputFrame.Controls.Add(_outputScrollHost);
 
         _header.Controls.Add(_titleLayout, 0, 0);
         _header.Controls.Add(_actions, 1, 0);
