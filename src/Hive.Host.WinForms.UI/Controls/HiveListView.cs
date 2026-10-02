@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Theme;
 
@@ -8,7 +9,21 @@ public sealed class HiveListView : ListView
 {
     private const int RowHeight = 34;
     private const int WmNcPaint = 0x0085;
+    private const int WmWindowPosChanged = 0x0047;
     private const int WmStyleChanged = 0x007D;
+    private const uint SwpNoSize = 0x0001;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeWindowPosition
+    {
+        public IntPtr Hwnd;
+        public IntPtr HwndInsertAfter;
+        public int X;
+        public int Y;
+        public int Cx;
+        public int Cy;
+        public uint Flags;
+    }
 
     private HiveThemeDefinition? _theme;
     private int _hoverIndex = -1;
@@ -71,6 +86,14 @@ public sealed class HiveListView : ListView
         }
 
         base.WndProc(ref m);
+
+        if (_nativeScrollBarsSuppressed &&
+            m.Msg == WmWindowPosChanged &&
+            IsResizeWindowPositionMessage(m.LParam))
+        {
+            _nativeScrollBarsSuppressed = true;
+            HideNativeScrollBars();
+        }
 
         if (_nativeScrollBarsSuppressed &&
             m.Msg == WmStyleChanged)
@@ -372,6 +395,16 @@ public sealed class HiveListView : ListView
         {
             _suppressingNativeScrollBars = false;
         }
+    }
+
+    private static bool IsResizeWindowPositionMessage(
+        IntPtr lParam)
+    {
+        if (lParam == IntPtr.Zero)
+            return false;
+
+        var position = Marshal.PtrToStructure<NativeWindowPosition>(lParam);
+        return (position.Flags & SwpNoSize) == 0;
     }
 
     [System.Runtime.InteropServices.DllImport(
