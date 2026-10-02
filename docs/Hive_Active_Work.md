@@ -176,10 +176,9 @@ No DataGridView migration, new public scroll API, or unrelated UI refactoring is
 
 Status: VERIFICATION PENDING
 
-Developer handoff after this remediation:
+Developer handoff after native-scroll state remediation:
 
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
-Tests to run: HiveScrollHostTests.cs; HiveComboBoxTests.cs; HiveUiPolishTests.cs; relevant Example Host UI tests; broader-suite requirement: full Hive.Tests suite after the focused tests pass.
+Tests to run: `HiveScrollHostTests.NativeTextBoxContent_UsesHiveScrollBars`, `HiveScrollHostTests.NativeTreeViewContent_UsesHiveScrollBars`, `HiveScrollHostTests.NativeListViewContent_UsesHiveScrollBars`; then `HiveScrollHostTests.cs`, `HiveComboBoxTests.cs`, `HiveUiPolishTests.cs`, relevant Example Host UI tests, and the full `Hive.Tests` suite.
 
 Agent has not run the build or tests. Developer verification is required.
-
