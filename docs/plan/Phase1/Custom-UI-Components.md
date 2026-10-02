@@ -449,7 +449,7 @@ Existing domain validation and business logic remain outside the control.
 
 ## Existing TabControl integration
 
-The current repository search does not identify an existing production `TabControl` consumer comparable to the existing ComboBox usage. Slice 4 must therefore treat `HiveTabControl` as a reusable foundation first and migrate real existing consumers when they are actually present.
+The repository initially had no production `TabControl` consumer comparable to the existing ComboBox usage. Once the Advanced Provider Configuration form became the real production consumer, Slice 4 migrates that surface to `HiveTabControl` while preserving its existing tab/page semantics.
 
 Where an existing Hive surface later uses native `TabControl` and its header rendering violates the Hive theme contract, migrate that surface to `HiveTabControl` after its public tab/page compatibility requirements are covered.
 
