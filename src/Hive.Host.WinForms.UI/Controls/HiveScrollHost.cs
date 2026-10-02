@@ -243,17 +243,37 @@ public sealed class HiveScrollHost : UserControl
 
             if (_nativeScrollAdapter is not null)
             {
+                // Native controls need a real client viewport before their Win32
+                // scroll range is authoritative. During handle/layout creation the
+                // viewport can briefly be zero-sized; do not resize or suppress the
+                // native control in that transient state.
+                if (viewportSize.Width <= 0 ||
+                    viewportSize.Height <= 0)
+                {
+                    return;
+                }
+
                 _content.Size = viewportSize;
                 _content.Location = Point.Empty;
 
                 var nativeHorizontal = _nativeScrollAdapter.ReadState(
                     _content,
-                    Orientation.Horizontal);
+                    Orientation.Horizontal,
+                    out var horizontalAuthoritative);
                 var nativeVertical = _nativeScrollAdapter.ReadState(
                     _content,
-                    Orientation.Vertical);
+                    Orientation.Vertical,
+                    out var verticalAuthoritative);
 
-                _nativeScrollAdapter.HideNativeScrollBars(_content);
+                // Do not suppress the native non-client scrollbars until both
+                // orientations have supplied their first authoritative state.
+                // Otherwise a transient zero-page response can permanently hide the
+                // native source of truth before the next layout synchronization.
+                if (horizontalAuthoritative &&
+                    verticalAuthoritative)
+                {
+                    _nativeScrollAdapter.HideNativeScrollBars(_content);
+                }
 
                 _horizontalScrollBar.SetState(nativeHorizontal);
                 _verticalScrollBar.SetState(nativeVertical);
