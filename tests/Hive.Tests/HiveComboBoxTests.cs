@@ -38,6 +38,28 @@ public sealed class HiveComboBoxTests
     }
 
     [Fact]
+    public void FieldEditor_IsInsetAndVerticallyCentered()
+    {
+        using var combo = new HiveComboBox
+        {
+            Size = new Size(320, 42)
+        };
+
+        combo.PerformLayout();
+
+        var bounds = combo.FieldEditorBoundsForTesting;
+        var verticalDelta =
+            Math.Abs(
+                (bounds.Y * 2 + bounds.Height) -
+                combo.ClientSize.Height);
+
+        Assert.True(bounds.X > 0);
+        Assert.True(bounds.Right < combo.ClientSize.Width - 20);
+        Assert.InRange(verticalDelta, 0, 1);
+        Assert.NotNull(combo.Region);
+    }
+
+    [Fact]
     public void Items_SelectionAndNotificationsRemainDeterministic()
     {
         using var combo = new HiveComboBox
