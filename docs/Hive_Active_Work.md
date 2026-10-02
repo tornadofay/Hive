@@ -108,7 +108,18 @@ The reported visual verification defects were remediated within Slice 4:
 
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+
+Developer-reported compilation failures in the Slice 4 visual/native-scroll remediation:
+- `HiveScrollHost.Synchronize()` declares `horizontal` and `vertical` inside the native-scroll branch and again in the enclosing scope, producing CS0136.
+- `HiveComboBox.OnPaint()` declares `border` in the fallback branch scope and again in the themed branch scope, producing CS0136.
+- `HiveExampleTestSurface` references `CreateScrollHost(...)`, but the helper was not present in the final file, producing CS0103.
+
+Remediation is limited to resolving these compilation errors while preserving the already-implemented visual and native-scroll behavior.
+
+## Verification State
+
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Developer handoff after remediation:
 
