@@ -221,6 +221,7 @@ public static class HiveMessageBox
         private readonly Panel _detailsContainer;
         private readonly TableLayoutPanel _detailsLayout;
         private readonly TextBox _details;
+        private readonly HiveScrollHost _detailsScrollHost;
         private readonly HiveMessageButton _copyButton;
         private readonly FlowLayoutPanel _footer;
         private readonly HiveMessageButton _primaryButton;
@@ -458,7 +459,16 @@ public static class HiveMessageBox
             };
             _copyButton.Click += (_, _) => CopyDetails();
 
-            _detailsLayout.Controls.Add(_details, 0, 0);
+            _detailsScrollHost = new HiveScrollHost
+            {
+                Dock = DockStyle.Fill,
+                Margin = Padding.Empty,
+                AccessibleName = "Technical details scroll area",
+                AccessibleDescription = "Scroll technical details using Hive scrollbars."
+            };
+            _detailsScrollHost.Attach(_details);
+
+            _detailsLayout.Controls.Add(_detailsScrollHost, 0, 0);
             _detailsLayout.Controls.Add(_copyButton, 1, 0);
             _detailsContainer.Controls.Add(_detailsLayout);
 
