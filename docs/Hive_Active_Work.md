@@ -410,6 +410,33 @@ Microsoft documents `GetScrollBarInfo` as the Win32 mechanism for inspecting sta
 
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
 
+## Verification Failed / Remediation Required — CRUD Resize vs. Native Scroll Repaint
+
+Developer re-verification still reports native ListView scrollbars during maximized CRUD use and noticeable up/down scroll lag.
+
+Investigation narrowed the issue:
+- `HiveCrudPage.OnResize` and `HiveListView.OnResize` participate in maximize/resize layout, but they do not account for the per-scroll lag by themselves;
+- `HiveListView` was reasserting native scrollbar suppression from `WM_WINDOWPOSCHANGED`; that message can occur as part of native ListView scrolling, causing repeated Win32 scrollbar operations during movement;
+- the remediation must therefore keep resize suppression separate from the high-frequency native scroll path.
+
+Remediation boundary:
+- keep CRUD resize/layout behavior intact unless it is directly causing the reported defect;
+- remove native scrollbar suppression work from high-frequency ListView scroll/repaint messages;
+- preserve native ListView item, selection, keyboard, owner-draw, and `LVM_SCROLL` behavior;
+- retain Hive-owned visible scrollbars as the only intended scrollbar layer.
+
+No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring is authorized.
+
+## CRUD Scroll Repaint Remediation
+
+The latest same-slice remediation is implemented:
+- `HiveListView` no longer reapplies native scrollbar suppression from `WM_WINDOWPOSCHANGED` or from every `WM_NCPAINT`;
+- native scrollbar suppression is established on actual control resize and native style changes, with reentrancy guarded;
+- the existing focused CRUD/maximize regression continues to verify native scrollbar visibility after maximize and repeated scrolling;
+- `HiveScrollHost` retains the focused single-axis synchronization path so a vertical scroll does not unnecessarily re-read and update the horizontal state.
+
+Agent has not run the build or tests. Developer verification is required.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
