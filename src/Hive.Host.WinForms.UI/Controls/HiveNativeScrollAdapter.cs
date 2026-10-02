@@ -20,6 +20,8 @@ internal sealed class HiveNativeScrollAdapter
     private const uint SiPos = 0x0004;
     private const uint SiAll = SiRange | SiPage | SiPos;
 
+    private readonly Dictionary<Orientation, HiveScrollState> _lastKnownStates = new();
+
     public static bool Supports(Control control) =>
         control is TextBoxBase or TreeView or ListView;
 
@@ -52,32 +54,21 @@ internal sealed class HiveNativeScrollAdapter
         };
 
         if (!GetScrollInfo(control.Handle, bar, ref info))
-        {
-            return HiveScrollState.Create(
-                orientation,
-                0,
-                0,
-                0,
-                0,
-                enabled: false);
-        }
+            return GetCachedState(orientation);
 
         var minimum = info.nMin;
         var page = Math.Max(0, ClampToInt(info.nPage));
         var maximum = info.nMax;
 
-        if (maximum < minimum || page <= 0)
-        {
-            return HiveScrollState.Create(
-                orientation,
-                minimum,
-                Math.Max(minimum, minimum),
-                minimum,
-                page,
-                smallChange: 1,
-                largeChange: Math.Max(1, page),
-                enabled: false);
-        }
+        if (maximum < minimum)
+            return GetCachedState(orientation);
+
+        // Once a native scrollbar is hidden, some Win32 controls can temporarily
+        // report a zero page size even though their underlying scroll range is still
+        // valid. Keep the last authoritative range/viewport rather than collapsing
+        // the Hive scrollbar during that transient native state.
+        if (page <= 0)
+            return GetCachedState(orientation);
 
         var effectiveMaximum = Math.Max(
             minimum,
@@ -90,9 +81,7 @@ internal sealed class HiveNativeScrollAdapter
 
         var enabled = effectiveMaximum > minimum;
 
-        HideNativeScrollBar(control.Handle, bar);
-
-        return HiveScrollState.Create(
+        var state = HiveScrollState.Create(
             orientation,
             minimum,
             minimum + extent,
@@ -101,7 +90,22 @@ internal sealed class HiveNativeScrollAdapter
             smallChange: Math.Max(1, viewportSize / 10),
             largeChange: Math.Max(1, viewportSize),
             enabled: enabled);
+
+        _lastKnownStates[orientation] = state;
+        HideNativeScrollBar(control.Handle, bar);
+        return state;
     }
+
+    private HiveScrollState GetCachedState(Orientation orientation) =>
+        _lastKnownStates.TryGetValue(orientation, out var state)
+            ? state
+            : HiveScrollState.Create(
+                orientation,
+                0,
+                0,
+                0,
+                0,
+                enabled: false);
 
     public void SetPosition(
         Control control,
