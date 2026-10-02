@@ -258,7 +258,8 @@ internal sealed class HiveNativeScrollAdapter
                 Value = listTarget
             };
 
-            HideNativeScrollBar(control.Handle, bar);
+            if (control is not HiveListView)
+                HideNativeScrollBar(control.Handle, bar);
             return;
         }
 
@@ -341,7 +342,9 @@ internal sealed class HiveNativeScrollAdapter
                 cached.Minimum,
                 cached.EffectiveMaximum)
         };
-        HideNativeScrollBar(control.Handle, bar);
+
+        if (control is not ListView)
+            HideNativeScrollBar(control.Handle, bar);
     }
 
     public void HideNativeScrollBars(Control control)
