@@ -84,9 +84,9 @@ The host-integration base controls are explicitly named `HostTextBox`, `HostComb
 
 ## Verification Failed / Remediation Required
 
-Developer visual verification reports two in-scope Slice 4 UI defects:
-- `HiveComboBox` currently appears visually flat/unfinished, and its displayed text is not vertically centered within the control.
-- Hive-owned TextBox and TreeView scrolling surfaces still show native/unmodified scrollbar presentation instead of the intended Hive scrollbar treatment.
+Developer visual verification reported two in-scope Slice 4 UI defects:
+- `HiveComboBox` appeared visually flat/unfinished, and its displayed text was not vertically centered within the control.
+- Hive-owned TextBox and TreeView scrolling surfaces still showed native/unmodified scrollbar presentation instead of the intended Hive scrollbar treatment.
 
 Remediation boundary:
 - correct the `HiveComboBox` field visual treatment, including depth/border/interaction presentation and reliable vertical text centering, without changing its public semantic contract;
@@ -95,11 +95,20 @@ Remediation boundary:
 - add focused regression coverage for the corrected presentation/integration behavior;
 - update UI documentation only where the actual supported behavior changes.
 
-No later roadmap work is authorized by this failure.
+## Visual / Native Scroll Remediation
+
+The reported visual verification defects were remediated within Slice 4:
+- `HiveComboBox` now uses a Hive-rounded field surface with normal, hover, pressed, disabled, and focused border/background states, a separated arrow area, and a centered native text editor sized to its preferred single-line height;
+- the editable field editor remains an ordinary WinForms `TextBox`, preserving the corrected text/selection event contract;
+- `HiveScrollHost` now has a bounded native-scroll adapter for directly attached multiline `TextBoxBase` and `TreeView` controls; the native viewport, keyboard input, selection, and control-specific scrolling remain intact while the native scrollbar presentation is hidden and mirrored by HiveScrollBar;
+- Hive-owned multiline TextBox surfaces in the Example Test Surface, Example Output, MessageBox technical details, Model Information, and WorkItem rejection dialog now run through `HiveScrollHost`;
+- `HiveNavigationTree` instances in the Example Host, Settings, and Advanced Provider Configuration now run through `HiveScrollHost`;
+- focused regression coverage was added for `HiveComboBox` field geometry and adapter-backed TextBox/TreeView scrolling;
+- `docs/ui/controls.md` now documents the bounded native-scroll adapter behavior and the Slice 4 integration boundary.
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Developer handoff after remediation:
 
