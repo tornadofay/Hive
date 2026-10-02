@@ -120,6 +120,17 @@ Remediation boundary:
 
 No DataGridView migration, ListView rewrite, new public scroll API, or unrelated UI refactoring is authorized.
 
+## CRUD List Scroll Remediation — Revision
+
+The reported CRUD ListView scroll failure was corrected within the same Slice 4 boundary:
+- `HiveListView` now suppresses native scrollbar non-client painting and reapplies suppression around native window-position/scroll/style messages, preventing the default scrollbar from flickering into view;
+- `HiveListView` also suppresses native scrollbars when its handle is created;
+- `HiveNativeScrollAdapter` keeps ListView scrolling on the native `LVM_SCROLL` path and quantizes report-mode vertical targets to the ListView's row increment, preventing small custom-thumb deltas from rounding to zero and resetting the Hive scrollbar;
+- reverse scrolling remains supported by quantizing the requested absolute target rather than constraining it relative to the current position;
+- focused ListView regression coverage now verifies actual movement to a row-aligned target and CRUD composition remains hosted by `HiveScrollHost`.
+
+The native ListView item, owner-draw, selection, keyboard, and CRUD paging behavior remains intact. No DataGridView or broader ListView rewrite was introduced.
+
 ## Visual / Native Scroll Remediation
 
 The reported visual verification defects were remediated within Slice 4:
@@ -153,7 +164,15 @@ No behavior or scope was expanded by these corrections.
 
 Status: VERIFICATION PENDING
 
-Developer handoff after remediation:
+Developer handoff after this remediation:
+
+Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
+Tests to run: HiveScrollHostTests.cs; HiveComboBoxTests.cs; HiveUiPolishTests.cs; relevant Example Host UI tests; broader-suite requirement: full Hive.Tests suite after the focused tests pass.
+
+Agent has not run the build or tests. Developer verification is required.
+
+Historical handoff before this remediation:
+
 
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
 Tests to run: HiveComboBoxTests.cs; HiveScrollHostTests.cs; HiveUiPolishTests.cs; relevant Example Host UI tests; broader-suite requirement: full Hive.Tests suite after focused coverage passes.
