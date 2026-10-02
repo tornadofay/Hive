@@ -10,11 +10,6 @@ public sealed class HiveListView : ListView
     private const int WmNcPaint = 0x0085;
     private const int WmStyleChanged = 0x007D;
 
-    private const int ObjIdHScroll = -6;
-    private const int ObjIdVScroll = -5;
-    private const uint StateSystemInvisible = 0x00008000;
-    private const uint StateSystemOffscreen = 0x00010000;
-
     private HiveThemeDefinition? _theme;
     private int _hoverIndex = -1;
     private int _naturalLastColumnWidth = -1;
@@ -70,7 +65,8 @@ public sealed class HiveListView : ListView
         // without replacing the ListView's native item/selection implementation.
         if (_nativeScrollBarsSuppressed && m.Msg == WmNcPaint)
         {
-            HideNativeScrollBars();
+            // Do not issue Win32 scrollbar changes from the non-client paint path.
+            // Native ListView scrolling can repaint this region frequently.
             return;
         }
 
@@ -79,7 +75,7 @@ public sealed class HiveListView : ListView
         if (_nativeScrollBarsSuppressed &&
             m.Msg == WmStyleChanged)
         {
-                HideNativeScrollBars();
+            HideNativeScrollBars();
         }
     }
 
@@ -363,68 +359,19 @@ public sealed class HiveListView : ListView
             return;
         }
 
-        if (!IsNativeScrollBarVisible(ObjIdHScroll) &&
-            !IsNativeScrollBarVisible(ObjIdVScroll))
-        {
-                return;
-        }
-
         _suppressingNativeScrollBars = true;
         try
         {
-            if (IsNativeScrollBarVisible(ObjIdHScroll))
-                ShowScrollBar(Handle, 0, false);
-
-            if (IsNativeScrollBarVisible(ObjIdVScroll))
-                ShowScrollBar(Handle, 1, false);
-
-            }
+            // Suppression is unconditional at attach, resize, and style-change
+            // boundaries. Win32 ListView visibility queries can be transient while
+            // the native window is laying itself out, while ShowScrollBar is stable.
+            ShowScrollBar(Handle, 0, false);
+            ShowScrollBar(Handle, 1, false);
+        }
         finally
         {
             _suppressingNativeScrollBars = false;
         }
-    }
-
-    private bool IsNativeScrollBarVisible(int objectId)
-    {
-        var info = new NativeScrollBarInfo
-        {
-            cbSize = System.Runtime.InteropServices.Marshal.SizeOf<NativeScrollBarInfo>(),
-            States = new uint[6]
-        };
-
-        if (!GetScrollBarInfo(Handle, objectId, ref info))
-            return true;
-
-        var state = info.States[0];
-        return (state & (StateSystemInvisible | StateSystemOffscreen)) == 0;
-    }
-
-    [System.Runtime.InteropServices.StructLayout(
-        System.Runtime.InteropServices.LayoutKind.Sequential)]
-    private struct NativeRect
-    {
-        public int Left;
-        public int Top;
-        public int Right;
-        public int Bottom;
-    }
-
-    [System.Runtime.InteropServices.StructLayout(
-        System.Runtime.InteropServices.LayoutKind.Sequential)]
-    private struct NativeScrollBarInfo
-    {
-        public int cbSize;
-        public NativeRect ScrollBar;
-        public int LineButton;
-        public int ThumbTop;
-        public int ThumbBottom;
-        public int Reserved;
-
-        [System.Runtime.InteropServices.MarshalAs(
-            System.Runtime.InteropServices.UnmanagedType.ByValArray,
-            SizeConst = 6)]
-        public uint[] States;
     }
 
     [System.Runtime.InteropServices.DllImport(
