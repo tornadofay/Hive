@@ -14,6 +14,7 @@ public sealed class HiveSettingsView : UserControl
     private readonly IHiveExampleOutput? _output;
     private readonly string _applicationName;
     private readonly HiveNavigationTree _navigation;
+    private readonly HiveScrollHost _navigationScrollHost;
     private readonly Panel _content;
     private readonly Label _title;
     private readonly Label _description;
@@ -119,6 +120,15 @@ public sealed class HiveSettingsView : UserControl
         _navigation.Nodes.Add(navigationRoot);
         navigationRoot.Expand();
 
+        _navigationScrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            AccessibleName = "Hive Settings navigation scroll area",
+            AccessibleDescription = "Scroll the Hive Settings navigation using Hive scrollbars."
+        };
+        _navigationScrollHost.Attach(_navigation);
+
         _content = new Panel
         {
             Dock = DockStyle.Fill,
@@ -126,7 +136,7 @@ public sealed class HiveSettingsView : UserControl
             AccessibleName = "Settings content"
         };
 
-        body.Controls.Add(_navigation, 0, 0);
+        body.Controls.Add(_navigationScrollHost, 0, 0);
         body.Controls.Add(_content, 1, 0);
 
         Controls.Add(body);
