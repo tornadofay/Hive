@@ -264,8 +264,11 @@ public sealed class HiveScrollHost : UserControl
                     return;
                 }
 
-                _content.Size = viewportSize;
-                _content.Location = Point.Empty;
+                if (_content.Size != viewportSize)
+                    _content.Size = viewportSize;
+
+                if (_content.Location != Point.Empty)
+                    _content.Location = Point.Empty;
 
                 var nativeHorizontal = _nativeScrollAdapter.ReadState(
                     _content,
@@ -398,6 +401,15 @@ public sealed class HiveScrollHost : UserControl
         base.OnResize(e);
 
         UpdateScrollBarLayout();
+
+        if (_content is not null &&
+            _nativeScrollAdapter is not null &&
+            IsHandleCreated)
+        {
+            RequestSynchronization();
+            return;
+        }
+
         Synchronize();
     }
 
