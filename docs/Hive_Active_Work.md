@@ -174,12 +174,12 @@ No DataGridView migration, new public scroll API, or unrelated UI refactoring is
 
 ## Verification Failed / Remediation Required — Native Scroll State Still Inactive
 
-Developer re-verification reran the three focused native-scroll tests and they still fail with `VerticalScrollState.CanScroll == false`":
-- `HiveScrollHostTests.NativeTextBoxContent_UsesHiveScrollBars`"
-- `HiveScrollHostTests.NativeTreeViewContent_UsesHiveScrollBars`"
-- `HiveScrollHostTests.NativeListViewContent_UsesHiveScrollBars`"
+Developer re-verification reran the three focused native-scroll tests and they still failed with `VerticalScrollState.CanScroll == false`:
+- `HiveScrollHostTests.NativeTextBoxContent_UsesHiveScrollBars`
+- `HiveScrollHostTests.NativeTreeViewContent_UsesHiveScrollBars`
+- `HiveScrollHostTests.NativeListViewContent_UsesHiveScrollBars`
 
-Developer result: `Hive.Tests` 566 total, 563 passed, 3 failed, 0 skipped."
+Developer result: `Hive.Tests` 566 total, 563 passed, 3 failed, 0 skipped.
 
 Remediation boundary:
 - correct the shared native-scroll state initialization/acquisition so the first authoritative range is obtained before native scrollbar suppression can invalidate the reported page/range;
@@ -223,9 +223,20 @@ Remediation boundary:
 
 No DataGridView migration, new public scroll API, control rewrite, or unrelated UI refactoring is authorized.
 
+## Native Scroll State Remediation — Range Fallback and Real UI Lifecycle
+
+The latest remediation remains within the recorded Slice 4 boundary:
+- `HiveNativeScrollAdapter` now falls back from an unusable `SCROLLINFO.nPage` to the Win32 standard scrollbar range/position APIs and derives the viewport from the hosted control's client extent;
+- native specialized-content suppression remains deferred until both orientations have a usable authoritative state;
+- the focused native-scroll tests now exercise the hosted controls through a visible Form lifecycle, allowing Win32 control layout/scroll ranges to finalize as they do in the running UI;
+- the transient zero-viewport regression remains covered;
+- UI documentation records the range fallback and lifecycle requirement.
+
+No DataGridView migration, new public scroll API, control rewrite, or unrelated UI refactoring was introduced.
+
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Developer handoff after native-scroll state remediation:
 
