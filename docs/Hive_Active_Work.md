@@ -372,6 +372,20 @@ Remediation boundary:
 
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring is authorized.
 
+## Verification Failed / Remediation Required — CRUD Native Scrollbar Reappearance and Scroll Lag
+
+Developer manual verification still reports two same-slice defects after the previous resize remediation:
+- maximizing a CRUD surface still allows the native ListView scrollbars to be painted alongside the Hive scrollbars;
+- vertical scrolling is noticeably laggy when moving up and down.
+
+Remediation boundary:
+- eliminate native ListView scrollbar reappearance during maximize, resize, and scroll while retaining native ListView scrolling;
+- remove avoidable per-scroll Win32 scrollbar suppression/synchronization work responsible for the lag;
+- preserve CRUD paging, selection, keyboard, owner-draw, and Hive scrollbar behavior;
+- add focused regression coverage for the corrected suppression/scroll lifecycle where practical.
+
+No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring is authorized.
+
 ## CRUD Maximize Scrollbar / Layout Remediation
 
 The reported maximize regression was corrected within Slice 4:
