@@ -12,7 +12,10 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     private const int DefaultDropDownWidth = 280;
     private const int DefaultMaxDropDownItems = 8;
     private const int DefaultItemHeight = 34;
-    private const int ArrowAreaWidth = 30;
+    private const int ArrowAreaWidth = 36;
+    private const int CornerRadius = 8;
+    private const int BorderWidth = 1;
+    private const int FocusBorderWidth = 2;
 
     private readonly TextBox _fieldEditor;
     private readonly BindingSource _bindingSource;
@@ -37,10 +40,18 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     private HiveComboBoxPopupForm? _popup;
     private SolidBrush? _backgroundBrush;
     private SolidBrush? _disabledBrush;
+    private SolidBrush? _hoverBackgroundBrush;
+    private SolidBrush? _pressedBackgroundBrush;
+    private SolidBrush? _arrowBackgroundBrush;
     private Pen? _borderPen;
     private Pen? _hoverBorderPen;
     private Pen? _focusPen;
+    private Pen? _disabledBorderPen;
+    private Pen? _dividerPen;
+    private GraphicsPath? _path;
+    private Region? _region;
     private bool _hovered;
+    private bool _pressed;
 
     public HiveComboBox()
     {
@@ -74,13 +85,16 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             BorderStyle = BorderStyle.None,
             Dock = DockStyle.None,
             Margin = Padding.Empty,
-            Padding = new Padding(8, 0, ArrowAreaWidth, 0),
+            Padding = new Padding(10, 0, 10, 0),
             TabStop = false,
             AutoSize = false,
             TextAlign = HorizontalAlignment.Left
         };
 
         _fieldEditor.MouseDown += FieldEditorOnMouseDown;
+        _fieldEditor.MouseUp += FieldEditorOnMouseUp;
+        _fieldEditor.MouseEnter += FieldEditorOnMouseEnter;
+        _fieldEditor.MouseLeave += FieldEditorOnMouseLeave;
         _fieldEditor.KeyDown += FieldEditorOnKeyDown;
         _fieldEditor.TextChanged += FieldEditorOnTextChanged;
         _fieldEditor.GotFocus += FieldEditorOnFocusChanged;
@@ -423,6 +437,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     protected override void OnResize(EventArgs e)
     {
         base.OnResize(e);
+        RebuildRegion();
         UpdateFieldLayout();
 
         if (DroppedDown)
@@ -440,6 +455,8 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     {
         base.OnEnabledChanged(e);
 
+        _hovered = false;
+        _pressed = false;
         UpdateFieldEditorState();
 
         if (!Enabled)
@@ -483,6 +500,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             return;
 
         _hovered = false;
+        _pressed = false;
         Invalidate();
     }
 
@@ -494,12 +512,25 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             return;
 
         FocusField();
+        _pressed = true;
+        Invalidate();
 
         if (IsArrowArea(e.Location.X) ||
             _dropDownStyle == ComboBoxStyle.DropDownList)
         {
             ToggleDropDown();
         }
+    }
+
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+
+        if (e.Button != MouseButtons.Left)
+            return;
+
+        _pressed = false;
+        Invalidate();
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -513,7 +544,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     {
         var height = Math.Max(
             LogicalToDevice(DefaultFieldHeight),
-            _fieldEditor.GetPreferredSize(Size.Empty).Height + LogicalToDevice(2));
+            _fieldEditor.GetPreferredSize(Size.Empty).Height + LogicalToDevice(8));
 
         return new Size(
             proposedSize.Width > 0
@@ -526,72 +557,121 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     {
         base.OnPaint(e);
 
-        var bounds = ClientRectangle;
-        if (bounds.Width <= 1 || bounds.Height <= 1)
+        if (_path is null ||
+            ClientSize.Width <= 1 ||
+            ClientSize.Height <= 1)
+        {
             return;
+        }
 
         var theme = _theme;
-
         if (theme is null)
         {
-            e.Graphics.FillRectangle(
-                SystemBrushes.Window,
-                bounds);
-            using var border = new Pen(SystemColors.WindowFrame);
-            e.Graphics.DrawRectangle(
-                border,
-                bounds.Left,
-                bounds.Top,
-                bounds.Width - 1,
-                bounds.Height - 1);
+            e.Graphics.FillPath(SystemBrushes.Window, _path);
+            using var border = new Pen(
+                SystemColors.WindowFrame,
+                BorderWidth);
+
+            e.Graphics.DrawPath(border, _path);
+            return;
         }
-        else
+
+        var background = !Enabled
+            ? _disabledBrush
+            : _pressed
+                ? _pressedBackgroundBrush
+                : _hovered
+                    ? _hoverBackgroundBrush
+                    : _backgroundBrush;
+
+        if (background is not null)
         {
-            var brush = Enabled
-                ? _backgroundBrush
-                : _disabledBrush;
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            e.Graphics.FillPath(background, _path);
+        }
 
-            if (brush is not null)
-                e.Graphics.FillRectangle(brush, bounds);
+        var arrowWidth = LogicalToDevice(ArrowAreaWidth);
+        var arrowLeft = Math.Max(
+            0,
+            ClientSize.Width - arrowWidth);
 
-            var border = ContainsFocus || DroppedDown
+        if (_arrowBackgroundBrush is not null)
+        {
+            var arrowBounds = new Rectangle(
+                arrowLeft,
+                1,
+                Math.Max(0, ClientSize.Width - arrowLeft - 1),
+                Math.Max(0, ClientSize.Height - 2));
+
+            using var arrowPath = CreateRoundedPath(
+                new RectangleF(
+                    arrowBounds.X,
+                    arrowBounds.Y,
+                    arrowBounds.Width,
+                    arrowBounds.Height),
+                Math.Max(1, LogicalToDevice(6)));
+
+            e.Graphics.FillPath(
+                _arrowBackgroundBrush,
+                arrowPath);
+        }
+
+        if (_dividerPen is not null &&
+            arrowLeft > 0)
+        {
+            e.Graphics.DrawLine(
+                _dividerPen,
+                arrowLeft,
+                LogicalToDevice(7),
+                arrowLeft,
+                Math.Max(
+                    LogicalToDevice(7),
+                    ClientSize.Height - LogicalToDevice(7)));
+        }
+
+        var border = !Enabled
+            ? _disabledBorderPen
+            : ContainsFocus || DroppedDown
                 ? _focusPen
                 : _hovered
                     ? _hoverBorderPen
                     : _borderPen;
 
-            if (border is not null)
-            {
-                e.Graphics.DrawRectangle(
-                    border,
-                    bounds.Left,
-                    bounds.Top,
-                    bounds.Width - 1,
-                    bounds.Height - 1);
-            }
+        if (border is not null)
+        {
+            e.Graphics.DrawPath(border, _path);
         }
 
-        var arrowX = bounds.Right - LogicalToDevice(ArrowAreaWidth);
-        var centerY = bounds.Top + bounds.Height / 2;
-        var halfWidth = LogicalToDevice(5);
-        var halfHeight = LogicalToDevice(3);
+        var chevronCenterX = arrowLeft + arrowWidth / 2;
+        var centerY = ClientSize.Height / 2f;
+        var chevronHalfWidth = LogicalToDevice(5);
+        var chevronHalfHeight = LogicalToDevice(3);
 
-        using var arrowBrush =
-            new SolidBrush(
-                Enabled
-                    ? _theme?.Palette.MutedText ?? SystemColors.ControlText
-                    : _theme?.Palette.DisabledText ?? SystemColors.GrayText);
+        using var chevronPen = new Pen(
+            Enabled
+                ? theme.Palette.MutedText
+                : theme.Palette.DisabledText,
+            LogicalToDevice(1.5f))
+        {
+            StartCap = LineCap.Round,
+            EndCap = LineCap.Round,
+            LineJoin = LineJoin.Round
+        };
 
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-        e.Graphics.FillPolygon(
-            arrowBrush,
-            [
-                new Point(arrowX + halfWidth, centerY - halfHeight),
-                new Point(arrowX + LogicalToDevice(ArrowAreaWidth) - halfWidth, centerY - halfHeight),
-                new Point(
-                    arrowX + LogicalToDevice(ArrowAreaWidth) / 2,
-                    centerY + halfHeight)
-            ]);
+        e.Graphics.DrawLine(
+            chevronPen,
+            chevronCenterX - chevronHalfWidth,
+            centerY - chevronHalfHeight / 2f,
+            chevronCenterX,
+            centerY + chevronHalfHeight);
+        e.Graphics.DrawLine(
+            chevronPen,
+            chevronCenterX,
+            centerY + chevronHalfHeight,
+            chevronCenterX + chevronHalfWidth,
+            centerY - chevronHalfHeight / 2f);
     }
 
     protected override void Dispose(bool disposing)
@@ -605,6 +685,9 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             _bindingSource.Dispose();
 
             _fieldEditor.MouseDown -= FieldEditorOnMouseDown;
+            _fieldEditor.MouseUp -= FieldEditorOnMouseUp;
+            _fieldEditor.MouseEnter -= FieldEditorOnMouseEnter;
+            _fieldEditor.MouseLeave -= FieldEditorOnMouseLeave;
             _fieldEditor.KeyDown -= FieldEditorOnKeyDown;
             _fieldEditor.TextChanged -= FieldEditorOnTextChanged;
             _fieldEditor.GotFocus -= FieldEditorOnFocusChanged;
@@ -981,9 +1064,39 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             return;
 
         FocusField();
+        _pressed = true;
+        Invalidate();
 
         if (_dropDownStyle == ComboBoxStyle.DropDownList)
             ToggleDropDown();
+    }
+
+    private void FieldEditorOnMouseUp(object? sender, MouseEventArgs e)
+    {
+        if (e.Button != MouseButtons.Left)
+            return;
+
+        _pressed = false;
+        Invalidate();
+    }
+
+    private void FieldEditorOnMouseEnter(object? sender, EventArgs e)
+    {
+        if (!Enabled)
+            return;
+
+        _hovered = true;
+        Invalidate();
+    }
+
+    private void FieldEditorOnMouseLeave(object? sender, EventArgs e)
+    {
+        if (_popup is not null || _fieldEditor.Focused)
+            return;
+
+        _hovered = false;
+        _pressed = false;
+        Invalidate();
     }
 
     private void FieldEditorOnKeyDown(object? sender, KeyEventArgs e)
@@ -1065,9 +1178,13 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         _fieldEditor.BackColor =
             _theme is null
                 ? SystemColors.Window
-                : Enabled
-                    ? _theme.Palette.InputBackground
-                    : _theme.Palette.DisabledBackground;
+                : !Enabled
+                    ? _theme.Palette.DisabledBackground
+                    : _pressed
+                        ? _theme.VisualStates.PressedBackground
+                        : _hovered
+                            ? _theme.VisualStates.HoverBackground
+                            : _theme.Palette.InputBackground;
         _fieldEditor.ForeColor =
             _theme is null
                 ? SystemColors.WindowText
@@ -1082,14 +1199,27 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             return;
 
         var arrowWidth = LogicalToDevice(ArrowAreaWidth);
-        var fieldHeight = Math.Max(0, ClientSize.Height - 2);
-        var fieldWidth = Math.Max(0, ClientSize.Width - arrowWidth - 2);
+        var horizontalInset = LogicalToDevice(8);
+        var availableWidth = Math.Max(
+            0,
+            ClientSize.Width - arrowWidth - horizontalInset * 2);
+
+        var editorPreferredHeight = _fieldEditor.GetPreferredSize(Size.Empty).Height;
+        var editorHeight = Math.Clamp(
+            editorPreferredHeight,
+            LogicalToDevice(18),
+            Math.Max(
+                LogicalToDevice(18),
+                ClientSize.Height - LogicalToDevice(8)));
+        var y = Math.Max(
+            0,
+            (ClientSize.Height - editorHeight) / 2);
 
         _fieldEditor.SetBounds(
-            1,
-            1,
-            fieldWidth,
-            fieldHeight);
+            horizontalInset,
+            y,
+            availableWidth,
+            editorHeight);
     }
 
     private bool IsArrowArea(int x) =>
@@ -1134,25 +1264,123 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             return;
 
         _backgroundBrush = new SolidBrush(theme.Palette.InputBackground);
+        _hoverBackgroundBrush = new SolidBrush(theme.VisualStates.HoverBackground);
+        _pressedBackgroundBrush = new SolidBrush(theme.VisualStates.PressedBackground);
+        _arrowBackgroundBrush = new SolidBrush(theme.Palette.ElevatedSurface);
         _disabledBrush = new SolidBrush(theme.Palette.DisabledBackground);
-        _borderPen = new Pen(theme.Palette.Border);
-        _hoverBorderPen = new Pen(theme.Palette.AccentHover);
-        _focusPen = new Pen(theme.VisualStates.FocusedBorder, 2f);
+
+        _borderPen = new Pen(
+            theme.Palette.Border,
+            BorderWidth)
+        {
+            Alignment = PenAlignment.Inset
+        };
+        _hoverBorderPen = new Pen(
+            theme.Palette.AccentHover,
+            BorderWidth)
+        {
+            Alignment = PenAlignment.Inset
+        };
+        _focusPen = new Pen(
+            theme.VisualStates.FocusedBorder,
+            FocusBorderWidth)
+        {
+            Alignment = PenAlignment.Inset
+        };
+        _disabledBorderPen = new Pen(
+            theme.VisualStates.DisabledBorder,
+            BorderWidth)
+        {
+            Alignment = PenAlignment.Inset
+        };
+        _dividerPen = new Pen(theme.Palette.Border, BorderWidth);
+
+        RebuildRegion();
     }
 
     private void DisposePaintResources()
     {
+        var previousRegion = Region;
+        Region = null;
+        previousRegion?.Dispose();
+
+        _path?.Dispose();
+        _path = null;
+
         _backgroundBrush?.Dispose();
+        _hoverBackgroundBrush?.Dispose();
+        _pressedBackgroundBrush?.Dispose();
+        _arrowBackgroundBrush?.Dispose();
         _disabledBrush?.Dispose();
         _borderPen?.Dispose();
         _hoverBorderPen?.Dispose();
         _focusPen?.Dispose();
+        _disabledBorderPen?.Dispose();
+        _dividerPen?.Dispose();
 
         _backgroundBrush = null;
+        _hoverBackgroundBrush = null;
+        _pressedBackgroundBrush = null;
+        _arrowBackgroundBrush = null;
         _disabledBrush = null;
         _borderPen = null;
         _hoverBorderPen = null;
         _focusPen = null;
+        _disabledBorderPen = null;
+        _dividerPen = null;
+    }
+
+    private void RebuildRegion()
+    {
+        if (ClientSize.Width <= 1 || ClientSize.Height <= 1)
+            return;
+
+        _path?.Dispose();
+        _path = CreateRoundedPath(
+            new RectangleF(
+                0.5f,
+                0.5f,
+                ClientSize.Width - 1f,
+                ClientSize.Height - 1f),
+            LogicalToDevice(CornerRadius));
+
+        var previousRegion = Region;
+        Region = new Region(_path);
+        previousRegion?.Dispose();
+    }
+
+    private static GraphicsPath CreateRoundedPath(
+        RectangleF bounds,
+        float radius)
+    {
+        var path = new GraphicsPath();
+
+        if (radius <= 0f)
+        {
+            path.AddRectangle(bounds);
+            return path;
+        }
+
+        var diameter = Math.Min(
+            radius * 2f,
+            Math.Min(bounds.Width, bounds.Height));
+
+        var arc = new RectangleF(
+            bounds.Left,
+            bounds.Top,
+            diameter,
+            diameter);
+
+        path.AddArc(arc, 180f, 90f);
+        arc.X = bounds.Right - diameter;
+        path.AddArc(arc, 270f, 90f);
+        arc.Y = bounds.Bottom - diameter;
+        path.AddArc(arc, 0f, 90f);
+        arc.X = bounds.Left;
+        path.AddArc(arc, 90f, 90f);
+        path.CloseFigure();
+
+        return path;
     }
 
     private int LogicalToDevice(int value)
@@ -1164,6 +1392,9 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
                 value * dpi / 96f,
                 MidpointRounding.AwayFromZero));
     }
+
+    internal Rectangle FieldEditorBoundsForTesting =>
+        _fieldEditor.Bounds;
 
     internal void CommitPopupSelectionForTesting(int sourceIndex) =>
         CommitPopupSelection(sourceIndex);
