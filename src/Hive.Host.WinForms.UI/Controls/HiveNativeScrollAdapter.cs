@@ -188,7 +188,8 @@ internal sealed class HiveNativeScrollAdapter
     private static IntPtr MakeWParam(
         ushort low,
         ushort high) =>
-        new((high << 16) | low);
+        new(
+            (long)(((uint)high << 16) | low));
 
     private static void HideNativeScrollBar(
         IntPtr handle,
