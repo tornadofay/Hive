@@ -102,6 +102,44 @@ public sealed class HiveScrollHostTests
     }
 
     [Fact]
+    public void NativeContent_RecoversAfterTransientZeroViewportBeforeScrollStateAcquisition()
+    {
+        using var form = new Form
+        {
+            Size = new Size(500, 400)
+        };
+        using var host = new HiveScrollHost
+        {
+            Size = new Size(500, 400)
+        };
+        using var textBox = new TextBox
+        {
+            Multiline = true,
+            ScrollBars = ScrollBars.Vertical
+        };
+
+        textBox.Text = string.Join(
+            Environment.NewLine,
+            Enumerable.Range(1, 160)
+                .Select(index => $"Line {index:000}"));
+
+        form.Controls.Add(host);
+        host.Attach(textBox);
+        form.CreateControl();
+        host.CreateControl();
+
+        host.SetBounds(0, 0, 0, 0);
+        host.Synchronize();
+
+        host.SetBounds(0, 0, 500, 400);
+        Application.DoEvents();
+        host.Synchronize();
+
+        Assert.True(host.VerticalScrollState.CanScroll);
+        Assert.True(host.VerticalScrollBarForTesting.Visible);
+    }
+
+    [Fact]
     public void NativeTextBoxContent_UsesHiveScrollBars()
     {
         using var form = new Form
@@ -110,7 +148,7 @@ public sealed class HiveScrollHostTests
         };
         using var host = new HiveScrollHost
         {
-            Dock = DockStyle.Fill
+            Size = new Size(500, 400)
         };
         using var textBox = new TextBox
         {
