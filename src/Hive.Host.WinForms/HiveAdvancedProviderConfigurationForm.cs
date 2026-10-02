@@ -81,8 +81,6 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
         _navigationTabs.SelectedIndexChanged += NavigationTabChanged;
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
 
-        _navigationTabs.SelectedIndex = 0;
-
         Load += async (_, _) => await SelectCurrentPageAsync().ConfigureAwait(true);
     }
 
