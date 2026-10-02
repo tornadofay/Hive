@@ -27,9 +27,17 @@ internal sealed class HiveNativeScrollAdapter
 
     public HiveScrollState ReadState(
         Control control,
-        Orientation orientation)
+        Orientation orientation) =>
+        ReadState(control, orientation, out _);
+
+    public HiveScrollState ReadState(
+        Control control,
+        Orientation orientation,
+        out bool authoritative)
     {
         ArgumentNullException.ThrowIfNull(control);
+
+        authoritative = false;
 
         if (!Supports(control) ||
             !control.IsHandleCreated)
@@ -54,21 +62,32 @@ internal sealed class HiveNativeScrollAdapter
         };
 
         if (!GetScrollInfo(control.Handle, bar, ref info))
-            return GetCachedState(orientation, null);
+            return GetCachedState(
+                orientation,
+                null,
+                out authoritative);
 
         var minimum = info.nMin;
         var page = Math.Max(0, ClampToInt(info.nPage));
         var maximum = info.nMax;
 
         if (maximum < minimum)
-            return GetCachedState(orientation, null);
+            return GetCachedState(
+                orientation,
+                null,
+                out authoritative);
 
         // Once a native scrollbar is hidden, some Win32 controls can temporarily
         // report a zero page size even though their underlying scroll range is still
         // valid. Keep the last authoritative range/viewport rather than collapsing
-        // the Hive scrollbar during that transient native state.
+        // the Hive scrollbar during that transient native state. Without a cached
+        // state, do not suppress the native scrollbar yet; another synchronization
+        // must get a chance to acquire the first authoritative range.
         if (page <= 0)
-            return GetCachedState(orientation, info.nPos);
+            return GetCachedState(
+                orientation,
+                info.nPos,
+                out authoritative);
 
         var effectiveMaximum = Math.Max(
             minimum,
@@ -92,29 +111,47 @@ internal sealed class HiveNativeScrollAdapter
             enabled: enabled);
 
         _lastKnownStates[orientation] = state;
+        authoritative = true;
         return state;
     }
 
     private HiveScrollState GetCachedState(
         Orientation orientation,
         int? nativePosition) =>
-        _lastKnownStates.TryGetValue(orientation, out var state)
-            ? nativePosition is int position
-                ? state with
-                {
-                    Value = Math.Clamp(
-                        position,
-                        state.Minimum,
-                        state.EffectiveMaximum)
-                }
-                : state
-            : HiveScrollState.Create(
+        GetCachedState(
+            orientation,
+            nativePosition,
+            out _);
+
+    private HiveScrollState GetCachedState(
+        Orientation orientation,
+        int? nativePosition,
+        out bool authoritative)
+    {
+        if (!_lastKnownStates.TryGetValue(orientation, out var state))
+        {
+            authoritative = false;
+            return HiveScrollState.Create(
                 orientation,
                 0,
                 0,
                 0,
                 0,
                 enabled: false);
+        }
+
+        authoritative = true;
+
+        return nativePosition is int position
+            ? state with
+            {
+                Value = Math.Clamp(
+                    position,
+                    state.Minimum,
+                    state.EffectiveMaximum)
+            }
+            : state;
+    }
 
     public void SetPosition(
         Control control,
