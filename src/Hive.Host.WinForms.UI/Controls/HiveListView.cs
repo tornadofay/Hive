@@ -332,6 +332,9 @@ public sealed class HiveListView : ListView
 
     internal void SuppressNativeScrollBars()
     {
+        if (_nativeScrollBarsSuppressed)
+            return;
+
         _nativeScrollBarsSuppressed = true;
         HideNativeScrollBars();
     }
