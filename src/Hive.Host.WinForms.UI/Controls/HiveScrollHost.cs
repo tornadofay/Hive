@@ -189,6 +189,9 @@ public sealed class HiveScrollHost : UserControl
         UnhookContentControls(content);
         _viewport.Controls.Remove(content);
 
+        if (content is HiveListView hiveListView)
+            hiveListView.RestoreNativeScrollBars();
+
         var presentation = _contentPresentation;
         if (presentation is not null)
             presentation.Restore(content);
@@ -400,8 +403,6 @@ public sealed class HiveScrollHost : UserControl
     {
         base.OnResize(e);
 
-        UpdateScrollBarLayout();
-
         if (_content is not null &&
             _nativeScrollAdapter is not null &&
             IsHandleCreated)
@@ -410,6 +411,7 @@ public sealed class HiveScrollHost : UserControl
             return;
         }
 
+        UpdateScrollBarLayout();
         Synchronize();
     }
 
