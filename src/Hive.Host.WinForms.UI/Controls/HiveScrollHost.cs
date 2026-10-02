@@ -253,6 +253,8 @@ public sealed class HiveScrollHost : UserControl
                     _content,
                     Orientation.Vertical);
 
+                _nativeScrollAdapter.HideNativeScrollBars(_content);
+
                 _horizontalScrollBar.SetState(nativeHorizontal);
                 _verticalScrollBar.SetState(nativeVertical);
 
