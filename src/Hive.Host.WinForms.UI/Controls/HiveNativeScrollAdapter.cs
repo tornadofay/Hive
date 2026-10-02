@@ -202,7 +202,23 @@ internal sealed class HiveNativeScrollAdapter
         if (current == target)
             return;
 
+        if (orientation == Orientation.Vertical)
+        {
+            var lineHeight = ResolveListViewLineHeight(listView);
+            var quantizedTarget = Math.Clamp(
+                (int)Math.Round(
+                    target / (double)lineHeight,
+                    MidpointRounding.AwayFromZero) * lineHeight,
+                current - (current % lineHeight),
+                int.MaxValue);
+
+            target = quantizedTarget;
+        }
+
         var delta = target - current;
+        if (delta == 0)
+            return;
+
         var horizontalDelta = orientation == Orientation.Horizontal
             ? delta
             : 0;
@@ -215,6 +231,18 @@ internal sealed class HiveNativeScrollAdapter
             LvmScroll,
             new IntPtr(horizontalDelta),
             new IntPtr(verticalDelta));
+    }
+
+    private static int ResolveListViewLineHeight(ListView listView)
+    {
+        if (listView.Items.Count > 0)
+        {
+            var bounds = listView.GetItemRect(0);
+            if (bounds.Height > 0)
+                return bounds.Height;
+        }
+
+        return Math.Max(1, listView.Font.Height);
     }
 
     private static int ClampToInt(uint value) =>
