@@ -234,9 +234,18 @@ The latest remediation remains within the recorded Slice 4 boundary:
 
 No DataGridView migration, new public scroll API, control rewrite, or unrelated UI refactoring was introduced.
 
+## Verification Failed / Remediation Required — Native Scroll Adapter Compilation
+
+Developer compilation reported six same-slice errors in `HiveNativeScrollAdapter.cs`: CS0136 local-name collisions for `enabled`, `effectiveMaximum`, `viewportSize`, `extent`, and `state`, plus CS0162 unreachable code.
+
+Remediation boundary:
+- correct the `ReadState` local scoping and remove the unreachable duplicate path introduced by the native-range fallback remediation;
+- preserve the intended native TextBoxBase, TreeView, and ListView state/position behavior and existing suppression lifecycle;
+- no behavioral expansion or unrelated refactoring.
+
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Developer handoff after native-scroll state remediation:
 
