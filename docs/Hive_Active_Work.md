@@ -243,9 +243,27 @@ Remediation boundary:
 - preserve the intended native TextBoxBase, TreeView, and ListView state/position behavior and existing suppression lifecycle;
 - no behavioral expansion or unrelated refactoring.
 
+## Verification Failed / Remediation Required — ListView Native Scroll State
+
+Developer re-verification now has one remaining same-slice failure:
+- `HiveScrollHostTests.NativeListViewContent_UsesHiveScrollBars`
+
+Developer result: `Hive.Tests` 567 total, 566 passed, 1 failed, 0 skipped.
+
+The TextBoxBase and TreeView native-scroll regressions no longer fail. Remediation is therefore limited to the ListView native range/position path, including the existing CRUD ListView integration and native scrollbar suppression.
+
+Remediation boundary:
+- correct ListView-specific native scroll-state acquisition/normalization for the failing axis;
+- preserve native ListView item, selection, keyboard, owner-draw, and CRUD behavior;
+- retain Hive-owned visible scrollbars and the existing `LVM_SCROLL` position mechanism;
+- strengthen focused ListView regression coverage only as required.
+
+No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring is authorized.
+
+
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Developer handoff after native-scroll state remediation:
 
