@@ -296,9 +296,21 @@ Remediation boundary:
 - preserve the ListView row-based state normalization and native `LVM_SCROLL` behavior introduced by the preceding remediation;
 - no behavioral expansion or unrelated refactoring.
 
+## Verification Failed / Remediation Required — Native Wheel Scrolling
+
+Developer manual verification reports that mouse-wheel scrolling does not work over Hive-hosted native TreeView and TextBox surfaces in the Example Host, despite the automated native-scroll state tests now running successfully.
+
+Remediation boundary:
+- restore mouse-wheel scrolling for directly hosted `TextBoxBase`, `TreeView`, and existing ListView surfaces through the existing `HiveScrollHost` path;
+- intercept native wheel input at the control window boundary before the native control consumes it, then route the movement to the Hive-owned scrollbar state;
+- preserve native control text editing, selection, tree interaction, ListView item/selection behavior, and keyboard scrolling;
+- add focused regression coverage for native wheel routing only where the existing test infrastructure can exercise it.
+
+No new public scroll API, DataGridView migration, control rewrite, or unrelated UI refactoring is authorized.
+
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Developer handoff after native-scroll state remediation:
 
