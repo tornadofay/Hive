@@ -377,14 +377,6 @@ public sealed class HiveListView : ListView
     [System.Runtime.InteropServices.DllImport(
         "user32.dll",
         SetLastError = true)]
-    private static extern bool GetScrollBarInfo(
-        IntPtr handle,
-        int objectId,
-        ref NativeScrollBarInfo info);
-
-    [System.Runtime.InteropServices.DllImport(
-        "user32.dll",
-        SetLastError = true)]
     private static extern bool ShowScrollBar(
         IntPtr handle,
         int bar,
