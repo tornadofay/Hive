@@ -12,6 +12,7 @@ public sealed class HiveScrollHost : UserControl
     private readonly HiveScrollBar _verticalScrollBar;
     private readonly HashSet<Control> _hookedContentControls = new();
     private HiveNativeScrollAdapter? _nativeScrollAdapter;
+    private NativeWheelInterceptor? _nativeWheelInterceptor;
 
     private Control? _content;
     private ContentPresentation? _contentPresentation;
@@ -130,8 +131,15 @@ public sealed class HiveScrollHost : UserControl
         content.Layout += ContentChanged;
         content.SizeChanged += ContentChanged;
         content.HandleCreated += NativeContentHandleCreated;
+        content.HandleDestroyed += NativeContentHandleDestroyed;
         content.FontChanged += ContentChanged;
         content.KeyUp += NativeContentKeyUp;
+
+        if (_nativeScrollAdapter is not null &&
+            content.IsHandleCreated)
+        {
+            AttachNativeWheelInterceptor(content);
+        }
 
         if (content is TextBoxBase textBox)
             textBox.TextChanged += ContentChanged;
@@ -159,8 +167,11 @@ public sealed class HiveScrollHost : UserControl
         content.Layout -= ContentChanged;
         content.SizeChanged -= ContentChanged;
         content.HandleCreated -= NativeContentHandleCreated;
+        content.HandleDestroyed -= NativeContentHandleDestroyed;
         content.FontChanged -= ContentChanged;
         content.KeyUp -= NativeContentKeyUp;
+
+        DetachNativeWheelInterceptor();
 
         if (content is TextBoxBase textBox)
             textBox.TextChanged -= ContentChanged;
@@ -415,6 +426,10 @@ public sealed class HiveScrollHost : UserControl
             _horizontalScrollBar.ValueChanged -= ScrollBarValueChanged;
             _verticalScrollBar.ValueChanged -= ScrollBarValueChanged;
 
+            DetachNativeWheelInterceptor();
+            _nativeWheelInterceptor?.Dispose();
+            _nativeWheelInterceptor = null;
+
             var content = _content;
             if (content is not null)
             {
@@ -422,8 +437,11 @@ public sealed class HiveScrollHost : UserControl
                 content.Layout -= ContentChanged;
                 content.SizeChanged -= ContentChanged;
                 content.HandleCreated -= NativeContentHandleCreated;
+                content.HandleDestroyed -= NativeContentHandleDestroyed;
                 content.FontChanged -= ContentChanged;
                 content.KeyUp -= NativeContentKeyUp;
+
+                DetachNativeWheelInterceptor();
 
                 if (content is TextBoxBase textBox)
                     textBox.TextChanged -= ContentChanged;
@@ -502,34 +520,30 @@ public sealed class HiveScrollHost : UserControl
         MouseEventArgs e)
     {
         if (_content is null ||
-            _scrolling ||
-            !_verticalScrollBar.State.CanScroll)
-            return;
-
-        if (sender is TextBoxBase ||
-            sender is ListControl ||
-            sender is DataGridView ||
-            sender is TreeView)
+            _scrolling)
         {
-            if (_nativeScrollAdapter is not null &&
-                ReferenceEquals(sender, _content))
-            {
-                RequestSynchronization();
-            }
-
             return;
         }
 
-        var steps = e.Delta / SystemInformation.MouseWheelScrollDelta;
-        if (steps == 0)
-            steps = Math.Sign(e.Delta);
+        if (_nativeScrollAdapter is not null &&
+            ReferenceEquals(sender, _content))
+        {
+            HandleNativeWheelDelta(
+                e.Delta,
+                Control.ModifierKeys.HasFlag(Keys.Shift));
+            return;
+        }
 
-        SetScrollPosition(
-            _horizontalScrollBar.Value,
-            _verticalScrollBar.Value -
-            steps * Math.Max(
-                1,
-                _verticalScrollBar.State.SmallChange));
+        if (sender is ListControl ||
+            sender is DataGridView ||
+            sender is TreeView)
+        {
+            return;
+        }
+
+        ScrollByWheel(
+            e.Delta,
+            Control.ModifierKeys.HasFlag(Keys.Shift));
     }
 
     private void HookContentControls(Control control)
@@ -558,8 +572,20 @@ public sealed class HiveScrollHost : UserControl
             UnhookContentControls(child);
     }
 
-    private void NativeContentHandleCreated(object? sender, EventArgs e) =>
+    private void NativeContentHandleCreated(object? sender, EventArgs e)
+    {
+        if (_nativeScrollAdapter is not null &&
+            sender is Control content &&
+            ReferenceEquals(content, _content))
+        {
+            AttachNativeWheelInterceptor(content);
+        }
+
         RequestSynchronization();
+    }
+
+    private void NativeContentHandleDestroyed(object? sender, EventArgs e) =>
+        DetachNativeWheelInterceptor();
 
     private void NativeContentKeyUp(object? sender, KeyEventArgs e) =>
         RequestSynchronization();
@@ -588,6 +614,80 @@ public sealed class HiveScrollHost : UserControl
             UnhookContentControls(control);
 
         RequestSynchronization();
+    }
+
+    private void HandleNativeWheelDelta(
+        int delta,
+        bool horizontal)
+    {
+        if (_nativeScrollAdapter is null ||
+            _content is null ||
+            delta == 0)
+        {
+            return;
+        }
+
+        ScrollByWheel(delta, horizontal);
+    }
+
+    private void ScrollByWheel(
+        int delta,
+        bool horizontal)
+    {
+        if (delta == 0 ||
+            _content is null)
+        {
+            return;
+        }
+
+        var steps = delta / SystemInformation.MouseWheelScrollDelta;
+        if (steps == 0)
+            steps = Math.Sign(delta);
+
+        if (horizontal)
+        {
+            if (!_horizontalScrollBar.State.CanScroll)
+                return;
+
+            SetScrollPosition(
+                _horizontalScrollBar.Value +
+                steps * Math.Max(
+                    1,
+                    _horizontalScrollBar.State.SmallChange),
+                _verticalScrollBar.Value);
+            return;
+        }
+
+        if (!_verticalScrollBar.State.CanScroll)
+            return;
+
+        SetScrollPosition(
+            _horizontalScrollBar.Value,
+            _verticalScrollBar.Value -
+            steps * Math.Max(
+                1,
+                _verticalScrollBar.State.SmallChange));
+    }
+
+    private void AttachNativeWheelInterceptor(Control content)
+    {
+        if (_nativeScrollAdapter is null ||
+            !content.IsHandleCreated)
+        {
+            return;
+        }
+
+        _nativeWheelInterceptor ??= new NativeWheelInterceptor(
+            () => IsDisposed || Disposing,
+            (delta, horizontal) =>
+                HandleNativeWheelDelta(delta, horizontal));
+
+        _nativeWheelInterceptor.AssignHandle(content.Handle);
+    }
+
+    private void DetachNativeWheelInterceptor()
+    {
+        _nativeWheelInterceptor?.ReleaseHandle();
     }
 
     private void RequestSynchronization()
@@ -827,4 +927,63 @@ public sealed class HiveScrollHost : UserControl
             content.Dock = Dock;
         }
     }
+    private sealed class NativeWheelInterceptor : NativeWindow, IDisposable
+    {
+        private const int WmMouseWheel = 0x020A;
+        private const int WmMouseHWheel = 0x020E;
+        private const int MkShift = 0x0004;
+
+        private readonly Func<bool> _isDisposed;
+        private readonly Action<int, bool> _wheel;
+        private int _verticalRemainder;
+        private int _horizontalRemainder;
+
+        public NativeWheelInterceptor(
+            Func<bool> isDisposed,
+            Action<int, bool> wheel)
+        {
+            _isDisposed = isDisposed;
+            _wheel = wheel;
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == WmMouseWheel ||
+                m.Msg == WmMouseHWheel)
+            {
+                if (_isDisposed())
+                    return;
+
+                var delta = unchecked(
+                    (short)((m.WParam.ToInt64() >> 16) & 0xFFFF));
+
+                var horizontal =
+                    m.Msg == WmMouseHWheel ||
+                    (m.Msg == WmMouseWheel &&
+                     (((int)m.WParam.ToInt64() & MkShift) != 0));
+
+                ref var remainder = ref horizontal
+                    ? ref _horizontalRemainder
+                    : ref _verticalRemainder;
+
+                remainder += delta;
+
+                var steps = remainder / SystemInformation.MouseWheelScrollDelta;
+                remainder %= SystemInformation.MouseWheelScrollDelta;
+
+                if (steps != 0)
+                    _wheel(
+                        steps * SystemInformation.MouseWheelScrollDelta,
+                        horizontal);
+
+                return;
+            }
+
+            base.WndProc(ref m);
+        }
+
+        public void Dispose() =>
+            ReleaseHandle();
+    }
+
 }
