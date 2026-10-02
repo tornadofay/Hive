@@ -49,7 +49,6 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     private Pen? _disabledBorderPen;
     private Pen? _dividerPen;
     private GraphicsPath? _path;
-    private Region? _region;
     private bool _hovered;
     private bool _pressed;
 
@@ -421,14 +420,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         _theme = theme;
         RebuildPaintResources();
 
-        _fieldEditor.BackColor =
-            Enabled
-                ? theme.Palette.InputBackground
-                : theme.Palette.DisabledBackground;
-        _fieldEditor.ForeColor =
-            Enabled
-                ? theme.Palette.Text
-                : theme.Palette.DisabledText;
+        UpdateFieldEditorState();
 
         _popup?.ApplyTheme(theme);
         Invalidate();
@@ -448,6 +440,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     {
         base.OnFontChanged(e);
         _fieldEditor.Font = Font;
+        UpdateFieldLayout();
         Invalidate();
     }
 
@@ -596,7 +589,11 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             0,
             ClientSize.Width - arrowWidth);
 
-        if (_arrowBackgroundBrush is not null)
+        var arrowBackground = Enabled
+            ? _arrowBackgroundBrush
+            : _disabledBrush;
+
+        if (arrowBackground is not null)
         {
             var arrowBounds = new Rectangle(
                 arrowLeft,
@@ -613,7 +610,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
                 Math.Max(1, LogicalToDevice(6)));
 
             e.Graphics.FillPath(
-                _arrowBackgroundBrush,
+                arrowBackground,
                 arrowPath);
         }
 
@@ -652,7 +649,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             Enabled
                 ? theme.Palette.MutedText
                 : theme.Palette.DisabledText,
-            LogicalToDevice(1.5f))
+            LogicalToDevice(2))
         {
             StartCap = LineCap.Round,
             EndCap = LineCap.Round,
