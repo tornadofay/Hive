@@ -24,6 +24,7 @@ internal sealed class HiveExampleHostForm : HiveForm
     private readonly Panel _navigationSurface;
     private readonly Panel _navigationSeparator;
     private readonly HiveNavigationTree _navigation;
+    private readonly HiveScrollHost _navigationScrollHost;
     private readonly Label _navigationTitle;
     private readonly Label _navigationDescription;
     private readonly Label _viewTitle;
@@ -182,9 +183,18 @@ internal sealed class HiveExampleHostForm : HiveForm
         };
         _navigation.AfterSelect += NavigationAfterSelect;
 
+        _navigationScrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            AccessibleName = "Example navigation scroll area",
+            AccessibleDescription = "Scroll the Example Host navigation using Hive scrollbars."
+        };
+        _navigationScrollHost.Attach(_navigation);
+
         navigationLayout.Controls.Add(_navigationTitle, 0, 0);
         navigationLayout.Controls.Add(_navigationDescription, 0, 1);
-        navigationLayout.Controls.Add(_navigation, 0, 2);
+        navigationLayout.Controls.Add(_navigationScrollHost, 0, 2);
         _navigationSurface.Controls.Add(navigationLayout);
 
         _navigationSeparator = new Panel
