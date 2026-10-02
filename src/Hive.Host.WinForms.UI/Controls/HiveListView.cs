@@ -37,7 +37,6 @@ public sealed class HiveListView : ListView
     private Pen? _borderPen;
     private Pen? _focusPen;
     private readonly ImageList _rowImageList;
-    private bool _suppressingNativeScrollBars;
     private bool _nativeScrollBarsSuppressed;
     private bool _updatingNativeScrollBarStyles;
     private long _suppressedNativeScrollBarStyles;
