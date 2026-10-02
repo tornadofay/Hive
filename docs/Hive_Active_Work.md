@@ -261,9 +261,21 @@ Remediation boundary:
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring is authorized.
 
 
+## ListView Native Scroll State Remediation
+
+The remaining ListView verification failure was corrected within Slice 4:
+- Details/report-style ListView vertical scroll state is now normalized from the control's visible top-item index and row height rather than treating the native vertical scrollbar position as an arbitrary pixel coordinate;
+- vertical `LVM_SCROLL` requests are converted from the Hive logical row-based position to whole-row native deltas, matching the documented ListView scrolling contract;
+- horizontal ListView scrolling continues through the native `LVM_SCROLL` path;
+- existing CRUD ListView composition, item/selection/owner-draw behavior, and Hive scrollbar presentation remain unchanged;
+- UI documentation records the ListView-specific scroll-state normalization.
+
+No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
+
+
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Developer handoff after native-scroll state remediation:
 
