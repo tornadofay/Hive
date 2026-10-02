@@ -26,6 +26,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
     private readonly IHiveThemeManager _themeManager;
     private readonly IHiveExampleOutput? _output;
     private readonly HiveNavigationTree _navigation;
+    private readonly HiveScrollHost _navigationScrollHost;
     private readonly SplitContainer _navigationSplit;
     private readonly Panel _contentHost;
     private readonly Dictionary<AdvancedPage, TreeNode> _nodes = new();
@@ -92,9 +93,18 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
             IsSplitterFixed = true,
             SplitterWidth = 1
         };
+        _navigationScrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            AccessibleName = "Advanced Provider Configuration navigation scroll area",
+            AccessibleDescription = "Scroll the advanced configuration navigation using Hive scrollbars."
+        };
+        _navigationScrollHost.Attach(_navigation);
+
         _navigationSplit.Panel1.Padding = new Padding(4);
         _navigationSplit.Panel2.Padding = new Padding(4);
-        _navigationSplit.Panel1.Controls.Add(_navigation);
+        _navigationSplit.Panel1.Controls.Add(_navigationScrollHost);
         _navigationSplit.Panel2.Controls.Add(_contentHost);
 
         BodyPanel.Controls.Add(_navigationSplit);
