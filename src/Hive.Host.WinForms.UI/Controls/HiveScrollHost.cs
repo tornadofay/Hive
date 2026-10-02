@@ -131,16 +131,16 @@ public sealed class HiveScrollHost : UserControl
         content.SizeChanged += ContentChanged;
         content.HandleCreated += NativeContentHandleCreated;
         content.FontChanged += ContentChanged;
-        content.KeyUp += NativeContentInteractionChanged;
+        content.KeyUp += NativeContentKeyUp;
 
         if (content is TextBoxBase textBox)
             textBox.TextChanged += ContentChanged;
 
         if (content is TreeView tree)
         {
-            tree.AfterExpand += NativeContentInteractionChanged;
-            tree.AfterCollapse += NativeContentInteractionChanged;
-            tree.AfterSelect += NativeContentInteractionChanged;
+            tree.AfterExpand += NativeTreeViewChanged;
+            tree.AfterCollapse += NativeTreeViewChanged;
+            tree.AfterSelect += NativeTreeViewChanged;
         }
 
         Synchronize();
@@ -157,16 +157,16 @@ public sealed class HiveScrollHost : UserControl
         content.SizeChanged -= ContentChanged;
         content.HandleCreated -= NativeContentHandleCreated;
         content.FontChanged -= ContentChanged;
-        content.KeyUp -= NativeContentInteractionChanged;
+        content.KeyUp -= NativeContentKeyUp;
 
         if (content is TextBoxBase textBox)
             textBox.TextChanged -= ContentChanged;
 
         if (content is TreeView tree)
         {
-            tree.AfterExpand -= NativeContentInteractionChanged;
-            tree.AfterCollapse -= NativeContentInteractionChanged;
-            tree.AfterSelect -= NativeContentInteractionChanged;
+            tree.AfterExpand -= NativeTreeViewChanged;
+            tree.AfterCollapse -= NativeTreeViewChanged;
+            tree.AfterSelect -= NativeTreeViewChanged;
         }
 
         UnhookContentControls(content);
@@ -395,16 +395,16 @@ public sealed class HiveScrollHost : UserControl
                 content.SizeChanged -= ContentChanged;
                 content.HandleCreated -= NativeContentHandleCreated;
                 content.FontChanged -= ContentChanged;
-                content.KeyUp -= NativeContentInteractionChanged;
+                content.KeyUp -= NativeContentKeyUp;
 
                 if (content is TextBoxBase textBox)
                     textBox.TextChanged -= ContentChanged;
 
                 if (content is TreeView tree)
                 {
-                    tree.AfterExpand -= NativeContentInteractionChanged;
-                    tree.AfterCollapse -= NativeContentInteractionChanged;
-                    tree.AfterSelect -= NativeContentInteractionChanged;
+                    tree.AfterExpand -= NativeTreeViewChanged;
+                    tree.AfterCollapse -= NativeTreeViewChanged;
+                    tree.AfterSelect -= NativeTreeViewChanged;
                 }
 
                 UnhookContentControls(content);
@@ -530,7 +530,10 @@ public sealed class HiveScrollHost : UserControl
     private void NativeContentHandleCreated(object? sender, EventArgs e) =>
         RequestSynchronization();
 
-    private void NativeContentInteractionChanged(object? sender, EventArgs e) =>
+    private void NativeContentKeyUp(object? sender, KeyEventArgs e) =>
+        RequestSynchronization();
+
+    private void NativeTreeViewChanged(object? sender, TreeViewEventArgs e) =>
         RequestSynchronization();
 
     private void DescendantControlAdded(
