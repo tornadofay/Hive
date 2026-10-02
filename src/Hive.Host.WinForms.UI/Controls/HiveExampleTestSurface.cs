@@ -616,13 +616,13 @@ public sealed class HiveExampleTestSurface : UserControl
 
                 _inputTitle.Margin = new Padding(0, 0, 0, 2);
                 _codeTitle.Margin = new Padding(0, 8, 0, 2);
-                _input.Margin = Padding.Empty;
-                _code.Margin = Padding.Empty;
+                _inputScrollHost.Margin = Padding.Empty;
+                _codeScrollHost.Margin = Padding.Empty;
 
                 _workspace.Controls.Add(_inputTitle, 0, 0);
-                _workspace.Controls.Add(_input, 0, 1);
+                _workspace.Controls.Add(_inputScrollHost, 0, 1);
                 _workspace.Controls.Add(_codeTitle, 0, 2);
-                _workspace.Controls.Add(_code, 0, 3);
+                _workspace.Controls.Add(_codeScrollHost, 0, 3);
             }
             else
             {
@@ -639,13 +639,13 @@ public sealed class HiveExampleTestSurface : UserControl
 
                 _inputTitle.Margin = Padding.Empty;
                 _codeTitle.Margin = Padding.Empty;
-                _input.Margin = new Padding(0, 0, 6, 0);
-                _code.Margin = new Padding(6, 0, 0, 0);
+                _inputScrollHost.Margin = new Padding(0, 0, 6, 0);
+                _codeScrollHost.Margin = new Padding(6, 0, 0, 0);
 
                 _workspace.Controls.Add(_inputTitle, 0, 0);
                 _workspace.Controls.Add(_codeTitle, 1, 0);
-                _workspace.Controls.Add(_input, 0, 1);
-                _workspace.Controls.Add(_code, 1, 1);
+                _workspace.Controls.Add(_inputScrollHost, 0, 1);
+                _workspace.Controls.Add(_codeScrollHost, 1, 1);
             }
         }
         finally
