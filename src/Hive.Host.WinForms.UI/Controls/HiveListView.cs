@@ -32,7 +32,6 @@ public sealed class HiveListView : ListView
     private readonly ImageList _rowImageList;
     private bool _suppressingNativeScrollBars;
     private bool _nativeScrollBarsSuppressed;
-    private bool _nativeScrollBarsHidden;
 
     public HiveListView()
     {
@@ -80,8 +79,7 @@ public sealed class HiveListView : ListView
         if (_nativeScrollBarsSuppressed &&
             m.Msg == WmStyleChanged)
         {
-            _nativeScrollBarsHidden = false;
-            HideNativeScrollBars();
+                HideNativeScrollBars();
         }
     }
 
@@ -92,8 +90,7 @@ public sealed class HiveListView : ListView
 
         if (_nativeScrollBarsSuppressed)
         {
-            _nativeScrollBarsHidden = false;
-            HideNativeScrollBars();
+                HideNativeScrollBars();
         }
     }
 
@@ -340,7 +337,6 @@ public sealed class HiveListView : ListView
     internal void SuppressNativeScrollBars()
     {
         _nativeScrollBarsSuppressed = true;
-        _nativeScrollBarsHidden = false;
         HideNativeScrollBars();
     }
 
@@ -350,7 +346,6 @@ public sealed class HiveListView : ListView
             return;
 
         _nativeScrollBarsSuppressed = false;
-        _nativeScrollBarsHidden = false;
 
         if (IsHandleCreated)
         {
@@ -371,8 +366,7 @@ public sealed class HiveListView : ListView
         if (!IsNativeScrollBarVisible(ObjIdHScroll) &&
             !IsNativeScrollBarVisible(ObjIdVScroll))
         {
-            _nativeScrollBarsHidden = true;
-            return;
+                return;
         }
 
         _suppressingNativeScrollBars = true;
@@ -384,8 +378,7 @@ public sealed class HiveListView : ListView
             if (IsNativeScrollBarVisible(ObjIdVScroll))
                 ShowScrollBar(Handle, 1, false);
 
-            _nativeScrollBarsHidden = true;
-        }
+            }
         finally
         {
             _suppressingNativeScrollBars = false;
