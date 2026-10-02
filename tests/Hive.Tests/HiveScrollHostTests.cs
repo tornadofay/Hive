@@ -9,6 +9,9 @@ namespace Hive.Tests;
 
 public sealed class HiveScrollHostTests
 {
+    private const int GwlStyle = -16;
+    private const long NativeScrollBarStyleMask = 0x00300000L;
+
     [Fact]
     public void Synchronize_ExposesNormalizedHorizontalAndVerticalState()
     {
@@ -346,6 +349,58 @@ public sealed class HiveScrollHostTests
         Assert.True(list.TopItem?.Index > 0);
     }
 
+    [WinFormsFact]
+    public void NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling()
+    {
+        using var form = new Form
+        {
+            Size = new Size(900, 620)
+        };
+        using var host = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill
+        };
+        using var list = new HiveListView
+        {
+            View = View.Details,
+            HideSelection = false
+        };
+
+        list.Columns.Add("Name", 800);
+        for (var index = 1; index <= 160; index++)
+            list.Items.Add($"Item {index:000}");
+
+        form.Controls.Add(host);
+        host.Attach(list);
+        form.Show();
+        Application.DoEvents();
+        host.Synchronize();
+
+        AssertNativeListViewScrollBarsHidden(list);
+
+        form.WindowState = FormWindowState.Maximized;
+        Application.DoEvents();
+        host.Synchronize();
+
+        AssertNativeListViewScrollBarsHidden(list);
+
+        var lineHeight = Math.Max(1, list.GetItemRect(0).Height);
+        for (var row = 1; row <= 8; row++)
+        {
+            host.SetScrollPosition(
+                host.HorizontalScrollPosition,
+                Math.Min(
+                    host.VerticalScrollState.EffectiveMaximum,
+                    row * lineHeight));
+        }
+
+        Application.DoEvents();
+
+        Assert.True(host.VerticalScrollPosition > 0);
+        Assert.True(list.TopItem?.Index > 0);
+        AssertNativeListViewScrollBarsHidden(list);
+    }
+
     [Fact]
     public void HiveCrudPage_UsesHiveScrollHostForList()
     {
@@ -354,6 +409,23 @@ public sealed class HiveScrollHostTests
         Assert.Same(page.ListView, page.ListScrollHostForTesting.Content);
         Assert.IsType<HiveScrollHost>(page.ListScrollHostForTesting);
     }
+
+    private static void AssertNativeListViewScrollBarsHidden(
+        Control control)
+    {
+        var style = GetWindowLongPtr(
+            control.Handle,
+            GwlStyle).ToInt64();
+
+        Assert.Equal(
+            0L,
+            style & NativeScrollBarStyleMask);
+    }
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW", SetLastError = true)]
+    private static extern IntPtr GetWindowLongPtr(
+        IntPtr handle,
+        int index);
 
     [DllImport("user32.dll")]
     private static extern IntPtr SendMessage(
