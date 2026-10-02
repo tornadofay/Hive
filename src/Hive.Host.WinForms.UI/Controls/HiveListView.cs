@@ -8,7 +8,6 @@ public sealed class HiveListView : ListView
 {
     private const int RowHeight = 34;
     private const int WmNcPaint = 0x0085;
-    private const int WmWindowPosChanged = 0x0047;
     private const int WmStyleChanged = 0x007D;
 
     private HiveThemeDefinition? _theme;
@@ -67,15 +66,16 @@ public sealed class HiveListView : ListView
         // without replacing the ListView's native item/selection implementation.
         if (_nativeScrollBarsSuppressed && m.Msg == WmNcPaint)
         {
-            HideNativeScrollBars();
+            // Native scrollbar visibility is established when the hosted control
+            // resizes or its window style changes. Do not call ShowScrollBar from
+            // every non-client repaint; native scrolling can invalidate that region.
             return;
         }
 
         base.WndProc(ref m);
 
         if (_nativeScrollBarsSuppressed &&
-            (m.Msg == WmWindowPosChanged ||
-             m.Msg == WmStyleChanged))
+            m.Msg == WmStyleChanged)
         {
             _nativeScrollBarsHidden = false;
             HideNativeScrollBars();
@@ -86,6 +86,12 @@ public sealed class HiveListView : ListView
     {
         base.OnResize(e);
         FillLastColumn();
+
+        if (_nativeScrollBarsSuppressed)
+        {
+            _nativeScrollBarsHidden = false;
+            HideNativeScrollBars();
+        }
     }
 
     internal void ResetColumnLayout()
