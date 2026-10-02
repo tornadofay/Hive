@@ -962,14 +962,13 @@ public sealed class HiveScrollHost : UserControl
                     (m.Msg == WmMouseWheel &&
                      (((int)m.WParam.ToInt64() & MkShift) != 0));
 
-                ref var remainder = ref horizontal
-                    ? ref _horizontalRemainder
-                    : ref _verticalRemainder;
-
-                remainder += delta;
-
-                var steps = remainder / SystemInformation.MouseWheelScrollDelta;
-                remainder %= SystemInformation.MouseWheelScrollDelta;
+                var steps = horizontal
+                    ? ConsumeWheelDelta(
+                        ref _horizontalRemainder,
+                        delta)
+                    : ConsumeWheelDelta(
+                        ref _verticalRemainder,
+                        delta);
 
                 if (steps != 0)
                     _wheel(
@@ -986,4 +985,15 @@ public sealed class HiveScrollHost : UserControl
             ReleaseHandle();
     }
 
+    private static int ConsumeWheelDelta(
+        ref int remainder,
+        int delta)
+    {
+        remainder += delta;
+
+        var steps = remainder / SystemInformation.MouseWheelScrollDelta;
+        remainder %= SystemInformation.MouseWheelScrollDelta;
+
+        return steps;
+    }
 }
