@@ -804,6 +804,27 @@ public sealed class HiveExampleTestSurface : UserControl
         Error
     }
 
+    private static HiveScrollHost CreateScrollHost(
+        Control content,
+        string accessibleName,
+        string accessibleDescription)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+
+        var host = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            AccessibleName = accessibleName,
+            AccessibleDescription = accessibleDescription
+        };
+
+        content.Margin = Padding.Empty;
+        host.Attach(content);
+        return host;
+    }
+
     private Label CreateSectionLabel(string text) =>
         new()
         {
