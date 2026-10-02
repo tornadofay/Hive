@@ -171,10 +171,3 @@ Tests to run: HiveScrollHostTests.cs; HiveComboBoxTests.cs; HiveUiPolishTests.cs
 
 Agent has not run the build or tests. Developer verification is required.
 
-Historical handoff before this remediation:
-
-
-Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
-Tests to run: HiveComboBoxTests.cs; HiveScrollHostTests.cs; HiveUiPolishTests.cs; relevant Example Host UI tests; broader-suite requirement: full Hive.Tests suite after focused coverage passes.
-
-Agent has not run the build or tests. Developer verification is required.
