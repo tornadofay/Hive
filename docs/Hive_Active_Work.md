@@ -496,6 +496,14 @@ The latest same-slice remediation is implemented:
 
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
 
+## Verification Result — Developer Re-run 2026-10-03 (Resize-Qualified Remediation)
+
+Developer re-ran the full `Hive.Tests` suite after the resize-qualified ListView suppression remediation: **570 total, 569 passed, 1 failed, 0 skipped**.
+
+The same single failure remains: `HiveScrollHostTests.NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling`. The native ListView scrollbar visibility assertion still fails immediately after the maximize lifecycle.
+
+The previous remediation did not close the recorded maximize/layout suppression boundary. Status remains **VERIFICATION FAILED / REMEDIATION REQUIRED** for the same Slice 4 scope.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
