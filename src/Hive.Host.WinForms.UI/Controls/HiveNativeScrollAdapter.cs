@@ -11,6 +11,8 @@ internal sealed class HiveNativeScrollAdapter
     private const int WmHorizontalScroll = 0x0114;
     private const int WmVerticalScroll = 0x0115;
 
+    private const int LvmScroll = 0x1014;
+
     private const int SbThumbPosition = 4;
 
     private const uint SiRange = 0x0001;
@@ -19,7 +21,7 @@ internal sealed class HiveNativeScrollAdapter
     private const uint SiAll = SiRange | SiPage | SiPos;
 
     public static bool Supports(Control control) =>
-        control is TextBoxBase or TreeView;
+        control is TextBoxBase or TreeView or ListView;
 
     public HiveScrollState ReadState(
         Control control,
@@ -140,28 +142,39 @@ internal sealed class HiveNativeScrollAdapter
             info.nMin,
             maximumPosition);
 
-        info.fMask = SiPos;
-        info.nPos = target;
+        if (control is ListView listView)
+        {
+            SetListViewPosition(
+                listView,
+                orientation,
+                info.nPos,
+                target);
+        }
+        else
+        {
+            info.fMask = SiPos;
+            info.nPos = target;
 
-        SetScrollInfo(
-            control.Handle,
-            bar,
-            ref info,
-            true);
+            SetScrollInfo(
+                control.Handle,
+                bar,
+                ref info,
+                true);
 
-        var message = orientation == Orientation.Vertical
-            ? WmVerticalScroll
-            : WmHorizontalScroll;
+            var message = orientation == Orientation.Vertical
+                ? WmVerticalScroll
+                : WmHorizontalScroll;
 
-        var wParam = MakeWParam(
-            (ushort)SbThumbPosition,
-            (ushort)Math.Clamp(target, 0, ushort.MaxValue));
+            var wParam = MakeWParam(
+                (ushort)SbThumbPosition,
+                (ushort)Math.Clamp(target, 0, ushort.MaxValue));
 
-        SendMessage(
-            control.Handle,
-            message,
-            wParam,
-            IntPtr.Zero);
+            SendMessage(
+                control.Handle,
+                message,
+                wParam,
+                IntPtr.Zero);
+        }
 
         HideNativeScrollBar(control.Handle, bar);
     }
@@ -178,6 +191,30 @@ internal sealed class HiveNativeScrollAdapter
 
         HideNativeScrollBar(control.Handle, SbHorizontal);
         HideNativeScrollBar(control.Handle, SbVertical);
+    }
+
+    private static void SetListViewPosition(
+        ListView listView,
+        Orientation orientation,
+        int current,
+        int target)
+    {
+        if (current == target)
+            return;
+
+        var delta = target - current;
+        var horizontalDelta = orientation == Orientation.Horizontal
+            ? delta
+            : 0;
+        var verticalDelta = orientation == Orientation.Vertical
+            ? delta
+            : 0;
+
+        SendMessage(
+            listView.Handle,
+            LvmScroll,
+            new IntPtr(horizontalDelta),
+            new IntPtr(verticalDelta));
     }
 
     private static int ClampToInt(uint value) =>
