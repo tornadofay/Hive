@@ -154,6 +154,31 @@ public sealed class HiveComboBoxTests
     }
 
     [Fact]
+    public void EditableFieldChange_RaisesTextChangedAndSynchronizesBaseText()
+    {
+        using var combo = new HiveComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDown
+        };
+
+        combo.Items.Add("vision-model");
+        combo.SelectedIndex = 0;
+
+        var fieldEditor = Assert.IsType<TextBox>(
+            Assert.Single(combo.Controls));
+
+        var changeCount = 0;
+        combo.TextChanged += (_, _) => changeCount++;
+
+        fieldEditor.Text = "custom-model";
+
+        Assert.Equal(1, changeCount);
+        Assert.Equal("custom-model", combo.Text);
+        Assert.Equal("custom-model", fieldEditor.Text);
+        Assert.Equal(0, combo.SelectedIndex);
+    }
+
+    [Fact]
     public void Filtering_IsOrdinalCaseInsensitiveAndPreservesSourceOrder()
     {
         using var combo = new HiveComboBox
