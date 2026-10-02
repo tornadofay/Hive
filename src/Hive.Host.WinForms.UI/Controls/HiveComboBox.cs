@@ -996,7 +996,21 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         if (_synchronizingFieldText)
             return;
 
-        Text = _fieldEditor.Text;
+        var value = _fieldEditor.Text;
+        if (!string.Equals(base.Text, value, StringComparison.Ordinal))
+        {
+            _suppressBaseTextChanged = true;
+            try
+            {
+                base.Text = value;
+            }
+            finally
+            {
+                _suppressBaseTextChanged = false;
+            }
+
+            OnTextChanged(EventArgs.Empty);
+        }
 
         if (DroppedDown)
             RefreshPopup();
