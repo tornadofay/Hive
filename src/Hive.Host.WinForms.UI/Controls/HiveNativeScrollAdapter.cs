@@ -295,23 +295,23 @@ internal sealed class HiveNativeScrollAdapter
             info.nMin,
             info.nMax - Math.Max(1, ClampToInt(info.nPage)) + 1);
 
-        var target = Math.Clamp(
+        var nativeTarget = Math.Clamp(
             value,
             info.nMin,
             maximumPosition);
 
-        if (control is ListView listView)
+        if (control is ListView nativeListView)
         {
             SetListViewPosition(
-                listView,
+                nativeListView,
                 orientation,
                 info.nPos,
-                target);
+                nativeTarget);
         }
         else
         {
             info.fMask = SiPos;
-            info.nPos = target;
+            info.nPos = nativeTarget;
 
             SetScrollInfo(
                 control.Handle,
@@ -325,7 +325,7 @@ internal sealed class HiveNativeScrollAdapter
 
             var wParam = MakeWParam(
                 (ushort)SbThumbPosition,
-                (ushort)Math.Clamp(target, 0, ushort.MaxValue));
+                (ushort)Math.Clamp(nativeTarget, 0, ushort.MaxValue));
 
             SendMessage(
                 control.Handle,
@@ -337,7 +337,7 @@ internal sealed class HiveNativeScrollAdapter
         _lastKnownStates[orientation] = cached with
         {
             Value = Math.Clamp(
-                target,
+                nativeTarget,
                 cached.Minimum,
                 cached.EffectiveMaximum)
         };
