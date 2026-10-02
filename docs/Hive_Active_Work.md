@@ -486,8 +486,23 @@ Developer ran the full `Hive.Tests` suite after pulling commit `a6cc0c113f625e7b
 
 The only failure was `HiveScrollHostTests.NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling`. The failure occurs in the native scrollbar visibility assertion immediately after form maximize, confirming the remaining defect is the recorded ListView native scrollbar suppression lifecycle boundary.
 
+## ListView Scrollbar Suppression — Resize-Qualified Reassertion
+
+The latest same-slice remediation is implemented:
+- `HiveListView` now reasserts native scrollbar suppression after `WM_WINDOWPOSCHANGED` only when the native `WINDOWPOS` flags indicate an actual size change, covering maximize/resize without reintroducing suppression work for scroll-time window-position messages;
+- existing `OnResize` and native-style-change suppression paths remain in place;
+- `WM_NCPAINT` remains outside the suppression operation, and native ListView scrolling continues through the existing `LVM_SCROLL` path;
+- the focused maximize/repeated-scroll regression remains the verification boundary.
+
+No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
+
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
-The same Slice 4 remediation boundary remains active. No broader UI work is authorized by this failure.
+Developer handoff after the resize-qualified ListView suppression remediation:
+
+Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
+Tests to run: `HiveScrollHostTests.NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling`; `HiveScrollHostTests.NativeListViewContent_UsesHiveScrollBars`; then `HiveScrollHostTests.cs`, `HiveComboBoxTests.cs`, `HiveUiPolishTests.cs`, relevant Example Host UI tests, and the full `Hive.Tests` suite.
+
+Agent has not run the build or tests. Developer verification is required.
