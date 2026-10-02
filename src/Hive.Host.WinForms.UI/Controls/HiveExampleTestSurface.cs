@@ -16,6 +16,8 @@ public sealed class HiveExampleTestSurface : UserControl
     private readonly Label _status;
     private readonly TextBox _input;
     private readonly TextBox _code;
+    private readonly HiveScrollHost _inputScrollHost;
+    private readonly HiveScrollHost _codeScrollHost;
     private readonly Label _inputTitle;
     private readonly Label _codeTitle;
     private readonly Label _details;
@@ -196,10 +198,19 @@ public sealed class HiveExampleTestSurface : UserControl
         };
         _code.TextChanged += (_, _) => UpdateActionState();
 
+        _inputScrollHost = CreateScrollHost(
+            _input,
+            "Test input scroll area",
+            "Scroll the editable test input.");
+        _codeScrollHost = CreateScrollHost(
+            _code,
+            "Code scroll area",
+            "Scroll the read-only reproduction code.");
+
         _workspace.Controls.Add(_inputTitle, 0, 0);
         _workspace.Controls.Add(_codeTitle, 1, 0);
-        _workspace.Controls.Add(_input, 0, 1);
-        _workspace.Controls.Add(_code, 1, 1);
+        _workspace.Controls.Add(_inputScrollHost, 0, 1);
+        _workspace.Controls.Add(_codeScrollHost, 1, 1);
 
         _details = new Label
         {
