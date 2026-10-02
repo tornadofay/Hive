@@ -61,33 +61,60 @@ internal sealed class HiveNativeScrollAdapter
             fMask = SiAll
         };
 
-        if (!GetScrollInfo(control.Handle, bar, ref info))
-            return GetCachedState(
-                orientation,
-                null,
-                out authoritative);
+        var hasScrollInfo = GetScrollInfo(
+            control.Handle,
+            bar,
+            ref info);
 
-        var minimum = info.nMin;
-        var page = Math.Max(0, ClampToInt(info.nPage));
-        var maximum = info.nMax;
+        var minimum = hasScrollInfo
+            ? info.nMin
+            : 0;
+        var page = hasScrollInfo
+            ? Math.Max(0, ClampToInt(info.nPage))
+            : 0;
+        var maximum = hasScrollInfo
+            ? info.nMax
+            : 0;
+        var position = hasScrollInfo
+            ? info.nPos
+            : 0;
 
-        if (maximum < minimum)
-            return GetCachedState(
-                orientation,
-                null,
-                out authoritative);
-
-        // Once a native scrollbar is hidden, some Win32 controls can temporarily
-        // report a zero page size even though their underlying scroll range is still
-        // valid. Keep the last authoritative range/viewport rather than collapsing
-        // the Hive scrollbar during that transient native state. Without a cached
-        // state, do not suppress the native scrollbar yet; another synchronization
-        // must get a chance to acquire the first authoritative range.
+        // Some native common controls expose their current range/position through
+        // the standard range/position APIs while returning an unusable zero page
+        // through GetScrollInfo. Keep the adapter generic, but reconstruct the
+        // viewport from the hosted control's client extent in that case.
         if (page <= 0)
+        {
+            var hasRange = GetScrollRange(
+                control.Handle,
+                bar,
+                out minimum,
+                out maximum);
+
+            if (hasRange &&
+                maximum >= minimum)
+            {
+                position = GetScrollPosition(
+                    control.Handle,
+                    bar);
+
+                page = orientation == Orientation.Vertical
+                    ? Math.Max(1, control.ClientSize.Height)
+                    : Math.Max(1, control.ClientSize.Width);
+
+                hasScrollInfo = true;
+            }
+        }
+
+        if (!hasScrollInfo ||
+            maximum < minimum ||
+            page <= 0)
+        {
             return GetCachedState(
                 orientation,
-                info.nPos,
+                position,
                 out authoritative);
+        }
 
         var effectiveMaximum = Math.Max(
             minimum,
@@ -352,6 +379,29 @@ internal sealed class HiveNativeScrollAdapter
         IntPtr hWnd,
         int nBar,
         ref ScrollInfo lpScrollInfo);
+
+    [DllImport(
+        "user32.dll",
+        SetLastError = true)]
+    private static extern bool GetScrollRange(
+        IntPtr hWnd,
+        int nBar,
+        out int lpMinPos,
+        out int lpMaxPos);
+
+    [DllImport(
+        "user32.dll",
+        SetLastError = true)]
+    private static extern int GetScrollPos(
+        IntPtr hWnd,
+        int nBar);
+
+    private static int GetScrollPosition(
+        IntPtr handle,
+        int bar) =>
+        Math.Max(
+            0,
+            GetScrollPos(handle, bar));
 
     [DllImport(
         "user32.dll",
