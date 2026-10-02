@@ -580,7 +580,7 @@ Running executions use their already-established effective configuration snapsho
 
 The Example Host is the first concrete application-level consumer of this boundary. It exposes the real Hive Settings center through the Overview → Getting Started → Example Configuration leaf, whose primary action opens the host-level Settings window. The Settings UI uses the reusable Hive.Host.WinForms.UI foundation.
 
-The normal Settings experience presents configured providers as the user-facing provider service configuration, while the underlying ProviderAccount and ExecutionTarget resources remain available through one generalized Advanced Provider Configuration surface. The Advanced window is a tree-based administrative surface with its own Overview landing page and a read-only Model Information page for the authorized rich-discovery follow-up:
+The normal Settings experience presents configured providers as the user-facing provider service configuration, while the underlying ProviderAccount and ExecutionTarget resources remain available through one generalized Advanced Provider Configuration surface. The Advanced window is a tab-based administrative surface using HiveTabControl, with Overview and a read-only Model Information tab for the authorized rich-discovery follow-up:
 
 ```text
 Hive Settings
@@ -592,11 +592,7 @@ Providers page toolbar
 [ Add Provider ] [ Refresh ] [ Advanced ]
 
 Advanced Provider Configuration
-├── Overview
-├── Providers
-├── Accounts / Credentials
-├── Execution Targets
-└── Model Information
+[Overview] [Providers] [Accounts / Credentials] [Execution Targets] [Model Information]
 ```
 
 The Providers page uses the shared Hive CRUD presentation rather than a provider-specific card/action framework. It lists configured Provider resources and presents masked credential status plus useful operational summary such as readiness/model count where available. There is no per-row action column; normal CRUD interaction remains the established page behavior. For a normal built-in provider, Edit is limited to replacing its protected API key/credential; changing provider identity or transport belongs in Advanced.
