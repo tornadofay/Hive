@@ -41,6 +41,7 @@ Implemented integration:
 - the editable/autocomplete Provider transport field remains native because its existing native autocomplete semantics do not fit the first-class HiveComboBox contract;
 - no existing native production TabControl consumer was found, so `HiveTabControl` remains a reusable foundation with no migration;
 - Settings Overview and Advanced Provider Configuration Overview now use `HiveScrollHost` for their intrinsically-sized content;
+- `HiveCrudPage` now hosts its existing `HiveListView` through `HiveScrollHost`, keeping native ListView behavior while using Hive-owned scrollbars;
 - focused regression coverage was updated for the migrated controls and the new scroll-host integrations;
 - UI control and Example Host guidance documents now describe the Slice 4 integration boundary.
 
