@@ -67,13 +67,16 @@ The reported automatic-target verification failure was remediated:
 - This restores deterministic model-selection state synchronization when an editable model changes from a discovered model to custom text, allowing the execution-target editor to clear stale discovery-managed capabilities.
 - `HiveComboBoxTests.TextChange_RaisesTextChangedForProgrammaticEditableText` provides focused regression coverage for the underlying control contract.
 
-## Revision 2 Verification State
+## Revision 2 Verification Remediation
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+The revision audit finding was remediated:
+- `HiveComboBox.FieldEditorOnTextChanged` now synchronizes the native text backend directly from the edited field value instead of routing through the public `Text` setter, which avoids the same-value short-circuit.
+- The control now raises one reliable `TextChanged` notification after real editable field changes, while preserving the committed selected item/index until selection is explicitly changed.
+- `HiveComboBoxTests.EditableFieldChange_RaisesTextChangedAndSynchronizesBaseText` directly exercises the editable field path; the existing programmatic-text regression and execution-target capability regression remain in place.
 
-Revision audit identified an additional in-scope `HiveComboBox` defect in the editable typing path: `FieldEditorOnTextChanged` delegated to the public `Text` setter while that setter compares against the same field-editor text, so real user edits can short-circuit without updating the base control text or raising `TextChanged`.
+## Verification State
 
-Remediation boundary: fix only this same-slice editable text synchronization defect and strengthen focused `HiveComboBox` regression coverage for the field-editor/user-edit path; then return to `VERIFICATION PENDING`.
+Status: VERIFICATION PENDING
 
 Developer handoff:
 
