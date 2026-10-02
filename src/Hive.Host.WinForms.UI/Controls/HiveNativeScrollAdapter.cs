@@ -43,8 +43,6 @@ internal sealed class HiveNativeScrollAdapter
             ? SbVertical
             : SbHorizontal;
 
-        HideNativeScrollBar(control.Handle, bar);
-
         var info = new ScrollInfo
         {
             cbSize = Marshal.SizeOf<ScrollInfo>(),
@@ -89,6 +87,8 @@ internal sealed class HiveNativeScrollAdapter
             effectiveMaximum - minimum + viewportSize);
 
         var enabled = effectiveMaximum > minimum;
+
+        HideNativeScrollBar(control.Handle, bar);
 
         return HiveScrollState.Create(
             orientation,
