@@ -54,21 +54,21 @@ internal sealed class HiveNativeScrollAdapter
         };
 
         if (!GetScrollInfo(control.Handle, bar, ref info))
-            return GetCachedState(orientation);
+            return GetCachedState(orientation, null);
 
         var minimum = info.nMin;
         var page = Math.Max(0, ClampToInt(info.nPage));
         var maximum = info.nMax;
 
         if (maximum < minimum)
-            return GetCachedState(orientation);
+            return GetCachedState(orientation, null);
 
         // Once a native scrollbar is hidden, some Win32 controls can temporarily
         // report a zero page size even though their underlying scroll range is still
         // valid. Keep the last authoritative range/viewport rather than collapsing
         // the Hive scrollbar during that transient native state.
         if (page <= 0)
-            return GetCachedState(orientation);
+            return GetCachedState(orientation, info.nPos);
 
         var effectiveMaximum = Math.Max(
             minimum,
@@ -92,13 +92,22 @@ internal sealed class HiveNativeScrollAdapter
             enabled: enabled);
 
         _lastKnownStates[orientation] = state;
-        HideNativeScrollBar(control.Handle, bar);
         return state;
     }
 
-    private HiveScrollState GetCachedState(Orientation orientation) =>
+    private HiveScrollState GetCachedState(
+        Orientation orientation,
+        int? nativePosition) =>
         _lastKnownStates.TryGetValue(orientation, out var state)
-            ? state
+            ? nativePosition is int position
+                ? state with
+                {
+                    Value = Math.Clamp(
+                        position,
+                        state.Minimum,
+                        state.EffectiveMaximum)
+                }
+                : state
             : HiveScrollState.Create(
                 orientation,
                 0,
@@ -130,16 +139,33 @@ internal sealed class HiveNativeScrollAdapter
             fMask = SiAll
         };
 
-        if (!GetScrollInfo(control.Handle, bar, ref info))
+        var hasNativeInfo = GetScrollInfo(
+            control.Handle,
+            bar,
+            ref info);
+
+        var cached = GetCachedState(orientation, null);
+        var page = hasNativeInfo
+            ? Math.Max(0, ClampToInt(info.nPage))
+            : 0;
+
+        if (!hasNativeInfo || page <= 0)
         {
-            HideNativeScrollBar(control.Handle, bar);
-            return;
+            if (!cached.CanScroll)
+            {
+                HideNativeScrollBars(control);
+                return;
+            }
+
+            info.nMin = cached.Minimum;
+            info.nMax = cached.Maximum - 1;
+            info.nPage = (uint)Math.Max(0, cached.ViewportSize);
+            info.nPos = cached.Value;
         }
 
-        var page = Math.Max(0, ClampToInt(info.nPage));
-        var maximumPosition = page > 0
-            ? Math.Max(info.nMin, info.nMax - page + 1)
-            : info.nMax;
+        var maximumPosition = Math.Max(
+            info.nMin,
+            info.nMax - Math.Max(1, ClampToInt(info.nPage)) + 1);
 
         var target = Math.Clamp(
             value,
@@ -163,7 +189,7 @@ internal sealed class HiveNativeScrollAdapter
                 control.Handle,
                 bar,
                 ref info,
-                true);
+                false);
 
             var message = orientation == Orientation.Vertical
                 ? WmVerticalScroll
@@ -180,6 +206,13 @@ internal sealed class HiveNativeScrollAdapter
                 IntPtr.Zero);
         }
 
+        _lastKnownStates[orientation] = cached with
+        {
+            Value = Math.Clamp(
+                target,
+                cached.Minimum,
+                cached.EffectiveMaximum)
+        };
         HideNativeScrollBar(control.Handle, bar);
     }
 
@@ -190,6 +223,12 @@ internal sealed class HiveNativeScrollAdapter
         if (!Supports(control) ||
             !control.IsHandleCreated)
         {
+            return;
+        }
+
+        if (control is HiveListView hiveListView)
+        {
+            hiveListView.SuppressNativeScrollBars();
             return;
         }
 
