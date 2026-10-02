@@ -308,9 +308,21 @@ Remediation boundary:
 
 No new public scroll API, DataGridView migration, control rewrite, or unrelated UI refactoring is authorized.
 
+## Native Wheel Scrolling Remediation
+
+The reported Example Host mouse-wheel defect was corrected within Slice 4:
+- directly hosted native `TextBoxBase`, `TreeView`, and `ListView` controls now have a host-owned native-window wheel interceptor so `WM_MOUSEWHEEL` / horizontal wheel messages are handled before the native control consumes them;
+- wheel movement is translated into the existing Hive scrollbar position through `HiveScrollHost`, while Shift/horizontal wheel uses the horizontal Hive scrollbar when available;
+- high-resolution wheel deltas are accumulated until a full standard wheel step is available;
+- the existing `MouseWheel` event path now also routes directly hosted native content through the Hive scrollbar as a fallback;
+- the interceptor is attached/released across native handle creation/destruction and host disposal;
+- focused TextBox and TreeView tests send a real Win32 mouse-wheel message and verify that the Hive scroll position moves.
+
+No new public scroll API, DataGridView migration, native control rewrite, or unrelated UI refactoring was introduced.
+
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Developer handoff after native-scroll state remediation:
 
