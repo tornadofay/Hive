@@ -242,7 +242,7 @@ internal sealed class HiveNativeScrollAdapter
                 }
             }
 
-            var target = Math.Clamp(
+            var listTarget = Math.Clamp(
                 value,
                 cached.Minimum,
                 cached.EffectiveMaximum);
@@ -251,11 +251,11 @@ internal sealed class HiveNativeScrollAdapter
                 listView,
                 orientation,
                 cached.Value,
-                target);
+                listTarget);
 
             _lastKnownStates[orientation] = cached with
             {
-                Value = target
+                Value = listTarget
             };
 
             HideNativeScrollBar(control.Handle, bar);
