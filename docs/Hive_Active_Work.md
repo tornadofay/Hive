@@ -190,9 +190,22 @@ Remediation boundary:
 No DataGridView migration, new public scroll API, or unrelated UI refactoring is authorized.
 
 
+## Native Scroll State Remediation
+
+The re-verification failure was remediated within the recorded Slice 4 boundary:
+- `HiveScrollHost` now skips native content resizing and scrollbar suppression while its viewport is transiently zero-sized during handle/layout initialization;
+- `HiveNativeScrollAdapter.ReadState` now reports whether each orientation supplied an authoritative native state, so first-time invalid/zero-page reads cannot authorize suppression;
+- native scrollbar suppression begins only after both orientations have yielded an authoritative state, preserving a recoverable native source of truth during initialization;
+- existing cached state remains authoritative across transient zero-page responses after suppression;
+- the focused native-scroll tests now give the host a deterministic 500x400 viewport and add explicit regression coverage for recovery after a transient zero-sized viewport;
+- UI documentation now records the initialization/suppression lifecycle.
+
+No DataGridView migration, new public scroll API, or unrelated UI refactoring was introduced.
+
+
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Developer handoff after native-scroll state remediation:
 
