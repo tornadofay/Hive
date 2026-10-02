@@ -342,9 +342,21 @@ Tests to run: `Phase116FollowUpTests.AdvancedConfiguration_UsesHiveTabsForNaviga
 Agent has not run the build or tests after this migration. Developer verification is required.
 
 
+## Verification Failed / Remediation Required — CRUD Maximize Scrollbars / Layout Lag
+
+Developer manual verification reports that maximizing a CRUD surface causes two scrollbar presentations to appear and the form begins to lag.
+
+Remediation boundary:
+- correct the existing `HiveCrudPage` / `HiveScrollHost` / `HiveListView` resize and native-scrollbar suppression lifecycle causing duplicate visible scrollbar painting;
+- eliminate avoidable synchronization/layout feedback during maximize/resize while preserving CRUD paging, selection, keyboard, owner-draw, and ListView scrolling;
+- preserve the existing Hive-owned scrollbar presentation as the single visible scrollbar layer;
+- add focused regression coverage for resize/maximize behavior where practical.
+
+No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring is authorized.
+
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Developer handoff after native-scroll state remediation:
 
