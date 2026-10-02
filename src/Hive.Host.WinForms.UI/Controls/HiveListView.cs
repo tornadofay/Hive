@@ -86,7 +86,7 @@ public sealed class HiveListView : ListView
 
         if (_nativeScrollBarsSuppressed)
         {
-                HideNativeScrollBars();
+            HideNativeScrollBars();
         }
     }
 
