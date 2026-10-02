@@ -394,9 +394,11 @@ internal sealed class HiveNativeScrollAdapter
             0,
             contentExtent - viewportSize);
 
-        var topIndex = listView.TopItem?.Index ?? 0;
-        var value = Math.Clamp(
-            topIndex * lineHeight,
+        var topIndex = Math.Max(
+            0,
+            listView.TopItem?.Index ?? 0);
+        var value = (int)Math.Clamp(
+            (long)topIndex * lineHeight,
             0,
             effectiveMaximum);
 
@@ -421,14 +423,13 @@ internal sealed class HiveNativeScrollAdapter
         int current,
         int target)
     {
-        if (current == target)
-            return;
-
         var lineHeight = ResolveListViewLineHeight(listView);
 
         if (orientation == Orientation.Vertical)
         {
-            var currentTopIndex = listView.TopItem?.Index ?? 0;
+            var currentTopIndex = Math.Max(
+                0,
+                listView.TopItem?.Index ?? 0);
             var targetTopIndex = Math.Max(
                 0,
                 (int)Math.Round(
@@ -439,11 +440,16 @@ internal sealed class HiveNativeScrollAdapter
             if (deltaRows == 0)
                 return;
 
+            var deltaPixels = Math.Clamp(
+                (long)deltaRows * lineHeight,
+                int.MinValue,
+                int.MaxValue);
+
             SendMessage(
                 listView.Handle,
                 LvmScroll,
                 IntPtr.Zero,
-                new IntPtr(deltaRows * lineHeight));
+                new IntPtr(deltaPixels));
             return;
         }
 
