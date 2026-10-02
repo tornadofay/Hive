@@ -273,6 +273,20 @@ The remaining ListView verification failure was corrected within Slice 4:
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
 
 
+## ListView Native Scroll State Remediation — Final Correction
+
+The remaining ListView failure was corrected within the same Slice 4 boundary:
+- `Details`-view vertical scroll state is represented in Hive logical pixels derived from the visible top-item index and row height;
+- vertical `LVM_SCROLL` deltas are calculated from the current and requested row indices, matching the ListView report/detail whole-line scrolling contract;
+- ListView vertical positioning no longer clamps a Hive logical pixel target against the native ListView scrollbar's separate coordinate range;
+- row arithmetic is bounded to avoid integer overflow;
+- horizontal ListView scrolling remains on the native `LVM_SCROLL` path;
+- existing CRUD composition and native ListView item/selection/owner-draw behavior remain unchanged.
+
+Microsoft's ListView documentation specifies that report-view vertical scrolling occurs in whole-line increments, which is the basis for this control-specific normalization.
+
+No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
