@@ -377,7 +377,7 @@ public sealed class HiveListView : ListView
     internal void RestoreNativeScrollBars()
     {
         _nativeScrollBarSuppressionPending = false;
-    {
+
         if (!_nativeScrollBarsSuppressed)
             return;
 
