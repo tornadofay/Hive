@@ -11,10 +11,6 @@ public sealed class HiveListView : ListView
     private const int WmWindowPosChanged = 0x0047;
     private const int WmStyleChanged = 0x007D;
 
-    private const int WmNcPaint = 0x0085;
-    private const int WmWindowPosChanged = 0x0047;
-    private const int WmStyleChanged = 0x007D;
-
     private HiveThemeDefinition? _theme;
     private int _hoverIndex = -1;
     private int _naturalLastColumnWidth = -1;
