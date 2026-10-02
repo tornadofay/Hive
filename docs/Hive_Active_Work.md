@@ -342,6 +342,24 @@ Tests to run: `Phase116FollowUpTests.AdvancedConfiguration_UsesHiveTabsForNaviga
 Agent has not run the build or tests after this migration. Developer verification is required.
 
 
+## Verification Failed / Remediation Required — Advanced Provider Configuration Tab Metadata Test
+
+Developer verification reported one same-slice test failure:
+- `Phase116FollowUpTests.AdvancedConfiguration_UsesHiveTabsForNavigation` expected each `TabPage.Tag` to be an `int`;
+- the implemented production contract stores the corresponding `AdvancedPage` enum value in `TabPage.Tag`.
+
+Remediation boundary:
+- correct only the focused regression assertion to validate the actual tab metadata contract;
+- preserve the existing five-tab navigation and page lifecycle;
+- no production navigation behavior or unrelated UI refactoring is authorized.
+
+## Advanced Provider Configuration Tab Test Remediation
+
+The reported test failure was corrected within Slice 4:
+- the tab metadata regression now verifies that each tab has non-null metadata and that the metadata value matches the tab's stable `Name`;
+- the production `AdvancedPage` metadata contract remains unchanged;
+- no production code or navigation behavior was changed by this remediation.
+
 ## Verification Failed / Remediation Required — CRUD Maximize Scrollbars / Layout Lag
 
 Developer manual verification reports that maximizing a CRUD surface causes two scrollbar presentations to appear and the form begins to lag.
@@ -368,7 +386,7 @@ No DataGridView migration, new public scroll API, ListView rewrite, or unrelated
 
 Status: VERIFICATION PENDING
 
-Developer handoff after native-scroll state remediation:
+Developer handoff after the tab metadata test remediation and native-scroll state remediation:
 
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
 Tests to run: `HiveScrollHostTests.NativeTextBoxContent_UsesHiveScrollBars`, `HiveScrollHostTests.NativeTreeViewContent_UsesHiveScrollBars`, `HiveScrollHostTests.NativeListViewContent_UsesHiveScrollBars`; then `HiveScrollHostTests.cs`, `HiveComboBoxTests.cs`, `HiveUiPolishTests.cs`, relevant Example Host UI tests, and the full `Hive.Tests` suite.
