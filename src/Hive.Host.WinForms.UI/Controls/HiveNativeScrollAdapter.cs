@@ -343,7 +343,7 @@ internal sealed class HiveNativeScrollAdapter
                 cached.EffectiveMaximum)
         };
 
-        if (control is not ListView)
+        if (control is not HiveListView)
             HideNativeScrollBar(control.Handle, bar);
     }
 
