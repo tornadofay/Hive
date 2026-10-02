@@ -396,11 +396,25 @@ The reported maximize regression was corrected within Slice 4:
 
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
 
+## CRUD Native Scrollbar / Scroll Performance Remediation
+
+The latest CRUD maximize verification failure was remediated within the same Slice 4 boundary:
+- `HiveListView` now suppresses the native `WS_HSCROLL` / `WS_VSCROLL` window styles while hosted by `HiveScrollHost`, preserving native ListView scrolling and restoring the original styles when the host detaches;
+- the previous per-scroll `ShowScrollBar` calls were removed from the `HiveListView` position path, eliminating repeated native scrollbar hide/repaint work during wheel and scrollbar movement;
+- `HiveScrollHost` now updates native scroll state through a focused position synchronization path instead of running the full content resize/layout synchronization after every scroll value change;
+- redundant axis scroll operations are skipped when a wheel or scrollbar change affects only the other axis;
+- native-host resize layout is no longer updated twice before the coalesced synchronization pass;
+- focused regression coverage now verifies that a hosted `HiveListView` keeps the native scrollbar style bits removed across form maximize and repeated scrolling.
+
+Microsoft documents `LVM_SCROLL` as the native ListView content-scrolling mechanism and distinguishes it from the `LVS_NOSCROLL` style; Hive continues using `LVM_SCROLL` and does not disable ListView scrolling.
+
+No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
 
-Developer handoff after the tab metadata test remediation and native-scroll state remediation:
+Developer handoff after the CRUD native-scrollbar/scroll-performance remediation:
 
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
 Tests to run: `HiveScrollHostTests.NativeTextBoxContent_UsesHiveScrollBars`, `HiveScrollHostTests.NativeTreeViewContent_UsesHiveScrollBars`, `HiveScrollHostTests.NativeListViewContent_UsesHiveScrollBars`; then `HiveScrollHostTests.cs`, `HiveComboBoxTests.cs`, `HiveUiPolishTests.cs`, relevant Example Host UI tests, and the full `Hive.Tests` suite.
