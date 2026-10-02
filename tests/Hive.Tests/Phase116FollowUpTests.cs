@@ -416,7 +416,7 @@ public sealed class Phase116FollowUpTests
     }
 
     [WinFormsFact]
-    public void AdvancedConfigurationTree_UsesOverviewAndModelInformationLeaves()
+    public void AdvancedConfiguration_UsesHiveTabsForNavigation()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
         var context = CreateContext();
@@ -430,14 +430,12 @@ public sealed class Phase116FollowUpTests
         Assert.Equal(
             "Advanced Provider Configuration",
             form.Text);
-        Assert.Equal(
-            160,
-            form.NavigationSplitterDistance);
 
-        var names = form.NavigationTree
-            .Nodes
-            .Cast<TreeNode>()
-            .Select(node => node.Text)
+        Assert.IsType<HiveTabControl>(form.NavigationTabs);
+
+        var names = form.NavigationTabs.TabPages
+            .Cast<TabPage>()
+            .Select(page => page.Text)
             .ToArray();
 
         Assert.Equal(
@@ -450,7 +448,13 @@ public sealed class Phase116FollowUpTests
             ],
             names);
 
-        Assert.Equal("Overview", form.NavigationTree.SelectedNode?.Text);
+        Assert.Equal(
+            "Overview",
+            form.NavigationTabs.SelectedTab?.Text);
+
+        Assert.All(
+            form.NavigationTabs.TabPages.Cast<TabPage>(),
+            page => Assert.IsType<int>(page.Tag));
     }
 
     [WinFormsFact]
