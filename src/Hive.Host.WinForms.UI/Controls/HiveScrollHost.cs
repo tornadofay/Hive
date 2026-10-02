@@ -374,14 +374,22 @@ public sealed class HiveScrollHost : UserControl
 
             if (_nativeScrollAdapter is not null)
             {
-                _nativeScrollAdapter.SetPosition(
-                    _content,
-                    Orientation.Horizontal,
-                    horizontalValue);
-                _nativeScrollAdapter.SetPosition(
-                    _content,
-                    Orientation.Vertical,
-                    verticalValue);
+                if (horizontalValue != _horizontalScrollBar.Value)
+                {
+                    _nativeScrollAdapter.SetPosition(
+                        _content,
+                        Orientation.Horizontal,
+                        horizontalValue);
+                }
+
+                if (verticalValue != _verticalScrollBar.Value)
+                {
+                    _nativeScrollAdapter.SetPosition(
+                        _content,
+                        Orientation.Vertical,
+                        verticalValue);
+                }
+
                 SynchronizeNativeScrollPosition();
             }
             else
