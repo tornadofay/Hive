@@ -188,6 +188,59 @@ public sealed class HiveScrollHostTests
     }
 
     [Fact]
+    public void NativeListViewContent_UsesHiveScrollBars()
+    {
+        using var form = new Form
+        {
+            Size = new Size(500, 400)
+        };
+        using var host = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill
+        };
+        using var list = new HiveListView
+        {
+            View = View.Details,
+            HideSelection = false
+        };
+
+        list.Columns.Add("Name", 800);
+        for (var index = 1; index <= 160; index++)
+            list.Items.Add($"Item {index:000}");
+
+        form.Controls.Add(host);
+        host.Attach(list);
+        form.CreateControl();
+        host.CreateControl();
+        Application.DoEvents();
+        host.Synchronize();
+
+        Assert.Same(list, host.Content);
+        Assert.True(host.VerticalScrollState.CanScroll);
+        Assert.True(host.HorizontalScrollState.CanScroll);
+        Assert.True(host.VerticalScrollBarForTesting.Visible);
+        Assert.True(host.HorizontalScrollBarForTesting.Visible);
+        Assert.Equal(Point.Empty, list.Location);
+
+        host.SetScrollPosition(
+            host.HorizontalScrollState.EffectiveMaximum,
+            host.VerticalScrollState.EffectiveMaximum);
+
+        Assert.True(host.VerticalScrollPosition > 0);
+        Assert.True(host.HorizontalScrollPosition > 0);
+        Assert.True(list.TopItem?.Index > 0);
+    }
+
+    [Fact]
+    public void HiveCrudPage_UsesHiveScrollHostForList()
+    {
+        using var page = new HiveCrudPage<object>();
+
+        Assert.Same(page.ListView, page.ListScrollHostForTesting.Content);
+        Assert.IsType<HiveScrollHost>(page.ListScrollHostForTesting);
+    }
+
+    [Fact]
     public void Synchronize_AfterResizeClampsExistingPositionToNewBounds()
     {
         using var host = new HiveScrollHost
