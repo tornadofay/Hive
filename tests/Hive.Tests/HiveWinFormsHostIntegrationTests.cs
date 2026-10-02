@@ -147,7 +147,7 @@ public sealed class HiveWinFormsHostIntegrationTests
     public async Task Capture_AppliesFieldOverrideWhenConfiguredWithDifferentCase()
     {
         using var form = new Form();
-        var grid = new HiveDataGridView
+        var grid = new HostDataGridView
         {
             Name = "orders",
             AutoGenerateColumns = false
@@ -210,7 +210,7 @@ public sealed class HiveWinFormsHostIntegrationTests
     public async Task Capture_SensitiveFieldMetadataRedactsValueAndCurrentValue()
     {
         using var form = new Form();
-        var secret = new HiveTextBox
+        var secret = new HostTextBox
         {
             Name = "secret",
             Text = "top-secret"
@@ -236,7 +236,7 @@ public sealed class HiveWinFormsHostIntegrationTests
     public async Task Capture_ParentChildFieldMatchingIgnoresFieldNameCase()
     {
         using var form = new Form();
-        var parent = new HiveDataGridView
+        var parent = new HostDataGridView
         {
             Name = "invoice",
             AutoGenerateColumns = false
@@ -251,7 +251,7 @@ public sealed class HiveWinFormsHostIntegrationTests
                 DataPropertyName = "Id"
             });
 
-        var child = new HiveDataGridView
+        var child = new HostDataGridView
         {
             Name = "lines",
             AutoGenerateColumns = false
@@ -295,8 +295,8 @@ public sealed class HiveWinFormsHostIntegrationTests
     public async Task Capture_DuplicateExplicitControlIdentityFailsInsteadOfAliasing()
     {
         using var form = new Form();
-        var first = new HiveTextBox { Name = "first" };
-        var second = new HiveTextBox { Name = "second" };
+        var first = new HostTextBox { Name = "first" };
+        var second = new HostTextBox { Name = "second" };
         first.HiveIntegration.ControlId = "shared";
         second.HiveIntegration.ControlId = "shared";
         form.Controls.Add(first);
@@ -319,12 +319,12 @@ public sealed class HiveWinFormsHostIntegrationTests
     public async Task Capture_DuplicateExplicitSurfaceIdentityFailsInsteadOfAliasing()
     {
         using var form = new Form();
-        var first = new HiveDataGridView
+        var first = new HostDataGridView
         {
             Name = "orders",
             AutoGenerateColumns = false
         };
-        var second = new HiveDataGridView
+        var second = new HostDataGridView
         {
             Name = "orders2",
             AutoGenerateColumns = false
@@ -352,7 +352,7 @@ public sealed class HiveWinFormsHostIntegrationTests
     public async Task Capture_RejectsMissingExplicitPrimaryKeyField()
     {
         using var form = new Form();
-        var grid = new HiveDataGridView
+        var grid = new HostDataGridView
         {
             Name = "orders",
             AutoGenerateColumns = false
@@ -457,7 +457,7 @@ public sealed class HiveWinFormsHostIntegrationTests
     public async Task Capture_ComputedBaseFieldDoesNotExposeWriteCapability()
     {
         using var form = new Form();
-        var total = new HiveTextBox
+        var total = new HostTextBox
         {
             Name = "total",
             Text = "100"
@@ -500,7 +500,7 @@ public sealed class HiveWinFormsHostIntegrationTests
     public async Task ExplicitPathLikeControlIdentityRemainsResolvable()
     {
         using var form = new Form();
-        var control = new HiveTextBox
+        var control = new HostTextBox
         {
             Name = "customer",
             Text = "Example"
@@ -575,7 +575,7 @@ public sealed class HiveWinFormsHostIntegrationTests
             result.Error!.Category);
         Assert.Equal(
             "Example",
-            ((HiveTextBox)FindControl(form, "customer")).Text);
+            ((HostTextBox)FindControl(form, "customer")).Text);
     }
 
     [Fact]
@@ -668,7 +668,7 @@ public sealed class HiveWinFormsHostIntegrationTests
     {
         using var form = new Form();
 
-        var original = new HiveTextBox
+        var original = new HostTextBox
         {
             Name = "customer",
             Text = "Original"
@@ -688,7 +688,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         form.Controls.Remove(original);
         original.Dispose();
 
-        var replacement = new HiveTextBox
+        var replacement = new HostTextBox
         {
             Name = "customer",
             Text = "Replacement"
@@ -725,7 +725,7 @@ public sealed class HiveWinFormsHostIntegrationTests
     {
         using var form = new Form();
 
-        var original = new HiveTextBox
+        var original = new HostTextBox
         {
             Name = "customer",
             Text = "Original"
@@ -745,7 +745,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         form.Controls.Remove(original);
         original.Dispose();
 
-        var replacement = new HiveTextBox
+        var replacement = new HostTextBox
         {
             Name = "customer",
             Text = "Replacement"
@@ -781,7 +781,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         {
             Name = "originalContainer"
         };
-        var customer = new HiveTextBox
+        var customer = new HostTextBox
         {
             Name = "customer",
             Text = "Original"
@@ -1168,7 +1168,7 @@ public sealed class HiveWinFormsHostIntegrationTests
     public async Task ConsequentialInteraction_FromStaleCapture_IsRejected()
     {
         using var form = new Form();
-        var original = new HiveTextBox
+        var original = new HostTextBox
         {
             Name = "customer",
             Text = "Original"
@@ -1189,7 +1189,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         form.Controls.Remove(original);
         original.Dispose();
 
-        var replacement = new HiveTextBox
+        var replacement = new HostTextBox
         {
             Name = "customer",
             Text = "Replacement"
@@ -1224,7 +1224,7 @@ public sealed class HiveWinFormsHostIntegrationTests
     public async Task ConsequentialInteraction_RejectsReplacedDataSurfaceWithoutRecapture()
     {
         using var form = new Form();
-        var original = new HiveDataGridView
+        var original = new HostDataGridView
         {
             Name = "orders",
             AutoGenerateColumns = false
@@ -1257,7 +1257,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         form.Controls.Remove(original);
         original.Dispose();
 
-        var replacement = new HiveDataGridView
+        var replacement = new HostDataGridView
         {
             Name = "orders",
             AutoGenerateColumns = false
@@ -1303,7 +1303,7 @@ public sealed class HiveWinFormsHostIntegrationTests
     public async Task ConsequentialInteraction_RejectsReplacedControlWithoutRecapture()
     {
         using var form = new Form();
-        var original = new HiveTextBox
+        var original = new HostTextBox
         {
             Name = "customer",
             Text = "Original"
@@ -1323,7 +1323,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         form.Controls.Remove(original);
         original.Dispose();
 
-        var replacement = new HiveTextBox
+        var replacement = new HostTextBox
         {
             Name = "customer",
             Text = "Replacement"
@@ -1360,7 +1360,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         {
             Name = "originalContainer"
         };
-        var customer = new HiveTextBox
+        var customer = new HostTextBox
         {
             Name = "customer",
             Text = "Original"
@@ -1417,7 +1417,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         {
             Name = "originalContainer"
         };
-        var grid = new HiveDataGridView
+        var grid = new HostDataGridView
         {
             Name = "orders",
             AutoGenerateColumns = false
@@ -1484,7 +1484,7 @@ public sealed class HiveWinFormsHostIntegrationTests
     public async Task ConsequentialInteraction_CannotRebindOldCapabilityToCurrentCapture()
     {
         using var form = new Form();
-        var original = new HiveTextBox
+        var original = new HostTextBox
         {
             Name = "customer",
             Text = "Original"
@@ -1504,7 +1504,7 @@ public sealed class HiveWinFormsHostIntegrationTests
         form.Controls.Remove(original);
         original.Dispose();
 
-        var replacement = new HiveTextBox
+        var replacement = new HostTextBox
         {
             Name = "customer",
             Text = "Replacement",
@@ -1712,13 +1712,13 @@ public sealed class HiveWinFormsHostIntegrationTests
             Text = "Base Fixture"
         };
 
-        var customer = new HiveTextBox
+        var customer = new HostTextBox
         {
             Name = "customer",
             Text = "Example"
         };
 
-        var invoiceGrid = new HiveDataGridView
+        var invoiceGrid = new HostDataGridView
         {
             Name = "invoiceGrid",
             AutoGenerateColumns = false
@@ -1744,7 +1744,7 @@ public sealed class HiveWinFormsHostIntegrationTests
                 DataPropertyName = "Total"
             });
 
-        var lineGrid = new HiveDataGridView
+        var lineGrid = new HostDataGridView
         {
             Name = "invoiceLinesGrid",
             AutoGenerateColumns = false

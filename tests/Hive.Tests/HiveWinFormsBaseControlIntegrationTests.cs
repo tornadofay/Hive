@@ -10,13 +10,13 @@ public sealed class HiveWinFormsBaseControlIntegrationTests
     [Fact]
     public void BaseControlsPreserveNativeInheritanceExceptHiveOwnedComboBox()
     {
-        Assert.True(typeof(TextBox).IsAssignableFrom(typeof(HiveTextBox)));
+        Assert.True(typeof(TextBox).IsAssignableFrom(typeof(HostTextBox)));
         Assert.False(typeof(ComboBox).IsAssignableFrom(typeof(HiveComboBox)));
         Assert.True(typeof(Control).IsAssignableFrom(typeof(HiveComboBox)));
-        Assert.True(typeof(CheckBox).IsAssignableFrom(typeof(HiveCheckBox)));
-        Assert.True(typeof(DateTimePicker).IsAssignableFrom(typeof(HiveDateTimePicker)));
-        Assert.True(typeof(NumericUpDown).IsAssignableFrom(typeof(HiveNumericUpDown)));
-        Assert.True(typeof(DataGridView).IsAssignableFrom(typeof(HiveDataGridView)));
+        Assert.True(typeof(CheckBox).IsAssignableFrom(typeof(HostCheckBox)));
+        Assert.True(typeof(DateTimePicker).IsAssignableFrom(typeof(HostDateTimePicker)));
+        Assert.True(typeof(NumericUpDown).IsAssignableFrom(typeof(HostNumericUpDown)));
+        Assert.True(typeof(DataGridView).IsAssignableFrom(typeof(HostDataGridView)));
         Assert.True(typeof(Form).IsAssignableFrom(typeof(HiveForm)));
 
         using var combo = new HiveComboBox();
@@ -27,7 +27,7 @@ public sealed class HiveWinFormsBaseControlIntegrationTests
     [Fact]
     public void ConfigureFieldRejectsBlankFieldKeys()
     {
-        using var grid = new HiveDataGridView();
+        using var grid = new HostDataGridView();
 
         Assert.Throws<ArgumentException>(
             () => grid.HiveDataSurface.ConfigureField(" "));
@@ -36,7 +36,7 @@ public sealed class HiveWinFormsBaseControlIntegrationTests
     [Fact]
     public void DataSurfaceFieldOverridesUseCaseInsensitiveKeys()
     {
-        using var grid = new HiveDataGridView();
+        using var grid = new HostDataGridView();
 
         var metadata = grid.HiveDataSurface.ConfigureField("CustomerId");
         metadata.Required = true;
@@ -54,7 +54,7 @@ public sealed class HiveWinFormsBaseControlIntegrationTests
     [Fact]
     public void DataSurfaceRejectsDuplicateCapabilityIdentity()
     {
-        using var grid = new HiveDataGridView();
+        using var grid = new HostDataGridView();
         var id = Guid.Parse("00000000-0000-0000-0000-000000000010");
         var capability = new HiveHostCapabilityDescriptor(
             id,

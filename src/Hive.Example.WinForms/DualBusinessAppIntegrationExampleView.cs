@@ -317,7 +317,7 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
 
             Name = "phase14Fixture";
 
-            var invoiceNumber = new HiveTextBox
+            var invoiceNumber = new HostTextBox
             {
                 Name = "invoiceNumber",
                 Text = "INV-1001",
@@ -325,7 +325,7 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
                 Width = 260
             };
 
-            var invoiceGrid = new HiveDataGridView
+            var invoiceGrid = new HostDataGridView
             {
                 Name = "invoiceGrid",
                 Location = new Point(12, 48),
@@ -358,7 +358,7 @@ internal sealed class DualBusinessAppIntegrationExampleView : UserControl
             });
             invoiceGrid.DataSource = provider.Invoices;
 
-            var linesGrid = new HiveDataGridView
+            var linesGrid = new HostDataGridView
             {
                 Name = "invoiceLinesGrid",
                 Location = new Point(12, 224),

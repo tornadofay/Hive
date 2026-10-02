@@ -169,7 +169,7 @@ public sealed class HiveWinFormsHostContextTests
     public async Task Capture_RedactsSensitiveFieldMetadataText()
     {
         using var form = new Form();
-        var secret = new HiveTextBox
+        var secret = new HostTextBox
         {
             Name = "secret",
             Text = "top-secret"
