@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
@@ -182,6 +183,44 @@ public sealed class HiveScrollHostTests
     }
 
     [Fact]
+    public void NativeTextBox_MouseWheelScrollsHivePosition()
+    {
+        using var form = new Form
+        {
+            Size = new Size(500, 400)
+        };
+        using var host = new HiveScrollHost
+        {
+            Size = new Size(500, 400)
+        };
+        using var textBox = new TextBox
+        {
+            Multiline = true,
+            ScrollBars = ScrollBars.Vertical
+        };
+
+        textBox.Text = string.Join(
+            Environment.NewLine,
+            Enumerable.Range(1, 160)
+                .Select(index => $"Line {index:000}"));
+
+        form.Controls.Add(host);
+        host.Attach(textBox);
+        form.Show();
+        Application.DoEvents();
+        host.Synchronize();
+
+        Assert.True(host.VerticalScrollState.CanScroll);
+        Assert.Equal(0, host.VerticalScrollPosition);
+
+        SendMouseWheel(textBox.Handle, -120);
+        Application.DoEvents();
+        host.Synchronize();
+
+        Assert.True(host.VerticalScrollPosition > 0);
+    }
+
+    [Fact]
     public void NativeTreeViewContent_UsesHiveScrollBars()
     {
         using var form = new Form
@@ -219,6 +258,41 @@ public sealed class HiveScrollHostTests
         Assert.True(maximum > 0);
 
         host.SetScrollPosition(0, maximum);
+
+        Assert.True(host.VerticalScrollPosition > 0);
+    }
+
+    [Fact]
+    public void NativeTreeView_MouseWheelScrollsHivePosition()
+    {
+        using var form = new Form
+        {
+            Size = new Size(500, 400)
+        };
+        using var host = new HiveScrollHost
+        {
+            Size = new Size(500, 400)
+        };
+        using var tree = new TreeView();
+
+        var root = new TreeNode("Root");
+        for (var index = 1; index <= 160; index++)
+            root.Nodes.Add($"Child {index:000}");
+        tree.Nodes.Add(root);
+        root.Expand();
+
+        form.Controls.Add(host);
+        host.Attach(tree);
+        form.Show();
+        Application.DoEvents();
+        host.Synchronize();
+
+        Assert.True(host.VerticalScrollState.CanScroll);
+        Assert.Equal(0, host.VerticalScrollPosition);
+
+        SendMouseWheel(tree.Handle, -120);
+        Application.DoEvents();
+        host.Synchronize();
 
         Assert.True(host.VerticalScrollPosition > 0);
     }
@@ -279,6 +353,27 @@ public sealed class HiveScrollHostTests
 
         Assert.Same(page.ListView, page.ListScrollHostForTesting.Content);
         Assert.IsType<HiveScrollHost>(page.ListScrollHostForTesting);
+    }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SendMessage(
+        IntPtr hWnd,
+        int msg,
+        IntPtr wParam,
+        IntPtr lParam);
+
+    private static void SendMouseWheel(
+        IntPtr handle,
+        int delta)
+    {
+        var wParam = new IntPtr(
+            (long)(ushort)delta << 16);
+
+        SendMessage(
+            handle,
+            0x020A,
+            wParam,
+            IntPtr.Zero);
     }
 
     [Fact]
