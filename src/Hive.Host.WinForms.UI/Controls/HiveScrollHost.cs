@@ -379,7 +379,7 @@ public sealed class HiveScrollHost : UserControl
                     _content,
                     Orientation.Vertical,
                     verticalValue);
-                Synchronize();
+                SynchronizeNativeScrollPosition();
             }
             else
             {
@@ -506,7 +506,7 @@ public sealed class HiveScrollHost : UserControl
                     _content,
                     scrollBar.Orientation,
                     scrollBar.Value);
-                Synchronize();
+                SynchronizeNativeScrollPosition();
             }
             else
             {
@@ -517,6 +517,54 @@ public sealed class HiveScrollHost : UserControl
         finally
         {
             _scrolling = false;
+        }
+    }
+
+    private void SynchronizeNativeScrollPosition()
+    {
+        if (_nativeScrollAdapter is null ||
+            _content is null ||
+            _synchronizing ||
+            IsDisposed ||
+            Disposing)
+        {
+            return;
+        }
+
+        _synchronizing = true;
+        try
+        {
+            var horizontalVisible = _horizontalScrollBar.Visible;
+            var verticalVisible = _verticalScrollBar.Visible;
+
+            var horizontal = _nativeScrollAdapter.ReadState(
+                _content,
+                Orientation.Horizontal,
+                out _);
+            var vertical = _nativeScrollAdapter.ReadState(
+                _content,
+                Orientation.Vertical,
+                out _);
+
+            _horizontalScrollBar.SetState(horizontal);
+            _verticalScrollBar.SetState(vertical);
+
+            _horizontalScrollBar.Visible = horizontal.CanScroll;
+            _verticalScrollBar.Visible = vertical.CanScroll;
+            _horizontalScrollBar.Enabled = horizontal.CanScroll;
+            _verticalScrollBar.Enabled = vertical.CanScroll;
+
+            if (horizontalVisible != _horizontalScrollBar.Visible ||
+                verticalVisible != _verticalScrollBar.Visible)
+            {
+                UpdateScrollBarLayout();
+            }
+
+            NotifyScrollPositionChanged();
+        }
+        finally
+        {
+            _synchronizing = false;
         }
     }
 
