@@ -480,13 +480,14 @@ Remediation boundary:
 - preserve the deterministic attach/resize/style-change scrollbar suppression and the optimized scroll path already implemented;
 - no behavioral expansion or unrelated refactoring.
 
+## Verification Result — Developer Re-run 2026-10-03
+
+Developer ran the full `Hive.Tests` suite after pulling commit `a6cc0c113f625e7b68b26330864225ee473138e1`: **570 total, 569 passed, 1 failed, 0 skipped**.
+
+The only failure was `HiveScrollHostTests.NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling`. The failure occurs in the native scrollbar visibility assertion immediately after form maximize, confirming the remaining defect is the recorded ListView native scrollbar suppression lifecycle boundary.
+
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
-Developer handoff after the CRUD native-scrollbar/scroll-performance remediation:
-
-Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
-Tests to run: `HiveScrollHostTests.NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling`; `HiveScrollHostTests.NativeListViewContent_UsesHiveScrollBars`; then `HiveScrollHostTests.cs`, `HiveComboBoxTests.cs`, `HiveUiPolishTests.cs`, relevant Example Host UI tests, and the full `Hive.Tests` suite.
-
-Agent has not run the build or tests. Developer verification is required.
+The same Slice 4 remediation boundary remains active. No broader UI work is authorized by this failure.
