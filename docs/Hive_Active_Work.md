@@ -95,16 +95,37 @@ Remediation boundary:
 - add focused regression coverage for the corrected presentation/integration behavior;
 - update UI documentation only where the actual supported behavior changes.
 
+## Verification Failed / Remediation Required — CRUD List Scroll Integration
+
+The current Slice 4 verification boundary identified one remaining same-slice integration gap: `HiveCrudPage` uses `HiveListView`, but the CRUD list surface was still using native ListView scrollbars instead of the shared Hive scrollbar infrastructure.
+
+Remediation boundary:
+- host the existing `HiveListView` inside `HiveScrollHost` without replacing ListView item, selection, keyboard, owner-draw, or paging behavior;
+- extend the existing `HiveNativeScrollAdapter` only for ListView-specific native scroll synchronization;
+- add focused regression coverage proving ListView and `HiveCrudPage` use the shared Hive scroll host;
+- update UI documentation to distinguish native ListView behavior from Hive-owned scrollbar presentation.
+
+No DataGridView migration, ListView rewrite, new public scroll API, or unrelated UI refactoring is authorized.
+
 ## Visual / Native Scroll Remediation
 
 The reported visual verification defects were remediated within Slice 4:
 - `HiveComboBox` now uses a Hive-rounded field surface with normal, hover, pressed, disabled, and focused border/background states, a separated arrow area, and a centered native text editor sized to its preferred single-line height;
 - the editable field editor remains an ordinary WinForms `TextBox`, preserving the corrected text/selection event contract;
-- `HiveScrollHost` now has a bounded native-scroll adapter for directly attached multiline `TextBoxBase` and `TreeView` controls; the native viewport, keyboard input, selection, and control-specific scrolling remain intact while the native scrollbar presentation is hidden and mirrored by HiveScrollBar;
+- `HiveScrollHost` now has a bounded native-scroll adapter for directly attached multiline `TextBoxBase`, `TreeView`, and `ListView` controls; the native viewport, keyboard input, selection, and control-specific scrolling remain intact while the native scrollbar presentation is hidden and mirrored by HiveScrollBar;
 - Hive-owned multiline TextBox surfaces in the Example Test Surface, Example Output, MessageBox technical details, Model Information, and WorkItem rejection dialog now run through `HiveScrollHost`;
 - `HiveNavigationTree` instances in the Example Host, Settings, and Advanced Provider Configuration now run through `HiveScrollHost`;
-- focused regression coverage was added for `HiveComboBox` field geometry and adapter-backed TextBox/TreeView scrolling;
+- `HiveCrudPage` now hosts its existing `HiveListView` through `HiveScrollHost`; ListView scrolling uses the existing native control through a bounded ListView-specific adapter path while the visible scrollbars are Hive-owned;
+- focused regression coverage was added for `HiveComboBox` field geometry and adapter-backed TextBox/TreeView/ListView scrolling, including direct CRUD composition coverage;
 - `docs/ui/controls.md` now documents the bounded native-scroll adapter behavior and the Slice 4 integration boundary.
+
+## CRUD List Scroll Remediation
+
+The remaining Slice 4 CRUD scrollbar gap has been remediated:
+- `HiveNativeScrollAdapter` now supports `ListView` and uses the ListView's native `LVM_SCROLL` mechanism for position changes rather than replacing ListView scrolling internals;
+- `HiveScrollHost` synchronizes hosted ListView state and coalesces selection-triggered synchronization alongside its existing mouse-wheel/keyboard synchronization paths;
+- `HiveCrudPage` now places its `HiveListView` inside `HiveScrollHost`; the existing `HiveListView` public surface and native item/selection behavior remain unchanged;
+- focused tests cover both adapter-backed ListView scrolling and the CRUD composition boundary.
 
 ## Compilation Remediation
 
