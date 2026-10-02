@@ -153,40 +153,7 @@ internal sealed class HiveNativeScrollAdapter
         return GetCachedState(
             orientation,
             position,
-            out authoritative);        if (!hasScrollInfo ||
-            maximum < minimum ||
-            page <= 0)
-        {
-            return GetCachedState(
-                orientation,
-                position,
-                out authoritative);
-        }
-
-        var effectiveMaximum = Math.Max(
-            minimum,
-            maximum - page + 1);
-
-        var viewportSize = page;
-        var extent = Math.Max(
-            viewportSize,
-            effectiveMaximum - minimum + viewportSize);
-
-        var enabled = effectiveMaximum > minimum;
-
-        var state = HiveScrollState.Create(
-            orientation,
-            minimum,
-            minimum + extent,
-            info.nPos,
-            viewportSize,
-            smallChange: Math.Max(1, viewportSize / 10),
-            largeChange: Math.Max(1, viewportSize),
-            enabled: enabled);
-
-        _lastKnownStates[orientation] = state;
-        authoritative = true;
-        return state;
+            out authoritative);
     }
 
     private HiveScrollState GetCachedState(
