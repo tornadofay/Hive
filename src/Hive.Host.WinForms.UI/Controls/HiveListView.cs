@@ -91,7 +91,6 @@ public sealed class HiveListView : ListView
             m.Msg == WmWindowPosChanged &&
             IsResizeWindowPositionMessage(m.LParam))
         {
-            _nativeScrollBarsSuppressed = true;
             HideNativeScrollBars();
         }
 
