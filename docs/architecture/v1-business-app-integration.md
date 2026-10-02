@@ -917,16 +917,18 @@ public class InvoiceForm : HInvoiceForm
 }
 ```
 
-Common Hive controls may be used directly:
+Common host-integration controls may be used directly:
 
 ```csharp
-HiveTextBox
-HiveComboBox
-HiveCheckBox
-HiveDateTimePicker
-HiveNumericUpDown
-HiveDataGridView
+HostTextBox
+HostComboBox
+HostCheckBox
+HostDateTimePicker
+HostNumericUpDown
+HostDataGridView
 ```
+
+`HiveComboBox` and other `Hive*` controls are Hive-owned presentation controls, not host-integration bases. A host uses them when it wants Hive's presentation layer; they do not replace the host-integration path.
 
 A host may derive its own reusable application control from a Hive base control when it needs application-specific behavior, but it should not need a one-off wrapper class merely to obtain the common Hive integration behavior.
 
@@ -1040,23 +1042,37 @@ Public Hive documentation describes the neutral contracts, reusable WinForms bas
 Hive's reusable base controls and forms are Hive-owned implementation types. Host applications may derive from them, compose them, or bypass them through the compatibility adapter. Hive must not require host applications to expose their private business frameworks as public Hive types.
 
 
-### 17.6 Concrete WinForms base integration surface
+### 17.6 Concrete WinForms host-integration surface
 
-The preferred WinForms path uses a small, bounded set of Hive-owned integration controls. Most remain native-control-derived types that add integration metadata and safe conventions without moving host business logic into Hive. `HiveComboBox` is the deliberate first composite exception: its integration metadata remains part of the public contract while its visible field and popup presentation are Hive-owned.
+The preferred WinForms path uses a small, bounded set of Hive-owned **host-integration controls**. These controls exist to give Hive/AI a stable semantic bridge into an existing application's WinForms UI. They remain native-control-derived and intentionally do not own Hive presentation.
 
-The current V1 integration types are:
+The current V1 host-integration types are:
 
 ```
 HiveForm : Form
-HiveTextBox : TextBox
-HiveComboBox : Hive-owned UserControl composite
-HiveCheckBox : CheckBox
-HiveDateTimePicker : DateTimePicker
-HiveNumericUpDown : NumericUpDown
-HiveDataGridView : DataGridView
+HostTextBox : TextBox
+HostComboBox : ComboBox
+HostCheckBox : CheckBox
+HostDateTimePicker : DateTimePicker
+HostNumericUpDown : NumericUpDown
+HostDataGridView : DataGridView
 ```
 
-Each control exposes the bounded Hive-owned integration metadata required by the host-integration contract. The concrete `HiveComboBox` architecture is intentionally not assignable to native `ComboBox`; ordinary native `ComboBox` controls remain valid for business applications that do not use the Hive-specific presentation control.
+Each host control exposes the bounded Hive-owned integration metadata required by the host-integration contract. `HostComboBox` participates in the existing standard `ComboBox` value-adapter path, so the host control gains Hive/AI integration without becoming a Hive-rendered presentation control.
+
+`HiveComboBox` is separate. It is the Hive-owned presentation control used where Hive needs its own selection UI, filtering, popup rendering, and theme behavior. It is a `UserControl` composite and is intentionally not assignable to native `ComboBox`. Its internal editors are presentation implementation details and are not host-integration controls.
+
+The separation is intentional:
+
+```
+HostTextBox / HostComboBox / ...
+    = existing-application integration surface
+
+HiveComboBox / HiveTabControl / HiveScrollHost / ...
+    = Hive-owned presentation surface
+```
+
+A host application may use the host-integration bases when it can modify control inheritance, for example by deriving an application control from `HostComboBox`. Applications that already use custom or third-party controls, or cannot change their inheritance, continue to use the bounded native/custom adapter and semantic-provider compatibility path. Hive therefore does not require replacement of an existing UI library merely to obtain host integration.
 
 The metadata surface is intentionally bounded:
 
@@ -1085,11 +1101,6 @@ For data-surface identity, an explicit surface identifier wins; otherwise a uniq
 Capability identities generated from automatic behavior are deterministic for the canonical adapter/control/surface identity and capability kind. Capability identifiers remain identifiers, not authorization grants: Management authorization is still required before any consequential interaction. Consequential interaction requests are additionally bound to the capture identity from which their target and capability were obtained. The adapter also retains the captured WinForms target instances and rejects a mutation when a control/data surface has been replaced, removed, or reparented since that capture, even when no recapture has occurred yet.
 
 Within a captured host context, control identities, data-surface identities, and business-operation capability identities must be unique where the neutral contract would otherwise make authorization or target selection ambiguous. Lookup identity is additionally carried into lookup authorization, so an authorized lookup capability is bound to the specific requested lookup.
-
-`HiveDataGridView` exposes field metadata and stable-row identity configuration, but it does not become a generic data-access or business-write engine. Row mutation, host validation/save behavior, lookup resolution, and business/application actions remain host-owned through the bounded semantic-provider/operation hooks. The base control only supplies reusable contract metadata and safe standard interaction plumbing.
-
-Base metadata is owned by the host control/form instance. Disposing the adapter or host-integration registration does not dispose host controls or forms and does not invalidate host-owned application lifecycle beyond the registration itself.
-
 ## 17.7 WinForms adapter implementation responsibility boundary
 
 The concrete V1 WinForms implementation remains an internal implementation of the neutral host-integration contracts. The public adapter surface should stay a thin façade over cohesive internal boundaries rather than accumulating discovery, projection, target resolution, and interaction mechanics in one class.

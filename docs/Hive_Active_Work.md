@@ -74,6 +74,14 @@ The revision audit finding was remediated:
 - The control now raises one reliable `TextChanged` notification after real editable field changes, while preserving the committed selected item/index until selection is explicitly changed.
 - `HiveComboBoxTests.EditableFieldChange_RaisesTextChangedAndSynchronizesBaseText` directly exercises the editable field path; the existing programmatic-text regression and execution-target capability regression remain in place.
 
+## Host/UI Control Boundary Correction
+
+The host-integration base controls are explicitly named `HostTextBox`, `HostComboBox`, `HostCheckBox`, `HostDateTimePicker`, `HostNumericUpDown`, and `HostDataGridView`. The Hive-owned presentation controls keep their existing `Hive*` names, including `HiveComboBox`.
+
+`HiveComboBox` no longer embeds a Hive host-integration base control. Its internal field/filter editors are ordinary WinForms `TextBox` controls so the Hive presentation composite does not accidentally introduce host/AI integration controls into its private implementation hierarchy.
+
+`HostComboBox` is handled by the existing native `ComboBox` value-adapter path. The former `HiveComboBoxValueAdapter` is no longer part of the host-integration layer because the Hive-owned `HiveComboBox` is a presentation control rather than a host-integration base.
+
 ## Verification State
 
 Status: VERIFICATION PENDING

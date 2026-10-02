@@ -14,7 +14,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     private const int DefaultItemHeight = 34;
     private const int ArrowAreaWidth = 30;
 
-    private readonly HostTextBox _fieldEditor;
+    private readonly TextBox _fieldEditor;
     private readonly BindingSource _bindingSource;
     private readonly HiveComboBoxItemCollection _items;
     private readonly List<HiveComboBoxItem> _filteredItems = new();
@@ -69,7 +69,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         _bindingSource.ListChanged += BindingSourceOnListChanged;
         _bindingSource.CurrentChanged += BindingSourceOnCurrentChanged;
 
-        _fieldEditor = new HostTextBox
+        _fieldEditor = new TextBox
         {
             BorderStyle = BorderStyle.None,
             Dock = DockStyle.None,
@@ -1440,7 +1440,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
     private sealed class HiveComboBoxPopupForm : Form
     {
         private readonly HiveComboBox _owner;
-        private readonly HostTextBox _filterEditor;
+        private readonly TextBox _filterEditor;
         private readonly HiveScrollHost _scrollHost;
         private readonly HiveComboPopupList _list;
         private HiveThemeDefinition? _theme;
@@ -1467,7 +1467,7 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
             Deactivate += OnDeactivate;
             KeyDown += OnKeyDown;
 
-            _filterEditor = new HostTextBox
+            _filterEditor = new TextBox
             {
                 BorderStyle = BorderStyle.None,
                 Dock = DockStyle.Top,

@@ -270,38 +270,42 @@ void Append(string value);
 ```
 
 
-## WinForms host-integration base controls
+## WinForms host-integration controls
 
-Phase 1.14 provides a bounded set of Hive-owned integration bases. Most remain native-control-derived; `HiveComboBox` is now the first exception because Slice 2 gives it a Hive-owned composite presentation:
+Phase 1.14 provides a bounded set of Hive-owned **host-integration controls**. These are native-control-derived integration bases whose purpose is to make an existing WinForms application understandable and safely interactive through Hive's host-integration contract:
 
 ```csharp
 HiveForm
-HiveTextBox
-HiveComboBox
-HiveCheckBox
-HiveDateTimePicker
-HiveNumericUpDown
-HiveDataGridView
+HostTextBox
+HostComboBox
+HostCheckBox
+HostDateTimePicker
+HostNumericUpDown
+HostDataGridView
 ```
 
-The integration bases expose Hive-owned metadata without moving host business semantics into the UI controls. `HiveComboBox` retains that metadata contract while owning its visible field and popup presentation.
+Use these controls when the host application can change its control inheritance and wants the low-code integration path. They expose Hive integration metadata and bounded semantic defaults; they do not move host business semantics into Hive.
+
+HostComboBox is the host-integration ComboBox. Its value is handled through the ordinary native `ComboBox` adapter path.
+
+`HiveComboBox` is separate and remains the single public Hive selection control. It owns Hive's presentation, popup, filtering, selection visuals, and theme behavior. It is not a host-integration base control and is not assignable to native `ComboBox`.
 
 For field controls, use `HiveField` for explicit semantic overrides:
 
 ```csharp
-var customer = new HiveTextBox
+var customer = new HostTextBox
 {
     Name = "customer"
 };
 customer.HiveField.Required = true;
 
-var total = new HiveTextBox
+var total = new HostTextBox
 {
     Name = "total"
 };
 total.HiveField.Computed = true;
 
-var secret = new HiveTextBox
+var secret = new HostTextBox
 {
     Name = "secret"
 };
@@ -313,7 +317,7 @@ Set `Sensitive = true` for field values that must not appear in passive host-con
 For data surfaces, use `HiveDataSurface`:
 
 ```csharp
-var grid = new HiveDataGridView
+var grid = new HostDataGridView
 {
     Name = "invoiceLines"
 };
@@ -329,4 +333,6 @@ grid.HiveDataSurface.ChildKeyField = "InvoiceId";
 
 For a `HiveForm`, `HiveHostIntegration.HostName` can override the host display identity without changing the normal WinForms form lifecycle.
 
-Automatic metadata uses safe deterministic conventions first and explicit Hive metadata where supplied. Base metadata does not grant authorization and does not turn `HiveDataGridView` into a database or business-write engine. Row operations, lookup execution, validation/save behavior, and business actions remain host-owned through the existing bounded semantic-provider/operation path.
+Automatic metadata uses safe deterministic conventions first and explicit Hive metadata where supplied. Base metadata does not grant authorization and does not turn `HostDataGridView` into a database or business-write engine. Row operations, lookup execution, validation/save behavior, and business actions remain host-owned through the existing bounded semantic-provider/operation path.
+
+Existing native or custom/third-party controls remain supported through the compatibility adapter and semantic-provider path when a host cannot or should not derive from a Hive host-integration base.

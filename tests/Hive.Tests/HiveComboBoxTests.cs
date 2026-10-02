@@ -418,16 +418,19 @@ public sealed class HiveComboBoxTests
     }
 
     [Fact]
-    public void HostValueAdapter_HandlesHiveComboBoxExplicitly()
+    public void HostValueAdapter_HandlesHostComboBoxThroughNativeAdapter()
     {
-        using var combo = new HiveComboBox();
-        combo.Text = "Adapter value";
+        using var combo = new HostComboBox
+        {
+            Name = "combo",
+            Text = "Adapter value"
+        };
 
         Assert.True(
             WinFormsControlValueAdapters.TryGet(
                 combo,
                 out var adapter));
-        Assert.IsType<HiveComboBoxValueAdapter>(adapter);
+        Assert.IsType<ComboBoxValueAdapter>(adapter);
         Assert.Equal(
             typeof(string).FullName,
             adapter.ValueTypeName);
@@ -446,6 +449,12 @@ public sealed class HiveComboBoxTests
 
         Assert.True(result.IsSuccess, result.Error?.Message);
         Assert.Equal("Updated", combo.Text);
+
+        using var hiveCombo = new HiveComboBox();
+        Assert.False(
+            WinFormsControlValueAdapters.TryGet(
+                hiveCombo,
+                out _));
     }
 
     [Fact]
