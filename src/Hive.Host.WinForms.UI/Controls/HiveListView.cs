@@ -42,6 +42,7 @@ public sealed class HiveListView : ListView
     private readonly ImageList _rowImageList;
     private bool _suppressingNativeScrollBars;
     private bool _nativeScrollBarsSuppressed;
+    private bool _nativeScrollBarSuppressionPending;
 
     public HiveListView()
     {
@@ -92,12 +93,14 @@ public sealed class HiveListView : ListView
             IsResizeWindowPositionMessage(m.LParam))
         {
             HideNativeScrollBars();
+            RequestNativeScrollBarSuppression();
         }
 
         if (_nativeScrollBarsSuppressed &&
             m.Msg == WmStyleChanged)
         {
             HideNativeScrollBars();
+            RequestNativeScrollBarSuppression();
         }
     }
 
@@ -109,6 +112,18 @@ public sealed class HiveListView : ListView
         if (_nativeScrollBarsSuppressed)
         {
             HideNativeScrollBars();
+            RequestNativeScrollBarSuppression();
+        }
+    }
+
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+
+        if (_nativeScrollBarsSuppressed)
+        {
+            HideNativeScrollBars();
+            RequestNativeScrollBarSuppression();
         }
     }
 
@@ -356,9 +371,12 @@ public sealed class HiveListView : ListView
     {
         _nativeScrollBarsSuppressed = true;
         HideNativeScrollBars();
+        RequestNativeScrollBarSuppression();
     }
 
     internal void RestoreNativeScrollBars()
+    {
+        _nativeScrollBarSuppressionPending = false;
     {
         if (!_nativeScrollBarsSuppressed)
             return;
@@ -393,6 +411,40 @@ public sealed class HiveListView : ListView
         finally
         {
             _suppressingNativeScrollBars = false;
+        }
+    }
+
+    private void RequestNativeScrollBarSuppression()
+    {
+        if (!IsHandleCreated ||
+            !_nativeScrollBarsSuppressed ||
+            _nativeScrollBarSuppressionPending ||
+            IsDisposed ||
+            Disposing)
+        {
+            return;
+        }
+
+        _nativeScrollBarSuppressionPending = true;
+        try
+        {
+            BeginInvoke(new MethodInvoker(() =>
+            {
+                _nativeScrollBarSuppressionPending = false;
+
+                if (IsDisposed || Disposing || !_nativeScrollBarsSuppressed)
+                    return;
+
+                HideNativeScrollBars();
+            }));
+        }
+        catch (InvalidOperationException)
+        {
+            _nativeScrollBarSuppressionPending = false;
+        }
+        catch (ObjectDisposedException)
+        {
+            _nativeScrollBarSuppressionPending = false;
         }
     }
 
