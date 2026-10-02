@@ -332,6 +332,16 @@ User-authorized Slice 4 integration now replaces the Advanced Provider Configura
 
 This is the previously planned Slice 4 behavior for a real production TabControl consumer and does not introduce a new navigation framework.
 
+## Tab Navigation Verification Handoff
+
+The Advanced Provider Configuration navigation migration is implemented and documentation is aligned.
+
+Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
+Tests to run: `Phase116FollowUpTests.AdvancedConfiguration_UsesHiveTabsForNavigation`; `HiveTabControlTests.cs`; then the relevant Advanced Provider Configuration UI tests and the full `Hive.Tests` suite.
+
+Agent has not run the build or tests after this migration. Developer verification is required.
+
+
 ## Verification State
 
 Status: VERIFICATION PENDING
