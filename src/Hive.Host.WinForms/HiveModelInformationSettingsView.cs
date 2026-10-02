@@ -35,6 +35,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly Label _statusLabel;
     private readonly ListView _modelsList;
     private readonly TextBox _detailsBox;
+    private readonly HiveScrollHost _detailsScrollHost;
     private readonly Label _contextLabel;
     private CancellationTokenSource? _operationCts;
     private int _operationVersion;
@@ -140,6 +141,15 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             AccessibleName = "Selected model information"
         };
 
+        _detailsScrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            AccessibleName = "Selected model information scroll area",
+            AccessibleDescription = "Scroll the selected model information using Hive scrollbars."
+        };
+        _detailsScrollHost.Attach(_detailsBox);
+
         var split = new SplitContainer
         {
             Dock = DockStyle.Fill,
@@ -150,7 +160,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         split.Panel1.Padding = new Padding(0, 4, 8, 0);
         split.Panel2.Padding = new Padding(8, 4, 0, 0);
         split.Panel1.Controls.Add(_modelsList);
-        split.Panel2.Controls.Add(_detailsBox);
+        split.Panel2.Controls.Add(_detailsScrollHost);
 
         Controls.Add(split);
         Controls.Add(_statusLabel);
