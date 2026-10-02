@@ -354,9 +354,19 @@ Remediation boundary:
 
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring is authorized.
 
+## CRUD Maximize Scrollbar / Layout Remediation
+
+The reported maximize regression was corrected within Slice 4:
+- `HiveListView` native scrollbar suppression is now idempotent, so repeated `HiveScrollHost` synchronization no longer repeatedly calls the native hide operation;
+- `HiveScrollHost` avoids reassigning the same native content size/location during synchronization;
+- native-host resize synchronization is coalesced through the existing `RequestSynchronization()` path instead of running synchronously for every native-host resize event, reducing maximize/layout churn;
+- the existing native ListView scrolling, CRUD paging, selection, keyboard, owner-draw, and Hive-owned scrollbar presentation remain unchanged.
+
+No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
+
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Developer handoff after native-scroll state remediation:
 
