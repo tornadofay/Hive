@@ -222,11 +222,17 @@ public sealed class HiveScrollHostTests
         Assert.True(host.HorizontalScrollBarForTesting.Visible);
         Assert.Equal(Point.Empty, list.Location);
 
+        var lineHeight = Math.Max(1, list.GetItemRect(0).Height);
+        var targetVertical = Math.Min(
+            host.VerticalScrollState.EffectiveMaximum,
+            lineHeight * 2);
+
         host.SetScrollPosition(
             host.HorizontalScrollState.EffectiveMaximum,
-            host.VerticalScrollState.EffectiveMaximum);
+            targetVertical);
 
         Assert.True(host.VerticalScrollPosition > 0);
+        Assert.True(host.VerticalScrollPosition % lineHeight == 0);
         Assert.True(host.HorizontalScrollPosition > 0);
         Assert.True(list.TopItem?.Index > 0);
     }
