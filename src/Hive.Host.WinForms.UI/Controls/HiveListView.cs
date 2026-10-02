@@ -29,6 +29,7 @@ public sealed class HiveListView : ListView
     private Pen? _focusPen;
     private readonly ImageList _rowImageList;
     private bool _suppressingNativeScrollBars;
+    private bool _nativeScrollBarsSuppressed;
 
     public HiveListView()
     {
@@ -60,18 +61,12 @@ public sealed class HiveListView : ListView
         SmallImageList = _rowImageList;
     }
 
-    protected override void OnHandleCreated(EventArgs e)
-    {
-        base.OnHandleCreated(e);
-        HideNativeScrollBars();
-    }
-
     protected override void WndProc(ref Message m)
     {
         // ListView owns its scroll-window chrome internally. HiveScrollHost supplies
         // the visible scrollbars, so suppress the native non-client scrollbar paint
         // without replacing the ListView's native item/selection implementation.
-        if (m.Msg == WmNcPaint)
+        if (_nativeScrollBarsSuppressed && m.Msg == WmNcPaint)
         {
             HideNativeScrollBars();
             return;
@@ -79,10 +74,11 @@ public sealed class HiveListView : ListView
 
         base.WndProc(ref m);
 
-        if (m.Msg == WmWindowPosChanged ||
-            m.Msg == WmVScroll ||
-            m.Msg == WmHScroll ||
-            m.Msg == WmStyleChanged)
+        if (_nativeScrollBarsSuppressed &&
+            (m.Msg == WmWindowPosChanged ||
+             m.Msg == WmVScroll ||
+             m.Msg == WmHScroll ||
+             m.Msg == WmStyleChanged))
         {
             HideNativeScrollBars();
         }
@@ -332,6 +328,12 @@ public sealed class HiveListView : ListView
 
         if (previous >= 0 && previous < Items.Count)
             Invalidate(GetItemRect(previous));
+    }
+
+    internal void SuppressNativeScrollBars()
+    {
+        _nativeScrollBarsSuppressed = true;
+        HideNativeScrollBars();
     }
 
     private void HideNativeScrollBars()
