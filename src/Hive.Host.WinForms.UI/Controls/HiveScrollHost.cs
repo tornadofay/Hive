@@ -374,7 +374,12 @@ public sealed class HiveScrollHost : UserControl
 
             if (_nativeScrollAdapter is not null)
             {
-                if (horizontalValue != _horizontalScrollBar.Value)
+                var horizontalChanged =
+                    horizontalValue != _horizontalScrollBar.Value;
+                var verticalChanged =
+                    verticalValue != _verticalScrollBar.Value;
+
+                if (horizontalChanged)
                 {
                     _nativeScrollAdapter.SetPosition(
                         _content,
@@ -382,7 +387,7 @@ public sealed class HiveScrollHost : UserControl
                         horizontalValue);
                 }
 
-                if (verticalValue != _verticalScrollBar.Value)
+                if (verticalChanged)
                 {
                     _nativeScrollAdapter.SetPosition(
                         _content,
@@ -390,7 +395,9 @@ public sealed class HiveScrollHost : UserControl
                         verticalValue);
                 }
 
-                SynchronizeNativeScrollPosition();
+                SynchronizeNativeScrollPosition(
+                    horizontalChanged,
+                    verticalChanged);
             }
             else
             {
@@ -516,7 +523,9 @@ public sealed class HiveScrollHost : UserControl
                     _content,
                     scrollBar.Orientation,
                     scrollBar.Value);
-                SynchronizeNativeScrollPosition();
+                SynchronizeNativeScrollPosition(
+                    scrollBar.Orientation == Orientation.Horizontal,
+                    scrollBar.Orientation == Orientation.Vertical);
             }
             else
             {
@@ -530,13 +539,16 @@ public sealed class HiveScrollHost : UserControl
         }
     }
 
-    private void SynchronizeNativeScrollPosition()
+    private void SynchronizeNativeScrollPosition(
+        bool horizontalChanged,
+        bool verticalChanged)
     {
         if (_nativeScrollAdapter is null ||
             _content is null ||
             _synchronizing ||
             IsDisposed ||
-            Disposing)
+            Disposing ||
+            (!horizontalChanged && !verticalChanged))
         {
             return;
         }
@@ -547,22 +559,27 @@ public sealed class HiveScrollHost : UserControl
             var horizontalVisible = _horizontalScrollBar.Visible;
             var verticalVisible = _verticalScrollBar.Visible;
 
-            var horizontal = _nativeScrollAdapter.ReadState(
-                _content,
-                Orientation.Horizontal,
-                out _);
-            var vertical = _nativeScrollAdapter.ReadState(
-                _content,
-                Orientation.Vertical,
-                out _);
+            if (horizontalChanged)
+            {
+                var horizontal = _nativeScrollAdapter.ReadState(
+                    _content,
+                    Orientation.Horizontal,
+                    out _);
+                _horizontalScrollBar.SetState(horizontal);
+                _horizontalScrollBar.Visible = horizontal.CanScroll;
+                _horizontalScrollBar.Enabled = horizontal.CanScroll;
+            }
 
-            _horizontalScrollBar.SetState(horizontal);
-            _verticalScrollBar.SetState(vertical);
-
-            _horizontalScrollBar.Visible = horizontal.CanScroll;
-            _verticalScrollBar.Visible = vertical.CanScroll;
-            _horizontalScrollBar.Enabled = horizontal.CanScroll;
-            _verticalScrollBar.Enabled = vertical.CanScroll;
+            if (verticalChanged)
+            {
+                var vertical = _nativeScrollAdapter.ReadState(
+                    _content,
+                    Orientation.Vertical,
+                    out _);
+                _verticalScrollBar.SetState(vertical);
+                _verticalScrollBar.Visible = vertical.CanScroll;
+                _verticalScrollBar.Enabled = vertical.CanScroll;
+            }
 
             if (horizontalVisible != _horizontalScrollBar.Visible ||
                 verticalVisible != _verticalScrollBar.Visible)
