@@ -425,6 +425,23 @@ Remediation boundary:
 
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring is authorized.
 
+## Verification Failed / Remediation Required — CRUD Native Scrollbar Suppression Still Not Effective
+
+Developer verification reports that `HiveScrollHostTests.NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling` still sees a native scrollbar immediately after attachment.
+
+Investigation:
+- the current `HiveListView` suppression path queries `GetScrollBarInfo` before calling `ShowScrollBar`;
+- during native ListView initialization/layout, that visibility query is not a reliable gate for whether the ListView's scrollbar presentation will repaint;
+- the suppression contract therefore needs to issue both native hide operations at the explicit attach/resize/style boundaries, without using the visibility query as a prerequisite.
+
+Remediation boundary:
+- make native scrollbar suppression deterministic at attach, resize, and native-style-change boundaries;
+- do not reintroduce suppression calls into the high-frequency native vertical/horizontal scroll path;
+- preserve native ListView `LVM_SCROLL`, owner-draw, selection, keyboard, and CRUD behavior;
+- keep the existing Hive-owned scrollbar presentation.
+
+No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring is authorized.
+
 ## Verification Failed / Remediation Required — CRUD Resize vs. Native Scroll Repaint
 
 Developer re-verification still reports native ListView scrollbars during maximized CRUD use and noticeable up/down scroll lag.
