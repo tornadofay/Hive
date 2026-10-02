@@ -194,7 +194,7 @@ The normalized state treats `Maximum` as the content extent endpoint and derives
 
 ## Slice 4 integration
 
-Existing Hive Settings/configuration selectors and the shared `HiveCrudPage` status filter use `HiveComboBox` where the interaction is selection-oriented. Free-form fields that depend on native editable/autocomplete behavior remain native. The Example Host's configured-agent selector also uses `HiveComboBox` because it is a selection surface. Settings Overview and Advanced Provider Configuration overview content use `HiveScrollHost`. Hive-owned multiline `TextBoxBase` surfaces, `HiveNavigationTree`, and `HiveListView`/CRUD list surfaces are hosted through `HiveScrollHost` so their visible scrollbars use the shared Hive scrollbar treatment. `DataGridView` scrolling remains native.
+Existing Hive Settings/configuration selectors and the shared `HiveCrudPage` status filter use `HiveComboBox` where the interaction is selection-oriented. Free-form fields that depend on native editable/autocomplete behavior remain native. The Example Host's configured-agent selector also uses `HiveComboBox` because it is a selection surface. Settings Overview content uses `HiveScrollHost`. The Advanced Provider Configuration surface uses `HiveTabControl` for its Overview, Providers, Accounts / Credentials, Execution Targets, and Model Information navigation. Hive-owned multiline `TextBoxBase` surfaces, `HiveNavigationTree`, and `HiveListView`/CRUD list surfaces are hosted through `HiveScrollHost` where their visible scrollbars use the shared Hive scrollbar treatment. `DataGridView` scrolling remains native.
 
 ## HiveTabControl
 
