@@ -561,11 +561,11 @@ public sealed class HiveComboBox : UserControl, IHiveWinFormsFieldControl
         if (theme is null)
         {
             e.Graphics.FillPath(SystemBrushes.Window, _path);
-            using var border = new Pen(
+            using var fallbackBorder = new Pen(
                 SystemColors.WindowFrame,
                 BorderWidth);
 
-            e.Graphics.DrawPath(border, _path);
+            e.Graphics.DrawPath(fallbackBorder, _path);
             return;
         }
 
