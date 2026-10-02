@@ -205,12 +205,11 @@ internal sealed class HiveNativeScrollAdapter
         if (orientation == Orientation.Vertical)
         {
             var lineHeight = ResolveListViewLineHeight(listView);
-            var quantizedTarget = Math.Clamp(
+            var quantizedTarget = Math.Max(
+                0,
                 (int)Math.Round(
                     target / (double)lineHeight,
-                    MidpointRounding.AwayFromZero) * lineHeight,
-                current - (current % lineHeight),
-                int.MaxValue);
+                    MidpointRounding.AwayFromZero) * lineHeight);
 
             target = quantizedTarget;
         }
