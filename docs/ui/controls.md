@@ -194,7 +194,7 @@ The normalized state treats `Maximum` as the content extent endpoint and derives
 
 ## Slice 4 integration
 
-Existing Hive Settings/configuration selectors and the shared `HiveCrudPage` status filter use `HiveComboBox` where the interaction is selection-oriented. Free-form fields that depend on native editable/autocomplete behavior remain native. The Example Host's configured-agent selector also uses `HiveComboBox` because it is a selection surface. Settings Overview and Advanced Provider Configuration overview content use `HiveScrollHost`; specialized ListView, TreeView, and DataGridView scrolling remains native where no bounded control-specific replacement is required.
+Existing Hive Settings/configuration selectors and the shared `HiveCrudPage` status filter use `HiveComboBox` where the interaction is selection-oriented. Free-form fields that depend on native editable/autocomplete behavior remain native. The Example Host's configured-agent selector also uses `HiveComboBox` because it is a selection surface. Settings Overview and Advanced Provider Configuration overview content use `HiveScrollHost`. Hive-owned multiline `TextBoxBase` surfaces and `HiveNavigationTree` are also hosted through `HiveScrollHost` so their visible scrollbars use the shared Hive scrollbar treatment. Specialized `ListView` and `DataGridView` scrolling remains native.
 
 ## HiveTabControl
 
@@ -239,7 +239,9 @@ Members: `Content`, `HorizontalScrollState`, `VerticalScrollState`, `HorizontalS
 
 The host accepts one explicit content control and does not dispose a detached/replaced control. While content is attached, normal WinForms parent/child disposal semantics apply. Attaching content that already belongs to another parent is rejected rather than silently reparenting it. The host overlays Hive scrollbars without reserving layout space for them, synchronizes after resize/content changes, forwards mouse-wheel input from the attached control subtree, and prevents scrollbar/content feedback loops.
 
-`HiveEditorLayout` uses `HiveScrollHost` for its field region. Native `TreeView` and `ListView` scrolling remains native unless a later control-specific integration proves reliable viewport synchronization.
+When the directly attached content is a multiline `TextBoxBase` or `TreeView`, HiveScrollHost uses a bounded native-scroll adapter: the native viewport and keyboard/mouse behavior remain intact, native scrollbars are hidden, and the HiveScrollBar pair mirrors and controls the native scroll position. This keeps the specialized control implementation native while replacing only its visible scrollbar presentation.
+
+`HiveEditorLayout` uses `HiveScrollHost` for its field region. Hive-owned multiline text surfaces and `HiveNavigationTree` use the same adapter-backed host where custom scrollbar presentation is required. Specialized `ListView` and `DataGridView` scrolling remains native by design.
 ## HiveNavigationTree
 
 Use for Example Host hierarchical navigation.
