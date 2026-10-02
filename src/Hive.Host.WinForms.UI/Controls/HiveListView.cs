@@ -7,6 +7,11 @@ namespace Hive.Host.WinForms.UI.Controls;
 public sealed class HiveListView : ListView
 {
     private const int RowHeight = 34;
+    private const int WmNcPaint = 0x0085;
+    private const int WmWindowPosChanged = 0x0047;
+    private const int WmStyleChanged = 0x007D;
+    private const int WmVScroll = 0x0115;
+    private const int WmHScroll = 0x0114;
 
     private HiveThemeDefinition? _theme;
     private int _hoverIndex = -1;
@@ -52,6 +57,28 @@ public sealed class HiveListView : ListView
         };
         _rowImageList.Images.Add(new Bitmap(1, RowHeight));
         SmallImageList = _rowImageList;
+    }
+
+    protected override void WndProc(ref Message m)
+    {
+        // ListView owns its scroll-window chrome internally. HiveScrollHost supplies
+        // the visible scrollbars, so suppress the native non-client scrollbar paint
+        // without replacing the ListView's native item/selection implementation.
+        if (m.Msg == WmNcPaint)
+        {
+            HideNativeScrollBars();
+            return;
+        }
+
+        base.WndProc(ref m);
+
+        if (m.Msg == WmWindowPosChanged ||
+            m.Msg == WmVScroll ||
+            m.Msg == WmHScroll ||
+            m.Msg == WmStyleChanged)
+        {
+            HideNativeScrollBars();
+        }
     }
 
     protected override void OnResize(EventArgs e)
@@ -299,6 +326,26 @@ public sealed class HiveListView : ListView
         if (previous >= 0 && previous < Items.Count)
             Invalidate(GetItemRect(previous));
     }
+
+    private void HideNativeScrollBars()
+    {
+        if (!IsHandleCreated)
+            return;
+
+        HideNativeScrollBar(Handle, 0);
+        HideNativeScrollBar(Handle, 1);
+    }
+
+    [System.Runtime.InteropServices.DllImport(
+        "user32.dll",
+        SetLastError = true)]
+    private static extern bool ShowScrollBar(
+        IntPtr handle,
+        int bar,
+        bool show);
+
+    private static void HideNativeScrollBar(IntPtr handle, int bar) =>
+        ShowScrollBar(handle, bar, false);
 
     private void ApplySurfaceTheme(HiveThemeDefinition theme)
     {
