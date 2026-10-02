@@ -11,6 +11,7 @@ public sealed class HiveScrollHost : UserControl
     private readonly HiveScrollBar _horizontalScrollBar;
     private readonly HiveScrollBar _verticalScrollBar;
     private readonly HashSet<Control> _hookedContentControls = new();
+    private HiveNativeScrollAdapter? _nativeScrollAdapter;
 
     private Control? _content;
     private ContentPresentation? _contentPresentation;
@@ -108,9 +109,19 @@ public sealed class HiveScrollHost : UserControl
 
         _content = content;
         _contentPresentation = ContentPresentation.Capture(content);
+        _nativeScrollAdapter = HiveNativeScrollAdapter.Supports(content)
+            ? new HiveNativeScrollAdapter()
+            : null;
 
-        if (content is ScrollableControl scrollable)
+        if (_nativeScrollAdapter is not null)
+        {
+            if (content is TextBoxBase textBox)
+                textBox.ScrollBars = textBox.ScrollBars;
+        }
+        else if (content is ScrollableControl scrollable)
+        {
             scrollable.AutoScroll = false;
+        }
 
         content.Dock = DockStyle.None;
         content.Anchor = AnchorStyles.Top | AnchorStyles.Left;
@@ -122,6 +133,19 @@ public sealed class HiveScrollHost : UserControl
         content.Resize += ContentChanged;
         content.Layout += ContentChanged;
         content.SizeChanged += ContentChanged;
+        content.HandleCreated += NativeContentHandleCreated;
+        content.FontChanged += ContentChanged;
+        content.KeyUp += NativeContentInteractionChanged;
+
+        if (content is TextBoxBase textBox)
+            textBox.TextChanged += ContentChanged;
+
+        if (content is TreeView tree)
+        {
+            tree.AfterExpand += NativeContentInteractionChanged;
+            tree.AfterCollapse += NativeContentInteractionChanged;
+            tree.AfterSelect += NativeContentInteractionChanged;
+        }
 
         Synchronize();
     }
@@ -135,6 +159,19 @@ public sealed class HiveScrollHost : UserControl
         content.Resize -= ContentChanged;
         content.Layout -= ContentChanged;
         content.SizeChanged -= ContentChanged;
+        content.HandleCreated -= NativeContentHandleCreated;
+        content.FontChanged -= ContentChanged;
+        content.KeyUp -= NativeContentInteractionChanged;
+
+        if (content is TextBoxBase textBox)
+            textBox.TextChanged -= ContentChanged;
+
+        if (content is TreeView tree)
+        {
+            tree.AfterExpand -= NativeContentInteractionChanged;
+            tree.AfterCollapse -= NativeContentInteractionChanged;
+            tree.AfterSelect -= NativeContentInteractionChanged;
+        }
 
         UnhookContentControls(content);
         _viewport.Controls.Remove(content);
@@ -145,6 +182,7 @@ public sealed class HiveScrollHost : UserControl
 
         _content = null;
         _contentPresentation = null;
+        _nativeScrollAdapter = null;
 
         _horizontalScrollBar.SetState(
             HiveScrollState.Create(
@@ -200,6 +238,32 @@ public sealed class HiveScrollHost : UserControl
             var viewportSize = new Size(
                 Math.Max(0, _viewport.ClientSize.Width),
                 Math.Max(0, _viewport.ClientSize.Height));
+
+            if (_nativeScrollAdapter is not null)
+            {
+                _content.Size = viewportSize;
+                _content.Location = Point.Empty;
+
+                var horizontal = _nativeScrollAdapter.ReadState(
+                    _content,
+                    Orientation.Horizontal);
+                var vertical = _nativeScrollAdapter.ReadState(
+                    _content,
+                    Orientation.Vertical);
+
+                _horizontalScrollBar.SetState(horizontal);
+                _verticalScrollBar.SetState(vertical);
+
+                _horizontalScrollBar.Visible = horizontal.CanScroll;
+                _verticalScrollBar.Visible = vertical.CanScroll;
+                _horizontalScrollBar.Enabled = horizontal.CanScroll;
+                _verticalScrollBar.Enabled = vertical.CanScroll;
+
+                UpdateScrollBarLayout();
+                NotifyScrollPositionChanged();
+                return;
+            }
+
             var contentSize = MeasureContentSize(viewportSize);
 
             var horizontal = HiveScrollState.Create(
@@ -267,11 +331,26 @@ public sealed class HiveScrollHost : UserControl
                 _verticalScrollBar.State.Minimum,
                 _verticalScrollBar.State.EffectiveMaximum);
 
-            _horizontalScrollBar.SetValue(horizontalValue);
-            _verticalScrollBar.SetValue(verticalValue);
+            if (_nativeScrollAdapter is not null)
+            {
+                _nativeScrollAdapter.SetPosition(
+                    _content,
+                    Orientation.Horizontal,
+                    horizontalValue);
+                _nativeScrollAdapter.SetPosition(
+                    _content,
+                    Orientation.Vertical,
+                    verticalValue);
+                Synchronize();
+            }
+            else
+            {
+                _horizontalScrollBar.SetValue(horizontalValue);
+                _verticalScrollBar.SetValue(verticalValue);
 
-            ApplyContentLocation();
-            NotifyScrollPositionChanged();
+                ApplyContentLocation();
+                NotifyScrollPositionChanged();
+            }
         }
         finally
         {
@@ -285,6 +364,12 @@ public sealed class HiveScrollHost : UserControl
 
         UpdateScrollBarLayout();
         Synchronize();
+    }
+
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        RequestSynchronization();
     }
 
     protected override void OnLayout(LayoutEventArgs levent)
@@ -312,6 +397,20 @@ public sealed class HiveScrollHost : UserControl
                 content.Resize -= ContentChanged;
                 content.Layout -= ContentChanged;
                 content.SizeChanged -= ContentChanged;
+                content.HandleCreated -= NativeContentHandleCreated;
+                content.FontChanged -= ContentChanged;
+                content.KeyUp -= NativeContentInteractionChanged;
+
+                if (content is TextBoxBase textBox)
+                    textBox.TextChanged -= ContentChanged;
+
+                if (content is TreeView tree)
+                {
+                    tree.AfterExpand -= NativeContentInteractionChanged;
+                    tree.AfterCollapse -= NativeContentInteractionChanged;
+                    tree.AfterSelect -= NativeContentInteractionChanged;
+                }
+
                 UnhookContentControls(content);
             }
         }
@@ -344,8 +443,21 @@ public sealed class HiveScrollHost : UserControl
         _scrolling = true;
         try
         {
-            ApplyContentLocation();
-            NotifyScrollPositionChanged();
+            if (_nativeScrollAdapter is not null &&
+                _content is not null &&
+                sender is HiveScrollBar scrollBar)
+            {
+                _nativeScrollAdapter.SetPosition(
+                    _content,
+                    scrollBar.Orientation,
+                    scrollBar.Value);
+                Synchronize();
+            }
+            else
+            {
+                ApplyContentLocation();
+                NotifyScrollPositionChanged();
+            }
         }
         finally
         {
@@ -371,7 +483,15 @@ public sealed class HiveScrollHost : UserControl
             sender is ListControl ||
             sender is DataGridView ||
             sender is TreeView)
+        {
+            if (_nativeScrollAdapter is not null &&
+                ReferenceEquals(sender, _content))
+            {
+                RequestSynchronization();
+            }
+
             return;
+        }
 
         var steps = e.Delta / SystemInformation.MouseWheelScrollDelta;
         if (steps == 0)
@@ -410,6 +530,12 @@ public sealed class HiveScrollHost : UserControl
         foreach (Control child in control.Controls)
             UnhookContentControls(child);
     }
+
+    private void NativeContentHandleCreated(object? sender, EventArgs e) =>
+        RequestSynchronization();
+
+    private void NativeContentInteractionChanged(object? sender, EventArgs e) =>
+        RequestSynchronization();
 
     private void DescendantControlAdded(
         object? sender,
@@ -473,7 +599,8 @@ public sealed class HiveScrollHost : UserControl
 
     private void ApplyContentLocation()
     {
-        if (_content is null)
+        if (_content is null ||
+            _nativeScrollAdapter is not null)
             return;
 
         _content.Location = new Point(
@@ -511,6 +638,11 @@ public sealed class HiveScrollHost : UserControl
     {
         if (_content is null)
             return Size.Empty;
+
+        if (_nativeScrollAdapter is not null)
+            return new Size(
+                Math.Max(0, viewportSize.Width),
+                Math.Max(0, viewportSize.Height));
 
         var viewportWidth = Math.Max(1, viewportSize.Width);
         var currentSize = _content.Size;
