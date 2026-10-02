@@ -125,8 +125,8 @@ public sealed class HiveScrollHostTests
 
         form.Controls.Add(host);
         host.Attach(textBox);
-        form.CreateControl();
-        host.CreateControl();
+        form.Show();
+        Application.DoEvents();
 
         host.SetBounds(0, 0, 0, 0);
         host.Synchronize();
@@ -164,8 +164,7 @@ public sealed class HiveScrollHostTests
 
         form.Controls.Add(host);
         host.Attach(textBox);
-        form.CreateControl();
-        host.CreateControl();
+        form.Show();
         Application.DoEvents();
         host.Synchronize();
 
@@ -207,8 +206,7 @@ public sealed class HiveScrollHostTests
 
         form.Controls.Add(host);
         host.Attach(tree);
-        form.CreateControl();
-        host.CreateControl();
+        form.Show();
         Application.DoEvents();
         host.Synchronize();
 
@@ -248,8 +246,7 @@ public sealed class HiveScrollHostTests
 
         form.Controls.Add(host);
         host.Attach(list);
-        form.CreateControl();
-        host.CreateControl();
+        form.Show();
         Application.DoEvents();
         host.Synchronize();
 
