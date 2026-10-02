@@ -25,11 +25,8 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
     private readonly IHiveExampleOutput? _output;
-    private readonly HiveNavigationTree _navigation;
-    private readonly HiveScrollHost _navigationScrollHost;
-    private readonly SplitContainer _navigationSplit;
-    private readonly Panel _contentHost;
-    private readonly Dictionary<AdvancedPage, TreeNode> _nodes = new();
+    private readonly HiveTabControl _navigationTabs;
+    private readonly Dictionary<AdvancedPage, TabPage> _tabs = new();
     private CancellationTokenSource? _pageCts;
     private Control? _currentPage;
     private int _pageRequestVersion;
@@ -61,91 +58,47 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
 
         SetBodyPadding(new Padding(12));
 
-        _navigation = new HiveNavigationTree
-        {
-            Dock = DockStyle.Fill,
-            BorderStyle = BorderStyle.None,
-            HideSelection = false,
-            FullRowSelect = true,
-            ShowLines = false,
-            ShowPlusMinus = false,
-            ShowRootLines = false,
-            AccessibleName = "Advanced Provider Configuration navigation"
-        };
-
-        AddNavigation(new NavigationEntry("Overview", AdvancedPage.Overview));
-        AddNavigation(new NavigationEntry("Providers", AdvancedPage.Providers));
-        AddNavigation(new NavigationEntry("Accounts / Credentials", AdvancedPage.Accounts));
-        AddNavigation(new NavigationEntry("Execution Targets", AdvancedPage.ExecutionTargets));
-        AddNavigation(new NavigationEntry("Model Information", AdvancedPage.ModelInformation));
-
-        _contentHost = new Panel
-        {
-            Dock = DockStyle.Fill,
-            Padding = new Padding(16, 0, 0, 0)
-        };
-
-        _navigationSplit = new SplitContainer
-        {
-            Dock = DockStyle.Fill,
-            Orientation = Orientation.Vertical,
-            FixedPanel = FixedPanel.Panel1,
-            IsSplitterFixed = true,
-            SplitterWidth = 1
-        };
-        _navigationScrollHost = new HiveScrollHost
+        _navigationTabs = new HiveTabControl
         {
             Dock = DockStyle.Fill,
             Margin = Padding.Empty,
-            AccessibleName = "Advanced Provider Configuration navigation scroll area",
-            AccessibleDescription = "Scroll the advanced configuration navigation using Hive scrollbars."
+            Padding = Padding.Empty,
+            AccessibleName = "Advanced Provider Configuration tabs",
+            AccessibleRole = AccessibleRole.PageTabList
         };
-        _navigationScrollHost.Attach(_navigation);
 
-        _navigationSplit.Panel1.Padding = new Padding(4);
-        _navigationSplit.Panel2.Padding = new Padding(4);
-        _navigationSplit.Panel1.Controls.Add(_navigationScrollHost);
-        _navigationSplit.Panel2.Controls.Add(_contentHost);
+        AddTab(new NavigationEntry("Overview", AdvancedPage.Overview));
+        AddTab(new NavigationEntry("Providers", AdvancedPage.Providers));
+        AddTab(new NavigationEntry("Accounts / Credentials", AdvancedPage.Accounts));
+        AddTab(new NavigationEntry("Execution Targets", AdvancedPage.ExecutionTargets));
+        AddTab(new NavigationEntry("Model Information", AdvancedPage.ModelInformation));
 
-        BodyPanel.Controls.Add(_navigationSplit);
+        BodyPanel.Controls.Add(_navigationTabs);
         BodyPanel.PerformLayout();
-        _navigationSplit.PerformLayout();
-
-        _navigationSplit.SplitterDistance = 160;
 
         ThemeManager.Apply(BodyPanel);
 
-        _navigation.AfterSelect += NavigationAfterSelect;
+        _navigationTabs.SelectedIndexChanged += NavigationTabChanged;
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
 
-        if (_nodes.TryGetValue(AdvancedPage.Overview, out var overviewNode))
-            _navigation.SelectedNode = overviewNode;
+        _navigationTabs.SelectedIndex = 0;
 
         Load += async (_, _) => await SelectCurrentPageAsync().ConfigureAwait(true);
     }
 
-    internal TreeView NavigationTree => _navigation;
+    internal HiveTabControl NavigationTabs => _navigationTabs;
 
-    internal int NavigationSplitterDistance => _navigationSplit.SplitterDistance;
-
-    internal Panel ContentHost => _contentHost;
-
-    private void AddNavigation(NavigationEntry entry)
+    private void AddTab(NavigationEntry entry)
     {
-        var node = new TreeNode(entry.Title)
-        {
-            Tag = entry.Page,
-            Name = entry.Page.ToString(),
-            ToolTipText = entry.Page == AdvancedPage.ModelInformation
-                ? "Read-only provider model discovery information."
-                : entry.Title
-        };
+        var tab = _navigationTabs.TabPages.Add(entry.Title);
+        tab.Name = entry.Page.ToString();
+        tab.Tag = entry.Page;
+        tab.Padding = new Padding(4, 12, 4, 4);
 
-        _nodes.Add(entry.Page, node);
-        _navigation.Nodes.Add(node);
+        _tabs.Add(entry.Page, tab);
     }
 
-    private async void NavigationAfterSelect(object? sender, TreeViewEventArgs e)
+    private async void NavigationTabChanged(object? sender, EventArgs e)
     {
         if (IsDisposed ||
             Disposing)
@@ -181,8 +134,11 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
         if (IsDisposed || Disposing)
             return;
 
-        if (_navigation.SelectedNode?.Tag is not AdvancedPage page)
+        if (_navigationTabs.SelectedTab?.Tag is not AdvancedPage page ||
+            !_tabs.TryGetValue(page, out var tab))
+        {
             return;
+        }
 
         var version = Interlocked.Increment(ref _pageRequestVersion);
         var pageCts = new CancellationTokenSource();
@@ -198,7 +154,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
                 throw new InvalidOperationException($"No Advanced Provider Configuration page is registered for '{page}'.");
 
             view.Dock = DockStyle.Fill;
-            _contentHost.Controls.Add(view);
+            tab.Controls.Add(view);
             _currentPage = view;
             _themeManager.Apply(view);
 
@@ -264,8 +220,8 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
         if (page is null)
             return;
 
-        if (_contentHost.Controls.Contains(page))
-            _contentHost.Controls.Remove(page);
+        if (page.Parent is not null)
+            page.Parent.Controls.Remove(page);
 
         page.Dispose();
     }
@@ -275,8 +231,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
         if (IsDisposed || Disposing)
             return;
 
-        _themeManager.Apply(_navigation);
-        _themeManager.Apply(_contentHost);
+        _themeManager.Apply(_navigationTabs);
 
         if (_currentPage is not null)
             _themeManager.Apply(_currentPage);
@@ -286,7 +241,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
     {
         if (disposing)
         {
-            _navigation.AfterSelect -= NavigationAfterSelect;
+            _navigationTabs.SelectedIndexChanged -= NavigationTabChanged;
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
 
             var cts = Interlocked.Exchange(ref _pageCts, null);
