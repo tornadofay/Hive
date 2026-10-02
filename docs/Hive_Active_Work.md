@@ -96,6 +96,18 @@ Remediation boundary:
 - add focused regression coverage for the corrected presentation/integration behavior;
 - update UI documentation only where the actual supported behavior changes.
 
+## Verification Failed / Remediation Required — CRUD List Scroll Flicker / Non-Scrolling
+
+Developer verification reported that scrolling the CRUD ListView causes the native scrollbar to flicker back into view and then disappear, with no effective list scrolling. This is an in-scope failure of the Slice 4 ListView scrollbar integration.
+
+Remediation boundary:
+- correct the existing ListView-specific native scroll adapter/host synchronization so the native ListView scrollbar remains suppressed without flicker;
+- restore actual vertical/horizontal ListView scrolling through the existing native control mechanism;
+- preserve existing `HiveListView` owner-draw, selection, keyboard, paging, and CRUD behavior;
+- add or strengthen focused regression coverage for native ListView scrolling and suppression lifecycle.
+
+No DataGridView migration, ListView rewrite, new public scroll API, or unrelated UI refactoring is authorized.
+
 ## Verification Failed / Remediation Required — CRUD List Scroll Integration
 
 The current Slice 4 verification boundary identified one remaining same-slice integration gap: `HiveCrudPage` uses `HiveListView`, but the CRUD list surface was still using native ListView scrollbars instead of the shared Hive scrollbar infrastructure.
