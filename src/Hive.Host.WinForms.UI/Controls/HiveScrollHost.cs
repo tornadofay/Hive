@@ -240,20 +240,20 @@ public sealed class HiveScrollHost : UserControl
                 _content.Size = viewportSize;
                 _content.Location = Point.Empty;
 
-                var horizontal = _nativeScrollAdapter.ReadState(
+                var nativeHorizontal = _nativeScrollAdapter.ReadState(
                     _content,
                     Orientation.Horizontal);
-                var vertical = _nativeScrollAdapter.ReadState(
+                var nativeVertical = _nativeScrollAdapter.ReadState(
                     _content,
                     Orientation.Vertical);
 
-                _horizontalScrollBar.SetState(horizontal);
-                _verticalScrollBar.SetState(vertical);
+                _horizontalScrollBar.SetState(nativeHorizontal);
+                _verticalScrollBar.SetState(nativeVertical);
 
-                _horizontalScrollBar.Visible = horizontal.CanScroll;
-                _verticalScrollBar.Visible = vertical.CanScroll;
-                _horizontalScrollBar.Enabled = horizontal.CanScroll;
-                _verticalScrollBar.Enabled = vertical.CanScroll;
+                _horizontalScrollBar.Visible = nativeHorizontal.CanScroll;
+                _verticalScrollBar.Visible = nativeVertical.CanScroll;
+                _horizontalScrollBar.Enabled = nativeHorizontal.CanScroll;
+                _verticalScrollBar.Enabled = nativeVertical.CanScroll;
 
                 UpdateScrollBarLayout();
                 NotifyScrollPositionChanged();
