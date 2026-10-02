@@ -245,7 +245,7 @@ Remediation boundary:
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Developer handoff after native-scroll state remediation:
 
