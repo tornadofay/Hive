@@ -26,6 +26,7 @@ public sealed class HiveListView : ListView
     private Pen? _borderPen;
     private Pen? _focusPen;
     private readonly ImageList _rowImageList;
+    private bool _suppressingNativeScrollBars;
     private bool _nativeScrollBarsSuppressed;
     private bool _nativeScrollBarsHidden;
 
@@ -353,14 +354,23 @@ public sealed class HiveListView : ListView
     {
         if (!IsHandleCreated ||
             !_nativeScrollBarsSuppressed ||
-            _nativeScrollBarsHidden)
+            _nativeScrollBarsHidden ||
+            _suppressingNativeScrollBars)
         {
             return;
         }
 
-        ShowScrollBar(Handle, 0, false);
-        ShowScrollBar(Handle, 1, false);
-        _nativeScrollBarsHidden = true;
+        _suppressingNativeScrollBars = true;
+        try
+        {
+            ShowScrollBar(Handle, 0, false);
+            ShowScrollBar(Handle, 1, false);
+            _nativeScrollBarsHidden = true;
+        }
+        finally
+        {
+            _suppressingNativeScrollBars = false;
+        }
     }
 
     [System.Runtime.InteropServices.DllImport(
