@@ -82,13 +82,28 @@ The host-integration base controls are explicitly named `HostTextBox`, `HostComb
 
 `HostComboBox` is handled by the existing native `ComboBox` value-adapter path. The former `HiveComboBoxValueAdapter` is no longer part of the host-integration layer because the Hive-owned `HiveComboBox` is a presentation control rather than a host-integration base.
 
+## Verification Failed / Remediation Required
+
+Developer visual verification reports two in-scope Slice 4 UI defects:
+- `HiveComboBox` currently appears visually flat/unfinished, and its displayed text is not vertically centered within the control.
+- Hive-owned TextBox and TreeView scrolling surfaces still show native/unmodified scrollbar presentation instead of the intended Hive scrollbar treatment.
+
+Remediation boundary:
+- correct the `HiveComboBox` field visual treatment, including depth/border/interaction presentation and reliable vertical text centering, without changing its public semantic contract;
+- correct scrollbar integration for the affected Hive-owned TextBox and TreeView surfaces within the existing custom-scroll infrastructure and Slice 4 scope;
+- preserve existing specialized control behavior, selection/focus/query state, and the intentional native host-integration control boundary;
+- add focused regression coverage for the corrected presentation/integration behavior;
+- update UI documentation only where the actual supported behavior changes.
+
+No later roadmap work is authorized by this failure.
+
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
-Developer handoff:
+Developer handoff after remediation:
 
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
-Tests to run: HiveExecutionTargetDiscoverySettingsTests.cs; HiveComboBoxTests.cs; HiveUiPolishTests.cs; Phase116FollowUpTests.cs; ProviderSettingsIntegrationTests.cs; broader-suite requirement: full Hive.Tests suite after focused coverage passes.
+Tests to run: HiveComboBoxTests.cs; HiveScrollHostTests.cs; HiveUiPolishTests.cs; relevant Example Host UI tests; broader-suite requirement: full Hive.Tests suite after focused coverage passes.
 
 Agent has not run the build or tests. Developer verification is required.
