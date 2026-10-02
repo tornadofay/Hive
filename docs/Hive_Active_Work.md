@@ -172,9 +172,27 @@ Remediation boundary:
 
 No DataGridView migration, new public scroll API, or unrelated UI refactoring is authorized.
 
+## Verification Failed / Remediation Required — Native Scroll State Still Inactive
+
+Developer re-verification reran the three focused native-scroll tests and they still fail with `VerticalScrollState.CanScroll == false`":
+- `HiveScrollHostTests.NativeTextBoxContent_UsesHiveScrollBars`"
+- `HiveScrollHostTests.NativeTreeViewContent_UsesHiveScrollBars`"
+- `HiveScrollHostTests.NativeListViewContent_UsesHiveScrollBars`"
+
+Developer result: `Hive.Tests` 566 total, 563 passed, 3 failed, 0 skipped."
+
+Remediation boundary:
+- correct the shared native-scroll state initialization/acquisition so the first authoritative range is obtained before native scrollbar suppression can invalidate the reported page/range;
+- preserve native TextBoxBase, TreeView, and ListView viewport/input/selection behavior and the existing Hive scrollbar presentation;
+- retain the CRUD ListView integration and native scrollbar suppression behavior;
+- strengthen only the focused state/initialization coverage needed to prove the corrected lifecycle.
+
+No DataGridView migration, new public scroll API, or unrelated UI refactoring is authorized.
+
+
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Developer handoff after native-scroll state remediation:
 
