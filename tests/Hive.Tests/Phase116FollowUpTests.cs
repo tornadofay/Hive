@@ -454,7 +454,11 @@ public sealed class Phase116FollowUpTests
 
         Assert.All(
             form.NavigationTabs.TabPages.Cast<TabPage>(),
-            page => Assert.IsType<int>(page.Tag));
+            page =>
+            {
+                Assert.NotNull(page.Tag);
+                Assert.Equal(page.Name, page.Tag.ToString());
+            });
     }
 
     [WinFormsFact]
