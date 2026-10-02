@@ -39,7 +39,7 @@ Implemented integration:
 - Settings/configuration selection surfaces now use `HiveComboBox` where the interaction is selection-oriented, including provider onboarding, provider/account and execution-target selectors, model selection, capability state selection, Agent target/generation selection, Persistence authentication selection, and the shared CRUD status filter;
 - the Example Host configured-agent selector now uses `HiveComboBox`;
 - the editable/autocomplete Provider transport field remains native because its existing native autocomplete semantics do not fit the first-class HiveComboBox contract;
-- no existing native production TabControl consumer was found, so `HiveTabControl` remains a reusable foundation with no migration;
+- `HiveAdvancedProviderConfigurationForm` is now a real existing production `HiveTabControl` consumer: its Overview, Providers, Accounts / Credentials, Execution Targets, and Model Information navigation is tab-based;
 - Settings Overview and Advanced Provider Configuration Overview now use `HiveScrollHost` for their intrinsically-sized content;
 - `HiveCrudPage` now hosts its existing `HiveListView` through `HiveScrollHost`, keeping native ListView behavior while using Hive-owned scrollbars;
 - focused regression coverage was updated for the migrated controls and the new scroll-host integrations;
@@ -319,6 +319,18 @@ The reported Example Host mouse-wheel defect was corrected within Slice 4:
 - focused TextBox and TreeView tests send a real Win32 mouse-wheel message and verify that the Hive scroll position moves.
 
 No new public scroll API, DataGridView migration, native control rewrite, or unrelated UI refactoring was introduced.
+
+## Slice 4 Tab Navigation Extension
+
+User-authorized Slice 4 integration now replaces the Advanced Provider Configuration TreeView navigation with the existing HiveTabControl:
+- the five existing administrative pages remain the same;
+- stable TabPage instances hold the existing page lifecycle, while the form continues to create/dispose the active page through its existing cancellation-aware path;
+- tab selection now drives the existing asynchronous page initialization instead of TreeView selection;
+- the former left navigation split/scroll host is removed because the tab control owns the navigation header and its existing overflow scrolling;
+- theme application now targets the HiveTabControl and the active page;
+- focused coverage now verifies the five tab titles, initial Overview selection, and page metadata.
+
+This is the previously planned Slice 4 behavior for a real production TabControl consumer and does not introduce a new navigation framework.
 
 ## Verification State
 
