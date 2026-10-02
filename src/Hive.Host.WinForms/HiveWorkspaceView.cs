@@ -941,6 +941,7 @@ public sealed class HiveWorkspaceView : UserControl
     private sealed class HiveRejectionReasonDialog : HiveForm
     {
         private readonly TextBox _reasonTextBox;
+        private readonly HiveScrollHost _reasonScrollHost;
 
         public HiveRejectionReasonDialog(IHiveThemeManager themeManager)
             : base(
@@ -971,10 +972,19 @@ public sealed class HiveWorkspaceView : UserControl
                 AcceptsReturn = true
             };
 
+            _reasonScrollHost = new HiveScrollHost
+            {
+                Dock = DockStyle.Fill,
+                Margin = Padding.Empty,
+                AccessibleName = "Rejection reason scroll area",
+                AccessibleDescription = "Scroll the rejection reason using Hive scrollbars."
+            };
+            _reasonScrollHost.Attach(_reasonTextBox);
+
             editor.AddField(
                 "Reason",
                 "This text is stored as the rejection reason. Leaving it empty preserves the existing behavior and submits an empty reason.",
-                _reasonTextBox,
+                _reasonScrollHost,
                 150);
 
             var rejectButton = editor.AddActionButton(
