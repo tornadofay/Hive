@@ -143,6 +143,9 @@ public sealed class HiveScrollHost : UserControl
             tree.AfterSelect += NativeTreeViewChanged;
         }
 
+        if (content is ListView listView)
+            listView.SelectedIndexChanged += NativeListViewChanged;
+
         Synchronize();
     }
 
@@ -168,6 +171,9 @@ public sealed class HiveScrollHost : UserControl
             tree.AfterCollapse -= NativeTreeViewChanged;
             tree.AfterSelect -= NativeTreeViewChanged;
         }
+
+        if (content is ListView listView)
+            listView.SelectedIndexChanged -= NativeListViewChanged;
 
         UnhookContentControls(content);
         _viewport.Controls.Remove(content);
@@ -407,6 +413,9 @@ public sealed class HiveScrollHost : UserControl
                     tree.AfterSelect -= NativeTreeViewChanged;
                 }
 
+                if (content is ListView listView)
+                    listView.SelectedIndexChanged -= NativeListViewChanged;
+
                 UnhookContentControls(content);
             }
         }
@@ -534,6 +543,9 @@ public sealed class HiveScrollHost : UserControl
         RequestSynchronization();
 
     private void NativeTreeViewChanged(object? sender, TreeViewEventArgs e) =>
+        RequestSynchronization();
+
+    private void NativeListViewChanged(object? sender, EventArgs e) =>
         RequestSynchronization();
 
     private void DescendantControlAdded(
