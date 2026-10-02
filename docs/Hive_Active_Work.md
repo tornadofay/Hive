@@ -410,6 +410,21 @@ Microsoft documents `GetScrollBarInfo` as the Win32 mechanism for inspecting sta
 
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
 
+## Verification Failed / Remediation Required — CRUD Native Scrollbar Returns After Maximize
+
+Developer verification reports one remaining same-slice failure:
+- `HiveScrollHostTests.NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling` passes initial attach but fails immediately after form maximize because the native ListView scrollbar is visible again.
+
+This localizes the remaining defect to the native ListView scrollbar suppression lifecycle during maximize/layout, not the CRUD form's functional behavior.
+
+Remediation boundary:
+- make native scrollbar suppression reassert itself after native ListView layout/repaint when the scrollbar is actually visible;
+- avoid unconditional `ShowScrollBar` calls during continuous ListView scrolling to preserve scroll performance;
+- preserve native ListView `LVM_SCROLL`, item, selection, keyboard, owner-draw, and CRUD behavior;
+- keep the existing Hive-owned scrollbar layer as the visible presentation.
+
+No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring is authorized.
+
 ## Verification Failed / Remediation Required — CRUD Resize vs. Native Scroll Repaint
 
 Developer re-verification still reports native ListView scrollbars during maximized CRUD use and noticeable up/down scroll lag.
