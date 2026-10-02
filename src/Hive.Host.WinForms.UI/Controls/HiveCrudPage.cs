@@ -58,6 +58,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     private readonly HiveButton _deleteButton;
     private readonly HiveButton _refreshButton;
     private readonly ListView _list;
+    private readonly HiveScrollHost _listScrollHost;
     private readonly Label _emptyStateLabel;
     private readonly HivePaginationBar _pagination;
     private readonly HiveCrudPageListController<TItem> _listController;
@@ -264,6 +265,15 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             TabIndex = 2
         };
         _list.AccessibleName = "CRUD item list";
+
+        _listScrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            AccessibleName = "CRUD item list scrolling surface",
+            AccessibleDescription = "Scrollable Hive item list." 
+        };
         _list.SelectedIndexChanged += (_, _) => UpdateActionState();
         _list.ItemActivate += async (_, _) =>
         {
@@ -283,8 +293,9 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
             Visible = false
         };
 
-        listHost.Controls.Add(_list);
+        listHost.Controls.Add(_listScrollHost);
         listHost.Controls.Add(_emptyStateLabel);
+        _listScrollHost.Attach(_list);
 
         _footerLayout = new TableLayoutPanel
         {
@@ -400,6 +411,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     public Panel ActionBarPanel => _pageLayout.ActionBarPanel;
     public Label StatusLabel => _statusLabel;
     public TextBox SearchBox => _searchBox;
+
+    internal HiveScrollHost ListScrollHostForTesting => _listScrollHost;
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsBusy => _operationController.IsBusy;
