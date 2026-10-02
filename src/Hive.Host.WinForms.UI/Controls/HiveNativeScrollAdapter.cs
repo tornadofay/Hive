@@ -222,6 +222,46 @@ internal sealed class HiveNativeScrollAdapter
             ? SbVertical
             : SbHorizontal;
 
+        var cached = GetCachedState(orientation, null);
+
+        if (control is ListView listView &&
+            orientation == Orientation.Vertical &&
+            listView.View == View.Details)
+        {
+            if (!cached.CanScroll)
+            {
+                cached = ReadListViewVerticalState(
+                    listView,
+                    orientation,
+                    out var authoritative);
+
+                if (!authoritative)
+                {
+                    HideNativeScrollBars(control);
+                    return;
+                }
+            }
+
+            var target = Math.Clamp(
+                value,
+                cached.Minimum,
+                cached.EffectiveMaximum);
+
+            SetListViewPosition(
+                listView,
+                orientation,
+                cached.Value,
+                target);
+
+            _lastKnownStates[orientation] = cached with
+            {
+                Value = target
+            };
+
+            HideNativeScrollBar(control.Handle, bar);
+            return;
+        }
+
         var info = new ScrollInfo
         {
             cbSize = Marshal.SizeOf<ScrollInfo>(),
@@ -233,7 +273,6 @@ internal sealed class HiveNativeScrollAdapter
             bar,
             ref info);
 
-        var cached = GetCachedState(orientation, null);
         var page = hasNativeInfo
             ? Math.Max(0, ClampToInt(info.nPage))
             : 0;
@@ -347,7 +386,9 @@ internal sealed class HiveNativeScrollAdapter
 
         var contentExtent = Math.Max(
             viewportSize,
-            itemCount * lineHeight);
+            (int)Math.Min(
+                int.MaxValue,
+                (long)itemCount * lineHeight));
 
         var effectiveMaximum = Math.Max(
             0,
