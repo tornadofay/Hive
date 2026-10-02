@@ -9,8 +9,10 @@ namespace Hive.Tests;
 
 public sealed class HiveScrollHostTests
 {
-    private const int GwlStyle = -16;
-    private const long NativeScrollBarStyleMask = 0x00300000L;
+    private const int ObjIdHScroll = -6;
+    private const int ObjIdVScroll = -5;
+    private const uint StateSystemInvisible = 0x00008000;
+    private const uint StateSystemOffscreen = 0x00010000;
 
     [Fact]
     public void Synchronize_ExposesNormalizedHorizontalAndVerticalState()
@@ -413,19 +415,56 @@ public sealed class HiveScrollHostTests
     private static void AssertNativeListViewScrollBarsHidden(
         Control control)
     {
-        var style = GetWindowLongPtr(
-            control.Handle,
-            GwlStyle).ToInt64();
-
-        Assert.Equal(
-            0L,
-            style & NativeScrollBarStyleMask);
+        AssertScrollBarHidden(control, ObjIdHScroll);
+        AssertScrollBarHidden(control, ObjIdVScroll);
     }
 
-    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW", SetLastError = true)]
-    private static extern IntPtr GetWindowLongPtr(
+    private static void AssertScrollBarHidden(
+        Control control,
+        int objectId)
+    {
+        var info = new NativeScrollBarInfo
+        {
+            cbSize = Marshal.SizeOf<NativeScrollBarInfo>(),
+            States = new uint[6]
+        };
+
+        Assert.True(GetScrollBarInfo(control.Handle, objectId, ref info));
+
+        var state = info.States[0];
+        Assert.True(
+            (state & StateSystemInvisible) != 0 ||
+            (state & StateSystemOffscreen) != 0);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeScrollBarInfo
+    {
+        public int cbSize;
+        public NativeRect ScrollBar;
+        public int LineButton;
+        public int ThumbTop;
+        public int ThumbBottom;
+        public int Reserved;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
+        public uint[] States;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool GetScrollBarInfo(
         IntPtr handle,
-        int index);
+        int objectId,
+        ref NativeScrollBarInfo info);
 
     [DllImport("user32.dll")]
     private static extern IntPtr SendMessage(
