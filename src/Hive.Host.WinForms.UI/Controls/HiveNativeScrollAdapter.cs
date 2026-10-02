@@ -79,12 +79,26 @@ internal sealed class HiveNativeScrollAdapter
             ? info.nPos
             : 0;
 
-        // Some native common controls expose their current range/position through
-        // the standard range/position APIs while returning an unusable zero page
-        // through GetScrollInfo. Keep the adapter generic, but reconstruct the
-        // viewport from the hosted control's client extent in that case.
+        // Once a native scrollbar has been suppressed, some controls can report a
+        // zero page size. A previously authoritative Hive state must remain the
+        // source of truth in that case rather than being replaced by a synthetic
+        // fallback range.
         if (page <= 0)
         {
+            var cached = GetCachedState(
+                orientation,
+                hasScrollInfo ? info.nPos : null,
+                out var cachedAuthoritative);
+
+            if (cachedAuthoritative)
+            {
+                authoritative = true;
+                return cached;
+            }
+
+            // On first acquisition, some native controls expose the range/position
+            // through the standard compatibility APIs even when SCROLLINFO.nPage is
+            // unavailable. Derive the viewport from the actual hosted control size.
             var hasRange = GetScrollRange(
                 control.Handle,
                 bar,
@@ -106,7 +120,40 @@ internal sealed class HiveNativeScrollAdapter
             }
         }
 
-        if (!hasScrollInfo ||
+        if (hasScrollInfo &&
+            maximum >= minimum &&
+            page > 0)
+        {
+            var effectiveMaximum = Math.Max(
+                minimum,
+                maximum - page + 1);
+
+            var viewportSize = page;
+            var extent = Math.Max(
+                viewportSize,
+                effectiveMaximum - minimum + viewportSize);
+
+            var enabled = effectiveMaximum > minimum;
+
+            var state = HiveScrollState.Create(
+                orientation,
+                minimum,
+                minimum + extent,
+                position,
+                viewportSize,
+                smallChange: Math.Max(1, viewportSize / 10),
+                largeChange: Math.Max(1, viewportSize),
+                enabled: enabled);
+
+            _lastKnownStates[orientation] = state;
+            authoritative = true;
+            return state;
+        }
+
+        return GetCachedState(
+            orientation,
+            position,
+            out authoritative);        if (!hasScrollInfo ||
             maximum < minimum ||
             page <= 0)
         {
