@@ -160,6 +160,18 @@ The developer-reported compilation failures were corrected:
 
 No behavior or scope was expanded by these corrections.
 
+## Verification Failed / Remediation Required — Native Scroll State Regression
+
+Developer verification reported three same-slice failures in `HiveScrollHostTests`: `NativeTextBoxContent_UsesHiveScrollBars`, `NativeTreeViewContent_UsesHiveScrollBars`, and `NativeListViewContent_UsesHiveScrollBars`. All failures assert an expected active Hive scrollbar state but received `false`.
+
+Remediation boundary:
+- correct the shared native-scroll state acquisition/normalization used by TextBoxBase, TreeView, and ListView;
+- preserve native viewport, input, selection, and control-specific scrolling while keeping the Hive scrollbar presentation;
+- retain the existing CRUD ListView integration and native scrollbar suppression behavior;
+- strengthen focused regression coverage only where required to encode the corrected native-state contract.
+
+No DataGridView migration, new public scroll API, or unrelated UI refactoring is authorized.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
