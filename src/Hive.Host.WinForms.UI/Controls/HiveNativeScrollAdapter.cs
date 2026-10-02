@@ -55,6 +55,17 @@ internal sealed class HiveNativeScrollAdapter
             ? SbVertical
             : SbHorizontal;
 
+        if (control is ListView listView &&
+            orientation == Orientation.Vertical &&
+            listView.View == View.Details)
+        {
+            return ReadListViewVerticalState(
+                listView,
+                orientation,
+                out authoritative);
+        }
+
+
         var info = new ScrollInfo
         {
             cbSize = Marshal.SizeOf<ScrollInfo>(),
@@ -314,6 +325,55 @@ internal sealed class HiveNativeScrollAdapter
         HideNativeScrollBar(control.Handle, SbVertical);
     }
 
+    private HiveScrollState ReadListViewVerticalState(
+        ListView listView,
+        Orientation orientation,
+        out bool authoritative)
+    {
+        authoritative = false;
+
+        var lineHeight = ResolveListViewLineHeight(listView);
+        var itemCount = listView.Items.Count;
+        var viewportSize = Math.Max(0, listView.ClientSize.Height);
+
+        if (lineHeight <= 0 ||
+            viewportSize <= 0)
+        {
+            return GetCachedState(
+                orientation,
+                null,
+                out authoritative);
+        }
+
+        var contentExtent = Math.Max(
+            viewportSize,
+            itemCount * lineHeight);
+
+        var effectiveMaximum = Math.Max(
+            0,
+            contentExtent - viewportSize);
+
+        var topIndex = listView.TopItem?.Index ?? 0;
+        var value = Math.Clamp(
+            topIndex * lineHeight,
+            0,
+            effectiveMaximum);
+
+        var state = HiveScrollState.Create(
+            orientation,
+            0,
+            contentExtent,
+            value,
+            viewportSize,
+            smallChange: lineHeight,
+            largeChange: Math.Max(lineHeight, viewportSize),
+            enabled: effectiveMaximum > 0);
+
+        _lastKnownStates[orientation] = state;
+        authoritative = true;
+        return state;
+    }
+
     private static void SetListViewPosition(
         ListView listView,
         Orientation orientation,
@@ -323,34 +383,38 @@ internal sealed class HiveNativeScrollAdapter
         if (current == target)
             return;
 
+        var lineHeight = ResolveListViewLineHeight(listView);
+
         if (orientation == Orientation.Vertical)
         {
-            var lineHeight = ResolveListViewLineHeight(listView);
-            var quantizedTarget = Math.Max(
+            var currentTopIndex = listView.TopItem?.Index ?? 0;
+            var targetTopIndex = Math.Max(
                 0,
                 (int)Math.Round(
                     target / (double)lineHeight,
-                    MidpointRounding.AwayFromZero) * lineHeight);
+                    MidpointRounding.AwayFromZero));
 
-            target = quantizedTarget;
+            var deltaRows = targetTopIndex - currentTopIndex;
+            if (deltaRows == 0)
+                return;
+
+            SendMessage(
+                listView.Handle,
+                LvmScroll,
+                IntPtr.Zero,
+                new IntPtr(deltaRows * lineHeight));
+            return;
         }
 
         var delta = target - current;
         if (delta == 0)
             return;
 
-        var horizontalDelta = orientation == Orientation.Horizontal
-            ? delta
-            : 0;
-        var verticalDelta = orientation == Orientation.Vertical
-            ? delta
-            : 0;
-
         SendMessage(
             listView.Handle,
             LvmScroll,
-            new IntPtr(horizontalDelta),
-            new IntPtr(verticalDelta));
+            new IntPtr(delta),
+            IntPtr.Zero);
     }
 
     private static int ResolveListViewLineHeight(ListView listView)
