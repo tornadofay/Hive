@@ -471,6 +471,15 @@ The latest same-slice remediation is implemented:
 
 Agent has not run the build or tests. Developer verification is required.
 
+## Verification Failed / Remediation Required — ListView Suppression Compilation
+
+Developer compilation reported CS0246 in `HiveListView.cs`: the production file still referenced the removed `NativeScrollBarInfo` type through an orphaned `GetScrollBarInfo` declaration.
+
+Remediation boundary:
+- remove only the orphaned native visibility-query declaration;
+- preserve the deterministic attach/resize/style-change scrollbar suppression and the optimized scroll path already implemented;
+- no behavioral expansion or unrelated refactoring.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
