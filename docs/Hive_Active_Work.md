@@ -106,20 +106,18 @@ The reported visual verification defects were remediated within Slice 4:
 - focused regression coverage was added for `HiveComboBox` field geometry and adapter-backed TextBox/TreeView scrolling;
 - `docs/ui/controls.md` now documents the bounded native-scroll adapter behavior and the Slice 4 integration boundary.
 
-## Verification State
+## Compilation Remediation
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+The developer-reported compilation failures were corrected:
+- native TextBox/TreeView scroll-state locals were renamed to avoid enclosing-scope conflicts;
+- the ComboBox fallback border local was renamed to avoid the themed-branch scope conflict;
+- `HiveExampleTestSurface.CreateScrollHost(...)` was restored.
 
-Developer-reported compilation failures in the Slice 4 visual/native-scroll remediation:
-- `HiveScrollHost.Synchronize()` declares `horizontal` and `vertical` inside the native-scroll branch and again in the enclosing scope, producing CS0136.
-- `HiveComboBox.OnPaint()` declares `border` in the fallback branch scope and again in the themed branch scope, producing CS0136.
-- `HiveExampleTestSurface` references `CreateScrollHost(...)`, but the helper was not present in the final file, producing CS0103.
-
-Remediation is limited to resolving these compilation errors while preserving the already-implemented visual and native-scroll behavior.
+No behavior or scope was expanded by these corrections.
 
 ## Verification State
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Developer handoff after remediation:
 
