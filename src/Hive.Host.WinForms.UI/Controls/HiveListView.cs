@@ -59,6 +59,12 @@ public sealed class HiveListView : ListView
         SmallImageList = _rowImageList;
     }
 
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        HideNativeScrollBars();
+    }
+
     protected override void WndProc(ref Message m)
     {
         // ListView owns its scroll-window chrome internally. HiveScrollHost supplies
