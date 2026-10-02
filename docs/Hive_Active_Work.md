@@ -287,9 +287,18 @@ Microsoft's ListView documentation specifies that report-view vertical scrolling
 
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
 
+## Verification Failed / Remediation Required — ListView Scroll Adapter Compilation
+
+Developer compilation reported three same-slice errors in `HiveNativeScrollAdapter.cs`: CS0128 for a duplicate `listView` local/pattern variable, CS0136 for a nested `target` local collision, and CS0165 for the resulting unassigned `listView` path.
+
+Remediation boundary:
+- correct only the local/pattern scoping in the existing ListView scroll-position path;
+- preserve the ListView row-based state normalization and native `LVM_SCROLL` behavior introduced by the preceding remediation;
+- no behavioral expansion or unrelated refactoring.
+
 ## Verification State
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Developer handoff after native-scroll state remediation:
 
