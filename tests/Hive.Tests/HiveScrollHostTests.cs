@@ -102,6 +102,92 @@ public sealed class HiveScrollHostTests
     }
 
     [Fact]
+    public void NativeTextBoxContent_UsesHiveScrollBars()
+    {
+        using var form = new Form
+        {
+            Size = new Size(500, 400)
+        };
+        using var host = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill
+        };
+        using var textBox = new TextBox
+        {
+            Multiline = true,
+            ScrollBars = ScrollBars.Both,
+            WordWrap = false
+        };
+
+        textBox.Text = string.Join(
+            Environment.NewLine,
+            Enumerable.Range(1, 160)
+                .Select(index => $"Line {index:000} " + new string('x', 180)));
+
+        form.Controls.Add(host);
+        host.Attach(textBox);
+        form.CreateControl();
+        host.CreateControl();
+        Application.DoEvents();
+        host.Synchronize();
+
+        Assert.Same(textBox, host.Content);
+        Assert.True(host.VerticalScrollState.CanScroll);
+        Assert.True(host.HorizontalScrollState.CanScroll);
+        Assert.True(host.VerticalScrollBarForTesting.Visible);
+        Assert.True(host.HorizontalScrollBarForTesting.Visible);
+        Assert.Equal(Point.Empty, textBox.Location);
+
+        host.SetScrollPosition(40, 80);
+
+        Assert.True(host.VerticalScrollPosition > 0);
+        Assert.True(host.HorizontalScrollPosition > 0);
+    }
+
+    [Fact]
+    public void NativeTreeViewContent_UsesHiveScrollBars()
+    {
+        using var form = new Form
+        {
+            Size = new Size(500, 400)
+        };
+        using var host = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill
+        };
+        using var tree = new TreeView
+        {
+            Dock = DockStyle.Fill,
+            HideSelection = false
+        };
+
+        var root = new TreeNode("Root");
+        for (var index = 1; index <= 160; index++)
+            root.Nodes.Add($"Child {index:000}");
+        tree.Nodes.Add(root);
+        root.Expand();
+
+        form.Controls.Add(host);
+        host.Attach(tree);
+        form.CreateControl();
+        host.CreateControl();
+        Application.DoEvents();
+        host.Synchronize();
+
+        Assert.Same(tree, host.Content);
+        Assert.True(host.VerticalScrollState.CanScroll);
+        Assert.True(host.VerticalScrollBarForTesting.Visible);
+        Assert.Equal(Point.Empty, tree.Location);
+
+        var maximum = host.VerticalScrollState.EffectiveMaximum;
+        Assert.True(maximum > 0);
+
+        host.SetScrollPosition(0, maximum);
+
+        Assert.True(host.VerticalScrollPosition > 0);
+    }
+
+    [Fact]
     public void Synchronize_AfterResizeClampsExistingPositionToNewBounds()
     {
         using var host = new HiveScrollHost
