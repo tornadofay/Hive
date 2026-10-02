@@ -463,10 +463,11 @@ No DataGridView migration, new public scroll API, ListView rewrite, or unrelated
 
 The latest same-slice remediation is implemented:
 - `HiveListView` no longer reapplies native scrollbar suppression from `WM_WINDOWPOSCHANGED`, which could occur during native ListView scrolling;
-- `WM_NCPAINT` now checks the actual Win32 scrollbar visibility and calls `ShowScrollBar(..., false)` only when a native scrollbar is actually visible;
-- native scrollbar suppression is also reasserted after actual control resize and native style changes, with reentrancy guarded;
-- the existing focused CRUD/maximize regression continues to verify native scrollbar visibility after maximize and repeated scrolling;
-- `HiveScrollHost` retains the focused single-axis synchronization path so a vertical scroll does not unnecessarily re-read and update the horizontal state.
+- `WM_NCPAINT` no longer performs any native scrollbar operation, so non-client repaint remains outside the high-frequency scroll path;
+- native scrollbar suppression is now deterministic and unconditional at the explicit attach, resize, and native-style-change boundaries;
+- the native visibility query was removed from the production suppression path because it was not reliable during ListView initialization/layout;
+- `HiveScrollHost` retains the focused single-axis synchronization path so a vertical scroll does not unnecessarily re-read and update the horizontal state;
+- the focused maximize/repeated-scroll regression remains responsible for verifying that native scrollbar presentation stays suppressed.
 
 Agent has not run the build or tests. Developer verification is required.
 
