@@ -441,8 +441,6 @@ public sealed class HiveScrollHost : UserControl
                 content.FontChanged -= ContentChanged;
                 content.KeyUp -= NativeContentKeyUp;
 
-                DetachNativeWheelInterceptor();
-
                 if (content is TextBoxBase textBox)
                     textBox.TextChanged -= ContentChanged;
 
