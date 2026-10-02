@@ -226,7 +226,7 @@ No DataGridView migration, new public scroll API, control rewrite, or unrelated 
 ## Native Scroll State Remediation — Range Fallback and Real UI Lifecycle
 
 The latest remediation remains within the recorded Slice 4 boundary:
-- `HiveNativeScrollAdapter` now falls back from an unusable `SCROLLINFO.nPage` to the Win32 standard scrollbar range/position APIs and derives the viewport from the hosted control's client extent;
+- `HiveNativeScrollAdapter` now falls back from an unusable `SCROLLINFO.nPage` to the Win32 standard scrollbar range/position APIs and derives the viewport from the hosted control's client extent; once a state has been established, that cached state remains authoritative across later zero-page responses after native suppression;
 - native specialized-content suppression remains deferred until both orientations have a usable authoritative state;
 - the focused native-scroll tests now exercise the hosted controls through a visible Form lifecycle, allowing Win32 control layout/scroll ranges to finalize as they do in the running UI;
 - the transient zero-viewport regression remains covered;
