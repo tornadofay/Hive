@@ -398,15 +398,15 @@ No DataGridView migration, new public scroll API, ListView rewrite, or unrelated
 
 ## CRUD Native Scrollbar / Scroll Performance Remediation
 
-The latest CRUD maximize verification failure was remediated within the same Slice 4 boundary:
-- `HiveListView` now suppresses the native `WS_HSCROLL` / `WS_VSCROLL` window styles while hosted by `HiveScrollHost`, preserving native ListView scrolling and restoring the original styles when the host detaches;
-- the previous per-scroll `ShowScrollBar` calls were removed from the `HiveListView` position path, eliminating repeated native scrollbar hide/repaint work during wheel and scrollbar movement;
-- `HiveScrollHost` now updates native scroll state through a focused position synchronization path instead of running the full content resize/layout synchronization after every scroll value change;
-- redundant axis scroll operations are skipped when a wheel or scrollbar change affects only the other axis;
-- native-host resize layout is no longer updated twice before the coalesced synchronization pass;
-- focused regression coverage now verifies that a hosted `HiveListView` keeps the native scrollbar style bits removed across form maximize and repeated scrolling.
+The latest CRUD maximize verification remediation was corrected within the same Slice 4 boundary:
+- `HiveListView` now suppresses the native scrollbar presentation with `ShowScrollBar(..., false)` while hosted by `HiveScrollHost`, without changing the ListView's `WS_HSCROLL` / `WS_VSCROLL` style contract;
+- suppression is kept out of `WM_VSCROLL` / `WM_HSCROLL` handling, avoiding repeated native scrollbar operations during vertical/horizontal movement;
+- suppression is reasserted only after native window-position/style changes and during non-client repaint handling, so maximize/resize cannot leave the native scrollbar layer visible;
+- detaching the hosted ListView restores native scrollbar visibility;
+- `HiveScrollHost` now synchronizes only the scroll axis that actually changed instead of re-reading and repainting both axes for every wheel step;
+- focused regression coverage verifies native scrollbar visibility state across initial attach, maximize, and repeated scrolling.
 
-Microsoft documents `LVM_SCROLL` as the native ListView content-scrolling mechanism and distinguishes it from the `LVS_NOSCROLL` style; Hive continues using `LVM_SCROLL` and does not disable ListView scrolling.
+Microsoft documents `GetScrollBarInfo` as the Win32 mechanism for inspecting standard window scrollbar visibility/state; the regression test checks the actual native scrollbar state rather than assuming a particular window-style bit pattern. citeturn400509search0turn400509search3
 
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
 
@@ -417,6 +417,6 @@ Status: VERIFICATION PENDING
 Developer handoff after the CRUD native-scrollbar/scroll-performance remediation:
 
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
-Tests to run: `HiveScrollHostTests.NativeTextBoxContent_UsesHiveScrollBars`, `HiveScrollHostTests.NativeTreeViewContent_UsesHiveScrollBars`, `HiveScrollHostTests.NativeListViewContent_UsesHiveScrollBars`; then `HiveScrollHostTests.cs`, `HiveComboBoxTests.cs`, `HiveUiPolishTests.cs`, relevant Example Host UI tests, and the full `Hive.Tests` suite.
+Tests to run: `HiveScrollHostTests.NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling`; `HiveScrollHostTests.NativeListViewContent_UsesHiveScrollBars`; then `HiveScrollHostTests.cs`, `HiveComboBoxTests.cs`, `HiveUiPolishTests.cs`, relevant Example Host UI tests, and the full `Hive.Tests` suite.
 
 Agent has not run the build or tests. Developer verification is required.
