@@ -74,10 +74,10 @@ public sealed class ExecutionTargetFavoriteFilterTests
                 ResourceLifecycle.Active(now)),
             ProviderId.New(),
             ProviderAccountId.New(),
-            $"target-{Guid.NewGuid():N}",
+            "target",
             "Example Target",
             new Uri("https://example.test/v1"),
-            $"model-{Guid.NewGuid():N}",
+            "model",
             null,
             [
                 new CapabilityStateEntry(
