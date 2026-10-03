@@ -438,11 +438,11 @@ public sealed class HiveListView : ListView
                 HideNativeScrollBars();
             }));
         }
-        catch (InvalidOperationException)
+        catch (ObjectDisposedException)
         {
             _nativeScrollBarSuppressionPending = false;
         }
-        catch (ObjectDisposedException)
+        catch (InvalidOperationException)
         {
             _nativeScrollBarSuppressionPending = false;
         }
