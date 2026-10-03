@@ -705,3 +705,14 @@ Remediation boundary:
 - do not reintroduce high-frequency per-scroll/repaint suppression work, deferred recursive callbacks, DataGridView migration, a ListView rewrite, a new public scroll API, or unrelated refactoring.
 
 Status is **VERIFICATION FAILED / REMEDIATION REQUIRED** pending same-slice remediation.
+
+## ListView Suppression Ordering Remediation
+
+The latest same-slice correction changes only the native ListView suppression ordering:
+- `HiveScrollHost.Synchronize()` now completes native ListView state acquisition, Hive scrollbar state/visibility updates, and scrollbar layout before issuing the final native scrollbar suppression operation;
+- this makes native scrollbar suppression the final synchronous step of the host's native-content layout boundary, after the ListView viewport size has been finalized;
+- native `LVM_SCROLL`, ListView item/selection/keyboard/owner-draw/CRUD behavior, and the existing lifecycle-only suppression boundaries remain unchanged;
+- no deferred callback, per-scroll/repaint suppression, style mutation, public API, or unrelated UI refactoring was introduced.
+
+Status is returned to **VERIFICATION PENDING** for developer compilation and test verification.
+
