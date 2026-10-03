@@ -178,6 +178,16 @@ Remediation boundary:
 - do not change discovery, persistence, Provider / ProviderAccount / ExecutionTarget ownership, Favorites behavior, or Agent target-selection semantics;
 - return Active Work to VERIFICATION PENDING after remediation and require developer re-verification.
 
+## Remediation Completed — Model Information Detail Container
+
+Remediation completed within the recorded failure boundary:
+- replaced the auto-sizing FlowLayoutPanel used as the scroll-hosted details content with a plain Panel whose child cards are explicitly stacked and sized;
+- detail-card widths, heights, and vertical positions are now calculated deterministically from the actual details viewport and table preferred height;
+- the selection regression now uses a shown WinForms host and pumps the native ListView selection lifecycle;
+- no discovery, persistence, Provider / ProviderAccount / ExecutionTarget, Favorites, or Agent behavior was changed.
+
+Developer re-verification is required.
+
 ## Verification state
 
 - Developer verification on 2026-10-03 passed the original Phase 1.19A implementation at 584/584 Hive.Tests executions (0 failed, 0 skipped) before the additional existing-UI correction.
