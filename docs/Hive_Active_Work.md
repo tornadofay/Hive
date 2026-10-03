@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IN PROGRESS
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Current Slice
 
@@ -39,7 +39,18 @@ Expected user-facing behavior:
 - the Provider Settings Favorites page lets the user choose active targets by Provider and Provider Account;
 - Agent target editing can narrow targets by Provider and Account and uses the favorite pool when one exists.
 
-Verification state:
-- NOT VERIFIED — implementation pending developer build/test/manual verification.
+## Verification Failure / Remediation Boundary
+
+Developer reported the following when using the Favorites page:
+- Refresh produced `System.InvalidOperationException: Collection was modified; enumeration operation may not execute.`
+- Refresh also produced `System.ObjectDisposedException: The CancellationTokenSource has been disposed.`
+- On first opening the Favorites tab, the target list was populated with execution targets from all providers/accounts instead of presenting the intended focused favorite-target workflow.
+
+Remediation is limited to the Phase 1.19A Favorites settings view load/filter lifecycle and its focused UI tests. No unrelated roadmap or selection-policy changes are authorized by this failure.
+
+## Verification state
+
+- VERIFICATION FAILED / REMEDIATION REQUIRED — developer runtime failure reported above.
+- After remediation, return this document to VERIFICATION PENDING with exact rerun targets.
 
 No future roadmap slice is authorized by this work item.
