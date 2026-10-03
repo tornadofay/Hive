@@ -29,7 +29,7 @@ Explicit non-goals:
 - no automatic fallback from a non-empty favorite pool to all targets when the favorite pool produces no qualifying target;
 - no change to automatic/manual ExecutionTarget management or provider discovery/reconciliation;
 - no direct provider transport, SQL, or secret access from UI;
-- no Workspace/Agent roadmap advancement beyond the selection UI support needed by this slice;
+- no Workspace/Agent roadmap advancement or Agent target-selection changes;
 - no background discovery or ranking based on favorite ordering.
 
 Expected user-facing behavior:
@@ -56,7 +56,7 @@ Remediation completed within the Phase 1.19A Favorites settings view, filtered p
 - Add Favorite and Remove persist immediately through Hive.Management;
 - Refresh loads saved favorite IDs and resolves only those IDs for display;
 - refresh/cancellation lifecycle was simplified to lifetime-owned cancellation, avoiding disposal of in-flight operation tokens;
-- focused UI tests now assert saved-favorites-only rendering, empty-state behavior, picker filtering, repeated refresh, and existing Agent selector behavior.
+- focused UI tests assert saved-favorites-only rendering, empty-state behavior, picker filtering, CRUD/scroll-host composition, and repeated refresh.
 
 ## Verification state
 
