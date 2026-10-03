@@ -24,7 +24,7 @@ internal sealed class HiveExecutionTargetPreferenceManagementService : HiveManag
     {
         if (_preferences is null)
         {
-            return Failure<IReadOnlyList<ExecutionTargetId>>(
+            return Failure(
                 Error.Unsupported(
                     "hive.management.execution-target-favorites-unavailable",
                     "Execution target favorites persistence is not configured."));
@@ -89,7 +89,7 @@ internal sealed class HiveExecutionTargetPreferenceManagementService : HiveManag
             .ListExecutionTargetsAsync(
                 accessContext,
                 includeRetired: true,
-                cancellationToken)
+                cancellationToken: cancellationToken)
             .ConfigureAwait(false);
 
         if (accessibleTargets.IsFailure)
@@ -119,7 +119,7 @@ internal sealed class HiveExecutionTargetPreferenceManagementService : HiveManag
             .ConfigureAwait(false);
     }
 
-    private static Task<Result<IReadOnlyList<ExecutionTargetId>>> Failure<T>(
+    private static Task<Result<IReadOnlyList<ExecutionTargetId>>> Failure(
         Error error) =>
         Task.FromResult(
             Result<IReadOnlyList<ExecutionTargetId>>.Failure(error));
