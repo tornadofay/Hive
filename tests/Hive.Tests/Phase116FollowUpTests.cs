@@ -716,7 +716,7 @@ public sealed class Phase116FollowUpTests
         var supportedIndex = Enumerable.Range(0, view.CapabilityStateFilter.Items.Count)
             .Single(index => string.Equals(
                 view.CapabilityStateFilter.Items[index]?.ToString(),
-                "True",
+                "Supported",
                 StringComparison.Ordinal));
 
         view.CapabilityFilter.SelectedIndex = visionIndex;
