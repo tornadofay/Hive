@@ -44,6 +44,11 @@ Expected user-facing behavior:
 
 ## Verification Failure / Remediation Boundary
 
+Developer reported an in-scope compile failure after the latest UI remediation:
+- ExecutionTargetFavoriteSettingsUiTests.cs referenced HiveFavoriteExecutionTargetsSettingsView.StatusLabel, but that view exposes the status label through its shared HiveCrudPage.
+
+## Verification Failure / Remediation Boundary
+
 Developer reported a remaining in-scope UI failure:
 - when the Favorites CRUD page opens at its normal window size, the CRUD action buttons can be laid out outside the visible right side until the window is maximized and resized back;
 - the shared CRUD layout therefore does not reliably apply its responsive geometry after the page is attached to its final parent and receives its real client size;
