@@ -10,7 +10,6 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
 {
     private enum AdvancedPage
     {
-        Overview,
         Providers,
         Accounts,
         ExecutionTargets,
@@ -67,7 +66,6 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
             AccessibleRole = AccessibleRole.PageTabList
         };
 
-        AddTab(new NavigationEntry("Overview", AdvancedPage.Overview));
         AddTab(new NavigationEntry("Providers", AdvancedPage.Providers));
         AddTab(new NavigationEntry("Accounts / Credentials", AdvancedPage.Accounts));
         AddTab(new NavigationEntry("Execution Targets", AdvancedPage.ExecutionTargets));
@@ -188,7 +186,6 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
     private Control CreatePage(AdvancedPage page) =>
         page switch
         {
-            AdvancedPage.Overview => new HiveAdvancedOverviewPage(_themeManager),
             AdvancedPage.Providers => new HiveProviderConfigurationView(
                 _management,
                 _accessContext,
