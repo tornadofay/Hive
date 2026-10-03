@@ -63,7 +63,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
 
-        var contextCard = new HiveBorderPanel
+        var contextCard = new Panel
         {
             Dock = DockStyle.Top,
             Height = 72,
@@ -154,7 +154,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         };
         _modelsScrollHost.Attach(_modelsList);
 
-        var modelSurface = new HiveBorderPanel
+        var modelSurface = new Panel
         {
             Dock = DockStyle.Fill,
             Padding = new Padding(1),
@@ -186,7 +186,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _detailsScrollHost.Attach(_detailsContent);
         _detailsScrollHost.Resize += DetailsScrollHostOnResize;
 
-        var detailsSurface = new HiveBorderPanel
+        var detailsSurface = new Panel
         {
             Dock = DockStyle.Fill,
             Padding = new Padding(1),
@@ -469,6 +469,16 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         if (_selectedEndpoint is not null)
             await LoadCachedOrDiscoverAsync().ConfigureAwait(true);
+    }
+
+    private void UpdateContextLabel()
+    {
+        _selectedEndpoint = TryParseEndpoint(_endpointComboBox.Text);
+
+        _contextLabel.Text =
+            $"Provider: {_selectedProvider?.DisplayName ?? "—"}  •  " +
+            $"Account: {_selectedAccount?.DisplayName ?? "—"}  •  " +
+            $"Endpoint: {_selectedEndpoint?.AbsoluteUri ?? "—"}";
     }
 
     private async Task LoadCachedOrDiscoverAsync()
@@ -928,11 +938,11 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         ResizeDetailCards();
     }
 
-    private HiveBorderPanel CreateDetailCard(
+    private Panel CreateDetailCard(
         string title,
         bool emphasized = false)
     {
-        var card = new HiveBorderPanel
+        var card = new Panel
         {
             AutoSize = true,
             Margin = new Padding(0, 0, 0, 8),
@@ -978,7 +988,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         return card;
     }
 
-    private static TableLayoutPanel GetCardTable(HiveBorderPanel card) =>
+    private static TableLayoutPanel GetCardTable(Panel card) =>
         card.Controls.OfType<TableLayoutPanel>().Single();
 
     private static void AddKeyValueRow(
@@ -1031,7 +1041,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         _themeManager.Apply(_detailsContent);
 
-        foreach (var card in _detailsContent.Controls.OfType<HiveBorderPanel>())
+        foreach (var card in _detailsContent.Controls.OfType<Panel>())
         {
             var table = GetCardTable(card);
 
@@ -1061,7 +1071,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         foreach (Control child in _detailsContent.Controls)
         {
-            if (child is HiveBorderPanel card)
+            if (child is Panel card)
                 card.Width = availableWidth;
         }
 
