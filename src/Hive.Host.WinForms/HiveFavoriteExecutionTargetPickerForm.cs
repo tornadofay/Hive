@@ -114,9 +114,6 @@ internal sealed class HiveFavoriteExecutionTargetPickerForm : HiveForm
         AcceptButton = _addButton;
         CancelButton = _cancelButton;
 
-        _cancelButton.Click += CancelButtonClick;
-        _addButton.Click += AddButtonClick;
-
         _themeManager.Apply(this);
     }
 
