@@ -74,6 +74,8 @@ Remediation completed within the Phase 1.19A Favorites settings view, filtered p
 
 ## Verification state
 
+- Developer manually confirmed that the Favorites CRUD buttons now appear correctly at the normal window size without requiring maximize/unmaximize; remaining 1.19A verification is still pending.
+
 - VERIFICATION PENDING — corrected implementation is complete; developer verification is required.
 - Rerun the focused ExecutionTargetFavorite UI/management/persistence tests and Favorite Settings / Add Favorite picker UI tests.
 - Exercise Overview / Getting Started / Example Configuration — Hive.Example.WinForms.
