@@ -336,7 +336,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
             _management,
             _accessContext,
             _themeManager,
-            favoriteIds,
+            favoriteIds.ToHashSet(),
             _output);
 
         await picker.InitializeAsync(_lifetimeCts.Token).ConfigureAwait(true);
