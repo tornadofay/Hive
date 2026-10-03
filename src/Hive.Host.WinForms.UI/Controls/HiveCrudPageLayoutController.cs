@@ -7,7 +7,7 @@ namespace Hive.Host.WinForms.UI.Controls;
 internal sealed class HiveCrudPageLayoutController : IDisposable
 {
     internal const int HeaderHeight = 64;
-    internal const int ActionBarHeight = 46;
+    internal const int ActionBarHeight = 52;
     internal const int FooterHeight = 42;
     internal const int ActionButtonWidth = 92;
     internal const int CompactActionButtonWidth = 84;
