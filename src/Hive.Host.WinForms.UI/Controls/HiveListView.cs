@@ -38,8 +38,8 @@ public sealed class HiveListView : ListView
     [StructLayout(LayoutKind.Sequential)]
     private struct NativeStyleStruct
     {
-        public IntPtr OldStyle;
-        public IntPtr NewStyle;
+        public uint OldStyle;
+        public uint NewStyle;
     }
 
     private HiveThemeDefinition? _theme;
@@ -509,8 +509,8 @@ public sealed class HiveListView : ListView
             return;
 
         var style = Marshal.PtrToStructure<NativeStyleStruct>(lParam);
-        var oldStyle = style.OldStyle.ToInt64();
-        var newStyle = style.NewStyle.ToInt64();
+        var oldStyle = (long)style.OldStyle;
+        var newStyle = (long)style.NewStyle;
         var nativeScrollBarStyles = newStyle & NativeScrollBarStyleMask;
 
         if (nativeScrollBarStyles == 0)
@@ -519,9 +519,7 @@ public sealed class HiveListView : ListView
         _suppressedNativeScrollBarStyles |=
             nativeScrollBarStyles & NativeScrollBarStyleMask & oldStyle;
 
-        style.NewStyle = new IntPtr(
-            newStyle & ~NativeScrollBarStyleMask);
-
+        style.NewStyle = (uint)(newStyle & ~NativeScrollBarStyleMask);
         Marshal.StructureToPtr(style, lParam, false);
     }
 
