@@ -557,12 +557,21 @@ public sealed class Phase116FollowUpTests
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
         var fixture = CreateFixture();
 
+        using var host = new Form
+        {
+            Size = new Size(1160, 760)
+        };
         using var view = new HiveModelInformationSettingsView(
             fixture.Management,
             fixture.Context,
             themeManager);
 
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
         await view.InitializeAsync();
+        Application.DoEvents();
 
         var firstItem = Assert.Single(
             view.ModelsList.Items.Cast<ListViewItem>());
@@ -586,6 +595,7 @@ public sealed class Phase116FollowUpTests
         firstItem.Selected = false;
         secondItem.Selected = true;
         secondItem.Focused = true;
+        Application.DoEvents();
 
         var detailsText = CollectVisibleControlText(view.DetailsContent);
 
