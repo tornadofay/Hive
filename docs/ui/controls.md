@@ -104,6 +104,8 @@ page.GetItemDisplayName = x => x.Name;
 await page.RefreshAsync();
 ```
 
+For an already-loaded client-side data source that needs presentation-only filtering without invoking the asynchronous load operation, `SetItemsForView(items)` replaces the displayed CRUD items directly while retaining the shared CRUD/list presentation.
+
 Column constructor:
 ```csharp
 HiveCrudColumn<TItem>(
