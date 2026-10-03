@@ -480,6 +480,8 @@ public sealed class Phase116FollowUpTests
         Assert.InRange(view.AccountSelector.Height, 34, 36);
         Assert.InRange(view.EndpointSelector.Height, 34, 36);
         Assert.IsType<HiveListView>(view.ModelsList);
+        Assert.Same(view.ModelsList, view.ModelsScrollHost.Content);
+        Assert.Same(view.DetailsContent, view.DetailsScrollHost.Content);
 
         Assert.Single(view.ModelsList.Items);
         Assert.Equal(
@@ -729,7 +731,7 @@ public sealed class Phase116FollowUpTests
             System.Reflection.MethodInfo? targetMethod,
             object?[]? args) =>
             throw new NotSupportedException(
-                $"No management operation is expected for the Advanced Overview fixture: {targetMethod?.Name}");
+                $"No management operation is expected for the Advanced Provider Configuration navigation fixture: {targetMethod?.Name}");
     }
 
     private class ModelInformationManagementProxy : DispatchProxy
