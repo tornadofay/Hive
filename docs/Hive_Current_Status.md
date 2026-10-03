@@ -1,6 +1,6 @@
 # Hive — Current Status
 
-Last updated: 2026-10-01
+Last updated: 2026-10-03
 
 ## Phase status
 
@@ -37,6 +37,7 @@ Last updated: 2026-10-01
   - **Phase 1 Custom UI Components — Slice 1: Custom Scroll Infrastructure:** Complete and verified on 2026-10-01. Developer verification: full `Hive.Tests` suite passed **524/524** (0 failed, 0 skipped); the matching `Hive.Example.WinForms` Scroll Infrastructure scenario was manually confirmed working correctly. The slice establishes reusable Hive-owned scroll infrastructure and integrates it with `HiveEditorLayout`; broader replacement of existing native scrolling remains outside this slice. [Closure verification record](verification/phase-1/custom-ui-scroll-infrastructure-closure-2026-10-01.md)
   - **Phase 1 Custom UI Components — Slice 2: HiveComboBox with Filtering:** Complete and verified on 2026-10-01. Developer verification: full `Hive.Tests` suite passed **542/542** (0 failed, 0 skipped); the matching `Hive.Example.WinForms` HiveComboBox scenario was manually confirmed working correctly after popup scroll remediation. The HiveComboBox popup uses the Slice 1 Hive-owned scroll infrastructure for long lists; broader replacement of existing native scrolling remains outside this slice. [Closure verification record](verification/phase-1/custom-ui-combobox-filtering-closure-2026-10-01.md)
   - **Phase 1 Custom UI Components — Slice 3: HiveTabControl:** Complete and verified on 2026-10-01. Developer verification: full `Hive.Tests` suite passed **555/555** (0 failed, 0 skipped); the matching `Hive.Example.WinForms` UI / Foundation / HiveTabControl scenario was manually confirmed and the developer reported the control looks good. [Closure verification record](verification/phase-1/custom-ui-tabcontrol-closure-2026-10-01.md)
+  - **Phase 1 Custom UI Components — Slice 4: Existing Hive UI Integration, Consistency & Hardening:** Complete and verified on 2026-10-03. Final developer verification: full `Hive.Tests` suite passed **570/570** (0 failed, 0 skipped) in 58.8 seconds; the matching `Hive.Example.WinForms` Overview / Getting Started / Example Configuration workflow was manually confirmed running correctly. The final verification includes the CRUD `HiveListView` first-paint/native-scrollbar suppression remediation. [Closure verification record](verification/phase-1/custom-ui-slice-4-closure-2026-10-03.md)
 
   - **1.17+:** Not authorized.
   
