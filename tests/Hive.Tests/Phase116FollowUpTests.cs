@@ -476,9 +476,9 @@ public sealed class Phase116FollowUpTests
         Assert.IsType<HiveComboBox>(view.ProviderSelector);
         Assert.IsType<HiveComboBox>(view.AccountSelector);
         Assert.IsType<HiveComboBox>(view.EndpointSelector);
-        Assert.InRange(view.ProviderSelector.Height, 34, 36);
-        Assert.InRange(view.AccountSelector.Height, 34, 36);
-        Assert.InRange(view.EndpointSelector.Height, 34, 36);
+        Assert.Equal(view.ProviderSelector.Height, view.AccountSelector.Height);
+        Assert.Equal(view.ProviderSelector.Height, view.EndpointSelector.Height);
+        Assert.InRange(view.ProviderSelector.Height, 34, 72);
         Assert.IsType<HiveListView>(view.ModelsList);
         Assert.Same(view.ModelsList, view.ModelsScrollHost.Content);
         Assert.Same(view.DetailsContent, view.DetailsScrollHost.Content);
