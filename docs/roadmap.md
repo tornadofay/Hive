@@ -331,7 +331,7 @@ Detailed implementation plan: [1.21 — V1 Agent Interaction & Application/Form 
 
 Objective: extend Workspace with explicit Agent interaction and application/form-scoped specialist Agents.
 
-Scope and non-goals: Agent selection may be Auto or an exact target from the user's Favorite ExecutionTarget pool; Auto runs authoritative capability-aware planning only over favorites, explicit selection presents only favorites and remains pinned, and neither mode silently falls back to non-favorite targets when the favorite pool has no qualifying target.
+Scope and non-goals: Agent target-source selection may be `Auto` or `Favorites`. When the favorite list is empty, `Auto` preserves normal behavior and considers all otherwise eligible ExecutionTargets. When one or more favorites exist, `Auto` considers only those favorites. `Favorites` presents only the favorite targets for explicit selection, even when there is only one favorite, and persists the exact selected ExecutionTarget identity. A non-empty favorite pool never falls back to non-favorites when no qualifying favorite exists; an empty Favorites mode has no selectable target.
 
 Verify: Agent conversation/selection using the Favorite ExecutionTarget pool, Auto over favorites only, explicit favorite-only target selection, empty/no-qualifying-favorite failure without fallback, pinned-target failure behavior, application and form association, create/reuse/activation, mode switching, runtime isolation, bounded host association, and no implicit Hive/Swarm state.
 
