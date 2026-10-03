@@ -715,7 +715,8 @@ public sealed class Phase116FollowUpTests
         return new TestModelFixture(model);
     }
 
-    private static ModelInformationFixture CreateFixture()
+    private static ModelInformationFixture CreateFixture(
+        bool favoriteFirstModel = false)
     {
         var context = CreateContext();
         var principal = context.PrincipalId!.Value;
@@ -783,6 +784,27 @@ public sealed class Phase116FollowUpTests
             null,
             []);
 
+        var secondTarget = new ExecutionTarget(
+            new ResourceEnvelope<ExecutionTargetId>(
+                ResourceKind.ExecutionTarget,
+                ExecutionTargetId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                new ResourceProvenance(
+                    principal,
+                    created,
+                    CorrelationId.New()),
+                ResourceLifecycle.Active(created)),
+            provider.Id,
+            account.Id,
+            "second-model-information-target",
+            "Second Model Information Target",
+            target.Endpoint,
+            "second-model",
+            null,
+            []);
+
         var observed = created.AddMinutes(5);
         var staleAfter = observed.AddHours(1);
 
@@ -831,6 +853,26 @@ public sealed class Phase116FollowUpTests
             observedAtUtc: observed,
             staleAfterUtc: staleAfter);
 
+        var secondModel = new ProviderModelMetadata(
+            "second-model",
+            "second-provider",
+            created,
+            ProviderAvailabilityStatus.Available,
+            ProviderHealthStatus.Healthy,
+            [
+                new CapabilityStateEntry(
+                    HiveCapabilityKeys.TextGeneration,
+                    CapabilityState.Supported),
+                new CapabilityStateEntry(
+                    HiveCapabilityKeys.Reasoning,
+                    CapabilityState.Unknown)
+            ],
+            ["text"],
+            ["text"],
+            family: "second-family",
+            modelType: "chat",
+            operationalState: "active");
+
         var snapshot = new ProviderDiscoverySnapshot(
             provider.Id,
             account.Id,
@@ -842,27 +884,37 @@ public sealed class Phase116FollowUpTests
                 staleAfter,
                 17),
             ProviderDiscoveryState.Supported,
-            [model]);
+            [model, secondModel]);
 
         var management = DispatchProxy.Create<
             IHiveManagementFacade,
             ModelInformationManagementProxy>();
 
-        ((ModelInformationManagementProxy)(object)management).Configure(
+        var managementProxy =
+            (ModelInformationManagementProxy)(object)management;
+
+        managementProxy.Configure(
             provider,
             account,
-            target,
+            [target, secondTarget],
             snapshot,
-            context);
+            context,
+            favoriteFirstModel
+                ? [target.Id]
+                : []);
 
         return new ModelInformationFixture(
             context,
-            management);
+            management,
+            target,
+            managementProxy);
     }
 
     private sealed record ModelInformationFixture(
         ResourceAccessContext Context,
-        IHiveManagementFacade Management);
+        IHiveManagementFacade Management,
+        ExecutionTarget Target,
+        ModelInformationManagementProxy ManagementProxy);
 
     private class ThrowingManagementProxy : DispatchProxy
     {
@@ -877,20 +929,26 @@ public sealed class Phase116FollowUpTests
     {
         private Provider? _provider;
         private ProviderAccount? _account;
-        private ExecutionTarget? _target;
+        private IReadOnlyList<ExecutionTarget> _targets = [];
         private ProviderDiscoverySnapshot? _snapshot;
+        private IReadOnlyList<ExecutionTargetId> _favoriteExecutionTargetIds = [];
+
+        public IReadOnlyList<ExecutionTargetId> FavoriteExecutionTargetIds =>
+            _favoriteExecutionTargetIds;
 
         public void Configure(
             Provider provider,
             ProviderAccount account,
-            ExecutionTarget target,
+            IReadOnlyList<ExecutionTarget> targets,
             ProviderDiscoverySnapshot snapshot,
-            ResourceAccessContext context)
+            ResourceAccessContext context,
+            IReadOnlyList<ExecutionTargetId> favoriteTargetIds)
         {
             _provider = provider;
             _account = account;
-            _target = target;
+            _targets = targets;
             _snapshot = snapshot;
+            _favoriteExecutionTargetIds = favoriteTargetIds.ToArray();
         }
 
         protected override object? Invoke(
@@ -911,10 +969,16 @@ public sealed class Phase116FollowUpTests
                     Task.FromResult(
                         Result<IReadOnlyList<ProviderAccount>>.Success(
                             [_account!])),
+                nameof(IHiveManagementFacade.GetFavoriteExecutionTargetIdsAsync) =>
+                    Task.FromResult(
+                        Result<IReadOnlyList<ExecutionTargetId>>.Success(
+                            _favoriteExecutionTargetIds)),
+                nameof(IHiveManagementFacade.ReplaceFavoriteExecutionTargetIdsAsync) =>
+                    ReplaceFavoriteExecutionTargetIds(args),
                 nameof(IHiveManagementFacade.ListExecutionTargetsAsync) =>
                     Task.FromResult(
                         Result<IReadOnlyList<ExecutionTarget>>.Success(
-                            [_target!])),
+                            _targets)),
                 nameof(IHiveManagementFacade.GetProviderDiscoveryAsync)
                     when args is { Length: 6 } &&
                          args[0] is ProviderId =>
@@ -951,6 +1015,22 @@ public sealed class Phase116FollowUpTests
             };
 
             return Task.FromResult(response);
+        }
+
+        private object ReplaceFavoriteExecutionTargetIds(object?[]? args)
+        {
+            var ids =
+                args is not null &&
+                args.Length > 0 &&
+                args[0] is IReadOnlyList<ExecutionTargetId> favoriteIds
+                    ? favoriteIds
+                    : Array.Empty<ExecutionTargetId>();
+
+            _favoriteExecutionTargetIds = ids.ToArray();
+
+            return Task.FromResult(
+                Result<IReadOnlyList<ExecutionTargetId>>.Success(
+                    _favoriteExecutionTargetIds));
         }
     }
 }
