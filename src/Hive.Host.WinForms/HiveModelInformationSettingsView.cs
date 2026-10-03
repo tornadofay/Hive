@@ -757,199 +757,198 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             ClearDetailsContent();
 
             var summary = CreateDetailCard(
-            model.DisplayName ?? model.ModelId,
-            emphasized: true);
-        var summaryTable = GetCardTable(summary);
+                model.DisplayName ?? model.ModelId,
+                emphasized: true);
+            var summaryTable = GetCardTable(summary);
 
-        AddKeyValueRow(summaryTable, "Model ID", model.ModelId);
-        AddKeyValueRow(summaryTable, "Owner / attribution", model.OwnedBy ?? "Not reported");
-        AddKeyValueRow(summaryTable, "Family", model.Family ?? "Not reported");
-        AddKeyValueRow(summaryTable, "Type", model.ModelType ?? "Not reported");
-        AddKeyValueRow(summaryTable, "Category", model.Category ?? "Not reported");
-        AddKeyValueRow(summaryTable, "Version", model.Version ?? "Not reported");
-        AddKeyValueRow(summaryTable, "Operational state", model.OperationalState ?? "Not reported");
-        AddKeyValueRow(
-            summaryTable,
-            "Created",
-            model.CreatedAtUtc?.ToString("O") ?? "Not reported");
-        AddKeyValueRow(
-            summaryTable,
-            "Description",
-            model.Description ?? "Not reported");
-
-        _detailsContent.Controls.Add(summary);
-
-        var modalities = CreateDetailCard("Inputs & outputs");
-        var modalitiesTable = GetCardTable(modalities);
-        AddKeyValueRow(
-            modalitiesTable,
-            "Input modalities",
-            FormatList(model.InputModalities));
-        AddKeyValueRow(
-            modalitiesTable,
-            "Output modalities",
-            FormatList(model.OutputModalities));
-        _detailsContent.Controls.Add(modalities);
-
-        var capabilities = CreateDetailCard("Capabilities");
-        var capabilityTable = GetCardTable(capabilities);
-        AddKeyValueRow(capabilityTable, "Capability", "Discovered state");
-        if (model.DiscoveredCapabilities.Count == 0)
-        {
+            AddKeyValueRow(summaryTable, "Model ID", model.ModelId);
+            AddKeyValueRow(summaryTable, "Owner / attribution", model.OwnedBy ?? "Not reported");
+            AddKeyValueRow(summaryTable, "Family", model.Family ?? "Not reported");
+            AddKeyValueRow(summaryTable, "Type", model.ModelType ?? "Not reported");
+            AddKeyValueRow(summaryTable, "Category", model.Category ?? "Not reported");
+            AddKeyValueRow(summaryTable, "Version", model.Version ?? "Not reported");
+            AddKeyValueRow(summaryTable, "Operational state", model.OperationalState ?? "Not reported");
             AddKeyValueRow(
-                capabilityTable,
-                "State",
-                "No normalized capability state was reported.");
-        }
-        else
-        {
-            foreach (var item in model.DiscoveredCapabilities
-                         .OrderBy(item => item.Capability.Value, StringComparer.Ordinal))
+                summaryTable,
+                "Created",
+                model.CreatedAtUtc?.ToString("O") ?? "Not reported");
+            AddKeyValueRow(
+                summaryTable,
+                "Description",
+                model.Description ?? "Not reported");
+
+            _detailsContent.Controls.Add(summary);
+
+            var modalities = CreateDetailCard("Inputs & outputs");
+            var modalitiesTable = GetCardTable(modalities);
+            AddKeyValueRow(
+                modalitiesTable,
+                "Input modalities",
+                FormatList(model.InputModalities));
+            AddKeyValueRow(
+                modalitiesTable,
+                "Output modalities",
+                FormatList(model.OutputModalities));
+            _detailsContent.Controls.Add(modalities);
+
+            var capabilities = CreateDetailCard("Capabilities");
+            var capabilityTable = GetCardTable(capabilities);
+            AddKeyValueRow(capabilityTable, "Capability", "Discovered state");
+            if (model.DiscoveredCapabilities.Count == 0)
             {
                 AddKeyValueRow(
                     capabilityTable,
-                    item.Capability.Value,
-                    $"{item.State}  •  discovered");
-            }
-        }
-
-        _detailsContent.Controls.Add(capabilities);
-
-        var reasoning = CreateDetailCard("Reasoning & thinking");
-        var reasoningTable = GetCardTable(reasoning);
-        AddKeyValueRow(
-            reasoningTable,
-            "Reasoning",
-            FindCapability(model, HiveCapabilityKeys.Reasoning));
-        AddKeyValueRow(
-            reasoningTable,
-            "Thinking",
-            FindCapability(model, HiveCapabilityKeys.Thinking));
-        AddKeyValueRow(
-            reasoningTable,
-            "Options",
-            FormatList(model.ThinkingOptions));
-        AddKeyValueRow(
-            reasoningTable,
-            "Default",
-            model.DefaultThinkingLevel ?? "Not reported");
-        _detailsContent.Controls.Add(reasoning);
-
-        var limits = CreateDetailCard("Limits");
-        var limitsTable = GetCardTable(limits);
-        if (model.Limits is null)
-        {
-            AddKeyValueRow(
-                limitsTable,
-                "Status",
-                "No model-scoped limits were reported.");
-        }
-        else
-        {
-            AddKeyValueRow(
-                limitsTable,
-                "Context window tokens",
-                model.Limits.ContextWindowTokens?.ToString() ?? "Not reported");
-            AddKeyValueRow(
-                limitsTable,
-                "Max input tokens",
-                model.Limits.MaxInputTokens?.ToString() ?? "Not reported");
-            AddKeyValueRow(
-                limitsTable,
-                "Max output tokens",
-                model.Limits.MaxOutputTokens?.ToString() ?? "Not reported");
-            AddKeyValueRow(
-                limitsTable,
-                "Additional constraints",
-                FormatJsonDictionary(model.Limits.AdditionalConstraints));
-        }
-
-        _detailsContent.Controls.Add(limits);
-
-        var pricing = CreateDetailCard("Pricing & economics");
-        var pricingTable = GetCardTable(pricing);
-        if (model.Pricing is null)
-        {
-            AddKeyValueRow(pricingTable, "Status", "No pricing was reported.");
-            AddKeyValueRow(
-                pricingTable,
-                "Interpretation",
-                "Missing pricing is not evidence that the model is free.");
-        }
-        else
-        {
-            AddKeyValueRow(
-                pricingTable,
-                "Explicit free evidence",
-                model.Pricing.ExplicitFreeEvidence ? "Reported" : "Not reported");
-
-            if (model.Pricing.Prices.Count == 0)
-            {
-                AddKeyValueRow(
-                    pricingTable,
-                    "Rates",
-                    "No billable rate entries were reported.");
+                    "State",
+                    "No normalized capability state was reported.");
             }
             else
             {
-                foreach (var price in model.Pricing.Prices)
+                foreach (var item in model.DiscoveredCapabilities
+                             .OrderBy(item => item.Capability.Value, StringComparer.Ordinal))
                 {
-                    var quantity = price.UnitQuantity is { } value
-                        ? $" per {value:0.####}"
-                        : string.Empty;
                     AddKeyValueRow(
-                        pricingTable,
-                        price.BillingUnit,
-                        $"{price.Price:0.##########} {price.Currency ?? "currency not reported"}{quantity}");
+                        capabilityTable,
+                        item.Capability.Value,
+                        $"{item.State}  •  discovered");
                 }
             }
-        }
 
-        _detailsContent.Controls.Add(pricing);
+            _detailsContent.Controls.Add(capabilities);
 
-        var operational = CreateDetailCard("Operational state");
-        var operationalTable = GetCardTable(operational);
-        AddKeyValueRow(
-            operationalTable,
-            "Availability",
-            model.Availability.ToString());
-        AddKeyValueRow(
-            operationalTable,
-            "Health",
-            model.Health.ToString());
-        AddKeyValueRow(
-            operationalTable,
-            "Observed",
-            model.ObservedAtUtc?.ToString("O") ?? "Snapshot observation timestamp");
-        AddKeyValueRow(
-            operationalTable,
-            "Stale after",
-            model.StaleAfterUtc?.ToString("O") ?? "Snapshot freshness boundary");
-        _detailsContent.Controls.Add(operational);
-
-        var providerInfo = CreateDetailCard("Additional provider information");
-        var providerInfoTable = GetCardTable(providerInfo);
-        if (model.ExtensionData.Count == 0)
-        {
+            var reasoning = CreateDetailCard("Reasoning & thinking");
+            var reasoningTable = GetCardTable(reasoning);
             AddKeyValueRow(
-                providerInfoTable,
-                "Status",
-                "No additional bounded provider-specific evidence was reported.");
-        }
-        else
-        {
-            foreach (var pair in model.ExtensionData
-                         .OrderBy(pair => pair.Key, StringComparer.Ordinal))
+                reasoningTable,
+                "Reasoning",
+                FindCapability(model, HiveCapabilityKeys.Reasoning));
+            AddKeyValueRow(
+                reasoningTable,
+                "Thinking",
+                FindCapability(model, HiveCapabilityKeys.Thinking));
+            AddKeyValueRow(
+                reasoningTable,
+                "Options",
+                FormatList(model.ThinkingOptions));
+            AddKeyValueRow(
+                reasoningTable,
+                "Default",
+                model.DefaultThinkingLevel ?? "Not reported");
+            _detailsContent.Controls.Add(reasoning);
+
+            var limits = CreateDetailCard("Limits");
+            var limitsTable = GetCardTable(limits);
+            if (model.Limits is null)
+            {
+                AddKeyValueRow(
+                    limitsTable,
+                    "Status",
+                    "No model-scoped limits were reported.");
+            }
+            else
+            {
+                AddKeyValueRow(
+                    limitsTable,
+                    "Context window tokens",
+                    model.Limits.ContextWindowTokens?.ToString() ?? "Not reported");
+                AddKeyValueRow(
+                    limitsTable,
+                    "Max input tokens",
+                    model.Limits.MaxInputTokens?.ToString() ?? "Not reported");
+                AddKeyValueRow(
+                    limitsTable,
+                    "Max output tokens",
+                    model.Limits.MaxOutputTokens?.ToString() ?? "Not reported");
+                AddKeyValueRow(
+                    limitsTable,
+                    "Additional constraints",
+                    FormatJsonDictionary(model.Limits.AdditionalConstraints));
+            }
+
+            _detailsContent.Controls.Add(limits);
+
+            var pricing = CreateDetailCard("Pricing & economics");
+            var pricingTable = GetCardTable(pricing);
+            if (model.Pricing is null)
+            {
+                AddKeyValueRow(pricingTable, "Status", "No pricing was reported.");
+                AddKeyValueRow(
+                    pricingTable,
+                    "Interpretation",
+                    "Missing pricing is not evidence that the model is free.");
+            }
+            else
+            {
+                AddKeyValueRow(
+                    pricingTable,
+                    "Explicit free evidence",
+                    model.Pricing.ExplicitFreeEvidence ? "Reported" : "Not reported");
+
+                if (model.Pricing.Prices.Count == 0)
+                {
+                    AddKeyValueRow(
+                        pricingTable,
+                        "Rates",
+                        "No billable rate entries were reported.");
+                }
+                else
+                {
+                    foreach (var price in model.Pricing.Prices)
+                    {
+                        var quantity = price.UnitQuantity is { } value
+                            ? $" per {value:0.####}"
+                            : string.Empty;
+                        AddKeyValueRow(
+                            pricingTable,
+                            price.BillingUnit,
+                            $"{price.Price:0.##########} {price.Currency ?? "currency not reported"}{quantity}");
+                    }
+                }
+            }
+
+            _detailsContent.Controls.Add(pricing);
+
+            var operational = CreateDetailCard("Operational state");
+            var operationalTable = GetCardTable(operational);
+            AddKeyValueRow(
+                operationalTable,
+                "Availability",
+                model.Availability.ToString());
+            AddKeyValueRow(
+                operationalTable,
+                "Health",
+                model.Health.ToString());
+            AddKeyValueRow(
+                operationalTable,
+                "Observed",
+                model.ObservedAtUtc?.ToString("O") ?? "Snapshot observation timestamp");
+            AddKeyValueRow(
+                operationalTable,
+                "Stale after",
+                model.StaleAfterUtc?.ToString("O") ?? "Snapshot freshness boundary");
+            _detailsContent.Controls.Add(operational);
+
+            var providerInfo = CreateDetailCard("Additional provider information");
+            var providerInfoTable = GetCardTable(providerInfo);
+            if (model.ExtensionData.Count == 0)
             {
                 AddKeyValueRow(
                     providerInfoTable,
-                    pair.Key,
-                    FormatJsonValue(pair.Value));
+                    "Status",
+                    "No additional bounded provider-specific evidence was reported.");
             }
-        }
+            else
+            {
+                foreach (var pair in model.ExtensionData
+                             .OrderBy(pair => pair.Key, StringComparer.Ordinal))
+                {
+                    AddKeyValueRow(
+                        providerInfoTable,
+                        pair.Key,
+                        FormatJsonValue(pair.Value));
+                }
+            }
 
             _detailsContent.Controls.Add(providerInfo);
-
             ApplyDetailsTheme();
         }
         finally
