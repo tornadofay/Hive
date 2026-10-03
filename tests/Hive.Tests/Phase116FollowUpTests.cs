@@ -1163,6 +1163,7 @@ public sealed class Phase116FollowUpTests
     private class ModelInformationManagementProxy : DispatchProxy
     {
         private Provider? _provider;
+        private ProviderAccount? _account;
         private IReadOnlyList<ExecutionTarget> _targets = [];
         private ProviderDiscoverySnapshot? _snapshot;
         private IReadOnlyList<ExecutionTargetId> _favoriteExecutionTargetIds = [];
@@ -1179,6 +1180,7 @@ public sealed class Phase116FollowUpTests
             IReadOnlyList<ExecutionTargetId> favoriteTargetIds)
         {
             _provider = provider;
+            _account = account;
             _targets = targets;
             _snapshot = snapshot;
             _favoriteExecutionTargetIds = favoriteTargetIds.ToArray();
@@ -1266,20 +1268,5 @@ public sealed class Phase116FollowUpTests
             return Task.FromResult(response);
         }
 
-        private object ReplaceFavoriteExecutionTargetIds(object?[]? args)
-        {
-            var ids =
-                args is not null &&
-                args.Length > 0 &&
-                args[0] is IReadOnlyList<ExecutionTargetId> favoriteIds
-                    ? favoriteIds
-                    : Array.Empty<ExecutionTargetId>();
-
-            _favoriteExecutionTargetIds = ids.ToArray();
-
-            return Task.FromResult(
-                Result<IReadOnlyList<ExecutionTargetId>>.Success(
-                    _favoriteExecutionTargetIds));
-        }
     }
 }
