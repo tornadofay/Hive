@@ -172,8 +172,8 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         _providerComboBox.SelectedIndexChanged += ProviderChanged;
         _accountComboBox.SelectedIndexChanged += AccountChanged;
         _targetList.ItemCheck += TargetItemCheck;
-        _saveButton.Click += async (_, _) => await SaveAsync();
-        _refreshButton.Click += async (_, _) => await InitializeAsync();
+        _saveButton.Click += SaveButtonClick;
+        _refreshButton.Click += RefreshButtonClick;
 
         Controls.Add(root);
         _themeManager.Apply(this);
@@ -448,6 +448,12 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         _saveButton.Enabled = true;
     }
 
+    private async void SaveButtonClick(object? sender, EventArgs e) =>
+        await SaveAsync();
+
+    private async void RefreshButtonClick(object? sender, EventArgs e) =>
+        await InitializeAsync();
+
     private async Task SaveAsync()
     {
         if (IsDisposed || Disposing)
@@ -571,7 +577,8 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
             _providerComboBox.SelectedIndexChanged -= ProviderChanged;
             _accountComboBox.SelectedIndexChanged -= AccountChanged;
             _targetList.ItemCheck -= TargetItemCheck;
-            _saveButton.Click -= async (_, _) => await SaveAsync();
+            _saveButton.Click -= SaveButtonClick;
+            _refreshButton.Click -= RefreshButtonClick;
 
             var cts = Interlocked.Exchange(ref _loadCts, null);
             cts?.Cancel();
