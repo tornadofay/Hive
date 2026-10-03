@@ -163,6 +163,23 @@ public sealed class HiveUiPolishTests
         Assert.True(textBox.Height >= 32);
     }
 
+    [WinFormsFact]
+    public void HiveListView_UsesOwningHiveThemeBeforeFirstPaint()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Dark);
+
+        using var form = new TestHiveForm(themeManager);
+        using var list = new HiveListView
+        {
+            View = View.Details
+        };
+
+        form.Body.Controls.Add(list);
+
+        Assert.Equal(themeManager.Theme.Palette.Surface, list.BackColor);
+        Assert.Equal(themeManager.Theme.Palette.Text, list.ForeColor);
+    }
+
     [Fact]
     public void HiveCrudPage_AppliesErrorStatusToneAndPreservesItAcrossThemeChanges()
     {
