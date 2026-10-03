@@ -511,7 +511,55 @@ public sealed class Phase116FollowUpTests
 
         Assert.All(
             view.DetailsContent.Controls.Cast<Control>(),
-            control => Assert.IsType<HiveBorderPanel>(control));
+            control =>
+            {
+                var panel = Assert.IsType<Panel>(control);
+                Assert.Equal(
+                    BorderStyle.FixedSingle,
+                    panel.BorderStyle);
+            });
+    }
+
+    [WinFormsFact]
+    public async Task ModelInformationView_UpdatesDetailsWhenSelectionChanges()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var fixture = CreateFixture();
+
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        await view.InitializeAsync();
+
+        var firstItem = Assert.Single(view.ModelsList.Items);
+        var secondModel = new ProviderModelMetadata(
+            "second-model",
+            "second-provider",
+            null,
+            ProviderAvailabilityStatus.Available,
+            ProviderHealthStatus.Healthy,
+            []);
+
+        var secondItem = new ListViewItem(secondModel.ModelId)
+        {
+            Tag = secondModel
+        };
+        secondItem.SubItems.Add("chat");
+        secondItem.SubItems.Add(secondModel.Availability.ToString());
+        secondItem.SubItems.Add(secondModel.Health.ToString());
+        view.ModelsList.Items.Add(secondItem);
+
+        firstItem.Selected = false;
+        secondItem.Selected = true;
+        secondItem.Focused = true;
+
+        var detailsText = CollectVisibleControlText(view.DetailsContent);
+
+        Assert.Contains("second-model", detailsText);
+        Assert.Contains("second-provider", detailsText);
+        Assert.DoesNotContain("rich-model", detailsText);
     }
 
     private static string CollectVisibleControlText(Control root)
