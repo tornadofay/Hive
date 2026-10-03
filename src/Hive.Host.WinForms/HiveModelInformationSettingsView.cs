@@ -181,7 +181,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             AccessibleDescription = "Browse structured model information using the Hive scrollbars."
         };
         _detailsScrollHost.Attach(_detailsContent);
-        _detailsScrollHost.Resize += (_, _) => ResizeDetailCards();
+        _detailsScrollHost.Resize += DetailsScrollHostOnResize;
 
         var detailsSurface = new HiveBorderPanel
         {
@@ -957,7 +957,13 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Height = 28,
             Text = title,
             Padding = new Padding(0, 0, 0, 6),
-            AccessibleRole = AccessibleRole.Heading,
+            AccessibleRole = AccessibleRole.StaticText,
+            Font = new Font(
+                _themeManager.Theme.Palette.Text.IsEmpty
+                    ? "Segoe UI"
+                    : _themeManager.Theme.Typography.FontFamily,
+                _themeManager.Theme.Typography.SectionSize,
+                FontStyle.Bold),
             AccessibleName = title
         };
 
@@ -985,7 +991,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             AutoSize = false,
             Text = key,
             Padding = new Padding(0, 3, 12, 3),
-            TextAlign = ContentAlignment.TopLeft
+            TextAlign = ContentAlignment.TopLeft,
+            ForeColor = SystemColors.GrayText
         };
 
         var valueLabel = new Label
@@ -994,7 +1001,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             MaximumSize = new Size(520, 0),
             Text = value,
             Padding = new Padding(0, 3, 0, 3),
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            ForeColor = SystemColors.ControlText
         };
 
         table.Controls.Add(keyLabel, 0, row);
@@ -1017,15 +1025,10 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             return;
 
         _themeManager.Apply(_detailsContent);
-
-        foreach (var card in _detailsContent.Controls.OfType<HiveBorderPanel>())
-        {
-            card.BorderColor =
-                card.AccessibleName == "Selected model information"
-                    ? _themeManager.Theme.Palette.Accent
-                    : card.BorderColor;
-        }
     }
+
+    private void DetailsScrollHostOnResize(object? sender, EventArgs e) =>
+        ResizeDetailCards();
 
     private void ResizeDetailCards()
     {
@@ -1216,6 +1219,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _endpointComboBox.TextChanged -= EndpointTextChanged;
             _refreshButton.Click -= RefreshButtonOnClick;
             _modelsList.SelectedIndexChanged -= ModelsListSelected;
+            _detailsScrollHost.Resize -= DetailsScrollHostOnResize;
             CancelOperation();
         }
 
