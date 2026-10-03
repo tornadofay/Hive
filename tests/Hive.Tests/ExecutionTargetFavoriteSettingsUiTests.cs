@@ -356,7 +356,7 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
             ]);
     }
 
-    private sealed class UiManagementProxy : DispatchProxy
+    private class UiManagementProxy : DispatchProxy
     {
         private IReadOnlyList<Provider> _providers = [];
         private IReadOnlyList<ProviderAccount> _accounts = [];
