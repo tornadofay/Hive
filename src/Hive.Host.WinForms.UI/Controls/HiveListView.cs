@@ -93,14 +93,12 @@ public sealed class HiveListView : ListView
             IsResizeWindowPositionMessage(m.LParam))
         {
             HideNativeScrollBars();
-            RequestNativeScrollBarSuppression();
         }
 
         if (_nativeScrollBarsSuppressed &&
             m.Msg == WmStyleChanged)
         {
             HideNativeScrollBars();
-            RequestNativeScrollBarSuppression();
         }
     }
 
