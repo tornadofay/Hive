@@ -154,6 +154,7 @@ internal sealed class HiveAgentSettingsView : UserControl
                 if (accountTargets.IsFailure)
                     throw new InvalidOperationException(accountTargets.Error!.Message);
 
+                allAccounts.Add(account);
                 targets.AddRange(accountTargets.Value!);
             }
         }
