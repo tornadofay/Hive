@@ -44,7 +44,6 @@ Expected user-facing behavior:
 
 ## Verification Failure / Remediation Boundary
 
-## Verification Failure / Remediation Boundary
 
 Developer reported a remaining in-scope UI failure:
 - when the Favorites CRUD page opens at its normal window size, the CRUD action buttons can be laid out outside the visible right side until the window is maximized and resized back;
