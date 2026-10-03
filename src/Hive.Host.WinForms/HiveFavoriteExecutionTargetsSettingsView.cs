@@ -172,6 +172,14 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
                 throw new InvalidOperationException(favorites.Error!.Message);
 
             var favoriteIds = favorites.Value!.ToArray();
+            if (favoriteIds.Length == 0)
+            {
+                PopulateFavorites(
+                    favoriteIds,
+                    new Dictionary<ExecutionTargetId, TargetDetails>());
+                return;
+            }
+
             var targets = await LoadAccessibleTargetsAsync(linked.Token)
                 .ConfigureAwait(true);
 
@@ -428,12 +436,12 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         }
     }
 
-    private IReadOnlySet<ExecutionTargetId> GetFavoriteIdsFromList() =>
+    private IReadOnlyList<ExecutionTargetId> GetFavoriteIdsFromList() =>
         _favoriteList.Items
             .Cast<ListViewItem>()
             .Select(item => item.Tag)
             .OfType<ExecutionTargetId>()
-            .ToHashSet();
+            .ToArray();
 
     private void FavoriteSelectionChanged(object? sender, EventArgs e)
     {
