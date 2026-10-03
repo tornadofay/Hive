@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Current Slice
 
@@ -50,6 +50,8 @@ Remediation boundary:
 - correct the test proxy declaration so DispatchProxy can generate the proxy;
 - do not change Favorites production behavior, target-selection semantics, persistence contracts, or unrelated tests;
 - rerun the focused ExecutionTargetFavoriteSettingsUiTests coverage, then the broader Hive.Tests suite before slice closure.
+
+Remediation completed: changed only the test proxy declaration from a sealed DispatchProxy base to a non-sealed base so the framework can generate the proxy. No production Favorites behavior was changed. Developer re-verification is required.
 
 ## Verification Failure / Remediation Boundary — CRUD Initial Layout
 
