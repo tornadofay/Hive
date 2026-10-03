@@ -30,6 +30,7 @@ BEGIN
     CREATE INDEX [IX_HiveExecutionTargetFavorites_Order]
         ON [dbo].[HiveExecutionTargetFavorites]
         (
+            [DeploymentId],
             [OwnerPrincipalId],
             [ScopeKind],
             [ScopeIdentity],
