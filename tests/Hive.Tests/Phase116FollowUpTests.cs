@@ -784,7 +784,7 @@ public sealed class Phase116FollowUpTests
         var trueIndex = Enumerable.Range(0, view.CapabilityStateFilter.Items.Count)
             .Single(index =>
                 string.Equals(
-                    view.CapabilityStateFilter.Items[index]? .ToString(),
+                    view.CapabilityStateFilter.Items[index]?.ToString(),
                     "Supported",
                     StringComparison.Ordinal));
 
