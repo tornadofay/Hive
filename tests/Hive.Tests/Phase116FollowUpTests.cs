@@ -416,7 +416,7 @@ public sealed class Phase116FollowUpTests
     }
 
     [WinFormsFact]
-    public void AdvancedConfiguration_UsesHiveTabsForNavigation()
+    public void AdvancedConfiguration_UsesHiveTabsWithoutOverview()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
         var context = CreateContext();
@@ -476,6 +476,9 @@ public sealed class Phase116FollowUpTests
         Assert.IsType<HiveComboBox>(view.ProviderSelector);
         Assert.IsType<HiveComboBox>(view.AccountSelector);
         Assert.IsType<HiveComboBox>(view.EndpointSelector);
+        Assert.InRange(view.ProviderSelector.Height, 34, 36);
+        Assert.InRange(view.AccountSelector.Height, 34, 36);
+        Assert.InRange(view.EndpointSelector.Height, 34, 36);
         Assert.IsType<HiveListView>(view.ModelsList);
 
         Assert.Single(view.ModelsList.Items);
