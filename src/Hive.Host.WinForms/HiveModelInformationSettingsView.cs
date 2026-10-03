@@ -33,8 +33,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly HiveComboBox _endpointComboBox;
     private readonly HiveButton _refreshButton;
     private readonly Label _statusLabel;
-    private readonly ListView _modelsList;
-    private readonly TextBox _detailsBox;
+    private readonly HiveListView _modelsList;
+    private readonly HiveScrollHost _modelsScrollHost;
+    private readonly FlowLayoutPanel _detailsContent;
     private readonly HiveScrollHost _detailsScrollHost;
     private readonly Label _contextLabel;
     private CancellationTokenSource? _operationCts;
@@ -59,18 +60,28 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
 
-        var contextPanel = new TableLayoutPanel
+        var contextCard = new HiveBorderPanel
         {
             Dock = DockStyle.Top,
-            Height = 96,
+            Height = 72,
+            Padding = new Padding(8),
+            Margin = Padding.Empty
+        };
+
+        var contextPanel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
             ColumnCount = 4,
             RowCount = 2,
-            Padding = new Padding(0, 0, 0, 8)
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
         };
-        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 26f));
-        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 26f));
-        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 36f));
+        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25f));
+        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25f));
+        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38f));
         contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12f));
+        contextPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 18f));
+        contextPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
 
         contextPanel.Controls.Add(CreateContextLabel("Provider"), 0, 0);
         contextPanel.Controls.Add(CreateContextLabel("Account / Credential"), 1, 0);
@@ -87,57 +98,77 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Dock = DockStyle.Fill,
             Text = "Refresh",
             Style = HiveButtonStyle.Secondary,
-            AccessibleName = "Refresh model information"
+            AccessibleName = "Refresh model information",
+            Margin = Padding.Empty
         };
 
         contextPanel.Controls.Add(_providerComboBox, 0, 1);
         contextPanel.Controls.Add(_accountComboBox, 1, 1);
         contextPanel.Controls.Add(_endpointComboBox, 2, 1);
         contextPanel.Controls.Add(_refreshButton, 3, 1);
+        contextCard.Controls.Add(contextPanel);
 
         _contextLabel = new Label
         {
             Dock = DockStyle.Top,
             AutoSize = false,
-            Height = 34,
-            Text = "Select a Provider and Account, choose a saved endpoint, or enter an HTTP/HTTPS endpoint, then Refresh.",
+            Height = 26,
+            Text = "Select a Provider and Account, choose a saved endpoint, or enter an HTTP/HTTPS endpoint.",
             AutoEllipsis = true,
-            Padding = new Padding(4, 6, 4, 4)
+            Padding = new Padding(4, 4, 4, 2),
+            AccessibleName = "Model discovery context"
         };
 
         _statusLabel = new Label
         {
             Dock = DockStyle.Top,
             AutoSize = false,
-            Height = 30,
+            Height = 24,
             Text = "Model discovery has not started.",
             AutoEllipsis = true,
-            Padding = new Padding(4, 4, 4, 2)
+            Padding = new Padding(4, 2, 4, 2),
+            AccessibleRole = AccessibleRole.StatusBar
         };
 
-        _modelsList = new ListView
+        _modelsList = new HiveListView
         {
             Dock = DockStyle.Fill,
-            View = View.Details,
-            FullRowSelect = true,
-            HideSelection = false,
-            MultiSelect = false,
-            BorderStyle = BorderStyle.FixedSingle,
-            AccessibleName = "Discovered provider models"
+            AccessibleName = "Discovered provider models",
+            AccessibleRole = AccessibleRole.Table
         };
-        _modelsList.Columns.Add("Model", 240);
-        _modelsList.Columns.Add("Owner", 150);
+        _modelsList.Columns.Add("Model", 260);
+        _modelsList.Columns.Add("Type", 120);
         _modelsList.Columns.Add("Availability", 110);
         _modelsList.Columns.Add("Health", 100);
 
-        _detailsBox = new TextBox
+        _modelsScrollHost = new HiveScrollHost
         {
             Dock = DockStyle.Fill,
-            Multiline = true,
-            ReadOnly = true,
-            ScrollBars = ScrollBars.Both,
-            WordWrap = false,
-            BorderStyle = BorderStyle.FixedSingle,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            AccessibleName = "Discovered provider models scroll area",
+            AccessibleDescription = "Browse discovered models using the Hive scrollbars."
+        };
+        _modelsScrollHost.Attach(_modelsList);
+
+        var modelSurface = new HiveBorderPanel
+        {
+            Dock = DockStyle.Fill,
+            Padding = new Padding(1),
+            Margin = Padding.Empty
+        };
+        modelSurface.Controls.Add(_modelsScrollHost);
+
+        _detailsContent = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Margin = Padding.Empty,
+            Padding = new Padding(0, 0, 8, 8),
+            MinimumSize = new Size(320, 0),
             AccessibleName = "Selected model information"
         };
 
@@ -145,10 +176,20 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             Dock = DockStyle.Fill,
             Margin = Padding.Empty,
+            Padding = Padding.Empty,
             AccessibleName = "Selected model information scroll area",
-            AccessibleDescription = "Scroll the selected model information using Hive scrollbars."
+            AccessibleDescription = "Browse structured model information using the Hive scrollbars."
         };
-        _detailsScrollHost.Attach(_detailsBox);
+        _detailsScrollHost.Attach(_detailsContent);
+        _detailsScrollHost.Resize += (_, _) => ResizeDetailCards();
+
+        var detailsSurface = new HiveBorderPanel
+        {
+            Dock = DockStyle.Fill,
+            Padding = new Padding(1),
+            Margin = Padding.Empty
+        };
+        detailsSurface.Controls.Add(_detailsScrollHost);
 
         var split = new SplitContainer
         {
@@ -157,15 +198,15 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             SplitterDistance = 430,
             IsSplitterFixed = false
         };
-        split.Panel1.Padding = new Padding(0, 4, 8, 0);
-        split.Panel2.Padding = new Padding(8, 4, 0, 0);
-        split.Panel1.Controls.Add(_modelsList);
-        split.Panel2.Controls.Add(_detailsScrollHost);
+        split.Panel1.Padding = new Padding(0, 6, 8, 0);
+        split.Panel2.Padding = new Padding(8, 6, 0, 0);
+        split.Panel1.Controls.Add(modelSurface);
+        split.Panel2.Controls.Add(detailsSurface);
 
         Controls.Add(split);
         Controls.Add(_statusLabel);
         Controls.Add(_contextLabel);
-        Controls.Add(contextPanel);
+        Controls.Add(contextCard);
 
         _providerComboBox.SelectedIndexChanged += ProviderChanged;
         _accountComboBox.SelectedIndexChanged += AccountChanged;
@@ -185,9 +226,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     internal HiveComboBox EndpointSelector => _endpointComboBox;
 
-    internal ListView ModelsList => _modelsList;
+    internal HiveListView ModelsList => _modelsList;
 
-    internal TextBox DetailsBox => _detailsBox;
+    internal FlowLayoutPanel DetailsContent => _detailsContent;
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -564,7 +605,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             foreach (var model in _snapshot.Models)
             {
                 var item = new ListViewItem(model.ModelId);
-                item.SubItems.Add(model.OwnedBy ?? "Not reported");
+                item.SubItems.Add(model.ModelType ?? "Not reported");
                 item.SubItems.Add(model.Availability.ToString());
                 item.SubItems.Add(model.Health.ToString());
                 item.Tag = model;
@@ -580,16 +621,15 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             var firstItem = _modelsList.Items[0];
             firstItem.Selected = true;
-
-            if (firstItem.Tag is ProviderModelMetadata firstModel)
-                _detailsBox.Text = FormatModel(firstModel);
+            firstItem.Focused = true;
         }
         else
         {
-            _detailsBox.Clear();
+            RenderNoModelDetails();
         }
 
         ApplyOperationalContext();
+        ResizeDetailCards();
     }
 
     private void ModelsListSelected(object? sender, EventArgs e)
@@ -597,10 +637,12 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         if (_modelsList.SelectedItems.Count == 0 ||
             _modelsList.SelectedItems[0].Tag is not ProviderModelMetadata model)
         {
+            if (_snapshot?.Models.Count == 0)
+                RenderNoModelDetails();
             return;
         }
 
-        _detailsBox.Text = FormatModel(model);
+        RenderModelDetails(model);
     }
 
     private void ApplyOperationalContext()
@@ -619,15 +661,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             $"Endpoint: {_selectedEndpoint?.AbsoluteUri ?? "—"}{rateLimit}";
 
         if (_snapshot.Models.Count == 0)
-        {
-            _detailsBox.Text =
-                $"Provider operational state{Environment.NewLine}" +
-                $"Availability: {operational.Availability}{Environment.NewLine}" +
-                $"Health: {operational.Health}{Environment.NewLine}" +
-                $"Observed: {operational.ObservedAtUtc:O}{Environment.NewLine}" +
-                $"Stale after: {operational.StaleAfterUtc:O}{rateLimit}{Environment.NewLine}{Environment.NewLine}" +
-                "No model metadata is available for this observation.";
-        }
+            RenderNoModelDetails();
     }
 
     private void ClearObservation()
@@ -635,119 +669,381 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         CancelOperation();
         _snapshot = null;
         _modelsList.Items.Clear();
-        _detailsBox.Clear();
+        ClearDetailsContent();
         SetStatus(
             "Select a Provider, Account, and endpoint to inspect model information.",
             HiveStatusTone.Neutral);
     }
 
-    private void UpdateContextLabel()
+    private void RenderNoModelDetails()
     {
-        _selectedEndpoint = TryParseEndpoint(_endpointComboBox.Text);
+        ClearDetailsContent();
 
-        _contextLabel.Text =
-            $"Provider: {_selectedProvider?.DisplayName ?? "—"}  •  " +
-            $"Account: {_selectedAccount?.DisplayName ?? "—"}  •  " +
-            $"Endpoint: {_selectedEndpoint?.AbsoluteUri ?? "—"}";
+        var operational = _snapshot?.Operational;
+        var card = CreateDetailCard(
+            "No model selected",
+            emphasized: true);
+
+        var table = GetCardTable(card);
+        AddKeyValueRow(
+            table,
+            "Discovery state",
+            _snapshot?.ModelEnumerationState.ToString() ?? "Not started");
+        AddKeyValueRow(
+            table,
+            "Provider availability",
+            operational?.Availability.ToString() ?? "Not reported");
+        AddKeyValueRow(
+            table,
+            "Provider health",
+            operational?.Health.ToString() ?? "Not reported");
+        AddKeyValueRow(
+            table,
+            "Observed",
+            operational?.ObservedAtUtc.ToString("O") ?? "Not reported");
+        AddKeyValueRow(
+            table,
+            "Stale after",
+            operational?.StaleAfterUtc.ToString("O") ?? "Not reported");
+
+        var message = _snapshot is null
+            ? "Choose a Provider, Account, and endpoint, then refresh."
+            : _snapshot.Models.Count == 0
+                ? "No model metadata is available for this observation. Hive does not infer a model when enumeration returns none."
+                : "Select a model from the discovered catalog.";
+
+        AddKeyValueRow(table, "Information", message);
+
+        _detailsContent.Controls.Add(card);
+        ApplyDetailsTheme();
+        ResizeDetailCards();
     }
 
-    private static string FormatModel(ProviderModelMetadata model)
+    private void RenderModelDetails(ProviderModelMetadata model)
     {
-        var lines = new List<string>();
+        ClearDetailsContent();
 
-        AddSection(lines, "Identity", [
-            $"Model: {model.ModelId}",
-            $"Owner / provider attribution: {model.OwnedBy ?? "Not reported"}",
-            $"Display name: {model.DisplayName ?? "Not reported"}",
-            $"Description: {model.Description ?? "Not reported"}",
-            $"Family: {model.Family ?? "Not reported"}",
-            $"Model type: {model.ModelType ?? "Not reported"}",
-            $"Category: {model.Category ?? "Not reported"}",
-            $"Version: {model.Version ?? "Not reported"}",
-            $"Operational state: {model.OperationalState ?? "Not reported"}",
-            $"Created: {(model.CreatedAtUtc is { } created ? created.ToString("O") : "Not reported")}"
-        ]);
+        var summary = CreateDetailCard(
+            model.DisplayName ?? model.ModelId,
+            emphasized: true);
+        var summaryTable = GetCardTable(summary);
 
-        AddSection(lines, "Inputs", [
-            $"Modalities: {FormatList(model.InputModalities)}"
-        ]);
+        AddKeyValueRow(summaryTable, "Model ID", model.ModelId);
+        AddKeyValueRow(summaryTable, "Owner / attribution", model.OwnedBy ?? "Not reported");
+        AddKeyValueRow(summaryTable, "Family", model.Family ?? "Not reported");
+        AddKeyValueRow(summaryTable, "Type", model.ModelType ?? "Not reported");
+        AddKeyValueRow(summaryTable, "Category", model.Category ?? "Not reported");
+        AddKeyValueRow(summaryTable, "Version", model.Version ?? "Not reported");
+        AddKeyValueRow(summaryTable, "Operational state", model.OperationalState ?? "Not reported");
+        AddKeyValueRow(
+            summaryTable,
+            "Created",
+            model.CreatedAtUtc?.ToString("O") ?? "Not reported");
+        AddKeyValueRow(
+            summaryTable,
+            "Description",
+            model.Description ?? "Not reported");
 
-        AddSection(lines, "Outputs", [
-            $"Modalities: {FormatList(model.OutputModalities)}"
-        ]);
+        _detailsContent.Controls.Add(summary);
 
-        AddSection(
-            lines,
-            "Capabilities",
-            model.DiscoveredCapabilities.Count == 0
-                ? ["No normalized capability state was reported."]
-                : model.DiscoveredCapabilities
-                    .OrderBy(item => item.Capability.Value, StringComparer.Ordinal)
-                    .Select(item => $"{item.Capability.Value}: {item.State}")
-                    .ToArray());
+        var modalities = CreateDetailCard("Inputs & outputs");
+        var modalitiesTable = GetCardTable(modalities);
+        AddKeyValueRow(
+            modalitiesTable,
+            "Input modalities",
+            FormatList(model.InputModalities));
+        AddKeyValueRow(
+            modalitiesTable,
+            "Output modalities",
+            FormatList(model.OutputModalities));
+        _detailsContent.Controls.Add(modalities);
 
-        AddSection(lines, "Reasoning / Thinking", [
-            $"Reasoning: {FindCapability(model, HiveCapabilityKeys.Reasoning)}",
-            $"Thinking: {FindCapability(model, HiveCapabilityKeys.Thinking)}",
-            $"Options: {FormatList(model.ThinkingOptions)}",
-            $"Default: {model.DefaultThinkingLevel ?? "Not reported"}"
-        ]);
+        var capabilities = CreateDetailCard("Capabilities");
+        var capabilityTable = GetCardTable(capabilities);
+        AddKeyValueRow(capabilityTable, "Capability", "Discovered state");
+        if (model.DiscoveredCapabilities.Count == 0)
+        {
+            AddKeyValueRow(
+                capabilityTable,
+                "State",
+                "No normalized capability state was reported.");
+        }
+        else
+        {
+            foreach (var item in model.DiscoveredCapabilities
+                         .OrderBy(item => item.Capability.Value, StringComparer.Ordinal))
+            {
+                AddKeyValueRow(
+                    capabilityTable,
+                    item.Capability.Value,
+                    $"{item.State}  •  discovered");
+            }
+        }
 
-        var limits = model.Limits;
-        AddSection(
-            lines,
-            "Limits",
-            limits is null
-                ? ["No model-scoped limits were reported."]
-                : [
-                    $"Context window tokens: {limits.ContextWindowTokens?.ToString() ?? "Not reported"}",
-                    $"Max input tokens: {limits.MaxInputTokens?.ToString() ?? "Not reported"}",
-                    $"Max output tokens: {limits.MaxOutputTokens?.ToString() ?? "Not reported"}",
-                    $"Additional constraints: {FormatJsonDictionary(limits.AdditionalConstraints)}"
-                ]);
+        _detailsContent.Controls.Add(capabilities);
 
-        var pricing = model.Pricing;
-        AddSection(
-            lines,
-            "Pricing / Economics",
-            pricing is null
-                ? [
-                    "No pricing was reported.",
-                    "Missing pricing is not evidence that the model is free."
-                ]
-                : [
-                    $"Explicit free evidence: {(pricing.ExplicitFreeEvidence ? "Reported" : "Not reported")}",
-                    pricing.Prices.Count == 0
-                        ? "No billable rate entries were reported."
-                        : string.Join(
-                            Environment.NewLine,
-                            pricing.Prices.Select(
-                                item =>
-                                    $"{item.BillingUnit}: {item.Price} " +
-                                    $"{item.Currency ?? "currency not reported"}" +
-                                    $"{(item.UnitQuantity is { } quantity ? $" per {quantity}" : string.Empty)}"))
-                ]);
+        var reasoning = CreateDetailCard("Reasoning & thinking");
+        var reasoningTable = GetCardTable(reasoning);
+        AddKeyValueRow(
+            reasoningTable,
+            "Reasoning",
+            FindCapability(model, HiveCapabilityKeys.Reasoning));
+        AddKeyValueRow(
+            reasoningTable,
+            "Thinking",
+            FindCapability(model, HiveCapabilityKeys.Thinking));
+        AddKeyValueRow(
+            reasoningTable,
+            "Options",
+            FormatList(model.ThinkingOptions));
+        AddKeyValueRow(
+            reasoningTable,
+            "Default",
+            model.DefaultThinkingLevel ?? "Not reported");
+        _detailsContent.Controls.Add(reasoning);
 
-        AddSection(lines, "Operational state", [
-            $"Availability: {model.Availability}",
-            $"Health: {model.Health}",
-            $"Observed: {model.ObservedAtUtc?.ToString("O") ?? "Snapshot observation timestamp"}",
-            $"Stale after: {model.StaleAfterUtc?.ToString("O") ?? "Snapshot freshness boundary"}"
-        ]);
+        var limits = CreateDetailCard("Limits");
+        var limitsTable = GetCardTable(limits);
+        if (model.Limits is null)
+        {
+            AddKeyValueRow(
+                limitsTable,
+                "Status",
+                "No model-scoped limits were reported.");
+        }
+        else
+        {
+            AddKeyValueRow(
+                limitsTable,
+                "Context window tokens",
+                model.Limits.ContextWindowTokens?.ToString() ?? "Not reported");
+            AddKeyValueRow(
+                limitsTable,
+                "Max input tokens",
+                model.Limits.MaxInputTokens?.ToString() ?? "Not reported");
+            AddKeyValueRow(
+                limitsTable,
+                "Max output tokens",
+                model.Limits.MaxOutputTokens?.ToString() ?? "Not reported");
+            AddKeyValueRow(
+                limitsTable,
+                "Additional constraints",
+                FormatJsonDictionary(model.Limits.AdditionalConstraints));
+        }
 
-        AddSection(
-            lines,
-            "Additional provider information",
-            model.ExtensionData.Count == 0
-                ? ["No additional bounded provider-specific evidence was reported."]
-                : model.ExtensionData
-                    .OrderBy(pair => pair.Key, StringComparer.Ordinal)
-                    .Select(pair => $"{pair.Key}: {pair.Value.GetRawText()}")
-                    .ToArray());
+        _detailsContent.Controls.Add(limits);
 
-        return string.Join(
-            Environment.NewLine + Environment.NewLine,
-            lines);
+        var pricing = CreateDetailCard("Pricing & economics");
+        var pricingTable = GetCardTable(pricing);
+        if (model.Pricing is null)
+        {
+            AddKeyValueRow(pricingTable, "Status", "No pricing was reported.");
+            AddKeyValueRow(
+                pricingTable,
+                "Interpretation",
+                "Missing pricing is not evidence that the model is free.");
+        }
+        else
+        {
+            AddKeyValueRow(
+                pricingTable,
+                "Explicit free evidence",
+                model.Pricing.ExplicitFreeEvidence ? "Reported" : "Not reported");
+
+            if (model.Pricing.Prices.Count == 0)
+            {
+                AddKeyValueRow(
+                    pricingTable,
+                    "Rates",
+                    "No billable rate entries were reported.");
+            }
+            else
+            {
+                foreach (var price in model.Pricing.Prices)
+                {
+                    var quantity = price.UnitQuantity is { } value
+                        ? $" per {value:0.####}"
+                        : string.Empty;
+                    AddKeyValueRow(
+                        pricingTable,
+                        price.BillingUnit,
+                        $"{price.Price:0.##########} {price.Currency ?? "currency not reported"}{quantity}");
+                }
+            }
+        }
+
+        _detailsContent.Controls.Add(pricing);
+
+        var operational = CreateDetailCard("Operational state");
+        var operationalTable = GetCardTable(operational);
+        AddKeyValueRow(
+            operationalTable,
+            "Availability",
+            model.Availability.ToString());
+        AddKeyValueRow(
+            operationalTable,
+            "Health",
+            model.Health.ToString());
+        AddKeyValueRow(
+            operationalTable,
+            "Observed",
+            model.ObservedAtUtc?.ToString("O") ?? "Snapshot observation timestamp");
+        AddKeyValueRow(
+            operationalTable,
+            "Stale after",
+            model.StaleAfterUtc?.ToString("O") ?? "Snapshot freshness boundary");
+        _detailsContent.Controls.Add(operational);
+
+        var providerInfo = CreateDetailCard("Additional provider information");
+        var providerInfoTable = GetCardTable(providerInfo);
+        if (model.ExtensionData.Count == 0)
+        {
+            AddKeyValueRow(
+                providerInfoTable,
+                "Status",
+                "No additional bounded provider-specific evidence was reported.");
+        }
+        else
+        {
+            foreach (var pair in model.ExtensionData
+                         .OrderBy(pair => pair.Key, StringComparer.Ordinal))
+            {
+                AddKeyValueRow(
+                    providerInfoTable,
+                    pair.Key,
+                    FormatJsonValue(pair.Value));
+            }
+        }
+
+        _detailsContent.Controls.Add(providerInfo);
+
+        ApplyDetailsTheme();
+        ResizeDetailCards();
+    }
+
+    private HiveBorderPanel CreateDetailCard(
+        string title,
+        bool emphasized = false)
+    {
+        var card = new HiveBorderPanel
+        {
+            AutoSize = true,
+            Margin = new Padding(0, 0, 0, 8),
+            Padding = new Padding(10),
+            BorderColor = emphasized
+                ? _themeManager.Theme.Palette.Accent
+                : _themeManager.Theme.Palette.Border,
+            CornerRadius = 8,
+            AccessibleName = title
+        };
+
+        var table = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 36f));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 64f));
+
+        var heading = new Label
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            Height = 28,
+            Text = title,
+            Padding = new Padding(0, 0, 0, 6),
+            AccessibleRole = AccessibleRole.Heading,
+            AccessibleName = title
+        };
+
+        table.Controls.Add(heading, 0, 0);
+        table.SetColumnSpan(heading, 2);
+        card.Controls.Add(table);
+        return card;
+    }
+
+    private static TableLayoutPanel GetCardTable(HiveBorderPanel card) =>
+        card.Controls.OfType<TableLayoutPanel>().Single();
+
+    private static void AddKeyValueRow(
+        TableLayoutPanel table,
+        string key,
+        string value)
+    {
+        var row = table.RowCount;
+        table.RowCount++;
+        table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+        var keyLabel = new Label
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            Text = key,
+            Padding = new Padding(0, 3, 12, 3),
+            TextAlign = ContentAlignment.TopLeft
+        };
+
+        var valueLabel = new Label
+        {
+            AutoSize = true,
+            MaximumSize = new Size(520, 0),
+            Text = value,
+            Padding = new Padding(0, 3, 0, 3),
+            Margin = Padding.Empty
+        };
+
+        table.Controls.Add(keyLabel, 0, row);
+        table.Controls.Add(valueLabel, 1, row);
+    }
+
+    private void ClearDetailsContent()
+    {
+        while (_detailsContent.Controls.Count > 0)
+        {
+            var child = _detailsContent.Controls[0];
+            _detailsContent.Controls.RemoveAt(0);
+            child.Dispose();
+        }
+    }
+
+    private void ApplyDetailsTheme()
+    {
+        if (IsDisposed || Disposing)
+            return;
+
+        _themeManager.Apply(_detailsContent);
+
+        foreach (var card in _detailsContent.Controls.OfType<HiveBorderPanel>())
+        {
+            card.BorderColor =
+                card.AccessibleName == "Selected model information"
+                    ? _themeManager.Theme.Palette.Accent
+                    : card.BorderColor;
+        }
+    }
+
+    private void ResizeDetailCards()
+    {
+        if (IsDisposed || Disposing)
+            return;
+
+        var availableWidth = Math.Max(
+            280,
+            _detailsScrollHost.ClientSize.Width - 10);
+
+        foreach (Control child in _detailsContent.Controls)
+        {
+            if (child is HiveBorderPanel card)
+                card.Width = availableWidth;
+        }
+
+        _detailsContent.PerformLayout();
+        _detailsScrollHost.Synchronize();
     }
 
     private static bool EndpointsEqual(Uri left, Uri right) =>
@@ -776,17 +1072,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             ? "Not reported"
             : string.Join(", ", values);
 
-    private static void AddSection(
-        ICollection<string> lines,
-        string heading,
-        IEnumerable<string> content)
-    {
-        lines.Add(heading);
-        lines.Add(new string('-', heading.Length));
-        foreach (var line in content)
-            lines.Add(line);
-    }
-
     private static string FormatJsonDictionary(
         IReadOnlyDictionary<string, JsonElement> values)
     {
@@ -794,9 +1079,17 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             return "None";
 
         return string.Join(
-            "; ",
-            values.Select(pair => $"{pair.Key}={pair.Value.GetRawText()}"));
+            Environment.NewLine,
+            values.Select(pair => $"{pair.Key}: {FormatJsonValue(pair.Value)}"));
     }
+
+    private static string FormatJsonValue(JsonElement value) =>
+        value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString() ?? string.Empty,
+            JsonValueKind.Null => "null",
+            _ => value.GetRawText()
+        };
 
     private static Uri? TryParseEndpoint(string? text)
     {
@@ -819,7 +1112,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Height = 32,
+            Height = 36,
+            Margin = Padding.Empty,
             AccessibleName = name
         };
 
@@ -886,6 +1180,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         _themeManager.Apply(this);
         ApplyStatusTheme();
+        ApplyDetailsTheme();
     }
 
     private void ReportError(Exception exception, string message)
