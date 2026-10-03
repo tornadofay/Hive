@@ -12,7 +12,8 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
     private readonly HiveProviderManagementService _providers;
     private readonly HiveAgentManagementService _agents;
     private readonly HiveWorkItemManagementService _workItems;
-    private readonly HiveInputPreparationManagementService _inputPreparation;
+    private readonly HiveInputPreparationManagementService _inputPreparation; 
+    private readonly HiveExecutionTargetPreferenceManagementService _executionTargetPreferences;
     private readonly object _lifetimeGate = new();
     private int _disposed;
 
@@ -27,7 +28,8 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         IHiveBootstrapCredentialStore? bootstrapCredentials = null,
         AgentExecutionService? agentExecution = null,
         IProviderCapabilityDiscovery? providerCapabilityDiscovery = null,
-        IClock? clock = null)
+        IClock? clock = null,
+        IExecutionTargetPreferenceStore? executionTargetPreferences = null)
     {
         _configuration = new HiveConfigurationManagementService(
             configurationStore,
@@ -47,7 +49,10 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
             secrets,
             agentExecution);
         _workItems = new HiveWorkItemManagementService(workItems);
-        _inputPreparation = new HiveInputPreparationManagementService(_providers);
+        _inputPreparation = new HiveInputPreparationManagementService(_providers); 
+        _executionTargetPreferences = new HiveExecutionTargetPreferenceManagementService(
+            executionTargetPreferences,
+            providerResources);
     }
 
     public void Dispose()
@@ -156,6 +161,22 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
             throw;
         }
     }
+
+    public Task<Result<IReadOnlyList<ExecutionTargetId>>> GetFavoriteExecutionTargetIdsAsync(
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _executionTargetPreferences.GetFavoriteExecutionTargetIdsAsync(
+            accessContext,
+            cancellationToken));
+
+    public Task<Result<IReadOnlyList<ExecutionTargetId>>> ReplaceFavoriteExecutionTargetIdsAsync(
+        IReadOnlyList<ExecutionTargetId> favoriteTargetIds,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _executionTargetPreferences.ReplaceFavoriteExecutionTargetIdsAsync(
+            favoriteTargetIds,
+            accessContext,
+            cancellationToken));
 
     public Task<Result<ProviderConnectionTestResult>> TestExecutionTargetConnectionAsync(
         ExecutionTargetId executionTargetId,
