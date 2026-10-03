@@ -4,7 +4,7 @@ Status: IN PROGRESS
 
 ## Current Slice
 
-**Phase 1.19 Follow-Up — Execution Target Preferences & Favorite Target Pool**
+**Phase 1.19A — Execution Target Preferences & Favorite Target Pool**
 
 Authorized by explicit user instruction on 2026-10-03.
 
