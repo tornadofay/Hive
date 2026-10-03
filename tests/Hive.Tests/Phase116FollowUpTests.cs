@@ -533,7 +533,8 @@ public sealed class Phase116FollowUpTests
 
         await view.InitializeAsync();
 
-        var firstItem = Assert.Single(view.ModelsList.Items);
+        var firstItem = Assert.Single(
+            view.ModelsList.Items.Cast<ListViewItem>());
         var secondModel = new ProviderModelMetadata(
             "second-model",
             "second-provider",
