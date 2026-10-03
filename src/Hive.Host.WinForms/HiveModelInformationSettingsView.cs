@@ -80,6 +80,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly HiveComboBox _capabilityFilter;
     private readonly HiveComboBox _capabilityStateFilter;
     private readonly HiveCrudPage<ModelInformationRow> _page;
+    private readonly SplitContainer _mainSplit;
     private readonly Panel _detailsContent;
     private readonly HiveScrollHost _detailsScrollHost;
     private CancellationTokenSource? _operationCts;
@@ -290,7 +291,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         };
         detailsSurface.Controls.Add(_detailsScrollHost);
 
-        var split = new SplitContainer
+        _mainSplit = new SplitContainer
         {
             Dock = DockStyle.Fill,
             Orientation = Orientation.Vertical,
@@ -300,10 +301,10 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Panel1MinSize = 360,
             Panel2MinSize = 520
         };
-        split.Panel1.Padding = new Padding(0, 6, 8, 0);
-        split.Panel2.Padding = new Padding(8, 6, 0, 0);
-        split.Panel1.Controls.Add(_page);
-        split.Panel2.Controls.Add(detailsSurface);
+        _mainSplit.Panel1.Padding = new Padding(0, 6, 8, 0);
+        _mainSplit.Panel2.Padding = new Padding(8, 6, 0, 0);
+        _mainSplit.Panel1.Controls.Add(_page);
+        _mainSplit.Panel2.Controls.Add(detailsSurface);
 
         var root = new TableLayoutPanel
         {
@@ -318,7 +319,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         root.Controls.Add(contextCard, 0, 0);
         root.Controls.Add(filterBar, 0, 1);
-        root.Controls.Add(split, 0, 2);
+        root.Controls.Add(_mainSplit, 0, 2);
         Controls.Add(root);
 
         _providerComboBox.SelectedIndexChanged += ProviderChanged;
@@ -349,6 +350,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     internal HiveComboBox CapabilityStateFilter => _capabilityStateFilter;
 
     internal Panel DetailsContent => _detailsContent;
+
+    internal int DetailsPanelWidth => _mainSplit.Panel2.Width;
 
     internal HiveScrollHost DetailsScrollHost => _detailsScrollHost;
 
