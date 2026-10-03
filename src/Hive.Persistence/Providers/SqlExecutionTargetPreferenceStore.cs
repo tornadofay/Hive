@@ -30,7 +30,8 @@ public sealed class SqlExecutionTargetPreferenceStore : IExecutionTargetPreferen
             command.CommandText = """
                 SELECT [ExecutionTargetId]
                 FROM [dbo].[HiveExecutionTargetFavorites]
-                WHERE [OwnerPrincipalId] = @OwnerPrincipalId
+                WHERE [DeploymentId] = @DeploymentId
+                  AND [OwnerPrincipalId] = @OwnerPrincipalId
                   AND [ScopeKind] = @ScopeKind
                   AND [ScopeIdentity] = @ScopeIdentity
                 ORDER BY [DisplayOrder] ASC, [ExecutionTargetId] ASC;
@@ -85,7 +86,8 @@ public sealed class SqlExecutionTargetPreferenceStore : IExecutionTargetPreferen
                 delete.Transaction = transaction;
                 delete.CommandText = """
                     DELETE FROM [dbo].[HiveExecutionTargetFavorites]
-                    WHERE [OwnerPrincipalId] = @OwnerPrincipalId
+                    WHERE [DeploymentId] = @DeploymentId
+                      AND [OwnerPrincipalId] = @OwnerPrincipalId
                       AND [ScopeKind] = @ScopeKind
                       AND [ScopeIdentity] = @ScopeIdentity;
                     """;
@@ -102,6 +104,7 @@ public sealed class SqlExecutionTargetPreferenceStore : IExecutionTargetPreferen
                 insert.CommandText = """
                     INSERT INTO [dbo].[HiveExecutionTargetFavorites]
                     (
+                        [DeploymentId],
                         [OwnerPrincipalId],
                         [ScopeKind],
                         [ScopeIdentity],
@@ -110,6 +113,7 @@ public sealed class SqlExecutionTargetPreferenceStore : IExecutionTargetPreferen
                     )
                     VALUES
                     (
+                        @DeploymentId,
                         @OwnerPrincipalId,
                         @ScopeKind,
                         @ScopeIdentity,
@@ -172,6 +176,11 @@ public sealed class SqlExecutionTargetPreferenceStore : IExecutionTargetPreferen
     {
         var scope = ResolvePreferenceScope(accessContext);
 
+        command.Parameters.Add(
+            new SqlParameter("@DeploymentId", SqlDbType.UniqueIdentifier)
+            {
+                Value = accessContext.DeploymentId!.Value.Value
+            });
         command.Parameters.Add(
             new SqlParameter("@OwnerPrincipalId", SqlDbType.UniqueIdentifier)
             {
