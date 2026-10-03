@@ -72,6 +72,51 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
     }
 
     [WinFormsFact]
+    public async Task FavoriteSettings_InitialLoadFocusesFirstProviderAndAccount()
+    {
+        var context = CreateContext();
+        var firstProvider = CreateProvider(context, "Provider One");
+        var secondProvider = CreateProvider(context, "Provider Two");
+        var firstAccount = CreateAccount(firstProvider.Id, context, "Account One");
+        var secondAccount = CreateAccount(secondProvider.Id, context, "Account Two");
+        var firstTarget = CreateTarget(
+            firstProvider.Id,
+            firstAccount.Id,
+            context,
+            "first",
+            "First Target");
+        var secondTarget = CreateTarget(
+            secondProvider.Id,
+            secondAccount.Id,
+            context,
+            "second",
+            "Second Target");
+
+        var proxy = UiManagementProxy.Create(
+            [firstProvider, secondProvider],
+            [firstAccount, secondAccount],
+            new Dictionary<ProviderAccountId, IReadOnlyList<ExecutionTarget>>
+            {
+                [firstAccount.Id] = [firstTarget],
+                [secondAccount.Id] = [secondTarget]
+            });
+
+        using var view = new HiveFavoriteExecutionTargetsSettingsView(
+            proxy,
+            context,
+            new HiveThemeManager(HiveThemeMode.Light));
+
+        await view.InitializeAsync();
+
+        Assert.Equal(1, view.ProviderSelector.SelectedIndex);
+        Assert.Equal("Provider One", view.ProviderSelector.SelectedItem!.ToString());
+        Assert.Equal(1, view.AccountSelector.SelectedIndex);
+        Assert.Equal("Account One", view.AccountSelector.SelectedItem!.ToString());
+        Assert.Single(view.TargetList.Items);
+        Assert.Equal(firstTarget.Id, ((ListViewItem)view.TargetList.Items[0]).Tag);
+    }
+
+    [WinFormsFact]
     public async Task FavoriteSettings_AccountFilterNarrowsVisibleTargets()
     {
         var context = CreateContext();
