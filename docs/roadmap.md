@@ -331,7 +331,7 @@ Detailed implementation plan: [1.21 — V1 Agent Interaction & Application/Form 
 
 Objective: extend Workspace with explicit Agent interaction and application/form-scoped specialist Agents.
 
-Scope and non-goals: Agent selection may be Auto or an exact target; Auto uses authoritative capability-aware planning, while pinned targets fail clearly when unusable instead of silently switching.
+Scope and non-goals: Agent selection may be Auto or an exact target from the user's Favorite ExecutionTarget pool; Auto runs authoritative capability-aware planning only over favorites, explicit selection presents only favorites and remains pinned, and neither mode silently falls back to non-favorite targets when the favorite pool has no qualifying target.
 
 Verify: Agent conversation/selection, application and form association, create/reuse/activation, mode switching, runtime isolation, bounded host association, and no implicit Hive/Swarm state.
 
