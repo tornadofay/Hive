@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Current Slice
 
@@ -42,7 +42,16 @@ Expected user-facing behavior:
 - a retired favorite remains stored and visible as a retired favorite where its resource is still accessible;
 - Agent execution-target behavior remains unchanged in this slice and is owned by its later configuration/selection phase.
 
-## Verification Failure / Remediation Boundary — Favorites UI Assertions
+## Verification Failure / Remediation Boundary — Favorites CRUD Button Geometry
+
+Developer verification on 2026-10-03 reran Hive.Tests with **584** executions: **583 passed, 1 failed, 0 skipped**. The remaining failure is `ExecutionTargetFavoriteSettingsUiTests.FavoriteSettings_CrudActionsRemainVisibleAtNormalWindowSize`. All three expected action buttons are visible, but the final geometry assertions report each button extends outside the FlowLayoutPanel bounds.
+
+Remediation boundary:
+- correct the shared HiveCrudPage action-bar geometry so the existing visible buttons are laid out inside their owning action panel at the normal 1120x700 host size;
+- preserve the existing Favorites CRUD action set and shared CRUD layout contract;
+- do not change Favorite persistence/filter semantics or Agent target-selection behavior.
+
+
 
 Developer verification on 2026-10-03 reran Hive.Tests with **584** executions: **580 passed, 4 failed, 0 skipped**. The four failures are now within the Favorites UI assertions:
 - CRUD action bar reports zero visible HiveButton children at normal size;
