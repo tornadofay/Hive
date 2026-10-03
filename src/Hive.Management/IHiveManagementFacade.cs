@@ -55,6 +55,15 @@ public interface IHiveManagementFacade
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
 
+    Task<Result<IReadOnlyList<ExecutionTargetId>>> GetFavoriteExecutionTargetIdsAsync(
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<ExecutionTargetId>>> ReplaceFavoriteExecutionTargetIdsAsync(
+        IReadOnlyList<ExecutionTargetId> favoriteTargetIds,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
     Task<Result<ProviderConnectionTestResult>> TestExecutionTargetConnectionAsync(
         ExecutionTargetId executionTargetId,
         ResourceAccessContext accessContext,
