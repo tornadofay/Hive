@@ -9,19 +9,10 @@ public sealed class HiveListView : ListView
 {
     private const int RowHeight = 34;
     private const int WmNcPaint = 0x0085;
-    private const int WmNcCalcSize = 0x0083;
     private const int WmWindowPosChanged = 0x0047;
-    private const int WmStyleChanging = 0x007C;
     private const int WmStyleChanged = 0x007D;
-    private const int GwlStyle = -16;
-    private const long WsHScroll = 0x00100000L;
-    private const long WsVScroll = 0x00200000L;
-    private const long NativeScrollBarStyleMask = WsHScroll | WsVScroll;
+    private const int WmHiveSuppressNativeScrollBars = 0x8000;
     private const uint SwpNoSize = 0x0001;
-    private const uint SwpNoMove = 0x0002;
-    private const uint SwpNoZOrder = 0x0004;
-    private const uint SwpNoActivate = 0x0010;
-    private const uint SwpFrameChanged = 0x0020;
 
     [StructLayout(LayoutKind.Sequential)]
     private struct NativeWindowPosition
@@ -33,13 +24,6 @@ public sealed class HiveListView : ListView
         public int Cx;
         public int Cy;
         public uint Flags;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct NativeStyleStruct
-    {
-        public uint OldStyle;
-        public uint NewStyle;
     }
 
     private HiveThemeDefinition? _theme;
@@ -59,8 +43,7 @@ public sealed class HiveListView : ListView
     private readonly ImageList _rowImageList;
     private bool _suppressingNativeScrollBars;
     private bool _nativeScrollBarsSuppressed;
-    private bool _updatingNativeScrollBarStyles;
-    private long _suppressedNativeScrollBarStyles;
+    private bool _nativeScrollBarSuppressionPending;
 
     public HiveListView()
     {
@@ -104,32 +87,28 @@ public sealed class HiveListView : ListView
             return;
         }
 
-        if (_nativeScrollBarsSuppressed &&
-            m.Msg == WmStyleChanging &&
-            m.WParam == new IntPtr(GwlStyle))
-        {
-            SuppressChangingNativeScrollBarStyles(m.LParam);
-        }
-
-        if (_nativeScrollBarsSuppressed &&
-            m.Msg == WmNcCalcSize)
-        {
-            ApplyNativeScrollBarSuppression();
-        }
-
         base.WndProc(ref m);
 
         if (_nativeScrollBarsSuppressed &&
             m.Msg == WmWindowPosChanged &&
             IsResizeWindowPositionMessage(m.LParam))
         {
-            ApplyNativeScrollBarSuppression();
+            HideNativeScrollBars();
+            RequestNativeScrollBarSuppression();
         }
 
         if (_nativeScrollBarsSuppressed &&
             m.Msg == WmStyleChanged)
         {
-            ApplyNativeScrollBarSuppression();
+            HideNativeScrollBars();
+        }
+
+        if (m.Msg == WmHiveSuppressNativeScrollBars)
+        {
+            _nativeScrollBarSuppressionPending = false;
+
+            if (_nativeScrollBarsSuppressed)
+                HideNativeScrollBars();
         }
     }
 
@@ -140,7 +119,8 @@ public sealed class HiveListView : ListView
 
         if (_nativeScrollBarsSuppressed)
         {
-            ApplyNativeScrollBarSuppression();
+            HideNativeScrollBars();
+            RequestNativeScrollBarSuppression();
         }
     }
 
@@ -150,14 +130,9 @@ public sealed class HiveListView : ListView
 
         if (_nativeScrollBarsSuppressed)
         {
-            ApplyNativeScrollBarSuppression();
+            HideNativeScrollBars();
+            RequestNativeScrollBarSuppression();
         }
-    }
-
-    protected override void OnHandleDestroyed(EventArgs e)
-    {
-        _suppressedNativeScrollBarStyles = 0;
-        base.OnHandleDestroyed(e);
     }
 
     internal void ResetColumnLayout()
@@ -403,54 +378,24 @@ public sealed class HiveListView : ListView
     internal void SuppressNativeScrollBars()
     {
         _nativeScrollBarsSuppressed = true;
-        ApplyNativeScrollBarSuppression();
+        HideNativeScrollBars();
+        RequestNativeScrollBarSuppression();
     }
 
     internal void RestoreNativeScrollBars()
     {
+        _nativeScrollBarSuppressionPending = false;
+
         if (!_nativeScrollBarsSuppressed)
             return;
 
         _nativeScrollBarsSuppressed = false;
 
-        if (!IsHandleCreated)
+        if (IsHandleCreated)
         {
-            _suppressedNativeScrollBarStyles = 0;
-            return;
+            ShowScrollBar(Handle, 0, true);
+            ShowScrollBar(Handle, 1, true);
         }
-
-        if (_suppressedNativeScrollBarStyles != 0)
-        {
-            var currentStyle = GetWindowLongPtr(Handle, GwlStyle).ToInt64();
-            var restoredStyle = currentStyle | _suppressedNativeScrollBarStyles;
-            _suppressedNativeScrollBarStyles = 0;
-
-            SetNativeWindowStyle(restoredStyle);
-        }
-
-        ShowScrollBar(Handle, 0, true);
-        ShowScrollBar(Handle, 1, true);
-    }
-
-    private void ApplyNativeScrollBarSuppression()
-    {
-        if (!IsHandleCreated ||
-            !_nativeScrollBarsSuppressed ||
-            _updatingNativeScrollBarStyles)
-        {
-            return;
-        }
-
-        var currentStyle = GetWindowLongPtr(Handle, GwlStyle).ToInt64();
-        var visibleScrollBarStyles = currentStyle & NativeScrollBarStyleMask;
-
-        if (visibleScrollBarStyles != 0)
-        {
-            _suppressedNativeScrollBarStyles |= visibleScrollBarStyles;
-            SetNativeWindowStyle(currentStyle & ~NativeScrollBarStyleMask);
-        }
-
-        HideNativeScrollBars();
     }
 
     private void HideNativeScrollBars()
@@ -474,53 +419,27 @@ public sealed class HiveListView : ListView
         }
     }
 
-    private void SetNativeWindowStyle(long style)
+    private void RequestNativeScrollBarSuppression()
     {
-        _updatingNativeScrollBarStyles = true;
-        try
+        if (!IsHandleCreated ||
+            !_nativeScrollBarsSuppressed ||
+            _nativeScrollBarSuppressionPending ||
+            IsDisposed ||
+            Disposing)
         {
-            SetWindowLongPtr(
-                Handle,
-                GwlStyle,
-                new IntPtr(style));
+            return;
+        }
 
-            SetWindowPos(
+        _nativeScrollBarSuppressionPending = true;
+
+        if (!PostMessage(
                 Handle,
+                WmHiveSuppressNativeScrollBars,
                 IntPtr.Zero,
-                0,
-                0,
-                0,
-                0,
-                SwpNoSize |
-                SwpNoMove |
-                SwpNoZOrder |
-                SwpNoActivate |
-                SwpFrameChanged);
-        }
-        finally
+                IntPtr.Zero))
         {
-            _updatingNativeScrollBarStyles = false;
+            _nativeScrollBarSuppressionPending = false;
         }
-    }
-
-    private void SuppressChangingNativeScrollBarStyles(IntPtr lParam)
-    {
-        if (lParam == IntPtr.Zero)
-            return;
-
-        var style = Marshal.PtrToStructure<NativeStyleStruct>(lParam);
-        var oldStyle = (long)style.OldStyle;
-        var newStyle = (long)style.NewStyle;
-        var nativeScrollBarStyles = newStyle & NativeScrollBarStyleMask;
-
-        if (nativeScrollBarStyles == 0)
-            return;
-
-        _suppressedNativeScrollBarStyles |=
-            nativeScrollBarStyles & NativeScrollBarStyleMask & oldStyle;
-
-        style.NewStyle = (uint)(newStyle & ~NativeScrollBarStyleMask);
-        Marshal.StructureToPtr(style, lParam, false);
     }
 
     private static bool IsResizeWindowPositionMessage(
@@ -535,40 +454,20 @@ public sealed class HiveListView : ListView
 
     [System.Runtime.InteropServices.DllImport(
         "user32.dll",
-        EntryPoint = "GetWindowLongPtrW",
-        SetLastError = true)]
-    private static extern IntPtr GetWindowLongPtr(
-        IntPtr handle,
-        int index);
-
-    [System.Runtime.InteropServices.DllImport(
-        "user32.dll",
-        EntryPoint = "SetWindowLongPtrW",
-        SetLastError = true)]
-    private static extern IntPtr SetWindowLongPtr(
-        IntPtr handle,
-        int index,
-        IntPtr value);
-
-    [System.Runtime.InteropServices.DllImport(
-        "user32.dll",
-        SetLastError = true)]
-    private static extern bool SetWindowPos(
-        IntPtr handle,
-        IntPtr insertAfter,
-        int x,
-        int y,
-        int width,
-        int height,
-        uint flags);
-
-    [System.Runtime.InteropServices.DllImport(
-        "user32.dll",
         SetLastError = true)]
     private static extern bool ShowScrollBar(
         IntPtr handle,
         int bar,
         bool show);
+
+    [System.Runtime.InteropServices.DllImport(
+        "user32.dll",
+        SetLastError = true)]
+    private static extern bool PostMessage(
+        IntPtr handle,
+        int message,
+        IntPtr wParam,
+        IntPtr lParam);
 
     private void ApplySurfaceTheme(HiveThemeDefinition theme)
     {
@@ -678,6 +577,8 @@ public sealed class HiveListView : ListView
 
     protected override void Dispose(bool disposing)
     {
+        _nativeScrollBarSuppressionPending = false;
+
         if (disposing)
         {
             SmallImageList = null;
