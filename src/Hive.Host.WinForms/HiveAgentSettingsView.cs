@@ -15,10 +15,6 @@ internal sealed class HiveAgentSettingsView : UserControl
     private readonly HiveCrudPage<AgentDefinition> _page;
 
     private IReadOnlyList<ExecutionTarget> _targets = Array.Empty<ExecutionTarget>();
-    private IReadOnlyList<Provider> _providers = Array.Empty<Provider>();
-    private IReadOnlyList<ProviderAccount> _accounts = Array.Empty<ProviderAccount>();
-    private IReadOnlySet<ExecutionTargetId> _favoriteTargetIds =
-        new HashSet<ExecutionTargetId>();
 
     public HiveAgentSettingsView(
         IHiveManagementFacade management,
@@ -122,7 +118,6 @@ internal sealed class HiveAgentSettingsView : UserControl
             throw new InvalidOperationException(providers.Error!.Message);
 
         var targets = new List<ExecutionTarget>();
-        var allAccounts = new List<ProviderAccount>();
 
         foreach (var provider in providers.Value!)
         {
@@ -154,33 +149,11 @@ internal sealed class HiveAgentSettingsView : UserControl
                 if (accountTargets.IsFailure)
                     throw new InvalidOperationException(accountTargets.Error!.Message);
 
-                allAccounts.Add(account);
                 targets.AddRange(accountTargets.Value!);
             }
         }
 
-        _providers = providers.Value!;
-        _accounts = allAccounts;
         _targets = targets;
-
-        var favorites = await _management
-            .GetFavoriteExecutionTargetIdsAsync(
-                _accessContext,
-                cancellationToken)
-            .ConfigureAwait(true);
-
-        if (favorites.IsSuccess)
-        {
-            _favoriteTargetIds = favorites.Value!.ToHashSet();
-        }
-        else if (favorites.Error?.Category == ErrorCategory.Unsupported)
-        {
-            _favoriteTargetIds = new HashSet<ExecutionTargetId>();
-        }
-        else
-        {
-            throw new InvalidOperationException(favorites.Error!.Message);
-        }
 
         var agents = await _management
             .ListAgentDefinitionsAsync(
@@ -204,9 +177,6 @@ internal sealed class HiveAgentSettingsView : UserControl
         using var editor = new HiveAgentDefinitionEditorForm(
             definition,
             _targets,
-            _providers,
-            _accounts,
-            _favoriteTargetIds,
             _accessContext,
             _themeManager,
             _output);
