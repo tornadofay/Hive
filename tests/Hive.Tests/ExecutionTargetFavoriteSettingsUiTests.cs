@@ -110,6 +110,12 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
             context,
             "first",
             "First Target");
+        var firstAdditionalTarget = CreateTarget(
+            firstProvider.Id,
+            firstAccount.Id,
+            context,
+            "first-additional",
+            "First Additional Target");
         var secondTarget = CreateTarget(
             secondProvider.Id,
             secondAccount.Id,
@@ -122,7 +128,7 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
             [firstAccount, secondAccount],
             new Dictionary<ProviderAccountId, IReadOnlyList<ExecutionTarget>>
             {
-                [firstAccount.Id] = [firstTarget],
+                [firstAccount.Id] = [firstTarget, firstAdditionalTarget],
                 [secondAccount.Id] = [secondTarget]
             },
             [firstTarget.Id]);
@@ -139,8 +145,13 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
         Assert.Equal("Provider One", picker.ProviderSelector.SelectedItem!.ToString());
         Assert.Single(picker.AccountSelector.Items);
         Assert.Equal("Account One", picker.AccountSelector.SelectedItem!.ToString());
-        Assert.Empty(picker.TargetSelector.Items.Cast<object>());
-        Assert.False(picker.AddButton.Enabled);
+        Assert.Single(picker.TargetSelector.Items);
+        Assert.Contains(
+            picker.TargetSelector.Items.Cast<object>(),
+            item => item.ToString()!.Contains("First Additional Target", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            picker.TargetSelector.Items.Cast<object>(),
+            item => item.ToString()!.Contains("First Target", StringComparison.Ordinal));
     }
 
     [WinFormsFact]
