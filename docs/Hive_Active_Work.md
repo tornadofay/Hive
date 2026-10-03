@@ -653,6 +653,16 @@ The latest same-slice remediation moves the final native scrollbar hide to a coa
 
 The implementation remains within the recorded Slice 4 host/ListView integration remediation boundary.
 
+## ListView Scrollbar Suppression — Unified Native Hide
+
+The latest same-slice remediation removes the posted suppression message and returns suppression to explicit lifecycle boundaries, using a single Win32 `SB_BOTH` operation:
+- attach, resize, handle-creation, and native style-change boundaries invoke one native hide operation for both standard scrollbars together;
+- detaching restores both native standard scrollbars with one `SB_BOTH` operation;
+- no deferred callback, style mutation, or per-scroll/repaint suppression remains;
+- native `LVM_SCROLL`, Hive scrollbar synchronization, ListView selection/keyboard/owner-draw, and CRUD behavior remain unchanged.
+
+Developer verification is required. The focused maximize/scroll regression remains the immediate verification target.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
