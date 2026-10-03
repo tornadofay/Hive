@@ -298,7 +298,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             SplitterDistance = 500,
             IsSplitterFixed = false,
             FixedPanel = FixedPanel.Panel2,
-            Panel1MinSize = 360,
+            Panel1MinSize = 320,
             Panel2MinSize = 520
         };
         _mainSplit.Panel1.Padding = new Padding(0, 6, 8, 0);
