@@ -212,6 +212,7 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
     {
         var selectedProvider = GetSelectedProvider();
         var selectedAccount = GetSelectedAccount();
+        var currentTargetId = _existing?.ConfiguredExecutionTargetId;
 
         _updatingFilters = true;
         try
@@ -221,8 +222,8 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
                 _favoriteTargetIds);
 
             if (_favoriteTargetIds.Count > 0 &&
-                _existing?.ConfiguredExecutionTargetId is { } configuredTargetId &&
-                candidates.All(target => target.Id != configuredTargetId))
+                currentTargetId is { } &&
+                candidates.All(target => target.Id != currentTargetId))
             {
                 var currentTarget = _targets.FirstOrDefault(
                     target => target.Id == currentTargetId);
@@ -246,8 +247,6 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
                     .Where(target => target.ProviderAccountId == selectedAccount.Id)
                     .ToList();
             }
-
-            var currentTargetId = _existing?.ConfiguredExecutionTargetId;
 
             _targetComboBox.Items.Clear();
             _targetComboBox.Items.Add(
