@@ -662,7 +662,10 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         if (!e.IsSelected)
             return;
 
-        if (e.Item.Tag is ProviderModelMetadata model)
+        if (e.Item is not ListViewItem item)
+            return;
+
+        if (item.Tag is ProviderModelMetadata model)
         {
             RenderModelDetails(model);
             return;
