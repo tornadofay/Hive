@@ -688,3 +688,20 @@ Example to run: Overview / Getting Started / Example Configuration — Hive.Exam
 Tests to run: `HiveScrollHostTests.NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling`; `HiveScrollHostTests.NativeListViewContent_UsesHiveScrollBars`; then `HiveScrollHostTests.cs`, `HiveComboBoxTests.cs`, `HiveUiPolishTests.cs`, relevant Example Host UI tests, and the full `Hive.Tests` suite.
 
 Agent has not run the build or tests. Developer verification is required.
+
+
+## Verification Failed / Remediation Required — Unified Suppression Still Fails After Maximize
+
+Developer re-ran the full `Hive.Tests` suite after the unified `SB_BOTH` suppression cleanup: **570 total, 569 passed, 1 failed, 0 skipped**.
+
+The same single failure remains in `HiveScrollHostTests.NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling`. The assertion fails immediately after `form.WindowState = FormWindowState.Maximized`, `Application.DoEvents()`, and `host.Synchronize()`, at `HiveScrollHostTests.cs` line 381. Initial attachment still passes, and the test completes without hanging.
+
+This confirms the remaining same-slice defect is still the native ListView scrollbar presentation lifecycle across the host maximize/resize synchronization boundary.
+
+Remediation boundary:
+- trace the existing `HiveScrollHost` resize/synchronization and `HiveListView` native scrollbar lifecycle to identify why the native scrollbar becomes visible after maximize;
+- correct only that existing lifecycle within the Slice 4 ListView integration boundary;
+- preserve native ListView `LVM_SCROLL`, item/selection/keyboard/owner-draw/CRUD behavior and the existing Hive scrollbar layer;
+- do not reintroduce high-frequency per-scroll/repaint suppression work, deferred recursive callbacks, DataGridView migration, a ListView rewrite, a new public scroll API, or unrelated refactoring.
+
+Status is **VERIFICATION FAILED / REMEDIATION REQUIRED** pending same-slice remediation.
