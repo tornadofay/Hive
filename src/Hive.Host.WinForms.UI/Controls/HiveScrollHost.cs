@@ -446,7 +446,6 @@ public sealed class HiveScrollHost : UserControl
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
-        ApplyAmbientHiveTheme();
         RequestSynchronization();
     }
 
@@ -516,8 +515,6 @@ public sealed class HiveScrollHost : UserControl
 
         _viewport.BackColor = theme.Palette.Surface;
         BackColor = theme.Palette.Surface;
-        _horizontalScrollBar.ApplyTheme(theme);
-        _verticalScrollBar.ApplyTheme(theme);
         Invalidate();
     }
 
