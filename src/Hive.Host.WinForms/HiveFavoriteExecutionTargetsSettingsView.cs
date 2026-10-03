@@ -19,6 +19,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
     private readonly HiveComboBox _accountComboBox;
     private readonly HiveListView _targetList;
     private readonly HiveButton _saveButton;
+    private readonly HiveButton _refreshButton;
     private readonly Label _statusLabel;
 
     private readonly List<Provider> _providers = [];
@@ -134,6 +135,19 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
             Margin = Padding.Empty
         };
 
+        _refreshButton = new HiveButton
+        {
+            Text = "Refresh",
+            Style = HiveButtonStyle.Secondary,
+            Width = 92,
+            Height = 32,
+            Dock = DockStyle.Right,
+            Margin = new Padding(0, 0, 6, 0),
+            AccessibleName = "Refresh Favorite Execution Targets",
+            AccessibleDescription =
+                "Reload the favorite execution-target list from Hive."
+        };
+
         _saveButton = new HiveButton
         {
             Text = "Save Favorites",
@@ -148,6 +162,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
 
         footer.Controls.Add(_statusLabel);
         footer.Controls.Add(_saveButton);
+        footer.Controls.Add(_refreshButton);
 
         root.Controls.Add(header, 0, 0);
         root.Controls.Add(filters, 0, 1);
@@ -158,6 +173,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         _accountComboBox.SelectedIndexChanged += AccountChanged;
         _targetList.ItemCheck += TargetItemCheck;
         _saveButton.Click += async (_, _) => await SaveAsync();
+        _refreshButton.Click += async (_, _) => await InitializeAsync();
 
         Controls.Add(root);
         _themeManager.Apply(this);
@@ -167,6 +183,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
     internal HiveComboBox AccountSelector => _accountComboBox;
     internal HiveListView TargetList => _targetList;
     internal HiveButton SaveButton => _saveButton;
+    internal HiveButton RefreshButton => _refreshButton;
     internal Label StatusLabel => _statusLabel;
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -179,6 +196,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         try
         {
             _saveButton.Enabled = false;
+            _refreshButton.Enabled = false;
             _providerComboBox.Items.Clear();
             _accountComboBox.Items.Clear();
             _targetList.Items.Clear();
@@ -251,6 +269,9 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
                 Interlocked.CompareExchange(ref _loadCts, null, loadCts);
 
             loadCts.Dispose();
+
+            if (!IsDisposed && !Disposing)
+                _refreshButton.Enabled = true;
         }
     }
 
@@ -435,22 +456,6 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         _saveButton.Enabled = false;
         try
         {
-            var checkedVisibleIds = _targetList.Items
-                .Cast<ListViewItem>()
-                .Where(item => item.Checked && item.Tag is ExecutionTargetId)
-                .Select(item => (ExecutionTargetId)item.Tag!)
-                .ToHashSet();
-
-            // Preserve favorites outside the current Provider/Account filter.
-            var visibleIds = _targetList.Items
-                .Cast<ListViewItem>()
-                .Where(item => item.Tag is ExecutionTargetId)
-                .Select(item => (ExecutionTargetId)item.Tag!)
-                .ToHashSet();
-
-            _favoriteTargetIds.ExceptWith(visibleIds);
-            _favoriteTargetIds.UnionWith(checkedVisibleIds);
-
             var orderedIds = _favoriteTargetIds
                 .OrderBy(id => id.Value)
                 .ToArray();
@@ -474,6 +479,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         catch (Exception exception)
         {
             _saveButton.Enabled = true;
+            _refreshButton.Enabled = true;
             _statusLabel.Text = "Favorites could not be saved.";
             HiveUiErrorReporter.Report(
                 FindForm(),
@@ -497,6 +503,15 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
             e.Index >= _targetList.Items.Count)
         {
             return;
+        }
+
+        var item = _targetList.Items[e.Index];
+        if (item.Tag is ExecutionTargetId targetId)
+        {
+            if (e.NewValue == CheckState.Checked)
+                _favoriteTargetIds.Add(targetId);
+            else
+                _favoriteTargetIds.Remove(targetId);
         }
 
         _dirty = true;
@@ -556,6 +571,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
             _providerComboBox.SelectedIndexChanged -= ProviderChanged;
             _accountComboBox.SelectedIndexChanged -= AccountChanged;
             _targetList.ItemCheck -= TargetItemCheck;
+            _saveButton.Click -= async (_, _) => await SaveAsync();
 
             var cts = Interlocked.Exchange(ref _loadCts, null);
             cts?.Cancel();
