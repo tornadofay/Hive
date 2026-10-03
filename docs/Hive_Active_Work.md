@@ -226,7 +226,7 @@ Developer then requested a bounded Model Information usability correction:
 - the Add to Favorites action must have enough width and require confirmation;
 - add user-facing model inspection filters for token price and capability state.
 
-Price-filter definition for this UI slice: use the highest reported `input_token` / `output_token` price for the model, only when the price entry is USD and has a unit quantity; normalize that rate to USD per 1,000,000 tokens. Models without a comparable token price remain visible with `—` and are not removed by an inactive/default price filter.
+Price-filter definition for this UI slice: use the highest reported `input_token` / `output_token` price for the model when the currency is USD; normalize that rate to USD per 1,000,000 tokens using the reported unit quantity, or one token when no quantity is reported. Models without a comparable token price remain visible with `—`.
 
 Remediation boundary:
 - UI, tests, and documentation only; no discovery/provider transport or durable resource-contract changes;
