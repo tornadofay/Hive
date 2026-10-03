@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Current Slice
 
@@ -42,7 +42,20 @@ Expected user-facing behavior:
 - a retired favorite remains stored and visible as a retired favorite where its resource is still accessible;
 - Agent execution-target behavior remains unchanged in this slice and is owned by its later configuration/selection phase.
 
-## Verification Failure / Remediation Boundary — Favorites UI Test Proxy
+## Verification Failure / Remediation Boundary — Favorites UI Assertions
+
+Developer verification on 2026-10-03 reran Hive.Tests with **584** executions: **580 passed, 4 failed, 0 skipped**. The four failures are now within the Favorites UI assertions:
+- CRUD action bar reports zero visible HiveButton children at normal size;
+- the empty-state status is the shared CRUD default "0 items" instead of the required Favorites-specific empty-state message;
+- stored favorite list items expose display text as the asserted value instead of the ExecutionTargetId in the current item contract;
+- the saved-favorite rendering assertion therefore fails on the stored favorite item identity.
+
+Remediation boundary:
+- correct the Favorites page/test interaction with the existing Hive CRUD/list contracts so the required behavior is represented through the actual UI implementation;
+- preserve the Favorites page semantics, immediate persistence, picker filtering, and existing shared CRUD ownership;
+- do not change Agent target-selection behavior or introduce a new selection mode.
+
+
 
 Developer verification on 2026-10-03 reported 584 Hive.Tests executions with 577 passed, 7 failed, 0 skipped. All seven failures are in ExecutionTargetFavoriteSettingsUiTests and terminate before the test body executes because DispatchProxy.Create<IHiveManagementFacade, UiManagementProxy>() rejects the proxy base type: UiManagementProxy is declared sealed, while DispatchProxy requires a non-sealed proxy base type.
 
