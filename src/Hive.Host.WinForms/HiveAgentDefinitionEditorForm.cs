@@ -221,8 +221,8 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
                 _favoriteTargetIds);
 
             if (_favoriteTargetIds.Count > 0 &&
-                _existing?.ConfiguredExecutionTargetId is { } currentTargetId &&
-                candidates.All(target => target.Id != currentTargetId))
+                _existing?.ConfiguredExecutionTargetId is { } configuredTargetId &&
+                candidates.All(target => target.Id != configuredTargetId))
             {
                 var currentTarget = _targets.FirstOrDefault(
                     target => target.Id == currentTargetId);
