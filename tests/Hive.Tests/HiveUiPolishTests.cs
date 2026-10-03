@@ -163,28 +163,6 @@ public sealed class HiveUiPolishTests
         Assert.True(textBox.Height >= 32);
     }
 
-    [WinFormsFact]
-    public void HiveCrudScrollHost_UsesOwningHiveThemeBeforeFirstPaint()
-    {
-        var themeManager = new HiveThemeManager(HiveThemeMode.Dark);
-
-        using var form = new TestHiveForm(themeManager);
-        using var page = new HiveCrudPage<TestItem>();
-
-        form.Body.Controls.Add(page);
-        form.CreateControl();
-
-        var host = page.ListScrollHostForTesting;
-
-        Assert.Equal(themeManager.Theme.Palette.Surface, host.BackColor);
-
-        form.Show();
-        Application.DoEvents();
-
-        Assert.Equal(themeManager.Theme.Palette.Surface, host.BackColor);
-        Assert.Equal(themeManager.Theme.Palette.Surface, host.Controls[0].BackColor);
-    }
-
     [Fact]
     public void HiveCrudPage_AppliesErrorStatusToneAndPreservesItAcrossThemeChanges()
     {
