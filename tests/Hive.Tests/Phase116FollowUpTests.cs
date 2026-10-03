@@ -464,7 +464,7 @@ public sealed class Phase116FollowUpTests
     public async Task ModelInformationView_RendersRichDiscoveryProfile()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
-        var fixture = CreateFixture();
+        var fixture = CreateFixture(favoriteFirstModel: true);
 
         using var host = new Form
         {
@@ -499,6 +499,19 @@ public sealed class Phase116FollowUpTests
         Assert.True(view.CrudPage.AllowAdd);
         Assert.Equal("Add to Favorites", view.CrudPage.AddButtonText);
 
+        var actionLayout = Assert.IsType<TableLayoutPanel>(
+            view.CrudPage.ActionBarPanel.Controls[0]);
+        var visibleActionButtons = actionLayout.Controls
+            .OfType<FlowLayoutPanel>()
+            .Single()
+            .Controls
+            .OfType<HiveButton>()
+            .Where(button => button.Visible)
+            .ToArray();
+
+        Assert.Single(visibleActionButtons);
+        Assert.Equal("Add to Favorites", visibleActionButtons[0].Text);
+
         Assert.Equal(
             [
                 "Model",
@@ -512,7 +525,10 @@ public sealed class Phase116FollowUpTests
             view.CrudPage.Columns.Select(column => column.Header));
 
         Assert.Equal(2, view.ModelsList.Items.Count);
-        Assert.Equal(
+        Assert.StartsWith(
+            "★ ",
+            view.ModelsList.Items[0].Text);
+        Assert.Contains(
             "rich-model",
             view.ModelsList.Items[0].Text);
 
@@ -928,7 +944,6 @@ public sealed class Phase116FollowUpTests
     private class ModelInformationManagementProxy : DispatchProxy
     {
         private Provider? _provider;
-        private ProviderAccount? _account;
         private IReadOnlyList<ExecutionTarget> _targets = [];
         private ProviderDiscoverySnapshot? _snapshot;
         private IReadOnlyList<ExecutionTargetId> _favoriteExecutionTargetIds = [];
@@ -945,7 +960,6 @@ public sealed class Phase116FollowUpTests
             IReadOnlyList<ExecutionTargetId> favoriteTargetIds)
         {
             _provider = provider;
-            _account = account;
             _targets = targets;
             _snapshot = snapshot;
             _favoriteExecutionTargetIds = favoriteTargetIds.ToArray();
