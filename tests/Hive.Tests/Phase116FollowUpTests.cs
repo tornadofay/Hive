@@ -544,7 +544,7 @@ public sealed class Phase116FollowUpTests
             view.ModelsList.Items[0].Text);
         Assert.Equal("✓", view.ModelsList.Items[0].SubItems[1].Text);
         Assert.Equal("✓", view.ModelsList.Items[0].SubItems[3].Text);
-        Assert.Equal("—", view.ModelsList.Items[0].SubItems[4].Text);
+        Assert.Equal("✓", view.ModelsList.Items[0].SubItems[4].Text);
         Assert.Equal("✕", view.ModelsList.Items[1].SubItems[2].Text);
         Assert.Equal("—", view.ModelsList.Items[1].SubItems[4].Text);
 
@@ -559,8 +559,10 @@ public sealed class Phase116FollowUpTests
         Assert.Contains("text, image, audio", detailsText);
         Assert.Contains("Capabilities", detailsText);
         Assert.Contains("text.generate", detailsText);
-        Assert.Contains("✓", detailsText);
+        Assert.Contains("Supported", detailsText);
         Assert.Contains("Reasoning", detailsText);
+        Assert.DoesNotContain("✕", detailsText);
+        Assert.DoesNotContain("✓", detailsText);
         Assert.Contains("medium", detailsText);
         Assert.Contains("Limits", detailsText);
         Assert.Contains("131072", detailsText);
@@ -754,7 +756,7 @@ public sealed class Phase116FollowUpTests
     }
 
     [WinFormsFact]
-    public async Task ModelInformationView_CapabilityFilterUsesTrueState()
+    public async Task ModelInformationView_CapabilityFilterUsesSupportedState()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
         var fixture = CreateFixture();
@@ -782,8 +784,8 @@ public sealed class Phase116FollowUpTests
         var trueIndex = Enumerable.Range(0, view.CapabilityStateFilter.Items.Count)
             .Single(index =>
                 string.Equals(
-                    view.CapabilityStateFilter.Items[index]?.ToString(),
-                    "True",
+                    view.CapabilityStateFilter.Items[index]? .ToString(),
+                    "Supported",
                     StringComparison.Ordinal));
 
         view.CapabilityFilter.SelectedIndex = visionIndex;
