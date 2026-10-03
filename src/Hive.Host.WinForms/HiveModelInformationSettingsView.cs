@@ -678,7 +678,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         if (selectedItem is not null)
         {
             selectedItem.SubItems[0].Text = FormatModelName(row);
-            selectedItem.Invalidate();
+            _page.ListView.Invalidate(selectedItem.Bounds);
         }
 
         _page.SetStatus(
