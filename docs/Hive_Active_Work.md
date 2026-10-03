@@ -595,6 +595,17 @@ Remediation boundary:
 - keep suppression out of high-frequency scroll and repaint handling;
 - no test weakening, DataGridView migration, new public scroll API, ListView rewrite, or unrelated refactoring.
 
+## ListView Scrollbar Suppression — Style-Change Interception
+
+The latest same-slice remediation adds a native style-change boundary:
+- `HiveListView` intercepts `WM_STYLECHANGING` for `GWL_STYLE` while hosted and removes `WS_HSCROLL` / `WS_VSCROLL` from the pending new style before Windows applies it;
+- the original style bits remain tracked for standalone restoration when the ListView is detached;
+- existing non-client/lifecycle suppression remains in place as a fallback visibility enforcement path;
+- no deferred callback is used, and no suppression is performed from high-frequency scrolling or repaint messages;
+- native `LVM_SCROLL`, item/selection, keyboard, owner-draw, and CRUD behavior remain unchanged.
+
+No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
