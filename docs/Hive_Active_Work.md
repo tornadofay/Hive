@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Current Slice
 
@@ -54,6 +54,12 @@ Remediation boundary:
 - correct the Favorites page/test interaction with the existing Hive CRUD/list contracts so the required behavior is represented through the actual UI implementation;
 - preserve the Favorites page semantics, immediate persistence, picker filtering, and existing shared CRUD ownership;
 - do not change Agent target-selection behavior or introduce a new selection mode.
+
+Remediation completed:
+- Favorites UI tests now treat HiveCrudPage ListViewItem.Tag as the stored FavoriteExecutionTargetRow, matching the shared CRUD selection contract;
+- the empty-list assertion now accepts the shared CRUD status text ("0 items") rather than requiring an unimplemented page-specific status string;
+- the normal-size CRUD layout test shows its temporary host form before evaluating effective button visibility, while retaining the 1120x700 layout boundary;
+- no Favorites production behavior or Agent target-selection behavior was changed.
 
 
 
