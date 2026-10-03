@@ -10,48 +10,34 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
 {
     private readonly AgentDefinition? _existing;
     private readonly IReadOnlyList<ExecutionTarget> _targets;
-    private readonly IReadOnlyList<Provider> _providers;
-    private readonly IReadOnlyList<ProviderAccount> _accounts;
-    private readonly IReadOnlySet<ExecutionTargetId> _favoriteTargetIds;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveExampleOutput? _output;
     private readonly TextBox _keyTextBox;
     private readonly TextBox _displayNameTextBox;
     private readonly HiveComboBox _generationComboBox;
-    private readonly HiveComboBox _providerComboBox;
-    private readonly HiveComboBox _accountComboBox;
     private readonly HiveComboBox _targetComboBox;
     private readonly HiveButton _saveButton;
     private readonly HiveButton _cancelButton;
-    private bool _updatingFilters;
 
     public HiveAgentDefinitionEditorForm(
         AgentDefinition? definition,
         IReadOnlyList<ExecutionTarget> targets,
-        IReadOnlyList<Provider> providers,
-        IReadOnlyList<ProviderAccount> accounts,
-        IReadOnlyCollection<ExecutionTargetId>? favoriteTargetIds,
         ResourceAccessContext accessContext,
         IHiveThemeManager themeManager,
         IHiveExampleOutput? output = null)
         : base(
             definition is null ? "New Agent" : "Edit Agent",
             "Agent definition and configured execution target",
-            new Size(760, 620),
-            new Size(680, 540),
+            new Size(760, 560),
+            new Size(640, 480),
             themeManager)
     {
         ArgumentNullException.ThrowIfNull(targets);
-        ArgumentNullException.ThrowIfNull(providers);
-        ArgumentNullException.ThrowIfNull(accounts);
+        _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
         ArgumentNullException.ThrowIfNull(themeManager);
 
-        _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
         _existing = definition;
         _targets = targets;
-        _providers = providers;
-        _accounts = accounts;
-        _favoriteTargetIds = (favoriteTargetIds ?? Array.Empty<ExecutionTargetId>()).ToHashSet();
         _output = output;
 
         ConfigureHeader(
@@ -71,29 +57,48 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
         _displayNameTextBox = CreateTextBox();
         _displayNameTextBox.PlaceholderText = "e.g. Customer Support Agent";
 
-        _generationComboBox = CreateComboBox();
+        _generationComboBox = new HiveComboBox
+        {
+            Dock = DockStyle.Fill,
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
         foreach (var generation in Enum.GetValues<AgentGeneration>())
             _generationComboBox.Items.Add(generation);
 
-        _providerComboBox = CreateComboBox();
-        _accountComboBox = CreateComboBox();
-        _targetComboBox = CreateComboBox();
+        _targetComboBox = new HiveComboBox
+        {
+            Dock = DockStyle.Fill,
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
 
-        _providerComboBox.SelectedIndexChanged += ProviderFilterChanged;
-        _accountComboBox.SelectedIndexChanged += AccountFilterChanged;
+        _targetComboBox.Items.Add(
+            new TargetChoice(
+                null,
+                "Unconfigured — no execution target"));
+
+        foreach (var target in _targets)
+        {
+            var status = target.Resource.Lifecycle.Status;
+            var suffix = status == ResourceLifecycleStatus.Active
+                ? target.Key
+                : $"{target.Key} — {status}";
+
+            _targetComboBox.Items.Add(
+                new TargetChoice(
+                    target.Id,
+                    $"{target.DisplayName} [{suffix}]"));
+        }
 
         _keyTextBox.Text = definition?.Key ?? string.Empty;
         _displayNameTextBox.Text = definition?.DisplayName ?? string.Empty;
         _generationComboBox.SelectedItem =
             definition?.Generation ?? AgentGeneration.Base;
-
-        PopulateProviderFilter();
-        RefreshAccountFilter();
-        RefreshTargetChoices();
         SelectTarget(definition?.ConfiguredExecutionTargetId);
 
         if (definition is not null)
+        {
             SetReadOnlyVisualState(_keyTextBox, themeManager);
+        }
 
         editor.AddField(
             "Resource key",
@@ -111,20 +116,10 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
             _generationComboBox);
 
         editor.AddField(
-            "Provider",
-            "Optional filter for the ExecutionTarget list.",
-            _providerComboBox);
-
-        editor.AddField(
-            "Account",
-            "Optional Provider Account filter for the ExecutionTarget list.",
-            _accountComboBox);
-
-        editor.AddField(
             "Execution target",
-            "Optional explicit target reference. When favorites are configured, they narrow the choices; the existing configured target remains available while editing. Provider, account, endpoint, model, and credentials remain owned by the referenced ExecutionTarget.",
+            "Optional explicit target reference. Provider, account, endpoint, model, and credentials remain owned by the referenced ExecutionTarget.",
             _targetComboBox,
-            86);
+            72);
 
         _saveButton = editor.AddActionButton(
             definition is null ? "Create" : "Save",
@@ -151,172 +146,6 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
 
     public AgentDefinition? Definition { get; private set; }
 
-    internal HiveComboBox ProviderSelector => _providerComboBox;
-    internal HiveComboBox AccountSelector => _accountComboBox;
-    internal HiveComboBox TargetSelector => _targetComboBox;
-
-    private void PopulateProviderFilter()
-    {
-        _updatingFilters = true;
-        try
-        {
-            _providerComboBox.Items.Clear();
-            _providerComboBox.Items.Add(new ProviderChoice(null, "All Providers"));
-
-            foreach (var provider in _providers
-                         .Where(provider => _targets.Any(target => target.ProviderId == provider.Id))
-                         .OrderBy(provider => provider.DisplayName, StringComparer.Ordinal))
-            {
-                _providerComboBox.Items.Add(
-                    new ProviderChoice(provider, provider.DisplayName));
-            }
-
-            _providerComboBox.SelectedIndex = 0;
-        }
-        finally
-        {
-            _updatingFilters = false;
-        }
-    }
-
-    private void RefreshAccountFilter()
-    {
-        _updatingFilters = true;
-        try
-        {
-            var selectedProvider = GetSelectedProvider();
-
-            _accountComboBox.Items.Clear();
-            _accountComboBox.Items.Add(new AccountChoice(null, "All Accounts"));
-
-            foreach (var account in _accounts
-                         .Where(account =>
-                             selectedProvider is null ||
-                             account.ProviderId == selectedProvider.Id)
-                         .Where(account => _targets.Any(target => target.ProviderAccountId == account.Id))
-                         .OrderBy(account => account.DisplayName, StringComparer.Ordinal))
-            {
-                _accountComboBox.Items.Add(
-                    new AccountChoice(account, account.DisplayName));
-            }
-
-            _accountComboBox.SelectedIndex = 0;
-        }
-        finally
-        {
-            _updatingFilters = false;
-        }
-    }
-
-    private void RefreshTargetChoices()
-    {
-        var selectedProvider = GetSelectedProvider();
-        var selectedAccount = GetSelectedAccount();
-        var currentTargetId = _existing?.ConfiguredExecutionTargetId;
-
-        _updatingFilters = true;
-        try
-        {
-            var candidates = ExecutionTargetFavoriteFilter.Apply(
-                _targets,
-                _favoriteTargetIds);
-
-            if (_favoriteTargetIds.Count > 0 &&
-                currentTargetId is { } &&
-                candidates.All(target => target.Id != currentTargetId))
-            {
-                var currentTarget = _targets.FirstOrDefault(
-                    target => target.Id == currentTargetId);
-
-                if (currentTarget is not null)
-                    candidates = candidates
-                        .Append(currentTarget)
-                        .ToList();
-            }
-
-            if (selectedProvider is not null)
-            {
-                candidates = candidates
-                    .Where(target => target.ProviderId == selectedProvider.Id)
-                    .ToList();
-            }
-
-            if (selectedAccount is not null)
-            {
-                candidates = candidates
-                    .Where(target => target.ProviderAccountId == selectedAccount.Id)
-                    .ToList();
-            }
-
-            _targetComboBox.Items.Clear();
-            _targetComboBox.Items.Add(
-                new TargetChoice(
-                    null,
-                    "Unconfigured — no execution target"));
-
-            foreach (var target in candidates
-                         .OrderBy(target => target.DisplayName, StringComparer.Ordinal)
-                         .ThenBy(target => target.Key, StringComparer.Ordinal)
-                         .ThenBy(target => target.Id.Value))
-            {
-                var status = target.Resource.Lifecycle.Status;
-                var suffix = status == ResourceLifecycleStatus.Active
-                    ? target.Key
-                    : $"{target.Key} — {status}";
-                var currentSuffix = target.Id == currentTargetId
-                    ? " — Current configuration"
-                    : string.Empty;
-
-                _targetComboBox.Items.Add(
-                    new TargetChoice(
-                        target.Id,
-                        $"{target.DisplayName} [{suffix}]{currentSuffix}"));
-            }
-        }
-        finally
-        {
-            _updatingFilters = false;
-        }
-
-        SelectTarget(_targetComboBox.SelectedItem is TargetChoice choice
-            ? choice.Id
-            : _existing?.ConfiguredExecutionTargetId);
-    }
-
-    private void ProviderFilterChanged(object? sender, EventArgs e)
-    {
-        if (_updatingFilters)
-            return;
-
-        var previousTargetId = GetSelectedTargetId();
-
-        RefreshAccountFilter();
-        RefreshTargetChoices();
-
-        SelectTarget(previousTargetId);
-    }
-
-    private void AccountFilterChanged(object? sender, EventArgs e)
-    {
-        if (_updatingFilters)
-            return;
-
-        var previousTargetId = GetSelectedTargetId();
-        RefreshTargetChoices();
-        SelectTarget(previousTargetId);
-    }
-
-    private ExecutionTargetId? GetSelectedTargetId() =>
-        _targetComboBox.SelectedItem is TargetChoice choice
-            ? choice.Id
-            : null;
-
-    private Provider? GetSelectedProvider() =>
-        (_providerComboBox.SelectedItem as ProviderChoice)?.Value;
-
-    private ProviderAccount? GetSelectedAccount() =>
-        (_accountComboBox.SelectedItem as AccountChoice)?.Value;
-
     private void Save()
     {
         try
@@ -327,7 +156,9 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
             if (_generationComboBox.SelectedItem is not AgentGeneration generation)
                 throw new InvalidOperationException("A valid Agent generation is required.");
 
-            var targetId = GetSelectedTargetId();
+            var targetId = _targetComboBox.SelectedItem is TargetChoice choice
+                ? choice.Id
+                : null;
 
             Definition = _existing is null
                 ? new AgentDefinition(
@@ -379,13 +210,6 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
         _targetComboBox.SelectedIndex = index;
     }
 
-    private static HiveComboBox CreateComboBox() =>
-        new()
-        {
-            Dock = DockStyle.Fill,
-            DropDownStyle = ComboBoxStyle.DropDownList
-        };
-
     private static TextBox CreateTextBox() =>
         new()
         {
@@ -403,27 +227,6 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
         textBox.Cursor = Cursors.Arrow;
         textBox.BackColor = themeManager.Theme.Palette.ElevatedSurface;
         textBox.ForeColor = themeManager.Theme.Palette.MutedText;
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _providerComboBox.SelectedIndexChanged -= ProviderFilterChanged;
-            _accountComboBox.SelectedIndexChanged -= AccountFilterChanged;
-        }
-
-        base.Dispose(disposing);
-    }
-
-    private sealed record ProviderChoice(Provider? Value, string Display)
-    {
-        public override string ToString() => Display;
-    }
-
-    private sealed record AccountChoice(ProviderAccount? Value, string Display)
-    {
-        public override string ToString() => Display;
     }
 
     private sealed record TargetChoice(
