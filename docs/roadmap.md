@@ -305,6 +305,16 @@ Scope and non-goals: V1 uses the `IVectorStore` boundary and SQL Server vector s
 
 Verify: insertion/search, deterministic ordering/ties, ownership/scope, invalid vectors, result bounds, cancellation, persistence/reload, and isolation.
 
+## 1.19 Follow-Up — Execution Target Preferences & Favorite Target Pool
+
+Detailed implementation plan: [1.19 Follow-Up — Execution Target Preferences & Favorite Target Pool](plan/Phase1/1.19-Follow-Up.md)
+
+Objective: establish a durable user/scope-aware favorite ExecutionTarget pool that acts only as an optional candidate filter for later target selection, while adding a practical Provider Settings management surface and easier Provider / Account filtering for existing target selection.
+
+Scope and non-goals: favorite target IDs are durable preferences, not a new ExecutionTarget resource type or selection mode. When the favorite pool is empty, existing target candidate behavior is unchanged; when it is non-empty, consumers may filter candidates to the favorite IDs and then invoke the existing capability-aware selection policy. Favorites do not alter target capability, lifecycle, automatic/manual ownership, or ranking semantics.
+
+Verify: persistence and scope isolation; invalid/inaccessible target rejection; favorite filter empty/non-empty behavior; preservation across target retirement; Provider Settings Favorites UI; Provider / Account filtering for target selection; focused Example Host behavior.
+
 ## 1.20 — V1 Workspace Foundation
 
 Detailed implementation plan: [1.20 — V1 Workspace Foundation](plan/Phase1/1.20.md)
