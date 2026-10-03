@@ -429,12 +429,20 @@ public sealed class HiveScrollHostTests
             States = new uint[6]
         };
 
-        Assert.True(GetScrollBarInfo(control.Handle, objectId, ref info));
+        var available = GetScrollBarInfo(
+            control.Handle,
+            objectId,
+            ref info);
+
+        Assert.True(
+            available,
+            $"GetScrollBarInfo failed for native scrollbar object {objectId}.");
 
         var state = info.States[0];
         Assert.True(
             (state & StateSystemInvisible) != 0 ||
-            (state & StateSystemOffscreen) != 0);
+            (state & StateSystemOffscreen) != 0,
+            $"Native scrollbar object {objectId} is still exposed; state=0x{state:X8}.");
     }
 
     [StructLayout(LayoutKind.Sequential)]
