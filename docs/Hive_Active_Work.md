@@ -318,3 +318,28 @@ Remediation completed inside the recorded layout failure boundary:
 - no Model Information discovery, filter, Favorites, capability, persistence, or Agent target-selection behavior changed.
 
 Developer re-verification is required.
+
+## Verification Failure / Remediation Boundary — Model Information Capability Presentation and Filtering
+
+Developer verification on 2026-10-03 reported 592 Hive.Tests executions: 591 passed, 1 failed, 0 skipped. The remaining failure was Phase116FollowUpTests.ModelInformationView_RendersRichDiscoveryProfile, where the Model Information list assertion encountered a mismatched expected capability symbol. Developer feedback also identified in-scope presentation issues: compact capability symbols had been reused in structured details instead of being list-only; the page title/header was not the first visual section; the fixed right details panel was substantially wider than necessary; changing inspection filters caused visible form flicker; and the filters were not reliably updating the displayed model list.
+
+Remediation boundary:
+- keep `✓` / `✕` / `—` exclusively for compact capability state cells in the Model Information list;
+- use full textual capability state names in structured details and descriptive filter choices;
+- reorder the existing Model Information composition so its title/description header appears first, followed by the existing context selectors/inspection filters, then the model list/details split;
+- size the fixed right details panel to the intended compact content width rather than deriving a large width from the left panel;
+- apply price/capability filters locally against the current discovery snapshot without invoking the CRUD asynchronous load operation, preserving the current selection where possible and avoiding unnecessary whole-page loading/flicker;
+- preserve discovery, Favorites, persistence, capability authority, and Agent target-selection semantics.
+
+## Remediation Completed — Model Information Capability Presentation and Filtering
+
+Implementation completed inside the recorded boundary:
+- list-only capability cells use `✓` / `✕` / `—`; structured detail capability states use `Supported`, `Unsupported`, or `Unknown / unreported`;
+- the capability state filter now uses textual `Supported`, `Unsupported`, and `Unknown / unreported` choices;
+- the existing CRUD page header is presented first in the Model Information page composition, before the context selectors/inspection filters and model/details split;
+- the right details panel targets a compact 400px fixed width;
+- inspection filters now update the existing list locally from the current discovery snapshot instead of triggering the CRUD load operation, preserving an applicable selection and avoiding loading-state flicker;
+- the focused test assertions were aligned with the intended list/detail distinction and supported-state filter text;
+- no discovery/provider transport, Favorites persistence, capability authority, or Agent behavior changed.
+
+Developer re-verification is required.
