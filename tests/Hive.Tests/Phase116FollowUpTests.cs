@@ -999,7 +999,7 @@ public sealed class Phase116FollowUpTests
                     ? favoriteIds
                     : Array.Empty<ExecutionTargetId>();
 
-            _favoriteExecutionTargetIds = favoriteIds.ToArray();
+            _favoriteExecutionTargetIds = ids.ToArray();
 
             return Task.FromResult(
                 Result<IReadOnlyList<ExecutionTargetId>>.Success(
