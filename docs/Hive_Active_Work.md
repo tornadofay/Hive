@@ -791,3 +791,17 @@ Correction:
 The already-verified native ListView scrollbar/lifecycle fix remains unchanged.
 
 Status is **VERIFICATION PENDING** for developer compilation, focused UI regression, and the broader suite.
+
+
+## Verification Failed / Remediation Required — CRUD ListView Native Scrollbars During First Paint
+
+Developer visual verification clarified the remaining Dark-mode CRUD scrolling defect: the issue is not the scroll-host background theme itself. The CRUD `HiveListView` can visibly paint its native Win32 scrollbars during its initial handle/layout/first-paint lifecycle before Hive-owned scrollbars are established.
+
+Remediation boundary:
+- arm the existing `HiveListView` native scrollbar suppression before the ListView is inserted into `HiveScrollHost`, so native handle creation/non-client layout occurs with suppression already active;
+- preserve the later authoritative scroll-state acquisition and existing native `LVM_SCROLL` behavior;
+- preserve the Hive scrollbar rendering and all CRUD ListView item/selection/keyboard/owner-draw/paging behavior;
+- do not add deferred retries, per-scroll suppression, or another alternate scrollbar mechanism;
+- remove the previously attempted CRUD scroll-host ambient-theme workaround because it addressed the wrong cause.
+
+Status is **VERIFICATION FAILED / REMEDIATION REQUIRED** pending same-slice correction.
