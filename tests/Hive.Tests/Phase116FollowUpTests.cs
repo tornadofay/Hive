@@ -516,7 +516,11 @@ public sealed class Phase116FollowUpTests
         Assert.Equal("Add to Favorites", visibleActionButtons[0].Text);
         Assert.True(visibleActionButtons[0].Width >= 120);
 
+        var pageRoot = Assert.IsType<TableLayoutPanel>(view.Controls[0]);
+        Assert.Same(view.CrudPage.HeaderPanel, pageRoot.Controls[0]);
+
         var initialDetailsWidth = view.DetailsPanelWidth;
+        Assert.InRange(initialDetailsWidth, 390, 410);
         host.ClientSize = new Size(1320, 760);
         host.PerformLayout();
         view.PerformLayout();
@@ -871,6 +875,10 @@ public sealed class Phase116FollowUpTests
 
         Assert.Contains("second-model", detailsText);
         Assert.Contains("second-provider", detailsText);
+        Assert.Contains("Vision", detailsText);
+        Assert.Contains("Unsupported", detailsText);
+        Assert.DoesNotContain("✓", detailsText);
+        Assert.DoesNotContain("✕", detailsText);
         Assert.DoesNotContain("rich-model", detailsText);
     }
 
