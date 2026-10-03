@@ -44,9 +44,6 @@ Expected user-facing behavior:
 
 ## Verification Failure / Remediation Boundary
 
-Developer reported an in-scope compile failure after the latest UI remediation:
-- ExecutionTargetFavoriteSettingsUiTests.cs referenced HiveFavoriteExecutionTargetsSettingsView.StatusLabel, but that view exposes the status label through its shared HiveCrudPage.
-
 ## Verification Failure / Remediation Boundary
 
 Developer reported a remaining in-scope UI failure:
@@ -76,6 +73,10 @@ Remediation completed within the Phase 1.19A Favorites settings view, filtered p
 - Refresh loads saved favorite IDs and resolves only those IDs for display;
 - refresh/cancellation lifecycle was simplified to lifetime-owned cancellation, avoiding disposal of in-flight operation tokens;
 - focused UI tests assert saved-favorites-only rendering, empty-state behavior, picker filtering, CRUD/scroll-host composition, and repeated refresh.
+
+Remediation completed:
+- corrected the Favorites UI test to access the status label through the exposed shared CRUD page;
+- the implementation remains within the existing Favorites UI test boundary and no Agent behavior was changed.
 
 ## Verification state
 
