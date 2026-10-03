@@ -220,7 +220,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _endpointComboBox.TextChanged += EndpointTextChanged;
         _refreshButton.Click += RefreshButtonOnClick;
 
-        _modelsList.SelectedIndexChanged += ModelsListSelected;
+        _modelsList.ItemSelectionChanged += ModelsListSelectionChanged;
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         ApplyTheme();
@@ -642,6 +642,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             var firstItem = _modelsList.Items[0];
             firstItem.Selected = true;
             firstItem.Focused = true;
+
+            if (firstItem.Tag is ProviderModelMetadata model)
+                RenderModelDetails(model);
         }
         else
         {
@@ -652,17 +655,21 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         ResizeDetailCards();
     }
 
-    private void ModelsListSelected(object? sender, EventArgs e)
+    private void ModelsListSelectionChanged(
+        object? sender,
+        ListViewItemSelectionChangedEventArgs e)
     {
-        if (_modelsList.SelectedItems.Count == 0 ||
-            _modelsList.SelectedItems[0].Tag is not ProviderModelMetadata model)
+        if (!e.IsSelected)
+            return;
+
+        if (e.Item.Tag is ProviderModelMetadata model)
         {
-            if (_snapshot?.Models.Count == 0)
-                RenderNoModelDetails();
+            RenderModelDetails(model);
             return;
         }
 
-        RenderModelDetails(model);
+        if (_snapshot?.Models.Count == 0)
+            RenderNoModelDetails();
     }
 
     private void ApplyOperationalContext()
@@ -1259,7 +1266,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _endpointComboBox.SelectedIndexChanged -= EndpointChanged;
             _endpointComboBox.TextChanged -= EndpointTextChanged;
             _refreshButton.Click -= RefreshButtonOnClick;
-            _modelsList.SelectedIndexChanged -= ModelsListSelected;
+            _modelsList.ItemSelectionChanged -= ModelsListSelectionChanged;
             _detailsScrollHost.Resize -= DetailsScrollHostOnResize;
             CancelOperation();
         }
