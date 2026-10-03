@@ -110,7 +110,6 @@ public sealed class HiveListView : ListView
         if (_nativeScrollBarsSuppressed)
         {
             HideNativeScrollBars();
-            RequestNativeScrollBarSuppression();
         }
     }
 
@@ -121,7 +120,6 @@ public sealed class HiveListView : ListView
         if (_nativeScrollBarsSuppressed)
         {
             HideNativeScrollBars();
-            RequestNativeScrollBarSuppression();
         }
     }
 
