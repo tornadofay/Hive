@@ -308,3 +308,13 @@ Remediation boundary:
 - preserve the fixed-right-panel behavior during normal resizing;
 - do not change discovery, filtering, Favorites persistence, capability semantics, or Agent target-selection behavior;
 - return Active Work to VERIFICATION PENDING and require developer re-verification.
+
+## Remediation Completed — Model Information SplitContainer Initialization
+
+Remediation completed inside the recorded layout failure boundary:
+- the Model Information SplitContainer no longer assigns an invalid splitter position during view construction while its client width is still at the WinForms pre-layout size;
+- Panel 1 / Panel 2 minimum widths and the existing 500px initial Panel 1 position are now applied only after the split container has enough usable width;
+- FixedPanel.Panel2 remains the governing resize behavior, so the established details-panel width is preserved during normal window resizing;
+- no Model Information discovery, filter, Favorites, capability, persistence, or Agent target-selection behavior changed.
+
+Developer re-verification is required.
