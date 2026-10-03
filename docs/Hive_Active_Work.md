@@ -276,3 +276,25 @@ Verification boundary after this correction:
 - focused Advanced Provider Configuration / Model Information automated tests;
 - broader Hive.Tests suite;
 - manual Example Host / Settings UI verification of the changed Advanced button, tab set, Model Information selectors/list/details, and Light/Dark/System presentation where applicable.
+
+## Verification Failure / Remediation Boundary — Model Information Compilation Errors
+
+Developer verification reported in-scope compilation errors on 2026-10-03:
+- HiveCrudPageLayoutController.cs passed HiveButton instances to a width helper typed as System.Windows.Forms.Button;
+- Phase116FollowUpTests.cs referenced _account from the Model Information test proxy without storing the configured ProviderAccount;
+- the test file contained an accidental duplicate ReplaceFavoriteExecutionTargetIds method inside FixedResponseHandler, referencing state that belongs to the Model Information proxy.
+
+Remediation boundary:
+- correct only the shared CRUD action-width helper type and the affected Model Information test-proxy state/method placement;
+- preserve the existing Model Information UI behavior, favorite persistence path, filter semantics, discovery semantics, and Agent target-selection behavior;
+- return Active Work to VERIFICATION PENDING and require developer re-verification.
+
+## Remediation Completed — Model Information Compilation Errors
+
+Remediation completed within the recorded boundary:
+- changed GetActionButtonWidth to accept the actual shared HiveButton action type;
+- stored the configured ProviderAccount in ModelInformationManagementProxy so ListProviderAccountsAsync returns the configured account;
+- removed the stray duplicate favorite-replacement method from FixedResponseHandler;
+- no production discovery, persistence, Favorites semantics, or Agent behavior changed.
+
+Developer re-verification is required.
