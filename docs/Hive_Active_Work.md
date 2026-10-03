@@ -606,6 +606,19 @@ The latest same-slice remediation adds a native style-change boundary:
 
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
 
+## Verification Failed / Remediation Required — Style-Change Interception Still Fails After Maximize
+
+Developer re-ran the full `Hive.Tests` suite after the `WM_STYLECHANGING` remediation: **570 total, 569 passed, 1 failed, 0 skipped**.
+
+The same failure remains in `HiveScrollHostTests.NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling`, at the post-maximize native scrollbar assertion (test line 381). The test completes without hanging, but the native ListView scrollbar is still reported visible.
+
+The repeated failure indicates the remaining defect may be in the host resize/synchronization lifecycle rather than solely inside `HiveListView`. Investigation must therefore trace the existing `HiveScrollHost` resize and native-content synchronization boundary before another control-level suppression change.
+
+Remediation boundary:
+- identify and correct the same-slice lifecycle responsible for native ListView scrollbar restoration after maximize;
+- preserve native ListView `LVM_SCROLL`, Hive scrollbar synchronization, and normal control behavior;
+- no test weakening, DataGridView migration, new public scroll API, ListView rewrite, or unrelated refactoring.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
