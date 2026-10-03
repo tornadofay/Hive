@@ -152,6 +152,8 @@ internal sealed class HiveProvidersSettingsView : UserControl
 
     internal HiveTabControl NavigationTabs => _tabs;
 
+    internal HiveButton AdvancedButton => _advancedButton;
+
     internal HiveFavoriteExecutionTargetsSettingsView FavoriteTargetsPage =>
         _favoritesPage;
 
