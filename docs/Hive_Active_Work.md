@@ -298,3 +298,13 @@ Remediation completed within the recorded boundary:
 - no production discovery, persistence, Favorites semantics, or Agent behavior changed.
 
 Developer re-verification is required.
+
+## Verification Failure / Remediation Boundary — Model Information SplitContainer Initialization
+
+Developer verification on 2026-10-03 reported 592 Hive.Tests executions: 584 passed, 8 failed, 0 skipped. All eight failures are the in-scope Model Information tests and fail during HiveModelInformationSettingsView construction because SplitContainer.SplitterDistance is assigned before the control has a width large enough to satisfy Panel1MinSize + Panel2MinSize.
+
+Remediation boundary:
+- correct only the Model Information SplitContainer initialization/layout lifecycle so its initial splitter position is applied safely after usable client dimensions exist;
+- preserve the fixed-right-panel behavior during normal resizing;
+- do not change discovery, filtering, Favorites persistence, capability semantics, or Agent target-selection behavior;
+- return Active Work to VERIFICATION PENDING and require developer re-verification.
