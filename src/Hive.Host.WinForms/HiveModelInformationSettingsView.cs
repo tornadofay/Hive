@@ -84,6 +84,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly SplitContainer _mainSplit;
     private readonly Panel _detailsContent;
     private readonly HiveScrollHost _detailsScrollHost;
+    private bool _updatingModelList;
     private CancellationTokenSource? _operationCts;
     private int _operationVersion;
     private bool _initializingContext;
@@ -226,11 +227,13 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _capabilityStateFilter.Items.Add(
             new StateFilterChoice(ModelCapabilityFilterState.Any, "Any"));
         _capabilityStateFilter.Items.Add(
-            new StateFilterChoice(ModelCapabilityFilterState.Supported, "True"));
+            new StateFilterChoice(ModelCapabilityFilterState.Supported, "Supported"));
         _capabilityStateFilter.Items.Add(
-            new StateFilterChoice(ModelCapabilityFilterState.Unsupported, "False"));
+            new StateFilterChoice(ModelCapabilityFilterState.Unsupported, "Unsupported"));
         _capabilityStateFilter.Items.Add(
-            new StateFilterChoice(ModelCapabilityFilterState.Unknown, "—"));
+            new StateFilterChoice(
+                ModelCapabilityFilterState.Unknown,
+                "Unknown / unreported"));
         _capabilityStateFilter.SelectedIndex = 0;
 
         var filterBar = new FlowLayoutPanel
@@ -307,6 +310,24 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _mainSplit.Panel1.Controls.Add(_page);
         _mainSplit.Panel2.Controls.Add(detailsSurface);
 
+        var pageHeader = _page.HeaderPanel;
+        _page.PageLayout.HeaderHeight = 0;
+        pageHeader.Dock = DockStyle.Fill;
+        pageHeader.Margin = Padding.Empty;
+
+        var contextAndFilters = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        contextAndFilters.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
+        contextAndFilters.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
+        contextAndFilters.Controls.Add(contextCard, 0, 0);
+        contextAndFilters.Controls.Add(filterBar, 0, 1);
+
         var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -315,11 +336,11 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 120));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        root.Controls.Add(contextCard, 0, 0);
-        root.Controls.Add(filterBar, 0, 1);
+        root.Controls.Add(pageHeader, 0, 0);
+        root.Controls.Add(contextAndFilters, 0, 1);
         root.Controls.Add(_mainSplit, 0, 2);
         Controls.Add(root);
 
@@ -333,7 +354,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     }
 
     private const int MainSplitPanel1MinimumWidth = 320;
-    private const int MainSplitPanel2MinimumWidth = 520;
+    private const int MainSplitPanel2MinimumWidth = 400;
     private const int MainSplitInitialPanel1Width = 500;
     private bool _mainSplitConstraintsApplied;
 
@@ -623,47 +644,81 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             await LoadCachedOrDiscoverAsync().ConfigureAwait(true);
     }
 
-    private async void FilterChanged(object? sender, EventArgs e)
+    private void FilterChanged(object? sender, EventArgs e)
     {
         if (_updatingFilters || IsDisposed || Disposing)
             return;
 
+        if (_minPriceFilter.Value > _maxPriceFilter.Value)
+        {
+            _updatingFilters = true;
+            try
+            {
+                if (ReferenceEquals(sender, _minPriceFilter))
+                    _maxPriceFilter.Value = _minPriceFilter.Value;
+                else
+                    _minPriceFilter.Value = _maxPriceFilter.Value;
+            }
+            finally
+            {
+                _updatingFilters = false;
+            }
+
+            return;
+        }
+
+        ApplyModelFilters();
+    }
+
+    private void ApplyModelFilters()
+    {
+        if (IsDisposed || Disposing || _snapshot is null)
+            return;
+
+        var selectedModelId =
+            (_page.SelectedItem as ModelInformationRow)?.Model.ModelId;
+
+        var rows = CreateModelRows();
+
+        _updatingModelList = true;
         try
         {
-            if (_minPriceFilter.Value > _maxPriceFilter.Value)
-            {
-                _updatingFilters = true;
-                try
-                {
-                    if (ReferenceEquals(sender, _minPriceFilter))
-                        _maxPriceFilter.Value = _minPriceFilter.Value;
-                    else
-                        _minPriceFilter.Value = _maxPriceFilter.Value;
-                }
-                finally
-                {
-                    _updatingFilters = false;
-                }
-
-                return;
-            }
-
-            await _page.RefreshAsync().ConfigureAwait(true);
-
-            if (_page.ListView.Items.Count > 0)
-            {
-                var firstItem = _page.ListView.Items[0];
-                firstItem.Selected = true;
-                firstItem.Focused = true;
-            }
-            else
-            {
-                RenderNoModelDetails();
-            }
+            _page.SetItemsForView(rows);
         }
-        catch (OperationCanceledException)
-            when (IsDisposed || Disposing)
+        finally
         {
+            _updatingModelList = false;
+        }
+
+        ListViewItem? selectedItem = null;
+
+        if (!string.IsNullOrWhiteSpace(selectedModelId))
+        {
+            selectedItem = _page.ListView.Items
+                .Cast<ListViewItem>()
+                .FirstOrDefault(item =>
+                    item.Tag is ModelInformationRow row &&
+                    string.Equals(
+                        row.Model.ModelId,
+                        selectedModelId,
+                        StringComparison.OrdinalIgnoreCase));
+        }
+
+        selectedItem ??= _page.ListView.Items.Count > 0
+            ? _page.ListView.Items[0]
+            : null;
+
+        if (selectedItem is not null)
+        {
+            selectedItem.Selected = true;
+            selectedItem.Focused = true;
+
+            if (selectedItem.Tag is ModelInformationRow row)
+                RenderModelDetails(row.Model);
+        }
+        else
+        {
+            RenderNoModelDetails();
         }
     }
 
@@ -752,6 +807,14 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _ => "—"
         };
 
+    private static string FormatCapabilityDetailState(CapabilityState state) =>
+        state switch
+        {
+            CapabilityState.Supported => "Supported",
+            CapabilityState.Unsupported => "Unsupported",
+            _ => "Unknown / unreported"
+        };
+
     private static string FormatCapabilityState(
         ProviderModelMetadata model,
         CapabilityKey key) =>
@@ -759,6 +822,14 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             .FirstOrDefault(item => item.Capability == key) is { } entry
                 ? FormatCapabilityState(entry.State)
                 : "—";
+
+    private static string FindCapabilityDetail(
+        ProviderModelMetadata model,
+        CapabilityKey key) =>
+        model.DiscoveredCapabilities
+            .FirstOrDefault(item => item.Capability == key) is { } entry
+                ? FormatCapabilityDetailState(entry.State)
+                : "Unknown / unreported";
 
     private Color? GetCapabilityStateColor(
         ProviderModelMetadata model,
@@ -932,7 +1003,16 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             return Task.FromResult<IReadOnlyList<ModelInformationRow>>(
                 Array.Empty<ModelInformationRow>());
 
-        var rows = _snapshot.Models
+        return Task.FromResult<IReadOnlyList<ModelInformationRow>>(
+            CreateModelRows());
+    }
+
+    private IReadOnlyList<ModelInformationRow> CreateModelRows()
+    {
+        if (_snapshot is null)
+            return Array.Empty<ModelInformationRow>();
+
+        return _snapshot.Models
             .Where(MatchesFilters)
             .Select(model =>
             {
@@ -944,15 +1024,13 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                     _favoriteTargetIdSet.Contains(target.Id));
             })
             .ToArray();
-
-        return Task.FromResult<IReadOnlyList<ModelInformationRow>>(rows);
     }
 
     private void ModelsListSelectionChanged(
         object? sender,
         ListViewItemSelectionChangedEventArgs e)
     {
-        if (!e.IsSelected)
+        if (!e.IsSelected || _updatingModelList)
             return;
 
         if (_page.SelectedItem is ModelInformationRow row)
@@ -1168,7 +1246,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                     AddKeyValueRow(
                         capabilityTable,
                         item.Capability.Value,
-                        FormatCapabilityState(item.State));
+                        FormatCapabilityDetailState(item.State));
                 }
             }
 
@@ -1179,11 +1257,11 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             AddKeyValueRow(
                 reasoningTable,
                 "Reasoning",
-                FindCapability(model, HiveCapabilityKeys.Reasoning));
+                FindCapabilityDetail(model, HiveCapabilityKeys.Reasoning));
             AddKeyValueRow(
                 reasoningTable,
                 "Thinking",
-                FindCapability(model, HiveCapabilityKeys.Thinking));
+                FindCapabilityDetail(model, HiveCapabilityKeys.Thinking));
             AddKeyValueRow(
                 reasoningTable,
                 "Options",
@@ -1240,7 +1318,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 AddKeyValueRow(
                     pricingTable,
                     "Explicit free evidence",
-                    model.Pricing.ExplicitFreeEvidence ? "✓" : "—");
+                    model.Pricing.ExplicitFreeEvidence ? "True" : "False");
 
                 if (model.Pricing.Prices.Count == 0)
                 {
