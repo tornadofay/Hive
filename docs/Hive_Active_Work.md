@@ -630,6 +630,18 @@ Remediation completed:
 
 Status is **VERIFICATION PENDING** for developer compilation and the focused ListView maximize test.
 
+## Verification Failed / Remediation Required — Corrected Style Payload Still Fails
+
+Developer reran the focused `NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling` test after correcting the Win32 `STYLESTRUCT` layout. The test still fails immediately at the post-maximize scrollbar assertion (line 381).
+
+This rules out the previous `STYLESTRUCT` marshaling defect as the sole cause. Investigation is broadened within the same Slice 4 boundary to the interaction between `HiveScrollHost` native-content synchronization and the actual native ListView scrollbar-window lifecycle.
+
+Remediation boundary:
+- identify the actual owner/lifecycle that restores the native ListView scrollbar presentation during maximize synchronization;
+- preserve native `LVM_SCROLL`, Hive scrollbar synchronization, and existing ListView behavior;
+- avoid high-frequency scroll/repaint suppression work;
+- no test weakening, DataGridView migration, new public scroll API, ListView rewrite, or unrelated refactoring.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
