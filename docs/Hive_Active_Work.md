@@ -165,6 +165,19 @@ Remediation completed within the existing selection/details UI boundary:
 
 Developer re-verification is required.
 
+## Verification Failure / Remediation Boundary — Model Information Detail Rendering/Layout
+
+Developer verification on 2026-10-03 reported two focused failures after the selection-detail remediation:
+- `ModelInformationView_RendersRichDiscoveryProfile`: all eight detail cards were present, but each card failed the visibility/layout assertion.
+- `ModelInformationView_UpdatesDetailsWhenSelectionChanges`: changing the selected item did not replace the rendered `rich-model` details with `second-model`.
+
+Remediation boundary:
+- replace the unstable auto-sizing detail-content container with deterministic stacked layout inside the existing HiveScrollHost;
+- preserve the existing structured model metadata, HiveListView, HiveComboBox, and HiveScrollHost presentation;
+- make the regression exercise selection on a real shown WinForms host so the native ListView selection lifecycle is actually exercised;
+- do not change discovery, persistence, Provider / ProviderAccount / ExecutionTarget ownership, Favorites behavior, or Agent target-selection semantics;
+- return Active Work to VERIFICATION PENDING after remediation and require developer re-verification.
+
 ## Verification state
 
 - Developer verification on 2026-10-03 passed the original Phase 1.19A implementation at 584/584 Hive.Tests executions (0 failed, 0 skipped) before the additional existing-UI correction.
