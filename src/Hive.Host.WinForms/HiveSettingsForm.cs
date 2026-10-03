@@ -17,8 +17,8 @@ public sealed class HiveSettingsForm : HiveForm
         : base(
             "Hive Settings",
             "Global Hive package configuration",
-            new Size(1120, 780),
-            new Size(880, 620),
+            new Size(1240, 820),
+            new Size(960, 660),
             themeManager)
     {
         ArgumentNullException.ThrowIfNull(management);
