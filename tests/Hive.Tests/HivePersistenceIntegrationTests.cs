@@ -45,6 +45,8 @@ public sealed class HivePersistenceIntegrationTests
         Assert.True(await IndexExistsAsync(options, "UX_HiveProviders_ProviderKey", "HiveProviders"));
         Assert.True(await IndexExistsAsync(options, "UX_HiveProviderAccounts_Provider_Key", "HiveProviderAccounts"));
         Assert.True(await IndexExistsAsync(options, "UX_HiveExecutionTargets_ProviderAccount_Key", "HiveExecutionTargets"));
+        Assert.True(await TableExistsAsync(options, "HiveExecutionTargetFavorites"));
+        Assert.True(await IndexExistsAsync(options, "IX_HiveExecutionTargetFavorites_Order", "HiveExecutionTargetFavorites"));
         Assert.True(await IndexExistsAsync(options, "IX_HiveProviders_OwnerScope", "HiveProviders"));
         Assert.True(await IndexExistsAsync(options, "IX_HiveProviderAccounts_OwnerScope", "HiveProviderAccounts"));
         Assert.True(await IndexExistsAsync(options, "IX_HiveExecutionTargets_OwnerScope", "HiveExecutionTargets"));
