@@ -286,15 +286,6 @@ public sealed class HiveScrollHost : UserControl
                 // orientations have supplied their first authoritative state.
                 // Otherwise a transient zero-page response can permanently hide the
                 // native source of truth before the next layout synchronization.
-                if (horizontalAuthoritative &&
-                    verticalAuthoritative)
-                {
-                    // The native viewport size was just finalized above. Keep the
-                    // native control's state authoritative while the Hive bars are
-                    // updated, then make native scrollbar suppression the final
-                    // synchronous step of this layout boundary.
-                }
-
                 _horizontalScrollBar.SetState(nativeHorizontal);
                 _verticalScrollBar.SetState(nativeVertical);
 
