@@ -1,4 +1,6 @@
+using System.Drawing;
 using System.Reflection;
+using System.Windows.Forms;
 using Hive.Core;
 using Hive.Host.WinForms;
 using Hive.Host.WinForms.UI.Controls;
@@ -182,6 +184,67 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
 
         Assert.Single(view.FavoriteList.Items);
         Assert.Equal(target.Id, ((ListViewItem)view.FavoriteList.Items[0]).Tag);
+    }
+
+    [WinFormsFact]
+    public async Task FavoriteSettings_CrudActionsRemainVisibleAtNormalWindowSize()
+    {
+        var context = CreateContext();
+        var provider = CreateProvider(context, "Provider One");
+        var account = CreateAccount(provider.Id, context, "Account One");
+        var target = CreateTarget(provider.Id, account.Id, context, "target", "Target");
+
+        var management = UiManagementProxy.Create(
+            [provider],
+            [account],
+            new Dictionary<ProviderAccountId, IReadOnlyList<ExecutionTarget>>
+            {
+                [account.Id] = [target]
+            },
+            [target.Id]);
+
+        using var view = new HiveFavoriteExecutionTargetsSettingsView(
+            management,
+            context,
+            new HiveThemeManager(HiveThemeMode.Light));
+
+        using var host = new Form
+        {
+            ClientSize = new Size(1120, 700)
+        };
+
+        host.Controls.Add(view);
+        host.PerformLayout();
+        view.PerformLayout();
+        view.CrudPage.PerformLayout();
+
+        await view.InitializeAsync();
+
+        host.PerformLayout();
+        view.PerformLayout();
+        view.CrudPage.PerformLayout();
+
+        var actionLayout = Assert.IsType<TableLayoutPanel>(view.CrudPage.ActionBarPanel.Controls[0]);
+        var actionButtons = Assert.IsType<FlowLayoutPanel>(
+            actionLayout.Controls
+                .Cast<Control>()
+                .Single(control => control is FlowLayoutPanel && control.Controls.OfType<HiveButton>().Any()));
+
+        var visibleButtons = actionButtons.Controls
+            .OfType<HiveButton>()
+            .Where(button => button.Visible)
+            .ToArray();
+
+        Assert.Equal(3, visibleButtons.Length);
+        Assert.All(
+            visibleButtons,
+            button =>
+            {
+                Assert.True(button.Left >= 0);
+                Assert.True(button.Top >= 0);
+                Assert.True(button.Right <= actionButtons.ClientSize.Width);
+                Assert.True(button.Bottom <= actionButtons.ClientSize.Height);
+            });
     }
 
     [WinFormsFact]
