@@ -361,6 +361,13 @@ public sealed class HiveListView : ListView
             Invalidate(GetItemRect(previous));
     }
 
+    internal void PrepareNativeScrollBarSuppression()
+    {
+        // Arm suppression before handle creation. The host will acquire
+        // authoritative scroll state and perform the normal synchronous hide later.
+        _nativeScrollBarsSuppressed = true;
+    }
+
     internal void SuppressNativeScrollBars()
     {
         _nativeScrollBarsSuppressed = true;
