@@ -716,3 +716,23 @@ The latest same-slice correction changes only the native ListView suppression or
 
 Status is returned to **VERIFICATION PENDING** for developer compilation and test verification.
 
+
+
+## Verification Failed / Remediation Required — Suppression Ordering Does Not Change Native Visibility
+
+Developer re-ran the full `Hive.Tests` suite after the suppression-ordering remediation: **570 total, 569 passed, 1 failed, 0 skipped**.
+
+The same focused regression still fails immediately after maximize. The improved diagnostic now identifies the first exposed object explicitly:
+- native horizontal scrollbar object `-6` is still exposed;
+- `GetScrollBarInfo` succeeds but reports `state=0x00000000`, so the scrollbar is present/visible rather than the query itself failing.
+
+This disproves the hypothesis that the previous host-side suppression ordering was sufficient.
+
+Remediation boundary:
+- stop adding equivalent `ShowScrollBar` timing/retry variants;
+- determine which native ListView/layout operation recreates or exposes the horizontal scrollbar after maximize;
+- trace the actual `HiveScrollHost` viewport/layout interaction and `HiveListView` column/layout behavior before changing suppression;
+- preserve native ListView `LVM_SCROLL`, item/selection/keyboard/owner-draw/CRUD behavior and the existing Hive scrollbar layer;
+- no test weakening, per-scroll/repaint suppression, DataGridView migration, ListView rewrite, new public scroll API, or unrelated refactoring.
+
+Status is **VERIFICATION FAILED / REMEDIATION REQUIRED** pending root-cause investigation.
