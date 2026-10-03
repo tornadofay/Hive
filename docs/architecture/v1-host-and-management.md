@@ -261,6 +261,8 @@ Phase 1.14 establishes the extension/adapter and interaction contracts. Phase 1.
 
 Phase 1.15 establishes input preparation/routing. Phase 1.16 establishes provider/model capability discovery and operational metadata. Phase 1.17 establishes structured candidate extraction/validation. Vision is one possible input capability; structured spreadsheet input may bypass vision. Parent/child candidate data is added only when the actual V1 operation requires it.
 
+Phase 1.19 Follow-Up establishes durable ExecutionTarget favorite preferences and a Provider Settings second tab for managing them. The first Providers tab remains the existing provider configuration page. The Favorites tab is a preference editor over durable ExecutionTarget IDs and uses Provider / Provider Account filters. Existing target-selection UI may apply the saved favorite set as a candidate filter, but the existing capability-aware selector remains authoritative.
+
 ### 4.1.8 Phase 1.15 Input Preparation & Routing
 
 Phase 1.15 establishes the source-neutral input preparation boundary before typed candidate extraction. A single submission may contain multiple input items; preparation is allowed to produce zero, one, or multiple prepared items while retaining the submission grouping only as operational context. Each prepared item remains attributable to its source item and, where applicable, worksheet and row.
