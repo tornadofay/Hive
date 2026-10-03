@@ -554,6 +554,22 @@ The deferred suppression path was tightened after developer verification reporte
 
 The change remains inside the recorded Slice 4 remediation boundary.
 
+## Verification Failed / Remediation Required — ListView Scrollbar Still Visible After Maximize
+
+Developer verification now completes the `HiveScrollHostTests` group, but
+`NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling` still fails at the
+post-maximize native scrollbar assertion (`HiveScrollHostTests.cs` line 381).
+
+The failure is the same functional boundary previously recorded: after
+`form.WindowState = FormWindowState.Maximized` and `Application.DoEvents()`,
+the native ListView scrollbar state is visible instead of suppressed.
+
+Remediation boundary:
+- correct the native ListView scrollbar suppression lifecycle for maximize/layout;
+- preserve the existing non-recursive deferred mechanism and native `LVM_SCROLL` path;
+- do not move suppression into high-frequency scrolling/repaint handling;
+- no test weakening, DataGridView migration, new public scroll API, ListView rewrite, or unrelated refactoring.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
