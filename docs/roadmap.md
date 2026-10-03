@@ -333,7 +333,7 @@ Objective: extend Workspace with explicit Agent interaction and application/form
 
 Scope and non-goals: Agent selection may be Auto or an exact target from the user's Favorite ExecutionTarget pool; Auto runs authoritative capability-aware planning only over favorites, explicit selection presents only favorites and remains pinned, and neither mode silently falls back to non-favorite targets when the favorite pool has no qualifying target.
 
-Verify: Agent conversation/selection, application and form association, create/reuse/activation, mode switching, runtime isolation, bounded host association, and no implicit Hive/Swarm state.
+Verify: Agent conversation/selection using the Favorite ExecutionTarget pool, Auto over favorites only, explicit favorite-only target selection, empty/no-qualifying-favorite failure without fallback, pinned-target failure behavior, application and form association, create/reuse/activation, mode switching, runtime isolation, bounded host association, and no implicit Hive/Swarm state.
 
 ## 1.22 — Governed Tools, Policy, Permissions & Human Intervention
 
