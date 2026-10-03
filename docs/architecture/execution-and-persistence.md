@@ -392,6 +392,8 @@ Canonical scopes:
 Global / Tenant / User / Workspace / Agent / Runtime / Execution
 ```
 
+A narrower scope must not be silently collapsed to a broader scope when required identity is missing. In particular, User scope requires the applicable TenantId and UserId according to the canonical ResourceScope contract; a preference operation missing required scope identity must fail closed rather than being treated as Global.
+
 Resource examples include Provider, ProviderAccount, ExecutionTarget, AgentDefinition, HiveDefinition, Workspace, WorkItem, Question, Memory, Knowledge, Wiki, Skill, LearningCandidate, CognitiveState, and Review resources. CognitiveAgent evidence additionally includes first-class Experience and OutcomeEvaluation semantics, with Mistake, Success, Partial, Unknown, Regret, Risk, Fear, and Confidence represented according to their owning cognitive contracts. A concept does not have to become a generic Resource merely to be first-class; where an independent lifecycle, persistence, scheduling, or replacement boundary exists, a dedicated resource/component/event stream may be used.
 
 Assignments are references/policies, not copies of the assigned resource.
