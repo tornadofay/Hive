@@ -875,7 +875,7 @@ public sealed class Phase116FollowUpTests
 
         Assert.Contains("second-model", detailsText);
         Assert.Contains("second-provider", detailsText);
-        Assert.Contains("Vision", detailsText);
+        Assert.Contains("vision", detailsText);
         Assert.Contains("Unsupported", detailsText);
         Assert.DoesNotContain("✓", detailsText);
         Assert.DoesNotContain("✕", detailsText);
