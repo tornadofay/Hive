@@ -61,11 +61,24 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
         var row = Assert.IsType<HiveFavoriteExecutionTargetsSettingsView.FavoriteExecutionTargetRow>(item.Tag);
         Assert.Equal(second.Id, row.ExecutionTargetId);
         Assert.Equal("Second Target", row.DisplayName);
-            view.FavoriteList.Items.Cast<ListViewItem>(),
-            candidate => candidate.Tag is ExecutionTargetId id && id == first.Id);
         Assert.DoesNotContain(
             view.FavoriteList.Items.Cast<ListViewItem>(),
-            candidate => candidate.Tag is ExecutionTargetId id && id == third.Id);
+            candidate =>
+            {
+                var candidateRow =
+                    Assert.IsType<HiveFavoriteExecutionTargetsSettingsView.FavoriteExecutionTargetRow>(
+                        candidate.Tag);
+                return candidateRow.ExecutionTargetId == first.Id;
+            });
+        Assert.DoesNotContain(
+            view.FavoriteList.Items.Cast<ListViewItem>(),
+            candidate =>
+            {
+                var candidateRow =
+                    Assert.IsType<HiveFavoriteExecutionTargetsSettingsView.FavoriteExecutionTargetRow>(
+                        candidate.Tag);
+                return candidateRow.ExecutionTargetId == third.Id;
+            });
         Assert.False(view.FavoriteList.CheckBoxes);
     }
 
