@@ -763,3 +763,15 @@ Remediation boundary:
 - preserve Light/Dark/System behavior and avoid unrelated UI refactoring.
 
 Status is **VERIFICATION FAILED / REMEDIATION REQUIRED** pending same-slice visual remediation.
+
+
+## HiveListView Dark First-Paint Remediation
+
+The reported Dark-mode first-paint defect is corrected within the same Slice 4 boundary:
+- `HiveListView` now resolves the active theme from its owning `HiveForm` during parent assignment and handle creation, so the native control receives the Hive surface/text colors before its first user-visible paint;
+- no hard-coded dark default was introduced, preserving Light/Dark/System theme authority;
+- the existing `HiveThemeManager.Apply(...)` path remains authoritative for normal theme propagation and later theme changes;
+- ListView scrolling, native scrollbar suppression, owner-draw, selection, keyboard, and CRUD behavior were not changed by this correction;
+- focused `HiveUiPolishTests.HiveListView_UsesOwningHiveThemeBeforeFirstPaint` coverage now verifies the dark theme is applied when the control enters a Hive form before showing the UI.
+
+Status is **VERIFICATION PENDING** for developer compilation and the focused UI regression/full suite.
