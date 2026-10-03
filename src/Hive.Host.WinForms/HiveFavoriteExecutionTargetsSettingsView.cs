@@ -115,8 +115,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
             AccessibleDescription =
                 "Select execution targets to include in the favorite target pool."
         };
-        _targetList.Columns.Add("Favorite", 70);
-        _targetList.Columns.Add("Execution Target", 260);
+        _targetList.Columns.Add("Execution Target", 310);
         _targetList.Columns.Add("Model / Deployment", 260);
         _targetList.Columns.Add("Management", 120);
 
@@ -260,11 +259,10 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         if (_updatingList || IsDisposed || Disposing)
             return;
 
+        using var cts = ReplaceLoadCancellation();
         try
         {
-            var cts = ReplaceLoadCancellation();
             await ReloadAccountsAsync(cts.Token).ConfigureAwait(true);
-            cts.Dispose();
         }
         catch (OperationCanceledException)
         {
@@ -280,11 +278,10 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         if (_updatingList || IsDisposed || Disposing)
             return;
 
+        using var cts = ReplaceLoadCancellation();
         try
         {
-            var cts = ReplaceLoadCancellation();
             await ReloadTargetsAsync(cts.Token).ConfigureAwait(true);
-            cts.Dispose();
         }
         catch (OperationCanceledException)
         {
@@ -408,13 +405,12 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
                     ? "Automatic"
                     : "Manual";
 
-                var item = new ListViewItem(_favoriteTargetIds.Contains(target.Id) ? "Yes" : "No")
+                var item = new ListViewItem(target.DisplayName)
                 {
                     Tag = target.Id,
                     Checked = _favoriteTargetIds.Contains(target.Id),
                     ToolTipText = $"{target.DisplayName} — {model}"
                 };
-                item.SubItems.Add(target.DisplayName);
                 item.SubItems.Add(model);
                 item.SubItems.Add(management);
 
@@ -439,7 +435,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         _saveButton.Enabled = false;
         try
         {
-            var orderedIds = _targetList.Items
+            var checkedVisibleIds = _targetList.Items
                 .Cast<ListViewItem>()
                 .Where(item => item.Checked && item.Tag is ExecutionTargetId)
                 .Select(item => (ExecutionTargetId)item.Tag!)
@@ -453,7 +449,11 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
                 .ToHashSet();
 
             _favoriteTargetIds.ExceptWith(visibleIds);
-            _favoriteTargetIds.UnionWith(orderedIds);
+            _favoriteTargetIds.UnionWith(checkedVisibleIds);
+
+            var orderedIds = _favoriteTargetIds
+                .OrderBy(id => id.Value)
+                .ToArray();
 
             var result = await _management
                 .ReplaceFavoriteExecutionTargetIdsAsync(
@@ -500,20 +500,6 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         }
 
         _dirty = true;
-        BeginInvoke(new Action(UpdateVisibleFavoriteState));
-    }
-
-    private void UpdateVisibleFavoriteState()
-    {
-        if (IsDisposed || Disposing)
-            return;
-
-        for (var i = 0; i < _targetList.Items.Count; i++)
-        {
-            var item = _targetList.Items[i];
-            item.Text = item.Checked ? "Yes" : "No";
-        }
-
         UpdateStatus(_targetList.Items.Count);
     }
 
