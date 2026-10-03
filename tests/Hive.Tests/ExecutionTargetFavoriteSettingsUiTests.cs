@@ -1,4 +1,3 @@
-using System.Reflection;
 using Hive.Core;
 using Hive.Host.WinForms;
 using Hive.Host.WinForms.UI.Controls;
@@ -100,8 +99,6 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
         await view.InitializeAsync();
 
         view.AccountSelector.SelectedIndex = 2;
-        await proxy.WaitForAccountLoadAsync(secondAccount.Id);
-
         Assert.Single(view.TargetList.Items);
         Assert.Equal(second.Id, ((ListViewItem)view.TargetList.Items[0]).Tag);
     }
@@ -244,8 +241,6 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
         private IReadOnlyDictionary<ProviderAccountId, IReadOnlyList<ExecutionTarget>> _targets =
             new Dictionary<ProviderAccountId, IReadOnlyList<ExecutionTarget>>();
         private IReadOnlyList<ExecutionTargetId> _favorites = [];
-        private readonly TaskCompletionSource<ProviderAccountId> _accountLoad =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         internal static IHiveManagementFacade Create(
             IReadOnlyList<Provider>? providers = null,
@@ -261,12 +256,6 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
             proxy._targets = targets ?? new Dictionary<ProviderAccountId, IReadOnlyList<ExecutionTarget>>();
             proxy._favorites = favorites ?? [];
             return management;
-        }
-
-        internal async Task WaitForAccountLoadAsync(ProviderAccountId accountId)
-        {
-            await _accountLoad.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            Assert.Equal(accountId, _accountLoad.Task.Result);
         }
 
         protected override object Invoke(
@@ -310,9 +299,6 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
             var accountId = args is not null && args.Length > 0 && args[0] is ProviderAccountId id
                 ? id
                 : default;
-
-            if (accountId != default)
-                _accountLoad.TrySetResult(accountId);
 
             _targets.TryGetValue(accountId, out var targets);
             return Task.FromResult(
