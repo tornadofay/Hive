@@ -354,3 +354,11 @@ Remediation boundary:
 - correct only the test assertion to match the existing structured detail representation;
 - do not change production Model Information rendering, discovery, filtering, Favorites, persistence, or Agent target-selection behavior;
 - return Active Work to VERIFICATION PENDING and require developer re-verification.
+
+## Remediation Completed — Model Information Selection Detail Test Assertion
+
+Remediation completed within the recorded test-assertion boundary:
+- changed the selection-details regression to assert the normalized capability key "vision", matching the existing structured detail representation;
+- no production Model Information rendering or behavior changed.
+
+Developer re-verification is required.
