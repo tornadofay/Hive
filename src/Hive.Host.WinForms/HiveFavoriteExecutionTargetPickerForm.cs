@@ -55,26 +55,6 @@ internal sealed class HiveFavoriteExecutionTargetPickerForm : HiveForm
             Margin = Padding.Empty
         };
 
-        _addButton = new HiveButton
-        {
-            Text = "Add Favorite",
-            Style = HiveButtonStyle.Primary,
-            Width = 120,
-            Height = 36,
-            AccessibleName = "Add Favorite Execution Target",
-            AccessibleDescription = "Add the selected execution target to Favorite Execution Targets."
-        };
-
-        _cancelButton = new HiveButton
-        {
-            Text = "Cancel",
-            Style = HiveButtonStyle.Secondary,
-            Width = 96,
-            Height = 36,
-            AccessibleName = "Cancel",
-            AccessibleDescription = "Close without adding an execution target."
-        };
-
         var editor = new HiveEditorLayout
         {
             Dock = DockStyle.Fill,
@@ -101,17 +81,21 @@ internal sealed class HiveFavoriteExecutionTargetPickerForm : HiveForm
             "Current picker state.",
             _statusLabel);
 
-        editor.AddActionButton(
+        _cancelButton = editor.AddActionButton(
             "Cancel",
             HiveButtonStyle.Secondary,
-            96).Click += CancelButtonClick;
+            96);
 
-        editor.AddActionButton(
+        _addButton = editor.AddActionButton(
             "Add Favorite",
             HiveButtonStyle.Primary,
-            120).Click += AddButtonClick;
+            120);
 
-        Controls.Add(editor);
+        _cancelButton.Click += CancelButtonClick;
+        _addButton.Click += AddButtonClick;
+
+        BodyPanel.Controls.Add(editor);
+        ThemeManager.Apply(BodyPanel);
 
         _providerComboBox.SelectedIndexChanged += ProviderChanged;
         _accountComboBox.SelectedIndexChanged += AccountChanged;
