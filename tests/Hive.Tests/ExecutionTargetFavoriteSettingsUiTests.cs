@@ -13,6 +13,23 @@ namespace Hive.Tests;
 public sealed class ExecutionTargetFavoriteSettingsUiTests
 {
     [WinFormsFact]
+    public void ProviderSettings_UsesAdministrativeAdvancedButtonStyle()
+    {
+        var management = UiManagementProxy.Create();
+        var context = CreateContext();
+        var theme = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var view = new HiveProvidersSettingsView(
+            management,
+            context,
+            theme);
+
+        Assert.Equal(
+            HiveButtonStyle.Administrative,
+            view.AdvancedButton.Style);
+    }
+
+    [WinFormsFact]
     public void ProviderSettings_UsesProvidersAsFirstTabAndFavoritesAsSecondTab()
     {
         var management = UiManagementProxy.Create();
