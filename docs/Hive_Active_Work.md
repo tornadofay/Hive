@@ -120,6 +120,18 @@ Remediation completed:
 - corrected the Favorites UI test to access the status label through the exposed shared CRUD page;
 - the implementation remains within the existing Favorites UI test boundary and no Agent behavior was changed.
 
+## Verification Failure / Remediation Boundary — Advanced Model Information UI Compile Errors
+
+Developer reported compile errors after the authorized existing-UI correction:
+- Hive.Host.WinForms/HiveModelInformationSettingsView.cs references HiveBorderPanel, which is internal to Hive.Host.WinForms.UI and therefore inaccessible from Hive.Host.WinForms.
+- UpdateContextLabel was accidentally removed while restructuring the Model Information presentation, leaving three existing call sites unresolved.
+
+Remediation boundary:
+- replace inaccessible HiveBorderPanel usage with controls/types legitimately accessible from Hive.Host.WinForms while retaining Hive-owned HiveListView, HiveComboBox, and HiveScrollHost presentation;
+- restore the existing UpdateContextLabel behavior;
+- do not change discovery semantics, persistence, Provider/Account/Target ownership, Favorites behavior, or Agent target-selection behavior;
+- return Active Work to VERIFICATION PENDING after remediation and require developer re-verification.
+
 ## Verification state
 
 - Developer verification on 2026-10-03 passed the original Phase 1.19A implementation at 584/584 Hive.Tests executions (0 failed, 0 skipped) before the additional existing-UI correction.
