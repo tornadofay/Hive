@@ -12,15 +12,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
     private readonly IHiveExampleOutput? _output;
-
-    private readonly HiveListView _favoriteList;
-    private readonly HiveButton _addButton;
-    private readonly HiveButton _removeButton;
-    private readonly HiveButton _refreshButton;
-    private readonly Label _statusLabel;
-
-    private readonly CancellationTokenSource _lifetimeCts = new();
-    private bool _loading;
+    private readonly HiveCrudPage<FavoriteExecutionTargetRow> _page;
 
     public HiveFavoriteExecutionTargetsSettingsView(
         IHiveManagementFacade management,
@@ -36,175 +28,122 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
 
-        var root = new TableLayoutPanel
+        _page = new HiveCrudPage<FavoriteExecutionTargetRow>
         {
-            Dock = DockStyle.Fill,
-            ColumnCount = 1,
-            RowCount = 3,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Title = "Favorite Execution Targets",
+            Description = "Manage the execution targets you have saved as favorites.",
+            PageSize = 20,
+            AllowAdd = true,
+            AllowEdit = false,
+            AllowDelete = true,
+            ShowRefresh = true,
+            ShowSearch = true,
+            SearchPlaceholder = "Search favorite execution targets..."
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
+        _page.AddButtonText = "Add Favorite";
 
-        var header = new Label
-        {
-            Dock = DockStyle.Fill,
-            Text = "Favorite Execution Targets",
-            Font = new Font("Segoe UI", 13f, FontStyle.Bold),
-            Padding = new Padding(0, 8, 0, 0),
-            Margin = Padding.Empty,
-            AutoEllipsis = true
-        };
+        _page.SetColumns(
+            new HiveCrudColumn<FavoriteExecutionTargetRow>(
+                "Execution Target",
+                260,
+                item => item.DisplayName),
+            new HiveCrudColumn<FavoriteExecutionTargetRow>(
+                "Provider",
+                190,
+                item => item.ProviderName),
+            new HiveCrudColumn<FavoriteExecutionTargetRow>(
+                "Account",
+                190,
+                item => item.AccountName),
+            new HiveCrudColumn<FavoriteExecutionTargetRow>(
+                "Model / Deployment",
+                230,
+                item => item.ModelDeployment),
+            new HiveCrudColumn<FavoriteExecutionTargetRow>(
+                "Status",
+                110,
+                item => item.Status,
+                item => item.Status == "Active"
+                    ? _themeManager.Theme.VisualStates.Success
+                    : item.Status == "Unavailable"
+                        ? _themeManager.Theme.VisualStates.Error
+                        : _themeManager.Theme.VisualStates.Warning));
 
-        _favoriteList = new HiveListView
-        {
-            Dock = DockStyle.Fill,
-            View = View.Details,
-            FullRowSelect = true,
-            HideSelection = false,
-            MultiSelect = false,
-            HeaderStyle = ColumnHeaderStyle.Nonclickable,
-            Margin = Padding.Empty,
-            AccessibleName = "Favorite Execution Targets",
-            AccessibleDescription = "The execution targets currently saved as favorites."
-        };
-        _favoriteList.Columns.Add("Execution Target", 270);
-        _favoriteList.Columns.Add("Provider", 190);
-        _favoriteList.Columns.Add("Account", 190);
-        _favoriteList.Columns.Add("Model / Deployment", 230);
-        _favoriteList.Columns.Add("Status", 110);
+        _page.LoadItemsAsync = LoadAsync;
+        _page.EditItemAsync = AddFavoriteAsync;
+        _page.DeleteItemAsync = RemoveFavoriteAsync;
+        _page.CanDeleteItem = _ => true;
+        _page.GetItemDisplayName = item => item.DisplayName;
+        _page.OperationFailed += PageOperationFailed;
 
-        var footer = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 4,
-            RowCount = 1,
-            Margin = Padding.Empty,
-            Padding = new Padding(0, 8, 0, 8)
-        };
-        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
-        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
-        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
-
-        _statusLabel = new Label
-        {
-            Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.MiddleLeft,
-            AutoEllipsis = true,
-            Margin = Padding.Empty
-        };
-
-        _addButton = new HiveButton
-        {
-            Text = "Add Favorite",
-            Style = HiveButtonStyle.Primary,
-            Dock = DockStyle.Fill,
-            Margin = new Padding(4, 0, 4, 0),
-            AccessibleName = "Add Favorite Execution Target",
-            AccessibleDescription = "Choose an execution target through Provider and Account filters and add it to favorites."
-        };
-
-        _removeButton = new HiveButton
-        {
-            Text = "Remove",
-            Style = HiveButtonStyle.Secondary,
-            Dock = DockStyle.Fill,
-            Margin = new Padding(4, 0, 4, 0),
-            AccessibleName = "Remove Favorite Execution Target",
-            AccessibleDescription = "Remove the selected execution target from favorites."
-        };
-
-        _refreshButton = new HiveButton
-        {
-            Text = "Refresh",
-            Style = HiveButtonStyle.Secondary,
-            Dock = DockStyle.Fill,
-            Margin = new Padding(4, 0, 0, 0),
-            AccessibleName = "Refresh Favorite Execution Targets",
-            AccessibleDescription = "Reload the saved favorite execution targets."
-        };
-
-        footer.Controls.Add(_statusLabel, 0, 0);
-        footer.Controls.Add(_addButton, 1, 0);
-        footer.Controls.Add(_removeButton, 2, 0);
-        footer.Controls.Add(_refreshButton, 3, 0);
-
-        root.Controls.Add(header, 0, 0);
-        root.Controls.Add(_favoriteList, 0, 1);
-        root.Controls.Add(footer, 0, 2);
-
-        Controls.Add(root);
-
-        _favoriteList.SelectedIndexChanged += FavoriteSelectionChanged;
-        _addButton.Click += AddButtonClick;
-        _removeButton.Click += RemoveButtonClick;
-        _refreshButton.Click += RefreshButtonClick;
-
-        _removeButton.Enabled = false;
+        Controls.Add(_page);
         _themeManager.Apply(this);
     }
 
-    internal HiveListView FavoriteList => _favoriteList;
-    internal HiveButton AddButton => _addButton;
-    internal HiveButton RemoveButton => _removeButton;
-    internal HiveButton RefreshButton => _refreshButton;
-    internal Label StatusLabel => _statusLabel;
+    internal HiveCrudPage<FavoriteExecutionTargetRow> CrudPage => _page;
 
-    public async Task InitializeAsync(CancellationToken cancellationToken = default)
+    internal ListView FavoriteList => _page.ListView;
+
+    public Task InitializeAsync(
+        CancellationToken cancellationToken = default) =>
+        _page.RefreshAsync(cancellationToken);
+
+    private async Task<IReadOnlyList<FavoriteExecutionTargetRow>> LoadAsync(
+        CancellationToken cancellationToken)
     {
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken,
-            _lifetimeCts.Token);
+        var favorites = await _management
+            .GetFavoriteExecutionTargetIdsAsync(
+                _accessContext,
+                cancellationToken)
+            .ConfigureAwait(true);
 
-        SetLoading(true);
-        try
+        if (favorites.IsFailure)
+            throw new InvalidOperationException(favorites.Error!.Message);
+
+        var favoriteIds = favorites.Value!.ToArray();
+        if (favoriteIds.Length == 0)
+            return Array.Empty<FavoriteExecutionTargetRow>();
+
+        var targets = await LoadAccessibleTargetsAsync(cancellationToken)
+            .ConfigureAwait(true);
+
+        var rows = new List<FavoriteExecutionTargetRow>(favoriteIds.Length);
+
+        foreach (var favoriteId in favoriteIds)
         {
-            var favorites = await _management
-                .GetFavoriteExecutionTargetIdsAsync(
-                    _accessContext,
-                    linked.Token)
-                .ConfigureAwait(true);
+            cancellationToken.ThrowIfCancellationRequested();
 
-            if (favorites.IsFailure)
-                throw new InvalidOperationException(favorites.Error!.Message);
-
-            var favoriteIds = favorites.Value!.ToArray();
-            if (favoriteIds.Length == 0)
+            if (targets.TryGetValue(favoriteId, out var details))
             {
-                PopulateFavorites(
-                    favoriteIds,
-                    new Dictionary<ExecutionTargetId, TargetDetails>());
-                return;
+                var target = details.Target;
+                var model = target.Model ?? target.Deployment ?? "—";
+                var status = target.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active
+                    ? "Active"
+                    : target.Resource.Lifecycle.Status.ToString();
+
+                rows.Add(
+                    new FavoriteExecutionTargetRow(
+                        favoriteId,
+                        target.DisplayName,
+                        details.ProviderName,
+                        details.AccountName,
+                        model,
+                        status));
             }
+            else
+            {
+                rows.Add(
+                    new FavoriteExecutionTargetRow(
+                        favoriteId,
+                        "Unavailable execution target",
+                        "—",
+                        "—",
+                        "—",
+                        "Unavailable"));
+            }
+        }
 
-            var targets = await LoadAccessibleTargetsAsync(linked.Token)
-                .ConfigureAwait(true);
-
-            PopulateFavorites(favoriteIds, targets);
-        }
-        catch (OperationCanceledException)
-            when (linked.IsCancellationRequested)
-        {
-        }
-        catch (Exception exception)
-        {
-            _favoriteList.Items.Clear();
-            SetStatus("Favorite execution targets could not be loaded.");
-            HiveUiErrorReporter.Report(
-                FindForm(),
-                exception,
-                "Favorite Execution Targets",
-                "The saved favorite execution targets could not be loaded.",
-                _output,
-                _themeManager);
-        }
-        finally
-        {
-            SetLoading(false);
-        }
+        return rows;
     }
 
     private async Task<IReadOnlyDictionary<ExecutionTargetId, TargetDetails>> LoadAccessibleTargetsAsync(
@@ -268,214 +207,154 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         return targets;
     }
 
-    private void PopulateFavorites(
-        IReadOnlyList<ExecutionTargetId> favoriteIds,
-        IReadOnlyDictionary<ExecutionTargetId, TargetDetails> targets)
+    private async Task<FavoriteExecutionTargetRow?> AddFavoriteAsync(
+        FavoriteExecutionTargetRow? _,
+        CancellationToken cancellationToken)
     {
-        _favoriteList.BeginUpdate();
-        try
-        {
-            _favoriteList.Items.Clear();
+        cancellationToken.ThrowIfCancellationRequested();
 
-            foreach (var favoriteId in favoriteIds)
-            {
-                if (targets.TryGetValue(favoriteId, out var details))
-                {
-                    var target = details.Target;
-                    var model = target.Model ?? target.Deployment ?? "—";
-                    var status = target.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active
-                        ? "Active"
-                        : target.Resource.Lifecycle.Status.ToString();
+        var current = await _management
+            .GetFavoriteExecutionTargetIdsAsync(
+                _accessContext,
+                cancellationToken)
+            .ConfigureAwait(true);
 
-                    var item = new ListViewItem(target.DisplayName)
-                    {
-                        Tag = favoriteId,
-                        ToolTipText = $"{details.ProviderName} / {details.AccountName} — {model}"
-                    };
-                    item.SubItems.Add(details.ProviderName);
-                    item.SubItems.Add(details.AccountName);
-                    item.SubItems.Add(model);
-                    item.SubItems.Add(status);
-                    _favoriteList.Items.Add(item);
-                }
-                else
-                {
-                    var item = new ListViewItem("Unavailable execution target")
-                    {
-                        Tag = favoriteId,
-                        ToolTipText = favoriteId.Value.ToString()
-                    };
-                    item.SubItems.Add("—");
-                    item.SubItems.Add("—");
-                    item.SubItems.Add("—");
-                    item.SubItems.Add("Unavailable");
-                    _favoriteList.Items.Add(item);
-                }
-            }
-        }
-        finally
-        {
-            _favoriteList.EndUpdate();
-        }
-
-        _removeButton.Enabled = _favoriteList.SelectedItems.Count == 1;
-        SetStatus(
-            favoriteIds.Count == 0
-                ? "No favorite execution targets configured."
-                : $"{favoriteIds.Count} favorite execution target(s) configured.");
-    }
-
-    private async void AddButtonClick(object? sender, EventArgs e)
-    {
-        if (_loading || IsDisposed || Disposing)
-            return;
-
-        var favoriteIds = GetFavoriteIdsFromList();
+        if (current.IsFailure)
+            throw new InvalidOperationException(current.Error!.Message);
 
         using var picker = new HiveFavoriteExecutionTargetPickerForm(
             _management,
             _accessContext,
             _themeManager,
-            favoriteIds.ToHashSet(),
+            current.Value!.ToHashSet(),
             _output);
 
-        await picker.InitializeAsync(_lifetimeCts.Token).ConfigureAwait(true);
-        if (IsDisposed || Disposing ||
-            picker.DialogResult == DialogResult.Cancel)
-        {
-            return;
-        }
+        await picker.InitializeAsync(cancellationToken).ConfigureAwait(true);
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (picker.ShowDialog(FindForm()) != DialogResult.OK ||
             picker.SelectedExecutionTargetId is not { } targetId)
         {
-            return;
+            return null;
         }
 
-        if (favoriteIds.Contains(targetId))
-            return;
+        if (current.Value!.Contains(targetId))
+            return null;
 
-        var updated = favoriteIds
+        var updated = current.Value!
             .Concat([targetId])
             .ToArray();
 
-        await PersistFavoritesAsync(updated).ConfigureAwait(true);
+        var result = await _management
+            .ReplaceFavoriteExecutionTargetIdsAsync(
+                updated,
+                _accessContext,
+                cancellationToken)
+            .ConfigureAwait(true);
+
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error!.Message);
+
+        var target = await ResolveTargetAsync(targetId, cancellationToken)
+            .ConfigureAwait(true);
+
+        return target ?? new FavoriteExecutionTargetRow(
+            targetId,
+            "Unavailable execution target",
+            "—",
+            "—",
+            "—",
+            "Unavailable");
     }
 
-    private async void RemoveButtonClick(object? sender, EventArgs e)
+    private async Task RemoveFavoriteAsync(
+        FavoriteExecutionTargetRow row,
+        CancellationToken cancellationToken)
     {
-        if (_loading || IsDisposed || Disposing ||
-            _favoriteList.SelectedItems.Count != 1)
-        {
-            return;
-        }
+        var current = await _management
+            .GetFavoriteExecutionTargetIdsAsync(
+                _accessContext,
+                cancellationToken)
+            .ConfigureAwait(true);
 
-        var item = _favoriteList.SelectedItems[0];
-        if (item.Tag is not ExecutionTargetId targetId)
-            return;
+        if (current.IsFailure)
+            throw new InvalidOperationException(current.Error!.Message);
 
-        var targetName = item.Text;
-        var result = HiveMessageBox.ShowQuestion(
+        var updated = current.Value!
+            .Where(id => id != row.ExecutionTargetId)
+            .ToArray();
+
+        var result = await _management
+            .ReplaceFavoriteExecutionTargetIdsAsync(
+                updated,
+                _accessContext,
+                cancellationToken)
+            .ConfigureAwait(true);
+
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error!.Message);
+    }
+
+    private async Task<FavoriteExecutionTargetRow?> ResolveTargetAsync(
+        ExecutionTargetId targetId,
+        CancellationToken cancellationToken)
+    {
+        var targets = await LoadAccessibleTargetsAsync(cancellationToken)
+            .ConfigureAwait(true);
+
+        if (!targets.TryGetValue(targetId, out var details))
+            return null;
+
+        var target = details.Target;
+        var model = target.Model ?? target.Deployment ?? "—";
+        var status = target.Resource.Lifecycle.Status == ResourceLifecycleStatus.Active
+            ? "Active"
+            : target.Resource.Lifecycle.Status.ToString();
+
+        return new FavoriteExecutionTargetRow(
+            target.Id,
+            target.DisplayName,
+            details.ProviderName,
+            details.AccountName,
+            model,
+            status);
+    }
+
+    private void PageOperationFailed(
+        object? sender,
+        HiveCrudOperationFailedEventArgs e)
+    {
+        _page.SetStatus(
+            "Operation failed. See technical details.",
+            HiveStatusTone.Error);
+
+        HiveUiErrorReporter.Report(
             FindForm(),
-            $"Remove '{targetName}' from Favorite Execution Targets?",
-            "Remove Favorite",
-            MessageBoxButtons.YesNo,
+            e.Exception,
+            "Favorite Execution Target operation failed",
+            "The favorite execution target operation could not be completed.",
+            _output,
             _themeManager);
-
-        if (result != DialogResult.Yes)
-            return;
-
-        var updated = GetFavoriteIdsFromList()
-            .Where(id => id != targetId)
-            .ToArray();
-
-        await PersistFavoritesAsync(updated).ConfigureAwait(true);
     }
-
-    private async void RefreshButtonClick(object? sender, EventArgs e)
-    {
-        if (_loading || IsDisposed || Disposing)
-            return;
-
-        await InitializeAsync(_lifetimeCts.Token).ConfigureAwait(true);
-    }
-
-    private async Task PersistFavoritesAsync(IReadOnlyList<ExecutionTargetId> favoriteIds)
-    {
-        SetLoading(true);
-        try
-        {
-            var result = await _management
-                .ReplaceFavoriteExecutionTargetIdsAsync(
-                    favoriteIds,
-                    _accessContext,
-                    _lifetimeCts.Token)
-                .ConfigureAwait(true);
-
-            if (result.IsFailure)
-                throw new InvalidOperationException(result.Error!.Message);
-
-            await InitializeAsync(_lifetimeCts.Token).ConfigureAwait(true);
-        }
-        catch (OperationCanceledException)
-        {
-        }
-        catch (Exception exception)
-        {
-            HiveUiErrorReporter.Report(
-                FindForm(),
-                exception,
-                "Favorite Execution Targets",
-                "The favorite execution-target change could not be saved.",
-                _output,
-                _themeManager);
-        }
-        finally
-        {
-            SetLoading(false);
-        }
-    }
-
-    private IReadOnlyList<ExecutionTargetId> GetFavoriteIdsFromList() =>
-        _favoriteList.Items
-            .Cast<ListViewItem>()
-            .Select(item => item.Tag)
-            .OfType<ExecutionTargetId>()
-            .ToArray();
-
-    private void FavoriteSelectionChanged(object? sender, EventArgs e)
-    {
-        if (!_loading && !IsDisposed && !Disposing)
-            _removeButton.Enabled = _favoriteList.SelectedItems.Count == 1;
-    }
-
-    private void SetLoading(bool value)
-    {
-        _loading = value;
-        if (IsDisposed || Disposing)
-            return;
-
-        _addButton.Enabled = !value;
-        _removeButton.Enabled = !value && _favoriteList.SelectedItems.Count == 1;
-        _refreshButton.Enabled = !value;
-    }
-
-    private void SetStatus(string message) =>
-        _statusLabel.Text = message;
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
-        {
-            _favoriteList.SelectedIndexChanged -= FavoriteSelectionChanged;
-            _addButton.Click -= AddButtonClick;
-            _removeButton.Click -= RemoveButtonClick;
-            _refreshButton.Click -= RefreshButtonClick;
-            _lifetimeCts.Cancel();
-            _lifetimeCts.Dispose();
-        }
+            _page.OperationFailed -= PageOperationFailed;
 
         base.Dispose(disposing);
+    }
+
+    internal sealed record FavoriteExecutionTargetRow(
+        ExecutionTargetId ExecutionTargetId,
+        string DisplayName,
+        string ProviderName,
+        string AccountName,
+        string ModelDeployment,
+        string Status)
+    {
+        public override string ToString() => DisplayName;
     }
 
     private sealed record TargetDetails(
