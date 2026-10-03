@@ -122,14 +122,14 @@ Remediation completed:
 
 ## Verification state
 
-- Developer manually confirmed that the Favorites CRUD buttons now appear correctly at the normal window size without requiring maximize/unmaximize; remaining 1.19A verification is still pending.
+- Developer verification on 2026-10-03 passed the original Phase 1.19A implementation at 584/584 Hive.Tests executions (0 failed, 0 skipped) before the additional existing-UI correction.
 
-- VERIFICATION PENDING — corrected implementation is complete; developer verification is required.
-- Rerun the focused ExecutionTargetFavorite UI/management/persistence tests and Favorite Settings / Add Favorite picker UI tests.
+- **VERIFICATION PENDING** for the authorized existing-UI correction. Re-run the focused Advanced Provider Configuration / Model Information tests, then the broader Hive.Tests suite.
 - Exercise Overview / Getting Started / Example Configuration — Hive.Example.WinForms.
-- In Settings → Providers → Favorite Execution Targets, verify the list contains only saved favorites; Add Favorite opens the Provider → Account → Target picker; Add and Remove persist immediately; and repeated Refresh produces no exceptions.
-- Verify changing Provider and Account in the Add Favorite picker narrows the Execution Target choices; do not modify Agent target-selection behavior in this slice.
-- Broader Hive.Tests verification remains required for normal slice closure.
+- In Settings → Providers, verify the Advanced button has distinct administrative visual treatment without the destructive semantics of Danger.
+- In Advanced Provider Configuration, verify the four tabs are Providers, Accounts / Credentials, Execution Targets, and Model Information, with no separate Overview tab.
+- In Model Information, verify compact Provider / Account / Discovery Endpoint selectors, HiveListView model browsing with Hive scrollbar presentation, structured model metadata cards, selection/resize behavior, and Light/Dark/System theme presentation.
+- Preserve the existing read-only discovery, Provider → ProviderAccount → ExecutionTarget ownership, Favorites behavior, and Agent target-selection semantics.
 
 No future roadmap slice is authorized by this work item.
 
