@@ -895,6 +895,12 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _listController.SetItems(items);
     }
 
+    internal void SetItemsForView(IReadOnlyList<TItem> items)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        _listController.SetItems(items);
+    }
+
     private void UpdateActionState()
     {
         var item = SelectedItem;
