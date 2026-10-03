@@ -216,13 +216,22 @@ internal sealed class HiveAgentDefinitionEditorForm : HiveForm
         _updatingFilters = true;
         try
         {
-            var candidates = _favoriteTargetIds.Count == 0
-                ? _targets
-                : _targets
-                    .Where(target =>
-                        _favoriteTargetIds.Contains(target.Id) ||
-                        target.Id == _existing?.ConfiguredExecutionTargetId)
-                    .ToList();
+            var candidates = ExecutionTargetFavoriteFilter.Apply(
+                _targets,
+                _favoriteTargetIds);
+
+            if (_favoriteTargetIds.Count > 0 &&
+                _existing?.ConfiguredExecutionTargetId is { } currentTargetId &&
+                candidates.All(target => target.Id != currentTargetId))
+            {
+                var currentTarget = _targets.FirstOrDefault(
+                    target => target.Id == currentTargetId);
+
+                if (currentTarget is not null)
+                    candidates = candidates
+                        .Append(currentTarget)
+                        .ToList();
+            }
 
             if (selectedProvider is not null)
             {
