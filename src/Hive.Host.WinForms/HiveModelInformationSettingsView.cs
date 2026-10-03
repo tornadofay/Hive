@@ -454,7 +454,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _initializingContext = false;
         }
 
-        UpdateContextLabel();
 
         if (_selectedEndpoint is not null)
             await LoadCachedOrDiscoverAsync().ConfigureAwait(true);
@@ -558,6 +557,13 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             return;
 
         await _page.RefreshAsync().ConfigureAwait(true);
+
+        if (_page.ListView.Items.Count > 0)
+        {
+            var firstItem = _page.ListView.Items[0];
+            firstItem.Selected = true;
+            firstItem.Focused = true;
+        }
 
         if (_page.SelectedItem is ModelInformationRow row)
             RenderModelDetails(row.Model);
@@ -1209,13 +1215,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             comboBox.ResumeLayout(true);
         }
-    }
-
-    private void SetStatus(string text, HiveStatusTone tone)
-    {
-        _statusLabel.Text = text;
-        _statusLabel.Tag = tone;
-        ApplyStatusTheme();
     }
 
     private void ThemeManagerOnChanged(object? sender, EventArgs e)
