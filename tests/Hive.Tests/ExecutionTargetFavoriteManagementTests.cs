@@ -65,6 +65,16 @@ public sealed class ExecutionTargetFavoriteManagementTests
         var alternate = await facade.GetFavoriteExecutionTargetIdsAsync(alternateContext);
         Assert.True(alternate.IsSuccess, alternate.Error?.Message);
         Assert.Empty(alternate.Value!);
+
+        var otherDeploymentContext = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var otherDeployment = await facade.GetFavoriteExecutionTargetIdsAsync(
+            otherDeploymentContext);
+        Assert.True(otherDeployment.IsSuccess, otherDeployment.Error?.Message);
+        Assert.Empty(otherDeployment.Value!);
     }
 
     [Fact]
