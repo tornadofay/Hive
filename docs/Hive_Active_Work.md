@@ -13,14 +13,13 @@ Objective:
 - add a second Favorites tab to normal Settings → Providers while preserving the existing Providers page as the first tab;
 - provide a simple Favorites preference CRUD surface: list the user's saved favorite targets, add a target through a filtered picker, remove a favorite, and refresh;
 - use Provider / Provider Account filters only inside the Add Favorite picker so the user does not have to browse a long global ExecutionTarget list;
-- make existing ExecutionTarget selection easier through Provider / Provider Account filtering and use favorites as the candidate list when favorites exist, while preserving the currently configured target during edit where necessary;
 - preserve the existing Provider → ProviderAccount → ExecutionTarget resource model and the authoritative capability-aware selector.
 
 Implementation scope:
 - Hive.Core: favorite-target candidate filtering contract that leaves selection policy unchanged;
 - Hive.Management: favorite-target load/save operations with access/scope validation;
 - Hive.Persistence: durable favorite-target persistence and migration;
-- Hive.Host.WinForms: Provider Settings two-tab UI, simple favorite preference CRUD, filtered Add Favorite picker, and filtered ExecutionTarget selection UI;
+- Hive.Host.WinForms: Provider Settings two-tab UI, simple favorite preference CRUD, and filtered Add Favorite picker;
 - Hive.Example.WinForms / public usage guidance: update the existing configuration example to cover the new settings behavior;
 - focused automated coverage for persistence, access/scope, filter semantics, UI composition, and target-selector filtering behavior.
 
@@ -41,7 +40,7 @@ Expected user-facing behavior:
 - favorite display order is the durable presentation order and is not a selection-ranking signal;
 - when favorites exist, target-selection consumers that opt into the favorite filter receive only those favorite target identities before normal capability selection;
 - a retired favorite remains stored and visible as a retired favorite where its resource is still accessible;
-- Agent target editing can narrow targets by Provider and Account and uses the favorite pool when one exists.
+- Agent execution-target behavior remains unchanged in this slice and is owned by its later configuration/selection phase.
 
 ## Verification Failure / Remediation Boundary
 
@@ -62,10 +61,10 @@ Remediation completed within the Phase 1.19A Favorites settings view, filtered p
 ## Verification state
 
 - VERIFICATION PENDING — corrected implementation is complete; developer verification is required.
-- Rerun the focused ExecutionTargetFavorite UI/management/persistence tests and the Agent selector UI tests.
+- Rerun the focused ExecutionTargetFavorite UI/management/persistence tests and Favorite Settings / Add Favorite picker UI tests.
 - Exercise Overview / Getting Started / Example Configuration — Hive.Example.WinForms.
 - In Settings → Providers → Favorite Execution Targets, verify the list contains only saved favorites; Add Favorite opens the Provider → Account → Target picker; Add and Remove persist immediately; and repeated Refresh produces no exceptions.
-- Verify changing Provider and Account in the Add Favorite picker narrows the Execution Target choices.
+- Verify changing Provider and Account in the Add Favorite picker narrows the Execution Target choices; do not modify Agent target-selection behavior in this slice.
 - Broader Hive.Tests verification remains required for normal slice closure.
 
 No future roadmap slice is authorized by this work item.
