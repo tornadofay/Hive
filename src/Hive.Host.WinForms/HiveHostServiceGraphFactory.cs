@@ -116,7 +116,6 @@ public sealed class SqlHiveHostServiceGraphFactory :
                 agentExecution,
                 new OpenAICompatibleProviderCapabilityDiscovery(
                     SharedHttpClient),
-                clock: null,
                 executionTargetPreferences: new SqlExecutionTargetPreferenceStore(options));
 
             var graph = new HiveHostServiceGraph(
