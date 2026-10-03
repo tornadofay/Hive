@@ -514,6 +514,14 @@ public sealed class Phase116FollowUpTests
 
         Assert.Single(visibleActionButtons);
         Assert.Equal("Add to Favorites", visibleActionButtons[0].Text);
+        Assert.True(visibleActionButtons[0].Width >= 120);
+        
+        var initialDetailsWidth = view.DetailsPanelWidth;
+        host.ClientSize = new Size(1320, 760);
+        host.PerformLayout();
+        view.PerformLayout();
+        Application.DoEvents();
+        Assert.Equal(initialDetailsWidth, view.DetailsPanelWidth);
 
         Assert.Equal(
             [
@@ -546,7 +554,7 @@ public sealed class Phase116FollowUpTests
         Assert.Contains("text, image, audio", detailsText);
         Assert.Contains("Capabilities", detailsText);
         Assert.Contains("text.generate", detailsText);
-        Assert.Contains("Supported  •  discovered", detailsText);
+        Assert.Contains("✓", detailsText);
         Assert.Contains("Reasoning", detailsText);
         Assert.Contains("medium", detailsText);
         Assert.Contains("Limits", detailsText);
@@ -630,6 +638,73 @@ public sealed class Phase116FollowUpTests
 
         Assert.Contains(fixture.Target.Id, fixture.ManagementProxy.FavoriteExecutionTargetIds);
         Assert.StartsWith("★ ", view.ModelsList.Items[0].Text);
+    }
+
+    [WinFormsFact]
+    public async Task ModelInformationView_PriceFilterUsesHighestTokenRate()
+    {
+        var fixture = CreateFixture();
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var host = new Form { Size = new Size(1160, 760) };
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync();
+        Application.DoEvents();
+
+        Assert.Equal(2, view.ModelsList.Items.Count);
+
+        view.MaxPriceFilter.Value = 1m;
+        Application.DoEvents();
+
+        Assert.Single(view.ModelsList.Items);
+        Assert.Equal("second-model", view.ModelsList.Items[0].Text);
+    }
+
+    [WinFormsFact]
+    public async Task ModelInformationView_CapabilityFilterMatchesState()
+    {
+        var fixture = CreateFixture();
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var host = new Form { Size = new Size(1160, 760) };
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync();
+        Application.DoEvents();
+
+        var visionIndex = Enumerable.Range(0, view.CapabilityFilter.Items.Count)
+            .Single(index => string.Equals(
+                view.CapabilityFilter.Items[index]?.ToString(),
+                "Vision",
+                StringComparison.Ordinal));
+
+        var supportedIndex = Enumerable.Range(0, view.CapabilityStateFilter.Items.Count)
+            .Single(index => string.Equals(
+                view.CapabilityStateFilter.Items[index]?.ToString(),
+                "True",
+                StringComparison.Ordinal));
+
+        view.CapabilityFilter.SelectedIndex = visionIndex;
+        view.CapabilityStateFilter.SelectedIndex = supportedIndex;
+        Application.DoEvents();
+
+        Assert.Single(view.ModelsList.Items);
+        Assert.Contains("rich-model", view.ModelsList.Items[0].Text);
     }
 
     [WinFormsFact]
