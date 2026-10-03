@@ -570,6 +570,19 @@ Remediation boundary:
 - do not move suppression into high-frequency scrolling/repaint handling;
 - no test weakening, DataGridView migration, new public scroll API, ListView rewrite, or unrelated refactoring.
 
+## ListView Scrollbar Suppression — Native Style Boundary
+
+The latest same-slice remediation replaces the insufficient visibility-only suppression with a durable native ListView style boundary:
+- while hosted, `HiveListView` suppresses the native `WS_HSCROLL` and `WS_VSCROLL` style bits during `WM_NCCALCSIZE`, preventing the ListView from recreating its native scrollbar presentation during non-client recalculation;
+- lifecycle position/style handling still reapplies the suppression when native layout changes the window style;
+- explicit `ShowScrollBar(..., false)` calls remain the visibility enforcement step;
+- the original native scrollbar style bits are retained and restored when the ListView is detached from `HiveScrollHost`;
+- no deferred callback is used by the new suppression mechanism, avoiding the previously observed test-group hang;
+- native ListView `LVM_SCROLL`, item/selection, keyboard, owner-draw, and CRUD behavior remain unchanged;
+- suppression remains outside high-frequency scrolling/repaint work.
+
+No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
