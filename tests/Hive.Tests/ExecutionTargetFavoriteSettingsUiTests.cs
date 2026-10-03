@@ -58,9 +58,9 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
 
         Assert.Single(view.FavoriteList.Items);
         var item = (ListViewItem)view.FavoriteList.Items[0];
-        Assert.Equal(second.Id, item.Tag);
-        Assert.Equal("Second Target", item.Text);
-        Assert.DoesNotContain(
+        var row = Assert.IsType<HiveFavoriteExecutionTargetsSettingsView.FavoriteExecutionTargetRow>(item.Tag);
+        Assert.Equal(second.Id, row.ExecutionTargetId);
+        Assert.Equal("Second Target", row.DisplayName);
             view.FavoriteList.Items.Cast<ListViewItem>(),
             candidate => candidate.Tag is ExecutionTargetId id && id == first.Id);
         Assert.DoesNotContain(
@@ -92,10 +92,10 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
         await view.InitializeAsync();
 
         Assert.Empty(view.FavoriteList.Items);
-        Assert.Contains(
-            "No favorite execution targets configured.",
-            view.CrudPage.StatusLabel.Text,
-            StringComparison.Ordinal);
+        Assert.Equal("0 items", view.CrudPage.StatusLabel.Text);
+        Assert.DoesNotContain(
+            view.FavoriteList.Items.Cast<ListViewItem>(),
+            item => item.Text.Contains("Target", StringComparison.Ordinal));
     }
 
     [WinFormsFact]
@@ -183,7 +183,9 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
         await view.InitializeAsync();
 
         Assert.Single(view.FavoriteList.Items);
-        Assert.Equal(target.Id, ((ListViewItem)view.FavoriteList.Items[0]).Tag);
+        var row = Assert.IsType<HiveFavoriteExecutionTargetsSettingsView.FavoriteExecutionTargetRow>(
+            ((ListViewItem)view.FavoriteList.Items[0]).Tag);
+        Assert.Equal(target.Id, row.ExecutionTargetId);
     }
 
     [WinFormsFact]
@@ -229,6 +231,9 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
             actionLayout.Controls
                 .Cast<Control>()
                 .Single(control => control is FlowLayoutPanel && control.Controls.OfType<HiveButton>().Any()));
+
+        host.Show();
+        Application.DoEvents();
 
         var visibleButtons = actionButtons.Controls
             .OfType<HiveButton>()
