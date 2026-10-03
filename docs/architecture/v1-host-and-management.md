@@ -514,11 +514,11 @@ AgentDefinition configuration may reference an existing ExecutionTarget without 
 
 The durable relationship established by the earlier Settings contract remains the foundation. Agent-specific execution policy is not owned by Provider Settings.
 
-The later Agent interaction/configuration slice owns the user-facing distinction between:
-- `Auto` — select an eligible target only from the user's Favorite ExecutionTargets through the existing authoritative execution-target selection/planning boundary;
-- `Specific ExecutionTarget` — present only the user's Favorite ExecutionTargets, pin the Agent to the exact selected target, and fail clearly when that exact target becomes unusable rather than silently switching.
+The later Agent interaction/configuration slice owns the user-facing target source:
+- `Auto` — when no favorites are saved, select from all otherwise eligible ExecutionTargets through the existing authoritative execution-target selection/planning boundary; when one or more favorites are saved, select only from those favorites through the same boundary;
+- `Favorites` — present only the user's saved Favorite ExecutionTargets for explicit selection, even when there is only one, and persist the exact selected ExecutionTarget identity.
 
-The Agent target-selection surface must not expand an empty or non-qualifying favorite pool into the full ExecutionTarget catalog. If no qualifying favorite exists, `Auto` fails clearly; explicit selection has no candidate until the user configures favorites.
+The Agent must not expand a non-empty favorite pool to the full ExecutionTarget catalog. If a non-empty favorite pool contains no qualifying target, `Auto` fails clearly rather than falling back. If the Favorites source is empty, there is no selectable explicit target and the UI should direct the user to configure favorites. A pinned favorite that later becomes unusable follows the exact-target failure boundary rather than silently switching.
 
 The Agent configuration surface must therefore resolve friendly provider/model choices to the exact durable ExecutionTarget identity rather than persist only an ambiguous model-name string.
 
