@@ -343,3 +343,5 @@ Implementation completed inside the recorded boundary:
 - no discovery/provider transport, Favorites persistence, capability authority, or Agent behavior changed.
 
 Developer re-verification is required.
+
+Implementation note: the shared HiveCrudPage now exposes the presentation-only SetItemsForView(items) surface so a consuming view can replace already-loaded display items for local filtering without starting the asynchronous CRUD load operation. This is limited to shared UI presentation and does not alter Hive domain or management contracts.
