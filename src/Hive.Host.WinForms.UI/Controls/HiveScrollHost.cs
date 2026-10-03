@@ -289,7 +289,10 @@ public sealed class HiveScrollHost : UserControl
                 if (horizontalAuthoritative &&
                     verticalAuthoritative)
                 {
-                    _nativeScrollAdapter.HideNativeScrollBars(_content);
+                    // The native viewport size was just finalized above. Keep the
+                    // native control's state authoritative while the Hive bars are
+                    // updated, then make native scrollbar suppression the final
+                    // synchronous step of this layout boundary.
                 }
 
                 _horizontalScrollBar.SetState(nativeHorizontal);
@@ -301,6 +304,13 @@ public sealed class HiveScrollHost : UserControl
                 _verticalScrollBar.Enabled = nativeVertical.CanScroll;
 
                 UpdateScrollBarLayout();
+
+                if (horizontalAuthoritative &&
+                    verticalAuthoritative)
+                {
+                    _nativeScrollAdapter.HideNativeScrollBars(_content);
+                }
+
                 NotifyScrollPositionChanged();
                 return;
             }
