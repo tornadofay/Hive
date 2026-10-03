@@ -470,7 +470,7 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
     }
 
     private static int GetActionButtonWidth(
-        Button button,
+        HiveButton button,
         bool compact) =>
         Math.Max(
             compact
