@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Current Slice
 
@@ -50,6 +50,11 @@ Remediation boundary:
 - correct the shared HiveCrudPage action-bar geometry so the existing visible buttons are laid out inside their owning action panel at the normal 1120x700 host size;
 - preserve the existing Favorites CRUD action set and shared CRUD layout contract;
 - do not change Favorite persistence/filter semantics or Agent target-selection behavior.
+
+Remediation completed:
+- increased the shared wide CRUD action-bar height from 46px to 52px so the existing 36px HiveButton controls, 4px internal FlowLayoutPanel vertical padding, and 6px ActionBarPanel vertical padding fit within the action-bar geometry;
+- no Favorites persistence/filter behavior or Agent target-selection behavior was changed;
+- developer re-verification is required.
 
 
 
