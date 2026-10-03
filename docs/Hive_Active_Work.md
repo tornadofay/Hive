@@ -234,6 +234,19 @@ Remediation boundary:
 - capability filters consume normalized discovery evidence only and do not modify configured capability authority;
 - return Active Work to VERIFICATION PENDING after remediation and require developer re-verification.
 
+## Remediation Completed — Model Information Inspection UX
+
+Implementation completed inside the recorded Model Information remediation boundary:
+- capability states use `✓` / `✕` / `—` in the model catalog and normalized detail view;
+- capability columns use compact fixed widths;
+- the right details panel is the fixed SplitContainer panel and retains its width during normal window resizing;
+- Add to Favorites now has text-fitting CRUD button geometry and requires explicit confirmation;
+- local inspection filters provide a 0–1000 USD/1M token-price range and a capability/state filter;
+- price filtering uses the highest reported comparable USD input/output token rate after per-1M normalization; missing comparable token pricing remains visible;
+- no provider/discovery, persistence, or Agent target-selection behavior was changed.
+
+Developer re-verification is required.
+
 ## Verification state
 
 - Developer verification on 2026-10-03 passed the original Phase 1.19A implementation at 584/584 Hive.Tests executions (0 failed, 0 skipped) before the additional existing-UI correction.
