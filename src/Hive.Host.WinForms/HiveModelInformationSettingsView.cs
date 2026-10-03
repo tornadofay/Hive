@@ -22,6 +22,28 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private const string DetailKeyTag = "detail-key";
     private const string DetailValueTag = "detail-value";
 
+    private enum ModelCapabilityFilterState
+    {
+        Any,
+        Supported,
+        Unsupported,
+        Unknown
+    }
+
+    private sealed record CapabilityFilterChoice(
+        CapabilityKey? Key,
+        string DisplayName)
+    {
+        public override string ToString() => DisplayName;
+    }
+
+    private sealed record StateFilterChoice(
+        ModelCapabilityFilterState State,
+        string DisplayName)
+    {
+        public override string ToString() => DisplayName;
+    }
+
     private sealed record EndpointChoice(Uri Endpoint, string Source)
     {
         public override string ToString() => Endpoint.AbsoluteUri;
@@ -53,6 +75,10 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly HiveComboBox _providerComboBox;
     private readonly HiveComboBox _accountComboBox;
     private readonly HiveComboBox _endpointComboBox;
+    private readonly NumericUpDown _minPriceFilter;
+    private readonly NumericUpDown _maxPriceFilter;
+    private readonly HiveComboBox _capabilityFilter;
+    private readonly HiveComboBox _capabilityStateFilter;
     private readonly HiveCrudPage<ModelInformationRow> _page;
     private readonly Panel _detailsContent;
     private readonly HiveScrollHost _detailsScrollHost;
@@ -65,6 +91,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private IReadOnlyList<ExecutionTarget> _executionTargets = Array.Empty<ExecutionTarget>();
     private IReadOnlyList<ExecutionTargetId> _favoriteExecutionTargetIds = Array.Empty<ExecutionTargetId>();
     private HashSet<ExecutionTargetId> _favoriteTargetIdSet = [];
+    private bool _updatingFilters;
     private ProviderDiscoverySnapshot? _snapshot;
 
     public HiveModelInformationSettingsView(
@@ -136,32 +163,100 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _page.SetColumns(
             new HiveCrudColumn<ModelInformationRow>(
                 "Model",
-                300,
+                250,
                 FormatModelName),
             new HiveCrudColumn<ModelInformationRow>(
                 "Text",
-                95,
-                row => FindCapability(row.Model, HiveCapabilityKeys.TextGeneration)),
+                50,
+                row => FormatCapabilityState(row.Model, HiveCapabilityKeys.TextGeneration),
+                row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.TextGeneration)),
             new HiveCrudColumn<ModelInformationRow>(
                 "Vision",
-                95,
-                row => FindCapability(row.Model, HiveCapabilityKeys.Vision)),
+                58,
+                row => FormatCapabilityState(row.Model, HiveCapabilityKeys.Vision),
+                row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.Vision)),
             new HiveCrudColumn<ModelInformationRow>(
                 "Tools",
-                95,
-                row => FindCapability(row.Model, HiveCapabilityKeys.ToolCalling)),
+                52,
+                row => FormatCapabilityState(row.Model, HiveCapabilityKeys.ToolCalling),
+                row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.ToolCalling)),
             new HiveCrudColumn<ModelInformationRow>(
                 "Structured",
-                105,
-                row => FindCapability(row.Model, HiveCapabilityKeys.StructuredOutput)),
+                76,
+                row => FormatCapabilityState(row.Model, HiveCapabilityKeys.StructuredOutput),
+                row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.StructuredOutput)),
             new HiveCrudColumn<ModelInformationRow>(
                 "Reasoning",
-                100,
-                row => FindCapability(row.Model, HiveCapabilityKeys.Reasoning)),
+                72,
+                row => FormatCapabilityState(row.Model, HiveCapabilityKeys.Reasoning),
+                row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.Reasoning)),
             new HiveCrudColumn<ModelInformationRow>(
                 "Thinking",
-                100,
-                row => FindCapability(row.Model, HiveCapabilityKeys.Thinking)));
+                64,
+                row => FormatCapabilityState(row.Model, HiveCapabilityKeys.Thinking),
+                row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.Thinking)));
+
+        _page.LoadItemsAsync = LoadModelsAsync;
+        _page.EditItemAsync = AddSelectedModelToFavoritesAsync;
+        _page.OperationFailed += PageOperationFailed;
+        _page.ListView.ItemSelectionChanged += ModelsListSelectionChanged;
+
+        _minPriceFilter = CreatePriceFilter(0);
+        _maxPriceFilter = CreatePriceFilter(1000);
+
+        _capabilityFilter = new HiveComboBox
+        {
+            Width = 150,
+            Height = 32,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Margin = Padding.Empty,
+            AccessibleName = "Capability filter"
+        };
+        foreach (var choice in GetCapabilityFilterChoices())
+            _capabilityFilter.Items.Add(choice);
+        _capabilityFilter.SelectedIndex = 0;
+
+        _capabilityStateFilter = new HiveComboBox
+        {
+            Width = 88,
+            Height = 32,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Margin = Padding.Empty,
+            AccessibleName = "Capability state filter"
+        };
+        _capabilityStateFilter.Items.Add(
+            new StateFilterChoice(ModelCapabilityFilterState.Any, "Any"));
+        _capabilityStateFilter.Items.Add(
+            new StateFilterChoice(ModelCapabilityFilterState.Supported, "True"));
+        _capabilityStateFilter.Items.Add(
+            new StateFilterChoice(ModelCapabilityFilterState.Unsupported, "False"));
+        _capabilityStateFilter.Items.Add(
+            new StateFilterChoice(ModelCapabilityFilterState.Unknown, "—"));
+        _capabilityStateFilter.SelectedIndex = 0;
+
+        var filterBar = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            AutoSize = false,
+            Margin = Padding.Empty,
+            Padding = new Padding(8, 6, 0, 6),
+            AccessibleName = "Model Information filters"
+        };
+        filterBar.Controls.Add(CreateFilterLabel("Token price / 1M USD"));
+        filterBar.Controls.Add(_minPriceFilter);
+        filterBar.Controls.Add(CreateFilterLabel("to"));
+        filterBar.Controls.Add(_maxPriceFilter);
+        filterBar.Controls.Add(CreateFilterLabel("Capability"));
+        filterBar.Controls.Add(_capabilityFilter);
+        filterBar.Controls.Add(CreateFilterLabel("State"));
+        filterBar.Controls.Add(_capabilityStateFilter);
+
+        _minPriceFilter.ValueChanged += FilterChanged;
+        _maxPriceFilter.ValueChanged += FilterChanged;
+        _capabilityFilter.SelectedIndexChanged += FilterChanged;
+        _capabilityStateFilter.SelectedIndexChanged += FilterChanged;
 
         _page.LoadItemsAsync = LoadModelsAsync;
         _page.EditItemAsync = AddSelectedModelToFavoritesAsync;
@@ -202,8 +297,11 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             Dock = DockStyle.Fill,
             Orientation = Orientation.Vertical,
-            SplitterDistance = 610,
-            IsSplitterFixed = false
+            SplitterDistance = 500,
+            IsSplitterFixed = false,
+            FixedPanel = FixedPanel.Panel2,
+            Panel1MinSize = 360,
+            Panel2MinSize = 520
         };
         split.Panel1.Padding = new Padding(0, 6, 8, 0);
         split.Panel2.Padding = new Padding(8, 6, 0, 0);
@@ -214,14 +312,16 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 2,
+            RowCount = 3,
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         root.Controls.Add(contextCard, 0, 0);
-        root.Controls.Add(split, 0, 1);
+        root.Controls.Add(filterBar, 0, 1);
+        root.Controls.Add(split, 0, 2);
         Controls.Add(root);
 
         _providerComboBox.SelectedIndexChanged += ProviderChanged;
