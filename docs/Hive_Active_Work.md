@@ -775,3 +775,19 @@ The reported Dark-mode first-paint defect is corrected within the same Slice 4 b
 - focused `HiveUiPolishTests.HiveListView_UsesOwningHiveThemeBeforeFirstPaint` coverage now verifies the dark theme is applied when the control enters a Hive form before showing the UI.
 
 Status is **VERIFICATION PENDING** for developer compilation and the focused UI regression/full suite.
+
+
+## CRUD Scroll First-Paint Correction
+
+The developer clarified that the remaining Dark-mode first-paint defect is in the **CRUD scrolling surface**, not the ListView itself.
+
+Correction:
+- the previously added ambient theme initialization on `HiveListView` was removed because it targeted the wrong surface;
+- `HiveScrollHost` now resolves the owning `HiveForm` theme during control creation/parenting and applies that theme to the complete hosted scroll surface before first visible paint;
+- this uses the existing `HiveThemeManager` rather than introducing a separate theme/default-color path;
+- `HiveScrollHost.ApplyTheme` remains responsible only for the host/viewport surface, while normal recursive theme application remains responsible for its child Hive scrollbars, avoiding duplicate resource rebuilds;
+- focused regression coverage now verifies a dark-themed CRUD scroll host receives the owning Hive surface before the form is shown.
+
+The already-verified native ListView scrollbar/lifecycle fix remains unchanged.
+
+Status is **VERIFICATION PENDING** for developer compilation, focused UI regression, and the broader suite.
