@@ -663,6 +663,15 @@ The latest same-slice remediation removes the posted suppression message and ret
 
 Developer verification is required. The focused maximize/scroll regression remains the immediate verification target.
 
+## Verification Failed / Remediation Required — Stale Deferred-Suppression References
+
+Developer compilation reports four CS0103 errors in `HiveListView.cs`: three remaining calls to the removed `RequestNativeScrollBarSuppression` method and one remaining reference to the removed `_nativeScrollBarSuppressionPending` field.
+
+Remediation boundary:
+- remove only the stale references left by the unified `SB_BOTH` suppression cleanup;
+- preserve the current lifecycle-only native scrollbar suppression behavior;
+- no behavioral expansion or unrelated refactoring.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
