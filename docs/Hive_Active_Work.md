@@ -215,6 +215,25 @@ The requested UI correction has been implemented within the existing Phase 1.19A
 
 Developer re-verification is required.
 
+## Verification Failure / Remediation Boundary — Model Information Layout Test
+
+Developer verification on 2026-10-03 reported `Hive.Tests` 586 executions: **585 passed, 1 failed, 0 skipped**. The remaining failure was `Phase116FollowUpTests.ModelInformationView_RendersRichDiscoveryProfile`; all eight detail cards were present but did not satisfy the visibility assertion.
+
+Developer then requested a bounded Model Information usability correction:
+- capability values should display `✓` for Supported, `✕` for Unsupported, and `—` for Unknown/unreported instead of prose values;
+- capability columns should use compact widths;
+- the right details panel should have a stable initial width and retain that panel width when the window is resized, avoiding a mandatory separator drag;
+- the Add to Favorites action must have enough width and require confirmation;
+- add user-facing model inspection filters for token price and capability state.
+
+Price-filter definition for this UI slice: use the highest reported `input_token` / `output_token` price for the model, only when the price entry is USD and has a unit quantity; normalize that rate to USD per 1,000,000 tokens. Models without a comparable token price remain visible with `—` and are not removed by an inactive/default price filter.
+
+Remediation boundary:
+- UI, tests, and documentation only; no discovery/provider transport or durable resource-contract changes;
+- favorite persistence continues to use the existing ExecutionTarget favorite contract;
+- capability filters consume normalized discovery evidence only and do not modify configured capability authority;
+- return Active Work to VERIFICATION PENDING after remediation and require developer re-verification.
+
 ## Verification state
 
 - Developer verification on 2026-10-03 passed the original Phase 1.19A implementation at 584/584 Hive.Tests executions (0 failed, 0 skipped) before the additional existing-UI correction.
