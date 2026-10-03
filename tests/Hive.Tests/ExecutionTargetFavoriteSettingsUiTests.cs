@@ -1,3 +1,4 @@
+using System.Reflection;
 using Hive.Core;
 using Hive.Host.WinForms;
 using Hive.Host.WinForms.UI.Controls;
@@ -28,20 +29,21 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
     }
 
     [WinFormsFact]
-    public async Task FavoriteSettings_LoadsProvidersAccountsTargetsAndStoredFavorites()
+    public async Task FavoriteSettings_ShowsOnlyStoredFavorites()
     {
         var context = CreateContext();
         var provider = CreateProvider(context, "Provider One");
         var account = CreateAccount(provider.Id, context, "Account One");
         var first = CreateTarget(provider.Id, account.Id, context, "first", "First Target");
         var second = CreateTarget(provider.Id, account.Id, context, "second", "Second Target");
+        var third = CreateTarget(provider.Id, account.Id, context, "third", "Third Target");
 
         var management = UiManagementProxy.Create(
             [provider],
             [account],
             new Dictionary<ProviderAccountId, IReadOnlyList<ExecutionTarget>>
             {
-                [account.Id] = [first, second]
+                [account.Id] = [first, second, third]
             },
             [second.Id]);
 
@@ -52,27 +54,50 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
 
         await view.InitializeAsync();
 
-        Assert.Equal(2, view.ProviderSelector.Items.Count);
-        Assert.Equal("All Providers", view.ProviderSelector.Items[0]!.ToString());
-        Assert.Equal("Provider One", view.ProviderSelector.Items[1]!.ToString());
-        Assert.Equal(2, view.AccountSelector.Items.Count);
-        Assert.Equal("All Accounts", view.AccountSelector.Items[0]!.ToString());
-        Assert.Equal("Account One", view.AccountSelector.Items[1]!.ToString());
-
-        Assert.Equal(2, view.TargetList.Items.Count);
-        var firstItem = view.TargetList.Items
-            .Cast<ListViewItem>()
-            .Single(item => item.Tag is ExecutionTargetId id && id == first.Id);
-        var secondItem = view.TargetList.Items
-            .Cast<ListViewItem>()
-            .Single(item => item.Tag is ExecutionTargetId id && id == second.Id);
-
-        Assert.False(firstItem.Checked);
-        Assert.True(secondItem.Checked);
+        Assert.Single(view.FavoriteList.Items);
+        var item = (ListViewItem)view.FavoriteList.Items[0];
+        Assert.Equal(second.Id, item.Tag);
+        Assert.Equal("Second Target", item.Text);
+        Assert.DoesNotContain(
+            view.FavoriteList.Items.Cast<ListViewItem>(),
+            candidate => candidate.Tag is ExecutionTargetId id && id == first.Id);
+        Assert.DoesNotContain(
+            view.FavoriteList.Items.Cast<ListViewItem>(),
+            candidate => candidate.Tag is ExecutionTargetId id && id == third.Id);
+        Assert.False(view.FavoriteList.CheckBoxes);
     }
 
     [WinFormsFact]
-    public async Task FavoriteSettings_InitialLoadFocusesFirstProviderAndAccount()
+    public async Task FavoriteSettings_EmptyStateDoesNotLoadTargetCatalog()
+    {
+        var context = CreateContext();
+        var provider = CreateProvider(context, "Provider One");
+        var account = CreateAccount(provider.Id, context, "Account One");
+
+        var management = UiManagementProxy.Create(
+            [provider],
+            [account],
+            new Dictionary<ProviderAccountId, IReadOnlyList<ExecutionTarget>>
+            {
+                [account.Id] = []
+            });
+
+        using var view = new HiveFavoriteExecutionTargetsSettingsView(
+            management,
+            context,
+            new HiveThemeManager(HiveThemeMode.Light));
+
+        await view.InitializeAsync();
+
+        Assert.Empty(view.FavoriteList.Items);
+        Assert.Contains(
+            "No favorite execution targets configured.",
+            view.StatusLabel.Text,
+            StringComparison.Ordinal);
+    }
+
+    [WinFormsFact]
+    public async Task FavoriteTargetPicker_UsesProviderAndAccountFiltersBeforeShowingTargets()
     {
         var context = CreateContext();
         var firstProvider = CreateProvider(context, "Provider One");
@@ -92,60 +117,60 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
             "second",
             "Second Target");
 
-        var proxy = UiManagementProxy.Create(
+        var management = UiManagementProxy.Create(
             [firstProvider, secondProvider],
             [firstAccount, secondAccount],
             new Dictionary<ProviderAccountId, IReadOnlyList<ExecutionTarget>>
             {
                 [firstAccount.Id] = [firstTarget],
                 [secondAccount.Id] = [secondTarget]
-            });
+            },
+            [firstTarget.Id]);
 
-        using var view = new HiveFavoriteExecutionTargetsSettingsView(
-            proxy,
+        using var picker = new HiveFavoriteExecutionTargetPickerForm(
+            management,
             context,
-            new HiveThemeManager(HiveThemeMode.Light));
+            new HiveThemeManager(HiveThemeMode.Light),
+            new HashSet<ExecutionTargetId> { firstTarget.Id });
 
-        await view.InitializeAsync();
+        await picker.InitializeAsync();
 
-        Assert.Equal(1, view.ProviderSelector.SelectedIndex);
-        Assert.Equal("Provider One", view.ProviderSelector.SelectedItem!.ToString());
-        Assert.Equal(1, view.AccountSelector.SelectedIndex);
-        Assert.Equal("Account One", view.AccountSelector.SelectedItem!.ToString());
-        Assert.Single(view.TargetList.Items);
-        Assert.Equal(firstTarget.Id, ((ListViewItem)view.TargetList.Items[0]).Tag);
+        Assert.Equal(2, picker.ProviderSelector.Items.Count);
+        Assert.Equal("Provider One", picker.ProviderSelector.SelectedItem!.ToString());
+        Assert.Single(picker.AccountSelector.Items);
+        Assert.Equal("Account One", picker.AccountSelector.SelectedItem!.ToString());
+        Assert.Empty(picker.TargetSelector.Items.Cast<object>());
+        Assert.False(picker.AddButton.Enabled);
     }
 
     [WinFormsFact]
-    public async Task FavoriteSettings_AccountFilterNarrowsVisibleTargets()
+    public async Task FavoriteSettings_RepeatedRefreshDoesNotThrow()
     {
         var context = CreateContext();
         var provider = CreateProvider(context, "Provider One");
-        var firstAccount = CreateAccount(provider.Id, context, "Account One");
-        var secondAccount = CreateAccount(provider.Id, context, "Account Two");
-        var first = CreateTarget(provider.Id, firstAccount.Id, context, "first", "First Target");
-        var second = CreateTarget(provider.Id, secondAccount.Id, context, "second", "Second Target");
+        var account = CreateAccount(provider.Id, context, "Account One");
+        var target = CreateTarget(provider.Id, account.Id, context, "target", "Target");
 
-        var proxy = UiManagementProxy.Create(
+        var management = UiManagementProxy.Create(
             [provider],
-            [firstAccount, secondAccount],
+            [account],
             new Dictionary<ProviderAccountId, IReadOnlyList<ExecutionTarget>>
             {
-                [firstAccount.Id] = [first],
-                [secondAccount.Id] = [second]
+                [account.Id] = [target]
             },
-            [first.Id, second.Id]);
+            [target.Id]);
 
         using var view = new HiveFavoriteExecutionTargetsSettingsView(
-            proxy,
+            management,
             context,
             new HiveThemeManager(HiveThemeMode.Light));
 
         await view.InitializeAsync();
+        await view.InitializeAsync();
+        await view.InitializeAsync();
 
-        view.AccountSelector.SelectedIndex = 2;
-        Assert.Single(view.TargetList.Items);
-        Assert.Equal(second.Id, ((ListViewItem)view.TargetList.Items[0]).Tag);
+        Assert.Single(view.FavoriteList.Items);
+        Assert.Equal(target.Id, ((ListViewItem)view.FavoriteList.Items[0]).Tag);
     }
 
     [WinFormsFact]
@@ -314,6 +339,9 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
                         Result<IReadOnlyList<ExecutionTargetId>>.Success(
                             _favorites)),
 
+                nameof(IHiveManagementFacade.ReplaceFavoriteExecutionTargetIdsAsync) =>
+                    ReplaceFavorites(args),
+
                 nameof(IHiveManagementFacade.ListProvidersAsync) =>
                     Task.FromResult(
                         Result<IReadOnlyList<Provider>>.Success(
@@ -337,6 +365,20 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
                 _ => throw new NotSupportedException(
                     $"The favorite target UI test proxy does not implement '{targetMethod?.Name}'.")
             };
+        }
+
+        private object ReplaceFavorites(object?[]? args)
+        {
+            var ids = args is not null &&
+                      args.Length > 0 &&
+                      args[0] is IReadOnlyList<ExecutionTargetId> list
+                ? list
+                : Array.Empty<ExecutionTargetId>();
+
+            _favorites = ids.ToArray();
+
+            return Task.FromResult(
+                Result<IReadOnlyList<ExecutionTargetId>>.Success(_favorites));
         }
 
         private object HandleTargets(object?[]? args)
