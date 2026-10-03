@@ -686,7 +686,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Value = value,
             ThousandsSeparator = false,
             Margin = Padding.Empty,
-            AccessibleRole = AccessibleRole.SpinButton
+            AccessibleRole = AccessibleRole.SpinButton,
+            AccessibleDescription = "Token price in USD per 1 million input or output tokens."
         };
 
     private static Label CreateFilterLabel(string text) =>
@@ -747,6 +748,10 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             .Select(static price =>
             {
                 var quantity = price.UnitQuantity ?? 1m;
+
+                if (price.Price > decimal.MaxValue / 1_000_000m)
+                    return decimal.MaxValue;
+
                 return price.Price * 1_000_000m / quantity;
             })
             .ToArray();
@@ -1150,7 +1155,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 AddKeyValueRow(
                     limitsTable,
                     "Status",
-                    "No model-scoped limits were reported.");
+                    "—");
             }
             else
             {
@@ -1178,7 +1183,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             var pricingTable = GetCardTable(pricing);
             if (model.Pricing is null)
             {
-                AddKeyValueRow(pricingTable, "Status", "No pricing was reported.");
+                AddKeyValueRow(pricingTable, "Status", "—");
                 AddKeyValueRow(
                     pricingTable,
                     "Interpretation",
@@ -1189,14 +1194,14 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 AddKeyValueRow(
                     pricingTable,
                     "Explicit free evidence",
-                    model.Pricing.ExplicitFreeEvidence ? "Reported" : "—");
+                    model.Pricing.ExplicitFreeEvidence ? "✓" : "—");
 
                 if (model.Pricing.Prices.Count == 0)
                 {
                     AddKeyValueRow(
                         pricingTable,
                         "Rates",
-                        "No billable rate entries were reported.");
+                        "—");
                 }
                 else
                 {
@@ -1208,7 +1213,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                         AddKeyValueRow(
                             pricingTable,
                             price.BillingUnit,
-                            $"{price.Price:0.##########} {price.Currency ?? "currency not reported"}{quantity}");
+                            $"{price.Price:0.##########} {price.Currency ?? "—"}{quantity}");
                     }
                 }
             }
@@ -1242,7 +1247,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 AddKeyValueRow(
                     providerInfoTable,
                     "Status",
-                    "No additional bounded provider-specific evidence was reported.");
+                    "—");
             }
             else
             {
@@ -1468,8 +1473,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private static string FindCapability(
         ProviderModelMetadata model,
         CapabilityKey key) =>
-        model.DiscoveredCapabilities.FirstOrDefault(item => item.Capability == key)
-            ?.State.ToString() ?? "—";
+        model.DiscoveredCapabilities.FirstOrDefault(item => item.Capability == key) is { } entry
+            ? FormatCapabilityState(entry.State)
+            : "—";
 
     private static string FormatList(IReadOnlyList<string> values) =>
         values.Count == 0
