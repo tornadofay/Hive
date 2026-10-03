@@ -27,7 +27,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         public override string ToString() => Endpoint.AbsoluteUri;
     }
 
-    private sealed class ModelInformationRow
+    internal sealed class ModelInformationRow
     {
         public ModelInformationRow(
             ProviderModelMetadata model,
