@@ -27,10 +27,24 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         public override string ToString() => Endpoint.AbsoluteUri;
     }
 
-    private sealed record ModelInformationRow(
-        ProviderModelMetadata Model,
-        ExecutionTarget? ExecutionTarget,
-        bool IsFavorite);
+    private sealed class ModelInformationRow
+    {
+        public ModelInformationRow(
+            ProviderModelMetadata model,
+            ExecutionTarget? executionTarget,
+            bool isFavorite)
+        {
+            Model = model;
+            ExecutionTarget = executionTarget;
+            IsFavorite = isFavorite;
+        }
+
+        public ProviderModelMetadata Model { get; }
+
+        public ExecutionTarget? ExecutionTarget { get; }
+
+        public bool IsFavorite { get; set; }
+    }
 
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
@@ -123,9 +137,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             new HiveCrudColumn<ModelInformationRow>(
                 "Model",
                 300,
-                row => row.IsFavorite
-                    ? $"★ {row.Model.DisplayName ?? row.Model.ModelId}"
-                    : row.Model.DisplayName ?? row.Model.ModelId),
+                FormatModelName),
             new HiveCrudColumn<ModelInformationRow>(
                 "Text",
                 95,
@@ -656,11 +668,24 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _favoriteExecutionTargetIds = result.Value!;
         _favoriteTargetIdSet = _favoriteExecutionTargetIds.ToHashSet();
 
+        row.IsFavorite = true;
+
+        var selectedItem = _page.ListView.SelectedItems
+            .Cast<ListViewItem>()
+            .SingleOrDefault(item =>
+                ReferenceEquals(item.Tag, row));
+
+        if (selectedItem is not null)
+        {
+            selectedItem.SubItems[0].Text = FormatModelName(row);
+            selectedItem.Invalidate();
+        }
+
         _page.SetStatus(
             "ExecutionTarget added to Favorites.",
             HiveStatusTone.Neutral);
 
-        return row with { IsFavorite = true };
+        return null;
     }
 
     private ExecutionTarget? ResolveExecutionTarget(
@@ -1132,6 +1157,12 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             UriComponents.PathAndQuery,
             UriFormat.SafeUnescaped,
             StringComparison.Ordinal) == 0;
+
+    private static string FormatModelName(
+        ModelInformationRow row) =>
+        row.IsFavorite
+            ? $"★ {row.Model.DisplayName ?? row.Model.ModelId}"
+            : row.Model.DisplayName ?? row.Model.ModelId;
 
     private static string FindCapability(
         ProviderModelMetadata model,
