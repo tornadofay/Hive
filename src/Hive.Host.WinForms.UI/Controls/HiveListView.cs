@@ -114,25 +114,11 @@ public sealed class HiveListView : ListView
     {
         base.OnHandleCreated(e);
 
-        ApplyAmbientHiveTheme();
-
         if (_nativeScrollBarsSuppressed)
         {
             SuppressNativeScrollBarStyles();
             HideNativeScrollBars();
         }
-    }
-
-    protected override void OnParentChanged(EventArgs e)
-    {
-        base.OnParentChanged(e);
-        ApplyAmbientHiveTheme();
-    }
-
-    private void ApplyAmbientHiveTheme()
-    {
-        if (FindForm() is HiveForm hiveForm)
-            ApplyTheme(hiveForm.Theme);
     }
 
     internal void ResetColumnLayout()
