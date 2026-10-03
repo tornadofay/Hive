@@ -635,6 +635,13 @@ public sealed class Phase116FollowUpTests
         selected.Selected = true;
         selected.Focused = true;
 
+        string? confirmedModelName = null;
+        view.FavoriteConfirmationOverride = modelName =>
+        {
+            confirmedModelName = modelName;
+            return true;
+        };
+
         var actionLayout = Assert.IsType<TableLayoutPanel>(
             view.CrudPage.ActionBarPanel.Controls[0]);
         var actionButtons = actionLayout.Controls
@@ -647,6 +654,7 @@ public sealed class Phase116FollowUpTests
         addButton.PerformClick();
         Application.DoEvents();
 
+        Assert.Equal("rich-model", confirmedModelName);
         Assert.Contains(fixture.Target.Id, fixture.ManagementProxy.FavoriteExecutionTargetIds);
         Assert.StartsWith("★ ", view.ModelsList.Items[0].Text);
     }
@@ -787,6 +795,44 @@ public sealed class Phase116FollowUpTests
 
         Assert.Single(view.ModelsList.Items);
         Assert.Contains("rich-model", view.ModelsList.Items[0].Text);
+    }
+
+    [WinFormsFact]
+    public async Task ModelInformationView_DoesNotAddFavoriteWhenConfirmationIsDeclined()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var fixture = CreateFixture();
+
+        using var host = new Form { Size = new Size(1160, 760) };
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync();
+        Application.DoEvents();
+
+        view.ModelsList.Items[0].Selected = true;
+        view.FavoriteConfirmationOverride = _ => false;
+
+        var actionLayout = Assert.IsType<TableLayoutPanel>(
+            view.CrudPage.ActionBarPanel.Controls[0]);
+        var actionButton = actionLayout.Controls
+            .OfType<FlowLayoutPanel>()
+            .SelectMany(panel => panel.Controls.OfType<HiveButton>())
+            .Single(button => button.Text == "Add to Favorites");
+
+        actionButton.PerformClick();
+        Application.DoEvents();
+
+        Assert.DoesNotContain(
+            fixture.Target.Id,
+            fixture.ManagementProxy.FavoriteExecutionTargetIds);
+        Assert.DoesNotContain("★ ", view.ModelsList.Items[0].Text);
     }
 
     [WinFormsFact]
