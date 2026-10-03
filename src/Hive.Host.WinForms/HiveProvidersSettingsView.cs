@@ -17,6 +17,7 @@ internal sealed class HiveProvidersSettingsView : UserControl
     private readonly HiveTabControl _tabs;
     private readonly HiveFavoriteExecutionTargetsSettingsView _favoritesPage;
     private CancellationTokenSource? _refreshCts;
+    private bool _favoritesInitialized;
     private int _refreshRunning;
 
     public HiveProvidersSettingsView(
@@ -158,7 +159,8 @@ internal sealed class HiveProvidersSettingsView : UserControl
     {
         if (_tabs.SelectedIndex != 1 ||
             _favoritesPage.IsDisposed ||
-            _favoritesPage.Disposing)
+            _favoritesPage.Disposing ||
+            _favoritesInitialized)
         {
             return;
         }
@@ -166,6 +168,7 @@ internal sealed class HiveProvidersSettingsView : UserControl
         try
         {
             await _favoritesPage.InitializeAsync().ConfigureAwait(true);
+            _favoritesInitialized = true;
         }
         catch (Exception exception)
         {
