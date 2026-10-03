@@ -49,7 +49,7 @@ internal sealed class ExampleConfigurationExampleView : UserControl
 
         _providerFlow = CreateSection(
             "Provider configuration",
-            "Start on the Providers page. Add Provider opens a built-in provider catalog; select the provider and enter its required credential. Hive creates the underlying ProviderAccount and uses the provider's discovery configuration to create or refresh automatic ExecutionTargets.");
+            "Start on the Providers page. Add Provider opens a built-in provider catalog; select the provider and enter its required credential. Hive creates the underlying ProviderAccount and uses the provider's discovery configuration to create or refresh automatic ExecutionTargets. Use the Favorite Execution Targets tab to keep a bounded personal target pool.");
 
         _settingsFlow = CreateSection(
             "Advanced resources",
