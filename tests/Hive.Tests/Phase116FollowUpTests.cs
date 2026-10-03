@@ -466,12 +466,21 @@ public sealed class Phase116FollowUpTests
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
         var fixture = CreateFixture();
 
+        using var host = new Form
+        {
+            Size = new Size(1160, 760)
+        };
         using var view = new HiveModelInformationSettingsView(
             fixture.Management,
             fixture.Context,
             themeManager);
 
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
         await view.InitializeAsync();
+        Application.DoEvents();
 
         Assert.IsType<HiveComboBox>(view.ProviderSelector);
         Assert.IsType<HiveComboBox>(view.AccountSelector);
@@ -509,15 +518,37 @@ public sealed class Phase116FollowUpTests
         Assert.Contains("Additional provider information", detailsText);
         Assert.Contains("deterministic-fixture", detailsText);
 
+        var detailCards = view.DetailsContent.Controls
+            .Cast<Control>()
+            .ToArray();
+
+        Assert.NotEmpty(detailCards);
         Assert.All(
-            view.DetailsContent.Controls.Cast<Control>(),
+            detailCards,
             control =>
             {
                 var panel = Assert.IsType<Panel>(control);
+                Assert.True(panel.Visible);
+                Assert.True(panel.Width >= 320);
+                Assert.True(panel.Height >= 48);
                 Assert.Equal(
                     BorderStyle.FixedSingle,
                     panel.BorderStyle);
+
+                var table = Assert.IsType<TableLayoutPanel>(
+                    Assert.Single(panel.Controls.Cast<Control>()));
+
+                Assert.True(table.Width >= 300);
+                Assert.True(table.Height > 28);
             });
+
+        var detailBounds = detailCards
+            .Select(control => control.Bounds)
+            .ToArray();
+
+        Assert.Equal(
+            detailBounds.Length,
+            detailBounds.Select(bounds => bounds.Top).Distinct().Count());
     }
 
     [WinFormsFact]
