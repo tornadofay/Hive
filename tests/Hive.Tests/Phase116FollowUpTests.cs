@@ -989,6 +989,22 @@ public sealed class Phase116FollowUpTests
                     $"The test management proxy does not implement '{targetMethod.Name}'.")
             };
         }
+
+        private object ReplaceFavoriteExecutionTargetIds(object?[]? args)
+        {
+            var ids =
+                args is not null &&
+                args.Length > 0 &&
+                args[0] is IReadOnlyList<ExecutionTargetId> favoriteIds
+                    ? favoriteIds
+                    : Array.Empty<ExecutionTargetId>();
+
+            _favoriteExecutionTargetIds = favoriteIds.ToArray();
+
+            return Task.FromResult(
+                Result<IReadOnlyList<ExecutionTargetId>>.Success(
+                    _favoriteExecutionTargetIds));
+        }
     }
 
     private sealed class FixedResponseHandler : HttpMessageHandler
