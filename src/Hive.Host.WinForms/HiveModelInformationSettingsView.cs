@@ -296,12 +296,12 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             Dock = DockStyle.Fill,
             Orientation = Orientation.Vertical,
-            SplitterDistance = 500,
             IsSplitterFixed = false,
             FixedPanel = FixedPanel.Panel2,
-            Panel1MinSize = 320,
-            Panel2MinSize = 520
+            Panel1MinSize = 0,
+            Panel2MinSize = 0
         };
+        _mainSplit.SizeChanged += MainSplitSizeChanged;
         _mainSplit.Panel1.Padding = new Padding(0, 6, 8, 0);
         _mainSplit.Panel2.Padding = new Padding(8, 6, 0, 0);
         _mainSplit.Panel1.Controls.Add(_page);
@@ -330,6 +330,44 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         ApplyTheme();
+    }
+
+    private const int MainSplitPanel1MinimumWidth = 320;
+    private const int MainSplitPanel2MinimumWidth = 520;
+    private const int MainSplitInitialPanel1Width = 500;
+    private bool _mainSplitConstraintsApplied;
+
+    private void MainSplitSizeChanged(object? sender, EventArgs e)
+    {
+        if (IsDisposed || Disposing)
+            return;
+
+        ApplyMainSplitConstraints();
+    }
+
+    private void ApplyMainSplitConstraints()
+    {
+        var width = _mainSplit.ClientSize.Width;
+        var minimumWidth =
+            MainSplitPanel1MinimumWidth +
+            MainSplitPanel2MinimumWidth +
+            _mainSplit.SplitterWidth;
+
+        if (width < minimumWidth)
+            return;
+
+        if (!_mainSplitConstraintsApplied)
+        {
+            _mainSplit.Panel1MinSize = MainSplitPanel1MinimumWidth;
+            _mainSplit.Panel2MinSize = MainSplitPanel2MinimumWidth;
+            _mainSplit.SplitterDistance = Math.Clamp(
+                MainSplitInitialPanel1Width,
+                MainSplitPanel1MinimumWidth,
+                width -
+                MainSplitPanel2MinimumWidth -
+                _mainSplit.SplitterWidth);
+            _mainSplitConstraintsApplied = true;
+        }
     }
 
     internal HiveComboBox ProviderSelector => _providerComboBox;
@@ -1626,6 +1664,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _capabilityFilter.SelectedIndexChanged -= FilterChanged;
             _capabilityStateFilter.SelectedIndexChanged -= FilterChanged;
             _detailsScrollHost.Resize -= DetailsScrollHostOnResize;
+            _mainSplit.SizeChanged -= MainSplitSizeChanged;
             CancelOperation();
         }
 
