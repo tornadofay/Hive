@@ -154,6 +154,17 @@ Remediation boundary:
 - do not change discovery, persistence, Provider / ProviderAccount / ExecutionTarget ownership, Favorites behavior, or Agent target-selection semantics;
 - return Active Work to VERIFICATION PENDING after remediation and require developer re-verification.
 
+## Remediation Completed — Model Information Detail Layout
+
+Remediation completed within the existing selection/details UI boundary:
+- made model detail rendering a single suspended-layout operation so the side panel does not expose intermediate collapsed card states;
+- replaced percent/percent auto-sized detail-card columns with a deterministic fixed key column plus content column;
+- changed detail cards from auto-sized panels to explicitly sized panels and calculate each card's height from its rendered table content;
+- retained HiveListView, HiveComboBox, and HiveScrollHost ownership and did not change discovery semantics;
+- strengthened the focused UI regression to host the view in a real Form and verify visible, non-overlapping detail cards with positive rendered dimensions.
+
+Developer re-verification is required.
+
 ## Verification state
 
 - Developer verification on 2026-10-03 passed the original Phase 1.19A implementation at 584/584 Hive.Tests executions (0 failed, 0 skipped) before the additional existing-UI correction.
