@@ -736,3 +736,18 @@ Remediation boundary:
 - no test weakening, per-scroll/repaint suppression, DataGridView migration, ListView rewrite, new public scroll API, or unrelated refactoring.
 
 Status is **VERIFICATION FAILED / REMEDIATION REQUIRED** pending root-cause investigation.
+
+
+## ListView Native Non-Client Suppression Remediation
+
+Root-cause investigation changed the suppression strategy:
+- repeated `ShowScrollBar` timing/order variants did not prevent the native ListView from exposing its standard scrollbar after maximize;
+- the developer diagnostic confirms `GetScrollBarInfo` succeeds for the exposed horizontal object and reports `state=0x00000000`, proving that the native scrollbar is actually exposed rather than the visibility query failing;
+- the native ListView non-client calculation boundary is therefore the relevant lifecycle owner: while the control is hosted, `HiveListView` now removes `WS_HSCROLL` / `WS_VSCROLL` during `WM_NCCALCSIZE`, before native non-client processing can recreate those standard scrollbar styles, and reapplies the removal after native processing;
+- the original native scrollbar style bits are retained for restoration when the control is detached;
+- native `LVM_SCROLL` remains unchanged, so ListView viewport/item/selection/keyboard/owner-draw/CRUD behavior is still provided by the native control;
+- no suppression operation is added to the high-frequency scroll/repaint path, and the previous deferred/posted suppression mechanisms are not reintroduced.
+
+The regression test itself remains unchanged in behavior and continues to require both native standard scrollbar objects to report hidden after attach, maximize, and scrolling.
+
+Status is **VERIFICATION PENDING** for developer compilation and the focused ListView maximize/scroll regression.
