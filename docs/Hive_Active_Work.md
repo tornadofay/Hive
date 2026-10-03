@@ -751,3 +751,15 @@ Root-cause investigation changed the suppression strategy:
 The regression test itself remains unchanged in behavior and continues to require both native standard scrollbar objects to report hidden after attach, maximize, and scrolling.
 
 Status is **VERIFICATION PENDING** for developer compilation and the focused ListView maximize/scroll regression.
+
+
+## Verification Failed / Remediation Required — HiveListView Dark-Mode First Paint
+
+Developer verification confirms the previous ListView scrollbar regression is now functionally resolved, but visual verification identifies one same-slice UI defect: the `HiveListView` first paint is briefly white in Dark mode before the Hive theme surface is applied.
+
+Remediation boundary:
+- correct only the `HiveListView` initialization/theme lifecycle responsible for the first-paint background;
+- ensure the initial native ListView surface is consistent with the active Hive theme without changing ListView scrolling, owner-draw, selection, keyboard, CRUD, or native scrollbar suppression behavior;
+- preserve Light/Dark/System behavior and avoid unrelated UI refactoring.
+
+Status is **VERIFICATION FAILED / REMEDIATION REQUIRED** pending same-slice visual remediation.
