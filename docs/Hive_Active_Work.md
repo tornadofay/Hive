@@ -583,6 +583,18 @@ The latest same-slice remediation replaces the insufficient visibility-only supp
 
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
 
+## Verification Failed / Remediation Required — Native Style Suppression Still Loses After Maximize
+
+Developer re-ran the full test suite after the native style-boundary remediation: **570 total, 569 passed, 1 failed, 0 skipped**.
+
+The single failure remains `HiveScrollHostTests.NativeListView_HidesNativeScrollBarsAcrossMaximizeAndScrolling`, at the post-maximize assertion in `HiveScrollHostTests.cs` line 381. The test completes without hanging, but the native ListView scrollbar is still reported visible after maximize.
+
+Remediation boundary:
+- correct the native ListView scrollbar suppression ordering/lifecycle that allows the scrollbar state to return after maximize;
+- preserve native ListView scrolling through `LVM_SCROLL` and the existing Hive scrollbar synchronization;
+- keep suppression out of high-frequency scroll and repaint handling;
+- no test weakening, DataGridView migration, new public scroll API, ListView rewrite, or unrelated refactoring.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
