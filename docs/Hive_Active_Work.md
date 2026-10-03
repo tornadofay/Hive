@@ -672,6 +672,12 @@ Remediation boundary:
 - preserve the current lifecycle-only native scrollbar suppression behavior;
 - no behavioral expansion or unrelated refactoring.
 
+## ListView Suppression Compile Cleanup
+
+The reported CS0103 errors are corrected. The removed deferred-suppression method and pending flag no longer have production references in `HiveListView.cs`.
+
+Status is **VERIFICATION PENDING** for developer compilation and the focused ListView maximize test.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
