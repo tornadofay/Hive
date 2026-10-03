@@ -9,8 +9,8 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
     internal const int HeaderHeight = 64;
     internal const int ActionBarHeight = 52;
     internal const int FooterHeight = 42;
-    internal const int ActionButtonWidth = 92;
-    internal const int CompactActionButtonWidth = 84;
+    internal const int ActionButtonWidth = 120;
+    internal const int CompactActionButtonWidth = 110;
     internal const int ActionButtonSpacing = 8;
     internal const int InitialActionBarActionsWidth = (ActionButtonWidth + ActionButtonSpacing) * 4;
     internal const int PaginationWidth = 276;
