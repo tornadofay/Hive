@@ -39,7 +39,7 @@ Last updated: 2026-10-03
   - **Phase 1 Custom UI Components — Slice 3: HiveTabControl:** Complete and verified on 2026-10-01. Developer verification: full `Hive.Tests` suite passed **555/555** (0 failed, 0 skipped); the matching `Hive.Example.WinForms` UI / Foundation / HiveTabControl scenario was manually confirmed and the developer reported the control looks good. [Closure verification record](verification/phase-1/custom-ui-tabcontrol-closure-2026-10-01.md)
   - **Phase 1 Custom UI Components — Slice 4: Existing Hive UI Integration, Consistency & Hardening:** Complete and verified on 2026-10-03. Final developer verification: full `Hive.Tests` suite passed **570/570** (0 failed, 0 skipped) in 58.8 seconds; the matching `Hive.Example.WinForms` Overview / Getting Started / Example Configuration workflow was manually confirmed running correctly. The final verification includes the CRUD `HiveListView` first-paint/native-scrollbar suppression remediation. [Closure verification record](verification/phase-1/custom-ui-slice-4-closure-2026-10-03.md)
 
-  - **1.19A — Execution Target Preferences & Favorite Target Pool:** In progress. This slice is currently authorized; no developer verification has been recorded yet.
+  - **1.19A — Execution Target Preferences & Favorite Target Pool:** In progress. Developer verification of the Favorites implementation passed **584/584** (0 failed, 0 skipped) on 2026-10-03. A bounded existing-UI correction is now pending re-verification: Advanced Provider Configuration button emphasis, removal of its Overview tab, and Model Information UI polish.
   - **1.20+:** Not authorized.
   
 Historical verification records are maintained under [`docs/verification/`](verification/).
