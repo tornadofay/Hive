@@ -132,6 +132,16 @@ Remediation boundary:
 - do not change discovery semantics, persistence, Provider/Account/Target ownership, Favorites behavior, or Agent target-selection behavior;
 - return Active Work to VERIFICATION PENDING after remediation and require developer re-verification.
 
+## Verification Failure / Remediation Boundary — Model Information Selection Details Not Rendering
+
+Developer reported on 2026-10-03 that the Model Information side panel remains empty after selecting a model from the discovered model list.
+
+Remediation boundary:
+- make the existing model-selection-to-details rendering path deterministic for both initial selection and subsequent row selection;
+- preserve the existing read-only discovery snapshot and structured metadata presentation;
+- add focused regression coverage that actually changes the selected model and verifies the displayed details follow that selection;
+- do not change discovery, persistence, Provider / ProviderAccount / ExecutionTarget ownership, Favorites behavior, or Agent target-selection semantics.
+
 ## Verification state
 
 - Developer verification on 2026-10-03 passed the original Phase 1.19A implementation at 584/584 Hive.Tests executions (0 failed, 0 skipped) before the additional existing-UI correction.
