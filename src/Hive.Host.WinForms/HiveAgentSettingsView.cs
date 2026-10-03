@@ -122,6 +122,7 @@ internal sealed class HiveAgentSettingsView : UserControl
             throw new InvalidOperationException(providers.Error!.Message);
 
         var targets = new List<ExecutionTarget>();
+        var allAccounts = new List<ProviderAccount>();
 
         foreach (var provider in providers.Value!)
         {
@@ -158,29 +159,6 @@ internal sealed class HiveAgentSettingsView : UserControl
         }
 
         _providers = providers.Value!;
-        _accounts = targets
-            .SelectMany(_ => Array.Empty<ProviderAccount>())
-            .ToArray();
-
-        var allAccounts = new List<ProviderAccount>();
-        foreach (var provider in providers.Value!)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var accounts = await _management
-                .ListProviderAccountsAsync(
-                    provider.Id,
-                    _accessContext,
-                    includeRetired: true,
-                    cancellationToken: cancellationToken)
-                .ConfigureAwait(true);
-
-            if (accounts.IsFailure)
-                throw new InvalidOperationException(accounts.Error!.Message);
-
-            allAccounts.AddRange(accounts.Value!);
-        }
-
         _accounts = allAccounts;
         _targets = targets;
 
