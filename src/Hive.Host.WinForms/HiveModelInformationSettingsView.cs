@@ -751,9 +751,12 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     private void RenderModelDetails(ProviderModelMetadata model)
     {
-        ClearDetailsContent();
+        _detailsContent.SuspendLayout();
+        try
+        {
+            ClearDetailsContent();
 
-        var summary = CreateDetailCard(
+            var summary = CreateDetailCard(
             model.DisplayName ?? model.ModelId,
             emphasized: true);
         var summaryTable = GetCardTable(summary);
@@ -945,10 +948,15 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             }
         }
 
-        _detailsContent.Controls.Add(providerInfo);
+            _detailsContent.Controls.Add(providerInfo);
 
-        ApplyDetailsTheme();
-        ResizeDetailCards();
+            ApplyDetailsTheme();
+        }
+        finally
+        {
+            _detailsContent.ResumeLayout(true);
+            ResizeDetailCards();
+        }
     }
 
     private Panel CreateDetailCard(
@@ -958,7 +966,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         var theme = _themeManager.Theme;
         var card = new Panel
         {
-            AutoSize = true,
+            AutoSize = false,
+            Size = new Size(320, 48),
             Margin = new Padding(0, 0, 0, 8),
             Padding = new Padding(10),
             BackColor = emphasized
@@ -979,8 +988,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 36f));
-        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 64f));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 155f));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
         var heading = new Label
         {
@@ -1087,13 +1096,31 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             return;
 
         var availableWidth = Math.Max(
-            280,
+            320,
             _detailsScrollHost.ClientSize.Width - 10);
 
         foreach (Control child in _detailsContent.Controls)
         {
-            if (child is Panel card)
-                card.Width = availableWidth;
+            if (child is not Panel card)
+                continue;
+
+            card.Width = availableWidth;
+
+            if (card.Controls.OfType<TableLayoutPanel>().SingleOrDefault() is not { } table)
+                continue;
+
+            table.Width = Math.Max(
+                300,
+                card.ClientSize.Width - card.Padding.Horizontal);
+
+            table.PerformLayout();
+
+            var preferred = table.GetPreferredSize(
+                new Size(table.Width, 0));
+
+            card.Height = Math.Max(
+                48,
+                preferred.Height + card.Padding.Vertical + 2);
         }
 
         _detailsContent.PerformLayout();
