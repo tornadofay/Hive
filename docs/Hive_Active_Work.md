@@ -642,6 +642,17 @@ Remediation boundary:
 - avoid high-frequency scroll/repaint suppression work;
 - no test weakening, DataGridView migration, new public scroll API, ListView rewrite, or unrelated refactoring.
 
+## ListView Scrollbar Suppression — Posted Native Resize Reassertion
+
+The latest same-slice remediation moves the final native scrollbar hide to a coalesced posted Win32 message:
+- `WM_WINDOWPOSCHANGED` still performs the immediate hide for real size changes, then posts one dedicated lifecycle message;
+- the dedicated message only re-hides the native scrollbars and clears its pending flag; it does not schedule another message;
+- the earlier `WM_STYLECHANGING` style mutation and deferred `BeginInvoke` approach are removed because they did not solve the actual native scrollbar-window state and introduced unnecessary complexity;
+- native `LVM_SCROLL`, Hive scrollbar synchronization, ListView selection/keyboard/owner-draw, and CRUD behavior remain unchanged;
+- no suppression is performed from high-frequency scrolling or non-client repaint.
+
+The implementation remains within the recorded Slice 4 host/ListView integration remediation boundary.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
