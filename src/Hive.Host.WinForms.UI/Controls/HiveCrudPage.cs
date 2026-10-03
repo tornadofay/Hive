@@ -895,7 +895,7 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _listController.SetItems(items);
     }
 
-    internal void SetItemsForView(IReadOnlyList<TItem> items)
+    public void SetItemsForView(IReadOnlyList<TItem> items)
     {
         ArgumentNullException.ThrowIfNull(items);
         _listController.SetItems(items);
