@@ -94,7 +94,7 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
         Assert.Empty(view.FavoriteList.Items);
         Assert.Contains(
             "No favorite execution targets configured.",
-            view.StatusLabel.Text,
+            view.CrudPage.StatusLabel.Text,
             StringComparison.Ordinal);
     }
 
