@@ -805,3 +805,15 @@ Remediation boundary:
 - remove the previously attempted CRUD scroll-host ambient-theme workaround because it addressed the wrong cause.
 
 Status is **VERIFICATION FAILED / REMEDIATION REQUIRED** pending same-slice correction.
+
+
+## CRUD ListView First-Paint Suppression Remediation
+
+The corrected implementation addresses the actual first-paint lifecycle:
+- `HiveScrollHost.Attach()` now arms `HiveListView` native scrollbar suppression **before** the ListView is inserted into the host viewport when its handle has not yet been created;
+- this allows the existing `WM_NCCALCSIZE` / native style suppression logic to be active during the ListView's initial native handle creation and non-client setup, preventing native scrollbars from becoming the first-paint presentation;
+- authoritative scroll-state acquisition remains in the existing `Synchronize()` path, and native `LVM_SCROLL` remains unchanged;
+- the previously attempted ambient-theme workaround on `HiveScrollHost` was removed because it targeted the wrong cause;
+- the focused maximize/scroll regression now also checks the native scrollbar state immediately after `form.Show()`, before the normal message-pump synchronization boundary.
+
+Status is **VERIFICATION PENDING** for developer compilation and focused/full UI verification.
