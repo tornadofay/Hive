@@ -188,6 +188,18 @@ Remediation completed within the recorded failure boundary:
 
 Developer re-verification is required.
 
+## Remediation Boundary — Model Information CRUD / Favorites / Capability List
+
+Developer requested on 2026-10-03 a further bounded correction to the existing Model Information UI:
+- use the shared Hive CRUD presentation for the discovered model list, with only an Add to Favorites action;
+- add a star marker before the model name for models whose matching ExecutionTarget is already a favorite;
+- replace Type / Availability / Health columns with capability-state columns;
+- add the same page title/description presentation used by the other Provider advanced pages;
+- remove the redundant Provider / Account / Endpoint summary text below the filters and the green discovery-status banner;
+- keep the existing structured model-details side panel and read-only discovery semantics.
+
+Remediation remains bounded to existing Phase 1.19A UI behavior. No new selection mode, discovery contract, persistence contract, provider transport, or Agent behavior is authorized.
+
 ## Verification state
 
 - Developer verification on 2026-10-03 passed the original Phase 1.19A implementation at 584/584 Hive.Tests executions (0 failed, 0 skipped) before the additional existing-UI correction.
