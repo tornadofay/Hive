@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Current Slice
 
@@ -41,6 +41,15 @@ Expected user-facing behavior:
 - when favorites exist, target-selection consumers that opt into the favorite filter receive only those favorite target identities before normal capability selection;
 - a retired favorite remains stored and visible as a retired favorite where its resource is still accessible;
 - Agent execution-target behavior remains unchanged in this slice and is owned by its later configuration/selection phase.
+
+## Verification Failure / Remediation Boundary — Favorites UI Test Proxy
+
+Developer verification on 2026-10-03 reported 584 Hive.Tests executions with 577 passed, 7 failed, 0 skipped. All seven failures are in ExecutionTargetFavoriteSettingsUiTests and terminate before the test body executes because DispatchProxy.Create<IHiveManagementFacade, UiManagementProxy>() rejects the proxy base type: UiManagementProxy is declared sealed, while DispatchProxy requires a non-sealed proxy base type.
+
+Remediation boundary:
+- correct the test proxy declaration so DispatchProxy can generate the proxy;
+- do not change Favorites production behavior, target-selection semantics, persistence contracts, or unrelated tests;
+- rerun the focused ExecutionTargetFavoriteSettingsUiTests coverage, then the broader Hive.Tests suite before slice closure.
 
 ## Verification Failure / Remediation Boundary — CRUD Initial Layout
 
