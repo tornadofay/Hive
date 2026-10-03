@@ -440,7 +440,6 @@ public sealed class Phase116FollowUpTests
 
         Assert.Equal(
             [
-                "Overview",
                 "Providers",
                 "Accounts / Credentials",
                 "Execution Targets",
@@ -449,7 +448,7 @@ public sealed class Phase116FollowUpTests
             names);
 
         Assert.Equal(
-            "Overview",
+            "Providers",
             form.NavigationTabs.SelectedTab?.Text);
 
         Assert.All(
@@ -477,6 +476,7 @@ public sealed class Phase116FollowUpTests
         Assert.IsType<HiveComboBox>(view.ProviderSelector);
         Assert.IsType<HiveComboBox>(view.AccountSelector);
         Assert.IsType<HiveComboBox>(view.EndpointSelector);
+        Assert.IsType<HiveListView>(view.ModelsList);
 
         Assert.Single(view.ModelsList.Items);
         Assert.Equal(
@@ -485,22 +485,46 @@ public sealed class Phase116FollowUpTests
 
         view.ModelsList.Items[0].Selected = true;
 
-        Assert.Contains("Identity", view.DetailsBox.Text);
-        Assert.Contains("example-family", view.DetailsBox.Text);
-        Assert.Contains("Inputs", view.DetailsBox.Text);
-        Assert.Contains("text, image, audio", view.DetailsBox.Text);
-        Assert.Contains("Outputs", view.DetailsBox.Text);
-        Assert.Contains("Capabilities", view.DetailsBox.Text);
-        Assert.Contains("Reasoning / Thinking", view.DetailsBox.Text);
-        Assert.Contains("medium", view.DetailsBox.Text);
-        Assert.Contains("Limits", view.DetailsBox.Text);
-        Assert.Contains("131072", view.DetailsBox.Text);
-        Assert.Contains("Pricing / Economics", view.DetailsBox.Text);
-        Assert.Contains("1.25", view.DetailsBox.Text);
-        Assert.Contains("Operational state", view.DetailsBox.Text);
-        Assert.Contains("active", view.DetailsBox.Text);
-        Assert.Contains("Additional provider information", view.DetailsBox.Text);
-        Assert.Contains("deterministic-fixture", view.DetailsBox.Text);
+        var detailsText = CollectVisibleControlText(view.DetailsContent);
+
+        Assert.Contains("rich-model", detailsText);
+        Assert.Contains("example-family", detailsText);
+        Assert.Contains("text, image, audio", detailsText);
+        Assert.Contains("Capabilities", detailsText);
+        Assert.Contains("text.generate", detailsText);
+        Assert.Contains("Supported  •  discovered", detailsText);
+        Assert.Contains("Reasoning", detailsText);
+        Assert.Contains("medium", detailsText);
+        Assert.Contains("Limits", detailsText);
+        Assert.Contains("131072", detailsText);
+        Assert.Contains("Pricing & economics", detailsText);
+        Assert.Contains("1.25", detailsText);
+        Assert.Contains("Operational state", detailsText);
+        Assert.Contains("active", detailsText);
+        Assert.Contains("Additional provider information", detailsText);
+        Assert.Contains("deterministic-fixture", detailsText);
+
+        Assert.All(
+            view.DetailsContent.Controls.Cast<Control>(),
+            control => Assert.IsType<HiveBorderPanel>(control));
+    }
+
+    private static string CollectVisibleControlText(Control root)
+    {
+        var values = new List<string>();
+
+        foreach (Control control in root.Controls)
+        {
+            if (!string.IsNullOrWhiteSpace(control.Text))
+                values.Add(control.Text);
+
+            if (control.HasChildren)
+                values.Add(CollectVisibleControlText(control));
+        }
+
+        return string.Join(
+            Environment.NewLine,
+            values);
     }
 
     private static ResourceAccessContext CreateContext() =>
