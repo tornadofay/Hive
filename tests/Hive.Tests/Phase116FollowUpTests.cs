@@ -548,6 +548,11 @@ public sealed class Phase116FollowUpTests
         Assert.Contains(
             "rich-model",
             view.ModelsList.Items[0].Text);
+        Assert.Equal("✓", view.ModelsList.Items[0].SubItems[1].Text);
+        Assert.Equal("✓", view.ModelsList.Items[0].SubItems[3].Text);
+        Assert.Equal("—", view.ModelsList.Items[0].SubItems[4].Text);
+        Assert.Equal("✕", view.ModelsList.Items[1].SubItems[2].Text);
+        Assert.Equal("—", view.ModelsList.Items[1].SubItems[4].Text);
 
         view.ModelsList.Items[0].Selected = true;
         view.ModelsList.Items[0].Focused = true;
@@ -666,6 +671,8 @@ public sealed class Phase116FollowUpTests
         Application.DoEvents();
 
         Assert.Equal(2, view.ModelsList.Items.Count);
+        Assert.Equal(0m, view.MinPriceFilter.Value);
+        Assert.Equal(1000m, view.MaxPriceFilter.Value);
 
         view.MaxPriceFilter.Value = 1m;
         Application.DoEvents();
@@ -1032,6 +1039,9 @@ public sealed class Phase116FollowUpTests
                 new CapabilityStateEntry(
                     HiveCapabilityKeys.TextGeneration,
                     CapabilityState.Supported),
+                new CapabilityStateEntry(
+                    HiveCapabilityKeys.Vision,
+                    CapabilityState.Unsupported),
                 new CapabilityStateEntry(
                     HiveCapabilityKeys.Reasoning,
                     CapabilityState.Unknown)
