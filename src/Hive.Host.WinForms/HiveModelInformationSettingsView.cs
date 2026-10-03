@@ -321,24 +321,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         }
     }
 
-    private async void RefreshButtonOnClick(object? sender, EventArgs e)
-    {
-        try
-        {
-            await RefreshDiscoveryAsync(forceRefresh: true).ConfigureAwait(true);
-        }
-        catch (OperationCanceledException)
-            when (IsDisposed || Disposing)
-        {
-        }
-        catch (Exception exception)
-        {
-            ReportError(
-                exception,
-                "Provider model information could not be refreshed.");
-        }
-    }
-
     private void EndpointTextChanged(object? sender, EventArgs e)
     {
         if (_initializingContext || IsDisposed || Disposing)
@@ -354,10 +336,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         _selectedEndpoint = null;
         ClearObservation();
-        UpdateContextLabel();
-        SetStatus(
-            "Endpoint changed. Refresh to inspect model information for the entered endpoint.",
-            HiveStatusTone.Information);
     }
 
     private void EndpointChanged(object? sender, EventArgs e)
@@ -369,7 +347,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             (_endpointComboBox.SelectedItem as EndpointChoice)?.Endpoint;
 
         ClearObservation();
-        UpdateContextLabel();
 
         if (_selectedEndpoint is null)
             return;
@@ -442,8 +419,10 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 if (targets.IsFailure)
                     throw new InvalidOperationException(targets.Error!.Message);
 
+                _executionTargets = targets.Value!;
+
                 endpoints.AddRange(
-                    targets.Value!
+                    _executionTargets
                         .Select(target => new EndpointChoice(
                             target.Endpoint,
                             "Execution Target")));
@@ -481,16 +460,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             await LoadCachedOrDiscoverAsync().ConfigureAwait(true);
     }
 
-    private void UpdateContextLabel()
-    {
-        _selectedEndpoint = TryParseEndpoint(_endpointComboBox.Text);
-
-        _contextLabel.Text =
-            $"Provider: {_selectedProvider?.DisplayName ?? "—"}  •  " +
-            $"Account: {_selectedAccount?.DisplayName ?? "—"}  •  " +
-            $"Endpoint: {_selectedEndpoint?.AbsoluteUri ?? "—"}";
-    }
-
     private async Task LoadCachedOrDiscoverAsync()
     {
         if (_selectedProvider is null ||
@@ -511,7 +480,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _selectedAccount is null ||
             _selectedEndpoint is null)
         {
-            SetStatus(
+            _page.SetStatus(
                 "Select a Provider, Account, and endpoint first.",
                 HiveStatusTone.Warning);
             return;
@@ -521,13 +490,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         var cts = new CancellationTokenSource();
         var previous = Interlocked.Exchange(ref _operationCts, cts);
         previous?.Cancel();
-
-        _refreshButton.Enabled = false;
-        SetStatus(
-            forceRefresh
-                ? "Refreshing provider model information..."
-                : "Loading provider model information...",
-            HiveStatusTone.Information);
 
         try
         {
@@ -551,13 +513,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
             if (result.IsFailure)
             {
-                SetStatus(
-                    $"Discovery did not complete ({result.Error!.Code}). " +
-                    (_snapshot is null
-                        ? "No successful model observation is available."
-                        : "The last successful model observation is retained."),
-                    _snapshot is null ? HiveStatusTone.Error : HiveStatusTone.Warning);
-                ApplyOperationalContext();
+                _page.SetStatus(
+                    $"Discovery did not complete ({result.Error!.Code}).",
+                    HiveStatusTone.Error);
                 ReportError(
                     new InvalidOperationException(result.Error.Message),
                     "Provider model discovery could not be completed.");
@@ -565,7 +523,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             }
 
             _snapshot = result.Value!;
-            ApplySnapshot();
+            await ApplySnapshotAsync().ConfigureAwait(true);
         }
         catch (OperationCanceledException)
             when (cts.IsCancellationRequested || IsDisposed || Disposing)
@@ -580,11 +538,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 return;
             }
 
-            SetStatus(
-                _snapshot is null
-                    ? "Model information could not be loaded."
-                    : "Refresh failed. The last successful model observation is retained.",
-                _snapshot is null ? HiveStatusTone.Error : HiveStatusTone.Warning);
+            _page.SetStatus(
+                "Model information could not be loaded.",
+                HiveStatusTone.Error);
             ReportError(exception, "Provider model discovery could not be completed.");
         }
         finally
@@ -593,73 +549,46 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 Interlocked.CompareExchange(ref _operationCts, null, cts);
 
             cts.Dispose();
-
-            if (!IsDisposed && !Disposing)
-                _refreshButton.Enabled = true;
         }
     }
 
-    private void ApplySnapshot()
+    private async Task ApplySnapshotAsync()
     {
         if (_snapshot is null)
             return;
 
-        var stale = _snapshot.IsStale(DateTimeOffset.UtcNow);
-        SetStatus(
-            _snapshot.ModelEnumerationState switch
-            {
-                ProviderDiscoveryState.Supported when _snapshot.Models.Count > 0 =>
-                    stale
-                        ? $"Discovered {_snapshot.Models.Count} model(s). Observation is stale; refresh recommended."
-                        : $"Discovered {_snapshot.Models.Count} model(s).",
-                ProviderDiscoveryState.Supported =>
-                    "The provider returned no models. No model was inferred.",
-                ProviderDiscoveryState.Unsupported =>
-                    "This provider does not expose supported model enumeration.",
-                _ => "Provider model enumeration state is unknown."
-            },
-            stale
-                ? HiveStatusTone.Warning
-                : _snapshot.ModelEnumerationState == ProviderDiscoveryState.Supported
-                    ? HiveStatusTone.Success
-                    : HiveStatusTone.Warning);
+        await _page.RefreshAsync().ConfigureAwait(true);
 
-        _modelsList.BeginUpdate();
-        try
-        {
-            _modelsList.Items.Clear();
-
-            foreach (var model in _snapshot.Models)
-            {
-                var item = new ListViewItem(model.ModelId);
-                item.SubItems.Add(model.ModelType ?? "Not reported");
-                item.SubItems.Add(model.Availability.ToString());
-                item.SubItems.Add(model.Health.ToString());
-                item.Tag = model;
-                _modelsList.Items.Add(item);
-            }
-        }
-        finally
-        {
-            _modelsList.EndUpdate();
-        }
-
-        if (_modelsList.Items.Count > 0)
-        {
-            var firstItem = _modelsList.Items[0];
-            firstItem.Selected = true;
-            firstItem.Focused = true;
-
-            if (firstItem.Tag is ProviderModelMetadata model)
-                RenderModelDetails(model);
-        }
+        if (_page.SelectedItem is ModelInformationRow row)
+            RenderModelDetails(row.Model);
         else
-        {
             RenderNoModelDetails();
-        }
 
-        ApplyOperationalContext();
         ResizeDetailCards();
+    }
+
+    private Task<IReadOnlyList<ModelInformationRow>> LoadModelsAsync(
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (_snapshot is null)
+            return Task.FromResult<IReadOnlyList<ModelInformationRow>>(
+                Array.Empty<ModelInformationRow>());
+
+        var rows = _snapshot.Models
+            .Select(model =>
+            {
+                var target = ResolveExecutionTarget(model);
+                return new ModelInformationRow(
+                    model,
+                    target,
+                    target is not null &&
+                    _favoriteTargetIdSet.Contains(target.Id));
+            })
+            .ToArray();
+
+        return Task.FromResult<IReadOnlyList<ModelInformationRow>>(rows);
     }
 
     private void ModelsListSelectionChanged(
@@ -669,12 +598,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         if (!e.IsSelected)
             return;
 
-        if (e.Item is not ListViewItem item)
-            return;
-
-        if (item.Tag is ProviderModelMetadata model)
+        if (_page.SelectedItem is ModelInformationRow row)
         {
-            RenderModelDetails(model);
+            RenderModelDetails(row.Model);
             return;
         }
 
@@ -682,34 +608,77 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             RenderNoModelDetails();
     }
 
-    private void ApplyOperationalContext()
+    private async Task<ModelInformationRow?> AddSelectedModelToFavoritesAsync(
+        ModelInformationRow? _,
+        CancellationToken cancellationToken)
     {
-        if (_snapshot is null)
-            return;
+        var row = _page.SelectedItem;
+        if (row is null)
+            return null;
 
-        var operational = _snapshot.Operational;
-        var rateLimit = operational.RateLimitRemaining is { } remaining
-            ? $"  •  Provider rate limit remaining: {remaining}"
-            : string.Empty;
+        if (row.ExecutionTarget is null)
+        {
+            HiveMessageBox.ShowInformation(
+                FindForm(),
+                "The selected discovered model does not map to an ExecutionTarget for this endpoint.",
+                "Add to Favorites");
+            return null;
+        }
 
-        _contextLabel.Text =
-            $"Provider: {_selectedProvider?.DisplayName ?? "—"}  •  " +
-            $"Account: {_selectedAccount?.DisplayName ?? "—"}  •  " +
-            $"Endpoint: {_selectedEndpoint?.AbsoluteUri ?? "—"}{rateLimit}";
+        if (_favoriteTargetIdSet.Contains(row.ExecutionTarget.Id))
+        {
+            _page.SetStatus(
+                "The selected ExecutionTarget is already a favorite.",
+                HiveStatusTone.Neutral);
+            return null;
+        }
 
-        if (_snapshot.Models.Count == 0)
-            RenderNoModelDetails();
+        var updatedIds = _favoriteExecutionTargetIds
+            .Append(row.ExecutionTarget.Id)
+            .ToArray();
+
+        var result = await _management
+            .ReplaceFavoriteExecutionTargetIdsAsync(
+                updatedIds,
+                _accessContext,
+                cancellationToken)
+            .ConfigureAwait(true);
+
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error!.Message);
+
+        _favoriteExecutionTargetIds = result.Value!;
+        _favoriteTargetIdSet = _favoriteExecutionTargetIds.ToHashSet();
+
+        _page.SetStatus(
+            "ExecutionTarget added to Favorites.",
+            HiveStatusTone.Neutral);
+
+        return row with { IsFavorite = true };
     }
+
+    private ExecutionTarget? ResolveExecutionTarget(
+        ProviderModelMetadata model) =>
+        _selectedEndpoint is null
+            ? null
+            : _executionTargets.FirstOrDefault(target =>
+                EndpointsEqual(target.Endpoint, _selectedEndpoint) &&
+                (string.Equals(
+                     target.Model,
+                     model.ModelId,
+                     StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(
+                     target.Deployment,
+                     model.ModelId,
+                     StringComparison.OrdinalIgnoreCase)));
 
     private void ClearObservation()
     {
         CancelOperation();
         _snapshot = null;
-        _modelsList.Items.Clear();
+        _executionTargets = Array.Empty<ExecutionTarget>();
+        _page.ListView.Items.Clear();
         ClearDetailsContent();
-        SetStatus(
-            "Select a Provider, Account, and endpoint to inspect model information.",
-            HiveStatusTone.Neutral);
     }
 
     private void RenderNoModelDetails()
@@ -1249,22 +1218,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         ApplyStatusTheme();
     }
 
-    private void ApplyStatusTheme()
-    {
-        var tone = _statusLabel.Tag is HiveStatusTone value
-            ? value
-            : HiveStatusTone.Neutral;
-
-        _statusLabel.ForeColor = tone switch
-        {
-            HiveStatusTone.Information => _themeManager.Theme.VisualStates.Information,
-            HiveStatusTone.Success => _themeManager.Theme.VisualStates.Success,
-            HiveStatusTone.Warning => _themeManager.Theme.VisualStates.Warning,
-            HiveStatusTone.Error => _themeManager.Theme.VisualStates.Error,
-            _ => _themeManager.Theme.Palette.MutedText
-        };
-    }
-
     private void ThemeManagerOnChanged(object? sender, EventArgs e)
     {
         ApplyTheme();
@@ -1276,8 +1229,20 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             return;
 
         _themeManager.Apply(this);
-        ApplyStatusTheme();
         ApplyDetailsTheme();
+    }
+
+    private void PageOperationFailed(
+        object? sender,
+        HiveCrudOperationFailedEventArgs e)
+    {
+        _page.SetStatus(
+            "Operation failed. See technical details.",
+            HiveStatusTone.Error);
+
+        ReportError(
+            e.Exception,
+            "The Model Information operation could not be completed.");
     }
 
     private void ReportError(Exception exception, string message)
@@ -1311,8 +1276,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _accountComboBox.SelectedIndexChanged -= AccountChanged;
             _endpointComboBox.SelectedIndexChanged -= EndpointChanged;
             _endpointComboBox.TextChanged -= EndpointTextChanged;
-            _refreshButton.Click -= RefreshButtonOnClick;
-            _modelsList.ItemSelectionChanged -= ModelsListSelectionChanged;
+            _page.OperationFailed -= PageOperationFailed;
+            _page.ListView.ItemSelectionChanged -= ModelsListSelectionChanged;
             _detailsScrollHost.Resize -= DetailsScrollHostOnResize;
             CancelOperation();
         }
