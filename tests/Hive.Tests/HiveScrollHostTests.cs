@@ -375,6 +375,12 @@ public sealed class HiveScrollHostTests
         form.Controls.Add(host);
         host.Attach(list);
         form.Show();
+
+        // The ListView handle is created during showing. Suppression must already
+        // be armed before this lifecycle so native scrollbars never become the
+        // first-paint presentation.
+        AssertNativeListViewScrollBarsHidden(list);
+
         Application.DoEvents();
         host.Synchronize();
 
