@@ -42,8 +42,7 @@ Expected user-facing behavior:
 - a retired favorite remains stored and visible as a retired favorite where its resource is still accessible;
 - Agent execution-target behavior remains unchanged in this slice and is owned by its later configuration/selection phase.
 
-## Verification Failure / Remediation Boundary
-
+## Verification Failure / Remediation Boundary — CRUD Initial Layout
 
 Developer reported a remaining in-scope UI failure:
 - when the Favorites CRUD page opens at its normal window size, the CRUD action buttons can be laid out outside the visible right side until the window is maximized and resized back;
@@ -52,7 +51,7 @@ Developer reported a remaining in-scope UI failure:
 
 Remediation is authorized within Phase 1.19A because it corrects the existing Favorites Settings presentation and shared Hive CRUD resize behavior; it does not add a new capability or change Agent behavior.
 
-## Verification Failure / Remediation Boundary
+## Verification Failure / Remediation Boundary — Favorites UI and Refresh Lifecycle
 
 Developer reported:
 - Refresh produced System.InvalidOperationException: Collection was modified; enumeration operation may not execute.
