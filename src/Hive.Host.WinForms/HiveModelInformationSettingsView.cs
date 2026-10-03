@@ -355,7 +355,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     private const int MainSplitPanel1MinimumWidth = 320;
     private const int MainSplitPanel2MinimumWidth = 400;
-    private const int MainSplitInitialPanel1Width = 500;
+    private const int MainSplitPreferredPanel2Width = 400;
     private bool _mainSplitConstraintsApplied;
 
     private void MainSplitSizeChanged(object? sender, EventArgs e)
@@ -379,8 +379,13 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         if (!_mainSplitConstraintsApplied)
         {
+            var preferredSplitterDistance =
+                width -
+                MainSplitPreferredPanel2Width -
+                _mainSplit.SplitterWidth;
+
             var initialSplitterDistance = Math.Clamp(
-                MainSplitInitialPanel1Width,
+                preferredSplitterDistance,
                 MainSplitPanel1MinimumWidth,
                 width -
                 MainSplitPanel2MinimumWidth -
