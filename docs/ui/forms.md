@@ -90,7 +90,7 @@ Advanced Provider Configuration
 
 There is no separate Overview tab in this window. The surrounding normal Providers Settings surface remains the entry point for simple provider onboarding.
 
-Model Information presents the discovered provider/model profile without becoming a configuration store. Provider, Account / Credential, and Discovery Endpoint are compact HiveComboBox selectors. The discovered model catalog uses HiveListView and the selected model is shown in structured Hive-owned detail panels rather than a raw multiline text box. Identity, inputs, outputs, capabilities, reasoning/thinking, limits, pricing/economics, operational state, and bounded provider-specific evidence remain separately readable, while missing information remains explicitly not reported/Unknown.
+Model Information presents the discovered provider/model profile without becoming a configuration store. Provider, Account / Credential, and Discovery Endpoint are compact HiveComboBox selectors. The discovered model catalog uses the shared Hive CRUD / HiveListView presentation with one Add to Favorites action, capability/state columns rendered as `✓` / `✕` / `—`, a local token-price range filter, and a capability/state filter. The selected model is shown in structured Hive-owned detail panels rather than a raw multiline text box. Identity, inputs, outputs, capabilities, reasoning/thinking, limits, pricing/economics, operational state, and bounded provider-specific evidence remain separately readable, while missing information is shown as `—`.
 
 The target capability editor is structured rather than free-form. It uses bounded Hive capability identities and Supported / Unsupported / Unknown states. The first-look layout is:
 
