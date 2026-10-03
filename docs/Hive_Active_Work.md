@@ -59,6 +59,11 @@ Developer reported:
 - The first Favorites tab implementation populated the main list with execution targets from all providers/accounts instead of presenting only saved favorites.
 - The interaction model incorrectly put Provider / Account filters and checkboxes on the main Favorites page instead of using them only in an Add Favorite picker.
 
+Remediation completed for this latest UI failure:
+- HiveCrudPage now reapplies toolbar and footer geometry when its handle is created, when it is attached/reparented, and during normal WinForms layout passes, so the initial client size is authoritative without requiring a maximize/unmaximize cycle;
+- Hive Settings now opens at a larger default/minimum size to give the Settings and CRUD surfaces more usable desktop space;
+- focused Favorites UI regression coverage attaches the Favorites page to a normal-size WinForms parent and verifies all visible CRUD actions remain inside the action bar.
+
 Remediation completed within the Phase 1.19A Favorites settings view, filtered picker, persistence invocation path, and focused UI tests:
 - the main Favorites page is now a saved-favorites list only;
 - the Provider / Account selectors exist only in the Add Favorite picker, followed by one Execution Target selector;
