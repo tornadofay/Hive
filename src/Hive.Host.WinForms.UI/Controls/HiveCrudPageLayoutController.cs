@@ -283,15 +283,11 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
             _actionLayout.ColumnStyles.Clear();
             _actionLayout.RowStyles.Clear();
 
-            var actionButtonWidth = compact
-                ? CompactActionButtonWidth
-                : ActionButtonWidth;
-
-            _addButton.Width = actionButtonWidth;
-            _editButton.Width = actionButtonWidth;
-            _activateButton.Width = actionButtonWidth;
-            _deleteButton.Width = actionButtonWidth;
-            _refreshButton.Width = actionButtonWidth;
+            _addButton.Width = GetActionButtonWidth(_addButton, compact);
+            _editButton.Width = GetActionButtonWidth(_editButton, compact);
+            _activateButton.Width = GetActionButtonWidth(_activateButton, compact);
+            _deleteButton.Width = GetActionButtonWidth(_deleteButton, compact);
+            _refreshButton.Width = GetActionButtonWidth(_refreshButton, compact);
 
             _actionButtons.WrapContents = compact;
             _searchLabel.Visible = _searchBox.Visible && !compact;
@@ -350,14 +346,18 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
 
     internal int GetCompactActionRowCount()
     {
-        var visibleCount =
-            (_addButton.Visible ? 1 : 0) +
-            (_editButton.Visible ? 1 : 0) +
-            (_activateButton.Visible ? 1 : 0) +
-            (_deleteButton.Visible ? 1 : 0) +
-            (_refreshButton.Visible ? 1 : 0);
+        var visibleButtons = new[]
+        {
+            _addButton,
+            _editButton,
+            _activateButton,
+            _deleteButton,
+            _refreshButton
+        }
+        .Where(static button => button.Visible)
+        .ToArray();
 
-        if (visibleCount == 0)
+        if (visibleButtons.Length == 0)
             return 1;
 
         var availableWidth = Math.Max(
@@ -366,13 +366,14 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
             _actionButtons.Padding.Left -
             _actionButtons.Padding.Right);
 
-        var buttonWidth =
-            CompactActionButtonWidth + ActionButtonSpacing;
+        var requiredWidth = visibleButtons.Sum(
+            button => GetActionButtonWidth(button, compact: true) +
+                      ActionButtonSpacing);
 
         return Math.Max(
             1,
             (int)Math.Ceiling(
-                visibleCount * buttonWidth /
+                requiredWidth /
                 (double)availableWidth));
     }
 
@@ -452,16 +453,32 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
         if (compact)
             return 0;
 
-        var buttonWidth = ActionButtonWidth;
-        var visibleCount =
-            (_addButton.Visible ? 1 : 0) +
-            (_editButton.Visible ? 1 : 0) +
-            (_activateButton.Visible ? 1 : 0) +
-            (_deleteButton.Visible ? 1 : 0) +
-            (_refreshButton.Visible ? 1 : 0);
+        var visibleButtons = new[]
+        {
+            _addButton,
+            _editButton,
+            _activateButton,
+            _deleteButton,
+            _refreshButton
+        }
+        .Where(static button => button.Visible)
+        .ToArray();
 
-        return visibleCount * (buttonWidth + ActionButtonSpacing);
+        return visibleButtons.Sum(
+            button => GetActionButtonWidth(button, compact: false) +
+                      ActionButtonSpacing);
     }
+
+    private static int GetActionButtonWidth(
+        Button button,
+        bool compact) =>
+        Math.Max(
+            compact
+                ? CompactActionButtonWidth
+                : ActionButtonWidth,
+            TextRenderer.MeasureText(
+                button.Text ?? string.Empty,
+                button.Font).Width + 28);
 
     internal void OwnerFontChanged(object? sender, EventArgs e) => ApplyThemeTypography();
 
