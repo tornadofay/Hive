@@ -14,6 +14,8 @@ internal sealed class HiveProvidersSettingsView : UserControl
     private readonly HiveCrudPage<ConfiguredProviderRow> _page;
     private readonly HiveButton _refreshButton;
     private readonly HiveButton _advancedButton;
+    private readonly HiveTabControl _tabs;
+    private readonly HiveFavoriteExecutionTargetsSettingsView _favoritesPage;
     private CancellationTokenSource? _refreshCts;
     private int _refreshRunning;
 
@@ -109,13 +111,76 @@ internal sealed class HiveProvidersSettingsView : UserControl
         _page.ActionBarPanel.Controls.Add(_refreshButton);
         _page.OperationFailed += PageOperationFailed;
 
-        Controls.Add(_page);
+        _tabs = new HiveTabControl
+        {
+            Dock = DockStyle.Fill,
+            AccessibleName = "Provider settings sections"
+        };
+
+        var providersTab = new TabPage("Providers")
+        {
+            Padding = Padding.Empty,
+            Margin = Padding.Empty
+        };
+        providersTab.Controls.Add(_page);
+
+        _favoritesPage = new HiveFavoriteExecutionTargetsSettingsView(
+            _management,
+            _accessContext,
+            _themeManager,
+            _output);
+
+        var favoritesTab = new TabPage("Favorite Execution Targets")
+        {
+            Padding = new Padding(8),
+            Margin = Padding.Empty
+        };
+        favoritesTab.Controls.Add(_favoritesPage);
+
+        _tabs.TabPages.Add(providersTab);
+        _tabs.TabPages.Add(favoritesTab);
+        _tabs.SelectedIndexChanged += TabsSelectedIndexChanged;
+
+        Controls.Add(_tabs);
         _themeManager.Apply(this);
     }
 
     public Task InitializeAsync(
         CancellationToken cancellationToken = default) =>
         _page.RefreshAsync(cancellationToken);
+
+    internal HiveTabControl NavigationTabs => _tabs;
+
+    internal HiveFavoriteExecutionTargetsSettingsView FavoriteTargetsPage =>
+        _favoritesPage;
+
+    private async void TabsSelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (_tabs.SelectedIndex != 1 ||
+            _favoritesPage.IsDisposed ||
+            _favoritesPage.Disposing)
+        {
+            return;
+        }
+
+        try
+        {
+            await _favoritesPage.InitializeAsync().ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            if (!IsDisposed && !Disposing)
+            {
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    exception,
+                    "Favorite Execution Targets",
+                    "The favorite execution-target settings could not be loaded.",
+                    _output,
+                    _themeManager);
+            }
+        }
+    }
 
     private async Task<IReadOnlyList<ConfiguredProviderRow>> LoadAsync(
         CancellationToken cancellationToken)
@@ -561,6 +626,7 @@ internal sealed class HiveProvidersSettingsView : UserControl
         if (disposing)
         {
             _page.OperationFailed -= PageOperationFailed;
+            _tabs.SelectedIndexChanged -= TabsSelectedIndexChanged;
 
             var refreshCts = Interlocked.Exchange(ref _refreshCts, null);
             refreshCts?.Cancel();
