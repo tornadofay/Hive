@@ -468,7 +468,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
 
             var result = await _management
                 .ReplaceFavoriteExecutionTargetIdsAsync(
-                    _favoriteTargetIds.ToArray(),
+                    orderedIds,
                     _accessContext)
                 .ConfigureAwait(true);
 
