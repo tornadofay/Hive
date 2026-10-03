@@ -31,6 +31,12 @@ internal sealed class HiveFavoriteExecutionTargetPickerForm : HiveForm
         IHiveThemeManager themeManager,
         IReadOnlySet<ExecutionTargetId> favoriteTargetIds,
         IHiveExampleOutput? output = null)
+        : base(
+            "Add Favorite Execution Target",
+            "Choose one execution target to add to your favorites.",
+            new Size(620, 420),
+            new Size(560, 360),
+            themeManager)
     {
         _management = management ?? throw new ArgumentNullException(nameof(management));
         _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
@@ -38,10 +44,15 @@ internal sealed class HiveFavoriteExecutionTargetPickerForm : HiveForm
         _favoriteTargetIds = favoriteTargetIds ?? throw new ArgumentNullException(nameof(favoriteTargetIds));
         _output = output;
 
-        Text = "Add Favorite Execution Target";
-        StartPosition = FormStartPosition.CenterParent;
-        MinimumSize = new Size(560, 360);
-        ClientSize = new Size(620, 420);
+        ConfigureHeader(
+            allowMove: true,
+            allowClose: true,
+            allowMinimize: false,
+            allowMaximize: false,
+            allowHelp: false,
+            allowThemeToggle: true);
+
+        SetBodyPadding(new Padding(20));
 
         _providerComboBox = CreateComboBox();
         _accountComboBox = CreateComboBox();
