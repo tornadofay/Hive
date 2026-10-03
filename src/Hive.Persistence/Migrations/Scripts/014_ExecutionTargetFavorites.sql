@@ -10,6 +10,7 @@ IF OBJECT_ID(N'[dbo].[HiveExecutionTargetFavorites]', N'U') IS NULL
 BEGIN
     CREATE TABLE [dbo].[HiveExecutionTargetFavorites]
     (
+        [DeploymentId] UNIQUEIDENTIFIER NOT NULL,
         [OwnerPrincipalId] UNIQUEIDENTIFIER NOT NULL,
         [ScopeKind] INT NOT NULL,
         [ScopeIdentity] UNIQUEIDENTIFIER NOT NULL,
@@ -18,6 +19,7 @@ BEGIN
         CONSTRAINT [PK_HiveExecutionTargetFavorites]
             PRIMARY KEY CLUSTERED
             (
+                [DeploymentId],
                 [OwnerPrincipalId],
                 [ScopeKind],
                 [ScopeIdentity],
