@@ -515,8 +515,10 @@ AgentDefinition configuration may reference an existing ExecutionTarget without 
 The durable relationship established by the earlier Settings contract remains the foundation. Agent-specific execution policy is not owned by Provider Settings.
 
 The later Agent interaction/configuration slice owns the user-facing distinction between:
-- `Auto` — select an eligible target through the existing authoritative execution-target selection/planning boundary;
-- `Specific ExecutionTarget` — pin the Agent to an exact existing ExecutionTarget and fail clearly when that exact target becomes unusable rather than silently switching.
+- `Auto` — select an eligible target only from the user's Favorite ExecutionTargets through the existing authoritative execution-target selection/planning boundary;
+- `Specific ExecutionTarget` — present only the user's Favorite ExecutionTargets, pin the Agent to the exact selected target, and fail clearly when that exact target becomes unusable rather than silently switching.
+
+The Agent target-selection surface must not expand an empty or non-qualifying favorite pool into the full ExecutionTarget catalog. If no qualifying favorite exists, `Auto` fails clearly; explicit selection has no candidate until the user configures favorites.
 
 The Agent configuration surface must therefore resolve friendly provider/model choices to the exact durable ExecutionTarget identity rather than persist only an ambiguous model-name string.
 
