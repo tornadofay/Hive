@@ -515,9 +515,15 @@ public sealed class Phase116FollowUpTests
         Assert.Single(visibleActionButtons);
         Assert.Equal("Add to Favorites", visibleActionButtons[0].Text);
         Assert.True(visibleActionButtons[0].Width >= 120);
-        
+
         var initialDetailsWidth = view.DetailsPanelWidth;
         host.ClientSize = new Size(1320, 760);
+        host.PerformLayout();
+        view.PerformLayout();
+        Application.DoEvents();
+        Assert.Equal(initialDetailsWidth, view.DetailsPanelWidth);
+
+        host.ClientSize = new Size(980, 760);
         host.PerformLayout();
         view.PerformLayout();
         Application.DoEvents();
@@ -701,6 +707,75 @@ public sealed class Phase116FollowUpTests
 
         view.CapabilityFilter.SelectedIndex = visionIndex;
         view.CapabilityStateFilter.SelectedIndex = supportedIndex;
+        Application.DoEvents();
+
+        Assert.Single(view.ModelsList.Items);
+        Assert.Contains("rich-model", view.ModelsList.Items[0].Text);
+    }
+
+    [WinFormsFact]
+    public async Task ModelInformationView_PriceFilterUsesHighestReportedTokenRate()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var fixture = CreateFixture();
+
+        using var host = new Form { Size = new Size(1160, 760) };
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync();
+        Application.DoEvents();
+
+        Assert.Equal(2, view.ModelsList.Items.Count);
+
+        view.MaxPriceFilter.Value = 1m;
+        Application.DoEvents();
+
+        Assert.Single(view.ModelsList.Items);
+        Assert.Equal("second-model", view.ModelsList.Items[0].Text);
+    }
+
+    [WinFormsFact]
+    public async Task ModelInformationView_CapabilityFilterUsesTrueState()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var fixture = CreateFixture();
+
+        using var host = new Form { Size = new Size(1160, 760) };
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync();
+        Application.DoEvents();
+
+        var visionIndex = Enumerable.Range(0, view.CapabilityFilter.Items.Count)
+            .Single(index =>
+                string.Equals(
+                    view.CapabilityFilter.Items[index]?.ToString(),
+                    "Vision",
+                    StringComparison.Ordinal));
+
+        var trueIndex = Enumerable.Range(0, view.CapabilityStateFilter.Items.Count)
+            .Single(index =>
+                string.Equals(
+                    view.CapabilityStateFilter.Items[index]?.ToString(),
+                    "True",
+                    StringComparison.Ordinal));
+
+        view.CapabilityFilter.SelectedIndex = visionIndex;
+        view.CapabilityStateFilter.SelectedIndex = trueIndex;
         Application.DoEvents();
 
         Assert.Single(view.ModelsList.Items);
@@ -965,7 +1040,20 @@ public sealed class Phase116FollowUpTests
             ["text"],
             family: "second-family",
             modelType: "chat",
-            operationalState: "active");
+            operationalState: "active",
+            pricing: new ProviderModelPricing(
+                [
+                    new ProviderModelPrice(
+                        "input_token",
+                        0.25m,
+                        "USD",
+                        1_000_000m),
+                    new ProviderModelPrice(
+                        "output_token",
+                        0.5m,
+                        "USD",
+                        1_000_000m)
+                ]));
 
         var snapshot = new ProviderDiscoverySnapshot(
             provider.Id,
