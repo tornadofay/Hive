@@ -38,7 +38,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly Label _statusLabel;
     private readonly HiveListView _modelsList;
     private readonly HiveScrollHost _modelsScrollHost;
-    private readonly FlowLayoutPanel _detailsContent;
+    private readonly Panel _detailsContent;
     private readonly HiveScrollHost _detailsScrollHost;
     private readonly Label _contextLabel;
     private CancellationTokenSource? _operationCts;
@@ -164,16 +164,13 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         };
         modelSurface.Controls.Add(_modelsScrollHost);
 
-        _detailsContent = new FlowLayoutPanel
+        _detailsContent = new Panel
         {
             Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = false,
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            AutoSize = false,
             Margin = Padding.Empty,
             Padding = new Padding(0, 0, 8, 8),
-            MinimumSize = new Size(320, 0),
+            MinimumSize = new Size(320, 48),
             AccessibleName = "Selected model information"
         };
 
@@ -234,7 +231,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     internal HiveListView ModelsList => _modelsList;
 
-    internal FlowLayoutPanel DetailsContent => _detailsContent;
+    internal Panel DetailsContent => _detailsContent;
 
     internal HiveScrollHost ModelsScrollHost => _modelsScrollHost;
 
@@ -1096,8 +1093,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         var availableWidth = Math.Max(
             320,
-            _detailsScrollHost.ClientSize.Width - 10);
+            _detailsScrollHost.ClientSize.Width - _detailsContent.Padding.Horizontal - 10);
 
+        var top = 0;
         foreach (Control child in _detailsContent.Controls)
         {
             if (child is not Panel card)
@@ -1105,22 +1103,31 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
             card.Width = availableWidth;
 
-            if (card.Controls.OfType<TableLayoutPanel>().SingleOrDefault() is not { } table)
-                continue;
+            if (card.Controls.OfType<TableLayoutPanel>().SingleOrDefault() is { } table)
+            {
+                table.Width = Math.Max(
+                    300,
+                    card.ClientSize.Width - card.Padding.Horizontal);
 
-            table.Width = Math.Max(
-                300,
-                card.ClientSize.Width - card.Padding.Horizontal);
+                table.PerformLayout();
 
-            table.PerformLayout();
+                var preferred = table.GetPreferredSize(
+                    new Size(table.Width, 0));
 
-            var preferred = table.GetPreferredSize(
-                new Size(table.Width, 0));
+                card.Height = Math.Max(
+                    48,
+                    preferred.Height + card.Padding.Vertical + 2);
+            }
 
-            card.Height = Math.Max(
-                48,
-                preferred.Height + card.Padding.Vertical + 2);
+            card.Location = new Point(0, top);
+            top += card.Height + card.Margin.Bottom;
         }
+
+        _detailsContent.Size = new Size(
+            Math.Max(320, availableWidth + _detailsContent.Padding.Horizontal),
+            Math.Max(
+                48,
+                top + _detailsContent.Padding.Bottom));
 
         _detailsContent.PerformLayout();
         _detailsScrollHost.Synchronize();
