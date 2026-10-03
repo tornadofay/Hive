@@ -68,7 +68,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Dock = DockStyle.Top,
             Height = 72,
             Padding = new Padding(8),
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            BorderStyle = BorderStyle.FixedSingle
         };
 
         var contextPanel = new TableLayoutPanel
@@ -158,7 +159,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             Dock = DockStyle.Fill,
             Padding = new Padding(1),
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            BorderStyle = BorderStyle.FixedSingle
         };
         modelSurface.Controls.Add(_modelsScrollHost);
 
@@ -190,7 +192,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             Dock = DockStyle.Fill,
             Padding = new Padding(1),
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            BorderStyle = BorderStyle.FixedSingle
         };
         detailsSurface.Controls.Add(_detailsScrollHost);
 
@@ -942,16 +945,18 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         string title,
         bool emphasized = false)
     {
+        var theme = _themeManager.Theme;
         var card = new Panel
         {
             AutoSize = true,
             Margin = new Padding(0, 0, 0, 8),
             Padding = new Padding(10),
-            BorderColor = emphasized
-                ? _themeManager.Theme.Palette.Accent
-                : _themeManager.Theme.Palette.Border,
-            CornerRadius = 8,
-            AccessibleName = title
+            BackColor = emphasized
+                ? theme.Palette.Surface
+                : theme.Palette.ElevatedSurface,
+            BorderStyle = BorderStyle.FixedSingle,
+            AccessibleName = title,
+            Tag = emphasized ? "emphasized" : null
         };
 
         var table = new TableLayoutPanel
@@ -1041,17 +1046,23 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         _themeManager.Apply(_detailsContent);
 
+        var theme = _themeManager.Theme;
         foreach (var card in _detailsContent.Controls.OfType<Panel>())
         {
+            card.BackColor = card.Tag is string tag && tag == "emphasized"
+                ? theme.Palette.Surface
+                : theme.Palette.ElevatedSurface;
+            card.ForeColor = theme.Palette.Text;
+
             var table = GetCardTable(card);
 
             foreach (var label in table.Controls.OfType<Label>())
             {
                 label.ForeColor = label.Tag switch
                 {
-                    DetailKeyTag => _themeManager.Theme.Palette.MutedText,
-                    DetailValueTag => _themeManager.Theme.Palette.Text,
-                    _ => label.ForeColor
+                    DetailKeyTag => theme.Palette.MutedText,
+                    DetailValueTag => theme.Palette.Text,
+                    _ => theme.Palette.Text
                 };
             }
         }
