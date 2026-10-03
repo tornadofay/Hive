@@ -123,6 +123,16 @@ public sealed class HiveScrollHost : UserControl
         content.Dock = DockStyle.None;
         content.Anchor = AnchorStyles.Top | AnchorStyles.Left;
 
+        // Arm HiveListView native-scrollbar suppression before the hosted ListView
+        // enters the viewport and can create/paint its native scrollbar windows.
+        // The normal Synchronize path still acquires authoritative scroll state
+        // before applying the final suppression operation.
+        if (content is HiveListView hiveListView &&
+            !content.IsHandleCreated)
+        {
+            hiveListView.PrepareNativeScrollBarSuppression();
+        }
+
         _viewport.Controls.Add(content);
 
         HookContentControls(content);
@@ -431,17 +441,6 @@ public sealed class HiveScrollHost : UserControl
         Synchronize();
     }
 
-    protected override void OnCreateControl()
-    {
-        base.OnCreateControl();
-        ApplyAmbientHiveTheme();
-    }
-
-    protected override void OnParentChanged(EventArgs e)
-    {
-        base.OnParentChanged(e);
-        ApplyAmbientHiveTheme();
-    }
 
     protected override void OnHandleCreated(EventArgs e)
     {
@@ -517,13 +516,6 @@ public sealed class HiveScrollHost : UserControl
         BackColor = theme.Palette.Surface;
         Invalidate();
     }
-
-    private void ApplyAmbientHiveTheme()
-    {
-        if (FindForm() is HiveForm hiveForm)
-            hiveForm.ThemeManager.Apply(this);
-    }
-
     private void ScrollBarValueChanged(
         object? sender,
         EventArgs e)
