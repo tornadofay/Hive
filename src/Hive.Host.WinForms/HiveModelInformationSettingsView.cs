@@ -161,10 +161,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         };
 
         _page.SetColumns(
-            new HiveCrudColumn<ModelInformationRow>(
-                "Model",
-                250,
-                FormatModelName),
+            new HiveCrudColumn<ModelInformationRow>("Model", 250, FormatModelName),
             new HiveCrudColumn<ModelInformationRow>(
                 "Text",
                 50,
@@ -571,6 +568,187 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             await LoadCachedOrDiscoverAsync().ConfigureAwait(true);
     }
 
+    private async void FilterChanged(object? sender, EventArgs e)
+    {
+        if (_updatingFilters || IsDisposed || Disposing)
+            return;
+
+        try
+        {
+            if (_minPriceFilter.Value > _maxPriceFilter.Value)
+            {
+                _updatingFilters = true;
+                try
+                {
+                    if (ReferenceEquals(sender, _minPriceFilter))
+                        _maxPriceFilter.Value = _minPriceFilter.Value;
+                    else
+                        _minPriceFilter.Value = _maxPriceFilter.Value;
+                }
+                finally
+                {
+                    _updatingFilters = false;
+                }
+
+                return;
+            }
+
+            await _page.RefreshAsync().ConfigureAwait(true);
+
+            if (_page.ListView.Items.Count > 0)
+            {
+                var firstItem = _page.ListView.Items[0];
+                firstItem.Selected = true;
+                firstItem.Focused = true;
+            }
+            else
+            {
+                RenderNoModelDetails();
+            }
+        }
+        catch (OperationCanceledException)
+            when (IsDisposed || Disposing)
+        {
+        }
+    }
+
+    private bool MatchesFilters(ProviderModelMetadata model)
+    {
+        var price = GetComparableTokenPricePerMillion(model);
+
+        if (price is { } comparablePrice &&
+            (comparablePrice < _minPriceFilter.Value ||
+             comparablePrice > _maxPriceFilter.Value))
+        {
+            return false;
+        }
+
+        if (_capabilityFilter.SelectedItem is not CapabilityFilterChoice
+            {
+                Key: { } key
+            })
+        {
+            return true;
+        }
+
+        var desiredState = _capabilityStateFilter.SelectedItem is StateFilterChoice state
+            ? state.State
+            : ModelCapabilityFilterState.Any;
+
+        if (desiredState == ModelCapabilityFilterState.Any)
+            return true;
+
+        var actual = model.DiscoveredCapabilities
+            .FirstOrDefault(item => item.Capability == key)
+            ?.State;
+
+        return desiredState switch
+        {
+            ModelCapabilityFilterState.Supported => actual == CapabilityState.Supported,
+            ModelCapabilityFilterState.Unsupported => actual == CapabilityState.Unsupported,
+            ModelCapabilityFilterState.Unknown =>
+                actual == CapabilityState.Unknown || actual is null,
+            _ => true
+        };
+    }
+
+    private static IReadOnlyList<CapabilityFilterChoice> GetCapabilityFilterChoices() =>
+    [
+        new(null, "Any"),
+        new(HiveCapabilityKeys.TextGeneration, "Text"),
+        new(HiveCapabilityKeys.Vision, "Vision"),
+        new(HiveCapabilityKeys.ToolCalling, "Tools"),
+        new(HiveCapabilityKeys.StructuredOutput, "Structured"),
+        new(HiveCapabilityKeys.Reasoning, "Reasoning"),
+        new(HiveCapabilityKeys.Thinking, "Thinking")
+    ];
+
+    private static NumericUpDown CreatePriceFilter(decimal value) =>
+        new()
+        {
+            Width = 72,
+            Height = 32,
+            Minimum = 0,
+            Maximum = 1000,
+            DecimalPlaces = 2,
+            Increment = 1,
+            Value = value,
+            ThousandsSeparator = false,
+            Margin = Padding.Empty,
+            AccessibleRole = AccessibleRole.SpinButton
+        };
+
+    private static Label CreateFilterLabel(string text) =>
+        new()
+        {
+            AutoSize = true,
+            Text = text,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(0, 8, 6, 0),
+            Padding = Padding.Empty
+        };
+
+    private static string FormatCapabilityState(CapabilityState state) =>
+        state switch
+        {
+            CapabilityState.Supported => "✓",
+            CapabilityState.Unsupported => "✕",
+            _ => "—"
+        };
+
+    private static string FormatCapabilityState(
+        ProviderModelMetadata model,
+        CapabilityKey key) =>
+        model.DiscoveredCapabilities
+            .FirstOrDefault(item => item.Capability == key) is { } entry
+                ? FormatCapabilityState(entry.State)
+                : "—";
+
+    private Color? GetCapabilityStateColor(
+        ProviderModelMetadata model,
+        CapabilityKey key)
+    {
+        var state = model.DiscoveredCapabilities
+            .FirstOrDefault(item => item.Capability == key)
+            ?.State;
+
+        return state switch
+        {
+            CapabilityState.Supported => _themeManager.Theme.VisualStates.Success,
+            CapabilityState.Unsupported => _themeManager.Theme.VisualStates.Error,
+            _ => _themeManager.Theme.Palette.MutedText
+        };
+    }
+
+    private static decimal? GetComparableTokenPricePerMillion(
+        ProviderModelMetadata model)
+    {
+        if (model.Pricing?.ExplicitFreeEvidence == true &&
+            model.Pricing.Prices.All(price => !IsTokenBillingUnit(price.BillingUnit)))
+        {
+            return 0m;
+        }
+
+        var values = model.Pricing?.Prices
+            .Where(static price =>
+                IsTokenBillingUnit(price.BillingUnit) &&
+                string.Equals(price.Currency, "USD", StringComparison.OrdinalIgnoreCase))
+            .Select(static price =>
+            {
+                var quantity = price.UnitQuantity ?? 1m;
+                return price.Price * 1_000_000m / quantity;
+            })
+            .ToArray();
+
+        return values is { Length: > 0 }
+            ? values.Max()
+            : null;
+    }
+
+    private static bool IsTokenBillingUnit(string billingUnit) =>
+        string.Equals(billingUnit, "input_token", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(billingUnit, "output_token", StringComparison.OrdinalIgnoreCase);
+
     private async Task LoadCachedOrDiscoverAsync()
     {
         if (_selectedProvider is null ||
@@ -695,6 +873,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 Array.Empty<ModelInformationRow>());
 
         var rows = _snapshot.Models
+            .Where(MatchesFilters)
             .Select(model =>
             {
                 var target = ResolveExecutionTarget(model);
@@ -750,6 +929,17 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 HiveStatusTone.Neutral);
             return null;
         }
+
+        var displayName = row.Model.DisplayName ?? row.Model.ModelId;
+        var confirmation = HiveMessageBox.ShowQuestion(
+            FindForm(),
+            $"Add '{displayName}' to Favorite Execution Targets?",
+            "Add to Favorites",
+            MessageBoxButtons.YesNo,
+            _themeManager);
+
+        if (confirmation != DialogResult.Yes)
+            return null;
 
         var updatedIds = _favoriteExecutionTargetIds
             .Append(row.ExecutionTarget.Id)
@@ -829,19 +1019,19 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         AddKeyValueRow(
             table,
             "Provider availability",
-            operational?.Availability.ToString() ?? "Not reported");
+            operational?.Availability.ToString() ?? "—");
         AddKeyValueRow(
             table,
             "Provider health",
-            operational?.Health.ToString() ?? "Not reported");
+            operational?.Health.ToString() ?? "—");
         AddKeyValueRow(
             table,
             "Observed",
-            operational?.ObservedAtUtc.ToString("O") ?? "Not reported");
+            operational?.ObservedAtUtc.ToString("O") ?? "—");
         AddKeyValueRow(
             table,
             "Stale after",
-            operational?.StaleAfterUtc.ToString("O") ?? "Not reported");
+            operational?.StaleAfterUtc.ToString("O") ?? "—");
 
         var message = _snapshot is null
             ? "Choose a Provider, Account, and endpoint, then refresh."
@@ -869,20 +1059,20 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             var summaryTable = GetCardTable(summary);
 
             AddKeyValueRow(summaryTable, "Model ID", model.ModelId);
-            AddKeyValueRow(summaryTable, "Owner / attribution", model.OwnedBy ?? "Not reported");
-            AddKeyValueRow(summaryTable, "Family", model.Family ?? "Not reported");
-            AddKeyValueRow(summaryTable, "Type", model.ModelType ?? "Not reported");
-            AddKeyValueRow(summaryTable, "Category", model.Category ?? "Not reported");
-            AddKeyValueRow(summaryTable, "Version", model.Version ?? "Not reported");
-            AddKeyValueRow(summaryTable, "Operational state", model.OperationalState ?? "Not reported");
+            AddKeyValueRow(summaryTable, "Owner / attribution", model.OwnedBy ?? "—");
+            AddKeyValueRow(summaryTable, "Family", model.Family ?? "—");
+            AddKeyValueRow(summaryTable, "Type", model.ModelType ?? "—");
+            AddKeyValueRow(summaryTable, "Category", model.Category ?? "—");
+            AddKeyValueRow(summaryTable, "Version", model.Version ?? "—");
+            AddKeyValueRow(summaryTable, "Operational state", model.OperationalState ?? "—");
             AddKeyValueRow(
                 summaryTable,
                 "Created",
-                model.CreatedAtUtc?.ToString("O") ?? "Not reported");
+                model.CreatedAtUtc?.ToString("O") ?? "—");
             AddKeyValueRow(
                 summaryTable,
                 "Description",
-                model.Description ?? "Not reported");
+                model.Description ?? "—");
 
             _detailsContent.Controls.Add(summary);
 
@@ -900,13 +1090,13 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
             var capabilities = CreateDetailCard("Capabilities");
             var capabilityTable = GetCardTable(capabilities);
-            AddKeyValueRow(capabilityTable, "Capability", "Discovered state");
+            AddKeyValueRow(capabilityTable, "Capability", "State");
             if (model.DiscoveredCapabilities.Count == 0)
             {
                 AddKeyValueRow(
                     capabilityTable,
                     "State",
-                    "No normalized capability state was reported.");
+                    "—");
             }
             else
             {
@@ -916,7 +1106,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                     AddKeyValueRow(
                         capabilityTable,
                         item.Capability.Value,
-                        $"{item.State}  •  discovered");
+                        FormatCapabilityState(item.State));
                 }
             }
 
@@ -939,7 +1129,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             AddKeyValueRow(
                 reasoningTable,
                 "Default",
-                model.DefaultThinkingLevel ?? "Not reported");
+                model.DefaultThinkingLevel ?? "—");
             _detailsContent.Controls.Add(reasoning);
 
             var limits = CreateDetailCard("Limits");
@@ -956,15 +1146,15 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 AddKeyValueRow(
                     limitsTable,
                     "Context window tokens",
-                    model.Limits.ContextWindowTokens?.ToString() ?? "Not reported");
+                    model.Limits.ContextWindowTokens?.ToString() ?? "—");
                 AddKeyValueRow(
                     limitsTable,
                     "Max input tokens",
-                    model.Limits.MaxInputTokens?.ToString() ?? "Not reported");
+                    model.Limits.MaxInputTokens?.ToString() ?? "—");
                 AddKeyValueRow(
                     limitsTable,
                     "Max output tokens",
-                    model.Limits.MaxOutputTokens?.ToString() ?? "Not reported");
+                    model.Limits.MaxOutputTokens?.ToString() ?? "—");
                 AddKeyValueRow(
                     limitsTable,
                     "Additional constraints",
@@ -988,7 +1178,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 AddKeyValueRow(
                     pricingTable,
                     "Explicit free evidence",
-                    model.Pricing.ExplicitFreeEvidence ? "Reported" : "Not reported");
+                    model.Pricing.ExplicitFreeEvidence ? "Reported" : "—");
 
                 if (model.Pricing.Prices.Count == 0)
                 {
@@ -1268,11 +1458,11 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         ProviderModelMetadata model,
         CapabilityKey key) =>
         model.DiscoveredCapabilities.FirstOrDefault(item => item.Capability == key)
-            ?.State.ToString() ?? "Not reported";
+            ?.State.ToString() ?? "—";
 
     private static string FormatList(IReadOnlyList<string> values) =>
         values.Count == 0
-            ? "Not reported"
+            ? "—"
             : string.Join(", ", values);
 
     private static string FormatJsonDictionary(
@@ -1408,6 +1598,10 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _endpointComboBox.TextChanged -= EndpointTextChanged;
             _page.OperationFailed -= PageOperationFailed;
             _page.ListView.ItemSelectionChanged -= ModelsListSelectionChanged;
+            _minPriceFilter.ValueChanged -= FilterChanged;
+            _maxPriceFilter.ValueChanged -= FilterChanged;
+            _capabilityFilter.SelectedIndexChanged -= FilterChanged;
+            _capabilityStateFilter.SelectedIndexChanged -= FilterChanged;
             _detailsScrollHost.Resize -= DetailsScrollHostOnResize;
             CancelOperation();
         }
