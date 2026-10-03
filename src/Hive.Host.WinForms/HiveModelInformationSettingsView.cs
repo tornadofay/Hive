@@ -340,6 +340,14 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     internal HiveListView ModelsList => (HiveListView)_page.ListView;
 
+    internal NumericUpDown MinPriceFilter => _minPriceFilter;
+
+    internal NumericUpDown MaxPriceFilter => _maxPriceFilter;
+
+    internal HiveComboBox CapabilityFilter => _capabilityFilter;
+
+    internal HiveComboBox CapabilityStateFilter => _capabilityStateFilter;
+
     internal Panel DetailsContent => _detailsContent;
 
     internal HiveScrollHost DetailsScrollHost => _detailsScrollHost;
