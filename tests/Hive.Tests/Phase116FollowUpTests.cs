@@ -501,9 +501,12 @@ public sealed class Phase116FollowUpTests
 
         var actionLayout = Assert.IsType<TableLayoutPanel>(
             view.CrudPage.ActionBarPanel.Controls[0]);
-        var visibleActionButtons = actionLayout.Controls
-            .OfType<FlowLayoutPanel>()
-            .Single()
+        var visibleActionButtons = Assert.IsType<FlowLayoutPanel>(
+            actionLayout.Controls
+                .Cast<Control>()
+                .Single(control =>
+                    control is FlowLayoutPanel &&
+                    control.Controls.OfType<HiveButton>().Any()))
             .Controls
             .OfType<HiveButton>()
             .Where(button => button.Visible)
