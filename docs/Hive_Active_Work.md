@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Current Slice
 
@@ -45,18 +45,27 @@ Expected user-facing behavior:
 
 ## Verification Failure / Remediation Boundary
 
-Developer reported the following when using the Favorites page:
+Developer reported:
 - Refresh produced System.InvalidOperationException: Collection was modified; enumeration operation may not execute.
 - Refresh also produced System.ObjectDisposedException: The CancellationTokenSource has been disposed.
-- On first opening the Favorites tab, the target list was populated with execution targets from all providers/accounts instead of presenting the intended focused favorite-target workflow.
-- The implemented screen also misunderstood the requested UX: it exposed a target catalog with Provider / Account filters and checkboxes on the main Favorites page instead of providing a simple saved-favorites list with a filtered Add flow.
+- The first Favorites tab implementation populated the main list with execution targets from all providers/accounts instead of presenting only saved favorites.
+- The interaction model incorrectly put Provider / Account filters and checkboxes on the main Favorites page instead of using them only in an Add Favorite picker.
 
-Remediation is limited to the Phase 1.19A Favorites settings view, its Add Favorite picker, persistence invocation path, and focused UI tests. No unrelated roadmap or selection-policy changes are authorized by this failure.
+Remediation completed within the Phase 1.19A Favorites settings view, filtered picker, persistence invocation path, and focused UI tests:
+- the main Favorites page is now a saved-favorites list only;
+- the Provider / Account selectors exist only in the Add Favorite picker, followed by one Execution Target selector;
+- Add Favorite and Remove persist immediately through Hive.Management;
+- Refresh loads saved favorite IDs and resolves only those IDs for display;
+- refresh/cancellation lifecycle was simplified to lifetime-owned cancellation, avoiding disposal of in-flight operation tokens;
+- focused UI tests now assert saved-favorites-only rendering, empty-state behavior, picker filtering, repeated refresh, and existing Agent selector behavior.
 
 ## Verification state
 
-- VERIFICATION FAILED / REMEDIATION REQUIRED — the previous remediation was insufficient because the main interaction model was still wrong.
-- Implement the corrected simple Favorites CRUD surface and filtered Add Favorite picker.
-- Then return this document to VERIFICATION PENDING with exact rerun targets.
+- VERIFICATION PENDING — corrected implementation is complete; developer verification is required.
+- Rerun the focused ExecutionTargetFavorite UI/management/persistence tests and the Agent selector UI tests.
+- Exercise Overview / Getting Started / Example Configuration — Hive.Example.WinForms.
+- In Settings → Providers → Favorite Execution Targets, verify the list contains only saved favorites; Add Favorite opens the Provider → Account → Target picker; Add and Remove persist immediately; and repeated Refresh produces no exceptions.
+- Verify changing Provider and Account in the Add Favorite picker narrows the Execution Target choices.
+- Broader Hive.Tests verification remains required for normal slice closure.
 
 No future roadmap slice is authorized by this work item.
