@@ -305,7 +305,7 @@ Scope and non-goals: V1 uses the `IVectorStore` boundary and SQL Server vector s
 
 Verify: insertion/search, deterministic ordering/ties, ownership/scope, invalid vectors, result bounds, cancellation, persistence/reload, and isolation.
 
-## 1.19 Follow-Up — Execution Target Preferences & Favorite Target Pool
+## 1.19A — Execution Target Preferences & Favorite Target Pool
 
 Detailed implementation plan: [1.19 Follow-Up — Execution Target Preferences & Favorite Target Pool](plan/Phase1/1.19-Follow-Up.md)
 
