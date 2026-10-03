@@ -287,7 +287,7 @@ authoritative ExecutionTargetSelector
 
 Configured capability entries remain authoritative; discovery fills only missing evidence and never mutates durable overrides.
 
-The existing `ExecutionTargetSelector` remains the single capability-selection policy boundary. It supports the existing internal Auto/Preferred/Fixed selection contract and deterministic tie-breaking. The normal Provider Settings UI does not expose target-selection policy.
+The existing `ExecutionTargetSelector` remains the single capability-selection policy boundary. It supports the existing internal Auto/Preferred/Fixed selection contract and deterministic tie-breaking. The Agent-facing `Auto` / `Favorites` distinction is a target-source choice applied before this selector; `Favorites` is not a new internal `ExecutionTargetSelector` mode. The normal Provider Settings UI does not expose target-selection policy.
 
 Favorite ExecutionTarget preferences are a separate candidate-pool concern. A favorite set is stored as durable owner/scope preference state containing only ExecutionTarget identities. When a consumer has a non-empty favorite set, it filters its supplied target candidates to those identities before invoking ExecutionTargetSelector; an empty set leaves the candidate set unchanged. Favorite state never alters target configuration, capability evidence, lifecycle, authorization, automatic/manual management mode, or selector ranking, and the filter does not fall back to non-favorite targets when the filtered set contains no qualifying target.
 
