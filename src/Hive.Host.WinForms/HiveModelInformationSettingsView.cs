@@ -27,6 +27,11 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         public override string ToString() => Endpoint.AbsoluteUri;
     }
 
+    private sealed record ModelInformationRow(
+        ProviderModelMetadata Model,
+        ExecutionTarget? ExecutionTarget,
+        bool IsFavorite);
+
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
@@ -34,19 +39,18 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly HiveComboBox _providerComboBox;
     private readonly HiveComboBox _accountComboBox;
     private readonly HiveComboBox _endpointComboBox;
-    private readonly HiveButton _refreshButton;
-    private readonly Label _statusLabel;
-    private readonly HiveListView _modelsList;
-    private readonly HiveScrollHost _modelsScrollHost;
+    private readonly HiveCrudPage<ModelInformationRow> _page;
     private readonly Panel _detailsContent;
     private readonly HiveScrollHost _detailsScrollHost;
-    private readonly Label _contextLabel;
     private CancellationTokenSource? _operationCts;
     private int _operationVersion;
     private bool _initializingContext;
     private Provider? _selectedProvider;
     private ProviderAccount? _selectedAccount;
     private Uri? _selectedEndpoint;
+    private IReadOnlyList<ExecutionTarget> _executionTargets = Array.Empty<ExecutionTarget>();
+    private IReadOnlyList<ExecutionTargetId> _favoriteExecutionTargetIds = Array.Empty<ExecutionTargetId>();
+    private HashSet<ExecutionTargetId> _favoriteTargetIdSet = [];
     private ProviderDiscoverySnapshot? _snapshot;
 
     public HiveModelInformationSettingsView(
@@ -75,94 +79,82 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         var contextPanel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 4,
+            ColumnCount = 3,
             RowCount = 2,
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25f));
-        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25f));
-        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38f));
-        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12f));
+        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28f));
+        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28f));
+        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 44f));
         contextPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 18f));
         contextPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
 
         contextPanel.Controls.Add(CreateContextLabel("Provider"), 0, 0);
         contextPanel.Controls.Add(CreateContextLabel("Account / Credential"), 1, 0);
         contextPanel.Controls.Add(CreateContextLabel("Discovery endpoint"), 2, 0);
-        contextPanel.Controls.Add(CreateContextLabel(string.Empty), 3, 0);
 
         _providerComboBox = CreateSelector("Provider");
         _accountComboBox = CreateSelector("Account / Credential");
         _endpointComboBox = CreateSelector("Discovery endpoint");
         _endpointComboBox.DropDownStyle = ComboBoxStyle.DropDown;
 
-        _refreshButton = new HiveButton
-        {
-            Dock = DockStyle.Fill,
-            Text = "Refresh",
-            Style = HiveButtonStyle.Secondary,
-            AccessibleName = "Refresh model information",
-            Margin = Padding.Empty
-        };
-
         contextPanel.Controls.Add(_providerComboBox, 0, 1);
         contextPanel.Controls.Add(_accountComboBox, 1, 1);
         contextPanel.Controls.Add(_endpointComboBox, 2, 1);
-        contextPanel.Controls.Add(_refreshButton, 3, 1);
         contextCard.Controls.Add(contextPanel);
 
-        _contextLabel = new Label
-        {
-            Dock = DockStyle.Top,
-            AutoSize = false,
-            Height = 26,
-            Text = "Select a Provider and Account, choose a saved endpoint, or enter an HTTP/HTTPS endpoint.",
-            AutoEllipsis = true,
-            Padding = new Padding(4, 4, 4, 2),
-            AccessibleName = "Model discovery context"
-        };
-
-        _statusLabel = new Label
-        {
-            Dock = DockStyle.Top,
-            AutoSize = false,
-            Height = 24,
-            Text = "Model discovery has not started.",
-            AutoEllipsis = true,
-            Padding = new Padding(4, 2, 4, 2),
-            AccessibleRole = AccessibleRole.StatusBar
-        };
-
-        _modelsList = new HiveListView
+        _page = new HiveCrudPage<ModelInformationRow>
         {
             Dock = DockStyle.Fill,
-            AccessibleName = "Discovered provider models",
-            AccessibleRole = AccessibleRole.Table
+            Title = "Model Information",
+            Description = "Browse discovered provider models, inspect normalized metadata, and add the selected ExecutionTarget to Favorites.",
+            PageSize = 25,
+            AllowAdd = true,
+            AddButtonText = "Add to Favorites",
+            AllowEdit = false,
+            AllowDelete = false,
+            ShowRefresh = false,
+            ShowSearch = true,
+            SearchPlaceholder = "Search models..."
         };
-        _modelsList.Columns.Add("Model", 260);
-        _modelsList.Columns.Add("Type", 120);
-        _modelsList.Columns.Add("Availability", 110);
-        _modelsList.Columns.Add("Health", 100);
 
-        _modelsScrollHost = new HiveScrollHost
-        {
-            Dock = DockStyle.Fill,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty,
-            AccessibleName = "Discovered provider models scroll area",
-            AccessibleDescription = "Browse discovered models using the Hive scrollbars."
-        };
-        _modelsScrollHost.Attach(_modelsList);
+        _page.SetColumns(
+            new HiveCrudColumn<ModelInformationRow>(
+                "Model",
+                300,
+                row => row.IsFavorite
+                    ? $"★ {row.Model.DisplayName ?? row.Model.ModelId}"
+                    : row.Model.DisplayName ?? row.Model.ModelId),
+            new HiveCrudColumn<ModelInformationRow>(
+                "Text",
+                95,
+                row => FindCapability(row.Model, HiveCapabilityKeys.TextGeneration)),
+            new HiveCrudColumn<ModelInformationRow>(
+                "Vision",
+                95,
+                row => FindCapability(row.Model, HiveCapabilityKeys.Vision)),
+            new HiveCrudColumn<ModelInformationRow>(
+                "Tools",
+                95,
+                row => FindCapability(row.Model, HiveCapabilityKeys.ToolCalling)),
+            new HiveCrudColumn<ModelInformationRow>(
+                "Structured",
+                105,
+                row => FindCapability(row.Model, HiveCapabilityKeys.StructuredOutput)),
+            new HiveCrudColumn<ModelInformationRow>(
+                "Reasoning",
+                100,
+                row => FindCapability(row.Model, HiveCapabilityKeys.Reasoning)),
+            new HiveCrudColumn<ModelInformationRow>(
+                "Thinking",
+                100,
+                row => FindCapability(row.Model, HiveCapabilityKeys.Thinking)));
 
-        var modelSurface = new Panel
-        {
-            Dock = DockStyle.Fill,
-            Padding = new Padding(1),
-            Margin = Padding.Empty,
-            BorderStyle = BorderStyle.FixedSingle
-        };
-        modelSurface.Controls.Add(_modelsScrollHost);
+        _page.LoadItemsAsync = LoadModelsAsync;
+        _page.EditItemAsync = AddSelectedModelToFavoritesAsync;
+        _page.OperationFailed += PageOperationFailed;
+        _page.ListView.ItemSelectionChanged += ModelsListSelectionChanged;
 
         _detailsContent = new Panel
         {
@@ -198,26 +190,32 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             Dock = DockStyle.Fill,
             Orientation = Orientation.Vertical,
-            SplitterDistance = 430,
+            SplitterDistance = 610,
             IsSplitterFixed = false
         };
         split.Panel1.Padding = new Padding(0, 6, 8, 0);
         split.Panel2.Padding = new Padding(8, 6, 0, 0);
-        split.Panel1.Controls.Add(modelSurface);
+        split.Panel1.Controls.Add(_page);
         split.Panel2.Controls.Add(detailsSurface);
 
-        Controls.Add(split);
-        Controls.Add(_statusLabel);
-        Controls.Add(_contextLabel);
-        Controls.Add(contextCard);
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+        root.Controls.Add(contextCard, 0, 0);
+        root.Controls.Add(split, 0, 1);
+        Controls.Add(root);
 
         _providerComboBox.SelectedIndexChanged += ProviderChanged;
         _accountComboBox.SelectedIndexChanged += AccountChanged;
         _endpointComboBox.SelectedIndexChanged += EndpointChanged;
         _endpointComboBox.TextChanged += EndpointTextChanged;
-        _refreshButton.Click += RefreshButtonOnClick;
-
-        _modelsList.ItemSelectionChanged += ModelsListSelectionChanged;
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         ApplyTheme();
@@ -229,17 +227,29 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     internal HiveComboBox EndpointSelector => _endpointComboBox;
 
-    internal HiveListView ModelsList => _modelsList;
+    internal HiveCrudPage<ModelInformationRow> CrudPage => _page;
+
+    internal HiveListView ModelsList => (HiveListView)_page.ListView;
 
     internal Panel DetailsContent => _detailsContent;
-
-    internal HiveScrollHost ModelsScrollHost => _modelsScrollHost;
 
     internal HiveScrollHost DetailsScrollHost => _detailsScrollHost;
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+
+        var favoriteResult = await _management
+            .GetFavoriteExecutionTargetIdsAsync(
+                _accessContext,
+                cancellationToken)
+            .ConfigureAwait(true);
+
+        if (favoriteResult.IsFailure)
+            throw new InvalidOperationException(favoriteResult.Error!.Message);
+
+        _favoriteExecutionTargetIds = favoriteResult.Value!;
+        _favoriteTargetIdSet = _favoriteExecutionTargetIds.ToHashSet();
 
         var result = await _management
             .ListProvidersAsync(
