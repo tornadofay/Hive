@@ -431,9 +431,22 @@ public sealed class HiveScrollHost : UserControl
         Synchronize();
     }
 
+    protected override void OnCreateControl()
+    {
+        base.OnCreateControl();
+        ApplyAmbientHiveTheme();
+    }
+
+    protected override void OnParentChanged(EventArgs e)
+    {
+        base.OnParentChanged(e);
+        ApplyAmbientHiveTheme();
+    }
+
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
+        ApplyAmbientHiveTheme();
         RequestSynchronization();
     }
 
@@ -503,7 +516,15 @@ public sealed class HiveScrollHost : UserControl
 
         _viewport.BackColor = theme.Palette.Surface;
         BackColor = theme.Palette.Surface;
+        _horizontalScrollBar.ApplyTheme(theme);
+        _verticalScrollBar.ApplyTheme(theme);
         Invalidate();
+    }
+
+    private void ApplyAmbientHiveTheme()
+    {
+        if (FindForm() is HiveForm hiveForm)
+            hiveForm.ThemeManager.Apply(this);
     }
 
     private void ScrollBarValueChanged(
