@@ -93,7 +93,6 @@ public sealed class HiveListView : ListView
             IsResizeWindowPositionMessage(m.LParam))
         {
             HideNativeScrollBars();
-            RequestNativeScrollBarSuppression();
         }
 
         if (_nativeScrollBarsSuppressed &&
@@ -529,8 +528,6 @@ public sealed class HiveListView : ListView
 
     protected override void Dispose(bool disposing)
     {
-        _nativeScrollBarSuppressionPending = false;
-
         if (disposing)
         {
             SmallImageList = null;
