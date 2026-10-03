@@ -191,7 +191,6 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         var loadCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var previous = Interlocked.Exchange(ref _loadCts, loadCts);
         previous?.Cancel();
-        previous?.Dispose();
 
         try
         {
@@ -225,6 +224,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
             if (providers.IsFailure)
                 throw new InvalidOperationException(providers.Error!.Message);
 
+            loadCts.Token.ThrowIfCancellationRequested();
             _providers.AddRange(providers.Value!);
 
             _updatingList = true;
@@ -234,7 +234,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
                 foreach (var provider in _providers.OrderBy(item => item.DisplayName, StringComparer.Ordinal))
                     _providerComboBox.Items.Add(new ProviderChoice(provider, provider.DisplayName));
 
-                _providerComboBox.SelectedIndex = 0;
+                _providerComboBox.SelectedIndex = _providers.Count > 0 ? 1 : 0;
             }
             finally
             {
@@ -242,10 +242,10 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
             }
 
             await ReloadAccountsAsync(loadCts.Token).ConfigureAwait(true);
+            loadCts.Token.ThrowIfCancellationRequested();
             UpdateStatus();
         }
         catch (OperationCanceledException)
-            when (loadCts.IsCancellationRequested || IsDisposed || Disposing)
         {
         }
         catch (Exception exception)
@@ -280,7 +280,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         if (_updatingList || IsDisposed || Disposing)
             return;
 
-        using var cts = ReplaceLoadCancellation();
+        var cts = ReplaceLoadCancellation();
         try
         {
             await ReloadAccountsAsync(cts.Token).ConfigureAwait(true);
@@ -292,6 +292,10 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         {
             HandleLoadFailure(exception);
         }
+        finally
+        {
+            ReleaseLoadCancellation(cts);
+        }
     }
 
     private async void AccountChanged(object? sender, EventArgs e)
@@ -299,7 +303,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         if (_updatingList || IsDisposed || Disposing)
             return;
 
-        using var cts = ReplaceLoadCancellation();
+        var cts = ReplaceLoadCancellation();
         try
         {
             await ReloadTargetsAsync(cts.Token).ConfigureAwait(true);
@@ -310,6 +314,10 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         catch (Exception exception)
         {
             HandleLoadFailure(exception);
+        }
+        finally
+        {
+            ReleaseLoadCancellation(cts);
         }
     }
 
@@ -340,11 +348,13 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
                 if (accounts.IsFailure)
                     throw new InvalidOperationException(accounts.Error!.Message);
 
+                cancellationToken.ThrowIfCancellationRequested();
                 _accounts.AddRange(accounts.Value!);
             }
             else
             {
-                foreach (var provider in _providers)
+                var providers = _providers.ToArray();
+                foreach (var provider in providers)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
@@ -370,7 +380,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
                     new AccountChoice(account, account.DisplayName));
             }
 
-            _accountComboBox.SelectedIndex = 0;
+            _accountComboBox.SelectedIndex = _accounts.Count > 0 ? 1 : 0;
         }
         finally
         {
@@ -378,6 +388,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         }
 
         await ReloadTargetsAsync(cancellationToken).ConfigureAwait(true);
+        cancellationToken.ThrowIfCancellationRequested();
     }
 
     private async Task ReloadTargetsAsync(CancellationToken cancellationToken)
@@ -394,14 +405,15 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         {
             _targetList.Items.Clear();
 
-            IEnumerable<ProviderAccount> accounts = _accounts;
+            IEnumerable<ProviderAccount> accounts = _accounts.ToArray();
             if (selectedAccount is not null)
                 accounts = accounts.Where(account => account.Id == selectedAccount.Id);
             else if (selectedProvider is not null)
                 accounts = accounts.Where(account => account.ProviderId == selectedProvider.Id);
 
+            var accountsToLoad = accounts.ToArray();
             var targets = new List<ExecutionTarget>();
-            foreach (var account in accounts)
+            foreach (var account in accountsToLoad)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -416,6 +428,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
                 if (result.IsFailure)
                     throw new InvalidOperationException(result.Error!.Message);
 
+                cancellationToken.ThrowIfCancellationRequested();
                 targets.AddRange(result.Value!);
             }
 
@@ -444,6 +457,7 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
             _targetList.EndUpdate();
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         UpdateStatus(targetCount: _targetList.Items.Count);
         _saveButton.Enabled = true;
     }
@@ -544,8 +558,15 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
         var cts = new CancellationTokenSource();
         var previous = Interlocked.Exchange(ref _loadCts, cts);
         previous?.Cancel();
-        previous?.Dispose();
         return cts;
+    }
+
+    private void ReleaseLoadCancellation(CancellationTokenSource cts)
+    {
+        if (ReferenceEquals(_loadCts, cts))
+            Interlocked.CompareExchange(ref _loadCts, null, cts);
+
+        cts.Dispose();
     }
 
     private void HandleLoadFailure(Exception exception)
@@ -582,7 +603,6 @@ internal sealed class HiveFavoriteExecutionTargetsSettingsView : UserControl
 
             var cts = Interlocked.Exchange(ref _loadCts, null);
             cts?.Cancel();
-            cts?.Dispose();
         }
 
         base.Dispose(disposing);
