@@ -638,9 +638,12 @@ public sealed class Phase116FollowUpTests
 
         var actionLayout = Assert.IsType<TableLayoutPanel>(
             view.CrudPage.ActionBarPanel.Controls[0]);
-        var actionButtons = actionLayout.Controls
-            .OfType<FlowLayoutPanel>()
-            .Single();
+        var actionButtons = Assert.IsType<FlowLayoutPanel>(
+            actionLayout.Controls
+                .Cast<Control>()
+                .Single(control =>
+                    control is FlowLayoutPanel &&
+                    control.Controls.OfType<HiveButton>().Any()));
         var addButton = actionButtons.Controls
             .OfType<HiveButton>()
             .Single(button => button.Text == "Add to Favorites");
