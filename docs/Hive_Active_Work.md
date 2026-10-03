@@ -132,3 +132,20 @@ Remediation completed:
 - Broader Hive.Tests verification remains required for normal slice closure.
 
 No future roadmap slice is authorized by this work item.
+
+
+## Additional Authorized Existing-UI Correction — 2026-10-03
+
+Developer verification of the existing Phase 1.19A implementation passed 584/584 automated tests on 2026-10-03. Before final slice closure, the developer explicitly authorized a bounded correction/polish of the existing Provider Settings / Advanced Provider Configuration UI.
+
+Authorized UI boundary:
+- give the normal Providers-page Advanced entry point a distinct administrative visual treatment;
+- remove the separate Overview tab from Advanced Provider Configuration while retaining Providers, Accounts / Credentials, Execution Targets, and Model Information;
+- polish Model Information without changing its read-only discovery semantics: use Hive-owned selection/list/panel presentation, compact selector geometry, clearer model browsing, and structured metadata details;
+- preserve Provider / ProviderAccount / ExecutionTarget ownership, Management boundaries, discovery evidence semantics, Favorites behavior, and Agent target-selection behavior;
+- no new capability, durable Model resource, provider transport, persistence contract, or Agent behavior.
+
+Verification boundary after this correction:
+- focused Advanced Provider Configuration / Model Information automated tests;
+- broader Hive.Tests suite;
+- manual Example Host / Settings UI verification of the changed Advanced button, tab set, Model Information selectors/list/details, and Light/Dark/System presentation where applicable.
