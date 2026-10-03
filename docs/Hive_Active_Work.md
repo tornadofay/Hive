@@ -142,6 +142,18 @@ Remediation boundary:
 - add focused regression coverage that actually changes the selected model and verifies the displayed details follow that selection;
 - do not change discovery, persistence, Provider / ProviderAccount / ExecutionTarget ownership, Favorites behavior, or Agent target-selection semantics.
 
+## Verification Failure / Remediation Boundary — Model Information Selection Compile Errors
+
+Developer verification reported on 2026-10-03 two compile errors from the selection-detail remediation:
+- `Phase116FollowUpTests.cs`: the regression test's `Assert.Single(view.ModelsList.Items)` inferred an `object`, so assigning `Selected` to the result caused CS1061.
+- `HiveModelInformationSettingsView.cs`: `ListViewItemSelectionChangedEventArgs.Item` is nullable in the current target framework, so direct `e.Item.Tag` caused CS8602.
+
+Remediation boundary:
+- correct only the test's concrete `ListViewItem` typing and the production event's null-safe item handling;
+- preserve the selection-detail rendering behavior and regression coverage;
+- do not change discovery, persistence, Provider / ProviderAccount / ExecutionTarget ownership, Favorites behavior, or Agent target-selection semantics;
+- return Active Work to VERIFICATION PENDING after remediation and require developer re-verification.
+
 ## Verification state
 
 - Developer verification on 2026-10-03 passed the original Phase 1.19A implementation at 584/584 Hive.Tests executions (0 failed, 0 skipped) before the additional existing-UI correction.
