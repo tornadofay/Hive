@@ -11,6 +11,7 @@ public sealed class HiveListView : ListView
     private const int WmNcPaint = 0x0085;
     private const int WmNcCalcSize = 0x0083;
     private const int WmWindowPosChanged = 0x0047;
+    private const int WmStyleChanging = 0x007C;
     private const int WmStyleChanged = 0x007D;
     private const int GwlStyle = -16;
     private const long WsHScroll = 0x00100000L;
@@ -32,6 +33,13 @@ public sealed class HiveListView : ListView
         public int Cx;
         public int Cy;
         public uint Flags;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeStyleStruct
+    {
+        public IntPtr OldStyle;
+        public IntPtr NewStyle;
     }
 
     private HiveThemeDefinition? _theme;
@@ -94,6 +102,13 @@ public sealed class HiveListView : ListView
             // Do not issue Win32 scrollbar changes from the non-client paint path.
             // Native ListView scrolling can repaint this region frequently.
             return;
+        }
+
+        if (_nativeScrollBarsSuppressed &&
+            m.Msg == WmStyleChanging &&
+            m.WParam == new IntPtr(GwlStyle))
+        {
+            SuppressChangingNativeScrollBarStyles(m.LParam);
         }
 
         if (_nativeScrollBarsSuppressed &&
@@ -486,6 +501,28 @@ public sealed class HiveListView : ListView
         {
             _updatingNativeScrollBarStyles = false;
         }
+    }
+
+    private void SuppressChangingNativeScrollBarStyles(IntPtr lParam)
+    {
+        if (lParam == IntPtr.Zero)
+            return;
+
+        var style = Marshal.PtrToStructure<NativeStyleStruct>(lParam);
+        var oldStyle = style.OldStyle.ToInt64();
+        var newStyle = style.NewStyle.ToInt64();
+        var nativeScrollBarStyles = newStyle & NativeScrollBarStyleMask;
+
+        if (nativeScrollBarStyles == 0)
+            return;
+
+        _suppressedNativeScrollBarStyles |=
+            nativeScrollBarStyles & NativeScrollBarStyleMask & oldStyle;
+
+        style.NewStyle = new IntPtr(
+            newStyle & ~NativeScrollBarStyleMask);
+
+        Marshal.StructureToPtr(style, lParam, false);
     }
 
     private static bool IsResizeWindowPositionMessage(
