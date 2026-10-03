@@ -4,6 +4,7 @@ using Hive.Core;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 using Hive.Management;
+using System.ComponentModel;
 
 namespace Hive.Host.WinForms;
 
@@ -349,6 +350,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     internal HiveComboBox CapabilityStateFilter => _capabilityStateFilter;
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     internal Func<string, bool>? FavoriteConfirmationOverride { get; set; }
 
     internal Panel DetailsContent => _detailsContent;
