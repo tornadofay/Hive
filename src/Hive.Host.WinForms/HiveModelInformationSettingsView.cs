@@ -19,6 +19,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         public override string ToString() => Value.DisplayName;
     }
 
+    private const string DetailKeyTag = "detail-key";
+    private const string DetailValueTag = "detail-value";
+
     private sealed record EndpointChoice(Uri Endpoint, string Source)
     {
         public override string ToString() => Endpoint.AbsoluteUri;
@@ -229,6 +232,10 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     internal HiveListView ModelsList => _modelsList;
 
     internal FlowLayoutPanel DetailsContent => _detailsContent;
+
+    internal HiveScrollHost ModelsScrollHost => _modelsScrollHost;
+
+    internal HiveScrollHost DetailsScrollHost => _detailsScrollHost;
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -959,10 +966,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Padding = new Padding(0, 0, 0, 6),
             AccessibleRole = AccessibleRole.StaticText,
             Font = new Font(
-                _themeManager.Theme.Palette.Text.IsEmpty
-                    ? "Segoe UI"
-                    : _themeManager.Theme.Typography.FontFamily,
-                _themeManager.Theme.Typography.SectionSize,
+                _themeManager.Theme.Typography.FontFamily,
+                _themeManager.Theme.Typography.SectionSize + 0.75f,
                 FontStyle.Bold),
             AccessibleName = title
         };
@@ -992,7 +997,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Text = key,
             Padding = new Padding(0, 3, 12, 3),
             TextAlign = ContentAlignment.TopLeft,
-            ForeColor = SystemColors.GrayText
+            Tag = DetailKeyTag
         };
 
         var valueLabel = new Label
@@ -1002,7 +1007,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Text = value,
             Padding = new Padding(0, 3, 0, 3),
             Margin = Padding.Empty,
-            ForeColor = SystemColors.ControlText
+            Tag = DetailValueTag
         };
 
         table.Controls.Add(keyLabel, 0, row);
@@ -1025,6 +1030,21 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             return;
 
         _themeManager.Apply(_detailsContent);
+
+        foreach (var card in _detailsContent.Controls.OfType<HiveBorderPanel>())
+        {
+            var table = GetCardTable(card);
+
+            foreach (var label in table.Controls.OfType<Label>())
+            {
+                label.ForeColor = label.Tag switch
+                {
+                    DetailKeyTag => _themeManager.Theme.Palette.MutedText,
+                    DetailValueTag => _themeManager.Theme.Palette.Text,
+                    _ => label.ForeColor
+                };
+            }
+        }
     }
 
     private void DetailsScrollHostOnResize(object? sender, EventArgs e) =>
