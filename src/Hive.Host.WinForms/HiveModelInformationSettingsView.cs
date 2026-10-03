@@ -349,6 +349,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     internal HiveComboBox CapabilityStateFilter => _capabilityStateFilter;
 
+    internal Func<string, bool>? FavoriteConfirmationOverride { get; set; }
+
     internal Panel DetailsContent => _detailsContent;
 
     internal int DetailsPanelWidth => _mainSplit.Panel2.Width;
@@ -947,14 +949,16 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         }
 
         var displayName = row.Model.DisplayName ?? row.Model.ModelId;
-        var confirmation = HiveMessageBox.ShowQuestion(
-            FindForm(),
-            $"Add '{displayName}' to Favorite Execution Targets?",
-            "Add to Favorites",
-            MessageBoxButtons.YesNo,
-            _themeManager);
+        var confirmed = FavoriteConfirmationOverride is { } confirmationOverride
+            ? confirmationOverride(displayName)
+            : HiveMessageBox.ShowQuestion(
+                    FindForm(),
+                    $"Add '{displayName}' to Favorite Execution Targets?",
+                    "Add to Favorites",
+                    MessageBoxButtons.YesNo,
+                    _themeManager) == DialogResult.Yes;
 
-        if (confirmation != DialogResult.Yes)
+        if (!confirmed)
             return null;
 
         var updatedIds = _favoriteExecutionTargetIds
