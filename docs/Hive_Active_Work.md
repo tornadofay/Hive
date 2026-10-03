@@ -345,3 +345,12 @@ Implementation completed inside the recorded boundary:
 Developer re-verification is required.
 
 Implementation note: the shared HiveCrudPage now exposes the presentation-only SetItemsForView(items) surface so a consuming view can replace already-loaded display items for local filtering without starting the asynchronous CRUD load operation. This is limited to shared UI presentation and does not alter Hive domain or management contracts.
+
+## Verification Failure / Remediation Boundary — Model Information Selection Detail Test Assertion
+
+Developer verification on 2026-10-03 reported 592 Hive.Tests executions: 591 passed, 1 failed, 0 skipped. The remaining failure was Phase116FollowUpTests.ModelInformationView_UpdatesDetailsWhenSelectionChanges because the regression asserted the human-readable text "Vision", while the structured detail table renders the normalized capability key "vision". The selected second-model details otherwise matched the intended selection-path assertions.
+
+Remediation boundary:
+- correct only the test assertion to match the existing structured detail representation;
+- do not change production Model Information rendering, discovery, filtering, Favorites, persistence, or Agent target-selection behavior;
+- return Active Work to VERIFICATION PENDING and require developer re-verification.
