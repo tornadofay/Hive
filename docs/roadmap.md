@@ -309,11 +309,11 @@ Verify: insertion/search, deterministic ordering/ties, ownership/scope, invalid 
 
 Detailed implementation plan: [1.19 Follow-Up — Execution Target Preferences & Favorite Target Pool](plan/Phase1/1.19-Follow-Up.md)
 
-Objective: establish a durable user/scope-aware favorite ExecutionTarget pool that acts only as an optional candidate filter for later target selection, with a simple Provider Settings Favorites preference CRUD surface. Adding a favorite uses a compact Provider → Account → Execution Target picker so Provider / Account filters reduce the target choices instead of forcing the user through a long global target list. Existing target selection also gains Provider / Account filtering.
+Objective: establish a durable user/scope-aware favorite ExecutionTarget pool that acts only as an optional candidate filter for later target selection, with a simple Provider Settings Favorites preference CRUD surface. Adding a favorite uses a compact Provider → Account → Execution Target picker so Provider / Account filters reduce the target choices instead of forcing the user through a long global target list. Agent and other target-selection behavior remains unchanged in this slice and is owned by the relevant later phase.
 
 Scope and non-goals: favorite target IDs are durable preferences, not a new ExecutionTarget resource type or selection mode. When the favorite pool is empty, existing target candidate behavior is unchanged; when it is non-empty, consumers may filter candidates to the favorite IDs and then invoke the existing capability-aware selection policy. Favorites do not alter target capability, lifecycle, automatic/manual ownership, or ranking semantics.
 
-Verify: persistence and scope isolation; invalid/inaccessible target rejection; favorite filter empty/non-empty behavior; preservation across target retirement; Provider Settings Favorites UI; Provider / Account filtering for target selection; focused Example Host behavior.
+Verify: persistence and scope isolation; invalid/inaccessible target rejection; favorite filter empty/non-empty behavior; preservation across target retirement; Provider Settings Favorites CRUD UI; Add Favorite Provider / Account / Target filtering; focused Example Host behavior.
 
 ## 1.20 — V1 Workspace Foundation
 
