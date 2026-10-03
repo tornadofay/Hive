@@ -619,6 +619,17 @@ Remediation boundary:
 - preserve native ListView `LVM_SCROLL`, Hive scrollbar synchronization, and normal control behavior;
 - no test weakening, DataGridView migration, new public scroll API, ListView rewrite, or unrelated refactoring.
 
+## ListView Style-Change Payload Correction
+
+Investigation identified a defect in the `WM_STYLECHANGING` interception: the Win32 `STYLESTRUCT` payload contains two 32-bit `DWORD` style values, while the implementation had modeled them as pointer-sized values. On 64-bit processes that layout was incorrect, so the pending scrollbar-style change was not reliably modified.
+
+Remediation completed:
+- `NativeStyleStruct.OldStyle` and `.NewStyle` now use `uint`, matching the Win32 payload layout;
+- the interception still strips `WS_HSCROLL` / `WS_VSCROLL` only while the ListView is hosted;
+- no change to native scrolling, Hive scrollbar synchronization, or test behavior was made.
+
+Status is **VERIFICATION PENDING** for developer compilation and the focused ListView maximize test.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
