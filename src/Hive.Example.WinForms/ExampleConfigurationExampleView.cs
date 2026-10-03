@@ -53,7 +53,7 @@ internal sealed class ExampleConfigurationExampleView : UserControl
 
         _settingsFlow = CreateSection(
             "Advanced resources",
-            "Use Advanced from the Providers page when you need multiple accounts, custom or local endpoints, manually configured models/deployments, explicit capability overrides, or lifecycle troubleshooting. These pages operate on the same underlying Provider, ProviderAccount, and ExecutionTarget resources; they are not a second configuration system. Agent target selection also exposes Provider and Account filters, and configured favorites narrow the choices when a favorite pool exists.");
+            "Use Advanced from the Providers page when you need multiple accounts, custom or local endpoints, manually configured models/deployments, explicit capability overrides, or lifecycle troubleshooting. These pages operate on the same underlying Provider, ProviderAccount, and ExecutionTarget resources; they are not a second configuration system. Agent execution-target behavior remains unchanged by this favorites-management slice.");
 
         _futureText = CreateSection(
             "Configuration grows with Hive",
