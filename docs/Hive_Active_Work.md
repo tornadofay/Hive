@@ -44,6 +44,15 @@ Expected user-facing behavior:
 
 ## Verification Failure / Remediation Boundary
 
+Developer reported a remaining in-scope UI failure:
+- when the Favorites CRUD page opens at its normal window size, the CRUD action buttons can be laid out outside the visible right side until the window is maximized and resized back;
+- the shared CRUD layout therefore does not reliably apply its responsive geometry after the page is attached to its final parent and receives its real client size;
+- the Hive Settings configuration window should also open at a larger production-appropriate size.
+
+Remediation is authorized within Phase 1.19A because it corrects the existing Favorites Settings presentation and shared Hive CRUD resize behavior; it does not add a new capability or change Agent behavior.
+
+## Verification Failure / Remediation Boundary
+
 Developer reported:
 - Refresh produced System.InvalidOperationException: Collection was modified; enumeration operation may not execute.
 - Refresh also produced System.ObjectDisposedException: The CancellationTokenSource has been disposed.
