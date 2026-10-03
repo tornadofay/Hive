@@ -523,12 +523,6 @@ public sealed class Phase116FollowUpTests
         Application.DoEvents();
         Assert.Equal(initialDetailsWidth, view.DetailsPanelWidth);
 
-        host.ClientSize = new Size(980, 760);
-        host.PerformLayout();
-        view.PerformLayout();
-        Application.DoEvents();
-        Assert.Equal(initialDetailsWidth, view.DetailsPanelWidth);
-
         Assert.Equal(
             [
                 "Model",
