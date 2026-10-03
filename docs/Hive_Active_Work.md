@@ -543,6 +543,17 @@ Remediation boundary:
 - keep suppression work out of high-frequency scrolling;
 - no test weakening, DataGridView migration, new public scroll API, ListView rewrite, or unrelated refactoring.
 
+## ListView Scrollbar Test Hang Remediation
+
+The deferred suppression path was tightened after developer verification reported the `HiveScrollHostTests` group hanging:
+- `WM_WINDOWPOSCHANGED` resize-qualified handling now performs only the immediate native hide;
+- `WM_STYLECHANGED` handling now performs only the immediate native hide;
+- only the explicit resize and handle-creation lifecycle callbacks queue the coalesced post-layout reassertion;
+- this prevents native lifecycle messages generated while applying suppression from recursively queuing additional deferred callbacks;
+- native ListView scrolling remains on the existing `LVM_SCROLL` path without suppression work in the high-frequency scroll path.
+
+The change remains inside the recorded Slice 4 remediation boundary.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
