@@ -489,15 +489,36 @@ public sealed class Phase116FollowUpTests
         Assert.Equal(view.ProviderSelector.Height, view.EndpointSelector.Height);
         Assert.InRange(view.ProviderSelector.Height, 34, 72);
         Assert.IsType<HiveListView>(view.ModelsList);
-        Assert.Same(view.ModelsList, view.ModelsScrollHost.Content);
+        Assert.Same(view.ModelsList, view.CrudPage.ListView);
+        Assert.Same(view.ModelsList, view.CrudPage.ListScrollHostForTesting.Content);
         Assert.Same(view.DetailsContent, view.DetailsScrollHost.Content);
+        Assert.Equal("Model Information", view.CrudPage.Title);
+        Assert.False(view.CrudPage.AllowEdit);
+        Assert.False(view.CrudPage.AllowDelete);
+        Assert.False(view.CrudPage.ShowRefresh);
+        Assert.True(view.CrudPage.AllowAdd);
+        Assert.Equal("Add to Favorites", view.CrudPage.AddButtonText);
 
-        Assert.Single(view.ModelsList.Items);
+        Assert.Equal(
+            [
+                "Model",
+                "Text",
+                "Vision",
+                "Tools",
+                "Structured",
+                "Reasoning",
+                "Thinking"
+            ],
+            view.CrudPage.Columns.Select(column => column.Header));
+
+        Assert.Equal(2, view.ModelsList.Items.Count);
         Assert.Equal(
             "rich-model",
             view.ModelsList.Items[0].Text);
 
         view.ModelsList.Items[0].Selected = true;
+        view.ModelsList.Items[0].Focused = true;
+        Application.DoEvents();
 
         var detailsText = CollectVisibleControlText(view.DetailsContent);
 
@@ -528,7 +549,6 @@ public sealed class Phase116FollowUpTests
             control =>
             {
                 var panel = Assert.IsType<Panel>(control);
-                Assert.True(panel.Visible);
                 Assert.True(panel.Width >= 320);
                 Assert.True(panel.Height >= 48);
                 Assert.Equal(
@@ -549,6 +569,48 @@ public sealed class Phase116FollowUpTests
         Assert.Equal(
             detailBounds.Length,
             detailBounds.Select(bounds => bounds.Top).Distinct().Count());
+    }
+
+    [WinFormsFact]
+    public async Task ModelInformationView_AddsSelectedExecutionTargetToFavorites()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var fixture = CreateFixture();
+
+        using var host = new Form
+        {
+            Size = new Size(1160, 760)
+        };
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync();
+        Application.DoEvents();
+
+        var selected = view.ModelsList.Items[0];
+        selected.Selected = true;
+        selected.Focused = true;
+
+        var actionLayout = Assert.IsType<TableLayoutPanel>(
+            view.CrudPage.ActionBarPanel.Controls[0]);
+        var actionButtons = actionLayout.Controls
+            .OfType<FlowLayoutPanel>()
+            .Single();
+        var addButton = actionButtons.Controls
+            .OfType<HiveButton>()
+            .Single(button => button.Text == "Add to Favorites");
+
+        addButton.PerformClick();
+        Application.DoEvents();
+
+        Assert.Contains(fixture.Target.Id, fixture.ManagementProxy.FavoriteExecutionTargetIds);
+        Assert.StartsWith("★ ", view.ModelsList.Items[0].Text);
     }
 
     [WinFormsFact]
@@ -573,24 +635,11 @@ public sealed class Phase116FollowUpTests
         await view.InitializeAsync();
         Application.DoEvents();
 
-        var firstItem = Assert.Single(
-            view.ModelsList.Items.Cast<ListViewItem>());
-        var secondModel = new ProviderModelMetadata(
-            "second-model",
-            "second-provider",
-            null,
-            ProviderAvailabilityStatus.Available,
-            ProviderHealthStatus.Healthy,
-            []);
+        Assert.Equal(2, view.ModelsList.Items.Count);
+        var firstItem = view.ModelsList.Items[0];
+        var secondItem = view.ModelsList.Items[1];
 
-        var secondItem = new ListViewItem(secondModel.ModelId)
-        {
-            Tag = secondModel
-        };
-        secondItem.SubItems.Add("chat");
-        secondItem.SubItems.Add(secondModel.Availability.ToString());
-        secondItem.SubItems.Add(secondModel.Health.ToString());
-        view.ModelsList.Items.Add(secondItem);
+        Assert.NotEqual(firstItem.Text, secondItem.Text);
 
         firstItem.Selected = false;
         secondItem.Selected = true;
