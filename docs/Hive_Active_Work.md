@@ -524,6 +524,15 @@ Remediation boundary:
 - preserve the existing coalesced post-layout suppression behavior;
 - no behavioral expansion, test weakening, or unrelated refactoring.
 
+## ListView Suppression Compilation Remediation
+
+The reported CS0160 compilation failure is corrected:
+- `ObjectDisposedException` is now caught before its base type `InvalidOperationException` in `RequestNativeScrollBarSuppression`;
+- both existing exception paths continue to clear the pending-suppression flag;
+- no runtime behavior outside exception-handler ordering was changed.
+
+Status is returned to **VERIFICATION PENDING** for developer compilation/test verification.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
