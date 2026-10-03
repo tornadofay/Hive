@@ -654,6 +654,8 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _layoutController!.UpdateThemeSubscription();
         _layoutController!.ApplyThemeTypography();
         _layoutController!.ApplyStatusColor();
+        _layoutController!.UpdateToolbarLayout();
+        _layoutController!.UpdateFooterLayout();
     }
 
 
@@ -663,6 +665,15 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         _layoutController!.UpdateThemeSubscription();
         _layoutController!.ApplyThemeTypography();
         _layoutController!.ApplyStatusColor();
+        _layoutController!.UpdateToolbarLayout();
+        _layoutController!.UpdateFooterLayout();
+    }
+
+    protected override void OnLayout(LayoutEventArgs levent)
+    {
+        base.OnLayout(levent);
+        _layoutController?.UpdateToolbarLayout();
+        _layoutController?.UpdateFooterLayout();
     }
 
 
