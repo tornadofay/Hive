@@ -200,6 +200,21 @@ Developer requested on 2026-10-03 a further bounded correction to the existing M
 
 Remediation remains bounded to existing Phase 1.19A UI behavior. No new selection mode, discovery contract, persistence contract, provider transport, or Agent behavior is authorized.
 
+## Remediation Completed — Model Information CRUD / Favorites / Capability Presentation
+
+The requested UI correction has been implemented within the existing Phase 1.19A boundary:
+- Model Information now uses the shared Hive CRUD presentation and HiveListView for model browsing.
+- The CRUD action bar exposes only `Add to Favorites`; Edit, Delete, and the separate discovery Refresh action are not shown on this model page.
+- The selected discovered model resolves to its matching ExecutionTarget for the active endpoint/model identity and adds that durable ExecutionTarget ID through the existing favorite Management contract.
+- Favorite-backed models display a leading `★` before the model name.
+- Type / Availability / Health list columns were replaced by Text, Vision, Tools, Structured, Reasoning, and Thinking capability-state columns.
+- The Model Information page now has the standard CRUD title/description presentation used by the other Provider advanced pages.
+- The redundant Provider / Account / Endpoint summary line and green discovery-status banner were removed.
+- Structured selected-model metadata details and the existing Hive scrolling presentation remain intact.
+- Focused tests now cover the CRUD composition, capability columns, favorite star, favorite persistence path, and selection changes.
+
+Developer re-verification is required.
+
 ## Verification state
 
 - Developer verification on 2026-10-03 passed the original Phase 1.19A implementation at 584/584 Hive.Tests executions (0 failed, 0 skipped) before the additional existing-UI correction.
