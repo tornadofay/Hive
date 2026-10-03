@@ -358,14 +358,16 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         if (!_mainSplitConstraintsApplied)
         {
-            _mainSplit.Panel1MinSize = MainSplitPanel1MinimumWidth;
-            _mainSplit.Panel2MinSize = MainSplitPanel2MinimumWidth;
-            _mainSplit.SplitterDistance = Math.Clamp(
+            var initialSplitterDistance = Math.Clamp(
                 MainSplitInitialPanel1Width,
                 MainSplitPanel1MinimumWidth,
                 width -
                 MainSplitPanel2MinimumWidth -
                 _mainSplit.SplitterWidth);
+
+            _mainSplit.SplitterDistance = initialSplitterDistance;
+            _mainSplit.Panel1MinSize = MainSplitPanel1MinimumWidth;
+            _mainSplit.Panel2MinSize = MainSplitPanel2MinimumWidth;
             _mainSplitConstraintsApplied = true;
         }
     }
