@@ -185,59 +185,37 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
     }
 
     [WinFormsFact]
-    public void AgentEditor_ShowsFavoritePoolWithProviderAndAccountFilters_AndPreservesCurrentTarget()
+    public async Task FavoriteSettings_UsesHiveCrudAndItsScrollHost()
     {
         var context = CreateContext();
-        var firstProvider = CreateProvider(context, "Provider One");
-        var secondProvider = CreateProvider(context, "Provider Two");
-        var firstAccount = CreateAccount(firstProvider.Id, context, "Account One");
-        var secondAccount = CreateAccount(secondProvider.Id, context, "Account Two");
-        var current = CreateTarget(firstProvider.Id, firstAccount.Id, context, "current", "Current Target");
-        var favorite = CreateTarget(secondProvider.Id, secondAccount.Id, context, "favorite", "Favorite Target");
+        var provider = CreateProvider(context, "Provider One");
+        var account = CreateAccount(provider.Id, context, "Account One");
+        var target = CreateTarget(provider.Id, account.Id, context, "target", "Target");
 
-        var definition = new Hive.Agents.AgentDefinition(
-            new ResourceEnvelope<Hive.Agents.AgentDefinitionId>(
-                ResourceKind.AgentDefinition,
-                Hive.Agents.AgentDefinitionId.New(),
-                context.PrincipalId!.Value,
-                ResourceScope.Tenant(context.TenantId!.Value),
-                ResourceVersion.Initial,
-                new ResourceProvenance(
-                    context.PrincipalId.Value,
-                    Now,
-                    CorrelationId.New()),
-                ResourceLifecycle.Active(Now)),
-            "example-agent",
-            "Example Agent",
-            Hive.Agents.AgentGeneration.Base,
-            current.Id);
+        var management = UiManagementProxy.Create(
+            [provider],
+            [account],
+            new Dictionary<ProviderAccountId, IReadOnlyList<ExecutionTarget>>
+            {
+                [account.Id] = [target]
+            },
+            [target.Id]);
 
-        using var editor = new HiveAgentDefinitionEditorForm(
-            definition,
-            [current, favorite],
-            [firstProvider, secondProvider],
-            [firstAccount, secondAccount],
-            [favorite.Id],
+        using var view = new HiveFavoriteExecutionTargetsSettingsView(
+            management,
             context,
             new HiveThemeManager(HiveThemeMode.Light));
 
-        Assert.Equal(3, editor.TargetSelector.Items.Count);
-        Assert.Contains(
-            editor.TargetSelector.Items.Cast<object>(),
-            item => item.ToString()!.Contains("Current Target", StringComparison.Ordinal));
-        Assert.Contains(
-            editor.TargetSelector.Items.Cast<object>(),
-            item => item.ToString()!.Contains("Favorite Target", StringComparison.Ordinal));
+        Assert.True(view.CrudPage.AllowAdd);
+        Assert.False(view.CrudPage.AllowEdit);
+        Assert.True(view.CrudPage.AllowDelete);
+        Assert.True(view.CrudPage.ShowRefresh);
+        Assert.Equal("Add Favorite", view.CrudPage.AddButtonText);
+        Assert.NotNull(view.CrudPage.ListScrollHostForTesting);
 
-        editor.ProviderSelector.SelectedIndex = 2;
+        await view.InitializeAsync();
 
-        Assert.Equal(2, editor.TargetSelector.Items.Count);
-        Assert.Contains(
-            editor.TargetSelector.Items.Cast<object>(),
-            item => item.ToString()!.Contains("Favorite Target", StringComparison.Ordinal));
-        Assert.DoesNotContain(
-            editor.TargetSelector.Items.Cast<object>(),
-            item => item.ToString()!.Contains("Current Target", StringComparison.Ordinal));
+        Assert.Single(view.FavoriteList.Items);
     }
 
     private static ResourceAccessContext CreateContext() =>
