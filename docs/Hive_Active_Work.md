@@ -533,6 +533,16 @@ The reported CS0160 compilation failure is corrected:
 
 Status is returned to **VERIFICATION PENDING** for developer compilation/test verification.
 
+## Verification Failed / Remediation Required — ListView Scrollbar Test Hang
+
+Developer verification reports the `HiveScrollHostTests` group does not complete after the post-layout suppression remediation; the group shows **23 tests / 430 ms** and then hangs.
+
+Remediation boundary:
+- determine and correct only the same-slice lifecycle/callback condition causing the test hang;
+- preserve Hive-owned scrollbar presentation and native ListView behavior;
+- keep suppression work out of high-frequency scrolling;
+- no test weakening, DataGridView migration, new public scroll API, ListView rewrite, or unrelated refactoring.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
