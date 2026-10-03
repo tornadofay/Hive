@@ -28,7 +28,7 @@ new HiveButton
 };
 ```
 
-Styles: `Primary`, `Secondary`, `Navigation`, `NavigationSelected`, `Danger`.
+Styles: `Primary`, `Secondary`, `Navigation`, `NavigationSelected`, `Danger`, `Administrative`. `Administrative` is for non-destructive administrative entry points that need stronger visual emphasis than normal secondary actions.
 
 ## HiveMessageBox
 
