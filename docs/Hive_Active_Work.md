@@ -515,6 +515,15 @@ The latest same-slice remediation is implemented:
 
 No DataGridView migration, new public scroll API, ListView rewrite, or unrelated UI refactoring was introduced.
 
+## Verification Failed / Remediation Required — Deferred Suppression Catch Ordering
+
+Developer compilation reported **CS0160** in `HiveListView.cs`: the `ObjectDisposedException` catch clause follows `InvalidOperationException`, but `ObjectDisposedException` derives from `InvalidOperationException`, making the later catch unreachable.
+
+Remediation boundary:
+- correct only the exception-handling order in `RequestNativeScrollBarSuppression`;
+- preserve the existing coalesced post-layout suppression behavior;
+- no behavioral expansion, test weakening, or unrelated refactoring.
+
 ## Verification State
 
 Status: VERIFICATION PENDING
