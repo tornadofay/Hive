@@ -273,7 +273,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 _themeManager.Theme.Typography.FontFamily,
                 _themeManager.Theme.Typography.SectionSize + 0.75f,
                 FontStyle.Bold),
-            AccessibleRole = AccessibleRole.Heading
+            AccessibleRole = AccessibleRole.StaticText
         };
 
         _detailsBody = new Label
@@ -1264,6 +1264,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _detailsContent.PerformLayout();
         _detailsScrollHost.Synchronize();
     }
+
+    private void DetailsScrollHostOnResize(object? sender, EventArgs e) =>
+        ResizeDetailsContent();
 
     private static bool EndpointsEqual(Uri left, Uri right) =>
         Uri.Compare(
