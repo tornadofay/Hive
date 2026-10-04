@@ -515,3 +515,13 @@ Remediation completed within the recorded compile-failure boundary:
 - no provider behavior or production public contract was otherwise widened.
 
 Developer re-verification is required.
+
+
+## Verification Failure / Remediation Boundary — Model Information Provider Details Heading
+
+Developer verification on 2026-10-04 reports **593** Hive.Tests executions: **592 passed, 1 failed, 0 skipped**. The remaining failure is `Phase116FollowUpTests.ModelInformationView_RendersRichDiscoveryProfile` at `Phase116FollowUpTests.cs:624`, where the rendered details text does not contain the expected `Additional provider information` section heading.
+
+Remediation boundary:
+- correct only the Model Information lightweight details provider-information heading/rendering and its focused regression assertion;
+- do not change pricing architecture, provider catalog scope, discovery semantics, Favorites, persistence, capability authority, Provider/Account/ExecutionTarget ownership, or Agent target-selection behavior;
+- return Active Work to VERIFICATION PENDING and require developer re-verification.
