@@ -401,3 +401,12 @@ Remediation boundary:
 - restore the existing details-scroll resize handler so the lightweight details surface continues to recompute its text width on resize;
 - do not change Model Information discovery, filtering semantics, Favorites behavior, persistence, capability meaning, or Agent target-selection behavior;
 - return Active Work to VERIFICATION PENDING and require developer re-verification.
+
+## Remediation Completed — Model Information Accessibility/Resize Compile Errors
+
+Remediation completed within the recorded compile-failure boundary:
+- replaced the unsupported `AccessibleRole.Heading` value with the valid `AccessibleRole.StaticText`;
+- restored `DetailsScrollHostOnResize` so the reusable details surface retains its existing resize-width synchronization;
+- no Model Information discovery, filtering, Favorites, persistence, capability semantics, or Agent target-selection behavior changed.
+
+Developer re-verification is required.
