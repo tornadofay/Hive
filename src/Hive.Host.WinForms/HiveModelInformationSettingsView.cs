@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using Hive.Core;
@@ -81,8 +82,12 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly Panel _detailsContent;
     private readonly Label _detailsTitle;
     private readonly Label _detailsBody;
-    private readonly NumericUpDown _minPriceFilter;
-    private readonly NumericUpDown _maxPriceFilter;
+    private const int PriceSliderScale = 4;
+    private readonly TrackBar _minPriceFilter;
+    private readonly TrackBar _maxPriceFilter;
+    private readonly Label _minPriceValueLabel;
+    private readonly Label _maxPriceValueLabel;
+    private bool _updatingPriceFilters;
     private readonly HiveScrollHost _detailsScrollHost;
     private bool _updatingModelList;
     private CancellationTokenSource? _operationCts;
@@ -212,8 +217,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _capabilityFilter.Items.Add(choice);
         _capabilityFilter.SelectedIndex = 0;
 
-        _minPriceFilter = CreatePriceFilter(0m);
-        _maxPriceFilter = CreatePriceFilter(1000m);
 
         _capabilityStateFilter = new HiveComboBox
         {
@@ -246,16 +249,26 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             AccessibleName = "Model Information filters"
         };
         filterBar.Controls.Add(CreateFilterLabel("Min"));
+        _minPriceValueLabel = CreatePriceValueLabel();
+        _maxPriceValueLabel = CreatePriceValueLabel();
+
+        _minPriceFilter = CreatePriceSlider(0);
+        _maxPriceFilter = CreatePriceSlider(1000 * PriceSliderScale);
+
         filterBar.Controls.Add(_minPriceFilter);
+        filterBar.Controls.Add(_minPriceValueLabel);
         filterBar.Controls.Add(CreateFilterLabel("Max"));
         filterBar.Controls.Add(_maxPriceFilter);
+        filterBar.Controls.Add(_maxPriceValueLabel);
+
+        UpdatePriceFilterLabels();
         filterBar.Controls.Add(CreateFilterLabel("Capability"));
         filterBar.Controls.Add(_capabilityFilter);
         filterBar.Controls.Add(CreateFilterLabel("State"));
         filterBar.Controls.Add(_capabilityStateFilter);
 
-        _minPriceFilter.ValueChanged += FilterChanged;
-        _maxPriceFilter.ValueChanged += FilterChanged;
+        _minPriceFilter.Scroll += PriceFilterScroll;
+        _maxPriceFilter.Scroll += PriceFilterScroll;
         _capabilityFilter.SelectedIndexChanged += FilterChanged;
         _capabilityStateFilter.SelectedIndexChanged += FilterChanged;
 
@@ -432,9 +445,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     internal HiveListView ModelsList => (HiveListView)_page.ListView;
 
-    internal NumericUpDown MinPriceFilter => _minPriceFilter;
+    internal TrackBar MinPriceFilter => _minPriceFilter;
 
-    internal NumericUpDown MaxPriceFilter => _maxPriceFilter;
+    internal TrackBar MaxPriceFilter => _maxPriceFilter;
 
     internal HiveComboBox CapabilityFilter => _capabilityFilter;
 
@@ -673,6 +686,44 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             await LoadCachedOrDiscoverAsync().ConfigureAwait(true);
     }
 
+    private void PriceFilterScroll(object? sender, EventArgs e)
+    {
+        if (_updatingPriceFilters || IsDisposed || Disposing)
+            return;
+
+        _updatingPriceFilters = true;
+        try
+        {
+            if (ReferenceEquals(sender, _minPriceFilter) &&
+                _minPriceFilter.Value > _maxPriceFilter.Value)
+            {
+                _maxPriceFilter.Value = _minPriceFilter.Value;
+            }
+            else if (ReferenceEquals(sender, _maxPriceFilter) &&
+                     _maxPriceFilter.Value < _minPriceFilter.Value)
+            {
+                _minPriceFilter.Value = _maxPriceFilter.Value;
+            }
+
+            UpdatePriceFilterLabels();
+        }
+        finally
+        {
+            _updatingPriceFilters = false;
+        }
+
+        ApplyModelFilters();
+    }
+
+    private void UpdatePriceFilterLabels()
+    {
+        _minPriceValueLabel.Text = FormatPriceSliderValue(_minPriceFilter.Value);
+        _maxPriceValueLabel.Text = FormatPriceSliderValue(_maxPriceFilter.Value);
+    }
+
+    private static string FormatPriceSliderValue(int value) =>
+        "$" + (value / (decimal)PriceSliderScale).ToString("0.00", CultureInfo.InvariantCulture);
+
     private void FilterChanged(object? sender, EventArgs e)
     {
         if (IsDisposed || Disposing)
@@ -736,21 +787,23 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private bool MatchesFilters(ProviderModelMetadata model)
     {
         var price = GetComparableTokenPricePerMillion(model);
+        var minPrice = _minPriceFilter.Value / (decimal)PriceSliderScale;
+        var maxPrice = _maxPriceFilter.Value / (decimal)PriceSliderScale;
 
         if (price is not null &&
-            (price.Value < _minPriceFilter.Value ||
-             price.Value > _maxPriceFilter.Value))
+            (price.Value < minPrice ||
+             price.Value > maxPrice))
         {
             return false;
         }
 
         if (price is null &&
-            _minPriceFilter.Value > 0m)
+            minPrice > 0m)
         {
             return false;
         }
 
-        if (_maxPriceFilter.Value == 0m &&
+        if (maxPrice == 0m &&
             price != 0m)
         {
             return false;
@@ -796,20 +849,32 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         new(HiveCapabilityKeys.Thinking, "Thinking")
     ];
 
-    private static NumericUpDown CreatePriceFilter(decimal value) =>
+    private static TrackBar CreatePriceSlider(int value) =>
         new()
         {
-            Width = 64,
+            Width = 120,
             Height = 32,
             Minimum = 0,
-            Maximum = 1000,
-            DecimalPlaces = 2,
-            Increment = 0.25m,
+            Maximum = 1000 * PriceSliderScale,
+            TickFrequency = 400,
+            SmallChange = 1,
+            LargeChange = 20,
             Value = value,
-            ThousandsSeparator = false,
             Margin = Padding.Empty,
-            AccessibleRole = AccessibleRole.SpinButton,
+            AccessibleRole = AccessibleRole.Slider,
             AccessibleDescription = "Comparable USD price per 1 million input or output tokens. Set maximum to zero to show only free-priced models."
+        };
+
+    private static Label CreatePriceValueLabel() =>
+        new()
+        {
+            AutoSize = false,
+            Width = 58,
+            Height = 32,
+            Margin = new Padding(2, 0, 4, 0),
+            Padding = Padding.Empty,
+            TextAlign = ContentAlignment.MiddleLeft,
+            AccessibleRole = AccessibleRole.StaticText
         };
 
     private static Label CreateFilterLabel(string text) =>
@@ -1509,8 +1574,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _endpointComboBox.TextChanged -= EndpointTextChanged;
             _page.OperationFailed -= PageOperationFailed;
             _page.ListView.ItemSelectionChanged -= ModelsListSelectionChanged;
-            _minPriceFilter.ValueChanged -= FilterChanged;
-            _maxPriceFilter.ValueChanged -= FilterChanged;
+            _minPriceFilter.Scroll -= PriceFilterScroll;
+            _maxPriceFilter.Scroll -= PriceFilterScroll;
             _capabilityFilter.SelectedIndexChanged -= FilterChanged;
             _capabilityStateFilter.SelectedIndexChanged -= FilterChanged;
             _detailsScrollHost.Resize -= DetailsScrollHostOnResize;
