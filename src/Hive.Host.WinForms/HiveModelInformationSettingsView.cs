@@ -82,7 +82,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly Panel _detailsContent;
     private readonly Label _detailsTitle;
     private readonly Label _detailsBody;
-    private const int PriceSliderScale = 4;
+    private const int PriceSliderScale = 100;
+    private const decimal MinimumPriceSliderMaximum = 5m;
+    private const decimal PriceSliderMaximumStep = 5m;
     private readonly TrackBar _minPriceFilter;
     private readonly TrackBar _maxPriceFilter;
     private readonly Label _minPriceValueLabel;
@@ -253,7 +255,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _maxPriceValueLabel = CreatePriceValueLabel();
 
         _minPriceFilter = CreatePriceSlider(0);
-        _maxPriceFilter = CreatePriceSlider(1000 * PriceSliderScale);
+        _maxPriceFilter = CreatePriceSlider(
+            checked((int)(MinimumPriceSliderMaximum * PriceSliderScale)));
 
         filterBar.Controls.Add(_minPriceFilter);
         filterBar.Controls.Add(_minPriceValueLabel);
@@ -724,6 +727,46 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private static string FormatPriceSliderValue(int value) =>
         "$" + (value / (decimal)PriceSliderScale).ToString("0.00", CultureInfo.InvariantCulture);
 
+    private void ConfigurePriceFiltersForSnapshot()
+    {
+        if (_snapshot is null)
+            return;
+
+        var highestComparablePrice =
+            _snapshot.Models
+                .Select(GetComparableTokenPricePerMillion)
+                .Where(static price => price is not null)
+                .Select(static price => price!.Value)
+                .DefaultIfEmpty(0m)
+                .Max();
+
+        var maximumPrice =
+            highestComparablePrice <= 0m
+                ? MinimumPriceSliderMaximum
+                : Math.Max(
+                    MinimumPriceSliderMaximum,
+                    Math.Ceiling(
+                        highestComparablePrice / PriceSliderMaximumStep) *
+                    PriceSliderMaximumStep);
+
+        var maximumValue = checked(
+            (int)(maximumPrice * PriceSliderScale));
+
+        _updatingPriceFilters = true;
+        try
+        {
+            _minPriceFilter.Maximum = maximumValue;
+            _maxPriceFilter.Maximum = maximumValue;
+            _minPriceFilter.Value = 0;
+            _maxPriceFilter.Value = maximumValue;
+            UpdatePriceFilterLabels();
+        }
+        finally
+        {
+            _updatingPriceFilters = false;
+        }
+    }
+
     private void FilterChanged(object? sender, EventArgs e)
     {
         if (IsDisposed || Disposing)
@@ -797,10 +840,18 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             return false;
         }
 
-        if (price is null &&
-            minPrice > 0m)
+        if (price is null)
         {
-            return false;
+            var fullRangeMaximum =
+                _maxPriceFilter.Maximum / (decimal)PriceSliderScale;
+
+            if (minPrice > 0m ||
+                maxPrice < fullRangeMaximum)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         if (maxPrice == 0m &&
@@ -855,14 +906,14 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Width = 120,
             Height = 32,
             Minimum = 0,
-            Maximum = 1000 * PriceSliderScale,
-            TickFrequency = 400,
+            Maximum = checked((int)(MinimumPriceSliderMaximum * PriceSliderScale)),
+            TickFrequency = PriceSliderScale * 5,
             SmallChange = 1,
             LargeChange = 20,
             Value = value,
             Margin = Padding.Empty,
             AccessibleRole = AccessibleRole.Slider,
-            AccessibleDescription = "Comparable USD price per 1 million input or output tokens. Set maximum to zero to show only free-priced models."
+            AccessibleDescription = "Comparable USD price per 1 million input or output tokens. Values are adjustable in $0.01 increments. Set maximum to zero to show only free-priced models."
         };
 
     private static Label CreatePriceValueLabel() =>
@@ -998,6 +1049,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             }
 
             _snapshot = result.Value!;
+            ConfigurePriceFiltersForSnapshot();
             await ApplySnapshotAsync().ConfigureAwait(true);
         }
         catch (OperationCanceledException)
