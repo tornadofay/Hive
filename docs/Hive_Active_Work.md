@@ -451,3 +451,14 @@ Remediation boundary:
 - correct the concrete price-filter evaluation/list-refresh defect without changing discovery, Favorites, persistence, capability authority, Provider/Account/ExecutionTarget ownership, or Agent target-selection behavior;
 - preserve the rule that maximum price 0 represents free-only presentation and missing pricing is not treated as free;
 - return Active Work to VERIFICATION PENDING and require developer re-verification.
+
+## Remediation Completed — Model Information Price Sliders and Provider Details Heading
+
+Remediation completed within the recorded Model Information UI failure boundary:
+- replaced the numeric min/max token-price controls with paired TrackBar sliders using $0–$1000 bounds and $0.25 increments;
+- slider changes update labels and apply local filtering through ValueChanged, including programmatic/test changes;
+- maximum price $0 remains the explicit free-model view; missing pricing is not treated as free;
+- normalized the remaining lightweight provider-information section heading to the expected descriptive text;
+- preserved the lightweight reusable details surface and all discovery/Favorites/persistence/capability/Agent boundaries.
+
+Developer re-verification is required.
