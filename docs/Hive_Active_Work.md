@@ -496,3 +496,14 @@ Remediation completed within the recorded pricing verification boundary:
 - no discovery capability semantics, Favorites behavior, persistence, Provider/Account/ExecutionTarget ownership, or Agent target-selection behavior changed.
 
 Developer re-verification is required.
+
+
+## Verification Failure / Remediation Boundary — OpenRouter Pricing Regression Test Accessibility
+
+Developer verification on 2026-10-04 reports two in-scope compilation errors in `tests/Hive.Tests/Phase116FollowUpTests.cs`: `OpenAICompatibleModelCatalogFormat` is inaccessible due to its protection level at lines 68 and 154.
+
+Remediation boundary:
+- correct only the test/production accessibility contract needed for the focused OpenRouter pricing regressions to compile and exercise the intended provider-format path;
+- prefer existing repository test-access conventions and do not widen production public API unless the existing responsibility boundary requires it;
+- do not change provider discovery semantics, pricing normalization semantics, Favorites, persistence, capability authority, or Agent target-selection behavior;
+- return Active Work to VERIFICATION PENDING and require developer re-verification.
