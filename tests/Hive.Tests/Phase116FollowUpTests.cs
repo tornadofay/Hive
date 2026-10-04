@@ -125,6 +125,50 @@ public sealed class Phase116FollowUpTests
     }
 
     [Fact]
+    public async Task OpenAICompatibleAdapter_RecognizesOpenRouterZeroPricingWithoutCurrency()
+    {
+        using var client = new HttpClient(
+            new FixedResponseHandler(
+                """
+                {
+                  "data": [
+                    {
+                      "id": "free-model",
+                      "name": "Free Model",
+                      "pricing": {
+                        "prompt": "0",
+                        "completion": "0"
+                      }
+                    }
+                  ]
+                }
+                """));
+
+        var adapter = new OpenAICompatibleProviderAdapter(
+            client,
+            new OpenAICompatibleProviderOptions(
+                new Uri("https://openrouter.ai/api/v1/")));
+
+        var result = await adapter.ListModelsAsync(
+            new Uri("https://openrouter.ai/api/v1/models"),
+            OpenAICompatibleModelCatalogFormat.OpenRouter);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var model = Assert.Single(result.Value!.Models);
+        Assert.NotNull(model.Pricing);
+        Assert.True(model.Pricing!.ExplicitFreeEvidence);
+
+        Assert.All(
+            model.Pricing.Prices,
+            price =>
+            {
+                Assert.Equal("USD", price.Currency);
+                Assert.Equal(0m, price.Price);
+            });
+    }
+
+    [Fact]
     public async Task OpenAICompatibleAdapter_PreservesRichModelMetadata_AndRedactsSensitiveExtensionEvidence()
     {
         using var client = new HttpClient(
