@@ -929,7 +929,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         else
             RenderNoModelDetails();
 
-        ResizeDetailsContent();
     }
 
     private Task<IReadOnlyList<ModelInformationRow>> LoadModelsAsync(
@@ -1286,13 +1285,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         row.IsFavorite
             ? $"★ {row.Model.DisplayName ?? row.Model.ModelId}"
             : row.Model.DisplayName ?? row.Model.ModelId;
-
-    private static string FindCapability(
-        ProviderModelMetadata model,
-        CapabilityKey key) =>
-        model.DiscoveredCapabilities.FirstOrDefault(item => item.Capability == key) is { } entry
-            ? FormatCapabilityState(entry.State)
-            : "—";
 
     private static string FormatList(IReadOnlyList<string> values) =>
         values.Count == 0
