@@ -1183,7 +1183,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 .Select(item =>
                     $"{item.Capability.Value}: {FormatCapabilityDetailState(item.State)}")
                 .ToArray();
-        AppendDetailSection(builder, "CAPABILITIES", capabilityLines);
+        AppendDetailSection(builder, "Capabilities", capabilityLines);
 
         AppendDetailSection(
             builder,
