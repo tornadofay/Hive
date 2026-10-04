@@ -81,6 +81,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly Panel _detailsContent;
     private readonly Label _detailsTitle;
     private readonly Label _detailsBody;
+    private readonly NumericUpDown _minPriceFilter;
+    private readonly NumericUpDown _maxPriceFilter;
     private readonly HiveScrollHost _detailsScrollHost;
     private bool _updatingModelList;
     private CancellationTokenSource? _operationCts;
@@ -210,6 +212,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _capabilityFilter.Items.Add(choice);
         _capabilityFilter.SelectedIndex = 0;
 
+        _minPriceFilter = CreatePriceFilter(0m);
+        _maxPriceFilter = CreatePriceFilter(1000m);
+
         _capabilityStateFilter = new HiveComboBox
         {
             Width = 88,
@@ -240,11 +245,17 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Padding = new Padding(8, 6, 0, 6),
             AccessibleName = "Model Information filters"
         };
+        filterBar.Controls.Add(CreateFilterLabel("Price / 1M USD"));
+        filterBar.Controls.Add(_minPriceFilter);
+        filterBar.Controls.Add(CreateFilterLabel("to"));
+        filterBar.Controls.Add(_maxPriceFilter);
         filterBar.Controls.Add(CreateFilterLabel("Capability"));
         filterBar.Controls.Add(_capabilityFilter);
         filterBar.Controls.Add(CreateFilterLabel("State"));
         filterBar.Controls.Add(_capabilityStateFilter);
 
+        _minPriceFilter.ValueChanged += FilterChanged;
+        _maxPriceFilter.ValueChanged += FilterChanged;
         _capabilityFilter.SelectedIndexChanged += FilterChanged;
         _capabilityStateFilter.SelectedIndexChanged += FilterChanged;
 
@@ -420,6 +431,10 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     internal HiveCrudPage<ModelInformationRow> CrudPage => _page;
 
     internal HiveListView ModelsList => (HiveListView)_page.ListView;
+
+    internal NumericUpDown MinPriceFilter => _minPriceFilter;
+
+    internal NumericUpDown MaxPriceFilter => _maxPriceFilter;
 
     internal HiveComboBox CapabilityFilter => _capabilityFilter;
 
@@ -720,6 +735,27 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     private bool MatchesFilters(ProviderModelMetadata model)
     {
+        var price = GetComparableTokenPricePerMillion(model);
+
+        if (price is not null &&
+            (price.Value < _minPriceFilter.Value ||
+             price.Value > _maxPriceFilter.Value))
+        {
+            return false;
+        }
+
+        if (price is null &&
+            _minPriceFilter.Value > 0m)
+        {
+            return false;
+        }
+
+        if (_maxPriceFilter.Value == 0m &&
+            price != 0m)
+        {
+            return false;
+        }
+
         if (_capabilityFilter.SelectedItem is not CapabilityFilterChoice
             {
                 Key: { } key
@@ -759,6 +795,22 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         new(HiveCapabilityKeys.Reasoning, "Reasoning"),
         new(HiveCapabilityKeys.Thinking, "Thinking")
     ];
+
+    private static NumericUpDown CreatePriceFilter(decimal value) =>
+        new()
+        {
+            Width = 64,
+            Height = 32,
+            Minimum = 0,
+            Maximum = 1000,
+            DecimalPlaces = 2,
+            Increment = 0.25m,
+            Value = value,
+            ThousandsSeparator = false,
+            Margin = Padding.Empty,
+            AccessibleRole = AccessibleRole.SpinButton,
+            AccessibleDescription = "Maximum or minimum comparable USD price per 1 million input or output tokens. Set maximum to zero to show free-priced models."
+        };
 
     private static Label CreateFilterLabel(string text) =>
         new()
@@ -1107,7 +1159,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         AppendDetailSection(
             builder,
-            "IDENTITY",
+            "Identity",
             $"Model ID: {model.ModelId}",
             $"Owner / attribution: {model.OwnedBy ?? "—"}",
             $"Family: {model.Family ?? "—"}",
@@ -1120,7 +1172,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         AppendDetailSection(
             builder,
-            "INPUTS & OUTPUTS",
+            "Inputs & Outputs",
             $"Input modalities: {FormatList(model.InputModalities)}",
             $"Output modalities: {FormatList(model.OutputModalities)}");
 
@@ -1135,7 +1187,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         AppendDetailSection(
             builder,
-            "REASONING & THINKING",
+            "Reasoning & Thinking",
             $"Reasoning: {FindCapabilityDetail(model, HiveCapabilityKeys.Reasoning)}",
             $"Thinking: {FindCapabilityDetail(model, HiveCapabilityKeys.Thinking)}",
             $"Options: {FormatList(model.ThinkingOptions)}",
@@ -1149,7 +1201,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             AppendDetailSection(
                 builder,
-                "LIMITS",
+                "Limits",
                 $"Context window tokens: {model.Limits.ContextWindowTokens?.ToString() ?? "—"}",
                 $"Max input tokens: {model.Limits.MaxInputTokens?.ToString() ?? "—"}",
                 $"Max output tokens: {model.Limits.MaxOutputTokens?.ToString() ?? "—"}",
@@ -1160,7 +1212,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             AppendDetailSection(
                 builder,
-                "PRICING & ECONOMICS",
+                "Pricing & economics",
                 "Status: —",
                 "Interpretation: Missing pricing is not evidence that the model is free.");
         }
@@ -1205,7 +1257,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             AppendDetailSection(
                 builder,
-                "ADDITIONAL PROVIDER INFORMATION",
+                "Additional provider information",
                 "Status: —");
         }
         else
@@ -1233,6 +1285,37 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _detailsBody.Text = body;
         ResizeDetailsContent();
     }
+
+    private static decimal? GetComparableTokenPricePerMillion(
+        ProviderModelMetadata model)
+    {
+        if (model.Pricing?.ExplicitFreeEvidence == true &&
+            model.Pricing.Prices.All(price => !IsTokenBillingUnit(price.BillingUnit)))
+        {
+            return 0m;
+        }
+
+        var values = model.Pricing?.Prices
+            .Where(static price =>
+                IsTokenBillingUnit(price.BillingUnit) &&
+                string.Equals(price.Currency, "USD", StringComparison.OrdinalIgnoreCase))
+            .Select(static price =>
+            {
+                var quantity = price.UnitQuantity ?? 1m;
+                return quantity <= 0m
+                    ? decimal.MaxValue
+                    : price.Price * 1_000_000m / quantity;
+            })
+            .ToArray();
+
+        return values is { Length: > 0 }
+            ? values.Max()
+            : null;
+    }
+
+    private static bool IsTokenBillingUnit(string billingUnit) =>
+        string.Equals(billingUnit, "input_token", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(billingUnit, "output_token", StringComparison.OrdinalIgnoreCase);
 
     private static void AppendDetailSection(
         StringBuilder builder,
@@ -1426,6 +1509,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _endpointComboBox.TextChanged -= EndpointTextChanged;
             _page.OperationFailed -= PageOperationFailed;
             _page.ListView.ItemSelectionChanged -= ModelsListSelectionChanged;
+            _minPriceFilter.ValueChanged -= FilterChanged;
+            _maxPriceFilter.ValueChanged -= FilterChanged;
             _capabilityFilter.SelectedIndexChanged -= FilterChanged;
             _capabilityStateFilter.SelectedIndexChanged -= FilterChanged;
             _detailsScrollHost.Resize -= DetailsScrollHostOnResize;
