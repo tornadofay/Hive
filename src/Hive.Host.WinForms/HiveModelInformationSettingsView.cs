@@ -267,8 +267,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         filterBar.Controls.Add(CreateFilterLabel("State"));
         filterBar.Controls.Add(_capabilityStateFilter);
 
-        _minPriceFilter.Scroll += PriceFilterScroll;
-        _maxPriceFilter.Scroll += PriceFilterScroll;
+        _minPriceFilter.ValueChanged += PriceFilterValueChanged;
+        _maxPriceFilter.ValueChanged += PriceFilterValueChanged;
         _capabilityFilter.SelectedIndexChanged += FilterChanged;
         _capabilityStateFilter.SelectedIndexChanged += FilterChanged;
 
@@ -686,7 +686,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             await LoadCachedOrDiscoverAsync().ConfigureAwait(true);
     }
 
-    private void PriceFilterScroll(object? sender, EventArgs e)
+    private void PriceFilterValueChanged(object? sender, EventArgs e)
     {
         if (_updatingPriceFilters || IsDisposed || Disposing)
             return;
@@ -1574,8 +1574,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _endpointComboBox.TextChanged -= EndpointTextChanged;
             _page.OperationFailed -= PageOperationFailed;
             _page.ListView.ItemSelectionChanged -= ModelsListSelectionChanged;
-            _minPriceFilter.Scroll -= PriceFilterScroll;
-            _maxPriceFilter.Scroll -= PriceFilterScroll;
+            _minPriceFilter.ValueChanged -= PriceFilterValueChanged;
+            _maxPriceFilter.ValueChanged -= PriceFilterValueChanged;
             _capabilityFilter.SelectedIndexChanged -= FilterChanged;
             _capabilityStateFilter.SelectedIndexChanged -= FilterChanged;
             _detailsScrollHost.Resize -= DetailsScrollHostOnResize;
