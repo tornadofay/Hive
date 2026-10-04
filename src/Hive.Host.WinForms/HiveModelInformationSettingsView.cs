@@ -1195,7 +1195,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         if (model.Limits is null)
         {
-            AppendDetailSection(builder, "LIMITS", "Status: —");
+            AppendDetailSection(builder, "Limits", "Status: —");
         }
         else
         {
@@ -1241,13 +1241,13 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
             AppendDetailSection(
                 builder,
-                "PRICING & ECONOMICS",
+                "Pricing & economics",
                 pricingLines.ToArray());
         }
 
         AppendDetailSection(
             builder,
-            "OPERATIONAL STATE",
+            "Operational state",
             $"Availability: {model.Availability}",
             $"Health: {model.Health}",
             $"Observed: {model.ObservedAtUtc?.ToString("O") ?? "Snapshot observation timestamp"}",
