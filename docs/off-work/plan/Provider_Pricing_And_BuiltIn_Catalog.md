@@ -34,7 +34,7 @@ The production heading defect has now been corrected within the current Active W
 
 ## Workstream 1 — Pricing contract
 
-### B1. Make source quantity explicit
+### 1.1 Make source quantity explicit
 
 Audit `ProviderModelPrice.UnitQuantity` and remove any token-price path that relies on an implicit quantity of 1.
 
@@ -47,7 +47,7 @@ Required behavior:
 
 Keep the contract as small as possible. The objective is an enforceable normalization invariant, not a general billing framework.
 
-### B2. Introduce explicit normalization rules
+### 1.2 Introduce explicit normalization rules
 
 Create a provider pricing normalization abstraction owned by the OpenAI-compatible provider boundary.
 
@@ -63,7 +63,7 @@ It should make these decisions explicit:
 
 Avoid a generic "guess the unit" algorithm.
 
-### B3. Correct free-evidence semantics
+### 1.3 Correct free-evidence semantics
 
 Replace the current overly broad zero-price inference.
 
@@ -97,7 +97,7 @@ output = 0
 
 Missing pricing must remain distinct.
 
-### B4. Support pricing variants
+### 1.4 Support pricing variants
 
 Expand the normalized contract enough to represent documented conditions such as:
 
@@ -155,7 +155,7 @@ Initial profiles:
 
 ### Different provider transport/integration boundaries
 
-Catalog entries should exist now, but implementation should remain separately bounded:
+These providers belong in the built-in provider inventory, but their transport/discovery implementation is a separate boundary:
 
 - Anthropic
 - AWS Bedrock
@@ -163,7 +163,7 @@ Catalog entries should exist now, but implementation should remain separately bo
 - Google Vertex AI
 - Replicate
 
-For these, do not force fake OpenAI-compatible discovery behavior just to make the catalog entry exist.
+For each such provider, the catalog definition may record that a native integration is required. Do not route it through the OpenAI-compatible adapter merely to make the catalog entry functional.
 
 ## Workstream 3 — Built-in catalog quality
 
@@ -206,7 +206,7 @@ with $0.01 precision.
 
 A separate unrestricted/Any state should be available so models above the practical display range are not made impossible to inspect.
 
-The final implementation may choose a slightly different practical ceiling after inspecting the real built-in provider catalog, but it must remain small enough to provide useful slider precision.
+The final implementation must choose the practical ceiling from the normalized built-in catalog and retain an unrestricted state for prices above that ceiling. The exact ceiling is deliberately not frozen in this plan.
 
 ## Workstream 5 — Focused automated tests
 
