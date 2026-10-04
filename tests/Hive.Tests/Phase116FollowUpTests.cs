@@ -530,12 +530,12 @@ public sealed class Phase116FollowUpTests
         Assert.Equal(
             [
                 "Model",
-                "✎",
-                "👁",
-                "⚒",
-                "{}",
-                "∴",
-                "💭"
+                "Text",
+                "Vision",
+                "Tools",
+                "Structured",
+                "Reasoning",
+                "Thinking"
             ],
             view.CrudPage.Columns.Select(column => column.Header));
 
@@ -639,6 +639,36 @@ public sealed class Phase116FollowUpTests
         Assert.Equal("rich-model", confirmedModelName);
         Assert.Contains(fixture.Target.Id, fixture.ManagementProxy.FavoriteExecutionTargetIds);
         Assert.StartsWith("★ ", view.ModelsList.Items[0].Text);
+    }
+
+    [WinFormsFact]
+    public async Task ModelInformationView_PriceRangeFilterCanShowOnlyFreeModels()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var fixture = CreateFixture(secondModelFree: true);
+
+        using var host = new Form { Size = new Size(1160, 760) };
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync();
+        Application.DoEvents();
+
+        Assert.Equal(2, view.ModelsList.Items.Count);
+        Assert.Equal(0m, view.MinPriceFilter.Value);
+        Assert.Equal(1000m, view.MaxPriceFilter.Value);
+
+        view.MaxPriceFilter.Value = 0m;
+        Application.DoEvents();
+
+        Assert.Single(view.ModelsList.Items);
+        Assert.Equal("second-model", view.ModelsList.Items[0].Text);
     }
 
     [WinFormsFact]
@@ -873,7 +903,8 @@ public sealed class Phase116FollowUpTests
     }
 
     private static ModelInformationFixture CreateFixture(
-        bool favoriteFirstModel = false)
+        bool favoriteFirstModel = false,
+        bool secondModelFree = false)
     {
         var context = CreateContext();
         var principal = context.PrincipalId!.Value;
@@ -1033,18 +1064,32 @@ public sealed class Phase116FollowUpTests
             modelType: "chat",
             operationalState: "active",
             pricing: new ProviderModelPricing(
-                [
-                    new ProviderModelPrice(
-                        "input_token",
-                        0.25m,
-                        "USD",
-                        1_000_000m),
-                    new ProviderModelPrice(
-                        "output_token",
-                        0.5m,
-                        "USD",
-                        1_000_000m)
-                ]));
+                secondModelFree
+                    ? [
+                        new ProviderModelPrice(
+                            "input_token",
+                            0m,
+                            "USD",
+                            1_000_000m),
+                        new ProviderModelPrice(
+                            "output_token",
+                            0m,
+                            "USD",
+                            1_000_000m)
+                    ]
+                    : [
+                        new ProviderModelPrice(
+                            "input_token",
+                            0.25m,
+                            "USD",
+                            1_000_000m),
+                        new ProviderModelPrice(
+                            "output_token",
+                            0.5m,
+                            "USD",
+                            1_000_000m)
+                    ],
+                explicitFreeEvidence: secondModelFree));
 
         var snapshot = new ProviderDiscoverySnapshot(
             provider.Id,
