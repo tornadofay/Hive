@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Text;
 using System.Text.Json;
 using Hive.Core;
 using Hive.Host.WinForms.UI.Controls;
@@ -19,9 +20,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     {
         public override string ToString() => Value.DisplayName;
     }
-
-    private const string DetailKeyTag = "detail-key";
-    private const string DetailValueTag = "detail-value";
 
     private enum ModelCapabilityFilterState
     {
@@ -76,13 +74,13 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly HiveComboBox _providerComboBox;
     private readonly HiveComboBox _accountComboBox;
     private readonly HiveComboBox _endpointComboBox;
-    private readonly NumericUpDown _minPriceFilter;
-    private readonly NumericUpDown _maxPriceFilter;
     private readonly HiveComboBox _capabilityFilter;
     private readonly HiveComboBox _capabilityStateFilter;
     private readonly HiveCrudPage<ModelInformationRow> _page;
     private readonly SplitContainer _mainSplit;
     private readonly Panel _detailsContent;
+    private readonly Label _detailsTitle;
+    private readonly Label _detailsBody;
     private readonly HiveScrollHost _detailsScrollHost;
     private bool _updatingModelList;
     private CancellationTokenSource? _operationCts;
@@ -94,7 +92,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private IReadOnlyList<ExecutionTarget> _executionTargets = Array.Empty<ExecutionTarget>();
     private IReadOnlyList<ExecutionTargetId> _favoriteExecutionTargetIds = Array.Empty<ExecutionTargetId>();
     private HashSet<ExecutionTargetId> _favoriteTargetIdSet = [];
-    private bool _updatingFilters;
     private ProviderDiscoverySnapshot? _snapshot;
 
     public HiveModelInformationSettingsView(
@@ -166,33 +163,33 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _page.SetColumns(
             new HiveCrudColumn<ModelInformationRow>("Model", 250, FormatModelName),
             new HiveCrudColumn<ModelInformationRow>(
-                "Text",
-                50,
+                "✎",
+                42,
                 row => FormatCapabilityState(row.Model, HiveCapabilityKeys.TextGeneration),
                 row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.TextGeneration)),
             new HiveCrudColumn<ModelInformationRow>(
-                "Vision",
-                58,
+                "👁",
+                42,
                 row => FormatCapabilityState(row.Model, HiveCapabilityKeys.Vision),
                 row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.Vision)),
             new HiveCrudColumn<ModelInformationRow>(
-                "Tools",
-                52,
+                "⚒",
+                42,
                 row => FormatCapabilityState(row.Model, HiveCapabilityKeys.ToolCalling),
                 row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.ToolCalling)),
             new HiveCrudColumn<ModelInformationRow>(
-                "Structured",
-                76,
+                "{}",
+                48,
                 row => FormatCapabilityState(row.Model, HiveCapabilityKeys.StructuredOutput),
                 row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.StructuredOutput)),
             new HiveCrudColumn<ModelInformationRow>(
-                "Reasoning",
-                72,
+                "∴",
+                42,
                 row => FormatCapabilityState(row.Model, HiveCapabilityKeys.Reasoning),
                 row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.Reasoning)),
             new HiveCrudColumn<ModelInformationRow>(
-                "Thinking",
-                64,
+                "💭",
+                48,
                 row => FormatCapabilityState(row.Model, HiveCapabilityKeys.Thinking),
                 row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.Thinking)));
 
@@ -200,9 +197,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _page.EditItemAsync = AddSelectedModelToFavoritesAsync;
         _page.OperationFailed += PageOperationFailed;
         _page.ListView.ItemSelectionChanged += ModelsListSelectionChanged;
-
-        _minPriceFilter = CreatePriceFilter(0);
-        _maxPriceFilter = CreatePriceFilter(1000);
 
         _capabilityFilter = new HiveComboBox
         {
@@ -246,17 +240,11 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Padding = new Padding(8, 6, 0, 6),
             AccessibleName = "Model Information filters"
         };
-        filterBar.Controls.Add(CreateFilterLabel("Token price / 1M USD"));
-        filterBar.Controls.Add(_minPriceFilter);
-        filterBar.Controls.Add(CreateFilterLabel("to"));
-        filterBar.Controls.Add(_maxPriceFilter);
         filterBar.Controls.Add(CreateFilterLabel("Capability"));
         filterBar.Controls.Add(_capabilityFilter);
         filterBar.Controls.Add(CreateFilterLabel("State"));
         filterBar.Controls.Add(_capabilityStateFilter);
 
-        _minPriceFilter.ValueChanged += FilterChanged;
-        _maxPriceFilter.ValueChanged += FilterChanged;
         _capabilityFilter.SelectedIndexChanged += FilterChanged;
         _capabilityStateFilter.SelectedIndexChanged += FilterChanged;
 
@@ -267,13 +255,38 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         _detailsContent = new Panel
         {
-            Dock = DockStyle.Fill,
-            AutoSize = false,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             Margin = Padding.Empty,
-            Padding = new Padding(0, 0, 8, 8),
-            MinimumSize = new Size(320, 48),
+            Padding = new Padding(12),
+            MinimumSize = new Size(300, 48),
             AccessibleName = "Selected model information"
         };
+
+        _detailsTitle = new Label
+        {
+            AutoSize = true,
+            Dock = DockStyle.Top,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            Font = new Font(
+                _themeManager.Theme.Typography.FontFamily,
+                _themeManager.Theme.Typography.SectionSize + 0.75f,
+                FontStyle.Bold),
+            AccessibleRole = AccessibleRole.Heading
+        };
+
+        _detailsBody = new Label
+        {
+            AutoSize = true,
+            Dock = DockStyle.Top,
+            Margin = new Padding(0, 8, 0, 0),
+            Padding = Padding.Empty,
+            AccessibleRole = AccessibleRole.StaticText
+        };
+
+        _detailsContent.Controls.Add(_detailsBody);
+        _detailsContent.Controls.Add(_detailsTitle);
 
         _detailsScrollHost = new HiveScrollHost
         {
@@ -407,10 +420,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     internal HiveCrudPage<ModelInformationRow> CrudPage => _page;
 
     internal HiveListView ModelsList => (HiveListView)_page.ListView;
-
-    internal NumericUpDown MinPriceFilter => _minPriceFilter;
-
-    internal NumericUpDown MaxPriceFilter => _maxPriceFilter;
 
     internal HiveComboBox CapabilityFilter => _capabilityFilter;
 
@@ -651,26 +660,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     private void FilterChanged(object? sender, EventArgs e)
     {
-        if (_updatingFilters || IsDisposed || Disposing)
+        if (IsDisposed || Disposing)
             return;
-
-        if (_minPriceFilter.Value > _maxPriceFilter.Value)
-        {
-            _updatingFilters = true;
-            try
-            {
-                if (ReferenceEquals(sender, _minPriceFilter))
-                    _maxPriceFilter.Value = _minPriceFilter.Value;
-                else
-                    _minPriceFilter.Value = _maxPriceFilter.Value;
-            }
-            finally
-            {
-                _updatingFilters = false;
-            }
-
-            return;
-        }
 
         ApplyModelFilters();
     }
@@ -729,15 +720,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     private bool MatchesFilters(ProviderModelMetadata model)
     {
-        var price = GetComparableTokenPricePerMillion(model);
-
-        if (price is { } comparablePrice &&
-            (comparablePrice < _minPriceFilter.Value ||
-             comparablePrice > _maxPriceFilter.Value))
-        {
-            return false;
-        }
-
         if (_capabilityFilter.SelectedItem is not CapabilityFilterChoice
             {
                 Key: { } key
@@ -777,22 +759,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         new(HiveCapabilityKeys.Reasoning, "Reasoning"),
         new(HiveCapabilityKeys.Thinking, "Thinking")
     ];
-
-    private static NumericUpDown CreatePriceFilter(decimal value) =>
-        new()
-        {
-            Width = 72,
-            Height = 32,
-            Minimum = 0,
-            Maximum = 1000,
-            DecimalPlaces = 2,
-            Increment = 1,
-            Value = value,
-            ThousandsSeparator = false,
-            Margin = Padding.Empty,
-            AccessibleRole = AccessibleRole.SpinButton,
-            AccessibleDescription = "Token price in USD per 1 million input or output tokens."
-        };
 
     private static Label CreateFilterLabel(string text) =>
         new()
@@ -851,39 +817,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _ => _themeManager.Theme.Palette.MutedText
         };
     }
-
-    private static decimal? GetComparableTokenPricePerMillion(
-        ProviderModelMetadata model)
-    {
-        if (model.Pricing?.ExplicitFreeEvidence == true &&
-            model.Pricing.Prices.All(price => !IsTokenBillingUnit(price.BillingUnit)))
-        {
-            return 0m;
-        }
-
-        var values = model.Pricing?.Prices
-            .Where(static price =>
-                IsTokenBillingUnit(price.BillingUnit) &&
-                string.Equals(price.Currency, "USD", StringComparison.OrdinalIgnoreCase))
-            .Select(static price =>
-            {
-                var quantity = price.UnitQuantity ?? 1m;
-
-                if (price.Price > decimal.MaxValue / 1_000_000m)
-                    return decimal.MaxValue;
-
-                return price.Price * 1_000_000m / quantity;
-            })
-            .ToArray();
-
-        return values is { Length: > 0 }
-            ? values.Max()
-            : null;
-    }
-
-    private static bool IsTokenBillingUnit(string billingUnit) =>
-        string.Equals(billingUnit, "input_token", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(billingUnit, "output_token", StringComparison.OrdinalIgnoreCase);
 
     private async Task LoadCachedOrDiscoverAsync()
     {
@@ -996,7 +929,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         else
             RenderNoModelDetails();
 
-        ResizeDetailCards();
+        ResizeDetailsContent();
     }
 
     private Task<IReadOnlyList<ModelInformationRow>> LoadModelsAsync(
@@ -1144,39 +1077,12 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _snapshot = null;
         _executionTargets = Array.Empty<ExecutionTarget>();
         _page.ListView.Items.Clear();
-        ClearDetailsContent();
+        RenderNoModelDetails();
     }
 
     private void RenderNoModelDetails()
     {
-        ClearDetailsContent();
-
         var operational = _snapshot?.Operational;
-        var card = CreateDetailCard(
-            "No model selected",
-            emphasized: true);
-
-        var table = GetCardTable(card);
-        AddKeyValueRow(
-            table,
-            "Discovery state",
-            _snapshot?.ModelEnumerationState.ToString() ?? "Not started");
-        AddKeyValueRow(
-            table,
-            "Provider availability",
-            operational?.Availability.ToString() ?? "—");
-        AddKeyValueRow(
-            table,
-            "Provider health",
-            operational?.Health.ToString() ?? "—");
-        AddKeyValueRow(
-            table,
-            "Observed",
-            operational?.ObservedAtUtc.ToString("O") ?? "—");
-        AddKeyValueRow(
-            table,
-            "Stale after",
-            operational?.StaleAfterUtc.ToString("O") ?? "—");
 
         var message = _snapshot is null
             ? "Choose a Provider, Account, and endpoint, then refresh."
@@ -1184,395 +1090,177 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 ? "No model metadata is available for this observation. Hive does not infer a model when enumeration returns none."
                 : "Select a model from the discovered catalog.";
 
-        AddKeyValueRow(table, "Information", message);
-
-        _detailsContent.Controls.Add(card);
-        ApplyDetailsTheme();
-        ResizeDetailCards();
+        SetDetails(
+            "No model selected",
+            string.Join(
+                Environment.NewLine,
+                $"Discovery state: {_snapshot?.ModelEnumerationState.ToString() ?? "Not started"}",
+                $"Provider availability: {operational?.Availability.ToString() ?? "—"}",
+                $"Provider health: {operational?.Health.ToString() ?? "—"}",
+                $"Observed: {operational?.ObservedAtUtc.ToString("O") ?? "—"}",
+                $"Stale after: {operational?.StaleAfterUtc.ToString("O") ?? "—"}",
+                message));
     }
 
     private void RenderModelDetails(ProviderModelMetadata model)
     {
-        _detailsContent.SuspendLayout();
-        try
+        var builder = new StringBuilder();
+
+        AppendDetailSection(
+            builder,
+            "IDENTITY",
+            $"Model ID: {model.ModelId}",
+            $"Owner / attribution: {model.OwnedBy ?? "—"}",
+            $"Family: {model.Family ?? "—"}",
+            $"Type: {model.ModelType ?? "—"}",
+            $"Category: {model.Category ?? "—"}",
+            $"Version: {model.Version ?? "—"}",
+            $"Operational state: {model.OperationalState ?? "—"}",
+            $"Created: {model.CreatedAtUtc?.ToString("O") ?? "—"}",
+            $"Description: {model.Description ?? "—"}");
+
+        AppendDetailSection(
+            builder,
+            "INPUTS & OUTPUTS",
+            $"Input modalities: {FormatList(model.InputModalities)}",
+            $"Output modalities: {FormatList(model.OutputModalities)}");
+
+        var capabilityLines = model.DiscoveredCapabilities.Count == 0
+            ? new[] { "State: —" }
+            : model.DiscoveredCapabilities
+                .OrderBy(item => item.Capability.Value, StringComparer.Ordinal)
+                .Select(item =>
+                    $"{item.Capability.Value}: {FormatCapabilityDetailState(item.State)}")
+                .ToArray();
+        AppendDetailSection(builder, "CAPABILITIES", capabilityLines);
+
+        AppendDetailSection(
+            builder,
+            "REASONING & THINKING",
+            $"Reasoning: {FindCapabilityDetail(model, HiveCapabilityKeys.Reasoning)}",
+            $"Thinking: {FindCapabilityDetail(model, HiveCapabilityKeys.Thinking)}",
+            $"Options: {FormatList(model.ThinkingOptions)}",
+            $"Default: {model.DefaultThinkingLevel ?? "—"}");
+
+        if (model.Limits is null)
         {
-            ClearDetailsContent();
+            AppendDetailSection(builder, "LIMITS", "Status: —");
+        }
+        else
+        {
+            AppendDetailSection(
+                builder,
+                "LIMITS",
+                $"Context window tokens: {model.Limits.ContextWindowTokens?.ToString() ?? "—"}",
+                $"Max input tokens: {model.Limits.MaxInputTokens?.ToString() ?? "—"}",
+                $"Max output tokens: {model.Limits.MaxOutputTokens?.ToString() ?? "—"}",
+                $"Additional constraints: {FormatJsonDictionary(model.Limits.AdditionalConstraints)}");
+        }
 
-            var summary = CreateDetailCard(
-                model.DisplayName ?? model.ModelId,
-                emphasized: true);
-            var summaryTable = GetCardTable(summary);
-
-            AddKeyValueRow(summaryTable, "Model ID", model.ModelId);
-            AddKeyValueRow(summaryTable, "Owner / attribution", model.OwnedBy ?? "—");
-            AddKeyValueRow(summaryTable, "Family", model.Family ?? "—");
-            AddKeyValueRow(summaryTable, "Type", model.ModelType ?? "—");
-            AddKeyValueRow(summaryTable, "Category", model.Category ?? "—");
-            AddKeyValueRow(summaryTable, "Version", model.Version ?? "—");
-            AddKeyValueRow(summaryTable, "Operational state", model.OperationalState ?? "—");
-            AddKeyValueRow(
-                summaryTable,
-                "Created",
-                model.CreatedAtUtc?.ToString("O") ?? "—");
-            AddKeyValueRow(
-                summaryTable,
-                "Description",
-                model.Description ?? "—");
-
-            _detailsContent.Controls.Add(summary);
-
-            var modalities = CreateDetailCard("Inputs & outputs");
-            var modalitiesTable = GetCardTable(modalities);
-            AddKeyValueRow(
-                modalitiesTable,
-                "Input modalities",
-                FormatList(model.InputModalities));
-            AddKeyValueRow(
-                modalitiesTable,
-                "Output modalities",
-                FormatList(model.OutputModalities));
-            _detailsContent.Controls.Add(modalities);
-
-            var capabilities = CreateDetailCard("Capabilities");
-            var capabilityTable = GetCardTable(capabilities);
-            AddKeyValueRow(capabilityTable, "Capability", "State");
-            if (model.DiscoveredCapabilities.Count == 0)
+        if (model.Pricing is null)
+        {
+            AppendDetailSection(
+                builder,
+                "PRICING & ECONOMICS",
+                "Status: —",
+                "Interpretation: Missing pricing is not evidence that the model is free.");
+        }
+        else
+        {
+            var pricingLines = new List<string>
             {
-                AddKeyValueRow(
-                    capabilityTable,
-                    "State",
-                    "—");
+                $"Explicit free evidence: {(model.Pricing.ExplicitFreeEvidence ? "True" : "False")}"
+            };
+
+            if (model.Pricing.Prices.Count == 0)
+            {
+                pricingLines.Add("Rates: —");
             }
             else
             {
-                foreach (var item in model.DiscoveredCapabilities
-                             .OrderBy(item => item.Capability.Value, StringComparer.Ordinal))
-                {
-                    AddKeyValueRow(
-                        capabilityTable,
-                        item.Capability.Value,
-                        FormatCapabilityDetailState(item.State));
-                }
-            }
-
-            _detailsContent.Controls.Add(capabilities);
-
-            var reasoning = CreateDetailCard("Reasoning & thinking");
-            var reasoningTable = GetCardTable(reasoning);
-            AddKeyValueRow(
-                reasoningTable,
-                "Reasoning",
-                FindCapabilityDetail(model, HiveCapabilityKeys.Reasoning));
-            AddKeyValueRow(
-                reasoningTable,
-                "Thinking",
-                FindCapabilityDetail(model, HiveCapabilityKeys.Thinking));
-            AddKeyValueRow(
-                reasoningTable,
-                "Options",
-                FormatList(model.ThinkingOptions));
-            AddKeyValueRow(
-                reasoningTable,
-                "Default",
-                model.DefaultThinkingLevel ?? "—");
-            _detailsContent.Controls.Add(reasoning);
-
-            var limits = CreateDetailCard("Limits");
-            var limitsTable = GetCardTable(limits);
-            if (model.Limits is null)
-            {
-                AddKeyValueRow(
-                    limitsTable,
-                    "Status",
-                    "—");
-            }
-            else
-            {
-                AddKeyValueRow(
-                    limitsTable,
-                    "Context window tokens",
-                    model.Limits.ContextWindowTokens?.ToString() ?? "—");
-                AddKeyValueRow(
-                    limitsTable,
-                    "Max input tokens",
-                    model.Limits.MaxInputTokens?.ToString() ?? "—");
-                AddKeyValueRow(
-                    limitsTable,
-                    "Max output tokens",
-                    model.Limits.MaxOutputTokens?.ToString() ?? "—");
-                AddKeyValueRow(
-                    limitsTable,
-                    "Additional constraints",
-                    FormatJsonDictionary(model.Limits.AdditionalConstraints));
-            }
-
-            _detailsContent.Controls.Add(limits);
-
-            var pricing = CreateDetailCard("Pricing & economics");
-            var pricingTable = GetCardTable(pricing);
-            if (model.Pricing is null)
-            {
-                AddKeyValueRow(pricingTable, "Status", "—");
-                AddKeyValueRow(
-                    pricingTable,
-                    "Interpretation",
-                    "Missing pricing is not evidence that the model is free.");
-            }
-            else
-            {
-                AddKeyValueRow(
-                    pricingTable,
-                    "Explicit free evidence",
-                    model.Pricing.ExplicitFreeEvidence ? "True" : "False");
-
-                if (model.Pricing.Prices.Count == 0)
-                {
-                    AddKeyValueRow(
-                        pricingTable,
-                        "Rates",
-                        "—");
-                }
-                else
-                {
-                    foreach (var price in model.Pricing.Prices)
+                pricingLines.AddRange(
+                    model.Pricing.Prices.Select(price =>
                     {
                         var quantity = price.UnitQuantity is { } value
                             ? $" per {value:0.####}"
                             : string.Empty;
-                        AddKeyValueRow(
-                            pricingTable,
-                            price.BillingUnit,
-                            $"{price.Price:0.##########} {price.Currency ?? "—"}{quantity}");
-                    }
-                }
+                        return $"{price.BillingUnit}: {price.Price:0.##########} {price.Currency ?? "—"}{quantity}";
+                    }));
             }
 
-            _detailsContent.Controls.Add(pricing);
-
-            var operational = CreateDetailCard("Operational state");
-            var operationalTable = GetCardTable(operational);
-            AddKeyValueRow(
-                operationalTable,
-                "Availability",
-                model.Availability.ToString());
-            AddKeyValueRow(
-                operationalTable,
-                "Health",
-                model.Health.ToString());
-            AddKeyValueRow(
-                operationalTable,
-                "Observed",
-                model.ObservedAtUtc?.ToString("O") ?? "Snapshot observation timestamp");
-            AddKeyValueRow(
-                operationalTable,
-                "Stale after",
-                model.StaleAfterUtc?.ToString("O") ?? "Snapshot freshness boundary");
-            _detailsContent.Controls.Add(operational);
-
-            var providerInfo = CreateDetailCard("Additional provider information");
-            var providerInfoTable = GetCardTable(providerInfo);
-            if (model.ExtensionData.Count == 0)
-            {
-                AddKeyValueRow(
-                    providerInfoTable,
-                    "Status",
-                    "—");
-            }
-            else
-            {
-                foreach (var pair in model.ExtensionData
-                             .OrderBy(pair => pair.Key, StringComparer.Ordinal))
-                {
-                    AddKeyValueRow(
-                        providerInfoTable,
-                        pair.Key,
-                        FormatJsonValue(pair.Value));
-                }
-            }
-
-            _detailsContent.Controls.Add(providerInfo);
-            ApplyDetailsTheme();
+            AppendDetailSection(
+                builder,
+                "PRICING & ECONOMICS",
+                pricingLines.ToArray());
         }
-        finally
+
+        AppendDetailSection(
+            builder,
+            "OPERATIONAL STATE",
+            $"Availability: {model.Availability}",
+            $"Health: {model.Health}",
+            $"Observed: {model.ObservedAtUtc?.ToString("O") ?? "Snapshot observation timestamp"}",
+            $"Stale after: {model.StaleAfterUtc?.ToString("O") ?? "Snapshot freshness boundary"}");
+
+        if (model.ExtensionData.Count == 0)
         {
-            _detailsContent.ResumeLayout(true);
-            ResizeDetailCards();
+            AppendDetailSection(
+                builder,
+                "ADDITIONAL PROVIDER INFORMATION",
+                "Status: —");
         }
-    }
-
-    private Panel CreateDetailCard(
-        string title,
-        bool emphasized = false)
-    {
-        var theme = _themeManager.Theme;
-        var card = new Panel
+        else
         {
-            AutoSize = false,
-            Size = new Size(320, 48),
-            Margin = new Padding(0, 0, 0, 8),
-            Padding = new Padding(10),
-            BackColor = emphasized
-                ? theme.Palette.Surface
-                : theme.Palette.ElevatedSurface,
-            BorderStyle = BorderStyle.FixedSingle,
-            AccessibleName = title,
-            Tag = emphasized ? "emphasized" : null
-        };
-
-        var table = new TableLayoutPanel
-        {
-            Dock = DockStyle.Top,
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            ColumnCount = 2,
-            RowCount = 1,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty
-        };
-        table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 155f));
-        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-
-        var heading = new Label
-        {
-            Dock = DockStyle.Fill,
-            AutoSize = false,
-            Height = 28,
-            Text = title,
-            Padding = new Padding(0, 0, 0, 6),
-            AccessibleRole = AccessibleRole.StaticText,
-            Font = new Font(
-                _themeManager.Theme.Typography.FontFamily,
-                _themeManager.Theme.Typography.SectionSize + 0.75f,
-                FontStyle.Bold),
-            AccessibleName = title
-        };
-
-        table.Controls.Add(heading, 0, 0);
-        table.SetColumnSpan(heading, 2);
-        card.Controls.Add(table);
-        return card;
-    }
-
-    private static TableLayoutPanel GetCardTable(Panel card) =>
-        card.Controls.OfType<TableLayoutPanel>().Single();
-
-    private static void AddKeyValueRow(
-        TableLayoutPanel table,
-        string key,
-        string value)
-    {
-        var row = table.RowCount;
-        table.RowCount++;
-        table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-
-        var keyLabel = new Label
-        {
-            Dock = DockStyle.Fill,
-            AutoSize = false,
-            Text = key,
-            Padding = new Padding(0, 3, 12, 3),
-            TextAlign = ContentAlignment.TopLeft,
-            Tag = DetailKeyTag
-        };
-
-        var valueLabel = new Label
-        {
-            AutoSize = true,
-            MaximumSize = new Size(520, 0),
-            Text = value,
-            Padding = new Padding(0, 3, 0, 3),
-            Margin = Padding.Empty,
-            Tag = DetailValueTag
-        };
-
-        table.Controls.Add(keyLabel, 0, row);
-        table.Controls.Add(valueLabel, 1, row);
-    }
-
-    private void ClearDetailsContent()
-    {
-        while (_detailsContent.Controls.Count > 0)
-        {
-            var child = _detailsContent.Controls[0];
-            _detailsContent.Controls.RemoveAt(0);
-            child.Dispose();
+            AppendDetailSection(
+                builder,
+                "ADDITIONAL PROVIDER INFORMATION",
+                model.ExtensionData
+                    .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                    .Select(pair => $"{pair.Key}: {FormatJsonValue(pair.Value)}")
+                    .ToArray());
         }
+
+        SetDetails(
+            model.DisplayName ?? model.ModelId,
+            builder.ToString().TrimEnd());
     }
 
-    private void ApplyDetailsTheme()
+    private void SetDetails(string title, string body)
     {
         if (IsDisposed || Disposing)
             return;
 
-        _themeManager.Apply(_detailsContent);
-
-        var theme = _themeManager.Theme;
-        foreach (var card in _detailsContent.Controls.OfType<Panel>())
-        {
-            card.BackColor = card.Tag is string tag && tag == "emphasized"
-                ? theme.Palette.Surface
-                : theme.Palette.ElevatedSurface;
-            card.ForeColor = theme.Palette.Text;
-
-            var table = GetCardTable(card);
-
-            foreach (var label in table.Controls.OfType<Label>())
-            {
-                label.ForeColor = label.Tag switch
-                {
-                    DetailKeyTag => theme.Palette.MutedText,
-                    DetailValueTag => theme.Palette.Text,
-                    _ => theme.Palette.Text
-                };
-            }
-        }
+        _detailsTitle.Text = title;
+        _detailsBody.Text = body;
+        ResizeDetailsContent();
     }
 
-    private void DetailsScrollHostOnResize(object? sender, EventArgs e) =>
-        ResizeDetailCards();
+    private static void AppendDetailSection(
+        StringBuilder builder,
+        string title,
+        params string[] lines)
+    {
+        if (builder.Length > 0)
+            builder.AppendLine().AppendLine();
 
-    private void ResizeDetailCards()
+        builder.AppendLine(title);
+        foreach (var line in lines)
+            builder.AppendLine(line);
+    }
+
+    private void ResizeDetailsContent()
     {
         if (IsDisposed || Disposing)
             return;
 
         var availableWidth = Math.Max(
-            320,
-            _detailsScrollHost.ClientSize.Width - _detailsContent.Padding.Horizontal - 10);
+            300,
+            _detailsScrollHost.ClientSize.Width -
+            _detailsContent.Padding.Horizontal -
+            8);
 
-        var top = 0;
-        foreach (Control child in _detailsContent.Controls)
-        {
-            if (child is not Panel card)
-                continue;
-
-            card.Width = availableWidth;
-
-            if (card.Controls.OfType<TableLayoutPanel>().SingleOrDefault() is { } table)
-            {
-                table.Width = Math.Max(
-                    300,
-                    card.ClientSize.Width - card.Padding.Horizontal);
-
-                table.PerformLayout();
-
-                var preferred = table.GetPreferredSize(
-                    new Size(table.Width, 0));
-
-                card.Height = Math.Max(
-                    48,
-                    preferred.Height + card.Padding.Vertical + 2);
-            }
-
-            card.Location = new Point(0, top);
-            top += card.Height + card.Margin.Bottom;
-        }
-
-        _detailsContent.Size = new Size(
-            Math.Max(320, availableWidth + _detailsContent.Padding.Horizontal),
-            Math.Max(
-                48,
-                top + _detailsContent.Padding.Bottom));
+        _detailsTitle.MaximumSize = new Size(availableWidth, 0);
+        _detailsBody.MaximumSize = new Size(availableWidth, 0);
 
         _detailsContent.PerformLayout();
         _detailsScrollHost.Synchronize();
@@ -1695,7 +1383,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             return;
 
         _themeManager.Apply(this);
-        ApplyDetailsTheme();
     }
 
     private void PageOperationFailed(
@@ -1744,8 +1431,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _endpointComboBox.TextChanged -= EndpointTextChanged;
             _page.OperationFailed -= PageOperationFailed;
             _page.ListView.ItemSelectionChanged -= ModelsListSelectionChanged;
-            _minPriceFilter.ValueChanged -= FilterChanged;
-            _maxPriceFilter.ValueChanged -= FilterChanged;
             _capabilityFilter.SelectedIndexChanged -= FilterChanged;
             _capabilityStateFilter.SelectedIndexChanged -= FilterChanged;
             _detailsScrollHost.Resize -= DetailsScrollHostOnResize;
