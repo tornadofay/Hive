@@ -334,17 +334,23 @@ public sealed class OpenAICompatibleProviderAdapter
                 return format switch
                 {
                     OpenAICompatibleModelCatalogFormat.Standard
-                        or OpenAICompatibleModelCatalogFormat.OpenRouter
-                        or OpenAICompatibleModelCatalogFormat.CerebrasOpenRouter
                         => ParseModelCatalog(
                             responseBody.Value!,
                             TryGetRateLimitRemaining(response)),
+                    
+                    OpenAICompatibleModelCatalogFormat.OpenRouter
+                        or OpenAICompatibleModelCatalogFormat.CerebrasOpenRouter
+                        => ParseModelCatalog(
+                            responseBody.Value!,
+                            TryGetRateLimitRemaining(response),
+                            "USD"),
 
                     OpenAICompatibleModelCatalogFormat.CloudflareOpenRouter
                         => ParseWrappedModelCatalog(
                             responseBody.Value!,
                             "result",
-                            TryGetRateLimitRemaining(response)),
+                            TryGetRateLimitRemaining(response),
+                            "USD"),
 
                     OpenAICompatibleModelCatalogFormat.Gemini
                         => ParseGeminiModelCatalog(
@@ -520,7 +526,8 @@ public sealed class OpenAICompatibleProviderAdapter
     private static Result<OpenAICompatibleModelCatalog> ParseWrappedModelCatalog(
         string responseJson,
         string arrayPropertyName,
-        int? rateLimitRemaining)
+        int? rateLimitRemaining,
+        string? defaultPricingCurrency = null)
     {
         try
         {
@@ -542,7 +549,8 @@ public sealed class OpenAICompatibleProviderAdapter
 
             return ParseModelCatalog(
                 normalized,
-                rateLimitRemaining);
+                rateLimitRemaining,
+                defaultPricingCurrency);
         }
         catch (JsonException)
         {
@@ -1001,7 +1009,8 @@ public sealed class OpenAICompatibleProviderAdapter
 
     private static Result<OpenAICompatibleModelCatalog> ParseModelCatalog(
         string responseJson,
-        int? rateLimitRemaining)
+        int? rateLimitRemaining,
+        string? defaultPricingCurrency = null)
     {
         try
         {
@@ -1110,7 +1119,7 @@ public sealed class OpenAICompatibleProviderAdapter
                 }
                 var thinking = ParseThinking(model);
                 var limits = ParseLimits(model);
-                var pricing = ParsePricing(model);
+                var pricing = ParsePricing(model, defaultPricingCurrency);
                 var extensionData = ParseExtensionData(model);
 
                 models.Add(
@@ -1748,7 +1757,9 @@ public sealed class OpenAICompatibleProviderAdapter
         return null;
     }
 
-    private static ProviderModelPricing? ParsePricing(JsonElement model)
+    private static ProviderModelPricing? ParsePricing(
+        JsonElement model,
+        string? defaultPricingCurrency = null)
     {
         var prices = new Dictionary<string, ProviderModelPrice>(StringComparer.Ordinal);
         var explicitFree = false;
@@ -1779,8 +1790,8 @@ public sealed class OpenAICompatibleProviderAdapter
 
         var defaultCurrency =
             pricing.ValueKind == JsonValueKind.Object
-                ? TryGetString(pricing, "currency")
-                : null;
+                ? TryGetString(pricing, "currency") ?? defaultPricingCurrency
+                : defaultPricingCurrency;
 
         if (pricing.ValueKind == JsonValueKind.Object)
         {
