@@ -383,7 +383,7 @@ Developer re-verification is required after remediation.
 
 Remediation completed within the recorded Model Information UI failure boundary:
 - replaced verbose capability column headers with compact capability icons (`✎`, `👁`, `⚒`, `{}`, `∴`, `💭`) while preserving `✓` / `✕` / `—` list-cell state semantics;
-- replaced the recreated multi-card details tree with reusable title/body labels and updates the existing controls on model selection, filter changes, and context changes;
+- replaced the recreated multi-card details tree with reusable title/body labels that update in place on model selection, filter changes, and context changes;
 - removed the Token price / 1M USD filter and its focused automated tests because the filter was not providing reliable value;
 - retained pricing information inside the selected model's observational details;
 - no discovery, provider transport, Favorites, persistence, capability authority, or Agent target-selection behavior changed.
