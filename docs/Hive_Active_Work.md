@@ -362,3 +362,19 @@ Remediation completed within the recorded test-assertion boundary:
 - no production Model Information rendering or behavior changed.
 
 Developer re-verification is required.
+
+## Verification Failure / Remediation Boundary — Model Information List/Details Weight and Token Price Filter
+
+Developer feedback on 2026-10-04 identifies three bounded existing-UI problems in the already authorized Model Information correction:
+- capability column headers are still verbose text; the user requires a compact `Model | icon | icon | ...` presentation, with recognizable capability icons such as an eye for Vision;
+- the right-side Model Information panel is too heavy and causes excessive painting/re-rendering when the selected model, inspection filter, or Provider/Account/endpoint context changes;
+- the Token price / 1M USD filter is not reliably useful and is explicitly requested for removal.
+
+Remediation boundary:
+- replace only the Model Information list capability column labels/presentation with compact, deterministic icons while retaining list-only capability-state semantics;
+- replace the existing multi-card details construction with a lightweight reusable details surface that updates existing controls instead of recreating a large control tree on each selection/filter/context change;
+- remove the Token price filter controls and their local filtering logic/tests/documentation;
+- preserve discovery semantics, capability evidence/state meaning, Provider → ProviderAccount → ExecutionTarget ownership, Favorites behavior, persistence contracts, and Agent target-selection behavior;
+- do not introduce a new shared icon framework or redesign the broader Hive UI.
+
+Developer re-verification is required after remediation.
