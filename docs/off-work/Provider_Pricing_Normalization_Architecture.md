@@ -19,6 +19,8 @@ The same normalized shape can represent:
 
 The current architecture can therefore accidentally make a source value look comparable when its unit or currency was never established.
 
+This off-work change is not a request to make every raw provider price comparable. The normalized model must preserve what the provider actually reported and separately identify whether a price is eligible for the canonical USD token comparison.
+
 The Model Information filter must never interpret raw provider numbers. Provider discovery must normalize the source semantics first.
 
 ## 2. Canonical pricing model
@@ -69,7 +71,9 @@ unitQuantity = 1,000,000
 => $0.15 per 1M tokens
 ```
 
-The important rule is that the normalized record must not rely on an implicit `unitQuantity = 1` for token pricing. A comparable token price must have an explicitly established source quantity.
+The important invariant is that every price entering the comparable token-price calculation has an explicitly established source quantity. The calculation must not use an implicit `UnitQuantity ?? 1` fallback.
+
+A provider can still preserve an observational price with an unresolved quantity, but that price is marked non-comparable to the canonical USD token filter.
 
 ## 3. Discovery normalization rules
 
@@ -200,7 +204,21 @@ Examples include:
 - short-context vs long-context pricing;
 - cache-hit vs cache-miss pricing.
 
-The normalized pricing contract must therefore allow more than one pricing variant while preserving deterministic comparison semantics.
+The normalized pricing contract should represent a bounded collection of pricing variants rather than forcing every condition into one flattened price.
+
+Conceptually:
+
+```
+ProviderModelPricing
+    ├── Standard/default variant
+    ├── Batch variant
+    ├── Priority variant
+    ├── Peak/off-peak variant
+    ├── Regional variant
+    └── Other provider-supported conditional variants
+```
+
+Each variant contains the same normalized price entries plus only the bounded conditions required to describe when those rates apply.
 
 A pricing variant should be able to carry bounded conditions such as:
 
@@ -214,7 +232,7 @@ cache_state = hit
 
 These conditions are observational pricing context. They are not authorization or execution-target configuration.
 
-For the Model Information default token-price filter, Hive should compare the provider's default/standard applicable rate when one is unambiguous. If multiple rates are simultaneously applicable and no single default can be established safely, the UI should keep the price non-comparable rather than selecting an arbitrary rate.
+For the Model Information default token-price filter, Hive should select a deterministic applicable variant. Prefer an explicit provider standard/default variant. If applicability cannot be established from provider evidence, the model remains non-comparable rather than selecting an arbitrary price.
 
 ## 7. Provider-specific normalization profiles
 
@@ -326,7 +344,23 @@ This off-roadmap work does not:
 - add FX conversion silently;
 - make provider-specific pricing rules editable by model output.
 
-## 11. References used for the design
+## 11. Implementation order and ownership
+
+The future implementation should follow this order:
+
+1. define the normalized quantity/comparability invariant;
+2. move provider-specific pricing assumptions into explicit provider discovery profiles;
+3. correct free-evidence derivation;
+4. add bounded pricing-variant representation;
+5. normalize existing providers;
+6. add new built-in provider catalog entries;
+7. wire Model Information filtering to the normalized comparable value;
+8. add focused regressions;
+9. update owning architecture/UI documentation from verified behavior.
+
+The OpenAI-compatible provider boundary owns provider-specific discovery normalization. Hive.Core owns the reusable normalized pricing contract. Hive.Host.WinForms consumes the normalized evidence and must not contain vendor-unit heuristics.
+
+## 12. References used for the design
 
 Provider contracts should be revalidated at implementation time. Current official references consulted include:
 
@@ -337,5 +371,9 @@ Provider contracts should be revalidated at implementation time. Current officia
 - Mistral Pricing: https://docs.mistral.ai/inference/pricing
 - Cohere OpenAI Compatibility: https://docs.cohere.com/docs/compatibility-api
 - Qwen / Model Studio OpenAI compatibility: https://help.aliyun.com/en/model-studio/compatibility-of-openai-with-dashscope
+- Qwen / Model Studio pricing: https://help.aliyun.com/en/model-studio/model-pricing
+- Kimi API overview: https://www.kimi.com/en/help/kimi-api/api-overview
+- Kimi API pricing: https://www.kimi.com/en/help/kimi-api/api-pricing
+- Fireworks documentation: https://docs.fireworks.ai/
 
-These references are implementation inputs, not runtime dependencies.
+These references are design inputs, not runtime dependencies.
