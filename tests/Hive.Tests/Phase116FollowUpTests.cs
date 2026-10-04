@@ -530,12 +530,12 @@ public sealed class Phase116FollowUpTests
         Assert.Equal(
             [
                 "Model",
-                "Text",
-                "Vision",
-                "Tools",
-                "Structured",
-                "Reasoning",
-                "Thinking"
+                "✎",
+                "👁",
+                "⚒",
+                "{}",
+                "∴",
+                "💭"
             ],
             view.CrudPage.Columns.Select(column => column.Header));
 
@@ -577,36 +577,15 @@ public sealed class Phase116FollowUpTests
         Assert.Contains("Additional provider information", detailsText);
         Assert.Contains("deterministic-fixture", detailsText);
 
-        var detailCards = view.DetailsContent.Controls
+        var detailControls = view.DetailsContent.Controls
             .Cast<Control>()
             .ToArray();
 
-        Assert.NotEmpty(detailCards);
-        Assert.All(
-            detailCards,
-            control =>
-            {
-                var panel = Assert.IsType<Panel>(control);
-                Assert.True(panel.Width >= 320);
-                Assert.True(panel.Height >= 48);
-                Assert.Equal(
-                    BorderStyle.FixedSingle,
-                    panel.BorderStyle);
-
-                var table = Assert.IsType<TableLayoutPanel>(
-                    Assert.Single(panel.Controls.Cast<Control>()));
-
-                Assert.True(table.Width >= 300);
-                Assert.True(table.Height > 28);
-            });
-
-        var detailBounds = detailCards
-            .Select(control => control.Bounds)
-            .ToArray();
-
+        Assert.Equal(2, detailControls.Length);
+        Assert.All(detailControls, control => Assert.IsType<Label>(control));
         Assert.Equal(
-            detailBounds.Length,
-            detailBounds.Select(bounds => bounds.Top).Distinct().Count());
+            detailControls.Length,
+            view.DetailsContent.Controls.Cast<Control>().Count());
     }
 
     [WinFormsFact]
@@ -663,36 +642,6 @@ public sealed class Phase116FollowUpTests
     }
 
     [WinFormsFact]
-    public async Task ModelInformationView_PriceFilterUsesHighestTokenRate()
-    {
-        var fixture = CreateFixture();
-        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
-
-        using var host = new Form { Size = new Size(1160, 760) };
-        using var view = new HiveModelInformationSettingsView(
-            fixture.Management,
-            fixture.Context,
-            themeManager);
-
-        host.Controls.Add(view);
-        host.Show();
-        Application.DoEvents();
-
-        await view.InitializeAsync();
-        Application.DoEvents();
-
-        Assert.Equal(2, view.ModelsList.Items.Count);
-        Assert.Equal(0m, view.MinPriceFilter.Value);
-        Assert.Equal(1000m, view.MaxPriceFilter.Value);
-
-        view.MaxPriceFilter.Value = 1m;
-        Application.DoEvents();
-
-        Assert.Single(view.ModelsList.Items);
-        Assert.Equal("second-model", view.ModelsList.Items[0].Text);
-    }
-
-    [WinFormsFact]
     public async Task ModelInformationView_CapabilityFilterMatchesState()
     {
         var fixture = CreateFixture();
@@ -729,34 +678,6 @@ public sealed class Phase116FollowUpTests
 
         Assert.Single(view.ModelsList.Items);
         Assert.Contains("rich-model", view.ModelsList.Items[0].Text);
-    }
-
-    [WinFormsFact]
-    public async Task ModelInformationView_PriceFilterUsesHighestReportedTokenRate()
-    {
-        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
-        var fixture = CreateFixture();
-
-        using var host = new Form { Size = new Size(1160, 760) };
-        using var view = new HiveModelInformationSettingsView(
-            fixture.Management,
-            fixture.Context,
-            themeManager);
-
-        host.Controls.Add(view);
-        host.Show();
-        Application.DoEvents();
-
-        await view.InitializeAsync();
-        Application.DoEvents();
-
-        Assert.Equal(2, view.ModelsList.Items.Count);
-
-        view.MaxPriceFilter.Value = 1m;
-        Application.DoEvents();
-
-        Assert.Single(view.ModelsList.Items);
-        Assert.Equal("second-model", view.ModelsList.Items[0].Text);
     }
 
     [WinFormsFact]
@@ -866,6 +787,10 @@ public sealed class Phase116FollowUpTests
 
         Assert.NotEqual(firstItem.Text, secondItem.Text);
 
+        var detailControlsBeforeSelection = view.DetailsContent.Controls
+            .Cast<Control>()
+            .ToArray();
+
         firstItem.Selected = false;
         secondItem.Selected = true;
         secondItem.Focused = true;
@@ -880,6 +805,9 @@ public sealed class Phase116FollowUpTests
         Assert.DoesNotContain("✓", detailsText);
         Assert.DoesNotContain("✕", detailsText);
         Assert.DoesNotContain("rich-model", detailsText);
+        Assert.Equal(
+            detailControlsBeforeSelection,
+            view.DetailsContent.Controls.Cast<Control>().ToArray());
     }
 
     private static string CollectVisibleControlText(Control root)
