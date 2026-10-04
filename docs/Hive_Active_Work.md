@@ -462,3 +462,22 @@ Remediation completed within the recorded Model Information UI failure boundary:
 - preserved the lightweight reusable details surface and all discovery/Favorites/persistence/capability/Agent boundaries.
 
 Developer re-verification is required.
+
+## Verification Failure / Remediation Boundary — Model Information Provider Pricing Units and Free Filter
+
+Developer/manual verification on 2026-10-04 reports an in-scope Model Information price-filter defect: paid models can be treated as unpriced and therefore all remain visible at ordinary ranges, while setting maximum price to 0 can show no model even when the discovered model has explicit free pricing.
+
+Repository and provider-source inspection identifies the concrete cause:
+- OpenRouter's OpenAI-compatible model metadata reports `pricing.prompt` and `pricing.completion` as USD **per token** values such as `0.00000035`, not USD per million tokens; OpenRouter's payload does not provide a `currency` property for these rates.
+- Hive's current comparable-price filter only accepts token prices when `Currency == "USD"`, so OpenRouter's valid rates are discarded as missing pricing.
+- The existing free-only branch therefore also rejects an OpenRouter free model when its zero-priced token entries have no explicit currency.
+- Groq's public model catalog presents prices as USD per 1 million tokens, while its public OpenAI-compatible models endpoint is model-discovery metadata rather than a guaranteed pricing source; Hive must not invent pricing where the provider endpoint does not report it.
+
+Remediation boundary:
+- correct Model Information price normalization/filtering so provider-reported token prices are interpreted according to their source-unit semantics and OpenRouter's implicit USD pricing is handled correctly within the existing OpenAI-compatible discovery boundary;
+- preserve the canonical comparable filter unit as USD per 1 million input/output tokens so values such as OpenRouter `0.00000035` become `$0.35/M` rather than being treated as `$0.00000035/M`;
+- make maximum price 0 reliably include explicitly free-priced token models while continuing to distinguish missing/unreported pricing from free pricing;
+- preserve non-token pricing entries as non-comparable and do not infer Groq pricing from its public website inside the discovery adapter;
+- update focused tests and applicable Model Information docs to cover provider-unit normalization, very-low prices, OpenRouter-style missing currency, and explicit free-only filtering;
+- do not change discovery capability semantics, Favorites behavior, persistence, Provider/Account/ExecutionTarget ownership, or Agent target-selection behavior;
+- return Active Work to VERIFICATION PENDING and require developer re-verification.
