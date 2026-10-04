@@ -481,3 +481,18 @@ Remediation boundary:
 - update focused tests and applicable Model Information docs to cover provider-unit normalization, very-low prices, OpenRouter-style missing currency, and explicit free-only filtering;
 - do not change discovery capability semantics, Favorites behavior, persistence, Provider/Account/ExecutionTarget ownership, or Agent target-selection behavior;
 - return Active Work to VERIFICATION PENDING and require developer re-verification.
+
+## Remediation Completed — Model Information Provider Pricing Units and Free Filter
+
+Remediation completed within the recorded pricing verification boundary:
+- OpenRouter, Cerebras OpenRouter, and Cloudflare OpenRouter catalog parsing now supplies the documented USD currency context when their pricing payload omits a currency field;
+- OpenRouter `prompt` / `completion` prices remain represented at their source unit and are converted by the Model Information comparison to USD per 1 million tokens, so `0.00000035` per token compares as `$0.35/M`;
+- Model Information price sliders now use $0.01 increments and size their maximum from the discovered comparable prices instead of a fixed $1000 range;
+- maximum price $0 now recognizes explicit zero-valued OpenRouter token pricing even without a currency field;
+- missing pricing remains distinct from explicit free pricing and is excluded when the user actually narrows the price range;
+- Groq pricing remains unreported when the OpenAI-compatible `/models` payload does not provide pricing; Hive does not scrape provider documentation or invent a catalog price;
+- pricing details now show the filter-comparable highest input/output token rate for clarity;
+- focused regression coverage now covers OpenRouter pricing without currency, explicit zero pricing, and per-token-to-per-million UI filtering;
+- no discovery capability semantics, Favorites behavior, persistence, Provider/Account/ExecutionTarget ownership, or Agent target-selection behavior changed.
+
+Developer re-verification is required.
