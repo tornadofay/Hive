@@ -426,3 +426,15 @@ Remediation boundary:
 - preserve the existing lightweight reusable details control structure;
 - do not change discovery semantics, Favorites, persistence, capability authority, Provider/Account/ExecutionTarget ownership, or Agent target-selection behavior.
 - return Active Work to VERIFICATION PENDING and require developer re-verification.
+
+## Remediation Completed — Model Information Capability Headers and Free-Model Price Range
+
+Remediation completed within the recorded Model Information UI failure boundary:
+- restored descriptive Text / Vision / Tools / Structured / Reasoning / Thinking capability column headers;
+- restored local minimum/maximum comparable token-price filtering;
+- setting the maximum price to 0 filters to models with a comparable price of exactly 0, while missing pricing remains distinct from free pricing;
+- kept the lightweight reusable detail text surface and the previously corrected capability-state semantics;
+- corrected the focused rich-profile heading mismatch by using the existing descriptive section heading text;
+- no discovery, provider transport, Favorites, persistence, capability authority, or Agent target-selection behavior changed.
+
+Developer re-verification is required.
