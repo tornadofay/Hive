@@ -1,10 +1,10 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: NO ACTIVE WORK
 
 ## Current Slice
 
-**Phase 1.19A — Execution Target Preferences & Favorite Target Pool**
+**Closed — Phase 1.19A — Execution Target Preferences & Favorite Target Pool**
 
 Authorized by explicit user instruction on 2026-10-03.
 
@@ -535,3 +535,19 @@ Remediation completed within the recorded 2026-10-04 verification-failure bounda
 - no discovery, pricing behavior, Favorites, persistence, capability authority, Provider/Account/ExecutionTarget ownership, or Agent target-selection behavior changed as part of this failure remediation.
 
 Status: VERIFICATION PENDING. Developer must rerun the focused Model Information tests and the broader Hive.Tests suite before this slice can close or the off-work provider-completion plan can be started.
+
+
+## Closure — Phase 1.19A — 2026-10-04
+
+Developer verification is complete for the authorized Phase 1.19A scope.
+
+- Full `Hive.Tests`: **593 total, 593 passed, 0 failed, 0 skipped**.
+- `Hive.Example.WinForms`: developer manually confirmed the application and the affected Settings / Advanced Provider Configuration workflow work correctly.
+- The final same-slice Model Information correction is included in the verified result: the provider-information details heading renders as `Additional provider information`.
+- The completed scope includes the durable owner/scope-aware Favorites preference surface, filtered Add Favorite picker, persistence/access validation, Favorites Settings UI, and the authorized existing Model Information UI correction.
+- No Agent target-selection redesign was introduced.
+- The off-road provider pricing normalization and built-in provider catalog plan remains separate and is not activated by this closure.
+
+Result: **Complete and verified.**
+
+No later roadmap phase is authorized by this closure.
