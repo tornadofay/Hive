@@ -63,7 +63,9 @@ public sealed class Phase116FollowUpTests
             new OpenAICompatibleProviderOptions(
                 new Uri("https://openrouter.ai/api/v1/")));
 
-        var result = await adapter.ListModelsAsync();
+        var result = await adapter.ListModelsAsync(
+            new Uri("https://openrouter.ai/api/v1/models"),
+            OpenAICompatibleModelCatalogFormat.OpenRouter);
 
         Assert.True(result.IsSuccess, result.Error?.Message);
 
@@ -107,14 +109,15 @@ public sealed class Phase116FollowUpTests
 
         Assert.Equal(8192, model.Limits!.ContextWindowTokens);
         Assert.Equal(4096, model.Limits.MaxOutputTokens);
-        Assert.Equal(
-            0.00003m,
-            model.Pricing!.Prices.Single(
-                price => price.BillingUnit == "input_token").Price);
-        Assert.Equal(
-            0.00006m,
-            model.Pricing.Prices.Single(
-                price => price.BillingUnit == "output_token").Price);
+        var inputPrice = model.Pricing!.Prices.Single(
+            price => price.BillingUnit == "input_token");
+        var outputPrice = model.Pricing.Prices.Single(
+            price => price.BillingUnit == "output_token");
+
+        Assert.Equal(0.00003m, inputPrice.Price);
+        Assert.Equal(0.00006m, outputPrice.Price);
+        Assert.Equal("USD", inputPrice.Currency);
+        Assert.Equal("USD", outputPrice.Currency);
 
         Assert.NotNull(model.ExtensionData);
         Assert.True(model.ExtensionData!.ContainsKey("architecture"));
@@ -662,11 +665,51 @@ public sealed class Phase116FollowUpTests
 
         Assert.Equal(2, view.ModelsList.Items.Count);
         Assert.Equal(0, view.MinPriceFilter.Value);
-        Assert.Equal(4000, view.MaxPriceFilter.Value);
+        Assert.Equal(500, view.MaxPriceFilter.Value);
 
         view.MaxPriceFilter.Value = 0;
         Application.DoEvents();
 
+        Assert.Single(view.ModelsList.Items);
+        Assert.Equal("second-model", view.ModelsList.Items[0].Text);
+    }
+
+    [WinFormsFact]
+    public async Task ModelInformationView_PriceRangeFilterNormalizesPerTokenPricing()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var fixture = CreateFixture(
+            secondModelFree: true,
+            richModelUsesPerTokenPricing: true);
+
+        using var host = new Form { Size = new Size(1160, 760) };
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync();
+        Application.DoEvents();
+
+        Assert.Equal(2, view.ModelsList.Items.Count);
+
+        // The fixture reports $0.00000070 per output token, which is $0.70/M.
+        view.MaxPriceFilter.Value = 70;
+        Application.DoEvents();
+        Assert.Equal(2, view.ModelsList.Items.Count);
+
+        // $0.69/M must exclude the $0.70/M rich model.
+        view.MaxPriceFilter.Value = 69;
+        Application.DoEvents();
+        Assert.Single(view.ModelsList.Items);
+        Assert.Equal("second-model", view.ModelsList.Items[0].Text);
+
+        view.MaxPriceFilter.Value = 0;
+        Application.DoEvents();
         Assert.Single(view.ModelsList.Items);
         Assert.Equal("second-model", view.ModelsList.Items[0].Text);
     }
@@ -904,7 +947,8 @@ public sealed class Phase116FollowUpTests
 
     private static ModelInformationFixture CreateFixture(
         bool favoriteFirstModel = false,
-        bool secondModelFree = false)
+        bool secondModelFree = false,
+        bool richModelUsesPerTokenPricing = false)
     {
         var context = CreateContext();
         var principal = context.PrincipalId!.Value;
@@ -1029,10 +1073,31 @@ public sealed class Phase116FollowUpTests
                         JsonSerializer.SerializeToElement(16)
                 }),
             pricing: new ProviderModelPricing(
-                [
-                    new ProviderModelPrice("input_token", 1.25m, "USD", 1_000_000m),
-                    new ProviderModelPrice("output_token", 5m, "USD", 1_000_000m)
-                ]),
+                richModelUsesPerTokenPricing
+                    ? [
+                        new ProviderModelPrice(
+                            "input_token",
+                            0.00000035m,
+                            "USD",
+                            1m),
+                        new ProviderModelPrice(
+                            "output_token",
+                            0.00000070m,
+                            "USD",
+                            1m)
+                    ]
+                    : [
+                        new ProviderModelPrice(
+                            "input_token",
+                            1.25m,
+                            "USD",
+                            1_000_000m),
+                        new ProviderModelPrice(
+                            "output_token",
+                            5m,
+                            "USD",
+                            1_000_000m)
+                    ]),
             extensionData: new Dictionary<string, JsonElement>
             {
                 ["vendor_library"] =
