@@ -1383,7 +1383,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             AppendDetailSection(
                 builder,
-                "ADDITIONAL PROVIDER INFORMATION",
+                "Additional provider information",
                 model.ExtensionData
                     .OrderBy(pair => pair.Key, StringComparer.Ordinal)
                     .Select(pair => $"{pair.Key}: {FormatJsonValue(pair.Value)}")
