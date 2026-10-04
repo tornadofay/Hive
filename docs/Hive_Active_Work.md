@@ -389,3 +389,15 @@ Remediation completed within the recorded Model Information UI failure boundary:
 - no discovery, provider transport, Favorites, persistence, capability authority, or Agent target-selection behavior changed.
 
 Developer re-verification is required.
+
+## Verification Failure / Remediation Boundary — Model Information Accessibility/Resize Compile Errors
+
+Developer verification on 2026-10-04 reports three in-scope compilation errors in HiveModelInformationSettingsView.cs:
+- `AccessibleRole.Heading` is not available in the target WinForms API;
+- `DetailsScrollHostOnResize` is referenced when subscribing to and unsubscribing from the details scroll host resize event, but the handler is missing.
+
+Remediation boundary:
+- replace the unsupported accessibility role with a valid existing WinForms accessibility role;
+- restore the existing details-scroll resize handler so the lightweight details surface continues to recompute its text width on resize;
+- do not change Model Information discovery, filtering semantics, Favorites behavior, persistence, capability meaning, or Agent target-selection behavior;
+- return Active Work to VERIFICATION PENDING and require developer re-verification.
