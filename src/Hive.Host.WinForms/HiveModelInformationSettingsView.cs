@@ -1335,9 +1335,11 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         }
         else
         {
+            var comparablePrice = GetComparableTokenPricePerMillion(model);
             var pricingLines = new List<string>
             {
-                $"Explicit free evidence: {(model.Pricing.ExplicitFreeEvidence ? "True" : "False")}"
+                $"Explicit free evidence: {(model.Pricing.ExplicitFreeEvidence ? "True" : "False")}",
+                $"Filter-comparable input/output token rate (highest): {(comparablePrice is { } value ? $"${value:0.00} / 1M tokens" : "—")}"
             };
 
             if (model.Pricing.Prices.Count == 0)
