@@ -264,6 +264,144 @@ For every built-in provider:
 
 A representative provider test should be maintained for each normalization pattern rather than requiring one large duplicated test per provider.
 
+
+## Workstream 8 — Runtime Token Usage & Cost Accounting
+
+This workstream is separate from pricing normalization. Pricing answers what a model costs; runtime usage answers what an execution actually consumed. It is designed as the provider-usage foundation that Phase 1.30 will consume for metrics, budgets, and cost accounting.
+
+### 8.1 Capture provider-reported usage
+
+Capture usage from the provider response at the provider boundary whenever the provider reports it.
+
+The preferred evidence path is:
+
+```
+Provider response + usage
+        ↓
+Provider-specific usage normalization
+        ↓
+Provider-neutral usage contract
+        ↓
+Execution / ChatResponse boundary
+        ↓
+Per-execution usage record
+```
+
+The normal authoritative source is the provider's reported usage. Hive must not replace provider-reported usage with a generic local tokenizer when authoritative provider usage is available.
+
+### 8.2 Preserve usage evidence
+
+Usage must preserve its evidence quality:
+
+- `Actual` — provider explicitly reported the usage value;
+- `Estimated` — Hive calculated a bounded estimate because provider usage was unavailable and a documented estimation path was applicable;
+- `Unknown` — usage was not reported and Hive could not safely determine it.
+
+Missing usage must never be represented as zero.
+
+Estimated usage must never be presented or persisted as provider-reported actual usage.
+
+A local tokenizer, where later introduced, is therefore an estimation mechanism only. Tokenizer selection must remain model/provider-aware and must not become a universal assumption that all models share one tokenization scheme.
+
+### 8.3 Normalize common usage dimensions
+
+The provider-neutral usage contract should preserve, where reported:
+
+- input token count;
+- output token count;
+- total token count;
+- cached input token count;
+- reasoning/thinking token count;
+- other bounded provider-reported usage dimensions.
+
+Do not manufacture totals or add breakdown fields together unless the provider contract or explicit normalization rule establishes that relationship.
+
+In particular, cached-input and reasoning/thinking counts must not automatically be treated as additional tokens on top of the provider's input/output totals. A provider-reported total remains authoritative when present.
+
+### 8.4 Preserve execution identity
+
+Usage belongs to the actual execution, not merely to a model name.
+
+Each usage record should be correlated with the applicable:
+
+- Provider;
+- ProviderAccount;
+- ExecutionTarget;
+- model/deployment identity;
+- Tenant/User/Workspace scope where applicable;
+- Agent;
+- Runtime;
+- Execution;
+- WorkItem;
+- observation timestamp.
+
+The exact correlation set must follow the established resource/provenance contract rather than introducing a parallel identity model.
+
+This allows Hive to answer usage questions by user, model, provider, target, Agent, Runtime, Execution, WorkItem, and time period without reconstructing ownership after the fact.
+
+### 8.5 Persist immutable per-execution usage
+
+A completed execution's usage observation should be durable and immutable once the execution reaches its applicable terminal accounting boundary.
+
+Historical usage must remain correct even when provider pricing changes later.
+
+Usage records must therefore remain separate from current provider pricing metadata.
+
+### 8.6 Calculate cost from usage + applicable pricing
+
+Cost is a derived accounting result:
+
+```
+recorded execution usage
+        +
+pricing applicable to that execution
+        ↓
+calculated Hive cost
+```
+
+The calculation must use the normalized pricing evidence applicable to the execution rather than the provider's current price at reporting time.
+
+Where usage or pricing is missing/non-comparable, Hive must preserve that uncertainty rather than silently reporting a zero cost.
+
+Cost estimates and provider-billed amounts must remain semantically distinct unless a provider gives Hive authoritative billing evidence.
+
+### 8.7 Aggregation
+
+Once per-execution usage is available, provide bounded aggregation by:
+
+- User / applicable scope;
+- Provider;
+- ProviderAccount;
+- ExecutionTarget;
+- model;
+- Agent;
+- Runtime;
+- WorkItem;
+- day/week/month or another explicit reporting period.
+
+Aggregation is reporting over recorded execution observations; it must not become a second source of truth.
+
+### 8.8 Streaming and multi-response handling
+
+For true provider streaming, prefer the provider's authoritative final usage report when available rather than counting tokens from streaming chunks.
+
+Where an execution can produce multiple provider calls, record usage per provider call/execution component and aggregate them at the execution/WorkItem level through deterministic correlation. Do not collapse multiple calls into a single guessed total before the individual usage observations are preserved.
+
+### 8.9 Phase 1.30 boundary
+
+This workstream is a prerequisite/input to Phase 1.30 rather than a replacement for it.
+
+Phase 1.30 remains responsible for:
+
+- execution/provider/model metrics;
+- budget enforcement;
+- OpenTelemetry traces/metrics;
+- quota/rate-limit handling;
+- cancellation and lifecycle integration;
+- consuming normalized token/cost information.
+
+The off-work provider task should make the usage evidence available cleanly enough that Phase 1.30 does not need provider-specific token parsing or pricing heuristics.
+
 ## Workstream 7 — Documentation
 
 Update the owning provider/UI documents only after implementation proves the behavior.
@@ -284,6 +422,10 @@ Do not modify `docs/roadmap.md` to create a new roadmap phase for this work.
 The off-work provider completion task is complete when:
 
 - all token prices entering Hive have explicit source quantity semantics;
+- provider-reported runtime token usage can be captured without being discarded at the provider boundary;
+- usage evidence distinguishes Actual, Estimated, and Unknown and never treats missing usage as zero;
+- usage is correlated to the applicable execution/resource identities and can be durably aggregated without reconstructing ownership;
+- historical cost can be derived from recorded usage plus pricing applicable to that execution without silently using current prices;
 - currency qualification is deterministic;
 - free evidence cannot be inferred from an unrelated zero-priced billing dimension;
 - multiple pricing conditions can be represented without arbitrary flattening;
