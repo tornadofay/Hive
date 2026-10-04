@@ -241,8 +241,8 @@ Implementation completed inside the recorded Model Information remediation bound
 - capability columns use compact fixed widths;
 - the right details panel is the fixed SplitContainer panel and retains its width during normal window resizing;
 - Add to Favorites now has text-fitting CRUD button geometry and requires explicit confirmation;
-- local inspection filters provide a 0–1000 USD/1M token-price range and a capability/state filter;
-- price filtering uses the highest reported comparable USD input/output token rate after per-1M normalization; missing comparable token pricing remains visible;
+- local inspection filters provide a data-sized practical USD/1M token-price range with $0.01 slider precision and a capability/state filter;
+- price filtering uses the highest normalized comparable USD input/output token rate; OpenRouter-style per-token rates are normalized to USD/1M before comparison, and missing comparable token pricing remains distinct from free pricing;
 - no provider/discovery, persistence, or Agent target-selection behavior was changed.
 
 Developer re-verification is required.
@@ -251,7 +251,7 @@ Developer re-verification is required.
 
 - Developer verification on 2026-10-03 passed the original Phase 1.19A implementation at 584/584 Hive.Tests executions (0 failed, 0 skipped) before the additional existing-UI correction.
 
-- **VERIFICATION PENDING** for the authorized existing-UI correction. Re-run the focused Advanced Provider Configuration / Model Information tests, then the broader Hive.Tests suite.
+- Automated verification now passes: on 2026-10-04 the developer ran the full Hive.Tests suite with **593/593 passed, 0 failed, 0 skipped**. The automated gate is satisfied for the authorized existing-UI correction. Manual Example Host / Settings verification remains required before final slice closure.
 - Exercise Overview / Getting Started / Example Configuration — Hive.Example.WinForms.
 - In Settings → Providers, verify the Advanced button has distinct administrative visual treatment without the destructive semantics of Danger.
 - In Advanced Provider Configuration, verify the four tabs are Providers, Accounts / Credentials, Execution Targets, and Model Information, with no separate Overview tab.
