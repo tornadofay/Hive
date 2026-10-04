@@ -165,33 +165,33 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _page.SetColumns(
             new HiveCrudColumn<ModelInformationRow>("Model", 250, FormatModelName),
             new HiveCrudColumn<ModelInformationRow>(
-                "✎",
-                42,
+                "Text",
+                50,
                 row => FormatCapabilityState(row.Model, HiveCapabilityKeys.TextGeneration),
                 row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.TextGeneration)),
             new HiveCrudColumn<ModelInformationRow>(
-                "👁",
-                42,
+                "Vision",
+                58,
                 row => FormatCapabilityState(row.Model, HiveCapabilityKeys.Vision),
                 row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.Vision)),
             new HiveCrudColumn<ModelInformationRow>(
-                "⚒",
-                42,
+                "Tools",
+                52,
                 row => FormatCapabilityState(row.Model, HiveCapabilityKeys.ToolCalling),
                 row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.ToolCalling)),
             new HiveCrudColumn<ModelInformationRow>(
-                "{}",
-                48,
+                "Structured",
+                76,
                 row => FormatCapabilityState(row.Model, HiveCapabilityKeys.StructuredOutput),
                 row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.StructuredOutput)),
             new HiveCrudColumn<ModelInformationRow>(
-                "∴",
-                42,
+                "Reasoning",
+                72,
                 row => FormatCapabilityState(row.Model, HiveCapabilityKeys.Reasoning),
                 row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.Reasoning)),
             new HiveCrudColumn<ModelInformationRow>(
-                "💭",
-                48,
+                "Thinking",
+                64,
                 row => FormatCapabilityState(row.Model, HiveCapabilityKeys.Thinking),
                 row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.Thinking)));
 
@@ -245,9 +245,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Padding = new Padding(8, 6, 0, 6),
             AccessibleName = "Model Information filters"
         };
-        filterBar.Controls.Add(CreateFilterLabel("Price / 1M USD"));
+        filterBar.Controls.Add(CreateFilterLabel("Min"));
         filterBar.Controls.Add(_minPriceFilter);
-        filterBar.Controls.Add(CreateFilterLabel("to"));
+        filterBar.Controls.Add(CreateFilterLabel("Max"));
         filterBar.Controls.Add(_maxPriceFilter);
         filterBar.Controls.Add(CreateFilterLabel("Capability"));
         filterBar.Controls.Add(_capabilityFilter);
@@ -809,7 +809,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             ThousandsSeparator = false,
             Margin = Padding.Empty,
             AccessibleRole = AccessibleRole.SpinButton,
-            AccessibleDescription = "Maximum or minimum comparable USD price per 1 million input or output tokens. Set maximum to zero to show free-priced models."
+            AccessibleDescription = "Comparable USD price per 1 million input or output tokens. Set maximum to zero to show only free-priced models."
         };
 
     private static Label CreateFilterLabel(string text) =>
