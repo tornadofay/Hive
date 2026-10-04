@@ -3,7 +3,7 @@
 > **Status:** Planned, not started  
 > **Roadmap impact:** None  
 > **Implementation authorization:** Must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice.  
-> **Prerequisite:** Finish/close the current 1.19A verification gate separately.
+> **Prerequisite:** Phase 1.19A verification is now closed. This off-work plan remains separate and still requires explicit implementation authorization in a dedicated chat.
 
 ## Objective
 
@@ -14,23 +14,20 @@ Before the Hive provider portion is considered finished, complete two bounded of
 
 The work must remain compatible with the existing Provider → ProviderAccount → ExecutionTarget architecture and must not modify Agent target-selection behavior.
 
-## Phase A — Finish the current verification gate first
+## Phase A — Prior verification gate is closed
 
-Do not mix this plan with the outstanding Phase 1.19A verification failure.
-
-Current recorded failure:
+Phase 1.19A completed its final verification on 2026-10-04:
 
 ```
 593 tests
-592 passed
-1 failed
+593 passed
+0 failed
 0 skipped
-
-Phase116FollowUpTests.ModelInformationView_RendersRichDiscoveryProfile
-Expected: "Additional provider information"
 ```
 
-The production heading defect has now been corrected within the current Active Work boundary. This remains a verification gate: developer re-verification must pass before this off-work implementation is started.
+The previously recorded Model Information provider-details heading failure was corrected and included in the final verified result. The matching `Hive.Example.WinForms` Settings / Advanced Provider Configuration workflow was also manually confirmed by the developer.
+
+This off-work plan is therefore no longer blocked by the 1.19A verification gate. It remains a separate, planned task: do not start implementation from this document alone, and do not open or advance a Phase 1 roadmap slice through this plan.
 
 ## Workstream 1 — Pricing contract
 
