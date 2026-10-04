@@ -30,9 +30,9 @@ Phase116FollowUpTests.ModelInformationView_RendersRichDiscoveryProfile
 Expected: "Additional provider information"
 ```
 
-Correct that failure within the current Active Work boundary and obtain developer verification before opening this off-roadmap implementation task.
+The production heading defect has now been corrected within the current Active Work boundary. This remains a verification gate: developer re-verification must pass before this off-work implementation is started.
 
-## Phase B — Pricing contract redesign
+## Workstream 1 — Pricing contract
 
 ### B1. Make source quantity explicit
 
@@ -45,7 +45,7 @@ Required behavior:
 - per-1M source → quantity 1,000,000;
 - unknown quantity → non-comparable.
 
-Add the smallest appropriate normalized contract needed to make the rule unambiguous.
+Keep the contract as small as possible. The objective is an enforceable normalization invariant, not a general billing framework.
 
 ### B2. Introduce explicit normalization rules
 
@@ -111,7 +111,7 @@ Do not invent a universal pricing taxonomy larger than the provider evidence req
 
 The comparison layer must never silently choose an arbitrary variant when there is no deterministic applicable default.
 
-## Phase C — Provider normalization profiles
+## Workstream 2 — Provider normalization profiles
 
 Create an explicit built-in provider normalization profile for each provider.
 
@@ -165,7 +165,7 @@ Catalog entries should exist now, but implementation should remain separately bo
 
 For these, do not force fake OpenAI-compatible discovery behavior just to make the catalog entry exist.
 
-## Phase D — Built-in catalog quality
+## Workstream 3 — Built-in catalog quality
 
 For every built-in provider entry, define:
 
@@ -181,7 +181,7 @@ For every built-in provider entry, define:
 
 Provider endpoints that are workspace-, account-, region-, or deployment-specific must remain Advanced-configuration entries instead of inventing unsafe default endpoints.
 
-## Phase E — Model Information integration
+## Workstream 4 — Model Information integration
 
 Once normalization is correct:
 
@@ -208,7 +208,7 @@ A separate unrestricted/Any state should be available so models above the practi
 
 The final implementation may choose a slightly different practical ceiling after inspecting the real built-in provider catalog, but it must remain small enough to provide useful slider precision.
 
-## Phase F — Tests
+## Workstream 5 — Focused automated tests
 
 Add focused tests for:
 
@@ -254,7 +254,7 @@ Add focused tests for:
 - unrestricted/Any view;
 - details text shows the normalized comparable rate.
 
-## Phase G — Provider catalog tests
+## Workstream 6 — Provider catalog tests
 
 For every built-in provider:
 
@@ -267,7 +267,7 @@ For every built-in provider:
 
 A representative provider test should be maintained for each normalization pattern rather than requiring one large duplicated test per provider.
 
-## Phase H — Documentation
+## Workstream 7 — Documentation
 
 Update the owning provider/UI documents only after implementation proves the behavior.
 
