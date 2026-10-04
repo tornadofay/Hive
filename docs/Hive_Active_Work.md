@@ -438,3 +438,16 @@ Remediation completed within the recorded Model Information UI failure boundary:
 - no discovery, provider transport, Favorites, persistence, capability authority, or Agent target-selection behavior changed.
 
 Developer re-verification is required.
+
+## Verification Failure / Remediation Boundary — Model Information Provider Details Heading and Price Filter
+
+Developer verification on 2026-10-04 reported **591** Hive.Tests executions: **590 passed, 1 failed, 0 skipped**. The remaining failure is `Phase116FollowUpTests.ModelInformationView_RendersRichDiscoveryProfile`, where the regression expects the provider-information section text `Additional provider information` but the current lightweight details renderer still emits the section heading with different casing.
+
+The developer also reports that the restored numeric token-price filter is not functioning correctly and requests a slider-based min/max UI instead.
+
+Remediation boundary:
+- correct only the lightweight details section heading text and its focused assertion;
+- replace the Model Information numeric price controls with a bounded min/max slider presentation while retaining local filtering semantics;
+- correct the concrete price-filter evaluation/list-refresh defect without changing discovery, Favorites, persistence, capability authority, Provider/Account/ExecutionTarget ownership, or Agent target-selection behavior;
+- preserve the rule that maximum price 0 represents free-only presentation and missing pricing is not treated as free;
+- return Active Work to VERIFICATION PENDING and require developer re-verification.
