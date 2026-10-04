@@ -507,3 +507,11 @@ Remediation boundary:
 - prefer existing repository test-access conventions and do not widen production public API unless the existing responsibility boundary requires it;
 - do not change provider discovery semantics, pricing normalization semantics, Favorites, persistence, capability authority, or Agent target-selection behavior;
 - return Active Work to VERIFICATION PENDING and require developer re-verification.
+
+## Remediation Completed — OpenRouter Pricing Regression Test Accessibility
+
+Remediation completed within the recorded compile-failure boundary:
+- added the repository-standard `InternalsVisibleTo("Hive.Tests")` assembly metadata to `Hive.Providers.OpenAICompatible`, allowing focused tests to exercise the internal provider catalog-format discriminator without making it part of the production public API;
+- no provider behavior or production public contract was otherwise widened.
+
+Developer re-verification is required.
