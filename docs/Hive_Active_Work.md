@@ -525,3 +525,13 @@ Remediation boundary:
 - correct only the Model Information lightweight details provider-information heading/rendering and its focused regression assertion;
 - do not change pricing architecture, provider catalog scope, discovery semantics, Favorites, persistence, capability authority, Provider/Account/ExecutionTarget ownership, or Agent target-selection behavior;
 - return Active Work to VERIFICATION PENDING and require developer re-verification.
+
+## Remediation Completed — Model Information Provider Details Heading
+
+Remediation completed within the recorded 2026-10-04 verification-failure boundary:
+- corrected the non-empty provider-extension details path to render the same descriptive heading `Additional provider information` used by the empty-extension path;
+- preserved the existing focused regression assertion rather than weakening it;
+- revised the off-work provider pricing architecture/plan documents separately; those documents do not authorize or advance the main roadmap and did not alter the current 1.19A implementation boundary;
+- no discovery, pricing behavior, Favorites, persistence, capability authority, Provider/Account/ExecutionTarget ownership, or Agent target-selection behavior changed as part of this failure remediation.
+
+Status: VERIFICATION PENDING. Developer must rerun the focused Model Information tests and the broader Hive.Tests suite before this slice can close or the off-work provider-completion plan can be started.
