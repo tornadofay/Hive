@@ -410,3 +410,19 @@ Remediation completed within the recorded compile-failure boundary:
 - no Model Information discovery, filtering, Favorites, persistence, capability semantics, or Agent target-selection behavior changed.
 
 Developer re-verification is required.
+
+## Verification Failure / Remediation Boundary — Model Information Lightweight Details Heading
+
+Developer verification on 2026-10-04 reported 590 Hive.Tests executions: 589 passed, 1 failed, 0 skipped. The failure was `Phase116FollowUpTests.ModelInformationView_RendersRichDiscoveryProfile`, where the test expected the details text to contain `Capabilities` while the lightweight reusable details surface rendered the section heading as uppercase `CAPABILITIES`.
+
+Additional user correction requested in the same Phase 1.19A Model Information UI scope:
+- restore descriptive capability column headers `Text`, `Vision`, `Tools`, `Structured`, `Reasoning`, and `Thinking`;
+- restore a local minimum/maximum token-price filter, with a maximum of zero serving as the explicit free-model filter;
+- missing pricing must remain distinct from free pricing.
+
+Remediation boundary:
+- change only the lightweight details section heading presentation and its focused regression assertion;
+- restore only the Model Information list's descriptive capability headers and local token-price range controls/filtering;
+- preserve the existing lightweight reusable details control structure;
+- do not change discovery semantics, Favorites, persistence, capability authority, Provider/Account/ExecutionTarget ownership, or Agent target-selection behavior.
+- return Active Work to VERIFICATION PENDING and require developer re-verification.
