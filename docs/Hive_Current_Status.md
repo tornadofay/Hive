@@ -1,6 +1,6 @@
 # Hive — Current Status
 
-Last updated: 2026-10-03
+Last updated: 2026-10-04
 
 ## Phase status
 
@@ -39,7 +39,7 @@ Last updated: 2026-10-03
   - **Phase 1 Custom UI Components — Slice 3: HiveTabControl:** Complete and verified on 2026-10-01. Developer verification: full `Hive.Tests` suite passed **555/555** (0 failed, 0 skipped); the matching `Hive.Example.WinForms` UI / Foundation / HiveTabControl scenario was manually confirmed and the developer reported the control looks good. [Closure verification record](verification/phase-1/custom-ui-tabcontrol-closure-2026-10-01.md)
   - **Phase 1 Custom UI Components — Slice 4: Existing Hive UI Integration, Consistency & Hardening:** Complete and verified on 2026-10-03. Final developer verification: full `Hive.Tests` suite passed **570/570** (0 failed, 0 skipped) in 58.8 seconds; the matching `Hive.Example.WinForms` Overview / Getting Started / Example Configuration workflow was manually confirmed running correctly. The final verification includes the CRUD `HiveListView` first-paint/native-scrollbar suppression remediation. [Closure verification record](verification/phase-1/custom-ui-slice-4-closure-2026-10-03.md)
 
-  - **1.19A — Execution Target Preferences & Favorite Target Pool:** In progress. The original Favorites implementation passed **584/584** on 2026-10-03. A bounded existing-UI correction remains pending re-verification; the latest developer run reported **590** Hive.Tests executions with **589 passed, 1 failed, 0 skipped**. The failure was the Model Information rich-profile details heading assertion. The subsequent same-slice remediation restores descriptive capability headers, replaces numeric price inputs with paired $0–$1000 TrackBar min/max sliders in $0.25 increments, and keeps maximum price $0 as the free-only presentation; no new verification result has been reported.
+  - **1.19A — Execution Target Preferences & Favorite Target Pool:** In progress. The original Favorites implementation passed **584/584** on 2026-10-03. A bounded existing-UI correction remains pending re-verification; the latest reported developer run was **591** Hive.Tests executions with **590 passed, 1 failed, 0 skipped** before the latest pricing-unit remediation. The subsequent same-slice remediation restores descriptive capability headers, replaces numeric price inputs with data-sized paired TrackBar min/max sliders using $0.01 increments, normalizes OpenRouter-style per-token pricing to the canonical USD-per-1M comparison, and recognizes OpenRouter explicit zero pricing even when currency is omitted. The latest remediation is **not yet developer-verified**.
   - **1.20+:** Not authorized.
   
 Historical verification records are maintained under [`docs/verification/`](verification/).
