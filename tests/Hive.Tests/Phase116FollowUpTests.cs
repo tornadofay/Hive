@@ -661,10 +661,10 @@ public sealed class Phase116FollowUpTests
         Application.DoEvents();
 
         Assert.Equal(2, view.ModelsList.Items.Count);
-        Assert.Equal(0m, view.MinPriceFilter.Value);
-        Assert.Equal(1000m, view.MaxPriceFilter.Value);
+        Assert.Equal(0, view.MinPriceFilter.Value);
+        Assert.Equal(4000, view.MaxPriceFilter.Value);
 
-        view.MaxPriceFilter.Value = 0m;
+        view.MaxPriceFilter.Value = 0;
         Application.DoEvents();
 
         Assert.Single(view.ModelsList.Items);
