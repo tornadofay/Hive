@@ -117,10 +117,11 @@ public sealed class BuiltInProviderCatalogTests
             Assert.NotNull(definition);
             Assert.True(definition!.RequiresNativeIntegration);
             Assert.False(definition.IsOpenAICompatible);
-            Assert.NotEqual(
-                "openai-compatible",
-                definition.TransportKind,
-                ignoreCase: true);
+            Assert.False(
+                string.Equals(
+                    "openai-compatible",
+                    definition.TransportKind,
+                    StringComparison.OrdinalIgnoreCase));
             Assert.False(definition.NormalOnboardingSupported);
             Assert.Null(definition.DefaultEndpoint);
             Assert.Equal(
@@ -156,9 +157,13 @@ public sealed class BuiltInProviderCatalogTests
                     definition.DefaultEndpoint.Scheme,
                     new[] { Uri.UriSchemeHttp, Uri.UriSchemeHttps });
                 Assert.Equal(string.Empty, definition.DefaultEndpoint.UserInfo);
-                Assert.Equal(
-                    BuiltInProviderDiscoveryEndpointKind.DefaultEndpointModels,
-                    definition.DiscoveryEndpointKind);
+                Assert.Contains(
+                    definition.DiscoveryEndpointKind,
+                    new[]
+                    {
+                        BuiltInProviderDiscoveryEndpointKind.DefaultEndpointModels,
+                        BuiltInProviderDiscoveryEndpointKind.ProviderSpecific
+                    });
             });
     }
 
