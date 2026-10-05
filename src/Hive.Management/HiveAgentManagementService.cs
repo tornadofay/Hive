@@ -474,8 +474,10 @@ internal sealed class HiveAgentManagementService : HiveManagementServiceBase
                         target.Value,
                         accessContext,
                         userMessage,
-                        credential,
-                        pricingEvidence: pricingEvidence),
+                        credential)
+                    {
+                        PricingEvidence = pricingEvidence
+                    },
                     cancellationToken)
                 .ConfigureAwait(false);
 
