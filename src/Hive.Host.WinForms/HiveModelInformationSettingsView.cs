@@ -833,9 +833,14 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         var minPrice = _minPriceFilter.Value / (decimal)PriceSliderScale;
         var maxPrice = _maxPriceFilter.Value / (decimal)PriceSliderScale;
 
-        if (price is not null &&
-            (price.Value < minPrice ||
-             price.Value > maxPrice))
+        if (maxPrice == 0m)
+        {
+            if (!IsFreeModel(model, price))
+                return false;
+        }
+        else if (price is not null &&
+                 (price.Value < minPrice ||
+                  price.Value > maxPrice))
         {
             return false;
         }
@@ -852,12 +857,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             }
 
             return true;
-        }
-
-        if (maxPrice == 0m &&
-            !IsFreeModel(model, price))
-        {
-            return false;
         }
 
         if (_capabilityFilter.SelectedItem is not CapabilityFilterChoice
