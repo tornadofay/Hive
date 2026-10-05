@@ -1949,7 +1949,8 @@ public sealed class OpenAICompatibleProviderAdapter
             explicitFree,
             variants);
 
-        if (pricingModel.HasZeroComparableInputOutputTokenPricing)
+        if (!explicitFree &&
+            HasExplicitZeroInputOutputTokenPricing(pricingModel.Prices))
         {
             explicitFree = true;
         }
@@ -1967,6 +1968,29 @@ public sealed class OpenAICompatibleProviderAdapter
                 .ToArray(),
             explicitFree,
             variants);
+    }
+
+    private static bool HasExplicitZeroInputOutputTokenPricing(
+        IReadOnlyList<ProviderModelPrice> prices)
+    {
+        var input = prices.FirstOrDefault(
+            static price =>
+                string.Equals(
+                    price.BillingUnit,
+                    "input_token",
+                    StringComparison.OrdinalIgnoreCase));
+
+        var output = prices.FirstOrDefault(
+            static price =>
+                string.Equals(
+                    price.BillingUnit,
+                    "output_token",
+                    StringComparison.OrdinalIgnoreCase));
+
+        return input is not null &&
+               output is not null &&
+               input.Price == 0m &&
+               output.Price == 0m;
     }
 
     private static decimal? ResolvePricingUnitQuantity(
