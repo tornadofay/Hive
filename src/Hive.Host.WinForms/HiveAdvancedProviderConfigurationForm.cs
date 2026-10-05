@@ -12,8 +12,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
     {
         Providers,
         Accounts,
-        ExecutionTargets,
-        ModelInformation
+        ExecutionTargets
     }
 
     private sealed record NavigationEntry(
@@ -37,7 +36,7 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
         IHiveExampleOutput? output = null)
         : base(
             "Advanced Provider Configuration",
-            "Administrative Provider, Account / Credential, Execution Target, and Model Information management.",
+            "Administrative Provider, Account / Credential, and Execution Target management.",
             new Size(1160, 760),
             new Size(900, 620),
             themeManager)
@@ -69,7 +68,6 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
         AddTab(new NavigationEntry("Providers", AdvancedPage.Providers));
         AddTab(new NavigationEntry("Accounts / Credentials", AdvancedPage.Accounts));
         AddTab(new NavigationEntry("Execution Targets", AdvancedPage.ExecutionTargets));
-        AddTab(new NavigationEntry("Model Information", AdvancedPage.ModelInformation));
 
         BodyPanel.Controls.Add(_navigationTabs);
         BodyPanel.PerformLayout();
@@ -197,11 +195,6 @@ public sealed class HiveAdvancedProviderConfigurationForm : HiveForm
                 _themeManager,
                 _output),
             AdvancedPage.ExecutionTargets => new HiveExecutionTargetsSettingsView(
-                _management,
-                _accessContext,
-                _themeManager,
-                _output),
-            AdvancedPage.ModelInformation => new HiveModelInformationSettingsView(
                 _management,
                 _accessContext,
                 _themeManager,
