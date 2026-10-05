@@ -40,7 +40,20 @@ Not implemented in this slice:
 - unrelated UI/control cleanup;
 - roadmap advancement.
 
-## Verification pending
+## Verification / remediation
+
+Developer compile diagnostics received after the initial Slice 1 implementation included:
+- `ProviderModelPrice.Value` reference errors in `ProviderDiscoveryContracts.cs`;
+- `IReadOnlyList<ProviderModelPrice>` to `IList<ProviderModelPrice>` construction error in `ProviderDiscoveryContracts.cs`;
+- missing `TryGetUnitQuantity` and `IsKnownBillingDimension` helpers in `OpenAICompatibleProviderAdapter.cs`.
+
+Remediation applied:
+- corrected nullable/reference handling for `ProviderModelPrice`;
+- corrected collection construction;
+- restored and bounded pricing-unit normalization helpers;
+- preserved the intended conservative quantity semantics.
+
+Verification remains pending.
 
 Agent verification status:
 
