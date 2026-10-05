@@ -546,6 +546,14 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     internal TrackBar MaxPriceFilter => _maxPriceFilter;
 
+    internal HiveTabControl DetailsTabs => _detailsTabs;
+
+    internal TabPage OverviewDetailsTab => _overviewTab;
+
+    internal TabPage ModelDetailsTab => _detailsTab;
+
+    internal TabPage TechnicalDetailsTab => _technicalTab;
+
     internal HiveComboBox CapabilityFilter => _capabilityFilter;
 
     internal HiveComboBox CapabilityStateFilter => _capabilityStateFilter;
@@ -1647,7 +1655,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Text = text,
             Margin = new Padding(0, 0, 0, 8),
             Padding = Padding.Empty,
-            MaximumSize = new Size(520, 0),
+            MaximumSize = new Size(270, 0),
             AccessibleRole = AccessibleRole.StaticText
         };
 
