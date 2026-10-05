@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ### Remediation checkpoint — 2026-10-05
 
@@ -14,6 +14,14 @@ The reported 3-test failure was remediated by aligning the affected assertions w
 
 Verification is pending developer rerun.
 
+### Verification failure — 2026-10-05
+
+
+Developer verification reported **679 tests: 677 passed, 2 failed, 0 skipped** after the prior remediation. The remaining failures are both inside `Phase116FollowUpTests`: tiered-pricing assertions still expect the prior price-line wording, and the selection-change test expects provider evidence while the Technical lazy tab is not selected.
+
+Developer manual UI verification also found in-scope presentation defects: long detail text can escape/truncate instead of wrapping with vertical scrolling, non-capability detail fields need readable line separation, both pricing-range checkboxes must remain visible without overlap, and the Model Information CRUD search should be narrower with responsive filter layout.
+
+Remediation boundary: correct the two failing tests/contracts and only the Model Information wrapping, technical formatting, filter layout, and search-width responsiveness reported above. No provider, persistence, filter-semantic, roadmap, or unrelated UI changes are authorized.
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
 Authorized: 2026-10-05 (explicit maintainer request in a dedicated chat)
