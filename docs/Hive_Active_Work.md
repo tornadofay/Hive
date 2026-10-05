@@ -1,11 +1,11 @@
 # Hive — Active Work
 
-Status: IMPLEMENTATION IN PROGRESS
+Status: VERIFICATION PENDING
 
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
 Authorized: 2026-10-05 (explicit maintainer request in a dedicated chat)
-Checkpoint: `680c322` — "Close verified Slice 4 Revision"
+Checkpoint: `b9cde02` — "Cover structured Model Information details and tiered pricing"
 Roadmap impact: None. Bounded off-roadmap work. Does not activate or advance any Phase 1 roadmap slice.
 
 ### Maintainer intent
@@ -91,7 +91,7 @@ The existing details panel is a single scrolling `Label` blob. Required outcome:
 
 **Reasoning levels — done and verified.** `ParseThinking` now reads OpenRouter's nested `reasoning` object (`supported_efforts`, `default_effort`), and `ParseCapabilities` reads `reasoning.mandatory` as reported evidence. Verified: efforts `["max","high","medium","low","none"]` with default `medium`.
 
-**Part 3 — performance first, then layout (in progress).**
+**Part 3 — performance first, then layout (implemented; verification pending).**
 
 *Performance.* Light-weightness was raised as a first-class requirement. Profiling the filter path by reading it showed three compounding costs, all repeated per model on every slider tick:
 
@@ -105,13 +105,24 @@ The existing details panel is a single scrolling `Label` blob. Required outcome:
 
 **Test adaptations recorded:** `Phase116FollowUpTests` column-header and sub-item assertions were updated to the new column set and order. These are assertions about presentation layout, which the maintainer explicitly authorized changing.
 
-**Not started:** the details-panel redesign itself (decision-first grouping, prominent free-model affordance, capability chips), and the live multi-provider API research, which remains incomplete because DeepSeek returned HTTP 401 and the Groq/OpenRouter documentation URLs returned 404. Only OpenRouter has live-verified response data.
+**Details-panel redesign — implemented in the current slice.** The existing multiline detail blob was replaced with stable Hive-owned detail sections for Identity, Inputs, Outputs, Capabilities, Reasoning / Thinking, Limits, Pricing, Operational state, and Additional provider information. Capability states are rendered as readable themed chips; known capabilities remain visible as Unknown / unreported when discovery has no evidence. Pricing now presents the decision price, explicit-free evidence, raw source rates, and tiered pricing variants/conditions without collapsing provider source units into the comparable display. The details surface remains fixed-width with the existing HiveScrollHost and updates existing section content rather than rebuilding the section hierarchy on every selection.
 
-### Verification performed by the agent
+**Verification coverage for the redesign was added.** `Phase116FollowUpTests` now asserts the stable section hierarchy, readable capability-state presentation, and tiered pricing display. The list-row pricing value also consumes the ModelCatalogIndex's precomputed comparable rate so slider/list redraws do not recompute pricing for every row.
+
+**Not started:** the live multi-provider API research remains incomplete because DeepSeek returned HTTP 401 and the Groq/OpenRouter documentation URLs returned 404. Only OpenRouter has live-verified response data.
+
+### Historical verification before the current details redesign
+
+The following results were reported before the current details-panel changes. They are retained as history and do **not** verify the current code.
 
 - `dotnet build Hive.sln` — 0 errors, 0 warnings.
 - Full `Hive.Tests` — **678 passed, 0 failed, 0 skipped**. The prior verified baseline was 663.
 - Focused `ModelInformation*` + `Phase116FollowUpTests` — 52 passed, 0 failed.
 - Developer confirmed the Model Information price filter now functions against live OpenRouter data with a correct maximum.
 - `Hive.Example.WinForms` has not been launched by the agent.
+
+### Current verification status
+
+No build or test run has been performed for the current details-panel redesign. The slice is therefore intentionally **VERIFICATION PENDING** until the developer runs the required automated and manual verification.
+
 - (c) Never present "no rows" as if the catalog were empty; distinguish "0 models match" from "no comparable pricing evidence".
