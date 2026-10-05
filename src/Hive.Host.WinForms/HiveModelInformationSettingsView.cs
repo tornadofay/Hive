@@ -1408,33 +1408,24 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private static decimal? GetComparableTokenPricePerMillion(
         ProviderModelMetadata model)
     {
-        if (model.Pricing?.ExplicitFreeEvidence == true &&
-            model.Pricing.Prices.All(price => !IsTokenBillingUnit(price.BillingUnit)))
-        {
-            return 0m;
-        }
+        ArgumentNullException.ThrowIfNull(model);
 
-        var values = model.Pricing?.Prices
-            .Where(static price =>
-                IsTokenBillingUnit(price.BillingUnit) &&
-                string.Equals(price.Currency, "USD", StringComparison.OrdinalIgnoreCase))
-            .Select(static price =>
-            {
-                var quantity = price.UnitQuantity ?? 1m;
-                return quantity <= 0m
-                    ? decimal.MaxValue
-                    : price.Price * 1_000_000m / quantity;
-            })
-            .ToArray();
-
-        return values is { Length: > 0 }
-            ? values.Max()
-            : null;
+        return model.Pricing?.TryGetComparableTokenPricePerMillion()
+            ?? (
+                model.Pricing?.ExplicitFreeEvidence == true &&
+                model.Pricing.Prices.All(
+                    static price =>
+                        !string.Equals(
+                            price.BillingUnit,
+                            "input_token",
+                            StringComparison.OrdinalIgnoreCase) &&
+                        !string.Equals(
+                            price.BillingUnit,
+                            "output_token",
+                            StringComparison.OrdinalIgnoreCase))
+                    ? 0m
+                    : null);
     }
-
-    private static bool IsTokenBillingUnit(string billingUnit) =>
-        string.Equals(billingUnit, "input_token", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(billingUnit, "output_token", StringComparison.OrdinalIgnoreCase);
 
     private static void AppendDetailSection(
         StringBuilder builder,
