@@ -49,6 +49,12 @@ Developer-reported Visual Studio compile error: **CS8604** in `HiveModelInformat
 
 This is an in-scope nullable-contract defect in the current details-scroll sizing remediation. Fix only the selected-tab nullability boundary, preserving the existing normal-size scroll behavior and tab layout. Verification must return to pending after remediation, with developer re-build and focused Model Information tests rerun.
 
+### Verification remediation — 2026-10-05
+
+The reported manual layout defects were corrected within the same boundary. The filter container now participates in the parent auto-size calculation instead of using `Dock=Fill`, reserves explicit vertical space for the two responsive filter rows, and adds bottom breathing room before the CRUD/details surface. A focused regression test now verifies that the capability/state combos and both pricing-evidence checkboxes are visible at normal size and that none extends into the CRUD/details surface.
+
+Developer re-verification is pending. Rerun the full `Hive.Tests` suite and manually verify **Providers / Provider Platform / Model Information** at normal window size, specifically the filter controls and spacing.
+
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
 Authorized: 2026-10-05 (explicit maintainer request in a dedicated chat)
