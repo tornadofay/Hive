@@ -759,6 +759,39 @@ public sealed class Phase116FollowUpTests
     }
 
     [WinFormsFact]
+    [WinFormsFact]
+    public async Task ModelInformationView_DoesNotAssumeMissingPricingQuantity()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var fixture = CreateFixture(
+            secondModelFree: true,
+            richModelUsesUnknownPricing: true);
+
+        using var host = new Form { Size = new Size(1160, 760) };
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync();
+        Application.DoEvents();
+
+        Assert.Equal(2, view.ModelsList.Items.Count);
+
+        // The rich model has token-like numeric prices but no established source quantity.
+        // It must not be interpreted as a $0.70/M comparable price.
+        view.MaxPriceFilter.Value = 100;
+        Application.DoEvents();
+
+        Assert.Single(view.ModelsList.Items);
+        Assert.Equal("second-model", view.ModelsList.Items[0].Text);
+    }
+
+    [WinFormsFact]
     public async Task ModelInformationView_CapabilityFilterMatchesState()
     {
         var fixture = CreateFixture();
@@ -992,7 +1025,8 @@ public sealed class Phase116FollowUpTests
     private static ModelInformationFixture CreateFixture(
         bool favoriteFirstModel = false,
         bool secondModelFree = false,
-        bool richModelUsesPerTokenPricing = false)
+        bool richModelUsesPerTokenPricing = false,
+        bool richModelUsesUnknownPricing = false)
     {
         var context = CreateContext();
         var principal = context.PrincipalId!.Value;
@@ -1130,18 +1164,29 @@ public sealed class Phase116FollowUpTests
                             "USD",
                             1m)
                     ]
-                    : [
-                        new ProviderModelPrice(
-                            "input_token",
-                            1.25m,
-                            "USD",
-                            1_000_000m),
-                        new ProviderModelPrice(
-                            "output_token",
-                            5m,
-                            "USD",
-                            1_000_000m)
-                    ]),
+                    : richModelUsesUnknownPricing
+                        ? [
+                            new ProviderModelPrice(
+                                "input_token",
+                                0.00000035m,
+                                "USD"),
+                            new ProviderModelPrice(
+                                "output_token",
+                                0.00000070m,
+                                "USD")
+                        ]
+                        : [
+                            new ProviderModelPrice(
+                                "input_token",
+                                1.25m,
+                                "USD",
+                                1_000_000m),
+                            new ProviderModelPrice(
+                                "output_token",
+                                5m,
+                                "USD",
+                                1_000_000m)
+                        ]),
             extensionData: new Dictionary<string, JsonElement>
             {
                 ["vendor_library"] =
