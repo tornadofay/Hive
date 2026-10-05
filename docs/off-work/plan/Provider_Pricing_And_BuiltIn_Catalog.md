@@ -90,7 +90,8 @@ and:
 input = 0
 output = 0
 
-=> free for token-price filtering when both comparable rates are fully reported
+=> explicit free evidence when both token-price dimensions are explicitly reported as zero
+=> USD comparability remains a separate decision and may still be unavailable when currency or quantity is missing
 ```
 
 Missing pricing must remain distinct.
