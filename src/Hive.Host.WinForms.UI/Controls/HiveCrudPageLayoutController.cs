@@ -15,7 +15,7 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
     internal const int InitialActionBarActionsWidth = (ActionButtonWidth + ActionButtonSpacing) * 4;
     internal const int PaginationWidth = 276;
     internal const int MinimumSearchWidth = 180;
-    internal const int MaximumSearchWidth = 420;
+    internal const int DefaultMaximumSearchWidth = 420;
 
     private readonly Control _owner;
     private readonly HiveListPageLayout _pageLayout;
@@ -45,6 +45,7 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
     private IHiveThemeManager? _subscribedThemeManager;
     private bool _typographyReady = true;
     private bool _compactToolbar;
+    private int _maximumSearchWidth = DefaultMaximumSearchWidth;
 
     internal HiveCrudPageLayoutController(
         Control owner,
@@ -377,6 +378,23 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
                 (double)availableWidth));
     }
 
+    internal int MaximumSearchWidth
+    {
+        get => _maximumSearchWidth;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(
+                value,
+                MinimumSearchWidth);
+
+            if (_maximumSearchWidth == value)
+                return;
+
+            _maximumSearchWidth = value;
+            UpdateSearchBoxWidth();
+        }
+    }
+
     internal void UpdateSearchBoxWidth()
     {
         if (!_searchPanel.Visible ||
@@ -412,7 +430,7 @@ internal sealed class HiveCrudPageLayoutController : IDisposable
             : MinimumSearchWidth;
 
         var targetWidth = availableWidth >= minimumWidth
-            ? Math.Min(availableWidth, MaximumSearchWidth)
+            ? Math.Min(availableWidth, _maximumSearchWidth)
             : Math.Max(0, availableWidth);
 
         if (_searchBox.Width != targetWidth)
