@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IMPLEMENTATION IN PROGRESS
+Status: VERIFICATION PENDING
 
 ## Authorized slice
 
@@ -56,6 +56,22 @@ Providers / Runtime / Token Usage Foundation — Hive.Example.WinForms
 ```
 
 Build result is not to be claimed unless the developer reports it separately.
+
+## Implementation completion
+
+The Slice 3 implementation is complete within the authorized boundary.
+
+Implemented:
+- Hive-owned `ExecutionTokenUsage` contract with Actual / Estimated / Unknown evidence states;
+- provider-reported OpenAI-compatible usage parsing for input/output/total, cached input, reasoning, and bounded additional token counts;
+- preservation through `OpenAICompatibleChatClient` and Microsoft Agent Framework;
+- immutable usage persistence inside the existing terminal execution event;
+- execution/resource correlation fields already available to the current AgentExecutionRequest;
+- focused provider, contract, and execution persistence regressions;
+- deterministic Example Host scenario at the required path;
+- owning architecture, example, and off-work plan documentation.
+
+No tokenizer/estimation engine, reporting subsystem, Phase 1.30 metrics/budgets/OpenTelemetry/quota behavior, native transport, or roadmap behavior was added.
 
 ## Closure gate
 
