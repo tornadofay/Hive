@@ -5,7 +5,7 @@ Status: VERIFICATION PENDING
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
 Authorized: 2026-10-05 (explicit maintainer request in a dedicated chat)
-Checkpoint: `b9cde02` — "Cover structured Model Information details and tiered pricing"
+Checkpoint: `d4bb58d` — "Stabilize Model Information detail section layout rows"
 Roadmap impact: None. Bounded off-roadmap work. Does not activate or advance any Phase 1 roadmap slice.
 
 ### Maintainer intent
