@@ -715,6 +715,37 @@ public sealed class Phase116FollowUpTests
     }
 
     [WinFormsFact]
+    public async Task ModelInformationView_ShowsVerticalScrollForLongTechnicalDetailsAtNormalSize()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var fixture = CreateFixture(richModelUsesLongProviderEvidence: true);
+
+        using var host = new Form
+        {
+            Size = new Size(1160, 760)
+        };
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync();
+        Application.DoEvents();
+
+        view.ModelsList.Items[0].Selected = true;
+        view.ModelsList.Items[0].Focused = true;
+        view.DetailsTabs.SelectedIndex = 2;
+        Application.DoEvents();
+
+        Assert.True(view.DetailsScrollHost.VerticalScrollState.CanScroll);
+        Assert.True(view.DetailsScrollHost.VerticalScrollBarForTesting.Visible);
+    }
+
+    [WinFormsFact]
     public async Task ModelInformationView_AddsSelectedExecutionTargetToFavorites()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
@@ -1159,7 +1190,8 @@ public sealed class Phase116FollowUpTests
         bool richModelUsesPerTokenPricing = false,
         bool richModelUsesUnknownPricing = false,
         bool secondModelHasPaidComparableBaseRates = false,
-        bool richModelUsesTieredPricing = false)
+        bool richModelUsesTieredPricing = false,
+        bool richModelUsesLongProviderEvidence = false)
     {
         var context = CreateContext();
         var principal = context.PrincipalId!.Value;
@@ -1345,7 +1377,10 @@ public sealed class Phase116FollowUpTests
             extensionData: new Dictionary<string, JsonElement>
             {
                 ["vendor_library"] =
-                    JsonSerializer.SerializeToElement("deterministic-fixture")
+                    JsonSerializer.SerializeToElement(
+                        richModelUsesLongProviderEvidence
+                            ? "deterministic-fixture-" + new string('x', 4000)
+                            : "deterministic-fixture")
             },
             observedAtUtc: observed,
             staleAfterUtc: staleAfter);
