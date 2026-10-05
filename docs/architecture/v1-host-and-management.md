@@ -261,7 +261,7 @@ Phase 1.14 establishes the extension/adapter and interaction contracts. Phase 1.
 
 Phase 1.15 establishes input preparation/routing. Phase 1.16 establishes provider/model capability discovery and operational metadata. Phase 1.17 establishes structured candidate extraction/validation. Vision is one possible input capability; structured spreadsheet input may bypass vision. Parent/child candidate data is added only when the actual V1 operation requires it.
 
-Phase 1.19A establishes durable ExecutionTarget favorite preferences and a Provider Settings third tab for managing them. The first Providers tab remains the existing provider configuration page. The Favorites tab is a simple preference CRUD surface containing only saved favorite ExecutionTargets, with Add Favorite, Remove, and Refresh actions. Add Favorite opens a compact Provider → Provider Account → Execution Target picker; Provider and Account are filters for that add flow only and are not filters on the saved-favorites list. Agent and other target-selection UI are not changed by this slice; their existing behavior remains owned by their respective phases.
+Phase 1.19A establishes durable ExecutionTarget favorite preferences and a Provider Settings second tab for managing them. The first Providers tab remains the existing provider configuration page. The Favorites tab is a simple preference CRUD surface containing only saved favorite ExecutionTargets, with Add Favorite, Remove, and Refresh actions. Add Favorite opens a compact Provider → Provider Account → Execution Target picker; Provider and Account are filters for that add flow only and are not filters on the saved-favorites list. Agent and other target-selection UI are not changed by this slice; their existing behavior remains owned by their respective phases.
 
 ### 4.1.8 Phase 1.15 Input Preparation & Routing
 
@@ -584,7 +584,7 @@ Running executions use their already-established effective configuration snapsho
 
 The Example Host is the first concrete application-level consumer of this boundary. It exposes the real Hive Settings center through the Overview → Getting Started → Example Configuration leaf, whose primary action opens the host-level Settings window. The Settings UI uses the reusable Hive.Host.WinForms.UI foundation.
 
-The normal Settings experience presents configured providers as the user-facing provider service configuration, while the underlying ProviderAccount and ExecutionTarget resources remain available through one generalized Advanced Provider Configuration surface. The normal Providers page also hosts the read-only Model Information and favorite-target preference views. The Advanced window is a tab-based administrative surface using HiveTabControl. Its pages are limited to administrative/resource management:
+The normal Settings experience presents configured providers as the user-facing provider service configuration, while the underlying ProviderAccount and ExecutionTarget resources remain available through one generalized Advanced Provider Configuration surface. The Advanced window is a tab-based administrative surface using HiveTabControl. Its pages are limited to the administrative/resource and read-only discovery surfaces:
 
 ```text
 Hive Settings
@@ -595,11 +595,8 @@ Hive Settings
 Providers page toolbar
 [ Add Provider ] [ Refresh ] [ Advanced ]
 
-Provider Settings tabs
-[Providers] [Model Information] [Favorite Execution Targets]
-
 Advanced Provider Configuration
-[Providers] [Accounts / Credentials] [Execution Targets]
+[Providers] [Accounts / Credentials] [Execution Targets] [Model Information]
 ```
 
 The Providers page uses the shared Hive CRUD presentation rather than a provider-specific card/action framework. It lists configured Provider resources and presents masked credential status plus useful operational summary such as readiness/model count where available. There is no per-row action column; normal CRUD interaction remains the established page behavior. For a normal built-in provider, Edit is limited to replacing its protected API key/credential; changing provider identity or transport belongs in Advanced.
@@ -608,7 +605,7 @@ The Providers page uses the shared Hive CRUD presentation rather than a provider
 
 `Refresh` is a Provider Settings operation, not merely a visual reload. It requests fresh discovery for active configured provider/account/endpoint contexts and reconciles automatically managed ExecutionTargets. Successful fresh discovery may create/reactivate/retire automatic targets according to the reconciliation contract. Retired providers are not refreshed for model discovery. Discovery failure preserves existing durable targets and reports the operational condition instead of interpreting failure as an empty model catalog.
 
-`Advanced` is a generalized administrative entry point, not a provider-specific editor. It opens the existing resource-management pages for Providers, Accounts / Credentials, and Execution Targets. The entry point is independent of any individual provider; it does not require a provider to be selected first. This is where multiple accounts, custom or alternate endpoints, local/self-hosted configurations, manual models/deployments, explicit capability overrides, and administrative lifecycle/troubleshooting belong. Model Information is presented on the normal Providers page for provider-reported model inspection; it is presentation-only and does not create or mutate a durable Model resource.
+`Advanced` is a generalized administrative entry point, not a provider-specific editor. It opens the existing resource-management pages for Providers, Accounts / Credentials, and Execution Targets, plus the read-only Model Information discovery surface. The entry point is independent of any individual provider; it does not require a provider to be selected first. This is where multiple accounts, custom or alternate endpoints, local/self-hosted configurations, manual models/deployments, explicit capability overrides, administrative lifecycle/troubleshooting, and inspection of provider-reported model metadata belong. Model Information is presentation-only and does not create or mutate a durable Model resource.
 
 Provider is the durable provider identity/transport resource. ProviderAccount is a durable credential/resource record. ExecutionTarget is the concrete endpoint/model/deployment/capability resource and remains the authoritative concrete execution resource. The normal UI hides that graph for simple setup; Advanced does not create a second resource model.
 
@@ -636,7 +633,7 @@ UI controls own their disposable fonts, brushes, pens, paths, and child controls
 
 The Example host is the permanent visual acceptance surface for the UI foundation. Before the 0.7 slice is considered complete, the developer manually verifies Light, Dark, and System modes, navigation state preservation, resize behavior, CRUD presentation, dialogs, focus/hover/disabled states, and consistent rendering across the shared controls.
 
-#### Provider Settings — Model Information presentation
+#### Advanced Model Information presentation
 
 Model Information remains read-only observational UI. Provider, Account, and Discovery Endpoint are compact HiveComboBox selectors, and Refresh is a HiveButton action. The discovered-model catalog uses HiveListView rather than a native ListView so model rows participate in the shared Hive theme, selection, focus, hover, and scrollbar treatment. The selected model is presented through a lightweight fixed-width Hive-owned details surface with three lazy information pages: Overview for decision data first (price/free state, context, favorite state, capabilities, and modalities), Details for identity/reasoning/thinking/limits, and Technical for raw pricing evidence, operational state, and bounded provider-specific evidence. The surface uses typography and whitespace rather than decorative detail boxes; only the initially selected page is materialized and later pages are created on first selection and then reused. The page preserves all normalized discovery fields already defined by the provider/model metadata contract while keeping the common decision path compact.
 
