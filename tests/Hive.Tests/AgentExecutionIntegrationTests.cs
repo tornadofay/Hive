@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using System.Net.Sockets;
 using System.Text;
 using Hive.Agents;
@@ -425,7 +426,8 @@ public sealed class AgentExecutionIntegrationTests
     [Fact]
     public async Task ExecuteAsync_MissingProviderUsage_IsExplicitlyUnknown()
     {
-        var store = new InMemoryEventPersistenceStore();
+        var database = await PrepareDatabase("Hive_Test_AgentExecutionMissingUsage");
+        var store = new SqlEventPersistenceStore(database.Options);
 
         await using var server = new LocalAgentServer(
             HttpStatusCode.OK,
