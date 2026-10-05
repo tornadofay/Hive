@@ -1,15 +1,17 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
-### Current verification failure — 2026-10-05
+### Remediation checkpoint — 2026-10-05
 
-Developer-reported compile errors in `src/Hive.Host.WinForms/HiveModelInformationSettingsView.cs` are inside the current Model Information UI slice. The failure boundary is limited to restoring the missing `GetCapabilityState`, `FormatTokenLimit`, and `FormatDateTime` helpers and resolving the `SystemFonts.MessageBoxFont` nullable warning in `AddInfoRow`. No redesign, filter, provider, persistence, or roadmap changes are authorized by this failure.
+The reported compile failure was remediated in `6095249c` — `Restore Model Information formatting helpers`. The change restores the missing `GetCapabilityState`, `FormatTokenLimit`, and `FormatDateTime` helpers and resolves the `SystemFonts.MessageBoxFont` nullable warning without changing the Model Information behavior or tab layout.
+
+Verification remains pending. Re-run the developer compile/build and the focused Model Information tests before closure; the broader verification gate below remains unchanged.
 
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
 Authorized: 2026-10-05 (explicit maintainer request in a dedicated chat)
-Checkpoint: `c65a423` — "Fix lazy Model Information page reset lifecycle"
+Checkpoint: `6095249c` — "Restore Model Information formatting helpers"
 Roadmap impact: None. Bounded off-roadmap work. Does not activate or advance any Phase 1 roadmap slice.
 
 ### Maintainer intent
