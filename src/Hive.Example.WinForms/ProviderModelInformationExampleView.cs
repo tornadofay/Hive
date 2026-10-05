@@ -36,13 +36,13 @@ internal sealed class ProviderModelInformationExampleView : UserControl
         };
 
         _surface.SetInformation(
-            "Opens the real Hive Settings surface with a deterministic provider/model discovery fixture. Select Providers, then Model Information to inspect a complete normalized model profile without a vendor network call or real credential.",
+            "Opens the real Advanced Provider Configuration surface with a deterministic provider/model discovery fixture. Select Model Information in the tree to inspect a complete normalized model profile without a vendor network call or real credential.",
             "The fixture demonstrates identity, modalities, known capability states, reasoning/thinking options, model-scoped limits, pricing/economic evidence, operational state, freshness, and bounded provider-specific evidence. The information is observational and does not create a durable Model resource.",
             "Providers / Target Selection / Capability Discovery / Provider / Model Information",
             "Uses a deterministic in-process Management facade fixture; no database, provider account, API key, or external network call is required.");
 
         _surface.CodeSnippet = """
-            using var form = new HiveSettingsForm(
+            using var form = new HiveAdvancedProviderConfigurationForm(
                 managementFixture,
                 context,
                 themeManager,
@@ -65,7 +65,7 @@ internal sealed class ProviderModelInformationExampleView : UserControl
         cancellationToken.ThrowIfCancellationRequested();
 
         var fixture = new ModelInformationFixture();
-        using var form = new HiveSettingsForm(
+        using var form = new HiveAdvancedProviderConfigurationForm(
             fixture.Management,
             fixture.Context,
             _themeManager,
@@ -76,8 +76,8 @@ internal sealed class ProviderModelInformationExampleView : UserControl
         _output.Write(
             "Provider / Model Information",
             """
-            Hive Settings opened with deterministic discovery data.
-            Select: Providers → Model Information
+            Advanced Provider Configuration opened with deterministic discovery data.
+            Select: Model Information
             Model fixture: rich-model
             Profile sections: Identity / Inputs / Outputs / Capabilities / Reasoning / Thinking / Limits / Pricing / Operational state / Additional provider information
             Credential: none
