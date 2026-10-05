@@ -486,6 +486,95 @@ public sealed class ProviderPricingNormalizationTests
     }
 
     [Fact]
+    public async Task MultipleDefaultPricingVariants_RemainAmbiguous()
+    {
+        using var client = new HttpClient(
+            new FixedResponseHandler(
+                """
+                {
+                  "data": [
+                    {
+                      "id": "multiple-defaults",
+                      "pricing": {
+                        "variants": {
+                          "standard": {
+                            "default": true,
+                            "input": 0.00000035,
+                            "output": 0.00000070
+                          },
+                          "priority": {
+                            "default": true,
+                            "input": 0.00000070,
+                            "output": 0.00000140
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+                """));
+
+        var adapter = new OpenAICompatibleProviderAdapter(
+            client,
+            new OpenAICompatibleProviderOptions(
+                new Uri("https://example.test/v1/")));
+
+        var result = await adapter.ListModelsAsync(
+            new Uri("https://example.test/v1/models"),
+            OpenAICompatibleModelCatalogFormat.OpenRouter);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var pricing = Assert.Single(result.Value!.Models).Pricing!;
+
+        Assert.Equal(2, pricing.Variants.Count);
+        Assert.Empty(pricing.Prices);
+        Assert.All(
+            pricing.Variants,
+            variant => Assert.False(variant.IsDefault));
+        Assert.Null(pricing.TryGetComparableTokenPricePerMillion());
+    }
+
+    [Fact]
+    public async Task InvalidTopLevelUnitQuantity_DoesNotFallBackToFormatDefault()
+    {
+        using var client = new HttpClient(
+            new FixedResponseHandler(
+                """
+                {
+                  "data": [
+                    {
+                      "id": "invalid-unit-quantity",
+                      "pricing": {
+                        "unit_quantity": 0,
+                        "input": 0.00000035,
+                        "output": 0.00000070
+                      }
+                    }
+                  ]
+                }
+                """));
+
+        var adapter = new OpenAICompatibleProviderAdapter(
+            client,
+            new OpenAICompatibleProviderOptions(
+                new Uri("https://example.test/v1/")));
+
+        var result = await adapter.ListModelsAsync(
+            new Uri("https://example.test/v1/models"),
+            OpenAICompatibleModelCatalogFormat.OpenRouter);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var pricing = Assert.Single(result.Value!.Models).Pricing!;
+
+        Assert.All(
+            pricing.Prices,
+            price => Assert.Null(price.UnitQuantity));
+        Assert.Null(pricing.TryGetComparableTokenPricePerMillion());
+    }
+
+    [Fact]
     public void PricingVariant_EnforcesBoundedConditionsAndExplicitDefault()
     {
         var defaultVariant = new ProviderModelPricingVariant(
