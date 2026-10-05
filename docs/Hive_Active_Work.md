@@ -1,12 +1,20 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ### Remediation checkpoint — 2026-10-05
 
 The reported compile failure was remediated in `6095249c` — `Restore Model Information formatting helpers`. The change restores the missing `GetCapabilityState`, `FormatTokenLimit`, and `FormatDateTime` helpers and resolves the `SystemFonts.MessageBoxFont` nullable warning without changing the Model Information behavior or tab layout.
 
 Verification remains pending. Re-run the developer compile/build and the focused Model Information tests before closure; the broader verification gate below remains unchanged.
+
+### Current verification failure — 2026-10-05
+
+Developer verification reported **679 tests: 676 passed, 3 failed, 0 skipped**. All three failures are inside `Phase116FollowUpTests` and concern the redesigned lazy Model Information tabs: the tests collect `DetailsContent` while **Overview** is still selected, so lazy `Details` / `Technical` content has not materialized. This is an in-scope test-contract remediation.
+
+The developer also reported five concrete UI polish defects within the same Model Information slice: long detail text escapes the fixed details surface instead of wrapping, capabilities should render one per line, the empty-state helper sentence should be removed, the above-price-range checkbox/label can escape the available form width, and Technical content should wrap/scroll without truncation and format provider JSON for human readability.
+
+Remediation boundary: update the affected `Phase116FollowUpTests` lazy-tab assertions and correct only these Model Information layout/readability issues. No provider contract, persistence, filter semantics, roadmap, or unrelated UI changes are authorized by this failure.
 
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
