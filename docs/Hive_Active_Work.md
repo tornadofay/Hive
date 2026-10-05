@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Revision — Off-Work Provider Completion Integration & Hardening
 
@@ -27,7 +27,7 @@ Required focused regression tests and owning architecture/example documentation 
 
 ### Verification gate
 
-Developer verification has failed at the compile gate. Visual Studio reports `CS1061` in `src/Hive.Coordination/AgentExecutionService.cs` line 205: `AgentResponse` does not define `ModelId` and no accessible extension method is available. This is an in-scope Slice 4 Revision regression because it blocks compilation of the corrected execution-result integration. Same-slice remediation is authorized only for this recorded compiler failure and must return Active Work to `VERIFICATION PENDING` after the correction.
+A developer compile failure was recorded and remediated within the same Slice 4 Revision boundary. The reported `CS1061` in `src/Hive.Coordination/AgentExecutionService.cs` line 205 was caused by reading `ModelId` directly from MAF `AgentResponse`, which does not expose that property. The correction now reads the provider-reported model from the underlying `Microsoft.Extensions.AI.ChatResponse` preserved in `AgentResponse.RawRepresentation`, then applies the existing bounded normalization. Developer re-verification is still required.
 
 Required handoff after changes:
 
