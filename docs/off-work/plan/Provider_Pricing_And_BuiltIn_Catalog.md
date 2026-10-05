@@ -1,6 +1,6 @@
 # Off-Work Plan — Provider Pricing, Built-In Catalog & Runtime Usage
 
-> **Status:** Slice 1 complete and verified; Slice 2 in progress; Slice 3 planned, not started  
+> **Status:** Slice 1 complete and verified; Slice 2 complete and verified; Slice 3 planned, not started  
 > **Roadmap impact:** None  
 > **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 2 is explicitly authorized in the current task.  
 > **Prerequisite:** Phase 1.19A verification is now closed. This off-work plan remains separate and still requires explicit implementation authorization in a dedicated chat.
@@ -114,7 +114,7 @@ Do not invent a universal pricing taxonomy larger than the provider evidence req
 
 The comparison layer must never silently choose an arbitrary variant when there is no deterministic applicable default.
 
-## Slice 2 — Built-In Provider Catalog — In progress
+## Slice 2 — Built-In Provider Catalog — Complete and verified
 
 Slice 2 is explicitly authorized on 2026-10-05. The implementation extends the existing static `BuiltInProviderCatalog` rather than introducing a second provider inventory.
 
@@ -143,6 +143,8 @@ Current endpoint hardening decisions include:
 - MiniMax remains an OpenAI-compatible catalog identity but has no built-in endpoint because its model-listing behavior is not treated as a reliable universal discovery path for this shared adapter.
 
 The existing OpenAI-compatible discovery boundary now consumes the catalog's discovery profile for endpoint/format selection. Unknown catalog providers continue to use the conservative standard OpenAI-compatible discovery profile.
+
+Final verification on 2026-10-05: full `Hive.Tests` passed 619/619 with 0 failures and 0 skipped. The deterministic Example Host scenario reported all 35 catalog entries and confirmed no external provider call and no durable Provider resource creation. The initial Ollama discovery regression was remediated within Slice 2 before the final rerun. See [verification record](../../verification/phase-1/off-work-provider-built-in-provider-catalog-closure-2026-10-05.md).
 
 ## Workstream 2 — Provider normalization profiles
 
