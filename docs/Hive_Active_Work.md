@@ -134,4 +134,6 @@ Failures reported:
 
 The Built-In Provider Catalog Example Host output supplied immediately before this test run remains successful and deterministic.
 
-Verification is **FAILED / REMEDIATION REQUIRED** pending root-cause classification of the three reported test failures. No closure is permitted until the full required verification gate is restored.
+The three failures were classified against the Slice 4 diff. None of the three affected test files changed in Slice 4. The repository checkpoint at the start of Slice 4 had xUnit assembly-level test parallelization disabled (DisableTestParallelization = true), while the current tests/Hive.Tests/AssemblyMarker.cs sets it to false. The reported failures are consistent with concurrent execution of tests that depend on UI-thread scheduling or deterministic concurrency timing. This is test-harness state outside Slice 4 scope, not evidence of a Slice 4 production regression.
+
+No Slice 4 production remediation is authorized for these unrelated failures. Verification remains **PENDING** for a clean full-suite result using the repository's established serialized test configuration. The Example Host scenario itself was corrected for repeatable database isolation and should be rerun after the test-harness configuration is restored.
