@@ -58,8 +58,9 @@ Developer re-verification is pending. Rerun the full `Hive.Tests` suite and manu
 ## Off-Work UI Slice — Move Model Information into Provider Settings
 
 Authorized: 2026-10-05 (explicit maintainer request)
-Status: IN PROGRESS
+Status: VERIFICATION PENDING
 Roadmap impact: None. Bounded off-roadmap UI/navigation work. Does not activate or advance any Phase 1 roadmap slice.
+Checkpoint: `e6a8501a` — "Initialize selected Provider Settings tab"
 
 ### Maintainer request
 
@@ -98,4 +99,8 @@ Advanced Provider Configuration remains administrative and contains only:
    `Overview / Getting Started / Example Configuration → Providers → Model Information`
    and confirms the existing Model Information behavior remains intact.
 4. Confirm Advanced Provider Configuration no longer presents a Model Information tab and still presents Accounts / Credentials and Execution Targets.
+
+### Implementation complete
+
+The existing Model Information view is now hosted by the normal Providers Settings surface as the second tab between Providers and Favorite Execution Targets. Advanced Provider Configuration now contains only Providers, Accounts / Credentials, and Execution Targets. The Example Host Model Information scenario now opens the real Hive Settings flow and directs the developer to Providers → Model Information. Focused navigation assertions and affected documentation have been updated.
 
