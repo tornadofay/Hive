@@ -534,13 +534,32 @@ public sealed class AgentExecutionIntegrationTests
             principal,
             tenant);
 
+        var pricingEvidence = new ExecutionPricingEvidence(
+            target.Model!,
+            new ProviderModelPricing(
+                [
+                    new ProviderModelPrice(
+                        "input_token",
+                        0.35m,
+                        "USD",
+                        1_000_000m),
+                    new ProviderModelPrice(
+                        "output_token",
+                        1.50m,
+                        "USD",
+                        1_000_000m)
+                ]),
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow.AddMinutes(10));
+
         var result = await service.ExecuteAsync(
             new AgentExecutionRequest(
                 agent,
                 runtime,
                 target,
                 accessContext,
-                "Trigger provider failure."));
+                "Trigger provider failure.",
+                pricingEvidence: pricingEvidence));
 
         Assert.True(result.IsFailure);
         Assert.NotNull(result.Error);
@@ -570,6 +589,10 @@ public sealed class AgentExecutionIntegrationTests
                 "usage",
                 out _));
         Assert.Equal(1, events.Value[1].Envelope.PayloadSchemaVersion.Value);
+        Assert.False(
+            events.Value[1].Envelope.Payload.TryGetProperty(
+                "pricingEvidence",
+                out _));
     }
 
     [Fact]
@@ -1162,13 +1185,32 @@ public sealed class AgentExecutionIntegrationTests
 
         using var cancellation = new CancellationTokenSource();
 
+        var pricingEvidence = new ExecutionPricingEvidence(
+            target.Model!,
+            new ProviderModelPricing(
+                [
+                    new ProviderModelPrice(
+                        "input_token",
+                        0.35m,
+                        "USD",
+                        1_000_000m),
+                    new ProviderModelPrice(
+                        "output_token",
+                        1.50m,
+                        "USD",
+                        1_000_000m)
+                ]),
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow.AddMinutes(10));
+
         var executionTask = service.ExecuteAsync(
             new AgentExecutionRequest(
                 agent,
                 runtime,
                 target,
                 accessContext,
-                "Cancel this request."),
+                "Cancel this request.",
+                pricingEvidence: pricingEvidence),
             cancellation.Token);
 
         await server.RequestObserved.Task.WaitAsync(
@@ -1201,6 +1243,10 @@ public sealed class AgentExecutionIntegrationTests
         Assert.Equal(
             events.Value[0].Envelope.EventId.Value,
             events.Value[1].Envelope.CausationId!.Value.Value);
+        Assert.False(
+            events.Value[1].Envelope.Payload.TryGetProperty(
+                "pricingEvidence",
+                out _));
         Assert.False(
             events.Value[1].Envelope.Payload.TryGetProperty(
                 "usage",
