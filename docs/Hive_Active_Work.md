@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Authorized slice
 
@@ -47,12 +47,17 @@ Native/different-transport providers are catalog metadata only in this slice and
 
 ## Verification
 
-Developer verification for Slice 2 has not yet been run.
+Developer verification result received:
 
-- Source inspected/reviewed: Yes.
-- Developer automated verification: Not yet run.
-- Build executed by agent: No.
-- Example Host manually verified: No.
+- Full `Hive.Tests`: **619 tests, 617 passed, 2 failed, 0 skipped**.
+- Failed: `BuiltInProviderCatalogTests.ExistingSpecialDiscoveryAndPricingProfilesRemainExplicit`.
+- Failed: `ProviderModelMetadataProviderTests.OllamaDiscovery_UsesBulkTagsAndDoesNotProbeEveryModel`.
+
+Observed cause:
+- the Ollama catalog entry did not explicitly declare its `Ollama` discovery profile after the catalog expansion;
+- catalog-driven discovery therefore selected the standard OpenAI-compatible parser for the Ollama `/api/tags` response.
+
+Remediation is authorized within this same Slice 2 failure boundary. Restore the explicit Ollama discovery profile; do not add a second provider-key routing table.
 
 Required developer verification:
 
