@@ -377,6 +377,8 @@ public sealed class ProviderModelMetadataProviderTests
     [Theory]
     [InlineData("openai")]
     [InlineData("nvidia")]
+    [InlineData("mistral")]
+    [InlineData("together-ai")]
     public async Task BasicOpenAiCompatibleProviders_DoNotInferCapabilities(
         string providerKey)
     {
@@ -395,9 +397,23 @@ public sealed class ProviderModelMetadataProviderTests
 
         var result = await DiscoverAsync(
             providerKey,
-            providerKey == "openai"
-                ? new Uri("https://api.openai.com/v1/")
-                : new Uri("https://integrate.api.nvidia.com/v1/"),
+            providerKey switch
+            {
+                "openai" =>
+                    new Uri("https://api.openai.com/v1/"),
+
+                "nvidia" =>
+                    new Uri("https://integrate.api.nvidia.com/v1/"),
+
+                "mistral" =>
+                    new Uri("https://api.mistral.ai/v1/"),
+
+                "together-ai" =>
+                    new Uri("https://api.together.xyz/v1/"),
+
+                _ => throw new InvalidOperationException(
+                    $"No endpoint fixture is defined for '{providerKey}'.")
+            },
             handler);
 
         Assert.True(result.IsSuccess, result.Error?.Message);
