@@ -709,7 +709,7 @@ For the current single-provider-call Agent execution path, the usage observation
 
 Provider pricing remains observational model metadata. The execution path must not perform live provider discovery merely to obtain pricing.
 
-When configured execution is invoked through Hive.Management, Management may attach an `ExecutionPricingEvidence` value only when the current Provider → ProviderAccount → ExecutionTarget context has a fresh cached discovery snapshot containing pricing for the exact target model/deployment. The evidence preserves the normalized pricing profile, its model identity, and the discovery observation/freshness timestamps.
+When configured execution is invoked through Hive.Management, Management may attach an `ExecutionPricingEvidence` value only when the current Provider → ProviderAccount → ExecutionTarget context has a fresh cached discovery snapshot containing pricing for the exact target model/deployment. The evidence preserves the normalized pricing profile, its model identity, the applicable Provider and ProviderAccount identities, the exact execution-target endpoint, and the discovery observation/freshness timestamps.
 
 The boundary is:
 
@@ -725,22 +725,23 @@ Hive.Coordination execution
 terminal execution event
 ```
 
-Coordination never starts discovery as part of execution. Missing, stale, mismatched, or non-comparable pricing remains absent/uncertain rather than being guessed from the current provider catalog or a later price lookup.
+Coordination never starts discovery as part of execution. AgentExecutionRequest validates pricing evidence against the execution target's Provider, ProviderAccount, endpoint, and model/deployment identities before execution can consume it. Missing, stale, mismatched, or non-comparable pricing remains absent/uncertain rather than being guessed from the current provider catalog or a later price lookup.
 
 For successful executions and failures after a provider response was received, the pricing evidence is persisted alongside the runtime usage payload in the existing terminal event schema version 2. This keeps observed usage and the pricing applicability known at execution time in the same immutable execution evidence boundary. Provider failures or cancellation before provider response do not persist fabricated pricing or usage evidence.
 
-The persisted pricing evidence contains normalized price entries, explicit free evidence, and bounded pricing variants/conditions. It contains no credential material, authorization data, or live provider response body. Native/different-transport providers remain outside the OpenAI-compatible execution adapter.
+The persisted pricing evidence contains the source Provider and ProviderAccount identities, exact endpoint, normalized price entries, explicit free evidence, and bounded pricing variants/conditions. It contains no credential material, authorization data, or live provider response body. Configured Agent execution is rejected for built-in native-integration providers and for any Provider transport other than OpenAI-compatible before the OpenAI-compatible adapter is invoked. Native/different-transport providers remain outside that adapter.
 
 The persisted usage payload carries the applicable identities already known at the execution boundary:
 
 - Provider;
 - ProviderAccount;
 - ExecutionTarget;
-- model/deployment;
+- configured model/deployment;
 - Agent;
 - Runtime;
 - Execution;
 - applicable Deployment/Tenant/Principal/User/Session/Workspace/Hive scope identifiers;
+- provider-reported model identity when supplied;
 - provider response identity when supplied;
 - the terminal event's durable observation time.
 
