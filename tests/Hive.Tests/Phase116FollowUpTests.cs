@@ -617,56 +617,62 @@ public sealed class Phase116FollowUpTests
         Assert.Contains("rich-model", detailsText);
         Assert.Contains("example-family", detailsText);
         Assert.Contains("text, image, audio", detailsText);
+        Assert.Equal(
+            ["Overview", "Details", "Technical"],
+            view.DetailsTabs.TabPages.Cast<TabPage>().Select(page => page.Text));
+        Assert.NotNull(view.DetailsTabs.SelectedTab);
+        Assert.Equal("Overview", view.DetailsTabs.SelectedTab!.Text);
+        Assert.NotEmpty(view.OverviewDetailsTab.Controls);
+        Assert.Empty(view.ModelDetailsTab.Controls);
+        Assert.Empty(view.TechnicalDetailsTab.Controls);
+
         Assert.Contains("Identity", detailsText);
         Assert.Contains("Inputs", detailsText);
         Assert.Contains("Outputs", detailsText);
         Assert.Contains("Capabilities", detailsText);
-        Assert.Contains("Text generation — Supported", detailsText);
-        Assert.Contains("Structured output — Supported", detailsText);
-        Assert.Contains("Reasoning / Thinking", detailsText);
+        Assert.Contains("Text: Supported", detailsText);
+        Assert.Contains("Structured: Supported", detailsText);
         Assert.DoesNotContain("✕", detailsText);
         Assert.DoesNotContain("✓", detailsText);
         Assert.Contains("medium", detailsText);
         Assert.Contains("Limits", detailsText);
         Assert.Contains("131,072 tokens", detailsText);
-        Assert.Contains("Pricing", detailsText);
-        Assert.Contains("1.25", detailsText);
-        Assert.Contains("Operational state", detailsText);
-        Assert.Contains("active", detailsText);
-        Assert.Contains("Additional provider information", detailsText);
-        Assert.Contains("deterministic-fixture", detailsText);
+        Assert.Contains("Price / 1M", detailsText);
+        Assert.Contains("5.00", detailsText);
+        Assert.Contains("Operational", detailsText);
+        Assert.DoesNotContain("deterministic-fixture", detailsText);
+
+        view.DetailsTabs.SelectedIndex = 1;
+        Application.DoEvents();
+
+        var modelDetailsText = CollectVisibleControlText(view.ModelDetailsTab);
+        Assert.NotEmpty(view.ModelDetailsTab.Controls);
+        Assert.Contains("ID: rich-model", modelDetailsText);
+        Assert.Contains("Reasoning: Supported", modelDetailsText);
+        Assert.Contains("131,072 tokens", modelDetailsText);
+        Assert.Empty(view.TechnicalDetailsTab.Controls);
+
+        view.DetailsTabs.SelectedIndex = 2;
+        Application.DoEvents();
+
+        var technicalText = CollectVisibleControlText(view.TechnicalDetailsTab);
+        Assert.NotEmpty(view.TechnicalDetailsTab.Controls);
+        Assert.Contains("Pricing evidence", technicalText);
+        Assert.Contains("Input tokens", technicalText);
+        Assert.Contains("Operational", technicalText);
+        Assert.Contains("deterministic-fixture", technicalText);
 
         var detailControls = view.DetailsContent.Controls
             .Cast<Control>()
             .ToArray();
 
         Assert.Equal(3, detailControls.Length);
-        Assert.Contains(detailControls, control => control is TableLayoutPanel);
-        Assert.Equal(
-            [
-                "Identity",
-                "Inputs",
-                "Outputs",
-                "Capabilities",
-                "Reasoning / Thinking",
-                "Limits",
-                "Pricing",
-                "Operational state",
-                "Additional provider information"
-            ],
-            view.DetailsContent.Controls
-                .Cast<Control>()
-                .Single(control => control is TableLayoutPanel)
-                .Controls
-                .Cast<Control>()
-                .Select(section => section.Controls
-                    .OfType<Label>()
-                    .Single(label => label.Text.Length > 0)
-                    .Text)
-                .ToArray());
         Assert.Equal(
             detailControls.Length,
             view.DetailsContent.Controls.Cast<Control>().Count());
+        Assert.Contains(
+            detailControls,
+            control => control is HiveTabControl);
     }
 
     [WinFormsFact]
@@ -1053,10 +1059,10 @@ public sealed class Phase116FollowUpTests
 
         Assert.Contains("second-model", detailsText);
         Assert.Contains("second-provider", detailsText);
-        Assert.Contains("vision", detailsText);
+        Assert.Contains("Vision", detailsText);
         Assert.Contains("Capabilities", detailsText);
-        Assert.Contains("Vision — Unsupported", detailsText);
-        Assert.Contains("Reasoning — Unknown / unreported", detailsText);
+        Assert.Contains("Vision: Unsupported", detailsText);
+        Assert.Contains("Reasoning: Unknown / unreported", detailsText);
         Assert.DoesNotContain("✓", detailsText);
         Assert.DoesNotContain("✕", detailsText);
         Assert.DoesNotContain("rich-model", detailsText);
