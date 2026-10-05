@@ -202,41 +202,56 @@ public sealed class OpenAICompatibleProviderCapabilityDiscovery :
     {
         ArgumentNullException.ThrowIfNull(baseEndpoint);
 
-        var key = providerKey?.Trim().ToLowerInvariant();
+        var profile =
+            BuiltInProviderCatalog.Find(providerKey)?.DiscoveryProfile ??
+            BuiltInProviderDiscoveryProfile.StandardOpenAICompatible;
 
-        return key switch
+        return profile switch
         {
-            "cerebras" => Result<ModelCatalogEndpoint>.Success(
-                new ModelCatalogEndpoint(
-                    BuildCerebrasModelsUri(baseEndpoint),
-                    OpenAICompatibleModelCatalogFormat.CerebrasOpenRouter)),
+            BuiltInProviderDiscoveryProfile.CerebrasOpenRouter =>
+                Result<ModelCatalogEndpoint>.Success(
+                    new ModelCatalogEndpoint(
+                        BuildCerebrasModelsUri(baseEndpoint),
+                        OpenAICompatibleModelCatalogFormat.CerebrasOpenRouter)),
 
-            "google-gemini" => Result<ModelCatalogEndpoint>.Success(
-                new ModelCatalogEndpoint(
-                    BuildGeminiModelsUri(baseEndpoint),
-                    OpenAICompatibleModelCatalogFormat.Gemini)),
+            BuiltInProviderDiscoveryProfile.Gemini =>
+                Result<ModelCatalogEndpoint>.Success(
+                    new ModelCatalogEndpoint(
+                        BuildGeminiModelsUri(baseEndpoint),
+                        OpenAICompatibleModelCatalogFormat.Gemini)),
 
-            "lm-studio" => Result<ModelCatalogEndpoint>.Success(
-                new ModelCatalogEndpoint(
-                    BuildLmStudioModelsUri(baseEndpoint),
-                    OpenAICompatibleModelCatalogFormat.LmStudio)),
+            BuiltInProviderDiscoveryProfile.LmStudio =>
+                Result<ModelCatalogEndpoint>.Success(
+                    new ModelCatalogEndpoint(
+                        BuildLmStudioModelsUri(baseEndpoint),
+                        OpenAICompatibleModelCatalogFormat.LmStudio)),
 
-            "ollama" => Result<ModelCatalogEndpoint>.Success(
-                new ModelCatalogEndpoint(
-                    BuildOllamaModelsUri(baseEndpoint),
-                    OpenAICompatibleModelCatalogFormat.Ollama)),
+            BuiltInProviderDiscoveryProfile.Ollama =>
+                Result<ModelCatalogEndpoint>.Success(
+                    new ModelCatalogEndpoint(
+                        BuildOllamaModelsUri(baseEndpoint),
+                        OpenAICompatibleModelCatalogFormat.Ollama)),
 
-            "cloudflare" => BuildCloudflareModelsEndpoint(baseEndpoint),
+            BuiltInProviderDiscoveryProfile.CloudflareOpenRouter =>
+                BuildCloudflareModelsEndpoint(baseEndpoint),
 
-            "openrouter" => Result<ModelCatalogEndpoint>.Success(
-                new ModelCatalogEndpoint(
-                    BuildModelsUri(baseEndpoint),
-                    OpenAICompatibleModelCatalogFormat.OpenRouter)),
+            BuiltInProviderDiscoveryProfile.OpenRouter =>
+                Result<ModelCatalogEndpoint>.Success(
+                    new ModelCatalogEndpoint(
+                        BuildModelsUri(baseEndpoint),
+                        OpenAICompatibleModelCatalogFormat.OpenRouter)),
 
-            _ => Result<ModelCatalogEndpoint>.Success(
-                new ModelCatalogEndpoint(
-                    BuildModelsUri(baseEndpoint),
-                    OpenAICompatibleModelCatalogFormat.Standard))
+            BuiltInProviderDiscoveryProfile.NativeIntegrationRequired =>
+                Result<ModelCatalogEndpoint>.Failure(
+                    Error.Validation(
+                        "hive.provider.discovery.native-integration-required",
+                        "This provider requires its native discovery integration.")),
+
+            _ =>
+                Result<ModelCatalogEndpoint>.Success(
+                    new ModelCatalogEndpoint(
+                        BuildModelsUri(baseEndpoint),
+                        OpenAICompatibleModelCatalogFormat.Standard))
         };
     }
 
