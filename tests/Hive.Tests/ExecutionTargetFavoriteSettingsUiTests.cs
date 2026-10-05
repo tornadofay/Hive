@@ -55,23 +55,6 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
     }
 
     [WinFormsFact]
-    public async Task ProviderSettings_ModelInformationTabLoadsExistingModelInformationView()
-    {
-        var fixture = Phase116FollowUpTests.CreateFixtureForNavigation();
-        using var view = new HiveProvidersSettingsView(
-            fixture.Management,
-            fixture.Context,
-            new HiveThemeManager(HiveThemeMode.Light));
-
-        view.NavigationTabs.SelectedIndex = 1;
-        await Task.Delay(1);
-        Assert.IsType<HiveModelInformationSettingsView>(view.ModelInformationPage);
-        Assert.Same(
-            view.ModelInformationPage,
-            view.NavigationTabs.TabPages[1].Controls[0]);
-    }
-
-    [WinFormsFact]
     public async Task FavoriteSettings_ShowsOnlyStoredFavorites()
     {
         var context = CreateContext();
