@@ -77,7 +77,9 @@ public sealed class OpenAICompatibleProviderAdapterTests
         Assert.Equal(165, usage.TotalTokenCount);
         Assert.Equal(20, usage.CachedInputTokenCount);
         Assert.Equal(10, usage.ReasoningTokenCount);
-        Assert.Equal(3, usage.AdditionalCounts["accepted_prediction_tokens"]);
+        var additionalCounts = usage.AdditionalCounts ??
+            throw new InvalidOperationException("Provider additional token counts were not returned.");
+        Assert.Equal(3, additionalCounts["accepted_prediction_tokens"]);
     }
 
     [Fact]
