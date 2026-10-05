@@ -30,7 +30,7 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
     }
 
     [WinFormsFact]
-    public void ProviderSettings_UsesProvidersAsFirstTabAndFavoritesAsSecondTab()
+    public void ProviderSettings_UsesProvidersModelInformationAndFavoritesTabs()
     {
         var management = UiManagementProxy.Create();
         var context = CreateContext();
@@ -41,10 +41,34 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
             context,
             theme);
 
-        Assert.Equal(2, view.NavigationTabs.TabPages.Count);
+        Assert.Equal(3, view.NavigationTabs.TabPages.Count);
         Assert.Equal("Providers", view.NavigationTabs.TabPages[0].Text);
-        Assert.Equal("Favorite Execution Targets", view.NavigationTabs.TabPages[1].Text);
+        Assert.Equal("Model Information", view.NavigationTabs.TabPages[1].Text);
+        Assert.Equal("Favorite Execution Targets", view.NavigationTabs.TabPages[2].Text);
         Assert.Equal(0, view.NavigationTabs.SelectedIndex);
+        Assert.Same(
+            view.ModelInformationPage,
+            view.NavigationTabs.TabPages[1].Controls[0]);
+        Assert.Same(
+            view.FavoriteTargetsPage,
+            view.NavigationTabs.TabPages[2].Controls[0]);
+    }
+
+    [WinFormsFact]
+    public async Task ProviderSettings_ModelInformationTabLoadsExistingModelInformationView()
+    {
+        var fixture = Phase116FollowUpTests.CreateFixtureForNavigation();
+        using var view = new HiveProvidersSettingsView(
+            fixture.Management,
+            fixture.Context,
+            new HiveThemeManager(HiveThemeMode.Light));
+
+        view.NavigationTabs.SelectedIndex = 1;
+        await Task.Delay(1);
+        Assert.IsType<HiveModelInformationSettingsView>(view.ModelInformationPage);
+        Assert.Same(
+            view.ModelInformationPage,
+            view.NavigationTabs.TabPages[1].Controls[0]);
     }
 
     [WinFormsFact]
