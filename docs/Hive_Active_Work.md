@@ -1,9 +1,35 @@
 # Hive — Active Work
 
-Status: NO ACTIVE WORK
+Status: VERIFICATION PENDING
 
-No implementation slice is currently authorized.
+## Revision — Off-Work Provider Completion Integration & Hardening
 
-The off-work provider-completion program (Slices 1–4) is complete and verified. Its historical verification records remain under `docs/verification/phase-1/`.
+Authorized by the user's explicit request on 2026-10-05 to fix all findings from the Slice 4 Revision audit.
 
-No Phase 1.30 or later roadmap slice has been activated.
+### Authorized corrective boundary
+
+Correct only the concrete Slice 4 findings:
+
+1. Bind execution pricing evidence to its complete Provider → ProviderAccount → resource-version → endpoint source identity so evidence cannot be attached to a different execution context.
+2. Preserve provider-reported model identity separately from the configured target model/deployment in execution results and usage evidence so provider-resolved aliases/deployments are not discarded.
+3. Enforce the existing OpenAI-compatible execution boundary in configured Management execution so native/different-transport Providers cannot be routed through the OpenAI-compatible adapter.
+
+Required focused regression tests and owning architecture/example documentation updates are in scope.
+
+### Explicit exclusions
+
+- no new provider transports;
+- no new pricing, billing, tokenizer, estimation, metrics, budgets, quota, OpenTelemetry, or reporting capability;
+- no Agent target-selection redesign;
+- no durable Model resource;
+- no Phase 1.30 or later roadmap work;
+- no unrelated UI or cleanup work.
+
+### Verification gate
+
+Implementation is pending developer verification. Required handoff after changes:
+
+Example to run: Providers / Runtime / Provider Completion Integration & Hardening — Hive.Example.WinForms
+Tests to run: full Hive.Tests suite; focused ProviderCompletionIntegrationTests and relevant configured Agent execution regressions.
+
+No roadmap phase has been activated.
