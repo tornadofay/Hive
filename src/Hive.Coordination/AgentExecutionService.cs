@@ -202,7 +202,7 @@ public sealed class AgentExecutionService
             var responseText = responseMessage?.Text;
             var providerResponseId = response.ResponseId;
             var providerReportedModelId =
-                NormalizeProviderReportedModelId(response.ModelId);
+                GetProviderReportedModelId(response);
             var usage = NormalizeUsage(response.Usage);
 
             if (string.IsNullOrWhiteSpace(responseText))
@@ -287,6 +287,16 @@ public sealed class AgentExecutionService
                     CancellationToken.None)
                 .ConfigureAwait(false);
         }
+    }
+
+    private static string? GetProviderReportedModelId(
+        AgentResponse response)
+    {
+        ArgumentNullException.ThrowIfNull(response);
+
+        return response.RawRepresentation is ChatResponse chatResponse
+            ? NormalizeProviderReportedModelId(chatResponse.ModelId)
+            : null;
     }
 
     private static string? NormalizeProviderReportedModelId(
