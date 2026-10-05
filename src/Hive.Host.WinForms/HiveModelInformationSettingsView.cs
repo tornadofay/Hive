@@ -1101,6 +1101,22 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _ => "Unknown / unreported"
         };
 
+    private static CapabilityState GetCapabilityState(
+        ProviderModelMetadata model,
+        CapabilityKey key) =>
+        model.DiscoveredCapabilities
+            .FirstOrDefault(item => item.Capability == key)
+            ?.State ??
+        CapabilityState.Unknown;
+
+    private static string FormatTokenLimit(long? tokens) =>
+        tokens is { } value
+            ? $"{value.ToString("N0", CultureInfo.InvariantCulture)} tokens"
+            : "Not reported";
+
+    private static string FormatDateTime(DateTimeOffset? value) =>
+        value?.ToString("O") ?? "Not reported";
+
     private static string FormatCapabilityState(
         ProviderModelMetadata model,
         CapabilityKey key) =>
@@ -1625,13 +1641,14 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private static Label AddInfoRow(TableLayoutPanel layout, int row, string caption)
     {
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
         var captionLabel = new Label
         {
             AutoSize = true,
             Text = caption,
             Margin = new Padding(0, 0, 12, 8),
             Padding = Padding.Empty,
-            Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
+            Font = new Font(fallbackFont, FontStyle.Bold),
             ForeColor = SystemColors.GrayText,
             AccessibleRole = AccessibleRole.StaticText
         };
