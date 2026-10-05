@@ -70,9 +70,9 @@ public sealed class BuiltInProviderCatalogTests
             normalizedKeys.Length,
             normalizedKeys.Distinct(StringComparer.Ordinal).Count());
 
-        var deepSeek = Assert.NotNull(
-            BuiltInProviderCatalog.Find("  DEEPSEEK  "));
+        var deepSeek = BuiltInProviderCatalog.Find("  DEEPSEEK  ");
 
+        Assert.NotNull(deepSeek);
         Assert.Equal("deepseek", deepSeek!.Key);
     }
 
@@ -112,8 +112,9 @@ public sealed class BuiltInProviderCatalogTests
 
         foreach (var key in nativeKeys)
         {
-            var definition = Assert.NotNull(BuiltInProviderCatalog.Find(key));
+            var definition = BuiltInProviderCatalog.Find(key);
 
+            Assert.NotNull(definition);
             Assert.True(definition!.RequiresNativeIntegration);
             Assert.False(definition.IsOpenAICompatible);
             Assert.NotEqual(
@@ -175,8 +176,9 @@ public sealed class BuiltInProviderCatalogTests
 
         foreach (var key in keys)
         {
-            var definition = Assert.NotNull(BuiltInProviderCatalog.Find(key));
+            var definition = BuiltInProviderCatalog.Find(key);
 
+            Assert.NotNull(definition);
             Assert.False(definition!.NormalOnboardingSupported);
             Assert.Null(definition.DefaultEndpoint);
             Assert.Equal(
@@ -189,11 +191,17 @@ public sealed class BuiltInProviderCatalogTests
     [Fact]
     public void ExistingSpecialDiscoveryAndPricingProfilesRemainExplicit()
     {
-        var openRouter = Assert.NotNull(BuiltInProviderCatalog.Find("openrouter"));
-        var cerebras = Assert.NotNull(BuiltInProviderCatalog.Find("cerebras"));
-        var gemini = Assert.NotNull(BuiltInProviderCatalog.Find("google-gemini"));
-        var ollama = Assert.NotNull(BuiltInProviderCatalog.Find("ollama"));
-        var cloudflare = Assert.NotNull(BuiltInProviderCatalog.Find("cloudflare"));
+        var openRouter = BuiltInProviderCatalog.Find("openrouter");
+        var cerebras = BuiltInProviderCatalog.Find("cerebras");
+        var gemini = BuiltInProviderCatalog.Find("google-gemini");
+        var ollama = BuiltInProviderCatalog.Find("ollama");
+        var cloudflare = BuiltInProviderCatalog.Find("cloudflare");
+
+        Assert.NotNull(openRouter);
+        Assert.NotNull(cerebras);
+        Assert.NotNull(gemini);
+        Assert.NotNull(ollama);
+        Assert.NotNull(cloudflare);
 
         Assert.Equal(
             BuiltInProviderPricingNormalizationProfile.OpenRouterPerToken,
