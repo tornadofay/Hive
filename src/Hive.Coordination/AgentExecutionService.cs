@@ -420,25 +420,28 @@ public sealed class AgentExecutionService
         string eventType,
         CorrelationId correlationId,
         CausationId? causationId,
-        object payload) =>
+        object payload,
+        int payloadSchemaVersion = 1) =>
         CreateLifecycleEvent(
             EventId.New(),
             eventType,
             correlationId,
             causationId,
-            payload);
+            payload,
+            payloadSchemaVersion);
 
     private EventEnvelope CreateLifecycleEvent(
         EventId eventId,
         string eventType,
         CorrelationId correlationId,
         CausationId? causationId,
-        object payload) =>
+        object payload,
+        int payloadSchemaVersion = 1) =>
         new JsonEventSerializer().CreateEnvelope(
             eventId,
             _clock.UtcNow,
             new EventType(eventType),
-            new EventPayloadVersion(1),
+            new EventPayloadVersion(payloadSchemaVersion),
             correlationId,
             causationId,
             JsonSerializer.SerializeToElement(payload));
@@ -597,7 +600,8 @@ public sealed class AgentExecutionService
                     execution,
                     usage,
                     providerResponseId)
-            });
+            },
+            payloadSchemaVersion: 2);
 
         return await PersistTerminalAsync(
                 request,
@@ -628,11 +632,25 @@ public sealed class AgentExecutionService
         if (failed.IsFailure)
             return Result<AgentExecutionResult>.Failure(failed.Error!);
 
-        var envelope = CreateLifecycleEvent(
-            "agent.execution.failed",
-            correlationId,
-            new CausationId(startedEvent.EventId.Value),
-            new
+        object payload;
+        var payloadSchemaVersion = 1;
+
+        if (usage is null)
+        {
+            payload = new
+            {
+                executionId = execution.Id.Value,
+                agentId = execution.AgentId.Value,
+                runtimeId = execution.RuntimeId.Value,
+                targetId = request.Target.Id.Value,
+                status = failed.Value!.Status.ToString(),
+                errorCode = error.Code,
+                errorCategory = error.Category.ToString()
+            };
+        }
+        else
+        {
+            payload = new
             {
                 executionId = execution.Id.Value,
                 agentId = execution.AgentId.Value,
@@ -641,14 +659,22 @@ public sealed class AgentExecutionService
                 status = failed.Value!.Status.ToString(),
                 errorCode = error.Code,
                 errorCategory = error.Category.ToString(),
-                usage = usage is null
-                    ? null
-                    : CreateUsagePayload(
-                        request,
-                        execution,
-                        usage,
-                        providerResponseId: null)
-            });
+                usage = CreateUsagePayload(
+                    request,
+                    execution,
+                    usage,
+                    providerResponseId: null)
+            };
+
+            payloadSchemaVersion = 2;
+        }
+
+        var envelope = CreateLifecycleEvent(
+            "agent.execution.failed",
+            correlationId,
+            new CausationId(startedEvent.EventId.Value),
+            payload,
+            payloadSchemaVersion);
 
         var persisted = await PersistTerminalEventAsync(
             new EventAppendRequest(
