@@ -2,7 +2,7 @@
 
 > **Status:** Slice 1 complete and verified; Slice 2 complete and verified; Slice 3 planned, not started  
 > **Roadmap impact:** None  
-> **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 2 is explicitly authorized in the current task.  
+> **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 2 was explicitly authorized on 2026-10-05 and is now complete.  
 > **Prerequisite:** Phase 1.19A verification is now closed. This off-work plan remains separate and still requires explicit implementation authorization in a dedicated chat.
 
 ## Objective
@@ -116,7 +116,7 @@ The comparison layer must never silently choose an arbitrary variant when there 
 
 ## Slice 2 — Built-In Provider Catalog — Complete and verified
 
-Slice 2 is explicitly authorized on 2026-10-05. The implementation extends the existing static `BuiltInProviderCatalog` rather than introducing a second provider inventory.
+Slice 2 was explicitly authorized on 2026-10-05 and is now complete. The implementation extends the existing static `BuiltInProviderCatalog` rather than introducing a second provider inventory.
 
 The catalog now records, in addition to provider key/name/transport/credential mode/endpoint/onboarding support:
 
