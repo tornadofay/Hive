@@ -1,8 +1,8 @@
 # Off-Work Plan — Provider Pricing, Built-In Catalog & Runtime Usage
 
-> **Status:** Slice 1 complete and verified; Slice 2 complete and verified; Slice 3 complete and verified  
+> **Status:** Slice 1 complete and verified; Slice 2 complete and verified; Slice 3 complete and verified; Slice 4 implementation in progress  
 > **Roadmap impact:** None  
-> **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 2 and Slice 3 were explicitly authorized on 2026-10-05 and are now complete.  
+> **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 2, Slice 3, and Slice 4 were explicitly authorized on 2026-10-05; Slices 2–3 are complete and Slice 4 is in progress.  
 > **Prerequisite:** Phase 1.19A verification is now closed. This off-work plan remains separate and still requires explicit implementation authorization in a dedicated chat.
 
 ## Objective
