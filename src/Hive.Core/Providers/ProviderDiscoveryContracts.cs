@@ -254,13 +254,122 @@ public sealed record ProviderModelPrice
     public decimal? UnitQuantity { get; }
 }
 
+public sealed record ProviderModelPricingVariant
+{
+    private const int MaxPrices = 32;
+    private const int MaxConditionCount = 16;
+    private const int MaxConditionLength = 128;
+
+    public ProviderModelPricingVariant(
+        string key,
+        IReadOnlyList<ProviderModelPrice> prices,
+        IReadOnlyDictionary<string, string>? conditions = null,
+        bool isDefault = false)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            throw new ArgumentException(
+                "Pricing variant key is required.",
+                nameof(key));
+
+        key = key.Trim();
+        if (key.Length > 128)
+        {
+            throw new ArgumentException(
+                "Pricing variant key cannot exceed 128 characters.",
+                nameof(key));
+        }
+
+        ArgumentNullException.ThrowIfNull(prices);
+
+        if (prices.Count > MaxPrices)
+        {
+            throw new ArgumentException(
+                $"A pricing variant cannot contain more than {MaxPrices} entries.",
+                nameof(prices));
+        }
+
+        var normalizedPrices = new List<ProviderModelPrice>(prices.Count);
+        var units = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var price in prices)
+        {
+            ArgumentNullException.ThrowIfNull(price);
+
+            if (!units.Add(price.BillingUnit))
+            {
+                throw new ArgumentException(
+                    $"Duplicate pricing unit '{price.BillingUnit}' is not allowed in variant '{key}'.",
+                    nameof(prices));
+            }
+
+            normalizedPrices.Add(price);
+        }
+
+        conditions ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        if (conditions.Count > MaxConditionCount)
+        {
+            throw new ArgumentException(
+                $"A pricing variant cannot contain more than {MaxConditionCount} conditions.",
+                nameof(conditions));
+        }
+
+        var normalizedConditions =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var condition in conditions)
+        {
+            if (string.IsNullOrWhiteSpace(condition.Key) ||
+                string.IsNullOrWhiteSpace(condition.Value))
+            {
+                throw new ArgumentException(
+                    "Pricing variant condition names and values are required.",
+                    nameof(conditions));
+            }
+
+            var normalizedKey = condition.Key.Trim();
+            var normalizedValue = condition.Value.Trim();
+
+            if (normalizedKey.Length > MaxConditionLength ||
+                normalizedValue.Length > MaxConditionLength)
+            {
+                throw new ArgumentException(
+                    $"Pricing variant condition names and values cannot exceed {MaxConditionLength} characters.",
+                    nameof(conditions));
+            }
+
+            if (!normalizedConditions.TryAdd(normalizedKey, normalizedValue))
+            {
+                throw new ArgumentException(
+                    $"Duplicate pricing variant condition '{normalizedKey}' is not allowed.",
+                    nameof(conditions));
+            }
+        }
+
+        Key = key;
+        Prices = new ReadOnlyCollection<ProviderModelPrice>(normalizedPrices);
+        Conditions = new ReadOnlyDictionary<string, string>(normalizedConditions);
+        IsDefault = isDefault;
+    }
+
+    public string Key { get; }
+
+    public IReadOnlyList<ProviderModelPrice> Prices { get; }
+
+    public IReadOnlyDictionary<string, string> Conditions { get; }
+
+    public bool IsDefault { get; }
+}
+
 public sealed record ProviderModelPricing
 {
     private const int MaxPrices = 32;
+    private const int MaxVariants = 16;
 
     public ProviderModelPricing(
         IReadOnlyList<ProviderModelPrice> prices,
-        bool explicitFreeEvidence = false)
+        bool explicitFreeEvidence = false,
+        IReadOnlyList<ProviderModelPricingVariant>? variants = null)
     {
         ArgumentNullException.ThrowIfNull(prices);
 
@@ -271,6 +380,126 @@ public sealed record ProviderModelPricing
                 nameof(prices));
         }
 
+        var normalized = NormalizePrices(prices, nameof(prices));
+
+        variants ??= Array.Empty<ProviderModelPricingVariant>();
+
+        if (variants.Count > MaxVariants)
+        {
+            throw new ArgumentException(
+                $"A model pricing profile cannot contain more than {MaxVariants} variants.",
+                nameof(variants));
+        }
+
+        var normalizedVariants = new List<ProviderModelPricingVariant>(variants.Count);
+        var variantKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var defaultCount = 0;
+
+        foreach (var variant in variants)
+        {
+            ArgumentNullException.ThrowIfNull(variant);
+
+            if (!variantKeys.Add(variant.Key))
+            {
+                throw new ArgumentException(
+                    $"Duplicate pricing variant '{variant.Key}' is not allowed.",
+                    nameof(variants));
+            }
+
+            if (variant.IsDefault)
+                defaultCount++;
+
+            normalizedVariants.Add(variant);
+        }
+
+        if (defaultCount > 1)
+        {
+            throw new ArgumentException(
+                "At most one pricing variant may be marked as the default.",
+                nameof(variants));
+        }
+
+        if (defaultCount == 1 &&
+            !normalized.Any() &&
+            normalizedVariants.Single(variant => variant.IsDefault).Prices.Count > MaxPrices)
+        {
+            throw new ArgumentException(
+                $"The default pricing variant cannot contain more than {MaxPrices} entries.",
+                nameof(variants));
+        }
+
+        Prices = new ReadOnlyCollection<ProviderModelPrice>(normalized);
+        Variants = new ReadOnlyCollection<ProviderModelPricingVariant>(normalizedVariants);
+        ExplicitFreeEvidence = explicitFreeEvidence;
+    }
+
+    public IReadOnlyList<ProviderModelPrice> Prices { get; }
+
+    public IReadOnlyList<ProviderModelPricingVariant> Variants { get; }
+
+    public bool ExplicitFreeEvidence { get; }
+
+    public decimal? TryGetComparableTokenPricePerMillion()
+    {
+        var values = Prices
+            .Where(IsComparableTokenPrice)
+            .Select(static price =>
+                price.Price * 1_000_000m / price.UnitQuantity!.Value)
+            .ToArray();
+
+        return values.Length == 0
+            ? null
+            : values.Max();
+    }
+
+    public bool HasCompleteComparableInputOutputTokenPricing
+    {
+        get
+        {
+            var input = FindComparableTokenPrice("input_token");
+            var output = FindComparableTokenPrice("output_token");
+
+            return input is not null && output is not null;
+        }
+    }
+
+    public bool HasZeroComparableInputOutputTokenPricing =>
+        HasCompleteComparableInputOutputTokenPricing &&
+        FindComparableTokenPrice("input_token")!.Value.Price == 0m &&
+        FindComparableTokenPrice("output_token")!.Value.Price == 0m;
+
+    private ProviderModelPrice? FindComparableTokenPrice(string billingUnit) =>
+        Prices.FirstOrDefault(
+            price =>
+                string.Equals(
+                    price.BillingUnit,
+                    billingUnit,
+                    StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(
+                    price.Currency,
+                    "USD",
+                    StringComparison.OrdinalIgnoreCase) &&
+                price.UnitQuantity is > 0m);
+
+    private static bool IsComparableTokenPrice(ProviderModelPrice price) =>
+        (string.Equals(
+             price.BillingUnit,
+             "input_token",
+             StringComparison.OrdinalIgnoreCase) ||
+         string.Equals(
+             price.BillingUnit,
+             "output_token",
+             StringComparison.OrdinalIgnoreCase)) &&
+        string.Equals(
+            price.Currency,
+            "USD",
+            StringComparison.OrdinalIgnoreCase) &&
+        price.UnitQuantity is > 0m;
+
+    private static IReadOnlyList<ProviderModelPrice> NormalizePrices(
+        IReadOnlyList<ProviderModelPrice> prices,
+        string parameterName)
+    {
         var normalized = new List<ProviderModelPrice>(prices.Count);
         var units = new HashSet<string>(StringComparer.Ordinal);
 
@@ -282,19 +511,14 @@ public sealed record ProviderModelPricing
             {
                 throw new ArgumentException(
                     $"Duplicate model pricing unit '{price.BillingUnit}' is not allowed.",
-                    nameof(prices));
+                    parameterName);
             }
 
             normalized.Add(price);
         }
 
-        Prices = new ReadOnlyCollection<ProviderModelPrice>(normalized);
-        ExplicitFreeEvidence = explicitFreeEvidence;
+        return normalized;
     }
-
-    public IReadOnlyList<ProviderModelPrice> Prices { get; }
-
-    public bool ExplicitFreeEvidence { get; }
 }
 
 public sealed record ProviderModelMetadata
