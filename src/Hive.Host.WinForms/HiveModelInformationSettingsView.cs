@@ -433,6 +433,18 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _detailsContent.Controls.Add(_detailsSections);
         _detailsContent.Controls.Add(_detailsSummary);
         _detailsContent.Controls.Add(_detailsTitle);
+
+        _detailsScrollHost = new HiveScrollHost
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            AccessibleName = "Selected model information scroll area",
+            AccessibleDescription = "Browse structured model information using the Hive scrollbars."
+        };
+        _detailsScrollHost.Attach(_detailsContent);
+        _detailsScrollHost.Resize += DetailsScrollHostOnResize;
+
         var detailsSurface = new Panel
         {
             Dock = DockStyle.Fill,
@@ -1790,10 +1802,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 Margin = new Padding(0, 0, 7, 7),
                 Padding = new Padding(7, 4, 7, 4),
                 BorderStyle = BorderStyle.FixedSingle,
-                Font = new Font(
-                    _themeManager.Theme.Typography.FontFamily,
-                    Math.Max(8f, _themeManager.Theme.Typography.SectionSize - 1f),
-                    FontStyle.Bold),
+                Font = SystemFonts.MessageBoxFont,
                 AccessibleRole = AccessibleRole.StaticText
             };
 
