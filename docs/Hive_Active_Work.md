@@ -63,6 +63,23 @@ Providers / Runtime / Provider Completion Integration & Hardening — Hive.Examp
 
 Build result is not to be claimed unless the developer reports it separately.
 
+## Verification remediation — 2026-10-05
+
+Developer-reported compile errors were recorded before remediation:
+
+- AgentExecutionRequest overload required apiKey and correlationId when using named pricingEvidence;
+- HiveAgentManagementService._providers was reported unassigned/non-nullable;
+- the Slice 4 Example Host read Status and CurrentSchemaVersion from Result<HiveDatabaseMigrationOutcome> instead of migration.Value;
+- existing execution-test call sites hit the same overload-parameter issue;
+- ProviderCompletionIntegrationTests referenced a missing local CreateAgent helper.
+
+Remediation:
+- retained the original 7-parameter execution-request constructor and made the additive 8-parameter overload parameters optional;
+- preserved the _providers dependency assignment in HiveAgentManagementService;
+- corrected the Example Host migration output to use migration.Value!;
+- added the missing provider-completion test CreateAgent helper.
+
+Production semantics were not broadened beyond the authorized Slice 4 boundary.
 ## Verification gate
 
 Developer verification is now required. Any in-scope failure or compile error must be recorded as `VERIFICATION FAILED / REMEDIATION REQUIRED` before same-slice remediation. On successful verification, archive the closure evidence and return Active Work to `NO ACTIVE WORK`.
