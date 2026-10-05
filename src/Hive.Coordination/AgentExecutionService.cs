@@ -717,7 +717,7 @@ public sealed class AgentExecutionService
                     execution,
                     usage,
                     providerResponseId: null,
-                    pricingEvidence)
+                    pricingEvidence: pricingEvidence)
             };
 
             payloadSchemaVersion = 2;
