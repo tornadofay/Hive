@@ -1044,9 +1044,6 @@ public sealed class Phase116FollowUpTests
 
         Assert.NotEqual(firstItem.Text, secondItem.Text);
 
-        view.DetailsTabs.SelectedIndex = 1;
-        Application.DoEvents();
-
         var detailControlsBeforeSelection = view.DetailsContent.Controls
             .Cast<Control>()
             .ToArray();
@@ -1056,17 +1053,30 @@ public sealed class Phase116FollowUpTests
         secondItem.Focused = true;
         Application.DoEvents();
 
-        var detailsText = CollectVisibleControlText(view.DetailsContent);
+        view.DetailsTabs.SelectedIndex = 0;
+        Application.DoEvents();
+        var overviewText = CollectVisibleControlText(view.OverviewDetailsTab);
+        Assert.Contains("second-model", CollectVisibleControlText(view.DetailsContent));
+        Assert.Contains("Capabilities", overviewText);
+        Assert.Contains("Vision: Unsupported", overviewText);
+        Assert.DoesNotContain("rich-model", overviewText);
 
-        Assert.Contains("second-model", detailsText);
-        Assert.Contains("second-provider", detailsText);
-        Assert.Contains("Vision", detailsText);
-        Assert.Contains("Capabilities", detailsText);
-        Assert.Contains("Vision: Unsupported", detailsText);
+        view.DetailsTabs.SelectedIndex = 1;
+        Application.DoEvents();
+        var detailsText = CollectVisibleControlText(view.ModelDetailsTab);
+        Assert.Contains("second-provider", detailsText) == false; // provider evidence belongs to Technical
+
         Assert.Contains("Reasoning: Unknown / unreported", detailsText);
-        Assert.DoesNotContain("✓", detailsText);
-        Assert.DoesNotContain("✕", detailsText);
         Assert.DoesNotContain("rich-model", detailsText);
+
+        view.DetailsTabs.SelectedIndex = 2;
+        Application.DoEvents();
+        var technicalText = CollectVisibleControlText(view.TechnicalDetailsTab);
+        Assert.Contains("second-provider", technicalText);
+        Assert.DoesNotContain("rich-model", technicalText);
+
+        Assert.DoesNotContain("✓", CollectVisibleControlText(view.DetailsContent));
+        Assert.DoesNotContain("✕", CollectVisibleControlText(view.DetailsContent));
         Assert.Equal(
             detailControlsBeforeSelection,
             view.DetailsContent.Controls.Cast<Control>().ToArray());
