@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ### Remediation checkpoint — 2026-10-05
 
@@ -14,18 +14,18 @@ The reported 3-test failure was remediated by aligning the affected assertions w
 
 Verification is pending developer rerun.
 
-### Verification failure — 2026-10-05
+### Verification remediation — 2026-10-05
 
+Developer verification reported **679 tests: 677 passed, 2 failed, 0 skipped**. The reported failures were remediated by moving the tiered-pricing check to the Technical lazy tab and validating selection-change data across Overview, Details, and Technical.
 
-Developer verification reported **679 tests: 677 passed, 2 failed, 0 skipped** after the prior remediation. The remaining failures are both inside `Phase116FollowUpTests`: tiered-pricing assertions still expect the prior price-line wording, and the selection-change test expects provider evidence while the Technical lazy tab is not selected.
+UI polish remediation is complete within the recorded failure boundary: detail values are line-oriented and width-constrained, details are synchronized after tab content changes so the existing vertical scroll host can recalculate for long text, provider JSON is indented and property-separated, the Model Information filter row is responsive with both pricing-evidence checkboxes preserved, and the page-specific CRUD search is bounded to 220px.
 
-Developer manual UI verification also found in-scope presentation defects: long detail text can escape/truncate instead of wrapping with vertical scrolling, non-capability detail fields need readable line separation, both pricing-range checkboxes must remain visible without overlap, and the Model Information CRUD search should be narrower with responsive filter layout.
+Verification remains pending developer rerun. No provider, persistence, filter-semantic, roadmap, or unrelated UI changes were made.
 
-Remediation boundary: correct the two failing tests/contracts and only the Model Information wrapping, technical formatting, filter layout, and search-width responsiveness reported above. No provider, persistence, filter-semantic, roadmap, or unrelated UI changes are authorized.
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
 Authorized: 2026-10-05 (explicit maintainer request in a dedicated chat)
-Checkpoint: `babe51d8` — "Polish Model Information wrapping and readability"
+Checkpoint: `05a9b9c1` — "Synchronize Model Information details after tab content changes"
 Roadmap impact: None. Bounded off-roadmap work. Does not activate or advance any Phase 1 roadmap slice.
 
 ### Maintainer intent
