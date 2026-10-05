@@ -122,3 +122,16 @@ Remediation applied on `main`: `ProviderCompletionIntegrationExampleView` now us
 Verification status returned to `VERIFICATION PENDING`. Developer rerun required:
 
 `Example to run: Providers / Runtime / Provider Completion Integration & Hardening — Hive.Example.WinForms`
+
+## Verification failure — full Hive.Tests rerun — 2026-10-05
+
+Developer reran the full `Hive.Tests` suite after Example Host remediation. Result: **636 tests, 633 passed, 3 failed, 0 skipped** in 51.2 seconds.
+
+Failures reported:
+- `HiveWinFormsHostIntegrationTests.Capture_FromBackgroundThread_IsRejectedBeforeHostTraversal` — expected assertion true, actual false; failure at line 1684.
+- `ProviderDiscoveryManagementIntegrationTests.Management_ConcurrentForcedRefreshRequestsShareOneSuccessfulRefresh` — expected discovery call count 2, actual 3; failure at line 617.
+- `OpenAICompatibleProviderAdapterTests.CompleteChatAsync_PropagatesCallerCancellation` — `InvalidOperationException: Client closed before headers.` from the local fake HTTP server during disposal; failure at line 341.
+
+The Built-In Provider Catalog Example Host output supplied immediately before this test run remains successful and deterministic.
+
+Verification is **FAILED / REMEDIATION REQUIRED** pending root-cause classification of the three reported test failures. No closure is permitted until the full required verification gate is restored.
