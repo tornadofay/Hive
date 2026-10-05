@@ -1733,7 +1733,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 _themeManager.Theme.Typography.FontFamily,
                 _themeManager.Theme.Typography.SectionSize,
                 FontStyle.Bold),
-            AccessibleRole = AccessibleRole.Heading
+            AccessibleRole = AccessibleRole.StaticText
         };
 
         var body = new FlowLayoutPanel
