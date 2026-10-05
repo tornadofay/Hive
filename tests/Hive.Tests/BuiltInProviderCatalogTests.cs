@@ -189,6 +189,34 @@ public sealed class BuiltInProviderCatalogTests
     }
 
     [Fact]
+    public void ProviderSpecificDiscoveryProvidersRemainAdvancedOnly()
+    {
+        var ai21 = BuiltInProviderCatalog.Find("ai21");
+        var minimax = BuiltInProviderCatalog.Find("minimax");
+
+        Assert.NotNull(ai21);
+        Assert.NotNull(minimax);
+
+        foreach (var definition in new[] { ai21!, minimax! })
+        {
+            Assert.True(definition.IsOpenAICompatible);
+            Assert.False(definition.RequiresNativeIntegration);
+            Assert.False(definition.NormalOnboardingSupported);
+            Assert.Null(definition.DefaultEndpoint);
+            Assert.Equal(
+                BuiltInProviderDiscoveryEndpointKind.ProviderSpecific,
+                definition.DiscoveryEndpointKind);
+            Assert.Equal(
+                BuiltInProviderCredentialRequirement.Required,
+                definition.CredentialRequirement);
+            Assert.Equal(
+                BuiltInProviderPricingNormalizationProfile.ProviderSpecific,
+                definition.PricingNormalizationProfile);
+            Assert.False(string.IsNullOrWhiteSpace(definition.OnboardingNote));
+        }
+    }
+
+    [Fact]
     public void ExistingSpecialDiscoveryAndPricingProfilesRemainExplicit()
     {
         var openRouter = BuiltInProviderCatalog.Find("openrouter");
