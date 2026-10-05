@@ -407,11 +407,23 @@ public sealed class AgentExecutionIntegrationTests
         Assert.Equal(20, usage.GetProperty("cachedInputTokenCount").GetInt64());
         Assert.Equal(10, usage.GetProperty("reasoningTokenCount").GetInt64());
         Assert.Equal(
+            target.ProviderId.Value,
+            usage.GetProperty("providerId").GetGuid());
+        Assert.Equal(
+            target.ProviderAccountId.Value,
+            usage.GetProperty("providerAccountId").GetGuid());
+        Assert.Equal(
             result.Value.TargetId.Value,
             usage.GetProperty("executionTargetId").GetGuid());
         Assert.Equal(
             result.Value.Execution.Id.Value,
             usage.GetProperty("executionId").GetGuid());
+        Assert.Equal(
+            tenant.Value,
+            usage.GetProperty("tenantId").GetGuid());
+        Assert.Equal(
+            principal.Value,
+            usage.GetProperty("principalId").GetGuid());
         Assert.Equal(
             result.Value.Execution.AgentId.Value,
             usage.GetProperty("agentId").GetGuid());
