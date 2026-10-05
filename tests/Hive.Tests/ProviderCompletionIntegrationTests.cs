@@ -15,6 +15,54 @@ namespace Hive.Tests;
 public sealed class ProviderCompletionIntegrationTests
 {
     [Fact]
+    public void AgentExecutionRequest_RejectsPricingEvidenceForDifferentModel()
+    {
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var agent = new AgentFactory(
+                new AllowBaseAgentCreationAuthorizer())
+            .Create<Agent>(
+                new AgentDefinition(
+                    "provider-completion-contract-agent",
+                    "Provider Completion Contract Agent"),
+                new AgentCreationContext(context))
+            .Value!;
+
+        var runtime = agent.CreateRuntimeInstance();
+        var target = CreateTarget(
+            ProviderId.New(),
+            ProviderAccountId.New(),
+            new Uri("https://example.invalid/v1/"),
+            "target-model",
+            context,
+            DateTimeOffset.UtcNow);
+
+        var pricing = new ExecutionPricingEvidence(
+            "different-model",
+            new ProviderModelPricing(
+                [
+                    new ProviderModelPrice(
+                        "input_token",
+                        0.35m,
+                        "USD",
+                        1_000_000m)
+                ]),
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow.AddMinutes(10));
+
+        Assert.Throws<ArgumentException>(
+            () => new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                context,
+                "Model mismatch.",
+                pricingEvidence: pricing));
+    }
+
+    [Fact]
     public async Task ExecuteConfiguredAgentAsync_UsesFreshCachedPricingWithoutDiscoveringDuringExecution()
     {
         var database = await PrepareDatabase("Hive_Test_ProviderCompletionIntegration");
