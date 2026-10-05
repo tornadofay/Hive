@@ -5,7 +5,7 @@ Status: VERIFICATION PENDING
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
 Authorized: 2026-10-05 (explicit maintainer request in a dedicated chat)
-Checkpoint: `d4bb58d` — "Stabilize Model Information detail section layout rows"
+Checkpoint: `c65a423` — "Fix lazy Model Information page reset lifecycle"
 Roadmap impact: None. Bounded off-roadmap work. Does not activate or advance any Phase 1 roadmap slice.
 
 ### Maintainer intent
