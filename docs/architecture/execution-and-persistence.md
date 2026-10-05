@@ -194,6 +194,8 @@ The built-in inventory includes the current V1 entries plus the off-work provide
 
 A normal-onboarding entry must have a safe default endpoint. Providers whose endpoints depend on workspace, account, region, deployment, or provider-native setup remain Advanced-only and receive no invented universal endpoint. Provider-specific credentials are likewise represented as required/provider-specific metadata rather than being exposed through the normal API-key-only onboarding workflow.
 
+Two OpenAI-compatible catalog entries are intentionally Advanced-only because the shared universal discovery path is not established safely: AI21's legacy Jamba/Studio API was sunset in August 2026, and MiniMax's model-listing behavior is not treated as a reliable universal discovery contract for this adapter. Together AI uses the current documented `https://api.together.ai/v1` base URL.
+
 Normal onboarding is:
 
 ```text
