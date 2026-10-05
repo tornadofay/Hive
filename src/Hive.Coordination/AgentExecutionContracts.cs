@@ -12,7 +12,8 @@ public sealed class AgentExecutionRequest
         ResourceAccessContext accessContext,
         string userMessage,
         SecretMaterial? apiKey = null,
-        CorrelationId? correlationId = null)
+        CorrelationId? correlationId = null,
+        ExecutionPricingEvidence? pricingEvidence = null)
     {
         Agent = agent ?? throw new ArgumentNullException(nameof(agent));
         Runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
@@ -41,9 +42,26 @@ public sealed class AgentExecutionRequest
                 nameof(correlationId));
         }
 
+        if (pricingEvidence is not null)
+        {
+            var targetModel = Target.Model ?? Target.Deployment;
+
+            if (string.IsNullOrWhiteSpace(targetModel) ||
+                !string.Equals(
+                    pricingEvidence.ModelId,
+                    targetModel,
+                    StringComparison.Ordinal))
+            {
+                throw new ArgumentException(
+                    "Execution pricing evidence must match the execution target model or deployment.",
+                    nameof(pricingEvidence));
+            }
+        }
+
         UserMessage = normalizedMessage;
         ApiKey = apiKey;
         CorrelationId = correlationId;
+        PricingEvidence = pricingEvidence;
     }
 
     public Agent Agent { get; }
@@ -59,6 +77,8 @@ public sealed class AgentExecutionRequest
     public SecretMaterial? ApiKey { get; }
 
     public CorrelationId? CorrelationId { get; }
+
+    public ExecutionPricingEvidence? PricingEvidence { get; }
 }
 
 public sealed record AgentExecutionResult(
@@ -69,4 +89,5 @@ public sealed record AgentExecutionResult(
     EventId StartedEventId,
     EventId TerminalEventId,
     string? ProviderResponseId,
-    ExecutionTokenUsage Usage);
+    ExecutionTokenUsage Usage,
+    ExecutionPricingEvidence? PricingEvidence);
