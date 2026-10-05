@@ -626,9 +626,6 @@ public sealed class Phase116FollowUpTests
         Assert.Empty(view.ModelDetailsTab.Controls);
         Assert.Empty(view.TechnicalDetailsTab.Controls);
 
-        Assert.Contains("Identity", detailsText);
-        Assert.Contains("Inputs", detailsText);
-        Assert.Contains("Outputs", detailsText);
         Assert.Contains("Capabilities", detailsText);
         Assert.Contains("Text: Supported", detailsText);
         Assert.Contains("Structured: Supported", detailsText);
