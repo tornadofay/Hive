@@ -587,6 +587,10 @@ public sealed class Phase116FollowUpTests
             view.CrudPage.Columns.Select(column => column.Header));
 
         Assert.Equal(2, view.ModelsList.Items.Count);
+        Assert.Equal(220, view.CrudPage.SearchMaximumWidth);
+        var filterSurfaceText = CollectVisibleControlText(view);
+        Assert.Contains("Show models without comparable pricing", filterSurfaceText);
+        Assert.Contains("Show models above the price range", filterSurfaceText);
         Assert.StartsWith(
             "★ ",
             view.ModelsList.Items[0].Text);
@@ -627,6 +631,11 @@ public sealed class Phase116FollowUpTests
 
         Assert.Contains("Capabilities", detailsText);
         Assert.Contains("Text: Supported", detailsText);
+        Assert.Contains(
+            "Text: Supported" + Environment.NewLine +
+            "Vision: Supported" + Environment.NewLine +
+            "Tools: Supported",
+            detailsText);
         Assert.Contains("Structured: Supported", detailsText);
         Assert.DoesNotContain("✕", detailsText);
         Assert.DoesNotContain("✓", detailsText);
@@ -1064,7 +1073,7 @@ public sealed class Phase116FollowUpTests
         view.DetailsTabs.SelectedIndex = 1;
         Application.DoEvents();
         var detailsText = CollectVisibleControlText(view.ModelDetailsTab);
-        Assert.Contains("second-provider", detailsText) == false; // provider evidence belongs to Technical
+        Assert.DoesNotContain("second-provider", detailsText); // provider evidence belongs to Technical
 
         Assert.Contains("Reasoning: Unknown / unreported", detailsText);
         Assert.DoesNotContain("rich-model", detailsText);
