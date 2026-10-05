@@ -2867,8 +2867,20 @@ public sealed class OpenAICompatibleProviderAdapter
     {
         value = null;
 
-        if (!element.TryGetProperty(propertyName, out var property))
+        if (element.ValueKind == JsonValueKind.Number)
+        {
+            if (!element.TryGetInt64(out var directValue) || directValue < 0)
+                return false;
+
+            value = directValue;
             return true;
+        }
+
+        if (element.ValueKind != JsonValueKind.Object ||
+            !element.TryGetProperty(propertyName, out var property))
+        {
+            return true;
+        }
 
         if (property.ValueKind != JsonValueKind.Number ||
             !property.TryGetInt64(out var parsed) ||
