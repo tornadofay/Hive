@@ -577,12 +577,12 @@ public sealed class Phase116FollowUpTests
         Assert.Equal(
             [
                 "Model",
+                "Price / 1M",
+                "Context",
                 "Text",
                 "Vision",
                 "Tools",
-                "Structured",
-                "Reasoning",
-                "Thinking"
+                "Reasoning"
             ],
             view.CrudPage.Columns.Select(column => column.Header));
 
@@ -593,11 +593,20 @@ public sealed class Phase116FollowUpTests
         Assert.Contains(
             "rich-model",
             view.ModelsList.Items[0].Text);
-        Assert.Equal("✓", view.ModelsList.Items[0].SubItems[1].Text);
+        // Column order: 0 Model, 1 Price / 1M, 2 Context, 3 Text, 4 Vision,
+        // 5 Tools, 6 Reasoning. Price and Context were added because they are
+        // the decision-relevant facts when choosing a model to bring into Hive.
         Assert.Equal("✓", view.ModelsList.Items[0].SubItems[3].Text);
         Assert.Equal("✓", view.ModelsList.Items[0].SubItems[4].Text);
-        Assert.Equal("✕", view.ModelsList.Items[1].SubItems[2].Text);
-        Assert.Equal("—", view.ModelsList.Items[1].SubItems[4].Text);
+        Assert.Equal("✓", view.ModelsList.Items[0].SubItems[5].Text);
+        Assert.Equal("✓", view.ModelsList.Items[0].SubItems[6].Text);
+
+        // The rich model's comparable rate is its highest token rate, $5.00 / 1M.
+        Assert.StartsWith("$5", view.ModelsList.Items[0].SubItems[1].Text);
+
+        // The second model reports vision unsupported and no context window.
+        Assert.Equal("✕", view.ModelsList.Items[1].SubItems[4].Text);
+        Assert.Equal("—", view.ModelsList.Items[1].SubItems[2].Text);
 
         view.ModelsList.Items[0].Selected = true;
         view.ModelsList.Items[0].Focused = true;
@@ -739,7 +748,10 @@ public sealed class Phase116FollowUpTests
 
         Assert.Equal(2, view.ModelsList.Items.Count);
         Assert.Equal(0, view.MinPriceFilter.Value);
-        Assert.Equal(500, view.MaxPriceFilter.Value);
+
+        // The ceiling is derived from the snapshot's price distribution, so
+        // assert the filter starts at its own ceiling rather than a fixed value.
+        Assert.Equal(view.MaxPriceFilter.Maximum, view.MaxPriceFilter.Value);
 
         view.MaxPriceFilter.Value = 0;
         Application.DoEvents();
@@ -813,7 +825,12 @@ public sealed class Phase116FollowUpTests
 
         // The rich model has token-like numeric prices but no established source quantity.
         // It must not be interpreted as a $0.70/M comparable price.
-        view.MaxPriceFilter.Value = 100;
+        //
+        // The slider ceiling is now derived from the data instead of a fixed $5,
+        // so a bounded selection is expressed relative to that ceiling. Only the
+        // free model has a comparable rate here, giving a $1.00 ceiling, so
+        // $0.50 is a bounded maximum that must exclude the unknown-pricing model.
+        view.MaxPriceFilter.Value = 50;
         Application.DoEvents();
 
         Assert.Single(view.ModelsList.Items);

@@ -46,11 +46,13 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         public ModelInformationRow(
             ProviderModelMetadata model,
             ExecutionTarget? executionTarget,
-            bool isFavorite)
+            bool isFavorite,
+            ModelCapabilitySummary capabilities)
         {
             Model = model;
             ExecutionTarget = executionTarget;
             IsFavorite = isFavorite;
+            Capabilities = capabilities;
         }
 
         public ProviderModelMetadata Model { get; }
@@ -58,6 +60,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         public ExecutionTarget? ExecutionTarget { get; }
 
         public bool IsFavorite { get; set; }
+
+        public ModelCapabilitySummary Capabilities { get; }
     }
 
     private readonly IHiveManagementFacade _management;
@@ -75,10 +79,15 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly Label _detailsTitle;
     private readonly Label _detailsBody;
     private const int PriceSliderScale = 100;
-    private const decimal MinimumPriceSliderMaximum = 5m;
-    private const decimal PriceSliderMaximumStep = 5m;
+    private const int InitialPriceSliderValue =
+        checked((int)(1m * PriceSliderScale));
     private readonly TrackBar _minPriceFilter;
     private readonly TrackBar _maxPriceFilter;
+    private readonly CheckBox _showUnpricedModels;
+    private readonly Label _filterNotice;
+    private readonly CheckBox _showAboveRangeModels;
+    private decimal _highestComparablePrice;
+    private ModelCatalogIndex _index = ModelCatalogIndex.Build([], [], null);
     private readonly Label _minPriceValueLabel;
     private readonly Label _maxPriceValueLabel;
     private bool _updatingPriceFilters;
@@ -161,38 +170,41 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             SearchPlaceholder = "Search models..."
         };
 
+        // Fixed widths include the header renderer's 10px-per-side text padding
+        // plus headroom for bold 9.25pt text under DPI scaling. The final column
+        // is fill-stretched by HiveListView to consume remaining viewport width.
         _page.SetColumns(
-            new HiveCrudColumn<ModelInformationRow>("Model", 250, FormatModelName),
+            new HiveCrudColumn<ModelInformationRow>("Model", 240, FormatModelName),
+            new HiveCrudColumn<ModelInformationRow>(
+                "Price / 1M",
+                100,
+                FormatRowPrice,
+                GetPriceColor),
+            new HiveCrudColumn<ModelInformationRow>(
+                "Context",
+                84,
+                row => FormatRowContext(row.Model)),
             new HiveCrudColumn<ModelInformationRow>(
                 "Text",
-                50,
-                row => FormatCapabilityState(row.Model, HiveCapabilityKeys.TextGeneration),
-                row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.TextGeneration)),
+                56,
+                row => FormatCapabilityState(
+                    row.Capabilities.Text),
+                row => GetCapabilityStateColor(row.Capabilities.Text)),
             new HiveCrudColumn<ModelInformationRow>(
                 "Vision",
-                58,
-                row => FormatCapabilityState(row.Model, HiveCapabilityKeys.Vision),
-                row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.Vision)),
+                72,
+                row => FormatCapabilityState(row.Capabilities.Vision),
+                row => GetCapabilityStateColor(row.Capabilities.Vision)),
             new HiveCrudColumn<ModelInformationRow>(
                 "Tools",
-                52,
-                row => FormatCapabilityState(row.Model, HiveCapabilityKeys.ToolCalling),
-                row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.ToolCalling)),
-            new HiveCrudColumn<ModelInformationRow>(
-                "Structured",
-                76,
-                row => FormatCapabilityState(row.Model, HiveCapabilityKeys.StructuredOutput),
-                row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.StructuredOutput)),
+                64,
+                row => FormatCapabilityState(row.Capabilities.Tools),
+                row => GetCapabilityStateColor(row.Capabilities.Tools)),
             new HiveCrudColumn<ModelInformationRow>(
                 "Reasoning",
-                72,
-                row => FormatCapabilityState(row.Model, HiveCapabilityKeys.Reasoning),
-                row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.Reasoning)),
-            new HiveCrudColumn<ModelInformationRow>(
-                "Thinking",
-                64,
-                row => FormatCapabilityState(row.Model, HiveCapabilityKeys.Thinking),
-                row => GetCapabilityStateColor(row.Model, HiveCapabilityKeys.Thinking)));
+                88,
+                row => FormatCapabilityState(row.Capabilities.Reasoning),
+                row => GetCapabilityStateColor(row.Capabilities.Reasoning)));
 
         _page.LoadItemsAsync = LoadModelsAsync;
         _page.EditItemAsync = AddSelectedModelToFavoritesAsync;
@@ -248,7 +260,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         _minPriceFilter = CreatePriceSlider(0);
         _maxPriceFilter = CreatePriceSlider(
-            checked((int)(MinimumPriceSliderMaximum * PriceSliderScale)));
+            InitialPriceSliderValue);
 
         filterBar.Controls.Add(_minPriceFilter);
         filterBar.Controls.Add(_minPriceValueLabel);
@@ -262,10 +274,48 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         filterBar.Controls.Add(CreateFilterLabel("State"));
         filterBar.Controls.Add(_capabilityStateFilter);
 
+        // A model can report pricing Hive cannot compare. Under a bounded price
+        // range such models are excluded, which is the established behaviour;
+        // the notice below makes that visible and reversible instead of silent.
+        _showUnpricedModels = new CheckBox
+        {
+            Text = "Show models without comparable pricing",
+            AutoSize = true,
+            Checked = false,
+            Margin = new Padding(12, 9, 0, 0),
+            AccessibleName = "Show models without comparable pricing"
+        };
+
+        filterBar.Controls.Add(_showUnpricedModels);
+
+        // The ceiling is a high percentile so the slider stays operable; models
+        // beyond it must stay reachable through an explicit control.
+        _showAboveRangeModels = new CheckBox
+        {
+            Text = "Show models above the price range",
+            AutoSize = true,
+            Checked = false,
+            Margin = new Padding(12, 9, 0, 0),
+            AccessibleName = "Show models above the price range"
+        };
+
+        filterBar.Controls.Add(_showAboveRangeModels);
+
+        _filterNotice = new Label
+        {
+            AutoSize = true,
+            Visible = false,
+            ForeColor = SystemColors.GrayText,
+            Margin = new Padding(0, 4, 0, 4),
+            AccessibleName = "Model filter summary"
+        };
+
         _minPriceFilter.ValueChanged += PriceFilterValueChanged;
         _maxPriceFilter.ValueChanged += PriceFilterValueChanged;
         _capabilityFilter.SelectedIndexChanged += FilterChanged;
         _capabilityStateFilter.SelectedIndexChanged += FilterChanged;
+        _showUnpricedModels.CheckedChanged += FilterChanged;
+        _showAboveRangeModels.CheckedChanged += FilterChanged;
 
         _page.LoadItemsAsync = LoadModelsAsync;
         _page.EditItemAsync = AddSelectedModelToFavoritesAsync;
@@ -357,8 +407,10 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         };
         contextAndFilters.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
         contextAndFilters.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
+        contextAndFilters.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         contextAndFilters.Controls.Add(contextCard, 0, 0);
         contextAndFilters.Controls.Add(filterBar, 0, 1);
+        contextAndFilters.Controls.Add(_filterNotice, 0, 2);
 
         var root = new TableLayoutPanel
         {
@@ -724,22 +776,19 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         if (_snapshot is null)
             return;
 
-        var highestComparablePrice =
-            _snapshot.Models
-                .Select(ModelInformationFilter.GetComparableTokenPricePerMillion)
-                .Where(static price => price is not null)
-                .Select(static price => price!.Value)
-                .DefaultIfEmpty(0m)
-                .Max();
+        // Resolve pricing, free-ness, capability states, and target mapping once
+        // per snapshot so filtering stays a comparison over cached values.
+        _index = ModelCatalogIndex.Build(
+            _snapshot.Models,
+            _executionTargets,
+            _selectedEndpoint);
+
+        var comparablePrices = _index.ComparablePrices;
 
         var maximumPrice =
-            highestComparablePrice <= 0m
-                ? MinimumPriceSliderMaximum
-                : Math.Max(
-                    MinimumPriceSliderMaximum,
-                    Math.Ceiling(
-                        highestComparablePrice / PriceSliderMaximumStep) *
-                    PriceSliderMaximumStep);
+            ModelInformationFilter.CalculatePriceCeiling(comparablePrices);
+
+        _highestComparablePrice = _index.HighestComparablePrice;
 
         var maximumValue = checked(
             (int)(maximumPrice * PriceSliderScale));
@@ -775,7 +824,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         var selectedModelId =
             (_page.SelectedItem as ModelInformationRow)?.Model.ModelId;
 
-        var rows = CreateModelRows();
+        var criteria = CaptureFilterCriteria();
+        var rows = CreateModelRows(criteria);
 
         _updatingModelList = true;
         try
@@ -786,6 +836,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             _updatingModelList = false;
         }
+
+        UpdateFilterNotice(criteria, rows.Count);
 
         ListViewItem? selectedItem = null;
 
@@ -819,8 +871,93 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         }
     }
 
-    private bool MatchesFilters(ProviderModelMetadata model) =>
-        ModelInformationFilter.Matches(model, CaptureFilterCriteria());
+    private IReadOnlyList<ModelInformationRow> CreateModelRows(
+        ModelFilterCriteria criteria)
+    {
+        if (_snapshot is null)
+            return Array.Empty<ModelInformationRow>();
+
+        var matched = _index.Select(criteria);
+
+        if (matched.Count == 0)
+            return Array.Empty<ModelInformationRow>();
+
+        var rows = new ModelInformationRow[matched.Count];
+
+        for (var index = 0; index < matched.Count; index++)
+        {
+            var entry = matched[index];
+
+            rows[index] = new ModelInformationRow(
+                entry.Model,
+                entry.Target,
+                entry.Target is not null &&
+                _favoriteTargetIdSet.Contains(entry.Target.Id),
+                entry.Capabilities);
+        }
+
+        return rows;
+    }
+
+    /// <summary>
+    /// Explains, rather than silently applies, any model the current filter
+    /// selection is holding back.
+    /// </summary>
+    /// <remarks>
+    /// A bounded price range legitimately excludes models whose pricing Hive
+    /// cannot compare. Without this notice the catalog simply appears empty,
+    /// which reads as "this provider has no models" rather than "your filter is
+    /// hiding rows".
+    /// </remarks>
+    private void UpdateFilterNotice(
+        ModelFilterCriteria criteria,
+        int visibleCount)
+    {
+        if (IsDisposed || Disposing || _snapshot is null)
+            return;
+
+        var total = _snapshot.Models.Count;
+
+        if (visibleCount == 0)
+        {
+            _filterNotice.Text =
+                $"No models match the current filters (of {total} discovered).";
+            _filterNotice.Visible = true;
+            return;
+        }
+
+        var withoutComparablePricing = _index.WithoutComparablePricingCount;
+
+        var ceiling = _maxPriceFilter.Maximum / (decimal)PriceSliderScale;
+        var aboveRange =
+            _showAboveRangeModels.Checked
+                ? 0
+                : _index.CountAboveCeiling(ceiling);
+
+        if (aboveRange > 0)
+        {
+            _filterNotice.Text =
+                $"{aboveRange} of {total} models cost more than " +
+                $"{ceiling:0.##} / 1M tokens and are outside the price range.";
+            _filterNotice.Visible = true;
+            return;
+        }
+
+        if (withoutComparablePricing > 0)
+        {
+            _filterNotice.Text =
+                criteria.UnknownPricing == UnknownPricingVisibility.Exclude
+                    ? $"{withoutComparablePricing} of {total} models have no comparable " +
+                      "per-million price and are hidden by the price filter."
+                    : $"{withoutComparablePricing} of {total} models have no comparable " +
+                      "per-million price. Any rate shown for them is the provider's " +
+                      "raw rate, not a per-million total.";
+            _filterNotice.Visible = true;
+            return;
+        }
+
+        _filterNotice.Visible = false;
+    }
 
     /// <summary>
     /// Snapshots live control state into an immutable criteria value so the
@@ -840,13 +977,23 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             (_capabilityStateFilter.SelectedItem as StateFilterChoice)?.State ??
             ModelCapabilityFilterState.Any;
 
+        // "Show above range" lifts the comparison ceiling without disturbing the
+        // slider position or the $0 free-only behaviour.
+        var effectiveMaximumPrice =
+            _showAboveRangeModels.Checked && _highestComparablePrice > 0m
+                ? _highestComparablePrice
+                : selectedMaximumPrice;
+
         return new ModelFilterCriteria(
             minimumPrice,
-            selectedMaximumPrice,
+            effectiveMaximumPrice,
             IsFullPriceRange: minimumPrice <= 0m &&
                              selectedMaximumPrice >= maximumPrice,
             capabilityKey,
-            capabilityState);
+            capabilityState,
+            _showUnpricedModels.Checked
+                ? UnknownPricingVisibility.Include
+                : UnknownPricingVisibility.Exclude);
     }
 
     private static IReadOnlyList<CapabilityFilterChoice> GetCapabilityFilterChoices() =>
@@ -866,7 +1013,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Width = 120,
             Height = 32,
             Minimum = 0,
-            Maximum = checked((int)(MinimumPriceSliderMaximum * PriceSliderScale)),
+            Maximum = InitialPriceSliderValue,
             TickFrequency = PriceSliderScale * 5,
             SmallChange = 1,
             LargeChange = 20,
@@ -921,6 +1068,70 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             .FirstOrDefault(item => item.Capability == key) is { } entry
                 ? FormatCapabilityState(entry.State)
                 : "—";
+
+    /// <summary>
+    /// Shows the comparable per-million price, or an explicit free marker.
+    /// </summary>
+    /// <remarks>
+    /// The column states the same unit the price filter uses, so what the user
+    /// filters on is what the user sees. A missing comparable rate is never shown
+    /// as free.
+    /// </remarks>
+    private string FormatRowPrice(ModelInformationRow row)
+    {
+        var comparable = ModelInformationFilter.GetComparableTokenPricePerMillion(
+            row.Model);
+
+        if (ModelInformationFilter.IsFreeModel(row.Model, comparable))
+            return "Free";
+
+        return comparable is null
+            ? "Not known"
+            : "$" + comparable.Value.ToString("0.##", CultureInfo.InvariantCulture);
+    }
+
+    private Color? GetPriceColor(ModelInformationRow row)
+    {
+        var comparable = ModelInformationFilter.GetComparableTokenPricePerMillion(
+            row.Model);
+
+        if (ModelInformationFilter.IsFreeModel(row.Model, comparable))
+            return _themeManager.Theme.VisualStates.Success;
+
+        return comparable is null
+            ? _themeManager.Theme.Palette.MutedText
+            : null;
+    }
+
+    private static string FormatRowContext(ProviderModelMetadata model) =>
+        model.Limits?.ContextWindowTokens is { } tokens
+            ? FormatTokenCount(tokens)
+            : "—";
+
+    private static string FormatTokenCount(long tokens)
+    {
+        if (tokens >= 1_000_000)
+        {
+            return (tokens / 1_000_000d)
+                .ToString("0.#", CultureInfo.InvariantCulture) + "M";
+        }
+
+        if (tokens >= 1_000)
+        {
+            return (tokens / 1_000d)
+                .ToString("0.#", CultureInfo.InvariantCulture) + "K";
+        }
+
+        return tokens.ToString(CultureInfo.InvariantCulture);
+    }
+
+    private Color? GetCapabilityStateColor(CapabilityState state) =>
+        state switch
+        {
+            CapabilityState.Supported => _themeManager.Theme.VisualStates.Success,
+            CapabilityState.Unsupported => _themeManager.Theme.Palette.MutedText,
+            _ => null
+        };
 
     private static string FindCapabilityDetail(
         ProviderModelMetadata model,
@@ -1070,26 +1281,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 Array.Empty<ModelInformationRow>());
 
         return Task.FromResult<IReadOnlyList<ModelInformationRow>>(
-            CreateModelRows());
-    }
-
-    private IReadOnlyList<ModelInformationRow> CreateModelRows()
-    {
-        if (_snapshot is null)
-            return Array.Empty<ModelInformationRow>();
-
-        return _snapshot.Models
-            .Where(MatchesFilters)
-            .Select(model =>
-            {
-                var target = ResolveExecutionTarget(model);
-                return new ModelInformationRow(
-                    model,
-                    target,
-                    target is not null &&
-                    _favoriteTargetIdSet.Contains(target.Id));
-            })
-            .ToArray();
+            CreateModelRows(CaptureFilterCriteria()));
     }
 
     private void ModelsListSelectionChanged(
@@ -1303,9 +1495,23 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             var pricingLines = new List<string>
             {
                 $"Explicit free evidence: {(model.Pricing.ExplicitFreeEvidence ? "True" : "False")}",
-                $"Filter result: {(isFree ? "Free" : "Not free")}",
-                $"Filter-comparable input/output token rate (highest): {(comparablePrice is { } value ? $"${value:0.00} / 1M tokens" : "—")}"
+                $"Filter result: {(isFree ? "Free" : "Not free")}"
             };
+
+            if (comparablePrice is { } comparable)
+            {
+                pricingLines.Add(
+                    $"Comparable rate (highest input/output): ${comparable:0.00} / 1M tokens");
+            }
+            else
+            {
+                // Be explicit rather than showing a bare dash: the user must be
+                // able to tell "not comparable" apart from "free".
+                pricingLines.Add(
+                    "Comparable rate (highest input/output): not comparable");
+                pricingLines.Add(
+                    "Reason: the provider reported rates without an established currency or source quantity, so Hive will not guess a per-million value. This model stays visible unless 'Show models without comparable pricing' is cleared.");
+            }
 
             if (model.Pricing.Prices.Count == 0)
             {
@@ -1566,6 +1772,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _maxPriceFilter.ValueChanged -= PriceFilterValueChanged;
             _capabilityFilter.SelectedIndexChanged -= FilterChanged;
             _capabilityStateFilter.SelectedIndexChanged -= FilterChanged;
+            _showUnpricedModels.CheckedChanged -= FilterChanged;
+            _showAboveRangeModels.CheckedChanged -= FilterChanged;
             _detailsScrollHost.Resize -= DetailsScrollHostOnResize;
             _mainSplit.SizeChanged -= MainSplitSizeChanged;
             CancelOperation();

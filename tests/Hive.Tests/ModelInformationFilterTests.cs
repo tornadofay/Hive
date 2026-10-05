@@ -43,9 +43,16 @@ public sealed class ModelInformationFilterTests
             CapabilityKey: null,
             CapabilityState: ModelCapabilityFilterState.Any);
 
-        // Missing pricing is not free, so a bounded price selection must not
-        // silently admit a model with no comparable rate.
+        // Established behaviour: a bounded selection excludes models with no
+        // comparable rate. The view must explain this rather than silently
+        // emptying the catalog.
         Assert.False(ModelInformationFilter.Matches(unknown, criteria));
+
+        Assert.True(ModelInformationFilter.Matches(
+            unknown,
+            criteria with { UnknownPricing = UnknownPricingVisibility.Include }));
+
+        Assert.True(ModelInformationFilter.Matches(unknown, FullRange()));
     }
 
     [Fact]
@@ -282,7 +289,14 @@ public sealed class ModelInformationFilterTests
     public void Matches_RejectsNullModel()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            ModelInformationFilter.Matches(null!, FullRange()));
+            ModelInformationFilter.Matches(
+                (ProviderModelMetadata)null!,
+                FullRange()));
+
+        Assert.Throws<ArgumentNullException>(() =>
+            ModelInformationFilter.Matches(
+                (ModelCatalogEntry)null!,
+                FullRange()));
     }
 
     private static ModelFilterCriteria FullRange() =>

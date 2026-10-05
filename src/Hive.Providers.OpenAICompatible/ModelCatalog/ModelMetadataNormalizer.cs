@@ -77,6 +77,21 @@ internal static class ModelMetadataNormalizer
             }
         }
 
+        if (model.TryGetProperty("reasoning", out var reasoningObject) &&
+            reasoningObject.ValueKind == JsonValueKind.Object &&
+            reasoningObject.TryGetProperty("mandatory", out var mandatory) &&
+            mandatory.ValueKind is JsonValueKind.True or JsonValueKind.False)
+        {
+            // A mandatory-reasoning model always runs in reasoning mode, so this
+            // is reported evidence rather than an unreported capability.
+            MergeCapabilityState(
+                states,
+                "reasoning",
+                mandatory.ValueKind == JsonValueKind.True
+                    ? CapabilityState.Supported
+                    : CapabilityState.Unsupported);
+        }
+
         if (model.TryGetProperty("architecture", out var architecture) &&
             architecture.ValueKind == JsonValueKind.Object)
         {
@@ -379,6 +394,31 @@ internal static class ModelMetadataNormalizer
             defaultValue =
                 TryGetString(thinking, "default") ??
                 TryGetString(thinking, "default_level");
+        }
+
+        // OpenRouter reports reasoning as a nested object rather than the
+        // top-level arrays or a "thinking" object:
+        //   "reasoning": { "mandatory": false,
+        //                   "supported_efforts": ["low","medium","high"],
+        //                   "default_effort": "medium" }
+        // Without this the effort levels a user can choose were lost.
+        if (model.TryGetProperty("reasoning", out var reasoning) &&
+            reasoning.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var propertyName in new[]
+                     {
+                         "supported_efforts",
+                         "efforts",
+                         "options",
+                         "levels"
+                     })
+            {
+                AddOrderedStringValues(reasoning, propertyName, options, seen);
+            }
+
+            defaultValue ??=
+                TryGetString(reasoning, "default_effort") ??
+                TryGetString(reasoning, "default");
         }
 
         defaultValue ??=
@@ -764,6 +804,24 @@ internal static class ModelMetadataNormalizer
                         ParsePricingVariantConditions(variant),
                         isDefault));
             }
+        }
+
+        // OpenRouter reports tiered pricing as an ARRAY of threshold overrides rather
+// than the object-shaped "variants" form, for example:
+//   "pricing": { "prompt": "0.000002", "completion": "0.00001",
+//                 "overrides": [{ "min_prompt_tokens": 272000,
+//                                 "prompt": "0.000004" }] }
+// Only the object form was recognized, so those tiers were silently discarded
+// and a user saw only the base rate even for long-context requests.
+if (pricing.ValueKind == JsonValueKind.Object &&
+            pricing.TryGetProperty("overrides", out var overrides) &&
+            overrides.ValueKind == JsonValueKind.Array)
+        {
+            ParsePricingOverrides(
+                overrides,
+                defaultCurrency,
+                defaultTokenUnitQuantity,
+                variants);
         }
 
         if (prices.Count == 0 && variants.Count > 0)
@@ -1381,5 +1439,121 @@ internal static class ModelMetadataNormalizer
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Parses an array of threshold pricing overrides into pricing variants.
+    /// </summary>
+    /// <remarks>
+    /// Each entry carries its own subset of rates plus its threshold conditions. The
+    /// first entry inherits the base rates so a tier is never presented as cheaper
+    /// than it actually is; later entries contribute only the rates they override.
+    /// </remarks>
+    internal static void ParsePricingOverrides(
+        JsonElement overrides,
+        string? defaultCurrency,
+        decimal? defaultTokenUnitQuantity,
+        List<ProviderModelPricingVariant> variants)
+    {
+        const int maxOverrides = 8;
+
+        var inheritedRates = default(JsonElement);
+        var isFirstEntry = true;
+
+        foreach (var entry in overrides.EnumerateArray())
+        {
+            if (variants.Count >= maxOverrides)
+                return;
+
+            if (entry.ValueKind != JsonValueKind.Object)
+                continue;
+
+            var mergedRates = new Dictionary<string, JsonElement>(
+                StringComparer.OrdinalIgnoreCase);
+
+            if (inheritedRates.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var pair in inheritedRates.EnumerateObject())
+                    mergedRates[pair.Name] = pair.Value;
+            }
+
+            var threshold = FirstNonNegativeInt64(
+                entry,
+                "min_prompt_tokens",
+                "min_input_tokens",
+                "min_tokens");
+
+            var hasRate = false;
+
+            foreach (var pair in entry.EnumerateObject())
+            {
+                if (pair.NameEquals("min_prompt_tokens") ||
+                    pair.NameEquals("min_input_tokens") ||
+                    pair.NameEquals("min_tokens"))
+                {
+                    continue;
+                }
+
+                hasRate = true;
+                mergedRates[pair.Name] = pair.Value;
+            }
+
+            var tierPrices = new Dictionary<string, ProviderModelPrice>(
+                StringComparer.Ordinal);
+
+            if (hasRate)
+            {
+                ParsePricingEntries(
+                    JsonSerializer.SerializeToElement(mergedRates),
+                    tierPrices,
+                    defaultCurrency,
+                    defaultTokenUnitQuantity);
+            }
+
+            if (tierPrices.Count == 0)
+            {
+                isFirstEntry = false;
+                inheritedRates = entry;
+                continue;
+            }
+
+            var conditions = new Dictionary<string, string>(
+                ParsePricingVariantConditions(entry),
+                StringComparer.OrdinalIgnoreCase);
+
+            if (threshold is { } minimumTokens)
+            {
+                conditions["min_prompt_tokens"] = minimumTokens.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            var tierKey = threshold is { } value
+                ? "over " + value.ToString(
+                      System.Globalization.CultureInfo.InvariantCulture) +
+                  " tokens"
+                : isFirstEntry
+                    ? "base"
+                    : "override " + variants.Count.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture);
+
+            try
+            {
+                variants.Add(
+                    new ProviderModelPricingVariant(
+                        tierKey,
+                        tierPrices.Values
+                            .OrderBy(item => item.BillingUnit, StringComparer.Ordinal)
+                            .ToArray(),
+                        conditions,
+                        isDefault: isFirstEntry));
+            }
+            catch (ArgumentException)
+            {
+                // A malformed override tier must not discard the base pricing.
+            }
+
+            isFirstEntry = false;
+            inheritedRates = entry;
+        }
     }
 }

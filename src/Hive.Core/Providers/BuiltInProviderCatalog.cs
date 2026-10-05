@@ -272,6 +272,8 @@ public static class BuiltInProviderCatalog
             "openai-compatible",
             BuiltInProviderCredentialKind.ApiKey,
             new Uri("https://openrouter.ai/api/v1"),
+            discoveryProfile:
+                BuiltInProviderDiscoveryProfile.OpenRouter,
             pricingNormalizationProfile:
                 BuiltInProviderPricingNormalizationProfile.OpenRouterPerToken),
 
