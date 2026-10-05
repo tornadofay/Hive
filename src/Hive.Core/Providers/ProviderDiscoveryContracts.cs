@@ -419,15 +419,6 @@ public sealed record ProviderModelPricing
                 nameof(variants));
         }
 
-        if (defaultCount == 1 &&
-            !normalized.Any() &&
-            normalizedVariants.Single(variant => variant.IsDefault).Prices.Count > MaxPrices)
-        {
-            throw new ArgumentException(
-                $"The default pricing variant cannot contain more than {MaxPrices} entries.",
-                nameof(variants));
-        }
-
         Prices = new ReadOnlyCollection<ProviderModelPrice>(normalized);
         Variants = new ReadOnlyCollection<ProviderModelPricingVariant>(normalizedVariants);
         ExplicitFreeEvidence = explicitFreeEvidence;
@@ -441,15 +432,22 @@ public sealed record ProviderModelPricing
 
     public decimal? TryGetComparableTokenPricePerMillion()
     {
-        var values = Prices
-            .Where(IsComparableTokenPrice)
-            .Select(static price =>
-                price.Price * 1_000_000m / price.UnitQuantity!.Value)
-            .ToArray();
+        try
+        {
+            var values = Prices
+                .Where(IsComparableTokenPrice)
+                .Select(static price =>
+                    price.Price / price.UnitQuantity!.Value * 1_000_000m)
+                .ToArray();
 
-        return values.Length == 0
-            ? null
-            : values.Max();
+            return values.Length == 0
+                ? null
+                : values.Max();
+        }
+        catch (OverflowException)
+        {
+            return null;
+        }
     }
 
     public bool HasCompleteComparableInputOutputTokenPricing
