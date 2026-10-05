@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ### Remediation checkpoint — 2026-10-05
 
@@ -21,6 +21,14 @@ Developer verification reported **679 tests: 677 passed, 2 failed, 0 skipped**. 
 UI polish remediation is complete within the recorded failure boundary: detail values are line-oriented and width-constrained, details are synchronized after tab content changes so the existing vertical scroll host can recalculate for long text, provider JSON is indented and property-separated, the Model Information filter row is responsive with both pricing-evidence checkboxes preserved, and the page-specific CRUD search is bounded to 220px.
 
 Verification remains pending developer rerun. No provider, persistence, filter-semantic, roadmap, or unrelated UI changes were made.
+
+### Verification failure — 2026-10-05
+
+Developer verification reported **679 tests: 678 passed, 1 failed, 0 skipped**. The remaining failure is `Phase116FollowUpTests.ModelInformationView_UpdatesDetailsWhenSelectionChanges`, which expects the selected model's provider evidence on the Technical tab but the current Technical page only renders extension data.
+
+Developer manual UI verification reports two remaining in-scope presentation defects: the right-side Model Information details surface does not show its vertical scrollbar reliably in normal window size when content overflows, and the filter controls overlap in normal mode so one pricing checkbox can be hidden.
+
+Remediation boundary: expose the authoritative model provider identity on the Technical page, correct the right-side scroll-content sizing so overflow is visible at normal size, and reorganize the Model Information filter controls into responsive non-overlapping rows. No provider contracts, persistence, filter semantics, roadmap, or unrelated UI changes are authorized.
 
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
