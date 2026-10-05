@@ -218,7 +218,7 @@ internal sealed class ProviderCompletionIntegrationExampleView : UserControl
             External provider call: no (loopback fixture)
             Provider credentials: none
             Discovery during execution: no
-            Migration: {migration.Status}; schema={migration.CurrentSchemaVersion}
+            Migration: {migration.Value!.Status}; schema={migration.Value.CurrentSchemaVersion}
             """);
     }
 
