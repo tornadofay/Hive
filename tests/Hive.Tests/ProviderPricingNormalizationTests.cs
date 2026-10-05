@@ -300,6 +300,110 @@ public sealed class ProviderPricingNormalizationTests
     }
 
     [Fact]
+    public async Task DeclaredDefaultPricingVariant_DrivesComparablePrice()
+    {
+        using var client = new HttpClient(
+            new FixedResponseHandler(
+                """
+                {
+                  "data": [
+                    {
+                      "id": "variant-model",
+                      "pricing": {
+                        "variants": {
+                          "standard": {
+                            "default": true,
+                            "conditions": {
+                              "service_tier": "standard"
+                            },
+                            "input": 0.00000035,
+                            "output": 0.00000070
+                          },
+                          "batch": {
+                            "conditions": {
+                              "service_tier": "batch"
+                            },
+                            "input": 0.00000018,
+                            "output": 0.00000035
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+                """));
+
+        var adapter = new OpenAICompatibleProviderAdapter(
+            client,
+            new OpenAICompatibleProviderOptions(
+                new Uri("https://example.test/v1/")));
+
+        var result = await adapter.ListModelsAsync(
+            new Uri("https://example.test/v1/models"),
+            OpenAICompatibleModelCatalogFormat.OpenRouter);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var pricing = Assert.Single(result.Value!.Models).Pricing!;
+
+        Assert.Equal(2, pricing.Variants.Count);
+        Assert.Equal(
+            "standard",
+            Assert.Single(pricing.Variants, variant => variant.IsDefault).Key);
+        Assert.Equal(0.70m, pricing.TryGetComparableTokenPricePerMillion());
+        Assert.Equal(
+            "standard",
+            pricing.Variants
+                .Single(variant => variant.IsDefault)
+                .Conditions["service_tier"]);
+    }
+
+    [Fact]
+    public async Task AmbiguousPricingVariants_RemainNonComparable()
+    {
+        using var client = new HttpClient(
+            new FixedResponseHandler(
+                """
+                {
+                  "data": [
+                    {
+                      "id": "ambiguous-variant-model",
+                      "pricing": {
+                        "variants": {
+                          "batch": {
+                            "input": 0.00000018,
+                            "output": 0.00000035
+                          },
+                          "priority": {
+                            "input": 0.00000035,
+                            "output": 0.00000070
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+                """));
+
+        var adapter = new OpenAICompatibleProviderAdapter(
+            client,
+            new OpenAICompatibleProviderOptions(
+                new Uri("https://example.test/v1/")));
+
+        var result = await adapter.ListModelsAsync(
+            new Uri("https://example.test/v1/models"),
+            OpenAICompatibleModelCatalogFormat.OpenRouter);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var pricing = Assert.Single(result.Value!.Models).Pricing!;
+
+        Assert.Equal(2, pricing.Variants.Count);
+        Assert.Empty(pricing.Prices);
+        Assert.Null(pricing.TryGetComparableTokenPricePerMillion());
+    }
+
+    [Fact]
     public void PricingVariant_EnforcesBoundedConditionsAndExplicitDefault()
     {
         var defaultVariant = new ProviderModelPricingVariant(
