@@ -1,6 +1,6 @@
 # Off-Work Provider Completion — Slice 4: Provider Completion Integration & Hardening
 
-> **Status:** Implementation complete; verification pending  
+> **Status:** Complete and verified on 2026-10-05  
 > **Roadmap impact:** None  
 > **Authorized:** 2026-10-05 after verified Slice 3 closure  
 
@@ -64,16 +64,14 @@ This is off-roadmap completion work. It does not start, advance, or implement Ph
 
 ## Verification
 
-Tests to run:
+Developer verification completed on 2026-10-05.
 
-- focused provider pricing/usage integration and cross-provider regression tests;
-- affected AgentExecutionIntegrationTests;
-- affected ProviderPricingNormalizationTests;
-- affected BuiltInProviderCatalogTests and ProviderModelMetadataProviderTests;
-- full Hive.Tests.
+Full `Hive.Tests`: **636/636 passed, 0 failed, 0 skipped**.
 
-Example to run:
+Exact Example Host scenario: `Providers / Runtime / Provider Completion Integration & Hardening` — Hive.Example.WinForms.
 
-`Providers / Runtime / Provider Completion Integration & Hardening` — Hive.Example.WinForms
+The scenario verified one discovery call before execution and one after execution, fresh cached pricing attached to `provider-completion-model`, 0.35 USD / 1M input and 1.50 USD / 1M output pricing, one preserved pricing variant, provider-reported Actual usage of 120 input / 45 output / 165 total, persistence of pricing and usage with the terminal execution event, no execution-time discovery, no external provider call, no credentials, and migration schema 14.
 
-A separate build result is not claimed unless the developer reports it.
+Closure evidence: `docs/verification/phase-1/off-work-provider-completion-integration-hardening-closure-2026-10-05.md`.
+
+No separate build result was supplied.
