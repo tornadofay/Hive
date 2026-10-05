@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IMPLEMENTATION IN PROGRESS
+Status: VERIFICATION PENDING
 
 ## Authorized slice
 
@@ -12,22 +12,23 @@ Explicit user authorization: begin the off-work provider plan now, starting with
 
 Started from `main` at commit `affe2f1e4f468a58345c0a2e2f66f6fbaea8019e`.
 
-## Scope
+## Implementation completed
 
-Implement only the pricing-normalization portion of the off-work provider completion plan:
+Implemented the bounded pricing-normalization slice:
 
-- make source pricing quantity semantics explicit and provider-correct;
-- remove implicit quantity fallback from comparable token-price calculation;
-- establish deterministic currency qualification;
-- correct free-evidence semantics so unrelated zero-cost billing dimensions do not mark a paid model free;
-- establish bounded pricing-variant representation only to the extent required by current provider evidence and deterministic comparison;
-- keep the canonical Model Information comparison at normalized USD per 1M input/output tokens;
-- update focused automated coverage and required provider/model UI regression coverage;
-- update owning architecture/documentation required by the implemented boundary.
+- Core-owned normalized USD token-price comparability with explicit source quantity requirements;
+- per-token quantity normalization for OpenRouter-derived model catalogs;
+- explicit per-1K/per-1M unit-basis recognition and explicit quantity handling;
+- deterministic currency qualification with non-USD/missing currency remaining non-comparable to the USD token filter;
+- corrected free-evidence derivation so unrelated zero-priced image/request dimensions do not mark paid token pricing free;
+- bounded pricing-variant representation and ingestion with deterministic default selection and fail-safe ambiguity handling;
+- Model Information now consumes the normalized Core comparability contract rather than applying a `UnitQuantity ?? 1` heuristic;
+- focused pricing and Model Information regression coverage;
+- owning architecture and off-work plan documentation aligned with the implemented boundary.
 
 ## Explicit exclusions
 
-Do not implement:
+Not implemented in this slice:
 
 - built-in provider catalog expansion (Slice 2);
 - runtime token-usage accounting (Slice 3);
@@ -39,17 +40,25 @@ Do not implement:
 - unrelated UI/control cleanup;
 - roadmap advancement.
 
-## Verification boundary
+## Verification pending
 
-Required developer verification for this slice:
+Agent verification status:
 
-- focused pricing/Model Information tests;
-- affected provider discovery regressions;
-- full `Hive.Tests` suite after the focused boundary is stable;
-- matching `Hive.Example.WinForms` Model Information scenario/manual verification where applicable.
+- Source inspected/reviewed: Yes.
+- Automated tests executed: No.
+- Build executed: No.
+- Example Host manually verified: No.
 
-The agent must not claim builds/tests/manual runs that were not actually performed.
+Required developer rerun targets:
+
+- `ProviderPricingNormalizationTests`;
+- affected `Phase116FollowUpTests` pricing / Model Information scenarios;
+- affected `ProviderModelMetadataProviderTests` provider pricing regressions;
+- full `Hive.Tests` suite;
+- matching `Hive.Example.WinForms` Model Information scenario/manual verification.
+
+Do not claim Slice 1 closure until developer results are received and the required verification passes. Any in-scope failure must be recorded here as `VERIFICATION FAILED / REMEDIATION REQUIRED` before remediation changes.
 
 ## Closure gate
 
-Slice 1 remains active until its implementation, focused tests, full-suite verification, required Example Host verification, and documentation review are complete. After developer results are received and pass, archive verification evidence and close this slice before starting Slice 2.
+After successful developer verification, archive the verification evidence, update Current Status from actual results, close this slice, and leave only the current no-slice state before starting Slice 2.
