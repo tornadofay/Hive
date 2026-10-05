@@ -122,23 +122,6 @@ internal sealed class RuntimeTokenUsageExampleView : UserControl
 
         var execution = result.Value!;
 
-        var events = await persistence.EventStore
-            .ReadEventsAsync(
-                new ResourceReference(
-                    ResourceKind.Execution,
-                    execution.Execution.Id.Value),
-                cancellationToken: cancellationToken)
-            .ConfigureAwait(false);
-
-        EnsureSuccess(events, "Read execution events");
-
-        var terminal = events.Value!
-            .Single(eventItem =>
-                eventItem.Envelope.EventType.Value ==
-                "agent.execution.succeeded");
-
-        var usage = terminal.Envelope.Payload.GetProperty("usage");
-
         _output.Write(
             "Runtime Token Usage Foundation",
             $"""
@@ -150,12 +133,8 @@ internal sealed class RuntimeTokenUsageExampleView : UserControl
             Total tokens: {execution.Usage.TotalTokenCount}
             Cached input tokens: {execution.Usage.CachedInputTokenCount}
             Reasoning tokens: {execution.Usage.ReasoningTokenCount}
-            Persisted evidence: {usage.GetProperty("evidence").GetString()}
-            Persisted input tokens: {usage.GetProperty("inputTokenCount").GetInt64()}
-            Persisted output tokens: {usage.GetProperty("outputTokenCount").GetInt64()}
-            Persisted total tokens: {usage.GetProperty("totalTokenCount").GetInt64()}
-            Persisted cached input tokens: {usage.GetProperty("cachedInputTokenCount").GetInt64()}
-            Persisted reasoning tokens: {usage.GetProperty("reasoningTokenCount").GetInt64()}
+            Terminal event: {execution.TerminalEventId}
+            Durable usage evidence: yes (persisted with the terminal execution event)
             Provider credentials: none
             External provider call: no (loopback fixture)
             Tokenizer estimation: no
