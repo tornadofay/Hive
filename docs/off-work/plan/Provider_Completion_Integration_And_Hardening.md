@@ -1,6 +1,6 @@
 # Off-Work Provider Completion — Slice 4: Provider Completion Integration & Hardening
 
-> **Status:** Slice 4 baseline verified; Revision corrective changes implemented, developer verification pending on 2026-10-05  
+> **Status:** Slice 4 baseline and Revision verified on 2026-10-05  
 > **Roadmap impact:** None  
 > **Authorized:** 2026-10-05 after verified Slice 3 closure  
 
@@ -72,7 +72,7 @@ The Revision audit identified and corrected three concrete production hardening 
 
 Focused regressions cover pricing provenance mismatches, provider-reported model preservation, and native/non-compatible transport rejection.
 
-Developer verification of this Revision is still pending.
+Developer verification of this Revision completed on 2026-10-05. Full `Hive.Tests` passed 638/638 (0 failed, 0 skipped), and the required Example Host scenario was manually verified successfully. The final Revision verification record is `docs/verification/phase-1/off-work-provider-completion-integration-hardening-revision-closure-2026-10-05.md`.
 
 ## Prior Slice 4 Verification
 
