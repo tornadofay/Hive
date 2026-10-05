@@ -31,9 +31,9 @@ public sealed class AgentExecutionRequest
         ExecutionTarget target,
         ResourceAccessContext accessContext,
         string userMessage,
-        SecretMaterial? apiKey,
-        CorrelationId? correlationId,
-        ExecutionPricingEvidence? pricingEvidence)
+        SecretMaterial? apiKey = null,
+        CorrelationId? correlationId = null,
+        ExecutionPricingEvidence? pricingEvidence = null)
     {
         Agent = agent ?? throw new ArgumentNullException(nameof(agent));
         Runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
