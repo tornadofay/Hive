@@ -30,7 +30,7 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
     }
 
     [WinFormsFact]
-    public void ProviderSettings_UsesProvidersModelInformationAndFavoritesTabs()
+    public void ProviderSettings_UsesProvidersAsFirstTabAndFavoritesAsSecondTab()
     {
         var management = UiManagementProxy.Create();
         var context = CreateContext();
@@ -41,17 +41,10 @@ public sealed class ExecutionTargetFavoriteSettingsUiTests
             context,
             theme);
 
-        Assert.Equal(3, view.NavigationTabs.TabPages.Count);
+        Assert.Equal(2, view.NavigationTabs.TabPages.Count);
         Assert.Equal("Providers", view.NavigationTabs.TabPages[0].Text);
-        Assert.Equal("Model Information", view.NavigationTabs.TabPages[1].Text);
-        Assert.Equal("Favorite Execution Targets", view.NavigationTabs.TabPages[2].Text);
+        Assert.Equal("Favorite Execution Targets", view.NavigationTabs.TabPages[1].Text);
         Assert.Equal(0, view.NavigationTabs.SelectedIndex);
-        Assert.Same(
-            view.ModelInformationPage,
-            view.NavigationTabs.TabPages[1].Controls[0]);
-        Assert.Same(
-            view.FavoriteTargetsPage,
-            view.NavigationTabs.TabPages[2].Controls[0]);
     }
 
     [WinFormsFact]
