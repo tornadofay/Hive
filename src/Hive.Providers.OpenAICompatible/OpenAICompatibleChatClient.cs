@@ -94,7 +94,8 @@ public sealed class OpenAICompatibleChatClient : IChatClient
                 response.Content))
         {
             ModelId = response.Model,
-            ResponseId = response.Id
+            ResponseId = response.Id,
+            Usage = response.Usage
         };
 
         return chatResponse;
