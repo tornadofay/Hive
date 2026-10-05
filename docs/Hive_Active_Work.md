@@ -57,6 +57,12 @@ Providers / Runtime / Token Usage Foundation — Hive.Example.WinForms
 
 Build result is not to be claimed unless the developer reports it separately.
 
+## Verification remediation
+
+Developer verification reported a CS8602 nullable-reference warning in `OpenAICompatibleProviderAdapterTests.cs` at the provider-usage assertion. The test was corrected by assigning the nullable usage value through an explicit null-guarded local before dereferencing it. Production code was not changed by this remediation.
+
+Required verification remains the same after this fix: focused runtime/provider usage tests, `AgentExecutionIntegrationTests`, full `Hive.Tests`, and `Providers / Runtime / Token Usage Foundation — Hive.Example.WinForms`.
+
 ## Implementation completion
 
 The Slice 3 implementation is complete within the authorized boundary.
