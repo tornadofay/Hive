@@ -31,3 +31,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [1.19A — Execution Target Preferences & Favorite Target Pool — 2026-10-04](1.19A-execution-target-preferences-favorite-target-pool-closure-2026-10-04.md)
 - [Off-Work Provider Completion — Slice 1: Pricing Normalization — 2026-10-05](off-work-provider-pricing-normalization-closure-2026-10-05.md)
 - [Off-Work Provider Completion — Slice 2: Built-In Provider Catalog — 2026-10-05](off-work-provider-built-in-provider-catalog-closure-2026-10-05.md)
+- [Off-Work Provider Completion — Slice 3: Runtime Token Usage Foundation — 2026-10-05](off-work-provider-runtime-usage-closure-2026-10-05.md)
