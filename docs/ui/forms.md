@@ -76,19 +76,25 @@ Settings pages call the appropriate public Management/application boundaries. Se
 
 Execution Target editors present **Management before Capabilities** so target ownership is established before the capability controls are read. Favorite ExecutionTarget preferences are managed on a second tab of the normal Providers Settings page. The Favorites tab is a simple preference CRUD surface, not another ExecutionTarget resource model: it lists only saved favorites and provides Add Favorite, Remove, and Refresh. Add Favorite opens a compact Provider → Account → Execution Target picker; the Provider and Account selectors exist there only to narrow the target choices instead of presenting a long global target list. Adding/removing a favorite persists immediately through Management. Agent and other ExecutionTarget selection dialogs/editors are outside this slice; they retain their existing behavior here and will be defined by their owning phase. The V1 Agent interaction phase is expected to use saved favorites conditionally: Auto uses the normal full eligible target set when the favorite list is empty and only favorites when one or more favorites exist; the Favorites source lists only saved favorites for explicit selection. Provider/model discovery is primarily surfaced from the normal Providers Settings page. The page offers explicit `Refresh`, which requests fresh provider/account/endpoint discovery for active configured providers and reconciles automatically managed ExecutionTargets. The UI presents configured providers and safe operational summary; it does not expose ProviderAccount or ExecutionTarget administration during normal onboarding. Advanced Provider Configuration exposes the generalized Providers / Accounts / Credentials / Execution Targets administration pages when an administrator needs multiple accounts, custom endpoints, local/self-hosted models, manual targets, or explicit capability overrides. Discovered availability, health, rate-limit metadata, and normalized capability states remain observational; configured ExecutionTarget capability overrides remain authoritative. Failed or stale discovery preserves existing durable targets and must never be interpreted as an empty model catalog.
 
-### Advanced Provider Configuration — Model Information
+### Providers Settings — Model Information
 
-The Advanced Provider Configuration window is a focused administrative surface with resource-management pages and one read-only discovery-information page:
+The normal Providers Settings surface contains the user-facing Provider configuration and inspection tabs:
+
+```text
+Providers Settings
+├── Providers
+├── Model Information
+└── Favorite Execution Targets
+```
+
+Model Information is a read-only discovery-information surface alongside the normal Provider and Favorite Execution Target views. Advanced Provider Configuration remains the administrative surface for:
 
 ```text
 Advanced Provider Configuration
 ├── Providers
 ├── Accounts / Credentials
-├── Execution Targets
-└── Model Information
+└── Execution Targets
 ```
-
-There is no separate Overview tab in this window. The surrounding normal Providers Settings surface remains the entry point for simple provider onboarding.
 
 Model Information presents the discovered provider/model profile without becoming a configuration store. Provider, Account / Credential, and Discovery Endpoint are compact HiveComboBox selectors. The discovered model catalog uses the shared Hive CRUD / HiveListView presentation with one confirmed Add to Favorites action, Text / Vision / Tools / Structured / Reasoning / Thinking capability columns whose state cells render as `✓` / `✕` / `—`, minimum/maximum comparable token-price sliders using $0.01 increments with a data-sized practical maximum, and a capability/state filter. A maximum price of $0 is the free-model view: it includes models with explicit free-pricing evidence or explicitly zero comparable input/output token pricing; missing pricing is not treated as free. The filter compares the highest USD input/output token rate after provider-unit normalization. The selected model is shown in a lightweight reusable detail text surface with a compact fixed right-side width rather than a recreated card tree. Capability columns use compact `✓` / `✕` / `—` symbols only in the list; detail text uses `Supported`, `Unsupported`, or `Unknown / unreported`. The page header comes before the selectors and inspection filters. Identity, inputs, outputs, capabilities, reasoning/thinking, limits, pricing/economics, operational state, and bounded provider-specific evidence remain separately readable, while missing information is shown as `—`.
 
