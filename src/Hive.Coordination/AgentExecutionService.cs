@@ -298,7 +298,18 @@ public sealed class AgentExecutionService
                     break;
                 }
 
-                additionalCounts[pair.Key] = pair.Value;
+                var key = pair.Key?.Trim();
+
+                if (string.IsNullOrWhiteSpace(key) ||
+                    key.Length >
+                        ExecutionTokenUsage.MaxAdditionalCountKeyLength ||
+                    pair.Value < 0 ||
+                    additionalCounts.ContainsKey(key))
+                {
+                    continue;
+                }
+
+                additionalCounts[key] = pair.Value;
             }
         }
 
