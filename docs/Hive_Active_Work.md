@@ -60,7 +60,7 @@ Developer re-verification is pending. Rerun the full `Hive.Tests` suite and manu
 Authorized: 2026-10-05 (explicit maintainer request)
 Status: VERIFICATION PENDING
 Roadmap impact: None. Bounded off-roadmap UI/navigation work. Does not activate or advance any Phase 1 roadmap slice.
-Checkpoint: `e6a8501a` — "Initialize selected Provider Settings tab"
+Checkpoint: `06942e3f` — "Align Advanced Provider overview with Model Information relocation"
 
 ### Maintainer request
 
