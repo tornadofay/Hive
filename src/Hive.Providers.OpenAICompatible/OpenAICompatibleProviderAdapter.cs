@@ -1829,19 +1829,40 @@ public sealed class OpenAICompatibleProviderAdapter
             pricing.TryGetProperty("variants", out var variantsElement) &&
             variantsElement.ValueKind == JsonValueKind.Object)
         {
-            string? explicitDefaultKey = null;
-
-            foreach (var variantProperty in variantsElement.EnumerateObject())
-            {
-                if (variantProperty.Value.ValueKind == JsonValueKind.Object &&
-                    variantProperty.Value.TryGetProperty(
+            var explicitDefaultKeys = variantsElement
+                .EnumerateObject()
+                .Where(static variant =>
+                    variant.Value.ValueKind == JsonValueKind.Object &&
+                    variant.Value.TryGetProperty(
                         "default",
                         out var defaultElement) &&
                     defaultElement.ValueKind == JsonValueKind.True)
-                {
-                    explicitDefaultKey = variantProperty.Name;
-                    break;
-                }
+                .Select(static variant => variant.Name)
+                .ToArray();
+
+            string? explicitDefaultKey =
+                explicitDefaultKeys.Length == 1
+                    ? explicitDefaultKeys[0]
+                    : null;
+
+            var implicitDefaultKeys = variantsElement
+                .EnumerateObject()
+                .Where(static variant =>
+                    string.Equals(
+                        variant.Name,
+                        "default",
+                        StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(
+                        variant.Name,
+                        "standard",
+                        StringComparison.OrdinalIgnoreCase))
+                .Select(static variant => variant.Name)
+                .ToArray();
+
+            if (explicitDefaultKeys.Length == 0 &&
+                implicitDefaultKeys.Length == 1)
+            {
+                explicitDefaultKey = implicitDefaultKeys[0];
             }
 
             foreach (var variantProperty in variantsElement.EnumerateObject())
@@ -1884,19 +1905,11 @@ public sealed class OpenAICompatibleProviderAdapter
                 }
 
                 var isDefault =
-                    explicitDefaultKey is not null
-                        ? string.Equals(
-                            variantProperty.Name,
-                            explicitDefaultKey,
-                            StringComparison.OrdinalIgnoreCase)
-                        : string.Equals(
-                            variantProperty.Name,
-                            "default",
-                            StringComparison.OrdinalIgnoreCase) ||
-                          string.Equals(
-                            variantProperty.Name,
-                            "standard",
-                            StringComparison.OrdinalIgnoreCase);
+                    explicitDefaultKey is not null &&
+                    string.Equals(
+                        variantProperty.Name,
+                        explicitDefaultKey,
+                        StringComparison.OrdinalIgnoreCase);
 
                 variants.Add(
                     new ProviderModelPricingVariant(
@@ -1960,14 +1973,16 @@ public sealed class OpenAICompatibleProviderAdapter
         JsonElement pricing,
         decimal? fallback)
     {
-        var explicitQuantity = TryGetDecimalProperty(
-            pricing,
-            "unit_quantity",
-            "quantity",
-            "units");
+        foreach (var propertyName in new[] { "unit_quantity", "quantity", "units" })
+        {
+            if (!pricing.TryGetProperty(propertyName, out var value))
+                continue;
 
-        if (explicitQuantity is > 0m)
-            return explicitQuantity;
+            var explicitQuantity = TryGetDecimal(value);
+            return explicitQuantity is > 0m
+                ? explicitQuantity
+                : null;
+        }
 
         var unit = TryGetString(pricing, "unit");
         return unit is null
