@@ -682,10 +682,10 @@ Microsoft.Extensions.AI UsageDetails
         ↓
 Hive.Coordination execution usage normalization
         ↓
-immutable execution usage event
+immutable terminal execution event
 ```
 
-The OpenAI-compatible adapter owns provider-wire interpretation. It may recognize documented provider usage fields and bounded numeric provider-specific dimensions, but it must not estimate missing usage or infer billing relationships.
+The OpenAI-compatible adapter owns provider-wire interpretation. It may recognize documented provider usage fields and bounded numeric provider-specific token dimensions, but it must not estimate missing usage or infer billing relationships.
 
 `Microsoft.Extensions.AI.ChatResponse.Usage` is the transport-neutral response boundary used by the current chat client. Hive's execution layer converts that response metadata into a Hive-owned token-usage contract so persistence and later Phase 1.30 consumers do not depend on provider-specific JSON or a particular provider adapter.
 
@@ -696,16 +696,16 @@ The Hive-owned token-usage contract preserves:
 - total token count;
 - cached input token count;
 - reasoning/thinking token count;
-- bounded additional provider-reported numeric counts;
+- bounded additional provider-reported token counts;
 - usage evidence classification: `Actual`, `Estimated`, or `Unknown`.
 
 A missing dimension remains unknown. Missing usage is never represented as zero. Cached-input and reasoning/thinking counts are informational breakdowns and are never automatically added to input/output/total counts.
 
 Slice 3 does not introduce a tokenizer or estimation engine. `Estimated` exists as an explicit future evidence state only; this slice produces `Actual` when provider usage is recognized and `Unknown` otherwise.
 
-For the current single-provider-call Agent execution path, each received provider response produces one immutable `agent.execution.usage.recorded` event in the existing Execution event stream. The event is an observation, not a Resource and not a lifecycle-success signal. It is appended before the terminal execution event so provider consumption evidence remains durable even if a later terminal-state persistence step fails.
+For the current single-provider-call Agent execution path, the usage observation is persisted inside the terminal execution event (`agent.execution.succeeded` or a terminal failure after a response was received). This keeps provider consumption evidence atomic with the terminal execution outcome and reuses the existing immutable Execution event stream and payload-versioning boundary. A received provider response with missing usage therefore records an explicit `Unknown` usage observation instead of silently omitting usage. A provider response with usage remains attributable even when subsequent response validation causes execution failure.
 
-The usage event carries the applicable execution/resource correlation identities already known at that boundary:
+The persisted usage payload carries the applicable identities already known at the execution boundary:
 
 - Provider;
 - ProviderAccount;
@@ -714,16 +714,15 @@ The usage event carries the applicable execution/resource correlation identities
 - Agent;
 - Runtime;
 - Execution;
-- applicable Deployment/Tenant/Principal scope;
-- optional WorkItem identity when the execution path has one;
+- applicable Deployment/Tenant/Principal/User/Session/Workspace/Hive scope identifiers;
 - provider response identity when supplied;
-- observation time from the durable event envelope.
+- the terminal event's durable observation time.
 
-The event remains immutable through the existing append-only event store and uses the existing payload schema-versioning boundary. No dedicated usage database table, second event store, or reporting subsystem is introduced by Slice 3.
+The current AgentExecutionRequest has no WorkItem identity, so this path records no WorkItem value. A later WorkItem-bound execution can populate that correlation through its owning execution contract without changing the token-count semantics.
 
-Cancellation or provider failure before a response is received does not fabricate a successful usage observation. When a provider response was actually received, an `Actual` or `Unknown` usage observation may still be recorded even if the subsequent execution terminal outcome is failure; this reflects observed provider consumption rather than execution success.
+The existing event store remains the durable source of truth. No dedicated usage table, second event store, or reporting subsystem is introduced by Slice 3. Phase 1.30 consumes the recorded observations for aggregation, metrics, budgets, OpenTelemetry, quota/rate-limit handling, and reporting.
 
-Phase 1.30 remains responsible for aggregation, metrics, budgets, OpenTelemetry, quota/rate-limit handling, and reporting over these recorded observations. Historical cost/accounting calculations must use the applicable preserved pricing evidence rather than the provider's current price.
+Cancellation or provider failure before a provider response is received does not fabricate a successful usage observation. A provider response that was actually received may still yield `Actual` or `Unknown` usage evidence even when its terminal execution outcome is failure; that evidence reflects observed provider consumption, not execution success.
 
 
 ---
