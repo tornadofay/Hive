@@ -15,7 +15,6 @@ internal sealed class HiveProvidersSettingsView : UserControl
     private readonly HiveButton _refreshButton;
     private readonly HiveButton _advancedButton;
     private readonly HiveTabControl _tabs;
-    private readonly HiveModelInformationSettingsView _modelInformationPage;
     private readonly HiveFavoriteExecutionTargetsSettingsView _favoritesPage;
     private CancellationTokenSource? _refreshCts;
     private bool _favoritesInitialized;
@@ -126,19 +125,6 @@ internal sealed class HiveProvidersSettingsView : UserControl
         };
         providersTab.Controls.Add(_page);
 
-        _modelInformationPage = new HiveModelInformationSettingsView(
-            _management,
-            _accessContext,
-            _themeManager,
-            _output);
-
-        var modelInformationTab = new TabPage("Model Information")
-        {
-            Padding = Padding.Empty,
-            Margin = Padding.Empty
-        };
-        modelInformationTab.Controls.Add(_modelInformationPage);
-
         _favoritesPage = new HiveFavoriteExecutionTargetsSettingsView(
             _management,
             _accessContext,
@@ -153,7 +139,6 @@ internal sealed class HiveProvidersSettingsView : UserControl
         favoritesTab.Controls.Add(_favoritesPage);
 
         _tabs.TabPages.Add(providersTab);
-        _tabs.TabPages.Add(modelInformationTab);
         _tabs.TabPages.Add(favoritesTab);
         _tabs.SelectedIndexChanged += TabsSelectedIndexChanged;
 
@@ -161,92 +146,41 @@ internal sealed class HiveProvidersSettingsView : UserControl
         _themeManager.Apply(this);
     }
 
-    public async Task InitializeAsync(
-        CancellationToken cancellationToken = default)
-    {
-        await _page.RefreshAsync(cancellationToken).ConfigureAwait(true);
-
-        switch (_tabs.SelectedIndex)
-        {
-            case 1:
-                await _modelInformationPage
-                    .InitializeAsync(cancellationToken)
-                    .ConfigureAwait(true);
-                break;
-
-            case 2:
-                if (!_favoritesInitialized)
-                {
-                    await _favoritesPage
-                        .InitializeAsync()
-                        .ConfigureAwait(true);
-                    _favoritesInitialized = true;
-                }
-
-                break;
-        }
-    }
+    public Task InitializeAsync(
+        CancellationToken cancellationToken = default) =>
+        _page.RefreshAsync(cancellationToken);
 
     internal HiveTabControl NavigationTabs => _tabs;
 
     internal HiveButton AdvancedButton => _advancedButton;
-
-    internal HiveModelInformationSettingsView ModelInformationPage =>
-        _modelInformationPage;
 
     internal HiveFavoriteExecutionTargetsSettingsView FavoriteTargetsPage =>
         _favoritesPage;
 
     private async void TabsSelectedIndexChanged(object? sender, EventArgs e)
     {
-        if (IsDisposed || Disposing)
+        if (_tabs.SelectedIndex != 1 ||
+            _favoritesPage.IsDisposed ||
+            _favoritesPage.Disposing ||
+            _favoritesInitialized)
+        {
             return;
+        }
 
         try
         {
-            switch (_tabs.SelectedIndex)
-            {
-                case 1:
-                    if (_modelInformationPage.IsDisposed ||
-                        _modelInformationPage.Disposing)
-                    {
-                        return;
-                    }
-
-                    await _modelInformationPage
-                        .InitializeAsync()
-                        .ConfigureAwait(true);
-                    break;
-
-                case 2:
-                    if (_favoritesPage.IsDisposed ||
-                        _favoritesPage.Disposing ||
-                        _favoritesInitialized)
-                    {
-                        return;
-                    }
-
-                    await _favoritesPage.InitializeAsync()
-                        .ConfigureAwait(true);
-                    _favoritesInitialized = true;
-                    break;
-            }
-        }
-        catch (OperationCanceledException)
-        {
+            await _favoritesPage.InitializeAsync().ConfigureAwait(true);
+            _favoritesInitialized = true;
         }
         catch (Exception exception)
         {
             if (!IsDisposed && !Disposing)
             {
-                var pageName = _tabs.SelectedIndex == 1
-                    ? "Model Information"
-                    : "Favorite Execution Targets";
                 HiveUiErrorReporter.Report(
                     FindForm(),
                     exception,
-                    pageName,
-                    $"The {pageName.ToLowerInvariant()} page could not be loaded.",
+                    "Favorite Execution Targets",
+                    "The favorite execution-target settings could not be loaded.",
                     _output,
                     _themeManager);
             }
