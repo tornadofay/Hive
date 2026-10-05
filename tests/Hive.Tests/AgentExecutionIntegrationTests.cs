@@ -549,6 +549,10 @@ public sealed class AgentExecutionIntegrationTests
         Assert.Equal(
             events.Value[0].Envelope.EventId.Value,
             events.Value[1].Envelope.CausationId!.Value.Value);
+        Assert.False(
+            events.Value[1].Envelope.Payload.TryGetProperty(
+                "usage",
+                out _));
     }
 
     [Fact]
@@ -1180,6 +1184,10 @@ public sealed class AgentExecutionIntegrationTests
         Assert.Equal(
             events.Value[0].Envelope.EventId.Value,
             events.Value[1].Envelope.CausationId!.Value.Value);
+        Assert.False(
+            events.Value[1].Envelope.Payload.TryGetProperty(
+                "usage",
+                out _));
     }
 
     private static async Task<ExecutionId> ReadLatestExecutionIdAsync(
