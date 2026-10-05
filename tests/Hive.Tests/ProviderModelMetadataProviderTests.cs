@@ -409,7 +409,7 @@ public sealed class ProviderModelMetadataProviderTests
                     new Uri("https://api.mistral.ai/v1/"),
 
                 "together-ai" =>
-                    new Uri("https://api.together.xyz/v1/"),
+                    new Uri("https://api.together.ai/v1/"),
 
                 _ => throw new InvalidOperationException(
                     $"No endpoint fixture is defined for '{providerKey}'.")
