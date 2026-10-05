@@ -1,6 +1,6 @@
 # Hive — Current Status
 
-Last updated: 2026-10-04
+Last updated: 2026-10-05
 
 ## Phase status
 
@@ -40,6 +40,7 @@ Last updated: 2026-10-04
   - **Phase 1 Custom UI Components — Slice 4: Existing Hive UI Integration, Consistency & Hardening:** Complete and verified on 2026-10-03. Final developer verification: full `Hive.Tests` suite passed **570/570** (0 failed, 0 skipped) in 58.8 seconds; the matching `Hive.Example.WinForms` Overview / Getting Started / Example Configuration workflow was manually confirmed running correctly. The final verification includes the CRUD `HiveListView` first-paint/native-scrollbar suppression remediation. [Closure verification record](verification/phase-1/custom-ui-slice-4-closure-2026-10-03.md)
 
   - **1.19A — Execution Target Preferences & Favorite Target Pool:** Complete and verified on 2026-10-04. Final developer verification: **Hive.Tests 593/593 passed, 0 failed, 0 skipped**; the developer also manually confirmed **Hive.Example.WinForms** and the affected Settings / Advanced Provider Configuration workflow work correctly. The Model Information rich-profile heading remediation is included in the final verified result. Provider pricing normalization and built-in provider catalog completion remain documented separately as **off-roadmap provider-closure work** and do not advance or alter the main roadmap.
+  - **Off-work provider completion — Slice 1: Pricing Normalization:** Complete and verified on 2026-10-05. Developer verification: full `Hive.Tests` suite passed **608/608** (0 failed, 0 skipped) after bounded remediation of three pricing regressions. The exact `Hive.Example.WinForms` **Providers / Target Selection / Capability Discovery / Provider / Model Information** scenario was manually exercised with deterministic discovery data. This remains off-roadmap work and does not advance or alter the Phase 1 roadmap. [Verification record](verification/phase-1/off-work-provider-pricing-normalization-closure-2026-10-05.md)
   - **1.20+:** Not authorized.
   
 Historical verification records are maintained under [`docs/verification/`](verification/).
