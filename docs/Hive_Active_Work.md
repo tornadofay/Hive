@@ -1,22 +1,62 @@
 # Hive — Active Work
 
-Status: NO ACTIVE WORK
+Status: IMPLEMENTATION IN PROGRESS
 
-## Current state
+## Authorized slice
 
-No implementation slice is currently authorized or pending verification.
+**Off-work provider completion — Slice 3: Runtime Token Usage Foundation**
 
-The previously authorized **Off-work provider completion — Slice 2: Built-In Provider Catalog** is complete and verified on 2026-10-05.
+Explicit user authorization: start the next off-work slice, Slice 3 only.
 
-Final developer verification:
-- full `Hive.Tests`: **619/619 passed, 0 failed, 0 skipped**;
-- deterministic Example Host scenario: **`Providers / Provider Platform / Built-In Provider Catalog`**;
-- Example output confirmed 35 catalog entries, 30 OpenAI-compatible providers, 5 native-integration-required providers, 23 normal-onboarding providers, and 12 advanced-only providers;
-- Example scenario confirmed no external provider call and no durable Provider resource creation.
+## Checkpoint
 
-Verification archive:
-`docs/verification/phase-1/off-work-provider-built-in-provider-catalog-closure-2026-10-05.md`
+Started from verified Slice 2 closure at `main` commit `84c488060a72571300520ec8fa5282c70c4b7655`.
 
-Slice 3 — Runtime Token Usage Foundation remains planned and not started. It requires separate explicit authorization.
+## Scope
 
-The main Phase 1 roadmap remains unchanged.
+Implement the provider-reported runtime token-usage foundation described by the off-work plan:
+
+- capture provider-reported usage at the OpenAI-compatible provider boundary;
+- normalize the supported usage dimensions into Hive-owned provider-neutral semantics;
+- distinguish `Actual`, `Estimated`, and `Unknown` without treating missing usage as zero;
+- preserve cached-input and reasoning/thinking counts without double-counting them into input/output/total;
+- carry usage through the existing chat/execution boundary;
+- persist immutable usage evidence using the existing execution-event persistence boundary;
+- preserve the applicable execution/resource correlation identities available to the current execution path;
+- keep cancellation/failure paths from fabricating successful usage records;
+- add focused deterministic provider, execution, persistence, and boundary regression coverage;
+- add the required deterministic Example Host scenario and owning documentation.
+
+## Explicit exclusions
+
+Not implemented in this slice:
+
+- Phase 1.30 metrics, budgets, OpenTelemetry, quota/rate-limit enforcement, or reporting/aggregation UI;
+- generic/local tokenizer estimation implementation;
+- native provider transport implementations;
+- provider billing reconciliation;
+- historical cost reporting UI;
+- Agent target-selection changes;
+- new durable Model resource;
+- unrelated UI/control cleanup;
+- roadmap advancement.
+
+A provider-reported usage value is authoritative evidence for that dimension. An unreported dimension remains unknown. Estimated usage may be represented by the contract for future bounded estimation, but this slice does not create a tokenizer or estimation engine.
+
+## Required verification
+
+```
+Tests to run:
+- focused runtime/provider usage tests;
+- AgentExecutionIntegrationTests usage/persistence regressions;
+- full Hive.Tests.
+
+Example to run:
+Providers / Runtime / Token Usage Foundation — Hive.Example.WinForms
+```
+
+Build result is not to be claimed unless the developer reports it separately.
+
+## Closure gate
+
+Do not start any future slice. After implementation, return Active Work to `VERIFICATION PENDING` and require developer verification. Close Slice 3 only after the required tests and Example Host scenario are actually verified.
