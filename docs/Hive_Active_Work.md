@@ -14,6 +14,12 @@ The reported 3-test failure was remediated by aligning the affected assertions w
 
 Verification is pending developer rerun.
 
+### Verification failure — 2026-10-05
+
+Developer verification passed **680/680 tests (0 failed, 0 skipped)**. Manual Model Information verification then reported two remaining in-scope presentation defects: the pricing-evidence checkboxes are not visible at normal window size, and the top edge of the CRUD/details surfaces overlaps the lower portion of the capability/state filter controls because the filter/header region does not reserve sufficient vertical spacing.
+
+Remediate only this Model Information layout boundary. Preserve the existing filter semantics, details scrolling, and responsive-row structure. Return Active Work to `VERIFICATION PENDING` after the correction and rerun the focused/full automated checks plus the manual Example Host path.
+
 ### Verification remediation — 2026-10-05
 
 Developer verification reported **679 tests: 677 passed, 2 failed, 0 skipped**. The reported failures were remediated by moving the tiered-pricing check to the Technical lazy tab and validating selection-change data across Overview, Details, and Technical.
