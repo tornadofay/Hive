@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Authorized slice
 
@@ -57,7 +57,12 @@ Observed cause:
 - the Ollama catalog entry did not explicitly declare its `Ollama` discovery profile after the catalog expansion;
 - catalog-driven discovery therefore selected the standard OpenAI-compatible parser for the Ollama `/api/tags` response.
 
-Remediation is authorized within this same Slice 2 failure boundary. Restore the explicit Ollama discovery profile; do not add a second provider-key routing table.
+Remediation completed within this same Slice 2 failure boundary:
+- restored `BuiltInProviderDiscoveryProfile.Ollama` on the Ollama catalog entry;
+- retained catalog-driven discovery routing with no second provider-key routing table;
+- no unrelated provider catalog or discovery behavior was changed.
+
+A developer rerun is required to confirm the remediation.
 
 Required developer verification:
 
