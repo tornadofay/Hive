@@ -70,13 +70,14 @@ public sealed class OpenAICompatibleProviderAdapterTests
             .CompleteChatAsync(CreateRequest());
 
         Assert.True(result.IsSuccess, result.Error?.Message);
-        Assert.NotNull(result.Value!.Usage);
-        Assert.Equal(120, result.Value.Usage!.InputTokenCount);
-        Assert.Equal(45, result.Value.Usage.OutputTokenCount);
-        Assert.Equal(165, result.Value.Usage.TotalTokenCount);
-        Assert.Equal(20, result.Value.Usage.CachedInputTokenCount);
-        Assert.Equal(10, result.Value.Usage.ReasoningTokenCount);
-        Assert.Equal(3, result.Value.Usage.AdditionalCounts["accepted_prediction_tokens"]);
+        var usage = result.Value!.Usage ??
+            throw new InvalidOperationException("Provider usage was not returned.");
+        Assert.Equal(120, usage.InputTokenCount);
+        Assert.Equal(45, usage.OutputTokenCount);
+        Assert.Equal(165, usage.TotalTokenCount);
+        Assert.Equal(20, usage.CachedInputTokenCount);
+        Assert.Equal(10, usage.ReasoningTokenCount);
+        Assert.Equal(3, usage.AdditionalCounts["accepted_prediction_tokens"]);
     }
 
     [Fact]
