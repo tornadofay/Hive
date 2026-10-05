@@ -100,6 +100,16 @@ Production semantics were not broadened beyond the authorized Slice 4 boundary.
 After the developer's 635/635 verification, a UI regression was identified in Advanced Provider Configuration → Model Information: the $0 filter considered only the comparable token price and ignored authoritative ExplicitFreeEvidence when a model also exposed paid/base token rates. The Model Information filter was corrected to treat explicit free evidence as eligible for the $0 free-model view, with a focused WinForms regression added. Slice 4 verification is therefore pending again for this final UI correction.
 
 The developer then reran the full `Hive.Tests` suite after the final UI correction: **636/636 passed, 0 failed, 0 skipped**, in 42.6 seconds. This verifies the full automated test gate; the Example Host verification remains the final outstanding Slice 4 verification step.
+
+## Verification failure — Example Host repeatability — 2026-10-05
+
+Developer manually ran the required `Providers / Runtime / Provider Completion Integration & Hardening` Example Host scenario and reported:
+
+`[EXCEPTION] Provider creation failed: hive.provider.duplicate [Conflict] The provider identity or key already exists.`
+
+Root cause identified: the example used a fixed persistent database name (`Hive_Example_ProviderCompletionIntegration`) while creating the same deterministic provider key (`integration-provider`) on every run. A second manual run therefore encountered the existing durable provider instead of an isolated example fixture. Same-slice remediation is authorized only for this verification failure boundary. No production provider uniqueness behavior is being changed.
+
+Remediation target: isolate each Example Host run with a per-run local development database, following the existing repeatable-example pattern. After remediation, return Active Work to `VERIFICATION PENDING` and rerun the required Example Host scenario.
 ## Verification gate
 
 Developer verification is now required. Any in-scope failure or compile error must be recorded as `VERIFICATION FAILED / REMEDIATION REQUIRED` before same-slice remediation. On successful verification, archive the closure evidence and return Active Work to `NO ACTIVE WORK`.
