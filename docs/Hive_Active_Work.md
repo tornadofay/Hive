@@ -17,7 +17,7 @@ Verification is pending developer rerun.
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
 Authorized: 2026-10-05 (explicit maintainer request in a dedicated chat)
-Checkpoint: `bb7ffd44` — "Sync Model Information UI documentation with remediation"
+Checkpoint: `babe51d8` — "Polish Model Information wrapping and readability"
 Roadmap impact: None. Bounded off-roadmap work. Does not activate or advance any Phase 1 roadmap slice.
 
 ### Maintainer intent
