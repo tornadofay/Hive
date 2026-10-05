@@ -309,7 +309,7 @@ public sealed class AgentExecutionIntegrationTests
 
         await using var server = new LocalAgentServer(
             HttpStatusCode.OK,
-            """{"id":"chatcmpl-agent-test","model":"test-model","choices":[{"message":{"role":"assistant","content":"Hello from MAF."}}]}""");
+            """{"id":"chatcmpl-agent-test","model":"test-model","usage":{"prompt_tokens":120,"completion_tokens":45,"total_tokens":165,"prompt_tokens_details":{"cached_tokens":20},"completion_tokens_details":{"reasoning_tokens":10}},"choices":[{"message":{"role":"assistant","content":"Hello from MAF."}}]}""");
 
         using var httpClient = new HttpClient();
         var service = new AgentExecutionService(
@@ -353,6 +353,12 @@ public sealed class AgentExecutionIntegrationTests
         Assert.Equal(
             "chatcmpl-agent-test",
             result.Value.ProviderResponseId);
+        Assert.Equal(TokenUsageEvidence.Actual, result.Value.Usage.Evidence);
+        Assert.Equal(120, result.Value.Usage.InputTokenCount);
+        Assert.Equal(45, result.Value.Usage.OutputTokenCount);
+        Assert.Equal(165, result.Value.Usage.TotalTokenCount);
+        Assert.Equal(20, result.Value.Usage.CachedInputTokenCount);
+        Assert.Equal(10, result.Value.Usage.ReasoningTokenCount);
 
         var events = await store.ReadEventsAsync(
             new ResourceReference(
@@ -391,6 +397,93 @@ public sealed class AgentExecutionIntegrationTests
         Assert.Equal(
             "chatcmpl-agent-test",
             succeeded.Envelope.Payload.GetProperty("providerResponseId").GetString());
+
+        var usage = succeeded.Envelope.Payload.GetProperty("usage");
+        Assert.Equal("Actual", usage.GetProperty("evidence").GetString());
+        Assert.Equal(120, usage.GetProperty("inputTokenCount").GetInt64());
+        Assert.Equal(45, usage.GetProperty("outputTokenCount").GetInt64());
+        Assert.Equal(165, usage.GetProperty("totalTokenCount").GetInt64());
+        Assert.Equal(20, usage.GetProperty("cachedInputTokenCount").GetInt64());
+        Assert.Equal(10, usage.GetProperty("reasoningTokenCount").GetInt64());
+        Assert.Equal(
+            result.Value.TargetId.Value,
+            usage.GetProperty("executionTargetId").GetGuid());
+        Assert.Equal(
+            result.Value.Execution.Id.Value,
+            usage.GetProperty("executionId").GetGuid());
+        Assert.Equal(
+            result.Value.Execution.AgentId.Value,
+            usage.GetProperty("agentId").GetGuid());
+        Assert.Equal(
+            result.Value.Execution.RuntimeId.Value,
+            usage.GetProperty("runtimeId").GetGuid());
+        Assert.Equal(
+            "test-model",
+            usage.GetProperty("model").GetString());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_MissingProviderUsage_IsExplicitlyUnknown()
+    {
+        var store = new InMemoryEventPersistenceStore();
+
+        await using var server = new LocalAgentServer(
+            HttpStatusCode.OK,
+            """{"id":"chatcmpl-agent-no-usage","model":"test-model","choices":[{"message":{"role":"assistant","content":"Hello without usage."}}]}""");
+
+        using var httpClient = new HttpClient();
+        var service = new AgentExecutionService(
+            new HiveEventPersistenceComposition(store),
+            httpClient,
+            TimeSpan.FromSeconds(5));
+
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var accessContext = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var agent = CreateAgent(accessContext);
+        var runtime = agent.CreateRuntimeInstance();
+        var target = CreateTarget(
+            server.BaseUri,
+            principal,
+            tenant);
+
+        var result = await service.ExecuteAsync(
+            new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                accessContext,
+                "Say hello without usage."));
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(
+            TokenUsageEvidence.Unknown,
+            result.Value!.Usage.Evidence);
+        Assert.Null(result.Value.Usage.InputTokenCount);
+        Assert.Null(result.Value.Usage.TotalTokenCount);
+
+        var events = await store.ReadEventsAsync(
+            new ResourceReference(
+                ResourceKind.Execution,
+                result.Value.Execution.Id.Value));
+
+        Assert.True(events.IsSuccess, events.Error?.Message);
+        var succeeded = Assert.Single(
+            events.Value!,
+            eventItem => eventItem.Envelope.EventType.Value == "agent.execution.succeeded");
+
+        var usage = succeeded.Envelope.Payload.GetProperty("usage");
+        Assert.Equal("Unknown", usage.GetProperty("evidence").GetString());
+        Assert.Equal(
+            JsonValueKind.Null,
+            usage.GetProperty("inputTokenCount").ValueKind);
+        Assert.Equal(
+            JsonValueKind.Null,
+            usage.GetProperty("totalTokenCount").ValueKind);
     }
 
     [Fact]
