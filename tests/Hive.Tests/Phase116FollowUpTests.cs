@@ -1055,7 +1055,8 @@ public sealed class Phase116FollowUpTests
         bool favoriteFirstModel = false,
         bool secondModelFree = false,
         bool richModelUsesPerTokenPricing = false,
-        bool richModelUsesUnknownPricing = false)
+        bool richModelUsesUnknownPricing = false,
+        bool secondModelHasPaidComparableBaseRates = false)
     {
         var context = CreateContext();
         var principal = context.PrincipalId!.Value;
