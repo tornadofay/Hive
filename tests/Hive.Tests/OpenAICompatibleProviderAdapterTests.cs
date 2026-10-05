@@ -115,12 +115,13 @@ public sealed class OpenAICompatibleProviderAdapterTests
                     "report your usage")
             ]);
 
-        Assert.NotNull(response.Usage);
-        Assert.Equal(120, response.Usage!.InputTokenCount);
-        Assert.Equal(45, response.Usage.OutputTokenCount);
-        Assert.Equal(165, response.Usage.TotalTokenCount);
-        Assert.Equal(20, response.Usage.CachedInputTokenCount);
-        Assert.Equal(10, response.Usage.ReasoningTokenCount);
+        var chatUsage = response.Usage ??
+            throw new InvalidOperationException("Provider usage was not returned.");
+        Assert.Equal(120, chatUsage.InputTokenCount);
+        Assert.Equal(45, chatUsage.OutputTokenCount);
+        Assert.Equal(165, chatUsage.TotalTokenCount);
+        Assert.Equal(20, chatUsage.CachedInputTokenCount);
+        Assert.Equal(10, chatUsage.ReasoningTokenCount);
     }
 
     [Fact]
