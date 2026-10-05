@@ -40,25 +40,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         public override string ToString() => Endpoint.AbsoluteUri;
     }
 
-    private sealed class DetailSection
-    {
-        public DetailSection(
-            Panel surface,
-            Label title,
-            FlowLayoutPanel body)
-        {
-            Surface = surface;
-            Title = title;
-            Body = body;
-        }
-
-        public Panel Surface { get; }
-
-        public Label Title { get; }
-
-        public FlowLayoutPanel Body { get; }
-    }
-
     internal sealed class ModelInformationRow
     {
         public ModelInformationRow(
@@ -1484,6 +1465,18 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _overviewTab.Controls.Clear();
         _detailsTab.Controls.Clear();
         _technicalTab.Controls.Clear();
+
+        _overviewPriceValue = null;
+        _overviewContextValue = null;
+        _overviewFavoriteValue = null;
+        _overviewCapabilitiesValue = null;
+        _overviewModalitiesValue = null;
+        _detailsIdentityValue = null;
+        _detailsReasoningValue = null;
+        _detailsLimitsValue = null;
+        _technicalPricingValue = null;
+        _technicalOperationalValue = null;
+        _technicalProviderValue = null;
 
         var empty = CreateInfoTextLabel(
             "Select a model to inspect price, capabilities, context, and provider evidence.");
