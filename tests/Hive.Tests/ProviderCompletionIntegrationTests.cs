@@ -60,8 +60,10 @@ public sealed class ProviderCompletionIntegrationTests
                 context,
                 "Model mismatch.",
                 apiKey: null,
-                correlationId: null,
-                pricingEvidence: pricing));
+                correlationId: null)
+            {
+                PricingEvidence = pricing
+            });
     }
 
     [Fact]
@@ -294,8 +296,10 @@ public sealed class ProviderCompletionIntegrationTests
                 context,
                 "Execute without stale pricing.",
                 apiKey: null,
-                correlationId: null,
-                pricingEvidence: stalePricing));
+                correlationId: null)
+            {
+                PricingEvidence = stalePricing
+            });
 
         Assert.True(result.IsSuccess, result.Error?.Message);
         Assert.Null(result.Value!.PricingEvidence);
