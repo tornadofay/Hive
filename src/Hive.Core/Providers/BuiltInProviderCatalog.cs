@@ -312,6 +312,8 @@ public static class BuiltInProviderCatalog
             "openai-compatible",
             BuiltInProviderCredentialKind.OptionalApiKey,
             new Uri("http://localhost:11434/v1"),
+            discoveryProfile:
+                BuiltInProviderDiscoveryProfile.Ollama,
             pricingNormalizationProfile:
                 BuiltInProviderPricingNormalizationProfile.None),
 
