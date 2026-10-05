@@ -746,6 +746,62 @@ public sealed class Phase116FollowUpTests
     }
 
     [WinFormsFact]
+    public async Task ModelInformationView_FilterAreaReservesSpaceForAllControlsAtNormalSize()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var fixture = CreateFixture();
+
+        using var host = new Form
+        {
+            Size = new Size(1160, 760)
+        };
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync();
+        Application.DoEvents();
+
+        var pageRoot = Assert.IsType<TableLayoutPanel>(view.Controls[0]);
+        var contextAndFilters = Assert.IsType<TableLayoutPanel>(
+            pageRoot.GetControlFromPosition(0, 1));
+        var mainSplit = Assert.IsType<SplitContainer>(
+            pageRoot.GetControlFromPosition(0, 2));
+
+        Assert.True(view.ShowUnpricedModelsFilter.Visible);
+        Assert.True(view.ShowAboveRangeModelsFilter.Visible);
+        Assert.True(view.CapabilityFilter.Visible);
+        Assert.True(view.CapabilityStateFilter.Visible);
+
+        var mainSplitTop = mainSplit.PointToScreen(Point.Empty).Y;
+
+        foreach (var control in new Control[]
+        {
+            view.CapabilityFilter,
+            view.CapabilityStateFilter,
+            view.ShowUnpricedModelsFilter,
+            view.ShowAboveRangeModelsFilter
+        })
+        {
+            var bottom = control.PointToScreen(
+                new Point(0, control.ClientSize.Height)).Y;
+            Assert.True(
+                bottom <= mainSplitTop,
+                $"{control.AccessibleName} extends into the CRUD/details surface: bottom={bottom}, mainSplitTop={mainSplitTop}.");
+        }
+
+        Assert.True(
+            mainSplit.Top >= contextAndFilters.Bottom,
+            $"CRUD/details surface overlaps the context/filter container: mainSplitTop={mainSplit.Top}, contextAndFiltersBottom={contextAndFilters.Bottom}.");
+        Assert.True(contextAndFilters.Height > 72);
+    }
+
+    [WinFormsFact]
     public async Task ModelInformationView_AddsSelectedExecutionTargetToFavorites()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
