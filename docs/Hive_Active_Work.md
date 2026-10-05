@@ -31,6 +31,12 @@ The final in-scope UI remediation also addresses the two reported presentation d
 A focused regression test was added for long Technical content at the normal `1160 x 760` test window and asserts that the Hive vertical scrollbar becomes available.
 
 Verification remains pending developer rerun. No provider, persistence, filter-semantic, roadmap, or unrelated UI changes were made.
+### Verification remediation — 2026-10-05
+
+The nullable compile failure reported for `_detailsTabs.SelectedTab` was corrected by using the existing Overview tab as the non-null fallback before calling `MeasureDetailsPageHeight`. This preserves the details sizing path when a selected tab is temporarily unavailable and removes the CS8604 warning without changing the tab presentation contract.
+
+Verification remains pending developer re-build and rerun of the focused Model Information tests and broader verification gate.
+
 ### Verification failure — 2026-10-05
 
 Developer-reported Visual Studio compile error: **CS8604** in `HiveModelInformationSettingsView.cs` line 1855: possible null reference argument passed to `MeasureDetailsPageHeight(TabPage page, int availableWidth)` from `_detailsTabs.SelectedTab`.
@@ -40,7 +46,7 @@ This is an in-scope nullable-contract defect in the current details-scroll sizin
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
 Authorized: 2026-10-05 (explicit maintainer request in a dedicated chat)
-Checkpoint: `e6a5cd54` — "Add Model Information normal-size scroll coverage"
+Checkpoint: `3eadef03` — "Fix Model Information selected tab nullability"
 Roadmap impact: None. Bounded off-roadmap work. Does not activate or advance any Phase 1 roadmap slice.
 
 ### Maintainer intent
