@@ -269,8 +269,10 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
             AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            MinimumSize = new Size(0, 72),
             Margin = Padding.Empty,
-            Padding = new Padding(8, 6, 0, 6),
+            Padding = new Padding(8, 6, 8, 8),
             AccessibleName = "Model Information filters"
         };
 
@@ -450,11 +452,13 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         var contextAndFilters = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 1,
             RowCount = 3,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = new Padding(0, 0, 0, 6)
         };
         contextAndFilters.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
         contextAndFilters.RowStyles.Add(new RowStyle(SizeType.AutoSize));
