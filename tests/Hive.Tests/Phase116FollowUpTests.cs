@@ -759,7 +759,6 @@ public sealed class Phase116FollowUpTests
     }
 
     [WinFormsFact]
-    [WinFormsFact]
     public async Task ModelInformationView_DoesNotAssumeMissingPricingQuantity()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
