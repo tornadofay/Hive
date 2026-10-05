@@ -55,52 +55,47 @@ The reported manual layout defects were corrected within the same boundary. The 
 
 Developer re-verification is pending. Rerun the full `Hive.Tests` suite and manually verify **Providers / Provider Platform / Model Information** at normal window size, specifically the filter controls and spacing.
 
-## Off-Work UI Slice — Move Model Information into Provider Settings
+## Off-Work UI Slice — Restore Model Information inside Advanced Provider Configuration
 
 Authorized: 2026-10-05 (explicit maintainer request)
 Status: VERIFICATION PENDING
-Roadmap impact: None. Bounded off-roadmap UI/navigation work. Does not activate or advance any Phase 1 roadmap slice.
-Checkpoint: `06942e3f` — "Align Advanced Provider overview with Model Information relocation"
+Roadmap impact: None. Bounded off-roadmap UI/navigation reversal. Does not activate or advance any Phase 1 roadmap slice.
+Checkpoint: `1631e169` — "Restore v1-host-and-management.md Advanced Model Information navigation"
 
 ### Maintainer request
 
-Move the existing, verified Model Information page out of **Advanced Provider Configuration** and into the normal **Providers** Settings page as a sibling tab.
+Return the existing Model Information page to **Advanced Provider Configuration**, reversing the immediately preceding navigation relocation.
 
 Target normal Provider Settings navigation:
 
-`Providers | Model Information | Favorite Execution Targets`
+`Providers | Favorite Execution Targets`
 
-Advanced Provider Configuration remains administrative and contains only:
+Target Advanced Provider Configuration navigation:
 
-`Providers | Accounts / Credentials | Execution Targets`
+`Providers | Accounts / Credentials | Execution Targets | Model Information`
 
 ### Scope
 
-- Rehost the existing `HiveModelInformationSettingsView` under `HiveProvidersSettingsView`.
-- Preserve all existing Model Information behavior, controls, pricing/filter semantics, details tabs, scrolling, and `Add to Favorites` action.
-- Initialize Model Information when its normal Provider Settings tab is selected, with deterministic cancellation/disposal behavior matching the existing Favorites tab.
-- Remove Model Information from Advanced Provider Configuration.
-- Update focused UI tests and affected documentation/example navigation references.
-- Keep Provider, ProviderAccount, ExecutionTarget, favorite persistence, and Management contracts unchanged.
+- Restore `HiveModelInformationSettingsView` as the fourth Advanced Provider Configuration tab.
+- Remove Model Information from the normal Providers Settings tabs.
+- Restore the existing Advanced Model Information Example Host navigation path.
+- Preserve the already-verified Model Information implementation itself: pricing/filter semantics, metadata presentation, details tabs, scrolling, checkbox layout, and Add to Favorites behavior.
+- Restore focused navigation assertions and documentation to match the previous verified ownership.
 
 ### Exclusions
 
-- No redesign of the Model Information surface.
+- No Model Information redesign or functional changes.
 - No provider/discovery/parser changes.
-- No changes to Agent `Auto` / `Favorites` behavior.
-- No new roadmap slice or durable resource.
-- No changes to the underlying Provider → ProviderAccount → ExecutionTarget ownership model.
+- No changes to Provider, ProviderAccount, ExecutionTarget, or favorite persistence contracts.
+- No Agent target-selection changes.
+- No roadmap advancement.
 
 ### Verification gate
 
 1. Focused Provider Settings and Advanced Provider Configuration navigation tests pass.
 2. Full `Hive.Tests` passes.
 3. Developer manually verifies the real Example Host path:
-   `Overview / Getting Started / Example Configuration → Providers → Model Information`
+   `Overview / Getting Started / Example Configuration → Advanced Provider Configuration → Model Information`
    and confirms the existing Model Information behavior remains intact.
-4. Confirm Advanced Provider Configuration no longer presents a Model Information tab and still presents Accounts / Credentials and Execution Targets.
-
-### Implementation complete
-
-The existing Model Information view is now hosted by the normal Providers Settings surface as the second tab between Providers and Favorite Execution Targets. Advanced Provider Configuration now contains only Providers, Accounts / Credentials, and Execution Targets. The Example Host Model Information scenario now opens the real Hive Settings flow and directs the developer to Providers → Model Information. Focused navigation assertions and affected documentation have been updated.
+4. Confirm normal Providers Settings has only Providers and Favorite Execution Targets, while Advanced contains Providers, Accounts / Credentials, Execution Targets, and Model Information.
 
