@@ -95,6 +95,88 @@ public sealed class ProviderPricingNormalizationTests
     }
 
     [Fact]
+    public async Task TopLevelPricingUnitQuantity_AppliesToTokenRates()
+    {
+        using var client = new HttpClient(
+            new FixedResponseHandler(
+                """
+                {
+                  "data": [
+                    {
+                      "id": "top-level-unit-model",
+                      "pricing": {
+                        "unit": "per_1k_tokens",
+                        "input": 0.35,
+                        "output": 0.75
+                      }
+                    }
+                  ]
+                }
+                """));
+
+        var adapter = new OpenAICompatibleProviderAdapter(
+            client,
+            new OpenAICompatibleProviderOptions(
+                new Uri("https://example.test/v1/")));
+
+        var result = await adapter.ListModelsAsync();
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var pricing = Assert.Single(result.Value!.Models).Pricing!;
+
+        Assert.All(
+            pricing.Prices,
+            price => Assert.Equal(1_000m, price.UnitQuantity));
+        Assert.Equal(750m, pricing.TryGetComparableTokenPricePerMillion());
+    }
+
+    [Fact]
+    public async Task ExplicitQuantityWithoutCurrency_RemainsNonComparableToUsd()
+    {
+        using var client = new HttpClient(
+            new FixedResponseHandler(
+                """
+                {
+                  "data": [
+                    {
+                      "id": "missing-currency-model",
+                      "pricing": {
+                        "input": {
+                          "price": 0.35,
+                          "unit_quantity": 1000000
+                        },
+                        "output": {
+                          "price": 0.75,
+                          "unit_quantity": 1000000
+                        }
+                      }
+                    }
+                  ]
+                }
+                """));
+
+        var adapter = new OpenAICompatibleProviderAdapter(
+            client,
+            new OpenAICompatibleProviderOptions(
+                new Uri("https://example.test/v1/")));
+
+        var result = await adapter.ListModelsAsync();
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var pricing = Assert.Single(result.Value!.Models).Pricing!;
+
+        Assert.All(
+            pricing.Prices,
+            price => Assert.Equal(1_000_000m, price.UnitQuantity));
+        Assert.All(
+            pricing.Prices,
+            price => Assert.Null(price.Currency));
+        Assert.Null(pricing.TryGetComparableTokenPricePerMillion());
+    }
+
+    [Fact]
     public async Task StandardObjectPricing_WithBillingDimensionOnly_DoesNotInferQuantity()
     {
         using var client = new HttpClient(
