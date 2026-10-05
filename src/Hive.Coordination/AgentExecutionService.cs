@@ -649,7 +649,8 @@ public sealed class AgentExecutionService
                     request,
                     execution,
                     usage,
-                    providerResponseId)
+                    providerResponseId,
+                    pricingEvidence)
             },
             payloadSchemaVersion: 2);
 
@@ -662,6 +663,7 @@ public sealed class AgentExecutionService
                 responseText,
                 providerResponseId,
                 usage,
+                pricingEvidence,
                 correlationId,
                 cancellationToken)
             .ConfigureAwait(false);
