@@ -38,6 +38,7 @@ internal sealed class HiveAgentManagementService : HiveManagementServiceBase
         _agentDefinitions = agentDefinitions ?? throw new ArgumentNullException(nameof(agentDefinitions));
 
         _providerResources = providerResources ?? throw new ArgumentNullException(nameof(providerResources));
+        _providers = providers ?? throw new ArgumentNullException(nameof(providers));
 
         _secrets = secrets;
 
