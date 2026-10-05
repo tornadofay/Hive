@@ -1,6 +1,6 @@
 # Off-Work Plan — Provider Pricing, Built-In Catalog & Runtime Usage
 
-> **Status:** Slice 1 complete and verified; Slice 2 complete and verified; Slice 3 planned, not started  
+> **Status:** Slice 1 complete and verified; Slice 2 complete and verified; Slice 3 in progress  
 > **Roadmap impact:** None  
 > **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 2 was explicitly authorized on 2026-10-05 and is now complete.  
 > **Prerequisite:** Phase 1.19A verification is now closed. This off-work plan remains separate and still requires explicit implementation authorization in a dedicated chat.
@@ -303,9 +303,13 @@ For every built-in provider:
 A representative provider test should be maintained for each normalization pattern rather than requiring one large duplicated test per provider.
 
 
+## Slice 3 — Runtime Token Usage Foundation — In progress
+
+Slice 3 was explicitly authorized on 2026-10-05. It implements only the provider-usage evidence foundation described below. Phase 1.30 reporting, metrics, budgets, OpenTelemetry, and quota enforcement remain outside this slice.
+
 ## Workstream 8 — Runtime Token Usage & Cost Accounting
 
-This workstream is separate from pricing normalization. Pricing answers what a model costs; runtime usage answers what an execution actually consumed. It is designed as the provider-usage foundation that Phase 1.30 will consume for metrics, budgets, and cost accounting.
+This workstream is separate from pricing normalization. Pricing answers what a model costs; runtime usage answers what an execution actually consumed. This slice establishes the provider-usage evidence foundation that Phase 1.30 will consume.
 
 ### 8.1 Capture provider-reported usage
 
