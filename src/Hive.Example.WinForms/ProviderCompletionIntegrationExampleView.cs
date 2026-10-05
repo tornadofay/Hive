@@ -137,7 +137,7 @@ internal sealed class ProviderCompletionIntegrationExampleView : UserControl
 
         using var httpClient = new HttpClient(
             new StaticHttpMessageHandler(
-                """{"id":"chatcmpl-provider-completion","model":"provider-completion-model","usage":{"prompt_tokens":120,"completion_tokens":45,"total_tokens":165},"choices":[{"message":{"role":"assistant","content":"Provider completion integration verified."}}]}"""));
+                """{"id":"chatcmpl-provider-completion","model":"resolved-provider-completion-model","usage":{"prompt_tokens":120,"completion_tokens":45,"total_tokens":165},"choices":[{"message":{"role":"assistant","content":"Provider completion integration verified."}}]}"""));
 
         var execution = new AgentExecutionService(
             eventPersistence,
@@ -212,6 +212,8 @@ internal sealed class ProviderCompletionIntegrationExampleView : UserControl
             Input tokens: {executionResult.Usage.InputTokenCount}
             Output tokens: {executionResult.Usage.OutputTokenCount}
             Total tokens: {executionResult.Usage.TotalTokenCount}
+            Configured model: {target.Model ?? target.Deployment}
+            Provider-reported model: {executionResult.ProviderReportedModelId ?? "(none)"}
             Provider response: {executionResult.ProviderResponseId}
             Terminal event: {executionResult.TerminalEventId}
             Pricing + usage persisted with terminal execution event: yes
