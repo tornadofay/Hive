@@ -1205,6 +1205,7 @@ public sealed class AgentExecutionIntegrationTests
             events.Value[1].Envelope.Payload.TryGetProperty(
                 "usage",
                 out _));
+        Assert.Equal(1, events.Value[1].Envelope.PayloadSchemaVersion.Value);
     }
 
     private static async Task<ExecutionId> ReadLatestExecutionIdAsync(
