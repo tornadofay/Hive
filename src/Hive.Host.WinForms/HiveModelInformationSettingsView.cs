@@ -392,7 +392,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             Dock = DockStyle.Top,
             ColumnCount = 1,
-            RowCount = 0,
+            RowCount = 9,
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
@@ -410,24 +410,27 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _additionalDetailsSection =
             CreateDetailSection("Additional provider information");
 
-        foreach (var section in new[]
-                 {
-                     _identityDetailsSection,
-                     _inputsDetailsSection,
-                     _outputsDetailsSection,
-                     _capabilitiesDetailsSection,
-                     _reasoningDetailsSection,
-                     _limitsDetailsSection,
-                     _pricingDetailsSection,
-                     _operationalDetailsSection,
-                     _additionalDetailsSection
-                 })
+        var detailSections = new[]
         {
-            var rowIndex = _detailsSections.RowCount;
+            _identityDetailsSection,
+            _inputsDetailsSection,
+            _outputsDetailsSection,
+            _capabilitiesDetailsSection,
+            _reasoningDetailsSection,
+            _limitsDetailsSection,
+            _pricingDetailsSection,
+            _operationalDetailsSection,
+            _additionalDetailsSection
+        };
+
+        foreach (var section in detailSections)
+        {
+            _detailsSections.Controls.Add(
+                section.Surface,
+                0,
+                Array.IndexOf(detailSections, section));
             _detailsSections.RowStyles.Add(
                 new RowStyle(SizeType.AutoSize));
-            _detailsSections.Controls.Add(section.Surface, 0, rowIndex);
-            _detailsSections.RowCount = rowIndex + 1;
         }
 
         _detailsContent.Controls.Add(_detailsSections);
