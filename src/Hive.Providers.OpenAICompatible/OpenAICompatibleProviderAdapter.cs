@@ -1803,6 +1803,13 @@ public sealed class OpenAICompatibleProviderAdapter
                 ? TryGetString(pricing, "currency") ?? defaultPricingCurrency
                 : defaultPricingCurrency;
 
+        var pricingDefaultTokenUnitQuantity =
+            pricing.ValueKind == JsonValueKind.Object
+                ? ResolvePricingUnitQuantity(
+                    pricing,
+                    defaultTokenUnitQuantity)
+                : defaultTokenUnitQuantity;
+
         if (pricing.ValueKind == JsonValueKind.Object)
         {
             if (pricing.TryGetProperty("free", out free) &&
@@ -1815,7 +1822,7 @@ public sealed class OpenAICompatibleProviderAdapter
                 pricing,
                 prices,
                 defaultCurrency,
-                defaultTokenUnitQuantity);
+                pricingDefaultTokenUnitQuantity);
         }
 
         if (pricing.ValueKind == JsonValueKind.Object &&
@@ -1866,7 +1873,9 @@ public sealed class OpenAICompatibleProviderAdapter
                     nestedPricing,
                     variantPrices,
                     variantCurrency,
-                    defaultTokenUnitQuantity);
+                    ResolvePricingUnitQuantity(
+                        nestedPricing,
+                        defaultTokenUnitQuantity));
 
                 if (variant.TryGetProperty("free", out var variantFree) &&
                     variantFree.ValueKind == JsonValueKind.True)
@@ -1945,6 +1954,25 @@ public sealed class OpenAICompatibleProviderAdapter
                 .ToArray(),
             explicitFree,
             variants);
+    }
+
+    private static decimal? ResolvePricingUnitQuantity(
+        JsonElement pricing,
+        decimal? fallback)
+    {
+        var explicitQuantity = TryGetDecimalProperty(
+            pricing,
+            "unit_quantity",
+            "quantity",
+            "units");
+
+        if (explicitQuantity is > 0m)
+            return explicitQuantity;
+
+        var unit = TryGetString(pricing, "unit");
+        return unit is null
+            ? fallback
+            : TryGetUnitQuantity(unit) ?? fallback;
     }
 
     private static void ParsePricingEntries(
