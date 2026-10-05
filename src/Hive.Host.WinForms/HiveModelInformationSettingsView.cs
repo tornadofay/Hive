@@ -838,14 +838,15 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             if (!IsFreeModel(model, price))
                 return false;
         }
-        else if (price is not null &&
-                 (price.Value < minPrice ||
-                  price.Value > maxPrice))
+        else if (price is not null)
         {
-            return false;
+            if (price.Value < minPrice ||
+                price.Value > maxPrice)
+            {
+                return false;
+            }
         }
-
-        if (price is null)
+        else
         {
             var fullRangeMaximum =
                 _maxPriceFilter.Maximum / (decimal)PriceSliderScale;
