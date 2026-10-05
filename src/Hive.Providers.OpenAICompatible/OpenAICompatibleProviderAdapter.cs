@@ -1933,11 +1933,7 @@ public sealed class OpenAICompatibleProviderAdapter
             "token" or
             "tokens" or
             "per_token" or
-            "per_tokens" or
-            "input_token" or
-            "output_token" or
-            "input_tokens" or
-            "output_tokens" => 1m,
+            "per_tokens" => 1m,
 
             "1k" or
             "1k_token" or
