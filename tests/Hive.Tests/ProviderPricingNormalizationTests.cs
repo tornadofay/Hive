@@ -106,6 +106,7 @@ public sealed class ProviderPricingNormalizationTests
                       "id": "top-level-unit-model",
                       "pricing": {
                         "unit": "per_1k_tokens",
+                        "currency": "USD",
                         "input": 0.35,
                         "output": 0.75
                       }
@@ -345,6 +346,7 @@ public sealed class ProviderPricingNormalizationTests
                     {
                       "id": "explicit-unit-model",
                       "pricing": {
+                        "currency": "USD",
                         "input": {
                           "price": 0.35,
                           "unit": "per_1m_tokens"
