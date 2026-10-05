@@ -389,6 +389,64 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         _discoveryCache.Clear();
     }
 
+    internal ExecutionPricingEvidence? TryGetFreshModelPricingEvidence(
+        Provider provider,
+        ProviderAccount account,
+        ExecutionTarget target)
+    {
+        ArgumentNullException.ThrowIfNull(provider);
+        ArgumentNullException.ThrowIfNull(account);
+        ArgumentNullException.ThrowIfNull(target);
+
+        if (provider.Id != target.ProviderId ||
+            account.Id != target.ProviderAccountId ||
+            account.ProviderId != provider.Id)
+        {
+            return null;
+        }
+
+        var modelId = target.Model ?? target.Deployment;
+        if (string.IsNullOrWhiteSpace(modelId))
+            return null;
+
+        var discoveryGeneration = Volatile.Read(ref _discoveryGeneration);
+        var cacheKey = new ProviderDiscoveryCacheKey(
+            provider.Id,
+            provider.Resource.Version,
+            account.Id,
+            account.Resource.Version,
+            target.Endpoint.AbsoluteUri,
+            discoveryGeneration);
+
+        if (!_discoveryCache.TryGetValue(cacheKey, out var cached))
+            return null;
+
+        var snapshot = cached.Snapshot;
+        var now = _clock.UtcNow;
+
+        if (snapshot.IsStale(now))
+            return null;
+
+        var model = snapshot.Models.FirstOrDefault(
+            item => string.Equals(
+                item.ModelId,
+                modelId,
+                StringComparison.Ordinal));
+
+        if (model?.Pricing is null ||
+            model.ObservedAtUtc is not { } observedAt ||
+            model.StaleAfterUtc is not { } staleAfter)
+        {
+            return null;
+        }
+
+        return new ExecutionPricingEvidence(
+            model.ModelId,
+            model.Pricing,
+            observedAt,
+            staleAfter);
+    }
+
     private void TrimDiscoveryCache(
         ProviderDiscoveryCacheKey preferredKey)
     {
