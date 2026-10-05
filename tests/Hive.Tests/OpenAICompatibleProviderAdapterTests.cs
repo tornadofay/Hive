@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using Hive.Core;
 using Hive.Providers.OpenAICompatible;
+using Microsoft.Extensions.AI;
 using Xunit;
 
 namespace Hive.Tests;
@@ -55,6 +56,85 @@ public sealed class OpenAICompatibleProviderAdapterTests
             StringComparison.Ordinal);
         Assert.Equal("Bearer", server.AuthorizationScheme);
         Assert.Equal("test-api-key", server.AuthorizationParameter);
+    }
+
+    [Fact]
+    public async Task CompleteChatAsync_PreservesProviderReportedTokenUsage()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                """{"id":"chatcmpl-usage","model":"usage-model","usage":{"prompt_tokens":120,"completion_tokens":45,"total_tokens":165,"prompt_tokens_details":{"cached_tokens":20},"completion_tokens_details":{"reasoning_tokens":10},"accepted_prediction_tokens":3},"choices":[{"message":{"role":"assistant","content":"usage response"}}]}"""));
+        using var client = new HttpClient();
+
+        var result = await CreateAdapter(server, client)
+            .CompleteChatAsync(CreateRequest());
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.NotNull(result.Value!.Usage);
+        Assert.Equal(120, result.Value.Usage!.InputTokenCount);
+        Assert.Equal(45, result.Value.Usage.OutputTokenCount);
+        Assert.Equal(165, result.Value.Usage.TotalTokenCount);
+        Assert.Equal(20, result.Value.Usage.CachedInputTokenCount);
+        Assert.Equal(10, result.Value.Usage.ReasoningTokenCount);
+        Assert.Equal(3, result.Value.Usage.AdditionalCounts["accepted_prediction_tokens"]);
+    }
+
+    [Fact]
+    public async Task CompleteChatAsync_MissingUsageRemainsAbsentForNeutralUnknownHandling()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                """{"id":"chatcmpl-no-usage","model":"usage-model","choices":[{"message":{"role":"assistant","content":"no usage response"}}]}"""));
+        using var client = new HttpClient();
+
+        var result = await CreateAdapter(server, client)
+            .CompleteChatAsync(CreateRequest());
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Null(result.Value!.Usage);
+    }
+
+    [Fact]
+    public async Task ChatClient_ExposesProviderReportedUsage()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                """{"id":"chatcmpl-client-usage","model":"usage-model","usage":{"prompt_tokens":120,"completion_tokens":45,"total_tokens":165,"prompt_tokens_details":{"cached_tokens":20},"completion_tokens_details":{"reasoning_tokens":10}},"choices":[{"message":{"role":"assistant","content":"chat client usage"}}]}"""));
+        using var client = new HttpClient();
+        using var chatClient = new OpenAICompatibleChatClient(
+            new OpenAICompatibleProviderAdapter(
+                client,
+                new OpenAICompatibleProviderOptions(server.BaseUri)),
+            "usage-model");
+
+        var response = await chatClient.GetResponseAsync(
+            [
+                new ChatMessage(
+                    ChatRole.User,
+                    "report your usage")
+            ]);
+
+        Assert.NotNull(response.Usage);
+        Assert.Equal(120, response.Usage!.InputTokenCount);
+        Assert.Equal(45, response.Usage.OutputTokenCount);
+        Assert.Equal(165, response.Usage.TotalTokenCount);
+        Assert.Equal(20, response.Usage.CachedInputTokenCount);
+        Assert.Equal(10, response.Usage.ReasoningTokenCount);
+    }
+
+    [Fact]
+    public async Task CompleteChatAsync_RejectsConflictingStandardUsageAliases()
+    {
+        await using var server = new LocalFakeHttpServer(
+            _ => LocalFakeHttpResponse.Json(
+                """{"usage":{"prompt_tokens":120,"input_tokens":121,"completion_tokens":45,"total_tokens":166},"choices":[{"message":{"role":"assistant","content":"response"}}]}"""));
+        using var client = new HttpClient();
+
+        var result = await CreateAdapter(server, client)
+            .CompleteChatAsync(CreateRequest());
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Null(result.Value!.Usage);
     }
 
     [Fact]
