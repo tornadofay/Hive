@@ -269,7 +269,7 @@ Verify: Add Provider, Refresh/reconciliation, automatic target creation/retireme
 
 Detailed implementation plan: [1.16 Follow-Up — Complete Provider Model Metadata Discovery](plan/Phase1/1.16-Follow-Up.md)
 
-Objective: extend Phase 1.16 discovery to preserve the complete useful provider-reported model profile and expose it through Advanced Provider Configuration **Model Information**.
+Objective: extend Phase 1.16 discovery to preserve the complete useful provider-reported model profile and expose it through the normal Provider Settings **Model Information** tab.
 
 Scope and non-goals: the Provider → ProviderAccount → ExecutionTarget graph remains unchanged; no durable Model resource, second provider transport architecture, Agent target-selection redesign, all-model probing, or background discovery is introduced.
 
