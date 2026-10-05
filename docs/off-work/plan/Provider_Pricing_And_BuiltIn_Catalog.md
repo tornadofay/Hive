@@ -1,8 +1,8 @@
 # Off-Work Plan — Provider Pricing, Built-In Catalog & Runtime Usage
 
-> **Status:** Slice 1 complete and verified; Slices 2–3 planned, not started  
+> **Status:** Slice 1 complete and verified; Slice 2 in progress; Slice 3 planned, not started  
 > **Roadmap impact:** None  
-> **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 1 is now closed; no Slice 2 authorization exists yet.  
+> **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 2 is explicitly authorized in the current task.  
 > **Prerequisite:** Phase 1.19A verification is now closed. This off-work plan remains separate and still requires explicit implementation authorization in a dedicated chat.
 
 ## Objective
@@ -132,9 +132,15 @@ Current catalog policy:
 
 - a normal-onboarding provider must have a safe universal default endpoint;
 - account/workspace/region/deployment-specific providers remain Advanced-only and do not receive invented universal endpoints;
+- provider-specific discovery endpoints remain Advanced-only when the shared `/models` discovery path is not established;
 - native/different-transport providers are Advanced-only and are explicitly marked as requiring a native integration;
 - provider-specific authentication is represented without falsely advertising an API-key-only workflow;
 - the catalog is static application metadata and does not create durable Provider resources.
+
+Current endpoint hardening decisions include:
+- Together AI uses the current documented `https://api.together.ai/v1` base URL for its standard OpenAI-compatible chat/model API;
+- AI21 remains an OpenAI-compatible catalog identity but has no built-in endpoint because the legacy Jamba/Studio API was sunset and the replacement platform endpoint is not established here as a universal Hive discovery endpoint;
+- MiniMax remains an OpenAI-compatible catalog identity but has no built-in endpoint because its model-listing behavior is not treated as a reliable universal discovery path for this shared adapter.
 
 The existing OpenAI-compatible discovery boundary now consumes the catalog's discovery profile for endpoint/format selection. Unknown catalog providers continue to use the conservative standard OpenAI-compatible discovery profile.
 
