@@ -12,8 +12,28 @@ public sealed class AgentExecutionRequest
         ResourceAccessContext accessContext,
         string userMessage,
         SecretMaterial? apiKey = null,
-        CorrelationId? correlationId = null,
-        ExecutionPricingEvidence? pricingEvidence = null)
+        CorrelationId? correlationId = null)
+        : this(
+            agent,
+            runtime,
+            target,
+            accessContext,
+            userMessage,
+            apiKey,
+            correlationId,
+            pricingEvidence: null)
+    {
+    }
+
+    public AgentExecutionRequest(
+        Agent agent,
+        RuntimeInstance runtime,
+        ExecutionTarget target,
+        ResourceAccessContext accessContext,
+        string userMessage,
+        SecretMaterial? apiKey,
+        CorrelationId? correlationId,
+        ExecutionPricingEvidence? pricingEvidence)
     {
         Agent = agent ?? throw new ArgumentNullException(nameof(agent));
         Runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
@@ -89,5 +109,7 @@ public sealed record AgentExecutionResult(
     EventId StartedEventId,
     EventId TerminalEventId,
     string? ProviderResponseId,
-    ExecutionTokenUsage Usage,
-    ExecutionPricingEvidence? PricingEvidence);
+    ExecutionTokenUsage Usage)
+{
+    public ExecutionPricingEvidence? PricingEvidence { get; init; }
+}
