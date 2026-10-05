@@ -689,6 +689,36 @@ public sealed class Phase116FollowUpTests
     }
 
     [WinFormsFact]
+    public async Task ModelInformationView_MaxZeroIncludesExplicitFreeEvidenceEvenWithPaidComparableBaseRates()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var fixture = CreateFixture(
+            secondModelFree: true,
+            secondModelHasPaidComparableBaseRates: true);
+
+        using var host = new Form { Size = new Size(1160, 760) };
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync();
+        Application.DoEvents();
+
+        Assert.Equal(2, view.ModelsList.Items.Count);
+
+        view.MaxPriceFilter.Value = 0;
+        Application.DoEvents();
+
+        Assert.Single(view.ModelsList.Items);
+        Assert.Equal("second-model", view.ModelsList.Items[0].Text);
+    }
+
+    [WinFormsFact]
     public async Task ModelInformationView_PriceRangeFilterCanShowOnlyFreeModels()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
@@ -1217,7 +1247,7 @@ public sealed class Phase116FollowUpTests
             modelType: "chat",
             operationalState: "active",
             pricing: new ProviderModelPricing(
-                secondModelFree
+                secondModelFree && !secondModelHasPaidComparableBaseRates
                     ? [
                         new ProviderModelPrice(
                             "input_token",
