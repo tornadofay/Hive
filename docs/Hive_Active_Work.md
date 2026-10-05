@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IMPLEMENTATION IN PROGRESS
+Status: VERIFICATION PENDING
 
 ## Authorized slice
 
@@ -18,18 +18,23 @@ Started from verified Slice 3 closure at `main` commit `fb451a065cd483e6e5462de6
 
 The four-slice provider completion plan remains off-roadmap and does not advance Phase 1.
 
-## Scope
+## Implementation complete
 
-- connect the completed normalized pricing evidence and runtime token usage through the existing provider/execution boundary;
-- preserve the Provider → ProviderAccount → ExecutionTarget ownership chain and applicable execution/resource correlation identities;
-- establish deterministic pricing applicability/evidence for the execution accounting handoff without silently guessing missing currency, quantity, or pricing variants;
-- preserve historical applicability rather than substituting current provider pricing;
-- harden cross-provider catalog/discovery/pricing routing and keep native/different-transport providers outside the OpenAI-compatible adapter;
-- harden malformed-response, missing-usage, provider-failure, cancellation, persistence-failure, and credential/security boundaries affected by the integrated path;
-- add focused deterministic integration/cross-provider regressions;
-- add/update `Providers / Runtime / Provider Completion Integration & Hardening` Example Host scenario;
-- update owning architecture/example/provider documentation as implementation proves the final boundary;
-- prepare the exact handoff contract into Phase 1.30 without implementing Phase 1.30.
+The Slice 4 implementation is complete within the authorized boundary.
+
+Implemented:
+- immutable `ExecutionPricingEvidence` for model-specific normalized pricing and freshness evidence;
+- additive execution-request/result integration that preserves existing public constructor/result compatibility;
+- fresh cached pricing handoff from Hive.Management into configured execution without live discovery from Coordination;
+- terminal-event persistence of pricing evidence alongside runtime usage;
+- stale pricing evidence suppression;
+- execution model/pricing identity validation;
+- provider-failure and cancellation hardening so pricing evidence is not fabricated into pre-response terminal outcomes;
+- focused provider-completion integration/staleness/contract regressions;
+- deterministic Example Host scenario at `Providers / Runtime / Provider Completion Integration & Hardening`;
+- architecture, example, UI-example, and off-work plan documentation.
+
+No Phase 1.30 behavior or later roadmap slice was implemented.
 
 ## Explicit exclusions
 
@@ -60,6 +65,6 @@ Build result is not to be claimed unless the developer reports it separately.
 
 ## Verification gate
 
-When implementation is complete, return Active Work to `VERIFICATION PENDING` and require developer verification. Any in-scope failure or compile error must be recorded as `VERIFICATION FAILED / REMEDIATION REQUIRED` before same-slice remediation.
+Developer verification is now required. Any in-scope failure or compile error must be recorded as `VERIFICATION FAILED / REMEDIATION REQUIRED` before same-slice remediation. On successful verification, archive the closure evidence and return Active Work to `NO ACTIVE WORK`.
 
 Do not start any later slice or Phase 1.30 work from this authorization.
