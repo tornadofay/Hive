@@ -810,8 +810,10 @@ public sealed class AgentExecutionService
                 startedEvent.EventId,
                 terminalEvent.EventId,
                 providerResponseId,
-                usage,
-                pricingEvidence));
+                usage)
+            {
+                PricingEvidence = pricingEvidence
+            });
     }
 
     private async Task<Result<EventAppendResult>> PersistTerminalEventAsync(
