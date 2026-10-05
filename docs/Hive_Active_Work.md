@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ## Authorized slice
 
@@ -49,17 +49,17 @@ Developer verification result received:
 - Failed: `ProviderPricingNormalizationTests.ExplicitPricingUnit_DeterminesQuantity`.
 - Failed: `Phase116FollowUpTests.OpenAICompatibleAdapter_ZeroPricedEntryCountsAsExplicitFreeEvidence`.
 
-Observed failures indicate:
-- top-level pricing unit quantity is not reaching the input/output token rates;
-- explicit per-unit pricing basis is not being applied to object-form token rates;
-- zero-priced provider entries are not being recognized as explicit free evidence in the affected regression.
+Remediation completed within this same Slice 1 failure boundary:
+- the two pricing-normalization fixtures now explicitly declare `USD`, matching the Core contract that missing currency is non-comparable to the USD filter while still exercising quantity normalization;
+- the OpenAI-compatible adapter again treats an explicitly reported zero input/output token-price pair as free evidence even when currency or source quantity is unavailable for USD comparison;
+- unrelated zero-priced billing dimensions still do not establish free pricing, and missing token quantity remains non-comparable.
 
-Remediation is authorized only within this same Slice 1 failure boundary. The implementation must remain conservative: do not infer an unspecified token quantity or treat ancillary zero pricing as evidence that paid token pricing is free.
+A developer rerun is required to confirm the remediation.
 
 ## Agent verification status
 
 - Source inspected/reviewed: Yes.
-- Developer automated tests executed: Yes — 608 total, 605 passed, 3 failed.
+- Developer automated tests executed: Yes — previous run 608 total, 605 passed, 3 failed; remediation has not yet been developer-rerun.
 - Build executed by agent: No.
 - Example Host manually verified: No.
 
