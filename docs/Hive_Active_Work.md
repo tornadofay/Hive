@@ -1,21 +1,65 @@
 # Hive — Active Work
 
-Status: NO ACTIVE WORK
+Status: IMPLEMENTATION IN PROGRESS
 
-## Current state
+## Authorized slice
 
-The previously authorized **Off-work provider completion — Slice 3: Runtime Token Usage Foundation** is complete and verified.
+**Off-work provider completion — Slice 4: Provider Completion Integration & Hardening**
 
-Verification is archived at:
-- `docs/verification/phase-1/off-work-provider-runtime-usage-closure-2026-10-05.md`
+Explicit user authorization: start the next off-work slice, Slice 4.
 
-The verified final developer evidence was:
-- full `Hive.Tests`: **632/632 passed, 0 failed, 0 skipped**;
-- deterministic Example Host: `Providers / Runtime / Token Usage Foundation` — manually exercised successfully;
-- provider-reported usage was classified as **Actual** and persisted with the terminal execution event;
-- no external provider call was used by the example fixture;
-- migration reported schema **14** applied.
+## Checkpoint
 
-No implementation slice is currently authorized.
+Started from verified Slice 3 closure at `main` commit `fb451a065cd483e6e5462de6ad9eff2eb83e5505`.
 
-Do not start or imply Slice 4, Phase 1.20+, Phase 1.30, or any other future work from this document. A new implementation slice requires separate explicit authorization.
+## Owning plan
+
+`docs/off-work/plan/Provider_Completion_Integration_And_Hardening.md`
+
+The four-slice provider completion plan remains off-roadmap and does not advance Phase 1.
+
+## Scope
+
+- connect the completed normalized pricing evidence and runtime token usage through the existing provider/execution boundary;
+- preserve the Provider → ProviderAccount → ExecutionTarget ownership chain and applicable execution/resource correlation identities;
+- establish deterministic pricing applicability/evidence for the execution accounting handoff without silently guessing missing currency, quantity, or pricing variants;
+- preserve historical applicability rather than substituting current provider pricing;
+- harden cross-provider catalog/discovery/pricing routing and keep native/different-transport providers outside the OpenAI-compatible adapter;
+- harden malformed-response, missing-usage, provider-failure, cancellation, persistence-failure, and credential/security boundaries affected by the integrated path;
+- add focused deterministic integration/cross-provider regressions;
+- add/update `Providers / Runtime / Provider Completion Integration & Hardening` Example Host scenario;
+- update owning architecture/example/provider documentation as implementation proves the final boundary;
+- prepare the exact handoff contract into Phase 1.30 without implementing Phase 1.30.
+
+## Explicit exclusions
+
+- Phase 1.30 metrics, budgets, OpenTelemetry, quota/rate-limit enforcement, reporting, or aggregation UI;
+- tokenizer/estimation engine;
+- provider billing/reconciliation APIs and account-level billing adjustments;
+- new native provider transports;
+- Agent target-selection redesign;
+- new durable Model resource;
+- unrelated UI/control cleanup;
+- roadmap advancement or activation of any subsequent slice.
+
+## Required verification
+
+```
+Tests to run:
+- focused provider pricing/usage integration and cross-provider regression tests;
+- affected AgentExecutionIntegrationTests;
+- affected ProviderPricingNormalizationTests;
+- affected BuiltInProviderCatalogTests and ProviderModelMetadataProviderTests;
+- full Hive.Tests.
+
+Example to run:
+Providers / Runtime / Provider Completion Integration & Hardening — Hive.Example.WinForms
+```
+
+Build result is not to be claimed unless the developer reports it separately.
+
+## Verification gate
+
+When implementation is complete, return Active Work to `VERIFICATION PENDING` and require developer verification. Any in-scope failure or compile error must be recorded as `VERIFICATION FAILED / REMEDIATION REQUIRED` before same-slice remediation.
+
+Do not start any later slice or Phase 1.30 work from this authorization.
