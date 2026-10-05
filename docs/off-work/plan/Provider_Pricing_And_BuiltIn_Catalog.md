@@ -7,11 +7,12 @@
 
 ## Objective
 
-Before the Hive provider portion is considered finished, complete three bounded off-roadmap provider-platform tasks:
+Before the Hive provider portion is considered finished, complete four bounded off-roadmap provider-platform tasks:
 
 1. make model pricing normalization explicit and provider-correct;
 2. complete the built-in provider catalog for the major providers Hive should know natively;
-3. establish provider-reported runtime usage as the authoritative usage input for the later Phase 1.30 metrics/budget/cost boundary.
+3. establish provider-reported runtime usage as the authoritative usage input for the later Phase 1.30 metrics/budget/cost boundary;
+4. integrate and harden the completed pricing, catalog, and runtime-usage boundaries and prepare the exact handoff into Phase 1.30.
 
 The work must remain compatible with the existing Provider → ProviderAccount → ExecutionTarget architecture and must not modify Agent target-selection behavior.
 
@@ -310,6 +311,48 @@ Slice 3 was explicitly authorized on 2026-10-05 and completed within this bounde
 Final developer verification: full `Hive.Tests` passed 632/632 with 0 failures and 0 skipped. The matching `Hive.Example.WinForms` scenario at `Providers / Runtime / Token Usage Foundation` was manually exercised with provider-reported Actual usage, cached/reasoning/additional dimensions, and durable terminal-event persistence. No external provider call was used; the example reported migration schema 14. Phase 1.30 reporting, metrics, budgets, OpenTelemetry, and quota enforcement remain outside this slice.
 
 The implementation adds a Hive-owned `ExecutionTokenUsage` contract, preserves OpenAI-compatible provider-reported usage through the current ChatClient / MAF boundary, persists usage inside the terminal execution event, and adds focused provider/core/execution regressions plus the deterministic Example Host scenario at `Providers / Runtime / Token Usage Foundation`.
+
+## Slice 4 — Provider Completion Integration & Hardening — Authorized; implementation in progress
+
+Slice 4 is the final bounded off-work provider-completion slice. It was explicitly authorized on 2026-10-05 after Slice 3 verification. It integrates and hardens the already-completed pricing, built-in catalog, and runtime-usage foundations without advancing the main Phase 1 roadmap.
+
+Detailed plan: [Provider Completion Integration & Hardening](Provider_Completion_Integration_And_Hardening.md)
+
+### Scope
+
+- connect normalized pricing evidence and runtime usage at the existing provider/execution boundary without creating a second execution or accounting pipeline;
+- preserve deterministic provider/model/resource attribution and the existing Provider → ProviderAccount → ExecutionTarget ownership chain;
+- harden cross-provider behavior using the built-in catalog's transport, discovery, authentication, endpoint, and pricing-normalization classifications;
+- add security, cancellation, malformed-response, missing-usage, provider-failure, and persistence-boundary regressions where the integrated path is affected;
+- ensure pricing applicability/evidence is not silently guessed, discarded, or replaced by current-provider values during execution accounting handoff;
+- keep native/different-transport providers outside the OpenAI-compatible adapter;
+- add the required deterministic Example Host integration scenario and owning documentation;
+- document the exact handoff contract into Phase 1.30 without implementing Phase 1.30.
+
+### Explicit exclusions
+
+- Phase 1.30 metrics, budgets, OpenTelemetry, quota/rate-limit enforcement, or reporting/aggregation UI;
+- tokenizer/estimation engine;
+- provider billing/reconciliation APIs or account-level billing adjustments;
+- new native provider transports;
+- Agent target-selection redesign;
+- new durable Model resource;
+- unrelated UI/control cleanup;
+- new roadmap slice activation.
+
+### Required verification
+
+```
+Tests to run:
+- focused provider pricing/usage integration and cross-provider regression tests;
+- affected AgentExecutionIntegrationTests and provider metadata/catalog tests;
+- full Hive.Tests.
+
+Example to run:
+Providers / Runtime / Provider Completion Integration & Hardening — Hive.Example.WinForms
+```
+
+Slice 4 remains implementation-only until the developer supplies the required verification results. A verification failure must return Active Work to VERIFICATION PENDING before remediation.
 
 ## Workstream 8 — Runtime Token Usage & Cost Accounting
 
