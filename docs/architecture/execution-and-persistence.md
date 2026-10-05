@@ -141,9 +141,15 @@ The normalized model metadata profile covers all applicable fields from the foll
    - input and output pricing;
    - separately priced reasoning/thinking tokens where reported;
    - cached input, image/audio, request, or other provider-defined billing units where reported;
-   - explicit free/zero-cost indication.
+   - explicit free/zero-cost indication;
+   - normalized source unit quantity and currency qualification;
+   - bounded pricing conditions/variants where provider evidence requires them.
 
-   Free pricing evidence requires an explicit zero-cost/free indication for the relevant provider-reported billable unit(s). Free pricing evidence does not guarantee zero user/account cost under every provider plan, routing arrangement, quota, or policy. Missing pricing is **not** interpreted as free. Pricing is discovery evidence, not a cost-policy decision.
+   Pricing normalization occurs at provider discovery ingestion. A comparable token rate must have an explicitly established source quantity and qualifying USD currency. Supported source bases include per-token, per-1K-token, and per-1M-token pricing; an unresolved source quantity or non-qualifying currency may remain observational metadata but is non-comparable to the canonical USD token filter. Hive must not infer a token quantity from the raw numeric value.
+
+   The canonical token comparison uses normalized USD input/output token rates per 1M tokens and selects a deterministic applicable pricing variant. It must not silently choose an arbitrary variant when applicability is unknown.
+
+   Free pricing evidence requires explicit provider evidence or complete normalized comparable input/output token rates that are both exactly zero. A zero-priced unrelated billing dimension, such as image or request charges, does not establish that the model is free. Free pricing evidence does not guarantee zero user/account cost under every provider plan, routing arrangement, quota, or policy. Missing pricing is **not** interpreted as free. Pricing is discovery evidence, not a cost-policy decision.
 
 7. **Operational metadata**
    - availability;
