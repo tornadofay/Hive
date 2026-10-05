@@ -535,6 +535,9 @@ public sealed class AgentExecutionIntegrationTests
             tenant);
 
         var pricingEvidence = new ExecutionPricingEvidence(
+            target.ProviderId,
+            target.ProviderAccountId,
+            target.Endpoint,
             target.Model!,
             new ProviderModelPricing(
                 [
@@ -1190,6 +1193,9 @@ public sealed class AgentExecutionIntegrationTests
         using var cancellation = new CancellationTokenSource();
 
         var pricingEvidence = new ExecutionPricingEvidence(
+            target.ProviderId,
+            target.ProviderAccountId,
+            target.Endpoint,
             target.Model!,
             new ProviderModelPricing(
                 [
