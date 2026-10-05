@@ -1,6 +1,10 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+
+### Current verification failure — 2026-10-05
+
+Developer-reported compile errors in `src/Hive.Host.WinForms/HiveModelInformationSettingsView.cs` are inside the current Model Information UI slice. The failure boundary is limited to restoring the missing `GetCapabilityState`, `FormatTokenLimit`, and `FormatDateTime` helpers and resolving the `SystemFonts.MessageBoxFont` nullable warning in `AddInfoRow`. No redesign, filter, provider, persistence, or roadmap changes are authorized by this failure.
 
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
