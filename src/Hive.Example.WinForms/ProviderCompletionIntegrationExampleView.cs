@@ -64,7 +64,7 @@ internal sealed class ProviderCompletionIntegrationExampleView : UserControl
     private async Task RunExampleAsync(CancellationToken cancellationToken)
     {
         var database = HiveDatabaseOptions.LocalDevelopment(
-            "Hive_Example_ProviderCompletionIntegration");
+            $"Hive_Example_ProviderCompletionIntegration_{Guid.NewGuid():N}");
 
         var migration = await new HiveDatabaseMigrator(database).MigrateAsync(
             cancellationToken);
