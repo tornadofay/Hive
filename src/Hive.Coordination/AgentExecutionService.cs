@@ -198,6 +198,7 @@ public sealed class AgentExecutionService
             var responseMessage = response.Messages.LastOrDefault();
             var responseText = responseMessage?.Text;
             var providerResponseId = response.ResponseId;
+            var usage = NormalizeUsage(response.Usage);
 
             if (string.IsNullOrWhiteSpace(responseText))
             {
@@ -211,7 +212,8 @@ public sealed class AgentExecutionService
                             "hive.agent.execution.empty-response",
                             ErrorCategory.Serialization,
                             "The provider returned no usable agent response text."),
-                        CancellationToken.None)
+                        CancellationToken.None,
+                        usage)
                     .ConfigureAwait(false);
             }
 
@@ -228,6 +230,7 @@ public sealed class AgentExecutionService
                     startedEvent,
                     responseText,
                     providerResponseId,
+                    usage,
                     CancellationToken.None)
                 .ConfigureAwait(false);
         }
@@ -274,6 +277,86 @@ public sealed class AgentExecutionService
                     CancellationToken.None)
                 .ConfigureAwait(false);
         }
+    }
+
+    private static ExecutionTokenUsage NormalizeUsage(
+        UsageDetails? usage)
+    {
+        if (usage is null)
+            return ExecutionTokenUsage.Unknown;
+
+        var additionalCounts =
+            new Dictionary<string, long>(StringComparer.Ordinal);
+
+        if (usage.AdditionalCounts is not null)
+        {
+            foreach (var pair in usage.AdditionalCounts)
+            {
+                if (additionalCounts.Count >=
+                    ExecutionTokenUsage.MaxAdditionalCountEntries)
+                {
+                    break;
+                }
+
+                additionalCounts[pair.Key] = pair.Value;
+            }
+        }
+
+        var hasKnownUsage =
+            usage.InputTokenCount is not null ||
+            usage.OutputTokenCount is not null ||
+            usage.TotalTokenCount is not null ||
+            usage.CachedInputTokenCount is not null ||
+            usage.ReasoningTokenCount is not null ||
+            additionalCounts.Count != 0;
+
+        if (!hasKnownUsage)
+            return ExecutionTokenUsage.Unknown;
+
+        return new ExecutionTokenUsage(
+            TokenUsageEvidence.Actual,
+            usage.InputTokenCount,
+            usage.OutputTokenCount,
+            usage.TotalTokenCount,
+            usage.CachedInputTokenCount,
+            usage.ReasoningTokenCount,
+            additionalCounts);
+    }
+
+    private static object CreateUsagePayload(
+        AgentExecutionRequest request,
+        Execution execution,
+        ExecutionTokenUsage usage,
+        string? providerResponseId)
+    {
+        var accessContext = request.AccessContext;
+
+        return new
+        {
+            evidence = usage.Evidence.ToString(),
+            inputTokenCount = usage.InputTokenCount,
+            outputTokenCount = usage.OutputTokenCount,
+            totalTokenCount = usage.TotalTokenCount,
+            cachedInputTokenCount = usage.CachedInputTokenCount,
+            reasoningTokenCount = usage.ReasoningTokenCount,
+            additionalCounts = usage.AdditionalCounts,
+            providerId = request.Target.ProviderId.Value,
+            providerAccountId = request.Target.ProviderAccountId.Value,
+            executionTargetId = request.Target.Id.Value,
+            model = request.Target.Model,
+            deployment = request.Target.Deployment,
+            agentId = execution.AgentId.Value,
+            runtimeId = execution.RuntimeId.Value,
+            executionId = execution.Id.Value,
+            deploymentId = accessContext.DeploymentId?.Value,
+            tenantId = accessContext.TenantId?.Value,
+            principalId = accessContext.PrincipalId?.Value,
+            userId = accessContext.UserId?.Value,
+            sessionId = accessContext.SessionId?.Value,
+            workspaceId = accessContext.WorkspaceId?.Value,
+            hiveId = accessContext.HiveId?.Value,
+            providerResponseId
+        };
     }
 
     private static Result ValidateRequest(
@@ -480,8 +563,11 @@ public sealed class AgentExecutionService
         EventEnvelope startedEvent,
         string responseText,
         string? providerResponseId,
+        ExecutionTokenUsage usage,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(usage);
+
         var envelope = CreateLifecycleEvent(
             "agent.execution.succeeded",
             correlationId,
@@ -494,7 +580,12 @@ public sealed class AgentExecutionService
                 targetId = request.Target.Id.Value,
                 status = execution.Status.ToString(),
                 responseLength = responseText.Length,
-                providerResponseId
+                providerResponseId,
+                usage = CreateUsagePayload(
+                    request,
+                    execution,
+                    usage,
+                    providerResponseId)
             });
 
         return await PersistTerminalAsync(
@@ -505,6 +596,7 @@ public sealed class AgentExecutionService
                 envelope,
                 responseText,
                 providerResponseId,
+                usage,
                 correlationId,
                 cancellationToken)
             .ConfigureAwait(false);
@@ -517,7 +609,8 @@ public sealed class AgentExecutionService
         CorrelationId correlationId,
         EventEnvelope startedEvent,
         Error error,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ExecutionTokenUsage? usage = null)
     {
         var failed = execution.Fail();
 
@@ -536,7 +629,14 @@ public sealed class AgentExecutionService
                 targetId = request.Target.Id.Value,
                 status = failed.Value!.Status.ToString(),
                 errorCode = error.Code,
-                errorCategory = error.Category.ToString()
+                errorCategory = error.Category.ToString(),
+                usage = usage is null
+                    ? null
+                    : CreateUsagePayload(
+                        request,
+                        execution,
+                        usage,
+                        providerResponseId: null)
             });
 
         var persisted = await PersistTerminalEventAsync(
@@ -596,6 +696,7 @@ public sealed class AgentExecutionService
         EventEnvelope terminalEvent,
         string responseText,
         string? providerResponseId,
+        ExecutionTokenUsage usage,
         CorrelationId correlationId,
         CancellationToken cancellationToken)
     {
@@ -616,7 +717,8 @@ public sealed class AgentExecutionService
                 correlationId,
                 startedEvent.EventId,
                 terminalEvent.EventId,
-                providerResponseId));
+                providerResponseId,
+                usage));
     }
 
     private async Task<Result<EventAppendResult>> PersistTerminalEventAsync(
