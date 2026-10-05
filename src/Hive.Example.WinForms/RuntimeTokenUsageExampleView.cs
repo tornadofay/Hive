@@ -30,7 +30,7 @@ internal sealed class RuntimeTokenUsageExampleView : UserControl
         };
 
         _surface.SetInformation(
-            "Runs one Base Agent request against a deterministic loopback provider response containing provider-reported input, output, total, cached-input, and reasoning token usage, then reads the same usage back from the immutable execution event.",
+            "Runs one Base Agent request against a deterministic loopback provider response containing provider-reported input, output, total, cached-input, and reasoning token usage, then reports the normalized usage returned by the execution boundary.",
             "The example proves the provider-to-execution-to-persistence usage boundary without a vendor account, external provider, tokenizer, billing service, or reporting subsystem.",
             "Providers / Runtime / Token Usage Foundation",
             "Uses a deterministic local HTTP server and the existing Hive execution event persistence boundary.");
@@ -138,7 +138,6 @@ internal sealed class RuntimeTokenUsageExampleView : UserControl
             Provider credentials: none
             External provider call: no (loopback fixture)
             Tokenizer estimation: no
-            Durable usage evidence: yes
             Migration: {migration.Value!.Status}; schema={migration.Value.CurrentSchemaVersion}
             """);
     }
