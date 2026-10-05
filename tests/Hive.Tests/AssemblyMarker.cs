@@ -1,6 +1,6 @@
 using Xunit;
 
-[assembly: CollectionBehavior(DisableTestParallelization = true)]
+[assembly: CollectionBehavior(DisableTestParallelization = false)]
 
 namespace Hive_Tests;
 
