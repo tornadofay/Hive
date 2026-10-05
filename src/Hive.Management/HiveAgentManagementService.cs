@@ -396,6 +396,28 @@ internal sealed class HiveAgentManagementService : HiveManagementServiceBase
                     "The configured Provider is not active."));
         }
 
+        var builtInDefinition = BuiltInProviderCatalog.Find(
+            provider.Value.Key);
+
+        if (builtInDefinition?.RequiresNativeIntegration == true)
+        {
+            return Result<AgentExecutionResult>.Failure(
+                Error.Unsupported(
+                    "hive.management.agent-execution.native-provider-unsupported",
+                    $"Provider '{provider.Value.Key}' requires a native integration and cannot be executed through the OpenAI-compatible Agent execution path."));
+        }
+
+        if (!string.Equals(
+                provider.Value.TransportKind,
+                "openai-compatible",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return Result<AgentExecutionResult>.Failure(
+                Error.Unsupported(
+                    "hive.management.agent-execution.unsupported-provider-transport",
+                    $"Provider transport '{provider.Value.TransportKind}' is not supported by the configured OpenAI-compatible Agent execution path."));
+        }
+
         var account = await _providerResources
             .GetProviderAccountAsync(
                 target.Value.ProviderAccountId,
