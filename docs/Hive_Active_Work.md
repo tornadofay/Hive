@@ -25,7 +25,7 @@ Verification remains pending developer rerun. No provider, persistence, filter-s
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
 Authorized: 2026-10-05 (explicit maintainer request in a dedicated chat)
-Checkpoint: `05a9b9c1` — "Synchronize Model Information details after tab content changes"
+Checkpoint: `fa695db9` — "Format model limits as readable lines"
 Roadmap impact: None. Bounded off-roadmap work. Does not activate or advance any Phase 1 roadmap slice.
 
 ### Maintainer intent
