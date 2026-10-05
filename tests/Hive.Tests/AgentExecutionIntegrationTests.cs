@@ -560,8 +560,10 @@ public sealed class AgentExecutionIntegrationTests
                 accessContext,
                 "Trigger provider failure.",
                 apiKey: null,
-                correlationId: null,
-                pricingEvidence: pricingEvidence));
+                correlationId: null)
+            {
+                PricingEvidence = pricingEvidence
+            });
 
         Assert.True(result.IsFailure);
         Assert.NotNull(result.Error);
@@ -1213,8 +1215,10 @@ public sealed class AgentExecutionIntegrationTests
                 accessContext,
                 "Cancel this request.",
                 apiKey: null,
-                correlationId: null,
-                pricingEvidence: pricingEvidence),
+                correlationId: null)
+            {
+                PricingEvidence = pricingEvidence
+            },
             cancellation.Token);
 
         await server.RequestObserved.Task.WaitAsync(
