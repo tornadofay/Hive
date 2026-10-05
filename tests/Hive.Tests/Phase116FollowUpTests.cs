@@ -615,7 +615,6 @@ public sealed class Phase116FollowUpTests
         var detailsText = CollectVisibleControlText(view.DetailsContent);
 
         Assert.Contains("rich-model", detailsText);
-        Assert.Contains("example-family", detailsText);
         Assert.Contains("text, image, audio", detailsText);
         Assert.Equal(
             ["Overview", "Details", "Technical"],
@@ -631,12 +630,8 @@ public sealed class Phase116FollowUpTests
         Assert.Contains("Structured: Supported", detailsText);
         Assert.DoesNotContain("✕", detailsText);
         Assert.DoesNotContain("✓", detailsText);
-        Assert.Contains("medium", detailsText);
-        Assert.Contains("Limits", detailsText);
-        Assert.Contains("131,072 tokens", detailsText);
         Assert.Contains("Price / 1M", detailsText);
         Assert.Contains("5.00", detailsText);
-        Assert.Contains("Operational", detailsText);
         Assert.DoesNotContain("deterministic-fixture", detailsText);
 
         view.DetailsTabs.SelectedIndex = 1;
@@ -645,7 +640,10 @@ public sealed class Phase116FollowUpTests
         var modelDetailsText = CollectVisibleControlText(view.ModelDetailsTab);
         Assert.NotEmpty(view.ModelDetailsTab.Controls);
         Assert.Contains("ID: rich-model", modelDetailsText);
+        Assert.Contains("example-family", modelDetailsText);
         Assert.Contains("Reasoning: Supported", modelDetailsText);
+        Assert.Contains("medium", modelDetailsText);
+        Assert.Contains("Limits", modelDetailsText);
         Assert.Contains("131,072 tokens", modelDetailsText);
         Assert.Empty(view.TechnicalDetailsTab.Controls);
 
@@ -695,7 +693,10 @@ public sealed class Phase116FollowUpTests
         view.ModelsList.Items[0].Focused = true;
         Application.DoEvents();
 
-        var detailsText = CollectVisibleControlText(view.DetailsContent);
+        view.DetailsTabs.SelectedIndex = 2;
+        Application.DoEvents();
+
+        var detailsText = CollectVisibleControlText(view.TechnicalDetailsTab);
 
         Assert.Contains("Tiered rates:", detailsText);
         Assert.Contains("long-context", detailsText);
@@ -1042,6 +1043,9 @@ public sealed class Phase116FollowUpTests
         var secondItem = view.ModelsList.Items[1];
 
         Assert.NotEqual(firstItem.Text, secondItem.Text);
+
+        view.DetailsTabs.SelectedIndex = 1;
+        Application.DoEvents();
 
         var detailControlsBeforeSelection = view.DetailsContent.Controls
             .Cast<Control>()
