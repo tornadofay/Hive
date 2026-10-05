@@ -68,4 +68,5 @@ public sealed record AgentExecutionResult(
     CorrelationId CorrelationId,
     EventId StartedEventId,
     EventId TerminalEventId,
-    string? ProviderResponseId);
+    string? ProviderResponseId,
+    ExecutionTokenUsage Usage);
