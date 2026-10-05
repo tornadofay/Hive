@@ -188,6 +188,12 @@ The normal Settings product experience is provider-centric rather than resource-
 
 The built-in provider catalog is static application metadata describing supported provider choices, transport/authentication requirements, default discovery endpoint behavior, and any provider-specific onboarding requirements. Its authentication metadata distinguishes **No credential**, **Optional credential**, and **Required credential**. A catalog entry is not itself a persisted Provider resource.
 
+Each built-in definition also records the intended integration boundary, discovery profile, discovery endpoint classification, and pricing-normalization profile. OpenAI-compatible entries use the shared `openai-compatible` transport; providers that require a different/native integration are explicitly classified as `NativeIntegrationRequired` and are not routed through the shared adapter merely because they appear in the catalog.
+
+The built-in inventory includes the current V1 entries plus the off-work provider catalog set: OpenAI, Groq, OpenRouter, Cerebras, NVIDIA, Google Gemini, Ollama, LM Studio, Cloudflare, DeepSeek, Qwen / Alibaba Cloud Model Studio, Kimi / Moonshot AI, xAI, Mistral AI, Cohere, Fireworks AI, Together AI, Perplexity, MiniMax, AI21 Labs, SambaNova, DeepInfra, Nebius AI Studio, SiliconFlow, Z.ai / GLM, StepFun, Baidu Qianfan / ERNIE, Tencent Hunyuan, ByteDance Volcengine / Doubao, Writer, Anthropic, AWS Bedrock, Azure OpenAI, Google Vertex AI, and Replicate.
+
+A normal-onboarding entry must have a safe default endpoint. Providers whose endpoints depend on workspace, account, region, deployment, or provider-native setup remain Advanced-only and receive no invented universal endpoint. Provider-specific credentials are likewise represented as required/provider-specific metadata rather than being exposed through the normal API-key-only onboarding workflow.
+
 Normal onboarding is:
 
 ```text
