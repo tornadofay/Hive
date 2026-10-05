@@ -22,14 +22,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         public override string ToString() => Value.DisplayName;
     }
 
-    private enum ModelCapabilityFilterState
-    {
-        Any,
-        Supported,
-        Unsupported,
-        Unknown
-    }
-
     private sealed record CapabilityFilterChoice(
         CapabilityKey? Key,
         string DisplayName)
@@ -734,7 +726,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         var highestComparablePrice =
             _snapshot.Models
-                .Select(GetComparableTokenPricePerMillion)
+                .Select(ModelInformationFilter.GetComparableTokenPricePerMillion)
                 .Where(static price => price is not null)
                 .Select(static price => price!.Value)
                 .DefaultIfEmpty(0m)
@@ -827,66 +819,34 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         }
     }
 
-    private bool MatchesFilters(ProviderModelMetadata model)
+    private bool MatchesFilters(ProviderModelMetadata model) =>
+        ModelInformationFilter.Matches(model, CaptureFilterCriteria());
+
+    /// <summary>
+    /// Snapshots live control state into an immutable criteria value so the
+    /// filter rule itself never reads a control.
+    /// </summary>
+    private ModelFilterCriteria CaptureFilterCriteria()
     {
-        var price = GetComparableTokenPricePerMillion(model);
-        var minPrice = _minPriceFilter.Value / (decimal)PriceSliderScale;
-        var maxPrice = _maxPriceFilter.Value / (decimal)PriceSliderScale;
+        var maximumPrice = _maxPriceFilter.Maximum / (decimal)PriceSliderScale;
+        var minimumPrice = _minPriceFilter.Value / (decimal)PriceSliderScale;
+        var selectedMaximumPrice =
+            _maxPriceFilter.Value / (decimal)PriceSliderScale;
 
-        if (maxPrice == 0m)
-        {
-            if (!IsFreeModel(model, price))
-                return false;
-        }
-        else if (price is not null)
-        {
-            if (price.Value < minPrice ||
-                price.Value > maxPrice)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            var fullRangeMaximum =
-                _maxPriceFilter.Maximum / (decimal)PriceSliderScale;
+        var capabilityKey =
+            (_capabilityFilter.SelectedItem as CapabilityFilterChoice)?.Key;
 
-            if (minPrice > 0m ||
-                maxPrice < fullRangeMaximum)
-            {
-                return false;
-            }
+        var capabilityState =
+            (_capabilityStateFilter.SelectedItem as StateFilterChoice)?.State ??
+            ModelCapabilityFilterState.Any;
 
-            return true;
-        }
-
-        if (_capabilityFilter.SelectedItem is not CapabilityFilterChoice
-            {
-                Key: { } key
-            })
-        {
-            return true;
-        }
-
-        var desiredState = _capabilityStateFilter.SelectedItem is StateFilterChoice state
-            ? state.State
-            : ModelCapabilityFilterState.Any;
-
-        if (desiredState == ModelCapabilityFilterState.Any)
-            return true;
-
-        var actual = model.DiscoveredCapabilities
-            .FirstOrDefault(item => item.Capability == key)
-            ?.State;
-
-        return desiredState switch
-        {
-            ModelCapabilityFilterState.Supported => actual == CapabilityState.Supported,
-            ModelCapabilityFilterState.Unsupported => actual == CapabilityState.Unsupported,
-            ModelCapabilityFilterState.Unknown =>
-                actual == CapabilityState.Unknown || actual is null,
-            _ => true
-        };
+        return new ModelFilterCriteria(
+            minimumPrice,
+            selectedMaximumPrice,
+            IsFullPriceRange: minimumPrice <= 0m &&
+                             selectedMaximumPrice >= maximumPrice,
+            capabilityKey,
+            capabilityState);
     }
 
     private static IReadOnlyList<CapabilityFilterChoice> GetCapabilityFilterChoices() =>
@@ -1335,10 +1295,15 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         }
         else
         {
-            var comparablePrice = GetComparableTokenPricePerMillion(model);
+            var comparablePrice =
+                ModelInformationFilter.GetComparableTokenPricePerMillion(model);
+            var isFree =
+                ModelInformationFilter.IsFreeModel(model, comparablePrice);
+
             var pricingLines = new List<string>
             {
                 $"Explicit free evidence: {(model.Pricing.ExplicitFreeEvidence ? "True" : "False")}",
+                $"Filter result: {(isFree ? "Free" : "Not free")}",
                 $"Filter-comparable input/output token rate (highest): {(comparablePrice is { } value ? $"${value:0.00} / 1M tokens" : "—")}"
             };
 
@@ -1403,35 +1368,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _detailsTitle.Text = title;
         _detailsBody.Text = body;
         ResizeDetailsContent();
-    }
-
-    private static bool IsFreeModel(
-        ProviderModelMetadata model,
-        decimal? comparablePrice) =>
-        model.Pricing?.ExplicitFreeEvidence == true ||
-        model.Pricing?.HasZeroComparableInputOutputTokenPricing == true ||
-        comparablePrice == 0m;
-
-    private static decimal? GetComparableTokenPricePerMillion(
-        ProviderModelMetadata model)
-    {
-        ArgumentNullException.ThrowIfNull(model);
-
-        return model.Pricing?.TryGetComparableTokenPricePerMillion()
-            ?? (
-                model.Pricing?.ExplicitFreeEvidence == true &&
-                model.Pricing.Prices.All(
-                    static price =>
-                        !string.Equals(
-                            price.BillingUnit,
-                            "input_token",
-                            StringComparison.OrdinalIgnoreCase) &&
-                        !string.Equals(
-                            price.BillingUnit,
-                            "output_token",
-                            StringComparison.OrdinalIgnoreCase))
-                    ? 0m
-                    : null);
     }
 
     private static void AppendDetailSection(

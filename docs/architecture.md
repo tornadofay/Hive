@@ -149,6 +149,8 @@ Absence of model metadata means **not reported / Unknown**, not zero capabilitie
 
 Discovery metadata is operational evidence and may be cached with freshness rules. It is not configuration, authorization, or a replacement for configured `ExecutionTarget` state. A matching discovered model profile may be consumed by UI, Management, selection, and automatic reconciliation, but those consumers must treat the profile as observed evidence rather than as durable target configuration. Later phases may choose to persist a reusable model catalog if a durable cross-restart catalog requirement is demonstrated; that would be a separate architecture decision and must not be introduced implicitly by provider discovery.
 
+Within the OpenAI-compatible provider boundary, HTTP transport and model-catalog parsing are separate responsibilities. `OpenAICompatibleProviderAdapter` owns transport: request construction, bounded request/response body handling, credential presentation, timeout/cancellation, status mapping, and response reading. Model-catalog parsing is owned by `Hive.Providers.OpenAICompatible.ModelCatalog`, where each provider catalog shape has one `IModelCatalogParser` implementation and `ModelCatalogParserRegistry` resolves the parser for a format. Shared JSON-to-contract normalization for capabilities, modalities, thinking, limits, pricing, health, and bounded/redacted extension data has one owner in `ModelMetadataNormalizer`. Supporting another provider catalog shape therefore means adding a parser file and a registry entry rather than extending a dispatch switch inside the adapter. This separation is structural only: it must not change parsed catalog content, error codes, error categories, or normalization outcomes.
+
 
 
 ## Engineering Standards
@@ -162,6 +164,7 @@ Hive is built for production real-world applications. The default coding standar
 - Public APIs expose only required consumer contracts and avoid leaking framework/vendor implementation types.
 - One authoritative implementation owns each validation, state transition, serialization rule, calculation, or policy decision.
 - Failures use structured/typed classification with useful context. Boundary catches must not silently swallow the underlying cause.
+- A public `Error` carries a stable Hive-authored code, category, and message. Raw exception `Message` text is diagnostic context and must not be forwarded into a public error, because Hive-authored control-flow exceptions can interpolate document, provider, or environment-supplied values. `Hive.Persistence` establishes this through `HivePersistenceError`, `Hive.Core/Input` establishes it through `InputPreparationFailureCatalog`, and an unregistered failure code resolves to a category-appropriate generic message rather than to exception detail.
 
 ### Performance
 
@@ -176,6 +179,7 @@ Hive is built for production real-world applications. The default coding standar
 
 - UI handlers must remain responsive; database, network, filesystem, and other blocking work must not run synchronously on the UI thread.
 - Theme and control updates should avoid unnecessary tree traversals, layout passes, repainting, and object creation.
+- Every `async void` handler must contain its failures. A WinForms event handler may be `async void`, but an exception escaping it becomes an unhandled UI-thread exception and terminates the process. Route failures to `HiveUiErrorReporter` so they surface through `HiveMessageBox` and the Output panel. When an awaited call already reports through `HiveCrudPage.OperationFailed` or an equivalent operation boundary, the handler guard covers only what happens outside that boundary, and the reporter itself must remain a contained observer boundary.
 - Hive-specific controls exist only for a real Hive consumer contract, behavior, or styling need. Native WinForms controls remain preferred where they already satisfy the requirement.
 
 ### Persistence

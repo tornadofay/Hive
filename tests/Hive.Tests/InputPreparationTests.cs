@@ -9,6 +9,128 @@ namespace Hive.Tests;
 public sealed class InputPreparationTests
 {
     [Fact]
+    public void SpreadsheetFailures_DoNotExposeDocumentSuppliedDetailInErrorMessage()
+    {
+        // The public error boundary must not carry exception-supplied detail.
+        // These identifiers are document content and must not escape into a
+        // public Error.Message.
+        const string sensitiveWorksheetName = "ConfidentialPayrollSheet";
+        const string sensitiveHeaderName = "EmployeeSocialSecurityNumber";
+
+        var workbook = CreateWorkbook(
+            (sensitiveWorksheetName,
+                [
+                    [sensitiveHeaderName, "Amount"],
+                    ["Duplicate", "1"],
+                    ["Duplicate", "2"]
+                ]));
+
+        var result = InputPreparationEngine.Prepare(
+            new InputSubmission(
+            [
+                new InputItem(
+                    "payroll.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    workbook)
+            ]),
+            Array.Empty<ExecutionTarget>());
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        foreach (var failure in result.Value!.Failures)
+        {
+            Assert.StartsWith("hive.input.spreadsheet.", failure.Error.Code);
+            Assert.False(string.IsNullOrWhiteSpace(failure.Error.Message));
+            Assert.DoesNotContain(
+                sensitiveHeaderName,
+                failure.Error.Message,
+                StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(
+                sensitiveWorksheetName,
+                failure.Error.Message,
+                StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    [Fact]
+    public void SpreadsheetRowFailure_CarriesStableCodeWithoutRawCellContent()
+    {
+        var oversizedCell = new string('x', InputPreparationLimits.MaxCellValueLength + 1);
+
+        var workbook = CreateWorkbook(
+            ("Orders",
+                [
+                    ["Customer", "Amount"],
+                    ["Bad", oversizedCell]
+                ]));
+
+        var result = InputPreparationEngine.Prepare(
+            new InputSubmission(
+            [
+                new InputItem(
+                    "orders.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    workbook)
+            ]),
+            Array.Empty<ExecutionTarget>());
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var failure = Assert.Single(result.Value!.Failures);
+
+        Assert.Equal(
+            "hive.input.spreadsheet.cell-too-large",
+            failure.Error.Code);
+        Assert.Equal(ErrorCategory.Validation, failure.Error.Category);
+        Assert.DoesNotContain(
+            oversizedCell,
+            failure.Error.Message,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void FailureCatalog_UnknownCodeResolvesToGenericMessage()
+    {
+        var error = InputPreparationFailureCatalog.CreateError(
+            "hive.input.spreadsheet.not-yet-registered",
+            ErrorCategory.Validation);
+
+        Assert.Equal(
+            "hive.input.spreadsheet.not-yet-registered",
+            error.Code);
+        Assert.Equal(ErrorCategory.Validation, error.Category);
+        Assert.False(string.IsNullOrWhiteSpace(error.Message));
+    }
+
+    [Fact]
+    public void FailureCatalog_KnownCodeOverridesTheFallbackCategory()
+    {
+        // The catalog owns the category for a registered code, so a caller
+        // cannot mislabel a known failure by passing the wrong fallback.
+        var error = InputPreparationFailureCatalog.CreateError(
+            "hive.input.spreadsheet.cell-too-large",
+            ErrorCategory.External);
+
+        Assert.Equal(ErrorCategory.Validation, error.Category);
+    }
+
+    [Fact]
+    public void FailureCatalog_RejectsMissingCode()
+    {
+        // ArgumentException.ThrowIfNullOrWhiteSpace: null and blank are rejected,
+        // but only null is an ArgumentNullException.
+        Assert.Throws<ArgumentNullException>(() =>
+            InputPreparationFailureCatalog.CreateError(
+                null!,
+                ErrorCategory.Validation));
+
+        Assert.Throws<ArgumentException>(() =>
+            InputPreparationFailureCatalog.CreateError(
+                "   ",
+                ErrorCategory.Validation));
+    }
+
+    [Fact]
     public void ImageInput_RoutesToExplicitlySupportedVisionTarget()
     {
         var target = CreateTarget(

@@ -713,13 +713,66 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
         {
             e.Handled = true;
             e.SuppressKeyPress = true;
-            await EditAsync(SelectedItem);
+
+            try
+            {
+                await EditAsync(SelectedItem);
+            }
+            catch (Exception exception)
+            {
+                ReportKeyHandlerFailure(exception);
+            }
         }
         else if (e.KeyCode == Keys.Delete && SelectedItem is not null)
         {
             e.Handled = true;
             e.SuppressKeyPress = true;
-            await DeleteAsync();
+
+            try
+            {
+                await DeleteAsync();
+            }
+            catch (Exception exception)
+            {
+                ReportKeyHandlerFailure(exception);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Keeps an exception raised inside an <c>async void</c> WinForms key handler
+    /// from becoming an unhandled UI-thread exception. Edit/Delete already report
+    /// contained operation failures through <see cref="OperationFailed"/>; this is
+    /// the guard for anything raised outside that operation boundary, such as
+    /// selection capture, layout restore, or a synchronous control failure.
+    /// </summary>
+    private void ReportKeyHandlerFailure(Exception exception)
+    {
+        System.Diagnostics.Debug.WriteLine(
+            $"HiveCrudPage key handler failed:\n{HiveUiExceptionDiagnostics.Format(exception)}");
+
+        try
+        {
+            var owner = FindForm();
+
+            if (owner is null || owner.IsDisposed || owner.Disposing)
+                return;
+
+            HiveUiErrorReporter.Report(
+                owner,
+                exception,
+                "List operation failed",
+                "The requested list operation could not be completed.",
+                null,
+                _layoutController?.ThemeManager());
+        }
+        catch (Exception reporterException)
+        {
+            // Error reporting is an observer boundary: a failing presentation
+            // surface must not rethrow the original failure from an async UI
+            // event path.
+            System.Diagnostics.Debug.WriteLine(
+                $"HiveCrudPage key handler error reporter failed:\n{HiveUiExceptionDiagnostics.Format(reporterException)}");
         }
     }
 

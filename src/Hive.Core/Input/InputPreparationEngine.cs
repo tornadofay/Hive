@@ -358,10 +358,9 @@ public static class InputPreparationEngine
                             itemIndex,
                             item.FileName,
                             worksheet.Name,
-                            new Error(
+                            InputPreparationFailureCatalog.CreateError(
                                 exception.Code,
-                                ErrorCategory.Validation,
-                                exception.Message)));
+                                ErrorCategory.Validation)));
                 }
                 catch (SpreadsheetPackageException exception)
                 {
@@ -370,10 +369,9 @@ public static class InputPreparationEngine
                             itemIndex,
                             item.FileName,
                             worksheet.Name,
-                            new Error(
+                            InputPreparationFailureCatalog.CreateError(
                                 exception.Code,
-                                ErrorCategory.Serialization,
-                                exception.Message)));
+                                ErrorCategory.Serialization)));
                 }
                 catch (XmlException)
                 {
@@ -382,10 +380,9 @@ public static class InputPreparationEngine
                             itemIndex,
                             item.FileName,
                             worksheet.Name,
-                            new Error(
+                            InputPreparationFailureCatalog.CreateError(
                                 "hive.input.spreadsheet.worksheet-invalid",
-                                ErrorCategory.Serialization,
-                                "The worksheet XML is malformed.")));
+                                ErrorCategory.Serialization)));
                 }
             }
 
@@ -402,10 +399,9 @@ public static class InputPreparationEngine
                     itemIndex,
                     item.FileName,
                     null,
-                    new Error(
+                    InputPreparationFailureCatalog.CreateError(
                         exception.Code,
-                        ErrorCategory.Validation,
-                        exception.Message)));
+                        ErrorCategory.Validation)));
             return;
         }
         catch (SpreadsheetPackageException exception)
@@ -415,10 +411,9 @@ public static class InputPreparationEngine
                     itemIndex,
                     item.FileName,
                     null,
-                    new Error(
+                    InputPreparationFailureCatalog.CreateError(
                         exception.Code,
-                        ErrorCategory.Serialization,
-                        exception.Message)));
+                        ErrorCategory.Serialization)));
             return;
         }
         catch (InvalidDataException)
@@ -428,10 +423,9 @@ public static class InputPreparationEngine
                     itemIndex,
                     item.FileName,
                     null,
-                    new Error(
+                    InputPreparationFailureCatalog.CreateError(
                         "hive.input.spreadsheet.package-invalid",
-                        ErrorCategory.Serialization,
-                        "The spreadsheet package is invalid or cannot be read.")));
+                        ErrorCategory.Serialization)));
             return;
         }
         catch (XmlException)
@@ -441,10 +435,9 @@ public static class InputPreparationEngine
                     itemIndex,
                     item.FileName,
                     null,
-                    new Error(
+                    InputPreparationFailureCatalog.CreateError(
                         "hive.input.spreadsheet.xml-invalid",
-                        ErrorCategory.Serialization,
-                        "The spreadsheet XML is malformed.")));
+                        ErrorCategory.Serialization)));
             return;
         }
         catch (IOException)
@@ -454,10 +447,9 @@ public static class InputPreparationEngine
                     itemIndex,
                     item.FileName,
                     null,
-                    new Error(
+                    InputPreparationFailureCatalog.CreateError(
                         "hive.input.spreadsheet.read-failed",
-                        ErrorCategory.Serialization,
-                        "The spreadsheet could not be read safely.")));
+                        ErrorCategory.Serialization)));
             return;
         }
 
@@ -537,10 +529,9 @@ public static class InputPreparationEngine
                         itemIndex,
                         item.FileName,
                         worksheetName + "!" + rowNumber,
-                        new Error(
+                        InputPreparationFailureCatalog.CreateError(
                             exception.Code,
-                            ErrorCategory.Validation,
-                            exception.Message)));
+                            ErrorCategory.Validation)));
             }
         }
 
@@ -620,10 +611,9 @@ public static class InputPreparationEngine
                         itemIndex,
                         item.FileName,
                         worksheetName + "!" + row.Number,
-                        new Error(
+                        InputPreparationFailureCatalog.CreateError(
                             exception.Code,
-                            ErrorCategory.Validation,
-                            exception.Message)));
+                            ErrorCategory.Validation)));
             }
         }
 
