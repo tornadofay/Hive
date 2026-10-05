@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Authorized slice
 
@@ -42,27 +42,28 @@ Not implemented in this slice:
 
 ## Verification / remediation
 
-Developer compile diagnostics received after the initial Slice 1 implementation included:
-- `ProviderModelPrice.Value` reference errors in `ProviderDiscoveryContracts.cs`;
-- `IReadOnlyList<ProviderModelPrice>` to `IList<ProviderModelPrice>` construction error in `ProviderDiscoveryContracts.cs`;
-- missing `TryGetUnitQuantity` and `IsKnownBillingDimension` helpers in `OpenAICompatibleProviderAdapter.cs`.
+Developer verification result received:
 
-Remediation applied:
-- corrected nullable/reference handling for `ProviderModelPrice`;
-- corrected collection construction;
-- restored and bounded pricing-unit normalization helpers;
-- preserved the intended conservative quantity semantics.
+- Full `Hive.Tests`: **608 tests, 605 passed, 3 failed, 0 skipped**.
+- Failed: `ProviderPricingNormalizationTests.TopLevelPricingUnitQuantity_AppliesToTokenRates`.
+- Failed: `ProviderPricingNormalizationTests.ExplicitPricingUnit_DeterminesQuantity`.
+- Failed: `Phase116FollowUpTests.OpenAICompatibleAdapter_ZeroPricedEntryCountsAsExplicitFreeEvidence`.
 
-Verification remains pending.
+Observed failures indicate:
+- top-level pricing unit quantity is not reaching the input/output token rates;
+- explicit per-unit pricing basis is not being applied to object-form token rates;
+- zero-priced provider entries are not being recognized as explicit free evidence in the affected regression.
 
-Agent verification status:
+Remediation is authorized only within this same Slice 1 failure boundary. The implementation must remain conservative: do not infer an unspecified token quantity or treat ancillary zero pricing as evidence that paid token pricing is free.
+
+## Agent verification status
 
 - Source inspected/reviewed: Yes.
-- Automated tests executed: No.
-- Build executed: No.
+- Developer automated tests executed: Yes — 608 total, 605 passed, 3 failed.
+- Build executed by agent: No.
 - Example Host manually verified: No.
 
-Required developer rerun targets:
+Required rerun after remediation:
 
 - `ProviderPricingNormalizationTests`;
 - affected `Phase116FollowUpTests` pricing / Model Information scenarios;
@@ -70,7 +71,7 @@ Required developer rerun targets:
 - full `Hive.Tests` suite;
 - matching `Hive.Example.WinForms` Model Information scenario/manual verification.
 
-Do not claim Slice 1 closure until developer results are received and the required verification passes. Any in-scope failure must be recorded here as `VERIFICATION FAILED / REMEDIATION REQUIRED` before remediation changes.
+After remediation, return this document to `VERIFICATION PENDING`. Do not claim Slice 1 closure until developer reruns the required checks successfully.
 
 ## Closure gate
 
