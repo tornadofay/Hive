@@ -59,6 +59,8 @@ public sealed class ProviderCompletionIntegrationTests
                 target,
                 context,
                 "Model mismatch.",
+                apiKey: null,
+                correlationId: null,
                 pricingEvidence: pricing));
     }
 
@@ -291,6 +293,8 @@ public sealed class ProviderCompletionIntegrationTests
                 target,
                 context,
                 "Execute without stale pricing.",
+                apiKey: null,
+                correlationId: null,
                 pricingEvidence: stalePricing));
 
         Assert.True(result.IsSuccess, result.Error?.Message);
@@ -402,6 +406,20 @@ public sealed class ProviderCompletionIntegrationTests
             "Provider Completion Agent",
             AgentGeneration.Base,
             targetId);
+
+    private static Agent CreateAgent(ResourceAccessContext context)
+    {
+        var result = new AgentFactory(
+                new AllowBaseAgentCreationAuthorizer())
+            .Create<Agent>(
+                new AgentDefinition(
+                    "provider-completion-test-agent",
+                    "Provider Completion Test Agent"),
+                new AgentCreationContext(context));
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        return result.Value!;
+    }
 
     private static async Task<PersistenceTestDatabase> PrepareDatabase(string name)
     {
