@@ -1873,14 +1873,23 @@ public sealed class OpenAICompatibleProviderAdapter
             price = TryGetDecimalProperty(value, "price", "amount", "value");
             currency = TryGetString(value, "currency") ?? defaultCurrency;
             var explicitUnit = TryGetString(value, "unit");
-            unit = explicitUnit is null
-                ? unit
-                : NormalizePricingUnit(explicitUnit);
+            if (explicitUnit is not null)
+            {
+                var normalizedExplicitUnit = NormalizePricingUnit(explicitUnit);
+                if (IsKnownBillingDimension(normalizedExplicitUnit))
+                    unit = normalizedExplicitUnit;
+            }
+
             unitQuantity = TryGetDecimalProperty(
                 value,
                 "unit_quantity",
                 "quantity",
                 "units");
+
+            if (unitQuantity is null && explicitUnit is not null)
+            {
+                unitQuantity = TryGetUnitQuantity(explicitUnit);
+            }
 
             if (unitQuantity is null)
             {
@@ -1903,6 +1912,13 @@ public sealed class OpenAICompatibleProviderAdapter
 
         prices.TryAdd(normalized.BillingUnit, normalized);
     }
+
+    private static bool IsKnownBillingDimension(string value) =>
+        value is "input_token" or
+            "output_token" or
+            "reasoning_token" or
+            "cached_input_token" or
+            "cached_output_token";
 
     private static decimal? TryGetUnitQuantity(string unit)
     {
