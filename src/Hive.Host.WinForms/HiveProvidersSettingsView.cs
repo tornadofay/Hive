@@ -161,9 +161,31 @@ internal sealed class HiveProvidersSettingsView : UserControl
         _themeManager.Apply(this);
     }
 
-    public Task InitializeAsync(
-        CancellationToken cancellationToken = default) =>
-        _page.RefreshAsync(cancellationToken);
+    public async Task InitializeAsync(
+        CancellationToken cancellationToken = default)
+    {
+        await _page.RefreshAsync(cancellationToken).ConfigureAwait(true);
+
+        switch (_tabs.SelectedIndex)
+        {
+            case 1:
+                await _modelInformationPage
+                    .InitializeAsync(cancellationToken)
+                    .ConfigureAwait(true);
+                break;
+
+            case 2:
+                if (!_favoritesInitialized)
+                {
+                    await _favoritesPage
+                        .InitializeAsync()
+                        .ConfigureAwait(true);
+                    _favoritesInitialized = true;
+                }
+
+                break;
+        }
+    }
 
     internal HiveTabControl NavigationTabs => _tabs;
 
