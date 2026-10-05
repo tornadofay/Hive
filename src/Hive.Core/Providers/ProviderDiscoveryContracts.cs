@@ -419,7 +419,7 @@ public sealed record ProviderModelPricing
                 nameof(variants));
         }
 
-        Prices = new ReadOnlyCollection<ProviderModelPrice>(normalized);
+        Prices = new ReadOnlyCollection<ProviderModelPrice>(normalized.ToList());
         Variants = new ReadOnlyCollection<ProviderModelPricingVariant>(normalizedVariants);
         ExplicitFreeEvidence = explicitFreeEvidence;
     }
@@ -463,8 +463,8 @@ public sealed record ProviderModelPricing
 
     public bool HasZeroComparableInputOutputTokenPricing =>
         HasCompleteComparableInputOutputTokenPricing &&
-        FindComparableTokenPrice("input_token")!.Value.Price == 0m &&
-        FindComparableTokenPrice("output_token")!.Value.Price == 0m;
+        FindComparableTokenPrice("input_token")!.Price == 0m &&
+        FindComparableTokenPrice("output_token")!.Price == 0m;
 
     private ProviderModelPrice? FindComparableTokenPrice(string billingUnit) =>
         Prices.FirstOrDefault(
