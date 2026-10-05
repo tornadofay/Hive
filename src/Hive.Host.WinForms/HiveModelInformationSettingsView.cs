@@ -266,8 +266,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
-            AutoSize = false,
+            WrapContents = true,
+            AutoSize = true,
             Margin = Padding.Empty,
             Padding = new Padding(8, 6, 0, 6),
             AccessibleName = "Model Information filters"
@@ -299,6 +299,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             Text = "Show models without comparable pricing",
             AutoSize = true,
+            MaximumSize = new Size(210, 0),
             Checked = false,
             Margin = new Padding(12, 9, 0, 0),
             AccessibleName = "Show models without comparable pricing"
@@ -312,6 +313,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             Text = "Show models above the price range",
             AutoSize = true,
+            MaximumSize = new Size(210, 0),
             Checked = false,
             Margin = new Padding(12, 9, 0, 0),
             AccessibleName = "Show models above the price range"
@@ -437,7 +439,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Padding = Padding.Empty
         };
         contextAndFilters.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
-        contextAndFilters.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
+        contextAndFilters.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         contextAndFilters.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         contextAndFilters.Controls.Add(contextCard, 0, 0);
         contextAndFilters.Controls.Add(filterBar, 0, 1);
@@ -1494,10 +1496,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _technicalOperationalValue = null;
         _technicalProviderValue = null;
 
-        var empty = CreateInfoTextLabel(
-            "Select a model to inspect price, capabilities, context, and provider evidence.");
-        _overviewTab.Controls.Add(empty);
-        LayoutLazyPage(_overviewTab, empty);
     }
 
     private void RenderModelDetails(ModelInformationRow row)
@@ -1617,9 +1615,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             $"Observed: {FormatDateTime(model.ObservedAtUtc)} · Stale after: {FormatDateTime(model.StaleAfterUtc)}";
         _technicalProviderValue!.Text = model.ExtensionData.Count == 0
             ? "No additional provider-specific evidence was reported."
-            : string.Join(" · ", model.ExtensionData
-                .OrderBy(pair => pair.Key, StringComparer.Ordinal)
-                .Select(pair => $"{pair.Key}: {FormatJsonValue(pair.Value)}"));
+            : FormatJsonDictionary(model.ExtensionData);
     }
 
     private static TableLayoutPanel CreateInfoGrid()
@@ -1688,7 +1684,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         };
 
         return string.Join(
-            " · ",
+            Environment.NewLine,
             capabilities.Select(entry =>
                 $"{entry.Item2}: {FormatCapabilityDetailState(GetCapabilityState(model, entry.Item1))}"));
     }
@@ -1732,7 +1728,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         var tiers = model.Pricing.Variants.Count == 0
             ? string.Empty
-            : " · Tiers: " + string.Join("; ", model.Pricing.Variants.Select(variant =>
+            : " · Tiered rates: " + string.Join("; ", model.Pricing.Variants.Select(variant =>
                 $"{variant.Key} ({string.Join(", ", variant.Conditions.Select(pair => $"{FormatPricingConditionName(pair.Key)}={pair.Value}"))})"));
 
         return headline + " · " + rates + tiers;
@@ -1784,6 +1780,21 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         if (IsDisposed || Disposing)
             return;
 
+        var viewportWidth = Math.Max(1, _detailsScrollHost.ClientSize.Width);
+        var contentWidth = Math.Max(
+            1,
+            viewportWidth);
+
+        if (_detailsContent.Width != contentWidth)
+            _detailsContent.Width = contentWidth;
+
+        var textWidth = Math.Max(
+            180,
+            contentWidth - _detailsContent.Padding.Horizontal);
+
+        _detailsTitle.MaximumSize = new Size(textWidth, 0);
+        _detailsSummary.MaximumSize = new Size(textWidth, 0);
+
         _detailsContent.PerformLayout();
         _detailsScrollHost.Synchronize();
     }
@@ -1823,16 +1834,23 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             return "None";
 
         return string.Join(
-            Environment.NewLine,
-            values.Select(pair => $"{pair.Key}: {FormatJsonValue(pair.Value)}"));
+            Environment.NewLine + Environment.NewLine,
+            values
+                .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                .Select(pair => $"{pair.Key}: {FormatJsonValue(pair.Value)}"));
     }
+
+    private static readonly JsonSerializerOptions HumanReadableJsonOptions = new()
+    {
+        WriteIndented = true
+    };
 
     private static string FormatJsonValue(JsonElement value) =>
         value.ValueKind switch
         {
             JsonValueKind.String => value.GetString() ?? string.Empty,
             JsonValueKind.Null => "null",
-            _ => value.GetRawText()
+            _ => JsonSerializer.Serialize(value, HumanReadableJsonOptions)
         };
 
     private static Uri? TryParseEndpoint(string? text)
