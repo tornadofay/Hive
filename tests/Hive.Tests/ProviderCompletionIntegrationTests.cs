@@ -346,12 +346,12 @@ public sealed class ProviderCompletionIntegrationTests
                 ProviderDiscoveryState.Supported,
                 [
                     new ProviderModelMetadata(
-                        _modelId,
+                        modelId: _modelId,
                         ownedBy: "integration-test",
                         createdAtUtc: null,
-                        ProviderAvailabilityStatus.Available,
-                        ProviderHealthStatus.Unknown,
-                        [
+                        availability: ProviderAvailabilityStatus.Available,
+                        health: ProviderHealthStatus.Unknown,
+                        discoveredCapabilities: [
                             new CapabilityStateEntry(
                                 new CapabilityKey("text.generate"),
                                 CapabilityState.Supported)
