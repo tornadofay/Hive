@@ -441,6 +441,9 @@ internal sealed class HiveProviderManagementService : HiveManagementServiceBase
         }
 
         return new ExecutionPricingEvidence(
+            provider.Id,
+            account.Id,
+            target.Endpoint,
             model.ModelId,
             model.Pricing,
             observedAt,
