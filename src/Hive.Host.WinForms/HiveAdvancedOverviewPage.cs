@@ -67,7 +67,7 @@ internal sealed class HiveAdvancedOverviewPage : UserControl, IHiveAdvancedConfi
         body.Controls.Add(
             CreateSection(
                 "Discovery versus configuration",
-                "Provider model discovery is observational evidence. Model Information shows what the provider reported. " +
+                "Provider model discovery is observational evidence. The normal Providers page exposes Model Information for inspection. " +
                 "Configured ExecutionTarget capability entries remain authoritative when explicitly configured."),
             0,
             2);
@@ -80,8 +80,7 @@ internal sealed class HiveAdvancedOverviewPage : UserControl, IHiveAdvancedConfi
         body.Controls.Add(
             CreateSection(
                 "Advanced administration",
-                "Use Providers, Accounts / Credentials, and Execution Targets for multiple accounts, custom endpoints, local/self-hosted services, manual targets, and administrative lifecycle control. " +
-                "Use Model Information to inspect the latest successful provider model observation."),
+                "Use Providers, Accounts / Credentials, and Execution Targets for multiple accounts, custom endpoints, local/self-hosted services, manual targets, and administrative lifecycle control."),
             0,
             4);
 
