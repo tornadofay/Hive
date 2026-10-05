@@ -1,6 +1,6 @@
 # Off-Work Plan — Provider Pricing, Built-In Catalog & Runtime Usage
 
-> **Status:** Slice 1 complete and verified; Slice 2 complete and verified; Slice 3 complete and verified; Slice 4 implementation in progress  
+> **Status:** Slice 1 complete and verified; Slice 2 complete and verified; Slice 3 complete and verified; Slice 4 implementation complete; verification pending  
 > **Roadmap impact:** None  
 > **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 2, Slice 3, and Slice 4 were explicitly authorized on 2026-10-05; Slices 2–3 are complete and Slice 4 is in progress.  
 > **Prerequisite:** Phase 1.19A verification is now closed. This off-work plan remains separate and still requires explicit implementation authorization in a dedicated chat.
@@ -312,9 +312,9 @@ Final developer verification: full `Hive.Tests` passed 632/632 with 0 failures a
 
 The implementation adds a Hive-owned `ExecutionTokenUsage` contract, preserves OpenAI-compatible provider-reported usage through the current ChatClient / MAF boundary, persists usage inside the terminal execution event, and adds focused provider/core/execution regressions plus the deterministic Example Host scenario at `Providers / Runtime / Token Usage Foundation`.
 
-## Slice 4 — Provider Completion Integration & Hardening — Authorized; implementation in progress
+## Slice 4 — Provider Completion Integration & Hardening — Implementation complete; verification pending
 
-Slice 4 is the final bounded off-work provider-completion slice. It was explicitly authorized on 2026-10-05 after Slice 3 verification. It integrates and hardens the already-completed pricing, built-in catalog, and runtime-usage foundations without advancing the main Phase 1 roadmap.
+Slice 4 is the final bounded off-work provider-completion slice. It was explicitly authorized on 2026-10-05 after Slice 3 verification. Its implementation is complete and verification is pending. It integrates and hardens the already-completed pricing, built-in catalog, and runtime-usage foundations without advancing the main Phase 1 roadmap.
 
 Detailed plan: [Provider Completion Integration & Hardening](Provider_Completion_Integration_And_Hardening.md)
 
