@@ -705,6 +705,32 @@ Slice 3 does not introduce a tokenizer or estimation engine. `Estimated` exists 
 
 For the current single-provider-call Agent execution path, the usage observation is persisted inside the terminal execution event (`agent.execution.succeeded` or a usage-bearing terminal failure after a response was received). Usage-bearing terminal payloads use schema version 2; the existing no-usage terminal payloads remain at schema version 1. This keeps provider consumption evidence atomic with the terminal execution outcome and reuses the existing immutable Execution event stream and payload-versioning boundary. A received provider response with missing usage therefore records an explicit `Unknown` usage observation instead of silently omitting usage. A provider response with usage remains attributable even when subsequent response validation causes execution failure.
 
+### 10.1. Execution pricing applicability handoff
+
+Provider pricing remains observational model metadata. The execution path must not perform live provider discovery merely to obtain pricing.
+
+When configured execution is invoked through Hive.Management, Management may attach an `ExecutionPricingEvidence` value only when the current Provider → ProviderAccount → ExecutionTarget context has a fresh cached discovery snapshot containing pricing for the exact target model/deployment. The evidence preserves the normalized pricing profile, its model identity, and the discovery observation/freshness timestamps.
+
+The boundary is:
+
+```
+fresh cached discovery
+        ↓
+Hive.Management pricing evidence handoff
+        ↓
+AgentExecutionRequest
+        ↓
+Hive.Coordination execution
+        ↓
+terminal execution event
+```
+
+Coordination never starts discovery as part of execution. Missing, stale, mismatched, or non-comparable pricing remains absent/uncertain rather than being guessed from the current provider catalog or a later price lookup.
+
+For successful executions and failures after a provider response was received, the pricing evidence is persisted alongside the runtime usage payload in the existing terminal event schema version 2. This keeps observed usage and the pricing applicability known at execution time in the same immutable execution evidence boundary. Provider failures or cancellation before provider response do not persist fabricated pricing or usage evidence.
+
+The persisted pricing evidence contains normalized price entries, explicit free evidence, and bounded pricing variants/conditions. It contains no credential material, authorization data, or live provider response body. Native/different-transport providers remain outside the OpenAI-compatible execution adapter.
+
 The persisted usage payload carries the applicable identities already known at the execution boundary:
 
 - Provider;
