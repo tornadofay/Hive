@@ -63,6 +63,22 @@ Providers / Runtime / Provider Completion Integration & Hardening — Hive.Examp
 
 Build result is not to be claimed unless the developer reports it separately.
 
+## Verification remediation — compile errors reported 2026-10-05
+
+Developer reported compile errors from the Slice 4 implementation. Remediations applied:
+
+- restored the original optional `AgentExecutionRequest` constructor signature instead of retaining an overlapping optional overload;
+- made `PricingEvidence` an additive validated init property so existing constructor call sites remain source/binary compatible;
+- assigned the new `HiveAgentManagementService._providers` dependency in its constructor;
+- changed configured execution to assign pricing evidence through the additive request property;
+- fixed Example Host migration-result access to use `migration.Value`;
+- fixed provider-completion test request construction to use the additive pricing property;
+- added the missing `CreateAgent` test fixture helper;
+- fixed affected AgentExecutionIntegrationTests pricing-evidence call sites.
+
+Production intent and Slice 4 scope are unchanged. Verification remains pending; no test/build result is claimed from these remediations.
+
+
 ## Verification remediation — 2026-10-05
 
 Developer-reported compile errors were recorded before remediation:
