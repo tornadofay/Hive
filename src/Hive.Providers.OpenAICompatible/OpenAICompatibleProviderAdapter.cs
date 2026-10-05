@@ -2171,6 +2171,52 @@ public sealed class OpenAICompatibleProviderAdapter
         };
     }
 
+    private static bool IsKnownBillingDimension(string value) =>
+        string.Equals(value, "input_token", StringComparison.Ordinal) ||
+        string.Equals(value, "output_token", StringComparison.Ordinal) ||
+        string.Equals(value, "reasoning_token", StringComparison.Ordinal) ||
+        string.Equals(value, "cached_input_token", StringComparison.Ordinal) ||
+        string.Equals(value, "cached_output_token", StringComparison.Ordinal);
+
+    private static decimal? TryGetUnitQuantity(string unit)
+    {
+        var normalized = unit
+            .Trim()
+            .ToLowerInvariant()
+            .Replace("-", "_")
+            .Replace(" ", "_");
+
+        return normalized switch
+        {
+            "token" or
+            "tokens" or
+            "per_token" or
+            "per_tokens" => 1m,
+
+            "1k" or
+            "1k_token" or
+            "1k_tokens" or
+            "per_1k" or
+            "per_1k_token" or
+            "per_1k_tokens" or
+            "per_1000" or
+            "per_1000_token" or
+            "per_1000_tokens" => 1_000m,
+
+            "1m" or
+            "1m_token" or
+            "1m_tokens" or
+            "per_1m" or
+            "per_1m_token" or
+            "per_1m_tokens" or
+            "per_1000000" or
+            "per_1000000_token" or
+            "per_1000000_tokens" => 1_000_000m,
+
+            _ => null
+        };
+    }
+
     private static IReadOnlyDictionary<string, JsonElement> ParseExtensionData(
         JsonElement model)
     {
