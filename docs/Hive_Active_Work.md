@@ -31,6 +31,12 @@ The final in-scope UI remediation also addresses the two reported presentation d
 A focused regression test was added for long Technical content at the normal `1160 x 760` test window and asserts that the Hive vertical scrollbar becomes available.
 
 Verification remains pending developer rerun. No provider, persistence, filter-semantic, roadmap, or unrelated UI changes were made.
+### Verification failure — 2026-10-05
+
+Developer-reported Visual Studio compile error: **CS8604** in `HiveModelInformationSettingsView.cs` line 1855: possible null reference argument passed to `MeasureDetailsPageHeight(TabPage page, int availableWidth)` from `_detailsTabs.SelectedTab`.
+
+This is an in-scope nullable-contract defect in the current details-scroll sizing remediation. Fix only the selected-tab nullability boundary, preserving the existing normal-size scroll behavior and tab layout. Verification must return to pending after remediation, with developer re-build and focused Model Information tests rerun.
+
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
 Authorized: 2026-10-05 (explicit maintainer request in a dedicated chat)
