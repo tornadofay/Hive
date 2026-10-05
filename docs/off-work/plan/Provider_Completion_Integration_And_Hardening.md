@@ -1,6 +1,6 @@
 # Off-Work Provider Completion — Slice 4: Provider Completion Integration & Hardening
 
-> **Status:** Complete and verified on 2026-10-05  
+> **Status:** Slice 4 baseline verified; Revision corrective changes implemented, developer verification pending on 2026-10-05  
 > **Roadmap impact:** None  
 > **Authorized:** 2026-10-05 after verified Slice 3 closure  
 
@@ -62,7 +62,19 @@ This is off-roadmap completion work. It does not start, advance, or implement Ph
 - unrelated UI/control cleanup;
 - roadmap advancement.
 
-## Verification
+## Revision — 2026-10-05
+
+The Revision audit identified and corrected three concrete production hardening findings within the Slice 4 boundary:
+
+1. ExecutionPricingEvidence now retains Provider, ProviderAccount, and exact endpoint provenance, and AgentExecutionRequest validates those identities in addition to the model/deployment identity.
+2. Configured execution now preserves the provider-reported model identity separately from the configured target model/deployment in AgentExecutionResult and usage-bearing terminal evidence.
+3. Configured Management execution now rejects built-in native-integration providers and any Provider transport other than openai-compatible before the OpenAI-compatible adapter is invoked.
+
+Focused regressions cover pricing provenance mismatches, provider-reported model preservation, and native/non-compatible transport rejection.
+
+Developer verification of this Revision is still pending.
+
+## Prior Slice 4 Verification
 
 Developer verification completed on 2026-10-05.
 
