@@ -563,6 +563,10 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     internal HiveComboBox CapabilityStateFilter => _capabilityStateFilter;
 
+    internal CheckBox ShowUnpricedModelsFilter => _showUnpricedModels;
+
+    internal CheckBox ShowAboveRangeModelsFilter => _showAboveRangeModels;
+
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     internal Func<string, bool>? FavoriteConfirmationOverride { get; set; }
 
