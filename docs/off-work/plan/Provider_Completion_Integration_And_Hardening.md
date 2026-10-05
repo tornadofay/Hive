@@ -1,5 +1,9 @@
 # Off-Work Provider Completion — Slice 4: Provider Completion Integration & Hardening
 
+> **Status:** Implementation complete; verification pending  
+> **Roadmap impact:** None  
+> **Authorized:** 2026-10-05 after verified Slice 3 closure  
+
 ## Purpose
 
 Slice 4 is the final bounded off-work provider-completion slice. It integrates and hardens the already-verified pricing normalization, built-in provider catalog, and runtime token-usage foundations.
