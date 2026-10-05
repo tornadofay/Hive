@@ -114,6 +114,8 @@ Examples are classified by the dependency model they prove:
 
 | Classification | Examples |
 |---|---|
+| **Runtime usage foundation** | `Providers / Runtime / Token Usage Foundation` — deterministic loopback provider reports token usage; the example shows provider-reported usage preserved through the Agent execution boundary and persisted with the terminal execution event. No vendor account, external provider call, tokenizer, or reporting subsystem is used. |
+
 | **Configured-host** | `Agents / Base Agent / Configured Agent Execution` — consumes the persisted Provider → ProviderAccount → ExecutionTarget → AgentDefinition graph from the host service graph and must not create a competing persistence/configuration path. |
 | **Isolated contract** | `Workspace / WorkItem Operations`; `Management / Facade`; `Agents / Base Agent / First Real Agent Execution`; `Providers / Security / DPAPI Secret Store`; `Providers / Provider Platform`; `Persistence / Events / Outbox Poller` — these intentionally use deterministic/example resources or `HiveDatabaseOptions.LocalDevelopment()` where that local database is intrinsic to the contract being demonstrated. |
 | **Host configuration surface** | `Overview / Getting Started / Example Configuration` — opens the real global Hive Settings surface; it is infrastructure guidance, not an isolated database example and not a competing configuration model. |
