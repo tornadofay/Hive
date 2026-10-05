@@ -98,6 +98,8 @@ Remediation:
 Production semantics were not broadened beyond the authorized Slice 4 boundary.
 
 After the developer's 635/635 verification, a UI regression was identified in Advanced Provider Configuration → Model Information: the $0 filter considered only the comparable token price and ignored authoritative ExplicitFreeEvidence when a model also exposed paid/base token rates. The Model Information filter was corrected to treat explicit free evidence as eligible for the $0 free-model view, with a focused WinForms regression added. Slice 4 verification is therefore pending again for this final UI correction.
+
+The developer then reran the full `Hive.Tests` suite after the final UI correction: **636/636 passed, 0 failed, 0 skipped**, in 42.6 seconds. This verifies the full automated test gate; the Example Host verification remains the final outstanding Slice 4 verification step.
 ## Verification gate
 
 Developer verification is now required. Any in-scope failure or compile error must be recorded as `VERIFICATION FAILED / REMEDIATION REQUIRED` before same-slice remediation. On successful verification, archive the closure evidence and return Active Work to `NO ACTIVE WORK`.
