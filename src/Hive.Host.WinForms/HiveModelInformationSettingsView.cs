@@ -1850,7 +1850,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _detailsTitle.MaximumSize = new Size(textWidth, 0);
         _detailsSummary.MaximumSize = new Size(textWidth, 0);
 
-        var selectedPage = _detailsTabs.SelectedTab;
+        var selectedPage = _detailsTabs.SelectedTab ?? _overviewTab;
         var selectedPageHeight = MeasureDetailsPageHeight(
             selectedPage,
             Math.Max(180, textWidth - 4));
