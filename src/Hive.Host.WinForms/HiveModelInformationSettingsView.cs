@@ -1723,7 +1723,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                         .Select(pair => $"  {pair.Key}: {FormatJsonValue(pair.Value)}")));
         }
 
-        return string.Join(" · ", values);
+        return string.Join(Environment.NewLine, values);
     }
 
     private static string FormatPricingEvidence(ProviderModelMetadata model)
