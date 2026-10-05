@@ -137,3 +137,27 @@ The Built-In Provider Catalog Example Host output supplied immediately before th
 The three failures were classified against the Slice 4 diff. None of the three affected test files changed in Slice 4. The repository checkpoint at the start of Slice 4 had xUnit assembly-level test parallelization disabled (DisableTestParallelization = true), while the current tests/Hive.Tests/AssemblyMarker.cs sets it to false. The reported failures are consistent with concurrent execution of tests that depend on UI-thread scheduling or deterministic concurrency timing. This is test-harness state outside Slice 4 scope, not evidence of a Slice 4 production regression.
 
 No Slice 4 production remediation is authorized for these unrelated failures. Verification remains **PENDING** for a clean full-suite result using the repository's established serialized test configuration. The Example Host scenario itself was corrected for repeatable database isolation and should be rerun after the test-harness configuration is restored.
+
+## Verification update — 2026-10-05 08:14
+
+Developer reran the required Slice 4 Example Host scenario successfully:
+
+`Providers / Runtime / Provider Completion Integration & Hardening`
+
+Observed:
+- discovery calls before execution: 1;
+- discovery calls after execution: 1;
+- pricing evidence attached for `provider-completion-model`;
+- input price 0.35 USD / 1M tokens;
+- output price 1.50 USD / 1M tokens;
+- one pricing variant preserved;
+- provider-reported Actual usage: 120 input, 45 output, 165 total;
+- provider response `chatcmpl-provider-completion`;
+- pricing and usage persisted with the terminal execution event;
+- no external provider call and no provider credentials;
+- no discovery during execution;
+- migration Applied, schema 14.
+
+The subsequent full `Hive.Tests` run reported **636 tests: 635 passed, 1 failed, 0 skipped**. The sole failure remains `HiveWinFormsHostIntegrationTests.Capture_FromBackgroundThread_IsRejectedBeforeHostTraversal` at line 1684 (`Assert.True`: expected true, actual false).
+
+This remains outside the Slice 4 production diff. The repository's established serialized xUnit configuration is still not restored; current `tests/Hive.Tests/AssemblyMarker.cs` uses `DisableTestParallelization = false`. Slice 4 verification therefore remains pending until the full suite is rerun under the established serialized test configuration and passes.
