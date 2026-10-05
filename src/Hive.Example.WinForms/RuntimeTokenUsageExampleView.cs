@@ -132,6 +132,7 @@ internal sealed class RuntimeTokenUsageExampleView : UserControl
             Total tokens: {execution.Usage.TotalTokenCount}
             Cached input tokens: {execution.Usage.CachedInputTokenCount}
             Reasoning tokens: {execution.Usage.ReasoningTokenCount}
+            Additional token count (accepted prediction): {execution.Usage.AdditionalCounts["accepted_prediction_tokens"]}
             Terminal event: {execution.TerminalEventId}
             Durable usage evidence: yes (persisted with the terminal execution event)
             Provider credentials: none
