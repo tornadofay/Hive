@@ -401,7 +401,7 @@ public static class BuiltInProviderCatalog
             "Together AI",
             "openai-compatible",
             BuiltInProviderCredentialKind.ApiKey,
-            new Uri("https://api.together.xyz/v1")),
+            new Uri("https://api.together.ai/v1")),
 
         new(
             "perplexity",
@@ -415,14 +415,28 @@ public static class BuiltInProviderCatalog
             "MiniMax",
             "openai-compatible",
             BuiltInProviderCredentialKind.ApiKey,
-            new Uri("https://api.minimax.io/v1")),
+            null,
+            normalOnboardingSupported: false,
+            onboardingNote:
+                "The OpenAI-compatible inference endpoint is available, but the provider model-listing surface is not treated as a universal discovery endpoint. Configure the endpoint/model through Advanced Provider Configuration.",
+            discoveryEndpointKind:
+                BuiltInProviderDiscoveryEndpointKind.ProviderSpecific,
+            pricingNormalizationProfile:
+                BuiltInProviderPricingNormalizationProfile.ProviderSpecific),
 
         new(
             "ai21",
             "AI21 Labs",
             "openai-compatible",
-            BuiltInProviderCredentialKind.ApiKey,
-            new Uri("https://api.ai21.com/studio/v1")),
+            BuiltInProviderCredentialKind.ProviderSpecific,
+            null,
+            normalOnboardingSupported: false,
+            onboardingNote:
+                "The legacy AI21 Studio/Jamba endpoint is retired. Configure an available AI21-compatible gateway endpoint through Advanced Provider Configuration.",
+            discoveryEndpointKind:
+                BuiltInProviderDiscoveryEndpointKind.ProviderSpecific,
+            pricingNormalizationProfile:
+                BuiltInProviderPricingNormalizationProfile.ProviderSpecific),
 
         new(
             "sambanova",
