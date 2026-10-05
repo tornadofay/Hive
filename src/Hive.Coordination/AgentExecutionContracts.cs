@@ -79,6 +79,30 @@ public sealed class AgentExecutionRequest
                         "Execution pricing evidence must match the execution target model or deployment.",
                         nameof(value));
                 }
+
+                if (value.ProviderId != Target.ProviderId)
+                {
+                    throw new ArgumentException(
+                        "Execution pricing evidence must match the execution target Provider.",
+                        nameof(value));
+                }
+
+                if (value.ProviderAccountId != Target.ProviderAccountId)
+                {
+                    throw new ArgumentException(
+                        "Execution pricing evidence must match the execution target ProviderAccount.",
+                        nameof(value));
+                }
+
+                if (!string.Equals(
+                        value.Endpoint.AbsoluteUri,
+                        Target.Endpoint.AbsoluteUri,
+                        StringComparison.Ordinal))
+                {
+                    throw new ArgumentException(
+                        "Execution pricing evidence must match the execution target endpoint.",
+                        nameof(value));
+                }
             }
 
             _pricingEvidence = value;
@@ -99,4 +123,6 @@ public sealed record AgentExecutionResult(
     ExecutionTokenUsage Usage)
 {
     public ExecutionPricingEvidence? PricingEvidence { get; init; }
+
+    public string? ProviderReportedModelId { get; init; }
 }
