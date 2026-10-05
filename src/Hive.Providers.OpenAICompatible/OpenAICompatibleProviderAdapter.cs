@@ -343,14 +343,16 @@ public sealed class OpenAICompatibleProviderAdapter
                         => ParseModelCatalog(
                             responseBody.Value!,
                             TryGetRateLimitRemaining(response),
-                            "USD"),
+                            "USD",
+                            1m),
 
                     OpenAICompatibleModelCatalogFormat.CloudflareOpenRouter
                         => ParseWrappedModelCatalog(
                             responseBody.Value!,
                             "result",
                             TryGetRateLimitRemaining(response),
-                            "USD"),
+                            "USD",
+                            1m),
 
                     OpenAICompatibleModelCatalogFormat.Gemini
                         => ParseGeminiModelCatalog(
@@ -527,7 +529,8 @@ public sealed class OpenAICompatibleProviderAdapter
         string responseJson,
         string arrayPropertyName,
         int? rateLimitRemaining,
-        string? defaultPricingCurrency = null)
+        string? defaultPricingCurrency = null,
+        decimal? defaultTokenUnitQuantity = null)
     {
         try
         {
@@ -550,7 +553,8 @@ public sealed class OpenAICompatibleProviderAdapter
             return ParseModelCatalog(
                 normalized,
                 rateLimitRemaining,
-                defaultPricingCurrency);
+                defaultPricingCurrency,
+                defaultTokenUnitQuantity);
         }
         catch (JsonException)
         {
@@ -1010,7 +1014,8 @@ public sealed class OpenAICompatibleProviderAdapter
     private static Result<OpenAICompatibleModelCatalog> ParseModelCatalog(
         string responseJson,
         int? rateLimitRemaining,
-        string? defaultPricingCurrency = null)
+        string? defaultPricingCurrency = null,
+        decimal? defaultTokenUnitQuantity = null)
     {
         try
         {
@@ -1119,7 +1124,10 @@ public sealed class OpenAICompatibleProviderAdapter
                 }
                 var thinking = ParseThinking(model);
                 var limits = ParseLimits(model);
-                var pricing = ParsePricing(model, defaultPricingCurrency);
+                var pricing = ParsePricing(
+                    model,
+                    defaultPricingCurrency,
+                    defaultTokenUnitQuantity);
                 var extensionData = ParseExtensionData(model);
 
                 models.Add(
@@ -1759,7 +1767,8 @@ public sealed class OpenAICompatibleProviderAdapter
 
     private static ProviderModelPricing? ParsePricing(
         JsonElement model,
-        string? defaultPricingCurrency = null)
+        string? defaultPricingCurrency = null,
+        decimal? defaultTokenUnitQuantity = null)
     {
         var prices = new Dictionary<string, ProviderModelPrice>(StringComparer.Ordinal);
         var explicitFree = false;
@@ -1806,7 +1815,8 @@ public sealed class OpenAICompatibleProviderAdapter
                 if (string.Equals(property.Name, "currency", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(property.Name, "unit", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(property.Name, "unit_quantity", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(property.Name, "free", StringComparison.OrdinalIgnoreCase))
+                    string.Equals(property.Name, "free", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(property.Name, "variants", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -1815,11 +1825,21 @@ public sealed class OpenAICompatibleProviderAdapter
                     prices,
                     property.Name,
                     property.Value,
-                    defaultCurrency);
+                    defaultCurrency,
+                    defaultTokenUnitQuantity);
             }
         }
 
-        explicitFree |= prices.Values.Any(price => price.Price == 0);
+        var pricingModel = new ProviderModelPricing(
+            prices.Values
+                .OrderBy(item => item.BillingUnit, StringComparer.Ordinal)
+                .ToArray(),
+            explicitFree);
+
+        if (pricingModel.HasZeroComparableInputOutputTokenPricing)
+        {
+            explicitFree = true;
+        }
 
         if (prices.Count == 0 && !explicitFree)
             return null;
@@ -1835,7 +1855,8 @@ public sealed class OpenAICompatibleProviderAdapter
         IDictionary<string, ProviderModelPrice> prices,
         string propertyName,
         JsonElement value,
-        string? defaultCurrency)
+        string? defaultCurrency,
+        decimal? defaultTokenUnitQuantity)
     {
         decimal? price = null;
         string? currency = defaultCurrency;
@@ -1845,17 +1866,27 @@ public sealed class OpenAICompatibleProviderAdapter
         if (value.ValueKind is JsonValueKind.Number or JsonValueKind.String)
         {
             price = TryGetDecimal(value);
+            unitQuantity = defaultTokenUnitQuantity;
         }
         else if (value.ValueKind == JsonValueKind.Object)
         {
             price = TryGetDecimalProperty(value, "price", "amount", "value");
             currency = TryGetString(value, "currency") ?? defaultCurrency;
-            unit = TryGetString(value, "unit") ?? unit;
+            var explicitUnit = TryGetString(value, "unit");
+            unit = explicitUnit is null
+                ? unit
+                : NormalizePricingUnit(explicitUnit);
             unitQuantity = TryGetDecimalProperty(
                 value,
                 "unit_quantity",
                 "quantity",
                 "units");
+
+            if (unitQuantity is null)
+            {
+                unitQuantity = TryGetUnitQuantity(unit)
+                    ?? defaultTokenUnitQuantity;
+            }
         }
 
         if (price is null || price < 0)
@@ -1871,6 +1902,49 @@ public sealed class OpenAICompatibleProviderAdapter
             unitQuantity);
 
         prices.TryAdd(normalized.BillingUnit, normalized);
+    }
+
+    private static decimal? TryGetUnitQuantity(string unit)
+    {
+        var normalized = unit
+            .Trim()
+            .ToLowerInvariant()
+            .Replace("-", "_")
+            .Replace(" ", "_");
+
+        return normalized switch
+        {
+            "token" or
+            "tokens" or
+            "per_token" or
+            "per_tokens" or
+            "input_token" or
+            "output_token" or
+            "input_tokens" or
+            "output_tokens" => 1m,
+
+            "1k" or
+            "1k_token" or
+            "1k_tokens" or
+            "per_1k" or
+            "per_1k_token" or
+            "per_1k_tokens" or
+            "per_1000" or
+            "per_1000_token" or
+            "per_1000_tokens" => 1_000m,
+
+            "1m" or
+            "1m_token" or
+            "1m_tokens" or
+            "per_1m" or
+            "per_1m_token" or
+            "per_1m_tokens" or
+            "per_1000000" or
+            "per_1000000_token" or
+            "per_1000000_tokens" => 1_000_000m,
+
+            _ => null
+        };
     }
 
     private static decimal? TryGetDecimalProperty(
