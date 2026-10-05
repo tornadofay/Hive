@@ -489,8 +489,7 @@ public sealed class Phase116FollowUpTests
             [
                 "Providers",
                 "Accounts / Credentials",
-                "Execution Targets",
-                "Model Information"
+                "Execution Targets"
             ],
             names);
 
