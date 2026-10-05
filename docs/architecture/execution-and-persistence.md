@@ -666,4 +666,64 @@ Required crash-safety properties:
 
 The outbox is not a general distributed message broker.
 
+
+## 10. Runtime Provider Usage Evidence Boundary
+
+Runtime provider usage is execution evidence, not provider configuration, pricing metadata, authorization, or a reporting subsystem.
+
+The current provider path has three ownership boundaries:
+
+```
+provider JSON usage
+        ↓
+OpenAI-compatible provider normalization
+        ↓
+Microsoft.Extensions.AI UsageDetails
+        ↓
+Hive.Coordination execution usage normalization
+        ↓
+immutable execution usage event
+```
+
+The OpenAI-compatible adapter owns provider-wire interpretation. It may recognize documented provider usage fields and bounded numeric provider-specific dimensions, but it must not estimate missing usage or infer billing relationships.
+
+`Microsoft.Extensions.AI.ChatResponse.Usage` is the transport-neutral response boundary used by the current chat client. Hive's execution layer converts that response metadata into a Hive-owned token-usage contract so persistence and later Phase 1.30 consumers do not depend on provider-specific JSON or a particular provider adapter.
+
+The Hive-owned token-usage contract preserves:
+
+- input token count;
+- output token count;
+- total token count;
+- cached input token count;
+- reasoning/thinking token count;
+- bounded additional provider-reported numeric counts;
+- usage evidence classification: `Actual`, `Estimated`, or `Unknown`.
+
+A missing dimension remains unknown. Missing usage is never represented as zero. Cached-input and reasoning/thinking counts are informational breakdowns and are never automatically added to input/output/total counts.
+
+Slice 3 does not introduce a tokenizer or estimation engine. `Estimated` exists as an explicit future evidence state only; this slice produces `Actual` when provider usage is recognized and `Unknown` otherwise.
+
+For the current single-provider-call Agent execution path, each received provider response produces one immutable `agent.execution.usage.recorded` event in the existing Execution event stream. The event is an observation, not a Resource and not a lifecycle-success signal. It is appended before the terminal execution event so provider consumption evidence remains durable even if a later terminal-state persistence step fails.
+
+The usage event carries the applicable execution/resource correlation identities already known at that boundary:
+
+- Provider;
+- ProviderAccount;
+- ExecutionTarget;
+- model/deployment;
+- Agent;
+- Runtime;
+- Execution;
+- applicable Deployment/Tenant/Principal scope;
+- optional WorkItem identity when the execution path has one;
+- provider response identity when supplied;
+- observation time from the durable event envelope.
+
+The event remains immutable through the existing append-only event store and uses the existing payload schema-versioning boundary. No dedicated usage database table, second event store, or reporting subsystem is introduced by Slice 3.
+
+Cancellation or provider failure before a response is received does not fabricate a successful usage observation. When a provider response was actually received, an `Actual` or `Unknown` usage observation may still be recorded even if the subsequent execution terminal outcome is failure; this reflects observed provider consumption rather than execution success.
+
+Phase 1.30 remains responsible for aggregation, metrics, budgets, OpenTelemetry, quota/rate-limit handling, and reporting over these recorded observations. Historical cost/accounting calculations must use the applicable preserved pricing evidence rather than the provider's current price.
+
+
 ---
