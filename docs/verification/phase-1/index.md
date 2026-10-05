@@ -32,3 +32,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [Off-Work Provider Completion — Slice 1: Pricing Normalization — 2026-10-05](off-work-provider-pricing-normalization-closure-2026-10-05.md)
 - [Off-Work Provider Completion — Slice 2: Built-In Provider Catalog — 2026-10-05](off-work-provider-built-in-provider-catalog-closure-2026-10-05.md)
 - [Off-Work Provider Completion — Slice 3: Runtime Token Usage Foundation — 2026-10-05](off-work-provider-runtime-usage-closure-2026-10-05.md)
+- [Off-Work Provider Completion — Slice 4: Provider Completion Integration & Hardening — 2026-10-05](off-work-provider-completion-integration-hardening-closure-2026-10-05.md)
