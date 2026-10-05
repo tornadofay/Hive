@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Hive.Core;
+using Microsoft.Extensions.AI;
 
 namespace Hive.Providers.OpenAICompatible;
 
@@ -123,7 +124,8 @@ public sealed record OpenAICompatibleChatResponse(
     string? Id,
     string Model,
     string Content,
-    JsonElement? StructuredContent);
+    JsonElement? StructuredContent,
+    UsageDetails? Usage);
 
 public sealed record OpenAICompatibleCapabilityDescriptor(
     string Key,
