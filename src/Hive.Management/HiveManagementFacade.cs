@@ -46,6 +46,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         _agents = new HiveAgentManagementService(
             agentDefinitions,
             providerResources,
+            _providers,
             secrets,
             agentExecution);
         _workItems = new HiveWorkItemManagementService(workItems);
