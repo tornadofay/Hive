@@ -1470,7 +1470,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         if (_page.SelectedItem is ModelInformationRow row)
             RenderDetailsTab(row, _detailsTabs.SelectedIndex);
-        ResizeDetailsContent();
     }
 
     private void RenderNoModelDetails()
@@ -1532,6 +1531,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 UpdateTechnicalPage(row);
                 break;
         }
+
+        ResizeDetailsContent();
     }
 
     private void EnsureOverviewPage()
@@ -1826,9 +1827,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         _detailsTitle.MaximumSize = new Size(textWidth, 0);
         _detailsSummary.MaximumSize = new Size(textWidth, 0);
-
-        foreach (var page in new[] { _overviewTab, _detailsTab, _technicalTab })
-            page.Size = new Size(Math.Max(1, contentWidth - 4), Math.Max(1, _detailsTabs.ClientSize.Height - 34));
 
         _detailsContent.PerformLayout();
         _detailsScrollHost.Synchronize();
