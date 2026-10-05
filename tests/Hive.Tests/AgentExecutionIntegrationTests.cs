@@ -399,6 +399,8 @@ public sealed class AgentExecutionIntegrationTests
             "chatcmpl-agent-test",
             succeeded.Envelope.Payload.GetProperty("providerResponseId").GetString());
 
+        Assert.Equal(2, succeeded.Envelope.PayloadSchemaVersion.Value);
+
         var usage = succeeded.Envelope.Payload.GetProperty("usage");
         Assert.Equal("Actual", usage.GetProperty("evidence").GetString());
         Assert.Equal(120, usage.GetProperty("inputTokenCount").GetInt64());
@@ -490,6 +492,8 @@ public sealed class AgentExecutionIntegrationTests
             events.Value!,
             eventItem => eventItem.Envelope.EventType.Value == "agent.execution.succeeded");
 
+        Assert.Equal(2, succeeded.Envelope.PayloadSchemaVersion.Value);
+
         var usage = succeeded.Envelope.Payload.GetProperty("usage");
         Assert.Equal("Unknown", usage.GetProperty("evidence").GetString());
         Assert.Equal(
@@ -565,6 +569,7 @@ public sealed class AgentExecutionIntegrationTests
             events.Value[1].Envelope.Payload.TryGetProperty(
                 "usage",
                 out _));
+        Assert.Equal(1, events.Value[1].Envelope.PayloadSchemaVersion.Value);
     }
 
     [Fact]
