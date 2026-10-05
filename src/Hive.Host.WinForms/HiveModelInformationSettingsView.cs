@@ -266,14 +266,25 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         var filterBar = new FlowLayoutPanel
         {
             Dock = DockStyle.Top,
-            FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = true,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
             AutoSize = true,
             Margin = Padding.Empty,
             Padding = new Padding(8, 6, 0, 6),
             AccessibleName = "Model Information filters"
         };
-        filterBar.Controls.Add(CreateFilterLabel("Min"));
+
+        var primaryFilterRow = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            AccessibleName = "Primary model filters"
+        };
+
+        primaryFilterRow.Controls.Add(CreateFilterLabel("Min"));
         _minPriceValueLabel = CreatePriceValueLabel();
         _maxPriceValueLabel = CreatePriceValueLabel();
 
@@ -281,46 +292,52 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _maxPriceFilter = CreatePriceSlider(
             InitialPriceSliderValue);
 
-        filterBar.Controls.Add(_minPriceFilter);
-        filterBar.Controls.Add(_minPriceValueLabel);
-        filterBar.Controls.Add(CreateFilterLabel("Max"));
-        filterBar.Controls.Add(_maxPriceFilter);
-        filterBar.Controls.Add(_maxPriceValueLabel);
+        primaryFilterRow.Controls.Add(_minPriceFilter);
+        primaryFilterRow.Controls.Add(_minPriceValueLabel);
+        primaryFilterRow.Controls.Add(CreateFilterLabel("Max"));
+        primaryFilterRow.Controls.Add(_maxPriceFilter);
+        primaryFilterRow.Controls.Add(_maxPriceValueLabel);
 
         UpdatePriceFilterLabels();
-        filterBar.Controls.Add(CreateFilterLabel("Capability"));
-        filterBar.Controls.Add(_capabilityFilter);
-        filterBar.Controls.Add(CreateFilterLabel("State"));
-        filterBar.Controls.Add(_capabilityStateFilter);
+        primaryFilterRow.Controls.Add(CreateFilterLabel("Capability"));
+        primaryFilterRow.Controls.Add(_capabilityFilter);
+        primaryFilterRow.Controls.Add(CreateFilterLabel("State"));
+        primaryFilterRow.Controls.Add(_capabilityStateFilter);
 
-        // A model can report pricing Hive cannot compare. Under a bounded price
-        // range such models are excluded, which is the established behaviour;
-        // the notice below makes that visible and reversible instead of silent.
+        // Keep both evidence switches together on their own responsive row so
+        // they cannot overlap the primary filter controls at normal window sizes.
+        var filterOptionsRow = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true,
+            Margin = new Padding(0, 2, 0, 0),
+            Padding = Padding.Empty,
+            AccessibleName = "Pricing evidence filters"
+        };
+
         _showUnpricedModels = new CheckBox
         {
             Text = "Show models without comparable pricing",
             AutoSize = true,
-            MaximumSize = new Size(210, 0),
             Checked = false,
-            Margin = new Padding(12, 9, 0, 0),
+            Margin = new Padding(0, 2, 18, 2),
             AccessibleName = "Show models without comparable pricing"
         };
 
-        filterBar.Controls.Add(_showUnpricedModels);
-
-        // The ceiling is a high percentile so the slider stays operable; models
-        // beyond it must stay reachable through an explicit control.
         _showAboveRangeModels = new CheckBox
         {
             Text = "Show models above the price range",
             AutoSize = true,
-            MaximumSize = new Size(210, 0),
             Checked = false,
-            Margin = new Padding(12, 9, 0, 0),
+            Margin = new Padding(0, 2, 0, 2),
             AccessibleName = "Show models above the price range"
         };
 
-        filterBar.Controls.Add(_showAboveRangeModels);
+        filterOptionsRow.Controls.Add(_showUnpricedModels);
+        filterOptionsRow.Controls.Add(_showAboveRangeModels);
+        filterBar.Controls.Add(primaryFilterRow);
+        filterBar.Controls.Add(filterOptionsRow);
 
         _filterNotice = new Label
         {
@@ -375,7 +392,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         _detailsTabs = new HiveTabControl
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
             Margin = Padding.Empty,
             HeaderHeight = 34,
             AccessibleName = "Model information categories"
@@ -1624,9 +1641,14 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             $"State: {model.OperationalState ?? "—"}{Environment.NewLine}" +
             $"Observed: {FormatDateTime(model.ObservedAtUtc)}{Environment.NewLine}" +
             $"Stale after: {FormatDateTime(model.StaleAfterUtc)}";
+        var providerEvidence = string.IsNullOrWhiteSpace(model.OwnedBy)
+            ? "Not reported"
+            : model.OwnedBy;
         _technicalProviderValue!.Text = model.ExtensionData.Count == 0
-            ? "No additional provider-specific evidence was reported."
-            : "Provider data:" + Environment.NewLine +
+            ? $"Provider: {providerEvidence}{Environment.NewLine}" +
+              "No additional provider-specific evidence was reported."
+            : $"Provider: {providerEvidence}{Environment.NewLine}" +
+              "Provider data:" + Environment.NewLine +
               FormatJsonDictionary(model.ExtensionData);
     }
 
@@ -1828,8 +1850,67 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _detailsTitle.MaximumSize = new Size(textWidth, 0);
         _detailsSummary.MaximumSize = new Size(textWidth, 0);
 
+        var selectedPage = _detailsTabs.SelectedTab;
+        var selectedPageHeight = MeasureDetailsPageHeight(
+            selectedPage,
+            Math.Max(180, textWidth - 4));
+
+        var tabHeight = Math.Max(
+            120,
+            _detailsTabs.HeaderHeight + selectedPageHeight + 10);
+
+        _detailsTabs.Height = tabHeight;
+
         _detailsContent.PerformLayout();
+
+        var requiredHeight =
+            _detailsContent.Padding.Vertical +
+            _detailsTitle.Height +
+            _detailsSummary.Height +
+            _detailsTabs.Height;
+
+        var viewportHeight = Math.Max(1, _detailsScrollHost.ClientSize.Height);
+        _detailsContent.Height = Math.Max(viewportHeight, requiredHeight);
+
         _detailsScrollHost.Synchronize();
+    }
+
+    private static int MeasureDetailsPageHeight(TabPage page, int availableWidth)
+    {
+        page.Width = Math.Max(1, availableWidth);
+        page.PerformLayout();
+
+        var content = page.Controls
+            .Cast<Control>()
+            .FirstOrDefault();
+
+        if (content is null)
+            return page.Padding.Vertical;
+
+        content.Width = Math.Max(1, availableWidth - page.Padding.Horizontal);
+
+        if (content is TableLayoutPanel layout)
+        {
+            layout.PerformLayout();
+            var valueWidth = Math.Max(
+                180,
+                layout.ClientSize.Width - 116);
+
+            foreach (Control child in layout.Controls)
+            {
+                if (layout.GetColumn(child) == 1 &&
+                    child is Label label)
+                {
+                    label.MaximumSize = new Size(valueWidth, 0);
+                }
+            }
+        }
+
+        content.PerformLayout();
+
+        return content.GetPreferredSize(
+            new Size(Math.Max(1, availableWidth), 0)).Height +
+            page.Padding.Vertical;
     }
 
     private void DetailsScrollHostOnResize(object? sender, EventArgs e) =>
