@@ -18,6 +18,7 @@ internal sealed class HiveAgentManagementService : HiveManagementServiceBase
     private readonly IAgentDefinitionResourceStore _agentDefinitions;
 
     private readonly IProviderResourceStore _providerResources;
+    private readonly HiveProviderManagementService _providers;
 
     private readonly ISecretStore? _secrets;
 
@@ -25,7 +26,12 @@ internal sealed class HiveAgentManagementService : HiveManagementServiceBase
 
 
 
-    internal HiveAgentManagementService(IAgentDefinitionResourceStore agentDefinitions, IProviderResourceStore providerResources, ISecretStore? secrets, AgentExecutionService? agentExecution)
+    internal HiveAgentManagementService(
+        IAgentDefinitionResourceStore agentDefinitions,
+        IProviderResourceStore providerResources,
+        HiveProviderManagementService providers,
+        ISecretStore? secrets,
+        AgentExecutionService? agentExecution)
 
     {
 
@@ -415,6 +421,11 @@ internal sealed class HiveAgentManagementService : HiveManagementServiceBase
                     "The configured ExecutionTarget references a ProviderAccount owned by a different Provider."));
         }
 
+        var pricingEvidence = _providers.TryGetFreshModelPricingEvidence(
+            provider.Value,
+            account.Value,
+            target.Value);
+
         SecretMaterial? credential = null;
 
         try
@@ -462,7 +473,8 @@ internal sealed class HiveAgentManagementService : HiveManagementServiceBase
                         target.Value,
                         accessContext,
                         userMessage,
-                        credential),
+                        credential,
+                        pricingEvidence: pricingEvidence),
                     cancellationToken)
                 .ConfigureAwait(false);
 
