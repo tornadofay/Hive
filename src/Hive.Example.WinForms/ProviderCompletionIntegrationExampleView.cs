@@ -51,6 +51,7 @@ internal sealed class ProviderCompletionIntegrationExampleView : UserControl
 
             // result.Usage and result.PricingEvidence identify the
             // same provider/execution accounting boundary.
+            // result.ProviderReportedModelId preserves provider-resolved model identity.
             """;
 
         _surface.ConfigureRun(
@@ -200,6 +201,9 @@ internal sealed class ProviderCompletionIntegrationExampleView : UserControl
             Discovery calls before execution: {discovery.CallCount}
             Discovery calls after execution: {discovery.CallCount}
             Pricing evidence: attached
+            Pricing source Provider: {pricingEvidence.ProviderId}
+            Pricing source Account: {pricingEvidence.ProviderAccountId}
+            Pricing source endpoint: {pricingEvidence.Endpoint.AbsoluteUri}
             Pricing model: {pricingEvidence.ModelId}
             Input price: {pricingEvidence.Pricing.Prices.Single(
                 price => price.BillingUnit == "input_token").Price} {pricingEvidence.Pricing.Prices.Single(
