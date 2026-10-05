@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 ### Remediation checkpoint — 2026-10-05
 
@@ -22,18 +22,19 @@ UI polish remediation is complete within the recorded failure boundary: detail v
 
 Verification remains pending developer rerun. No provider, persistence, filter-semantic, roadmap, or unrelated UI changes were made.
 
-### Verification failure — 2026-10-05
+### Verification remediation — 2026-10-05
 
-Developer verification reported **679 tests: 678 passed, 1 failed, 0 skipped**. The remaining failure is `Phase116FollowUpTests.ModelInformationView_UpdatesDetailsWhenSelectionChanges`, which expects the selected model's provider evidence on the Technical tab but the current Technical page only renders extension data.
+Developer verification reported **679 tests: 678 passed, 1 failed, 0 skipped**. The remaining failure was caused by the Technical tab omitting the model's `OwnedBy` provider evidence; the Technical page now renders it explicitly as `Provider`.
 
-Developer manual UI verification reports two remaining in-scope presentation defects: the right-side Model Information details surface does not show its vertical scrollbar reliably in normal window size when content overflows, and the filter controls overlap in normal mode so one pricing checkbox can be hidden.
+The final in-scope UI remediation also addresses the two reported presentation defects: the selected detail tab now determines an explicit content height so the enclosing HiveScrollHost can expose vertical scrolling at normal window size, and the filter controls are split into responsive primary/options rows so both pricing-evidence checkboxes remain visible without overlap.
 
-Remediation boundary: expose the authoritative model provider identity on the Technical page, correct the right-side scroll-content sizing so overflow is visible at normal size, and reorganize the Model Information filter controls into responsive non-overlapping rows. No provider contracts, persistence, filter semantics, roadmap, or unrelated UI changes are authorized.
+A focused regression test was added for long Technical content at the normal `1160 x 760` test window and asserts that the Hive vertical scrollbar becomes available.
 
+Verification remains pending developer rerun. No provider, persistence, filter-semantic, roadmap, or unrelated UI changes were made.
 ## Off-Work Slice — Model Information Decision Surface: Pricing Correctness, Provider Metadata Enrichment & UI/UX Redesign
 
 Authorized: 2026-10-05 (explicit maintainer request in a dedicated chat)
-Checkpoint: `fa695db9` — "Format model limits as readable lines"
+Checkpoint: `e6a5cd54` — "Add Model Information normal-size scroll coverage"
 Roadmap impact: None. Bounded off-roadmap work. Does not activate or advance any Phase 1 roadmap slice.
 
 ### Maintainer intent
