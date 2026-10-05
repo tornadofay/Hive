@@ -31,6 +31,18 @@ public sealed class ExecutionTokenUsageTests
     }
 
     [Fact]
+    public void Estimated_IsRepresentableButDistinctFromActual()
+    {
+        var usage = new ExecutionTokenUsage(
+            TokenUsageEvidence.Estimated,
+            totalTokenCount: 165);
+
+        Assert.Equal(TokenUsageEvidence.Estimated, usage.Evidence);
+        Assert.Equal(165, usage.TotalTokenCount);
+        Assert.True(usage.HasKnownUsage);
+    }
+
+    [Fact]
     public void Unknown_HasNoSyntheticZeroCounts()
     {
         var usage = ExecutionTokenUsage.Unknown;
