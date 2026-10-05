@@ -1771,6 +1771,7 @@ public sealed class OpenAICompatibleProviderAdapter
         decimal? defaultTokenUnitQuantity = null)
     {
         var prices = new Dictionary<string, ProviderModelPrice>(StringComparer.Ordinal);
+        var variants = new List<ProviderModelPricingVariant>();
         var explicitFree = false;
 
         if (model.TryGetProperty("free", out var free) &&
@@ -1810,23 +1811,112 @@ public sealed class OpenAICompatibleProviderAdapter
                 explicitFree = true;
             }
 
-            foreach (var property in pricing.EnumerateObject())
+            ParsePricingEntries(
+                pricing,
+                prices,
+                defaultCurrency,
+                defaultTokenUnitQuantity);
+        }
+
+        if (pricing.ValueKind == JsonValueKind.Object &&
+            pricing.TryGetProperty("variants", out var variantsElement) &&
+            variantsElement.ValueKind == JsonValueKind.Object)
+        {
+            string? explicitDefaultKey = null;
+
+            foreach (var variantProperty in variantsElement.EnumerateObject())
             {
-                if (string.Equals(property.Name, "currency", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(property.Name, "unit", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(property.Name, "unit_quantity", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(property.Name, "free", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(property.Name, "variants", StringComparison.OrdinalIgnoreCase))
+                if (variantProperty.Value.ValueKind == JsonValueKind.Object &&
+                    variantProperty.Value.TryGetProperty(
+                        "default",
+                        out var defaultElement) &&
+                    defaultElement.ValueKind == JsonValueKind.True)
                 {
+                    explicitDefaultKey = variantProperty.Name;
+                    break;
+                }
+            }
+
+            foreach (var variantProperty in variantsElement.EnumerateObject())
+            {
+                if (variantProperty.Value.ValueKind != JsonValueKind.Object)
                     continue;
+
+                var variant = variantProperty.Value;
+                var variantCurrency =
+                    TryGetString(variant, "currency") ??
+                    defaultCurrency;
+
+                var variantPrices = new Dictionary<string, ProviderModelPrice>(
+                    StringComparer.Ordinal);
+
+                var nestedPricing = variant;
+                if (variant.TryGetProperty("pricing", out var nestedPricingElement) &&
+                    nestedPricingElement.ValueKind == JsonValueKind.Object)
+                {
+                    nestedPricing = nestedPricingElement;
+                }
+                else if (variant.TryGetProperty("prices", out var nestedPricesElement) &&
+                         nestedPricesElement.ValueKind == JsonValueKind.Object)
+                {
+                    nestedPricing = nestedPricesElement;
                 }
 
-                AddPrice(
-                    prices,
-                    property.Name,
-                    property.Value,
-                    defaultCurrency,
+                ParsePricingEntries(
+                    nestedPricing,
+                    variantPrices,
+                    variantCurrency,
                     defaultTokenUnitQuantity);
+
+                if (variant.TryGetProperty("free", out var variantFree) &&
+                    variantFree.ValueKind == JsonValueKind.True)
+                {
+                    explicitFree = true;
+                }
+
+                var isDefault =
+                    explicitDefaultKey is not null
+                        ? string.Equals(
+                            variantProperty.Name,
+                            explicitDefaultKey,
+                            StringComparison.OrdinalIgnoreCase)
+                        : string.Equals(
+                            variantProperty.Name,
+                            "default",
+                            StringComparison.OrdinalIgnoreCase) ||
+                          string.Equals(
+                            variantProperty.Name,
+                            "standard",
+                            StringComparison.OrdinalIgnoreCase);
+
+                variants.Add(
+                    new ProviderModelPricingVariant(
+                        variantProperty.Name,
+                        variantPrices.Values
+                            .OrderBy(item => item.BillingUnit, StringComparer.Ordinal)
+                            .ToArray(),
+                        ParsePricingVariantConditions(variant),
+                        isDefault));
+            }
+        }
+
+        if (prices.Count == 0 && variants.Count > 0)
+        {
+            var defaultVariants = variants
+                .Where(static variant => variant.IsDefault)
+                .ToArray();
+
+            if (defaultVariants.Length == 1)
+            {
+                prices = defaultVariants[0].Prices.ToDictionary(
+                    price => price.BillingUnit,
+                    StringComparer.Ordinal);
+            }
+            else if (variants.Count == 1)
+            {
+                prices = variants[0].Prices.ToDictionary(
+                    price => price.BillingUnit,
+                    StringComparer.Ordinal);
             }
         }
 
@@ -1834,21 +1924,88 @@ public sealed class OpenAICompatibleProviderAdapter
             prices.Values
                 .OrderBy(item => item.BillingUnit, StringComparer.Ordinal)
                 .ToArray(),
-            explicitFree);
+            explicitFree,
+            variants);
 
         if (pricingModel.HasZeroComparableInputOutputTokenPricing)
         {
             explicitFree = true;
         }
 
-        if (prices.Count == 0 && !explicitFree)
+        if (prices.Count == 0 &&
+            variants.Count == 0 &&
+            !explicitFree)
+        {
             return null;
+        }
 
         return new ProviderModelPricing(
             prices.Values
                 .OrderBy(item => item.BillingUnit, StringComparer.Ordinal)
                 .ToArray(),
-            explicitFree);
+            explicitFree,
+            variants);
+    }
+
+    private static void ParsePricingEntries(
+        JsonElement pricing,
+        IDictionary<string, ProviderModelPrice> prices,
+        string? defaultCurrency,
+        decimal? defaultTokenUnitQuantity)
+    {
+        if (pricing.ValueKind != JsonValueKind.Object)
+            return;
+
+        foreach (var property in pricing.EnumerateObject())
+        {
+            if (string.Equals(property.Name, "currency", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(property.Name, "unit", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(property.Name, "unit_quantity", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(property.Name, "free", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(property.Name, "variants", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(property.Name, "conditions", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(property.Name, "default", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            AddPrice(
+                prices,
+                property.Name,
+                property.Value,
+                defaultCurrency,
+                defaultTokenUnitQuantity);
+        }
+    }
+
+    private static IReadOnlyDictionary<string, string> ParsePricingVariantConditions(
+        JsonElement variant)
+    {
+        if (!variant.TryGetProperty("conditions", out var conditions) ||
+            conditions.ValueKind != JsonValueKind.Object)
+        {
+            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        var result = new Dictionary<string, string>(
+            StringComparer.OrdinalIgnoreCase);
+
+        foreach (var property in conditions.EnumerateObject())
+        {
+            if (property.Value.ValueKind != JsonValueKind.String)
+                continue;
+
+            var value = property.Value.GetString();
+            if (string.IsNullOrWhiteSpace(value))
+                continue;
+
+            result[property.Name] = value.Trim();
+
+            if (result.Count >= 16)
+                break;
+        }
+
+        return result;
     }
 
     private static void AddPrice(
@@ -1911,52 +2068,6 @@ public sealed class OpenAICompatibleProviderAdapter
             unitQuantity);
 
         prices.TryAdd(normalized.BillingUnit, normalized);
-    }
-
-    private static bool IsKnownBillingDimension(string value) =>
-        value is "input_token" or
-            "output_token" or
-            "reasoning_token" or
-            "cached_input_token" or
-            "cached_output_token";
-
-    private static decimal? TryGetUnitQuantity(string unit)
-    {
-        var normalized = unit
-            .Trim()
-            .ToLowerInvariant()
-            .Replace("-", "_")
-            .Replace(" ", "_");
-
-        return normalized switch
-        {
-            "token" or
-            "tokens" or
-            "per_token" or
-            "per_tokens" => 1m,
-
-            "1k" or
-            "1k_token" or
-            "1k_tokens" or
-            "per_1k" or
-            "per_1k_token" or
-            "per_1k_tokens" or
-            "per_1000" or
-            "per_1000_token" or
-            "per_1000_tokens" => 1_000m,
-
-            "1m" or
-            "1m_token" or
-            "1m_tokens" or
-            "per_1m" or
-            "per_1m_token" or
-            "per_1m_tokens" or
-            "per_1000000" or
-            "per_1000000_token" or
-            "per_1000000_tokens" => 1_000_000m,
-
-            _ => null
-        };
     }
 
     private static decimal? TryGetDecimalProperty(
