@@ -182,6 +182,86 @@ public sealed class ProviderCompletionIntegrationTests
             persistedVariant.GetProperty("conditions").GetProperty("mode").GetString());
     }
 
+
+    [Fact]
+    public async Task ExecuteAsync_StalePricingEvidence_IsNotPersistedAsExecutionEvidence()
+    {
+        var database = await PrepareDatabase("Hive_Test_ProviderCompletionStalePricing");
+        var eventStore = new SqlEventPersistenceStore(database.Options);
+
+        var clock = new FixedClock(
+            new DateTimeOffset(2026, 10, 5, 12, 0, 0, TimeSpan.Zero));
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        var target = CreateTarget(
+            ProviderId.New(),
+            ProviderAccountId.New(),
+            new Uri("https://example.invalid/v1/"),
+            "stale-model",
+            context,
+            clock.UtcNow);
+
+        var pricing = new ProviderModelPricing(
+            [
+                new ProviderModelPrice(
+                    "input_token",
+                    0.35m,
+                    "USD",
+                    1_000_000m),
+                new ProviderModelPrice(
+                    "output_token",
+                    1.50m,
+                    "USD",
+                    1_000_000m)
+            ]);
+        var stalePricing = new ExecutionPricingEvidence(
+            target.Model!,
+            pricing,
+            new DateTimeOffset(2026, 10, 5, 9, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 10, 5, 10, 0, 0, TimeSpan.Zero));
+
+        using var httpClient = new HttpClient(
+            new StaticHttpMessageHandler(
+                """{"id":"chatcmpl-stale-pricing","model":"stale-model","usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15},"choices":[{"message":{"role":"assistant","content":"execution completed"}}]}"""));
+        var service = new AgentExecutionService(
+            new HiveEventPersistenceComposition(eventStore),
+            httpClient,
+            TimeSpan.FromSeconds(5),
+            clock);
+
+        var agent = CreateAgent(context);
+        var runtime = agent.CreateRuntimeInstance();
+
+        var result = await service.ExecuteAsync(
+            new AgentExecutionRequest(
+                agent,
+                runtime,
+                target,
+                context,
+                "Execute without stale pricing.",
+                pricingEvidence: stalePricing));
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Null(result.Value!.PricingEvidence);
+
+        var events = await eventStore.ReadEventsAsync(
+            new ResourceReference(
+                ResourceKind.Execution,
+                result.Value.Execution.Id.Value));
+        Assert.True(events.IsSuccess, events.Error?.Message);
+
+        var succeeded = events.Value!.Single(
+            item => item.Envelope.EventType.Value == "agent.execution.succeeded");
+        var pricingEvidence = succeeded.Envelope.Payload
+            .GetProperty("usage")
+            .GetProperty("pricingEvidence");
+
+        Assert.Equal(JsonValueKind.Null, pricingEvidence.ValueKind);
+    }
+
     private static Provider CreateProvider(
         ResourceAccessContext context,
         DateTimeOffset now) =>
