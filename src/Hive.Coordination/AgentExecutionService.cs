@@ -11,6 +11,8 @@ namespace Hive.Coordination;
 
 public sealed class AgentExecutionService
 {
+    private const int MaxProviderReportedModelIdLength = 512;
+
     private readonly IEventPersistenceStore _eventStore;
     private readonly HttpClient _httpClient;
     private readonly TimeSpan _providerTimeout;
@@ -199,6 +201,8 @@ public sealed class AgentExecutionService
             var responseMessage = response.Messages.LastOrDefault();
             var responseText = responseMessage?.Text;
             var providerResponseId = response.ResponseId;
+            var providerReportedModelId =
+                NormalizeProviderReportedModelId(response.ModelId);
             var usage = NormalizeUsage(response.Usage);
 
             if (string.IsNullOrWhiteSpace(responseText))
@@ -215,7 +219,9 @@ public sealed class AgentExecutionService
                             "The provider returned no usable agent response text."),
                         CancellationToken.None,
                         usage,
-                        pricingEvidence)
+                        pricingEvidence,
+                        providerResponseId,
+                        providerReportedModelId)
                     .ConfigureAwait(false);
             }
 
@@ -232,6 +238,7 @@ public sealed class AgentExecutionService
                     startedEvent,
                     responseText,
                     providerResponseId,
+                    providerReportedModelId,
                     usage,
                     pricingEvidence,
                     CancellationToken.None)
@@ -280,6 +287,19 @@ public sealed class AgentExecutionService
                     CancellationToken.None)
                 .ConfigureAwait(false);
         }
+    }
+
+    private static string? NormalizeProviderReportedModelId(
+        string? modelId)
+    {
+        if (string.IsNullOrWhiteSpace(modelId))
+            return null;
+
+        var normalized = modelId.Trim();
+
+        return normalized.Length <= MaxProviderReportedModelIdLength
+            ? normalized
+            : null;
     }
 
     private static ExecutionTokenUsage NormalizeUsage(
@@ -342,6 +362,7 @@ public sealed class AgentExecutionService
         Execution execution,
         ExecutionTokenUsage usage,
         string? providerResponseId,
+        string? providerReportedModelId,
         ExecutionPricingEvidence? pricingEvidence)
     {
         var accessContext = request.AccessContext;
@@ -371,6 +392,7 @@ public sealed class AgentExecutionService
             workspaceId = accessContext.WorkspaceId?.Value,
             hiveId = accessContext.HiveId?.Value,
             providerResponseId,
+            providerReportedModelId,
             pricingEvidence = CreatePricingPayload(pricingEvidence)
         };
     }
@@ -383,6 +405,9 @@ public sealed class AgentExecutionService
 
         return new
         {
+            providerId = pricingEvidence.ProviderId.Value,
+            providerAccountId = pricingEvidence.ProviderAccountId.Value,
+            endpoint = pricingEvidence.Endpoint.AbsoluteUri,
             modelId = pricingEvidence.ModelId,
             observedAtUtc = pricingEvidence.ObservedAtUtc,
             staleAfterUtc = pricingEvidence.StaleAfterUtc,
@@ -626,6 +651,7 @@ public sealed class AgentExecutionService
         EventEnvelope startedEvent,
         string responseText,
         string? providerResponseId,
+        string? providerReportedModelId,
         ExecutionTokenUsage usage,
         ExecutionPricingEvidence? pricingEvidence,
         CancellationToken cancellationToken)
@@ -650,6 +676,7 @@ public sealed class AgentExecutionService
                     execution,
                     usage,
                     providerResponseId,
+                    providerReportedModelId,
                     pricingEvidence)
             },
             payloadSchemaVersion: 2);
@@ -662,6 +689,7 @@ public sealed class AgentExecutionService
                 envelope,
                 responseText,
                 providerResponseId,
+                providerReportedModelId,
                 usage,
                 pricingEvidence,
                 correlationId,
@@ -678,7 +706,9 @@ public sealed class AgentExecutionService
         Error error,
         CancellationToken cancellationToken,
         ExecutionTokenUsage? usage = null,
-        ExecutionPricingEvidence? pricingEvidence = null)
+        ExecutionPricingEvidence? pricingEvidence = null,
+        string? providerResponseId = null,
+        string? providerReportedModelId = null)
     {
         var failed = execution.Fail();
 
@@ -716,7 +746,8 @@ public sealed class AgentExecutionService
                     request,
                     execution,
                     usage,
-                    providerResponseId: null,
+                    providerResponseId,
+                    providerReportedModelId,
                     pricingEvidence: pricingEvidence)
             };
 
@@ -788,6 +819,7 @@ public sealed class AgentExecutionService
         string responseText,
         string? providerResponseId,
         ExecutionTokenUsage usage,
+        string? providerReportedModelId,
         ExecutionPricingEvidence? pricingEvidence,
         CorrelationId correlationId,
         CancellationToken cancellationToken)
@@ -812,7 +844,8 @@ public sealed class AgentExecutionService
                 providerResponseId,
                 usage)
             {
-                PricingEvidence = pricingEvidence
+                PricingEvidence = pricingEvidence,
+                ProviderReportedModelId = providerReportedModelId
             });
     }
 
