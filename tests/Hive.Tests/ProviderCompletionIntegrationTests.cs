@@ -40,6 +40,9 @@ public sealed class ProviderCompletionIntegrationTests
             DateTimeOffset.UtcNow);
 
         var pricing = new ExecutionPricingEvidence(
+            target.ProviderId,
+            target.ProviderAccountId,
+            target.Endpoint,
             "different-model",
             new ProviderModelPricing(
                 [
@@ -135,7 +138,7 @@ public sealed class ProviderCompletionIntegrationTests
 
         using var httpClient = new HttpClient(
             new StaticHttpMessageHandler(
-                """{"id":"chatcmpl-provider-completion","model":"integration-model","usage":{"prompt_tokens":120,"completion_tokens":45,"total_tokens":165},"choices":[{"message":{"role":"assistant","content":"integration complete"}}]}"""));
+                """{"id":"chatcmpl-provider-completion","model":"resolved-integration-model","usage":{"prompt_tokens":120,"completion_tokens":45,"total_tokens":165},"choices":[{"message":{"role":"assistant","content":"integration complete"}}]}"""));
 
         var execution = new AgentExecutionService(
             new HiveEventPersistenceComposition(eventStore),
@@ -189,6 +192,9 @@ public sealed class ProviderCompletionIntegrationTests
         Assert.Equal(1, discovery.CallCount);
         Assert.Equal(TokenUsageEvidence.Actual, result.Value!.Usage.Evidence);
         Assert.Equal(120, result.Value.Usage.InputTokenCount);
+        Assert.Equal(
+            "resolved-integration-model",
+            result.Value.ProviderReportedModelId);
         Assert.NotNull(result.Value.PricingEvidence);
         Assert.Equal("integration-model", result.Value.PricingEvidence!.ModelId);
         Assert.False(result.Value.PricingEvidence.IsStale(clock.UtcNow));
@@ -209,7 +215,19 @@ public sealed class ProviderCompletionIntegrationTests
         Assert.Equal(2, succeeded.Envelope.PayloadSchemaVersion.Value);
 
         var usagePayload = succeeded.Envelope.Payload.GetProperty("usage");
+        Assert.Equal(
+            "resolved-integration-model",
+            usagePayload.GetProperty("providerReportedModelId").GetString());
         var pricingPayload = usagePayload.GetProperty("pricingEvidence");
+        Assert.Equal(
+            provider.Id.Value,
+            pricingPayload.GetProperty("providerId").GetGuid());
+        Assert.Equal(
+            account.Id.Value,
+            pricingPayload.GetProperty("providerAccountId").GetGuid());
+        Assert.Equal(
+            target.Endpoint.AbsoluteUri,
+            pricingPayload.GetProperty("endpoint").GetString());
         Assert.Equal(
             "integration-model",
             pricingPayload.GetProperty("modelId").GetString());
@@ -233,6 +251,147 @@ public sealed class ProviderCompletionIntegrationTests
         Assert.Equal(
             "batch",
             persistedVariant.GetProperty("conditions").GetProperty("mode").GetString());
+    }
+
+    
+    [Fact]
+    public async Task ExecuteConfiguredAgentAsync_RejectsNativeProviderBeforeAdapterInvocation()
+    {
+        var database = await PrepareDatabase("Hive_Test_ProviderCompletionNativeBoundary");
+        var eventStore = new SqlEventPersistenceStore(database.Options);
+        var clock = new FixedClock(
+            new DateTimeOffset(2026, 10, 5, 0, 0, 0, TimeSpan.Zero));
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        var provider = CreateProvider(
+            context,
+            clock.UtcNow,
+            key: "anthropic",
+            transportKind: "openai-compatible");
+        var account = CreateAccount(provider.Id, context, clock.UtcNow);
+        var target = CreateTarget(
+            provider.Id,
+            account.Id,
+            new Uri("https://example.invalid/v1/"),
+            "native-model",
+            context,
+            clock.UtcNow);
+        var definition = CreateAgentDefinition(
+            target.Id,
+            context,
+            clock.UtcNow);
+
+        var handler = new StaticHttpMessageHandler(
+            """{"id":"should-not-be-called","model":"native-model","choices":[{"message":{"role":"assistant","content":"unexpected"}}]}""");
+        using var httpClient = new HttpClient(handler);
+        var execution = new AgentExecutionService(
+            new HiveEventPersistenceComposition(eventStore),
+            httpClient,
+            TimeSpan.FromSeconds(5),
+            clock);
+
+        var facade = new HiveManagementFacade(
+            new SqlProviderResourceStore(database.Options),
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            agentExecution: execution,
+            clock: clock);
+
+        Assert.True(
+            (await facade.CreateProviderAsync(provider, context)).IsSuccess);
+        Assert.True(
+            (await facade.CreateProviderAccountAsync(account, context)).IsSuccess);
+        Assert.True(
+            (await facade.CreateExecutionTargetAsync(target, context)).IsSuccess);
+        Assert.True(
+            (await facade.CreateAgentDefinitionAsync(definition, context)).IsSuccess);
+
+        var result = await facade.ExecuteConfiguredAgentAsync(
+            definition.Id,
+            context,
+            "Native execution must be rejected.");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.management.agent-execution.native-provider-unsupported",
+            result.Error!.Code);
+        Assert.Equal(
+            ErrorCategory.Unsupported,
+            result.Error.Category);
+        Assert.Equal(0, handler.CallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteConfiguredAgentAsync_RejectsNonOpenAICompatibleProviderBeforeAdapterInvocation()
+    {
+        var database = await PrepareDatabase("Hive_Test_ProviderCompletionTransportBoundary");
+        var eventStore = new SqlEventPersistenceStore(database.Options);
+        var clock = new FixedClock(
+            new DateTimeOffset(2026, 10, 5, 0, 0, 0, TimeSpan.Zero));
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        var provider = CreateProvider(
+            context,
+            clock.UtcNow,
+            key: "custom-provider",
+            transportKind: "native-custom");
+        var account = CreateAccount(provider.Id, context, clock.UtcNow);
+        var target = CreateTarget(
+            provider.Id,
+            account.Id,
+            new Uri("https://example.invalid/v1/"),
+            "transport-model",
+            context,
+            clock.UtcNow);
+        var definition = CreateAgentDefinition(
+            target.Id,
+            context,
+            clock.UtcNow);
+
+        var handler = new StaticHttpMessageHandler(
+            """{"id":"should-not-be-called","model":"transport-model","choices":[{"message":{"role":"assistant","content":"unexpected"}}]}""");
+        using var httpClient = new HttpClient(handler);
+        var execution = new AgentExecutionService(
+            new HiveEventPersistenceComposition(eventStore),
+            httpClient,
+            TimeSpan.FromSeconds(5),
+            clock);
+
+        var facade = new HiveManagementFacade(
+            new SqlProviderResourceStore(database.Options),
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            agentExecution: execution,
+            clock: clock);
+
+        Assert.True(
+            (await facade.CreateProviderAsync(provider, context)).IsSuccess);
+        Assert.True(
+            (await facade.CreateProviderAccountAsync(account, context)).IsSuccess);
+        Assert.True(
+            (await facade.CreateExecutionTargetAsync(target, context)).IsSuccess);
+        Assert.True(
+            (await facade.CreateAgentDefinitionAsync(definition, context)).IsSuccess);
+
+        var result = await facade.ExecuteConfiguredAgentAsync(
+            definition.Id,
+            context,
+            "Non-compatible transport must be rejected.");
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.management.agent-execution.unsupported-provider-transport",
+            result.Error!.Code);
+        Assert.Equal(
+            ErrorCategory.Unsupported,
+            result.Error.Category);
+        Assert.Equal(0, handler.CallCount);
     }
 
 
@@ -271,6 +430,9 @@ public sealed class ProviderCompletionIntegrationTests
                     1_000_000m)
             ]);
         var stalePricing = new ExecutionPricingEvidence(
+            target.ProviderId,
+            target.ProviderAccountId,
+            target.Endpoint,
             target.Model!,
             pricing,
             new DateTimeOffset(2026, 10, 5, 9, 0, 0, TimeSpan.Zero),
@@ -321,7 +483,9 @@ public sealed class ProviderCompletionIntegrationTests
 
     private static Provider CreateProvider(
         ResourceAccessContext context,
-        DateTimeOffset now) =>
+        DateTimeOffset now,
+        string key = "integration-provider",
+        string transportKind = "openai-compatible") =>
         new(
             new ResourceEnvelope<ProviderId>(
                 ResourceKind.Provider,
@@ -334,9 +498,9 @@ public sealed class ProviderCompletionIntegrationTests
                     now,
                     CorrelationId.New()),
                 ResourceLifecycle.Active(now)),
-            "integration-provider",
+            key,
             "Integration Provider",
-            "openai-compatible");
+            transportKind);
 
     private static ProviderAccount CreateAccount(
         ProviderId providerId,
@@ -524,11 +688,14 @@ public sealed class ProviderCompletionIntegrationTests
         public StaticHttpMessageHandler(string responseBody) =>
             _responseBody = responseBody;
 
+        public int CallCount { get; private set; }
+
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            CallCount++;
 
             var response = new HttpResponseMessage(HttpStatusCode.OK)
             {
