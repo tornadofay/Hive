@@ -149,7 +149,7 @@ The normalized model metadata profile covers all applicable fields from the foll
 
    The canonical token comparison uses normalized USD input/output token rates per 1M tokens and selects a deterministic applicable pricing variant. It must not silently choose an arbitrary variant when applicability is unknown.
 
-   Free pricing evidence requires explicit provider evidence or complete normalized comparable input/output token rates that are both exactly zero. A zero-priced unrelated billing dimension, such as image or request charges, does not establish that the model is free. Free pricing evidence does not guarantee zero user/account cost under every provider plan, routing arrangement, quota, or policy. Missing pricing is **not** interpreted as free. Pricing is discovery evidence, not a cost-policy decision.
+   Free pricing evidence requires explicit provider evidence or a complete provider-reported input/output token-price pair that is both exactly zero. The zero pair is free evidence even when missing currency or quantity leaves the rates non-comparable to the canonical USD filter; comparability and free-evidence qualification are separate decisions. A zero-priced unrelated billing dimension, such as image or request charges, does not establish that the model is free. Free pricing evidence does not guarantee zero user/account cost under every provider plan, routing arrangement, quota, or policy. Missing pricing is **not** interpreted as free. Pricing is discovery evidence, not a cost-policy decision.
 
 7. **Operational metadata**
    - availability;
