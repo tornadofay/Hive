@@ -1,6 +1,6 @@
 # Off-Work Plan — Provider Pricing, Built-In Catalog & Runtime Usage
 
-> **Status:** Slice 1 complete and verified; Slice 2 complete and verified; Slice 3 in progress  
+> **Status:** Slice 1 complete and verified; Slice 2 complete and verified; Slice 3 implementation complete; verification pending  
 > **Roadmap impact:** None  
 > **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 2 was explicitly authorized on 2026-10-05 and is now complete.  
 > **Prerequisite:** Phase 1.19A verification is now closed. This off-work plan remains separate and still requires explicit implementation authorization in a dedicated chat.
@@ -303,9 +303,11 @@ For every built-in provider:
 A representative provider test should be maintained for each normalization pattern rather than requiring one large duplicated test per provider.
 
 
-## Slice 3 — Runtime Token Usage Foundation — In progress
+## Slice 3 — Runtime Token Usage Foundation — Implementation complete; verification pending
 
-Slice 3 was explicitly authorized on 2026-10-05. It implements only the provider-usage evidence foundation described below. Phase 1.30 reporting, metrics, budgets, OpenTelemetry, and quota enforcement remain outside this slice.
+Slice 3 was explicitly authorized on 2026-10-05. The implementation is complete within this bounded provider-usage evidence foundation. Developer verification is pending. Phase 1.30 reporting, metrics, budgets, OpenTelemetry, and quota enforcement remain outside this slice.
+
+The implementation adds a Hive-owned `ExecutionTokenUsage` contract, preserves OpenAI-compatible provider-reported usage through the current ChatClient / MAF boundary, persists usage inside the terminal execution event, and adds focused provider/core/execution regressions plus the deterministic Example Host scenario at `Providers / Runtime / Token Usage Foundation`.
 
 ## Workstream 8 — Runtime Token Usage & Cost Accounting
 
