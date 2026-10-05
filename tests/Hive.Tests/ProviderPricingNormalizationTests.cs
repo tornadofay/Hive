@@ -95,6 +95,49 @@ public sealed class ProviderPricingNormalizationTests
     }
 
     [Fact]
+    public async Task StandardObjectPricing_WithBillingDimensionOnly_DoesNotInferQuantity()
+    {
+        using var client = new HttpClient(
+            new FixedResponseHandler(
+                """
+                {
+                  "data": [
+                    {
+                      "id": "object-pricing-model",
+                      "pricing": {
+                        "input": {
+                          "price": 0.35,
+                          "unit": "input_token"
+                        },
+                        "output": {
+                          "price": 0.75,
+                          "unit": "output_token"
+                        }
+                      }
+                    }
+                  ]
+                }
+                """));
+
+        var adapter = new OpenAICompatibleProviderAdapter(
+            client,
+            new OpenAICompatibleProviderOptions(
+                new Uri("https://example.test/v1/")));
+
+        var result = await adapter.ListModelsAsync();
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var pricing = Assert.Single(result.Value!.Models).Pricing!;
+
+        Assert.Null(pricing.Prices.Single(
+            price => price.BillingUnit == "input_token").UnitQuantity);
+        Assert.Null(pricing.Prices.Single(
+            price => price.BillingUnit == "output_token").UnitQuantity);
+        Assert.Null(pricing.TryGetComparableTokenPricePerMillion());
+    }
+
+    [Fact]
     public async Task PaidTokenPricing_WithZeroAncillaryCharges_IsNotFree()
     {
         using var client = new HttpClient(
