@@ -1,8 +1,8 @@
 # Off-Work Plan — Provider Pricing, Built-In Catalog & Runtime Usage
 
-> **Status:** Planned, not started  
+> **Status:** Slice 1 complete and verified; Slices 2–3 planned, not started  
 > **Roadmap impact:** None  
-> **Implementation authorization:** Must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice.  
+> **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 1 is now closed; no Slice 2 authorization exists yet.  
 > **Prerequisite:** Phase 1.19A verification is now closed. This off-work plan remains separate and still requires explicit implementation authorization in a dedicated chat.
 
 ## Objective
@@ -29,6 +29,10 @@ Phase 1.19A completed its final verification on 2026-10-04:
 The previously recorded Model Information provider-details heading failure was corrected and included in the final verified result. The matching `Hive.Example.WinForms` Settings / Advanced Provider Configuration workflow was also manually confirmed by the developer.
 
 This off-work plan is therefore no longer blocked by the 1.19A verification gate. It remains a separate, planned task: do not start implementation from this document alone, and do not open or advance a Phase 1 roadmap slice through this plan.
+
+## Slice 1 — Pricing Normalization — Complete
+
+Slice 1 was explicitly authorized, implemented, remediated, and verified on 2026-10-05. See [verification record](../../verification/phase-1/off-work-provider-pricing-normalization-closure-2026-10-05.md).
 
 ## Workstream 1 — Pricing contract
 
