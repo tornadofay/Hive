@@ -90,7 +90,7 @@ Developer-reported compile errors were recorded before remediation:
 - ProviderCompletionIntegrationTests referenced a missing local CreateAgent helper.
 
 Remediation:
-- retained the original 7-parameter execution-request constructor and made the additive 8-parameter overload parameters optional;
+- retained the original 7-parameter execution-request constructor and carried pricing evidence as an additive init-only request property, preserving existing constructor call sites;
 - preserved the _providers dependency assignment in HiveAgentManagementService;
 - corrected the Example Host migration output to use migration.Value!;
 - added the missing provider-completion test CreateAgent helper.
