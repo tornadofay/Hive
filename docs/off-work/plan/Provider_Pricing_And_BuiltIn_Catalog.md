@@ -114,6 +114,30 @@ Do not invent a universal pricing taxonomy larger than the provider evidence req
 
 The comparison layer must never silently choose an arbitrary variant when there is no deterministic applicable default.
 
+## Slice 2 — Built-In Provider Catalog — In progress
+
+Slice 2 is explicitly authorized on 2026-10-05. The implementation extends the existing static `BuiltInProviderCatalog` rather than introducing a second provider inventory.
+
+The catalog now records, in addition to provider key/name/transport/credential mode/endpoint/onboarding support:
+
+- integration boundary (`OpenAICompatible` versus `NativeIntegrationRequired`);
+- discovery profile;
+- discovery endpoint classification (`DefaultEndpointModels`, provider-specific, account/region-specific, or native integration required);
+- pricing-normalization profile;
+- provider-specific onboarding notes.
+
+The completed inventory covers the nine existing providers plus the planned additional OpenAI-compatible and native/different-transport provider entries in Workstreams 2–3. Native providers remain catalog-only metadata in this slice and are not routed through the OpenAI-compatible adapter.
+
+Current catalog policy:
+
+- a normal-onboarding provider must have a safe universal default endpoint;
+- account/workspace/region/deployment-specific providers remain Advanced-only and do not receive invented universal endpoints;
+- native/different-transport providers are Advanced-only and are explicitly marked as requiring a native integration;
+- provider-specific authentication is represented without falsely advertising an API-key-only workflow;
+- the catalog is static application metadata and does not create durable Provider resources.
+
+The existing OpenAI-compatible discovery boundary now consumes the catalog's discovery profile for endpoint/format selection. Unknown catalog providers continue to use the conservative standard OpenAI-compatible discovery profile.
+
 ## Workstream 2 — Provider normalization profiles
 
 Create an explicit built-in provider normalization profile for each provider.
