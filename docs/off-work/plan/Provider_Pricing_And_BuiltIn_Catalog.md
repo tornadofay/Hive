@@ -723,7 +723,7 @@ The off-work provider completion task is complete when:
 - all token prices entering Hive have explicit source quantity semantics;
 - provider-reported runtime token usage can be captured without being discarded at the provider boundary;
 - usage evidence distinguishes Actual, Estimated, and Unknown and never treats missing usage as zero;
-- usage is correlated to the applicable execution/resource identities and can be durably aggregated without reconstructing ownership;
+- usage is correlated to the applicable execution/resource identities so Phase 1.30 can aggregate it without reconstructing ownership;
 - historical cost can be calculated from recorded usage plus preserved pricing applicability for that execution without silently using current prices;
 - currency qualification is deterministic;
 - free evidence cannot be inferred from an unrelated zero-priced billing dimension;
