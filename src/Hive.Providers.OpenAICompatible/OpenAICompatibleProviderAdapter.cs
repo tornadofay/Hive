@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.AI;
 
 namespace Hive.Providers.OpenAICompatible;
 
@@ -2654,6 +2655,7 @@ public sealed class OpenAICompatibleProviderAdapter
                 : responseId.Trim();
 
             JsonElement? structuredContent = null;
+            var usage = ParseUsage(root);
 
             if (structuredOutputRequested)
             {
@@ -2666,7 +2668,8 @@ public sealed class OpenAICompatibleProviderAdapter
                     id,
                     model,
                     text,
-                    structuredContent));
+                    structuredContent,
+                    usage));
         }
         catch (JsonException)
         {
@@ -2676,6 +2679,206 @@ public sealed class OpenAICompatibleProviderAdapter
         {
             return SerializationFailure();
         }
+    }
+
+    private static UsageDetails? ParseUsage(JsonElement root)
+    {
+        if (!root.TryGetProperty("usage", out var usageElement) ||
+            usageElement.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        var usage = new UsageDetails();
+        var hasKnownUsage = false;
+
+        if (!TryReadAliasedCount(
+                usageElement,
+                "prompt_tokens",
+                "input_tokens",
+                out var inputTokenCount))
+        {
+            return null;
+        }
+
+        if (inputTokenCount is { } input)
+        {
+            usage.InputTokenCount = input;
+            hasKnownUsage = true;
+        }
+
+        if (!TryReadAliasedCount(
+                usageElement,
+                "completion_tokens",
+                "output_tokens",
+                out var outputTokenCount))
+        {
+            return null;
+        }
+
+        if (outputTokenCount is { } output)
+        {
+            usage.OutputTokenCount = output;
+            hasKnownUsage = true;
+        }
+
+        if (TryReadNonNegativeCount(
+                usageElement,
+                "total_tokens",
+                out var totalTokenCount))
+        {
+            if (totalTokenCount is { } total)
+            {
+                usage.TotalTokenCount = total;
+                hasKnownUsage = true;
+            }
+        }
+        else
+        {
+            return null;
+        }
+
+        var cachedInputTokenCount =
+            TryReadNestedCount(
+                usageElement,
+                "prompt_tokens_details",
+                "cached_tokens") ??
+            TryReadNestedCount(
+                usageElement,
+                "input_tokens_details",
+                "cached_tokens");
+
+        if (cachedInputTokenCount is not null)
+        {
+            usage.CachedInputTokenCount = cachedInputTokenCount;
+            hasKnownUsage = true;
+        }
+
+        var reasoningTokenCount =
+            TryReadNestedCount(
+                usageElement,
+                "completion_tokens_details",
+                "reasoning_tokens") ??
+            TryReadNestedCount(
+                usageElement,
+                "output_tokens_details",
+                "reasoning_tokens");
+
+        if (reasoningTokenCount is not null)
+        {
+            usage.ReasoningTokenCount = reasoningTokenCount;
+            hasKnownUsage = true;
+        }
+
+        foreach (var property in usageElement.EnumerateObject())
+        {
+            if (property.Name.Equals("prompt_tokens", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Equals("input_tokens", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Equals("completion_tokens", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Equals("output_tokens", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Equals("total_tokens", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Equals("prompt_tokens_details", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Equals("input_tokens_details", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Equals("completion_tokens_details", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Equals("output_tokens_details", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (!property.Name.Contains("token", StringComparison.OrdinalIgnoreCase) ||
+                !TryReadNonNegativeCount(
+                    property.Value,
+                    property.Name,
+                    out var additional))
+            {
+                continue;
+            }
+
+            if (additional is null)
+                continue;
+
+            usage.AdditionalCounts ??= new AdditionalPropertiesDictionary<long>();
+
+            if (usage.AdditionalCounts.Count >= ExecutionTokenUsage.MaxAdditionalCountEntries)
+                break;
+
+            usage.AdditionalCounts[property.Name.Trim()] = additional.Value;
+            hasKnownUsage = true;
+        }
+
+        return hasKnownUsage ? usage : null;
+    }
+
+    private static bool TryReadAliasedCount(
+        JsonElement element,
+        string primaryName,
+        string aliasName,
+        out long? value)
+    {
+        value = null;
+
+        var hasPrimary = TryReadNonNegativeCount(
+            element,
+            primaryName,
+            out var primary);
+
+        var hasAlias = TryReadNonNegativeCount(
+            element,
+            aliasName,
+            out var alias);
+
+        if (!hasPrimary || !hasAlias)
+            return false;
+
+        if (primary is not null &&
+            alias is not null &&
+            primary.Value != alias.Value)
+        {
+            return false;
+        }
+
+        value = primary ?? alias;
+        return true;
+    }
+
+    private static long? TryReadNestedCount(
+        JsonElement parent,
+        string objectName,
+        string propertyName)
+    {
+        if (!parent.TryGetProperty(objectName, out var nested) ||
+            nested.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        return TryReadNonNegativeCount(
+            nested,
+            propertyName,
+            out var value)
+            ? value
+            : null;
+    }
+
+    private static bool TryReadNonNegativeCount(
+        JsonElement element,
+        string propertyName,
+        out long? value)
+    {
+        value = null;
+
+        if (!element.TryGetProperty(propertyName, out var property))
+            return true;
+
+        if (property.ValueKind != JsonValueKind.Number ||
+            !property.TryGetInt64(out var parsed) ||
+            parsed < 0)
+        {
+            return false;
+        }
+
+        value = parsed;
+        return true;
     }
 
     private sealed class BoundedWriteStream : Stream
