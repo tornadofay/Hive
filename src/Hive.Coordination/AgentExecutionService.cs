@@ -818,8 +818,8 @@ public sealed class AgentExecutionService
         EventEnvelope terminalEvent,
         string responseText,
         string? providerResponseId,
-        ExecutionTokenUsage usage,
         string? providerReportedModelId,
+        ExecutionTokenUsage usage,
         ExecutionPricingEvidence? pricingEvidence,
         CorrelationId correlationId,
         CancellationToken cancellationToken)
