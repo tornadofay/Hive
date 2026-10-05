@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 ## Revision — Off-Work Provider Completion Integration & Hardening
 
@@ -27,7 +27,9 @@ Required focused regression tests and owning architecture/example documentation 
 
 ### Verification gate
 
-Implementation is pending developer verification. Required handoff after changes:
+Developer verification has failed at the compile gate. Visual Studio reports `CS1061` in `src/Hive.Coordination/AgentExecutionService.cs` line 205: `AgentResponse` does not define `ModelId` and no accessible extension method is available. This is an in-scope Slice 4 Revision regression because it blocks compilation of the corrected execution-result integration. Same-slice remediation is authorized only for this recorded compiler failure and must return Active Work to `VERIFICATION PENDING` after the correction.
+
+Required handoff after changes:
 
 Example to run: Providers / Runtime / Provider Completion Integration & Hardening — Hive.Example.WinForms
 Tests to run: full Hive.Tests suite; focused ProviderCompletionIntegrationTests and relevant configured Agent execution regressions.
