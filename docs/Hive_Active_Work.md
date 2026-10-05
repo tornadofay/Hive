@@ -59,7 +59,7 @@ Build result is not to be claimed unless the developer reports it separately.
 
 ## Verification remediation
 
-Developer verification reported CS8602 nullable-reference warnings in `OpenAICompatibleProviderAdapterTests.cs` for nullable provider usage flow and nullable additional token counts. The test was corrected by assigning both nullable values through explicit null-guarded locals before dereferencing them. Production code was not changed by this remediation.
+Developer verification reported CS8602 nullable-reference warnings in `OpenAICompatibleProviderAdapterTests.cs` for nullable provider usage flow and nullable additional token counts. The test was corrected by assigning both nullable values through explicit null-guarded locals before dereferencing them. Subsequent focused verification exposed a parser defect: scalar additional token-count properties were passed to an object-only helper. The provider parser was corrected to read scalar numeric elements directly while retaining object-property handling for standard and nested usage fields. Verification remains pending.
 
 Required verification remains the same after this fix: focused runtime/provider usage tests, `AgentExecutionIntegrationTests`, full `Hive.Tests`, and `Providers / Runtime / Token Usage Foundation — Hive.Example.WinForms`.
 
