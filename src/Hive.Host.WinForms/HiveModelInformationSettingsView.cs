@@ -185,7 +185,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             AllowDelete = false,
             ShowRefresh = false,
             ShowSearch = true,
-            SearchPlaceholder = "Search models..."
+            SearchPlaceholder = "Search models...",
+            SearchMaximumWidth = 220
         };
 
         // Fixed widths include the header renderer's 10px-per-side text padding
@@ -264,7 +265,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         var filterBar = new FlowLayoutPanel
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = true,
             AutoSize = true,
@@ -434,7 +435,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 2,
+            RowCount = 3,
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
@@ -454,7 +455,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Padding = Padding.Empty
         };
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 120));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         root.Controls.Add(pageHeader, 0, 0);
         root.Controls.Add(contextAndFilters, 0, 1);
@@ -1469,6 +1470,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         if (_page.SelectedItem is ModelInformationRow row)
             RenderDetailsTab(row, _detailsTabs.SelectedIndex);
+        ResizeDetailsContent();
     }
 
     private void RenderNoModelDetails()
@@ -1565,7 +1567,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _overviewFavoriteValue!.Text = row.IsFavorite ? "Yes" : "No";
         _overviewCapabilitiesValue!.Text = FormatCapabilitySummary(model);
         _overviewModalitiesValue!.Text =
-            $"Input: {FormatList(model.InputModalities)} · Output: {FormatList(model.OutputModalities)}";
+            $"Input: {FormatList(model.InputModalities)}{Environment.NewLine}" +
+            $"Output: {FormatList(model.OutputModalities)}";
     }
 
     private void EnsureDetailsPage()
@@ -1585,11 +1588,15 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     {
         var model = row.Model;
         _detailsIdentityValue!.Text =
-            $"ID: {model.ModelId} · Family: {model.Family ?? "—"} · Type: {model.ModelType ?? "—"} · Version: {model.Version ?? "—"}";
+            $"ID: {model.ModelId}{Environment.NewLine}" +
+            $"Family: {model.Family ?? "—"}{Environment.NewLine}" +
+            $"Type: {model.ModelType ?? "—"}{Environment.NewLine}" +
+            $"Version: {model.Version ?? "—"}";
         _detailsReasoningValue!.Text =
-            $"Reasoning: {FormatCapabilityDetailState(GetCapabilityState(model, HiveCapabilityKeys.Reasoning))} · " +
-            $"Thinking: {FormatCapabilityDetailState(GetCapabilityState(model, HiveCapabilityKeys.Thinking))} · " +
-            $"Levels: {FormatList(model.ThinkingOptions)} · Default: {model.DefaultThinkingLevel ?? "—"}";
+            $"Reasoning: {FormatCapabilityDetailState(GetCapabilityState(model, HiveCapabilityKeys.Reasoning))}{Environment.NewLine}" +
+            $"Thinking: {FormatCapabilityDetailState(GetCapabilityState(model, HiveCapabilityKeys.Thinking))}{Environment.NewLine}" +
+            $"Levels: {FormatList(model.ThinkingOptions)}{Environment.NewLine}" +
+            $"Default: {model.DefaultThinkingLevel ?? "—"}";
         _detailsLimitsValue!.Text = FormatLimits(model.Limits);
     }
 
@@ -1611,11 +1618,15 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         var model = row.Model;
         _technicalPricingValue!.Text = FormatPricingEvidence(model);
         _technicalOperationalValue!.Text =
-            $"Availability: {model.Availability} · Health: {model.Health} · State: {model.OperationalState ?? "—"} · " +
-            $"Observed: {FormatDateTime(model.ObservedAtUtc)} · Stale after: {FormatDateTime(model.StaleAfterUtc)}";
+            $"Availability: {model.Availability}{Environment.NewLine}" +
+            $"Health: {model.Health}{Environment.NewLine}" +
+            $"State: {model.OperationalState ?? "—"}{Environment.NewLine}" +
+            $"Observed: {FormatDateTime(model.ObservedAtUtc)}{Environment.NewLine}" +
+            $"Stale after: {FormatDateTime(model.StaleAfterUtc)}";
         _technicalProviderValue!.Text = model.ExtensionData.Count == 0
             ? "No additional provider-specific evidence was reported."
-            : FormatJsonDictionary(model.ExtensionData);
+            : "Provider data:" + Environment.NewLine +
+              FormatJsonDictionary(model.ExtensionData);
     }
 
     private static TableLayoutPanel CreateInfoGrid()
@@ -1696,15 +1707,19 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         var values = new List<string>
         {
-            $"Context {FormatTokenLimit(limits.ContextWindowTokens)}",
-            $"Input {FormatTokenLimit(limits.MaxInputTokens)}",
-            $"Output {FormatTokenLimit(limits.MaxOutputTokens)}"
+            $"Context: {FormatTokenLimit(limits.ContextWindowTokens)}",
+            $"Input: {FormatTokenLimit(limits.MaxInputTokens)}",
+            $"Output: {FormatTokenLimit(limits.MaxOutputTokens)}"
         };
 
         if (limits.AdditionalConstraints.Count > 0)
         {
-            values.Add("Additional: " + string.Join(", ", limits.AdditionalConstraints.Select(pair =>
-                $"{pair.Key}={FormatJsonValue(pair.Value)}")));
+            values.Add("Additional:" + Environment.NewLine +
+                string.Join(
+                    Environment.NewLine,
+                    limits.AdditionalConstraints
+                        .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                        .Select(pair => $"  {pair.Key}: {FormatJsonValue(pair.Value)}")));
         }
 
         return string.Join(" · ", values);
@@ -1722,16 +1737,35 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 ? $"Comparable: ${value:0.00} / 1M tokens"
                 : "Comparable: not known";
 
-        var rates = model.Pricing.Prices.Count == 0
-            ? "Base rates: not reported"
-            : "Base: " + string.Join(", ", model.Pricing.Prices.Select(FormatPriceLine));
+        var lines = new List<string> { headline };
 
-        var tiers = model.Pricing.Variants.Count == 0
-            ? string.Empty
-            : " · Tiered rates: " + string.Join("; ", model.Pricing.Variants.Select(variant =>
-                $"{variant.Key} ({string.Join(", ", variant.Conditions.Select(pair => $"{FormatPricingConditionName(pair.Key)}={pair.Value}"))})"));
+        if (model.Pricing.Prices.Count == 0)
+        {
+            lines.Add("Base rates: not reported");
+        }
+        else
+        {
+            lines.Add("Base rates:");
+            lines.AddRange(
+                model.Pricing.Prices.Select(price => "  " + FormatPriceLine(price)));
+        }
 
-        return headline + " · " + rates + tiers;
+        if (model.Pricing.Variants.Count > 0)
+        {
+            lines.Add("Tiered rates:");
+            foreach (var variant in model.Pricing.Variants)
+            {
+                var conditions = variant.Conditions.Count == 0
+                    ? string.Empty
+                    : $" ({string.Join(", ", variant.Conditions.Select(pair => $"{FormatPricingConditionName(pair.Key)}={pair.Value}"))})";
+
+                lines.Add($"  {variant.Key}{conditions}");
+                lines.AddRange(
+                    variant.Prices.Select(price => "    " + FormatPriceLine(price)));
+            }
+        }
+
+        return string.Join(Environment.NewLine, lines);
     }
 
     private static string FormatPriceLine(ProviderModelPrice price)
@@ -1739,8 +1773,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         var currency = price.Currency ?? "currency not reported";
         var amount = price.Price.ToString("0.##########", CultureInfo.InvariantCulture);
         return price.UnitQuantity is { } quantity
-            ? $"{FormatBillingUnit(price.BillingUnit)} {amount} {currency} per {FormatUnitQuantity(quantity)} units"
-            : $"{FormatBillingUnit(price.BillingUnit)} {amount} {currency}; source quantity not reported";
+            ? $"{FormatBillingUnit(price.BillingUnit)}: {amount} {currency} per {FormatUnitQuantity(quantity)} units"
+            : $"{FormatBillingUnit(price.BillingUnit)}: {amount} {currency}; source quantity not reported";
     }
 
     private static string FormatUnitQuantity(decimal quantity)
@@ -1781,9 +1815,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             return;
 
         var viewportWidth = Math.Max(1, _detailsScrollHost.ClientSize.Width);
-        var contentWidth = Math.Max(
-            1,
-            viewportWidth);
+        var contentWidth = Math.Max(1, viewportWidth);
 
         if (_detailsContent.Width != contentWidth)
             _detailsContent.Width = contentWidth;
@@ -1794,6 +1826,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         _detailsTitle.MaximumSize = new Size(textWidth, 0);
         _detailsSummary.MaximumSize = new Size(textWidth, 0);
+
+        foreach (var page in new[] { _overviewTab, _detailsTab, _technicalTab })
+            page.Size = new Size(Math.Max(1, contentWidth - 4), Math.Max(1, _detailsTabs.ClientSize.Height - 34));
 
         _detailsContent.PerformLayout();
         _detailsScrollHost.Synchronize();
