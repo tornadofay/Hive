@@ -154,6 +154,7 @@ public sealed class AgentExecutionService
         }
 
         var startedEvent = started.Value!.Event.Envelope;
+        var pricingEvidence = ResolvePricingEvidence(request.PricingEvidence);
 
         try
         {
@@ -213,7 +214,8 @@ public sealed class AgentExecutionService
                             ErrorCategory.Serialization,
                             "The provider returned no usable agent response text."),
                         CancellationToken.None,
-                        usage)
+                        usage,
+                        pricingEvidence)
                     .ConfigureAwait(false);
             }
 
@@ -231,6 +233,7 @@ public sealed class AgentExecutionService
                     responseText,
                     providerResponseId,
                     usage,
+                    pricingEvidence,
                     CancellationToken.None)
                 .ConfigureAwait(false);
         }
@@ -338,7 +341,8 @@ public sealed class AgentExecutionService
         AgentExecutionRequest request,
         Execution execution,
         ExecutionTokenUsage usage,
-        string? providerResponseId)
+        string? providerResponseId,
+        ExecutionPricingEvidence? pricingEvidence)
     {
         var accessContext = request.AccessContext;
 
@@ -366,9 +370,54 @@ public sealed class AgentExecutionService
             sessionId = accessContext.SessionId?.Value,
             workspaceId = accessContext.WorkspaceId?.Value,
             hiveId = accessContext.HiveId?.Value,
-            providerResponseId
+            providerResponseId,
+            pricingEvidence = CreatePricingPayload(pricingEvidence)
         };
     }
+
+    private static object? CreatePricingPayload(
+        ExecutionPricingEvidence? pricingEvidence)
+    {
+        if (pricingEvidence is null)
+            return null;
+
+        return new
+        {
+            modelId = pricingEvidence.ModelId,
+            observedAtUtc = pricingEvidence.ObservedAtUtc,
+            staleAfterUtc = pricingEvidence.StaleAfterUtc,
+            explicitFreeEvidence = pricingEvidence.Pricing.ExplicitFreeEvidence,
+            prices = pricingEvidence.Pricing.Prices.Select(
+                static price => new
+                {
+                    billingUnit = price.BillingUnit,
+                    price = price.Price,
+                    currency = price.Currency,
+                    unitQuantity = price.UnitQuantity
+                }),
+            variants = pricingEvidence.Pricing.Variants.Select(
+                static variant => new
+                {
+                    key = variant.Key,
+                    isDefault = variant.IsDefault,
+                    conditions = variant.Conditions,
+                    prices = variant.Prices.Select(
+                        static price => new
+                        {
+                            billingUnit = price.BillingUnit,
+                            price = price.Price,
+                            currency = price.Currency,
+                            unitQuantity = price.UnitQuantity
+                        })
+                })
+        };
+    }
+
+    private ExecutionPricingEvidence? ResolvePricingEvidence(
+        ExecutionPricingEvidence? pricingEvidence) =>
+        pricingEvidence is { } evidence && !evidence.IsStale(_clock.UtcNow)
+            ? evidence
+            : null;
 
     private static Result ValidateRequest(
         AgentExecutionRequest request)
@@ -578,6 +627,7 @@ public sealed class AgentExecutionService
         string responseText,
         string? providerResponseId,
         ExecutionTokenUsage usage,
+        ExecutionPricingEvidence? pricingEvidence,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(usage);
@@ -625,7 +675,8 @@ public sealed class AgentExecutionService
         EventEnvelope startedEvent,
         Error error,
         CancellationToken cancellationToken,
-        ExecutionTokenUsage? usage = null)
+        ExecutionTokenUsage? usage = null,
+        ExecutionPricingEvidence? pricingEvidence = null)
     {
         var failed = execution.Fail();
 
@@ -663,7 +714,8 @@ public sealed class AgentExecutionService
                     request,
                     execution,
                     usage,
-                    providerResponseId: null)
+                    providerResponseId: null,
+                    pricingEvidence)
             };
 
             payloadSchemaVersion = 2;
@@ -734,6 +786,7 @@ public sealed class AgentExecutionService
         string responseText,
         string? providerResponseId,
         ExecutionTokenUsage usage,
+        ExecutionPricingEvidence? pricingEvidence,
         CorrelationId correlationId,
         CancellationToken cancellationToken)
     {
@@ -755,7 +808,8 @@ public sealed class AgentExecutionService
                 startedEvent.EventId,
                 terminalEvent.EventId,
                 providerResponseId,
-                usage));
+                usage,
+                pricingEvidence));
     }
 
     private async Task<Result<EventAppendResult>> PersistTerminalEventAsync(
