@@ -1,8 +1,8 @@
 # Off-Work Plan — Provider Pricing, Built-In Catalog & Runtime Usage
 
-> **Status:** Slice 1 complete and verified; Slice 2 complete and verified; Slice 3 implementation complete; verification pending  
+> **Status:** Slice 1 complete and verified; Slice 2 complete and verified; Slice 3 complete and verified  
 > **Roadmap impact:** None  
-> **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 2 was explicitly authorized on 2026-10-05 and is now complete.  
+> **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 2 and Slice 3 were explicitly authorized on 2026-10-05 and are now complete.  
 > **Prerequisite:** Phase 1.19A verification is now closed. This off-work plan remains separate and still requires explicit implementation authorization in a dedicated chat.
 
 ## Objective
@@ -303,9 +303,11 @@ For every built-in provider:
 A representative provider test should be maintained for each normalization pattern rather than requiring one large duplicated test per provider.
 
 
-## Slice 3 — Runtime Token Usage Foundation — Implementation complete; verification pending
+## Slice 3 — Runtime Token Usage Foundation — Complete and verified
 
-Slice 3 was explicitly authorized on 2026-10-05. The implementation is complete within this bounded provider-usage evidence foundation. Developer verification is pending. Phase 1.30 reporting, metrics, budgets, OpenTelemetry, and quota enforcement remain outside this slice.
+Slice 3 was explicitly authorized on 2026-10-05 and completed within this bounded provider-usage evidence foundation. Final developer verification passed on 2026-10-05. See [verification record](../../verification/phase-1/off-work-provider-runtime-usage-closure-2026-10-05.md).
+
+Final developer verification: full `Hive.Tests` passed 632/632 with 0 failures and 0 skipped. The matching `Hive.Example.WinForms` scenario at `Providers / Runtime / Token Usage Foundation` was manually exercised with provider-reported Actual usage, cached/reasoning/additional dimensions, and durable terminal-event persistence. No external provider call was used; the example reported migration schema 14. Phase 1.30 reporting, metrics, budgets, OpenTelemetry, and quota enforcement remain outside this slice.
 
 The implementation adds a Hive-owned `ExecutionTokenUsage` contract, preserves OpenAI-compatible provider-reported usage through the current ChatClient / MAF boundary, persists usage inside the terminal execution event, and adds focused provider/core/execution regressions plus the deterministic Example Host scenario at `Providers / Runtime / Token Usage Foundation`.
 
