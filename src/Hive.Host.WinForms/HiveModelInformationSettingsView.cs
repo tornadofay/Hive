@@ -855,7 +855,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         }
 
         if (maxPrice == 0m &&
-            price != 0m)
+            !IsFreeModel(model, price))
         {
             return false;
         }
@@ -1404,6 +1404,13 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _detailsBody.Text = body;
         ResizeDetailsContent();
     }
+
+    private static bool IsFreeModel(
+        ProviderModelMetadata model,
+        decimal? comparablePrice) =>
+        model.Pricing?.ExplicitFreeEvidence == true ||
+        model.Pricing?.HasZeroComparableInputOutputTokenPricing == true ||
+        comparablePrice == 0m;
 
     private static decimal? GetComparableTokenPricePerMillion(
         ProviderModelMetadata model)
