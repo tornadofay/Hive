@@ -497,6 +497,14 @@ public sealed class HiveCrudPage<TItem> : UserControl where TItem : class
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    [DefaultValue(420)]
+    public int SearchMaximumWidth
+    {
+        get => _layoutController!.MaximumSearchWidth;
+        set => _layoutController!.MaximumSearchWidth = value;
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int PageSize
     {
         get => _listController.PageSize;
