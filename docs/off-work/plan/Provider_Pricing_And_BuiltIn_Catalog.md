@@ -1,8 +1,8 @@
 # Off-Work Plan — Provider Pricing, Built-In Catalog & Runtime Usage
 
-> **Status:** Slice 1 complete and verified; Slice 2 complete and verified; Slice 3 complete and verified; Slice 4 implementation complete; verification pending  
+> **Status:** Slices 1–4 complete and verified on 2026-10-05  
 > **Roadmap impact:** None  
-> **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slice 2, Slice 3, and Slice 4 were explicitly authorized on 2026-10-05; Slices 2–3 are complete and Slice 4 is in progress.  
+> **Implementation authorization:** Each off-work slice must be explicitly started in a dedicated chat; this file does not activate a Phase 1 roadmap slice. Slices 2–4 were explicitly authorized on 2026-10-05; all four off-work provider-completion slices are now complete and verified.  
 > **Prerequisite:** Phase 1.19A verification is now closed. This off-work plan remains separate and still requires explicit implementation authorization in a dedicated chat.
 
 ## Objective
@@ -312,7 +312,7 @@ Final developer verification: full `Hive.Tests` passed 632/632 with 0 failures a
 
 The implementation adds a Hive-owned `ExecutionTokenUsage` contract, preserves OpenAI-compatible provider-reported usage through the current ChatClient / MAF boundary, persists usage inside the terminal execution event, and adds focused provider/core/execution regressions plus the deterministic Example Host scenario at `Providers / Runtime / Token Usage Foundation`.
 
-## Slice 4 — Provider Completion Integration & Hardening — Implementation complete; verification pending
+## Slice 4 — Provider Completion Integration & Hardening — Complete and verified
 
 Slice 4 is the final bounded off-work provider-completion slice. It was explicitly authorized on 2026-10-05 after Slice 3 verification. Its implementation is complete and verification is pending. It integrates and hardens the already-completed pricing, built-in catalog, and runtime-usage foundations without advancing the main Phase 1 roadmap.
 
@@ -352,7 +352,7 @@ Example to run:
 Providers / Runtime / Provider Completion Integration & Hardening — Hive.Example.WinForms
 ```
 
-Slice 4 remains implementation-only until the developer supplies the required verification results. A verification failure must return Active Work to VERIFICATION PENDING before remediation.
+Slice 4 was verified on 2026-10-05 with full `Hive.Tests` passing 636/636 and successful manual execution of the required Example Host scenario. Closure evidence: [Slice 4 verification record](../../verification/phase-1/off-work-provider-completion-integration-hardening-closure-2026-10-05.md). The off-work provider-completion plan is now complete; it does not activate or advance Phase 1.30.
 
 ## Workstream 8 — Runtime Token Usage & Cost Accounting
 
