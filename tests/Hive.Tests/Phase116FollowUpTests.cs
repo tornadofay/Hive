@@ -617,16 +617,19 @@ public sealed class Phase116FollowUpTests
         Assert.Contains("rich-model", detailsText);
         Assert.Contains("example-family", detailsText);
         Assert.Contains("text, image, audio", detailsText);
+        Assert.Contains("Identity", detailsText);
+        Assert.Contains("Inputs", detailsText);
+        Assert.Contains("Outputs", detailsText);
         Assert.Contains("Capabilities", detailsText);
-        Assert.Contains("text.generate", detailsText);
-        Assert.Contains("Supported", detailsText);
-        Assert.Contains("Reasoning", detailsText);
+        Assert.Contains("Text generation — Supported", detailsText);
+        Assert.Contains("Structured output — Supported", detailsText);
+        Assert.Contains("Reasoning / Thinking", detailsText);
         Assert.DoesNotContain("✕", detailsText);
         Assert.DoesNotContain("✓", detailsText);
         Assert.Contains("medium", detailsText);
         Assert.Contains("Limits", detailsText);
-        Assert.Contains("131072", detailsText);
-        Assert.Contains("Pricing & economics", detailsText);
+        Assert.Contains("131,072 tokens", detailsText);
+        Assert.Contains("Pricing", detailsText);
         Assert.Contains("1.25", detailsText);
         Assert.Contains("Operational state", detailsText);
         Assert.Contains("active", detailsText);
@@ -637,11 +640,65 @@ public sealed class Phase116FollowUpTests
             .Cast<Control>()
             .ToArray();
 
-        Assert.Equal(2, detailControls.Length);
-        Assert.All(detailControls, control => Assert.IsType<Label>(control));
+        Assert.Equal(3, detailControls.Length);
+        Assert.Contains(detailControls, control => control is TableLayoutPanel);
+        Assert.Equal(
+            [
+                "Identity",
+                "Inputs",
+                "Outputs",
+                "Capabilities",
+                "Reasoning / Thinking",
+                "Limits",
+                "Pricing",
+                "Operational state",
+                "Additional provider information"
+            ],
+            view.DetailsContent.Controls
+                .Cast<Control>()
+                .Single(control => control is TableLayoutPanel)
+                .Controls
+                .Cast<Control>()
+                .Select(section => section.Controls
+                    .OfType<Label>()
+                    .Single(label => label.Text.Length > 0)
+                    .Text)
+                .ToArray());
         Assert.Equal(
             detailControls.Length,
             view.DetailsContent.Controls.Cast<Control>().Count());
+    }
+
+    [WinFormsFact]
+    public async Task ModelInformationView_DisplaysTieredPricingDetails()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var fixture = CreateFixture(richModelUsesTieredPricing: true);
+
+        using var host = new Form { Size = new Size(1160, 760) };
+        using var view = new HiveModelInformationSettingsView(
+            fixture.Management,
+            fixture.Context,
+            themeManager);
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync();
+        Application.DoEvents();
+
+        view.ModelsList.Items[0].Selected = true;
+        view.ModelsList.Items[0].Focused = true;
+        Application.DoEvents();
+
+        var detailsText = CollectVisibleControlText(view.DetailsContent);
+
+        Assert.Contains("Tiered rates:", detailsText);
+        Assert.Contains("long-context", detailsText);
+        Assert.Contains("minimum prompt tokens=272000", detailsText);
+        Assert.Contains("Input tokens: 4 USD per 1M units", detailsText);
+        Assert.Contains("Output tokens: 15 USD per 1M units", detailsText);
     }
 
     [WinFormsFact]
@@ -997,7 +1054,9 @@ public sealed class Phase116FollowUpTests
         Assert.Contains("second-model", detailsText);
         Assert.Contains("second-provider", detailsText);
         Assert.Contains("vision", detailsText);
-        Assert.Contains("Unsupported", detailsText);
+        Assert.Contains("Capabilities", detailsText);
+        Assert.Contains("Vision — Unsupported", detailsText);
+        Assert.Contains("Reasoning — Unknown / unreported", detailsText);
         Assert.DoesNotContain("✓", detailsText);
         Assert.DoesNotContain("✕", detailsText);
         Assert.DoesNotContain("rich-model", detailsText);
@@ -1073,7 +1132,8 @@ public sealed class Phase116FollowUpTests
         bool secondModelFree = false,
         bool richModelUsesPerTokenPricing = false,
         bool richModelUsesUnknownPricing = false,
-        bool secondModelHasPaidComparableBaseRates = false)
+        bool secondModelHasPaidComparableBaseRates = false,
+        bool richModelUsesTieredPricing = false)
     {
         var context = CreateContext();
         var principal = context.PrincipalId!.Value;
@@ -1233,7 +1293,29 @@ public sealed class Phase116FollowUpTests
                                 5m,
                                 "USD",
                                 1_000_000m)
-                        ]),
+                        ],
+                variants: richModelUsesTieredPricing
+                    ? [
+                        new ProviderModelPricingVariant(
+                            "long-context",
+                            [
+                                new ProviderModelPrice(
+                                    "input_token",
+                                    4m,
+                                    "USD",
+                                    1_000_000m),
+                                new ProviderModelPrice(
+                                    "output_token",
+                                    15m,
+                                    "USD",
+                                    1_000_000m)
+                            ],
+                            new Dictionary<string, string>
+                            {
+                                ["min_prompt_tokens"] = "272000"
+                            })
+                    ]
+                    : null),
             extensionData: new Dictionary<string, JsonElement>
             {
                 ["vendor_library"] =
