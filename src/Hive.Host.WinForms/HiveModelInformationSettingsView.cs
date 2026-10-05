@@ -100,17 +100,22 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly Panel _detailsContent;
     private readonly Label _detailsTitle;
     private readonly Label _detailsSummary;
-    private readonly TableLayoutPanel _detailsSections;
-    private readonly DetailSection _identityDetailsSection;
-    private readonly DetailSection _inputsDetailsSection;
-    private readonly DetailSection _outputsDetailsSection;
-    private readonly DetailSection _capabilitiesDetailsSection;
-    private readonly DetailSection _reasoningDetailsSection;
-    private readonly DetailSection _limitsDetailsSection;
-    private readonly DetailSection _pricingDetailsSection;
-    private readonly DetailSection _operationalDetailsSection;
-    private readonly DetailSection _additionalDetailsSection;
-    private const int PriceSliderScale = 100;
+    private readonly HiveTabControl _detailsTabs;
+    private readonly TabPage _overviewTab;
+    private readonly TabPage _detailsTab;
+    private readonly TabPage _technicalTab;
+    private Label? _overviewPriceValue;
+    private Label? _overviewContextValue;
+    private Label? _overviewFavoriteValue;
+    private Label? _overviewCapabilitiesValue;
+    private Label? _overviewModalitiesValue;
+    private Label? _detailsIdentityValue;
+    private Label? _detailsReasoningValue;
+    private Label? _detailsLimitsValue;
+    private Label? _technicalPricingValue;
+    private Label? _technicalOperationalValue;
+    private Label? _technicalProviderValue;
+        private const int PriceSliderScale = 100;
     private const int InitialPriceSliderValue =
         checked((int)(1m * PriceSliderScale));
     private readonly TrackBar _minPriceFilter;
@@ -356,11 +361,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         _detailsContent = new Panel
         {
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Dock = DockStyle.Fill,
             Margin = Padding.Empty,
-            Padding = new Padding(12),
-            MinimumSize = new Size(300, 48),
+            Padding = new Padding(10, 8, 10, 8),
             AccessibleName = "Selected model information"
         };
 
@@ -381,59 +384,26 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             AutoSize = true,
             Dock = DockStyle.Top,
-            Margin = new Padding(0, 6, 0, 12),
+            Margin = new Padding(0, 4, 0, 8),
             Padding = Padding.Empty,
             AccessibleRole = AccessibleRole.StaticText
         };
 
-        _detailsSections = new TableLayoutPanel
+        _detailsTabs = new HiveTabControl
         {
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            Dock = DockStyle.Top,
-            ColumnCount = 1,
-            RowCount = 9,
+            Dock = DockStyle.Fill,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
-        };
-        _detailsSections.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Percent, 100f));
-
-        _identityDetailsSection = CreateDetailSection("Identity");
-        _inputsDetailsSection = CreateDetailSection("Inputs");
-        _outputsDetailsSection = CreateDetailSection("Outputs");
-        _capabilitiesDetailsSection = CreateDetailSection("Capabilities");
-        _reasoningDetailsSection = CreateDetailSection("Reasoning / Thinking");
-        _limitsDetailsSection = CreateDetailSection("Limits");
-        _pricingDetailsSection = CreateDetailSection("Pricing");
-        _operationalDetailsSection = CreateDetailSection("Operational state");
-        _additionalDetailsSection =
-            CreateDetailSection("Additional provider information");
-
-        var detailSections = new[]
-        {
-            _identityDetailsSection,
-            _inputsDetailsSection,
-            _outputsDetailsSection,
-            _capabilitiesDetailsSection,
-            _reasoningDetailsSection,
-            _limitsDetailsSection,
-            _pricingDetailsSection,
-            _operationalDetailsSection,
-            _additionalDetailsSection
+            HeaderHeight = 34,
+            AccessibleName = "Model information categories"
         };
 
-        foreach (var section in detailSections)
-        {
-            _detailsSections.Controls.Add(
-                section.Surface,
-                0,
-                Array.IndexOf(detailSections, section));
-            _detailsSections.RowStyles.Add(
-                new RowStyle(SizeType.AutoSize));
-        }
+        _overviewTab = new TabPage("Overview") { BackColor = Color.Transparent };
+        _detailsTab = new TabPage("Details") { BackColor = Color.Transparent };
+        _technicalTab = new TabPage("Technical") { BackColor = Color.Transparent };
+        _detailsTabs.TabPages.AddRange(_overviewTab, _detailsTab, _technicalTab);
+        _detailsTabs.SelectedTabChanged += DetailsTabChanged;
 
-        _detailsContent.Controls.Add(_detailsSections);
+        _detailsContent.Controls.Add(_detailsTabs);
         _detailsContent.Controls.Add(_detailsSummary);
         _detailsContent.Controls.Add(_detailsTitle);
 
@@ -443,7 +413,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             Margin = Padding.Empty,
             Padding = Padding.Empty,
             AccessibleName = "Selected model information scroll area",
-            AccessibleDescription = "Browse structured model information using the Hive scrollbars."
+            AccessibleDescription = "Browse model information using the Hive scrollbars."
         };
         _detailsScrollHost.Attach(_detailsContent);
         _detailsScrollHost.Resize += DetailsScrollHostOnResize;
@@ -451,9 +421,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         var detailsSurface = new Panel
         {
             Dock = DockStyle.Fill,
-            Padding = new Padding(1),
+            Padding = Padding.Empty,
             Margin = Padding.Empty,
-            BorderStyle = BorderStyle.FixedSingle
+            BorderStyle = BorderStyle.None
         };
         detailsSurface.Controls.Add(_detailsScrollHost);
 
