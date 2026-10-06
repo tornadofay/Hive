@@ -224,33 +224,41 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
                 "Unknown / unreported"));
         _capabilityStateFilter.SelectedIndex = 0;
 
-        var filterBar = new FlowLayoutPanel
+        var filterBar = new TableLayoutPanel
         {
             Dock = DockStyle.Top,
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = false,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 1,
+            RowCount = 3,
             Margin = Padding.Empty,
-            Padding = new Padding(0, 2, 0, 8),
+            Padding = new Padding(0, 2, 0, 6),
             BorderStyle = BorderStyle.None,
             AccessibleName = "Model Information filters"
         };
+        filterBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        filterBar.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        filterBar.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        filterBar.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         var contextRow = new FlowLayoutPanel
         {
             AutoSize = true,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = true,
-            Margin = new Padding(0, 0, 0, 6),
+            Margin = new Padding(0, 0, 0, 4),
             Padding = Padding.Empty,
-            AccessibleName = "Provider and account filters"
+            AccessibleName = "Provider, account, and capability filters"
         };
         contextRow.Controls.Add(CreateFilterLabel("Provider"));
         contextRow.Controls.Add(_providerComboBox);
         contextRow.Controls.Add(CreateFilterLabel("Account / Credential"));
         contextRow.Controls.Add(_accountComboBox);
-        filterBar.Controls.Add(contextRow);
+        contextRow.Controls.Add(CreateFilterLabel("Capability"));
+        contextRow.Controls.Add(_capabilityFilter);
+        contextRow.Controls.Add(CreateFilterLabel("State"));
+        contextRow.Controls.Add(_capabilityStateFilter);
+        filterBar.Controls.Add(contextRow, 0, 0);
 
         var primaryFilterRow = new FlowLayoutPanel
         {
@@ -259,7 +267,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             WrapContents = true,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
-            AccessibleName = "Primary model filters"
+            AccessibleName = "Price and pricing evidence filters"
         };
 
         primaryFilterRow.Controls.Add(CreateFilterLabel("Min"));
@@ -277,29 +285,13 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         primaryFilterRow.Controls.Add(_maxPriceValueLabel);
 
         UpdatePriceFilterLabels();
-        primaryFilterRow.Controls.Add(CreateFilterLabel("Capability"));
-        primaryFilterRow.Controls.Add(_capabilityFilter);
-        primaryFilterRow.Controls.Add(CreateFilterLabel("State"));
-        primaryFilterRow.Controls.Add(_capabilityStateFilter);
-
-        // Keep both evidence switches together on their own responsive row so
-        // they cannot overlap the primary filter controls at normal window sizes.
-        var filterOptionsRow = new FlowLayoutPanel
-        {
-            AutoSize = true,
-            FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = true,
-            Margin = new Padding(0, 2, 0, 0),
-            Padding = Padding.Empty,
-            AccessibleName = "Pricing evidence filters"
-        };
 
         _showUnpricedModels = new CheckBox
         {
             Text = "Show models without comparable pricing",
             AutoSize = true,
             Checked = false,
-            Margin = new Padding(0, 2, 18, 2),
+            Margin = new Padding(12, 2, 18, 2),
             AccessibleName = "Show models without comparable pricing"
         };
 
@@ -312,10 +304,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             AccessibleName = "Show models above the price range"
         };
 
-        filterOptionsRow.Controls.Add(_showUnpricedModels);
-        filterOptionsRow.Controls.Add(_showAboveRangeModels);
-        filterBar.Controls.Add(primaryFilterRow);
-        filterBar.Controls.Add(filterOptionsRow);
+        primaryFilterRow.Controls.Add(_showUnpricedModels);
+        primaryFilterRow.Controls.Add(_showAboveRangeModels);
+        filterBar.Controls.Add(primaryFilterRow, 0, 1);
 
         _filterNotice = new Label
         {

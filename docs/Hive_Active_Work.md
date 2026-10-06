@@ -142,3 +142,12 @@ Refine the Model Information filter/header area to reduce wasted space and give 
 1. Focused Model Information UI tests pass.
 2. Full Hive.Tests passes.
 3. Developer manually verifies the real Advanced Provider Configuration → Model Information page at normal size, including filter organization, model-list height, selector behavior, and the existing details/favorites behavior.
+### Verification remediation — 2026-10-07
+
+The failed UI regression is remediated within the same boundary. The Model Information filter surface is now a borderless TableLayoutPanel with two responsive rows: Provider / Account / Capability / State on the first row, and Min / Max price controls plus both pricing-evidence switches on the second row. The old endpoint selector remains removed; endpoint selection is internal and deterministic as previously specified.
+
+The regression coverage now asserts the two-row structure, the four top-row selectors, the second-row price/evidence controls, absence of the visible endpoint selector, and a larger normal-size model catalog viewport.
+
+**Status: VERIFICATION PENDING**
+
+Rerun the focused Model Information tests and the full `Hive.Tests` suite, then manually verify the real Advanced Provider Configuration → Model Information page at normal size.

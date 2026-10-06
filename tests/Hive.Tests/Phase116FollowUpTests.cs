@@ -564,13 +564,29 @@ public sealed class Phase116FollowUpTests
         var pageRoot = Assert.IsType<TableLayoutPanel>(view.Controls[0]);
         Assert.Same(view.CrudPage.HeaderPanel, pageRoot.Controls[0]);
 
-        var filterSurface = Assert.IsType<FlowLayoutPanel>(
+        var filterSurface = Assert.IsType<TableLayoutPanel>(
             pageRoot.GetControlFromPosition(0, 1));
         Assert.Equal(BorderStyle.None, filterSurface.BorderStyle);
+
+        var selectorRow = Assert.IsType<FlowLayoutPanel>(
+            filterSurface.GetControlFromPosition(0, 0));
         var filterSurfaceTextBeforeResize = CollectVisibleControlText(filterSurface);
         Assert.Contains("Provider", filterSurfaceTextBeforeResize);
         Assert.Contains("Account / Credential", filterSurfaceTextBeforeResize);
+        Assert.Contains("Capability", filterSurfaceTextBeforeResize);
+        Assert.Contains("State", filterSurfaceTextBeforeResize);
         Assert.DoesNotContain("Discovery endpoint", filterSurfaceTextBeforeResize);
+        Assert.Same(view.ProviderSelector, selectorRow.Controls.OfType<HiveComboBox>().ElementAt(0));
+        Assert.Same(view.AccountSelector, selectorRow.Controls.OfType<HiveComboBox>().ElementAt(1));
+        Assert.Same(view.CapabilityFilter, selectorRow.Controls.OfType<HiveComboBox>().ElementAt(2));
+        Assert.Same(view.CapabilityStateFilter, selectorRow.Controls.OfType<HiveComboBox>().ElementAt(3));
+
+        var priceAndEvidenceRow = Assert.IsType<FlowLayoutPanel>(
+            filterSurface.GetControlFromPosition(0, 1));
+        Assert.Contains(view.MinPriceFilter, priceAndEvidenceRow.Controls);
+        Assert.Contains(view.MaxPriceFilter, priceAndEvidenceRow.Controls);
+        Assert.Contains(view.ShowUnpricedModelsFilter, priceAndEvidenceRow.Controls);
+        Assert.Contains(view.ShowAboveRangeModelsFilter, priceAndEvidenceRow.Controls);
 
         var initialDetailsWidth = view.DetailsPanelWidth;
         Assert.InRange(initialDetailsWidth, 390, 410);
@@ -594,7 +610,7 @@ public sealed class Phase116FollowUpTests
 
         Assert.Equal(2, view.ModelsList.Items.Count);
         Assert.True(
-            view.ModelsList.Height >= 400,
+            view.ModelsList.Height >= 440,
             $"Model catalog viewport is too short at normal size: height={view.ModelsList.Height}.");
         Assert.Equal(220, view.CrudPage.SearchMaximumWidth);
         var filterSurfaceText = CollectVisibleControlText(view);
@@ -777,14 +793,31 @@ public sealed class Phase116FollowUpTests
         Application.DoEvents();
 
         var pageRoot = Assert.IsType<TableLayoutPanel>(view.Controls[0]);
-        var contextAndFilters = Assert.IsType<TableLayoutPanel>(
+        var filterSurface = Assert.IsType<TableLayoutPanel>(
             pageRoot.GetControlFromPosition(0, 1));
         var mainSplit = Assert.IsType<SplitContainer>(
             pageRoot.GetControlFromPosition(0, 2));
 
-        var filterSurface = Assert.IsType<FlowLayoutPanel>(
-            pageRoot.GetControlFromPosition(0, 1));
         Assert.Equal(BorderStyle.None, filterSurface.BorderStyle);
+
+        var selectorRow = Assert.IsType<FlowLayoutPanel>(
+            filterSurface.GetControlFromPosition(0, 0));
+        var priceAndEvidenceRow = Assert.IsType<FlowLayoutPanel>(
+            filterSurface.GetControlFromPosition(0, 1));
+        var filterSurfaceText = CollectVisibleControlText(filterSurface);
+        Assert.Contains("Provider", filterSurfaceText);
+        Assert.Contains("Account / Credential", filterSurfaceText);
+        Assert.Contains("Capability", filterSurfaceText);
+        Assert.Contains("State", filterSurfaceText);
+        Assert.DoesNotContain("Discovery endpoint", filterSurfaceText);
+        Assert.Same(view.ProviderSelector, selectorRow.Controls.OfType<HiveComboBox>().ElementAt(0));
+        Assert.Same(view.AccountSelector, selectorRow.Controls.OfType<HiveComboBox>().ElementAt(1));
+        Assert.Same(view.CapabilityFilter, selectorRow.Controls.OfType<HiveComboBox>().ElementAt(2));
+        Assert.Same(view.CapabilityStateFilter, selectorRow.Controls.OfType<HiveComboBox>().ElementAt(3));
+        Assert.Contains(view.MinPriceFilter, priceAndEvidenceRow.Controls);
+        Assert.Contains(view.MaxPriceFilter, priceAndEvidenceRow.Controls);
+        Assert.Contains(view.ShowUnpricedModelsFilter, priceAndEvidenceRow.Controls);
+        Assert.Contains(view.ShowAboveRangeModelsFilter, priceAndEvidenceRow.Controls);
         var filterSurfaceText = CollectVisibleControlText(filterSurface);
         Assert.Contains("Provider", filterSurfaceText);
         Assert.Contains("Account / Credential", filterSurfaceText);
@@ -813,9 +846,9 @@ public sealed class Phase116FollowUpTests
         }
 
         Assert.True(
-            mainSplit.Top >= contextAndFilters.Bottom,
-            $"CRUD/details surface overlaps the context/filter container: mainSplitTop={mainSplit.Top}, contextAndFiltersBottom={contextAndFilters.Bottom}.");
-        Assert.True(contextAndFilters.Height > 72);
+            mainSplit.Top >= filterSurface.Bottom,
+            $"CRUD/details surface overlaps the context/filter surface: mainSplitTop={mainSplit.Top}, filterSurfaceBottom={filterSurface.Bottom}.");
+        Assert.True(filterSurface.Height > 72);
     }
 
     [WinFormsFact]
