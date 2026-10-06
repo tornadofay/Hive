@@ -1,6 +1,12 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
+
+### Verification remediation — 2026-10-07 (test compile)
+
+The reported CS1503 errors were caused by passing a WinForms `ControlCollection` directly to xUnit's generic `Assert.Contains` in the four affected membership assertions. The assertions now use the native `ControlCollection.Contains(Control)` membership API, preserving the exact test intent while avoiding the incompatible generic/async-enumerable overload resolution.
+
+Verification remains pending. Recompile and rerun the focused Model Information tests and the full `Hive.Tests` suite.
 
 ### Verification failure — 2026-10-07 (test compile)
 
@@ -68,7 +74,7 @@ Developer re-verification is pending. Rerun the full `Hive.Tests` suite and manu
 Authorized: 2026-10-05 (explicit maintainer request)
 Status: VERIFICATION PENDING
 Roadmap impact: None. Bounded off-roadmap UI/navigation reversal. Does not activate or advance any Phase 1 roadmap slice.
-Checkpoint: `ce30bb47` — "Clean Model Information layout test"
+Checkpoint: `43aa0370` — "Fix Model Information control collection assertions"
 
 ### Maintainer request
 
