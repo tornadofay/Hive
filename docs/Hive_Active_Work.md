@@ -1,5 +1,13 @@
 # Hive — Active Work
 
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+
+### Verification failure — 2026-10-07 (test compile)
+
+Developer reported eight in-scope CS1503 compile errors in `tests/Hive.Tests/Phase116FollowUpTests.cs` at lines 586–589 and 817–820. The assertions pass a WinForms `ControlCollection` directly to xUnit's generic `Assert.Contains`, which does not provide the required generic collection type and is being resolved against an incompatible async-enumerable overload.
+
+Remediate only these affected layout assertions using the existing WinForms control-collection membership API or an explicitly typed compatible assertion. Preserve the already-authorized Model Information layout and test intent. After remediation, return Active Work to VERIFICATION PENDING and require the developer to recompile and rerun the focused Model Information tests and full `Hive.Tests` suite.
+
 Status: VERIFICATION PENDING
 
 ### Remediation checkpoint — 2026-10-05
