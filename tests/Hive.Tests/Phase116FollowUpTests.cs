@@ -531,9 +531,7 @@ public sealed class Phase116FollowUpTests
 
         Assert.IsType<HiveComboBox>(view.ProviderSelector);
         Assert.IsType<HiveComboBox>(view.AccountSelector);
-        Assert.IsType<HiveComboBox>(view.EndpointSelector);
         Assert.Equal(view.ProviderSelector.Height, view.AccountSelector.Height);
-        Assert.Equal(view.ProviderSelector.Height, view.EndpointSelector.Height);
         Assert.InRange(view.ProviderSelector.Height, 34, 72);
         Assert.IsType<HiveListView>(view.ModelsList);
         Assert.Same(view.ModelsList, view.CrudPage.ListView);
@@ -566,6 +564,14 @@ public sealed class Phase116FollowUpTests
         var pageRoot = Assert.IsType<TableLayoutPanel>(view.Controls[0]);
         Assert.Same(view.CrudPage.HeaderPanel, pageRoot.Controls[0]);
 
+        var filterSurface = Assert.IsType<FlowLayoutPanel>(
+            pageRoot.GetControlFromPosition(0, 1));
+        Assert.Equal(BorderStyle.None, filterSurface.BorderStyle);
+        var filterSurfaceTextBeforeResize = CollectVisibleControlText(filterSurface);
+        Assert.Contains("Provider", filterSurfaceTextBeforeResize);
+        Assert.Contains("Account / Credential", filterSurfaceTextBeforeResize);
+        Assert.DoesNotContain("Discovery endpoint", filterSurfaceTextBeforeResize);
+
         var initialDetailsWidth = view.DetailsPanelWidth;
         Assert.InRange(initialDetailsWidth, 390, 410);
         host.ClientSize = new Size(1320, 760);
@@ -587,6 +593,9 @@ public sealed class Phase116FollowUpTests
             view.CrudPage.Columns.Select(column => column.Header));
 
         Assert.Equal(2, view.ModelsList.Items.Count);
+        Assert.True(
+            view.ModelsList.Height >= 400,
+            $"Model catalog viewport is too short at normal size: height={view.ModelsList.Height}.");
         Assert.Equal(220, view.CrudPage.SearchMaximumWidth);
         var filterSurfaceText = CollectVisibleControlText(view);
         Assert.Contains("Show models without comparable pricing", filterSurfaceText);
@@ -772,6 +781,14 @@ public sealed class Phase116FollowUpTests
             pageRoot.GetControlFromPosition(0, 1));
         var mainSplit = Assert.IsType<SplitContainer>(
             pageRoot.GetControlFromPosition(0, 2));
+
+        var filterSurface = Assert.IsType<FlowLayoutPanel>(
+            pageRoot.GetControlFromPosition(0, 1));
+        Assert.Equal(BorderStyle.None, filterSurface.BorderStyle);
+        var filterSurfaceText = CollectVisibleControlText(filterSurface);
+        Assert.Contains("Provider", filterSurfaceText);
+        Assert.Contains("Account / Credential", filterSurfaceText);
+        Assert.DoesNotContain("Discovery endpoint", filterSurfaceText);
 
         Assert.True(view.ShowUnpricedModelsFilter.Visible);
         Assert.True(view.ShowAboveRangeModelsFilter.Visible);

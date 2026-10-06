@@ -35,11 +35,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         public override string ToString() => DisplayName;
     }
 
-    private sealed record EndpointChoice(Uri Endpoint, string Source)
-    {
-        public override string ToString() => Endpoint.AbsoluteUri;
-    }
-
     internal sealed class ModelInformationRow
     {
         public ModelInformationRow(
@@ -73,7 +68,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private readonly IHiveExampleOutput? _output;
     private readonly HiveComboBox _providerComboBox;
     private readonly HiveComboBox _accountComboBox;
-    private readonly HiveComboBox _endpointComboBox;
     private readonly HiveComboBox _capabilityFilter;
     private readonly HiveComboBox _capabilityStateFilter;
     private readonly HiveCrudPage<ModelInformationRow> _page;
@@ -136,48 +130,15 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
 
-        var contextCard = new Panel
-        {
-            Dock = DockStyle.Top,
-            Height = 72,
-            Padding = new Padding(8),
-            Margin = Padding.Empty,
-            BorderStyle = BorderStyle.FixedSingle
-        };
-
-        var contextPanel = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 3,
-            RowCount = 2,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty
-        };
-        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28f));
-        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28f));
-        contextPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 44f));
-        contextPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 18f));
-        contextPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
-
-        contextPanel.Controls.Add(CreateContextLabel("Provider"), 0, 0);
-        contextPanel.Controls.Add(CreateContextLabel("Account / Credential"), 1, 0);
-        contextPanel.Controls.Add(CreateContextLabel("Discovery endpoint"), 2, 0);
-
-        _providerComboBox = CreateSelector("Provider");
-        _accountComboBox = CreateSelector("Account / Credential");
-        _endpointComboBox = CreateSelector("Discovery endpoint");
-        _endpointComboBox.DropDownStyle = ComboBoxStyle.DropDown;
-
-        contextPanel.Controls.Add(_providerComboBox, 0, 1);
-        contextPanel.Controls.Add(_accountComboBox, 1, 1);
-        contextPanel.Controls.Add(_endpointComboBox, 2, 1);
-        contextCard.Controls.Add(contextPanel);
+        _providerComboBox = CreateSelector("Provider", 240);
+        _providerComboBox.Margin = new Padding(0, 0, 16, 0);
+        _accountComboBox = CreateSelector("Account / Credential", 260);
 
         _page = new HiveCrudPage<ModelInformationRow>
         {
             Dock = DockStyle.Fill,
             Title = "Model Information",
-            Description = "Browse discovered provider models, inspect normalized metadata, and add the selected ExecutionTarget to Favorites.",
+            Description = "Browse discovered provider models from the selected account's primary discovery endpoint, inspect normalized metadata, and add the selected ExecutionTarget to Favorites.",
             PageSize = 25,
             AllowAdd = true,
             AddButtonText = "Add to Favorites",
@@ -270,11 +231,26 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             WrapContents = false,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            MinimumSize = new Size(0, 72),
             Margin = Padding.Empty,
-            Padding = new Padding(8, 6, 8, 8),
+            Padding = new Padding(0, 2, 0, 8),
+            BorderStyle = BorderStyle.None,
             AccessibleName = "Model Information filters"
         };
+
+        var contextRow = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true,
+            Margin = new Padding(0, 0, 0, 6),
+            Padding = Padding.Empty,
+            AccessibleName = "Provider and account filters"
+        };
+        contextRow.Controls.Add(CreateFilterLabel("Provider"));
+        contextRow.Controls.Add(_providerComboBox);
+        contextRow.Controls.Add(CreateFilterLabel("Account / Credential"));
+        contextRow.Controls.Add(_accountComboBox);
+        filterBar.Controls.Add(contextRow);
 
         var primaryFilterRow = new FlowLayoutPanel
         {
@@ -450,22 +426,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         pageHeader.Dock = DockStyle.Fill;
         pageHeader.Margin = Padding.Empty;
 
-        var contextAndFilters = new TableLayoutPanel
-        {
-            Dock = DockStyle.Top,
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            ColumnCount = 1,
-            RowCount = 3,
-            Margin = Padding.Empty,
-            Padding = new Padding(0, 0, 0, 6)
-        };
-        contextAndFilters.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
-        contextAndFilters.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        contextAndFilters.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        contextAndFilters.Controls.Add(contextCard, 0, 0);
-        contextAndFilters.Controls.Add(filterBar, 0, 1);
-        contextAndFilters.Controls.Add(_filterNotice, 0, 2);
+        filterBar.Controls.Add(_filterNotice);
 
         var root = new TableLayoutPanel
         {
@@ -479,14 +440,12 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
         root.Controls.Add(pageHeader, 0, 0);
-        root.Controls.Add(contextAndFilters, 0, 1);
+        root.Controls.Add(filterBar, 0, 1);
         root.Controls.Add(_mainSplit, 0, 2);
         Controls.Add(root);
 
         _providerComboBox.SelectedIndexChanged += ProviderChanged;
         _accountComboBox.SelectedIndexChanged += AccountChanged;
-        _endpointComboBox.SelectedIndexChanged += EndpointChanged;
-        _endpointComboBox.TextChanged += EndpointTextChanged;
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         ApplyTheme();
@@ -540,8 +499,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     internal HiveComboBox ProviderSelector => _providerComboBox;
 
     internal HiveComboBox AccountSelector => _accountComboBox;
-
-    internal HiveComboBox EndpointSelector => _endpointComboBox;
 
     internal HiveCrudPage<ModelInformationRow> CrudPage => _page;
 
@@ -658,41 +615,8 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             ReportError(
                 exception,
-                "The endpoint context could not be loaded.");
+                "The account discovery context could not be loaded.");
         }
-    }
-
-    private void EndpointTextChanged(object? sender, EventArgs e)
-    {
-        if (_initializingContext || IsDisposed || Disposing)
-            return;
-
-        var parsed = TryParseEndpoint(_endpointComboBox.Text);
-        if (parsed is not null &&
-            _selectedEndpoint is not null &&
-            EndpointsEqual(parsed, _selectedEndpoint))
-        {
-            return;
-        }
-
-        _selectedEndpoint = null;
-        ClearObservation();
-    }
-
-    private void EndpointChanged(object? sender, EventArgs e)
-    {
-        if (_initializingContext || IsDisposed || Disposing)
-            return;
-
-        _selectedEndpoint =
-            (_endpointComboBox.SelectedItem as EndpointChoice)?.Endpoint;
-
-        ClearObservation();
-
-        if (_selectedEndpoint is null)
-            return;
-
-        _ = LoadCachedOrDiscoverAsync();
     }
 
     private async Task LoadAccountsAndEndpointsAsync(
@@ -738,6 +662,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         CancellationToken cancellationToken = default)
     {
         ClearObservation();
+        _selectedEndpoint = null;
 
         _selectedAccount =
             (_accountComboBox.SelectedItem as AccountChoice)?.Value;
@@ -745,7 +670,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _initializingContext = true;
         try
         {
-            var endpoints = new List<EndpointChoice>();
+            _executionTargets = Array.Empty<ExecutionTarget>();
 
             if (_selectedAccount is not null)
             {
@@ -762,42 +687,39 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
                 _executionTargets = targets.Value!;
 
-                endpoints.AddRange(
-                    _executionTargets
-                        .Select(target => new EndpointChoice(
-                            target.Endpoint,
-                            "Execution Target")));
+                _selectedEndpoint = _executionTargets
+                    .Select(target => target.Endpoint)
+                    .GroupBy(
+                        endpoint => endpoint.AbsoluteUri,
+                        StringComparer.OrdinalIgnoreCase)
+                    .Select(group => group.First())
+                    .OrderBy(
+                        endpoint => endpoint.AbsoluteUri,
+                        StringComparer.Ordinal)
+                    .FirstOrDefault();
             }
 
-            if (_selectedProvider is not null &&
+            if (_selectedEndpoint is null &&
+                _selectedProvider is not null &&
                 BuiltInProviderCatalog.Find(_selectedProvider.Key)?.DefaultEndpoint is { } defaultEndpoint)
             {
-                endpoints.Add(
-                    new EndpointChoice(
-                        defaultEndpoint,
-                        "Built-in provider default"));
+                _selectedEndpoint = defaultEndpoint;
             }
-
-            var unique = endpoints
-                .GroupBy(item => item.Endpoint.AbsoluteUri, StringComparer.OrdinalIgnoreCase)
-                .Select(group => group.First())
-                .OrderBy(item => item.Endpoint.AbsoluteUri, StringComparer.Ordinal)
-                .ToArray();
-
-            SetItems(_endpointComboBox, unique);
-            _endpointComboBox.SelectedIndex =
-                _endpointComboBox.Items.Count > 0 ? 0 : -1;
-            _selectedEndpoint =
-                (_endpointComboBox.SelectedItem as EndpointChoice)?.Endpoint;
         }
         finally
         {
             _initializingContext = false;
         }
 
+        if (_selectedEndpoint is null)
+        {
+            _page.SetStatus(
+                "No discovery endpoint is available for the selected account.",
+                HiveStatusTone.Warning);
+            return;
+        }
 
-        if (_selectedEndpoint is not null)
-            await LoadCachedOrDiscoverAsync().ConfigureAwait(true);
+        await LoadCachedOrDiscoverAsync().ConfigureAwait(true);
     }
 
     private void PriceFilterValueChanged(object? sender, EventArgs e)
@@ -1259,14 +1181,12 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
     private async Task RefreshDiscoveryAsync(bool forceRefresh)
     {
-        _selectedEndpoint = TryParseEndpoint(_endpointComboBox.Text);
-
         if (_selectedProvider is null ||
             _selectedAccount is null ||
             _selectedEndpoint is null)
         {
             _page.SetStatus(
-                "Select a Provider, Account, and endpoint first.",
+                "Select a Provider and Account first.",
                 HiveStatusTone.Warning);
             return;
         }
@@ -1975,40 +1895,15 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _ => JsonSerializer.Serialize(value, HumanReadableJsonOptions)
         };
 
-    private static Uri? TryParseEndpoint(string? text)
-    {
-        if (!Uri.TryCreate(
-                text?.Trim(),
-                UriKind.Absolute,
-                out var endpoint))
-        {
-            return null;
-        }
-
-        return endpoint.Scheme is "http" or "https" &&
-               string.IsNullOrEmpty(endpoint.UserInfo)
-            ? endpoint
-            : null;
-    }
-
-    private static HiveComboBox CreateSelector(string name) =>
+    private static HiveComboBox CreateSelector(string name, int width) =>
         new()
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.None,
+            Width = width,
             DropDownStyle = ComboBoxStyle.DropDownList,
             Height = 36,
             Margin = Padding.Empty,
             AccessibleName = name
-        };
-
-    private static Label CreateContextLabel(string text) =>
-        new()
-        {
-            Dock = DockStyle.Fill,
-            AutoSize = false,
-            Text = text,
-            TextAlign = ContentAlignment.MiddleLeft,
-            Padding = new Padding(4, 0, 4, 0)
         };
 
     private static void SetItems<T>(
@@ -2089,8 +1984,6 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
             _providerComboBox.SelectedIndexChanged -= ProviderChanged;
             _accountComboBox.SelectedIndexChanged -= AccountChanged;
-            _endpointComboBox.SelectedIndexChanged -= EndpointChanged;
-            _endpointComboBox.TextChanged -= EndpointTextChanged;
             _page.OperationFailed -= PageOperationFailed;
             _page.ListView.ItemSelectionChanged -= ModelsListSelectionChanged;
             _minPriceFilter.ValueChanged -= PriceFilterValueChanged;
