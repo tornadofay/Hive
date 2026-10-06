@@ -583,10 +583,10 @@ public sealed class Phase116FollowUpTests
 
         var priceAndEvidenceRow = Assert.IsType<FlowLayoutPanel>(
             filterSurface.GetControlFromPosition(0, 1));
-        Assert.Contains(view.MinPriceFilter, priceAndEvidenceRow.Controls);
-        Assert.Contains(view.MaxPriceFilter, priceAndEvidenceRow.Controls);
-        Assert.Contains(view.ShowUnpricedModelsFilter, priceAndEvidenceRow.Controls);
-        Assert.Contains(view.ShowAboveRangeModelsFilter, priceAndEvidenceRow.Controls);
+        Assert.True(priceAndEvidenceRow.Controls.Contains(view.MinPriceFilter));
+        Assert.True(priceAndEvidenceRow.Controls.Contains(view.MaxPriceFilter));
+        Assert.True(priceAndEvidenceRow.Controls.Contains(view.ShowUnpricedModelsFilter));
+        Assert.True(priceAndEvidenceRow.Controls.Contains(view.ShowAboveRangeModelsFilter));
 
         var initialDetailsWidth = view.DetailsPanelWidth;
         Assert.InRange(initialDetailsWidth, 390, 410);
@@ -814,10 +814,10 @@ public sealed class Phase116FollowUpTests
         Assert.Same(view.AccountSelector, selectorRow.Controls.OfType<HiveComboBox>().ElementAt(1));
         Assert.Same(view.CapabilityFilter, selectorRow.Controls.OfType<HiveComboBox>().ElementAt(2));
         Assert.Same(view.CapabilityStateFilter, selectorRow.Controls.OfType<HiveComboBox>().ElementAt(3));
-        Assert.Contains(view.MinPriceFilter, priceAndEvidenceRow.Controls);
-        Assert.Contains(view.MaxPriceFilter, priceAndEvidenceRow.Controls);
-        Assert.Contains(view.ShowUnpricedModelsFilter, priceAndEvidenceRow.Controls);
-        Assert.Contains(view.ShowAboveRangeModelsFilter, priceAndEvidenceRow.Controls);
+        Assert.True(priceAndEvidenceRow.Controls.Contains(view.MinPriceFilter));
+        Assert.True(priceAndEvidenceRow.Controls.Contains(view.MaxPriceFilter));
+        Assert.True(priceAndEvidenceRow.Controls.Contains(view.ShowUnpricedModelsFilter));
+        Assert.True(priceAndEvidenceRow.Controls.Contains(view.ShowAboveRangeModelsFilter));
 
         Assert.True(view.ShowUnpricedModelsFilter.Visible);
         Assert.True(view.ShowAboveRangeModelsFilter.Visible);
