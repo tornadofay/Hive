@@ -99,3 +99,37 @@ Target Advanced Provider Configuration navigation:
    and confirms the existing Model Information behavior remains intact.
 4. Confirm normal Providers Settings has only Providers and Favorite Execution Targets, while Advanced contains Providers, Accounts / Credentials, Execution Targets, and Model Information.
 
+### Polish follow-up — 2026-10-06
+
+Developer verification of the immediately preceding navigation restoration passed **681/681 tests (0 failed, 0 skipped)**. The remaining authorized work is a bounded visual/layout polish of the existing Model Information page.
+
+### Maintainer request
+
+Refine the Model Information filter/header area to reduce wasted space and give the model catalog more vertical room:
+- remove the bordered Provider / Account / endpoint context box;
+- keep Provider and Account / Credential selectors in the same borderless filter area as the other inspection filters;
+- remove the endpoint ComboBox from the visible UI;
+- preserve discovery by selecting the same deterministic first endpoint internally for the selected account/provider context;
+- reorganize the filter rows so the selectors, price/capability filters, and pricing-evidence switches have clear spacing and no overlap;
+- use the reclaimed vertical space to increase the model-list viewport at normal window size.
+
+### Scope
+
+- HiveModelInformationSettingsView presentation/layout only, plus the minimum internal endpoint-selection adjustment required by removing the endpoint selector.
+- Focused UI regression coverage for the new layout and the absence of the endpoint selector.
+- Synchronize only the owning current UI/plan/example documentation that describes the Model Information filter layout.
+
+### Exclusions
+
+- No provider/discovery contract changes.
+- No pricing/filter semantics changes.
+- No changes to the Model Information details surface.
+- No changes to Provider, ProviderAccount, ExecutionTarget, or favorite persistence contracts.
+- No change to Advanced Provider Configuration ownership/navigation.
+- No roadmap advancement.
+
+### Verification gate
+
+1. Focused Model Information UI tests pass.
+2. Full Hive.Tests passes.
+3. Developer manually verifies the real Advanced Provider Configuration → Model Information page at normal size, including filter organization, model-list height, selector behavior, and the existing details/favorites behavior.
