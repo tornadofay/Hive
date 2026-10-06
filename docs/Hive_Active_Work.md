@@ -60,7 +60,7 @@ Developer re-verification is pending. Rerun the full `Hive.Tests` suite and manu
 Authorized: 2026-10-05 (explicit maintainer request)
 Status: VERIFICATION PENDING
 Roadmap impact: None. Bounded off-roadmap UI/navigation reversal. Does not activate or advance any Phase 1 roadmap slice.
-Checkpoint: `d0c6c668` — "Polish Model Information filter layout"
+Checkpoint: `11a3b41a` — "Refine Model Information filter rows"
 
 ### Maintainer request
 

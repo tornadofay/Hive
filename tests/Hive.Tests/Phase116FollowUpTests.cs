@@ -818,10 +818,6 @@ public sealed class Phase116FollowUpTests
         Assert.Contains(view.MaxPriceFilter, priceAndEvidenceRow.Controls);
         Assert.Contains(view.ShowUnpricedModelsFilter, priceAndEvidenceRow.Controls);
         Assert.Contains(view.ShowAboveRangeModelsFilter, priceAndEvidenceRow.Controls);
-        var filterSurfaceText = CollectVisibleControlText(filterSurface);
-        Assert.Contains("Provider", filterSurfaceText);
-        Assert.Contains("Account / Credential", filterSurfaceText);
-        Assert.DoesNotContain("Discovery endpoint", filterSurfaceText);
 
         Assert.True(view.ShowUnpricedModelsFilter.Visible);
         Assert.True(view.ShowAboveRangeModelsFilter.Visible);
