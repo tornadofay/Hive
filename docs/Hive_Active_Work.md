@@ -99,6 +99,15 @@ Target Advanced Provider Configuration navigation:
    and confirms the existing Model Information behavior remains intact.
 4. Confirm normal Providers Settings has only Providers and Favorite Execution Targets, while Advanced contains Providers, Accounts / Credentials, Execution Targets, and Model Information.
 
+### Verification failure — 2026-10-07
+
+Developer verification reported **681 tests: 680 passed, 1 failed, 0 skipped**. The failure is the in-scope Model Information layout regression test expecting the filter container to be a TableLayoutPanel while the current implementation intentionally uses a FlowLayoutPanel.
+
+The maintainer also requested the next bounded layout refinement: place Capability and State beside Provider and Account on the primary filter row, move the price sliders and both pricing-evidence checkboxes to the row beneath, and use the resulting vertical space to increase the left-side model catalog height while keeping the details panel on the right.
+
+**Status: VERIFICATION FAILED / REMEDIATION REQUIRED**
+
+Remediate only this Model Information layout/test boundary. Preserve discovery semantics, filter semantics, details behavior, favorites behavior, and Advanced Provider Configuration ownership. After remediation, return Active Work to VERIFICATION PENDING and require focused/full test rerun plus manual UI verification.
 ### Polish follow-up — 2026-10-06
 
 Developer verification of the immediately preceding navigation restoration passed **681/681 tests (0 failed, 0 skipped)**. The remaining authorized work is a bounded visual/layout polish of the existing Model Information page.
