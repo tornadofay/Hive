@@ -269,5 +269,6 @@ public enum ResourceKind
     ProviderAccount,
     ExecutionTarget,
     Secret,
-    AgentDefinition
+    AgentDefinition,
+    StructuredExtractionBatch
 }
