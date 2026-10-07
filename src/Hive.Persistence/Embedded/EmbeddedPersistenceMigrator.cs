@@ -268,7 +268,7 @@ internal sealed class EmbeddedPersistenceMigrator
             .ConfigureAwait(false);
 
         if (schemaVersion is null ||
-            schemaVersion <= 0)
+            schemaVersion < EmbeddedPersistenceSchema.MinimumSupportedSchemaVersion)
             throw new EmbeddedPersistenceMetadataException();
 
         if (schemaVersion > EmbeddedPersistenceSchema.CurrentSchemaVersion)
