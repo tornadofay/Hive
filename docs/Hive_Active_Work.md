@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IMPLEMENTATION ACTIVE
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Phase: **1.18A — Embedded Persistence Profile**
 
@@ -29,13 +29,19 @@ Repository checkpoint at slice start: `aef7fdd0493d3a7d34bd8111c185a30220a3a67f`
 - No normal-user Embedded first-run default change.
 - No vector storage/search, cognitive features, configuration import/export, or unrelated refactoring.
 
+## Verification failure
+
+Developer verification reported compile errors in Slice 1:
+
+- `tests/Hive.Tests/HiveConfigurationTests.cs` lines 114–115: malformed C# raw/interpolated string escaping causing CS1056, CS1003, and CS1026.
+- `src/Hive.Persistence/Database/HiveDatabaseOptions.cs` line 82: malformed string literal causing CS1026.
+
+## Remediation boundary
+
+Correct only the reported compile defects and any directly necessary syntax consequence. Do not widen the Slice 1 scope.
+
 ## Verification gate
 
-Slice 1 is complete only after developer verification confirms:
+After remediation, Active Work must return to **VERIFICATION PENDING** with the exact rerun target:
 
-- backend-aware configuration load/save/validation works for both profiles;
-- SQL Server graph construction/regression behavior remains intact;
-- no backend-specific storage details leak into Core or Management contracts;
-- the focused `Hive.Tests` coverage passes.
-
-Current verification state: **NOT RUN**. The agent does not claim build/test/manual verification until developer results are supplied.
+`HiveConfigurationTests; HivePersistenceOptionsTests; HiveHostCompositionTests; broader Hive.Tests suite after focused verification.`
