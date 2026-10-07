@@ -1,4 +1,5 @@
 using Hive.Core;
+using Hive.Coordination;
 using Xunit;
 
 namespace Hive.Tests;
@@ -138,12 +139,13 @@ public sealed class StructuredExtractionContractsTests
             ],
             SpreadsheetMappingReviewState.Proposed);
 
-        Assert.False(mapping.IsDeterministicallyValid);
+        Assert.True(mapping.IsSuccess, mapping.Error?.Message);
+        Assert.False(mapping.Value!.IsDeterministicallyValid);
         Assert.Contains(
-            mapping.ValidationMessages,
+            mapping.Value.ValidationMessages,
             message => message.Contains("not present", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(
-            mapping.ValidationMessages,
+            mapping.Value.ValidationMessages,
             message => message.Contains("Required semantic field", StringComparison.Ordinal));
     }
 
