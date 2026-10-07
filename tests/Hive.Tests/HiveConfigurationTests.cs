@@ -111,7 +111,7 @@ public sealed class HiveConfigurationTests
                   "backend": 1,
                   "createDatabaseIfMissing": true,
                   "commandTimeoutSeconds": 30,
-                  "embeddedStoragePath": "{{storagePath.Replace("\", "\\")}}"
+                  "embeddedStoragePath": "{{storagePath.Replace("\\", "\\\\")}}"
                 }
                 """);
 
