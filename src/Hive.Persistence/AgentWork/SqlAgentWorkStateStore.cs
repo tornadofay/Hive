@@ -1464,7 +1464,7 @@ internal sealed class SqlAgentWorkStateStore :
 
         var sourceIdentity = reader.IsDBNull(
             reader.GetOrdinal("SourceIdentity"))
-            ? null
+            ? (Guid?)null
             : reader.GetGuid(
                 reader.GetOrdinal("SourceIdentity"));
 
