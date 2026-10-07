@@ -49,6 +49,7 @@ public static class StructuredExtractionValueNormalizer
                         field.Id,
                         field.ValueType,
                         decimalValue.ToString(
+                            "G29",
                             CultureInfo.InvariantCulture),
                         StructuredValidationState.Valid)
                     : Invalid(
