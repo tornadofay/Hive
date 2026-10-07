@@ -36,3 +36,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [Off-Work Provider Completion — Slice 4 Revision: Provider Completion Integration & Hardening — 2026-10-05](off-work-provider-completion-integration-hardening-revision-closure-2026-10-05.md)
 - [Off-Work — Model Information UI Polish — 2026-10-07](off-work-model-information-ui-polish-closure-2026-10-07.md)
 - [1.17 — Structured Extraction & Validation — 2026-10-07](1.17-structured-extraction-validation-closure-2026-10-07.md)
+- [Post-1.17 — Plain Text Input Support — 2026-10-07](post-1.17-plain-text-input-support-closure-2026-10-07.md)
