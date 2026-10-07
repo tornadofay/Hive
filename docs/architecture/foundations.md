@@ -97,12 +97,12 @@ Phase 0.4 established the original Hive-owned SQL Server persistence boundary wi
 **Embedded Persistence Profile**
 
 - Embedded mode is a first-class local/desktop persistence backend behind the same Hive persistence/resource contracts.
-- The default implementation candidate is SQLite through `Microsoft.Data.Sqlite`; the exact package/runtime choice is finalized during the 1.18A implementation review.
+- The planned implementation uses SQLite through `Microsoft.Data.Sqlite`; dependency/version and native packaging details remain subject to the normal 1.18A implementation review.
 - Embedded mode has no externally installed database-server dependency.
 - The embedded store is application-owned local storage with one authoritative relational store for Hive durable state rather than separate per-feature database files.
 - Embedded schema/version/migration behavior must preserve the same logical compatibility and failure semantics required by the Hive persistence boundary.
 
-The selected backend is a deployment/configuration decision. SQL Server and Embedded must remain interchangeable at the logical contract/resource layer; their storage-specific connection/path details must not leak into Hive.Core or Management contracts.
+The selected backend is a deployment/configuration decision. For a new normal end-user installation, Embedded is the intended default so Hive can run without an externally installed database server; the existing developer/local-development helpers may continue to default to SQL Server LocalDB. SQL Server and Embedded must remain interchangeable at the logical contract/resource layer; their storage-specific connection/path details must not leak into Hive.Core or Management contracts.
 
 #### First-class persistence configuration
 Hive's persistence configuration is a product/platform configuration domain with the same separation of concerns as Provider configuration.
