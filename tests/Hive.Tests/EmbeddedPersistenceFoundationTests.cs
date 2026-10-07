@@ -20,12 +20,14 @@ public sealed class EmbeddedPersistenceFoundationTests
             var first = await database.InitializeAsync();
 
             Assert.True(first.IsSuccess, first.Error?.Message);
-            Assert.Equal(HiveDatabaseMigrationStatus.Applied, first.Value.Status);
-            Assert.Equal(0, first.Value.PreviousSchemaVersion);
+            var firstValue = RequireValue(first);
+
+            Assert.Equal(HiveDatabaseMigrationStatus.Applied, firstValue.Status);
+            Assert.Equal(0, firstValue.PreviousSchemaVersion);
             Assert.Equal(
                 EmbeddedPersistenceSchema.CurrentSchemaVersion,
-                first.Value.CurrentSchemaVersion);
-            Assert.Equal(1, first.Value.AppliedMigrationCount);
+                firstValue.CurrentSchemaVersion);
+            Assert.Equal(1, firstValue.AppliedMigrationCount);
 
             await using (var connection = await database.OpenConnectionAsync())
             {
@@ -83,21 +85,25 @@ public sealed class EmbeddedPersistenceFoundationTests
             var second = await database.InitializeAsync();
 
             Assert.True(second.IsSuccess, second.Error?.Message);
+            var secondValue = RequireValue(second);
+
             Assert.Equal(
                 HiveDatabaseMigrationStatus.AlreadyCurrent,
-                second.Value.Status);
+                secondValue.Status);
             Assert.Equal(
                 EmbeddedPersistenceSchema.CurrentSchemaVersion,
-                second.Value.CurrentSchemaVersion);
-            Assert.Equal(0, second.Value.AppliedMigrationCount);
+                secondValue.CurrentSchemaVersion);
+            Assert.Equal(0, secondValue.AppliedMigrationCount);
 
             var status = await database.InspectAsync();
 
             Assert.True(status.IsSuccess, status.Error?.Message);
-            Assert.Equal(HiveDatabaseState.Current, status.Value.DatabaseState);
+            var statusValue = RequireValue(status);
+
+            Assert.Equal(HiveDatabaseState.Current, statusValue.DatabaseState);
             Assert.Equal(
                 EmbeddedPersistenceSchema.CurrentSchemaVersion,
-                status.Value.SchemaVersion);
+                statusValue.SchemaVersion);
         }
         finally
         {
@@ -215,10 +221,12 @@ public sealed class EmbeddedPersistenceFoundationTests
             var result = await database.InspectAsync();
 
             Assert.True(result.IsSuccess, result.Error?.Message);
+            var resultValue = RequireValue(result);
+
             Assert.Equal(
                 HiveDatabaseState.DatabaseNotFound,
-                result.Value.DatabaseState);
-            Assert.Null(result.Value.SchemaVersion);
+                resultValue.DatabaseState);
+            Assert.Null(resultValue.SchemaVersion);
             Assert.False(File.Exists(path));
         }
         finally
@@ -304,10 +312,12 @@ public sealed class EmbeddedPersistenceFoundationTests
             var status = await reopened.InspectAsync();
 
             Assert.True(status.IsSuccess, status.Error?.Message);
-            Assert.Equal(HiveDatabaseState.Current, status.Value.DatabaseState);
+            var statusValue = RequireValue(status);
+
+            Assert.Equal(HiveDatabaseState.Current, statusValue.DatabaseState);
             Assert.Equal(
                 EmbeddedPersistenceSchema.CurrentSchemaVersion,
-                status.Value.SchemaVersion);
+                statusValue.SchemaVersion);
 
             await using var connectionAfterReopen =
                 await reopened.OpenConnectionAsync();
@@ -420,10 +430,12 @@ public sealed class EmbeddedPersistenceFoundationTests
             var status = await database.InspectAsync();
 
             Assert.True(status.IsSuccess, status.Error?.Message);
+            var statusValue = RequireValue(status);
+
             Assert.Equal(
                 HiveDatabaseState.FutureSchema,
-                status.Value.DatabaseState);
-            Assert.Equal(99, status.Value.SchemaVersion);
+                statusValue.DatabaseState);
+            Assert.Equal(99, statusValue.SchemaVersion);
 
             var result = await database.InitializeAsync();
 
@@ -689,6 +701,13 @@ public sealed class EmbeddedPersistenceFoundationTests
             "contiguous",
             exception.Message,
             StringComparison.Ordinal);
+    }
+
+    private static T RequireValue<T>(Result<T> result)
+    {
+        return result.Value
+            ?? throw new InvalidOperationException(
+                "Expected a successful result with a value.");
     }
 
     private static async Task<object?> ExecuteScalarAsync(
