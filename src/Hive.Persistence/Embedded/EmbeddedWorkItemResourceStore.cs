@@ -1195,7 +1195,7 @@ public sealed class EmbeddedWorkItemResourceStore : IWorkItemResourceStore
         Guid? value) =>
         new(name, SqlDbType.UniqueIdentifier)
         {
-            Value = value?.ToString("D") ?? DBNull.Value
+            Value = (object?)value?.ToString("D") ?? DBNull.Value
         };
 
     private static SqlParameter BigIntParameter(
