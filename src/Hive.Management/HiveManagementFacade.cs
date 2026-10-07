@@ -15,6 +15,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
     private readonly HiveInputPreparationManagementService _inputPreparation;
     private readonly HiveStructuredExtractionManagementService _structuredExtraction;
     private readonly HiveExecutionTargetPreferenceManagementService _executionTargetPreferences;
+    private readonly HivePersistenceMigrationManagementService _persistenceMigration;
     private readonly object _lifetimeGate = new();
     private int _disposed;
 
@@ -32,7 +33,8 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         IClock? clock = null,
         IExecutionTargetPreferenceStore? executionTargetPreferences = null,
         IStructuredExtractionBatchStore? structuredExtractionBatches = null,
-        StructuredExtractionEngine? structuredExtractionEngine = null)
+        StructuredExtractionEngine? structuredExtractionEngine = null,
+        IHivePersistenceMigrationQuiescence? persistenceMigrationQuiescence = null)
     {
         _configuration = new HiveConfigurationManagementService(
             configurationStore,
@@ -64,6 +66,10 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         _executionTargetPreferences = new HiveExecutionTargetPreferenceManagementService(
             executionTargetPreferences,
             providerResources);
+        _persistenceMigration = new HivePersistenceMigrationManagementService(
+            configurationStore,
+            bootstrapCredentials,
+            persistenceMigrationQuiescence);
     }
 
     public void Dispose()
@@ -115,6 +121,15 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default) => Run(() =>
         _configuration.InitializePersistenceAsync(configuration, accessContext, cancellationToken));
+
+    public Task<Result<HivePersistenceMigrationResult>> MigratePersistenceDataAsync(
+        HivePersistenceMigrationRequest request,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _persistenceMigration.MigrateAsync(
+            request,
+            accessContext,
+            cancellationToken));
 
     public Task<Result<Secret>> CreateSecretAsync(
         string key,
