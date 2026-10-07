@@ -75,7 +75,7 @@ internal sealed class EmbeddedEventPersistenceStore : IEventPersistenceStore, IE
         catch (SqlException exception)
         {
             return Result<EventAppendResult>.Failure(
-                HivePersistenceError.External("hive.event.sql", "The durable event operation failed at the SQL Server boundary.", exception));
+                HivePersistenceError.External("hive.event.sql", "The durable event operation failed at the Embedded SQLite boundary.", exception));
         }
         catch (EventSerializationException exception)
         {
@@ -160,7 +160,7 @@ internal sealed class EmbeddedEventPersistenceStore : IEventPersistenceStore, IE
         catch (SqlException exception)
         {
             return Result<IReadOnlyList<PersistedEvent>>.Failure(
-                HivePersistenceError.External("hive.event.sql", "The durable event read failed at the SQL Server boundary.", exception));
+                HivePersistenceError.External("hive.event.sql", "The durable event read failed at the Embedded SQLite boundary.", exception));
         }
         catch (Exception exception)
         {
@@ -230,7 +230,7 @@ internal sealed class EmbeddedEventPersistenceStore : IEventPersistenceStore, IE
         catch (SqlException exception)
         {
             return Result<EventSnapshot?>.Failure(
-                HivePersistenceError.External("hive.event.sql", "The snapshot read failed at the SQL Server boundary.", exception));
+                HivePersistenceError.External("hive.event.sql", "The snapshot read failed at the Embedded SQLite boundary.", exception));
         }
         catch (Exception exception)
         {
@@ -309,7 +309,7 @@ internal sealed class EmbeddedEventPersistenceStore : IEventPersistenceStore, IE
         catch (SqlException exception)
         {
             return Result<IReadOnlyList<EventSnapshot>>.Failure(
-                HivePersistenceError.External("hive.event.sql", "The snapshot listing failed at the SQL Server boundary.", exception));
+                HivePersistenceError.External("hive.event.sql", "The snapshot listing failed at the Embedded SQLite boundary.", exception));
         }
         catch (Exception exception)
         {
@@ -377,7 +377,7 @@ internal sealed class EmbeddedEventPersistenceStore : IEventPersistenceStore, IE
         catch (SqlException exception)
         {
             return Result<EventOutboxEntry?>.Failure(
-                HivePersistenceError.External("hive.event.sql", "The outbox read failed at the SQL Server boundary.", exception));
+                HivePersistenceError.External("hive.event.sql", "The outbox read failed at the Embedded SQLite boundary.", exception));
         }
         catch (Exception exception)
         {
@@ -607,7 +607,7 @@ internal sealed class EmbeddedEventPersistenceStore : IEventPersistenceStore, IE
                 return Result.Failure(
                     HivePersistenceError.External(
                         "hive.outbox.renew-sql",
-                        "The outbox lease renewal failed at the SQL Server boundary.",
+                        "The outbox lease renewal failed at the Embedded SQLite boundary.",
                         exception));
             }
             catch (Exception exception)
@@ -665,7 +665,7 @@ internal sealed class EmbeddedEventPersistenceStore : IEventPersistenceStore, IE
         }
         catch (SqlException exception)
         {
-            return Result.Failure(HivePersistenceError.External("hive.outbox.complete-sql", "The outbox completion failed at the SQL Server boundary.", exception));
+            return Result.Failure(HivePersistenceError.External("hive.outbox.complete-sql", "The outbox completion failed at the Embedded SQLite boundary.", exception));
         }
         catch (Exception exception)
         {
