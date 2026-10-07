@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -8,6 +9,8 @@ public static class InputPreparationEngine
 {
     private const string SpreadsheetMediaType =
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    private const string TextMediaType = "text/plain";
 
     public static bool RequiresVisionTargetRouting(
         InputSubmission submission)
@@ -70,6 +73,18 @@ public static class InputPreparationEngine
                         prepared,
                         failures,
                         submissionPreparationBudget,
+                        cancellationToken);
+                    continue;
+                }
+
+                if (IsText(item))
+                {
+                    PrepareText(
+                        submission,
+                        index,
+                        item,
+                        prepared,
+                        failures,
                         cancellationToken);
                     continue;
                 }
@@ -191,6 +206,84 @@ public static class InputPreparationEngine
                 item.Content,
                 selection.Value!.SelectedTarget.Id,
                 selection.Value.Diagnostics));
+    }
+
+    private static void PrepareText(
+        InputSubmission submission,
+        int itemIndex,
+        InputItem item,
+        List<PreparedInput> prepared,
+        List<InputPreparationFailure> failures,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (item.Content.Length > InputPreparationLimits.MaxTextBytes)
+        {
+            AddFailure(
+                failures,
+                itemIndex,
+                item,
+                null,
+                Error.Validation(
+                    "hive.input.text-too-large",
+                    "Text input exceeds the bounded text file size limit."));
+            return;
+        }
+
+        try
+        {
+            var text = new UTF8Encoding(
+                    encoderShouldEmitUTF8Identifier: false,
+                    throwOnInvalidBytes: true)
+                .GetString(item.Content.Span)
+                .TrimStart('\uFEFF');
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                AddFailure(
+                    failures,
+                    itemIndex,
+                    item,
+                    null,
+                    Error.Validation(
+                        "hive.input.text-empty",
+                        "Text input does not contain any non-whitespace content."));
+                return;
+            }
+
+            if (text.Length > InputPreparationLimits.MaxTextCharacters)
+            {
+                AddFailure(
+                    failures,
+                    itemIndex,
+                    item,
+                    null,
+                    Error.Validation(
+                        "hive.input.text-too-large",
+                        "Text input exceeds the bounded text character limit."));
+                return;
+            }
+
+            prepared.Add(
+                new PreparedTextInput(
+                    submission.SubmissionId,
+                    itemIndex,
+                    item.FileName,
+                    item.MediaType,
+                    text));
+        }
+        catch (DecoderFallbackException)
+        {
+            AddFailure(
+                failures,
+                itemIndex,
+                item,
+                null,
+                Error.Serialization(
+                    "hive.input.text-invalid-utf8",
+                    "Text input is not valid UTF-8."));
+        }
     }
 
     private static void PrepareSpreadsheet(
@@ -1111,6 +1204,9 @@ public static class InputPreparationEngine
         item.MediaType.StartsWith(
             "image/",
             StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsText(InputItem item) =>
+        string.Equals(item.MediaType, TextMediaType, StringComparison.OrdinalIgnoreCase);
 
     private static bool IsSpreadsheet(InputItem item) =>
         string.Equals(
