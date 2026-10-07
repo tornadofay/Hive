@@ -12,7 +12,8 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
     private readonly HiveProviderManagementService _providers;
     private readonly HiveAgentManagementService _agents;
     private readonly HiveWorkItemManagementService _workItems;
-    private readonly HiveInputPreparationManagementService _inputPreparation; 
+    private readonly HiveInputPreparationManagementService _inputPreparation;
+    private readonly HiveStructuredExtractionManagementService _structuredExtraction;
     private readonly HiveExecutionTargetPreferenceManagementService _executionTargetPreferences;
     private readonly object _lifetimeGate = new();
     private int _disposed;
@@ -29,7 +30,9 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         AgentExecutionService? agentExecution = null,
         IProviderCapabilityDiscovery? providerCapabilityDiscovery = null,
         IClock? clock = null,
-        IExecutionTargetPreferenceStore? executionTargetPreferences = null)
+        IExecutionTargetPreferenceStore? executionTargetPreferences = null,
+        IStructuredExtractionBatchStore? structuredExtractionBatches = null,
+        StructuredExtractionEngine? structuredExtractionEngine = null)
     {
         _configuration = new HiveConfigurationManagementService(
             configurationStore,
@@ -50,7 +53,14 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
             secrets,
             agentExecution);
         _workItems = new HiveWorkItemManagementService(workItems);
-        _inputPreparation = new HiveInputPreparationManagementService(_providers); 
+        _inputPreparation = new HiveInputPreparationManagementService(_providers);
+        _structuredExtraction = new HiveStructuredExtractionManagementService(
+            _providers,
+            _inputPreparation,
+            secrets,
+            structuredExtractionBatches,
+            structuredExtractionEngine,
+            clock);
         _executionTargetPreferences = new HiveExecutionTargetPreferenceManagementService(
             executionTargetPreferences,
             providerResources);
@@ -401,6 +411,99 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         CancellationToken cancellationToken = default) => Run(() =>
         _inputPreparation.PrepareInputAsync(
             submission,
+            accessContext,
+            cancellationToken));
+
+    public Task<Result<StructuredExtractionBatch>> CreateStructuredExtractionBatchAsync(
+        InputSubmission submission,
+        StructuredTargetSchema targetSchema,
+        ExecutionTargetId? mappingExecutionTargetId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _structuredExtraction.CreateBatchAsync(
+            submission,
+            targetSchema,
+            mappingExecutionTargetId,
+            accessContext,
+            cancellationToken));
+
+    public Task<Result<StructuredExtractionBatch>> GetStructuredExtractionBatchAsync(
+        StructuredExtractionBatchId batchId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _structuredExtraction.GetBatchAsync(
+            batchId,
+            accessContext,
+            cancellationToken));
+
+    public Task<Result<StructuredExtractionBatch>> AuthorizeStructuredExtractionProcessingAsync(
+        StructuredExtractionBatchId batchId,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _structuredExtraction.AuthorizeProcessingAsync(
+            batchId,
+            expectedVersion,
+            accessContext,
+            cancellationToken));
+
+    public Task<Result<StructuredExtractionBatch>> ProcessStructuredExtractionBatchAsync(
+        StructuredExtractionBatchId batchId,
+        IReadOnlyList<PreparedInput> preparedInputs,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _structuredExtraction.ProcessBatchAsync(
+            batchId,
+            preparedInputs,
+            accessContext,
+            cancellationToken));
+
+    public Task<Result<StructuredExtractionBatch>> UpdateStructuredExtractionMappingAsync(
+        StructuredExtractionBatchId batchId,
+        string mappingContextIdentity,
+        IReadOnlyList<SpreadsheetMappingEntry> entries,
+        SpreadsheetMappingReviewState reviewState,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _structuredExtraction.UpdateSpreadsheetMappingAsync(
+            batchId,
+            mappingContextIdentity,
+            entries,
+            reviewState,
+            expectedVersion,
+            accessContext,
+            cancellationToken));
+
+    public Task<Result<StructuredExtractionBatch>> UpdateStructuredCandidateFieldAsync(
+        StructuredExtractionBatchId batchId,
+        int itemIndex,
+        SemanticFieldId fieldId,
+        string? value,
+        int? childIndex,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _structuredExtraction.UpdateCandidateFieldAsync(
+            batchId,
+            itemIndex,
+            fieldId,
+            value,
+            childIndex,
+            expectedVersion,
+            accessContext,
+            cancellationToken));
+
+    public Task<Result<StructuredExtractionBatch>> AuthorizeStructuredExtractionAcceptedSetAsync(
+        StructuredExtractionBatchId batchId,
+        IReadOnlyList<int> acceptedItemIndexes,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _structuredExtraction.AuthorizeAcceptedSetAsync(
+            batchId,
+            acceptedItemIndexes,
+            expectedVersion,
             accessContext,
             cancellationToken));
 
