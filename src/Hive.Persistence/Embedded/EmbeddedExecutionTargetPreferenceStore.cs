@@ -198,7 +198,7 @@ public sealed class EmbeddedExecutionTargetPreferenceStore : IExecutionTargetPre
         command.Parameters.Add(
             new SqlParameter("@ScopeIdentity", SqlDbType.UniqueIdentifier)
             {
-                Value = (object?)scope.Identity?.ToString("D") ?? DBNull.Value
+                Value = scope.Identity.ToString("D")
             });
     }
 
