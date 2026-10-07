@@ -5,7 +5,8 @@ namespace Hive.Core;
 public enum InputSourceKind
 {
     Image,
-    Spreadsheet
+    Spreadsheet,
+    Text
 }
 
 public sealed class InputItem
@@ -174,6 +175,36 @@ public abstract class PreparedInput
     public string MediaType { get; }
 
     public InputSourceKind SourceKind { get; }
+}
+
+public sealed class PreparedTextInput : PreparedInput
+{
+    public PreparedTextInput(
+        Guid submissionId,
+        int itemIndex,
+        string fileName,
+        string mediaType,
+        string content)
+        : base(
+            submissionId,
+            itemIndex,
+            fileName,
+            mediaType,
+            InputSourceKind.Text)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(content);
+
+        if (content.Length > InputPreparationLimits.MaxTextCharacters)
+        {
+            throw new ArgumentException(
+                $"Prepared text cannot exceed {InputPreparationLimits.MaxTextCharacters} characters.",
+                nameof(content));
+        }
+
+        Content = content;
+    }
+
+    public string Content { get; }
 }
 
 public sealed class PreparedImageInput : PreparedInput
@@ -356,6 +387,8 @@ public sealed class InputPreparationResult
 public static class InputPreparationLimits
 {
     public const int MaxSpreadsheetBytes = 16 * 1024 * 1024;
+    public const int MaxTextBytes = 1 * 1024 * 1024;
+    public const int MaxTextCharacters = 1_000_000;
     public const int MaxSpreadsheetWorksheets = 32;
     public const int MaxWorksheetRows = 5000;
     public const int MaxWorksheetColumns = 128;
