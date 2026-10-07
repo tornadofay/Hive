@@ -124,9 +124,13 @@ Save and readiness/connection Test remain non-destructive. The explicit `Initial
 `SQL Server → Embedded`
 `Embedded → SQL Server`
 
-It transfers **All Hive Data** as one migration scope. In 1.18A, migration is a full logical transfer of every Hive-owned durable record represented by the current persistence contracts, not just Providers/WorkItems. It provides source/destination status, destination preflight validation, bounded progress/status reporting, and a final verification result. It must not offer partial resource-family migration, merge behavior, destructive overwrite, or live synchronization. A non-empty/incompatible destination is rejected.
+It transfers **All Hive Data** as one migration scope. In 1.18A, migration is a full logical transfer of every Hive-owned durable record represented by the current persistence contracts, not just Providers/WorkItems. The source is the currently active backend. Destination settings use the same authoritative `HivePersistenceConfiguration` contract as Database Setup but remain transient migration-target input until activation.
 
-The Persistence page consumes Management operations only. It must not construct SQLite/SQL Server connections, expose raw credentials, or implement backend-specific persistence rules. A successful migration does not automatically activate the destination backend; activation remains explicit in Database Setup.
+Before migration, Hive must be quiescent: active persistence mutations, active execution persistence, and outbox delivery must be stopped or drained. If the source cannot be quiesced, the migration fails preflight. The tab provides source/destination status, destination preflight validation, bounded progress/status reporting, and a final verification result. It must not offer partial resource-family migration, merge behavior, destructive overwrite, or live synchronization. A non-empty/incompatible destination is rejected.
+
+Migration completion requires verification of the full logical dataset, including stable identities, relationships, versions/lifecycle state, event/snapshot/outbox consistency, work state, and protected Secret Store records. The source remains unchanged, and successful migration does not automatically activate the destination.
+
+The Persistence page consumes Management operations only. It must not construct SQLite/SQL Server connections, expose raw credentials, or implement backend-specific persistence rules.
 
 ## Structured extraction and batch input UI
 
