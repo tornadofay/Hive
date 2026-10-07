@@ -31,10 +31,13 @@ public sealed class HiveHostServiceGraphFactory :
             ?? throw new ArgumentNullException(nameof(configurationStore));
     }
 
-    public Task<Result<HiveHostServiceGraph>> CreateAsync(
+    public async Task<Result<HiveHostServiceGraph>> CreateAsync(
         HivePersistenceConfiguration configuration,
-        CancellationToken cancellationToken = default) =>
-        configuration.Backend switch
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        return await (configuration.Backend switch
         {
             HivePersistenceBackend.SqlServer =>
                 CreateSqlServerAsync(configuration, cancellationToken),
@@ -50,7 +53,8 @@ public sealed class HiveHostServiceGraphFactory :
                         Error.Validation(
                             "hive.host.persistence-backend-invalid",
                             "The persistence backend is invalid.")))
-        };
+        }).ConfigureAwait(false);
+    }
 
     private async Task<Result<HiveHostServiceGraph>> CreateSqlServerAsync(
         HivePersistenceConfiguration configuration,
