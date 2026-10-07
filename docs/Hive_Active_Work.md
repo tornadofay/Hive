@@ -1,31 +1,43 @@
 # Hive — Active Work
 
-Status: **NO ACTIVE WORK**
-
-No implementation slice is currently active.
-
-## Last completed work
+Status: **IMPLEMENTATION ACTIVE**
 
 Phase: **1.18A — Embedded Persistence Profile**
 
-Slice: **2 — Embedded Persistence Foundation**
+Slice: **3 — Embedded Persistence Parity**
 
-Completed and developer-verified on **2026-10-07**.
+Authorized by the user on **2026-10-07** with: “Hive: Continue start next slice 3”.
 
-Final developer verification: **736 Tests (736 Passed, 0 Failed, 0 Skipped)** in approximately **1.5 minutes**.
+Authorization boundary: implement the Embedded backend for the complete current SQL Server-backed durable persistence surface identified by the 1.18A catch-up baseline. The current repository baseline is schema version **15** and includes Provider, ProviderAccount, ExecutionTarget, ExecutionTarget favorites, AgentDefinition, WorkItem and immutable attachments, durable events/snapshots/outbox state, structured-extraction persistence, Base-Agent durable work state, and the Hive Secret Store.
 
-Closure record: `docs/verification/phase-1/1.18A-slice-2-embedded-persistence-foundation-closure-2026-10-07.md`
+Required responsibilities within this slice:
 
-Final repository verification checkpoint: `f277744e4bba7745d471f672875343c316cbabe6`.
+- add Embedded SQLite implementations of every applicable current persistence contract;
+- preserve logical identities, ownership/scope, provenance, lifecycle, versions/concurrency semantics, deterministic ordering, cancellation, and typed error behavior;
+- bring Embedded schema/migrations to the current logical persistence baseline without implementing Slice 4 migration;
+- reuse the existing Management/public persistence contracts rather than introducing an Embedded-specific resource model;
+- add focused and shared behavioral parity coverage comparing SQL Server and Embedded behavior where practical;
+- preserve SQL Server implementation and regression behavior.
 
-## Closure boundary
+Verification gate:
 
-Slice 2 established the Embedded SQLite persistence foundation, including application-owned storage, bounded path/lifecycle handling, deterministic connection configuration, foundation schema/version metadata, ordered deterministic migrations and journal, transactional rollback, future/inconsistent/corrupt storage rejection, reopen/recovery, bounded busy/locking behavior, cancellation/disposal boundaries, stable provider-neutral persistence errors, and focused regression coverage.
+- shared behavioral coverage demonstrates SQL Server and Embedded satisfy the same applicable persistence contracts;
+- representative end-to-end durable scenarios persist and reload correctly through Embedded;
+- SQL Server remains regression-safe;
+- developer verification is required before Slice 4 may be activated.
 
-The slice also preserved the existing SQL Server persistence path by isolating SQL Server DbUp migration resource discovery from the newly embedded SQLite migration resources.
+Verification status: **PENDING**
 
-No later 1.18A slice was activated by this closure.
+Focused verification target: Embedded persistence parity tests plus the broader Hive.Tests suite.
 
-## Next activation boundary
+Implementation exclusions:
 
-The next sequential 1.18A slice is **Slice 3 — Embedded Persistence Parity**, but it remains inactive. Explicit authorization is required before implementation begins.
+- no SQL Server → Embedded or Embedded → SQL Server logical migration;
+- no Persistence Settings UI or first-run default behavior;
+- no host backend activation/composition changes owned by Slice 5;
+- no vector storage/search/indexing owned by 1.19;
+- no unrelated persistence redesign, public-domain model split, or future roadmap work.
+
+Repository checkpoint at activation: cf22e5423b50a095e33063aa44c23aa811046080.
+
+The slice remains active until its verification result is reconciled or the slice is explicitly closed. A failed developer verification must be recorded as **VERIFICATION FAILED / REMEDIATION REQUIRED** before same-slice remediation, then returned to **VERIFICATION PENDING** with exact rerun targets.
