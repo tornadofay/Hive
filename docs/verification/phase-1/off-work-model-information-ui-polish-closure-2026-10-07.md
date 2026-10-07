@@ -26,7 +26,7 @@ Final developer verification reported:
 
 ## Manual Example Host verification
 
-Example to run: Provider / Model Information — Hive.Example.WinForms
+Example to run: Providers / Target Selection / Capability Discovery / Provider / Model Information — Hive.Example.WinForms
 
 Developer reported:
 - Advanced Provider Configuration opened with deterministic discovery data.
