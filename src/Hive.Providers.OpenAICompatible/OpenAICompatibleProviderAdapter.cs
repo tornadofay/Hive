@@ -517,11 +517,12 @@ public sealed class OpenAICompatibleProviderAdapter
 
     private static object BuildPayload(OpenAICompatibleChatRequest request)
     {
-        var messages = request.Messages.Select(message => new
-        {
-            role = ToWireRole(message.Role),
-            content = message.Content
-        }).ToArray();
+        var messages = request.Messages.Select(
+            message => new
+            {
+                role = ToWireRole(message.Role),
+                content = BuildMessageContent(message)
+            }).ToArray();
 
         object? responseFormat = null;
 
@@ -545,6 +546,43 @@ public sealed class OpenAICompatibleProviderAdapter
             messages,
             response_format = responseFormat
         };
+    }
+
+    private static object BuildMessageContent(
+        OpenAICompatibleMessage message)
+    {
+        if (message.Images.Count == 0)
+            return message.Content;
+
+        var parts = new List<object>
+        {
+            new
+            {
+                type = "text",
+                text = message.Content
+            }
+        };
+
+        foreach (var image in message.Images)
+        {
+            var dataUri =
+                "data:" +
+                image.MediaType +
+                ";base64," +
+                Convert.ToBase64String(image.Content.Span);
+
+            parts.Add(
+                new
+                {
+                    type = "image_url",
+                    image_url = new
+                    {
+                        url = dataUri
+                    }
+                });
+        }
+
+        return parts;
     }
 
     private static string ToWireRole(OpenAICompatibleMessageRole role) =>
