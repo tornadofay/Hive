@@ -142,6 +142,7 @@ public sealed class StructuredExtractionManagementIntegrationTests
             "TXT-1",
             textItem.Candidate!.Fields.Single(
                 field => field.FieldId == new SemanticFieldId("invoice.number")).Value);
+        Assert.False(string.IsNullOrWhiteSpace(textItem.SourceFingerprint));
 
         var acceptedMapping = await management.UpdateStructuredExtractionMappingAsync(
             processed.Value.Id,
@@ -207,6 +208,9 @@ public sealed class StructuredExtractionManagementIntegrationTests
             "TXT-1",
             reloadedText.Candidate!.Fields.Single(
                 field => field.FieldId == new SemanticFieldId("invoice.number")).Value);
+        Assert.Equal(
+            textItem.SourceFingerprint,
+            reloadedText.SourceFingerprint);
     }
 
     private static StructuredTargetSchema CreateSchema() =>
