@@ -256,7 +256,7 @@ internal sealed class HiveStructuredExtractionManagementService :
                     "hive.structured-extraction.processing-authorization-invalid",
                     "Processing authorization is valid only for a newly created batch."));
 
-        return _batches.UpdateAsync(
+        return await _batches.UpdateAsync(
             batch.With(
                 status: StructuredExtractionBatchStatus.ProcessingAuthorized,
                 changedAtUtc: _clock.UtcNow),
@@ -563,7 +563,7 @@ internal sealed class HiveStructuredExtractionManagementService :
             status: StructuredExtractionBatchStatus.ReviewRequired,
             changedAtUtc: _clock.UtcNow);
 
-        return _batches.UpdateAsync(
+        return await _batches.UpdateAsync(
             updated,
             expectedVersion,
             accessContext,
@@ -716,7 +716,7 @@ internal sealed class HiveStructuredExtractionManagementService :
                     : current)
             .ToArray();
 
-        return _batches.UpdateAsync(
+        return await _batches.UpdateAsync(
             batch.With(
                 items: itemsUpdated,
                 status: StructuredExtractionBatchStatus.ReviewRequired,
@@ -840,7 +840,7 @@ internal sealed class HiveStructuredExtractionManagementService :
                         : item)
             .ToArray();
 
-        return _batches.UpdateAsync(
+        return await _batches.UpdateAsync(
             batch.With(
                 items: items,
                 acceptedItemIndexes: accepted,
@@ -1065,7 +1065,7 @@ internal sealed class HiveStructuredExtractionManagementService :
             input.FileName,
             input.WorksheetName,
             columns,
-            contextRows,
+            contextRows.ToArray(),
             sourceFingerprint,
             targetFingerprint);
 
@@ -1074,6 +1074,24 @@ internal sealed class HiveStructuredExtractionManagementService :
             StructuredExtractionEngine.ComputeSourceStructureFingerprint(
                 value.WorksheetName,
                 value.Values.Keys);
+    }
+
+    private static ExecutionTargetId? ResolveMappingTargetId(
+        StructuredExtractionBatch batch)
+    {
+        if (!batch.Resource.Metadata.TryGetValue(
+                MappingExecutionTargetMetadataKey,
+                out var value) ||
+            string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return Guid.TryParse(
+            value,
+            out var id) && id != Guid.Empty
+            ? new ExecutionTargetId(id)
+            : null;
     }
 
     private async Task<Result<(ExecutionTarget Target, SecretMaterial? Credential)>> ResolveTargetAsync(
