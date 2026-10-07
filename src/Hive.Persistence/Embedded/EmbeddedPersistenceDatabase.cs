@@ -262,12 +262,6 @@ internal sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
         await journalCommand.ExecuteScalarAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        await using var synchronousCommand = connection.CreateCommand();
-        synchronousCommand.CommandTimeout = _commandTimeoutSeconds;
-        synchronousCommand.CommandText = "PRAGMA synchronous = FULL;";
-
-        await synchronousCommand.ExecuteNonQueryAsync(cancellationToken)
-            .ConfigureAwait(false);
     }
 
     private void EnsureParentDirectory()
