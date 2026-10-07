@@ -68,12 +68,8 @@ public sealed class HivePersistenceDataMigrationTests
             var embeddedCounts = await ReadEmbeddedCountsAsync(
                 embedded);
 
-            Assert.Equal(
-                sourceCountsBefore,
-                embeddedCounts);
-            Assert.Equal(
-                sourceCountsBefore,
-                first.Value.RecordCounts);
+            AssertCountsEqual(sourceCountsBefore, embeddedCounts);
+            AssertCountsEqual(sourceCountsBefore, first.Value.RecordCounts);
 
             var expectedTotal = sourceCountsBefore.Values.Sum();
             Assert.Equal(
@@ -229,7 +225,7 @@ public sealed class HivePersistenceDataMigrationTests
 
             var roundTripCounts = await ReadSqlCountsAsync(
                 roundTripOptions);
-            Assert.Equal(sourceCountsBefore, roundTripCounts);
+            AssertCountsEqual(sourceCountsBefore, roundTripCounts);
 
             var roundTripSecretStore = new SqlDpapiSecretStore(
                 roundTripOptions);
@@ -1012,6 +1008,18 @@ public sealed class HivePersistenceDataMigrationTests
         }
 
         return counts;
+    }
+
+    private static void AssertCountsEqual(
+        IReadOnlyDictionary<string, long> expected,
+        IReadOnlyDictionary<string, long> actual)
+    {
+        Assert.Equal(
+            expected.Keys.OrderBy(static value => value, StringComparer.Ordinal),
+            actual.Keys.OrderBy(static value => value, StringComparer.Ordinal));
+
+        foreach (var key in expected.Keys)
+            Assert.Equal(expected[key], actual[key]);
     }
 
     private static async Task<long> CountSqlRowsAsync(
