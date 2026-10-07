@@ -461,13 +461,16 @@ internal abstract class GuidBackedSnapshotJsonConverter<TIdentity> :
     where TIdentity : struct
 {
     private readonly Func<Guid, TIdentity> _factory;
+    private readonly Action<System.Text.Json.Utf8JsonWriter, TIdentity> _writer;
     private readonly string _typeName;
 
     protected GuidBackedSnapshotJsonConverter(
         Func<Guid, TIdentity> factory,
+        Action<System.Text.Json.Utf8JsonWriter, TIdentity> writer,
         string typeName)
     {
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+        _writer = writer ?? throw new ArgumentNullException(nameof(writer));
         _typeName = typeName;
     }
 
@@ -499,18 +502,8 @@ internal abstract class GuidBackedSnapshotJsonConverter<TIdentity> :
     public override void Write(
         System.Text.Json.Utf8JsonWriter writer,
         TIdentity value,
-        JsonSerializerOptions options)
-    {
-        var property = value.GetType().GetProperty(
-            "Value",
-            System.Reflection.BindingFlags.Instance |
-            System.Reflection.BindingFlags.Public);
-
-        if (property?.PropertyType != typeof(Guid))
-            throw new JsonException($"The {_typeName} value does not expose a GUID Value property.");
-
-        writer.WriteStringValue((Guid)property.GetValue(value)!);
-    }
+        JsonSerializerOptions options) =>
+        _writer(writer, value);
 
     private static string? ReadLegacyValue(
         ref System.Text.Json.Utf8JsonReader reader)
@@ -530,7 +523,10 @@ internal sealed class StructuredExtractionBatchIdJsonConverter :
     GuidBackedSnapshotJsonConverter<StructuredExtractionBatchId>
 {
     public StructuredExtractionBatchIdJsonConverter()
-        : base(static value => new StructuredExtractionBatchId(value), "structured extraction batch identity")
+        : base(
+            static value => new StructuredExtractionBatchId(value),
+            static (writer, value) => writer.WriteStringValue(value.ToString()),
+            "structured extraction batch identity")
     {
     }
 }
@@ -539,7 +535,10 @@ internal sealed class StructuredCandidateIdJsonConverter :
     GuidBackedSnapshotJsonConverter<StructuredCandidateId>
 {
     public StructuredCandidateIdJsonConverter()
-        : base(static value => new StructuredCandidateId(value), "structured candidate identity")
+        : base(
+            static value => new StructuredCandidateId(value),
+            static (writer, value) => writer.WriteStringValue(value.ToString()),
+            "structured candidate identity")
     {
     }
 }
@@ -548,7 +547,10 @@ internal sealed class PrincipalIdJsonConverter :
     GuidBackedSnapshotJsonConverter<PrincipalId>
 {
     public PrincipalIdJsonConverter()
-        : base(static value => new PrincipalId(value), "principal identity")
+        : base(
+            static value => new PrincipalId(value),
+            static (writer, value) => writer.WriteStringValue(value.ToString()),
+            "principal identity")
     {
     }
 }
@@ -557,7 +559,10 @@ internal sealed class ExecutionTargetIdJsonConverter :
     GuidBackedSnapshotJsonConverter<ExecutionTargetId>
 {
     public ExecutionTargetIdJsonConverter()
-        : base(static value => new ExecutionTargetId(value), "execution target identity")
+        : base(
+            static value => new ExecutionTargetId(value),
+            static (writer, value) => writer.WriteStringValue(value.ToString()),
+            "execution target identity")
     {
     }
 }
