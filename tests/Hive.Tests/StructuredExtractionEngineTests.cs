@@ -225,6 +225,33 @@ public sealed class StructuredExtractionEngineTests
     }
 
     [Fact]
+    public async Task ImageExtraction_UnknownProperty_IsRejectedAsSerializationFailure()
+    {
+        var target = CreateTarget(
+            "engine-malformed",
+            CapabilityState.Supported,
+            CapabilityState.Supported);
+
+        using var client = new HttpClient(
+            new RecordingStructuredResponseHandler(
+                """{"id":"candidate","model":"test-model","choices":[{"message":{"role":"assistant","content":"{\"invoice.number\":\"INV-1\",\"invoice.amount\":10,\"unexpected\":\"x\"}"}}]}"""));
+
+        var result = await new StructuredExtractionEngine(client)
+            .ExtractImageAsync(
+                CreatePreparedImage(target),
+                CreateSchema(),
+                target);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            ErrorCategory.Serialization,
+            result.Error!.Category);
+        Assert.Equal(
+            "hive.structured-extraction.candidate-output-invalid",
+            result.Error.Code);
+    }
+
+    [Fact]
     public async Task ImageExtraction_CancellationDoesNotBecomeBusinessFailure()
     {
         var target = CreateTarget(
