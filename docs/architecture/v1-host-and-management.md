@@ -558,11 +558,22 @@ Settings pages remain domain-owned for field semantics, validation, authorizatio
 
 Changing Persistence configuration changes the persistence dependency graph and therefore requires host/application recomposition rather than mutating the existing Management facade. The selected backend is a deployment/configuration choice; the host must not contain separate SQL and Embedded resource models.
 
-The Persistence Settings leaf remains a single editor for the global `HivePersistenceConfiguration`. Its primary backend selector is:
+The Persistence Settings leaf remains a single editor for the global `HivePersistenceConfiguration`. Its content is presented inside the existing HiveTabControl with two tabs:
+
+`[ Database Setup ] [ Data Migration ]`
+
+The **Database Setup** tab contains the backend selector:
 
 `Backend: [Embedded | SQL Server]`
 
 Embedded mode presents only the embedded storage location and backend readiness/initialization state. SQL Server mode presents the existing server/instance, port, authentication, database, security, and initialization fields. The page must not expose or construct backend-specific connection objects.
+
+The **Data Migration** tab is the first-class bidirectional migration surface. It supports:
+
+`SQL Server → Embedded`
+`Embedded → SQL Server`
+
+The migration scope is fixed to **All Hive Data**; partial resource-family migration is not a V1.18A capability. The UI presents source status, destination configuration/status, preflight validation, a bounded migration progress/status area, and a clear completion/failure result. A migration must not silently switch the active backend; after successful verification the user may explicitly select the destination backend on Database Setup and save/recompose the host.
 
 The safe lifecycle is:
 
@@ -617,13 +628,11 @@ Provider is the durable provider identity/transport resource. ProviderAccount is
 
 Automatic and manually managed ExecutionTargets use an explicit durable `ExecutionTargetManagementMode` with `Automatic` and `Manual` semantics. Discovery/reconciliation owns only automatic targets. Administrator-maintained targets are never overwritten by discovery. Provider retirement uses the existing durable lifecycle transition and preserves resource identity/history; dependent accounts/targets remain durable but cannot be reactivated or used while their parent provider is inactive. Lifecycle changes, retirement, reactivation, and reset-to-automatic are Management operations subject to the existing dependency, authorization, and concurrency rules.
 
-Persistence is not a resource collection. It edits one global HivePersistenceConfiguration, so its leaf is intentionally an editor rather than a CRUD page. The page exposes a backend selector `Embedded | SQL Server`.
+Persistence is not a resource collection. It edits one global `HivePersistenceConfiguration`, so its leaf is intentionally an editor rather than a CRUD page.
 
-For **Embedded**, the editor shows the configured Hive storage location plus backend status and explicit initialization/readiness actions. The embedded store is application-owned local storage and does not require an externally installed database server.
+**Database Setup** is the configuration lifecycle surface. It edits the same authoritative backend-aware configuration contract and contains the `Embedded | SQL Server` selector plus only the fields for the selected backend. Save changes configuration; explicit Test/readiness and Initialize/Apply Schema operations retain their non-destructive/explicit lifecycle semantics.
 
-For **SQL Server**, the editor retains the existing free-form Server / instance control, port, authentication, security, and database settings. It accepts local servers, named instances, remote hosts, IP addresses, and online SQL Server targets. Hive does not currently define an authoritative SQL Server discovery/catalog contract, so the Settings UI does not enumerate installed SQL Server instances. The Database value is Hive-owned and assigned automatically by the Settings surface.
-
-Switching the selected backend edits the same authoritative configuration contract. It does not create a separate persistence settings model and does not add a Vector Database settings page.
+**Data Migration** is a separate tab in the same page, not a second configuration model. It transfers the complete Hive-owned durable dataset between the configured SQL Server and Embedded stores. It does not migrate host business data, the external persistence configuration file, or SQL bootstrap credential material, and it does not provide live synchronization. The source is preserved; the destination must pass preflight validation and be suitable as a full migration target.
 
 It must use the configured Provider/Account/Target/Agent state in normal public-API examples. It may not construct a competing Hive service graph or bypass the host composition boundary. The configuration example explains this model but is not a substitute for the real Settings surface or configured runtime consumption.
 
