@@ -52,6 +52,6 @@ Developer reported the required broader `Hive.Tests` verification failed after t
 
 The failure was traced to a Slice 2 resource-isolation regression: adding Embedded SQLite migration `.sql` files to the `Hive.Persistence` assembly also made them visible to the existing SQL Server DbUp call `WithScriptsEmbeddedInAssembly(_migrationAssembly)`, which loads all embedded `.sql` resources by default. The SQL Server migrator was therefore attempting to execute the SQLite foundation migration against SQL Server. The remediation changed the SQL Server DbUp registration to accept only resources under `.Migrations.Scripts.`, leaving the Embedded SQLite migration resources exclusively to the Embedded migration catalog. This remains within the Slice 2 failure boundary and preserves the explicit SQL Server behavior requirement.
 
-Repository checkpoint: `d72fb0b0d6330b1c73fd0ecca7402b179c66f921`.
+Repository checkpoint: `c4017103ca4c9d0871e2bb8231b263423d1fc99c4`.
 
 Developer verification is **VERIFICATION PENDING**. Rerun the focused `EmbeddedPersistenceFoundationTests` suite, followed by the full `Hive.Tests` suite. The broad suite must demonstrate that the SQL Server migration regression is eliminated and that the Slice 2 foundation tests still pass.
