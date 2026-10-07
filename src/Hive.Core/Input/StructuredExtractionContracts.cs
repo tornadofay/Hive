@@ -199,12 +199,19 @@ public sealed class StructuredTargetSchema
             .Where(static field => field.Placement == StructuredFieldPlacement.Child)
             .GroupBy(static field => field.ChildCollectionKey!, StringComparer.Ordinal);
 
+        var fieldIds = copied
+            .Select(static field => field.Id.Value)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var collectionKeys = new HashSet<string>(StringComparer.Ordinal);
+
         foreach (var group in childGroups)
         {
-            if (group.Any(field => field.Placement != StructuredFieldPlacement.Child))
+            if (!collectionKeys.Add(group.Key) ||
+                fieldIds.Contains(group.Key))
             {
                 throw new ArgumentException(
-                    $"Child collection '{group.Key}' contains an invalid field placement.",
+                    $"Child collection key '{group.Key}' conflicts with another schema identity.",
                     nameof(fields));
             }
         }
