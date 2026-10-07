@@ -24,6 +24,7 @@ internal enum OpenAICompatibleModelCatalogFormat
 public sealed class OpenAICompatibleProviderAdapter
 {
     private const int MaxRequestBodyBytes = 4 * 1024 * 1024;
+    private const int MaxVisionRequestBodyBytes = 16 * 1024 * 1024;
     private const int MaxResponseBodyBytes = 4 * 1024 * 1024;
     private const int ResponseReadBufferSize = 8192;
 
@@ -99,7 +100,12 @@ public sealed class OpenAICompatibleProviderAdapter
 
         try
         {
-            requestBody = SerializeRequestBody(payload);
+            requestBody = SerializeRequestBody(
+                payload,
+                request.Messages.Any(
+                    static message => message.Images.Count != 0)
+                    ? MaxVisionRequestBodyBytes
+                    : MaxRequestBodyBytes);
         }
         catch (RequestBodyTooLargeException)
         {
@@ -107,7 +113,7 @@ public sealed class OpenAICompatibleProviderAdapter
                 new Error(
                     "hive.provider.openai-compatible.request-too-large",
                     ErrorCategory.Validation,
-                    "The provider request exceeds the 4 MiB request-body limit."));
+                    "The provider request exceeds the bounded request-body limit."));
         }
 
         httpRequest.Content = new StreamContent(requestBody);
@@ -444,15 +450,20 @@ public sealed class OpenAICompatibleProviderAdapter
             ErrorCategory.Serialization,
             "The provider response exceeds the 4 MiB response-body limit.");
 
-    private static Stream SerializeRequestBody(object payload)
+    private static Stream SerializeRequestBody(
+        object payload,
+        int maxBytes)
     {
+        if (maxBytes <= 0)
+            throw new ArgumentOutOfRangeException(nameof(maxBytes));
+
         var buffer = new MemoryStream(16 * 1024);
 
         try
         {
             var boundedStream = new BoundedWriteStream(
                 buffer,
-                MaxRequestBodyBytes);
+                maxBytes);
 
             JsonSerializer.Serialize(
                 boundedStream,
