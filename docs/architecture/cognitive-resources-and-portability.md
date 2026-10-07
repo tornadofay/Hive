@@ -115,6 +115,14 @@ They must never be used as authorization state or as a substitute for explicit p
 
 Learning is a first-class governed cognitive process, not model-weight training. Model output produces evidence or a candidate; authoritative cognitive/resource state changes only through Hive's validation, policy, authorization, reconciliation, and promotion boundaries. Promoted deterministic shortcuts must remain attributable, scoped by applicability conditions, and revocable/revisable when later evidence invalidates them.
 
+### 11.5 Persistence backend and vector representation independence
+
+Cognitive resources and the durable evidence/state that supports them are logical Hive resources, not SQL Server-specific or Embedded-specific resource types. The selected persistence backend stores the same authoritative resource/state contracts and preserves the same ownership, scope, provenance, lifecycle, and version semantics.
+
+A future vector representation used for retrieval is derived data. It is not the authoritative representation of a cognitive resource, WorkItem, evidence record, or configuration record. For the Embedded Persistence Profile, the local vector index must therefore be rebuildable from authoritative embedded state when required. For the SQL Server profile, native SQL Server vector storage remains an implementation detail behind the same `IVectorStore` boundary.
+
+Changing persistence backend does not change the meaning of a cognitive resource. Backend migration/synchronization, when eventually needed, is a portability concern and must not be implemented as a semantic-learning mechanism.
+
 ---
 
 
