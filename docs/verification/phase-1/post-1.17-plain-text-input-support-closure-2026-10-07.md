@@ -83,7 +83,7 @@ The authorized slice provides:
 - a 1 MiB text-file bound and 1,000,000-character prepared-text bound;
 - structured candidate extraction through the existing structured-output execution boundary;
 - text provenance and SHA-256 source fingerprinting;
-- durable Management processing and restart reload;
+- durable Management processing and reload;
 - deterministic failures for empty text and invalid UTF-8;
 - focused automated regression coverage;
 - Example Host coverage proving supported text processing and isolation of an unsupported binary input.
