@@ -515,11 +515,16 @@ internal sealed class HiveStructuredExtractionManagementService :
                     "The requested spreadsheet mapping context does not exist."));
         }
 
-        var validated = StructuredExtractionEngine.ValidateMapping(
+        var validatedResult = StructuredExtractionEngine.ValidateMapping(
             existing.Context,
             batch.TargetSchema,
             entries,
             reviewState);
+
+        if (validatedResult.IsFailure)
+            return Result<StructuredExtractionBatch>.Failure(validatedResult.Error!);
+
+        var validated = validatedResult.Value!;
 
         var mappings = batch.Mappings
             .Select(
@@ -1073,7 +1078,7 @@ internal sealed class HiveStructuredExtractionManagementService :
             PreparedSpreadsheetRowInput value) =>
             StructuredExtractionEngine.ComputeSourceStructureFingerprint(
                 value.WorksheetName,
-                value.Values.Keys);
+                value.Values.Keys.ToArray());
     }
 
     private static ExecutionTargetId? ResolveMappingTargetId(
