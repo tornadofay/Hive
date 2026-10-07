@@ -468,10 +468,9 @@ public sealed class EmbeddedPersistenceFoundationTests
             var initialized = await database.InitializeAsync();
             Assert.True(initialized.IsSuccess, initialized.Error?.Message);
 
-            await using var connection = await database.OpenConnectionAsync();
-
-            await using (var command = connection.CreateCommand())
+            await using (var connection = await database.OpenConnectionAsync())
             {
+                await using var command = connection.CreateCommand();
                 command.CommandText =
                     "DROP TABLE [HiveMigrationJournal];";
                 await command.ExecuteNonQueryAsync();
@@ -630,9 +629,6 @@ public sealed class EmbeddedPersistenceFoundationTests
                     TimeSpan.Zero,
                     TimeSpan.FromSeconds(5));
             }
-
-            return;
-
         }
         finally
         {
