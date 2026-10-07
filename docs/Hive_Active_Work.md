@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Phase: **1.18A — Embedded Persistence Profile**
 
@@ -8,7 +8,7 @@ Slice: **1 — Backend-Neutral Persistence Boundary**
 
 Authorization: Explicit user authorization on 2026-10-07 via `Hive: Start Phase 1.18A`. Per the 1.18A plan, only Slice 1 is active; later slices require successful developer verification of this slice.
 
-Repository checkpoint at slice start: `aef7fdd0493d3a7d34bd8111c185a30220a3a67f` (`main`).
+Repository checkpoint after same-slice remediation: `e3d607a54478eba31a7855c10e472c74ecd178ca` (`main`).
 
 ## Authorized scope
 
@@ -19,29 +19,17 @@ Repository checkpoint at slice start: `aef7fdd0493d3a7d34bd8111c185a30220a3a67f`
 - Establish a backend-aware host composition boundary that selects by the authoritative backend configuration while keeping Embedded activation deferred to Slice 2.
 - Add focused automated coverage for Embedded configuration construction/validation, JSON load/save round-trip, backend separation, and SQL Server composition regression.
 
-## Explicit exclusions
+## Completed same-slice remediation
 
-- No SQLite/Microsoft.Data.Sqlite implementation or Embedded persistence store.
-- No schema/migration implementation for Embedded.
-- No persistence-contract parity implementation.
-- No SQL Server ↔ Embedded data migration.
-- No Persistence Settings UI/backend selector/data-migration UI.
-- No normal-user Embedded first-run default change.
-- No vector storage/search, cognitive features, configuration import/export, or unrelated refactoring.
+Developer-reported Slice 1 compile failures were remediated:
 
-## Verification failure
-
-Developer verification reported compile errors in Slice 1:
-
-- `tests/Hive.Tests/HiveConfigurationTests.cs` lines 114–115: malformed C# raw/interpolated string escaping causing CS1056, CS1003, and CS1026.
-- `src/Hive.Persistence/Database/HiveDatabaseOptions.cs` line 82: malformed string literal causing CS1026.
-
-## Remediation boundary
-
-Correct only the reported compile defects and any directly necessary syntax consequence. Do not widen the Slice 1 scope.
+- corrected the malformed raw/interpolated JSON test string in `tests/Hive.Tests/HiveConfigurationTests.cs`;
+- corrected the missing closing parenthesis in `src/Hive.Persistence/Database/HiveDatabaseOptions.cs`.
 
 ## Verification gate
 
-After remediation, Active Work must return to **VERIFICATION PENDING** with the exact rerun target:
+Developer re-verification is now required. Rerun exactly:
 
 `HiveConfigurationTests; HivePersistenceOptionsTests; HiveHostCompositionTests; broader Hive.Tests suite after focused verification.`
+
+No verification result is claimed yet. Later 1.18A slices remain unauthorized until Slice 1 passes its gate.
