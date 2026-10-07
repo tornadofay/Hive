@@ -164,7 +164,7 @@ public sealed class StructuredExtractionManagementIntegrationTests
 
         var final = await management.AuthorizeStructuredExtractionAcceptedSetAsync(
             edited.Value.Id,
-            [0, 1],
+            [0, 1, 2],
             edited.Value.Resource.Version,
             context);
 
