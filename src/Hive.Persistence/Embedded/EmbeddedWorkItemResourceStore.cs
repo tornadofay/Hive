@@ -1246,8 +1246,8 @@ public sealed class EmbeddedWorkItemResourceStore : IWorkItemResourceStore
 
     private static Error ToSqlError(SqlException exception) =>
         HivePersistenceError.External(
-            "hive.persistence.work-item.sql-failure",
-            "SQL Server operation for the WorkItem failed.",
+            "hive.persistence.work-item.sqlite-failure",
+            "Embedded persistence operation for the WorkItem failed.",
             exception);
 
     private static Error ToInvalidStateError(Exception exception) =>
