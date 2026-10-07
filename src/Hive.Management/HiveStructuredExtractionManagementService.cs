@@ -435,6 +435,7 @@ internal sealed class HiveStructuredExtractionManagementService :
                 return persistedItemResult;
 
             batch = persistedItemResult.Value!;
+            processedIndexes.Add(updatedItem.ItemIndex);
             mappingsByIdentity = batch.Mappings.ToDictionary(
                 static mapping => mapping.Context.Identity,
                 StringComparer.Ordinal);
