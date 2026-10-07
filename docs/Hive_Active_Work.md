@@ -26,11 +26,11 @@ Verification gate:
 - SQL Server remains regression-safe;
 - developer verification is required before Slice 4 may be activated.
 
-Verification status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Verification status: **PENDING**
 
 Focused verification target: Embedded persistence parity tests plus the broader Hive.Tests suite.
 
-Developer verification failure received on 2026-10-08: developer reran the full Hive.Tests suite and reported 739 tests total, 737 passed, 2 failed, 0 skipped. The two failures are in EmbeddedPersistenceFoundationTests: (1) the old foundation test still expects only migration 1, while Slice 3 intentionally advances the Embedded baseline to schema 15; (2) the rollback test injects a one-entry migration catalog, which is now correctly rejected by the production catalog invariant requiring a complete contiguous catalog through CurrentSchemaVersion. Same-slice remediation is limited to bringing these existing test fixtures into alignment with the authorized Slice 3 schema-15 baseline without weakening the production migration invariant.
+Developer verification failure received on 2026-10-08: developer reran the full Hive.Tests suite and reported 739 tests total, 737 passed, 2 failed, 0 skipped. Same-slice remediation aligned the existing EmbeddedPersistenceFoundationTests fixtures with the authorized Slice 3 schema-15 baseline: the initialization test now expects all current migrations to apply, and the rollback test supplies a complete contiguous 1..15 injected catalog so the test reaches the intended migration-execution failure without violating the production catalog invariant. No build or test execution was performed by the agent.
 
 Exact rerun targets: rebuild/compile `Hive.Persistence` and `Hive.Tests`, run `EmbeddedPersistenceParityTests`, then run the full `Hive.Tests` suite.
 
