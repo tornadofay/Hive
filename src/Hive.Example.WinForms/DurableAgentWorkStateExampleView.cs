@@ -2,6 +2,7 @@ using Hive.Agents;
 using Hive.Core;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
+using Hive.Persistence;
 
 namespace Hive.Example.WinForms;
 
