@@ -156,7 +156,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
             return Result<Objective>.Failure(
                 HivePersistenceError.External(
                     "hive.persistence.agent-work-state.get-objective-sql",
-                    "The durable objective read failed at the SQL Server boundary.",
+                    "The durable objective read failed at the Embedded SQLite boundary.",
                     exception));
         }
         catch (Exception exception)
@@ -399,7 +399,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
             return Result<IReadOnlyList<AgentMemoryEntry>>.Failure(
                 HivePersistenceError.External(
                     "hive.persistence.agent-work-state.retrieve-memory-sql",
-                    "The durable memory retrieval failed at the SQL Server boundary.",
+                    "The durable memory retrieval failed at the Embedded SQLite boundary.",
                     exception));
         }
         catch (Exception exception)
@@ -457,7 +457,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
             return Result<AgentMemoryEntry>.Failure(
                 HivePersistenceError.External(
                     "hive.persistence.agent-work-state.get-memory-sql",
-                    "The durable memory read failed at the SQL Server boundary.",
+                    "The durable memory read failed at the Embedded SQLite boundary.",
                     exception));
         }
         catch (Exception exception)
@@ -837,7 +837,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
             return Result<DelegationRequest>.Failure(
                 HivePersistenceError.External(
                     "hive.persistence.agent-work-state.read-delegation-sql",
-                    "The durable delegation read failed at the SQL Server boundary.",
+                    "The durable delegation read failed at the Embedded SQLite boundary.",
                     exception));
         }
         catch (Exception exception)
@@ -895,7 +895,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
             return Result<Question>.Failure(
                 HivePersistenceError.External(
                     "hive.persistence.agent-work-state.get-question-sql",
-                    "The durable Question read failed at the SQL Server boundary.",
+                    "The durable Question read failed at the Embedded SQLite boundary.",
                     exception));
         }
         catch (Exception exception)
@@ -1017,7 +1017,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
             return Result<Objective>.Failure(
                 HivePersistenceError.External(
                     $"hive.persistence.agent-work-state.{operation}-sql",
-                    "The durable Objective operation failed at the SQL Server boundary.",
+                    "The durable Objective operation failed at the Embedded SQLite boundary.",
                     exception));
         }
         catch (Exception exception)
@@ -1116,7 +1116,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
             return Result<Question>.Failure(
                 HivePersistenceError.External(
                     $"hive.persistence.agent-work-state.{operation}-sql",
-                    "The durable Question operation failed at the SQL Server boundary.",
+                    "The durable Question operation failed at the Embedded SQLite boundary.",
                     exception));
         }
         catch (Exception exception)
@@ -1158,7 +1158,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
             return Result<T>.Failure(
                 HivePersistenceError.External(
                     $"hive.persistence.agent-work-state.{operation}-sql",
-                    "The durable Agent work-state operation failed at the SQL Server boundary.",
+                    "The durable Agent work-state operation failed at the Embedded SQLite boundary.",
                     exception));
         }
         catch (Exception exception)
@@ -1200,7 +1200,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
             return Result.Failure(
                 HivePersistenceError.External(
                     $"hive.persistence.agent-work-state.{operation}-sql",
-                    "The durable Agent work-state operation failed at the SQL Server boundary.",
+                    "The durable Agent work-state operation failed at the Embedded SQLite boundary.",
                     exception));
         }
         catch (Exception exception)
@@ -1213,7 +1213,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
         }
     }
 
-    private static void InsertState(
+    private void InsertState(
         SqlConnection connection,
         SqlTransaction transaction,
         StateRow row)
@@ -1277,7 +1277,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
         command.ExecuteNonQuery();
     }
 
-    private static Result UpdateState(
+    private Result UpdateState(
         SqlConnection connection,
         SqlTransaction transaction,
         StateRow expected,
@@ -1398,7 +1398,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
             : Result.Failure(result.Error!);
     }
 
-    private static StateRow? LoadRow(
+    private StateRow? LoadRow(
         SqlConnection connection,
         SqlTransaction? transaction,
         WorkStateKind kind,
