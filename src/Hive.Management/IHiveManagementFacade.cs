@@ -36,6 +36,11 @@ public interface IHiveManagementFacade
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
 
+    Task<Result<HivePersistenceMigrationResult>> MigratePersistenceDataAsync(
+        HivePersistenceMigrationRequest request,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
     Task<Result<Secret>> CreateSecretAsync(
         string key,
         string displayName,
