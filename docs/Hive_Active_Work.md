@@ -41,7 +41,7 @@ Implement the bounded Phase 1.17 Structured Extraction & Validation boundary def
 
 ## Implementation checkpoint
 
-Current checkpoint: `main @ 547c5e711c952b95e811e9c9522e470e01af61f3`
+Current checkpoint: main @ a0650d18e4048615372859e18dd8f6e97818bc10
 
 Implemented in this slice so far:
 
@@ -54,7 +54,7 @@ Implemented in this slice so far:
 - Management facade/service operations for batch creation, processing authorization, processing/retry, mapping review/edit, candidate edit, accepted-subset authorization, and durable reload;
 - public Example Host scenario and focused automated coverage for input selection, contracts, extraction/multimodal behavior, Management mapping reuse, malformed output, and persistence/restart.
 
-Verification has not been run in this session. The reported compile failures were corrected through the subsequent repair commits, including the Management result handling, XLSX fixture construction, snapshot rehydration, and test-import/xUnit diagnostics. The Example Host structured-extraction scenario has now been manually exercised through Accepted and durable Reloaded Accepted with zero business writes; automated focused tests and the full `Hive.Tests` suite remain to be run and reported by the developer.
+Verification has not been run in this session. The latest local test run exposed three Phase 1.17 defects. The mapping validation, spreadsheet-row durable-item matching, and vision test fixture were corrected. The Example Host structured-extraction scenario has been manually exercised through Accepted and durable Reloaded Accepted with zero business writes; the focused tests must be rerun, followed by the full `Hive.Tests` suite.
 
 ## Verification gate
 
