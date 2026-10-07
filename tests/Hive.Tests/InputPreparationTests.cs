@@ -294,8 +294,8 @@ public sealed class InputPreparationTests
             new InputSubmission(
             [
                 new InputItem(
-                    "notes.txt",
-                    "text/plain",
+                    "notes.bin",
+                    "application/octet-stream",
                     Encoding.UTF8.GetBytes("not supported")),
                 new InputItem(
                     "orders.xlsx",
