@@ -1111,15 +1111,16 @@ public sealed class HivePersistenceDataMigrator
             if (!options.CreateDatabaseIfMissing)
             {
                 return Result.Failure(
-                    Error.NotFound(
+                    new Error(
                         "hive.persistence.data-migration.destination-not-found",
+                        ErrorCategory.NotFound,
                         "The destination SQL Server database does not exist."));
             }
 
             var createOptions = new HiveDatabaseOptions(
                 options.ConnectionString,
                 createDatabaseIfMissing: true,
-                options.CommandTimeoutSeconds);
+                commandTimeoutSeconds: options.CommandTimeoutSeconds);
 
             var migration = await new HiveDatabaseMigrator(
                 createOptions).MigrateAsync(cancellationToken).ConfigureAwait(false);
@@ -1143,7 +1144,7 @@ public sealed class HivePersistenceDataMigrator
                     new HiveDatabaseOptions(
                         options.ConnectionString,
                         createDatabaseIfMissing: true,
-                        options.CommandTimeoutSeconds))
+                        commandTimeoutSeconds: options.CommandTimeoutSeconds))
                     .MigrateAsync(cancellationToken).ConfigureAwait(false);
 
                 if (initialize.IsFailure)
@@ -1177,8 +1178,9 @@ public sealed class HivePersistenceDataMigrator
                 cancellationToken).ConfigureAwait(false))
         {
             return Result<SqlDatabaseInspection>.Failure(
-                Error.NotFound(
+                new Error(
                     "hive.persistence.data-migration.source-not-found",
+                    ErrorCategory.NotFound,
                     "The source SQL Server database does not exist."));
         }
 
