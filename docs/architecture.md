@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-09-29 (rev 56 — provider model discovery boundary refinement)
+Last updated: 2026-10-07 (rev 57 — Embedded persistence parity and bidirectional migration architecture)
 
 
 
