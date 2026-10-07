@@ -3,6 +3,12 @@ using Hive.Core;
 
 namespace Hive.Agents;
 
+public enum MemoryEvidenceKind
+{
+    Actual,
+    Simulated
+}
+
 public sealed class AgentMemoryEntry
 {
     private AgentMemoryEntry(
@@ -10,13 +16,15 @@ public sealed class AgentMemoryEntry
         AgentId agentId,
         RuntimeId runtimeId,
         string key,
-        string content)
+        string content,
+        MemoryEvidenceKind evidenceKind)
     {
         Resource = resource;
         AgentId = agentId;
         RuntimeId = runtimeId;
         Key = key;
         Content = content;
+        EvidenceKind = evidenceKind;
     }
 
     public ResourceEnvelope<MemoryId> Resource { get; }
@@ -31,6 +39,23 @@ public sealed class AgentMemoryEntry
 
     public string Content { get; }
 
+    public MemoryEvidenceKind EvidenceKind { get; }
+
+    internal static AgentMemoryEntry Restore(
+        ResourceEnvelope<MemoryId> resource,
+        AgentId agentId,
+        RuntimeId runtimeId,
+        string key,
+        string content,
+        MemoryEvidenceKind evidenceKind) =>
+        new(
+            resource,
+            agentId,
+            runtimeId,
+            key,
+            content,
+            evidenceKind);
+
     internal static Result<AgentMemoryEntry> Create(
         ResourceAccessContext accessContext,
         AgentId agentId,
@@ -38,8 +63,17 @@ public sealed class AgentMemoryEntry
         string key,
         string content,
         DateTimeOffset storedAtUtc,
-        WorkItemBinding? workItemBinding = null)
+        WorkItemBinding? workItemBinding = null,
+        MemoryEvidenceKind evidenceKind = MemoryEvidenceKind.Actual)
     {
+        if (!Enum.IsDefined(evidenceKind))
+        {
+            return Result<AgentMemoryEntry>.Failure(
+                Error.Validation(
+                    "hive.agent.memory.evidence-kind-invalid",
+                    "Memory evidence kind is invalid."));
+        }
+
         var ownership = RuntimeProtocolGuard.Validate(
             accessContext,
             agentId,
@@ -96,7 +130,8 @@ public sealed class AgentMemoryEntry
                 agentId,
                 runtimeId,
                 key.Trim(),
-                content));
+                content,
+                evidenceKind));
     }
 }
 
@@ -109,7 +144,8 @@ public interface IAgentMemoryStore
         string key,
         string content,
         DateTimeOffset storedAtUtc,
-        WorkItemBinding? workItemBinding = null);
+        WorkItemBinding? workItemBinding = null,
+        MemoryEvidenceKind evidenceKind = MemoryEvidenceKind.Actual);
 
     Result<IReadOnlyList<AgentMemoryEntry>> Retrieve(
         ResourceAccessContext accessContext,
@@ -135,7 +171,8 @@ public sealed class AgentMemoryStore : IAgentMemoryStore
         string key,
         string content,
         DateTimeOffset storedAtUtc,
-        WorkItemBinding? workItemBinding = null)
+        WorkItemBinding? workItemBinding = null,
+        MemoryEvidenceKind evidenceKind = MemoryEvidenceKind.Actual)
     {
         var result = AgentMemoryEntry.Create(
             accessContext,
@@ -144,7 +181,8 @@ public sealed class AgentMemoryStore : IAgentMemoryStore
             key,
             content,
             storedAtUtc,
-            workItemBinding);
+            workItemBinding,
+            evidenceKind);
 
         if (result.IsFailure)
             return result;
