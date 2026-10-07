@@ -70,54 +70,68 @@ Scope matching does not itself grant authorization. Later management/security sl
 
 ### 0.4 Persistence bootstrap
 
-Phase 0.4 establishes the Hive-owned SQL Server persistence boundary without putting database dependencies into Hive.Core or the host application.
+Phase 0.4 established the original Hive-owned SQL Server persistence boundary without putting database dependencies into Hive.Core or the host application. Hive now extends that same architectural persistence boundary with a planned first-class Embedded Persistence Profile; this does not create a second logical resource model.
 
 #### Ownership and dependency boundary
 
-- Hive.Persistence owns all SQL Server connectivity, database bootstrap, migration execution, schema-version checks, and persistence-specific exceptions/results.
+- Hive.Persistence owns backend-specific connectivity, local storage/bootstrap, migration execution, schema-version checks, and persistence-specific exceptions/results. SQL Server-specific details remain confined to the SQL Server backend implementation; Embedded-specific storage details remain confined to the embedded backend implementation.
 - Hive.Core remains dependency-light and has no SQL client, DbUp, or database connection-string dependency.
 - Hive.Persistence may reference Hive.Core contracts, but Core never references Persistence.
 - Hive's database is a separate database owned by Hive. It is never used as a gateway to the host application's business database.
 - Persistence configuration is a first-class Hive platform configuration domain, not incidental host wiring.
 - Hosts may provide initial/bootstrap persistence configuration, but the long-term authoritative configuration surface is Hive's own typed persistence-configuration contract and management/settings boundary.
 - Credentials are not written to the repository, migration scripts, logs, or Hive database metadata. Hive resource credentials belong to the database-backed Secret Store boundary once Hive.Persistence is available. The SQL bootstrap credential is a separate user-scoped DPAPI-protected bootstrap-secret boundary outside the target Hive database and is referenced by persisted configuration rather than stored as plaintext.
-- `HiveDatabaseOptions` keeps any credential-bearing SQL connection string as Persistence-internal state; public callers receive only non-secret configuration/metadata contracts. Raw credential-bearing connection strings must not cross the public Hive.Persistence API boundary.
-- `HiveDatabaseOptions` enables database creation by default. Passing `createDatabaseIfMissing: false` is an explicit opt-out when the host requires pre-provisioned databases.
+`HiveDatabaseOptions` keeps any credential-bearing SQL connection string as Persistence-internal state; public callers receive only non-secret configuration/metadata contracts. Raw credential-bearing connection strings must not cross the public Hive.Persistence API boundary.
+- `HiveDatabaseOptions` enables database creation by default. Passing `createDatabaseIfMissing: false` is an explicit opt-out when the SQL Server host requires a pre-provisioned database.
 
 #### Database technology
 
-- SQL Server is the only V1 persistence engine.
-- SQL Server LocalDB is the supported local-development deployment of the same SQL Server boundary; it is not a separate persistence provider. LocalDB is not the future end-user embedded deployment profile; that remains a separate later portability/deployment capability.
+**SQL Server profile**
+
+- SQL Server remains the supported server/deployment persistence backend.
+- SQL Server LocalDB is the supported local-development deployment of the same SQL Server backend; it is not a separate Hive persistence provider.
 - Microsoft.Data.SqlClient is used for SQL Server connectivity.
 - DbUp SQL Server support is used for ordered schema migrations rather than hand-written migration orchestration.
 - DbUp migrations are embedded SQL resources in Hive.Persistence, numbered in execution order, and executed transactionally per migration script.
+
+**Embedded Persistence Profile**
+
+- Embedded mode is a first-class local/desktop persistence backend behind the same Hive persistence/resource contracts.
+- The default implementation candidate is SQLite through `Microsoft.Data.Sqlite`; the exact package/runtime choice is finalized during the 1.18A implementation review.
+- Embedded mode has no externally installed database-server dependency.
+- The embedded store is application-owned local storage with one authoritative relational store for Hive durable state rather than separate per-feature database files.
+- Embedded schema/version/migration behavior must preserve the same logical compatibility and failure semantics required by the Hive persistence boundary.
+
+The selected backend is a deployment/configuration decision. SQL Server and Embedded must remain interchangeable at the logical contract/resource layer; their storage-specific connection/path details must not leak into Hive.Core or Management contracts.
 
 #### First-class persistence configuration
 Hive's persistence configuration is a product/platform configuration domain with the same separation of concerns as Provider configuration.
 
 The authoritative configuration contract must represent, at minimum:
 - selected persistence backend;
-- SQL Server server/instance endpoint and port;
-- authentication mode and non-secret login metadata;
-- Hive database identity/name policy;
-- SQL connection security options required by the supported deployment;
+- backend-appropriate configuration for the selected profile;
+- SQL Server server/instance endpoint and port when SQL Server is selected;
+- SQL Server authentication mode and non-secret login metadata when applicable;
+- Hive database identity/name policy when SQL Server is selected;
+- SQL connection security options when SQL Server is selected;
+- Embedded storage location when Embedded is selected;
 - Hive resource secret identity for resource credentials once Hive.Persistence is available;
-- a separate bootstrap credential reference for SQL-password startup access, with protected material stored outside the Hive database;
-- database creation/migration policy where exposed by the platform.
+- a separate bootstrap credential reference for SQL-password startup access only for SQL-password SQL Server startup, with protected material stored outside the Hive database;
+- backend-specific database/storage initialization and migration policy where exposed by the platform.
 
-V1 has one persistence engine: SQL Server. LocalDB is a SQL Server deployment form for local development, not a second provider.
+V1 persistence supports two deployment profiles: SQL Server for server/serious deployments and Embedded for self-contained local/desktop installations. LocalDB remains a SQL Server deployment form for local development.
 
 The configuration surface is intentionally separated from the low-level connection implementation:
 - `Hive.Management` owns the management/configuration contract exposed to hosts and Settings UI;
 - `Hive.Persistence` owns connection construction, database bootstrap, migration, schema inspection, and persistence-specific failures/results;
-- WinForms configuration pages consume the Management contract and must not construct `SqlConnection` or embed SQL Server persistence rules;
+- WinForms configuration pages consume the Management contract and must not construct backend connections, read local database files directly, or embed SQL Server/SQLite persistence rules;
 - the persistence configuration page provides a non-destructive connection test and reports database/schema status separately from connection success;
 - connection testing must not implicitly create a database or apply migrations;
 - database initialization and schema migration remain explicit lifecycle operations in Hive.Persistence.
 
 Running executions must use an immutable effective persistence configuration snapshot where a runtime operation depends on persistence settings, so later configuration edits cannot silently change an already-running operation.
 
-The persistence configuration model must remain the single authoritative configuration model. Future configuration import/export must serialize that same contract rather than introduce a second database-configuration format.
+The persistence configuration model must remain the single authoritative configuration model. Future configuration import/export must serialize that same backend-aware contract rather than introduce a second database-configuration format. The logical resource and ownership model is independent of the selected persistence backend.
 
 The implementation currently pins dbup-sqlserver 7.2.0 and Microsoft.Data.SqlClient 7.1.0. The first is the current stable DbUp SQL Server package and the second is the current stable Microsoft SQL client at the time this slice is implemented. citeturn544673view0turn598125search0
 
