@@ -188,8 +188,9 @@ public static class InputSelectionBuilder
         catch (UnauthorizedAccessException)
         {
             return Result<InputSelectionResult>.Failure(
-                Error.Unauthorized(
+                new Error(
                     "hive.input.selection-access-denied",
+                    ErrorCategory.Unauthorized,
                     "The selected input path cannot be accessed."));
         }
         catch (IOException)
@@ -572,8 +573,9 @@ public static class InputSelectionBuilder
                 new InputSelectionFailure(
                     sourceIndex,
                     path,
-                    Error.Unauthorized(
+                    new Error(
                         "hive.input.selection-file-access-denied",
+                        ErrorCategory.Unauthorized,
                         "The selected file cannot be read.")));
         }
         catch (IOException)
