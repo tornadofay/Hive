@@ -27,7 +27,9 @@ public sealed class EmbeddedPersistenceFoundationTests
             Assert.Equal(
                 EmbeddedPersistenceSchema.CurrentSchemaVersion,
                 firstValue.CurrentSchemaVersion);
-            Assert.Equal(1, firstValue.AppliedMigrationCount);
+            Assert.Equal(
+                EmbeddedPersistenceSchema.CurrentSchemaVersion,
+                firstValue.AppliedMigrationCount);
 
             await using (var connection = await database.OpenConnectionAsync())
             {
@@ -501,9 +503,9 @@ public sealed class EmbeddedPersistenceFoundationTests
     {
         var path = CreatePath("rollback");
 
-        var migrations = new[]
+        var migrations = new List<EmbeddedPersistenceMigration>
         {
-            new EmbeddedPersistenceMigration(
+            new(
                 1,
                 "001_FailingFoundation.sql",
                 """
@@ -514,6 +516,13 @@ public sealed class EmbeddedPersistenceFoundationTests
                     [RecordedAtUtc] TEXT NOT NULL
                 );
 
+                CREATE TABLE [HiveMigrationJournal]
+                (
+                    [MigrationVersion] INTEGER NOT NULL PRIMARY KEY,
+                    [ScriptName] TEXT NOT NULL,
+                    [AppliedAtUtc] TEXT NOT NULL
+                );
+
                 CREATE TABLE [TransientMigrationProbe]
                 (
                     [Value] INTEGER NOT NULL
@@ -522,6 +531,15 @@ public sealed class EmbeddedPersistenceFoundationTests
                 THIS IS NOT VALID SQL;
                 """)
         };
+
+        for (var version = 2; version <= EmbeddedPersistenceSchema.CurrentSchemaVersion; version++)
+        {
+            migrations.Add(
+                new EmbeddedPersistenceMigration(
+                    version,
+                    $"{version:D3}_Placeholder.sql",
+                    "SELECT 1;"));
+        }
 
         try
         {
