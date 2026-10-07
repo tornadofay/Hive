@@ -241,23 +241,22 @@ internal sealed class EmbeddedPersistenceMigrator
                 cancellationToken)
             .ConfigureAwait(false);
 
-        var hasUnexpectedTables = await HasUnexpectedTablesAsync(
-                connection,
-                cancellationToken)
-            .ConfigureAwait(false);
-
         if (!schemaVersionTableExists && !journalTableExists)
         {
-            if (hasUnexpectedTables)
+            if (await HasUnexpectedTablesAsync(
+                    connection,
+                    cancellationToken)
+                .ConfigureAwait(false))
+            {
                 throw new EmbeddedPersistenceStorageNotEmptyException();
+            }
 
             return new EmbeddedPersistenceDatabaseStatus(
                 HiveDatabaseState.SchemaNotInitialized,
                 null);
         }
 
-        if (schemaVersionTableExists != journalTableExists ||
-            hasUnexpectedTables)
+        if (schemaVersionTableExists != journalTableExists)
         {
             throw new EmbeddedPersistenceMetadataException();
         }
