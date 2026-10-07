@@ -1213,6 +1213,29 @@ public sealed class HivePersistenceDataMigrator
                     "The SQL Server database contains tables outside the Hive persistence schema."));
         }
 
+        var hasSchemaTable = tables.Contains(
+            HiveDatabaseSchema.SchemaVersionTableName,
+            StringComparer.OrdinalIgnoreCase);
+        var hasJournalTable = tables.Contains(
+            HiveDatabaseSchema.MigrationJournalTableName,
+            StringComparer.OrdinalIgnoreCase);
+
+        if (!hasSchemaTable && !hasJournalTable)
+        {
+            return Result<SqlDatabaseInspection>.Failure(
+                Error.Conflict(
+                    "hive.persistence.data-migration.schema-not-initialized",
+                    "The SQL Server database does not have initialized Hive schema metadata."));
+        }
+
+        if (!hasSchemaTable || !hasJournalTable)
+        {
+            return Result<SqlDatabaseInspection>.Failure(
+                Error.Conflict(
+                    "hive.persistence.data-migration.schema-incomplete",
+                    "The SQL Server Hive schema metadata is incomplete."));
+        }
+
         var schemaVersion = await ReadSqlSchemaVersionAsync(
             connection,
             options.CommandTimeoutSeconds,
@@ -1222,8 +1245,8 @@ public sealed class HivePersistenceDataMigrator
         {
             return Result<SqlDatabaseInspection>.Failure(
                 Error.Conflict(
-                    "hive.persistence.data-migration.schema-not-initialized",
-                    "The SQL Server database does not have initialized Hive schema metadata."));
+                    "hive.persistence.data-migration.schema-incomplete",
+                    "The SQL Server Hive schema version row is missing."));
         }
 
         if (schemaVersion != CurrentSchemaVersion)
@@ -1243,24 +1266,21 @@ public sealed class HivePersistenceDataMigrator
         {
             return Result<SqlDatabaseInspection>.Failure(
                 Error.Conflict(
-                    "hive.persistence.data-migration.schema-incompatible",
+                    "hive.persistence.data-migration.schema-incomplete",
                     "The SQL Server Hive schema is incomplete."));
         }
 
-        if (requireCurrentSchema)
-        {
-            var journalCount = await ReadSqlMigrationJournalCountAsync(
-                connection,
-                options.CommandTimeoutSeconds,
-                cancellationToken).ConfigureAwait(false);
+        var journalCount = await ReadSqlMigrationJournalCountAsync(
+            connection,
+            options.CommandTimeoutSeconds,
+            cancellationToken).ConfigureAwait(false);
 
-            if (journalCount != CurrentSchemaVersion)
-            {
-                return Result<SqlDatabaseInspection>.Failure(
-                    Error.Conflict(
-                        "hive.persistence.data-migration.schema-incomplete",
-                        "The SQL Server Hive migration journal does not match the current schema version."));
-            }
+        if (journalCount != CurrentSchemaVersion)
+        {
+            return Result<SqlDatabaseInspection>.Failure(
+                Error.Conflict(
+                    "hive.persistence.data-migration.schema-incomplete",
+                    "The SQL Server Hive migration journal does not match the current schema version."));
         }
 
         return Result<SqlDatabaseInspection>.Success(
