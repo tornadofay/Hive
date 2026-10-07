@@ -713,35 +713,19 @@ public sealed class StructuredExtractionEngine
         if (value.ValueKind == JsonValueKind.Number &&
             value.TryGetDecimal(out var number))
         {
-            return new StructuredCandidateField(
-                field.Id,
-                field.ValueType,
-                number.ToString(CultureInfo.InvariantCulture),
-                StructuredValidationState.Valid);
+            return StructuredExtractionValueNormalizer.Normalize(
+                field,
+                number.ToString(CultureInfo.InvariantCulture));
         }
 
-        if (value.ValueKind == JsonValueKind.String &&
-            decimal.TryParse(
-                value.GetString(),
-                NumberStyles.Number,
-                CultureInfo.InvariantCulture,
-                out number))
+        if (value.ValueKind == JsonValueKind.String)
         {
-            return new StructuredCandidateField(
-                field.Id,
-                field.ValueType,
-                number.ToString(CultureInfo.InvariantCulture),
-                StructuredValidationState.Valid);
+            return StructuredExtractionValueNormalizer.Normalize(
+                field,
+                value.GetString()!);
         }
 
-        return value.ValueKind == JsonValueKind.String
-            ? new StructuredCandidateField(
-                field.Id,
-                field.ValueType,
-                value.GetString(),
-                StructuredValidationState.InvalidFormat,
-                "The value is not a valid decimal.")
-            : InvalidType(field);
+        return InvalidType(field);
     }
 
     private static StructuredCandidateField ParseDateTime(
