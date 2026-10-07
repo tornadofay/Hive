@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: ACTIVE
+Status: VERIFICATION PENDING
 
 ## Phase
 1.18 — Durable Base-Agent Work State
