@@ -169,7 +169,9 @@ public class Agent
     public RuntimeInstance CreateRuntimeInstance(
         DateTimeOffset? createdAtUtc = null,
         IDelegationChannel? delegation = null,
-        IClock? clock = null)
+        IClock? clock = null,
+        RuntimeWorkProtocolStores? workStores = null,
+        RuntimeId? runtimeId = null)
     {
         var effectiveClock = clock ?? _clock;
 
@@ -178,7 +180,9 @@ public class Agent
             Generation,
             createdAtUtc ?? effectiveClock.UtcNow,
             delegation,
-            effectiveClock);
+            effectiveClock,
+            workStores,
+            runtimeId);
     }
 }
 
@@ -270,13 +274,22 @@ public sealed class RuntimeInstance
         AgentGeneration generation,
         DateTimeOffset createdAtUtc,
         IDelegationChannel? delegation,
-        IClock? clock = null)
+        IClock? clock = null,
+        RuntimeWorkProtocolStores? workStores = null,
+        RuntimeId? runtimeId = null)
     {
-        var runtimeId = RuntimeId.New();
         var effectiveClock = clock ?? SystemClock.Instance;
+        var effectiveRuntimeId = runtimeId ?? RuntimeId.New();
+
+        if (effectiveRuntimeId == default)
+        {
+            throw new ArgumentException(
+                "Runtime identity is required.",
+                nameof(runtimeId));
+        }
 
         return new RuntimeInstance(
-            runtimeId,
+            effectiveRuntimeId,
             agentId,
             generation,
             RuntimeInstanceStatus.Active,
@@ -284,9 +297,10 @@ public sealed class RuntimeInstance
             null,
             new RuntimeWorkProtocols(
                 agentId,
-                runtimeId,
+                effectiveRuntimeId,
                 effectiveClock,
-                delegation),
+                delegation,
+                workStores),
             effectiveClock);
     }
 }
