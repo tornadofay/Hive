@@ -196,8 +196,8 @@ public sealed class StructuredTargetSchema
         }
 
         var childGroups = copied
-            .Where(static field => field.Placement == StructuredFieldPlacement.Child)
-            .GroupBy(static field => field.ChildCollectionKey!, StringComparer.Ordinal);
+            .Where(static targetField => targetField.Placement == StructuredFieldPlacement.Child)
+            .GroupBy(static targetField => targetField.ChildCollectionKey!, StringComparer.Ordinal);
 
         var fieldIds = copied
             .Select(static field => field.Id.Value)
@@ -228,7 +228,7 @@ public sealed class StructuredTargetSchema
 
     public IReadOnlyList<StructuredTargetField> ParentFields =>
         Fields
-            .Where(static field => field.Placement == StructuredFieldPlacement.Parent)
+            .Where(static targetField => targetField.Placement == StructuredFieldPlacement.Parent)
             .ToArray();
 
     public IReadOnlyDictionary<string, IReadOnlyList<StructuredTargetField>> ChildFieldsByCollection =>
@@ -554,11 +554,11 @@ public sealed record StructuredCandidate
     public double? Confidence { get; }
 
     public bool IsValid =>
-        Fields.All(static field =>
-            field.ValidationState == StructuredValidationState.Valid) &&
-        Children.All(static child =>
-            child.Fields.All(static field =>
-                field.ValidationState == StructuredValidationState.Valid));
+        Fields.All(static candidateField =>
+            candidateField.ValidationState == StructuredValidationState.Valid) &&
+        Children.All(static childCandidate =>
+            childCandidate.Fields.All(static candidateField =>
+                candidateField.ValidationState == StructuredValidationState.Valid));
 }
 
 public enum StructuredExtractionItemStatus
