@@ -62,7 +62,7 @@ public sealed class EmbeddedPersistenceFoundationTests
                     Convert.ToInt64(
                         await ExecuteScalarAsync(
                             connection,
-                            """
+                            $"""
                             SELECT COUNT(*)
                             FROM [HiveSchemaVersion]
                             WHERE [SchemaRowId] = 1
