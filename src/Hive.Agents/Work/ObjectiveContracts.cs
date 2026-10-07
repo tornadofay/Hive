@@ -103,6 +103,19 @@ public sealed record WorkItemBinding
     public ResourceReference WorkItemReference =>
         new(ResourceKind.WorkItem, WorkItemId.Value);
 
+    internal static WorkItemBinding Restore(
+        WorkItemId workItemId,
+        ResourceVersion workItemVersion,
+        AgentId agentId,
+        RuntimeId runtimeId,
+        ResourceProvenance provenance) =>
+        new(
+            workItemId,
+            workItemVersion,
+            agentId,
+            runtimeId,
+            provenance);
+
     public static Result<WorkItemBinding> Create(
         WorkItem workItem,
         ResourceAccessContext accessContext,
@@ -463,6 +476,29 @@ public sealed class Objective
             workItemBinding,
             status);
 
+    internal static Objective Restore(
+        ResourceEnvelope<ObjectiveId> resource,
+        AgentId agentId,
+        RuntimeId runtimeId,
+        string title,
+        string completionCriteria,
+        int priority,
+        DateTimeOffset? deadlineUtc,
+        IReadOnlyList<ObjectiveId> dependencies,
+        WorkItemBinding? workItemBinding,
+        ObjectiveStatus status) =>
+        new(
+            resource,
+            agentId,
+            runtimeId,
+            title,
+            completionCriteria,
+            priority,
+            deadlineUtc,
+            dependencies,
+            workItemBinding,
+            status);
+
     private static string RequireTitle(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -478,7 +514,7 @@ public sealed class Objective
     }
 }
 
-public sealed class ObjectiveStore
+public sealed class ObjectiveStore : IObjectiveStore
 {
     private readonly ConcurrentDictionary<ObjectiveId, Objective> _objectives = new();
 
