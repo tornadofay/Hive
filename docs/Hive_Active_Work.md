@@ -39,6 +39,23 @@ Implement the bounded Phase 1.17 Structured Extraction & Validation boundary def
 - no unrelated provider, UI-foundation, persistence, or architecture refactoring;
 - no future roadmap slice activation.
 
+## Implementation checkpoint
+
+Current checkpoint: `main @ 1dbfdf7c01dfee4f433643676e74f340a9c47b59`
+
+Implemented in this slice so far:
+
+- bounded Core Single File / Folder selection with deterministic ordering, subfolder depth/item limits, cancellation, and per-item selection failures;
+- source-neutral target semantic-field, spreadsheet mapping, candidate, provenance, parent/child, batch-state, and review contracts;
+- OpenAI-compatible bounded multimodal message support and vision request transport allowance;
+- deterministic spreadsheet mapping validation/reuse and typed candidate normalization;
+- independent image extraction with explicit vision/structured-output capability gates;
+- durable event-backed structured-extraction batch state with optimistic concurrency and restart reload;
+- Management facade/service operations for batch creation, processing authorization, processing/retry, mapping review/edit, candidate edit, accepted-subset authorization, and durable reload;
+- public Example Host scenario and focused automated coverage for input selection, contracts, extraction/multimodal behavior, Management mapping reuse, malformed output, and persistence/restart.
+
+Verification has not been run in this session. The phase remains open until the required focused tests, Example Host manual verification, and full `Hive.Tests` suite are completed and reported by the developer.
+
 ## Verification gate
 
 Status: VERIFICATION PENDING
