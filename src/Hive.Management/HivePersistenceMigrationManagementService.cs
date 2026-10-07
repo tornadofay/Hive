@@ -85,8 +85,9 @@ internal sealed class HivePersistenceMigrationManagementService : HiveManagement
         if (leaseResult.Value is null)
         {
             return Result<HivePersistenceMigrationResult>.Failure(
-                Error.Internal(
+                new Error(
                     "hive.management.persistence-migration.quiescence-invalid",
+                    ErrorCategory.Internal,
                     "The persistence migration quiescence boundary returned no lease."));
         }
 
@@ -178,8 +179,9 @@ internal sealed class HivePersistenceMigrationManagementService : HiveManagement
         catch (Exception)
         {
             return Result<HivePersistenceMigrationResult>.Failure(
-                Error.Internal(
+                new Error(
                     "hive.management.persistence-migration.failed",
+                    ErrorCategory.Internal,
                     "Hive persistence data migration failed unexpectedly."));
         }
         finally
