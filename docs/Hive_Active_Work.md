@@ -46,20 +46,24 @@ Required developer verification: `EmbeddedPersistenceFoundationTests` focused ru
 
 ## Latest verification failure
 
-Developer reran the broader `Hive.Tests` suite after the previous Embedded lifecycle remediation: **736 tests run, 732 passed, 4 failed, 0 skipped**, in approximately 1.5 minutes.
+Developer reran the broader `Hive.Tests` suite after the previous Embedded lifecycle and cancellation remediation: **736 tests run, 732 passed, 4 failed, 0 skipped**, in approximately 1.5 minutes.
 
-The remaining failures are all in `EmbeddedPersistenceFoundationTests`:
-- `FailedMigration_RollsBackScriptAndSchemaVersion`: test cleanup cannot delete `hive.db` because another process still has the file open.
-- `LockedStorage_ProducesBoundedBusyFailure`: test cleanup cannot delete `hive.db` because another process still has the file open.
-- `InitializeAsync_RejectsPreexistingNonHiveTables`: test cleanup cannot delete `hive.db` because another process still has the file open.
-- `InspectAsync_ReturnsCorruptionAsStablePersistenceError`: the stable public error message still contains the substring `SQLite`, violating the test's redaction assertion.
+The remaining failures were:
+- `FailedMigration_RollsBackScriptAndSchemaVersion`: cleanup attempted to delete `hive.db` while a test verification connection was still alive.
+- `LockedStorage_ProducesBoundedBusyFailure`: cleanup attempted to delete `hive.db` while the intentionally locking test connection was still alive.
+- `InitializeAsync_RejectsPreexistingNonHiveTables`: cleanup attempted to delete `hive.db` while a verification connection was still alive.
+- `InspectAsync_ReturnsCorruptionAsStablePersistenceError`: the public corruption error message contained the provider name `SQLite`, violating the test's provider-detail redaction boundary.
 
-This is a Slice 2 verification failure. Remediation is required before Slice 2 can close and is limited to the Embedded connection/lifecycle and stable-error/redaction boundaries exercised by these failures. No later-slice work is authorized.
+This is a Slice 2 verification failure. Remediation is required before Slice 2 can close and is limited to the Embedded foundation connection-lifetime and public-error-redaction boundaries exercised by these failures. No later-slice work is authorized.
 
 ## Completed same-slice remediation
 
-Previous Slice 2 remediations remain in place: SQL Server DbUp resource isolation and disabling SQLite pooling. The new failure set is narrower and requires correction of the remaining explicit test-owned connection lifecycle leaks and public corruption-error wording.
+The three file-lock failures were identified as test-owned lifetime leaks, not a retained production connection: the affected tests used `await using var` for extra SQLite connections, so disposal occurred at method exit, after the `finally` cleanup had already attempted to delete the database. Those connections are now wrapped in explicit scopes so they are disposed before cleanup. The intentionally locked connection in the busy test is likewise released before `DeleteDatabaseFiles` runs. The Inconsistent Metadata test verification connection was also explicitly scoped to keep the same lifecycle invariant.
 
-Repository checkpoint: `c74a2acb21ca8c0f37e7b62973ead3d86beb4b8f`.
+The corruption error was corrected so its stable public message no longer exposes the SQLite provider name; it now reports only that the storage is corrupt or not a valid database file.
 
-Developer verification is **VERIFICATION PENDING**.
+These changes remain strictly within Slice 2 verification/remediation boundaries.
+
+Repository checkpoint: `51261dbbbf9ced666fbbe50134bfd06ce64ced99` plus the public-error wording fix at `fea880c4ebb3f50a65992107670086dc9c331cd2`.
+
+Developer verification is **VERIFICATION PENDING**. Rerun the focused `EmbeddedPersistenceFoundationTests` suite, followed by the full `Hive.Tests` suite.
