@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: CLOSED
 
 ## Phase
 1.18 — Durable Base-Agent Work State
@@ -36,4 +36,4 @@ Required developer verification after implementation:
 - Example Host scenario for Persistence / Agent Work State.
 - Manual Example Host verification as applicable.
 
-Implementation is complete at the repository-edit boundary. Verification is pending developer execution of the listed focused and broader test suites plus the Example Host scenario. No future roadmap slice is authorized.
+Implementation and verification are complete. Developer verification recorded on 2026-10-07: full `Hive.Tests` passed 715/715 (0 failed, 0 skipped), and the required Example Host Persistence / Agent Work State / Durable Base-Agent Work State & Runtime Recovery scenario was manually exercised successfully. Phase 1.18 is closed. No future roadmap slice is authorized.
