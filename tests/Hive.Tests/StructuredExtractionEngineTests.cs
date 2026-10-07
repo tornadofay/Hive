@@ -85,6 +85,67 @@ public sealed class StructuredExtractionEngineTests
     }
 
     [Fact]
+    public async Task TextExtraction_UnknownProperty_IsRejectedAsSerializationFailure()
+    {
+        var target = CreateTarget(
+            "engine-text-malformed",
+            CapabilityState.Supported,
+            CapabilityState.Supported);
+
+        using var client = new HttpClient(
+            new RecordingStructuredResponseHandler(
+                """{"id":"candidate","model":"test-model","choices":[{"message":{"role":"assistant","content":"{\"invoice.number\":\"TXT-1\",\"unexpected\":\"x\"}"}}]}"""));
+
+        var result = await new StructuredExtractionEngine(client)
+            .ExtractTextAsync(
+                new PreparedTextInput(
+                    Guid.NewGuid(),
+                    0,
+                    "invoice.txt",
+                    "text/plain",
+                    "Invoice TXT-1"),
+                CreateSchema(),
+                target);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            ErrorCategory.Serialization,
+            result.Error!.Category);
+        Assert.Equal(
+            "hive.structured-extraction.candidate-output-invalid",
+            result.Error.Code);
+    }
+
+    [Fact]
+    public async Task TextExtraction_CancellationIsPropagated()
+    {
+        var target = CreateTarget(
+            "engine-text-cancel",
+            CapabilityState.Supported,
+            CapabilityState.Supported);
+
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        using var client = new HttpClient(
+            new RecordingStructuredResponseHandler(
+                """{"id":"unused","model":"test-model","choices":[{"message":{"role":"assistant","content":"{}"}}]}"""));
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => new StructuredExtractionEngine(client)
+                .ExtractTextAsync(
+                    new PreparedTextInput(
+                        Guid.NewGuid(),
+                        0,
+                        "invoice.txt",
+                        "text/plain",
+                        "Invoice TXT-1"),
+                    CreateSchema(),
+                    target,
+                    cancellationToken: cancellation.Token));
+    }
+
+    [Fact]
     public async Task ImageExtraction_ProducesTypedParentChildCandidateAndSendsImageContent()
     {
         var target = CreateTarget(
