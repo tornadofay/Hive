@@ -177,12 +177,8 @@ internal sealed class SqlAgentWorkStateStore :
             objectiveId,
             "agent.objective.updated",
             changedAtUtc,
-            static (objective, context) =>
-                objective.Update(
-                    context,
-                    updateContext!.Update!,
-                    updateContext!.ChangedAtUtc),
-            new ObjectiveTransitionContext(
+            objective => objective.Update(
+                accessContext,
                 update,
                 changedAtUtc));
 
@@ -201,12 +197,8 @@ internal sealed class SqlAgentWorkStateStore :
             objectiveId,
             "agent.objective.work-item-bound",
             changedAtUtc,
-            static (objective, context) =>
-                objective.BindWorkItem(
-                    context,
-                    updateContext!.Binding!,
-                    updateContext!.ChangedAtUtc),
-            new ObjectiveTransitionContext(
+            objective => objective.BindWorkItem(
+                accessContext,
                 binding,
                 changedAtUtc));
 
@@ -224,12 +216,8 @@ internal sealed class SqlAgentWorkStateStore :
             objectiveId,
             "agent.objective.completed",
             completedAtUtc,
-            static (objective, context) =>
-                objective.Complete(
-                    context,
-                    updateContext!.ChangedAtUtc),
-            new ObjectiveTransitionContext(
-                null,
+            objective => objective.Complete(
+                accessContext,
                 completedAtUtc));
 
     public Result<Objective> Cancel(
@@ -246,12 +234,8 @@ internal sealed class SqlAgentWorkStateStore :
             objectiveId,
             "agent.objective.cancelled",
             cancelledAtUtc,
-            static (objective, context) =>
-                objective.Cancel(
-                    context,
-                    updateContext!.ChangedAtUtc),
-            new ObjectiveTransitionContext(
-                null,
+            objective => objective.Cancel(
+                accessContext,
                 cancelledAtUtc));
 
     public Result<AgentMemoryEntry> Store(
@@ -605,13 +589,7 @@ internal sealed class SqlAgentWorkStateStore :
             responderRuntimeId,
             "agent.question.answered",
             answeredAtUtc,
-            static (question, _) =>
-                question.ApplyAnswer(
-                    transitionContext!.AgentId,
-                    transitionContext.RuntimeId,
-                    transitionContext.Answer!,
-                    transitionContext.ChangedAtUtc),
-            new QuestionTransitionContext(
+            question => question.ApplyAnswer(
                 responderAgentId,
                 responderRuntimeId,
                 answer,
@@ -633,14 +611,7 @@ internal sealed class SqlAgentWorkStateStore :
             runtimeId,
             "agent.question.cancelled",
             cancelledAtUtc,
-            static (question, _) =>
-                question.Cancel(
-                    transitionContext!.ChangedAtUtc),
-            new QuestionTransitionContext(
-                agentId,
-                runtimeId,
-                null,
-                cancelledAtUtc));
+            question => question.Cancel(cancelledAtUtc));
     }
 
     public int ExpireDue()
@@ -936,8 +907,7 @@ internal sealed class SqlAgentWorkStateStore :
         ObjectiveId objectiveId,
         string eventType,
         DateTimeOffset changedAtUtc,
-        Func<Objective, ResourceAccessContext, Result<Objective>> transition,
-        ObjectiveTransitionContext context)
+        Func<Objective, Result<Objective>> transition)
     {
         var validation = RuntimeProtocolGuard.Validate(
             accessContext,
@@ -979,10 +949,7 @@ internal sealed class SqlAgentWorkStateStore :
                         return Result<Objective>.Failure(accessError);
 
                     var objective = RestoreObjective(row);
-                    var transitioned = transition(
-                        objective,
-                        accessContext,
-                        context);
+                    var transitioned = transition(objective);
 
                     if (transitioned.IsFailure)
                         return transitioned;
@@ -1061,8 +1028,7 @@ internal sealed class SqlAgentWorkStateStore :
         RuntimeId runtimeId,
         string eventType,
         DateTimeOffset changedAtUtc,
-        Func<Question, Result<Question>> transition,
-        QuestionTransitionContext context)
+        Func<Question, Result<Question>> transition)
     {
         var validation = RuntimeProtocolGuard.Validate(
             accessContext,
@@ -1104,9 +1070,7 @@ internal sealed class SqlAgentWorkStateStore :
                         return Result<Question>.Failure(accessError);
 
                     var question = RestoreQuestion(row);
-                    var transitioned = transition(
-                        question,
-                        accessContext);
+                    var transitioned = transition(question);
 
                     if (transitioned.IsFailure)
                         return transitioned;
@@ -1765,10 +1729,6 @@ internal sealed class SqlAgentWorkStateStore :
             ToReferenceDocument(
                 provenance.Source));
 
-    private static ProvenanceDocument RestoreBindingProvenance(
-        BindingDocument document) =>
-        document.Provenance;
-
     private static ResourceProvenance RestoreProvenance(
         StateRow row)
     {
@@ -2082,23 +2042,6 @@ internal sealed class SqlAgentWorkStateStore :
         DateTimeOffset? ExpiresAtUtc,
         string StateJson,
         DateTimeOffset UpdatedAtUtc);
-
-    private sealed record ObjectiveTransitionContext(
-        object? UpdateValue,
-        DateTimeOffset ChangedAtUtc)
-    {
-        public ObjectiveUpdate? Update =>
-            UpdateValue as ObjectiveUpdate;
-
-        public WorkItemBinding? Binding =>
-            UpdateValue as WorkItemBinding;
-    }
-
-    private sealed record QuestionTransitionContext(
-        AgentId AgentId,
-        RuntimeId RuntimeId,
-        string? Answer,
-        DateTimeOffset ChangedAtUtc);
 
     private sealed record ResourceReferenceDocument(
         int Kind,
