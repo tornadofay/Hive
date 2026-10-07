@@ -1,6 +1,12 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
+
+### Verification remediation — 2026-10-07 (normal-size catalog height)
+
+The catalog-height failure was remediated within the recorded boundary. The two filter rows no longer use wrapped AutoSize measurement at the normal supported page width, and their selector/slider/checkbox widths were tightened so the two-row filter surface remains compact. The split container therefore receives the remaining page height for both the model catalog and details panel. Existing discovery, filter semantics, details, favorites, and Advanced navigation are unchanged.
+
+Verification remains pending. Re-run the focused Model Information tests and the full `Hive.Tests` suite, then manually verify the Advanced Provider Configuration → Model Information page at normal size.
 
 ### Verification failure — 2026-10-07 (normal-size catalog height)
 
