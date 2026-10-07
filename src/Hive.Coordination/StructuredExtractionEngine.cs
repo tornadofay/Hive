@@ -417,6 +417,18 @@ public sealed class StructuredExtractionEngine
                         "The provider returned an invalid spreadsheet mapping object."));
             }
 
+            if (json.EnumerateObject().Any(
+                    property => !string.Equals(
+                        property.Name,
+                        "mappings",
+                        StringComparison.Ordinal)))
+            {
+                return Result<SpreadsheetMapping>.Failure(
+                    SerializationError(
+                        "hive.structured-extraction.mapping-output-invalid",
+                        "The provider returned unknown spreadsheet mapping properties."));
+            }
+
             var entries = new List<SpreadsheetMappingEntry>();
 
             foreach (var element in mappingsElement.EnumerateArray())
@@ -425,7 +437,11 @@ public sealed class StructuredExtractionEngine
                     !element.TryGetProperty("sourceColumn", out var sourceColumn) ||
                     sourceColumn.ValueKind != JsonValueKind.String ||
                     !element.TryGetProperty("targetFieldId", out var targetFieldId) ||
-                    targetFieldId.ValueKind != JsonValueKind.String)
+                    targetFieldId.ValueKind != JsonValueKind.String ||
+                    element.EnumerateObject().Any(
+                        property =>
+                            property.Name is not "sourceColumn" and
+                            property.Name is not "targetFieldId"))
                 {
                     return Result<SpreadsheetMapping>.Failure(
                         SerializationError(
@@ -468,6 +484,24 @@ public sealed class StructuredExtractionEngine
                     SerializationError(
                         "hive.structured-extraction.candidate-output-invalid",
                         "The provider returned a structured candidate that is not a JSON object."));
+            }
+
+            var allowedProperties = new HashSet<string>(
+                targetSchema.ParentFields.Select(static field => field.Id.Value),
+                StringComparer.Ordinal);
+
+            allowedProperties.Add("confidence");
+
+            foreach (var collection in targetSchema.ChildFieldsByCollection.Keys)
+                allowedProperties.Add(collection);
+
+            if (json.EnumerateObject().Any(
+                    property => !allowedProperties.Contains(property.Name)))
+            {
+                return Result<StructuredCandidate>.Failure(
+                    SerializationError(
+                        "hive.structured-extraction.candidate-output-invalid",
+                        "The provider returned unknown structured candidate properties."));
             }
 
             double? confidence = null;
@@ -527,6 +561,19 @@ public sealed class StructuredExtractionEngine
                             SerializationError(
                                 "hive.structured-extraction.candidate-child-invalid",
                                 $"Child collection '{pair.Key}' contains a malformed item."));
+                    }
+
+                    var allowedChildProperties = pair.Value
+                        .Select(static field => field.Id.Value)
+                        .ToHashSet(StringComparer.Ordinal);
+
+                    if (child.EnumerateObject().Any(
+                            property => !allowedChildProperties.Contains(property.Name)))
+                    {
+                        return Result<StructuredCandidate>.Failure(
+                            SerializationError(
+                                "hive.structured-extraction.candidate-child-invalid",
+                                $"Child collection '{pair.Key}' contains unknown properties."));
                     }
 
                     var childFields = pair.Value
