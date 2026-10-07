@@ -373,6 +373,18 @@ public sealed class EmbeddedPersistenceFoundationTests
             Assert.Equal(
                 "hive.persistence.embedded.storage-not-empty",
                 status.Error!.Code);
+
+            await using var verificationConnection = new SqliteConnection(
+                $"Data Source={path};Mode=ReadWrite");
+            await verificationConnection.OpenAsync();
+
+            Assert.Equal(
+                "delete",
+                Convert.ToString(
+                    await ExecuteScalarAsync(
+                        verificationConnection,
+                        "PRAGMA journal_mode;"),
+                    System.Globalization.CultureInfo.InvariantCulture));
         }
         finally
         {
