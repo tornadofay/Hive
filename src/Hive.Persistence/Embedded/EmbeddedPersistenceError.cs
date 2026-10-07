@@ -18,7 +18,7 @@ internal static class EmbeddedPersistenceError
         {
             return sqliteException.SqliteErrorCode switch
             {
-                3 or 8 or 14 =>
+                3 or 8 or 10 or 14 =>
                     HivePersistenceError.External(
                         $"{operationCode}.storage-access",
                         $"The Embedded persistence {operation} could not access the configured storage.",
