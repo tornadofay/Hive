@@ -68,6 +68,7 @@ internal sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
         CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (Directory.Exists(_storagePath))
         {
@@ -116,6 +117,7 @@ internal sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
         CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (Directory.Exists(_storagePath))
         {
@@ -171,6 +173,7 @@ internal sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
         CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (!File.Exists(_storagePath))
             throw new FileNotFoundException(
