@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-10-07 (rev 57 — Embedded persistence parity and bidirectional migration architecture)
+Last updated: 2026-10-07 (rev 58 — Embedded persistence parity and bidirectional migration architecture)
 
 
 
