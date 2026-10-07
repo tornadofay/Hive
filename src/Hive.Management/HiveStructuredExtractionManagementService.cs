@@ -137,7 +137,8 @@ internal sealed class HiveStructuredExtractionManagementService :
                             preparedResults.Count,
                             text.FileName,
                             InputSourceKind.Text,
-                            StructuredExtractionItemStatus.Pending));
+                            StructuredExtractionItemStatus.Pending,
+                            sourceFingerprint: ComputeTextFingerprint(text.Content)));
                     break;
 
                 case PreparedSpreadsheetRowInput row:
@@ -982,7 +983,8 @@ internal sealed class HiveStructuredExtractionManagementService :
                     ? StructuredExtractionItemStatus.Succeeded
                     : StructuredExtractionItemStatus.Uncertain,
                 candidate,
-                executionTargetId: targetId);
+                executionTargetId: targetId,
+                sourceFingerprint: currentItem.SourceFingerprint);
         }
         finally
         {
@@ -1456,6 +1458,13 @@ internal sealed class HiveStructuredExtractionManagementService :
 
         return null;
     }
+
+    private static string ComputeTextFingerprint(
+        string content) =>
+        Convert.ToHexString(
+            System.Security.Cryptography.SHA256.HashData(
+                System.Text.Encoding.UTF8.GetBytes(content)))
+        .ToLowerInvariant();
 
     private static string ComputeImageFingerprint(
         ReadOnlyMemory<byte> content) =>
