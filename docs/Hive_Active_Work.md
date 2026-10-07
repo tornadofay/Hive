@@ -46,24 +46,21 @@ Required developer verification: `EmbeddedPersistenceFoundationTests` focused ru
 
 ## Latest verification failure
 
-Developer reran the broader `Hive.Tests` suite after the previous Embedded lifecycle and cancellation remediation: **736 tests run, 732 passed, 4 failed, 0 skipped**, in approximately 1.5 minutes.
+Developer reran the broader `Hive.Tests` suite after the prior remediation: **736 tests run, 733 passed, 3 failed, 0 skipped**, in approximately 1.5 minutes.
 
-The remaining failures were:
-- `FailedMigration_RollsBackScriptAndSchemaVersion`: cleanup attempted to delete `hive.db` while a test verification connection was still alive.
-- `LockedStorage_ProducesBoundedBusyFailure`: cleanup attempted to delete `hive.db` while the intentionally locking test connection was still alive.
-- `InitializeAsync_RejectsPreexistingNonHiveTables`: cleanup attempted to delete `hive.db` while a verification connection was still alive.
-- `InspectAsync_ReturnsCorruptionAsStablePersistenceError`: the public corruption error message contained the provider name `SQLite`, violating the test's provider-detail redaction boundary.
+The remaining failures were all cleanup-time file-lock failures in `EmbeddedPersistenceFoundationTests`:
+- `FailedMigration_RollsBackScriptAndSchemaVersion`
+- `LockedStorage_ProducesBoundedBusyFailure`
+- `InitializeAsync_RejectsPreexistingNonHiveTables`
 
-This is a Slice 2 verification failure. Remediation is required before Slice 2 can close and is limited to the Embedded foundation connection-lifetime and public-error-redaction boundaries exercised by these failures. No later-slice work is authorized.
+This is a Slice 2 verification failure. Remediation is required before Slice 2 can close and is limited to the Embedded foundation test connection-lifecycle boundary exercised by these failures. No later-slice work is authorized.
 
 ## Completed same-slice remediation
 
-The three file-lock failures were identified as test-owned lifetime leaks, not a retained production connection: the affected tests used `await using var` for extra SQLite connections, so disposal occurred at method exit, after the `finally` cleanup had already attempted to delete the database. Those connections are now wrapped in explicit scopes so they are disposed before cleanup. The intentionally locked connection in the busy test is likewise released before `DeleteDatabaseFiles` runs. The Inconsistent Metadata test verification connection was also explicitly scoped to keep the same lifecycle invariant.
+The remaining locks were traced to the raw SQLite connections created directly by the three affected tests. Their connection strings omitted `Pooling=false`, so Microsoft.Data.Sqlite used its default connection pooling behavior. The application-owned Embedded connection string already disables pooling; the test-only connections are now explicitly configured with `Pooling=False` so disposing those verification/locking connections deterministically releases the Windows file handle before `DeleteDatabaseFiles` runs.
 
-The corruption error was corrected so its stable public message no longer exposes the SQLite provider name; it now reports only that the storage is corrupt or not a valid database file.
+This is a test-harness correction only; no production Embedded connection-lifecycle contract was weakened or broadened.
 
-These changes remain strictly within Slice 2 verification/remediation boundaries.
-
-Repository checkpoint: `51261dbbbf9ced666fbbe50134bfd06ce64ced99` plus the public-error wording fix at `fea880c4ebb3f50a65992107670086dc9c331cd2`.
+Repository checkpoint: `b7214d7c710cb6a2ded18d59ddf99ea0675bed6a`.
 
 Developer verification is **VERIFICATION PENDING**. Rerun the focused `EmbeddedPersistenceFoundationTests` suite, followed by the full `Hive.Tests` suite.
