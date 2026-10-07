@@ -292,13 +292,26 @@ internal sealed class HiveStructuredExtractionManagementService :
 
         var batch = batchResult.Value!;
 
-        if (batch.Status != StructuredExtractionBatchStatus.ProcessingAuthorized &&
-            batch.Status != StructuredExtractionBatchStatus.Processing)
+        if (batch.Status is not StructuredExtractionBatchStatus.ProcessingAuthorized and
+            not StructuredExtractionBatchStatus.Processing and
+            not StructuredExtractionBatchStatus.ReviewRequired)
         {
             return Result<StructuredExtractionBatch>.Failure(
                 Error.Conflict(
                     "hive.structured-extraction.processing-state-invalid",
-                    "The structured extraction batch is not authorized for processing."));
+                    "The structured extraction batch is not authorized for processing or retry."));
+        }
+
+        if (batch.Status == StructuredExtractionBatchStatus.ReviewRequired &&
+            !preparedInputs.Any(
+                input => batch.Items.Any(
+                    item => item.ItemIndex == input.ItemIndex &&
+                            item.Status == StructuredExtractionItemStatus.Failed)))
+        {
+            return Result<StructuredExtractionBatch>.Failure(
+                Error.Conflict(
+                    "hive.structured-extraction.no-retryable-items",
+                    "A reviewable extraction batch has no failed items that can be retried."));
         }
 
         if (preparedInputs.Any(input => input.SubmissionId != batch.SubmissionId))
@@ -337,7 +350,6 @@ internal sealed class HiveStructuredExtractionManagementService :
                 .Where(
                     static item =>
                         item.Status is StructuredExtractionItemStatus.Succeeded
-                            or StructuredExtractionItemStatus.Failed
                             or StructuredExtractionItemStatus.Uncertain
                             or StructuredExtractionItemStatus.Excluded
                             or StructuredExtractionItemStatus.Accepted)
@@ -1184,9 +1196,9 @@ internal sealed class HiveStructuredExtractionManagementService :
                 ? StructuredExtractionItemStatus.Succeeded
                 : StructuredExtractionItemStatus.Uncertain,
             candidate,
-            item.ErrorCode,
-            item.ErrorCategory,
-            item.SafeErrorMessage,
+            null,
+            null,
+            null,
             item.WorksheetName,
             item.RowNumber,
             item.ExecutionTargetId,
