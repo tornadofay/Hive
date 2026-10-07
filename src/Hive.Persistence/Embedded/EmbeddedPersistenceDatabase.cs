@@ -145,6 +145,23 @@ internal sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
                     cancellationToken)
                 .ConfigureAwait(false);
 
+            var state = await _migrator.InspectAsync(
+                    connection,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (state.IsFailure)
+                return Result<HiveDatabaseMigrationOutcome>.Failure(
+                    state.Error!);
+
+            if (state.Value.DatabaseState ==
+                HiveDatabaseState.FutureSchema)
+            {
+                return Result<HiveDatabaseMigrationOutcome>.Failure(
+                    EmbeddedPersistenceError.FutureSchema(
+                        state.Value.SchemaVersion!.Value));
+            }
+
             await ConfigureDatabaseAsync(
                     connection,
                     cancellationToken)
