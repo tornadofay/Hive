@@ -274,25 +274,28 @@ public sealed class StructuredExtractionEngine
 
         foreach (var entry in entries)
         {
-            if (!sourceColumns.Contains(entry.SourceColumn))
+            var sourceExists = sourceColumns.Contains(entry.SourceColumn);
+            var targetExists = targetFields.Contains(entry.TargetFieldId.Value);
+
+            if (!sourceExists)
             {
                 errors.Add(
                     $"Source column '{entry.SourceColumn}' is not present in the mapping context.");
             }
 
-            if (!targetFields.Contains(entry.TargetFieldId.Value))
+            if (!targetExists)
             {
                 errors.Add(
                     $"Target semantic field '{entry.TargetFieldId}' is not present in the supplied target schema.");
             }
 
-            if (!seenSource.Add(entry.SourceColumn))
+            if (sourceExists && !seenSource.Add(entry.SourceColumn))
             {
                 errors.Add(
                     $"Source column '{entry.SourceColumn}' is mapped more than once.");
             }
 
-            if (!seenTarget.Add(entry.TargetFieldId.Value))
+            if (sourceExists && targetExists && !seenTarget.Add(entry.TargetFieldId.Value))
             {
                 errors.Add(
                     $"Target semantic field '{entry.TargetFieldId}' is mapped more than once.");
