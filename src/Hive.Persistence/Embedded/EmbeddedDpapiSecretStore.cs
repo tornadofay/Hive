@@ -729,7 +729,7 @@ public sealed class EmbeddedDpapiSecretStore : ISecretStore
     private static SqlParameter GuidParameter(
         string name,
         Guid? value) =>
-        new(name, SqlDbType.UniqueIdentifier) { Value = value?.ToString("D") ?? DBNull.Value };
+        new(name, SqlDbType.UniqueIdentifier) { Value = (object?)value?.ToString("D") ?? DBNull.Value };
 
     private static SqlParameter IntParameter(
         string name,
