@@ -37,9 +37,9 @@ internal sealed class StructuredExtractionExampleView : UserControl
 
         _surface.SetInformation(
             "Exercises the Phase 1.17 boundary from bounded folder selection through semantic mapping, independent vision extraction, deterministic validation, human review, and accepted-subset authorization.",
-            "The scenario is deterministic and local-only. It creates two XLSX files, an image, and an unsupported text file, uses one fake mapping response for the compatible spreadsheet context, reuses that mapping for every matching row, extracts the image independently, records failures, edits the mapping/candidates through Management, and never mutates host business state.",
+            "The scenario is deterministic and local-only. It creates two XLSX files, an image, a plain-text invoice, and one unsupported binary file, uses one fake mapping response for the compatible spreadsheet context, reuses that mapping for every matching row, extracts image and text independently, records the unsupported-item failure, edits the mapping/candidates through Management, and never mutates host business state.",
             "Scenario",
-            "Single folder selection, bounded mixed input, one-time mapping reuse, vision, parent/child candidates, provenance, review, acceptance, no host mutation");
+            "Single folder selection, bounded mixed input, text extraction, one-time mapping reuse, vision, parent/child candidates, provenance, review, acceptance, no host mutation");
 
         _surface.CodeSnippet = """
             var selection = await InputSelectionBuilder.BuildFolderAsync(
@@ -431,11 +431,11 @@ internal sealed class StructuredExtractionExampleView : UserControl
 
         File.WriteAllText(
             Path.Combine(folder, "notes.txt"),
-            "Unsupported example input.");
+            "Invoice: TXT-001\nCustomer: Text Customer\nAmount: 30.50");
 
         File.WriteAllText(
-            Path.Combine(folder, "nested", "extra.txt"),
-            "Nested unsupported example input.");
+            Path.Combine(folder, "nested", "extra.bin"),
+            "Unsupported binary example input.");
 
         return folder;
     }
@@ -797,7 +797,13 @@ internal sealed class StructuredExtractionExampleView : UserControl
                 ? """
                   {"id":"phase117-mapping","model":"phase117-structured-model","choices":[{"message":{"role":"assistant","content":"{\"mappings\":[{\"sourceColumn\":\"Invoice Number\",\"targetFieldId\":\"invoice.number\"},{\"sourceColumn\":\"Customer\",\"targetFieldId\":\"customer.name\"},{\"sourceColumn\":\"Amount\",\"targetFieldId\":\"invoice.amount\"},{\"sourceColumn\":\"Line Description\",\"targetFieldId\":\"line.description\"},{\"sourceColumn\":\"Quantity\",\"targetFieldId\":\"line.quantity\"}]}"}}]}
                   """
-                : """
+                : body.Contains(
+                    "plain-text evidence",
+                    StringComparison.Ordinal)
+                    ? """
+                      {"id":"phase117-text-candidate","model":"phase117-structured-model","choices":[{"message":{"role":"assistant","content":"{\"invoice.number\":\"TXT-001\",\"customer.name\":\"Text Customer\",\"invoice.amount\":30.50,\"lines\":[],\"confidence\":0.88}"}}]}
+                      """
+                    : """
                   {"id":"phase117-candidate","model":"phase117-structured-model","choices":[{"message":{"role":"assistant","content":"{\"invoice.number\":\"IMG-001\",\"customer.name\":\"Grace Hopper\",\"invoice.amount\":50.50,\"lines\":[{\"line.description\":\"Vision Item\",\"line.quantity\":2}],\"confidence\":0.91}"}}]}
                   """;
 
