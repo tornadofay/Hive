@@ -574,7 +574,12 @@ public sealed record StructuredExtractionItemResult
         StructuredCandidate? candidate = null,
         string? errorCode = null,
         ErrorCategory? errorCategory = null,
-        string? safeErrorMessage = null)
+        string? safeErrorMessage = null,
+        string? worksheetName = null,
+        int? rowNumber = null,
+        ExecutionTargetId? executionTargetId = null,
+        string? sourceFingerprint = null,
+        string? mappingContextIdentity = null)
     {
         if (itemIndex < 0)
             throw new ArgumentOutOfRangeException(nameof(itemIndex));
@@ -587,9 +592,27 @@ public sealed record StructuredExtractionItemResult
         if (!Enum.IsDefined(status))
             throw new ArgumentOutOfRangeException(nameof(status));
 
-        if (status is StructuredExtractionItemStatus.Succeeded or StructuredExtractionItemStatus.Accepted or StructuredExtractionItemStatus.Excluded or StructuredExtractionItemStatus.Uncertain)
+        if (rowNumber is <= 0)
+            throw new ArgumentOutOfRangeException(nameof(rowNumber));
+
+        if (sourceKind == InputSourceKind.Spreadsheet &&
+            (string.IsNullOrWhiteSpace(worksheetName) || rowNumber is null))
         {
-            if (candidate is null && status is not StructuredExtractionItemStatus.Excluded)
+            throw new ArgumentException(
+                "Spreadsheet results require worksheet and row provenance.",
+                nameof(worksheetName));
+        }
+
+        if (sourceKind == InputSourceKind.Image && rowNumber is not null)
+            throw new ArgumentException(
+                "Image results cannot contain spreadsheet row provenance.",
+                nameof(rowNumber));
+
+        if (status is StructuredExtractionItemStatus.Succeeded or
+            StructuredExtractionItemStatus.Accepted or
+            StructuredExtractionItemStatus.Uncertain)
+        {
+            if (candidate is null)
                 throw new ArgumentException(
                     "A candidate is required for this item status.",
                     nameof(candidate));
@@ -605,6 +628,17 @@ public sealed record StructuredExtractionItemResult
         SafeErrorMessage = string.IsNullOrWhiteSpace(safeErrorMessage)
             ? null
             : safeErrorMessage.Trim();
+        WorksheetName = string.IsNullOrWhiteSpace(worksheetName)
+            ? null
+            : worksheetName.Trim();
+        RowNumber = rowNumber;
+        ExecutionTargetId = executionTargetId;
+        SourceFingerprint = string.IsNullOrWhiteSpace(sourceFingerprint)
+            ? null
+            : sourceFingerprint.Trim();
+        MappingContextIdentity = string.IsNullOrWhiteSpace(mappingContextIdentity)
+            ? null
+            : mappingContextIdentity.Trim();
     }
 
     public int ItemIndex { get; }
@@ -622,6 +656,16 @@ public sealed record StructuredExtractionItemResult
     public ErrorCategory? ErrorCategory { get; }
 
     public string? SafeErrorMessage { get; }
+
+    public string? WorksheetName { get; }
+
+    public int? RowNumber { get; }
+
+    public ExecutionTargetId? ExecutionTargetId { get; }
+
+    public string? SourceFingerprint { get; }
+
+    public string? MappingContextIdentity { get; }
 }
 
 public enum StructuredExtractionBatchStatus
