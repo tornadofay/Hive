@@ -233,8 +233,8 @@ public sealed class StructuredTargetSchema
 
     public IReadOnlyDictionary<string, IReadOnlyList<StructuredTargetField>> ChildFieldsByCollection =>
         Fields
-            .Where(static field => field.Placement == StructuredFieldPlacement.Child)
-            .GroupBy(static field => field.ChildCollectionKey!, StringComparer.Ordinal)
+            .Where(static targetField => targetField.Placement == StructuredFieldPlacement.Child)
+            .GroupBy(static targetField => targetField.ChildCollectionKey!, StringComparer.Ordinal)
             .ToDictionary(
                 static group => group.Key,
                 static group => (IReadOnlyList<StructuredTargetField>)group.ToArray(),
