@@ -71,11 +71,10 @@ public sealed class StructuredExtractionInputSelectionTests
             Assert.Equal(2, result.Value.Submission!.Items.Count);
 
             var limitFailure = Assert.Single(
-                result.Value.Failures
-                    .Where(
-                        failure =>
-                            failure.Error.Code ==
-                            "hive.input.selection-item-limit"));
+                result.Value.Failures,
+                failure =>
+                    failure.Error.Code ==
+                    "hive.input.selection-item-limit");
 
             Assert.Contains(
                 Path.Combine(root, "nested", "c.png"),
