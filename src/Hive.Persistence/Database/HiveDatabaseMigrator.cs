@@ -87,8 +87,11 @@ public sealed class HiveDatabaseMigrator
                     _migrationAssembly,
                     static resourceName =>
                         resourceName.Contains(
-                            ".Migrations.Scripts.",
-                            StringComparison.OrdinalIgnoreCase))
+                                ".Migrations.Scripts.",
+                                StringComparison.OrdinalIgnoreCase) &&
+                            resourceName.EndsWith(
+                                ".sql",
+                                StringComparison.OrdinalIgnoreCase))
                 .WithTransactionPerScript()
                 .LogToNowhere()
                 .Build();
