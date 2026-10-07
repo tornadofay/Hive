@@ -196,8 +196,7 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
         if (accessError is not null)
             return Result<StructuredExtractionBatch>.Failure(accessError);
 
-        if (!expectedVersion.IsValid ||
-            expectedVersion.Value <= 0)
+        if (expectedVersion.Value <= 0)
         {
             return Result<StructuredExtractionBatch>.Failure(
                 Error.Validation(
