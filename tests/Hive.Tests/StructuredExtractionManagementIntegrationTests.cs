@@ -286,29 +286,35 @@ public sealed class StructuredExtractionManagementIntegrationTests
 
         using var memory = new MemoryStream();
 
-        var worksheetRows = rows
-            .Select(
-                (row, rowIndex) =>
+        var worksheetRows = new List<XElement>(rows.Length);
+
+        for (var rowIndex = 0; rowIndex < rows.Length; rowIndex++)
+        {
+            var row = rows[rowIndex];
+            var cells = new List<XElement>(row.Length);
+
+            for (var columnIndex = 0; columnIndex < row.Length; columnIndex++)
+            {
+                cells.Add(
                     new XElement(
-                        spreadsheet + "row",
-                        new XAttribute("r", rowIndex + 1),
-                        row.Select(
-                            (value, columnIndex) =>
-                                new XElement(
-                                    spreadsheet + "c",
-                                    new XAttribute(
-                                        "r",
-                                        ToColumnName(columnIndex + 1) +
-                                        (rowIndex + 1)),
-                                    new XAttribute(
-                                        "t",
-                                        "inlineStr"),
-                                    new XElement(
-                                        spreadsheet + "is",
-                                        new XElement(
-                                            spreadsheet + "t",
-                                            value)))))
-            .ToArray();
+                        spreadsheet + "c",
+                        new XAttribute(
+                            "r",
+                            ToColumnName(columnIndex + 1) + (rowIndex + 1)),
+                        new XAttribute("t", "inlineStr"),
+                        new XElement(
+                            spreadsheet + "is",
+                            new XElement(
+                                spreadsheet + "t",
+                                row[columnIndex]))));
+            }
+
+            worksheetRows.Add(
+                new XElement(
+                    spreadsheet + "row",
+                    new XAttribute("r", rowIndex + 1),
+                    cells));
+        }
 
         using (var archive = new ZipArchive(
                    memory,
