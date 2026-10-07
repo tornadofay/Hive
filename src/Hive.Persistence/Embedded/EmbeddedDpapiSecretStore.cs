@@ -801,9 +801,9 @@ public sealed class EmbeddedDpapiSecretStore : ISecretStore
         {
             return Result<T>.Failure(
                 new Error(
-                    $"hive.{resourceName}.sql-failure",
+                    $"hive.{resourceName}.sqlite-failure",
                     ErrorCategory.External,
-                    $"SQL Server operation for the {resourceName} failed."));
+                    $"Embedded persistence operation for the {resourceName} failed."));
         }
         catch (PlatformNotSupportedException)
         {
@@ -859,9 +859,9 @@ public sealed class EmbeddedDpapiSecretStore : ISecretStore
         {
             return Result.Failure(
                 new Error(
-                    $"hive.{resourceName}.sql-failure",
+                    $"hive.{resourceName}.sqlite-failure",
                     ErrorCategory.External,
-                    $"SQL Server operation for the {resourceName} failed."));
+                    $"Embedded persistence operation for the {resourceName} failed."));
         }
         catch (PlatformNotSupportedException)
         {
@@ -917,9 +917,9 @@ public sealed class EmbeddedDpapiSecretStore : ISecretStore
         {
             return Result<T>.Failure(
                 new Error(
-                    $"hive.{resourceName}.sql-failure",
+                    $"hive.{resourceName}.sqlite-failure",
                     ErrorCategory.External,
-                    $"SQL Server operation for the {resourceName} failed."));
+                    $"Embedded persistence operation for the {resourceName} failed."));
         }
         catch (PlatformNotSupportedException)
         {
