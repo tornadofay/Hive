@@ -9,7 +9,7 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
 
     private static JsonSerializerOptions CreateJsonOptions()
     {
-        var options = JsonEventSerializer.CreateDefaultOptions();
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         options.Converters.Add(new ResourceVersionJsonConverter());
         options.Converters.Add(new ResourceScopeJsonConverter());
         options.Converters.Add(new ResourceReferenceJsonConverter());
@@ -18,6 +18,8 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
         options.Converters.Add(new SemanticFieldIdJsonConverter());
         options.Converters.Add(new PrincipalIdJsonConverter());
         options.Converters.Add(new ExecutionTargetIdJsonConverter());
+        options.Converters.Add(new CorrelationIdSnapshotJsonConverter());
+        options.Converters.Add(new CausationIdSnapshotJsonConverter());
         return options;
     }
 
@@ -454,85 +456,187 @@ internal sealed class ResourceReferenceJsonConverter : System.Text.Json.Serializ
     }
 }
 
-internal sealed class StructuredExtractionBatchIdJsonConverter :
-    System.Text.Json.Serialization.JsonConverter<StructuredExtractionBatchId>
+internal abstract class GuidBackedSnapshotJsonConverter<TIdentity> :
+    System.Text.Json.Serialization.JsonConverter<TIdentity>
+    where TIdentity : struct
 {
-    public override StructuredExtractionBatchId Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    private readonly Func<Guid, TIdentity> _factory;
+    private readonly string _typeName;
+
+    protected GuidBackedSnapshotJsonConverter(
+        Func<Guid, TIdentity> factory,
+        string typeName)
     {
-        var value = reader.GetString();
-        if (value is null || !Guid.TryParse(value, out var guid) || guid == Guid.Empty)
-            throw new JsonException("Invalid structured extraction batch identity.");
-        return new StructuredExtractionBatchId(guid);
+        _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+        _typeName = typeName;
     }
 
-    public override void Write(System.Text.Json.Utf8JsonWriter writer, StructuredExtractionBatchId value, JsonSerializerOptions options) =>
-        writer.WriteStringValue(value.ToString());
-}
-
-internal sealed class StructuredCandidateIdJsonConverter :
-    System.Text.Json.Serialization.JsonConverter<StructuredCandidateId>
-{
-    public override StructuredCandidateId Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override TIdentity Read(
+        ref System.Text.Json.Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
     {
-        var value = reader.GetString();
-        if (value is null || !Guid.TryParse(value, out var guid) || guid == Guid.Empty)
-            throw new JsonException("Invalid structured candidate identity.");
-        return new StructuredCandidateId(guid);
-    }
+        string? text = reader.TokenType switch
+        {
+            System.Text.Json.JsonTokenType.String => reader.GetString(),
+            System.Text.Json.JsonTokenType.StartObject => ReadLegacyValue(ref reader),
+            _ => null
+        };
 
-    public override void Write(System.Text.Json.Utf8JsonWriter writer, StructuredCandidateId value, JsonSerializerOptions options) =>
-        writer.WriteStringValue(value.ToString());
-}
-
-internal sealed class SemanticFieldIdJsonConverter :
-    System.Text.Json.Serialization.JsonConverter<SemanticFieldId>
-{
-    public override SemanticFieldId Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        var value = reader.GetString();
-        if (value is null)
-            throw new JsonException("Invalid semantic field identity.");
+        if (!Guid.TryParse(text, out var value) || value == Guid.Empty)
+            throw new JsonException($"Invalid {_typeName} value.");
 
         try
         {
-            return new SemanticFieldId(value);
+            return _factory(value);
         }
         catch (ArgumentException exception)
         {
-            throw new JsonException("Invalid semantic field identity.", exception);
+            throw new JsonException($"Invalid {_typeName} value.", exception);
         }
     }
 
-    public override void Write(System.Text.Json.Utf8JsonWriter writer, SemanticFieldId value, JsonSerializerOptions options) =>
-        writer.WriteStringValue(value.Value);
+    public override void Write(
+        System.Text.Json.Utf8JsonWriter writer,
+        TIdentity value,
+        JsonSerializerOptions options)
+    {
+        var property = value.GetType().GetProperty(
+            "Value",
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.Public);
+
+        if (property?.PropertyType != typeof(Guid))
+            throw new JsonException($"The {_typeName} value does not expose a GUID Value property.");
+
+        writer.WriteStringValue((Guid)property.GetValue(value)!);
+    }
+
+    private static string? ReadLegacyValue(
+        ref System.Text.Json.Utf8JsonReader reader)
+    {
+        using var document = JsonDocument.ParseValue(ref reader);
+
+        return document.RootElement.TryGetProperty(
+                "value",
+                out var valueElement) &&
+            valueElement.ValueKind == JsonValueKind.String
+            ? valueElement.GetString()
+            : null;
+    }
+}
+
+internal sealed class StructuredExtractionBatchIdJsonConverter :
+    GuidBackedSnapshotJsonConverter<StructuredExtractionBatchId>
+{
+    public StructuredExtractionBatchIdJsonConverter()
+        : base(static value => new StructuredExtractionBatchId(value), "structured extraction batch identity")
+    {
+    }
+}
+
+internal sealed class StructuredCandidateIdJsonConverter :
+    GuidBackedSnapshotJsonConverter<StructuredCandidateId>
+{
+    public StructuredCandidateIdJsonConverter()
+        : base(static value => new StructuredCandidateId(value), "structured candidate identity")
+    {
+    }
 }
 
 internal sealed class PrincipalIdJsonConverter :
-    System.Text.Json.Serialization.JsonConverter<PrincipalId>
+    GuidBackedSnapshotJsonConverter<PrincipalId>
 {
-    public override PrincipalId Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public PrincipalIdJsonConverter()
+        : base(static value => new PrincipalId(value), "principal identity")
     {
-        var value = reader.GetString();
-        if (value is null || !Guid.TryParse(value, out var guid) || guid == Guid.Empty)
-            throw new JsonException("Invalid principal identity.");
-        return new PrincipalId(guid);
     }
-
-    public override void Write(System.Text.Json.Utf8JsonWriter writer, PrincipalId value, JsonSerializerOptions options) =>
-        writer.WriteStringValue(value.ToString());
 }
 
 internal sealed class ExecutionTargetIdJsonConverter :
-    System.Text.Json.Serialization.JsonConverter<ExecutionTargetId>
+    GuidBackedSnapshotJsonConverter<ExecutionTargetId>
 {
-    public override ExecutionTargetId Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public ExecutionTargetIdJsonConverter()
+        : base(static value => new ExecutionTargetId(value), "execution target identity")
     {
-        var value = reader.GetString();
-        if (value is null || !Guid.TryParse(value, out var guid) || guid == Guid.Empty)
-            throw new JsonException("Invalid execution target identity.");
-        return new ExecutionTargetId(guid);
+    }
+}
+
+
+
+internal sealed class CorrelationIdSnapshotJsonConverter :
+    System.Text.Json.Serialization.JsonConverter<CorrelationId>
+{
+    public override CorrelationId Read(
+        ref System.Text.Json.Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
+    {
+        var value = ReadValue(ref reader);
+
+        if (value is null || !CorrelationId.TryParse(value, out var id))
+            throw new JsonException("Invalid correlation identity.");
+
+        return id;
     }
 
-    public override void Write(System.Text.Json.Utf8JsonWriter writer, ExecutionTargetId value, JsonSerializerOptions options) =>
+    public override void Write(
+        System.Text.Json.Utf8JsonWriter writer,
+        CorrelationId value,
+        JsonSerializerOptions options) =>
         writer.WriteStringValue(value.ToString());
+
+    private static string? ReadValue(ref System.Text.Json.Utf8JsonReader reader) =>
+        reader.TokenType switch
+        {
+            System.Text.Json.JsonTokenType.String => reader.GetString(),
+            System.Text.Json.JsonTokenType.StartObject => ReadLegacyValue(ref reader),
+            _ => null
+        };
+
+    private static string? ReadLegacyValue(ref System.Text.Json.Utf8JsonReader reader)
+    {
+        using var document = JsonDocument.ParseValue(ref reader);
+        return document.RootElement.TryGetProperty("value", out var valueElement) &&
+               valueElement.ValueKind == JsonValueKind.String
+            ? valueElement.GetString()
+            : null;
+    }
+}
+
+internal sealed class CausationIdSnapshotJsonConverter :
+    System.Text.Json.Serialization.JsonConverter<CausationId>
+{
+    public override CausationId Read(
+        ref System.Text.Json.Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
+    {
+        var value = reader.TokenType switch
+        {
+            System.Text.Json.JsonTokenType.String => reader.GetString(),
+            System.Text.Json.JsonTokenType.StartObject => ReadLegacyValue(ref reader),
+            _ => null
+        };
+
+        if (value is null || !CausationId.TryParse(value, out var id))
+            throw new JsonException("Invalid causation identity.");
+
+        return id;
+    }
+
+    public override void Write(
+        System.Text.Json.Utf8JsonWriter writer,
+        CausationId value,
+        JsonSerializerOptions options) =>
+        writer.WriteStringValue(value.ToString());
+
+    private static string? ReadLegacyValue(ref System.Text.Json.Utf8JsonReader reader)
+    {
+        using var document = JsonDocument.ParseValue(ref reader);
+        return document.RootElement.TryGetProperty("value", out var valueElement) &&
+               valueElement.ValueKind == JsonValueKind.String
+            ? valueElement.GetString()
+            : null;
+    }
 }
