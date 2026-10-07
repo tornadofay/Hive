@@ -177,7 +177,7 @@ internal sealed class HiveStructuredExtractionManagementService :
                         "The input could not be prepared for structured extraction.").Message));
         }
 
-        if (preparedResults.Count > InputPreparationLimits.MaxPreparedRowsPerSubmission)
+        if (preparedResults.Count > InputPreparationLimits.MaxPreparedSpreadsheetRowsPerSubmission)
         {
             return Result<StructuredExtractionBatch>.Failure(
                 Error.Validation(
@@ -277,7 +277,7 @@ internal sealed class HiveStructuredExtractionManagementService :
 
         ArgumentNullException.ThrowIfNull(preparedInputs);
 
-        if (preparedInputs.Count > InputPreparationLimits.MaxPreparedRowsPerSubmission)
+        if (preparedInputs.Count > InputPreparationLimits.MaxPreparedSpreadsheetRowsPerSubmission)
             return Result<StructuredExtractionBatch>.Failure(
                 Error.Validation(
                     "hive.structured-extraction.prepared-input-limit",
@@ -326,10 +326,6 @@ internal sealed class HiveStructuredExtractionManagementService :
 
             batch = persisted.Value!;
         }
-
-        var spreadsheetInputs = preparedInputs
-            .OfType<PreparedSpreadsheetRowInput>()
-            .ToArray();
 
         var mappingsByIdentity = batch.Mappings
             .ToDictionary(
