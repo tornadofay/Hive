@@ -403,10 +403,6 @@ internal sealed class ResourceScopeJsonConverter : System.Text.Json.Serializatio
         {
             throw new JsonException("Invalid resource scope.", exception);
         }
-        catch (ArgumentOutOfRangeException exception)
-        {
-            throw new JsonException("Invalid resource scope.", exception);
-        }
     }
 
     public override void Write(System.Text.Json.Utf8JsonWriter writer, ResourceScope value, JsonSerializerOptions options)
@@ -446,10 +442,6 @@ internal sealed class ResourceReferenceJsonConverter : System.Text.Json.Serializ
         {
             throw new JsonException("Invalid resource reference.", exception);
         }
-        catch (ArgumentOutOfRangeException exception)
-        {
-            throw new JsonException("Invalid resource reference.", exception);
-        }
     }
 
     public override void Write(System.Text.Json.Utf8JsonWriter writer, ResourceReference value, JsonSerializerOptions options)
@@ -459,50 +451,6 @@ internal sealed class ResourceReferenceJsonConverter : System.Text.Json.Serializ
         JsonSerializer.Serialize(writer, value.Kind, options);
         writer.WriteString("identity", value.Identity);
         writer.WriteEndObject();
-    }
-}
-
-internal abstract class GuidIdentityJsonConverter<TIdentity> : System.Text.Json.Serialization.JsonConverter<TIdentity>
-    where TIdentity : struct
-{
-    private readonly Func<Guid, TIdentity> _factory;
-    private readonly Func<string?, (bool Success, TIdentity Value)> _tryParse;
-
-    protected GuidIdentityJsonConverter(
-        Func<Guid, TIdentity> factory,
-        Func<string?, (bool Success, TIdentity Value)> tryParse)
-    {
-        _factory = factory;
-        _tryParse = tryParse;
-    }
-
-    public override TIdentity Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        if (reader.TokenType != System.Text.Json.JsonTokenType.String)
-            throw new JsonException("Identity must be a GUID string.");
-
-        var value = reader.GetString();
-        var parsed = _tryParse(value);
-
-        if (!parsed.Success)
-            throw new JsonException($"Invalid {typeof(TIdentity).Name} value.");
-
-        return parsed.Value;
-    }
-
-    public override void Write(System.Text.Json.Utf8JsonWriter writer, TIdentity value, JsonSerializerOptions options)
-    {
-        var guid = value switch
-        {
-            StructuredExtractionBatchId id => id.Value,
-            StructuredCandidateId id => id.Value,
-            SemanticFieldId => throw new NotSupportedException(),
-            PrincipalId id => id.Value,
-            ExecutionTargetId id => id.Value,
-            _ => throw new NotSupportedException($"Unsupported identity type {typeof(TIdentity).Name}.")
-        };
-
-        writer.WriteStringValue(guid);
     }
 }
 
