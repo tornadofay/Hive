@@ -26,7 +26,7 @@ All files under `docs/architecture/` are part of the same architecture source of
 
 |---|---|
 
-| [`architecture/foundations.md`](architecture/foundations.md) | identity/resource foundation, SQL persistence bootstrap, test harness, WinForms UI foundation |
+| [`architecture/foundations.md`](architecture/foundations.md) | identity/resource foundation, persistence bootstrap, test harness, WinForms UI foundation |
 
 | [`architecture/execution-and-persistence.md`](architecture/execution-and-persistence.md) | MAF boundary, provider platform, resources, execution planning, human intervention, events/outbox |
 
