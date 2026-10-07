@@ -38,3 +38,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [1.17 — Structured Extraction & Validation — 2026-10-07](1.17-structured-extraction-validation-closure-2026-10-07.md)
 - [Post-1.17 — Plain Text Input Support — 2026-10-07](post-1.17-plain-text-input-support-closure-2026-10-07.md)
 - [1.18 — Durable Base-Agent Work State — 2026-10-07](1.18-durable-base-agent-work-state-closure-2026-10-07.md)
+- [1.18A — Slice 1: Backend-Neutral Persistence Boundary — 2026-10-07](1.18A-slice-1-backend-neutral-persistence-boundary-closure-2026-10-07.md)
