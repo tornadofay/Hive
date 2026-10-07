@@ -41,7 +41,7 @@ Implement the bounded Phase 1.17 Structured Extraction & Validation boundary def
 
 ## Implementation checkpoint
 
-Current checkpoint: `main @ 1dbfdf7c01dfee4f433643676e74f340a9c47b59`
+Current checkpoint: `main @ 204e60df98131e22f5464544de265e1b7466c7f6`
 
 Implemented in this slice so far:
 
@@ -54,7 +54,7 @@ Implemented in this slice so far:
 - Management facade/service operations for batch creation, processing authorization, processing/retry, mapping review/edit, candidate edit, accepted-subset authorization, and durable reload;
 - public Example Host scenario and focused automated coverage for input selection, contracts, extraction/multimodal behavior, Management mapping reuse, malformed output, and persistence/restart.
 
-Verification has not been run in this session. The phase remains open until the required focused tests, Example Host manual verification, and full `Hive.Tests` suite are completed and reported by the developer.
+Verification has not been run in this session. The reported compile failures were corrected in subsequent commits, but the phase remains open until the required focused tests, Example Host manual verification, and full `Hive.Tests` suite are completed and reported by the developer.
 
 ## Verification gate
 
