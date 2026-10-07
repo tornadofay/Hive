@@ -8,7 +8,7 @@ Slice: **2 — Embedded Persistence Foundation**
 
 Authorization: Explicit user authorization on 2026-10-07 via 'start slice 2', following successful developer verification of Slice 1 (721/721 tests passed).
 
-Repository checkpoint: `3026c0268369e211070bf7ba9cf2c7d9e96aabee` (`main`).
+Repository checkpoint: `a5d088f1dbf354fa5b58239a0a919f578e7f86ad` (`main`).
 
 ## Authorized scope
 
