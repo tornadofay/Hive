@@ -352,8 +352,9 @@ public static class InputSelectionBuilder
                 continue;
             }
 
-            items.Add(read.Item!);
-            totalBytes += read.Item.Content.Length;
+            var item = read.Item!;
+            items.Add(item);
+            totalBytes += item.Content.Length;
         }
 
         return Result<InputSelectionResult>.Success(
@@ -431,8 +432,8 @@ public static class InputSelectionBuilder
                             continue;
                     }
                     catch (Exception exception) when (
-                        exception is IOException or
-                        exception is UnauthorizedAccessException or
+                        exception is IOException ||
+                        exception is UnauthorizedAccessException ||
                         exception is ArgumentException)
                     {
                         continue;
