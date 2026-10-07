@@ -9,12 +9,15 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
         new(JsonSerializerDefaults.Web);
 
     private readonly IEventPersistenceStore _eventStore;
+    private readonly IClock _clock;
 
     public SqlStructuredExtractionBatchStore(
-        HiveEventPersistenceComposition persistence)
+        HiveEventPersistenceComposition persistence,
+        IClock? clock = null)
     {
         ArgumentNullException.ThrowIfNull(persistence);
         _eventStore = persistence.EventStore;
+        _clock = clock ?? SystemClock.Instance;
     }
 
     public async Task<Result<StructuredExtractionBatch>> CreateAsync(
@@ -74,8 +77,9 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
         catch (JsonException)
         {
             return Result<StructuredExtractionBatch>.Failure(
-                Error.Serialization(
+                new Error(
                     "hive.structured-extraction.batch-serialization-failed",
+                    ErrorCategory.Serialization,
                     "The structured extraction batch could not be serialized."));
         }
         catch (Exception)
@@ -135,8 +139,9 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
             catch (JsonException)
             {
                 return Result<StructuredExtractionBatch>.Failure(
-                    Error.Serialization(
+                    new Error(
                         "hive.structured-extraction.batch-state-invalid",
+                        ErrorCategory.Serialization,
                         "Stored structured extraction batch state is invalid."));
             }
 
@@ -145,8 +150,9 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
                 batch.Resource.Version != snapshot.Value.Version)
             {
                 return Result<StructuredExtractionBatch>.Failure(
-                    Error.Serialization(
+                    new Error(
                         "hive.structured-extraction.batch-state-invalid",
+                        ErrorCategory.Serialization,
                         "Stored structured extraction batch state does not match its event snapshot."));
             }
 
@@ -240,8 +246,9 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
         catch (JsonException)
         {
             return Result<StructuredExtractionBatch>.Failure(
-                Error.Serialization(
+                new Error(
                     "hive.structured-extraction.batch-serialization-failed",
+                    ErrorCategory.Serialization,
                     "The structured extraction batch could not be serialized."));
         }
         catch (Exception)
@@ -279,7 +286,7 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
     {
         return new EventEnvelope(
             EventId.New(),
-            DateTimeOffset.UtcNow,
+            _clock.UtcNow,
             new EventType(eventType),
             new EventPayloadVersion(1),
             correlationId,
@@ -312,15 +319,17 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
         if (requireOwner &&
             resource.Owner != accessContext.PrincipalId.Value)
         {
-            return Error.Forbidden(
+            return new Error(
                 "hive.structured-extraction.batch-owner-mismatch",
+                ErrorCategory.Forbidden,
                 "The structured extraction batch owner does not match the caller.");
         }
 
         return resource.Scope.Matches(accessContext)
             ? null
-            : Error.Forbidden(
+:            : new Error(
                 "hive.structured-extraction.batch-scope-forbidden",
+                ErrorCategory.Forbidden,
                 "The structured extraction batch is outside the caller's authorized scope.");
     }
 }
