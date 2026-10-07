@@ -26,11 +26,13 @@ Verification gate:
 - SQL Server remains regression-safe;
 - developer verification is required before Slice 4 may be activated.
 
-Verification status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Verification status: **PENDING**
 
 Focused verification target: Embedded persistence parity tests plus the broader Hive.Tests suite.
 
-Developer verification failure received on 2026-10-07: compilation failed with CS1503/CS0019/CS0721/CS0050 in `EmbeddedAgentDefinitionResourceStore.cs`, `EmbeddedPersistenceDatabase.cs`, and `EmbeddedPersistenceParityTests.cs`. The failures are confined to the Slice 3 implementation and include the Embedded SQLite type alias, nullable GUID parameter value typing, public status accessibility, and parity-test constructor/signature mismatches. Same-slice remediation is authorized; after remediation Active Work must return to **VERIFICATION PENDING** with exact rerun targets.
+Developer verification failure received on 2026-10-07: compilation failed with CS1503/CS0019/CS0721/CS0050 in the Slice 3 Embedded persistence implementation and parity tests. Same-slice remediation corrected the reported type-alias, nullable GUID, public status accessibility, parity-test API/constructor, and test-data construction errors. Static repository audit after remediation found no remaining Embedded `[dbo].`, `TOP (...)`, `WITH (UPDLOCK...)`, or `BeginTransactionAsync` remnants in the Embedded store surface.
+
+Exact rerun targets: rebuild/compile `Hive.Persistence` and `Hive.Tests`, run `EmbeddedPersistenceParityTests`, then run the full `Hive.Tests` suite.
 
 Implementation exclusions:
 
