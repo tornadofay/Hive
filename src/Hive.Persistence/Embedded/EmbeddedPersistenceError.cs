@@ -65,13 +65,15 @@ internal static class EmbeddedPersistenceError
     }
 
     public static Error InvalidMetadata() =>
-        HivePersistenceError.External(
+        new Error(
             "hive.persistence.embedded.metadata-inconsistent",
+            ErrorCategory.External,
             "The Embedded persistence metadata is inconsistent or incomplete.");
 
     public static Error StorageNotEmpty() =>
-        HivePersistenceError.External(
+        new Error(
             "hive.persistence.embedded.storage-not-empty",
+            ErrorCategory.External,
             "The configured Embedded storage already contains non-Hive application tables.");
 
     public static Error StorageNotFound() =>
