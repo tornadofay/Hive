@@ -292,10 +292,12 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
 
         Assert.True(requesterRead.IsSuccess, requesterRead.Error?.Message);
 
+        var outsiderPrincipal = PrincipalId.New();
+
         var outsiderAgent = CreateAgent(
             fixture.Deployment,
             fixture.Tenant,
-            PrincipalId.New(),
+            outsiderPrincipal,
             fixture.Clock);
 
         var outsiderRuntime = outsiderAgent.CreateRuntimeInstance(
@@ -306,7 +308,7 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
         var outsiderContext = new ResourceAccessContext(
             fixture.Deployment,
             fixture.Tenant,
-            PrincipalId.New(),
+            outsiderPrincipal,
             AgentId: outsiderAgent.Id,
             RuntimeId: outsiderRuntime.Id);
 
