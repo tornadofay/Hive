@@ -4,7 +4,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Hive.Persistence;
 
-internal sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
+public sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
 {
     private readonly string _storagePath;
     private readonly string _connectionString;
@@ -62,7 +62,11 @@ internal sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
             clock);
     }
 
-    internal string StoragePath => _storagePath;
+    public string StoragePath => _storagePath;
+
+    internal string ConnectionString => _connectionString;
+
+    internal int CommandTimeoutSeconds => _commandTimeoutSeconds;
 
     public async Task<Result<EmbeddedPersistenceDatabaseStatus>> InspectAsync(
         CancellationToken cancellationToken = default)
