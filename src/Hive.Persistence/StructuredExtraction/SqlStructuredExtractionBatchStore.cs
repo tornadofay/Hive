@@ -123,8 +123,9 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
             if (snapshot.Value is null)
             {
                 return Result<StructuredExtractionBatch>.Failure(
-                    Error.NotFound(
+                    new Error(
                         "hive.structured-extraction.batch-not-found",
+                        ErrorCategory.NotFound,
                         "The requested structured extraction batch does not exist."));
             }
 
