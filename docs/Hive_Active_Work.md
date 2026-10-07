@@ -36,4 +36,4 @@ Required developer verification after implementation:
 - Example Host scenario for Persistence / Agent Work State.
 - Manual Example Host verification as applicable.
 
-Status remains ACTIVE until implementation is complete; then transition to VERIFICATION PENDING with exact rerun targets. No future roadmap slice is authorized.
+Implementation is complete at the repository-edit boundary. Verification is pending developer execution of the listed focused and broader test suites plus the Example Host scenario. No future roadmap slice is authorized.
