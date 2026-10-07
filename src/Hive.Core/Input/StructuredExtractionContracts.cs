@@ -579,7 +579,8 @@ public sealed record StructuredExtractionItemResult
         int? rowNumber = null,
         ExecutionTargetId? executionTargetId = null,
         string? sourceFingerprint = null,
-        string? mappingContextIdentity = null)
+        string? mappingContextIdentity = null,
+        IReadOnlyDictionary<string, string>? sourceValues = null)
     {
         if (itemIndex < 0)
             throw new ArgumentOutOfRangeException(nameof(itemIndex));
@@ -639,6 +640,19 @@ public sealed record StructuredExtractionItemResult
         MappingContextIdentity = string.IsNullOrWhiteSpace(mappingContextIdentity)
             ? null
             : mappingContextIdentity.Trim();
+
+        if (sourceValues is not null)
+        {
+            if (sourceKind != InputSourceKind.Spreadsheet)
+                throw new ArgumentException(
+                    "Source values are supported only for spreadsheet results.",
+                    nameof(sourceValues));
+
+            SourceValues = new ReadOnlyDictionary<string, string>(
+                new Dictionary<string, string>(
+                    sourceValues,
+                    StringComparer.OrdinalIgnoreCase));
+        }
     }
 
     public int ItemIndex { get; }
@@ -666,6 +680,8 @@ public sealed record StructuredExtractionItemResult
     public string? SourceFingerprint { get; }
 
     public string? MappingContextIdentity { get; }
+
+    public IReadOnlyDictionary<string, string>? SourceValues { get; }
 }
 
 public enum StructuredExtractionBatchStatus
