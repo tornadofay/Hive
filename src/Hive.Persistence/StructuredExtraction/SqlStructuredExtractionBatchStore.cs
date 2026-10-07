@@ -279,7 +279,7 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
             state);
     }
 
-    private static EventEnvelope CreateEvent(
+    private EventEnvelope CreateEvent(
         string eventType,
         CorrelationId correlationId,
         StructuredExtractionBatch batch)
@@ -311,8 +311,9 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
         if (accessContext.DeploymentId is null ||
             accessContext.PrincipalId is null)
         {
-            return Error.Unauthorized(
+            return new Error(
                 "hive.structured-extraction.access-context-invalid",
+                ErrorCategory.Unauthorized,
                 "Structured extraction batch access requires deployment and principal identity.");
         }
 
@@ -327,7 +328,7 @@ public sealed class SqlStructuredExtractionBatchStore : IStructuredExtractionBat
 
         return resource.Scope.Matches(accessContext)
             ? null
-:            : new Error(
+            : new Error(
                 "hive.structured-extraction.batch-scope-forbidden",
                 ErrorCategory.Forbidden,
                 "The structured extraction batch is outside the caller's authorized scope.");
