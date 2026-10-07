@@ -8,23 +8,32 @@ public sealed class RuntimeWorkProtocols
         AgentId agentId,
         RuntimeId runtimeId,
         IClock? clock = null,
-        IDelegationChannel? delegation = null)
+        IDelegationChannel? delegation = null,
+        RuntimeWorkProtocolStores? stores = null)
     {
         AgentId = agentId;
         RuntimeId = runtimeId;
 
-        Objectives = new ObjectiveStore();
-        Memory = new AgentMemoryStore();
-        Questions = new QuestionTransport(clock);
+        var effectiveClock = clock ?? SystemClock.Instance;
+        var effectiveStores = stores ??
+            new RuntimeWorkProtocolStores(
+                new ObjectiveStore(),
+                new AgentMemoryStore(),
+                new QuestionTransport(effectiveClock),
+                delegation ?? new InMemoryDelegationChannel());
+
+        Objectives = effectiveStores.Objectives;
+        Memory = effectiveStores.Memory;
+        Questions = effectiveStores.Questions;
         UnderstandingGate = new UnderstandingGate();
-        Delegation = delegation ?? new InMemoryDelegationChannel();
+        Delegation = delegation ?? effectiveStores.Delegation;
     }
 
     public AgentId AgentId { get; }
 
     public RuntimeId RuntimeId { get; }
 
-    public ObjectiveStore Objectives { get; }
+    public IObjectiveStore Objectives { get; }
 
     public IAgentMemoryStore Memory { get; }
 
