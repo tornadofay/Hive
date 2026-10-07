@@ -130,9 +130,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
 
-        _providerComboBox = CreateSelector("Provider", 240);
+        _providerComboBox = CreateSelector("Provider", 180);
         _providerComboBox.Margin = new Padding(0, 0, 16, 0);
-        _accountComboBox = CreateSelector("Account / Credential", 260);
+        _accountComboBox = CreateSelector("Account / Credential", 210);
 
         _page = new HiveCrudPage<ModelInformationRow>
         {
@@ -193,7 +193,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         _capabilityFilter = new HiveComboBox
         {
-            Width = 150,
+            Width = 120,
             Height = 32,
             DropDownStyle = ComboBoxStyle.DropDownList,
             Margin = Padding.Empty,
@@ -206,7 +206,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
 
         _capabilityStateFilter = new HiveComboBox
         {
-            Width = 88,
+            Width = 80,
             Height = 32,
             DropDownStyle = ComboBoxStyle.DropDownList,
             Margin = Padding.Empty,
@@ -245,7 +245,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             AutoSize = true,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = true,
+            WrapContents = false,
             Margin = new Padding(0, 0, 0, 4),
             Padding = Padding.Empty,
             AccessibleName = "Provider, account, and capability filters"
@@ -264,7 +264,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         {
             AutoSize = true,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = true,
+            WrapContents = false,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
             AccessibleName = "Price and pricing evidence filters"
@@ -289,7 +289,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _showUnpricedModels = new CheckBox
         {
             Text = "Show models without comparable pricing",
-            AutoSize = true,
+            AutoSize = false,
+            Width = 220,
+            Height = 32,
             Checked = false,
             Margin = new Padding(12, 2, 18, 2),
             AccessibleName = "Show models without comparable pricing"
@@ -298,7 +300,9 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         _showAboveRangeModels = new CheckBox
         {
             Text = "Show models above the price range",
-            AutoSize = true,
+            AutoSize = false,
+            Width = 210,
+            Height = 32,
             Checked = false,
             Margin = new Padding(0, 2, 0, 2),
             AccessibleName = "Show models above the price range"
@@ -991,7 +995,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
     private static TrackBar CreatePriceSlider(int value) =>
         new()
         {
-            Width = 120,
+            Width = 100,
             Height = 32,
             Minimum = 0,
             Maximum = InitialPriceSliderValue,
@@ -1008,7 +1012,7 @@ internal sealed class HiveModelInformationSettingsView : UserControl, IHiveAdvan
         new()
         {
             AutoSize = false,
-            Width = 58,
+            Width = 54,
             Height = 32,
             Margin = new Padding(2, 0, 4, 0),
             Padding = Padding.Empty,
