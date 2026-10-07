@@ -6,7 +6,7 @@ Date: 2026-10-07
 
 This bounded capability was explicitly authorized after Phase 1.17 closure:
 
-" I authorize .txt only "
+"I authorize .txt only"
 
 The scope was limited to first-class plain-text `.txt` / `text/plain` input support in the existing input-preparation → structured-extraction pipeline.
 
