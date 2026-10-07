@@ -1,5 +1,15 @@
 # Hive — Active Work
 
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+
+### Verification failure — 2026-10-07 (normal-size catalog height)
+
+Developer verification reported **681 tests: 680 passed, 1 failed, 0 skipped**. The failing in-scope regression test `ModelInformationView_RendersRichDiscoveryProfile` reports `ModelsList.Height = 220`, below the required normal-size catalog viewport.
+
+The same layout condition affects both sides of the vertical Model Information split: the filter region is consuming excessive vertical space because its responsive `FlowLayoutPanel` rows are `AutoSize=true` with `WrapContents=true` inside an AutoSize table row without a constrained row width. WinForms can therefore measure wrapped content vertically during layout, leaving only a short remainder for the catalog and details surfaces.
+
+Remediate only this Model Information layout/verification boundary. Keep the required two-row filter arrangement, but make the normal-size row measurement deterministic and compact so the split container receives the available remaining height. Preserve provider/account/capability/state semantics, pricing filters, discovery behavior, details behavior, favorites, and Advanced ownership. After remediation, return Active Work to VERIFICATION PENDING and require focused/full test rerun plus manual normal-size UI verification.
+
 Status: VERIFICATION PENDING
 
 ### Verification remediation — 2026-10-07 (test compile)
