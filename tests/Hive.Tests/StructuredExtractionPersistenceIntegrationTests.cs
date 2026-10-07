@@ -1,4 +1,5 @@
 using Hive.Core;
+using Hive.Coordination;
 using Hive.Persistence;
 using Hive.Tests.TestInfrastructure;
 using Xunit;
