@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Phase: **1.18A — Embedded Persistence Profile**
 
@@ -8,7 +8,7 @@ Slice: **2 — Embedded Persistence Foundation**
 
 Authorization: Explicit user authorization on 2026-10-07 via 'start slice 2', following successful developer verification of Slice 1 (721/721 tests passed).
 
-Repository checkpoint: `a5d088f1dbf354fa5b58239a0a919f578e7f86ad` (`main`).
+Repository checkpoint: `bbe8a833b3d3da2755e26471d419f45b0c83eac0` (`main`).
 
 ## Authorized scope
 
@@ -42,3 +42,7 @@ The Slice 2 implementation is complete within the authorized boundary. No verifi
 The implementation includes the SQLite provider dependency, application-owned file lifecycle, bounded path handling, per-connection durability/foreign-key configuration, WAL initialization, deterministic foundation migrations and journal/version metadata, fail-closed metadata validation, stable SQLite/storage errors, cancellation boundaries, reopen recovery, bounded busy/locking behavior, non-destructive foreign-storage rejection, rollback, and disposal coverage.
 
 Required developer verification: `EmbeddedPersistenceFoundationTests` focused run, followed by the broader `Hive.Tests` suite. The gate must cover clean initialization, schema/version behavior, reopen/recovery, corruption/incompatibility handling, path/permission failures, locking/busy behavior, rollback, cancellation, and disposal.
+
+## Latest verification failure
+
+Developer reported compile failures in Slice 2: CS8602 nullable dereferences in Hive.Tests lines 23, 88, 97, 220, 307, 425; CS8602 in Hive.Persistence line 157; and CS9135, CS8121, CS0029 in the NormalizeStoragePath catch filter at lines 293-294. Remediation is limited to these Slice 2 nullable-flow and catch-filter errors.
