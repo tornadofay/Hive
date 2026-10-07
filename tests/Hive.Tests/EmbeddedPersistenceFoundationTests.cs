@@ -352,7 +352,7 @@ public sealed class EmbeddedPersistenceFoundationTests
                 Path.GetDirectoryName(path)!);
 
             await using (var connection = new SqliteConnection(
-                $"Data Source={path};Mode=ReadWrite;Pooling=FalseCreate;Pooling=False"))
+                $"Data Source={path};Mode=ReadWriteCreate;Pooling=False"))
             {
                 await connection.OpenAsync();
 
@@ -599,7 +599,7 @@ public sealed class EmbeddedPersistenceFoundationTests
                 Path.GetDirectoryName(path)!);
 
             await using (var firstConnection = new SqliteConnection(
-                $"Data Source={path};Mode=ReadWrite;Pooling=FalseCreate;Pooling=False"))
+                $"Data Source={path};Mode=ReadWriteCreate;Pooling=False"))
             {
                 await firstConnection.OpenAsync();
 
