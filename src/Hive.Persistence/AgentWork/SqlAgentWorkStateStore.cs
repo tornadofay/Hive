@@ -470,7 +470,7 @@ internal sealed class SqlAgentWorkStateStore :
         TimeSpan timeout,
         DateTimeOffset askedAtUtc)
     {
-        var result = Question.Create(
+        var question = Question.Create(
             accessContext,
             agentId,
             runtimeId,
@@ -479,10 +479,6 @@ internal sealed class SqlAgentWorkStateStore :
             askedAtUtc,
             CorrelationId.New());
 
-        if (result.IsFailure)
-            return result;
-
-        var question = result.Value!;
         var row = CreateQuestionRow(question);
 
         var persisted = ExecuteTransaction(
@@ -742,9 +738,11 @@ internal sealed class SqlAgentWorkStateStore :
             request.Provenance.CorrelationId.Value,
             request.Provenance.CausationId?.Value,
             request.Source?.Kind is { } sourceKind
-                ? (int)sourceKind
+                ? (ResourceKind?)sourceKind
                 : null,
-            request.Source?.Identity,
+            request.Source?.Identity is { } sourceIdentity
+                ? (Guid?)sourceIdentity
+                : null,
             (int)ResourceLifecycleStatus.Active,
             request.Provenance.CreatedAtUtc,
             0,
@@ -1118,6 +1116,48 @@ internal sealed class SqlAgentWorkStateStore :
                 HivePersistenceError.Internal(
                     $"hive.persistence.agent-work-state.{operation}",
                     "The durable Question operation failed.",
+                    exception));
+        }
+    }
+
+    private Result<T> ExecuteTransaction<T>(
+        string operation,
+        Func<SqlConnection, SqlTransaction, Result<T>> action)
+    {
+        try
+        {
+            using var connection = OpenConnection();
+
+            using var transaction =
+                connection.BeginTransaction(IsolationLevel.Serializable);
+
+            var result = action(
+                connection,
+                transaction);
+
+            if (result.IsFailure)
+            {
+                transaction.Rollback();
+                return result;
+            }
+
+            transaction.Commit();
+            return result;
+        }
+        catch (SqlException exception)
+        {
+            return Result<T>.Failure(
+                HivePersistenceError.External(
+                    $"hive.persistence.agent-work-state.{operation}-sql",
+                    "The durable Agent work-state operation failed at the SQL Server boundary.",
+                    exception));
+        }
+        catch (Exception exception)
+        {
+            return Result<T>.Failure(
+                HivePersistenceError.Internal(
+                    $"hive.persistence.agent-work-state.{operation}",
+                    "The durable Agent work-state operation failed.",
                     exception));
         }
     }
@@ -1524,10 +1564,12 @@ internal sealed class SqlAgentWorkStateStore :
             provenance.CorrelationId.Value,
             provenance.CausationId?.Value,
             provenance.Source?.Kind is { } sourceKind
-                ? (int)sourceKind
+                ? (ResourceKind?)sourceKind
                 : null,
-            provenance.Source?.Identity,
-            (int)lifecycle.Status,
+            provenance.Source?.Identity is { } sourceIdentity
+                ? (Guid?)sourceIdentity
+                : null,
+            lifecycle.Status,
             lifecycle.ChangedAtUtc,
             stateStatus,
             stateKey,
@@ -1713,7 +1755,7 @@ internal sealed class SqlAgentWorkStateStore :
                 new ResourceVersion(document.WorkItemVersion),
                 new AgentId(document.AgentId),
                 new RuntimeId(document.RuntimeId),
-                RestoreBindingProvenance(document));
+                RestoreBindingProvenance(document.Provenance));
 
     private static BindingDocument? ToBindingDocument(
         WorkItemBinding? binding) =>
@@ -1743,7 +1785,7 @@ internal sealed class SqlAgentWorkStateStore :
         var source =
             row.SourceKind is { } sourceKind &&
             row.SourceIdentity is { } sourceIdentity
-                ? new ResourceReference(
+                ? (ResourceReference?)new ResourceReference(
                     sourceKind,
                     sourceIdentity)
                 : null;
@@ -1763,7 +1805,7 @@ internal sealed class SqlAgentWorkStateStore :
     {
         var source =
             document.Source is { } sourceReference
-                ? new ResourceReference(
+                ? (ResourceReference?)new ResourceReference(
                     (ResourceKind)sourceReference.Kind,
                     sourceReference.Identity)
                 : null;
@@ -1799,6 +1841,14 @@ internal sealed class SqlAgentWorkStateStore :
         JsonSerializer.Serialize(
             value,
             JsonOptions);
+
+    private static Error NotFound(
+        string code,
+        string message) =>
+        new(
+            code,
+            ErrorCategory.NotFound,
+            message);
 
     private static Error? ValidateRowAccess(
         StateRow row,
