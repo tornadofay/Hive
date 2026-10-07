@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
@@ -378,11 +379,9 @@ public sealed class HivePersistenceDataMigrator
         Guid migrationId,
         CancellationToken cancellationToken)
     {
-        var source = new EmbeddedPersistenceDatabase(
+        await using var source = new EmbeddedPersistenceDatabase(
             sourceConfiguration);
 
-        await using (source.ConfigureAwait(false))
-        {
             var sourceStatus = await source.InspectAsync(
                 cancellationToken).ConfigureAwait(false);
 
@@ -420,14 +419,13 @@ public sealed class HivePersistenceDataMigrator
             await destinationConnection.OpenAsync(
                 cancellationToken).ConfigureAwait(false);
 
-            return await TransferAndVerifyAsync(
-                migrationId,
-                HivePersistenceBackend.Embedded,
-                HivePersistenceBackend.SqlServer,
-                sourceConnection,
-                destinationConnection,
-                cancellationToken).ConfigureAwait(false);
-        }
+        return await TransferAndVerifyAsync(
+            migrationId,
+            HivePersistenceBackend.Embedded,
+            HivePersistenceBackend.SqlServer,
+            sourceConnection,
+            destinationConnection,
+            cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<Result<HivePersistenceMigrationExecutionResult>> TransferAndVerifyAsync(
@@ -510,15 +508,16 @@ public sealed class HivePersistenceDataMigrator
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
         var destinationFingerprint = await ReadFingerprintAsync(
             destinationConnection,
             destinationBackend,
+            transaction,
             cancellationToken).ConfigureAwait(false);
 
         if (!sourceFingerprint.Matches(destinationFingerprint))
         {
+            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
             return Result<HivePersistenceMigrationExecutionResult>.Failure(
                 Error.Conflict(
                     "hive.persistence.data-migration.verification-failed",
@@ -528,15 +527,20 @@ public sealed class HivePersistenceDataMigrator
         var sourceAfter = await ReadFingerprintAsync(
             sourceConnection,
             sourceBackend,
+            null,
             cancellationToken).ConfigureAwait(false);
 
         if (!sourceFingerprint.Matches(sourceAfter))
         {
+            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
             return Result<HivePersistenceMigrationExecutionResult>.Failure(
                 Error.Concurrency(
                     "hive.persistence.data-migration.source-changed",
                     "The source data changed while the migration was running."));
         }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
         return Result<HivePersistenceMigrationExecutionResult>.Success(
             new HivePersistenceMigrationExecutionResult(
@@ -573,7 +577,7 @@ public sealed class HivePersistenceDataMigrator
 
         await using var destinationCommand = destinationConnection.CreateCommand();
         destinationCommand.Transaction = destinationTransaction;
-        destinationCommand.CommandText = BuildInsertSql(table);
+        destinationCommand.CommandText = BuildInsertSql(table, destinationConnection is SqliteConnection);
         AddParameters(destinationCommand, table);
 
         long count = 0;
@@ -641,7 +645,8 @@ public sealed class HivePersistenceDataMigrator
         destinationCommand.Transaction = destinationTransaction;
         destinationCommand.CommandText = BuildInsertSql(
             destinationTable,
-            destinationColumns);
+            destinationColumns,
+            destinationConnection is SqliteConnection);
 
         AddParameters(
             destinationCommand,
@@ -708,6 +713,7 @@ public sealed class HivePersistenceDataMigrator
     private async Task<HiveMigrationFingerprintSet> ReadFingerprintAsync(
         DbConnection connection,
         HivePersistenceBackend backend,
+        DbTransaction? transaction,
         CancellationToken cancellationToken)
     {
         var set = new HiveMigrationFingerprintSet();
@@ -723,6 +729,7 @@ public sealed class HivePersistenceDataMigrator
                     table,
                     set,
                     backend,
+                    transaction,
                     cancellationToken).ConfigureAwait(false);
             }
             else
@@ -731,6 +738,7 @@ public sealed class HivePersistenceDataMigrator
                     connection,
                     table,
                     set,
+                    transaction,
                     cancellationToken).ConfigureAwait(false);
             }
         }
@@ -742,9 +750,11 @@ public sealed class HivePersistenceDataMigrator
         DbConnection connection,
         HiveMigrationTableDefinition table,
         HiveMigrationFingerprintSet set,
+        DbTransaction? transaction,
         CancellationToken cancellationToken)
     {
         await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
         command.CommandText = BuildSelectSql(
             table,
             connection is SqliteConnection);
@@ -768,6 +778,7 @@ public sealed class HivePersistenceDataMigrator
         HiveMigrationTableDefinition table,
         HiveMigrationFingerprintSet set,
         HivePersistenceBackend backend,
+        DbTransaction? transaction,
         CancellationToken cancellationToken)
     {
         const string encryptedColumn = "EncryptedValue";
@@ -786,6 +797,7 @@ public sealed class HivePersistenceDataMigrator
             table.OrderByColumns.Select(static c => $"[{c}]"));
 
         await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
         command.CommandText = $"SELECT {selectColumns} FROM {qualifiedTable} ORDER BY {orderBy};";
 
         await using var reader = await command.ExecuteReaderAsync(
@@ -920,15 +932,18 @@ public sealed class HivePersistenceDataMigrator
         $"ORDER BY {string.Join(", ", table.OrderByColumns.Select(static c => $"[{c}]"))};";
 
     private static string BuildInsertSql(
-        HiveMigrationTableDefinition table) =>
+        HiveMigrationTableDefinition table,
+        bool sqlite) =>
         BuildInsertSql(
             table.Name,
-            table.Columns.Select(static c => c.Name).ToArray());
+            table.Columns.Select(static c => c.Name).ToArray(),
+            sqlite);
 
     private static string BuildInsertSql(
         string tableName,
-        IReadOnlyList<string> columns) =>
-        $"INSERT INTO [{tableName}] " +
+        IReadOnlyList<string> columns,
+        bool sqlite) =>
+        $"INSERT INTO {QuoteTable(tableName, sqlite)} " +
         $"({string.Join(", ", columns.Select(static c => $"[{c}]"))}) " +
         $"VALUES ({string.Join(", ", Enumerable.Range(0, columns.Count).Select(static i => $"@p{i}"))});";
 
@@ -957,6 +972,9 @@ public sealed class HivePersistenceDataMigrator
                 _ => throw new InvalidOperationException(
                     $"Unsupported migration column kind: {columns[i].Kind}.")
             };
+
+            if (columns[i].Kind is HiveMigrationColumnKind.String or HiveMigrationColumnKind.Binary)
+                parameter.Size = -1;
 
             if (parameter is SqliteParameter sqliteParameter)
             {
@@ -1463,6 +1481,11 @@ internal sealed class HiveMigrationFingerprintSet
         public IncrementalHash Hash { get; }
 
         public long Count { get; set; }
+
+        public byte[] GetDigest() =>
+            Digest ??= Hash.GetHashAndReset();
+
+        private byte[]? Digest { get; set; }
     }
 
     private readonly Dictionary<string, Fingerprint> _fingerprints =
@@ -1503,8 +1526,8 @@ internal sealed class HiveMigrationFingerprintSet
                 return false;
             }
 
-            var left = fingerprint.Hash.GetHashAndReset();
-            var right = otherFingerprint.Hash.GetHashAndReset();
+            var left = fingerprint.GetDigest();
+            var right = otherFingerprint.GetDigest();
 
             if (!CryptographicOperations.FixedTimeEquals(left, right))
                 return false;
@@ -1582,7 +1605,7 @@ internal sealed class HiveMigrationFingerprintSet
         ReadOnlySpan<byte> bytes)
     {
         Span<byte> length = stackalloc byte[4];
-        BitConverter.TryWriteBytes(length, bytes.Length);
+        BinaryPrimitives.WriteInt32LittleEndian(length, bytes.Length);
         hash.AppendData(length);
         hash.AppendData(bytes);
     }
