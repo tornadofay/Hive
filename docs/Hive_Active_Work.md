@@ -54,11 +54,11 @@ Implemented in this slice so far:
 - Management facade/service operations for batch creation, processing authorization, processing/retry, mapping review/edit, candidate edit, accepted-subset authorization, and durable reload;
 - public Example Host scenario and focused automated coverage for input selection, contracts, extraction/multimodal behavior, Management mapping reuse, malformed output, and persistence/restart.
 
-Verification has not been run in this session. The latest local test run exposed three Phase 1.17 defects. The mapping validation, spreadsheet-row durable-item matching, and vision test fixture were corrected. The Example Host structured-extraction scenario has been manually exercised through Accepted and durable Reloaded Accepted with zero business writes; the focused tests must be rerun, followed by the full `Hive.Tests` suite.
+Developer verification is recorded as FAILED / REMEDIATION REQUIRED. The latest local `Hive.Tests` run reported 697 tests with 696 passed and 1 failed. The remaining in-scope failure is `StructuredExtractionEngineTests.ImageExtraction_ProducesTypedParentChildCandidateAndSendsImageContent`, where decimal normalization returned `25.50` while the contract test expects canonical `25.5`. The previously reported mapping validation, spreadsheet-row durable-item matching, and vision fixture defects remain corrected. The Example Host structured-extraction scenario has been manually exercised through Accepted and durable Reloaded Accepted with zero business writes.
 
 ## Verification gate
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Required verification before closure, based on the Phase 1.17 plan and repository workflow:
 
