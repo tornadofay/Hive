@@ -128,6 +128,25 @@ public sealed record DelegationRequest
 
     public ResourceProvenance Provenance { get; }
 
+    internal static DelegationRequest Restore(
+        DelegationId id,
+        AgentId requesterAgentId,
+        RuntimeId requesterRuntimeId,
+        AgentId delegateAgentId,
+        RuntimeId delegateRuntimeId,
+        string task,
+        ResourceReference? source,
+        ResourceProvenance provenance) =>
+        new(
+            id,
+            requesterAgentId,
+            requesterRuntimeId,
+            delegateAgentId,
+            delegateRuntimeId,
+            task,
+            source,
+            provenance);
+
     public static Result<DelegationRequest> Create(
         ResourceAccessContext requesterContext,
         AgentId requesterAgentId,
