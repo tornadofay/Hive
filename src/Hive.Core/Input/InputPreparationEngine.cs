@@ -280,8 +280,9 @@ public static class InputPreparationEngine
                 itemIndex,
                 item,
                 null,
-                Error.Serialization(
+                new Error(
                     "hive.input.text-invalid-utf8",
+                    ErrorCategory.Serialization,
                     "Text input is not valid UTF-8."));
         }
     }
