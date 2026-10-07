@@ -286,6 +286,30 @@ public sealed class StructuredExtractionManagementIntegrationTests
 
         using var memory = new MemoryStream();
 
+        var worksheetRows = rows
+            .Select(
+                (row, rowIndex) =>
+                    new XElement(
+                        spreadsheet + "row",
+                        new XAttribute("r", rowIndex + 1),
+                        row.Select(
+                            (value, columnIndex) =>
+                                new XElement(
+                                    spreadsheet + "c",
+                                    new XAttribute(
+                                        "r",
+                                        ToColumnName(columnIndex + 1) +
+                                        (rowIndex + 1)),
+                                    new XAttribute(
+                                        "t",
+                                        "inlineStr"),
+                                    new XElement(
+                                        spreadsheet + "is",
+                                        new XElement(
+                                            spreadsheet + "t",
+                                            value)))))
+            .ToArray();
+
         using (var archive = new ZipArchive(
                    memory,
                    ZipArchiveMode.Create,
@@ -372,27 +396,7 @@ public sealed class StructuredExtractionManagementIntegrationTests
                         spreadsheet + "worksheet",
                         new XElement(
                             spreadsheet + "sheetData",
-                            rows.Select(
-                                (row, rowIndex) =>
-                                    new XElement(
-                                        spreadsheet + "row",
-                                        new XAttribute("r", rowIndex + 1),
-                                        row.Select(
-                                            (value, columnIndex) =>
-                                                new XElement(
-                                                    spreadsheet + "c",
-                                                    new XAttribute(
-                                                        "r",
-                                                        ToColumnName(columnIndex + 1) +
-                                                        (rowIndex + 1)),
-                                                    new XAttribute(
-                                                        "t",
-                                                        "inlineStr"),
-                                                    new XElement(
-                                                        spreadsheet + "is",
-                                                        new XElement(
-                                                            spreadsheet + "t",
-                                                            value)))))))))));
+                            worksheetRows)));
         }
 
         return memory.ToArray();
