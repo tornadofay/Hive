@@ -658,21 +658,22 @@ Additional governed tool-extension boundary.
 ## 8.5 — Additional Host Surfaces
 WPF/web/other hosts consume the same core and Management contracts.
 
-## 8.6 — Lightweight / Embedded Hive Deployment Profile
-Objective: provide an optional local/embedded persistence deployment for users who should not need to install or operate a separate SQL Server instance, while preserving the same Hive resource model, Management contracts, event/snapshot/outbox semantics, and authorization boundaries.
+## 8.6 — Embedded/Server Deployment Portability & Upgrade
+
+The initial Embedded Persistence Profile is brought into Phase 1 by **1.18A**. This later roadmap item therefore no longer owns the creation of the embedded backend.
+
+Objective: add later deployment-portability capabilities around the already-supported SQL Server and Embedded profiles.
 
 Scope:
-- select and document a mature embedded persistence technology rather than creating a database engine without a measured requirement;
-- reuse the existing Hive persistence/resource contracts instead of maintaining a second logical schema/model;
-- define which capabilities the embedded backend supports, including vector storage/search;
-- keep SQL Server as the server-oriented V1 persistence implementation;
-- make backend selection explicit and configuration-driven;
-- preserve migration/version/concurrency/security semantics across supported backends;
-- provide a clear upgrade/export path from local/embedded deployment to the server-oriented persistence profile when required.
+- versioned export/import between supported persistence profiles where required;
+- explicit upgrade/migration tooling for moving a local installation to a server-oriented deployment;
+- compatibility/conflict handling for deployment-profile changes;
+- operational guidance and supported migration paths;
+- later cross-profile portability concerns that are intentionally outside 1.18A and 1.19.
 
-This slice is a deployment/storage portability capability, not permission to fork Hive's domain model or introduce a separate vector database.
+This slice does not redefine the Hive resource model, create a third persistence backend, or retroactively move Embedded persistence implementation into Phase 8. Initial embedded relational persistence and backend-aware Settings belong to 1.18A; vector storage/search belongs to 1.19.
 
-Verify: clean local install, restart/persistence durability, migrations/upgrades, concurrency, crash/recovery, secret handling, supported vector-search behavior where available, explicit unsupported-capability reporting, and configuration migration between supported deployment profiles where that contract is provided.
+Verify: supported export/import or migration workflows, compatibility/conflict handling, preservation of resource identity/ownership/scope/provenance, failure recovery, secret/export safety, and deterministic post-migration state where those portability contracts are provided.
 
 ---
 
