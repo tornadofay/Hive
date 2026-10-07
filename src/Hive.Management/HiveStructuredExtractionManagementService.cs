@@ -118,6 +118,15 @@ internal sealed class HiveStructuredExtractionManagementService :
                             sourceFingerprint: ComputeImageFingerprint(image.Content)));
                     break;
 
+                case PreparedTextInput text:
+                    preparedResults.Add(
+                        new StructuredExtractionItemResult(
+                            preparedResults.Count,
+                            text.FileName,
+                            InputSourceKind.Text,
+                            StructuredExtractionItemStatus.Pending));
+                    break;
+
                 case PreparedSpreadsheetRowInput row:
                     var sourceColumns = row.Values.Keys
                         .OrderBy(static value => value, StringComparer.OrdinalIgnoreCase)
@@ -384,6 +393,14 @@ internal sealed class HiveStructuredExtractionManagementService :
                             batch,
                             currentItem,
                             mappingsByIdentity,
+                            accessContext,
+                            cancellationToken).ConfigureAwait(false),
+
+                    PreparedTextInput text =>
+                        await ProcessTextAsync(
+                            text,
+                            batch,
+                            currentItem,
                             accessContext,
                             cancellationToken).ConfigureAwait(false),
 
@@ -899,6 +916,67 @@ internal sealed class HiveStructuredExtractionManagementService :
         }
     }
 
+    private async Task<StructuredExtractionItemResult> ProcessTextAsync(
+        PreparedTextInput input,
+        StructuredExtractionBatch batch,
+        StructuredExtractionItemResult currentItem,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken)
+    {
+        var targetId = ResolveMappingTargetId(batch);
+
+        if (targetId is null)
+        {
+            return Failed(
+                currentItem,
+                new Error(
+                    "hive.structured-extraction.text-target-required",
+                    ErrorCategory.Validation,
+                    "A structured-output execution target is required for plain-text extraction."));
+        }
+
+        var targetResult = await ResolveTargetAsync(
+            targetId.Value,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (targetResult.IsFailure)
+            return Failed(currentItem, targetResult.Error!);
+
+        var resolved = targetResult.Value!;
+
+        try
+        {
+            var extraction = await _engine!
+                .ExtractTextAsync(
+                    input,
+                    batch.TargetSchema,
+                    resolved.Target,
+                    resolved.Credential,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (extraction.IsFailure)
+                return Failed(currentItem, extraction.Error!);
+
+            var candidate = extraction.Value!;
+
+            return new StructuredExtractionItemResult(
+                currentItem.ItemIndex,
+                currentItem.FileName,
+                InputSourceKind.Text,
+                candidate.IsValid
+                    ? StructuredExtractionItemStatus.Succeeded
+                    : StructuredExtractionItemStatus.Uncertain,
+                candidate,
+                executionTargetId: targetId);
+        }
+        finally
+        {
+            resolved.Credential?.Dispose();
+        }
+    }
+
     private async Task<StructuredExtractionItemResult> ProcessSpreadsheetAsync(
         PreparedSpreadsheetRowInput input,
         StructuredExtractionBatch batch,
@@ -1102,6 +1180,16 @@ internal sealed class HiveStructuredExtractionManagementService :
                             row.WorksheetName,
                             StringComparison.Ordinal) &&
                         item.RowNumber == row.RowNumber),
+
+            PreparedTextInput text =>
+                items.SingleOrDefault(
+                    item =>
+                        item.ItemIndex == text.ItemIndex &&
+                        item.SourceKind == InputSourceKind.Text &&
+                        string.Equals(
+                            item.FileName,
+                            text.FileName,
+                            StringComparison.Ordinal)),
 
             _ => null
         };
@@ -1346,6 +1434,12 @@ internal sealed class HiveStructuredExtractionManagementService :
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 StringComparison.OrdinalIgnoreCase))
             return InputSourceKind.Spreadsheet;
+
+        if (string.Equals(
+                mediaType,
+                "text/plain",
+                StringComparison.OrdinalIgnoreCase))
+            return InputSourceKind.Text;
 
         return null;
     }
