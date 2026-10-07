@@ -412,7 +412,7 @@ public sealed class StructuredExtractionEngine
                 mappingsElement.GetArrayLength() > InputPreparationLimits.MaxWorksheetColumns)
             {
                 return Result<SpreadsheetMapping>.Failure(
-                    Error.Serialization(
+                    SerializationError(
                         "hive.structured-extraction.mapping-output-invalid",
                         "The provider returned an invalid spreadsheet mapping object."));
             }
@@ -428,7 +428,7 @@ public sealed class StructuredExtractionEngine
                     targetFieldId.ValueKind != JsonValueKind.String)
                 {
                     return Result<SpreadsheetMapping>.Failure(
-                        Error.Serialization(
+                        SerializationError(
                             "hive.structured-extraction.mapping-output-invalid",
                             "A spreadsheet mapping entry is malformed."));
                 }
@@ -449,7 +449,7 @@ public sealed class StructuredExtractionEngine
         catch (ArgumentException)
         {
             return Result<SpreadsheetMapping>.Failure(
-                Error.Serialization(
+                SerializationError(
                     "hive.structured-extraction.mapping-output-invalid",
                     "The provider returned invalid spreadsheet mapping data."));
         }
@@ -465,7 +465,7 @@ public sealed class StructuredExtractionEngine
             if (json.ValueKind != JsonValueKind.Object)
             {
                 return Result<StructuredCandidate>.Failure(
-                    Error.Serialization(
+                    SerializationError(
                         "hive.structured-extraction.candidate-output-invalid",
                         "The provider returned a structured candidate that is not a JSON object."));
             }
@@ -481,7 +481,7 @@ public sealed class StructuredExtractionEngine
                     parsedConfidence is < 0 or > 1)
                 {
                     return Result<StructuredCandidate>.Failure(
-                        Error.Serialization(
+                        SerializationError(
                             "hive.structured-extraction.candidate-confidence-invalid",
                             "The provider returned an invalid confidence value."));
                 }
@@ -514,7 +514,7 @@ public sealed class StructuredExtractionEngine
                     collection.GetArrayLength() > 1024)
                 {
                     return Result<StructuredCandidate>.Failure(
-                        Error.Serialization(
+                        SerializationError(
                             "hive.structured-extraction.candidate-child-invalid",
                             $"Child collection '{pair.Key}' is malformed or exceeds the bounded child-item limit."));
                 }
@@ -524,7 +524,7 @@ public sealed class StructuredExtractionEngine
                     if (child.ValueKind != JsonValueKind.Object)
                     {
                         return Result<StructuredCandidate>.Failure(
-                            Error.Serialization(
+                            SerializationError(
                                 "hive.structured-extraction.candidate-child-invalid",
                                 $"Child collection '{pair.Key}' contains a malformed item."));
                     }
@@ -557,7 +557,7 @@ public sealed class StructuredExtractionEngine
         catch (ArgumentException)
         {
             return Result<StructuredCandidate>.Failure(
-                Error.Serialization(
+                SerializationError(
                     "hive.structured-extraction.candidate-output-invalid",
                     "The provider returned invalid structured candidate data."));
         }
@@ -1005,7 +1005,7 @@ public sealed class StructuredExtractionEngine
             if (result.Value!.StructuredContent is not { } content)
             {
                 return Result<JsonElement>.Failure(
-                    Error.Serialization(
+                    SerializationError(
                         "hive.structured-extraction.structured-content-missing",
                         "The provider did not return structured JSON content."));
             }
@@ -1024,6 +1024,14 @@ public sealed class StructuredExtractionEngine
                     "The structured extraction request was invalid."));
         }
     }
+
+    private static Error SerializationError(
+        string code,
+        string message) =>
+        new(
+            code,
+            ErrorCategory.Serialization,
+            message);
 
     private static string Truncate(
         string value,
