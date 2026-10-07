@@ -21,4 +21,21 @@ public static class HiveAgentWorkPersistence
             store,
             store);
     }
+
+    public static RuntimeWorkProtocolStores CreateEmbedded(
+        EmbeddedPersistenceDatabase database,
+        IClock? clock = null)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+
+        var store = new EmbeddedAgentWorkStateStore(
+            database,
+            clock);
+
+        return new RuntimeWorkProtocolStores(
+            store,
+            store,
+            store,
+            store);
+    }
 }
