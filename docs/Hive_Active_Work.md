@@ -61,6 +61,6 @@ The remaining locks were traced to the raw SQLite connections created directly b
 
 This is a test-harness correction only; no production Embedded connection-lifecycle contract was weakened or broadened.
 
-Repository checkpoint: `b7214d7c710cb6a2ded18d59ddf99ea0675bed6a`.
+Repository checkpoint: `893278c90a88af33ac853a02b13793228b0b7b69`.
 
 Developer verification is **VERIFICATION PENDING**. Rerun the focused `EmbeddedPersistenceFoundationTests` suite, followed by the full `Hive.Tests` suite.
