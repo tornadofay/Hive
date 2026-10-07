@@ -70,7 +70,7 @@ Scope matching does not itself grant authorization. Later management/security sl
 
 ### 0.4 Persistence bootstrap
 
-Phase 0.4 established the original Hive-owned SQL Server persistence boundary without putting database dependencies into Hive.Core or the host application. Hive now extends that same architectural persistence boundary with a planned first-class Embedded Persistence Profile; this does not create a second logical resource model.
+Phase 0.4 established the original Hive-owned SQL Server persistence boundary without putting database dependencies into Hive.Core or the host application. 1.18A extends that same architectural persistence boundary with a first-class Embedded Persistence Profile. Embedded is added to catch up to the durable persistence surface already implemented for SQL Server; the existing SQL Server backend remains supported and is not reimplemented by 1.18A. This does not create a second logical resource model.
 
 #### Ownership and dependency boundary
 
@@ -119,7 +119,7 @@ The authoritative configuration contract must represent, at minimum:
 - a separate bootstrap credential reference for SQL-password startup access only for SQL-password SQL Server startup, with protected material stored outside the Hive database;
 - backend-specific database/storage initialization and migration policy where exposed by the platform.
 
-V1 persistence supports two deployment profiles: SQL Server for server/serious deployments and Embedded for self-contained local/desktop installations. LocalDB remains a SQL Server deployment form for local development.
+V1 persistence is designed to support two deployment profiles: SQL Server for server/serious deployments and Embedded for self-contained local/desktop installations. 1.18A is the implementation slice that adds Embedded and brings it to parity with the current SQL Server-backed persistence surface. LocalDB remains a SQL Server deployment form for local development. Higher-level phases must consume the common persistence contracts rather than branch their domain/application behavior on the selected backend.
 
 The configuration surface is intentionally separated from the low-level connection implementation:
 - `Hive.Management` owns the management/configuration contract exposed to hosts and Settings UI;
@@ -132,6 +132,20 @@ The configuration surface is intentionally separated from the low-level connecti
 Running executions must use an immutable effective persistence configuration snapshot where a runtime operation depends on persistence settings, so later configuration edits cannot silently change an already-running operation.
 
 The persistence configuration model must remain the single authoritative configuration model. Future configuration import/export must serialize that same backend-aware contract rather than introduce a second database-configuration format. The logical resource and ownership model is independent of the selected persistence backend.
+
+#### Bidirectional Hive-data migration
+
+1.18A establishes a first-class migration boundary between the two supported persistence backends:
+
+`SQL Server ⇄ Embedded`
+
+Migration operates on the logical Hive persistence model rather than copying backend-specific tables or database files. It transfers all Hive-owned durable state represented by the current persistence contracts, including resource records, versions, ownership/scope, provenance, lifecycle state, events, snapshots, outbox records, structured-extraction state, Base-Agent work state, favorites, provider/account/target state, and protected Hive resource secrets where those records are part of the selected persistence backend.
+
+Migration does **not** transfer host-application business data, the external JSON persistence-configuration file itself, or the SQL bootstrap credential material. SQL bootstrap credentials remain an application startup concern and must be provisioned separately for a destination that requires SQL-password authentication.
+
+Secret records must be migrated through the Secret Store contract: plaintext is resolved only as protected `SecretMaterial` in memory and is re-protected by the destination backend. Backend-specific ciphertext is never copied as if it were portable data.
+
+Migration is full-data transfer, not merge or synchronization. The destination must be validated as an appropriate empty/new migration target; partial transfer, best-effort merging, or silent conflict replacement is not permitted. The source remains unchanged after a successful migration. Destination verification must prove the transferred resource identities and relationships before the user activates the destination backend. Migration must not silently change the active backend; activation remains an explicit Persistence Settings operation.
 
 The implementation currently pins dbup-sqlserver 7.2.0 and Microsoft.Data.SqlClient 7.1.0. The first is the current stable DbUp SQL Server package and the second is the current stable Microsoft SQL client at the time this slice is implemented. citeturn544673view0turn598125search0
 
