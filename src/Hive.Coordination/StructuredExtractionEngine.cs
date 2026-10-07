@@ -456,12 +456,11 @@ public sealed class StructuredExtractionEngine
                         new SemanticFieldId(targetFieldId.GetString()!)));
             }
 
-            return Result<SpreadsheetMapping>.Success(
-                ValidateMapping(
-                    context,
-                    targetSchema,
-                    entries,
-                    SpreadsheetMappingReviewState.Proposed));
+            return ValidateMapping(
+                context,
+                targetSchema,
+                entries,
+                SpreadsheetMappingReviewState.Proposed);
         }
         catch (ArgumentException)
         {
