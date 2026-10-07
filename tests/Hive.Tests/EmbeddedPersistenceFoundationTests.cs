@@ -580,21 +580,23 @@ public sealed class EmbeddedPersistenceFoundationTests
 
         try
         {
-            await using var database = new EmbeddedPersistenceDatabase(
-                HivePersistenceConfiguration.Embedded(
-                    path,
-                    commandTimeoutSeconds: 1));
+            Directory.CreateDirectory(
+                Path.GetDirectoryName(path)!);
 
-            var initialized = await database.InitializeAsync();
-            Assert.True(initialized.IsSuccess, initialized.Error?.Message);
-
-            await using var firstConnection = await database.OpenConnectionAsync();
+            await using var firstConnection = new SqliteConnection(
+                $"Data Source={path};Mode=ReadWriteCreate");
+            await firstConnection.OpenAsync();
 
             await using (var beginCommand = firstConnection.CreateCommand())
             {
                 beginCommand.CommandText = "BEGIN IMMEDIATE;";
                 await beginCommand.ExecuteNonQueryAsync();
             }
+
+            await using var database = new EmbeddedPersistenceDatabase(
+                HivePersistenceConfiguration.Embedded(
+                    path,
+                    commandTimeoutSeconds: 1));
 
             await using var secondDatabase = new EmbeddedPersistenceDatabase(
                 HivePersistenceConfiguration.Embedded(
