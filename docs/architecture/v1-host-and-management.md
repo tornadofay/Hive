@@ -490,7 +490,7 @@ Hive.Host.WinForms
 IHiveManagementFacade
 ```
 
-The Settings UI must not construct SQL connections, execute provider transport, run migrations, or read raw secret material.
+The Settings UI must not construct SQL/SQLite connections, execute provider transport, run migrations directly, or read raw secret material.
 
 #### Persistence bootstrap credential
 
@@ -556,7 +556,13 @@ Settings pages remain domain-owned for field semantics, validation, authorizatio
 
 #### Host recomposition
 
-Changing Persistence configuration changes the persistence dependency graph and therefore requires host/application recomposition rather than mutating the existing Management facade.
+Changing Persistence configuration changes the persistence dependency graph and therefore requires host/application recomposition rather than mutating the existing Management facade. The selected backend is a deployment/configuration choice; the host must not contain separate SQL and Embedded resource models.
+
+The Persistence Settings leaf remains a single editor for the global `HivePersistenceConfiguration`. Its primary backend selector is:
+
+`Backend: [Embedded | SQL Server]`
+
+Embedded mode presents only the embedded storage location and backend readiness/initialization state. SQL Server mode presents the existing server/instance, port, authentication, database, security, and initialization fields. The page must not expose or construct backend-specific connection objects.
 
 The safe lifecycle is:
 
@@ -611,7 +617,13 @@ Provider is the durable provider identity/transport resource. ProviderAccount is
 
 Automatic and manually managed ExecutionTargets use an explicit durable `ExecutionTargetManagementMode` with `Automatic` and `Manual` semantics. Discovery/reconciliation owns only automatic targets. Administrator-maintained targets are never overwritten by discovery. Provider retirement uses the existing durable lifecycle transition and preserves resource identity/history; dependent accounts/targets remain durable but cannot be reactivated or used while their parent provider is inactive. Lifecycle changes, retirement, reactivation, and reset-to-automatic are Management operations subject to the existing dependency, authorization, and concurrency rules.
 
-Persistence is not a resource collection. It edits one global HivePersistenceConfiguration, so its leaf is intentionally an editor rather than a CRUD page. Its Server / instance control is a free-form text field. It accepts local servers, named instances, remote hosts, IP addresses, and online SQL Server targets. Hive does not currently define an authoritative SQL Server discovery/catalog contract, so the Settings UI does not enumerate installed SQL Server instances. The Database value is Hive-owned and assigned automatically by the Settings surface.
+Persistence is not a resource collection. It edits one global HivePersistenceConfiguration, so its leaf is intentionally an editor rather than a CRUD page. The page exposes a backend selector `Embedded | SQL Server`.
+
+For **Embedded**, the editor shows the configured Hive storage location plus backend status and explicit initialization/readiness actions. The embedded store is application-owned local storage and does not require an externally installed database server.
+
+For **SQL Server**, the editor retains the existing free-form Server / instance control, port, authentication, security, and database settings. It accepts local servers, named instances, remote hosts, IP addresses, and online SQL Server targets. Hive does not currently define an authoritative SQL Server discovery/catalog contract, so the Settings UI does not enumerate installed SQL Server instances. The Database value is Hive-owned and assigned automatically by the Settings surface.
+
+Switching the selected backend edits the same authoritative configuration contract. It does not create a separate persistence settings model and does not add a Vector Database settings page.
 
 It must use the configured Provider/Account/Target/Agent state in normal public-API examples. It may not construct a competing Hive service graph or bypass the host composition boundary. The configuration example explains this model but is not a substitute for the real Settings surface or configured runtime consumption.
 
