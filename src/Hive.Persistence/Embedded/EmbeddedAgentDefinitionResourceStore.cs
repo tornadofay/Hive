@@ -779,8 +779,8 @@ public sealed class EmbeddedAgentDefinitionResourceStore : IAgentDefinitionResou
         {
             return Result<T>.Failure(
                 HivePersistenceError.External(
-                    $"hive.persistence.{resourceName.Replace(' ', '-')}.sql-failure",
-                    $"SQL Server operation for the {resourceName} failed.",
+                    $"hive.persistence.{resourceName.Replace(' ', '-')}.sqlite-failure",
+                    $"Embedded persistence operation for the {resourceName} failed.",
                     exception));
         }
         catch (Exception exception)
@@ -830,8 +830,8 @@ public sealed class EmbeddedAgentDefinitionResourceStore : IAgentDefinitionResou
         {
             return Result<T>.Failure(
                 HivePersistenceError.External(
-                    $"hive.persistence.{resourceName.Replace(' ', '-')}.sql-failure",
-                    $"SQL Server operation for the {resourceName} failed.",
+                    $"hive.persistence.{resourceName.Replace(' ', '-')}.sqlite-failure",
+                    $"Embedded persistence operation for the {resourceName} failed.",
                     exception));
         }
         catch (ConcurrencyException)
