@@ -208,6 +208,11 @@ internal sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
             await connection.OpenAsync(cancellationToken)
                 .ConfigureAwait(false);
 
+            await ConfigureConnectionAsync(
+                    connection,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
             return connection;
         }
         catch
@@ -215,6 +220,18 @@ internal sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
             await connection.DisposeAsync().ConfigureAwait(false);
             throw;
         }
+    }
+
+    private async Task ConfigureConnectionAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        await using var synchronousCommand = connection.CreateCommand();
+        synchronousCommand.CommandText = "PRAGMA synchronous = FULL;";
+        synchronousCommand.CommandTimeout = _commandTimeoutSeconds;
+
+        await synchronousCommand.ExecuteNonQueryAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private async Task ConfigureDatabaseAsync(
