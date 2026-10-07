@@ -67,6 +67,19 @@ internal sealed class HiveStructuredExtractionManagementService :
 
         cancellationToken.ThrowIfCancellationRequested();
 
+        if (mappingExecutionTargetId is null &&
+            submission.Items.Any(
+                item => string.Equals(
+                    item.MediaType,
+                    "text/plain",
+                    StringComparison.OrdinalIgnoreCase)))
+        {
+            return Result<StructuredExtractionBatch>.Failure(
+                Error.Validation(
+                    "hive.structured-extraction.text-target-required",
+                    "A structured-output execution target is required for plain-text extraction."));
+        }
+
         if (submission.Items.Any(
                 item => item.FileName.Length > 260))
         {
