@@ -56,4 +56,14 @@ This is a Slice 2 verification failure. Remediation is required before Slice 2 c
 
 ## Completed same-slice remediation
 
-The prior SQL Server migration-resource isolation remediation remains in place at repository checkpoint `c4017103ca4c9d0871e2bb8231b263423d1fc99c4`. The new failure is independent and requires Embedded connection/lifecycle correction.
+The prior SQL Server migration-resource isolation remediation remains in place at repository checkpoint `c4017103ca4c9d0871e2bb8231b263423d1fc99c4`.
+
+The remaining Embedded failures were traced to two Slice 2 issues:
+1. `EmbeddedPersistenceDatabase` configured Microsoft.Data.Sqlite connection pooling. On Windows, disposed pooled connections could keep the SQLite database file open after the test-owned connection was disposed, causing later cleanup attempts to fail with a file-in-use IOException. Pooling is now disabled for the application-owned Embedded foundation so connection disposal deterministically releases the file handle.
+2. The cancellation regression test used `CreatePath`, whose helper intentionally creates the parent directory before the test begins. The implementation correctly honored cancellation before storage access, but the test then asserted that the already-existing parent directory did not exist. The test now uses an uncreated path helper so the assertion checks the intended precondition.
+
+These changes remain strictly within the Slice 2 connection/lifecycle and cancellation verification boundary.
+
+Repository checkpoint: `3526ef7fb1179a67fe2526b105de47ac3f61ebb9`.
+
+Developer verification is **VERIFICATION PENDING**. Rerun the focused `EmbeddedPersistenceFoundationTests` suite, followed by the full `Hive.Tests` suite.
