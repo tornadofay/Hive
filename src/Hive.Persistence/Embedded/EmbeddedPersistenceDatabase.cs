@@ -48,7 +48,7 @@ internal sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
             Mode = SqliteOpenMode.ReadWrite,
             Cache = SqliteCacheMode.Default,
             ForeignKeys = true,
-            Pooling = true,
+            Pooling = false,
             DefaultTimeout = _commandTimeoutSeconds
         };
 
