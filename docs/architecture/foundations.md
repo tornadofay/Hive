@@ -119,7 +119,7 @@ The authoritative configuration contract must represent, at minimum:
 - a separate bootstrap credential reference for SQL-password startup access only for SQL-password SQL Server startup, with protected material stored outside the Hive database;
 - backend-specific database/storage initialization and migration policy where exposed by the platform.
 
-V1 persistence is designed to support two deployment profiles: SQL Server for server/serious deployments and Embedded for self-contained local/desktop installations. 1.18A is the implementation slice that adds Embedded and brings it to parity with the current SQL Server-backed persistence surface. LocalDB remains a SQL Server deployment form for local development. Higher-level phases must consume the common persistence contracts rather than branch their domain/application behavior on the selected backend.
+V1 persistence is designed to support two deployment profiles: SQL Server for server/serious deployments and Embedded for self-contained local/desktop installations. 1.18A is the implementation phase that adds Embedded and brings it to parity with the current SQL Server-backed persistence surface. LocalDB remains a SQL Server deployment form for local development. Higher-level phases must consume the common persistence contracts rather than branch their domain/application behavior on the selected backend.
 
 The configuration surface is intentionally separated from the low-level connection implementation:
 - `Hive.Management` owns the management/configuration contract exposed to hosts and Settings UI;
@@ -147,7 +147,7 @@ Secret records must be migrated through the Secret Store contract: plaintext is 
 
 Migration is full-data transfer, not merge or synchronization. The destination must be validated as an appropriate empty/new migration target; partial transfer, best-effort merging, or silent conflict replacement is not permitted. The source remains unchanged after a successful migration. Destination verification must prove the transferred resource identities and relationships before the user activates the destination backend. Migration must not silently change the active backend; activation remains an explicit Persistence Settings operation.
 
-The implementation currently pins dbup-sqlserver 7.2.0 and Microsoft.Data.SqlClient 7.1.0. The first is the current stable DbUp SQL Server package and the second is the current stable Microsoft SQL client at the time this slice is implemented. citeturn544673view0turn598125search0
+The repository currently pins `dbup-sqlserver` 7.2.0 and `Microsoft.Data.SqlClient` 7.1.0 for the SQL Server persistence implementation.
 
 #### Schema version and migration journal
 
