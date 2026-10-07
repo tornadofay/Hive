@@ -7,4 +7,5 @@ internal static class EmbeddedPersistenceSchema
     public const int SchemaRowId = 1;
     public const string SchemaVersionTableName = "HiveSchemaVersion";
     public const string MigrationJournalTableName = "HiveMigrationJournal";
+    public const string MigrationVersionColumnName = "MigrationVersion";
 }
