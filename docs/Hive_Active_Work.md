@@ -43,9 +43,10 @@ The implementation includes the SQLite provider dependency, application-owned fi
 
 Required developer verification: `EmbeddedPersistenceFoundationTests` focused run, followed by the broader `Hive.Tests` suite. The gate must cover clean initialization, schema/version behavior, reopen/recovery, corruption/incompatibility handling, path/permission failures, locking/busy behavior, rollback, cancellation, and disposal.
 
+
 ## Latest verification failure
 
-Developer reported compile failures in Slice 2: CS8602 nullable dereferences in Hive.Tests lines 23, 88, 97, 220, 307, 425; CS8602 in Hive.Persistence line 157; and CS9135, CS8121, CS0029 in the NormalizeStoragePath catch filter at lines 293-294. Remediation is limited to these Slice 2 nullable-flow and catch-filter errors.
+Developer reported the required broader `Hive.Tests` verification failed after the Slice 2 remediation: **736 tests run, 636 passed, 100 failed, 0 skipped**, in approximately 51.4 seconds. The reported failures span Provider Persistence, WorkItem Management, and Hive Persistence integration tests, with the common failure surface `Hive database migration failed. DbUp did not provide a migration error message.` The focused Slice 2 developer verification result was not separately supplied. Remediation is now required and is limited to the recorded Slice 2 regression/failure boundary: determine and correct the Embedded Slice 2 change that causes the existing SQL Server/DbUp migration path or its shared persistence boundary to fail, while preserving Slice 2 exclusions and existing SQL Server behavior. No later-slice work is authorized.
 
 ## Completed same-slice remediation
 
