@@ -392,7 +392,7 @@ public sealed class StructuredExtractionManagementIntegrationTests
                                                         spreadsheet + "is",
                                                         new XElement(
                                                             spreadsheet + "t",
-                                                            value)))))))));
+                                                            value)))))))))));
         }
 
         return memory.ToArray();
