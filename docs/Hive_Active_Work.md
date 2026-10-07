@@ -26,11 +26,11 @@ Verification gate:
 - SQL Server remains regression-safe;
 - developer verification is required before Slice 4 may be activated.
 
-Verification status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Verification status: **PENDING**
 
 Focused verification target: Embedded persistence parity tests plus the broader Hive.Tests suite.
 
-Developer verification failure received on 2026-10-07: developer ran the broader Hive.Tests suite and reported 739 tests total, 729 passed, 10 failed, 0 skipped. All reported failures are currently in Embedded persistence foundation/parity paths and fail with `The Embedded persistence metadata is inconsistent or incomplete.` The failures include path normalization initialization, future-schema rejection, dispose-after-use, and all three EmbeddedPersistenceParityTests backend-construction paths. Same-slice remediation is limited to the Embedded metadata/schema lifecycle root cause and directly related persistence consistency fixes.
+Developer verification failure received on 2026-10-07: developer ran the broader Hive.Tests suite and reported 739 tests total, 729 passed, 10 failed, 0 skipped. The reported failures all surfaced as `The Embedded persistence metadata is inconsistent or incomplete.` Same-slice remediation identified and corrected the root cause in `EmbeddedPersistenceMigrator.ReadStateAsync`: initialized databases were incorrectly checked for non-metadata tables as though they were uninitialized, causing every migrated application table to be classified as unexpected. The fix keeps the unexpected-table check only for the completely uninitialized state, while schema/journal consistency remains authoritative for initialized and future-schema databases. No build or test execution was performed by the agent.
 
 Exact rerun targets: rebuild/compile `Hive.Persistence` and `Hive.Tests`, run `EmbeddedPersistenceParityTests`, then run the full `Hive.Tests` suite.
 
