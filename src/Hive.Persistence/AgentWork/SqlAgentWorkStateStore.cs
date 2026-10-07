@@ -979,7 +979,8 @@ internal sealed class SqlAgentWorkStateStore :
                             updated.Dependencies
                                 .Select(static value => value.Value)
                                 .ToArray(),
-                            ToBindingDocument(updated.WorkItemBinding))));
+                            ToBindingDocument(updated.WorkItemBinding))),
+                        changedAtUtc);
 
                     var stateUpdate = UpdateState(
                         connection,
@@ -1076,7 +1077,9 @@ internal sealed class SqlAgentWorkStateStore :
                         return transitioned;
 
                     var updated = transitioned.Value!;
-                    var updatedRow = CreateQuestionRow(updated);
+                    var updatedRow = CreateQuestionRow(
+                        updated,
+                        changedAtUtc);
 
                     var stateUpdate = UpdateState(
                         connection,
@@ -1503,7 +1506,8 @@ internal sealed class SqlAgentWorkStateStore :
         int stateStatus,
         string? stateKey,
         DateTimeOffset? expiresAtUtc,
-        string stateJson) =>
+        string stateJson,
+        DateTimeOffset? updatedAtUtc = null) =>
         new(
             kind,
             stateId,
@@ -1527,10 +1531,11 @@ internal sealed class SqlAgentWorkStateStore :
             stateKey,
             expiresAtUtc,
             stateJson,
-            lifecycle.ChangedAtUtc);
+            updatedAtUtc ?? lifecycle.ChangedAtUtc);
 
     private static StateRow CreateQuestionRow(
-        Question question) =>
+        Question question,
+        DateTimeOffset? updatedAtUtc = null) =>
         CreateResourceRow(
             WorkStateKind.Question,
             question.AskedByAgentId,
@@ -1550,7 +1555,8 @@ internal sealed class SqlAgentWorkStateStore :
                 (int)question.Status,
                 question.Answer,
                 question.AnsweredByAgentId?.Value,
-                question.AnsweredByRuntimeId?.Value)));
+                question.AnsweredByRuntimeId?.Value)),
+            updatedAtUtc);
 
     private static ResourceEnvelope<ObjectiveId> RestoreObjectiveResource(
         StateRow row) =>
