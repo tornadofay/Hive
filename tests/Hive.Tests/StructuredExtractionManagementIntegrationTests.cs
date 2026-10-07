@@ -324,7 +324,7 @@ public sealed class StructuredExtractionManagementIntegrationTests
                                 "/xl/worksheets/sheet1.xml"),
                             new XAttribute(
                                 "ContentType",
-                                "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"))));
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml")))));
 
             WriteBytes(
                 archive,
@@ -346,7 +346,7 @@ public sealed class StructuredExtractionManagementIntegrationTests
                                 new XAttribute("sheetId", 1),
                                 new XAttribute(
                                     officeRelationships + "id",
-                                    "rId1")))));
+                                    "rId1"))))));
 
             WriteXml(
                 archive,
