@@ -315,6 +315,19 @@ public sealed class StructuredExtractionEngine
             errors);
     }
 
+    public static string ComputeContextFingerprint(
+        string sourceFingerprint,
+        string targetFingerprint)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceFingerprint);
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetFingerprint);
+
+        return Sha256(
+            sourceFingerprint.Trim() +
+            "|" +
+            targetFingerprint.Trim());
+    }
+
     public static string ComputeTargetSchemaFingerprint(
         StructuredTargetSchema targetSchema)
     {
@@ -350,6 +363,13 @@ public sealed class StructuredExtractionEngine
 
         return Sha256(normalized);
     }
+
+    private static StructuredCandidateField ConvertValue(
+        StructuredTargetField targetField,
+        string value) =>
+        StructuredExtractionValueNormalizer.Normalize(
+            targetField,
+            value);
 
     private static StructuredCandidateField CreateMappedField(
         StructuredTargetField targetField,
