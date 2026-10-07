@@ -569,7 +569,7 @@ public sealed record StructuredExtractionItemResult
     public StructuredExtractionItemResult(
         int itemIndex,
         string fileName,
-        InputSourceKind sourceKind,
+        InputSourceKind? sourceKind,
         StructuredExtractionItemStatus status,
         StructuredCandidate? candidate = null,
         string? errorCode = null,
@@ -587,8 +587,11 @@ public sealed record StructuredExtractionItemResult
 
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
 
-        if (!Enum.IsDefined(sourceKind))
+        if (sourceKind is { } definedSourceKind &&
+            !Enum.IsDefined(definedSourceKind))
+        {
             throw new ArgumentOutOfRangeException(nameof(sourceKind));
+        }
 
         if (!Enum.IsDefined(status))
             throw new ArgumentOutOfRangeException(nameof(status));
@@ -613,6 +616,11 @@ public sealed record StructuredExtractionItemResult
             StructuredExtractionItemStatus.Accepted or
             StructuredExtractionItemStatus.Uncertain)
         {
+            if (sourceKind is null)
+                throw new ArgumentException(
+                    "A source kind is required for successful extraction results.",
+                    nameof(sourceKind));
+
             if (candidate is null)
                 throw new ArgumentException(
                     "A candidate is required for this item status.",
@@ -659,7 +667,7 @@ public sealed record StructuredExtractionItemResult
 
     public string FileName { get; }
 
-    public InputSourceKind SourceKind { get; }
+    public InputSourceKind? SourceKind { get; }
 
     public StructuredExtractionItemStatus Status { get; }
 
