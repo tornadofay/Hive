@@ -634,7 +634,7 @@ public sealed class EmbeddedPersistenceFoundationTests
     [Fact]
     public async Task CancellationBeforeInitialization_IsHonoredWithoutCreatingStorage()
     {
-        var path = CreatePath("cancel");
+        var path = CreateUncreatedPath("cancel");
         var parent = Path.GetDirectoryName(path)!;
 
         try
@@ -722,6 +722,16 @@ public sealed class EmbeddedPersistenceFoundationTests
     private static string CreatePath(string name)
     {
         var directory = CreateDirectory(name);
+        return Path.Combine(directory, "hive.db");
+    }
+
+    private static string CreateUncreatedPath(string name)
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            "hive-embedded-foundation",
+            $"{name}-{Guid.NewGuid():N}");
+
         return Path.Combine(directory, "hive.db");
     }
 
