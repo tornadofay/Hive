@@ -743,7 +743,7 @@ internal sealed class SqlAgentWorkStateStore :
             request.Source?.Identity is { } sourceIdentity
                 ? (Guid?)sourceIdentity
                 : null,
-            (int)ResourceLifecycleStatus.Active,
+            ResourceLifecycleStatus.Active,
             request.Provenance.CreatedAtUtc,
             0,
             null,
@@ -1730,7 +1730,7 @@ internal sealed class SqlAgentWorkStateStore :
             row.StateJson);
 
         var source = document.Source is { } reference
-            ? new ResourceReference(
+            ? (ResourceReference?)new ResourceReference(
                 (ResourceKind)reference.Kind,
                 reference.Identity)
             : null;
