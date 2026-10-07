@@ -1,0 +1,477 @@
+using System.Data;
+using System.Text.Json;
+using Hive.Core;
+using Microsoft.Data.Sqlite;
+
+namespace Hive.Persistence;
+
+internal abstract class EmbeddedSqliteResourceStoreBase
+{
+    protected const string ScopeAccessPredicate = """
+        (
+            [ScopeKind] = @GlobalScope
+            OR ([ScopeKind] = @TenantScope AND @TenantId IS NOT NULL AND [ScopeIdentity] = @TenantId)
+            OR ([ScopeKind] = @UserScope AND @UserId IS NOT NULL AND [ScopeIdentity] = @UserId)
+            OR ([ScopeKind] = @WorkspaceScope AND @WorkspaceId IS NOT NULL AND [ScopeIdentity] = @WorkspaceId)
+            OR ([ScopeKind] = @AgentScope AND @AgentId IS NOT NULL AND [ScopeIdentity] = @AgentId)
+            OR ([ScopeKind] = @RuntimeScope AND @RuntimeId IS NOT NULL AND [ScopeIdentity] = @RuntimeId)
+            OR ([ScopeKind] = @ExecutionScope AND @ExecutionId IS NOT NULL AND [ScopeIdentity] = @ExecutionId)
+        )
+        """;
+
+    protected static readonly JsonSerializerOptions JsonOptions =
+        SqlResourceStoreCommon.JsonOptions;
+
+    protected readonly EmbeddedPersistenceDatabase _options;
+    protected readonly IClock _clock;
+
+    protected EmbeddedSqliteResourceStoreBase(
+        EmbeddedPersistenceDatabase options,
+        IClock? clock = null)
+    {
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _clock = clock ?? SystemClock.Instance;
+    }
+
+    protected static IReadOnlyDictionary<string, string> DeserializeMetadata(
+        string json) =>
+        SqlResourceStoreCommon.DeserializeMetadata(json);
+
+    protected static IReadOnlyList<CapabilityStateEntry> DeserializeCapabilities(
+        string json)
+    {
+        var items = JsonSerializer.Deserialize<List<CapabilityPersistenceItem>>(
+            json,
+            JsonOptions);
+
+        if (items is null)
+            throw new InvalidOperationException("Persisted capability JSON is invalid.");
+
+        var capabilities = new List<CapabilityStateEntry>(items.Count);
+
+        foreach (var item in items)
+        {
+            if (string.IsNullOrWhiteSpace(item.Key))
+                throw new InvalidOperationException("Persisted capability key is invalid.");
+
+            if (!Enum.IsDefined(item.State))
+                throw new InvalidOperationException("Persisted capability state is invalid.");
+
+            capabilities.Add(
+                new CapabilityStateEntry(
+                    new CapabilityKey(item.Key),
+                    item.State));
+        }
+
+        return capabilities;
+    }
+
+    protected static string SerializeMetadata(
+        IReadOnlyDictionary<string, string> metadata) =>
+        SqlResourceStoreCommon.SerializeMetadata(metadata);
+
+    protected static string SerializeCapabilities(
+        IReadOnlyList<CapabilityStateEntry> capabilities) =>
+        JsonSerializer.Serialize(
+            capabilities.Select(
+                capability => new CapabilityPersistenceItem(
+                    capability.Capability.Value,
+                    capability.State)),
+            JsonOptions);
+
+    protected static Error? ValidateCreate<TIdentity>(
+        ResourceEnvelope<TIdentity> resource,
+        ResourceKind expectedKind,
+        ResourceAccessContext accessContext,
+        string resourceName)
+        where TIdentity : struct
+    {
+        ValidateAccessContext(accessContext);
+
+        if (resource.Kind != expectedKind)
+        {
+            return Error.Validation(
+                "hive.resource.kind-invalid",
+                $"The {resourceName} resource kind is invalid.");
+        }
+
+        if (resource.Version != ResourceVersion.Initial)
+        {
+            return Error.Validation(
+                "hive.resource.version-invalid",
+                $"A new {resourceName} must start at resource version 1.");
+        }
+
+        if (resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+        {
+            return Error.Validation(
+                "hive.resource.lifecycle-invalid",
+                $"A new {resourceName} must start in Active lifecycle state.");
+        }
+
+        return ValidateAccess(resource, accessContext, resourceName);
+    }
+
+    protected static Error? ValidateUpdate<TIdentity>(
+        ResourceEnvelope<TIdentity> resource,
+        ResourceKind expectedKind,
+        ResourceAccessContext accessContext,
+        string resourceName)
+        where TIdentity : struct
+    {
+        ValidateAccessContext(accessContext);
+
+        if (resource.Kind != expectedKind)
+        {
+            return Error.Validation(
+                "hive.resource.kind-invalid",
+                $"The {resourceName} resource kind is invalid.");
+        }
+
+        if (resource.Version.Value <= 0)
+        {
+            return Error.Validation(
+                "hive.resource.version-invalid",
+                $"The {resourceName} resource version is invalid.");
+        }
+
+        return ValidateAccess(resource, accessContext, resourceName);
+    }
+
+    protected static Error? ValidateAccess<TIdentity>(
+        ResourceEnvelope<TIdentity> resource,
+        ResourceAccessContext accessContext,
+        string resourceName)
+        where TIdentity : struct
+    {
+        if (resource.Owner != accessContext.PrincipalId)
+        {
+            return new Error(
+                "hive.resource.owner-forbidden",
+                ErrorCategory.Forbidden,
+                $"The current principal does not own the {resourceName}.");
+        }
+
+        return resource.Scope.Matches(accessContext)
+            ? null
+            : new Error(
+                "hive.resource.scope-forbidden",
+                ErrorCategory.Forbidden,
+                $"The current access context is outside the {resourceName} scope.");
+    }
+
+    protected static void ValidateAccessContext(ResourceAccessContext accessContext)
+    {
+        ArgumentNullException.ThrowIfNull(accessContext);
+
+        if (accessContext.PrincipalId is null ||
+            accessContext.DeploymentId is null)
+        {
+            throw new InvalidOperationException(
+                "A deployment and principal are required for provider resource access.");
+        }
+    }
+
+    protected async Task<Result<T>> ExecuteAsync<T>(
+        string resourceName,
+        CancellationToken cancellationToken,
+        Func<SqliteConnection, Task<Result<T>>> operation)
+    {
+        try
+        {
+            await using var connection =
+                await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+
+            return await operation(connection).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (SqliteException exception) when (IsConstraintConflict(exception))
+        {
+            return Result<T>.Failure(
+                Conflict(
+                    $"hive.{resourceName.Replace(' ', '-')}.duplicate",
+                    $"The {resourceName} identity or key already exists."));
+        }
+        catch (SqliteException exception)
+        {
+            return Result<T>.Failure(ToSqlError(resourceName, exception));
+        }
+        catch (ConcurrencyException)
+        {
+            return Result<T>.Failure(
+                Concurrency(
+                    $"hive.{resourceName.Replace(' ', '-')}.concurrency",
+                    $"The {resourceName} changed before the operation completed."));
+        }
+        catch (Exception exception)
+        {
+            return Result<T>.Failure(ToInvalidStateError(resourceName, exception));
+        }
+    }
+
+    protected async Task<Result<T>> ExecuteInTransactionAsync<T>(
+        string resourceName,
+        CancellationToken cancellationToken,
+        Func<SqliteConnection, SqliteTransaction, Task<Result<T>>> operation)
+    {
+        try
+        {
+            await using var connection =
+                await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+
+            await using var transaction =
+                connection.BeginTransaction(IsolationLevel.Serializable, deferred: false);
+
+            var result = await operation(connection, transaction).ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                await transaction.CommitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await transaction.RollbackAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (SqliteException exception) when (IsConstraintConflict(exception))
+        {
+            return Result<T>.Failure(
+                Conflict(
+                    $"hive.{resourceName.Replace(' ', '-')}.duplicate",
+                    $"The {resourceName} identity or key already exists."));
+        }
+        catch (SqliteException exception)
+        {
+            return Result<T>.Failure(ToSqlError(resourceName, exception));
+        }
+        catch (ConcurrencyException)
+        {
+            return Result<T>.Failure(
+                Concurrency(
+                    $"hive.{resourceName.Replace(' ', '-')}.concurrency",
+                    $"The {resourceName} changed before the operation completed."));
+        }
+        catch (Exception exception)
+        {
+            return Result<T>.Failure(ToInvalidStateError(resourceName, exception));
+        }
+    }
+
+    protected Task<SqliteConnection> OpenConnectionAsync(
+        CancellationToken cancellationToken) =>
+        _options.OpenConnectionAsync(cancellationToken);
+
+    protected SqliteCommand CreateCommand(
+        SqliteConnection connection,
+        string commandText,
+        SqliteTransaction? transaction = null) =>
+        new(commandText, connection, transaction)
+        {
+            CommandTimeout = _options.CommandTimeoutSeconds
+        };
+
+    protected static void AddResourceParameters<TIdentity>(
+        SqliteCommand command,
+        ResourceEnvelope<TIdentity> resource)
+        where TIdentity : struct
+    {
+        command.Parameters.Add(GuidParameter("@OwnerPrincipalId", resource.Owner.Value));
+        command.Parameters.Add(IntParameter("@ScopeKind", (int)resource.Scope.Kind));
+        command.Parameters.Add(GuidParameter("@ScopeIdentity", resource.Scope.Identity));
+        command.Parameters.Add(
+            SqlParameter("@ResourceVersion", SqlDbType.BigInt, resource.Version.Value));
+        command.Parameters.Add(
+            GuidParameter("@CreatedByPrincipalId", resource.Provenance.CreatedBy.Value));
+        command.Parameters.Add(
+            DateTimeParameter("@CreatedAtUtc", resource.Provenance.CreatedAtUtc));
+        command.Parameters.Add(
+            GuidParameter("@CorrelationId", resource.Provenance.CorrelationId.Value));
+        command.Parameters.Add(
+            GuidParameter("@CausationId", resource.Provenance.CausationId?.Value));
+        command.Parameters.Add(
+            IntParameter("@LifecycleStatus", (int)resource.Lifecycle.Status));
+        command.Parameters.Add(
+            DateTimeParameter("@LifecycleChangedAtUtc", resource.Lifecycle.ChangedAtUtc));
+        command.Parameters.Add(
+            SqlParameter(
+                "@MetadataJson",
+                SqlDbType.NVarChar,
+                -1,
+                SerializeMetadata(resource.Metadata)));
+    }
+
+    protected static SqliteParameter GuidParameter(string name, Guid? value) =>
+        new(name, SqliteType.Text)
+        {
+            Value = value?.ToString("D") ?? DBNull.Value
+        };
+
+    protected static SqliteParameter IntParameter(string name, int value) =>
+        new(name, SqliteType.Integer)
+        {
+            Value = value
+        };
+
+    protected static SqliteParameter DateTimeParameter(
+        string name,
+        DateTimeOffset value) =>
+        new(name, SqliteType.Text)
+        {
+            Value = value.UtcDateTime.ToString(
+                "O",
+                System.Globalization.CultureInfo.InvariantCulture)
+        };
+
+    protected static SqliteParameter SqlParameter(
+        string name,
+        SqliteType type,
+        int size,
+        object? value) =>
+        new(name, type, size)
+        {
+            Value = value ?? DBNull.Value
+        };
+
+    protected static SqliteParameter SqlParameter(
+        string name,
+        SqliteType type,
+        object? value) =>
+        new(name, type)
+        {
+            Value = value ?? DBNull.Value
+        };
+
+    protected static void AddAccessParameters(
+        SqliteCommand command,
+        ResourceAccessContext accessContext)
+    {
+        command.Parameters.Add(GuidParameter("@PrincipalId", accessContext.PrincipalId!.Value.Value));
+        command.Parameters.Add(GuidParameter("@TenantId", accessContext.TenantId?.Value));
+        command.Parameters.Add(GuidParameter("@UserId", accessContext.UserId?.Value));
+        command.Parameters.Add(GuidParameter("@WorkspaceId", accessContext.WorkspaceId?.Value));
+        command.Parameters.Add(GuidParameter("@AgentId", accessContext.AgentId?.Value));
+        command.Parameters.Add(GuidParameter("@RuntimeId", accessContext.RuntimeId?.Value));
+        command.Parameters.Add(GuidParameter("@ExecutionId", accessContext.ExecutionId?.Value));
+        command.Parameters.Add(IntParameter("@GlobalScope", (int)ResourceScopeKind.Global));
+        command.Parameters.Add(IntParameter("@TenantScope", (int)ResourceScopeKind.Tenant));
+        command.Parameters.Add(IntParameter("@UserScope", (int)ResourceScopeKind.User));
+        command.Parameters.Add(IntParameter("@WorkspaceScope", (int)ResourceScopeKind.Workspace));
+        command.Parameters.Add(IntParameter("@AgentScope", (int)ResourceScopeKind.Agent));
+        command.Parameters.Add(IntParameter("@RuntimeScope", (int)ResourceScopeKind.Runtime));
+        command.Parameters.Add(IntParameter("@ExecutionScope", (int)ResourceScopeKind.Execution));
+    }
+
+    protected static ResourceEnvelope<TIdentity> ReadResourceEnvelope<TIdentity>(
+        SqliteDataReader reader,
+        ResourceKind expectedKind,
+        string identityColumn,
+        Func<Guid, TIdentity> identityFactory)
+        where TIdentity : struct
+    {
+        var identity = identityFactory(reader.GetGuid(reader.GetOrdinal(identityColumn)));
+        var owner = new PrincipalId(reader.GetGuid(reader.GetOrdinal("OwnerPrincipalId")));
+
+        var scopeKind = (ResourceScopeKind)reader.GetInt32(reader.GetOrdinal("ScopeKind"));
+        Guid? scopeIdentity = reader.IsDBNull(reader.GetOrdinal("ScopeIdentity"))
+            ? null
+            : reader.GetGuid(reader.GetOrdinal("ScopeIdentity"));
+
+        if (!Enum.IsDefined(scopeKind))
+            throw new InvalidOperationException("Persisted resource scope kind is invalid.");
+
+        var scope = scopeKind switch
+        {
+            ResourceScopeKind.Global when scopeIdentity is null => ResourceScope.Global(),
+            ResourceScopeKind.Tenant when scopeIdentity is not null => ResourceScope.Tenant(new TenantId(scopeIdentity.Value)),
+            ResourceScopeKind.User when scopeIdentity is not null => ResourceScope.User(new UserId(scopeIdentity.Value)),
+            ResourceScopeKind.Workspace when scopeIdentity is not null => ResourceScope.Workspace(new WorkspaceId(scopeIdentity.Value)),
+            ResourceScopeKind.Agent when scopeIdentity is not null => ResourceScope.Agent(new AgentId(scopeIdentity.Value)),
+            ResourceScopeKind.Runtime when scopeIdentity is not null => ResourceScope.Runtime(new RuntimeId(scopeIdentity.Value)),
+            ResourceScopeKind.Execution when scopeIdentity is not null => ResourceScope.Execution(new ExecutionId(scopeIdentity.Value)),
+            _ => throw new InvalidOperationException("Persisted resource scope state is invalid.")
+        };
+
+        var version = new ResourceVersion(
+            reader.GetInt64(reader.GetOrdinal("ResourceVersion")));
+
+        var provenance = new ResourceProvenance(
+            new PrincipalId(reader.GetGuid(reader.GetOrdinal("CreatedByPrincipalId"))),
+            reader.GetDateTime(reader.GetOrdinal("CreatedAtUtc")),
+            new CorrelationId(reader.GetGuid(reader.GetOrdinal("CorrelationId"))),
+            reader.IsDBNull(reader.GetOrdinal("CausationId"))
+                ? null
+                : new CausationId(reader.GetGuid(reader.GetOrdinal("CausationId"))));
+
+        var lifecycleStatus = (ResourceLifecycleStatus)reader.GetInt32(
+            reader.GetOrdinal("LifecycleStatus"));
+
+        if (!Enum.IsDefined(lifecycleStatus))
+            throw new InvalidOperationException("Persisted resource lifecycle state is invalid.");
+
+        var lifecycle = new ResourceLifecycle(
+            lifecycleStatus,
+            reader.GetDateTime(reader.GetOrdinal("LifecycleChangedAtUtc")));
+
+        var metadata = DeserializeMetadata(
+            reader.GetString(reader.GetOrdinal("MetadataJson")));
+
+        return new ResourceEnvelope<TIdentity>(
+            expectedKind,
+            identity,
+            owner,
+            scope,
+            version,
+            provenance,
+            lifecycle,
+            metadata);
+    }
+
+    protected static Error Conflict(string code, string message) =>
+        new(code, ErrorCategory.Conflict, message);
+
+    protected static Error Concurrency(string code, string message) =>
+        new(code, ErrorCategory.Concurrency, message);
+
+    protected static Error NotFound(string code, string message) =>
+        new(code, ErrorCategory.NotFound, message);
+
+    protected static Error Forbidden(string code, string message) =>
+        new(code, ErrorCategory.Forbidden, message);
+
+    protected static Error ToSqlError(string resourceName, SqliteException exception) =>
+        HivePersistenceError.External(
+            $"hive.persistence.{resourceName.Replace(' ', '-')}.sqlite-failure",
+            $"Embedded persistence operation for the {resourceName} failed.",
+            exception);
+
+    protected static Error ToInvalidStateError(
+        string resourceName,
+        Exception exception) =>
+        HivePersistenceError.Internal(
+            $"hive.persistence.{resourceName.Replace(' ', '-')}.invalid-state",
+            $"Persisted {resourceName} state could not be read or validated.",
+            exception);
+
+    private static bool IsConstraintConflict(SqliteException exception) =>
+        exception.SqliteErrorCode == 19 &&
+        exception.SqliteExtendedErrorCode is 1555 or 2067;
+
+    protected sealed class ConcurrencyException : Exception
+    {
+    }
+
+    private sealed record CapabilityPersistenceItem(
+        string Key,
+        CapabilityState State);
+}
