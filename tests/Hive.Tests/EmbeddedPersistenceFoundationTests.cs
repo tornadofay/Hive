@@ -66,7 +66,7 @@ public sealed class EmbeddedPersistenceFoundationTests
                             SELECT COUNT(*)
                             FROM [HiveSchemaVersion]
                             WHERE [SchemaRowId] = 1
-                              AND [SchemaVersion] = 1;
+                              AND [SchemaVersion] = {EmbeddedPersistenceSchema.CurrentSchemaVersion};
                             """),
                         System.Globalization.CultureInfo.InvariantCulture));
 
