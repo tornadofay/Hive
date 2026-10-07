@@ -105,7 +105,11 @@ Every known capability uses the same state-selector column. **Current** is the e
 
 This is the implemented Phase 1.16 follow-up capability presentation. See [Phase 1.16 Follow-Up — Model Information](../plan/Phase1/1.16-Follow-Up.md) for the detailed scope and verification contract.
 
-The Persistence page is one global `HivePersistenceConfiguration` editor with a backend selector:
+The Persistence page is one global `HivePersistenceConfiguration` editor using the existing HiveTabControl:
+
+`[ Database Setup ] [ Data Migration ]`
+
+**Database Setup** contains the backend selector:
 
 `Backend: [Embedded | SQL Server]`
 
@@ -115,7 +119,14 @@ For **SQL Server**, the Server / instance field remains a normal free-form text 
 
 Save and readiness/connection Test remain non-destructive. The explicit `Initialize Hive` lifecycle action may create or initialize the selected persistence backend when allowed and apply its schema migrations. Initialization must never occur implicitly from Save, Test, or ordinary Settings-page navigation.
 
-The Persistence page consumes Management operations only. It must not construct SQLite/SQL Server connections, expose raw credentials, or implement backend-specific persistence rules.
+**Data Migration** is the complete bidirectional migration surface:
+
+`SQL Server → Embedded`
+`Embedded → SQL Server`
+
+It transfers **All Hive Data** as one migration scope. In 1.18A, migration is a full logical transfer of every Hive-owned durable record represented by the current persistence contracts, not just Providers/WorkItems. It provides source/destination status, destination preflight validation, bounded progress/status reporting, and a final verification result. It must not offer partial resource-family migration, merge behavior, destructive overwrite, or live synchronization. A non-empty/incompatible destination is rejected.
+
+The Persistence page consumes Management operations only. It must not construct SQLite/SQL Server connections, expose raw credentials, or implement backend-specific persistence rules. A successful migration does not automatically activate the destination backend; activation remains explicit in Database Setup.
 
 ## Structured extraction and batch input UI
 
