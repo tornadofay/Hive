@@ -17,7 +17,7 @@ public readonly record struct ResourceScope
 {
     private readonly bool _isValid;
 
-    private ResourceScope(ResourceScopeKind kind, Guid? identity)
+    public ResourceScope(ResourceScopeKind kind, Guid? identity)
     {
         if (!Enum.IsDefined(kind))
             throw new ArgumentOutOfRangeException(nameof(kind), kind, "Resource scope kind is invalid.");
