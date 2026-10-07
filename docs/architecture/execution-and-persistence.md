@@ -54,8 +54,8 @@ Hive must never build a second workflow/orchestration engine merely because Hive
 | Language/runtime | C# / .NET 10 only | Single runtime baseline |
 | Agent programming model | Microsoft Agent Framework | Reuse MAF execution/orchestration |
 | Execution model | Ephemeral execution + durable Agent/Hive state + transactional outbox | Execution objects and Agent incarnations may end; durable state survives; a WorkItem is the durable unit of user-visible work and a submission may produce one or multiple WorkItems |
-| Persistence | SQL Server; LocalDB for development | Hive database is isolated from host business data |
-| Vector storage | SQL Server `VECTOR` / `VECTOR_DISTANCE` behind `IVectorStore` | V1 bounded storage/search infrastructure; no separate vector database is required for V1 |
+| Persistence | SQL Server profile + Embedded Persistence Profile; LocalDB for SQL development | Hive database is isolated from host business data; selected backend is a deployment/configuration concern |
+| Vector storage | SQL Server native `VECTOR` for the SQL Server profile + embedded vector implementation behind `IVectorStore` | 1.19 bounded storage/search infrastructure; vector index is derived retrieval data and no separate external vector database is required |
 | Provider adapter | One shared OpenAI-compatible adapter | Compatible providers are configurations, not new adapter implementations |
 | Provider | Vendor/service integration | Transport identity |
 | ProviderAccount | Credential/account/project under Provider | Credential/account boundary |
@@ -68,11 +68,11 @@ Hive must never build a second workflow/orchestration engine merely because Hive
 
 `ProviderAccount` stores only an optional `SecretReference` for provider credential material. Provider connection tests resolve that reference through `Hive.Management` and `ISecretStore`; provider credentials are never stored in ProviderAccount fields, configuration files, diagnostics, or provider-test output.
 
-The Phase 1.12 Settings boundary uses one typed persistence configuration contract containing SQL Server endpoint/port, database identity, authentication mode, non-secret login metadata, optional Secret Store credential reference, connection-security flags, database-initialization policy, and command timeout. `Hive.Management` exposes save/load and connection-test operations. The connection-test boundary must inspect server/database/schema state without creating the database or applying migrations. WinForms settings pages consume only these Management operations.
+The Phase 1.12 Settings boundary uses one typed persistence configuration contract whose selected backend determines the applicable settings. SQL Server retains endpoint/port, database identity, authentication mode, non-secret login metadata, optional Secret Store credential reference, connection-security flags, initialization policy, and command timeout. Embedded mode supplies its local storage location and backend-appropriate initialization/status settings. `Hive.Management` exposes save/load and backend-appropriate readiness/test/initialization operations. WinForms settings pages consume only these Management operations and never construct SQL Server or embedded database connections directly.
 
 Current V1 provider configurations include compatible hosted/local targets such as Groq, OpenRouter, Cloudflare, Cerebras, NVIDIA, Google, and local OpenAI-compatible servers. The adapter contract remains vendor-neutral; adding another compatible provider should normally require configuration, not another transport implementation.
 
-Deferred until a measured requirement exists: Temporal, Dapr, PostgreSQL/pgvector, Elasticsearch/OpenSearch, Akka.NET, Orleans, DiskANN, a custom Hive workflow engine, a separate external secrets-vault architecture, and the selection of a future embedded/local persistence backend. V1 does not require a separate vector database. Building a custom database engine is not assumed; a future embedded mode should prefer a mature embedded persistence technology behind the existing Hive persistence/resource contracts unless a measured requirement proves that insufficient.
+Deferred until a measured requirement exists: Temporal, Dapr, PostgreSQL/pgvector, Elasticsearch/OpenSearch, Akka.NET, Orleans, DiskANN, a custom Hive workflow engine, a separate external secrets-vault architecture, and any database engine beyond the supported SQL Server and Embedded profiles. V1 does not require a separate vector database. The Embedded Persistence Profile should use a mature embedded relational technology behind the existing Hive persistence/resource contracts; its vector implementation is a separate 1.19 boundary and must remain replaceable behind `IVectorStore`.
 
 ---
 
