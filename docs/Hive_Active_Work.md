@@ -54,11 +54,11 @@ Implemented in this slice so far:
 - Management facade/service operations for batch creation, processing authorization, processing/retry, mapping review/edit, candidate edit, accepted-subset authorization, and durable reload;
 - public Example Host scenario and focused automated coverage for input selection, contracts, extraction/multimodal behavior, Management mapping reuse, malformed output, and persistence/restart.
 
-The latest developer verification reported 697 tests with 696 passed and 1 failed. The remaining in-scope failure was `StructuredExtractionEngineTests.ImageExtraction_ProducesTypedParentChildCandidateAndSendsImageContent`, where decimal normalization returned `25.50` while the contract test expects canonical `25.5`. The decimal normalization root cause was corrected in `StructuredExtractionValueNormalizer` by using `G29` formatting, preserving numeric value while removing insignificant trailing zeros. The previously reported mapping validation, spreadsheet-row durable-item matching, and vision fixture defects remain corrected. The Example Host structured-extraction scenario has been manually exercised through Accepted and durable Reloaded Accepted with zero business writes. The developer must rerun the focused Phase 1.17 verification and then the full `Hive.Tests` suite.
+The latest developer verification rerun reported 697 tests with 696 passed and 1 failed. The remaining in-scope failure was `StructuredExtractionEngineTests.ImageExtraction_ProducesTypedParentChildCandidateAndSendsImageContent`, where decimal normalization returned `25.50` while the contract test expects canonical `25.5`. The decimal normalization root cause was corrected in `StructuredExtractionValueNormalizer` by using `G29` formatting, preserving numeric value while removing insignificant trailing zeros. The previously reported mapping validation, spreadsheet-row durable-item matching, and vision fixture defects remain corrected. The Example Host structured-extraction scenario has been manually exercised through Accepted and durable Reloaded Accepted with zero business writes. The same failure remains after the decimal-normalizer remediation: image extraction still returns `25.50` while the contract test expects canonical `25.5`. The executed path must be traced and corrected before verification can return to pending.
 
 ## Verification gate
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Required verification before closure, based on the Phase 1.17 plan and repository workflow:
 
