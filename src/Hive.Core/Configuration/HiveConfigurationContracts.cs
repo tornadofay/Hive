@@ -59,7 +59,7 @@ public sealed record HivePersistenceConfiguration
         bool trustServerCertificate,
         bool createDatabaseIfMissing,
         int commandTimeoutSeconds = 30,
-        string? embeddedStoragePath = null)
+        string? storagePath = null)
     {
         if (!Enum.IsDefined(backend))
             throw new ArgumentOutOfRangeException(nameof(backend));
@@ -72,10 +72,10 @@ public sealed record HivePersistenceConfiguration
 
         if (backend == HivePersistenceBackend.Embedded)
         {
-            if (string.IsNullOrWhiteSpace(embeddedStoragePath))
+            if (string.IsNullOrWhiteSpace(storagePath))
                 throw new ArgumentException(
                     "Embedded storage path is required.",
-                    nameof(embeddedStoragePath));
+                    nameof(storagePath));
 
             if (port is not null)
                 throw new ArgumentException(
@@ -128,7 +128,7 @@ public sealed record HivePersistenceConfiguration
             TrustServerCertificate = false;
             CreateDatabaseIfMissing = createDatabaseIfMissing;
             CommandTimeoutSeconds = commandTimeoutSeconds;
-            EmbeddedStoragePath = embeddedStoragePath.Trim();
+            EmbeddedStoragePath = storagePath.Trim();
             return;
         }
 
@@ -175,10 +175,10 @@ public sealed record HivePersistenceConfiguration
                 "A bootstrap credential must not be supplied for Windows integrated authentication.",
                 nameof(bootstrapCredential));
 
-        if (!string.IsNullOrWhiteSpace(embeddedStoragePath))
+        if (!string.IsNullOrWhiteSpace(storagePath))
             throw new ArgumentException(
                 "Embedded storage path is only applicable to Embedded persistence.",
-                nameof(embeddedStoragePath));
+                nameof(storagePath));
 
         Backend = backend;
         ServerName = serverName.Trim();
