@@ -979,7 +979,7 @@ public sealed class EmbeddedAgentDefinitionResourceStore : IAgentDefinitionResou
         Guid? value) =>
         new(name, SqlDbType.UniqueIdentifier)
         {
-            Value = value?.ToString("D") ?? DBNull.Value
+            Value = (object?)value?.ToString("D") ?? DBNull.Value
         };
 
     private static SqlParameter IntParameter(
@@ -1010,7 +1010,7 @@ public sealed class EmbeddedAgentDefinitionResourceStore : IAgentDefinitionResou
 
     private static SqlParameter SqlParameter(
         string name,
-        SqlDbType type,
+        SqliteType type,
         int size,
         object? value) =>
         new(name, type, size)
