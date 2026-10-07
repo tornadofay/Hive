@@ -11,6 +11,80 @@ namespace Hive.Tests;
 public sealed class StructuredExtractionEngineTests
 {
     [Fact]
+    public async Task TextExtraction_ProducesTypedCandidateAndPreservesTextProvenance()
+    {
+        var target = CreateTarget(
+            "engine-text",
+            CapabilityState.Supported,
+            CapabilityState.Supported);
+
+        var handler = new RecordingStructuredResponseHandler(
+            """{"id":"candidate","model":"test-model","choices":[{"message":{"role":"assistant","content":"{\"invoice.number\":\"TXT-1\",\"customer.name\":\"Ada Lovelace\",\"invoice.amount\":25.50,\"lines\":[{\"line.description\":\"Cable\",\"line.quantity\":2}],\"confidence\":0.9}"}}]}""");
+        using var client = new HttpClient(handler);
+        var engine = new StructuredExtractionEngine(client);
+
+        var input = new PreparedTextInput(
+            Guid.NewGuid(),
+            2,
+            "invoice.txt",
+            "text/plain",
+            "Invoice: TXT-1\nCustomer: Ada Lovelace\nAmount: 25.50");
+
+        var result = await engine.ExtractTextAsync(
+            input,
+            CreateSchema(),
+            target);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+
+        var candidate = result.Value!;
+        Assert.True(candidate.IsValid);
+        Assert.Equal(InputSourceKind.Text, candidate.Provenance.SourceKind);
+        Assert.Equal("invoice.txt", candidate.Provenance.FileName);
+        Assert.Equal(target.Id, candidate.Provenance.ExecutionTargetId);
+        Assert.Equal(
+            "TXT-1",
+            candidate.Fields.Single(
+                field => field.FieldId == new SemanticFieldId("invoice.number")).Value);
+        Assert.Equal(
+            "25.5",
+            candidate.Fields.Single(
+                field => field.FieldId == new SemanticFieldId("invoice.amount")).Value);
+        Assert.Contains(
+            "Invoice: TXT-1",
+            handler.LastRequestBody,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task TextExtraction_RejectsExplicitStructuredOutputUnsupported()
+    {
+        var target = CreateTarget(
+            "engine-text-unsupported",
+            CapabilityState.Unsupported,
+            CapabilityState.Unknown);
+
+        var result = await new StructuredExtractionEngine(
+                new HttpClient(
+                    new RecordingStructuredResponseHandler(
+                        """{"id":"unused","choices":[]}""")))
+            .ExtractTextAsync(
+                new PreparedTextInput(
+                    Guid.NewGuid(),
+                    0,
+                    "invoice.txt",
+                    "text/plain",
+                    "Invoice: TXT-1"),
+                CreateSchema(),
+                target);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.structured-extraction.structured-output-unsupported",
+            result.Error!.Code);
+    }
+
+    [Fact]
     public async Task ImageExtraction_ProducesTypedParentChildCandidateAndSendsImageContent()
     {
         var target = CreateTarget(
