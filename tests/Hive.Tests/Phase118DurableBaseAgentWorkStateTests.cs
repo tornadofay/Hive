@@ -288,7 +288,7 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
             fixture.Context,
             fixture.Agent.Id,
             fixture.RuntimeId,
-            request.Value.Id);
+            request.Value!.Id);
 
         Assert.True(requesterRead.IsSuccess, requesterRead.Error?.Message);
 
