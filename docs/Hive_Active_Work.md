@@ -46,24 +46,20 @@ Required developer verification: `EmbeddedPersistenceFoundationTests` focused ru
 
 ## Latest verification failure
 
-Developer reran the required broader `Hive.Tests` suite after the SQL Server migration-resource isolation fix: **736 tests run, 725 passed, 11 failed, 0 skipped**, in approximately 1.3 minutes.
+Developer reran the broader `Hive.Tests` suite after the previous Embedded lifecycle remediation: **736 tests run, 732 passed, 4 failed, 0 skipped**, in approximately 1.5 minutes.
 
-The remaining failures are confined to `EmbeddedPersistenceFoundationTests`. The reported failures are:
-- `CancellationBeforeInitialization_IsHonoredWithoutCreatingStorage`: `Assert.False` expected no storage but observed storage was created.
-- Ten other Embedded foundation tests fail during cleanup because `hive.db` remains locked by another process when `DeleteDatabaseFiles` attempts to delete it. The affected tests include initialization/idempotency, inconsistent metadata, rollback, busy/locking, corruption, reopen/recovery, parent-directory initialization, future-schema handling, disposal, and non-Hive-table rejection.
+The remaining failures are all in `EmbeddedPersistenceFoundationTests`:
+- `FailedMigration_RollsBackScriptAndSchemaVersion`: test cleanup cannot delete `hive.db` because another process still has the file open.
+- `LockedStorage_ProducesBoundedBusyFailure`: test cleanup cannot delete `hive.db` because another process still has the file open.
+- `InitializeAsync_RejectsPreexistingNonHiveTables`: test cleanup cannot delete `hive.db` because another process still has the file open.
+- `InspectAsync_ReturnsCorruptionAsStablePersistenceError`: the stable public error message still contains the substring `SQLite`, violating the test's redaction assertion.
 
-This is a Slice 2 verification failure. Remediation is required before Slice 2 can close and is limited to the Embedded foundation storage lifecycle/cancellation boundary recorded by these failures. No later-slice work is authorized.
+This is a Slice 2 verification failure. Remediation is required before Slice 2 can close and is limited to the Embedded connection/lifecycle and stable-error/redaction boundaries exercised by these failures. No later-slice work is authorized.
 
 ## Completed same-slice remediation
 
-The prior SQL Server migration-resource isolation remediation remains in place at repository checkpoint `c4017103ca4c9d0871e2bb8231b263423d1fc99c4`.
+Previous Slice 2 remediations remain in place: SQL Server DbUp resource isolation and disabling SQLite pooling. The new failure set is narrower and requires correction of the remaining explicit test-owned connection lifecycle leaks and public corruption-error wording.
 
-The remaining Embedded failures were traced to two Slice 2 issues:
-1. `EmbeddedPersistenceDatabase` configured Microsoft.Data.Sqlite connection pooling. On Windows, disposed pooled connections could keep the SQLite database file open after the test-owned connection was disposed, causing later cleanup attempts to fail with a file-in-use IOException. Pooling is now disabled for the application-owned Embedded foundation so connection disposal deterministically releases the file handle.
-2. The cancellation regression test used `CreatePath`, whose helper intentionally creates the parent directory before the test begins. The implementation correctly honored cancellation before storage access, but the test then asserted that the already-existing parent directory did not exist. The test now uses an uncreated path helper so the assertion checks the intended precondition.
+Repository checkpoint: `c74a2acb21ca8c0f37e7b62973ead3d86beb4b8f`.
 
-These changes remain strictly within the Slice 2 connection/lifecycle and cancellation verification boundary.
-
-Repository checkpoint: `3526ef7fb1179a67fe2526b105de47ac3f61ebb9`.
-
-Developer verification is **VERIFICATION PENDING**. Rerun the focused `EmbeddedPersistenceFoundationTests` suite, followed by the full `Hive.Tests` suite.
+Developer verification is **VERIFICATION PENDING**.
