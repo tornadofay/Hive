@@ -83,7 +83,12 @@ public sealed class HiveDatabaseMigrator
                 .JournalToSqlTable(
                     HiveDatabaseSchema.SchemaName,
                     HiveDatabaseSchema.MigrationJournalTableName)
-                .WithScriptsEmbeddedInAssembly(_migrationAssembly)
+                .WithScriptsEmbeddedInAssembly(
+                    _migrationAssembly,
+                    static resourceName =>
+                        resourceName.Contains(
+                            ".Migrations.Scripts.",
+                            StringComparison.OrdinalIgnoreCase))
                 .WithTransactionPerScript()
                 .LogToNowhere()
                 .Build();
