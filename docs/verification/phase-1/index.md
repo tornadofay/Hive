@@ -34,3 +34,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [Off-Work Provider Completion — Slice 3: Runtime Token Usage Foundation — 2026-10-05](off-work-provider-runtime-usage-closure-2026-10-05.md)
 - [Off-Work Provider Completion — Slice 4: Provider Completion Integration & Hardening — 2026-10-05](off-work-provider-completion-integration-hardening-closure-2026-10-05.md)
 - [Off-Work Provider Completion — Slice 4 Revision: Provider Completion Integration & Hardening — 2026-10-05](off-work-provider-completion-integration-hardening-revision-closure-2026-10-05.md)
+- [Off-Work — Model Information UI Polish — 2026-10-07](off-work-model-information-ui-polish-closure-2026-10-07.md)
