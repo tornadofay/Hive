@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: IMPLEMENTATION ACTIVE
+Status: VERIFICATION PENDING
 
 Phase: **1.18A — Embedded Persistence Profile**
 
@@ -37,4 +37,8 @@ Required developer verification after implementation:
 
 `EmbeddedPersistenceFoundationTests` focused run, followed by the broader `Hive.Tests` suite.
 
-The Slice 2 gate must cover clean initialization, schema/version behavior, reopen/recovery, corruption/incompatibility handling, path/permission failures, locking/busy behavior, rollback, cancellation, and disposal. No verification result is claimed until the developer reports the runs.
+The Slice 2 implementation is complete within the authorized boundary. No verification result is claimed until the developer reports the runs.
+
+The implementation includes the SQLite provider dependency, application-owned file lifecycle, bounded path handling, per-connection durability/foreign-key configuration, WAL initialization, deterministic foundation migrations and journal/version metadata, fail-closed metadata validation, stable SQLite/storage errors, cancellation boundaries, reopen recovery, bounded busy/locking behavior, non-destructive foreign-storage rejection, rollback, and disposal coverage.
+
+Required developer verification: `EmbeddedPersistenceFoundationTests` focused run, followed by the broader `Hive.Tests` suite. The gate must cover clean initialization, schema/version behavior, reopen/recovery, corruption/incompatibility handling, path/permission failures, locking/busy behavior, rollback, cancellation, and disposal.
