@@ -32,4 +32,16 @@ public static class HiveEventPersistence
                 options,
                 clock: clock));
     }
+
+    public static HiveEventPersistenceComposition CreateEmbedded(
+        EmbeddedPersistenceDatabase database,
+        IClock? clock = null)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+
+        return new HiveEventPersistenceComposition(
+            new EmbeddedEventPersistenceStore(
+                database,
+                clock: clock));
+    }
 }
