@@ -180,6 +180,23 @@ public sealed class StructuredExtractionManagementIntegrationTests
             item => Assert.Equal(
                 StructuredExtractionItemStatus.Accepted,
                 item.Status));
+
+        var reloaded = await management.GetStructuredExtractionBatchAsync(
+            final.Value.Id,
+            context);
+
+        Assert.True(reloaded.IsSuccess, reloaded.Error?.Message);
+
+        var reloadedText = Assert.Single(
+            reloaded.Value!.Items,
+            item => item.SourceKind == InputSourceKind.Text);
+        Assert.Equal(
+            StructuredExtractionItemStatus.Accepted,
+            reloadedText.Status);
+        Assert.Equal(
+            "TXT-1",
+            reloadedText.Candidate!.Fields.Single(
+                field => field.FieldId == new SemanticFieldId("invoice.number")).Value);
     }
 
     private static StructuredTargetSchema CreateSchema() =>
