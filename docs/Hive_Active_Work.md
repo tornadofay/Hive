@@ -33,13 +33,6 @@ Developer-reported Slice 1 compile failures and the subsequent verification asse
 - corrected the missing closing parenthesis in `src/Hive.Persistence/Database/HiveDatabaseOptions.cs`;
 - aligned the Embedded persistence storage-path validation parameter name in `src/Hive.Core/Configuration/HiveConfigurationContracts.cs`.
 
-## Completed same-slice remediation
-
-Developer-reported Slice 1 compile failures were remediated:
-
-- corrected the malformed raw/interpolated JSON test string in `tests/Hive.Tests/HiveConfigurationTests.cs`;
-- corrected the missing closing parenthesis in `src/Hive.Persistence/Database/HiveDatabaseOptions.cs`.
-
 ## Verification gate
 
 Developer re-verification is now required. Rerun exactly:
