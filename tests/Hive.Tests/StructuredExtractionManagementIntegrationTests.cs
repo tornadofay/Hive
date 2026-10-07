@@ -74,14 +74,23 @@ public sealed class StructuredExtractionManagementIntegrationTests
                         ["Invoice Number", "Customer", "Amount", "Line Description", "Quantity"],
                         ["INV-1", "Ada", "10.50", "Widget", "2"],
                         ["INV-2", "Grace", "20.00", "Cable", "3"]
-                    ]))
+                    ])),
+            new InputItem(
+                "invoice.txt",
+                "text/plain",
+                Encoding.UTF8.GetBytes(
+                    "Invoice: TXT-1\nCustomer: Text Customer\nAmount: 30.50"))
         ]);
 
         var prepared = await management.PrepareInputAsync(
             submission,
             context);
         Assert.True(prepared.IsSuccess, prepared.Error?.Message);
-        Assert.Equal(2, prepared.Value!.PreparedInputs.Count);
+        Assert.Equal(3, prepared.Value!.PreparedInputs.Count);
+        Assert.Contains(
+            prepared.Value.PreparedInputs,
+            input => input is PreparedTextInput text &&
+                     text.FileName == "invoice.txt");
 
         var created = await management.CreateStructuredExtractionBatchAsync(
             submission,
@@ -102,7 +111,7 @@ public sealed class StructuredExtractionManagementIntegrationTests
             context);
 
         Assert.True(processed.IsSuccess, processed.Error?.Message);
-        Assert.Equal(1, handler.CallCount);
+        Assert.Equal(2, handler.CallCount);
         Assert.Single(processed.Value!.Mappings);
         Assert.Equal(
             SpreadsheetMappingReviewState.Proposed,
@@ -113,6 +122,16 @@ public sealed class StructuredExtractionManagementIntegrationTests
             item => Assert.Equal(
                 StructuredExtractionItemStatus.Succeeded,
                 item.Status));
+        var textItem = Assert.Single(
+            processed.Value.Items,
+            item => item.SourceKind == InputSourceKind.Text);
+        Assert.Equal(
+            StructuredExtractionItemStatus.Succeeded,
+            textItem.Status);
+        Assert.Equal(
+            "TXT-1",
+            textItem.Candidate!.Fields.Single(
+                field => field.FieldId == new SemanticFieldId("invoice.number")).Value);
 
         var acceptedMapping = await management.UpdateStructuredExtractionMappingAsync(
             processed.Value.Id,
@@ -154,7 +173,7 @@ public sealed class StructuredExtractionManagementIntegrationTests
             StructuredExtractionBatchStatus.Accepted,
             final.Value!.Status);
         Assert.Equal(
-            [0, 1],
+            [0, 1, 2],
             final.Value.AcceptedItemIndexes.ToArray());
         Assert.All(
             final.Value.Items,
@@ -454,21 +473,32 @@ public sealed class StructuredExtractionManagementIntegrationTests
     {
         public int CallCount { get; private set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(
+        protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             CallCount++;
 
-            return Task.FromResult(
-                new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent(
-                        """{"id":"mapping","model":"phase117-test-model","choices":[{"message":{"role":"assistant","content":"{\"mappings\":[{\"sourceColumn\":\"Invoice Number\",\"targetFieldId\":\"invoice.number\"},{\"sourceColumn\":\"Customer\",\"targetFieldId\":\"customer.name\"},{\"sourceColumn\":\"Amount\",\"targetFieldId\":\"invoice.amount\"},{\"sourceColumn\":\"Line Description\",\"targetFieldId\":\"line.description\"},{\"sourceColumn\":\"Quantity\",\"targetFieldId\":\"line.quantity\"}]}"}}]}""",
-                        Encoding.UTF8,
-                        "application/json")
-                });
+            var body = request.Content is null
+                ? string.Empty
+                : await request.Content
+                    .ReadAsStringAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+            var content = body.Contains(
+                "plain-text evidence",
+                StringComparison.Ordinal)
+                ? """{"id":"text","model":"phase117-test-model","choices":[{"message":{"role":"assistant","content":"{\"invoice.number\":\"TXT-1\",\"customer.name\":\"Text Customer\",\"invoice.amount\":30.50,\"lines\":[]}"}}]}"""
+                : """{"id":"mapping","model":"phase117-test-model","choices":[{"message":{"role":"assistant","content":"{\"mappings\":[{\"sourceColumn\":\"Invoice Number\",\"targetFieldId\":\"invoice.number\"},{\"sourceColumn\":\"Customer\",\"targetFieldId\":\"customer.name\"},{\"sourceColumn\":\"Amount\",\"targetFieldId\":\"invoice.amount\"},{\"sourceColumn\":\"Line Description\",\"targetFieldId\":\"line.description\"},{\"sourceColumn\":\"Quantity\",\"targetFieldId\":\"line.quantity\"}]}"}}]}""";
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    content,
+                    Encoding.UTF8,
+                    "application/json")
+            };
         }
     }
 }
