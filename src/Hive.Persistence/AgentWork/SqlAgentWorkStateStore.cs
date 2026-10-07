@@ -678,7 +678,9 @@ internal sealed class SqlAgentWorkStateStore :
                     if (timeout.IsFailure)
                         return Result.Failure(timeout.Error!);
 
-                    var updated = CreateQuestionRow(timeout.Value!);
+                    var updated = CreateQuestionRow(
+                        timeout.Value!,
+                        _clock.UtcNow);
 
                     var stateUpdate = UpdateState(
                         connection,
