@@ -381,21 +381,29 @@ public sealed class HivePersistenceDataMigrator
         await using var source = new EmbeddedPersistenceDatabase(
             sourceConfiguration);
 
-            var sourceStatus = await source.InspectAsync(
-                cancellationToken).ConfigureAwait(false);
+        var sourceStatus = await source.InspectAsync(
+            cancellationToken).ConfigureAwait(false);
 
-            if (sourceStatus.IsFailure)
-                return Result<HivePersistenceMigrationExecutionResult>.Failure(
-                    sourceStatus.Error!);
+        if (sourceStatus.IsFailure)
+            return Result<HivePersistenceMigrationExecutionResult>.Failure(
+                sourceStatus.Error!);
 
-            if (sourceStatus.Value!.DatabaseState != HiveDatabaseState.Current ||
-                sourceStatus.Value.SchemaVersion != CurrentSchemaVersion)
-            {
-                return Result<HivePersistenceMigrationExecutionResult>.Failure(
-                    MigrationIncompatibleSourceError(
-                        sourceStatus.Value.DatabaseState,
-                        sourceStatus.Value.SchemaVersion));
-            }
+        if (sourceStatus.Value!.DatabaseState != HiveDatabaseState.Current ||
+            sourceStatus.Value.SchemaVersion != CurrentSchemaVersion)
+        {
+            return Result<HivePersistenceMigrationExecutionResult>.Failure(
+                MigrationIncompatibleSourceError(
+                    sourceStatus.Value.DatabaseState,
+                    sourceStatus.Value.SchemaVersion));
+        }
+
+        var sourceShape = await ValidateEmbeddedDatabaseShapeAsync(
+            source,
+            cancellationToken).ConfigureAwait(false);
+
+        if (sourceShape.IsFailure)
+            return Result<HivePersistenceMigrationExecutionResult>.Failure(
+                sourceShape.Error!);
 
             var destinationOptions = HiveDatabaseOptions.FromConfiguration(
                 destinationConfiguration,
@@ -1072,9 +1080,57 @@ public sealed class HivePersistenceDataMigrator
                 return Result.Failure(initialized.Error!);
         }
 
+        var shape = await ValidateEmbeddedDatabaseShapeAsync(
+            destination,
+            cancellationToken).ConfigureAwait(false);
+
+        if (shape.IsFailure)
+            return Result.Failure(shape.Error!);
+
         return await EnsureEmbeddedDestinationEmptyAsync(
             destination,
             cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<Result> ValidateEmbeddedDatabaseShapeAsync(
+        EmbeddedPersistenceDatabase database,
+        CancellationToken cancellationToken)
+    {
+        await using var connection = await database.OpenConnectionAsync(
+            cancellationToken).ConfigureAwait(false);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT [name]
+            FROM [sqlite_master]
+            WHERE [type] = 'table'
+              AND [name] NOT LIKE 'sqlite_%'
+            ORDER BY [name];
+            """;
+
+        var actual = new List<string>();
+        await using var reader = await command.ExecuteReaderAsync(
+            cancellationToken).ConfigureAwait(false);
+
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            actual.Add(reader.GetString(0));
+
+        var expected = Tables
+            .Select(static table => table.Name)
+            .Append(EmbeddedPersistenceSchema.SchemaVersionTableName)
+            .Append(EmbeddedPersistenceSchema.MigrationJournalTableName)
+            .OrderBy(static name => name, StringComparer.Ordinal)
+            .ToArray();
+
+        if (!actual.SequenceEqual(expected, StringComparer.Ordinal))
+        {
+            return Result.Failure(
+                Error.Conflict(
+                    "hive.persistence.data-migration.embedded-schema-incompatible",
+                    "The Embedded persistence database does not contain exactly the supported Hive schema tables."));
+        }
+
+        return Result.Success();
     }
 
     private async Task<Result> EnsureEmbeddedDestinationEmptyAsync(
@@ -1450,19 +1506,22 @@ public sealed class HivePersistenceDataMigrator
     private static Error MigrationIncompatibleSource(
         HiveDatabaseState state,
         int? version) =>
-        Error.Unsupported(
-            "hive.persistence.data-migration.source-schema-incompatible",
-            state switch
-            {
-                HiveDatabaseState.DatabaseNotFound =>
-                    "The source Embedded database does not exist.",
-                HiveDatabaseState.FutureSchema =>
-                    $"The source Embedded schema is version {version}, which is newer than this Hive build supports.",
-                HiveDatabaseState.NeedsMigration =>
-                    $"The source Embedded schema is version {version}, but version {CurrentSchemaVersion} is required.",
-                _ =>
-                    "The source Embedded persistence schema is not initialized or is incomplete."
-            });
+        state == HiveDatabaseState.DatabaseNotFound
+            ? new Error(
+                "hive.persistence.data-migration.source-not-found",
+                ErrorCategory.NotFound,
+                "The source Embedded database does not exist.")
+            : Error.Unsupported(
+                "hive.persistence.data-migration.source-schema-incompatible",
+                state switch
+                {
+                    HiveDatabaseState.FutureSchema =>
+                        $"The source Embedded schema is version {version}, which is newer than this Hive build supports.",
+                    HiveDatabaseState.NeedsMigration =>
+                        $"The source Embedded schema is version {version}, but version {CurrentSchemaVersion} is required.",
+                    _ =>
+                        "The source Embedded persistence schema is not initialized or is incomplete."
+                });
 
     private sealed record SqlDatabaseInspection(
         int SchemaVersion,
