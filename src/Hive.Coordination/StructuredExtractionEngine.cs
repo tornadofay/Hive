@@ -308,11 +308,12 @@ public sealed class StructuredExtractionEngine
             }
         }
 
-        return new SpreadsheetMapping(
-            context,
-            entries,
-            reviewState,
-            errors);
+        return Result<SpreadsheetMapping>.Success(
+            new SpreadsheetMapping(
+                context,
+                entries,
+                reviewState,
+                errors));
     }
 
     public static string ComputeContextFingerprint(
@@ -440,8 +441,8 @@ public sealed class StructuredExtractionEngine
                     targetFieldId.ValueKind != JsonValueKind.String ||
                     element.EnumerateObject().Any(
                         property =>
-                            property.Name is not "sourceColumn" and
-                            property.Name is not "targetFieldId"))
+                            !string.Equals(property.Name, "sourceColumn", StringComparison.Ordinal) &&
+                            !string.Equals(property.Name, "targetFieldId", StringComparison.Ordinal)))
                 {
                     return Result<SpreadsheetMapping>.Failure(
                         SerializationError(
@@ -1009,7 +1010,7 @@ public sealed class StructuredExtractionEngine
         };
     }
 
-    private static async Task<Result<JsonElement>> CompleteStructuredJsonAsync(
+    private async Task<Result<JsonElement>> CompleteStructuredJsonAsync(
         ExecutionTarget target,
         SecretMaterial? credential,
         string schemaName,
