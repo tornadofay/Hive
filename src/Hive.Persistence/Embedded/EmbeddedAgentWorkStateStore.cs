@@ -363,7 +363,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
                   AND [RuntimeId] = @RuntimeId
                   AND [OwnerPrincipalId] = @OwnerPrincipalId
                   AND [StateKey] = @StateKey
-                ORDER BY [CreatedAtUtc], [StateId];
+                ORDER BY [CreatedAtUtc], [StateId]
                 LIMIT 1;
                 """);
 
@@ -633,7 +633,7 @@ internal sealed class EmbeddedAgentWorkStateStore :
                 WHERE [WorkStateKind] = @Kind
                   AND [StateStatus] = @Waiting
                   AND [ExpiresAtUtc] <= @NowUtc
-                ORDER BY [ExpiresAtUtc], [StateId];
+                ORDER BY [ExpiresAtUtc], [StateId]
                 LIMIT 1;
                 """);
 
