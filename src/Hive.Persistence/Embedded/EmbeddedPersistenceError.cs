@@ -33,7 +33,7 @@ internal static class EmbeddedPersistenceError
                 11 or 26 =>
                     HivePersistenceError.External(
                         $"{operationCode}.storage-corrupt",
-                        $"The Embedded persistence {operation} could not use the storage because it is corrupt or is not a valid SQLite database.",
+                        $"The Embedded persistence {operation} could not use the storage because it is corrupt or is not a valid database file.",
                         exception),
 
                 13 =>
