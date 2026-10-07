@@ -341,7 +341,6 @@ public sealed class HivePersistenceDataMigrator
 
         var sourcePreflight = await InspectSqlDatabaseAsync(
             sourceOptions,
-            requireCurrentSchema: true,
             cancellationToken).ConfigureAwait(false);
 
         if (sourcePreflight.IsFailure)
@@ -469,7 +468,7 @@ public sealed class HivePersistenceDataMigrator
         DbConnection destinationConnection,
         CancellationToken cancellationToken)
     {
-        var sourceFingerprint = new HiveMigrationFingerprintSet();
+        using var sourceFingerprint = new HiveMigrationFingerprintSet();
         var rowCounts = new Dictionary<string, long>(StringComparer.Ordinal);
         long total = 0;
 
@@ -509,7 +508,7 @@ public sealed class HivePersistenceDataMigrator
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        var destinationFingerprint = await ReadFingerprintAsync(
+        using var destinationFingerprint = await ReadFingerprintAsync(
             destinationConnection,
             destinationBackend,
             transaction,
@@ -524,7 +523,7 @@ public sealed class HivePersistenceDataMigrator
                     "The migration destination does not exactly match the source logical dataset."));
         }
 
-        var sourceAfter = await ReadFingerprintAsync(
+        using var sourceAfter = await ReadFingerprintAsync(
             sourceConnection,
             sourceBackend,
             null,
@@ -1132,7 +1131,6 @@ public sealed class HivePersistenceDataMigrator
 
         var inspection = await InspectSqlDatabaseAsync(
             options,
-            requireCurrentSchema: false,
             cancellationToken).ConfigureAwait(false);
 
         if (inspection.IsFailure)
@@ -1170,7 +1168,6 @@ public sealed class HivePersistenceDataMigrator
 
     private async Task<Result<SqlDatabaseInspection>> InspectSqlDatabaseAsync(
         HiveDatabaseOptions options,
-        bool requireCurrentSchema,
         CancellationToken cancellationToken)
     {
         if (!await SqlDatabaseExistsAsync(
@@ -1491,7 +1488,7 @@ internal sealed record HiveMigrationTableDefinition(
     IReadOnlyList<HiveMigrationColumnDefinition> Columns,
     params string[] OrderByColumns);
 
-internal sealed class HiveMigrationFingerprintSet
+internal sealed class HiveMigrationFingerprintSet : IDisposable
 {
     private sealed class Fingerprint
     {
@@ -1556,6 +1553,14 @@ internal sealed class HiveMigrationFingerprintSet
         }
 
         return _fingerprints.Count == other._fingerprints.Count;
+    }
+
+    public void Dispose()
+    {
+        foreach (var fingerprint in _fingerprints.Values)
+            fingerprint.Hash.Dispose();
+
+        _fingerprints.Clear();
     }
 
     private static void AppendValue(
