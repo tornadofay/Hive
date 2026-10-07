@@ -39,6 +39,26 @@ public sealed class HivePersistenceOptionsTests
         Assert.True(builder.TrustServerCertificate);
     }
 
+
+    [Fact]
+    public void FromConfiguration_RejectsEmbeddedConfiguration()
+    {
+        var configuration = HivePersistenceConfiguration.Embedded(
+            Path.Combine(
+                Path.GetTempPath(),
+                "Hive",
+                "embedded.db"));
+
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(
+            () => HiveDatabaseOptions.FromConfiguration(configuration));
+
+        Assert.Equal("configuration", exception.ParamName);
+        Assert.Contains(
+            "only supports SQL Server persistence",
+            exception.Message,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public void FromConfiguration_RequiresCredentialForSqlPassword()
     {

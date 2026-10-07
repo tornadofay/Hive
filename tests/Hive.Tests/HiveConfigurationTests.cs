@@ -8,6 +8,129 @@ namespace Hive.Tests;
 
 public sealed class HiveConfigurationTests
 {
+
+    [Fact]
+    public void EmbeddedPersistenceConfiguration_RequiresStoragePath()
+    {
+        var exception = Assert.Throws<ArgumentException>(
+            () => HivePersistenceConfiguration.Embedded("  "));
+
+        Assert.Equal("storagePath", exception.ParamName);
+        Assert.Contains(
+            "Embedded storage path is required.",
+            exception.Message,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EmbeddedPersistenceConfiguration_DoesNotRequireSqlServerConfiguration()
+    {
+        var path = Path.Combine(
+            Path.GetTempPath(),
+            "Hive",
+            "Embedded",
+            "hive.db");
+
+        var configuration = HivePersistenceConfiguration.Embedded(
+            path,
+            createDatabaseIfMissing: false,
+            commandTimeoutSeconds: 45);
+
+        Assert.Equal(HivePersistenceBackend.Embedded, configuration.Backend);
+        Assert.Null(configuration.Port);
+        Assert.Equal(string.Empty, configuration.ServerName);
+        Assert.Equal(string.Empty, configuration.DatabaseName);
+        Assert.Equal(HiveSqlAuthenticationMode.WindowsIntegrated, configuration.AuthenticationMode);
+        Assert.Null(configuration.UserName);
+        Assert.Null(configuration.BootstrapCredential);
+        Assert.False(configuration.Encrypt);
+        Assert.False(configuration.TrustServerCertificate);
+        Assert.False(configuration.CreateDatabaseIfMissing);
+        Assert.Equal(45, configuration.CommandTimeoutSeconds);
+        Assert.Equal(path, configuration.EmbeddedStoragePath);
+    }
+
+    [Fact]
+    public async Task JsonConfigurationStore_EmbeddedConfiguration_RoundTrips()
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            $"hive-embedded-settings-{Guid.NewGuid():N}");
+        var filePath = Path.Combine(directory, "hive-settings.json");
+        var storagePath = Path.Combine(directory, "data", "hive.db");
+
+        try
+        {
+            var configuration = HivePersistenceConfiguration.Embedded(
+                storagePath,
+                createDatabaseIfMissing: true,
+                commandTimeoutSeconds: 47);
+
+            var store = new JsonHiveConfigurationStore(filePath);
+
+            var saved = await store.SavePersistenceConfigurationAsync(configuration);
+            Assert.True(saved.IsSuccess, saved.Error?.Message);
+
+            var loaded = await store.LoadPersistenceConfigurationAsync();
+            Assert.True(loaded.IsSuccess, loaded.Error?.Message);
+            Assert.Equal(configuration, loaded.Value);
+
+            var json = await File.ReadAllTextAsync(filePath);
+            Assert.Contains(
+                "embeddedStoragePath",
+                json,
+                StringComparison.Ordinal);
+            Assert.DoesNotContain(
+                "credentialSecretId",
+                json,
+                StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+                Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task JsonConfigurationStore_EmbeddedConfiguration_WithoutSqlFields_Loads()
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            $"hive-embedded-minimal-settings-{Guid.NewGuid():N}");
+        var filePath = Path.Combine(directory, "hive-settings.json");
+        var storagePath = Path.Combine(directory, "hive.db");
+
+        try
+        {
+            Directory.CreateDirectory(directory);
+            await File.WriteAllTextAsync(
+                filePath,
+                $$"""
+                {
+                  "backend": 1,
+                  "createDatabaseIfMissing": true,
+                  "commandTimeoutSeconds": 30,
+                  "embeddedStoragePath": "{{storagePath.Replace("\", "\\")}}"
+                }
+                """);
+
+            var result = await new JsonHiveConfigurationStore(filePath)
+                .LoadPersistenceConfigurationAsync();
+
+            Assert.True(result.IsSuccess, result.Error?.Message);
+            Assert.Equal(HivePersistenceBackend.Embedded, result.Value!.Backend);
+            Assert.Equal(
+                storagePath,
+                result.Value.EmbeddedStoragePath);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+                Directory.Delete(directory, recursive: true);
+        }
+    }
+
     [Fact]
     public void PersistenceConfiguration_RejectsBootstrapCredentialForWindowsAuthentication()
     {

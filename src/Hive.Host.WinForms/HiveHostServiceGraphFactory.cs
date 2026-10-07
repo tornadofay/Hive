@@ -13,7 +13,7 @@ public interface IHiveHostServiceGraphFactory
         CancellationToken cancellationToken = default);
 }
 
-public sealed class SqlHiveHostServiceGraphFactory :
+public sealed class HiveHostServiceGraphFactory :
     IHiveHostServiceGraphFactory
 {
     private static readonly HttpClient SharedHttpClient = new();
@@ -21,7 +21,7 @@ public sealed class SqlHiveHostServiceGraphFactory :
     private readonly IHiveBootstrapCredentialStore _bootstrapCredentials;
     private readonly IHiveConfigurationStore _configurationStore;
 
-    public SqlHiveHostServiceGraphFactory(
+    public HiveHostServiceGraphFactory(
         IHiveBootstrapCredentialStore bootstrapCredentials,
         IHiveConfigurationStore configurationStore)
     {
@@ -31,7 +31,28 @@ public sealed class SqlHiveHostServiceGraphFactory :
             ?? throw new ArgumentNullException(nameof(configurationStore));
     }
 
-    public async Task<Result<HiveHostServiceGraph>> CreateAsync(
+    public Task<Result<HiveHostServiceGraph>> CreateAsync(
+        HivePersistenceConfiguration configuration,
+        CancellationToken cancellationToken = default) =>
+        configuration.Backend switch
+        {
+            HivePersistenceBackend.SqlServer =>
+                CreateSqlServerAsync(configuration, cancellationToken),
+            HivePersistenceBackend.Embedded =>
+                Task.FromResult(
+                    Result<HiveHostServiceGraph>.Failure(
+                        Error.Unsupported(
+                            "hive.host.embedded-persistence-unavailable",
+                            "Embedded persistence is not available in the current implementation slice."))),
+            _ =>
+                Task.FromResult(
+                    Result<HiveHostServiceGraph>.Failure(
+                        Error.Validation(
+                            "hive.host.persistence-backend-invalid",
+                            "The persistence backend is invalid.")))
+        };
+
+    private async Task<Result<HiveHostServiceGraph>> CreateSqlServerAsync(
         HivePersistenceConfiguration configuration,
         CancellationToken cancellationToken = default)
     {

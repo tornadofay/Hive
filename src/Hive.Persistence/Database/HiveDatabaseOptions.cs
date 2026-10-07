@@ -79,7 +79,7 @@ public sealed class HiveDatabaseOptions
         {
             throw new ArgumentOutOfRangeException(
                 nameof(configuration),
-                "Only SQL Server persistence is supported in V1.");
+                "HiveDatabaseOptions only supports SQL Server persistence.";
         }
 
         var builder = new SqlConnectionStringBuilder

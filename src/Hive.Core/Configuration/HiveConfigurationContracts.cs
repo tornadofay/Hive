@@ -2,7 +2,8 @@ namespace Hive.Core;
 
 public enum HivePersistenceBackend
 {
-    SqlServer
+    SqlServer,
+    Embedded
 }
 
 public enum HiveSqlAuthenticationMode
@@ -48,22 +49,88 @@ public sealed record HivePersistenceConfiguration
 
     public HivePersistenceConfiguration(
         HivePersistenceBackend backend,
-        string serverName,
+        string? serverName,
         int? port,
-        string databaseName,
+        string? databaseName,
         HiveSqlAuthenticationMode authenticationMode,
         string? userName,
         HiveBootstrapCredentialReference? bootstrapCredential,
         bool encrypt,
         bool trustServerCertificate,
         bool createDatabaseIfMissing,
-        int commandTimeoutSeconds = 30)
+        int commandTimeoutSeconds = 30,
+        string? embeddedStoragePath = null)
     {
         if (!Enum.IsDefined(backend))
             throw new ArgumentOutOfRangeException(nameof(backend));
 
         if (!Enum.IsDefined(authenticationMode))
             throw new ArgumentOutOfRangeException(nameof(authenticationMode));
+
+        if (commandTimeoutSeconds <= 0)
+            throw new ArgumentOutOfRangeException(nameof(commandTimeoutSeconds));
+
+        if (backend == HivePersistenceBackend.Embedded)
+        {
+            if (string.IsNullOrWhiteSpace(embeddedStoragePath))
+                throw new ArgumentException(
+                    "Embedded storage path is required.",
+                    nameof(embeddedStoragePath));
+
+            if (port is not null)
+                throw new ArgumentException(
+                    "Port is only applicable to SQL Server persistence.",
+                    nameof(port));
+
+            if (!string.IsNullOrWhiteSpace(serverName))
+                throw new ArgumentException(
+                    "ServerName is only applicable to SQL Server persistence.",
+                    nameof(serverName));
+
+            if (!string.IsNullOrWhiteSpace(databaseName))
+                throw new ArgumentException(
+                    "DatabaseName is only applicable to SQL Server persistence.",
+                    nameof(databaseName));
+
+            if (authenticationMode != HiveSqlAuthenticationMode.WindowsIntegrated)
+                throw new ArgumentException(
+                    "SQL authentication is not applicable to Embedded persistence.",
+                    nameof(authenticationMode));
+
+            if (!string.IsNullOrWhiteSpace(userName))
+                throw new ArgumentException(
+                    "UserName is only applicable to SQL Server persistence.",
+                    nameof(userName));
+
+            if (bootstrapCredential is not null)
+                throw new ArgumentException(
+                    "A bootstrap credential is only applicable to SQL Server persistence.",
+                    nameof(bootstrapCredential));
+
+            if (encrypt)
+                throw new ArgumentException(
+                    "Encryption is only applicable to SQL Server persistence.",
+                    nameof(encrypt));
+
+            if (trustServerCertificate)
+                throw new ArgumentException(
+                    "TrustServerCertificate is only applicable to SQL Server persistence.",
+                    nameof(trustServerCertificate));
+
+            Backend = backend;
+            ServerName = string.Empty;
+            Port = null;
+            DatabaseName = string.Empty;
+            AuthenticationMode = HiveSqlAuthenticationMode.WindowsIntegrated;
+            UserName = null;
+            BootstrapCredential = null;
+            Encrypt = false;
+            TrustServerCertificate = false;
+            CreateDatabaseIfMissing = createDatabaseIfMissing;
+            CommandTimeoutSeconds = commandTimeoutSeconds;
+            EmbeddedStoragePath = embeddedStoragePath.Trim();
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(serverName))
             throw new ArgumentException("SQL Server name or instance is required.", nameof(serverName));
@@ -87,37 +154,31 @@ public sealed record HivePersistenceConfiguration
 
         if (authenticationMode == HiveSqlAuthenticationMode.SqlPassword &&
             string.IsNullOrWhiteSpace(userName))
-        {
             throw new ArgumentException(
                 "A SQL login name is required when SQL password authentication is selected.",
                 nameof(userName));
-        }
 
         if (authenticationMode == HiveSqlAuthenticationMode.WindowsIntegrated &&
             !string.IsNullOrWhiteSpace(userName))
-        {
             throw new ArgumentException(
                 "A SQL login name must not be supplied for Windows integrated authentication.",
                 nameof(userName));
-        }
 
         if (bootstrapCredential is { } reference && !reference.IsValid)
-        {
             throw new ArgumentException(
                 "Bootstrap credential reference must be valid when supplied.",
                 nameof(bootstrapCredential));
-        }
 
         if (authenticationMode == HiveSqlAuthenticationMode.WindowsIntegrated &&
             bootstrapCredential is not null)
-        {
             throw new ArgumentException(
                 "A bootstrap credential must not be supplied for Windows integrated authentication.",
                 nameof(bootstrapCredential));
-        }
 
-        if (commandTimeoutSeconds <= 0)
-            throw new ArgumentOutOfRangeException(nameof(commandTimeoutSeconds));
+        if (!string.IsNullOrWhiteSpace(embeddedStoragePath))
+            throw new ArgumentException(
+                "Embedded storage path is only applicable to Embedded persistence.",
+                nameof(embeddedStoragePath));
 
         Backend = backend;
         ServerName = serverName.Trim();
@@ -130,6 +191,7 @@ public sealed record HivePersistenceConfiguration
         TrustServerCertificate = trustServerCertificate;
         CreateDatabaseIfMissing = createDatabaseIfMissing;
         CommandTimeoutSeconds = commandTimeoutSeconds;
+        EmbeddedStoragePath = null;
     }
 
     public HivePersistenceBackend Backend { get; }
@@ -153,6 +215,26 @@ public sealed record HivePersistenceConfiguration
     public bool CreateDatabaseIfMissing { get; }
 
     public int CommandTimeoutSeconds { get; }
+
+    public string? EmbeddedStoragePath { get; }
+
+    public static HivePersistenceConfiguration Embedded(
+        string storagePath,
+        bool createDatabaseIfMissing = true,
+        int commandTimeoutSeconds = 30) =>
+        new(
+            HivePersistenceBackend.Embedded,
+            null,
+            null,
+            null,
+            HiveSqlAuthenticationMode.WindowsIntegrated,
+            null,
+            null,
+            encrypt: false,
+            trustServerCertificate: false,
+            createDatabaseIfMissing,
+            commandTimeoutSeconds,
+            storagePath);
 
     public static HivePersistenceConfiguration LocalDevelopment(
         string databaseName = DefaultDatabaseName) =>

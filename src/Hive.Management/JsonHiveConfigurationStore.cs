@@ -175,16 +175,17 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
 
     private sealed record ConfigurationDocument(
         HivePersistenceBackend Backend,
-        string ServerName,
+        string? ServerName,
         int? Port,
-        string DatabaseName,
+        string? DatabaseName,
         HiveSqlAuthenticationMode AuthenticationMode,
         string? UserName,
         Guid? BootstrapCredentialId,
         bool Encrypt,
         bool TrustServerCertificate,
         bool CreateDatabaseIfMissing,
-        int CommandTimeoutSeconds)
+        int CommandTimeoutSeconds,
+        string? EmbeddedStoragePath)
     {
         public HivePersistenceConfiguration ToConfiguration() =>
             new(
@@ -201,7 +202,8 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                 Encrypt,
                 TrustServerCertificate,
                 CreateDatabaseIfMissing,
-                CommandTimeoutSeconds);
+                CommandTimeoutSeconds,
+                EmbeddedStoragePath);
 
         public static ConfigurationDocument From(
             HivePersistenceConfiguration configuration) =>
@@ -216,7 +218,8 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                 configuration.Encrypt,
                 configuration.TrustServerCertificate,
                 configuration.CreateDatabaseIfMissing,
-                configuration.CommandTimeoutSeconds);
+                configuration.CommandTimeoutSeconds,
+                configuration.EmbeddedStoragePath);
 
         [System.Text.Json.Serialization.JsonExtensionData]
         public Dictionary<string, JsonElement>? ExtensionData { get; init; }

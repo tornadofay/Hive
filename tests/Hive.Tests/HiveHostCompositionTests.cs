@@ -18,7 +18,7 @@ public sealed class HiveHostCompositionTests
             "Hive.Example.WinForms");
         using var composition = new HiveHostComposition(
             store,
-            new SqlHiveHostServiceGraphFactory(
+            new HiveHostServiceGraphFactory(
                 new UnavailableHiveBootstrapCredentialStore(),
                 store));
 
@@ -60,7 +60,7 @@ public sealed class HiveHostCompositionTests
 
         using var composition = new HiveHostComposition(
             store,
-            new SqlHiveHostServiceGraphFactory(
+            new HiveHostServiceGraphFactory(
                 new UnavailableHiveBootstrapCredentialStore(),
                 store));
 
@@ -84,7 +84,7 @@ public sealed class HiveHostCompositionTests
 
         using var composition = new HiveHostComposition(
             store,
-            new SqlHiveHostServiceGraphFactory(
+            new HiveHostServiceGraphFactory(
                 new UnavailableHiveBootstrapCredentialStore(),
                 store));
 
@@ -114,7 +114,7 @@ public sealed class HiveHostCompositionTests
 
         using var composition = new HiveHostComposition(
             store,
-            new SqlHiveHostServiceGraphFactory(
+            new HiveHostServiceGraphFactory(
                 new UnavailableHiveBootstrapCredentialStore(),
                 store));
 
@@ -152,7 +152,7 @@ public sealed class HiveHostCompositionTests
 
         using var composition = new HiveHostComposition(
             store,
-            new SqlHiveHostServiceGraphFactory(
+            new HiveHostServiceGraphFactory(
                 new UnavailableHiveBootstrapCredentialStore(),
                 store));
 
@@ -701,7 +701,7 @@ public sealed class HiveHostCompositionTests
             trustServerCertificate: false,
             createDatabaseIfMissing: false);
 
-        var factory = new SqlHiveHostServiceGraphFactory(
+        var factory = new HiveHostServiceGraphFactory(
             new LeakyBootstrapCredentialStore(),
             new InMemoryConfigurationStore(configuration));
 
@@ -751,6 +751,30 @@ public sealed class HiveHostCompositionTests
         }
     }
 
+
+    [Fact]
+    public async Task GraphFactory_RejectsEmbeddedBeforeSqlBootstrapResolution()
+    {
+        var configuration = HivePersistenceConfiguration.Embedded(
+            Path.Combine(
+                Path.GetTempPath(),
+                "Hive",
+                "embedded.db"));
+        var bootstrap = new TrackingBootstrapCredentialStore();
+
+        var factory = new HiveHostServiceGraphFactory(
+            bootstrap,
+            new InMemoryConfigurationStore(configuration));
+
+        var result = await factory.CreateAsync(configuration);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(
+            "hive.host.embedded-persistence-unavailable",
+            result.Error!.Code);
+        Assert.False(bootstrap.ResolveCalled);
+    }
+
     private static HiveHostServiceGraph CreateGraph(
         HivePersistenceConfiguration configuration,
         params IDisposable[] resources)
@@ -775,6 +799,38 @@ public sealed class HiveHostCompositionTests
             configuration,
             facade,
             resources);
+    }
+
+
+    private sealed class TrackingBootstrapCredentialStore :
+        IHiveBootstrapCredentialStore
+    {
+        public bool ResolveCalled { get; private set; }
+
+        public Task<Result> SetAsync(
+            HiveBootstrapCredentialReference reference,
+            SecretMaterial material,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result.Success());
+
+        public Task<Result<SecretMaterial>> ResolveAsync(
+            HiveBootstrapCredentialReference reference,
+            CancellationToken cancellationToken = default)
+        {
+            ResolveCalled = true;
+
+            return Task.FromResult(
+                Result<SecretMaterial>.Failure(
+                    new Error(
+                        "test.bootstrap.should-not-resolve",
+                        ErrorCategory.Internal,
+                        "Bootstrap credential resolution should not be invoked for Embedded persistence.")));
+        }
+
+        public Task<Result> ClearAsync(
+            HiveBootstrapCredentialReference reference,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result.Success());
     }
 
     private sealed class CancellationIgnoringGraphFactory :

@@ -38,7 +38,7 @@ public sealed class HiveHostComposition : IDisposable
             applicationName: Application.ProductName);
 
         _configurationStore = configurationStore;
-        _graphFactory = new SqlHiveHostServiceGraphFactory(
+        _graphFactory = new HiveHostServiceGraphFactory(
             new DpapiHiveBootstrapCredentialStore(),
             configurationStore);
     }

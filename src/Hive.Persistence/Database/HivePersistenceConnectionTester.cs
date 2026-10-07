@@ -13,6 +13,14 @@ public sealed class HivePersistenceConnectionTester : IHivePersistenceConnection
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
+        if (configuration.Backend != HivePersistenceBackend.SqlServer)
+        {
+            return Result<HivePersistenceConnectionTest>.Failure(
+                Error.Unsupported(
+                    "hive.persistence.backend-not-supported",
+                    "The selected persistence backend is not supported by this connection tester."));
+        }
+
         try
         {
             var options = HiveDatabaseOptions.FromConfiguration(
