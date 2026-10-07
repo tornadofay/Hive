@@ -304,9 +304,8 @@ internal sealed class HiveStructuredExtractionManagementService :
 
         if (batch.Status == StructuredExtractionBatchStatus.ReviewRequired &&
             !preparedInputs.Any(
-                input => batch.Items.Any(
-                    item => item.ItemIndex == input.ItemIndex &&
-                            item.Status == StructuredExtractionItemStatus.Failed)))
+                input => FindBatchItem(batch.Items, input)?.Status ==
+                         StructuredExtractionItemStatus.Failed))
         {
             return Result<StructuredExtractionBatch>.Failure(
                 Error.Conflict(
@@ -345,25 +344,17 @@ internal sealed class HiveStructuredExtractionManagementService :
                 static mapping => mapping.Context.Identity,
                 StringComparer.Ordinal);
 
-        var processedIndexes = new HashSet<int>(
-            batch.Items
-                .Where(
-                    static item =>
-                        item.Status is StructuredExtractionItemStatus.Succeeded
-                            or StructuredExtractionItemStatus.Uncertain
-                            or StructuredExtractionItemStatus.Excluded
-                            or StructuredExtractionItemStatus.Accepted)
-                .Select(static item => item.ItemIndex));
+        var processedIndexes = new HashSet<int>();
 
-        foreach (var input in preparedInputs.OrderBy(static input => input.ItemIndex))
+        foreach (var input in preparedInputs)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (processedIndexes.Contains(input.ItemIndex))
-                continue;
+            var currentItem = FindBatchItem(batch.Items, input);
 
-            var currentItem = batch.Items.SingleOrDefault(
-                item => item.ItemIndex == input.ItemIndex);
+            if (currentItem is not null &&
+                processedIndexes.Contains(currentItem.ItemIndex))
+                continue;
 
             if (currentItem is null)
             {
@@ -1079,6 +1070,40 @@ internal sealed class HiveStructuredExtractionManagementService :
             StructuredExtractionEngine.ComputeSourceStructureFingerprint(
                 value.WorksheetName,
                 value.Values.Keys.ToArray());
+    }
+
+    private static StructuredExtractionItemResult? FindBatchItem(
+        IReadOnlyList<StructuredExtractionItemResult> items,
+        PreparedInput input)
+    {
+        return input switch
+        {
+            PreparedImageInput image =>
+                items.SingleOrDefault(
+                    item =>
+                        item.ItemIndex == image.ItemIndex &&
+                        item.SourceKind == InputSourceKind.Image &&
+                        string.Equals(
+                            item.FileName,
+                            image.FileName,
+                            StringComparison.Ordinal)),
+
+            PreparedSpreadsheetRowInput row =>
+                items.SingleOrDefault(
+                    item =>
+                        item.SourceKind == InputSourceKind.Spreadsheet &&
+                        string.Equals(
+                            item.FileName,
+                            row.FileName,
+                            StringComparison.Ordinal) &&
+                        string.Equals(
+                            item.WorksheetName,
+                            row.WorksheetName,
+                            StringComparison.Ordinal) &&
+                        item.RowNumber == row.RowNumber),
+
+            _ => null
+        };
     }
 
     private static ExecutionTargetId? ResolveMappingTargetId(
