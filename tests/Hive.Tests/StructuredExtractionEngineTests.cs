@@ -19,7 +19,7 @@ public sealed class StructuredExtractionEngineTests
             CapabilityState.Supported);
 
         var handler = new RecordingStructuredResponseHandler(
-            """{"id":"candidate","model":"test-model","choices":[{"message":{"role":"assistant","content":"{\"invoice.number\":\"IMG-1\",\"invoice.amount\":25.50,\"lines\":[{\"line.description\":\"Cable\",\"line.quantity\":2}],\"confidence\":0.9}"}}]}""");
+            """{"id":"candidate","model":"test-model","choices":[{"message":{"role":"assistant","content":"{\"invoice.number\":\"IMG-1\",\"customer.name\":\"Grace Hopper\",\"invoice.amount\":25.50,\"lines\":[{\"line.description\":\"Cable\",\"line.quantity\":2}],\"confidence\":0.9}"}}]}""");
         using var client = new HttpClient(handler);
         var engine = new StructuredExtractionEngine(client);
 
