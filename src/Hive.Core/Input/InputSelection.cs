@@ -429,7 +429,10 @@ public static class InputSelectionBuilder
                         if ((attributes & FileAttributes.ReparsePoint) != 0)
                             continue;
                     }
-                    catch (Exception) when (true)
+                    catch (Exception exception) when (
+                        exception is IOException or
+                        exception is UnauthorizedAccessException or
+                        exception is ArgumentException)
                     {
                         continue;
                     }
@@ -441,7 +444,16 @@ public static class InputSelectionBuilder
                 discovered++;
 
                 if (files.Count >= options.MaxItemCount)
-                    continue;
+                {
+                    failures.Add(
+                        new InputSelectionFailure(
+                            discovered - 1,
+                            entry,
+                            Error.Validation(
+                                "hive.input.selection-item-limit",
+                                $"The selected folder exceeds the {options.MaxItemCount}-item input batch limit.")));
+                    return;
+                }
 
                 files.Add(entry);
             }
