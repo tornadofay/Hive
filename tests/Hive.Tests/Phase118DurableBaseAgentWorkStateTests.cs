@@ -70,7 +70,7 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
             fixture.Context,
             fixture.Agent.Id,
             fixture.RuntimeId,
-            objective.Value.Id);
+            objective.Value!.Id);
 
         Assert.True(restored.IsSuccess, restored.Error?.Message);
         Assert.Equal(ResourceVersion.Initial.Next(), restored.Value!.Resource.Version);
@@ -161,7 +161,7 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
             fixture.Context,
             fixture.Agent.Id,
             fixture.RuntimeId,
-            question.Value.Id);
+            question.Value!.Id);
 
         Assert.True(waited.IsSuccess, waited.Error?.Message);
         Assert.Equal(QuestionStatus.Answered, waited.Value!.Status);
@@ -316,7 +316,7 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
             outsiderContext,
             outsiderAgent.Id,
             outsiderRuntime.Id,
-            request.Value.Id);
+            request.Value!.Id);
 
         Assert.True(denied.IsFailure);
         Assert.Equal(
