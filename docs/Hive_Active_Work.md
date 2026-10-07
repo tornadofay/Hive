@@ -26,11 +26,11 @@ Verification gate:
 - SQL Server remains regression-safe;
 - developer verification is required before Slice 4 may be activated.
 
-Verification status: **PENDING**
+Verification status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
 
 Focused verification target: Embedded persistence parity tests plus the broader Hive.Tests suite.
 
-Developer verification failure received on 2026-10-07: developer ran the broader Hive.Tests suite and reported 739 tests total, 729 passed, 10 failed, 0 skipped. The reported failures all surfaced as `The Embedded persistence metadata is inconsistent or incomplete.` Same-slice remediation identified and corrected the root cause in `EmbeddedPersistenceMigrator.ReadStateAsync`: initialized databases were incorrectly checked for non-metadata tables as though they were uninitialized, causing every migrated application table to be classified as unexpected. The fix keeps the unexpected-table check only for the completely uninitialized state, while schema/journal consistency remains authoritative for initialized and future-schema databases. No build or test execution was performed by the agent.
+Developer verification failure received on 2026-10-08: developer reran the full Hive.Tests suite and reported 739 tests total, 737 passed, 2 failed, 0 skipped. The two failures are in EmbeddedPersistenceFoundationTests: (1) the old foundation test still expects only migration 1, while Slice 3 intentionally advances the Embedded baseline to schema 15; (2) the rollback test injects a one-entry migration catalog, which is now correctly rejected by the production catalog invariant requiring a complete contiguous catalog through CurrentSchemaVersion. Same-slice remediation is limited to bringing these existing test fixtures into alignment with the authorized Slice 3 schema-15 baseline without weakening the production migration invariant.
 
 Exact rerun targets: rebuild/compile `Hive.Persistence` and `Hive.Tests`, run `EmbeddedPersistenceParityTests`, then run the full `Hive.Tests` suite.
 
