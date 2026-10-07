@@ -37,7 +37,7 @@ Explicitly excluded:
 
 Starting checkpoint: `main @ db303747fbf654ebe730aa41429bb75abf180306`
 
-Current checkpoint: `main @ 8413da81a3bb26c71e1f52c75eb2ac52c315859c`
+Current checkpoint: `main @ 0a2934f1556e3c50f3154ec2ce3de5b79debbdcf`
 
 ## Implementation summary
 
@@ -54,7 +54,7 @@ Implemented:
 
 ## Verification gate
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Required verification:
 - focused text input selection/preparation tests;
@@ -63,4 +63,4 @@ Required verification:
 - Example Host manual verification;
 - full `Hive.Tests` suite.
 
-The latest developer verification reported 708 tests with 706 passed and 2 failed. The first failure is the existing `Submission_ContinuesAfterUnsupportedItem` regression test, whose `notes.txt` fixture is now correctly recognized as supported text and therefore no longer represents an unsupported item. The second failure is a real batch-input identity defect: durable batch item indexes are logical output indexes, while prepared image/text inputs retain original submission indexes, so the image/text matcher must use stable source identity rather than `ItemIndex`.
+The failed verification was remediated. `Submission_ContinuesAfterUnsupportedItem` now uses an actually unsupported `.bin` fixture, while the durable batch matcher now uses source fingerprint plus file name for prepared image/text inputs instead of the original submission `ItemIndex`. This preserves correct matching when one source input expands into multiple durable items.
