@@ -397,7 +397,8 @@ public static class InputSelectionBuilder
                     });
             }
             catch (Exception exception) when (
-                exception is IOException or UnauthorizedAccessException)
+                exception is IOException ||
+                exception is UnauthorizedAccessException)
             {
                 failures.Add(
                     new InputSelectionFailure(
