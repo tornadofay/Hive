@@ -103,6 +103,25 @@ The bundle provides:
 
 Phase 1.6 adds typed protocol identities for ObjectiveId, MemoryId, QuestionId, and transient DelegationId. Objective, Memory, and Question use the existing Core resource envelope/scope/provenance model and remain in-memory in Phase 1.6. Phase 1.18 establishes their durable Base-Agent work-state representation and recovery semantics.
 
+
+### Phase 1.18 — Durable Base-Agent Work State
+
+Phase 1.18 makes the already-defined base-Agent work mechanisms durable without changing their non-cognitive semantics or introducing a second orchestration engine.
+
+The durable runtime-work boundary is an explicit RuntimeWorkProtocolStores dependency set containing the existing IObjectiveStore, IAgentMemoryStore, IQuestionTransport, and IDelegationChannel contracts. RuntimeWorkProtocols uses the supplied stores when a durable composition is provided and otherwise preserves the existing independent in-memory defaults.
+
+Durable persistence is SQL-backed and uses the established Hive event/snapshot/outbox primitive:
+
+- Objective, Memory, and Question state is represented as a durable materialized state record keyed by its existing typed identity and RuntimeInstance boundary.
+- Mutations use the existing resource version as the optimistic concurrency version and append an immutable event for the same state change. Event, snapshot, materialized state, and outbox work commit atomically in one SQL transaction.
+- WorkItem binding is not a second WorkItem resource. Objective and Memory records persist the existing WorkItem identity/version and binding provenance that were observed at the binding boundary.
+- Question waiting remains cancellation-aware. A durable transport reloads the current Question from SQL after runtime restart; terminal state is returned immediately, while waiting may resume against the durable state rather than depending on an in-memory waiter surviving process shutdown. Expiration remains explicit/deterministic through IClock and ExpireDue.
+- Delegation remains an immutable explicit request channel. Submitted requests are durably stored with requester/delegate Runtime identities and provenance; the durable channel never schedules, executes, retries, or orchestrates delegated work.
+- Runtime reincarnation may reuse an explicit existing RuntimeId, allowing a new RuntimeInstance object to attach to the same durable work-state boundary after application/runtime restart. Runtime incarnation remains ephemeral; durable work state does not depend on a live runtime object.
+- Base-Agent memory records carry an explicit evidence classification so actual and simulated evidence cannot be conflated. This is evidence metadata only and does not introduce CognitiveAgent semantics.
+
+Ownership, scope, provenance, resource version, authorization checks, deterministic ordering, cancellation, and cross-runtime isolation remain enforced at the base work-protocol boundary. No CognitiveAgent beliefs, goals, learning, Dream processing, vector storage, or automatic delegation orchestration is introduced by this phase.
+
 The base work-protocol APIs are additive to Agent and RuntimeInstance; they do not alter the Agent generation contract and do not create CognitiveAgent behavior. Cognitive generations may later build adaptive interpretation and revision over these same stable mechanisms.
 
 ### Cognitive Kernel vs Cognitive Strategy
