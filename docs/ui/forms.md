@@ -105,7 +105,17 @@ Every known capability uses the same state-selector column. **Current** is the e
 
 This is the implemented Phase 1.16 follow-up capability presentation. See [Phase 1.16 Follow-Up — Model Information](../plan/Phase1/1.16-Follow-Up.md) for the detailed scope and verification contract.
 
-The Persistence Server / instance field is a normal free-form text box. It accepts local servers, named instances, remote hosts, IP addresses, and online SQL Server targets. Hive currently has no authoritative server-discovery/catalog contract, so the UI does not attempt to enumerate installed SQL Server instances. The Database field is read-only and assigned automatically to Hive's package database name. Save and Test are non-destructive. The `Initialize Hive` action is the explicit lifecycle operation that may create the configured database when allowed and applies Hive schema migrations; it must not be used as an implicit side effect of Save, Test, or normal Settings-page navigation.
+The Persistence page is one global `HivePersistenceConfiguration` editor with a backend selector:
+
+`Backend: [Embedded | SQL Server]`
+
+For **Embedded**, the page shows the configured local Hive storage location plus backend status and explicit initialization/readiness actions. It does not require an externally installed database server and does not expose a SQL connection string.
+
+For **SQL Server**, the Server / instance field remains a normal free-form text box accepting local servers, named instances, remote hosts, IP addresses, and online SQL Server targets. Hive currently has no authoritative server-discovery/catalog contract, so the UI does not enumerate installed SQL Server instances. The Database field remains read-only and assigned automatically to Hive's package database name.
+
+Save and readiness/connection Test remain non-destructive. The explicit `Initialize Hive` lifecycle action may create or initialize the selected persistence backend when allowed and apply its schema migrations. Initialization must never occur implicitly from Save, Test, or ordinary Settings-page navigation.
+
+The Persistence page consumes Management operations only. It must not construct SQLite/SQL Server connections, expose raw credentials, or implement backend-specific persistence rules.
 
 ## Structured extraction and batch input UI
 
