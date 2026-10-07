@@ -384,17 +384,19 @@ public sealed class EmbeddedPersistenceFoundationTests
                 "hive.persistence.embedded.storage-not-empty",
                 status.Error!.Code);
 
-            await using var verificationConnection = new SqliteConnection(
-                $"Data Source={path};Mode=ReadWrite");
-            await verificationConnection.OpenAsync();
+            await using (var verificationConnection = new SqliteConnection(
+                $"Data Source={path};Mode=ReadWrite"))
+            {
+                await verificationConnection.OpenAsync();
 
-            Assert.Equal(
-                "delete",
-                Convert.ToString(
-                    await ExecuteScalarAsync(
-                        verificationConnection,
-                        "PRAGMA journal_mode;"),
-                    System.Globalization.CultureInfo.InvariantCulture));
+                Assert.Equal(
+                    "delete",
+                    Convert.ToString(
+                        await ExecuteScalarAsync(
+                            verificationConnection,
+                            "PRAGMA journal_mode;"),
+                        System.Globalization.CultureInfo.InvariantCulture));
+            }
         }
         finally
         {
@@ -536,48 +538,50 @@ public sealed class EmbeddedPersistenceFoundationTests
                 "hive.persistence.embedded.migration.sqlite-failure",
                 result.Error!.Code);
 
-            await using var connection = new SqliteConnection(
-                $"Data Source={path};Mode=ReadWrite");
-            await connection.OpenAsync();
+            await using (var connection = new SqliteConnection(
+                $"Data Source={path};Mode=ReadWrite"))
+            {
+                await connection.OpenAsync();
 
-            Assert.Equal(
-                0L,
-                Convert.ToInt64(
-                    await ExecuteScalarAsync(
-                        connection,
-                        """
-                        SELECT COUNT(*)
-                        FROM sqlite_master
-                        WHERE type = 'table'
-                          AND name = 'TransientMigrationProbe';
-                        """),
-                    System.Globalization.CultureInfo.InvariantCulture));
+                Assert.Equal(
+                    0L,
+                    Convert.ToInt64(
+                        await ExecuteScalarAsync(
+                            connection,
+                            """
+                            SELECT COUNT(*)
+                            FROM sqlite_master
+                            WHERE type = 'table'
+                              AND name = 'TransientMigrationProbe';
+                            """),
+                        System.Globalization.CultureInfo.InvariantCulture));
 
-            Assert.Equal(
-                0L,
-                Convert.ToInt64(
-                    await ExecuteScalarAsync(
-                        connection,
-                        """
-                        SELECT COUNT(*)
-                        FROM sqlite_master
-                        WHERE type = 'table'
-                          AND name = 'HiveSchemaVersion';
-                        """),
-                    System.Globalization.CultureInfo.InvariantCulture));
+                Assert.Equal(
+                    0L,
+                    Convert.ToInt64(
+                        await ExecuteScalarAsync(
+                            connection,
+                            """
+                            SELECT COUNT(*)
+                            FROM sqlite_master
+                            WHERE type = 'table'
+                              AND name = 'HiveSchemaVersion';
+                            """),
+                        System.Globalization.CultureInfo.InvariantCulture));
 
-            Assert.Equal(
-                0L,
-                Convert.ToInt64(
-                    await ExecuteScalarAsync(
-                        connection,
-                        """
-                        SELECT COUNT(*)
-                        FROM sqlite_master
-                        WHERE type = 'table'
-                          AND name = 'HiveMigrationJournal';
-                        """),
-                    System.Globalization.CultureInfo.InvariantCulture));
+                Assert.Equal(
+                    0L,
+                    Convert.ToInt64(
+                        await ExecuteScalarAsync(
+                            connection,
+                            """
+                            SELECT COUNT(*)
+                            FROM sqlite_master
+                            WHERE type = 'table'
+                              AND name = 'HiveMigrationJournal';
+                            """),
+                        System.Globalization.CultureInfo.InvariantCulture));
+            }
         }
         finally
         {
@@ -595,35 +599,40 @@ public sealed class EmbeddedPersistenceFoundationTests
             Directory.CreateDirectory(
                 Path.GetDirectoryName(path)!);
 
-            await using var firstConnection = new SqliteConnection(
-                $"Data Source={path};Mode=ReadWriteCreate");
-            await firstConnection.OpenAsync();
-
-            await using (var beginCommand = firstConnection.CreateCommand())
+            await using (var firstConnection = new SqliteConnection(
+                $"Data Source={path};Mode=ReadWriteCreate"))
             {
-                beginCommand.CommandText = "BEGIN IMMEDIATE;";
-                await beginCommand.ExecuteNonQueryAsync();
+                await firstConnection.OpenAsync();
+
+                await using (var beginCommand = firstConnection.CreateCommand())
+                {
+                    beginCommand.CommandText = "BEGIN IMMEDIATE;";
+                    await beginCommand.ExecuteNonQueryAsync();
+                }
+
+                await using var secondDatabase = new EmbeddedPersistenceDatabase(
+                    HivePersistenceConfiguration.Embedded(
+                        path,
+                        commandTimeoutSeconds: 1));
+
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+                var result = await secondDatabase.InitializeAsync();
+
+                stopwatch.Stop();
+
+                Assert.True(result.IsFailure);
+                Assert.Equal(
+                    "hive.persistence.embedded.initialize.storage-busy",
+                    result.Error!.Code);
+                Assert.InRange(
+                    stopwatch.Elapsed,
+                    TimeSpan.Zero,
+                    TimeSpan.FromSeconds(5));
             }
 
-            await using var secondDatabase = new EmbeddedPersistenceDatabase(
-                HivePersistenceConfiguration.Embedded(
-                    path,
-                    commandTimeoutSeconds: 1));
+            return;
 
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-
-            var result = await secondDatabase.InitializeAsync();
-
-            stopwatch.Stop();
-
-            Assert.True(result.IsFailure);
-            Assert.Equal(
-                "hive.persistence.embedded.initialize.storage-busy",
-                result.Error!.Code);
-            Assert.InRange(
-                stopwatch.Elapsed,
-                TimeSpan.Zero,
-                TimeSpan.FromSeconds(5));
         }
         finally
         {
