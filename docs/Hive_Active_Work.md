@@ -54,7 +54,7 @@ Implemented:
 
 ## Verification gate
 
-Status: VERIFICATION PENDING
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED
 
 Required verification:
 - focused text input selection/preparation tests;
@@ -63,4 +63,4 @@ Required verification:
 - Example Host manual verification;
 - full `Hive.Tests` suite.
 
-No verification result is claimed until the developer runs the required checks.
+The latest developer verification reported 708 tests with 706 passed and 2 failed. The first failure is the existing `Submission_ContinuesAfterUnsupportedItem` regression test, whose `notes.txt` fixture is now correctly recognized as supported text and therefore no longer represents an unsupported item. The second failure is a real batch-input identity defect: durable batch item indexes are logical output indexes, while prepared image/text inputs retain original submission indexes, so the image/text matcher must use stable source identity rather than `ItemIndex`.
