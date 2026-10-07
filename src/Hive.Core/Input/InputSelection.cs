@@ -645,6 +645,14 @@ public static class InputSelectionBuilder
             return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         }
 
+        if (string.Equals(
+                extension,
+                ".txt",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "text/plain";
+        }
+
         return "application/octet-stream";
     }
 }
