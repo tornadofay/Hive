@@ -593,11 +593,6 @@ public sealed class EmbeddedPersistenceFoundationTests
                 await beginCommand.ExecuteNonQueryAsync();
             }
 
-            await using var database = new EmbeddedPersistenceDatabase(
-                HivePersistenceConfiguration.Embedded(
-                    path,
-                    commandTimeoutSeconds: 1));
-
             await using var secondDatabase = new EmbeddedPersistenceDatabase(
                 HivePersistenceConfiguration.Embedded(
                     path,
