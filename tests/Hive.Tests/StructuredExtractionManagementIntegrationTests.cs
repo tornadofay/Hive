@@ -92,6 +92,16 @@ public sealed class StructuredExtractionManagementIntegrationTests
             input => input is PreparedTextInput text &&
                      text.FileName == "invoice.txt");
 
+        var missingTarget = await management.CreateStructuredExtractionBatchAsync(
+            submission,
+            schema,
+            null,
+            context);
+        Assert.True(missingTarget.IsFailure);
+        Assert.Equal(
+            "hive.structured-extraction.text-target-required",
+            missingTarget.Error!.Code);
+
         var created = await management.CreateStructuredExtractionBatchAsync(
             submission,
             schema,
