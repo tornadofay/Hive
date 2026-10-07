@@ -158,6 +158,27 @@ public sealed class Question
                 null));
     }
 
+    internal static Question Restore(
+        ResourceEnvelope<QuestionId> resource,
+        AgentId askedByAgentId,
+        RuntimeId askedByRuntimeId,
+        string prompt,
+        DateTimeOffset expiresAtUtc,
+        QuestionStatus status,
+        string? answer,
+        AgentId? answeredByAgentId,
+        RuntimeId? answeredByRuntimeId) =>
+        new(
+            resource,
+            askedByAgentId,
+            askedByRuntimeId,
+            prompt,
+            expiresAtUtc,
+            status,
+            answer,
+            answeredByAgentId,
+            answeredByRuntimeId);
+
     internal Result<Question> Cancel(DateTimeOffset cancelledAtUtc)
     {
         if (Status != QuestionStatus.Waiting)
