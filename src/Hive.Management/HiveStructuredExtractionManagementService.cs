@@ -327,26 +327,9 @@ internal sealed class HiveStructuredExtractionManagementService :
             batch = persisted.Value!;
         }
 
-        var inputsByIndex = preparedInputs.ToDictionary(
-            static input => input.ItemIndex);
-
         var spreadsheetInputs = preparedInputs
             .OfType<PreparedSpreadsheetRowInput>()
             .ToArray();
-
-        var spreadsheetContexts = spreadsheetInputs
-            .GroupBy(
-                input => input.WorksheetName + "|" +
-                         ComputeSourceStructureFingerprint(
-                             input.WorksheetName,
-                             input.Values.Keys),
-                StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(
-                static group => group.Key,
-                static group => group
-                    .OrderBy(input => input.RowNumber)
-                    .ToArray(),
-                StringComparer.OrdinalIgnoreCase);
 
         var mappingsByIdentity = batch.Mappings
             .ToDictionary(
@@ -518,8 +501,9 @@ internal sealed class HiveStructuredExtractionManagementService :
         if (existing is null)
         {
             return Result<StructuredExtractionBatch>.Failure(
-                Error.NotFound(
+                new Error(
                     "hive.structured-extraction.mapping-context-not-found",
+                    ErrorCategory.NotFound,
                     "The requested spreadsheet mapping context does not exist."));
         }
 
@@ -550,6 +534,7 @@ internal sealed class HiveStructuredExtractionManagementService :
                     item.Candidate
                         ?? CreatePlaceholderCandidate(
                             item,
+                            batch.SubmissionId,
                             batch.TargetSchema),
                     item.SourceValues!,
                     validated,
@@ -627,8 +612,9 @@ internal sealed class HiveStructuredExtractionManagementService :
 
         if (itemPosition.item is null)
             return Result<StructuredExtractionBatch>.Failure(
-                Error.NotFound(
+                new Error(
                     "hive.structured-extraction.item-not-found",
+                    ErrorCategory.NotFound,
                     "The requested extraction item does not exist."));
 
         var item = itemPosition.item;
@@ -644,8 +630,9 @@ internal sealed class HiveStructuredExtractionManagementService :
 
         if (targetField is null)
             return Result<StructuredExtractionBatch>.Failure(
-                Error.NotFound(
+                new Error(
                     "hive.structured-extraction.field-not-found",
+                    ErrorCategory.NotFound,
                     "The requested semantic field does not exist in the target schema."));
 
         var normalizedField = CreateEditedField(targetField, value);
@@ -1212,24 +1199,13 @@ internal sealed class HiveStructuredExtractionManagementService :
             item.SourceValues);
     }
 
-    private static StructuredExtractionItemResult CreatePlaceholderCandidateItem()
-    {
-        throw new NotSupportedException();
-    }
-
     private StructuredCandidate CreatePlaceholderCandidate(
         StructuredExtractionItemResult item,
+        Guid submissionId,
         StructuredTargetSchema targetSchema)
     {
         var provenance = new StructuredCandidateProvenance(
-            item.SourceValues is not null
-                ? Guid.Parse(
-                    item.SourceValues.TryGetValue(
-                        "__submissionId",
-                        out var submission)
-                        ? submission
-                        : Guid.Empty.ToString())
-                : Guid.NewGuid(),
+            submissionId,
             item.ItemIndex,
             item.FileName,
             InputSourceKind.Spreadsheet,
