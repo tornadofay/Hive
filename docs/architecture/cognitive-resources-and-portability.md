@@ -119,7 +119,7 @@ Learning is a first-class governed cognitive process, not model-weight training.
 
 Cognitive resources and the durable evidence/state that supports them are logical Hive resources, not SQL Server-specific or Embedded-specific resource types. The selected persistence backend stores the same authoritative resource/state contracts and preserves the same ownership, scope, provenance, lifecycle, and version semantics.
 
-A future vector representation used for retrieval is derived data. It is not the authoritative representation of a cognitive resource, WorkItem, evidence record, or configuration record. For the Embedded Persistence Profile, the local vector index must therefore be rebuildable from authoritative embedded state when required. For the SQL Server profile, native SQL Server vector storage remains an implementation detail behind the same `IVectorStore` boundary.
+A future vector representation used for retrieval is derived data. It is not the authoritative representation of a cognitive resource, WorkItem, evidence record, or configuration record. For the planned Embedded Persistence Profile, the local vector index must therefore be rebuildable from authoritative embedded state when required. For the SQL Server profile, native SQL Server vector storage remains an implementation detail behind the same `IVectorStore` boundary.
 
 Changing persistence backend does not change the meaning of a cognitive resource. Backend migration/synchronization, when eventually needed, is a portability concern and must not be implemented as a semantic-learning mechanism.
 
