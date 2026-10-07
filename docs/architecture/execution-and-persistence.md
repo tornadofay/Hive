@@ -422,19 +422,19 @@ Unknown future resource types remain representable through the generic inventory
 
 The public provider persistence contract remains grouped by the Provider → ProviderAccount → ExecutionTarget resource family through `IProviderResourceStore`. This grouping is a stable application-facing persistence contract and is not itself the concrete implementation boundary.
 
-The SQL implementation must not concentrate all three resource implementations in one concrete class. `SqlProviderResourceStore` is a composition/facade over resource-specific internal stores:
+A concrete backend implementation must not concentrate all three resource implementations in one concrete class. The current SQL Server implementation uses `SqlProviderResourceStore` as a composition/facade over resource-specific internal stores:
 
 ```
 IProviderResourceStore
         ↓
-SqlProviderResourceStore
+concrete backend composition
    ┌────┴────────┬──────────────────┐
    ↓             ↓                  ↓
 Provider      ProviderAccount   ExecutionTarget
 store         store             store
 ```
 
-Each internal store owns the SQL statements, resource-specific write logic, resource-specific validation that belongs to persistence, lifecycle transitions, and optimistic-concurrency mechanics for its resource. A small shared `SqlProviderResourceReader` owns cross-resource reads and row materialization needed to validate relationships without duplicating SQL or coupling the resource stores directly to one another. Shared connection creation, command construction, access-parameter construction, common serialization, and structured SQL/error translation remain shared infrastructure when those mechanics are genuinely identical.
+Each internal store owns its backend queries/commands, resource-specific write logic, resource-specific validation that belongs to persistence, lifecycle transitions, and optimistic-concurrency mechanics for its resource. In the SQL Server implementation, a small shared `SqlProviderResourceReader` owns cross-resource reads and row materialization needed to validate relationships without duplicating SQL or coupling the resource stores directly to one another. Backend-specific connection/command construction, parameter binding, common serialization, and structured persistence-error translation remain shared infrastructure within that backend when those mechanics are genuinely identical.
 
 This is an internal implementation separation. It must preserve the existing public `IProviderResourceStore` contract, resource ownership/scope enforcement, transactional semantics, cancellation behavior, error classification, deterministic ordering, and dependency direction. The composition class must not regain resource-specific SQL or domain logic merely to make the split appear superficial. Cross-resource relationship reads must remain explicit through the shared reader rather than recreating a monolithic three-resource store.
 
