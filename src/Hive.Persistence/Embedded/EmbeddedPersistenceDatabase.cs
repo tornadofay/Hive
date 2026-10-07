@@ -154,12 +154,16 @@ internal sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
                 return Result<HiveDatabaseMigrationOutcome>.Failure(
                     state.Error!);
 
-            if (state.Value.DatabaseState ==
+            var stateValue = state.Value
+                ?? throw new InvalidOperationException(
+                    "Embedded persistence inspection returned no state.");
+
+            if (stateValue.DatabaseState ==
                 HiveDatabaseState.FutureSchema)
             {
                 return Result<HiveDatabaseMigrationOutcome>.Failure(
                     EmbeddedPersistenceError.FutureSchema(
-                        state.Value.SchemaVersion!.Value));
+                        stateValue.SchemaVersion!.Value));
             }
 
             await ConfigureDatabaseAsync(
@@ -289,9 +293,7 @@ internal sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
             normalizedPath = Path.GetFullPath(storagePath.Trim());
         }
         catch (Exception exception) when (
-            exception is ArgumentException or
-            exception is NotSupportedException or
-            exception is PathTooLongException)
+            exception is ArgumentException or NotSupportedException or PathTooLongException)
         {
             throw new ArgumentException(
                 "Embedded storage path is invalid.",
