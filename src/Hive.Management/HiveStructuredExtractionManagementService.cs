@@ -1175,11 +1175,14 @@ internal sealed class HiveStructuredExtractionManagementService :
             PreparedImageInput image =>
                 items.SingleOrDefault(
                     item =>
-                        item.ItemIndex == image.ItemIndex &&
                         item.SourceKind == InputSourceKind.Image &&
                         string.Equals(
                             item.FileName,
                             image.FileName,
+                            StringComparison.Ordinal) &&
+                        string.Equals(
+                            item.SourceFingerprint,
+                            ComputeImageFingerprint(image.Content),
                             StringComparison.Ordinal)),
 
             PreparedSpreadsheetRowInput row =>
@@ -1199,11 +1202,14 @@ internal sealed class HiveStructuredExtractionManagementService :
             PreparedTextInput text =>
                 items.SingleOrDefault(
                     item =>
-                        item.ItemIndex == text.ItemIndex &&
                         item.SourceKind == InputSourceKind.Text &&
                         string.Equals(
                             item.FileName,
                             text.FileName,
+                            StringComparison.Ordinal) &&
+                        string.Equals(
+                            item.SourceFingerprint,
+                            ComputeTextFingerprint(text.Content),
                             StringComparison.Ordinal)),
 
             _ => null
