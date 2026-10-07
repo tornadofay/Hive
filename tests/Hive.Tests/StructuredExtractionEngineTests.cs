@@ -28,7 +28,7 @@ public sealed class StructuredExtractionEngineTests
             0,
             "invoice.png",
             "image/png",
-            [1, 2, 3, 4],
+            new byte[] { 1, 2, 3, 4 },
             target.Id,
             [
                 new ExecutionTargetSelectionDiagnostic(
@@ -57,7 +57,7 @@ public sealed class StructuredExtractionEngineTests
             candidate.Children.Single().Fields.Single(
                 field => field.FieldId == new SemanticFieldId("line.description")).Value);
         Assert.Contains(
-            ""type":"image_url"",
+            "\"type\":\"image_url\"",
             handler.LastRequestBody,
             StringComparison.Ordinal);
     }
@@ -282,7 +282,7 @@ public sealed class StructuredExtractionEngineTests
             0,
             "invoice.png",
             "image/png",
-            [1, 2, 3, 4],
+            new byte[] { 1, 2, 3, 4 },
             target.Id,
             [
                 new ExecutionTargetSelectionDiagnostic(
