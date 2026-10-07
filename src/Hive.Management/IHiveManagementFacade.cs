@@ -232,6 +232,56 @@ public interface IHiveManagementFacade
         ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default);
 
+    Task<Result<StructuredExtractionBatch>> CreateStructuredExtractionBatchAsync(
+        InputSubmission submission,
+        StructuredTargetSchema targetSchema,
+        ExecutionTargetId? mappingExecutionTargetId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<StructuredExtractionBatch>> GetStructuredExtractionBatchAsync(
+        StructuredExtractionBatchId batchId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<StructuredExtractionBatch>> AuthorizeStructuredExtractionProcessingAsync(
+        StructuredExtractionBatchId batchId,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<StructuredExtractionBatch>> ProcessStructuredExtractionBatchAsync(
+        StructuredExtractionBatchId batchId,
+        IReadOnlyList<PreparedInput> preparedInputs,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<StructuredExtractionBatch>> UpdateStructuredExtractionMappingAsync(
+        StructuredExtractionBatchId batchId,
+        string mappingContextIdentity,
+        IReadOnlyList<SpreadsheetMappingEntry> entries,
+        SpreadsheetMappingReviewState reviewState,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<StructuredExtractionBatch>> UpdateStructuredCandidateFieldAsync(
+        StructuredExtractionBatchId batchId,
+        int itemIndex,
+        SemanticFieldId fieldId,
+        string? value,
+        int? childIndex,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<StructuredExtractionBatch>> AuthorizeStructuredExtractionAcceptedSetAsync(
+        StructuredExtractionBatchId batchId,
+        IReadOnlyList<int> acceptedItemIndexes,
+        ResourceVersion expectedVersion,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
     Task<Result<WorkItem>> CreateImageWorkItemAsync(
         WorkItemImageSubmission submission,
         ResourceAccessContext accessContext,
