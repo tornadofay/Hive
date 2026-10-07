@@ -118,12 +118,12 @@ public sealed class EmbeddedPersistenceParityTests
                 secondTarget,
                 context)).IsSuccess);
 
-        var favorites = await backend.Favorites.ReplaceAsync(
+        var favorites = await backend.Favorites.ReplaceFavoriteExecutionTargetIdsAsync(
             [secondTarget.Id, firstTarget.Id],
             context);
         Assert.True(favorites.IsSuccess, favorites.Error?.Message);
 
-        var reloadedFavorites = await backend.Favorites.GetAsync(
+        var reloadedFavorites = await backend.Favorites.GetFavoriteExecutionTargetIdsAsync(
             context);
         Assert.True(
             reloadedFavorites.IsSuccess,
@@ -169,7 +169,7 @@ public sealed class EmbeddedPersistenceParityTests
             new WorkItemImageSubmission(
                 "parity.png",
                 "image/png",
-                [1, 2, 3, 4, 5]),
+                new byte[] { 1, 2, 3, 4, 5 }),
             context);
         Assert.True(createdWorkItem.IsSuccess, createdWorkItem.Error?.Message);
         Assert.NotNull(createdWorkItem.Value!.Attachment);
@@ -404,7 +404,6 @@ public sealed class EmbeddedPersistenceParityTests
             events.EventStore,
             HiveAgentWorkPersistence.CreateSql(database.Options),
             null,
-            null,
             null);
     }
 
@@ -455,7 +454,7 @@ public sealed class EmbeddedPersistenceParityTests
         }
     }
 
-    private static Provider CreateTarget(
+    private static ExecutionTarget CreateTarget(
         ProviderId providerId,
         ProviderAccountId accountId,
         PrincipalId owner,
