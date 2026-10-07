@@ -103,6 +103,10 @@ public sealed class SqlHiveHostServiceGraphFactory :
             var agentExecution = new AgentExecutionService(
                 eventPersistence,
                 SharedHttpClient);
+            var structuredExtractionEngine =
+                new StructuredExtractionEngine(SharedHttpClient);
+            var structuredExtractionBatches =
+                new SqlStructuredExtractionBatchStore(eventPersistence);
 
             management = new HiveManagementFacade(
                 new SqlProviderResourceStore(options),
@@ -116,7 +120,9 @@ public sealed class SqlHiveHostServiceGraphFactory :
                 agentExecution,
                 new OpenAICompatibleProviderCapabilityDiscovery(
                     SharedHttpClient),
-                executionTargetPreferences: new SqlExecutionTargetPreferenceStore(options));
+                executionTargetPreferences: new SqlExecutionTargetPreferenceStore(options),
+                structuredExtractionBatches: structuredExtractionBatches,
+                structuredExtractionEngine: structuredExtractionEngine);
 
             var graph = new HiveHostServiceGraph(
                 configuration,
