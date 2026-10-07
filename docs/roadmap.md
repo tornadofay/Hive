@@ -295,15 +295,25 @@ Scope and non-goals: persist Objective, WorkItem, Question/Answer, memory/work-s
 
 Verify: restart persistence, ownership/scope isolation, stale/concurrent handling, durable transitions, cancellation/recovery, and no cross-runtime leakage.
 
+## 1.18A — Embedded Persistence Profile
+
+Detailed implementation plan: [1.18A — Embedded Persistence Profile](plan/Phase1/1.18A.md)
+
+Objective: provide a self-contained local Hive persistence profile for normal desktop installations without requiring an externally installed database server, while preserving the same Hive persistence/resource contracts and logical resource model used by SQL Server.
+
+Scope and non-goals: add a first-class backend-aware persistence configuration and composition boundary; implement the embedded relational persistence backend for the already-defined durable Hive resources; support initialization, schema/version migration, reopen/restart, crash/recovery, and safe host recomposition; expose Embedded vs SQL Server in the existing Persistence Settings page; keep SQL Server behavior intact. Embedded vector indexing/search is explicitly deferred to 1.19, as are cross-backend live synchronization, configuration import/export, cognitive semantics, and any new resource model.
+
+Verify: clean first-run initialization; persistence and reload across application restart; schema/version handling and migration failure boundaries; secret/configuration safety; host recomposition and failed-candidate rollback; SQL Server regression behavior; Embedded/SQL backend selection through the Management/Settings boundary; and deterministic persistence of all already-implemented durable resource/state contracts.
+
 ## 1.19 — V1 Vector Retrieval Infrastructure
 
 Detailed implementation plan: [1.19 — V1 Vector Retrieval Infrastructure](plan/Phase1/1.19.md)
 
-Objective: establish bounded, replaceable vector storage and similarity retrieval for later Hive capabilities.
+Objective: establish bounded, replaceable vector storage and similarity retrieval for later Hive capabilities across both supported V1 persistence profiles.
 
-Scope and non-goals: V1 uses the `IVectorStore` boundary and SQL Server vector support; this is retrieval infrastructure, not the Phase 5 semantic-memory/learning system.
+Scope and non-goals: use the `IVectorStore` boundary with SQL Server native vector support for the SQL Server profile and a local embedded vector implementation for the Embedded Persistence Profile; this is retrieval infrastructure, not the Phase 5 semantic-memory/learning system. The authoritative logical resource/state records remain in the selected Hive persistence backend, and vector indexes are derived/rebuildable retrieval data.
 
-Verify: insertion/search, deterministic ordering/ties, ownership/scope, invalid vectors, result bounds, cancellation, persistence/reload, and isolation.
+Verify: insertion/search for each supported persistence profile, deterministic ordering/ties, ownership/scope, invalid vectors, result bounds, cancellation, persistence/reload/rebuild, and isolation.
 
 ## 1.19A — Execution Target Preferences & Favorite Target Pool
 
