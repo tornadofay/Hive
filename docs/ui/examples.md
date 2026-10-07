@@ -94,7 +94,7 @@ Planned V1 interaction and operations examples should also cover:
 - governed Tool, policy, permission, and human-intervention behavior → `Management / Governance`;
 - authoritative resource inventory and runtime/execution diagnostics → `Operations / Resource Inventory`;
 - durable Base-Agent work state and runtime-lifetime recovery → `Persistence / Agent Work State`;
-- planned Embedded Persistence Profile → the real `Overview / Getting Started / Example Configuration` Settings flow; demonstrate the Persistence page's `Embedded | SQL Server` backend selector, explicit Embedded initialization/readiness, local storage status, durable state across restart, and preservation of the existing SQL Server configuration path;
+- planned Embedded Persistence Profile → the real `Overview / Getting Started / Example Configuration` Settings flow; demonstrate the Persistence page's `Database Setup | Data Migration` tabs, the `Embedded | SQL Server` backend selector, explicit Embedded initialization/readiness, local storage status, quiescent migration preflight, full SQL Server → Embedded and Embedded → SQL Server migration of **All Hive Data**, verification of stable identities/relationships/versions/secret records, explicit destination activation, and preservation of the existing SQL Server configuration path;
 - bounded V1 vector insertion and similarity retrieval infrastructure → `Persistence / Vector Retrieval`;
 
 The host-level Hive Settings entry is introduced through the Overview / Getting Started configuration example. The example explains the configuration model and opens the real Settings window; it is not a fake configuration-inspection surface.
