@@ -299,19 +299,19 @@ Verify: restart persistence, ownership/scope isolation, stale/concurrent handlin
 
 Detailed implementation plan: [1.18A — Embedded Persistence Profile](plan/Phase1/1.18A.md)
 
-Objective: provide a self-contained local Hive persistence profile for normal desktop installations without requiring an externally installed database server, while preserving the same Hive persistence/resource contracts and logical resource model used by SQL Server.
+Objective: add a self-contained Embedded Persistence Profile for normal desktop installations without requiring an externally installed database server, while preserving the existing SQL Server backend and the same Hive persistence/resource contracts and logical resource model.
 
-Scope and non-goals: add a first-class backend-aware persistence configuration and composition boundary; implement the embedded relational persistence backend for the already-defined durable Hive resources; support initialization, schema/version migration, reopen/restart, crash/recovery, and safe host recomposition; expose Embedded vs SQL Server in the existing Persistence Settings page; keep SQL Server behavior intact. Embedded vector indexing/search is explicitly deferred to 1.19, as are cross-backend live synchronization, configuration import/export, cognitive semantics, and any new resource model.
+Scope and non-goals: first inventory the current SQL Server-backed persistence surface at implementation time and treat it as the Embedded catch-up baseline; implement the Embedded relational backend for every Hive-owned durable contract currently represented by the project, including changes through the current SQL schema/state; establish backend-aware composition and configuration; support initialization, schema/version migration, reopen/restart, crash/recovery, and safe host recomposition; expose Embedded vs SQL Server in the existing Persistence Settings page; and add complete bidirectional full-data migration between SQL Server and Embedded. Embedded vector indexing/search is explicitly deferred to 1.19, while live synchronization and cognitive/semantic features remain out of scope.
 
-Verify: clean first-run initialization; persistence and reload across application restart; schema/version handling and migration failure boundaries; secret/configuration safety; host recomposition and failed-candidate rollback; SQL Server regression behavior; Embedded/SQL backend selection through the Management/Settings boundary; and deterministic persistence of all already-implemented durable resource/state contracts.
+Verify: clean first-run initialization; parity with the current SQL Server durable persistence surface; persistence and reload across application restart; schema/version handling and migration failure boundaries; secret/configuration safety; host recomposition and failed-candidate rollback; SQL Server regression behavior; backend selection through the Management/Settings boundary; deterministic persistence; and successful full-data SQL Server ↔ Embedded migration with identity, relationship, and durability verification.
 
 ## 1.19 — V1 Vector Retrieval Infrastructure
 
 Detailed implementation plan: [1.19 — V1 Vector Retrieval Infrastructure](plan/Phase1/1.19.md)
 
-Objective: establish bounded, replaceable vector storage and similarity retrieval for later Hive capabilities across both supported V1 persistence profiles.
+Objective: establish bounded, replaceable vector storage and similarity retrieval for later Hive capabilities across the SQL Server and Embedded persistence profiles established by 1.18A.
 
-Scope and non-goals: use the `IVectorStore` boundary with SQL Server native vector support for the SQL Server profile and a local embedded vector implementation for the Embedded Persistence Profile; this is retrieval infrastructure, not the Phase 5 semantic-memory/learning system. The authoritative logical resource/state records remain in the selected Hive persistence backend, and vector indexes are derived/rebuildable retrieval data.
+Scope and non-goals: use the `IVectorStore` boundary with SQL Server native vector support for the SQL Server profile and a local embedded vector implementation for the Embedded Persistence Profile. 1.19 consumes those backend implementations through persistence/vector contracts; it must not duplicate higher-level feature logic for SQL Server versus Embedded. This is retrieval infrastructure, not the Phase 5 semantic-memory/learning system. The authoritative logical resource/state records remain in the selected Hive persistence backend, and vector indexes are derived/rebuildable retrieval data.
 
 Verify: insertion/search for each supported persistence profile, deterministic ordering/ties, ownership/scope, invalid vectors, result bounds, cancellation, persistence/reload/rebuild, and isolation.
 
