@@ -11,11 +11,62 @@ public enum OpenAICompatibleMessageRole
     Assistant
 }
 
+public sealed record OpenAICompatibleImageContent
+{
+    public const int MaxContentBytes = 10 * 1024 * 1024;
+
+    public OpenAICompatibleImageContent(
+        string mediaType,
+        ReadOnlyMemory<byte> content)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(mediaType);
+
+        var normalizedMediaType = mediaType.Trim().ToLowerInvariant();
+
+        if (!normalizedMediaType.StartsWith("image/", StringComparison.Ordinal))
+            throw new ArgumentException(
+                "Vision message content must use an image media type.",
+                nameof(mediaType));
+
+        if (normalizedMediaType.Length > 200)
+            throw new ArgumentException(
+                "Image media type cannot exceed 200 characters.",
+                nameof(mediaType));
+
+        if (content.Length <= 0)
+            throw new ArgumentException(
+                "Image message content cannot be empty.",
+                nameof(content));
+
+        if (content.Length > MaxContentBytes)
+            throw new ArgumentOutOfRangeException(
+                nameof(content),
+                content.Length,
+                $"Image message content cannot exceed {MaxContentBytes} bytes.");
+
+        MediaType = normalizedMediaType;
+        Content = content.ToArray();
+    }
+
+    public string MediaType { get; }
+
+    public ReadOnlyMemory<byte> Content { get; }
+}
+
 public sealed record OpenAICompatibleMessage
 {
     internal const int MaxContentLength = 64 * 1024;
+    internal const int MaxImageCount = 4;
 
     public OpenAICompatibleMessage(OpenAICompatibleMessageRole role, string content)
+        : this(role, content, Array.Empty<OpenAICompatibleImageContent>())
+    {
+    }
+
+    public OpenAICompatibleMessage(
+        OpenAICompatibleMessageRole role,
+        string content,
+        IReadOnlyList<OpenAICompatibleImageContent> images)
     {
         if (!Enum.IsDefined(role))
             throw new ArgumentOutOfRangeException(nameof(role), role, "Message role is invalid.");
@@ -28,13 +79,28 @@ public sealed record OpenAICompatibleMessage
                 "Message content cannot exceed 64 KiB.",
                 nameof(content));
 
+        ArgumentNullException.ThrowIfNull(images);
+
+        if (images.Count > MaxImageCount)
+            throw new ArgumentException(
+                $"A message cannot contain more than {MaxImageCount} images.",
+                nameof(images));
+
+        if (images.Any(static image => image is null))
+            throw new ArgumentException(
+                "Image content cannot contain null entries.",
+                nameof(images));
+
         Role = role;
         Content = content;
+        Images = images.ToArray();
     }
 
     public OpenAICompatibleMessageRole Role { get; }
 
     public string Content { get; }
+
+    public IReadOnlyList<OpenAICompatibleImageContent> Images { get; }
 }
 
 public sealed record OpenAICompatibleStructuredOutput
