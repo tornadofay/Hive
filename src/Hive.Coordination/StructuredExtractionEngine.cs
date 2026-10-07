@@ -14,6 +14,13 @@ public sealed class StructuredExtractionEngine
     private const string StructuredOutputCapability = "structured.output";
     private const string VisionCapability = "vision";
 
+    private readonly HttpClient _httpClient;
+
+    public StructuredExtractionEngine(HttpClient httpClient)
+    {
+        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+    }
+
     public async Task<Result<SpreadsheetMapping>> ProposeSpreadsheetMappingAsync(
         SpreadsheetMappingContext context,
         StructuredTargetSchema targetSchema,
@@ -956,7 +963,7 @@ public sealed class StructuredExtractionEngine
         try
         {
             var adapter = new OpenAICompatibleProviderAdapter(
-                new HttpClient(),
+                _httpClient,
                 new OpenAICompatibleProviderOptions(
                     target.Endpoint,
                     credential));
