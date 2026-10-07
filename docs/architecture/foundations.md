@@ -97,7 +97,7 @@ Phase 0.4 established the original Hive-owned SQL Server persistence boundary wi
 **Embedded Persistence Profile**
 
 - Embedded mode is a first-class local/desktop persistence backend behind the same Hive persistence/resource contracts.
-- The planned implementation uses SQLite through `Microsoft.Data.Sqlite`; dependency/version and native packaging details remain subject to the normal 1.18A implementation review.
+- The implemented Embedded persistence backend uses SQLite through `Microsoft.Data.Sqlite`; final dependency/version and native packaging details remain subject to the normal 1.18A phase closure review.
 - Embedded mode has no externally installed database-server dependency.
 - The embedded store is application-owned local storage with one authoritative relational store for Hive durable state rather than separate per-feature database files.
 - Embedded schema/version/migration behavior must preserve the same logical compatibility and failure semantics required by the Hive persistence boundary.
@@ -106,7 +106,7 @@ Phase 0.4 established the original Hive-owned SQL Server persistence boundary wi
 
 - The Slice 2 implementation keeps the Embedded storage engine behind an internal `Hive.Persistence` foundation so the public Hive contracts do not expose SQLite connection or transaction types.
 - The configured storage path is normalized to an absolute file path at the persistence boundary. Missing parent directories may be created only during explicit Embedded initialization; inspection/status is non-creating.
-- Embedded connections use file-backed `ReadWriteCreate` for explicit initialization, ordinary `ReadWrite` for non-creating inspection, foreign-key enforcement, connection pooling, and a bounded provider default timeout derived from the Hive command-timeout configuration. Shared-cache mode is not used so the store can use SQLite WAL safely.
+- Embedded connections use file-backed `ReadWriteCreate` for explicit initialization, ordinary `ReadWrite` for non-creating inspection, foreign-key enforcement, disabled connection pooling (`Pooling=False`), and a bounded provider default timeout derived from the Hive command-timeout configuration. Shared-cache mode is not used so the store can use SQLite WAL safely.
 - Initialization enables WAL for durable/recoverable local operation and uses SQLite's durable synchronous mode. SQLite busy/locked behavior remains bounded by the configured timeout; unbounded application retry loops are not introduced.
 - Embedded foundation migrations are embedded SQLite scripts ordered deterministically by numeric migration version. Each migration script, its migration-journal record, and the Hive-owned schema-version advancement commit as one write transaction. A failed or cancelled migration rolls back the entire transaction and never advances the schema version.
 - The foundation schema contains only the Hive schema-version singleton and Embedded migration journal. Domain/resource tables remain owned by their later persistence slices.
