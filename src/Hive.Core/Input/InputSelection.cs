@@ -273,8 +273,9 @@ public static class InputSelectionBuilder
                 new InputSelectionFailure(
                     discovered,
                     folderPath,
-                    Error.Unauthorized(
+                    new Error(
                         "hive.input.selection-enumeration-access-denied",
+                        ErrorCategory.Unauthorized,
                         "A folder or file could not be enumerated.")));
         }
 
