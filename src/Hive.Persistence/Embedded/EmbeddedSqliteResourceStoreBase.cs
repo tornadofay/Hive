@@ -290,7 +290,7 @@ internal abstract class EmbeddedSqliteResourceStoreBase
         command.Parameters.Add(IntParameter("@ScopeKind", (int)resource.Scope.Kind));
         command.Parameters.Add(GuidParameter("@ScopeIdentity", resource.Scope.Identity));
         command.Parameters.Add(
-            SqlParameter("@ResourceVersion", SqlDbType.BigInt, resource.Version.Value));
+            SqlParameter("@ResourceVersion", SqliteType.Integer, resource.Version.Value));
         command.Parameters.Add(
             GuidParameter("@CreatedByPrincipalId", resource.Provenance.CreatedBy.Value));
         command.Parameters.Add(
@@ -306,7 +306,7 @@ internal abstract class EmbeddedSqliteResourceStoreBase
         command.Parameters.Add(
             SqlParameter(
                 "@MetadataJson",
-                SqlDbType.NVarChar,
+                SqliteType.Text,
                 -1,
                 SerializeMetadata(resource.Metadata)));
     }
@@ -314,7 +314,7 @@ internal abstract class EmbeddedSqliteResourceStoreBase
     protected static SqliteParameter GuidParameter(string name, Guid? value) =>
         new(name, SqliteType.Text)
         {
-            Value = value?.ToString("D") ?? DBNull.Value
+            Value = (object?)value?.ToString("D") ?? DBNull.Value
         };
 
     protected static SqliteParameter IntParameter(string name, int value) =>
@@ -351,6 +351,59 @@ internal abstract class EmbeddedSqliteResourceStoreBase
         {
             Value = value ?? DBNull.Value
         };
+
+    protected async Task UpdateLifecycleAsync<TIdentity>(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        string tableName,
+        string identityColumn,
+        Guid resourceId,
+        ResourceEnvelope<TIdentity> updatedResource,
+        ResourceVersion expectedVersion,
+        CancellationToken cancellationToken)
+        where TIdentity : struct
+    {
+        await using var command = CreateCommand(
+            connection,
+            $"""
+            UPDATE [{tableName}]
+            SET [ResourceVersion] = @NewVersion,
+                [LifecycleStatus] = @LifecycleStatus,
+                [LifecycleChangedAtUtc] = @LifecycleChangedAtUtc
+            WHERE [{identityColumn}] = @ResourceId
+              AND [ResourceVersion] = @ExpectedVersion;
+            """,
+            transaction);
+
+        command.Parameters.Add(
+            SqlParameter(
+                "@NewVersion",
+                SqliteType.Integer,
+                updatedResource.Version.Value));
+        command.Parameters.Add(
+            IntParameter(
+                "@LifecycleStatus",
+                (int)updatedResource.Lifecycle.Status));
+        command.Parameters.Add(
+            DateTimeParameter(
+                "@LifecycleChangedAtUtc",
+                updatedResource.Lifecycle.ChangedAtUtc));
+        command.Parameters.Add(
+            GuidParameter(
+                "@ResourceId",
+                resourceId));
+        command.Parameters.Add(
+            SqlParameter(
+                "@ExpectedVersion",
+                SqliteType.Integer,
+                expectedVersion.Value));
+
+        var affected = await command.ExecuteNonQueryAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (affected != 1)
+            throw new ConcurrencyException();
+    }
 
     protected static void AddAccessParameters(
         SqliteCommand command,
