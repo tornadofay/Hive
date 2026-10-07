@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED
+Status: VERIFICATION PENDING
 
 Phase: **1.18A — Embedded Persistence Profile**
 
@@ -8,7 +8,7 @@ Slice: **1 — Backend-Neutral Persistence Boundary**
 
 Authorization: Explicit user authorization on 2026-10-07 via `Hive: Start Phase 1.18A`. Per the 1.18A plan, only Slice 1 is active; later slices require successful developer verification of this slice.
 
-Repository checkpoint after same-slice verification failure: `e3d607a54478eba31a7855c10e472c74ecd178ca` (`main`).
+Repository checkpoint after same-slice remediation: `53dc0d7d2131208571013bbeeaa998fb96559d2f` (`main`).
 
 ## Authorized scope
 
@@ -23,9 +23,15 @@ Repository checkpoint after same-slice verification failure: `e3d607a54478eba31a
 
 Developer verification on 2026-10-07 reported 721 tests run: 720 passed, 1 failed. The failing test was `Hive.Tests.HiveConfigurationTests.EmbeddedPersistenceConfiguration_RequiresStoragePath`.
 
-The assertion expected exception parameter name `storagePath`, but `HivePersistenceConfiguration` reported `embeddedStoragePath`. This is an in-scope public API validation-contract mismatch in Slice 1 and requires same-slice remediation before verification can return to pending.
+The assertion expected exception parameter name `storagePath`, but `HivePersistenceConfiguration` reported `embeddedStoragePath`. The remediation aligned the authoritative constructor validation parameter with the public storage-path parameter name: `storagePath`.
 
-Remediation boundary: preserve the existing Embedded configuration validation while exposing the public storage-path parameter consistently as `storagePath`; no later-slice work or unrelated cleanup is authorized.
+## Completed same-slice remediation
+
+Developer-reported Slice 1 compile failures and the subsequent verification assertion failure have been remediated:
+
+- corrected the malformed raw/interpolated JSON test string in `tests/Hive.Tests/HiveConfigurationTests.cs`;
+- corrected the missing closing parenthesis in `src/Hive.Persistence/Database/HiveDatabaseOptions.cs`;
+- aligned the Embedded persistence storage-path validation parameter name in `src/Hive.Core/Configuration/HiveConfigurationContracts.cs`.
 
 ## Completed same-slice remediation
 
