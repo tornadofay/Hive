@@ -270,5 +270,6 @@ public enum ResourceKind
     ExecutionTarget,
     Secret,
     AgentDefinition,
-    StructuredExtractionBatch
+    StructuredExtractionBatch,
+    Delegation
 }
