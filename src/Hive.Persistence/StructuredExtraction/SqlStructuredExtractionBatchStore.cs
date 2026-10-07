@@ -456,6 +456,54 @@ internal sealed class ResourceReferenceJsonConverter : System.Text.Json.Serializ
     }
 }
 
+internal sealed class SemanticFieldIdJsonConverter :
+    System.Text.Json.Serialization.JsonConverter<SemanticFieldId>
+{
+    public override SemanticFieldId Read(
+        ref System.Text.Json.Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
+    {
+        string? value = reader.TokenType switch
+        {
+            System.Text.Json.JsonTokenType.String => reader.GetString(),
+            System.Text.Json.JsonTokenType.StartObject => ReadLegacyValue(ref reader),
+            _ => null
+        };
+
+        if (value is null)
+            throw new JsonException("Invalid semantic field identity.");
+
+        try
+        {
+            return new SemanticFieldId(value);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new JsonException("Invalid semantic field identity.", exception);
+        }
+    }
+
+    public override void Write(
+        System.Text.Json.Utf8JsonWriter writer,
+        SemanticFieldId value,
+        JsonSerializerOptions options) =>
+        writer.WriteStringValue(value.Value);
+
+    private static string? ReadLegacyValue(
+        ref System.Text.Json.Utf8JsonReader reader)
+    {
+        using var document = JsonDocument.ParseValue(ref reader);
+
+        return document.RootElement.TryGetProperty(
+                "value",
+                out var valueElement) &&
+            valueElement.ValueKind == JsonValueKind.String
+            ? valueElement.GetString()
+            : null;
+    }
+}
+
 internal abstract class GuidBackedSnapshotJsonConverter<TIdentity> :
     System.Text.Json.Serialization.JsonConverter<TIdentity>
     where TIdentity : struct
