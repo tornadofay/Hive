@@ -131,6 +131,20 @@ public sealed class TextInputPreparationTests
     }
 
     [Fact]
+    public void TextInput_PreparedContractEnforcesCharacterBound()
+    {
+        var content = new string('x', InputPreparationLimits.MaxTextCharacters + 1);
+
+        Assert.Throws<ArgumentException>(
+            () => new PreparedTextInput(
+                Guid.NewGuid(),
+                0,
+                "large.txt",
+                "text/plain",
+                content));
+    }
+
+    [Fact]
     public void TextInput_DoesNotRequireVisionRouting()
     {
         var submission = new InputSubmission(
