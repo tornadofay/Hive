@@ -47,6 +47,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly TableLayoutPanel _sqlCredentialsField;
     private HiveStatusTone _statusTone = HiveStatusTone.Neutral;
     private bool _updatingBackendSelection;
+    private bool _normalizingSetupLayout;
 
     private CancellationTokenSource? _operationCts;
     private HivePersistenceConfiguration? _loadedConfiguration;
@@ -258,6 +259,12 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         UpdateBackendState();
         UpdateFooterStatusWidth();
+    }
+
+    protected override void OnLayout(LayoutEventArgs e)
+    {
+        base.OnLayout(e);
+        NormalizeSetupScrollContent();
     }
 
     public Task InitializeAsync(
@@ -1597,11 +1604,48 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private static TextBox CreateTextBox() =>
         new()
         {
+            Dock = DockStyle.Fill,
             Height = 32,
             AutoSize = false,
             BorderStyle = BorderStyle.FixedSingle
         };
 
+
+    private void NormalizeSetupScrollContent()
+    {
+        if (_normalizingSetupLayout ||
+            IsDisposed ||
+            Disposing ||
+            _editor.FieldsPanel.Parent is not HiveScrollHost scrollHost)
+        {
+            return;
+        }
+
+        var viewportWidth = scrollHost.ClientSize.Width;
+        var viewportHeight = scrollHost.ClientSize.Height;
+        if (viewportWidth <= 0 || viewportHeight <= 0)
+            return;
+
+        _normalizingSetupLayout = true;
+        try
+        {
+            _editor.FieldsPanel.Width = viewportWidth;
+            _editor.FieldsPanel.PerformLayout();
+
+            var preferred = _editor.FieldsPanel.GetPreferredSize(
+                new Size(viewportWidth, 0));
+            var height = Math.Max(1, preferred.Height);
+            _editor.FieldsPanel.Size = new Size(
+                viewportWidth,
+                height);
+
+            scrollHost.Synchronize();
+        }
+        finally
+        {
+            _normalizingSetupLayout = false;
+        }
+    }
 
     private static void SetReadOnlyVisualState(
         TextBox textBox,
