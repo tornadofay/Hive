@@ -287,8 +287,7 @@ public sealed class HiveUiPolishTests
         [
             "MSSQLSERVER",
             "HiveSql"
-        ],
-        "DEVBOX");
+        ]);
 
         Assert.Equal(
             new[]
