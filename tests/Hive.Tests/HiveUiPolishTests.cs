@@ -259,6 +259,11 @@ public sealed class HiveUiPolishTests
         Assert.Equal(2, view.NavigationTabs.TabPages.Count);
         Assert.Equal("Database Setup", view.NavigationTabs.TabPages[0].Text);
         Assert.Equal("Data Migration", view.NavigationTabs.TabPages[1].Text);
+        Assert.Single(view.NavigationTabs.TabPages[1].Controls);
+
+        view.NavigationTabs.SelectedIndex = 1;
+        Application.DoEvents();
+
         Assert.Equal(
             DockStyle.Fill,
             view.NavigationTabs.TabPages[1].Controls[0].Dock);
