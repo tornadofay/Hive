@@ -970,7 +970,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = controls.Length,
             RowCount = 1,
-            Margin = new Padding(0, 0, 0, 10),
+            Margin = new Padding(0, 0, 0, 8),
             Padding = Padding.Empty,
             GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
@@ -1109,7 +1109,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Text = title,
             Dock = DockStyle.Fill,
             AutoSize = false,
-            Height = 22,
+            Height = 20,
             Font = new Font(
                 SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
                 FontStyle.Bold),
@@ -1118,14 +1118,38 @@ internal sealed class HivePersistenceSettingsView : UserControl
         };
 
         editor.AutoSize = false;
-        editor.Dock = editorWidth is > 0
-            ? DockStyle.Left
-            : DockStyle.Fill;
         editor.Margin = Padding.Empty;
 
         if (editorWidth is > 0)
+        {
+            editor.Dock = DockStyle.Fill;
             editor.Width = editorWidth.Value;
+            editor.MinimumSize = new Size(
+                editorWidth.Value,
+                Math.Max(0, editor.MinimumSize.Height));
+            editor.MaximumSize = new Size(editorWidth.Value, 0);
 
+            var editorHost = new Panel
+            {
+                Dock = DockStyle.Left,
+                AutoSize = false,
+                Width = editorWidth.Value,
+                MinimumSize = new Size(editorWidth.Value, 0),
+                MaximumSize = new Size(editorWidth.Value, 0),
+                Margin = Padding.Empty,
+                Padding = Padding.Empty
+            };
+            editorHost.Controls.Add(editor);
+
+            if (editor.Height < 36)
+                editor.Height = 36;
+
+            block.Controls.Add(label, 0, 0);
+            block.Controls.Add(editorHost, 0, 1);
+            return block;
+        }
+
+        editor.Dock = DockStyle.Fill;
         if (editor.Height < 36)
             editor.Height = 36;
 
@@ -1154,8 +1178,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Text = text,
             Dock = DockStyle.Fill,
             AutoSize = true,
-            MaximumSize = new Size(0, 42),
-            Margin = new Padding(0, 0, 0, 12)
+            MaximumSize = new Size(0, 36),
+            Margin = new Padding(0, 0, 0, 8)
         };
 
     private FlowLayoutPanel CreateSecurityCheckBoxHost()
