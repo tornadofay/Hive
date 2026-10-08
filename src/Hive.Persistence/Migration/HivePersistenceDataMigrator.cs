@@ -424,7 +424,7 @@ internal sealed class HivePersistenceDataMigrator
 
         var destinationOptions = HiveDatabaseOptions.FromConfiguration(
                 destinationConfiguration,
-                sourceSqlCredential);
+                destinationSqlCredential);
 
         var destinationPreflight = await PrepareSqlDestinationAsync(
             destinationOptions,
