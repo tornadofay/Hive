@@ -180,7 +180,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             "Persistence Backend",
             "Choose where Hive stores its durable state. Changing this selector does not migrate data or activate a new backend.",
             CreateFormGrid(
-                CreateFieldBlock("Backend", _backendComboBox)));
+                CreateFieldBlock("Backend", _backendComboBox, 80)));
 
         _updatingBackendSelection = true;
         try
@@ -1005,7 +1005,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 Text = title,
                 Dock = DockStyle.Fill,
                 AutoSize = false,
-                Height = 22,
+                Height = 20,
                 Font = new Font(
                     SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
                     FontStyle.Bold),
@@ -1097,11 +1097,11 @@ internal sealed class HivePersistenceSettingsView : UserControl
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 1,
             RowCount = 2,
-            Margin = new Padding(0, 0, 10, 0),
+            Margin = new Padding(0, 0, 8, 0),
             Padding = Padding.Empty,
             GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
-        block.RowStyles.Add(new RowStyle(SizeType.Absolute, 22f));
+        block.RowStyles.Add(new RowStyle(SizeType.Absolute, 20f));
         block.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         var label = new Label
@@ -1140,7 +1140,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Text = text,
             Dock = DockStyle.Fill,
             AutoSize = false,
-            Height = 26,
+            Height = 24,
             Font = new Font(
                 SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
                 FontStyle.Bold),
@@ -1266,11 +1266,25 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _sqlCredentialsField.Visible = sqlPassword;
 
+        var credentialsRow = _sqlSection.GetPositionFromControl(_sqlCredentialsField).Row;
+        if (credentialsRow >= 0 &&
+            credentialsRow < _sqlSection.RowStyles.Count)
+        {
+            var rowStyle = _sqlSection.RowStyles[credentialsRow];
+            rowStyle.SizeType = sqlPassword
+                ? SizeType.AutoSize
+                : SizeType.Absolute;
+            rowStyle.Height = 0;
+        }
+
         if (!sqlPassword)
         {
             _userNameTextBox.Clear();
             _passwordTextBox.Clear();
         }
+
+        _sqlSection.PerformLayout();
+        _editor.FieldsPanel.PerformLayout();
 
         if (SelectedBackend == HivePersistenceBackend.Embedded)
         {
