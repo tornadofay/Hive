@@ -34,8 +34,11 @@ public sealed class HiveHostComposition : IDisposable
 
     public HiveHostComposition()
     {
+        var applicationName = Application.ProductName;
         var configurationStore = new JsonHiveConfigurationStore(
-            applicationName: Application.ProductName);
+            applicationName: applicationName,
+            defaultPersistenceConfiguration:
+                CreateEndUserFirstRunPersistenceConfiguration(applicationName));
 
         _configurationStore = configurationStore;
         _graphFactory = new HiveHostServiceGraphFactory(
@@ -51,6 +54,19 @@ public sealed class HiveHostComposition : IDisposable
             ?? throw new ArgumentNullException(nameof(configurationStore));
         _graphFactory = graphFactory
             ?? throw new ArgumentNullException(nameof(graphFactory));
+    }
+
+    internal static HivePersistenceConfiguration CreateEndUserFirstRunPersistenceConfiguration(
+        string? applicationName = null)
+    {
+        var root = Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData),
+            "Hive");
+
+        return HivePersistenceConfiguration.Embedded(
+            Path.Combine(root, "hive.db"),
+            createDatabaseIfMissing: true);
     }
 
     public HiveHostServiceGraph? Current =>
