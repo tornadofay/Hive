@@ -310,10 +310,9 @@ public sealed class HiveUiPolishTests
             @"localhost\MSSQLSERVER01",
             view.SqlServerPicker.ServerName);
         Assert.Equal(1433, view.SqlServerPicker.Port);
-        Assert.Contains(
-            view.StatusLabel,
-            FindAncestor<FlowLayoutPanel>(view.StatusLabel)?.Controls
-                ?? Array.Empty<Control>());
+        Assert.True(
+            FindAncestor<FlowLayoutPanel>(view.StatusLabel)
+                ?.Controls.Contains(view.StatusLabel) == true);
         Assert.NotNull(view.BrowseEmbeddedButton);
     }
 
@@ -336,7 +335,7 @@ public sealed class HiveUiPolishTests
         Assert.Equal(2, view.DirectionSelector.Items.Count);
         Assert.Equal("All Hive Data", view.ScopeLabel.Text);
         Assert.Equal(2, view.SqlAuthenticationSelector.Items.Count);
-        Assert.Contains(view.StatusLabel, view.FooterPanel.Controls);
+        Assert.True(view.FooterPanel.Controls.Contains(view.StatusLabel));
     }
 
     [Fact]
