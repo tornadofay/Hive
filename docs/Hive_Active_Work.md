@@ -45,7 +45,7 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+Current state: **VERIFICATION PENDING**.
 
 Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **756 tests: 752 passed, 4 failed, 0 skipped**.
 
@@ -133,6 +133,14 @@ These failures are same-slice regressions. They do not authorize Slice 6 or 1.19
 - \`HivePersistenceDataMigrator.MigrateEmbeddedToSqlAsync\` now receives the destination SQL credential under the same parameter name used by the caller.
 - \`PersistenceDataMigrationExampleView\` now constructs \`HivePersistenceMigrationRequest\` with both explicit source and destination configurations.
 - The full \`HivePersistenceDataMigrationTests\` file was previously restored after an accidental reduction; the final diff against the Slice 5 activation checkpoint is now bounded to the intended migration-test edits.
+
+### Latest verification remediation — 2026-10-08 18:55
+
+- Replaced the migration endpoint editor's overlapping fixed-size `TableLayoutPanel` host with a dedicated `Panel` that safely overlays the two backend-specific editors and brings the selected backend to the front. This removes the constructor-time `Additional Rows or Columns cannot be created` failure.
+- Kept both Source and Destination endpoint editors independent; no migration contract or backend scope was widened.
+- Corrected `HiveSqlServerInstancePicker.SetDiscoveredInstances` so a null preferred server means "choose the discovered local/default instance", while `RefreshAsync` still supplies the current server explicitly when preserving an existing selection is intended. This prevents a stale named-instance selection from becoming an unintended Custom endpoint during a fresh discovered-instance population.
+
+Developer re-verification is still required; the reported 758-test run remains the latest executed result.
 
 ### Verification handoff
 
