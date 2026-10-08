@@ -913,11 +913,12 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _fieldRowHeights[row] = _editor.FieldsPanel.RowStyles[row].Height;
     }
 
-    private static string DefaultEmbeddedStoragePath() =>
+    private string DefaultEmbeddedStoragePath() =>
         Path.Combine(
             Environment.GetFolderPath(
                 Environment.SpecialFolder.LocalApplicationData),
             "Hive",
+            HivePersistenceConfiguration.BuildDatabaseName(_applicationName),
             "hive.db");
 
     private void UpdateAuthenticationState()
