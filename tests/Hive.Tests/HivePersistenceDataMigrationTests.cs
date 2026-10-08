@@ -448,7 +448,8 @@ public sealed class HivePersistenceDataMigrationTests
                 HivePersistenceConfiguration.LocalDevelopment(
                     destinationDatabaseName),
                 null,
-                Guid.NewGuid());
+                Guid.NewGuid(),
+                context);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(
