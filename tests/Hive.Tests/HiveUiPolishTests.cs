@@ -266,6 +266,24 @@ public sealed class HiveUiPolishTests
         Assert.Equal("Embedded", view.BackendSelector.Items[0]?.ToString());
         Assert.Equal("SQL Server", view.BackendSelector.Items[1]?.ToString());
 
+        Assert.InRange(view.BackendSelector.Width, 180, 240);
+        Assert.InRange(view.DatabaseInput.Width, 240, 300);
+        Assert.InRange(view.AuthenticationSelector.Width, 180, 240);
+        Assert.Equal(1433, view.SqlPort);
+        Assert.Equal(
+            HivePersistenceConfiguration.BuildDatabaseName("Hive.TestHost"),
+            view.DatabaseInput.Text);
+        Assert.True(view.EmbeddedStorageInput.Width >= 500);
+
+        view.SqlServerPicker.SetDiscoveredInstances(
+            new[] { "localhost", @"localhost\HiveSql" },
+            null);
+        view.SqlServerPicker.ServerSelector.SelectedItem =
+            view.SqlServerPicker.ServerSelector.Items[^1];
+
+        Assert.True(view.SqlServerPicker.IsCustomSelected);
+        Assert.True(view.SqlServerPicker.CustomServerInput.Visible);
+
         view.BackendSelector.SelectedIndex = 0;
 
         var testButton = FindButton(
@@ -376,6 +394,13 @@ public sealed class HiveUiPolishTests
         Assert.Equal("All Hive Data", view.ScopeLabel.Text);
         Assert.Equal(2, view.SqlAuthenticationSelector.Items.Count);
         Assert.True(view.FooterPanel.Controls.Contains(view.StatusLabel));
+
+        Assert.Same(
+            view.SourceCard,
+            view.RoleColumns.GetControlFromPosition(0, 0));
+        Assert.Same(
+            view.DestinationCard,
+            view.RoleColumns.GetControlFromPosition(1, 0));
     }
 
     [Fact]
