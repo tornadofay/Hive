@@ -286,71 +286,125 @@ internal sealed class PersistenceDataMigrationExampleView : UserControl
             await using var destination = new EmbeddedPersistenceDatabase(
                 destinationConfiguration);
 
-                var destinationProviderStore =
-                    new EmbeddedProviderResourceStore(destination);
-                var destinationAccount =
-                    await destinationProviderStore.GetProviderAccountAsync(
-                        account.Id,
+            var destinationProviderStore =
+                new EmbeddedProviderResourceStore(destination);
+
+            var destinationAccount =
+                await destinationProviderStore.GetProviderAccountAsync(
+                    account.Id,
+                    context,
+                    cancellationToken);
+            EnsureSuccess(
+                destinationAccount,
+                "Destination ProviderAccount verification");
+
+            var destinationTarget =
+                await destinationProviderStore.GetExecutionTargetAsync(
+                    target.Id,
+                    context,
+                    cancellationToken);
+            EnsureSuccess(
+                destinationTarget,
+                "Destination ExecutionTarget verification");
+
+            var destinationAgentDefinition =
+                await new EmbeddedAgentDefinitionResourceStore(destination)
+                    .GetAgentDefinitionAsync(
+                        definition.Id,
                         context,
                         cancellationToken);
+            EnsureSuccess(
+                destinationAgentDefinition,
+                "Destination AgentDefinition verification");
 
-                EnsureSuccess(
-                    destinationAccount,
-                    "Destination ProviderAccount verification");
+            var destinationSecretStore =
+                new EmbeddedDpapiSecretStore(destination);
 
-                var destinationSecretStore =
-                    new EmbeddedDpapiSecretStore(destination);
-                var destinationSecret =
-                    await destinationSecretStore.GetAsync(
-                        secretId,
-                        context,
-                        cancellationToken);
+            var destinationSecret =
+                await destinationSecretStore.GetAsync(
+                    secretId,
+                    context,
+                    cancellationToken);
+            EnsureSuccess(
+                destinationSecret,
+                "Destination secret verification");
 
-                EnsureSuccess(
-                    destinationSecret,
-                    "Destination secret verification");
-
-                using (destinationSecret.Value!.Material)
-                {
-                    if (!string.Equals(
-                            destinationSecret.Value.Material.Reveal(),
-                            secretValue,
-                            StringComparison.Ordinal))
-                    {
-                        throw new InvalidOperationException(
-                            "Destination secret material did not round-trip correctly.");
-                    }
-                }
-
-                var destinationFavorites =
-                    new EmbeddedExecutionTargetPreferenceStore(destination);
-                var destinationFavoriteIds =
-                    await destinationFavorites.GetFavoriteExecutionTargetIdsAsync(
-                        context,
-                        cancellationToken);
-                EnsureSuccess(
-                    destinationFavoriteIds,
-                    "Destination favorite verification");
-
-                _output.Write(
-                    "SQL Server ↔ Embedded Full-Data Migration",
-                    $"""
-                    Source database: {databaseName}
-                    Migration: {migrationResult.Value!.MigrationId}
-                    Schema: {migrationResult.Value.SourceSchemaVersion} → {migrationResult.Value.DestinationSchemaVersion}
-                    Records migrated: {migrationResult.Value.TotalRecordsMigrated}
-                    Source verified unchanged: {migrationResult.Value.SourceVerifiedUnchanged}
-                    Destination verified: {migrationResult.Value.DestinationVerified}
-                    Destination activated: {migrationResult.Value.DestinationActivated}
-                    Quiescence acquired/released: {quiescence.Acquired}/{quiescence.Released}
-                    ProviderAccount credential reference preserved: {destinationAccount.Value!.CredentialSecret?.Id == secretId}
-                    Secret re-protected and readable: true (value not printed)
-                    Favorites preserved: {string.Join(", ", destinationFavoriteIds.Value!)}
-                    WorkItem preserved: {destinationWorkItem.Value!.Id}
-                    Migrated record counts: {string.Join(", ", migrationResult.Value.RecordCounts.OrderBy(static item => item.Key).Select(static item => $"{item.Key}={item.Value}"))}
-                    """);
+            bool secretRoundTrip;
+            using (destinationSecret.Value!.Material)
+            {
+                secretRoundTrip = string.Equals(
+                    destinationSecret.Value.Material.Reveal(),
+                    secretValue,
+                    StringComparison.Ordinal);
             }
-        }
+
+            if (!secretRoundTrip)
+            {
+                throw new InvalidOperationException(
+                    "Destination secret material did not round-trip correctly.");
+            }
+
+            var destinationFavorites =
+                new EmbeddedExecutionTargetPreferenceStore(destination);
+
+            var destinationFavoriteIds =
+                await destinationFavorites.GetFavoriteExecutionTargetIdsAsync(
+                    context,
+                    cancellationToken);
+            EnsureSuccess(
+                destinationFavoriteIds,
+                "Destination favorite verification");
+
+            var destinationWorkItem =
+                await new EmbeddedWorkItemResourceStore(destination)
+                    .GetWorkItemAsync(
+                        workItem.Value!.Id,
+                        context,
+                        cancellationToken);
+            EnsureSuccess(
+                destinationWorkItem,
+                "Destination WorkItem verification");
+
+            var destinationAttachment =
+                await new EmbeddedWorkItemResourceStore(destination)
+                    .GetWorkItemAttachmentAsync(
+                        workItem.Value.Id,
+                        context,
+                        cancellationToken);
+            EnsureSuccess(
+                destinationAttachment,
+                "Destination WorkItem attachment verification");
+
+            var destinationManagementMode =
+                destinationTarget.Value!.ManagementMode;
+
+            if (destinationManagementMode !=
+                target.ManagementMode)
+            {
+                throw new InvalidOperationException(
+                    "Destination ExecutionTarget management mode did not round-trip.");
+            }
+
+            _output.Write(
+                "SQL Server ↔ Embedded Full-Data Migration",
+                $"""
+                Source database: {databaseName}
+                Migration: {migrationResult.Value!.MigrationId}
+                Schema: {migrationResult.Value.SourceSchemaVersion} → {migrationResult.Value.DestinationSchemaVersion}
+                Records migrated: {migrationResult.Value.TotalRecordsMigrated}
+                Source verified unchanged: {migrationResult.Value.SourceVerifiedUnchanged}
+                Destination verified: {migrationResult.Value.DestinationVerified}
+                Destination activated: {migrationResult.Value.DestinationActivated}
+                Quiescence acquired/released: {quiescence.Acquired}/{quiescence.Released}
+                ProviderAccount credential reference preserved: {destinationAccount.Value!.CredentialSecret?.Id == secretId}
+                ExecutionTarget preserved: {destinationTarget.Value!.Id}
+                AgentDefinition preserved: {destinationAgentDefinition.Value!.Id}
+                Secret re-protected and readable: {secretRoundTrip} (value not printed)
+                Favorites preserved: {string.Join(", ", destinationFavoriteIds.Value!)}
+                WorkItem preserved: {destinationWorkItem.Value!.Id}
+                Attachment bytes preserved: {destinationAttachment.Value!.Content.Length}
+                Migrated record counts: {string.Join(", ", migrationResult.Value.RecordCounts.OrderBy(static item => item.Key).Select(static item => $"{item.Key}={item.Value}"))}
+                """);
         finally
         {
             await DropSqlDatabaseAsync(databaseName);
