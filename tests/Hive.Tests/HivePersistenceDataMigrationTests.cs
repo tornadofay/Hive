@@ -735,6 +735,7 @@ public sealed class HivePersistenceDataMigrationTests
             3,
             4,
             5,
+            1234567,
             TimeSpan.Zero);
         var context = NewContext();
         var providerStore = new SqlProviderResourceStore(options);
