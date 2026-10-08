@@ -273,6 +273,72 @@ public sealed class HiveUiPolishTests
 
     }
 
+    [WinFormsFact]
+    public void HivePersistenceSettingsView_UsesSqlServerPickerCustomChoiceAndFooterStatus()
+    {
+        var (management, _) =
+            HiveWorkspaceLifecycleTests.ManagementFacadeProxy.Create();
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var view = new HivePersistenceSettingsView(
+            management,
+            new ResourceAccessContext(
+                DeploymentId.New(),
+                TenantId.New(),
+                PrincipalId.New()),
+            themeManager,
+            "Hive.TestHost");
+
+        view.SqlServerPicker.SetDiscoveredInstances(
+            new[] { @"localhost\MSSQLSERVER01", @"DEVBOX\SQLEXPRESS" },
+            @"custom-host\HiveSql");
+
+        Assert.Equal(
+            "Custom...",
+            view.SqlServerPicker.ServerSelector.Items[^1]?.ToString());
+        Assert.True(view.SqlServerPicker.IsCustomSelected);
+        Assert.Equal(
+            @"custom-host\HiveSql",
+            view.SqlServerPicker.ServerName);
+
+        view.SqlServerPicker.SetValue(
+            @"localhost\MSSQLSERVER01",
+            1433);
+
+        Assert.False(view.SqlServerPicker.IsCustomSelected);
+        Assert.Equal(
+            @"localhost\MSSQLSERVER01",
+            view.SqlServerPicker.ServerName);
+        Assert.Equal(1433, view.SqlServerPicker.Port);
+        Assert.Contains(
+            view.StatusLabel,
+            FindAncestor<FlowLayoutPanel>(view.StatusLabel)?.Controls
+                ?? Array.Empty<Control>());
+        Assert.NotNull(view.BrowseEmbeddedButton);
+    }
+
+    [WinFormsFact]
+    public void HivePersistenceDataMigrationView_UsesTopDirectionAndScopeAndSqlAuthentication()
+    {
+        var (management, _) =
+            HiveWorkspaceLifecycleTests.ManagementFacadeProxy.Create();
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var view = new HivePersistenceDataMigrationSettingsView(
+            management,
+            new ResourceAccessContext(
+                DeploymentId.New(),
+                TenantId.New(),
+                PrincipalId.New()),
+            themeManager,
+            "Hive.TestHost");
+
+        Assert.Equal(2, view.DirectionSelector.Items.Count);
+        Assert.Equal("All Hive Data", view.ScopeLabel.Text);
+        Assert.Equal(2, view.SqlAuthenticationSelector.Items.Count);
+        Assert.Contains(view.StatusLabel, view.FooterPanel.Controls);
+    }
+
     [Fact]
     public void HiveSettingsView_OpensOverviewByDefault()
     {
@@ -724,6 +790,20 @@ public sealed class HiveUiPolishTests
             var nested = FindLabel(child, text);
             if (nested is not null)
                 return nested;
+        }
+
+        return null;
+    }
+
+    private static TControl? FindAncestor<TControl>(Control control)
+        where TControl : Control
+    {
+        for (var current = control.Parent;
+             current is not null;
+             current = current.Parent)
+        {
+            if (current is TControl match)
+                return match;
         }
 
         return null;
