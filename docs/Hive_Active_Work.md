@@ -45,7 +45,7 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+Current state: **VERIFICATION PENDING**.
 
 Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **756 tests: 752 passed, 4 failed, 0 skipped**.
 
@@ -61,7 +61,7 @@ Developer reported a real Slice 5 manual/runtime failure:
 
 - Database Setup connection test reported `Connection test failed: SQL Server connection test failed.`
 
-The same feedback establishes the migration UI requirement that Source and Destination are independent editable endpoints. The existing Slice 5 implementation still derives the migration source from Hive's currently active persistence configuration in Management and was therefore designed too narrowly.
+The same feedback establishes the migration requirement that Source and Destination are independent editable endpoints. The previous Slice 5 implementation incorrectly derived the migration source from Hive's currently active persistence configuration in Management; this was corrected by making the Management request carry both source and destination configurations explicitly.
 
 ### Remediation authorization
 
@@ -90,15 +90,17 @@ These remain within the authorized Slice 5 presentation/interaction boundary. Th
 
 ### Remediation completed
 
-- The SQL credentials field is initialized before `CreateSqlSection()` consumes it; the structured section/field hierarchy is preserved.
-- Installed local SQL Server instances are normalized to `localhost` / `localhost\\<Instance>`, with network-discovered remote names left unchanged.
-- Database Setup now uses bounded professional widths for Backend, Database, Authentication, SQL Server, SQL security, and credential editors. Hidden backend sections collapse their row, Embedded storage keeps a wide path editor with Browse directly beside it, and initialization controls are positioned compactly near the top of the backend section.
-- SQL Server now shows port **1433** by default, and a blank loaded SQL database name falls back to Hive's deterministic package database name.
-- Selecting SQL Server triggers instance discovery automatically; Refresh remains a manual retry. Custom server input expands directly below the instance selector.
-- Data Migration now places SOURCE on the left and DESTINATION on the right. SQL destination editors are sized for the split destination card, while Embedded storage uses the available destination width.
-- Migration direction remains user-selectable instead of being silently rewritten on refresh. The selected source is visibly marked **INACTIVE** when it does not match the active backend, and readiness/migration execution is blocked in that state rather than silently changing the user's choice. This preserves the current Management migration contract without creating a new source-configuration API.
-- Focused automated coverage now checks bounded setup widths, default database/port, custom-server presentation, source/destination order, and normal-workspace scroll state.
-- The affected Slice 5 implementation and documentation were re-reviewed after the new UX feedback. No Slice 6, new backend, new migration contract, or 1.19 work was introduced.
+- Database Setup uses bounded professional widths; the Backend selector is now compact, the Embedded database-file path gets the main available width with Browse immediately beside it, and hidden backend sections collapse without leaving large blank regions.
+- SQL Server discovery combines network enumeration with installed local-instance registry inventory, normalizes installed local instances to `localhost` / `localhost\\<Instance>`, and refreshes automatically when SQL Server is selected. Refresh remains a manual retry.
+- SQL Server port handling no longer forces 1433 onto named instances. A bare/default local instance uses **1433** when no port is supplied; a named instance relies on instance/SQL Browser resolution unless the user explicitly supplies a port.
+- A blank SQL database name falls back to Hive's deterministic package database name.
+- The SQL connection test status now identifies the server/database being tested without exposing credentials.
+- Data Migration now has two independent editable endpoint editors. Source and Destination each expose the appropriate SQL Server or Embedded connection/path configuration, and both directions remain selectable.
+- Source configuration is no longer read from Hive's active persistence configuration. The public `HivePersistenceMigrationRequest` explicitly carries both `SourceConfiguration` and `DestinationConfiguration`; Management passes both directly to the existing persistence migrator.
+- Embedded source/destination path inputs are explicitly single-line, and SQL controls are sized for their half-width cards rather than reusing full-width layouts.
+- The existing Embedded → SQL migration credential path was corrected to use the destination SQL credential rather than the source credential.
+- Focused automated coverage now checks the compact setup control, named-instance port behavior, independent endpoint editors, source/destination ordering, explicit-source Management migration, and normal-workspace scroll state.
+- The affected Slice 5 implementation and documentation were re-reviewed after the reported runtime/UX feedback. No Slice 6 or 1.19 work was introduced.
 
 ### Verification handoff
 
