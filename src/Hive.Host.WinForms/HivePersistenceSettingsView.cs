@@ -48,9 +48,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private HiveStatusTone _statusTone = HiveStatusTone.Neutral;
     private bool _updatingBackendSelection;
 
-    private const int BackendSectionHeight = 104;
-    private const int EmbeddedSectionHeight = 190;
-    private const int SqlSectionHeight = 500;
 
     private CancellationTokenSource? _operationCts;
     private HivePersistenceConfiguration? _loadedConfiguration;
@@ -77,6 +74,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
         {
             Dock = DockStyle.Fill
         };
+        _editor.FieldsPanel.AutoSize = true;
+        _editor.FieldsPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
 
         _backendComboBox = new HiveComboBox
         {
@@ -177,7 +176,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
         var backendSection = CreateSection(
             "Persistence Backend",
             "Choose where Hive stores its durable state. Changing this selector does not migrate data or activate a new backend.",
-            BackendSectionHeight,
             CreateFormGrid(
                 CreateFieldBlock("Backend", _backendComboBox, 120)));
 
@@ -846,8 +844,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     {
         var fields = _editor.FieldsPanel;
         var row = fields.RowCount++;
-        fields.RowStyles.Add(
-            new RowStyle(SizeType.Absolute, section.Height));
+        fields.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         fields.Controls.Add(section, 0, row);
         fields.SetColumnSpan(section, 2);
     }
@@ -871,7 +868,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
         return CreateSection(
             "Embedded Storage",
             "Application-owned local Hive database. Browse to another .db file when the default location is not suitable.",
-            EmbeddedSectionHeight,
             storagePath,
             lifecycle);
     }
@@ -912,7 +908,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
         var content = CreateSection(
             "SQL Server Connection",
             "Connect to an existing SQL Server deployment. Discovery is automatic when SQL Server is selected; Custom... remains available for manual targets.",
-            SqlSectionHeight,
             server,
             initialization,
             identity,
@@ -1027,14 +1022,13 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private TableLayoutPanel CreateSection(
         string title,
         string description,
-        int height,
         params Control[] content)
     {
         var section = new TableLayoutPanel
         {
             Dock = DockStyle.Top,
-            AutoSize = false,
-            Height = height,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 1,
             RowCount = 2,
             Margin = new Padding(0, 0, 0, 8),
@@ -1280,8 +1274,10 @@ internal sealed class HivePersistenceSettingsView : UserControl
             return;
 
         var rowStyle = _editor.FieldsPanel.RowStyles[row];
-        rowStyle.SizeType = SizeType.Absolute;
-        rowStyle.Height = visible ? section.Height : 0;
+        rowStyle.SizeType = visible
+            ? SizeType.AutoSize
+            : SizeType.Absolute;
+        rowStyle.Height = 0;
     }
 
     private void UpdateAuthenticationState()
