@@ -131,8 +131,11 @@ public sealed class HivePersistenceDataMigrationTests
                 embedded).EventStore;
             var events = await embeddedEvents.ReadEventsAsync(seed.EventStream);
             Assert.True(events.IsSuccess, events.Error?.Message);
-            Assert.Single(events.Value!);
-            Assert.Equal(seed.EventId, events.Value![0].Envelope.EventId);
+            Assert.Equal(2, events.Value!.Count);
+            Assert.Equal(1, events.Value[0].StreamVersion.Value);
+            Assert.Equal("work-item.created", events.Value[0].Envelope.EventType.Value);
+            Assert.Equal(2, events.Value[1].StreamVersion.Value);
+            Assert.Equal(seed.EventId, events.Value[1].Envelope.EventId);
 
             var snapshot = await embeddedEvents.GetSnapshotAsync(seed.EventStream);
             Assert.True(snapshot.IsSuccess, snapshot.Error?.Message);
