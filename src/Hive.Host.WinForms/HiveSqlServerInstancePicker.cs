@@ -1,6 +1,7 @@
 using System.Data;
 using Microsoft.Data.Sql;
 using System.ComponentModel;
+using Hive.Host.WinForms.UI.Controls;
 
 namespace Hive.Host.WinForms;
 
