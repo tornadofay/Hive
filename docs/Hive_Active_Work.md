@@ -20,7 +20,7 @@ Implement the Management-owned logical full-data migration operation in both dir
 - failure-safe/incomplete migration handling;
 - source immutability;
 - destination verification;
-- durable migration identity/schema evidence;
+- migration identity/schema evidence;
 - Secret Store re-protection in the destination;
 - cancellation, concurrency, lifecycle, determinism, authorization, validation, and typed-error behavior required by the migration boundary;
 - focused Hive.Tests coverage for successful migration, invalid/non-empty/incompatible/incomplete destinations, unquiescent sources, rollback/failure safety, source immutability, verification, and secret re-protection.
@@ -37,3 +37,8 @@ Implement the Management-owned logical full-data migration operation in both dir
 Both directions must be developer-verified against complete representative Hive datasets, including stable identities, relationships, versions/lifecycle state, event/snapshot/outbox consistency, Base-Agent work state, and protected Secret Store records. Invalid/non-empty/incomplete destinations and unquiescent sources must fail safely.
 
 Required verification remains **PENDING developer results** until the user reports the actual test/build/manual outcomes. No execution is claimed by the agent.
+
+### Example / verification handoff
+
+Example to run: **Persistence / Data Migration / Full-Data Migration / SQL Server ↔ Embedded** — Hive.Example.WinForms
+Tests to run: **HivePersistenceDataMigrationTests**; broader **Hive.Tests** suite for Slice 4 closure
