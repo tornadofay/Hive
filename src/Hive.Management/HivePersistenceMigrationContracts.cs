@@ -9,6 +9,7 @@ public enum HivePersistenceMigrationDirection
 }
 
 public sealed record HivePersistenceMigrationRequest(
+    HivePersistenceConfiguration SourceConfiguration,
     HivePersistenceConfiguration DestinationConfiguration);
 
 public sealed record HivePersistenceMigrationResult(
