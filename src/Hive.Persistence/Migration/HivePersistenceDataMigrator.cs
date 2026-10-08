@@ -880,7 +880,11 @@ internal sealed class HivePersistenceDataMigrator
 
         var orderBy = string.Join(
             ", ",
-            table.OrderByColumns.Select(static c => $"[{c}]"));
+            table.OrderByColumns.Select(
+                column => BuildOrderByExpression(
+                    table,
+                    column,
+                    connection is SqliteConnection)));
 
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
