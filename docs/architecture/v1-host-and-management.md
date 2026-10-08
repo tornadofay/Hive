@@ -451,9 +451,10 @@ Its implementation is separated into internal responsibility components aligned 
 IHiveManagementFacade
         ↓
 HiveManagementFacade
-   ┌─────┼─────────┬─────────┬──────────┐
-   ↓     ↓         ↓         ↓          ↓
-Config Secrets  Provider   Agent     WorkItem
+   ┌─────┼─────────┬─────────┬──────────┬───────────┐
+   ↓     ↓         ↓         ↓          ↓           ↓
+Config Secrets  Provider   Agent     WorkItem   Persistence
+                                                   Migration
 ```
 
 The internal components own the orchestration, validation, error translation, lifecycle/concurrency coordination, and cross-service dependencies for their domain. The facade is responsible for composing those components and preserving the stable public contract. The `HiveManagementFacade` is also the Management lifetime boundary: disposal prevents new public operations from delegating into child services, while operations that were already admitted before disposal may complete according to their underlying service lifetime rules.
@@ -539,6 +540,12 @@ execution boundary
 A missing, unauthorized, retired, or otherwise unusable referenced target is a configuration/runtime boundary failure, not a UI-only state.
 
 For the first configured-host Agent operation, the application-facing Management facade may consume the existing Hive.Coordination.AgentExecutionService rather than duplicating execution mechanics in the host or Example project. The Management operation resolves the persisted AgentDefinition, its configured ExecutionTarget, the authoritative Provider and ProviderAccount relationship, and the optional ProviderAccount Secret Store credential through their existing Management/Persistence boundaries, then submits one immutable execution request to the Coordination execution service. It must not copy provider credentials or target configuration into host state. The configured operation resolves the AgentDefinition and target afresh for each request, so a later Settings change affects subsequent executions while an already-running execution keeps its established target/configuration snapshot.
+
+#### Full-data persistence migration
+
+Full-data persistence migration is a Management-owned operation exposed through `IHiveManagementFacade.MigratePersistenceDataAsync`. It migrates the complete current Hive-owned durable persistence surface between SQL Server and Embedded in either direction. The operation must acquire an application-provided quiescence lease before transfer, require a clean/current destination, preserve source immutability, verify the destination before commit, and re-protect Hive Secret Store material under the destination's DPAPI boundary. It returns explicit migration identity/schema/result evidence and never activates or switches the destination configuration. The quiescence integration point is explicit so the host service graph can provide the real stop/drain boundary in the later host-composition slice; a missing gate fails closed.
+
+The Slice 4 Example Host scenario uses this public Management boundary with an isolated deterministic quiescence implementation. It is a contract example, not the production Persistence Settings UI; Database Setup/Data Migration presentation and backend activation remain Slice 5 scope.
 
 #### Settings UI foundation
 
