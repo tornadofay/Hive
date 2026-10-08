@@ -45,7 +45,7 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **VERIFICATION PENDING**.
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 
 Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **756 tests: 752 passed, 4 failed, 0 skipped**.
 
@@ -54,6 +54,21 @@ Concrete same-slice failures reported:
 - Clicking Persistence in the Example Host reaches the same construction failure.
 - `HiveSqlServerInstanceDiscovery_FormatsLocalInstancesForLocalConnection` expects installed local SQL Server instances to be formatted as `localhost` / `localhost\\HiveSql`, but the implementation currently uses the supplied machine name (`DEVBOX`), producing `DEVBOX` / `DEVBOX\\HiveSql`.
 - These failures are within the already-authorized Slice 5 settings/discovery presentation boundary and do not authorize Slice 6 or 1.19 work.
+
+### New developer/manual feedback — 2026-10-08
+
+Additional same-slice Slice 5 UX failures were reported after the previous remediation:
+- Database Setup fields are unnecessarily full-width: Backend, SQL Server database, Authentication, and related SQL inputs should use bounded professional field widths rather than filling the entire workspace.
+- SQL Server instance discovery should happen automatically when SQL Server is selected/opened; the user should not need to press Refresh for the normal initial population. Refresh remains a manual retry action.
+- The SQL Server database field can appear empty after configuration load even though Hive has a deterministic package database name; the UI should preserve/display the generated database name when the loaded value is blank.
+- The SQL Server port should have a useful default of 1433.
+- The Embedded database-file field needs a larger path editor with Browse directly adjacent.
+- Unused/overflowing vertical space and unnecessary horizontal/vertical scrolling should be removed; SQL initialization controls should be positioned compactly enough that the normal settings surface fits without avoidable scrolling.
+- Data Migration should place SOURCE on the left and DESTINATION on the right.
+- Data Migration SQL destination controls also need bounded widths so they do not overwhelm or overflow the workspace.
+- The migration direction must remain user-selectable instead of being silently rewritten from the currently active backend. The current Management migration contract still reads the source from the active persistence graph, so the UI must expose the selected direction honestly and prevent an invalid execution rather than silently changing the user's choice.
+
+These remain within the authorized Slice 5 presentation/interaction boundary. They do not authorize Slice 6, a new migration contract, or 1.19.
 
 ### Remediation completed
 
