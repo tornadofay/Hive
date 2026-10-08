@@ -45,7 +45,7 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+Current state: **VERIFICATION PENDING**.
 
 Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **756 tests: 752 passed, 4 failed, 0 skipped**.
 
@@ -113,6 +113,16 @@ Developer verification reported eight in-scope Slice 5 compilation failures afte
 - \`PersistenceDataMigrationExampleView\`: Example Host still used the old one-argument \`HivePersistenceMigrationRequest\` constructor.
 
 These are same-slice remediation defects in the implementation just changed; no new roadmap capability is being requested.
+
+### Compilation remediation completed — 2026-10-08 18:45
+
+- \`HivePersistenceDataMigrationSettingsView\` now exposes the SQL authentication selector as the actual \`HiveComboBox\`; the enum-valued authentication state remains a separate property.
+- Embedded migration Browse now uses the nested endpoint editor's actual root control when resolving the owning Form.
+- The outer Direction / Scope row now uses its own field-block helper instead of reaching into the nested endpoint editor.
+- Successful source/destination connection-test results are null-guarded before status formatting.
+- \`HivePersistenceDataMigrator.MigrateEmbeddedToSqlAsync\` now receives the destination SQL credential under the same parameter name used by the caller.
+- \`PersistenceDataMigrationExampleView\` now constructs \`HivePersistenceMigrationRequest\` with both explicit source and destination configurations.
+- The full \`HivePersistenceDataMigrationTests\` file was previously restored after an accidental reduction; the final diff against the Slice 5 activation checkpoint is now bounded to the intended migration-test edits.
 
 ### Verification handoff
 
