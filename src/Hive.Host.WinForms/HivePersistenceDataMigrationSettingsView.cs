@@ -70,8 +70,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private HivePersistenceConfiguration? _sourceConfiguration;
     private HiveBootstrapCredentialReference? _createdDestinationCredential;
     private bool _destinationConfigurationInitialized;
-    private bool _initializingDirection;
-    private bool _directionUserOverride;
 
     public HivePersistenceDataMigrationSettingsView(
         IHiveManagementFacade management,
@@ -765,14 +763,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
     private void DirectionChanged()
     {
-        if (!_initializingDirection)
-            _directionUserOverride = true;
-
         UpdateRolePanels();
         UpdateSourceSummary();
 
         if (SelectedDirection == MigrationDirection.EmbeddedToSqlServer &&
-            !_initializingDirection &&
             !IsDisposed &&
             !Disposing)
         {
@@ -856,32 +850,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         }
 
         _sourceConfiguration = source.Value!;
-
-        if (!_directionUserOverride)
-        {
-            var expectedDirection =
-                _sourceConfiguration.Backend == HivePersistenceBackend.Embedded
-                    ? MigrationDirection.EmbeddedToSqlServer
-                    : MigrationDirection.SqlServerToEmbedded;
-
-            _initializingDirection = true;
-            try
-            {
-                _directionComboBox.SelectedItem =
-                    expectedDirection == MigrationDirection.EmbeddedToSqlServer
-                        ? new DirectionChoice(
-                            "Embedded → SQL Server",
-                            expectedDirection)
-                        : new DirectionChoice(
-                            "SQL Server → Embedded",
-                            expectedDirection);
-            }
-            finally
-            {
-                _initializingDirection = false;
-            }
-        }
-
+        UpdateRolePanels();
         UpdateSourceSummary();
         await RefreshSqlServerInstancesIfNeededAsync(cancellationToken)
             .ConfigureAwait(true);
