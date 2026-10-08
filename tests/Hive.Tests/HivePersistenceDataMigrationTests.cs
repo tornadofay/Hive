@@ -84,7 +84,7 @@ public sealed class HivePersistenceDataMigrationTests
                 embeddedAccount.Error?.Message);
             Assert.Equal(
                 seed.SecretId,
-                embeddedAccount.Value!.CredentialSecret!.Id);
+                embeddedAccount.Value!.CredentialSecret!.Value.Id);
 
             var embeddedSecretStore = new EmbeddedDpapiSecretStore(embedded);
             var embeddedSecret = await embeddedSecretStore.GetAsync(
