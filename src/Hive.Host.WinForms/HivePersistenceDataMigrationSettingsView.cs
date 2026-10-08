@@ -198,14 +198,12 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         var roleColumns = CreateRoleColumns();
 
         _editor.FieldsPanel.Controls.Add(top, 0, 0);
+        _editor.FieldsPanel.SetColumnSpan(top, 2);
         _editor.FieldsPanel.Controls.Add(roleColumns, 0, 1);
-        _editor.FieldsPanel.ColumnStyles.Clear();
-        _editor.FieldsPanel.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Percent, 100f));
-        _editor.FieldsPanel.ColumnCount = 1;
+        _editor.FieldsPanel.SetColumnSpan(roleColumns, 2);
         _editor.FieldsPanel.RowStyles.Clear();
         _editor.FieldsPanel.RowStyles.Add(
-            new RowStyle(SizeType.Absolute, 66f));
+            new RowStyle(SizeType.Absolute, 74f));
         _editor.FieldsPanel.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
         _editor.FieldsPanel.RowCount = 2;
