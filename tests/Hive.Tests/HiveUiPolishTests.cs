@@ -259,6 +259,9 @@ public sealed class HiveUiPolishTests
         Assert.Equal(2, view.NavigationTabs.TabPages.Count);
         Assert.Equal("Database Setup", view.NavigationTabs.TabPages[0].Text);
         Assert.Equal("Data Migration", view.NavigationTabs.TabPages[1].Text);
+        Assert.Equal(
+            DockStyle.Fill,
+            view.NavigationTabs.TabPages[1].Controls[0].Dock);
         Assert.Equal(2, view.BackendSelector.Items.Count);
         Assert.Equal("Embedded", view.BackendSelector.Items[0]?.ToString());
         Assert.Equal("SQL Server", view.BackendSelector.Items[1]?.ToString());
@@ -271,6 +274,46 @@ public sealed class HiveUiPolishTests
 
         Assert.NotNull(testButton);
 
+    }
+
+    [Fact]
+    public void HiveSqlServerInstanceDiscovery_CombinesLocalAndNetworkInstances()
+    {
+        var instances = HiveSqlServerInstanceDiscovery.MergeCandidates(
+        [
+            @"REMOTE01\\REPORTING",
+            @"remote01\\REPORTING"
+        ],
+        [
+            "MSSQLSERVER",
+            "HiveSql"
+        ],
+        "DEVBOX");
+
+        Assert.Equal(
+            new[]
+            {
+                "DEVBOX",
+                @"DEVBOX\\HiveSql",
+                @"REMOTE01\\REPORTING"
+            },
+            instances);
+    }
+
+    [Fact]
+    public void HiveSqlServerInstanceDiscovery_FormatsLocalInstancesForLocalConnection()
+    {
+        Assert.Equal(
+            "localhost",
+            HiveSqlServerInstanceDiscovery.FormatLocalInstanceName(
+                "MSSQLSERVER",
+                "DEVBOX"));
+
+        Assert.Equal(
+            @"localhost\\HiveSql",
+            HiveSqlServerInstanceDiscovery.FormatLocalInstanceName(
+                "HiveSql",
+                "DEVBOX"));
     }
 
     [WinFormsFact]
