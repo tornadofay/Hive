@@ -405,6 +405,7 @@ internal sealed class PersistenceDataMigrationExampleView : UserControl
                 Attachment bytes preserved: {destinationAttachment.Value!.Content.Length}
                 Migrated record counts: {string.Join(", ", migrationResult.Value.RecordCounts.OrderBy(static item => item.Key).Select(static item => $"{item.Key}={item.Value}"))}
                 """);
+        }
         finally
         {
             await DropSqlDatabaseAsync(databaseName);
