@@ -307,6 +307,7 @@ internal sealed class HivePersistenceDataMigrator
                     sourceSqlCredential,
                     destinationConfiguration,
                     migrationId,
+                    accessContext,
                     cancellationToken).ConfigureAwait(false)
                 : await MigrateEmbeddedToSqlAsync(
                     sourceConfiguration,
