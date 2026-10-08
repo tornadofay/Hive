@@ -31,8 +31,10 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly Label _credentialStatus;
     private readonly CheckBox _encryptCheckBox;
     private readonly CheckBox _trustServerCertificateCheckBox;
-    private readonly CheckBox _createDatabaseCheckBox;
-    private readonly NumericUpDown _timeoutNumeric;
+    private readonly CheckBox _embeddedCreateDatabaseCheckBox;
+    private readonly CheckBox _sqlCreateDatabaseCheckBox;
+    private readonly NumericUpDown _embeddedTimeoutNumeric;
+    private readonly NumericUpDown _sqlTimeoutNumeric;
     private readonly Label _statusLabel;
     private readonly HiveButton _loadButton;
     private readonly HiveButton _saveButton;
@@ -122,12 +124,18 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Text = "Trust server certificate",
             AutoSize = true
         };
-        _createDatabaseCheckBox = new CheckBox
+        _embeddedCreateDatabaseCheckBox = new CheckBox
         {
-            Text = "Allow Hive to create the database file when initialization is requested.",
+            Text = "Allow Hive to create the Embedded database file when initialization is requested.",
             AutoSize = true
         };
-        _timeoutNumeric = CreateTimeoutInput();
+        _sqlCreateDatabaseCheckBox = new CheckBox
+        {
+            Text = "Allow database creation when initializing Hive.",
+            AutoSize = true
+        };
+        _embeddedTimeoutNumeric = CreateTimeoutInput();
+        _sqlTimeoutNumeric = CreateTimeoutInput();
 
         _statusLabel = CreateStatusLabel();
         _statusLabel.AutoSize = false;
@@ -623,8 +631,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         CancellationToken cancellationToken,
         bool persistCredential = true)
     {
-        if (!int.TryParse(_timeoutNumeric.Value.ToString(), out var timeout))
-            timeout = 30;
+
 
         var backend =
             (_backendComboBox.SelectedItem as BackendChoice)?.Backend
@@ -634,8 +641,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
         {
             var embeddedConfiguration = HivePersistenceConfiguration.Embedded(
                 _embeddedStorageTextBox.Text,
-                createDatabaseIfMissing: _createDatabaseCheckBox.Checked,
-                commandTimeoutSeconds: timeout);
+                createDatabaseIfMissing: _embeddedCreateDatabaseCheckBox.Checked,
+                commandTimeoutSeconds: (int)_embeddedTimeoutNumeric.Value);
 
             return (embeddedConfiguration, null);
         }
@@ -664,7 +671,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             credential,
             _encryptCheckBox.Checked,
             _trustServerCertificateCheckBox.Checked,
-            _createDatabaseCheckBox.Checked,
+            _sqlCreateDatabaseCheckBox.Checked,
             timeout);
 
         if (authentication != HiveSqlAuthenticationMode.SqlPassword)
@@ -800,10 +807,10 @@ internal sealed class HivePersistenceSettingsView : UserControl
         var lifecycle = CreateFormGrid(
             CreateCheckBoxField(
                 "Initialization",
-                _createDatabaseCheckBox),
+                _embeddedCreateDatabaseCheckBox),
             CreateFieldBlock(
                 "Command timeout",
-                CreateTimeoutField(_timeoutNumeric)));
+                CreateTimeoutField(_embeddedTimeoutNumeric)));
 
         return CreateSection(
             "Embedded Storage",
@@ -833,7 +840,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 CreateSecurityCheckBoxHost()),
             CreateFieldBlock(
                 "Command timeout",
-                CreateTimeoutField(_timeoutNumeric)));
+                CreateTimeoutField(_sqlTimeoutNumeric)));
 
         var initialization = CreateCheckBoxField(
             "Initialization",
@@ -1096,6 +1103,15 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Dock = DockStyle.Left,
             Margin = Padding.Empty
         };
+
+    private static void SetTimeoutValue(
+        NumericUpDown numeric,
+        int value)
+    {
+        numeric.Value = Math.Min(
+            numeric.Maximum,
+            Math.Max(numeric.Minimum, value));
+    }
 
     private void UpdateBackendState()
     {
