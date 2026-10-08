@@ -136,6 +136,8 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         SetDiscoveredInstances(Array.Empty<string>(), null);
     }
 
+    internal HiveComboBox ServerSelector => _serverComboBox;
+
     public string ServerName
     {
         get
