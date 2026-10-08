@@ -265,8 +265,12 @@ public sealed class HiveUiPolishTests
 
         view.BackendSelector.SelectedIndex = 0;
 
-        var testButton = FindControl<HiveButton>(view, "Test readiness");
+        var testButton = FindButton(
+            view,
+            "Test readiness");
+
         Assert.NotNull(testButton);
+
     }
 
     [Fact]
@@ -680,6 +684,26 @@ public sealed class HiveUiPolishTests
                 return match;
 
             var nested = FindControl<TControl>(child);
+            if (nested is not null)
+                return nested;
+        }
+
+        return null;
+    }
+
+    private static HiveButton? FindButton(
+        Control root,
+        string text)
+    {
+        foreach (Control child in root.Controls)
+        {
+            if (child is HiveButton button &&
+                string.Equals(button.Text, text, StringComparison.Ordinal))
+            {
+                return button;
+            }
+
+            var nested = FindButton(child, text);
             if (nested is not null)
                 return nested;
         }
