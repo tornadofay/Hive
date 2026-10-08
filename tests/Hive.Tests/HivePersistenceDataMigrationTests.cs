@@ -1,4 +1,3 @@
-using System.Data.Common;
 using System.Text.Json;
 using Hive.Agents;
 using Hive.Core;
@@ -6,7 +5,6 @@ using Hive.Management;
 using Hive.Persistence;
 using Hive.Tests.TestInfrastructure;
 using Microsoft.Data.SqlClient;
-using Microsoft.Data.Sqlite;
 using Xunit;
 
 namespace Hive.Tests;
