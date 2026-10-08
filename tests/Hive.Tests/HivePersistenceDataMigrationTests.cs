@@ -944,7 +944,7 @@ public sealed class HivePersistenceDataMigrationTests
             attachmentContent,
             eventStream,
             eventId,
-            ResourceVersion.Initial,
+            new ResourceVersion(1),
             agent,
             runtimeId,
             objective.Value!.Id,
