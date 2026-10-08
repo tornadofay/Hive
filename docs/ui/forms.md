@@ -115,7 +115,7 @@ The Persistence page is one global `HivePersistenceConfiguration` editor using t
 
 For **Embedded**, the page shows the configured local Hive storage location plus backend status and explicit initialization/readiness actions. It does not require an externally installed database server and does not expose a SQL connection string.
 
-For **SQL Server**, the Server / instance field remains a normal free-form text box accepting local servers, named instances, remote hosts, IP addresses, and online SQL Server targets. Hive currently has no authoritative server-discovery/catalog contract, so the UI does not enumerate installed SQL Server instances. The Database field remains read-only and assigned automatically to Hive's package database name.
+For **SQL Server**, the Server / port field uses a Hive SQL Server instance picker. It lists currently visible SQL Server instances discovered through the SQL client enumerator, keeps Custom... as the final choice, and reveals a free-form server/instance textbox for custom targets. Discovery is best-effort and may not return every visible/available instance, so Custom... is always retained. Port remains an optional TCP value alongside the instance selector. The Database field remains read-only and assigned automatically to Hive's package database name.
 
 Save and readiness/connection Test remain non-destructive. The explicit `Initialize Hive` lifecycle action may create or initialize the selected persistence backend when allowed and apply its schema migrations. Initialization must never occur implicitly from Save, Test, or ordinary Settings-page navigation.
 
