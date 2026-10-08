@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Status: **IMPLEMENTATION IN PROGRESS — VERIFICATION PENDING**
 
 ## Phase 1.18A — Embedded Persistence Profile
 ### Slice 4 — Full-Data Migration
@@ -41,6 +41,8 @@ Developer verification reported additional compile failures on 2026-10-08 in `Hi
 The 2026-10-08 developer run reached 749 tests with 742 passed and 7 failed. Six failures use `HivePersistenceConfiguration.LocalDevelopment(...)`, which points at `(localdb)\\MSSQLLocalDB` while the test database helper uses the configured SQL Server test instance. The seventh failure is the representative event fixture supplying `ResourceVersion.Initial` (version 0) as a snapshot for the first event, whose required snapshot version is 1. Same-slice remediation corrected these recorded failures; no out-of-scope failure is recorded.
 
 Developer verification on 2026-10-08 after the documented Slice 4 remediation reached a compiler error in `tests/Hive.Tests/HivePersistenceDataMigrationTests.cs` line 1060: `CS1503` because `string.LastIndexOf(char, StringComparison)` is not a valid overload. The failure is inside the same Slice 4 migration-test configuration helper and is an in-scope remediation boundary; no out-of-scope failure is recorded.
+
+Same-slice remediation corrected the reported `CS1503` by using the valid `string.LastIndexOf(string, StringComparison)` overload for comma-separated SQL server/port parsing. No unrelated production or test boundary was changed. Developer re-verification remains required.
 
 ### Example / verification handoff
 
