@@ -41,7 +41,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly HiveButton _testButton;
     private readonly HiveButton _initializeButton;
     private readonly HiveButton _browseEmbeddedButton;
-    private readonly HivePersistenceDataMigrationSettingsView _migrationView;
+    private HivePersistenceDataMigrationSettingsView? _migrationView;
+    private readonly TabPage _migrationTab;
     private readonly TableLayoutPanel _embeddedSection;
     private readonly TableLayoutPanel _sqlSection;
     private readonly TableLayoutPanel _sqlCredentialsField;
@@ -195,17 +196,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
         AddEditorSection(_embeddedSection);
         AddEditorSection(_sqlSection);
 
-        _migrationView = new HivePersistenceDataMigrationSettingsView(
-            _management,
-            _accessContext,
-            _themeManager,
-            _applicationName,
-            _output)
-        {
-            Dock = DockStyle.Fill,
-            Margin = Padding.Empty
-        };
-
         _tabs = new HiveTabControl
         {
             Dock = DockStyle.Fill,
@@ -219,16 +209,15 @@ internal sealed class HivePersistenceSettingsView : UserControl
         };
         setupTab.Controls.Add(_editor);
 
-        var migrationTab = new TabPage("Data Migration")
+        _migrationTab = new TabPage("Data Migration")
         {
             Padding = new Padding(12),
             Margin = Padding.Empty
         };
-        migrationTab.Controls.Add(_migrationView);
-        _migrationView.Dock = DockStyle.Fill;
+        _migrationTab.Controls.Add(CreateDeferredMigrationPlaceholder());
 
         _tabs.TabPages.Add(setupTab);
-        _tabs.TabPages.Add(migrationTab);
+        _tabs.TabPages.Add(_migrationTab);
         _tabs.SelectedIndexChanged += TabsSelectedIndexChanged;
 
         Controls.Add(_tabs);
@@ -281,16 +270,16 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
     private async void TabsSelectedIndexChanged(object? sender, EventArgs e)
     {
-        if (_tabs.SelectedIndex != 1 ||
-            _migrationView.IsDisposed ||
-            _migrationView.Disposing)
-        {
+        if (_tabs.SelectedIndex != 1)
             return;
-        }
+
+        var migrationView = EnsureMigrationView();
+        if (migrationView.IsDisposed || migrationView.Disposing)
+            return;
 
         try
         {
-            await _migrationView
+            await migrationView
                 .InitializeAsync()
                 .ConfigureAwait(true);
         }
@@ -311,6 +300,36 @@ internal sealed class HivePersistenceSettingsView : UserControl
             }
         }
     }
+
+    private HivePersistenceDataMigrationSettingsView EnsureMigrationView()
+    {
+        if (_migrationView is not null)
+            return _migrationView;
+
+        var migrationView = new HivePersistenceDataMigrationSettingsView(
+            _management,
+            _accessContext,
+            _themeManager,
+            _applicationName,
+            _output)
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty
+        };
+
+        _migrationTab.Controls.Clear();
+        _migrationTab.Controls.Add(migrationView);
+        _migrationView = migrationView;
+        return migrationView;
+    }
+
+    private static Control CreateDeferredMigrationPlaceholder() =>
+        new Panel
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
 
     private async Task LoadAsync(CancellationToken cancellationToken)
     {
@@ -1652,6 +1671,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 ref _operationCts,
                 null);
             operationCts?.Cancel();
+
+            _migrationView?.Dispose();
+            _migrationView = null;
         }
 
         base.Dispose(disposing);
