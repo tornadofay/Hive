@@ -23,6 +23,37 @@ public sealed class HiveConfigurationTests
     }
 
     [Fact]
+    public async Task JsonConfigurationStore_UsesInjectedDefaultPersistenceConfigurationWhenSettingsAreMissing()
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            "hive-default-settings",
+            Guid.NewGuid().ToString("N"));
+        var filePath = Path.Combine(directory, "hive-settings.json");
+        var storagePath = Path.Combine(directory, "data", "hive.db");
+        var expected = HivePersistenceConfiguration.Embedded(storagePath);
+
+        try
+        {
+            var store = new JsonHiveConfigurationStore(
+                filePath,
+                "Hive.TestHost",
+                expected);
+
+            var result = await store.LoadPersistenceConfigurationAsync();
+
+            Assert.True(result.IsSuccess, result.Error?.Message);
+            Assert.Equal(expected, result.Value);
+            Assert.False(File.Exists(filePath));
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+                Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void EmbeddedPersistenceConfiguration_DoesNotRequireSqlServerConfiguration()
     {
         var path = Path.Combine(
