@@ -41,3 +41,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [1.18A — Slice 1: Backend-Neutral Persistence Boundary — 2026-10-07](1.18A-slice-1-backend-neutral-persistence-boundary-closure-2026-10-07.md)
 - [1.18A — Slice 2: Embedded Persistence Foundation — 2026-10-07](1.18A-slice-2-embedded-persistence-foundation-closure-2026-10-07.md)
 - [1.18A — Slice 3: Embedded Persistence Parity — 2026-10-08](1.18A-slice-3-embedded-persistence-parity-closure-2026-10-08.md)
+- [1.18A — Slice 4: Full-Data Migration — 2026-10-08](1.18A-slice-4-full-data-migration-closure-2026-10-08.md)
