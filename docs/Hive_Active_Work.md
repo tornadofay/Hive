@@ -239,6 +239,19 @@ Developer verification reported **758 tests: 757 passed, 1 failed, 0 skipped**.
 
 These are same-slice Slice 5 settings-layout/composition failures. They do not authorize Slice 6 or 1.19 work.
 
+### Verification failure — 2026-10-09 latest developer/manual UI feedback
+
+The developer reported two additional in-scope Slice 5 failures:
+
+- SQL Server instance picker: choosing `Custom` does not visibly reveal the textbox needed to enter the custom instance/server name.
+- Persistence Settings first-open rendering is too slow/heavy for this lightweight settings surface. Initial open must avoid unnecessary layout/repaint work and remain responsive.
+
+These are same-slice settings UI interaction and performance failures. No new roadmap scope is authorized.
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+Implementation changes may proceed only to correct these recorded failures. After remediation, Active Work must return to **VERIFICATION PENDING** with the existing focused/full-suite, zero-warning build, and Example Host manual verification requirements.
+
 ### Remediation completed — latest manual UI correction
 
 - HivePersistenceSettingsView.CreateFieldBlock() now uses an auto-sized fixed-width editor host instead of a fixed-height wrapper. This lets the normal compact controls use their 34px natural field height, while the SQL Server picker can expand when its Custom row is shown.
