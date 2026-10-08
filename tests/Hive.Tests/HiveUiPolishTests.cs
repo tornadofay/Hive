@@ -408,6 +408,18 @@ public sealed class HiveUiPolishTests
 
         Assert.True(picker.IsCustomSelected);
         Assert.Equal(1433, picker.Port);
+
+        picker.SetDiscoveredInstances(
+            [
+                @"REMOTE01\SQL",
+                @"localhost\HiveSql"
+            ],
+            null);
+
+        Assert.Equal(
+            @"localhost\HiveSql",
+            picker.ServerName);
+        Assert.Null(picker.Port);
     }
 
     [Fact]
