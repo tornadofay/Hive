@@ -127,6 +127,7 @@ internal sealed class HivePersistenceMigrationManagementService : HiveManagement
                     destination,
                     destinationCredential,
                     migrationId,
+                    accessContext,
                     cancellationToken)
                 .ConfigureAwait(false);
 
