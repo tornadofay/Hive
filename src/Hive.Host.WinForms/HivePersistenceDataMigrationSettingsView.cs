@@ -501,11 +501,12 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         }
     }
 
-    private static string DefaultEmbeddedPath() =>
+    private string DefaultEmbeddedPath() =>
         Path.Combine(
             Environment.GetFolderPath(
                 Environment.SpecialFolder.LocalApplicationData),
             "Hive",
+            HivePersistenceConfiguration.BuildDatabaseName(_applicationName),
             "hive.db");
 
     private static string FormatStatus(
