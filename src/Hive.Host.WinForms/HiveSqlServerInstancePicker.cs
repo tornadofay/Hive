@@ -472,6 +472,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     {
         var custom = IsCustomSelected;
         _customRow.Visible = custom;
+        _customServerTextBox.Visible = custom;
         _layout.RowStyles[1].Height = custom ? 42f : 0f;
         Height = custom ? 78 : 36;
 
