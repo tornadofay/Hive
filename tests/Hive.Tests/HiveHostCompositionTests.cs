@@ -849,6 +849,28 @@ public sealed class HiveHostCompositionTests
         }
     }
 
+    private static void DeleteDatabaseFiles(string path)
+    {
+        foreach (var file in new[]
+        {
+            path,
+            $"{path}-wal",
+            $"{path}-shm"
+        })
+        {
+            if (File.Exists(file))
+                File.Delete(file);
+        }
+
+        var directory = Path.GetDirectoryName(path);
+
+        if (!string.IsNullOrWhiteSpace(directory) &&
+            Directory.Exists(directory))
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     private static HiveHostServiceGraph CreateGraph(
         HivePersistenceConfiguration configuration,
         params IDisposable[] resources)
