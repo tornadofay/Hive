@@ -580,11 +580,11 @@ The **Data Migration** tab is the first-class bidirectional migration surface. I
 `SQL Server → Embedded`
 `Embedded → SQL Server`
 
-The migration source is the currently active configured backend. Destination settings use the **same authoritative `HivePersistenceConfiguration` contract** as Database Setup, but remain transient migration-target input until migration succeeds; the tab must not create a second persisted configuration model.
+The migration request supplies both the explicit **SOURCE** and **DESTINATION** `HivePersistenceConfiguration` values. Neither endpoint is derived from the currently active configured backend/database. The Data Migration UI presents both endpoint configurations as independently editable transient inputs and swaps the backend editor assigned to each endpoint when the user changes direction. The migration request is the sole source of migration endpoint authority; the UI must not substitute the active persistence configuration.
 
 The migration scope is fixed to **All Hive Data**; partial resource-family migration is not a V1.18A capability. The UI presents source status, destination configuration/status, preflight validation, quiescence/readiness state, a bounded migration progress/status area, and a clear completion/failure result. A migration must not silently switch the active backend; after successful verification the user may explicitly select the destination backend on Database Setup and save/recompose the host.
 
-The migration action requires a quiescent source: active persistence mutations, active execution persistence, and outbox dispatch must be stopped or drained before copying begins. If the source cannot be quiesced, the migration is rejected during preflight.
+The migration action enters Hive's configured persistence quiescence boundary before copying begins. When the explicit source endpoint is the active Hive backend, this gate protects the active Hive persistence graph. When the source is an independent endpoint, the gate does not claim to stop external writers; the migration's source fingerprint/re-verification boundary detects concurrent source changes and fails safely.
 
 The safe lifecycle is:
 
