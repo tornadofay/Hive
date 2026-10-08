@@ -16,7 +16,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
     private sealed record DirectionChoice(
         string DisplayName,
-        MigrationDirection Direction);
+        MigrationDirection Direction)
+    {
+        public override string ToString() => DisplayName;
+    }
 
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
@@ -40,10 +43,11 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private readonly HiveButton _refreshButton;
     private readonly HiveButton _migrateButton;
 
-    private HiveStatusTone _statusTone = HiveStatusTone.Neutral;
+    private HiveStatusTone _sourceTone = HiveStatusTone.Neutral;
+    private HiveStatusTone _destinationTone = HiveStatusTone.Neutral;
+    private HiveStatusTone _migrationTone = HiveStatusTone.Neutral;
     private CancellationTokenSource? _operationCts;
     private HivePersistenceConfiguration? _sourceConfiguration;
-    private HivePersistenceConfiguration? _lastDestinationConfiguration;
 
     public HivePersistenceDataMigrationSettingsView(
         IHiveManagementFacade management,
@@ -212,21 +216,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _sqlDatabaseTextBox.Text = databaseName;
         _embeddedPathTextBox.Text = DefaultEmbeddedPath();
 
-        var tabs = new HiveTabControl
-        {
-            Dock = DockStyle.Fill,
-            AccessibleName = "Persistence data migration tabs"
-        };
-
-        var instructions = new TabPage("Migration")
-        {
-            Padding = new Padding(8),
-            Margin = Padding.Empty
-        };
-        instructions.Controls.Add(_editor);
-        tabs.TabPages.Add(instructions);
-
-        Controls.Add(tabs);
+        Controls.Add(_editor);
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(this);
@@ -418,8 +408,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             return;
         }
 
-        _lastDestinationConfiguration = destination;
-
         var value = result.Value!;
         SetStatus(
             _migrationStatusLabel,
@@ -532,14 +520,15 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         HiveStatusTone tone)
     {
         label.Text = text;
-        label.ForeColor = tone switch
-        {
-            HiveStatusTone.Information => _themeManager.Theme.VisualStates.Information,
-            HiveStatusTone.Success => _themeManager.Theme.VisualStates.Success,
-            HiveStatusTone.Warning => _themeManager.Theme.VisualStates.Warning,
-            HiveStatusTone.Error => _themeManager.Theme.VisualStates.Error,
-            _ => _themeManager.Theme.Palette.MutedText
-        };
+
+        if (ReferenceEquals(label, _sourceStatusLabel))
+            _sourceTone = tone;
+        else if (ReferenceEquals(label, _destinationStatusLabel))
+            _destinationTone = tone;
+        else if (ReferenceEquals(label, _migrationStatusLabel))
+            _migrationTone = tone;
+
+        ApplyStatusVisuals();
     }
 
     private void ThemeManagerOnChanged(object? sender, EventArgs e)
@@ -550,16 +539,23 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
     private void ApplyStatusVisuals()
     {
-        foreach (var label in new[]
-                 {
-                     _sourceStatusLabel,
-                     _destinationStatusLabel,
-                     _migrationStatusLabel
-                 })
+        ApplyStatusVisual(_sourceStatusLabel, _sourceTone);
+        ApplyStatusVisual(_destinationStatusLabel, _destinationTone);
+        ApplyStatusVisual(_migrationStatusLabel, _migrationTone);
+    }
+
+    private void ApplyStatusVisual(
+        Label label,
+        HiveStatusTone tone)
+    {
+        label.ForeColor = tone switch
         {
-            if (label.ForeColor == _themeManager.Theme.Palette.MutedText)
-                label.ForeColor = _themeManager.Theme.Palette.MutedText;
-        }
+            HiveStatusTone.Information => _themeManager.Theme.VisualStates.Information,
+            HiveStatusTone.Success => _themeManager.Theme.VisualStates.Success,
+            HiveStatusTone.Warning => _themeManager.Theme.VisualStates.Warning,
+            HiveStatusTone.Error => _themeManager.Theme.VisualStates.Error,
+            _ => _themeManager.Theme.Palette.MutedText
+        };
     }
 
     private async Task RunOperationAsync(
