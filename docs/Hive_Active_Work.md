@@ -239,32 +239,16 @@ Developer verification reported **758 tests: 757 passed, 1 failed, 0 skipped**.
 
 These are same-slice Slice 5 settings-layout/composition failures. They do not authorize Slice 6 or 1.19 work.
 
-### Remediation completed — latest
+### Remediation completed — latest manual UI correction
 
-- Removed the fixed Database Setup section heights. Backend, Embedded, and SQL Server are naturally auto-sized vertical sections, and the existing FieldsPanel is configured with AutoSize/GrowAndShrink so visible content determines the extent.
-- Kept the Backend selector explicitly bounded to 120px, preserving the requested compact professional field width while allowing values such as "SQL Server" to render.
-- Removed the view-specific scroll normalization and fixed-height section-row logic instead of layering another measurement workaround.
-- The Custom SQL endpoint visibility remediation remains intact; its previously failing focused assertion passed in the latest developer run.
-- No shared HiveComboBox/HiveScrollHost infrastructure, migration contract, persistence backend, Slice 6 work, or 1.19 work was changed.
+- HivePersistenceSettingsView.CreateFieldBlock() now uses an auto-sized fixed-width editor host instead of a fixed-height wrapper. This lets the normal compact controls use their 34px natural field height, while the SQL Server picker can expand when its Custom row is shown.
+- Compact text inputs and HiveComboBox instances are no longer forcibly inflated to 36px by the settings view. The existing HiveComboBox 34px field geometry is preserved, and the Embedded database-file textbox uses the same compact height.
+- The previous automated layout result remains valid: the developer-reported full suite passed **758/758** before this visual-only correction.
+- No shared HiveScrollHost/HiveComboBox infrastructure, migration contract, persistence backend, Slice 6, or 1.19 work was changed.
 
 Current state: **VERIFICATION PENDING**.
 
-Developer rerun is required against the corrected source. Preserve the focused/full-suite, zero-warning build, and Example Host verification requirements below.
-
-### Manual UI verification failure — latest developer report
-
-Developer reported the automated suite passing **758/758**, but the Slice 5 Persistence UI still has two visual defects:
-
-- The Database Setup **Backend** HiveComboBox is not visibly showing/rendering.
-- The Embedded **Database file** textbox is visibly taller than the intended compact field height.
-
-These are within the already-authorized Slice 5 settings UI presentation boundary. The automated scroll-fit contract is now passing, so no scroll-infrastructure change is authorized or needed. No Slice 6 or 1.19 work is authorized.
-
-### Remediation status — manual UI
-
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
-
-Correct only the two reported visual defects while preserving the now-passing 758-test layout behavior.
+Developer rerun/manual verification is required against the corrected source. Preserve the focused/full-suite, zero-warning build, and Example Host verification requirements below.
 
 ### Verification handoff
 
