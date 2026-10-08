@@ -239,11 +239,17 @@ Developer verification reported **758 tests: 757 passed, 1 failed, 0 skipped**.
 
 These are same-slice Slice 5 settings-layout/composition failures. They do not authorize Slice 6 or 1.19 work.
 
-### Remediation status — latest
+### Remediation completed — latest
 
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+- Replaced the persistence Database Setup page's whole-content preferred-size normalization with deterministic fixed-height section rows: Backend = 104px, Embedded = 190px, SQL Server = 500px. Sections remain ordinary top-docked controls inside the existing HiveEditorLayout, so the scroll extent is predictable rather than recursively derived from nested AutoSize layouts.
+- The Backend selector is now explicitly bounded to 120px, which is within the existing focused sizing contract while providing enough usable text area for values such as "SQL Server".
+- Removed redundant field-level Dock/Width assignments that were immediately overwritten by CreateFieldBlock, keeping the page composition easier to inspect and maintain.
+- The Custom SQL endpoint remediation remains intact and the previous custom-textbox visibility failure is no longer reported.
+- No shared HiveComboBox/HiveScrollHost changes, migration contract changes, persistence backend changes, Slice 6 work, or 1.19 work were introduced.
 
-The next correction is authorized only within the Slice 5 settings UI boundary. The settings page should be simplified rather than extended with more nested preferred-size/normalization logic; the Backend selector should use a straightforward dedicated bounded host, and the Database Setup layout should use deterministic vertical composition that fits the normal workspace without relying on the current recursive AutoSize measurement approach.
+Current state: **VERIFICATION PENDING**.
+
+Developer rerun is required against the corrected source. Preserve the focused/full-suite, zero-warning build, and Example Host verification requirements below.
 
 ### Verification handoff
 
