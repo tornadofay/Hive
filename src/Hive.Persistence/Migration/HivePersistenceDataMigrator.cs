@@ -409,7 +409,7 @@ internal sealed class HivePersistenceDataMigrator
             sourceStatus.Value.SchemaVersion != CurrentSchemaVersion)
         {
             return Result<HivePersistenceMigrationExecutionResult>.Failure(
-                MigrationIncompatibleSourceError(
+                MigrationIncompatibleSource(
                     sourceStatus.Value.DatabaseState,
                     sourceStatus.Value.SchemaVersion));
         }
@@ -637,7 +637,7 @@ internal sealed class HivePersistenceDataMigrator
         await using var destinationCommand = destinationConnection.CreateCommand();
         destinationCommand.Transaction = destinationTransaction;
         destinationCommand.CommandText = BuildInsertSql(table, destinationConnection is SqliteConnection);
-        AddParameters(destinationCommand, table);
+        AddParameters(destinationCommand, table.Columns);
 
         long count = 0;
 
@@ -886,17 +886,17 @@ internal sealed class HivePersistenceDataMigrator
         command.Transaction = transaction;
         command.CommandText = $"SELECT {selectColumns} FROM {qualifiedTable} ORDER BY {orderBy};";
 
-        await using var reader = await command.ExecuteReaderAsync(
+        await using var secretReader = await command.ExecuteReaderAsync(
             CommandBehavior.SequentialAccess,
             cancellationToken).ConfigureAwait(false);
 
-        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        while (await secretReader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var values = ReadRow(reader, table);
+            var values = ReadRow(secretReader, table);
             var encrypted = ReadBinary(
-                reader,
+                secretReader,
                 table.Columns.Count);
 
             using var material = DpapiSecretProtection.Unprotect(encrypted);
