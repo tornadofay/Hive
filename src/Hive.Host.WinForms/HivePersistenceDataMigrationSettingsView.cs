@@ -31,7 +31,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         private readonly IHiveThemeManager _themeManager;
         private readonly string _applicationName;
 
-        private readonly TableLayoutPanel _root;
+        private readonly Panel _root;
         private readonly TableLayoutPanel _embeddedPanel;
         private readonly TableLayoutPanel _sqlPanel;
 
@@ -63,16 +63,12 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
             _applicationName = applicationName;
 
-            _root = new TableLayoutPanel
+            _root = new Panel
             {
                 Dock = DockStyle.Fill,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                ColumnCount = 1,
-                RowCount = 1,
                 Margin = Padding.Empty,
                 Padding = Padding.Empty,
-                GrowStyle = TableLayoutPanelGrowStyle.FixedSize
+                AutoScroll = false
             };
 
             _embeddedPanel = CreateEmbeddedPanel(
@@ -101,8 +97,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             _sqlAuthenticationComboBox.SelectedIndexChanged += (_, _) =>
                 UpdateSqlAuthenticationState();
 
-            _root.Controls.Add(_embeddedPanel, 0, 0);
-            _root.Controls.Add(_sqlPanel, 0, 0);
+            _root.Controls.Add(_sqlPanel);
+            _root.Controls.Add(_embeddedPanel);
 
             _embeddedPathTextBox.Text = DefaultEmbeddedPath();
             _sqlDatabaseTextBox.Text =
@@ -127,6 +123,12 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 _embeddedPanel.Visible = value == HivePersistenceBackend.Embedded;
                 _sqlPanel.Visible = value == HivePersistenceBackend.SqlServer;
                 UpdateSqlAuthenticationState();
+
+                if (_embeddedPanel.Visible)
+                    _embeddedPanel.BringToFront();
+                else
+                    _sqlPanel.BringToFront();
+
                 _root.PerformLayout();
             }
         }
