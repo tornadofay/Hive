@@ -870,11 +870,11 @@ public sealed class HivePersistenceDataMigrationTests
         var append = await events.AppendAsync(
             new EventAppendRequest(
                 eventStream,
-                null,
+                new ResourceVersion(1),
                 envelope,
                 new EventSnapshot(
                     eventStream,
-                    new ResourceVersion(1),
+                    new ResourceVersion(2),
                     new EventPayloadVersion(1),
                     JsonSerializer.SerializeToElement(
                         new { state = "Migrated" }))));
