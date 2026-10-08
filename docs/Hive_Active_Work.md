@@ -45,7 +45,7 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+Current state: **VERIFICATION PENDING**.
 
 Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **756 tests: 752 passed, 4 failed, 0 skipped**.
 
@@ -55,18 +55,18 @@ Concrete same-slice failures reported:
 - `HiveSqlServerInstanceDiscovery_FormatsLocalInstancesForLocalConnection` expects installed local SQL Server instances to be formatted as `localhost` / `localhost\\HiveSql`, but the implementation currently uses the supplied machine name (`DEVBOX`), producing `DEVBOX` / `DEVBOX\\HiveSql`.
 - These failures are within the already-authorized Slice 5 settings/discovery presentation boundary and do not authorize Slice 6 or 1.19 work.
 
-### Required remediation
+### Remediation completed
 
-1. Fix Slice 5 construction ordering so the SQL credentials field is created before `CreateSqlSection()` consumes it; preserve the existing structured section/field hierarchy.
-2. Correct installed-local SQL Server instance formatting so the local registry inventory yields `localhost` for the default instance and `localhost\\<Instance>` for named instances. Remote/network-discovered servers remain unchanged.
-3. Align the focused automated coverage with the intended local-connection representation, including the existing local/network merge assertions.
-4. Re-review the affected Slice 5 diff and documents for accidental changes before returning to **VERIFICATION PENDING**.
+- The SQL credentials field is now created before `CreateSqlSection()` consumes it; the structured section/field hierarchy is unchanged.
+- Installed local SQL Server instance names are now normalized to `localhost` for the default instance and `localhost\\<Instance>` for named instances. Network-discovered remote names remain unchanged.
+- The focused discovery coverage now asserts the `localhost` representation and no longer passes an obsolete machine-name formatting argument.
+- The affected Slice 5 implementation and documentation were re-reviewed for this failure boundary only. No implementation outside the recorded remediation boundary was changed.
 
-No implementation outside this remediation boundary is authorized.
+Developer rerun is now required:
 
 ### Verification handoff
 
-After remediation, developer rerun is required:
+Developer rerun is required:
 
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
