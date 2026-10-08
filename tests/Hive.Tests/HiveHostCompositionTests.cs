@@ -38,6 +38,29 @@ public sealed class HiveHostCompositionTests
     }
 
     [Fact]
+    public void EndUserFirstRunConfiguration_UsesEmbeddedAndAppOwnedStorage()
+    {
+        const string applicationName = "Hive.Example.WinForms";
+
+        var configuration =
+            HiveHostComposition.CreateEndUserFirstRunPersistenceConfiguration(
+                applicationName);
+
+        var expectedPath = Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData),
+            "Hive",
+            HivePersistenceConfiguration.BuildDatabaseName(applicationName),
+            "hive.db");
+
+        Assert.Equal(HivePersistenceBackend.Embedded, configuration.Backend);
+        Assert.Equal(expectedPath, configuration.EmbeddedStoragePath);
+        Assert.True(configuration.CreateDatabaseIfMissing);
+        Assert.Equal(HiveSqlAuthenticationMode.WindowsIntegrated, configuration.AuthenticationMode);
+        Assert.Null(configuration.BootstrapCredential);
+    }
+
+    [Fact]
     public async Task SavedConfiguration_IsConsumedByComposition()
     {
         using var settings = TemporarySettingsFile.Create();
