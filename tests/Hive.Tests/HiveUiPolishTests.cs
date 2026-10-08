@@ -293,8 +293,8 @@ public sealed class HiveUiPolishTests
         Assert.Equal(
             new[]
             {
-                "DEVBOX",
-                @"DEVBOX\HiveSql",
+                "localhost",
+                @"localhost\HiveSql",
                 @"REMOTE01\REPORTING"
             },
             instances);
@@ -305,15 +305,13 @@ public sealed class HiveUiPolishTests
     {
         Assert.Equal(
             "localhost",
-            HiveSqlServerInstanceDiscovery.FormatLocalInstanceName(
-                "MSSQLSERVER",
-                "DEVBOX"));
+            HiveSqlServerInstanceDiscovery.FormatInstalledInstanceName(
+                "MSSQLSERVER"));
 
         Assert.Equal(
             @"localhost\HiveSql",
-            HiveSqlServerInstanceDiscovery.FormatLocalInstanceName(
-                "HiveSql",
-                "DEVBOX"));
+            HiveSqlServerInstanceDiscovery.FormatInstalledInstanceName(
+                "HiveSql"));
     }
 
     [WinFormsFact]
