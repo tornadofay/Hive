@@ -1204,8 +1204,8 @@ public sealed class HivePersistenceDataMigrationTests
         ResourceVersion EventSnapshotVersion,
         Agent Agent,
         RuntimeId RuntimeId,
-        AgentWorkStateId ObjectiveId,
-        AgentWorkStateId MemoryId,
+        ObjectiveId ObjectiveId,
+        MemoryId MemoryId,
         string MemoryContent,
         DateTimeOffset Now);
 
