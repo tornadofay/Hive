@@ -299,6 +299,23 @@ Current state: **VERIFICATION PENDING**.
 
 Developer rerun is required against the corrected source. Manual verification must specifically confirm that `Custom...` reveals an editable custom server/instance field and that initial Settings/Persistence presentation is responsive without the previous heavy first-open paint delay.
 
+### Verification failure — 2026-10-09 persistence editor follow-up
+
+The developer reports that after the prior remediation, the first opening of Persistence still incurs excessive painting/nested layout, and the SQL Server connection using their existing Windows-integrated endpoint fails:
+
+`Server=localhost\\MSSQLSERVER01;Database=Hive-Hive.Example.WinForms;Trusted_Connection=True;`
+
+Requested same-slice UI corrections:
+
+- The Custom SQL Server instance editor and the row hosting it must auto-size together, so selecting Custom exposes a usable input without clipping or fixed-height layout conflicts.
+- The Embedded database file textbox and its containing row must auto-size together, with the adjacent Browse button kept aligned and the textbox not stretched vertically.
+- Reduce first-open Persistence painting/layout work at the actual page construction and theme/layout ownership boundary rather than adding another normalization layer.
+- Diagnose the actual SQL Server connection failure against this named-instance, database-name, Windows-integrated-authentication scenario; surface a useful safe failure reason without exposing credentials.
+
+These remain same-slice Slice 5 interaction, layout/performance, and connection-readiness defects. They do not authorize Slice 6 or 1.19.
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
 ### Verification handoff
 
 Developer rerun is required:
