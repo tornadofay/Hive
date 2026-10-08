@@ -273,7 +273,7 @@ public sealed class HiveUiPolishTests
         Assert.Equal(
             HivePersistenceConfiguration.BuildDatabaseName("Hive.TestHost"),
             view.DatabaseInput.Text);
-        Assert.True(view.EmbeddedStorageInput.Width >= 500);
+        Assert.Equal(DockStyle.Fill, view.EmbeddedStorageInput.Dock);
 
         view.SqlServerPicker.SetDiscoveredInstances(
             new[] { "localhost", @"localhost\HiveSql" },
