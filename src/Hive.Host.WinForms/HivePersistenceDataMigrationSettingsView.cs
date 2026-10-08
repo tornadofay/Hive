@@ -55,6 +55,9 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private readonly CheckBox _sqlTrustServerCertificateCheckBox;
     private readonly CheckBox _sqlCreateDatabaseCheckBox;
     private readonly NumericUpDown _sqlTimeoutNumeric;
+    private readonly CheckBox _embeddedCreateDatabaseCheckBox;
+    private readonly NumericUpDown _embeddedTimeoutNumeric;
+    private TableLayoutPanel? _sqlCredentialField;
 
     private readonly HiveButton _refreshButton;
     private readonly HiveButton _migrateButton;
@@ -149,7 +152,21 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             AutoSize = true,
             Checked = true
         };
+        _embeddedCreateDatabaseCheckBox = new CheckBox
+        {
+            Text = "Allow database creation",
+            AutoSize = true,
+            Checked = true
+        };
         _sqlTimeoutNumeric = new NumericUpDown
+        {
+            Minimum = 1,
+            Maximum = 600,
+            Value = 30,
+            DecimalPlaces = 0,
+            Width = 82
+        };
+        _embeddedTimeoutNumeric = new NumericUpDown
         {
             Minimum = 1,
             Maximum = 600,
@@ -471,10 +488,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         panel.Controls.Add(
             CreateSecurityTimeoutPanel(
                 includeSecurity: false,
-                _sqlCreateDatabaseCheckBox,
+                _embeddedCreateDatabaseCheckBox,
                 secondarySecurityControl: null,
-                _sqlTimeoutNumeric,
-                "Create/initialize"),
+                _embeddedTimeoutNumeric,
+                "Initialize"),
             0,
             2);
 
@@ -529,8 +546,9 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 _sqlDatabaseTextBox),
             0,
             2);
+        _sqlCredentialField = CreateCredentialField();
         panel.Controls.Add(
-            CreateCredentialField(),
+            _sqlCredentialField,
             0,
             3);
         panel.Controls.Add(
@@ -999,8 +1017,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         {
             return HivePersistenceConfiguration.Embedded(
                 _embeddedPathTextBox.Text,
-                createDatabaseIfMissing: true,
-                commandTimeoutSeconds: (int)_sqlTimeoutNumeric.Value);
+                createDatabaseIfMissing: _embeddedCreateDatabaseCheckBox.Checked,
+                commandTimeoutSeconds: (int)_embeddedTimeoutNumeric.Value);
         }
 
         var authentication =
@@ -1163,6 +1181,13 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             _sqlAuthenticationComboBox.SelectedItem is HiveSqlAuthenticationMode.SqlPassword;
 
         _sqlAuthenticationComboBox.Visible = active;
+        if (_sqlCredentialField is not null)
+        {
+            _sqlCredentialField.Visible = true;
+            if (_sqlCredentialField.RowStyles.Count > 1)
+                _sqlCredentialField.RowStyles[1].Height = sqlPassword ? 52f : 0f;
+        }
+
         _sqlUserNameTextBox.Visible = sqlPassword;
         _sqlPasswordTextBox.Visible = sqlPassword;
         _sqlCredentialStatus.Visible = sqlPassword;
