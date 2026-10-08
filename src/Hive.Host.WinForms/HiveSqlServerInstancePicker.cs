@@ -51,17 +51,14 @@ internal static class HiveSqlServerInstanceDiscovery
                 continue;
 
             names.Add(
-                FormatLocalInstanceName(
-                    instance,
-                    localMachineName));
+                FormatInstalledInstanceName(instance));
         }
 
         return names.ToArray();
     }
 
-    internal static string FormatLocalInstanceName(
-        string instanceName,
-        string localMachineName)
+    internal static string FormatInstalledInstanceName(
+        string instanceName)
     {
         var normalized = instanceName.Trim();
         if (normalized.Length == 0)
@@ -69,16 +66,12 @@ internal static class HiveSqlServerInstanceDiscovery
                 "SQL Server instance name is required.",
                 nameof(instanceName));
 
-        var machine = string.IsNullOrWhiteSpace(localMachineName)
-            ? "localhost"
-            : localMachineName.Trim();
-
         return string.Equals(
             normalized,
             "MSSQLSERVER",
             StringComparison.OrdinalIgnoreCase)
-            ? machine
-            : $@"{machine}\{normalized}";
+            ? "localhost"
+            : $@"localhost\{normalized}";
     }
 
     private static IReadOnlyList<string> DiscoverNetworkInstances()
