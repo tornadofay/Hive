@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Status: **IMPLEMENTATION IN PROGRESS — VERIFICATION PENDING**
 
 ## Phase 1.18A — Embedded Persistence Profile
 ### Slice 4 — Full-Data Migration
@@ -58,3 +58,5 @@ Same-slice remediation updated the migration test to assert both persisted WorkI
 
 
 Developer verification on 2026-10-08 reported 749 tests with 748 passed and 1 failed: `FullDataMigration_RoundTripsAllCurrentDurableStateAndReprotectsSecrets` reached the second migration (Embedded → SQL Server), but the migration failed during destination fingerprint verification with `hive.persistence.data-migration.verification-failed`: "The migration destination does not exactly match the source logical dataset." The first SQL Server → Embedded migration fingerprint verification succeeded in the same run. The failure is confined to the Slice 4 cross-backend fingerprint/round-trip verification boundary and is therefore an in-scope same-slice remediation.
+
+Same-slice remediation aligned the SQL-side Secret Store fingerprint query with the existing cross-backend canonical ordering rule by routing its OrderByColumns through `BuildOrderByExpression`. This fixes the second-direction (Embedded → SQL Server) verification mismatch without weakening fingerprint verification or changing migration data semantics. No out-of-scope production behavior was changed. Developer re-verification remains required.
