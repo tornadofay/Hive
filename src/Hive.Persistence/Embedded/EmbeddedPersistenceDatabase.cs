@@ -4,7 +4,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Hive.Persistence;
 
-public sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
+public sealed class EmbeddedPersistenceDatabase : IDisposable, IAsyncDisposable
 {
     private readonly string _storagePath;
     private readonly string _connectionString;
@@ -211,9 +211,14 @@ public sealed class EmbeddedPersistenceDatabase : IAsyncDisposable
             .ConfigureAwait(false);
     }
 
-    public ValueTask DisposeAsync()
+    public void Dispose()
     {
         Interlocked.Exchange(ref _disposed, 1);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
         return ValueTask.CompletedTask;
     }
 
