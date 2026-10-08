@@ -13,6 +13,13 @@ public sealed class HivePersistenceConnectionTester : IHivePersistenceConnection
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
+        if (configuration.Backend == HivePersistenceBackend.Embedded)
+        {
+            return await TestEmbeddedAsync(
+                configuration,
+                cancellationToken).ConfigureAwait(false);
+        }
+
         if (configuration.Backend != HivePersistenceBackend.SqlServer)
         {
             return Result<HivePersistenceConnectionTest>.Failure(
@@ -168,7 +175,6 @@ public sealed class HivePersistenceConnectionTester : IHivePersistenceConnection
         }
     }
 
-
     private static async Task<Result<HivePersistenceConnectionTest>> TestEmbeddedAsync(
         HivePersistenceConfiguration configuration,
         CancellationToken cancellationToken)
@@ -230,9 +236,4 @@ public sealed class HivePersistenceConnectionTester : IHivePersistenceConnection
                     exception));
         }
     }
-
-}
-
-
-}
 }
