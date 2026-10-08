@@ -1,5 +1,6 @@
 using System.Data;
 using Microsoft.Data.Sql;
+using System.ComponentModel;
 
 namespace Hive.Host.WinForms;
 
@@ -146,6 +147,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int? Port
     {
         get => int.TryParse(_portTextBox.Text.Trim(), out var port) && port > 0
@@ -159,6 +161,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     public bool IsCustomSelected =>
         (_serverComboBox.SelectedItem as ServerChoice)?.IsCustom == true;
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsReadOnly
     {
         get => !_serverComboBox.Enabled;
