@@ -384,6 +384,33 @@ public sealed class HiveUiPolishTests
     }
 
     [Fact]
+    public void HiveSqlServerInstancePicker_DefaultsPortByInstanceKind()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        using var picker = new HiveSqlServerInstancePicker(themeManager);
+
+        picker.SetDiscoveredInstances(
+            new[] { @"localhost\\HiveSql" },
+            null);
+
+        Assert.Equal(@"localhost\\HiveSql", picker.ServerName);
+        Assert.Null(picker.Port);
+
+        picker.SetDiscoveredInstances(
+            new[] { "localhost" },
+            null);
+
+        Assert.Equal("localhost", picker.ServerName);
+        Assert.Equal(1433, picker.Port);
+
+        picker.ServerSelector.SelectedItem =
+            picker.ServerSelector.Items[^1];
+
+        Assert.True(picker.IsCustomSelected);
+        Assert.Equal(1433, picker.Port);
+    }
+
+    [Fact]
     public void HiveSqlServerInstanceDiscovery_FormatsLocalInstancesForLocalConnection()
     {
         Assert.Equal(
