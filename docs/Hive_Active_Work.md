@@ -45,20 +45,20 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+Current state: **IMPLEMENTATION COMPLETE; VERIFICATION PENDING**.
 
 Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **754 tests: 750 passed, 4 failed, 0 skipped**. The invalid zero label-width assignment has been remediated. Subsequent developer/manual verification reports new in-scope Slice 5 UX failures: SQL Server instance discovery returns no useful instances in the picker, the Database Setup and Data Migration controls have inconsistent sizing/alignment, and the Data Migration content renders as a small box in the upper-left instead of a full usable page. These failures affect the existing Slice 5 presentation boundary and require same-slice remediation.
 
-Same-slice remediation completed within the recorded Slice 5 boundary. It remains limited to Database Setup and Data Migration presentation, SQL Server instance discovery/custom selection, authentication-aware field presentation, Embedded storage browsing, source/destination migration layout, top-row Direction + Scope placement, and footer status/actions. No new backend, migration capability, persistence contract, Slice 6 work, or 1.19 work was introduced.
+Same-slice remediation completed within the recorded Slice 5 boundary. It remains limited to Database Setup and Data Migration presentation, SQL Server instance discovery/custom selection, authentication-aware field presentation, Embedded storage browsing, source/destination migration layout, top-row Direction + Scope placement, footer status/actions, responsive full-width layout, and consistent field/section hierarchy. No new backend, migration capability, persistence contract, Slice 6 work, or 1.19 work was introduced.
 
 Implementation checkpoint:
 - backend-aware real host composition for SQL Server and Embedded;
 - Embedded first-run default under application-owned Local AppData storage while the direct/default developer configuration store remains SQL Server LocalDB;
 - Persistence Settings `Database Setup | Data Migration` tabs with backend selection, readiness/initialization controls, fixed `All Hive Data` migration scope, and Management-only migration invocation;
-- SQL Server instance discovery/custom picker, Browse-enabled Embedded storage, compact grouped setup/migration rows, Destination-left / Source-right migration roles, authentication-aware SQL destination controls, top-row Direction + Scope, and footer status/actions;
+- SQL Server instance discovery/custom picker using both network enumeration and installed local SQL Server instance inventory, Browse-enabled Embedded storage, structured backend-specific sections with consistent field blocks, Destination-left / Source-right migration roles, authentication-aware SQL destination controls, top-row Direction + Scope, full-width tab/page docking, responsive two-column workspace layout, and footer status/actions;
 - bounded automated coverage for Embedded host composition, first-run defaults, configuration fallback, Settings tabs/backend selector, and the persistence UX behavior.
 
-Verification status: the latest Slice 5 UX failures are recorded above. Same-slice remediation is authorized only for the existing Persistence Settings composition, discovery behavior, sizing/layout, and presentation failure boundary; no new backend or later-slice capability is authorized.
+Verification status: the latest Slice 5 UX failures have been remediated within the existing failure boundary. The current implementation is unverified until the developer reruns `HiveUiPolishTests` and the full `Hive.Tests` suite, performs the zero-warning developer build, and manually verifies the Example Host Persistence flow.
 
 ### Verification handoff
 
