@@ -208,6 +208,8 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         _customRow = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 1,
             RowCount = 1,
             Margin = new Padding(0, 6, 0, 0),
@@ -220,6 +222,8 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         _layout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 1,
             RowCount = 2,
             Margin = Padding.Empty,
@@ -228,13 +232,15 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         };
         _layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
-        _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 0f));
+        _layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _layout.Controls.Add(_topRow, 0, 0);
         _layout.Controls.Add(_customRow, 0, 1);
 
         Controls.Add(_layout);
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
+        AutoSize = true;
+        AutoSizeMode = AutoSizeMode.GrowAndShrink;
         MinimumSize = new Size(0, 36);
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
@@ -473,14 +479,18 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         var custom = IsCustomSelected;
         _customRow.Visible = custom;
         _customServerTextBox.Visible = custom;
-        _layout.RowStyles[1].Height = custom ? 42f : 0f;
-        Height = custom ? 78 : 36;
+        _layout.RowStyles[1].SizeType = SizeType.AutoSize;
 
         if (!custom)
             _customServerTextBox.Clear();
 
+        _layout.PerformLayout();
+
         if (!_applyingValue)
+        {
             PerformLayout();
+            Parent?.PerformLayout();
+        }
     }
 
     private void ThemeManagerOnChanged(object? sender, EventArgs e) =>
