@@ -46,6 +46,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly TableLayoutPanel _sqlSection;
     private readonly TableLayoutPanel _sqlCredentialsField;
     private HiveStatusTone _statusTone = HiveStatusTone.Neutral;
+    private bool _updatingBackendSelection;
 
     private CancellationTokenSource? _operationCts;
     private HivePersistenceConfiguration? _loadedConfiguration;
@@ -84,7 +85,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
             new BackendChoice("Embedded", HivePersistenceBackend.Embedded),
             new BackendChoice("SQL Server", HivePersistenceBackend.SqlServer)
         ]);
-        _backendComboBox.SelectedIndexChanged += (_, _) => UpdateBackendState();
+        _backendComboBox.SelectedIndexChanged += async (_, _) =>
+            await BackendSelectionChangedAsync().ConfigureAwait(true);
 
         _embeddedStorageTextBox = CreateTextBox();
         _serverPicker = new HiveSqlServerInstancePicker(_themeManager);
@@ -93,6 +95,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _databaseTextBox = CreateTextBox();
         SetReadOnlyVisualState(_databaseTextBox, themeManager);
+        _databaseTextBox.Width = 320;
+        _databaseTextBox.Dock = DockStyle.Left;
 
         _authenticationComboBox = new HiveComboBox
         {
@@ -137,6 +141,11 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _embeddedTimeoutNumeric = CreateTimeoutInput();
         _sqlTimeoutNumeric = CreateTimeoutInput();
 
+        _backendComboBox.Width = 220;
+        _backendComboBox.Dock = DockStyle.Left;
+        _authenticationComboBox.Width = 220;
+        _authenticationComboBox.Dock = DockStyle.Left;
+
         _statusLabel = CreateStatusLabel();
         _statusLabel.AutoSize = false;
         _statusLabel.Height = 36;
@@ -173,9 +182,17 @@ internal sealed class HivePersistenceSettingsView : UserControl
             CreateFormGrid(
                 CreateFieldBlock("Backend", _backendComboBox)));
 
-        _embeddedSection = CreateEmbeddedSection();
-        _sqlCredentialsField = CreateCredentialsField();
-        _sqlSection = CreateSqlSection();
+        _updatingBackendSelection = true;
+        try
+        {
+            _embeddedSection = CreateEmbeddedSection();
+            _sqlCredentialsField = CreateCredentialsField();
+            _sqlSection = CreateSqlSection();
+        }
+        finally
+        {
+            _updatingBackendSelection = false;
+        }
 
         AddEditorSection(backendSection);
         AddEditorSection(_embeddedSection);
@@ -220,14 +237,23 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _databaseTextBox.Text = HivePersistenceConfiguration.BuildDatabaseName(_applicationName);
         _embeddedStorageTextBox.Text = DefaultEmbeddedStoragePath();
+        _serverPicker.SetValue("localhost", 1433);
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(this);
 
-        _backendComboBox.SelectedItem =
-            new BackendChoice("SQL Server", HivePersistenceBackend.SqlServer);
-        _authenticationComboBox.SelectedItem =
-            HiveSqlAuthenticationMode.WindowsIntegrated;
+        _updatingBackendSelection = true;
+        try
+        {
+            _backendComboBox.SelectedItem =
+                new BackendChoice("SQL Server", HivePersistenceBackend.SqlServer);
+            _authenticationComboBox.SelectedItem =
+                HiveSqlAuthenticationMode.WindowsIntegrated;
+        }
+        finally
+        {
+            _updatingBackendSelection = false;
+        }
 
         UpdateBackendState();
         UpdateFooterStatusWidth();
@@ -308,7 +334,16 @@ internal sealed class HivePersistenceSettingsView : UserControl
         if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
             return;
 
-        ApplyConfiguration(result.Value!);
+        _updatingBackendSelection = true;
+        try
+        {
+            ApplyConfiguration(result.Value!);
+        }
+        finally
+        {
+            _updatingBackendSelection = false;
+        }
+
         if (result.Value!.Backend == HivePersistenceBackend.SqlServer)
             await RefreshSqlServerInstancesAsync(cancellationToken).ConfigureAwait(true);
         SetStatus("Persistence configuration loaded.", HiveStatusTone.Success);
@@ -767,11 +802,15 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _embeddedStorageTextBox.Text =
             configuration.EmbeddedStoragePath ?? DefaultEmbeddedStoragePath();
         _serverPicker.SetValue(
-            configuration.ServerName,
-            configuration.Port);
+            string.IsNullOrWhiteSpace(configuration.ServerName)
+                ? "localhost"
+                : configuration.ServerName,
+            configuration.Port ?? 1433);
         _databaseTextBox.Text = configuration.Backend == HivePersistenceBackend.SqlServer
-            ? configuration.DatabaseName
-            : string.Empty;
+            ? (string.IsNullOrWhiteSpace(configuration.DatabaseName)
+                ? HivePersistenceConfiguration.BuildDatabaseName(_applicationName)
+                : configuration.DatabaseName)
+            : HivePersistenceConfiguration.BuildDatabaseName(_applicationName);
         _authenticationComboBox.SelectedItem = configuration.AuthenticationMode;
         _userNameTextBox.Text = configuration.UserName ?? string.Empty;
         _passwordTextBox.Clear();
@@ -806,7 +845,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
         var storagePath = CreateFormGrid(
             CreateFieldBlock(
                 "Database file",
-                CreateStorageLocationPanel()));
+                CreateStorageLocationPanel(),
+                600));
 
         var lifecycle = CreateFormGrid(
             CreateCheckBoxField(
@@ -814,11 +854,12 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 _embeddedCreateDatabaseCheckBox),
             CreateFieldBlock(
                 "Command timeout",
-                CreateTimeoutField(_embeddedTimeoutNumeric)));
+                CreateTimeoutField(_embeddedTimeoutNumeric),
+                180));
 
         return CreateSection(
             "Embedded Storage",
-            "The local Hive database is application-owned. Browse to another .db file when the default Local AppData location is not suitable.",
+            "Application-owned local Hive database. Browse to another .db file when the default location is not suitable.",
             storagePath,
             lifecycle);
     }
@@ -828,36 +869,42 @@ internal sealed class HivePersistenceSettingsView : UserControl
         var server = CreateFormGrid(
             CreateFieldBlock(
                 "SQL Server",
-                _serverPicker));
-
-        var identity = CreateFormGrid(
-            CreateFieldBlock(
-                "Database",
-                _databaseTextBox),
-            CreateFieldBlock(
-                "Authentication",
-                _authenticationComboBox));
-
-        var security = CreateFormGrid(
-            CreateFieldBlock(
-                "Connection security",
-                CreateSecurityCheckBoxHost()),
-            CreateFieldBlock(
-                "Command timeout",
-                CreateTimeoutField(_sqlTimeoutNumeric)));
+                _serverPicker,
+                520));
 
         var initialization = CreateCheckBoxField(
             "Initialization",
             _sqlCreateDatabaseCheckBox);
+        initialization.Margin = new Padding(0, 0, 0, 6);
+
+        var identity = CreateFormGrid(
+            CreateFieldBlock(
+                "Database",
+                _databaseTextBox,
+                320),
+            CreateFieldBlock(
+                "Authentication",
+                _authenticationComboBox,
+                220));
+
+        var security = CreateFormGrid(
+            CreateFieldBlock(
+                "Connection security",
+                CreateSecurityCheckBoxHost(),
+                360),
+            CreateFieldBlock(
+                "Command timeout",
+                CreateTimeoutField(_sqlTimeoutNumeric),
+                180));
 
         var content = CreateSection(
             "SQL Server Connection",
-            "Connect to an existing SQL Server deployment. Server discovery is best-effort; Custom... always remains available.",
+            "Connect to an existing SQL Server deployment. Discovery is automatic when SQL Server is selected; Custom... remains available for manual targets.",
             server,
+            initialization,
             identity,
             _sqlCredentialsField,
-            security,
-            initialization);
+            security);
 
         return content;
     }
@@ -875,7 +922,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         };
 
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92f));
         panel.Controls.Add(_embeddedStorageTextBox, 0, 0);
         panel.Controls.Add(_browseEmbeddedButton, 1, 0);
         return panel;
@@ -1028,8 +1075,11 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
     private static TableLayoutPanel CreateFieldBlock(
         string title,
-        Control editor)
+        Control editor,
+        int? editorWidth = null)
     {
+        ArgumentNullException.ThrowIfNull(editor);
+
         var block = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -1042,13 +1092,14 @@ internal sealed class HivePersistenceSettingsView : UserControl
             GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
         block.RowStyles.Add(new RowStyle(SizeType.Absolute, 22f));
-        block.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
+        block.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         var label = new Label
         {
             Text = title,
             Dock = DockStyle.Fill,
             AutoSize = false,
+            Height = 22,
             Font = new Font(
                 SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
                 FontStyle.Bold),
@@ -1056,8 +1107,17 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Margin = Padding.Empty
         };
 
-        editor.Dock = DockStyle.Fill;
+        editor.AutoSize = false;
+        editor.Dock = editorWidth is > 0
+            ? DockStyle.Left
+            : DockStyle.Fill;
         editor.Margin = Padding.Empty;
+
+        if (editorWidth is > 0)
+            editor.Width = editorWidth.Value;
+
+        if (editor.Height < 36)
+            editor.Height = 36;
 
         block.Controls.Add(label, 0, 0);
         block.Controls.Add(editor, 0, 1);
@@ -1140,8 +1200,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
     {
         var embedded = SelectedBackend == HivePersistenceBackend.Embedded;
 
-        _embeddedSection.Visible = embedded;
-        _sqlSection.Visible = !embedded;
+        SetEditorSectionVisibility(_embeddedSection, embedded);
+        SetEditorSectionVisibility(_sqlSection, !embedded);
 
         UpdateAuthenticationState();
 
@@ -1150,9 +1210,42 @@ internal sealed class HivePersistenceSettingsView : UserControl
             : "Test connection";
 
         _embeddedCreateDatabaseCheckBox.Text =
-            "Allow Hive to create the Embedded database file when initialization is requested.";
+            "Create the Embedded database file during explicit initialization.";
         _sqlCreateDatabaseCheckBox.Text =
-            "Allow database creation when initializing Hive.";
+            "Create the SQL Server database during explicit initialization.";
+    }
+
+    private async Task BackendSelectionChangedAsync()
+    {
+        UpdateBackendState();
+
+        if (_updatingBackendSelection ||
+            SelectedBackend != HivePersistenceBackend.SqlServer ||
+            IsDisposed ||
+            Disposing)
+        {
+            return;
+        }
+
+        await RunOperationAsync(RefreshSqlServerInstancesAsync)
+            .ConfigureAwait(true);
+    }
+
+    private void SetEditorSectionVisibility(
+        Control section,
+        bool visible)
+    {
+        section.Visible = visible;
+
+        var row = _editor.FieldsPanel.GetPositionFromControl(section).Row;
+        if (row < 0 || row >= _editor.FieldsPanel.RowStyles.Count)
+            return;
+
+        var rowStyle = _editor.FieldsPanel.RowStyles[row];
+        rowStyle.SizeType = visible
+            ? SizeType.AutoSize
+            : SizeType.Absolute;
+        rowStyle.Height = visible ? 0 : 0;
     }
 
     private void UpdateAuthenticationState()
