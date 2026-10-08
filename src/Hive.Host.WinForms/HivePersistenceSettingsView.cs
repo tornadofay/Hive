@@ -234,20 +234,20 @@ internal sealed class HivePersistenceSettingsView : UserControl
             securityPanel,
             88);
 
-        AddSqlField(
+        _editor.AddField(
             "Initialization",
-            "This option is consumed only when Hive initialization is explicitly requested. Save and Test never create a database or apply migrations.",
+            "This option controls whether Hive may create missing storage when initialization is explicitly requested. Save and Test never create or migrate storage.",
             _createDatabaseCheckBox,
             72);
 
-        AddSqlField(
+        _editor.AddField(
             "Command timeout",
-            "Default SQL command timeout in seconds.",
+            "Command timeout used by the selected persistence backend.",
             _timeoutNumeric);
 
-        AddSqlField(
+        _editor.AddField(
             "Status",
-            "Connection tests report server connectivity separately from database/schema state.",
+            "Readiness tests report connectivity/storage state separately from schema initialization and migration.",
             _statusLabel,
             72);
 
@@ -860,6 +860,10 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _testButton.Text = embedded
             ? "Test readiness"
             : "Test connection";
+
+        _createDatabaseCheckBox.Text = embedded
+            ? "Allow Hive to create the Embedded database file when initializing"
+            : "Allow database creation when initializing Hive";
     }
 
     private void SetFieldVisible(
