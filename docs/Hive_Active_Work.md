@@ -90,17 +90,16 @@ These remain within the authorized Slice 5 presentation/interaction boundary. Th
 
 ### Remediation completed
 
-- Database Setup uses bounded professional widths; the Backend selector is now compact, the Embedded database-file path gets the main available width with Browse immediately beside it, and hidden backend sections collapse without leaving large blank regions.
-- SQL Server discovery combines network enumeration with installed local-instance registry inventory, normalizes installed local instances to `localhost` / `localhost\\<Instance>`, and refreshes automatically when SQL Server is selected. Refresh remains a manual retry.
-- SQL Server port handling no longer forces 1433 onto named instances. A bare/default local instance uses **1433** when no port is supplied; a named instance relies on instance/SQL Browser resolution unless the user explicitly supplies a port.
-- A blank SQL database name falls back to Hive's deterministic package database name.
-- The SQL connection test status now identifies the server/database being tested without exposing credentials.
-- Data Migration now has two independent editable endpoint editors. Source and Destination each expose the appropriate SQL Server or Embedded connection/path configuration, and both directions remain selectable.
-- Source configuration is no longer read from Hive's active persistence configuration. The public `HivePersistenceMigrationRequest` explicitly carries both `SourceConfiguration` and `DestinationConfiguration`; Management passes both directly to the existing persistence migrator.
-- Embedded source/destination path inputs are explicitly single-line, and SQL controls are sized for their half-width cards rather than reusing full-width layouts.
-- The existing Embedded → SQL migration credential path was corrected to use the destination SQL credential rather than the source credential.
-- Focused automated coverage now checks the compact setup control, named-instance port behavior, independent endpoint editors, source/destination ordering, explicit-source Management migration, and normal-workspace scroll state.
-- The affected Slice 5 implementation and documentation were re-reviewed after the reported runtime/UX feedback. No Slice 6 or 1.19 work was introduced.
+- Database Setup uses compact/bounded control widths; the Backend selector is compact, the Embedded database-file editor remains responsively wide with Browse immediately beside it, and hidden backend sections do not leave large blank regions.
+- SQL Server instance discovery combines network enumeration with installed local-instance registry inventory, normalizes installed local instances to `localhost` / `localhost\\<Instance>`, automatically refreshes when SQL Server is selected, and prefers an installed local instance when one is available.
+- SQL Server port handling no longer forces 1433 onto named instances. Default/custom endpoints use **1433** when no explicit port is supplied; named instances leave Port unset so SQL Server instance resolution can determine the effective port unless the user explicitly enters one.
+- A blank SQL database name falls back to Hive's deterministic package database name. Connection-test status identifies the server/database being tested without exposing credentials.
+- Data Migration now has two independent editable endpoint editors. Source and Destination each expose the applicable SQL Server or Embedded endpoint configuration. Direction only selects which backend is assigned to each endpoint; neither endpoint is derived from the active Hive backend.
+- The public `HivePersistenceMigrationRequest` carries explicit `SourceConfiguration` and `DestinationConfiguration`. `Hive.Management` passes both directly to the existing persistence migrator instead of loading the active persistence configuration as the source.
+- Embedded source/destination path inputs are single-line. SQL endpoint editors are arranged and bounded for the half-width Source/Destination cards.
+- The Embedded → SQL migration path now uses the destination SQL credential for the destination connection.
+- Focused regression coverage checks compact setup sizing, named-instance port handling, endpoint editability/order, explicit-source Management migration, and normal-workspace scroll state.
+- The Slice 5 implementation and documentation were re-reviewed after the reported runtime/UX feedback. No Slice 6 or 1.19 work was introduced.
 
 ### Verification handoff
 
