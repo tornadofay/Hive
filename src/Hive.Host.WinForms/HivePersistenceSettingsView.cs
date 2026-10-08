@@ -151,7 +151,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _browseEmbeddedButton.Click += (_, _) => BrowseEmbeddedStorage();
 
         _editor.FooterPanel.Controls.Add(_statusLabel);
-        _editor.FooterPanel.Resize += (_, _) => UpdateFooterStatusWidth();
+        _editor.FooterPanel.Resize += FooterPanelOnResize;
         UpdateFooterStatusWidth();
 
         _loadButton.Click += async (_, _) => await RunOperationAsync(LoadAsync).ConfigureAwait(true);
@@ -1128,6 +1128,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private void ThemeManagerOnChanged(object? sender, EventArgs e) =>
         ApplyStatusVisual();
 
+    private void FooterPanelOnResize(object? sender, EventArgs e) =>
+        UpdateFooterStatusWidth();
+
     private void UpdateFooterStatusWidth()
     {
         var buttonsWidth = _editor.FooterPanel.Controls
@@ -1270,6 +1273,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
         if (disposing)
         {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
+
+            _editor.FooterPanel.Resize -= FooterPanelOnResize;
 
             var operationCts = Interlocked.Exchange(
                 ref _operationCts,
