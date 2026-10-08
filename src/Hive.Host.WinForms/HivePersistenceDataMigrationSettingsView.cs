@@ -132,7 +132,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
         _sqlAuthenticationField = CreateFieldBlock(
             "Authentication",
-            _sqlAuthenticationComboBox);
+            _sqlAuthenticationComboBox,
+            190);
 
         _sqlUserNameTextBox = CreateTextBox();
         _sqlPasswordTextBox = CreateTextBox();
@@ -458,8 +459,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         stack.Controls.Add(
             CreateFieldBlock(
                 "Database file",
-                CreateEmbeddedPathPanelCore(),
-                560));
+                CreateEmbeddedPathPanelCore()));
 
         stack.Controls.Add(
             CreateFormGrid(
@@ -485,15 +485,12 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             CreateFieldBlock(
                 "SQL Server",
                 _sqlServerPicker,
-                500));
+                380));
 
         stack.Controls.Add(
             CreateFormGrid(
-                CreateFieldBlock("Database", _sqlDatabaseTextBox, 300),
-                CreateFieldBlock(
-                    "Authentication",
-                    _sqlAuthenticationComboBox,
-                    220)));
+                CreateFieldBlock("Database", _sqlDatabaseTextBox, 190),
+                _sqlAuthenticationField));
 
         _sqlCredentialField = CreateCredentialField();
         stack.Controls.Add(_sqlCredentialField);
@@ -503,11 +500,11 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 CreateFieldBlock(
                     "Connection security",
                     CreateSecurityPanelCore(),
-                    340),
+                    190),
                 CreateFieldBlock(
                     "Command timeout",
                     _sqlTimeoutNumeric,
-                    180)));
+                    150)));
 
         stack.Controls.Add(
             CreateCheckBoxBlock(
@@ -766,6 +763,14 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
         UpdateRolePanels();
 
+        if (SelectedDirection == MigrationDirection.EmbeddedToSqlServer &&
+            !_initializingDirection &&
+            !IsDisposed &&
+            !Disposing)
+        {
+            _ = RunOperationAsync(RefreshSqlServerInstancesAsync);
+        }
+
         if (!_destinationConfigurationInitialized)
         {
             SetStatus(
@@ -775,7 +780,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         }
 
         SetStatus(
-            "Migration direction changed. Refresh readiness before running migration.",
+            "Migration direction changed. Review the destination configuration, then refresh readiness.",
             HiveStatusTone.Information);
     }
 
