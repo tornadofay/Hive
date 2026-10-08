@@ -37,6 +37,7 @@ internal sealed class PersistenceDataMigrationExampleView : UserControl
         _surface.CodeSnippet = """
             var result = await management.MigratePersistenceDataAsync(
                 new HivePersistenceMigrationRequest(
+                    sourceConfiguration,
                     destinationConfiguration),
                 accessContext,
                 cancellationToken);
