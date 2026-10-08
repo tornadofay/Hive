@@ -848,7 +848,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         var initialization = CreateCheckBoxField(
             "Initialization",
-            _createDatabaseCheckBox);
+            _sqlCreateDatabaseCheckBox);
 
         var content = CreateSection(
             "SQL Server Connection",
@@ -860,6 +860,25 @@ internal sealed class HivePersistenceSettingsView : UserControl
             initialization);
 
         return content;
+    }
+
+    private Control CreateStorageLocationPanel()
+    {
+        var panel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            GrowStyle = TableLayoutPanelGrowStyle.FixedSize
+        };
+
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
+        panel.Controls.Add(_embeddedStorageTextBox, 0, 0);
+        panel.Controls.Add(_browseEmbeddedButton, 1, 0);
+        return panel;
     }
 
     private TableLayoutPanel CreateCredentialsField()
