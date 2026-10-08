@@ -8,7 +8,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Hive.Persistence;
 
-public sealed class SqlDpapiSecretStore : ISecretStore
+public sealed class SqlDpapiSecretStore : ISecretStore, IHiveSecretStoreMigrationWriter
 {
     private static readonly Encoding StrictUtf8 = new UTF8Encoding(
         encoderShouldEmitUTF8Identifier: false,
