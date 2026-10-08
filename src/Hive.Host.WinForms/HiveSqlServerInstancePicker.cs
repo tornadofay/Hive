@@ -24,7 +24,7 @@ internal static class HiveSqlServerInstanceDiscovery
                 return MergeCandidates(
                     network,
                     local,
-                    Environment.MachineName);
+                    "localhost");
             },
             cancellationToken);
     }
@@ -128,7 +128,7 @@ internal static class HiveSqlServerInstanceDiscovery
                         names.Add(name.Trim());
                 }
             }
-            catch (SecurityException)
+            catch (System.Security.SecurityException)
             {
             }
             catch (UnauthorizedAccessException)
