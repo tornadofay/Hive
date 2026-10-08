@@ -22,8 +22,7 @@ public sealed class HivePersistenceDataMigrationTests
         try
         {
             var sourceOptions = await CreateSqlDatabaseAsync(sourceDatabaseName);
-            var sourceConfiguration = HivePersistenceConfiguration.LocalDevelopment(
-                sourceDatabaseName);
+            var sourceConfiguration = CreateSqlConfiguration(sourceDatabaseName);
 
             var seed = await SeedRepresentativeSqlDataAsync(
                 sourceOptions);
@@ -198,8 +197,7 @@ public sealed class HivePersistenceDataMigrationTests
             var second = await migrator.MigrateAsync(
                 embeddedConfiguration,
                 null,
-                HivePersistenceConfiguration.LocalDevelopment(
-                    roundTripDatabaseName),
+                CreateSqlConfiguration(roundTripDatabaseName),
                 null,
                 Guid.NewGuid(),
                 seed.Context);
@@ -260,8 +258,7 @@ public sealed class HivePersistenceDataMigrationTests
         try
         {
             var sourceOptions = await CreateSqlDatabaseAsync(sourceDatabaseName);
-            var sourceConfiguration = HivePersistenceConfiguration.LocalDevelopment(
-                sourceDatabaseName);
+            var sourceConfiguration = CreateSqlConfiguration(sourceDatabaseName);
             var configurationStore = new TestConfigurationStore(
                 sourceConfiguration);
             var context = new ResourceAccessContext(
@@ -325,8 +322,7 @@ public sealed class HivePersistenceDataMigrationTests
         try
         {
             var sourceOptions = await CreateSqlDatabaseAsync(sourceDatabaseName);
-            var sourceConfiguration = HivePersistenceConfiguration.LocalDevelopment(
-                sourceDatabaseName);
+            var sourceConfiguration = CreateSqlConfiguration(sourceDatabaseName);
             var configurationStore = new TestConfigurationStore(
                 sourceConfiguration);
             var quiescence = new RecordingQuiescence
@@ -374,8 +370,7 @@ public sealed class HivePersistenceDataMigrationTests
         try
         {
             var sourceOptions = await CreateSqlDatabaseAsync(sourceDatabaseName);
-            var sourceConfiguration = HivePersistenceConfiguration.LocalDevelopment(
-                sourceDatabaseName);
+            var sourceConfiguration = CreateSqlConfiguration(sourceDatabaseName);
 
             await using var destination = new EmbeddedPersistenceDatabase(
                 HivePersistenceConfiguration.Embedded(embeddedPath));
@@ -445,8 +440,7 @@ public sealed class HivePersistenceDataMigrationTests
             var result = await new HivePersistenceDataMigrator().MigrateAsync(
                 HivePersistenceConfiguration.Embedded(sourcePath),
                 null,
-                HivePersistenceConfiguration.LocalDevelopment(
-                    destinationDatabaseName),
+                CreateSqlConfiguration(destinationDatabaseName),
                 null,
                 Guid.NewGuid(),
                 context);
@@ -498,8 +492,7 @@ public sealed class HivePersistenceDataMigrationTests
             }
 
             var result = await new HivePersistenceDataMigrator().MigrateAsync(
-                HivePersistenceConfiguration.LocalDevelopment(
-                    sourceDatabaseName),
+                CreateSqlConfiguration(sourceDatabaseName),
                 null,
                 HivePersistenceConfiguration.Embedded(destinationPath),
                 null,
@@ -557,11 +550,9 @@ public sealed class HivePersistenceDataMigrationTests
             }
 
             var result = await new HivePersistenceDataMigrator().MigrateAsync(
-                HivePersistenceConfiguration.LocalDevelopment(
-                    sourceDatabaseName),
+                CreateSqlConfiguration(sourceDatabaseName),
                 null,
-                HivePersistenceConfiguration.LocalDevelopment(
-                    destinationDatabaseName),
+                CreateSqlConfiguration(destinationDatabaseName),
                 null,
                 Guid.NewGuid(),
                 NewContext());
@@ -615,8 +606,7 @@ public sealed class HivePersistenceDataMigrationTests
             }
 
             var result = await new HivePersistenceDataMigrator().MigrateAsync(
-                HivePersistenceConfiguration.LocalDevelopment(
-                    sourceDatabaseName),
+                CreateSqlConfiguration(sourceDatabaseName),
                 null,
                 HivePersistenceConfiguration.Embedded(embeddedPath),
                 null,
@@ -678,8 +668,7 @@ public sealed class HivePersistenceDataMigrationTests
             var result = await new HivePersistenceDataMigrator().MigrateAsync(
                 HivePersistenceConfiguration.Embedded(sourcePath),
                 null,
-                HivePersistenceConfiguration.LocalDevelopment(
-                    destinationDatabaseName),
+                CreateSqlConfiguration(destinationDatabaseName),
                 null,
                 Guid.NewGuid(),
                 context);
@@ -711,8 +700,7 @@ public sealed class HivePersistenceDataMigrationTests
 
             await Assert.ThrowsAsync<OperationCanceledException>(
                 () => new HivePersistenceDataMigrator().MigrateAsync(
-                    HivePersistenceConfiguration.LocalDevelopment(
-                        sourceDatabaseName),
+                    CreateSqlConfiguration(sourceDatabaseName),
                     null,
                     HivePersistenceConfiguration.Embedded(destinationPath),
                     null,
@@ -879,7 +867,7 @@ public sealed class HivePersistenceDataMigrationTests
                 envelope,
                 new EventSnapshot(
                     eventStream,
-                    ResourceVersion.Initial,
+                    new ResourceVersion(1),
                     new EventPayloadVersion(1),
                     JsonSerializer.SerializeToElement(
                         new { state = "Migrated" }))));
@@ -1059,6 +1047,44 @@ public sealed class HivePersistenceDataMigrationTests
 
         return Convert.ToInt64(
             await command.ExecuteScalarAsync());
+    }
+
+    private static HivePersistenceConfiguration CreateSqlConfiguration(
+        string databaseName)
+    {
+        var builder = new SqlConnectionStringBuilder(
+            HivePersistenceTestConfiguration.ConnectionString);
+
+        var serverName = builder.DataSource;
+        int? port = null;
+        var separator = serverName.LastIndexOf(',', StringComparison.Ordinal);
+
+        if (separator > 0 &&
+            int.TryParse(
+                serverName[(separator + 1)..],
+                out var parsedPort))
+        {
+            serverName = serverName[..separator];
+            port = parsedPort;
+        }
+
+        if (!builder.IntegratedSecurity)
+        {
+            throw new InvalidOperationException(
+                "Hive persistence migration tests require Windows integrated SQL authentication.");
+        }
+
+        return new HivePersistenceConfiguration(
+            HivePersistenceBackend.SqlServer,
+            serverName,
+            port,
+            databaseName,
+            HiveSqlAuthenticationMode.WindowsIntegrated,
+            null,
+            null,
+            builder.Encrypt,
+            builder.TrustServerCertificate,
+            createDatabaseIfMissing: true);
     }
 
     private static ResourceAccessContext NewContext() =>
