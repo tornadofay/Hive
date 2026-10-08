@@ -67,7 +67,6 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
             executionTargetPreferences,
             providerResources);
         _persistenceMigration = new HivePersistenceMigrationManagementService(
-            configurationStore,
             bootstrapCredentials,
             persistenceMigrationQuiescence);
     }
