@@ -1073,6 +1073,18 @@ internal sealed class HivePersistenceDataMigrator
 
         if (status.Value.DatabaseState == HiveDatabaseState.SchemaNotInitialized)
         {
+            var existingTables = await ReadEmbeddedUserTablesAsync(
+                destination,
+                cancellationToken).ConfigureAwait(false);
+
+            if (existingTables.Count != 0)
+            {
+                return Result.Failure(
+                    Error.Conflict(
+                        "hive.persistence.data-migration.embedded-schema-incomplete",
+                        "The destination Embedded database contains tables but its Hive schema metadata is not initialized."));
+            }
+
             var initialized = await destination.InitializeAsync(
                 cancellationToken).ConfigureAwait(false);
 
@@ -1090,6 +1102,33 @@ internal sealed class HivePersistenceDataMigrator
         return await EnsureEmbeddedDestinationEmptyAsync(
             destination,
             cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<IReadOnlyList<string>> ReadEmbeddedUserTablesAsync(
+        EmbeddedPersistenceDatabase database,
+        CancellationToken cancellationToken)
+    {
+        await using var connection = await database.OpenConnectionAsync(
+            cancellationToken).ConfigureAwait(false);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT [name]
+            FROM [sqlite_master]
+            WHERE [type] = 'table'
+              AND [name] NOT LIKE 'sqlite_%'
+            ORDER BY [name];
+            """;
+
+        var names = new List<string>();
+
+        await using var reader = await command.ExecuteReaderAsync(
+            cancellationToken).ConfigureAwait(false);
+
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            names.Add(reader.GetString(0));
+
+        return names;
     }
 
     private async Task<Result> ValidateEmbeddedDatabaseShapeAsync(
@@ -1275,6 +1314,18 @@ internal sealed class HivePersistenceDataMigrator
 
         if (!hasSchemaTable && !hasJournalTable)
         {
+            if (tables.Any(static table => Tables.Any(
+                    expected => string.Equals(
+                        expected.Name,
+                        table,
+                        StringComparison.OrdinalIgnoreCase))))
+            {
+                return Result<SqlDatabaseInspection>.Failure(
+                    Error.Conflict(
+                        "hive.persistence.data-migration.schema-incomplete",
+                        "The SQL Server database contains Hive data but its schema metadata is incomplete."));
+            }
+
             return Result<SqlDatabaseInspection>.Failure(
                 Error.Conflict(
                     "hive.persistence.data-migration.schema-not-initialized",
