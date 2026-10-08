@@ -99,8 +99,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _databaseTextBox = CreateTextBox();
         SetReadOnlyVisualState(_databaseTextBox, themeManager);
-        _databaseTextBox.Width = 280;
-        _databaseTextBox.Dock = DockStyle.Left;
 
         _authenticationComboBox = new HiveComboBox
         {
@@ -145,10 +143,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _embeddedTimeoutNumeric = CreateTimeoutInput();
         _sqlTimeoutNumeric = CreateTimeoutInput();
 
-        _backendComboBox.Width = 120;
-        _backendComboBox.Dock = DockStyle.Left;
-        _authenticationComboBox.Width = 160;
-        _authenticationComboBox.Dock = DockStyle.Left;
 
         _statusLabel = CreateStatusLabel();
         _statusLabel.AutoSize = false;
