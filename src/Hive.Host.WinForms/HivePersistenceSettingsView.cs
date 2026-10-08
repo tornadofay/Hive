@@ -856,8 +856,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         var storagePath = CreateFormGrid(
             CreateFieldBlock(
                 "Database file",
-                CreateStorageLocationPanel(),
-                720));
+                CreateStorageLocationPanel()));
 
         var lifecycle = CreateFormGrid(
             CreateCheckBoxField(
