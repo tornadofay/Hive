@@ -74,9 +74,7 @@ internal sealed class PersistenceDataMigrationExampleView : UserControl
             var sourceConfiguration =
                 HivePersistenceConfiguration.LocalDevelopment(databaseName);
             var sourceOptions =
-                HiveDatabaseOptions.FromConfiguration(
-                    sourceConfiguration,
-                    null);
+                HiveDatabaseOptions.LocalDevelopment(databaseName);
 
             var migration = await new HiveDatabaseMigrator(
                 sourceOptions).MigrateAsync(cancellationToken);
@@ -285,11 +283,9 @@ internal sealed class PersistenceDataMigrationExampleView : UserControl
                 migrationResult,
                 "Full-data migration");
 
-            var destination = new EmbeddedPersistenceDatabase(
+            await using var destination = new EmbeddedPersistenceDatabase(
                 destinationConfiguration);
 
-            await using (destination.ConfigureAwait(false))
-            {
                 var destinationProviderStore =
                     new EmbeddedProviderResourceStore(destination);
                 var destinationAccount =
