@@ -222,8 +222,9 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             out _destinationHeader,
             out _destinationBody);
 
-        roleColumns.Controls.Add(_sourceCard, 0, 0);
-        roleColumns.Controls.Add(_destinationCard, 1, 0);
+        // Migration reads visually from destination on the left to source on the right.
+        roleColumns.Controls.Add(_destinationCard, 0, 0);
+        roleColumns.Controls.Add(_sourceCard, 1, 0);
 
         _refreshButton.Click += async (_, _) =>
             await RunOperationAsync(RefreshStatusAsync).ConfigureAwait(true);
