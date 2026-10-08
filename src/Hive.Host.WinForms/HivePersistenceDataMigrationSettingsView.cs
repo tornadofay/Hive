@@ -84,10 +84,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             ? HivePersistenceConfiguration.DefaultApplicationName
             : applicationName.Trim();
 
-        _editor = new HiveEditorLayout
-        {
-            LabelColumnWidth = 0
-        };
+        _editor = new HiveEditorLayout();
 
         _directionComboBox = new HiveComboBox
         {
