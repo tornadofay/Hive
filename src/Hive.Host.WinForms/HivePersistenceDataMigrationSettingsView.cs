@@ -36,6 +36,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private readonly Label _destinationHeader;
     private readonly Panel _sourceBody;
     private readonly Panel _destinationBody;
+    private readonly TableLayoutPanel _roleColumns;
 
     private readonly Control _embeddedSourcePanel;
     private readonly Control _embeddedDestinationPanel;
@@ -133,7 +134,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _sqlAuthenticationField = CreateFieldBlock(
             "Authentication",
             _sqlAuthenticationComboBox,
-            190);
+            180);
 
         _sqlUserNameTextBox = CreateTextBox();
         _sqlPasswordTextBox = CreateTextBox();
@@ -198,12 +199,12 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _editor.FooterPanel.Resize += FooterPanelOnResize;
 
         var top = CreateTopConfigurationRow();
-        var roleColumns = CreateRoleColumns();
+        _roleColumns = CreateRoleColumns();
 
         _editor.FieldsPanel.Controls.Add(top, 0, 0);
         _editor.FieldsPanel.SetColumnSpan(top, 2);
-        _editor.FieldsPanel.Controls.Add(roleColumns, 0, 1);
-        _editor.FieldsPanel.SetColumnSpan(roleColumns, 2);
+        _editor.FieldsPanel.Controls.Add(_roleColumns, 0, 1);
+        _editor.FieldsPanel.SetColumnSpan(_roleColumns, 2);
         _editor.FieldsPanel.RowStyles.Clear();
         _editor.FieldsPanel.RowStyles.Add(
             new RowStyle(SizeType.Absolute, 74f));
@@ -228,8 +229,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         // Migration reads from source on the left to destination on the right.
         _sourceCard.Margin = new Padding(0, 0, 7, 0);
         _destinationCard.Margin = new Padding(7, 0, 0, 0);
-        roleColumns.Controls.Add(_sourceCard, 0, 0);
-        roleColumns.Controls.Add(_destinationCard, 1, 0);
+        _roleColumns.Controls.Add(_sourceCard, 0, 0);
+        _roleColumns.Controls.Add(_destinationCard, 1, 0);
 
         _refreshButton.Click += async (_, _) =>
             await RunOperationAsync(RefreshStatusAsync).ConfigureAwait(true);
@@ -269,6 +270,12 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     internal Label StatusLabel => _statusLabel;
 
     internal FlowLayoutPanel FooterPanel => _editor.FooterPanel;
+
+    internal TableLayoutPanel RoleColumns => _roleColumns;
+
+    internal Panel SourceCard => _sourceCard;
+
+    internal Panel DestinationCard => _destinationCard;
 
     private Control CreateTopConfigurationRow()
     {
@@ -485,11 +492,11 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             CreateFieldBlock(
                 "SQL Server",
                 _sqlServerPicker,
-                380));
+                350));
 
         stack.Controls.Add(
             CreateFormGrid(
-                CreateFieldBlock("Database", _sqlDatabaseTextBox, 190),
+                CreateFieldBlock("Database", _sqlDatabaseTextBox, 180),
                 _sqlAuthenticationField));
 
         _sqlCredentialField = CreateCredentialField();
@@ -500,11 +507,11 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 CreateFieldBlock(
                     "Connection security",
                     CreateSecurityPanelCore(),
-                    190),
+                    180),
                 CreateFieldBlock(
                     "Command timeout",
                     _sqlTimeoutNumeric,
-                    150)));
+                    140)));
 
         stack.Controls.Add(
             CreateCheckBoxBlock(
