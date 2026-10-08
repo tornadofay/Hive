@@ -226,42 +226,6 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
                     "Hive persistence connection testing is not configured."));
         }
 
-        if (configuration.Backend == HivePersistenceBackend.Embedded)
-        {
-            try
-            {
-                await using var database =
-                    new EmbeddedPersistenceDatabase(configuration);
-
-                var embeddedMigration = await database
-                    .InitializeAsync(cancellationToken)
-                    .ConfigureAwait(false);
-
-                return embeddedMigration.IsSuccess
-                    ? Result.Success()
-                    : Result.Failure(embeddedMigration.Error!);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (ArgumentException)
-            {
-                return Result.Failure(
-                    Error.Validation(
-                        "hive.management.persistence-configuration-invalid",
-                        "The Hive persistence configuration is invalid."));
-            }
-            catch (Exception)
-            {
-                return Result.Failure(
-                    new Error(
-                        "hive.management.persistence-initialize-failed",
-                        ErrorCategory.External,
-                        "Hive persistence initialization failed."));
-            }
-        }
-
         SecretMaterial? material = null;
 
         try
@@ -317,6 +281,42 @@ internal sealed class HiveConfigurationManagementService : HiveManagementService
         var contextError = ValidateAccessContext(accessContext);
         if (contextError is not null)
             return Result.Failure(contextError);
+        if (configuration.Backend == HivePersistenceBackend.Embedded)
+        {
+            try
+            {
+                await using var database =
+                    new EmbeddedPersistenceDatabase(configuration);
+
+                var embeddedMigration = await database
+                    .InitializeAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                return embeddedMigration.IsSuccess
+                    ? Result.Success()
+                    : Result.Failure(embeddedMigration.Error!);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (ArgumentException)
+            {
+                return Result.Failure(
+                    Error.Validation(
+                        "hive.management.persistence-configuration-invalid",
+                        "The Hive persistence configuration is invalid."));
+            }
+            catch (Exception)
+            {
+                return Result.Failure(
+                    new Error(
+                        "hive.management.persistence-initialize-failed",
+                        ErrorCategory.External,
+                        "Hive persistence initialization failed."));
+            }
+        }
+
 
         SecretMaterial? material = null;
 
