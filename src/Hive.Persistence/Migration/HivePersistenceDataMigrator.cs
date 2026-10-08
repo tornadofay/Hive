@@ -320,6 +320,11 @@ internal sealed class HivePersistenceDataMigrator
         {
             throw;
         }
+        catch (HiveSecretMigrationResolutionException exception)
+        {
+            return Result<HivePersistenceMigrationExecutionResult>.Failure(
+                exception.Error);
+        }
         catch (Exception exception)
         {
             return Result<HivePersistenceMigrationExecutionResult>.Failure(
@@ -652,60 +657,28 @@ internal sealed class HivePersistenceDataMigrator
         counts[table.Name] = count;
     }
 
-    private async Task TransferSecretsAsync(
+    private async Task<Result> TransferSecretsAsync(
         DbConnection sourceConnection,
         DbConnection destinationConnection,
         DbTransaction destinationTransaction,
         HiveMigrationTableDefinition table,
+        ISecretStore sourceSecretStore,
+        IHiveSecretStoreMigrationWriter destinationSecretWriter,
+        ResourceAccessContext accessContext,
         HiveMigrationFingerprintSet fingerprints,
         Dictionary<string, long> counts,
         CancellationToken cancellationToken)
     {
-        const string encryptedColumn = "EncryptedValue";
-
-        var selectColumns = string.Join(
-            ", ",
-            table.Columns
-                .Select(static c => $"[{c.Name}]")
-                .Append($"[{encryptedColumn}]"));
-
-        var orderBy = string.Join(
-            ", ",
-            table.OrderByColumns.Select(static c => $"[{c}]"));
-
-        var qualifiedTable = QuoteTable(
-            table.Name,
+        var select = BuildSelectSql(
+            table,
             sourceConnection is SqliteConnection);
 
         await using var sourceCommand = sourceConnection.CreateCommand();
-        sourceCommand.CommandText = $"SELECT {selectColumns} FROM {qualifiedTable} ORDER BY {orderBy};";
+        sourceCommand.CommandText = select;
 
         await using var reader = await sourceCommand.ExecuteReaderAsync(
             CommandBehavior.SequentialAccess,
             cancellationToken).ConfigureAwait(false);
-
-        var destinationTable = $"{table.Name}";
-        var destinationColumns = table.Columns
-            .Select(static c => c.Name)
-            .Append(encryptedColumn)
-            .ToArray();
-
-        await using var destinationCommand = destinationConnection.CreateCommand();
-        destinationCommand.Transaction = destinationTransaction;
-        destinationCommand.CommandText = BuildInsertSql(
-            destinationTable,
-            destinationColumns,
-            destinationConnection is SqliteConnection);
-
-        AddParameters(
-            destinationCommand,
-            table.Columns.Concat(
-                new[]
-                {
-                    new HiveMigrationColumnDefinition(
-                        encryptedColumn,
-                        HiveMigrationColumnKind.Binary)
-                }).ToArray());
 
         long count = 0;
 
@@ -714,11 +687,29 @@ internal sealed class HivePersistenceDataMigrator
             cancellationToken.ThrowIfCancellationRequested();
 
             var values = ReadRow(reader, table);
-            var encrypted = ReadBinary(
-                reader,
-                table.Columns.Count);
 
-            using var material = DpapiSecretProtection.Unprotect(encrypted);
+            if (values[0] is not Guid secretGuid)
+            {
+                return Result.Failure(
+                    new Error(
+                        "hive.persistence.data-migration.secret-identity-invalid",
+                        ErrorCategory.Internal,
+                        "A persisted SecretId has an invalid data representation."));
+            }
+
+            var secretResult = await sourceSecretStore.GetAsync(
+                new SecretId(secretGuid),
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+            if (secretResult.IsFailure)
+                return Result.Failure(secretResult.Error!);
+
+            var secretRead = secretResult.Value
+                ?? throw new InvalidOperationException(
+                    "The source Secret Store returned no secret material.");
+
+            using var material = secretRead.Material;
 
             fingerprints.AddRow(
                 table.Name,
@@ -726,37 +717,22 @@ internal sealed class HivePersistenceDataMigrator
                 values,
                 material.Reveal());
 
-            var destinationEncrypted = DpapiSecretProtection.Protect(material);
+            var imported = await destinationSecretWriter.ImportForMigrationAsync(
+                destinationConnection,
+                destinationTransaction,
+                secretRead.Secret,
+                material,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
 
-            var destinationValues = values
-                .Append(destinationEncrypted)
-                .ToArray();
-
-            BindParameters(
-                destinationCommand,
-                table.Columns.Concat(
-                    new[]
-                    {
-                        new HiveMigrationColumnDefinition(
-                            encryptedColumn,
-                            HiveMigrationColumnKind.Binary)
-                    }).ToArray(),
-                destinationValues);
-
-            try
-            {
-                _ = await destinationCommand.ExecuteNonQueryAsync(
-                    cancellationToken).ConfigureAwait(false);
-            }
-            finally
-            {
-                CryptographicOperations.ZeroMemory(destinationEncrypted);
-            }
+            if (imported.IsFailure)
+                return imported;
 
             count++;
         }
 
         counts[table.Name] = count;
+        return Result.Success();
     }
 
     private async Task<HiveMigrationFingerprintSet> ReadFingerprintAsync(
@@ -1615,6 +1591,14 @@ internal sealed class HivePersistenceDataMigrator
                     _ =>
                         "The source Embedded persistence schema is not initialized or is incomplete."
                 });
+
+    private sealed class HiveSecretMigrationResolutionException : Exception
+    {
+        public HiveSecretMigrationResolutionException(Error error) =>
+            Error = error;
+
+        public Error Error { get; }
+    }
 
     private sealed record SqlDatabaseInspection(
         int SchemaVersion,
