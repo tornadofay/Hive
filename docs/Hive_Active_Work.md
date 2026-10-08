@@ -219,11 +219,15 @@ Developer rerun reported **758 tests: 756 passed, 2 failed, 0 skipped**.
 
 These failures are within the existing Slice 5 settings layout and SQL Server picker presentation boundary. They do not authorize Slice 6 or 1.19 work.
 
-### Remediation status — latest
+### Remediation completed — latest
 
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+- `HivePersistenceSettingsView` no longer derives the setup scroll extent from the whole nested AutoSize panel's preferred size. After the real viewport has a usable width, it lays out the visible setup sections and uses their actual bottom bounds as the local content extent. This avoids the recursive/stale preferred-size inflation that kept vertical scrolling enabled at the normal workspace size.
+- `HiveSqlServerInstancePicker.UpdateCustomVisibility()` now explicitly synchronizes the Custom server textbox's `Visible` state with the Custom selection. The existing discovery/defaulting contract is unchanged.
+- The corrections remain inside Slice 5. `HiveScrollHost` and shared UI infrastructure were not modified.
 
-Implementation changes may now proceed only for the two recorded failures above. The settings layout will be corrected at the view composition level rather than by further manipulating the shared `HiveScrollHost`; the Custom endpoint visibility state will be corrected in the existing picker without changing its discovery contract. After remediation, Active Work must return to **VERIFICATION PENDING**.
+Current state: **VERIFICATION PENDING**.
+
+Developer rerun is required against the corrected source. Preserve the existing focused/full-suite, zero-warning build, and Example Host verification requirements below.
 
 ### Verification handoff
 
