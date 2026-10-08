@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **IMPLEMENTATION IN PROGRESS — VERIFICATION PENDING**
+Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
 
 ## Phase 1.18A — Embedded Persistence Profile
 ### Slice 4 — Full-Data Migration
@@ -43,6 +43,8 @@ The 2026-10-08 developer run reached 749 tests with 742 passed and 7 failed. Six
 Developer verification on 2026-10-08 after the documented Slice 4 remediation reached a compiler error in `tests/Hive.Tests/HivePersistenceDataMigrationTests.cs` line 1060: `CS1503` because `string.LastIndexOf(char, StringComparison)` is not a valid overload. The failure is inside the same Slice 4 migration-test configuration helper and is an in-scope remediation boundary; no out-of-scope failure is recorded.
 
 Same-slice remediation corrected the reported `CS1503` by using the valid `string.LastIndexOf(string, StringComparison)` overload for comma-separated SQL server/port parsing. No unrelated production or test boundary was changed. Developer re-verification remains required.
+
+Developer verification on 2026-10-08 reported 749 tests with 746 passed and 3 failed. The failures are confined to the Slice 4 migration-test boundary: `Migration_RejectsPartialSqlDestinationMetadata` expected `hive.persistence.data-migration.schema-incomplete` but received `hive.persistence.data-migration.backend-direction-invalid`; `Migration_RejectsFutureEmbeddedDestinationSchema` expected `hive.persistence.embedded.future-schema` but received `hive.persistence.data-migration.destination-...`; and `FullDataMigration_RoundTripsAllCurrentDurableStateAndReprotectsSecrets` still seeds an event stream at version 1 while supplying snapshot/expected version 0. Same-slice remediation is authorized only for these recorded failures.
 
 ### Example / verification handoff
 
