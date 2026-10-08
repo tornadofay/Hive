@@ -149,6 +149,8 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     private readonly TableLayoutPanel _layout;
     private readonly TableLayoutPanel _topRow;
     private readonly TableLayoutPanel _customRow;
+    private CancellationTokenSource? _autoRefreshCts;
+    private bool _autoRefreshStarted;
     private bool _applyingValue;
 
     public event EventHandler? RefreshRequested;
@@ -222,7 +224,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         };
         _layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
-        _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42f));
+        _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 0f));
         _layout.Controls.Add(_topRow, 0, 0);
         _layout.Controls.Add(_customRow, 0, 1);
 
@@ -237,6 +239,40 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     }
 
     internal HiveComboBox ServerSelector => _serverComboBox;
+
+    internal TextBox CustomServerInput => _customServerTextBox;
+
+    protected override void OnCreateControl()
+    {
+        base.OnCreateControl();
+
+        if (_autoRefreshStarted || DesignMode || IsDisposed || Disposing)
+            return;
+
+        _autoRefreshStarted = true;
+        _autoRefreshCts = new CancellationTokenSource();
+        _ = AutoRefreshAsync(_autoRefreshCts.Token);
+    }
+
+    private async Task AutoRefreshAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await RefreshAsync(
+                    ServerName,
+                    cancellationToken)
+                .ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch
+        {
+            // Discovery is best-effort during initial presentation.
+            // Custom... remains available and the explicit Refresh action can retry.
+        }
+    }
 
     public string ServerName
     {
@@ -390,7 +426,9 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     {
         var custom = IsCustomSelected;
         _customRow.Visible = custom;
-        _layout.RowStyles[1].Height = custom ? 38f : 0f;
+        _layout.RowStyles[1].Height = custom ? 42f : 0f;
+        Height = custom ? 78 : 36;
+
         if (!custom)
             _customServerTextBox.Clear();
 
@@ -414,7 +452,15 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     protected override void Dispose(bool disposing)
     {
         if (disposing)
+        {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
+
+            var autoRefreshCts = Interlocked.Exchange(
+                ref _autoRefreshCts,
+                null);
+            autoRefreshCts?.Cancel();
+            autoRefreshCts?.Dispose();
+        }
 
         base.Dispose(disposing);
     }
