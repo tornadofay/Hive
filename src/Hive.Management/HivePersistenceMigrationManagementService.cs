@@ -5,18 +5,15 @@ namespace Hive.Management;
 
 internal sealed class HivePersistenceMigrationManagementService : HiveManagementServiceBase
 {
-    private readonly IHiveConfigurationStore? _configurationStore;
     private readonly IHiveBootstrapCredentialStore? _bootstrapCredentials;
     private readonly IHivePersistenceMigrationQuiescence? _quiescence;
     private readonly HivePersistenceDataMigrator _migrator;
 
     public HivePersistenceMigrationManagementService(
-        IHiveConfigurationStore? configurationStore,
         IHiveBootstrapCredentialStore? bootstrapCredentials,
         IHivePersistenceMigrationQuiescence? quiescence,
         HivePersistenceDataMigrator? migrator = null)
     {
-        _configurationStore = configurationStore;
         _bootstrapCredentials = bootstrapCredentials;
         _quiescence = quiescence;
         _migrator = migrator ?? new HivePersistenceDataMigrator();
@@ -28,19 +25,12 @@ internal sealed class HivePersistenceMigrationManagementService : HiveManagement
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.SourceConfiguration);
         ArgumentNullException.ThrowIfNull(request.DestinationConfiguration);
 
         var contextError = ValidateAccessContext(accessContext);
         if (contextError is not null)
             return Result<HivePersistenceMigrationResult>.Failure(contextError);
-
-        if (_configurationStore is null)
-        {
-            return Result<HivePersistenceMigrationResult>.Failure(
-                Error.Unsupported(
-                    "hive.management.persistence-migration-configuration-store-unavailable",
-                    "Hive persistence configuration storage is not configured."));
-        }
 
         if (_quiescence is null)
         {
@@ -50,18 +40,7 @@ internal sealed class HivePersistenceMigrationManagementService : HiveManagement
                     "Hive persistence migration cannot proceed because the active service graph cannot be quiesced."));
         }
 
-        var sourceConfiguration = await _configurationStore
-            .LoadPersistenceConfigurationAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        if (sourceConfiguration.IsFailure)
-            return Result<HivePersistenceMigrationResult>.Failure(
-                sourceConfiguration.Error!);
-
-        var source = sourceConfiguration.Value
-            ?? throw new InvalidOperationException(
-                "Hive persistence configuration store returned no configuration.");
-
+        var source = request.SourceConfiguration;
         var destination = request.DestinationConfiguration;
 
         if (source.Backend == destination.Backend)
@@ -80,7 +59,7 @@ internal sealed class HivePersistenceMigrationManagementService : HiveManagement
             return Result<HivePersistenceMigrationResult>.Failure(
                 SanitizeTechnicalError(
                     leaseResult.Error!,
-                    "The active Hive persistence service graph could not be quiesced for migration."));
+                    "The Hive persistence service graph could not be quiesced for migration."));
 
         if (leaseResult.Value is null)
         {
