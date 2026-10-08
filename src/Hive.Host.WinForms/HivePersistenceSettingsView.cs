@@ -798,10 +798,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 CreateStorageLocationPanel()));
 
         var lifecycle = CreateFormGrid(
-            CreateFieldBlock(
+            CreateCheckBoxField(
                 "Initialization",
-                CreateCheckBoxHost(
-                    _createDatabaseCheckBox)),
+                _createDatabaseCheckBox),
             CreateFieldBlock(
                 "Command timeout",
                 CreateTimeoutField(_timeoutNumeric)));
@@ -1058,25 +1057,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
             MaximumSize = new Size(0, 42),
             Margin = new Padding(0, 0, 0, 12)
         };
-
-    private static Control CreateCheckBoxHost(CheckBox checkBox)
-    {
-        var host = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            AutoSize = false,
-            ColumnCount = 1,
-            RowCount = 1,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty
-        };
-        host.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-        checkBox.Dock = DockStyle.None;
-        checkBox.Anchor = AnchorStyles.Left;
-        checkBox.Margin = new Padding(0, 0, 0, 0);
-        host.Controls.Add(checkBox, 0, 0);
-        return host;
-    }
 
     private TableLayoutPanel CreateSecurityCheckBoxHost()
     {
