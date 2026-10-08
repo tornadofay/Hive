@@ -51,6 +51,8 @@ Developer verification evidence received on 2026-10-08: `Hive.Tests` completed w
 
 Same-slice remediation completed within the recorded Slice 5 boundary. It remains limited to Database Setup and Data Migration presentation, SQL Server instance discovery/custom selection, authentication-aware field presentation, Embedded storage browsing, source/destination migration layout, top-row Direction + Scope placement, footer status/actions, responsive full-width layout, and consistent field/section hierarchy. No new backend, migration capability, persistence contract, Slice 6 work, or 1.19 work was introduced.
 
+Developer compilation feedback received on 2026-10-08 identified six same-slice UI compilation errors after the redesign: missing `BrowseEmbeddedStorage`, missing migration timeout-helper references, missing `CreateStorageLocationPanel`, one stale `_createDatabaseCheckBox` reference, and a `FlowLayoutPanel`/`TableLayoutPanel` return-type mismatch. These concrete errors have been remediated within the existing Slice 5 presentation boundary. Developer rerun remains required.
+
 Implementation checkpoint:
 - backend-aware real host composition for SQL Server and Embedded;
 - Embedded first-run default under application-owned Local AppData storage while the direct/default developer configuration store remains SQL Server LocalDB;
