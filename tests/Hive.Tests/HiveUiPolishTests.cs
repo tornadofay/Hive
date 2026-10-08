@@ -266,7 +266,7 @@ public sealed class HiveUiPolishTests
         Assert.Equal("Embedded", view.BackendSelector.Items[0]?.ToString());
         Assert.Equal("SQL Server", view.BackendSelector.Items[1]?.ToString());
 
-        Assert.InRange(view.BackendSelector.Width, 180, 240);
+        Assert.InRange(view.BackendSelector.Width, 80, 120);
         Assert.InRange(view.DatabaseInput.Width, 240, 300);
         Assert.InRange(view.AuthenticationSelector.Width, 180, 240);
         Assert.Equal(1433, view.SqlPort);
@@ -283,6 +283,24 @@ public sealed class HiveUiPolishTests
 
         Assert.True(view.SqlServerPicker.IsCustomSelected);
         Assert.True(view.SqlServerPicker.CustomServerInput.Visible);
+
+        var migrationView =
+            view.NavigationTabs.TabPages[1].Controls[0]
+                as HivePersistenceDataMigrationSettingsView;
+
+        Assert.NotNull(migrationView);
+        Assert.True(migrationView!.SourceCard.Enabled);
+        Assert.True(migrationView.DestinationCard.Enabled);
+        Assert.Same(
+            migrationView.SourceCard,
+            migrationView.RoleColumns.GetControlFromPosition(0, 0));
+        Assert.Same(
+            migrationView.DestinationCard,
+            migrationView.RoleColumns.GetControlFromPosition(1, 0));
+        Assert.NotNull(migrationView.SourceSqlServerPicker);
+        Assert.NotNull(migrationView.DestinationSqlServerPicker);
+        Assert.False(migrationView.SourceEmbeddedStorageInput.Multiline);
+        Assert.False(migrationView.DestinationEmbeddedStorageInput.Multiline);
 
         view.BackendSelector.SelectedIndex = 0;
 
