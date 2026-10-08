@@ -281,8 +281,8 @@ public sealed class HiveUiPolishTests
     {
         var instances = HiveSqlServerInstanceDiscovery.MergeCandidates(
         [
-            @"REMOTE01\\REPORTING",
-            @"remote01\\REPORTING"
+            @"REMOTE01\REPORTING",
+            @"remote01\REPORTING"
         ],
         [
             "MSSQLSERVER",
@@ -294,8 +294,8 @@ public sealed class HiveUiPolishTests
             new[]
             {
                 "DEVBOX",
-                @"DEVBOX\\HiveSql",
-                @"REMOTE01\\REPORTING"
+                @"DEVBOX\HiveSql",
+                @"REMOTE01\REPORTING"
             },
             instances);
     }
@@ -310,7 +310,7 @@ public sealed class HiveUiPolishTests
                 "DEVBOX"));
 
         Assert.Equal(
-            @"localhost\\HiveSql",
+            @"localhost\HiveSql",
             HiveSqlServerInstanceDiscovery.FormatLocalInstanceName(
                 "HiveSql",
                 "DEVBOX"));
