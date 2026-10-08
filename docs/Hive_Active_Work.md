@@ -151,6 +151,21 @@ Developer rerun reported **758 tests: 756 passed, 2 failed, 0 skipped**. The two
 
 These are same-slice remediation failures. They do not authorize Slice 6 or 1.19 work.
 
+### Verification failure — 2026-10-08 21:xx (latest developer rerun)
+
+Developer rerun reported **758 tests: 756 passed, 2 failed, 0 skipped**.
+
+- `HivePersistenceSettingsAndMigrationFitNormalWorkspaceWithoutScrollOverflow`: the Database Setup `HiveScrollHost` still reports `VerticalScrollState.CanScroll == true` at the normal 1160×760 workspace size. The remaining failure is within the existing Slice 5 setup-layout/vertical-fit boundary.
+- `HivePersistenceSettingsView_UsesDatabaseSetupAndDataMigrationTabs`: the Data Migration tab's hosted control is expected to have `DockStyle.Fill`, but the first control currently reports `DockStyle.None`. The remaining failure is within the existing Slice 5 tab-host composition boundary.
+
+These failures are same-slice remediation defects. They do not authorize Slice 6 or 1.19 work.
+
+### Remediation status
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+Implementation changes may now proceed only for the two recorded failures above. After remediation, Active Work must return to **VERIFICATION PENDING** with the focused/full-suite, zero-warning build, and Example Host verification requirements preserved.
+
 ### Remediation completed — 2026-10-08 21:24
 
 - The Database Setup Backend selector now has a structurally bounded 80px field host, so the shared TableLayoutPanel sizing cannot stretch it to the full workspace width.
