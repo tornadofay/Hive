@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **IMPLEMENTATION IN PROGRESS**
+Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
 
 ## Phase 1.18A — Embedded Persistence Profile
 ### Slice 4 — Full-Data Migration
@@ -36,7 +36,7 @@ Implement the Management-owned logical full-data migration operation in both dir
 ### Verification gate
 Both directions must be developer-verified against complete representative Hive datasets, including stable identities, relationships, versions/lifecycle state, event/snapshot/outbox consistency, Base-Agent work state, and protected Secret Store records. Invalid/non-empty/incomplete destinations and unquiescent sources must fail safely.
 
-Required verification remains **PENDING developer results** until the user reports the actual test/build/manual outcomes. No execution is claimed by the agent.
+Developer verification reported compile failures on 2026-10-08. Same-slice remediation is authorized: fix only the reported Slice 4 compilation failures, then re-run the exact affected build/test targets. Verification must return to **PENDING developer results** after remediation. No execution is claimed by the agent.
 
 ### Example / verification handoff
 
