@@ -514,9 +514,13 @@ internal sealed class HivePersistenceSettingsView : UserControl
         if (IsDisposed || Disposing)
             return;
 
+        var targetDescription = _loadedConfiguration.Backend == HivePersistenceBackend.Embedded
+            ? $"Embedded storage: {_loadedConfiguration.EmbeddedStoragePath}"
+            : $"Database: {_loadedConfiguration.DatabaseName}";
+
         HiveMessageBox.ShowInformation(
             FindForm(),
-            $"Persistence settings saved. Database: {_loadedConfiguration.DatabaseName}",
+            $"Persistence settings saved. {targetDescription}",
             "Hive Persistence");
     }
 
@@ -552,21 +556,11 @@ internal sealed class HivePersistenceSettingsView : UserControl
             return;
         }
 
-        SetStatus(
-            if (IsDisposed || Disposing)
-                return;
-
-            HiveUiErrorReporter.Report(
-                FindForm(),
-                "No persistence configuration is loaded. Save or load the Settings configuration before initializing Hive.",
-                "Hive Persistence",
-                _output,
-                _themeManager);
+        if (IsDisposed || Disposing)
             return;
-        }
 
         SetStatus(
-            "Initializing the Hive database and applying schema migrations...",
+            $"Initializing {configuration.Backend} persistence and applying schema migrations...",
             HiveStatusTone.Information);
 
         var result = await _management
@@ -592,8 +586,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
             return;
         }
 
-        const string message =
-            "Hive database initialization completed successfully. The database is now ready for normal Hive operations.";
+        var message = configuration.Backend == HivePersistenceBackend.Embedded
+            ? "Embedded Hive persistence initialization completed successfully. The local database is now ready for normal Hive operations."
+            : "SQL Server Hive database initialization completed successfully. The database is now ready for normal Hive operations.";
 
         SetStatus(message, HiveStatusTone.Success);
 
@@ -879,8 +874,14 @@ internal sealed class HivePersistenceSettingsView : UserControl
             return;
         }
 
-        fields.GetControlFromPosition(0, row)?.SetVisibleSafe(visible);
-        fields.GetControlFromPosition(1, row)?.SetVisibleSafe(visible);
+        var labelPanel = fields.GetControlFromPosition(0, row);
+        var editorPanel = fields.GetControlFromPosition(1, row);
+
+        if (labelPanel is not null)
+            labelPanel.Visible = visible;
+
+        if (editorPanel is not null)
+            editorPanel.Visible = visible;
 
         if (row >= fields.RowStyles.Count)
             return;
@@ -1014,6 +1015,12 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
     private void UpdateCredentialStatus(HivePersistenceConfiguration configuration)
     {
+        if (configuration.Backend == HivePersistenceBackend.Embedded)
+        {
+            _credentialStatus.Text = "Credential not used — Embedded persistence.";
+            return;
+        }
+
         _credentialStatus.Text =
             configuration.AuthenticationMode == HiveSqlAuthenticationMode.WindowsIntegrated
                 ? "Credential not used — Windows integrated authentication."
