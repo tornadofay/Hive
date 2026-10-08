@@ -62,7 +62,8 @@ public sealed class HiveHostComposition : IDisposable
         var root = Path.Combine(
             Environment.GetFolderPath(
                 Environment.SpecialFolder.LocalApplicationData),
-            "Hive");
+            "Hive",
+            HivePersistenceConfiguration.BuildDatabaseName(applicationName));
 
         return HivePersistenceConfiguration.Embedded(
             Path.Combine(root, "hive.db"),
