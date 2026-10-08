@@ -229,6 +229,22 @@ Current state: **VERIFICATION PENDING**.
 
 Developer rerun is required against the corrected source. Preserve the existing focused/full-suite, zero-warning build, and Example Host verification requirements below.
 
+### Verification failure — 2026-10-08 (latest developer rerun)
+
+Developer verification reported **758 tests: 757 passed, 1 failed, 0 skipped**.
+
+- `HivePersistenceSettingsAndMigrationFitNormalWorkspaceWithoutScrollOverflow`: Database Setup still reports `VerticalScrollState.CanScroll == true` at the normal 1160×760 workspace size.
+- During the same developer UI verification, the Database Setup Backend `HiveComboBox` is not visibly rendering/showing as intended.
+- The previously failing Custom SQL Server endpoint visibility assertion now passes, confirming that remediation remains effective.
+
+These are same-slice Slice 5 settings-layout/composition failures. They do not authorize Slice 6 or 1.19 work.
+
+### Remediation status — latest
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+The next correction is authorized only within the Slice 5 settings UI boundary. The settings page should be simplified rather than extended with more nested preferred-size/normalization logic; the Backend selector should use a straightforward dedicated bounded host, and the Database Setup layout should use deterministic vertical composition that fits the normal workspace without relying on the current recursive AutoSize measurement approach.
+
 ### Verification handoff
 
 Developer rerun is required:
