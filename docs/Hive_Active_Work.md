@@ -239,19 +239,6 @@ Developer verification reported **758 tests: 757 passed, 1 failed, 0 skipped**.
 
 These are same-slice Slice 5 settings-layout/composition failures. They do not authorize Slice 6 or 1.19 work.
 
-### Verification failure — 2026-10-09 latest developer/manual UI feedback
-
-The developer reported two additional in-scope Slice 5 failures:
-
-- SQL Server instance picker: choosing `Custom` does not visibly reveal the textbox needed to enter the custom instance/server name.
-- Persistence Settings first-open rendering is too slow/heavy for this lightweight settings surface. Initial open must avoid unnecessary layout/repaint work and remain responsive.
-
-These are same-slice settings UI interaction and performance failures. No new roadmap scope is authorized.
-
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
-
-Implementation changes may proceed only to correct these recorded failures. After remediation, Active Work must return to **VERIFICATION PENDING** with the existing focused/full-suite, zero-warning build, and Example Host manual verification requirements.
-
 ### Remediation completed — 2026-10-09 custom picker and startup performance
 
 - `HiveSqlServerInstancePicker` now uses natural auto-sized layout for the optional Custom server row instead of forcing a fixed zero/78px outer height. Selecting `Custom...` keeps the picker available and expands the control to reveal the editable custom server/instance textbox.
@@ -287,6 +274,30 @@ This is an in-scope same-slice compilation defect in the recently changed field-
 - Replaced the invalid four-argument `Math.Max` call with equivalent nested two-argument `Math.Max` calls.
 - No layout behavior, persistence contract, migration behavior, shared UI infrastructure, Slice 6, or 1.19 scope was otherwise changed.
 - Active Work remains **VERIFICATION PENDING** until the developer reruns the affected tests/build and performs the required Example Host visual verification.
+
+### Verification failure — 2026-10-09 latest developer/manual UI feedback
+
+The developer reported two additional in-scope Slice 5 failures:
+
+- SQL Server instance picker: choosing `Custom` does not visibly reveal the textbox needed to enter the custom instance/server name.
+- Persistence Settings first-open rendering is too slow/heavy for this lightweight settings surface. Initial open must avoid unnecessary layout/repaint work and remain responsive.
+
+These are same-slice settings UI interaction and performance failures. No new roadmap scope is authorized.
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+### Remediation completed — 2026-10-09 custom picker and lightweight startup
+
+- `HiveSqlServerInstancePicker` now gives its optional Custom server row natural auto-sizing instead of manually forcing the picker between fixed 36px and 78px heights. Selecting `Custom...` keeps the server selector available and expands the control to reveal the editable custom server/instance textbox.
+- `HivePersistenceSettingsView.CreateFieldBlock()` preserves auto-sizing for the SQL Server picker while ordinary compact fields keep the 34px sizing contract.
+- `HiveSettingsView.InitializeAsync()` no longer constructs Provider, Agent, and Persistence pages during initial Settings startup; those pages remain lazy and are constructed only when first navigated to.
+- `HivePersistenceSettingsView` now also defers construction of the Data Migration editor until the Data Migration tab is actually selected, so the default Database Setup first paint does not build the migration surface unnecessarily.
+- The focused UI test now checks that the Custom editor has real bounds inside the picker and that the migration editor is created when its tab is opened.
+- No shared UI infrastructure, persistence contract, migration behavior, Slice 6, or 1.19 scope was changed.
+
+Current state: **VERIFICATION PENDING**.
+
+Developer rerun is required against the corrected source. Manual verification must specifically confirm that `Custom...` reveals an editable custom server/instance field and that initial Settings/Persistence presentation is responsive without the previous heavy first-open paint delay.
 
 ### Verification handoff
 
