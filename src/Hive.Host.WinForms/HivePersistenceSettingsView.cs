@@ -228,6 +228,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Margin = Padding.Empty
         };
         migrationTab.Controls.Add(_migrationView);
+        _migrationView.Dock = DockStyle.Fill;
 
         _tabs.TabPages.Add(setupTab);
         _tabs.TabPages.Add(migrationTab);
@@ -1028,7 +1029,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     {
         var section = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 1,
