@@ -1125,9 +1125,11 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
             var editorHeight = Math.Max(
                 34,
-                editor.Height,
-                editor.MinimumSize.Height,
-                editor.PreferredSize.Height);
+                Math.Max(
+                    editor.Height,
+                    Math.Max(
+                        editor.MinimumSize.Height,
+                        editor.PreferredSize.Height)));
 
             editor.MinimumSize = new Size(
                 editorWidth.Value,
