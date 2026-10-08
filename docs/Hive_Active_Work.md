@@ -72,24 +72,15 @@ These remain within the authorized Slice 5 presentation/interaction boundary. Th
 
 ### Remediation completed
 
-- The SQL credentials field is now created before `CreateSqlSection()` consumes it; the structured section/field hierarchy is unchanged.
-- Installed local SQL Server instance names are now normalized to `localhost` for the default instance and `localhost\\<Instance>` for named instances. Network-discovered remote names remain unchanged.
-- The focused discovery coverage now asserts the `localhost` representation and no longer passes an obsolete machine-name formatting argument.
-- The affected Slice 5 implementation and documentation were re-reviewed for this failure boundary only. No implementation outside the recorded remediation boundary was changed.
-
-Developer rerun is now required:
-
-### Remediation completed
-
-- Database Setup single-value editors now use bounded widths: Backend and Authentication are compact, Database is bounded, SQL Server picker is bounded while retaining a useful path for Custom input, and the Embedded database file path keeps the main available width with Browse directly beside it.
-- Hidden backend sections now collapse their editor row instead of leaving a large blank area. Initialization controls are grouped earlier and compactly so the normal Database Setup surface does not grow vertically without need.
-- SQL Server now presents port **1433** by default, and a blank loaded SQL database name falls back to Hive's deterministic package database name instead of rendering empty.
-- Selecting SQL Server now triggers instance discovery automatically; the explicit Refresh action remains available as a retry/manual refresh.
-- Custom SQL server input expands directly below the instance selector with a layout-aware picker height.
-- Data Migration now presents SOURCE on the left and DESTINATION on the right. SQL destination editors use widths appropriate for the split card, while Embedded storage uses the available destination width.
-- Migration direction remains user-selectable. The UI does not silently rewrite the user's choice on refresh; when the selected source backend is not the active Hive backend, the source is marked INACTIVE and migration/readiness execution is blocked until a matching direction is selected. This preserves the current Management contract without introducing a new source-configuration migration API.
-- Focused automated coverage now checks the bounded setup fields, default database/port, custom-server presentation, source/destination column order, and normal-workspace scroll state.
-- The affected Slice 5 implementation and documentation were re-reviewed after the reported UX feedback. No Slice 6, new migration contract, backend, or 1.19 work was introduced.
+- The SQL credentials field is initialized before `CreateSqlSection()` consumes it; the structured section/field hierarchy is preserved.
+- Installed local SQL Server instances are normalized to `localhost` / `localhost\\<Instance>`, with network-discovered remote names left unchanged.
+- Database Setup now uses bounded professional widths for Backend, Database, Authentication, SQL Server, SQL security, and credential editors. Hidden backend sections collapse their row, Embedded storage keeps a wide path editor with Browse directly beside it, and initialization controls are positioned compactly near the top of the backend section.
+- SQL Server now shows port **1433** by default, and a blank loaded SQL database name falls back to Hive's deterministic package database name.
+- Selecting SQL Server triggers instance discovery automatically; Refresh remains a manual retry. Custom server input expands directly below the instance selector.
+- Data Migration now places SOURCE on the left and DESTINATION on the right. SQL destination editors are sized for the split destination card, while Embedded storage uses the available destination width.
+- Migration direction remains user-selectable instead of being silently rewritten on refresh. The selected source is visibly marked **INACTIVE** when it does not match the active backend, and readiness/migration execution is blocked in that state rather than silently changing the user's choice. This preserves the current Management migration contract without creating a new source-configuration API.
+- Focused automated coverage now checks bounded setup widths, default database/port, custom-server presentation, source/destination order, and normal-workspace scroll state.
+- The affected Slice 5 implementation and documentation were re-reviewed after the new UX feedback. No Slice 6, new backend, new migration contract, or 1.19 work was introduced.
 
 ### Verification handoff
 
