@@ -45,7 +45,7 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **VERIFICATION PENDING**.
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 
 Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **756 tests: 752 passed, 4 failed, 0 skipped**.
 
@@ -100,6 +100,19 @@ These remain within the authorized Slice 5 presentation/interaction and Manageme
 - The Embedded → SQL migration path now uses the destination SQL credential for the destination connection.
 - Focused regression coverage checks compact setup sizing, named-instance port handling, endpoint editability/order, explicit-source Management migration, and normal-workspace scroll state.
 - The Slice 5 implementation and documentation were re-reviewed after the reported runtime/UX feedback. No Slice 6 or 1.19 work was introduced.
+
+### Compilation failure — 2026-10-08 18:45
+
+Developer verification reported eight in-scope Slice 5 compilation failures after the explicit editable-endpoint remediation:
+
+- \`HivePersistenceDataMigrationSettingsView\`: incorrect \`SqlAuthenticationSelector\` type exposure in two locations.
+- \`HivePersistenceDataMigrationSettingsView\`: nested endpoint editor called \`FindForm()\` as though it were itself a Control.
+- \`HivePersistenceDataMigrationSettingsView\`: outer top-row layout referenced the endpoint editor's private \`CreateFieldBlock\` helper.
+- \`HivePersistenceDataMigrationSettingsView\`: nullable Management test values reached \`FormatStatus\` without a non-null guard.
+- \`HivePersistenceDataMigrator\`: Embedded → SQL helper parameter did not match the \`destinationSqlCredential\` caller.
+- \`PersistenceDataMigrationExampleView\`: Example Host still used the old one-argument \`HivePersistenceMigrationRequest\` constructor.
+
+These are same-slice remediation defects in the implementation just changed; no new roadmap capability is being requested.
 
 ### Verification handoff
 
