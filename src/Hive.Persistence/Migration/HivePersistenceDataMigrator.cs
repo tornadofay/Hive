@@ -1012,10 +1012,43 @@ internal sealed class HivePersistenceDataMigrator
 
     private static string BuildSelectSql(
         HiveMigrationTableDefinition table,
-        bool sqlite) =>
-        $"SELECT {string.Join(", ", table.Columns.Select(static c => $"[{c.Name}]"))} " +
-        $"FROM {QuoteTable(table.Name, sqlite)} " +
-        $"ORDER BY {string.Join(", ", table.OrderByColumns.Select(static c => $"[{c}]"))};";
+        bool sqlite)
+    {
+        var orderBy = string.Join(
+            ", ",
+            table.OrderByColumns.Select(
+                column => BuildOrderByExpression(
+                    table,
+                    column,
+                    sqlite)));
+
+        return $"SELECT {string.Join(", ", table.Columns.Select(static c => $"[{c.Name}]"))} " +
+            $"FROM {QuoteTable(table.Name, sqlite)} " +
+            $"ORDER BY {orderBy};";
+    }
+
+    private static string BuildOrderByExpression(
+        HiveMigrationTableDefinition table,
+        string column,
+        bool sqlite)
+    {
+        var definition = table.Columns.FirstOrDefault(
+            candidate => string.Equals(
+                candidate.Name,
+                column,
+                StringComparison.Ordinal));
+
+        if (definition is null)
+        {
+            throw new InvalidOperationException(
+                $"Migration ordering column '{column}' is not defined on table '{table.Name}'.");
+        }
+
+        if (!sqlite && definition.Kind == HiveMigrationColumnKind.Guid)
+            return $"CONVERT(varchar(36), [{column}])";
+
+        return $"[{column}]";
+    }
 
     private static string BuildInsertSql(
         HiveMigrationTableDefinition table,
