@@ -468,6 +468,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             CreateSecurityTimeoutPanel(
                 includeSecurity: false,
                 _sqlCreateDatabaseCheckBox,
+                secondarySecurityControl: null,
                 _sqlTimeoutNumeric,
                 "Create/initialize"),
             0,
@@ -534,6 +535,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 CreateSecurityTimeoutPanel(
                     includeSecurity: true,
                     _sqlEncryptCheckBox,
+                    _sqlTrustServerCertificateCheckBox,
                     _sqlTimeoutNumeric,
                     null)),
             0,
@@ -651,6 +653,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private static Control CreateSecurityTimeoutPanel(
         bool includeSecurity,
         CheckBox firstSecurityControl,
+        CheckBox? secondarySecurityControl,
         NumericUpDown timeout,
         string? secondaryCaption)
     {
@@ -670,11 +673,9 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 26f));
             panel.Controls.Add(firstSecurityControl, 0, 0);
             panel.Controls.Add(
-                new CheckBox
-                {
-                    Text = "Trust server certificate",
-                    AutoSize = true
-                },
+                secondarySecurityControl
+                    ?? throw new InvalidOperationException(
+                        "A secondary SQL security control is required."),
                 1,
                 0);
             panel.Controls.Add(CreateTimeoutHost(timeout), 2, 0);
@@ -1094,38 +1095,23 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         Control root,
         params (string Title, string Value)[] values)
     {
-        var labels = root.Controls
-            .OfType<Label>()
-            .ToArray();
+        if (root is not TableLayoutPanel table)
+            return;
 
-        var rowLabels = new Dictionary<string, Label>(StringComparer.Ordinal);
-        foreach (var table in root.Controls.OfType<TableLayoutPanel>())
-        {
-            foreach (Control child in table.Controls)
-            {
-                if (child is Label label &&
-                    !string.IsNullOrWhiteSpace(label.Text))
-                {
-                    rowLabels[label.Text] = label;
-                }
-            }
-        }
+        var titleLabels = table.Controls
+            .OfType<Label>()
+            .Where(static label => label.Font.Bold)
+            .ToDictionary(
+                static label => label.Text,
+                StringComparer.Ordinal);
 
         foreach (var value in values)
         {
-            var title = rowLabels.Keys
-                .FirstOrDefault(key =>
-                    string.Equals(key, value.Title, StringComparison.Ordinal));
-            if (title is null)
-                continue;
-
-            var titleLabel = rowLabels[title];
-            if (titleLabel.Parent is not TableLayoutPanel table)
+            if (!titleLabels.TryGetValue(value.Title, out var titleLabel))
                 continue;
 
             var row = table.GetPositionFromControl(titleLabel).Row;
-            var valueLabel = table.GetControlFromPosition(1, row) as Label;
-            if (valueLabel is not null)
+            if (table.GetControlFromPosition(1, row) is Label valueLabel)
                 valueLabel.Text = value.Value;
         }
     }
