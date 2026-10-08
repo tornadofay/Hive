@@ -251,6 +251,21 @@ Current state: **VERIFICATION PENDING**.
 
 Developer rerun is required against the corrected source. Preserve the focused/full-suite, zero-warning build, and Example Host verification requirements below.
 
+### Manual UI verification failure — latest developer report
+
+Developer reported the automated suite passing **758/758**, but the Slice 5 Persistence UI still has two visual defects:
+
+- The Database Setup **Backend** HiveComboBox is not visibly showing/rendering.
+- The Embedded **Database file** textbox is visibly taller than the intended compact field height.
+
+These are within the already-authorized Slice 5 settings UI presentation boundary. The automated scroll-fit contract is now passing, so no scroll-infrastructure change is authorized or needed. No Slice 6 or 1.19 work is authorized.
+
+### Remediation status — manual UI
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+Correct only the two reported visual defects while preserving the now-passing 758-test layout behavior.
+
 ### Verification handoff
 
 Developer rerun is required:
