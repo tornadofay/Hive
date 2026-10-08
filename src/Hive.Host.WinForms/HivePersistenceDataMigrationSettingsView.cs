@@ -793,11 +793,16 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
     private void UpdateRolePanels()
     {
-        var direction = SelectedDirection;
-        var sourceSql = direction == MigrationDirection.SqlServerToEmbedded;
-        _sourceHeader.Text = sourceSql
-            ? "SOURCE · SQL Server"
-            : "SOURCE · Embedded";
+        var sourceSql = SelectedDirection == MigrationDirection.SqlServerToEmbedded;
+        var selectedSourceBackend = sourceSql
+            ? HivePersistenceBackend.SqlServer
+            : HivePersistenceBackend.Embedded;
+        var sourceIsActive = _sourceConfiguration is null ||
+            _sourceConfiguration.Backend == selectedSourceBackend;
+
+        _sourceHeader.Text =
+            $"SOURCE · {(sourceSql ? "SQL Server" : "Embedded")}" +
+            (sourceIsActive ? string.Empty : " · INACTIVE");
         _destinationHeader.Text = sourceSql
             ? "DESTINATION · Embedded"
             : "DESTINATION · SQL Server";
@@ -806,7 +811,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         ReplaceBody(_destinationBody, sourceSql ? _embeddedDestinationPanel : _sqlDestinationPanel);
 
         _destinationCard.Enabled = true;
-        _sourceCard.Enabled = false;
+        _sourceCard.Enabled = true;
         UpdateSqlAuthenticationState();
     }
 
@@ -827,6 +832,11 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private MigrationDirection SelectedDirection =>
         (_directionComboBox.SelectedItem as DirectionChoice)?.Direction
         ?? MigrationDirection.SqlServerToEmbedded;
+
+    private HivePersistenceBackend SelectedSourceBackend =>
+        SelectedDirection == MigrationDirection.SqlServerToEmbedded
+            ? HivePersistenceBackend.SqlServer
+            : HivePersistenceBackend.Embedded;
 
     private async Task RefreshStatusAsync(CancellationToken cancellationToken)
     {
@@ -911,6 +921,14 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         {
             SetStatus(
                 "Source configuration is not loaded.",
+                HiveStatusTone.Warning);
+            return;
+        }
+
+        if (SelectedSourceBackend != _sourceConfiguration.Backend)
+        {
+            SetStatus(
+                $"Selected source is {SelectedSourceBackend}, but the active Hive backend is {_sourceConfiguration.Backend}. The destination remains editable; choose the direction that matches the active backend before refreshing readiness or running migration.",
                 HiveStatusTone.Warning);
             return;
         }
@@ -1143,19 +1161,43 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 _embeddedSourcePanel,
                 ("Storage location", _sourceConfiguration.EmbeddedStoragePath ?? DefaultEmbeddedPath()),
                 ("Mode", "Read-only source"));
-            return;
+        }
+        else
+        {
+            var authentication = _sourceConfiguration.AuthenticationMode.ToString();
+            SetSummaryValues(
+                _sqlSourcePanel,
+                ("Server / port", FormatServerPort(
+                    _sourceConfiguration.ServerName,
+                    _sourceConfiguration.Port)),
+                ("Database", string.IsNullOrWhiteSpace(_sourceConfiguration.DatabaseName)
+                    ? HivePersistenceConfiguration.BuildDatabaseName(_applicationName)
+                    : _sourceConfiguration.DatabaseName),
+                ("Authentication", authentication),
+                ("SQL user", _sourceConfiguration.UserName ?? "Windows identity"),
+                ("Mode", "Read-only source"));
         }
 
-        var authentication = _sourceConfiguration.AuthenticationMode.ToString();
-        SetSummaryValues(
-            _sqlSourcePanel,
-            ("Server / port", FormatServerPort(
-                _sourceConfiguration.ServerName,
-                _sourceConfiguration.Port)),
-            ("Database", _sourceConfiguration.DatabaseName),
-            ("Authentication", authentication),
-            ("SQL user", _sourceConfiguration.UserName ?? "Windows identity"),
-            ("Mode", "Read-only source"));
+        if (SelectedSourceBackend == _sourceConfiguration.Backend)
+            return;
+
+        if (SelectedSourceBackend == HivePersistenceBackend.Embedded)
+        {
+            SetSummaryValues(
+                _embeddedSourcePanel,
+                ("Storage location", "Not active"),
+                ("Mode", "Inactive source — choose the other direction."));
+        }
+        else
+        {
+            SetSummaryValues(
+                _sqlSourcePanel,
+                ("Server / port", "Not active"),
+                ("Database", "Not active"),
+                ("Authentication", "Not active"),
+                ("SQL user", "Not active"),
+                ("Mode", "Inactive source — choose the other direction."));
+        }
     }
 
     private static void SetSummaryValues(
