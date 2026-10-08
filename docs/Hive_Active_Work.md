@@ -84,7 +84,7 @@ Additional same-slice Slice 5 UX failures were reported after the previous remed
 - Unused/overflowing vertical space and unnecessary horizontal/vertical scrolling should be removed; SQL initialization controls should be positioned compactly enough that the normal settings surface fits without avoidable scrolling.
 - Data Migration should place SOURCE on the left and DESTINATION on the right.
 - Data Migration SQL destination controls also need bounded widths so they do not overwhelm or overflow the workspace.
-- The migration direction must remain user-selectable instead of being silently rewritten from the currently active backend. The current Management migration contract still reads the source from the active persistence graph, so the UI must expose the selected direction honestly and prevent an invalid execution rather than silently changing the user's choice.
+- The migration direction must remain user-selectable instead of being silently rewritten from the active backend. Source and Destination are now independent explicit endpoint configurations, and the public Management migration request carries both endpoints.
 
 These remain within the authorized Slice 5 presentation/interaction and Management-boundary remediation. Slice 5 explicitly authorizes the corrected public migration request carrying SourceConfiguration + DestinationConfiguration. They do not authorize Slice 6 or 1.19.
 
