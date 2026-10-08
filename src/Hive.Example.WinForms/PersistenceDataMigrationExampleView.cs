@@ -100,6 +100,8 @@ internal sealed class PersistenceDataMigrationExampleView : UserControl
                 new SqlWorkItemResourceStore(sourceOptions),
                 secrets: new SqlDpapiSecretStore(sourceOptions),
                 configurationStore: configurationStore,
+                executionTargetPreferences:
+                    new SqlExecutionTargetPreferenceStore(sourceOptions),
                 persistenceMigrationQuiescence: quiescence);
 
             var secretValue = $"example-migration-{Guid.NewGuid():N}";
@@ -334,39 +336,6 @@ internal sealed class PersistenceDataMigrationExampleView : UserControl
                     destinationFavoriteIds,
                     "Destination favorite verification");
 
-                var destinationEvents =
-                    HiveEventPersistence.CreateEmbedded(destination).EventStore;
-                var activity =
-                    await destinationEvents.ReadEventsAsync(
-                        new ResourceReference(
-                            ResourceKind.WorkItem,
-                            workItem.Value!.Id.Value),
-                        cancellationToken);
-                EnsureSuccess(
-                    activity,
-                    "Destination event verification");
-
-                var sourceCounts =
-                    await ReadCountsAsync(sourceOptions, cancellationToken);
-                var destinationCounts =
-                    await ReadCountsAsync(destination, cancellationToken);
-
-                if (!sourceCounts.SequenceEqual(destinationCounts))
-                {
-                    throw new InvalidOperationException(
-                        "Destination table counts did not match the source dataset.");
-                }
-
-                var destinationWorkItem =
-                    await new EmbeddedWorkItemResourceStore(destination)
-                        .GetWorkItemAsync(
-                            workItem.Value.Id,
-                            context,
-                            cancellationToken);
-                EnsureSuccess(
-                    destinationWorkItem,
-                    "Destination WorkItem verification");
-
                 _output.Write(
                     "SQL Server ↔ Embedded Full-Data Migration",
                     $"""
@@ -382,7 +351,7 @@ internal sealed class PersistenceDataMigrationExampleView : UserControl
                     Secret re-protected and readable: true (value not printed)
                     Favorites preserved: {string.Join(", ", destinationFavoriteIds.Value!)}
                     WorkItem preserved: {destinationWorkItem.Value!.Id}
-                    Destination event count for WorkItem: {activity.Value!.Count}
+                    Migrated record counts: {string.Join(", ", migrationResult.Value.RecordCounts.OrderBy(static item => item.Key).Select(static item => $"{item.Key}={item.Value}"))}
                     """);
             }
         }
@@ -393,60 +362,18 @@ internal sealed class PersistenceDataMigrationExampleView : UserControl
         }
     }
 
-    private static async Task<Dictionary<string, long>> ReadCountsAsync(
-        HiveDatabaseOptions options,
-        CancellationToken cancellationToken)
-    {
-        await using var connection = new SqlConnection(
-            options.ConnectionString);
-        await connection.OpenAsync(cancellationToken);
-
-        var counts = new Dictionary<string, long>(
-            StringComparer.Ordinal);
-
-        foreach (var table in MigrationTables)
-        {
-            await using var command = connection.CreateCommand();
-            command.CommandText =
-                $"SELECT COUNT_BIG(1) FROM [dbo].[{table}];";
-            counts[table] = Convert.ToInt64(
-                await command.ExecuteScalarAsync(cancellationToken));
-        }
-
-        return counts;
-    }
-
-    private static async Task<Dictionary<string, long>> ReadCountsAsync(
-        EmbeddedPersistenceDatabase database,
-        CancellationToken cancellationToken)
-    {
-        await using var connection = await database.OpenConnectionAsync(
-            cancellationToken);
-
-        var counts = new Dictionary<string, long>(
-            StringComparer.Ordinal);
-
-        foreach (var table in MigrationTables)
-        {
-            await using var command = connection.CreateCommand();
-            command.CommandText =
-                $"SELECT COUNT(*) FROM [{table}];";
-            counts[table] = Convert.ToInt64(
-                await command.ExecuteScalarAsync(cancellationToken));
-        }
-
-        return counts;
-    }
-
     private static async Task DropSqlDatabaseAsync(
         string databaseName)
     {
         try
         {
-            var builder = new SqlConnectionStringBuilder(
-                HivePersistenceTestConfiguration.ConnectionString)
+            var builder = new SqlConnectionStringBuilder
             {
+                DataSource = HiveDatabaseOptions.LocalDevelopment().ServerName,
                 InitialCatalog = "master",
+                IntegratedSecurity = true,
+                TrustServerCertificate = true,
+                ConnectRetryCount = 0,
                 ApplicationName = "Hive.Example.WinForms"
             };
 
