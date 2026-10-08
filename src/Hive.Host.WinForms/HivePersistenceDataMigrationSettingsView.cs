@@ -134,6 +134,9 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         public string EmbeddedStoragePath =>
             _embeddedPathTextBox.Text.Trim();
 
+        public TextBox EmbeddedStorageInput =>
+            _embeddedPathTextBox;
+
         public CheckBox? EmbeddedCreateDatabaseCheckBox =>
             _embeddedCreateDatabaseCheckBox;
 
@@ -903,12 +906,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _destinationEndpoint.SqlServerPicker;
 
     internal TextBox SourceEmbeddedStorageInput =>
-        _sourceEndpoint.EmbeddedStoragePath is not null
-            ? FindEmbeddedPathTextBox(_sourceEndpoint.View)
-            : throw new InvalidOperationException();
+        _sourceEndpoint.EmbeddedStorageInput;
 
     internal TextBox DestinationEmbeddedStorageInput =>
-        FindEmbeddedPathTextBox(_destinationEndpoint.View);
+        _destinationEndpoint.EmbeddedStorageInput;
 
     private Control CreateTopConfigurationRow()
     {
@@ -922,8 +923,26 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             Padding = Padding.Empty,
             GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
+
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55f));
-        table.ColumnStyles.Add(new ColumnStyle.Percent?);
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45f));
+
+        table.Controls.Add(
+            CreateFieldBlock(
+                "Direction",
+                _directionComboBox,
+                220),
+            0,
+            0);
+
+        table.Controls.Add(
+            CreateFieldBlock(
+                "Scope",
+                _scopeLabel,
+                180),
+            1,
+            0);
+
         return table;
     }
 
@@ -990,20 +1009,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             TextAlign = ContentAlignment.MiddleLeft,
             Margin = Padding.Empty
         };
-
-    private static TextBox FindEmbeddedPathTextBox(Control root)
-    {
-        return root.Controls
-            .Cast<Control>()
-            .SelectMany(
-                child => child is TableLayoutPanel table
-                    ? table.Controls.Cast<Control>()
-                    : Enumerable.Empty<Control>())
-            .OfType<TextBox>()
-            .FirstOrDefault(text => text.PlaceholderText == "Hive database file (.db)")
-            ?? throw new InvalidOperationException(
-                "Embedded migration path editor was not found.");
-    }
 
     private void ApplyDirection()
     {
@@ -1096,6 +1101,9 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     {
         try
         {
+            await RefreshVisibleSqlServerInstancesAsync(
+                cancellationToken).ConfigureAwait(true);
+
             var source = await BuildEndpointConfigurationAsync(
                 _sourceEndpoint,
                 EndpointRole.Source,
