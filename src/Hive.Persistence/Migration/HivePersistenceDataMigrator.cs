@@ -1142,7 +1142,17 @@ internal sealed class HivePersistenceDataMigrator
                     cancellationToken).ConfigureAwait(false);
         }
 
-        if (status.Value.DatabaseState is HiveDatabaseState.NeedsMigration or HiveDatabaseState.FutureSchema)
+        if (status.Value.DatabaseState == HiveDatabaseState.FutureSchema)
+        {
+            var version = status.Value.SchemaVersion
+                ?? throw new InvalidOperationException(
+                    "Future-schema Embedded destination inspection returned no schema version.");
+
+            return Result.Failure(
+                EmbeddedPersistenceError.FutureSchema(version));
+        }
+
+        if (status.Value.DatabaseState == HiveDatabaseState.NeedsMigration)
         {
             return Result.Failure(
                 Error.Unsupported(
