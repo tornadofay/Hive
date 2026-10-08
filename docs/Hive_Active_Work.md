@@ -45,4 +45,12 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **IMPLEMENTATION IN PROGRESS**. No Slice 5 verification result is claimed yet.
+Current state: **IMPLEMENTATION COMPLETE; VERIFICATION PENDING**.
+
+Implemented checkpoint:
+- backend-aware real host composition for SQL Server and Embedded;
+- Embedded first-run default under application-owned Local AppData storage while the direct/default developer configuration store remains SQL Server LocalDB;
+- Persistence Settings `Database Setup | Data Migration` tabs with backend selection, readiness/initialization controls, fixed `All Hive Data` migration scope, and Management-only migration invocation;
+- bounded automated coverage for Embedded host composition, first-run defaults, configuration fallback, and the Settings tabs/backend selector.
+
+Verification results are intentionally not claimed yet because this environment could not execute the developer's Windows/.NET test and build commands, and the required Example Host manual verification has not been performed here.
