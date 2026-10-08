@@ -23,8 +23,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly HiveTabControl _tabs;
     private readonly HiveComboBox _backendComboBox;
     private readonly TextBox _embeddedStorageTextBox;
-    private readonly TextBox _serverTextBox;
-    private readonly TextBox _portTextBox;
+    private readonly HiveSqlServerInstancePicker _serverPicker;
     private readonly TextBox _databaseTextBox;
     private readonly HiveComboBox _authenticationComboBox;
     private readonly TextBox _userNameTextBox;
@@ -39,10 +38,12 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly HiveButton _saveButton;
     private readonly HiveButton _testButton;
     private readonly HiveButton _initializeButton;
+    private readonly HiveButton _browseEmbeddedButton;
     private readonly HivePersistenceDataMigrationSettingsView _migrationView;
     private readonly List<int> _sqlFieldRows = [];
     private readonly Dictionary<int, float> _fieldRowHeights = [];
     private int _embeddedStorageRow = -1;
+    private int _credentialsRow = -1;
     private HiveStatusTone _statusTone = HiveStatusTone.Neutral;
 
     private CancellationTokenSource? _operationCts;
@@ -66,7 +67,10 @@ internal sealed class HivePersistenceSettingsView : UserControl
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
 
-        _editor = new HiveEditorLayout();
+        _editor = new HiveEditorLayout
+        {
+            LabelColumnWidth = 176
+        };
 
         _backendComboBox = new HiveComboBox
         {
@@ -77,13 +81,13 @@ internal sealed class HivePersistenceSettingsView : UserControl
             new BackendChoice("Embedded", HivePersistenceBackend.Embedded),
             new BackendChoice("SQL Server", HivePersistenceBackend.SqlServer)
         ]);
-        _backendComboBox.SelectedIndexChanged += (_, _) =>
-            UpdateBackendState();
+        _backendComboBox.SelectedIndexChanged += (_, _) => UpdateBackendState();
 
         _embeddedStorageTextBox = CreateTextBox();
+        _serverPicker = new HiveSqlServerInstancePicker(_themeManager);
+        _serverPicker.RefreshRequested += async (_, _) =>
+            await RunOperationAsync(RefreshSqlServerInstancesAsync).ConfigureAwait(true);
 
-        _serverTextBox = CreateTextBox();
-        _portTextBox = CreateTextBox();
         _databaseTextBox = CreateTextBox();
         _authenticationComboBox = new HiveComboBox
         {
@@ -94,164 +98,118 @@ internal sealed class HivePersistenceSettingsView : UserControl
             HiveSqlAuthenticationMode.WindowsIntegrated,
             HiveSqlAuthenticationMode.SqlPassword
         ]);
-        _authenticationComboBox.SelectedIndexChanged += (_, _) =>
-            UpdateAuthenticationState();
+        _authenticationComboBox.SelectedIndexChanged += (_, _) => UpdateAuthenticationState();
 
         _userNameTextBox = CreateTextBox();
         _passwordTextBox = CreateTextBox();
         _passwordTextBox.UseSystemPasswordChar = true;
-
         _credentialStatus = CreateStatusLabel();
 
         _encryptCheckBox = new CheckBox
         {
-            Text = "Encrypt SQL connection",
+            Text = "Encrypt",
             AutoSize = true
         };
-
         _trustServerCertificateCheckBox = new CheckBox
         {
             Text = "Trust server certificate",
             AutoSize = true
         };
-
         _createDatabaseCheckBox = new CheckBox
         {
             Text = "Allow database creation when initializing Hive",
             AutoSize = true
         };
-
         _timeoutNumeric = new NumericUpDown
         {
             Minimum = 1,
             Maximum = 600,
             Value = 30,
-            DecimalPlaces = 0
+            DecimalPlaces = 0,
+            Width = 84
         };
 
         _statusLabel = CreateStatusLabel();
+        _statusLabel.AutoSize = false;
+        _statusLabel.Height = 36;
+        _statusLabel.TextAlign = ContentAlignment.MiddleLeft;
         _statusLabel.AutoEllipsis = true;
 
-        _saveButton = _editor.AddActionButton(
-            "Save",
-            HiveButtonStyle.Primary,
-            96);
-        _loadButton = _editor.AddActionButton(
-            "Load",
-            HiveButtonStyle.Secondary,
-            96);
-        _testButton = _editor.AddActionButton(
-            "Test connection",
-            HiveButtonStyle.Secondary,
-            132);
-        _initializeButton = _editor.AddActionButton(
-            "Initialize Hive",
-            HiveButtonStyle.Secondary,
-            122);
+        _saveButton = _editor.AddActionButton("Save", HiveButtonStyle.Primary, 96);
+        _loadButton = _editor.AddActionButton("Load", HiveButtonStyle.Secondary, 96);
+        _testButton = _editor.AddActionButton("Test connection", HiveButtonStyle.Secondary, 132);
+        _initializeButton = _editor.AddActionButton("Initialize Hive", HiveButtonStyle.Secondary, 122);
 
-        _loadButton.Click += async (_, _) => await RunOperationAsync(LoadAsync);
-        _saveButton.Click += async (_, _) => await RunOperationAsync(SaveAsync);
-        _testButton.Click += async (_, _) => await RunOperationAsync(TestAsync);
-        _initializeButton.Click += async (_, _) => await RunOperationAsync(InitializeDatabaseAsync);
+        _browseEmbeddedButton = new HiveButton
+        {
+            Text = "Browse...",
+            Style = HiveButtonStyle.Secondary,
+            Width = 92,
+            Height = 32,
+            Margin = new Padding(8, 0, 0, 0)
+        };
+        _browseEmbeddedButton.Click += (_, _) => BrowseEmbeddedStorage();
+
+        _editor.FooterPanel.Controls.Add(_statusLabel);
+        _editor.FooterPanel.Resize += (_, _) => UpdateFooterStatusWidth();
+        UpdateFooterStatusWidth();
+
+        _loadButton.Click += async (_, _) => await RunOperationAsync(LoadAsync).ConfigureAwait(true);
+        _saveButton.Click += async (_, _) => await RunOperationAsync(SaveAsync).ConfigureAwait(true);
+        _testButton.Click += async (_, _) => await RunOperationAsync(TestAsync).ConfigureAwait(true);
+        _initializeButton.Click += async (_, _) =>
+            await RunOperationAsync(InitializeDatabaseAsync).ConfigureAwait(true);
 
         _editor.AddField(
             "Backend",
-            "Select which Hive persistence backend this configuration edits. Changing the selector does not activate the new backend and does not migrate data.",
+            "Select Embedded or SQL Server. Changing this selector changes configuration only; it does not migrate or activate data.",
             _backendComboBox,
-            84);
+            70);
 
         _embeddedStorageRow = _editor.FieldsPanel.RowCount;
         _editor.AddField(
-            "Embedded storage",
-            "Application-owned path for the single Embedded Hive database file. The default is under the current user's Local Application Data.",
-            _embeddedStorageTextBox,
-            84);
-        _fieldRowHeights[_embeddedStorageRow] =
-            _editor.FieldsPanel.RowStyles[_embeddedStorageRow].Height;
+            "Storage location",
+            "Application-owned Embedded database file. Choose another .db location when the default Local AppData location is not suitable.",
+            CreateStorageLocationPanel(),
+            74);
 
         AddSqlField(
-            "Server / instance",
-            "Enter any SQL Server host or instance name. This may be a local server, named instance, remote host, IP address, or online SQL Server. Keep the port in the separate Port field.",
-            _serverTextBox);
-
-        AddSqlField(
-            "Port",
-            "Optional TCP port. Leave empty for the server default.",
-            _portTextBox);
+            "Server / port",
+            "Choose a discoverable SQL Server instance or select Custom... to enter a server or named instance. Port is optional.",
+            _serverPicker,
+            78);
 
         SetReadOnlyVisualState(_databaseTextBox, themeManager);
         AddSqlField(
             "Database",
-            "Assigned automatically by Hive. The Settings UI does not allow changing the Hive database name.",
-            _databaseTextBox);
+            "Assigned automatically by Hive from the application name.",
+            _databaseTextBox,
+            62);
 
         AddSqlField(
             "Authentication",
-            "Choose Windows integrated authentication or SQL login credentials.",
-            _authenticationComboBox);
+            "Windows integrated authentication uses the current Windows identity. SQL Server Authentication uses the protected Hive bootstrap credential.",
+            _authenticationComboBox,
+            62);
+
+        _credentialsRow = _editor.FieldsPanel.RowCount;
+        AddSqlField(
+            "SQL credentials",
+            "Shown only for SQL Server Authentication. Passwords are never stored in the settings JSON; only a protected bootstrap reference is retained.",
+            CreateCredentialPanel(),
+            82);
 
         AddSqlField(
-            "SQL user",
-            "Only used with SQL password authentication.",
-            _userNameTextBox);
-
-        var passwordPanel = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 1,
-            RowCount = 2,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty
-        };
-        passwordPanel.ColumnStyles.Add(
-            new ColumnStyle(SizeType.Percent, 100f));
-        passwordPanel.RowStyles.Add(
-            new RowStyle(SizeType.Absolute, 38f));
-        passwordPanel.RowStyles.Add(
-            new RowStyle(SizeType.Absolute, 22f));
-        _passwordTextBox.Dock = DockStyle.Fill;
-        _credentialStatus.Dock = DockStyle.Fill;
-        _credentialStatus.TextAlign = ContentAlignment.MiddleLeft;
-        passwordPanel.Controls.Add(_passwordTextBox, 0, 0);
-        passwordPanel.Controls.Add(_credentialStatus, 0, 1);
-
-        AddSqlField(
-            "SQL password",
-            "Never stored in the settings file. It is protected by the Windows user-scoped DPAPI bootstrap store; the settings file keeps only its bootstrap reference.",
-            passwordPanel,
-            86);
-
-        var securityPanel = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = false,
-            AutoSize = true
-        };
-        securityPanel.Controls.Add(_encryptCheckBox);
-        securityPanel.Controls.Add(_trustServerCertificateCheckBox);
-        AddSqlField(
-            "Connection security",
-            "Transport/security flags for the SQL Server connection.",
-            securityPanel,
-            88);
+            "Security / timeout",
+            "Connection encryption settings and command timeout for persistence operations.",
+            CreateSecurityTimeoutPanel(),
+            70);
 
         _editor.AddField(
             "Initialization",
-            "This option controls whether Hive may create missing storage when initialization is explicitly requested. Save and Test never create or migrate storage.",
+            "Explicit initialization may create missing storage and apply Hive schema migrations. Save and readiness testing remain non-destructive.",
             _createDatabaseCheckBox,
-            72);
-
-        _editor.AddField(
-            "Command timeout",
-            "Command timeout used by the selected persistence backend.",
-            _timeoutNumeric);
-
-        _editor.AddField(
-            "Status",
-            "Readiness tests report connectivity/storage state separately from schema initialization and migration.",
-            _statusLabel,
-            72);
+            70);
 
         _migrationView = new HivePersistenceDataMigrationSettingsView(
             _management,
@@ -291,10 +249,12 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(this);
+
         _backendComboBox.SelectedItem =
             new BackendChoice("SQL Server", HivePersistenceBackend.SqlServer);
         _authenticationComboBox.SelectedItem =
             HiveSqlAuthenticationMode.WindowsIntegrated;
+
         UpdateBackendState();
     }
 
@@ -368,6 +328,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
             return;
 
         ApplyConfiguration(result.Value!);
+        if (result.Value!.Backend == HivePersistenceBackend.SqlServer)
+            await RefreshSqlServerInstancesAsync(cancellationToken).ConfigureAwait(true);
         SetStatus("Persistence configuration loaded.", HiveStatusTone.Success);
     }
 
@@ -705,10 +667,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             return (embeddedConfiguration, null);
         }
 
-        if (!int.TryParse(_portTextBox.Text.Trim(), out var port))
-            port = 0;
-
-        int? resolvedPort = port <= 0 ? null : port;
+        var resolvedPort = _serverPicker.Port;
 
         var authentication =
             _authenticationComboBox.SelectedItem is HiveSqlAuthenticationMode value
@@ -722,7 +681,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         var configuration = new HivePersistenceConfiguration(
             HivePersistenceBackend.SqlServer,
-            _serverTextBox.Text,
+            _serverPicker.ServerName,
             resolvedPort,
             HivePersistenceConfiguration.BuildDatabaseName(_applicationName),
             authentication,
@@ -827,8 +786,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
             : new BackendChoice("SQL Server", HivePersistenceBackend.SqlServer);
         _embeddedStorageTextBox.Text =
             configuration.EmbeddedStoragePath ?? DefaultEmbeddedStoragePath();
-        _serverTextBox.Text = configuration.ServerName;
-        _portTextBox.Text = configuration.Port?.ToString() ?? string.Empty;
+        _serverPicker.SetValue(
+            configuration.ServerName,
+            configuration.Port);
         _databaseTextBox.Text = configuration.Backend == HivePersistenceBackend.SqlServer
             ? configuration.DatabaseName
             : string.Empty;
@@ -868,39 +828,27 @@ internal sealed class HivePersistenceSettingsView : UserControl
             : "Allow database creation when initializing Hive";
     }
 
-    private void SetFieldVisible(
-        int row,
-        bool visible)
+    private void SetFieldVisible(int row, bool visible)
     {
         var fields = _editor.FieldsPanel;
-
-        if (row < 0 ||
-            row >= fields.RowCount)
-        {
+        if (row < 0 || row >= fields.RowCount)
             return;
-        }
 
         var labelPanel = fields.GetControlFromPosition(0, row);
         var editorPanel = fields.GetControlFromPosition(1, row);
 
         if (labelPanel is not null)
             labelPanel.Visible = visible;
-
         if (editorPanel is not null)
             editorPanel.Visible = visible;
 
         if (row >= fields.RowStyles.Count)
             return;
 
-        if (visible)
-        {
-            if (_fieldRowHeights.TryGetValue(row, out var height))
-                fields.RowStyles[row].Height = height;
-        }
-        else
-        {
+        if (visible && _fieldRowHeights.TryGetValue(row, out var height))
+            fields.RowStyles[row].Height = height;
+        else if (!visible)
             fields.RowStyles[row].Height = 0;
-        }
     }
 
     private void AddSqlField(
@@ -915,31 +863,13 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _fieldRowHeights[row] = _editor.FieldsPanel.RowStyles[row].Height;
     }
 
-    private string DefaultEmbeddedStoragePath() =>
-        Path.Combine(
-            Environment.GetFolderPath(
-                Environment.SpecialFolder.LocalApplicationData),
-            "Hive",
-            HivePersistenceConfiguration.BuildDatabaseName(_applicationName),
-            "hive.db");
-
     private void UpdateAuthenticationState()
     {
-        if (SelectedBackend == HivePersistenceBackend.Embedded)
-        {
-            _userNameTextBox.Enabled = false;
-            _passwordTextBox.Enabled = false;
-            _credentialStatus.Enabled = false;
-            _credentialStatus.Text = "Credential not used — Embedded persistence.";
-            return;
-        }
-
         var sqlPassword =
+            SelectedBackend == HivePersistenceBackend.SqlServer &&
             _authenticationComboBox.SelectedItem is HiveSqlAuthenticationMode.SqlPassword;
 
-        _userNameTextBox.Enabled = sqlPassword;
-        _passwordTextBox.Enabled = sqlPassword;
-        _credentialStatus.Enabled = sqlPassword;
+        SetFieldVisible(_credentialsRow, sqlPassword);
 
         if (!sqlPassword)
         {
@@ -947,10 +877,13 @@ internal sealed class HivePersistenceSettingsView : UserControl
             _passwordTextBox.Clear();
         }
 
-        if (!sqlPassword)
+        if (SelectedBackend == HivePersistenceBackend.Embedded)
         {
-            _credentialStatus.Text =
-                "Credential not used — Windows integrated authentication.";
+            _credentialStatus.Text = "Not used for Embedded persistence.";
+        }
+        else if (_authenticationComboBox.SelectedItem is HiveSqlAuthenticationMode.WindowsIntegrated)
+        {
+            _credentialStatus.Text = "Windows identity is used; no SQL credentials are required.";
         }
         else if (_loadedConfiguration?.BootstrapCredential is not null)
         {
@@ -958,7 +891,157 @@ internal sealed class HivePersistenceSettingsView : UserControl
         }
         else
         {
-            _credentialStatus.Text = "Saved credential: not configured.";
+            _credentialStatus.Text = "Enter a password and save to create the protected bootstrap credential.";
+        }
+    }
+
+    private Control CreateStorageLocationPanel()
+    {
+        var panel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
+        panel.Controls.Add(_embeddedStorageTextBox, 0, 0);
+        panel.Controls.Add(_browseEmbeddedButton, 1, 0);
+        return panel;
+    }
+
+    private Control CreateCredentialPanel()
+    {
+        var panel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 2,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
+        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 22f));
+
+        panel.Controls.Add(_userNameTextBox, 0, 0);
+
+        var passwordHost = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 1,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        passwordHost.Controls.Add(_passwordTextBox, 0, 0);
+        panel.Controls.Add(passwordHost, 1, 0);
+        panel.Controls.Add(_credentialStatus, 0, 1);
+        panel.SetColumnSpan(_credentialStatus, 2);
+        return panel;
+    }
+
+    private Control CreateSecurityTimeoutPanel()
+    {
+        var panel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 3,
+            RowCount = 1,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 37f));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 37f));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 26f));
+
+        panel.Controls.Add(_encryptCheckBox, 0, 0);
+        panel.Controls.Add(_trustServerCertificateCheckBox, 1, 0);
+
+        var timeout = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        timeout.Controls.Add(new Label
+        {
+            Text = "Timeout (s)",
+            AutoSize = true,
+            Margin = new Padding(0, 7, 6, 0)
+        });
+        timeout.Controls.Add(_timeoutNumeric);
+        panel.Controls.Add(timeout, 2, 0);
+        return panel;
+    }
+
+    private void BrowseEmbeddedStorage()
+    {
+        using var dialog = new SaveFileDialog
+        {
+            Title = "Choose Embedded Hive database location",
+            Filter = "Hive database (*.db)|*.db|All files (*.*)|*.*",
+            DefaultExt = "db",
+            AddExtension = true,
+            FileName = Path.GetFileName(_embeddedStorageTextBox.Text),
+            InitialDirectory = GetExistingDirectory(_embeddedStorageTextBox.Text),
+            OverwritePrompt = false
+        };
+
+        if (dialog.ShowDialog(FindForm()) == DialogResult.OK)
+            _embeddedStorageTextBox.Text = dialog.FileName;
+    }
+
+    private static string GetExistingDirectory(string path)
+    {
+        var directory = Path.GetDirectoryName(path);
+        return !string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory)
+            ? directory
+            : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+    }
+
+    private async Task RefreshSqlServerInstancesAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedBackend != HivePersistenceBackend.SqlServer)
+            return;
+
+        var preferred = _serverPicker.ServerName;
+        SetStatus("Discovering visible SQL Server instances...", HiveStatusTone.Information);
+
+        try
+        {
+            await _serverPicker
+                .RefreshAsync(preferred, cancellationToken)
+                .ConfigureAwait(true);
+
+            SetStatus(
+                string.IsNullOrWhiteSpace(preferred)
+                    ? "SQL Server instance list refreshed."
+                    : $"SQL Server instance list refreshed. Current selection: {preferred}.",
+                HiveStatusTone.Success);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            SetStatus(
+                "SQL Server instance discovery failed; Custom... remains available.",
+                HiveStatusTone.Warning);
+
+            HiveUiErrorReporter.Report(
+                FindForm(),
+                exception,
+                "Hive Persistence",
+                "SQL Server instance discovery could not be completed. You can enter a server manually using Custom....",
+                _output,
+                _themeManager);
         }
     }
 
@@ -1038,6 +1121,17 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
     private void ThemeManagerOnChanged(object? sender, EventArgs e) =>
         ApplyStatusVisual();
+
+    private void UpdateFooterStatusWidth()
+    {
+        var buttonsWidth = _editor.FooterPanel.Controls
+            .OfType<HiveButton>()
+            .Sum(static button => button.Width + button.Margin.Horizontal + 8);
+
+        _statusLabel.Width = Math.Max(
+            180,
+            _editor.FooterPanel.ClientSize.Width - buttonsWidth - 24);
+    }
 
     private void SetStatus(string text, HiveStatusTone tone)
     {
@@ -1132,6 +1226,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _initializeButton.Enabled = !busy;
         _backendComboBox.Enabled = !busy;
         _embeddedStorageTextBox.Enabled = !busy;
+        _browseEmbeddedButton.Enabled = !busy;
+        _serverPicker.SetEnabled(!busy);
         if (!busy)
             UpdateBackendState();
     }
@@ -1168,6 +1264,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         if (disposing)
         {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
+            _editor.FooterPanel.Resize -= (_, _) => UpdateFooterStatusWidth();
 
             var operationCts = Interlocked.Exchange(
                 ref _operationCts,
