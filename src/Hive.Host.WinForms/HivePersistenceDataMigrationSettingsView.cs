@@ -463,7 +463,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                     _embeddedCreateDatabaseCheckBox),
                 CreateFieldBlock(
                     "Command timeout",
-                    CreateTimeoutInput(_embeddedTimeoutNumeric))));
+                    _embeddedTimeoutNumeric)));
 
         stack.Controls.Add(
             CreateSectionNote(
@@ -496,7 +496,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                     CreateSecurityPanelCore()),
                 CreateFieldBlock(
                     "Command timeout",
-                    CreateTimeoutInput(_sqlTimeoutNumeric))));
+                    _sqlTimeoutNumeric)));
 
         stack.Controls.Add(
             CreateCheckBoxBlock(
