@@ -753,26 +753,77 @@ public sealed class HiveHostCompositionTests
 
 
     [Fact]
-    public async Task GraphFactory_RejectsEmbeddedBeforeSqlBootstrapResolution()
+    public async Task GraphFactory_CreatesCompleteEmbeddedGraph_WithoutSqlBootstrapResolution()
     {
-        var configuration = HivePersistenceConfiguration.Embedded(
-            Path.Combine(
-                Path.GetTempPath(),
-                "Hive",
-                "embedded.db"));
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            "hive-host-embedded",
+            Guid.NewGuid().ToString("N"));
+        var path = Path.Combine(directory, "hive.db");
+        var configuration = HivePersistenceConfiguration.Embedded(path);
         var bootstrap = new TrackingBootstrapCredentialStore();
 
-        var factory = new HiveHostServiceGraphFactory(
-            bootstrap,
-            new InMemoryConfigurationStore(configuration));
+        try
+        {
+            var factory = new HiveHostServiceGraphFactory(
+                bootstrap,
+                new InMemoryConfigurationStore(configuration));
 
-        var result = await factory.CreateAsync(configuration);
+            var result = await factory.CreateAsync(configuration);
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(
-            "hive.host.embedded-persistence-unavailable",
-            result.Error!.Code);
-        Assert.False(bootstrap.ResolveCalled);
+            Assert.True(result.IsSuccess, result.Error?.Message);
+            using var graph = result.Value!;
+
+            Assert.Equal(
+                HivePersistenceBackend.Embedded,
+                graph.PersistenceConfiguration.Backend);
+            Assert.Equal(
+                path,
+                graph.PersistenceConfiguration.EmbeddedStoragePath);
+            Assert.False(bootstrap.ResolveCalled);
+
+            var context = new ResourceAccessContext(
+                DeploymentId.New(),
+                TenantId.New(),
+                PrincipalId.New());
+
+            var beforeInitialization = await graph.Management
+                .TestPersistenceConnectionAsync(
+                    configuration,
+                    context);
+
+            Assert.True(
+                beforeInitialization.IsSuccess,
+                beforeInitialization.Error?.Message);
+            Assert.Equal(
+                HiveDatabaseState.DatabaseNotFound,
+                beforeInitialization.Value!.DatabaseState);
+            Assert.False(File.Exists(path));
+
+            var initialized = await graph.Management
+                .InitializePersistenceAsync(
+                    configuration,
+                    context);
+
+            Assert.True(initialized.IsSuccess, initialized.Error?.Message);
+            Assert.True(File.Exists(path));
+
+            var afterInitialization = await graph.Management
+                .TestPersistenceConnectionAsync(
+                    configuration,
+                    context);
+
+            Assert.True(
+                afterInitialization.IsSuccess,
+                afterInitialization.Error?.Message);
+            Assert.Equal(
+                HiveDatabaseState.Current,
+                afterInitialization.Value!.DatabaseState);
+        }
+        finally
+        {
+            DeleteDatabaseFiles(path);
+        }
     }
 
     private static HiveHostServiceGraph CreateGraph(
