@@ -1090,7 +1090,7 @@ internal sealed class HivePersistenceDataMigrator
                 HiveMigrationColumnKind.Guid => DbType.Guid,
                 HiveMigrationColumnKind.String => DbType.String,
                 HiveMigrationColumnKind.Integer => DbType.Int64,
-                HiveMigrationColumnKind.UtcDateTime => DbType.DateTime,
+                HiveMigrationColumnKind.UtcDateTime => DbType.DateTime2,
                 HiveMigrationColumnKind.Binary => DbType.Binary,
                 _ => throw new InvalidOperationException(
                     $"Unsupported migration column kind: {columns[i].Kind}.")
