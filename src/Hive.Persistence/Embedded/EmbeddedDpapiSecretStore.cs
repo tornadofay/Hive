@@ -15,7 +15,7 @@ using SqlDbType = Hive.Persistence.EmbeddedSqliteDbType;
 
 namespace Hive.Persistence;
 
-public sealed class EmbeddedDpapiSecretStore : ISecretStore
+public sealed class EmbeddedDpapiSecretStore : ISecretStore, IHiveSecretStoreMigrationWriter
 {
     private static readonly Encoding StrictUtf8 = new UTF8Encoding(
         encoderShouldEmitUTF8Identifier: false,
