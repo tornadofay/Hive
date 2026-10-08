@@ -200,11 +200,15 @@ Root-cause inspection found that `CreateTextBox()` does not establish the expect
 
 These are same-slice remediation failures. They do not authorize Slice 6 or 1.19 work.
 
-### Remediation status — latest
+### Remediation completed — latest
 
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+- HivePersistenceSettingsView.CreateTextBox() now defaults native text inputs to DockStyle.Fill, restoring the Embedded database-file editor's existing presentation contract without changing the shared scroll host's intentional content docking behavior.
+- HivePersistenceSettingsView now normalizes the Database Setup fields content after the real HiveScrollHost viewport has a usable size: it remeasures the auto-sized setup content at the current viewport width, resets the local content extent to that preferred height, and re-synchronizes the scroll host. This removes the stale pre-viewport size that was keeping an unnecessary vertical scrollbar active.
+- The fix remains local to HivePersistenceSettingsView; HiveScrollHost, HiveEditorLayout, migration contracts, persistence backends, Slice 6, and 1.19 were not changed.
 
-Implementation changes may now proceed only for the two recorded failures above. After remediation, Active Work must return to **VERIFICATION PENDING** with the focused/full-suite, zero-warning build, and Example Host verification requirements preserved.
+Current state: **VERIFICATION PENDING**.
+
+Developer rerun is required against the corrected source. Preserve the existing focused/full-suite, zero-warning build, and Example Host verification requirements below.
 
 ### Verification handoff
 
