@@ -45,7 +45,7 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+Current state: **VERIFICATION PENDING**.
 
 Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **756 tests: 752 passed, 4 failed, 0 skipped**.
 
@@ -78,6 +78,18 @@ These remain within the authorized Slice 5 presentation/interaction boundary. Th
 - The affected Slice 5 implementation and documentation were re-reviewed for this failure boundary only. No implementation outside the recorded remediation boundary was changed.
 
 Developer rerun is now required:
+
+### Remediation completed
+
+- Database Setup single-value editors now use bounded widths: Backend and Authentication are compact, Database is bounded, SQL Server picker is bounded while retaining a useful path for Custom input, and the Embedded database file path keeps the main available width with Browse directly beside it.
+- Hidden backend sections now collapse their editor row instead of leaving a large blank area. Initialization controls are grouped earlier and compactly so the normal Database Setup surface does not grow vertically without need.
+- SQL Server now presents port **1433** by default, and a blank loaded SQL database name falls back to Hive's deterministic package database name instead of rendering empty.
+- Selecting SQL Server now triggers instance discovery automatically; the explicit Refresh action remains available as a retry/manual refresh.
+- Custom SQL server input expands directly below the instance selector with a layout-aware picker height.
+- Data Migration now presents SOURCE on the left and DESTINATION on the right. SQL destination editors use widths appropriate for the split card, while Embedded storage uses the available destination width.
+- Migration direction remains user-selectable. The UI does not silently rewrite the user's choice on refresh; when the selected source backend is not the active Hive backend, the source is marked INACTIVE and migration/readiness execution is blocked until a matching direction is selected. This preserves the current Management contract without introducing a new source-configuration migration API.
+- Focused automated coverage now checks the bounded setup fields, default database/port, custom-server presentation, source/destination column order, and normal-workspace scroll state.
+- The affected Slice 5 implementation and documentation were re-reviewed after the reported UX feedback. No Slice 6, new migration contract, backend, or 1.19 work was introduced.
 
 ### Verification handoff
 
