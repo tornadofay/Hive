@@ -164,7 +164,13 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
             Dock = DockStyle.Fill,
             Margin = Padding.Empty
         };
-        _serverComboBox.SelectedIndexChanged += (_, _) => UpdateCustomVisibility();
+        _serverComboBox.SelectedIndexChanged += (_, _) =>
+        {
+            if (!_applyingValue)
+                ApplyPortDefaultForSelection();
+
+            UpdateCustomVisibility();
+        };
 
         _customServerTextBox = CreateTextBox();
         _customServerTextBox.PlaceholderText = "Custom server or instance";
