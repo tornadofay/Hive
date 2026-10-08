@@ -998,7 +998,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         CheckBox checkBox)
     {
         var field = CreateVerticalStack();
-        field.Margin = new Padding(0, 0, 0, 10);
+        field.Margin = new Padding(0, 0, 0, 8);
         field.Controls.Add(
             new Label
             {
@@ -1033,8 +1033,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 1,
             RowCount = 2,
-            Margin = new Padding(0, 0, 0, 14),
-            Padding = new Padding(14),
+            Margin = new Padding(0, 0, 0, 8),
+            Padding = new Padding(10),
             BorderStyle = BorderStyle.FixedSingle,
             GrowStyle = TableLayoutPanelGrowStyle.AddRows,
             AccessibleName = title
