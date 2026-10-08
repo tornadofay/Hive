@@ -769,6 +769,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             _directionUserOverride = true;
 
         UpdateRolePanels();
+        UpdateSourceSummary();
 
         if (SelectedDirection == MigrationDirection.EmbeddedToSqlServer &&
             !_initializingDirection &&
