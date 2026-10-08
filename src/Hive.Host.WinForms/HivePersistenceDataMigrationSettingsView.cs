@@ -240,6 +240,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     internal HiveComboBox SqlAuthenticationSelector =>
         _sqlAuthenticationComboBox;
 
+    internal Label StatusLabel => _statusLabel;
+
+    internal FlowLayoutPanel FooterPanel => _editor.FooterPanel;
+
     private Control CreateTopConfigurationRow()
     {
         var table = new TableLayoutPanel
@@ -1428,8 +1432,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         if (disposing)
         {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
-            _sqlServerPicker.RefreshRequested -= async (_, _) =>
-                await RunOperationAsync(RefreshSqlServerInstancesAsync).ConfigureAwait(true);
             _editor.FooterPanel.Resize -= FooterPanelOnResize;
 
             var operationCts = Interlocked.Exchange(
