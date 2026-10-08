@@ -177,6 +177,145 @@ public sealed class SqlDpapiSecretStore : ISecretStore
         }
     }
 
+    internal async Task<Result> ImportForMigrationAsync(
+        DbConnection connection,
+        DbTransaction transaction,
+        Secret secret,
+        SecretMaterial material,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        ArgumentNullException.ThrowIfNull(transaction);
+        ArgumentNullException.ThrowIfNull(secret);
+        ArgumentNullException.ThrowIfNull(material);
+
+        var validation = ValidateMigrationImport(secret, accessContext);
+        if (validation is not null)
+            return Result.Failure(validation);
+
+        if (connection is not SqlConnection sqlConnection ||
+            transaction is not SqlTransaction sqlTransaction)
+        {
+            return Result.Failure(
+                new Error(
+                    "hive.secret.migration-boundary-invalid",
+                    ErrorCategory.Internal,
+                    "The SQL Secret Store migration boundary received an incompatible database transaction."));
+        }
+
+        if (!OperatingSystem.IsWindows())
+        {
+            return Result.Failure(
+                Error.Unsupported(
+                    "hive.secret.dpapi-windows-only",
+                    "Hive DPAPI secret storage is supported only on Windows."));
+        }
+
+        var encryptedValue = Protect(material);
+
+        try
+        {
+            await using var command = CreateCommand(
+                sqlConnection,
+                """
+                INSERT INTO [dbo].[HiveSecrets]
+                (
+                    [SecretId],
+                    [SecretKey],
+                    [DisplayName],
+                    [EncryptedValue],
+                    [OwnerPrincipalId],
+                    [ScopeKind],
+                    [ScopeIdentity],
+                    [ResourceVersion],
+                    [CreatedByPrincipalId],
+                    [CreatedAtUtc],
+                    [CorrelationId],
+                    [CausationId],
+                    [LifecycleStatus],
+                    [LifecycleChangedAtUtc],
+                    [MetadataJson]
+                )
+                VALUES
+                (
+                    @SecretId,
+                    @SecretKey,
+                    @DisplayName,
+                    @EncryptedValue,
+                    @OwnerPrincipalId,
+                    @ScopeKind,
+                    @ScopeIdentity,
+                    @ResourceVersion,
+                    @CreatedByPrincipalId,
+                    @CreatedAtUtc,
+                    @CorrelationId,
+                    @CausationId,
+                    @LifecycleStatus,
+                    @LifecycleChangedAtUtc,
+                    @MetadataJson
+                );
+                """,
+                sqlTransaction);
+
+            AddSecretParameters(
+                command,
+                secret,
+                encryptedValue);
+
+            _ = await command.ExecuteNonQueryAsync(
+                cancellationToken).ConfigureAwait(false);
+
+            return Result.Success();
+        }
+        catch (SqlException exception) when (IsConstraintConflict(exception))
+        {
+            return Result.Failure(
+                Error.Conflict(
+                    "hive.secret.migration-duplicate",
+                    "A destination secret identity or key already exists."));
+        }
+        catch (SqlException)
+        {
+            return Result.Failure(
+                new Error(
+                    "hive.secret.migration-sql-failure",
+                    ErrorCategory.External,
+                    "The destination SQL Secret Store could not persist a migrated secret."));
+        }
+        catch (PlatformNotSupportedException)
+        {
+            return Result.Failure(
+                Error.Unsupported(
+                    "hive.secret.dpapi-windows-only",
+                    "Hive DPAPI secret storage is supported only on Windows."));
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(encryptedValue);
+        }
+    }
+
+    private static Error? ValidateMigrationImport(
+        Secret secret,
+        ResourceAccessContext accessContext)
+    {
+        ValidateAccessContext(accessContext);
+
+        if (secret.Resource.Owner != accessContext.PrincipalId)
+        {
+            return Forbidden(
+                "hive.secret.owner-forbidden",
+                "The current principal does not own the secret.");
+        }
+
+        return secret.Resource.Scope.Matches(accessContext)
+            ? null
+            : Forbidden(
+                "hive.secret.scope-forbidden",
+                "The current access context is outside the secret scope.");
+    }
+
     private async Task<Result<SecretReadResult>> GetCoreAsync(
         SqlConnection connection,
         SecretId id,
