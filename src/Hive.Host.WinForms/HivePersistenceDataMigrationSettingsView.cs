@@ -155,6 +155,9 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         public string SqlDatabaseName =>
             _sqlDatabaseTextBox.Text.Trim();
 
+        public HiveComboBox SqlAuthenticationSelector =>
+            _sqlAuthenticationComboBox;
+
         public HiveSqlAuthenticationMode SqlAuthentication =>
             _sqlAuthenticationComboBox.SelectedItem is HiveSqlAuthenticationMode value
                 ? value
@@ -440,7 +443,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 OverwritePrompt = false
             };
 
-            if (dialog.ShowDialog(FindForm()) == DialogResult.OK)
+            if (dialog.ShowDialog(_root.FindForm()) == DialogResult.OK)
                 _embeddedPathTextBox.Text = dialog.FileName;
         }
 
@@ -895,7 +898,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     internal Label ScopeLabel => _scopeLabel;
 
     internal HiveComboBox SqlAuthenticationSelector =>
-        _destinationEndpoint.SqlAuthentication;
+        _destinationEndpoint.SqlAuthenticationSelector;
 
     internal Label StatusLabel => _statusLabel;
 
@@ -908,7 +911,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     internal Panel DestinationCard => _destinationCard;
 
     internal HiveComboBox SourceAuthenticationSelector =>
-        _sourceEndpoint.SqlAuthentication;
+        _sourceEndpoint.SqlAuthenticationSelector;
 
     internal HiveSqlServerInstancePicker SourceSqlServerPicker =>
         _sourceEndpoint.SqlServerPicker;
@@ -939,7 +942,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45f));
 
         table.Controls.Add(
-            CreateFieldBlock(
+            CreateTopFieldBlock(
                 "Direction",
                 _directionComboBox,
                 220),
@@ -947,7 +950,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             0);
 
         table.Controls.Add(
-            CreateFieldBlock(
+            CreateTopFieldBlock(
                 "Scope",
                 _scopeLabel,
                 180),
@@ -955,6 +958,53 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             0);
 
         return table;
+    }
+
+    private static TableLayoutPanel CreateTopFieldBlock(
+        string title,
+        Control control,
+        int width)
+    {
+        ArgumentNullException.ThrowIfNull(control);
+
+        control.AutoSize = false;
+        control.Dock = DockStyle.Left;
+        control.Width = width;
+        if (control.Height < 36)
+            control.Height = 36;
+
+        var block = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = new Padding(0, 0, 8, 0),
+            Padding = Padding.Empty,
+            GrowStyle = TableLayoutPanelGrowStyle.FixedSize
+        };
+
+        block.RowStyles.Add(new RowStyle(SizeType.Absolute, 21f));
+        block.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
+
+        block.Controls.Add(
+            new Label
+            {
+                Text = title,
+                Dock = DockStyle.Fill,
+                AutoSize = false,
+                Height = 21,
+                Font = new Font(
+                    SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
+                    FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = Padding.Empty
+            },
+            0,
+            0);
+
+        block.Controls.Add(control, 0, 1);
+        return block;
     }
 
     private static TableLayoutPanel CreateRoleColumns() =>
@@ -1157,16 +1207,23 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 return;
             }
 
+            var sourceStatus = sourceTest.Value
+                ?? throw new InvalidOperationException(
+                    "Source persistence connection test returned no status.");
+            var destinationStatus = destinationTest.Value
+                ?? throw new InvalidOperationException(
+                    "Destination persistence connection test returned no status.");
+
             var tone =
-                destinationTest.Value!.DatabaseState == HiveDatabaseState.DatabaseNotFound
+                destinationStatus.DatabaseState == HiveDatabaseState.DatabaseNotFound
                     ? HiveStatusTone.Information
-                    : sourceTest.Value!.DatabaseState == HiveDatabaseState.Current &&
-                      destinationTest.Value.DatabaseState == HiveDatabaseState.Current
+                    : sourceStatus.DatabaseState == HiveDatabaseState.Current &&
+                      destinationStatus.DatabaseState == HiveDatabaseState.Current
                         ? HiveStatusTone.Success
                         : HiveStatusTone.Warning;
 
             SetStatus(
-                $"Source: {FormatStatus(sourceTest.Value)} Destination: {FormatStatus(destinationTest.Value)}",
+                $"Source: {FormatStatus(sourceStatus)} Destination: {FormatStatus(destinationStatus)}",
                 tone);
         }
         catch (ArgumentException exception)
