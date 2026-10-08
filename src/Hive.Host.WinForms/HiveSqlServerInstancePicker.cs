@@ -361,7 +361,10 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         }
         else
         {
-            _serverComboBox.SelectedIndex = Math.Max(0, _serverComboBox.Items.Count - 1);
+            _serverComboBox.SelectedIndex =
+                _serverComboBox.Items.Count > 1
+                    ? 0
+                    : _serverComboBox.Items.Count - 1;
         }
 
         UpdateCustomVisibility();
