@@ -128,6 +128,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _sqlAuthenticationComboBox.SelectedIndexChanged += (_, _) =>
             UpdateSqlAuthenticationState();
 
+        _sqlAuthenticationField = CreateFieldBlock(
+            "Authentication",
+            _sqlAuthenticationComboBox);
+
         _sqlUserNameTextBox = CreateTextBox();
         _sqlPasswordTextBox = CreateTextBox();
         _sqlPasswordTextBox.UseSystemPasswordChar = true;
@@ -236,10 +240,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             HivePersistenceConfiguration.BuildDatabaseName(_applicationName);
         _sqlAuthenticationComboBox.SelectedItem =
             HiveSqlAuthenticationMode.WindowsIntegrated;
-
-        _sqlAuthenticationField = CreateFieldBlock(
-            "Authentication",
-            _sqlAuthenticationComboBox);
 
         Controls.Add(_editor);
         Dock = DockStyle.Fill;
@@ -638,12 +638,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         return grid;
     }
 
-    private static TableLayoutPanel CreateEmbeddedPathPanel()
-    {
-        throw new InvalidOperationException(
-            "CreateEmbeddedPathPanel must be initialized by the view instance.");
-    }
-
     private Control CreateEmbeddedPathPanelCore()
     {
         var path = new TableLayoutPanel
@@ -697,12 +691,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             MaximumSize = new Size(0, 48),
             Margin = new Padding(0, 0, 0, 10)
         };
-
-    private static Control CreateSecurityPanel()
-    {
-        throw new InvalidOperationException(
-            "CreateSecurityPanel must be initialized by the view instance.");
-    }
 
     private Control CreateSecurityPanelCore()
     {
@@ -1165,13 +1153,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             active &&
             _sqlAuthenticationComboBox.SelectedItem is HiveSqlAuthenticationMode.SqlPassword;
 
-        _sqlAuthenticationComboBox.Visible = active;
+        _sqlAuthenticationField.Visible = active;
+
         if (_sqlCredentialField is not null)
-        {
-            _sqlCredentialField.Visible = true;
-            if (_sqlCredentialField.RowStyles.Count > 1)
-                _sqlCredentialField.RowStyles[1].Height = sqlPassword ? 52f : 0f;
-        }
+            _sqlCredentialField.Visible = sqlPassword;
 
         _sqlUserNameTextBox.Visible = sqlPassword;
         _sqlPasswordTextBox.Visible = sqlPassword;
