@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **IMPLEMENTATION IN PROGRESS — VERIFICATION PENDING**
+Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
 
 ## Phase 1.18A — Embedded Persistence Profile
 ### Slice 4 — Full-Data Migration
@@ -55,3 +55,6 @@ Tests to run: **HivePersistenceDataMigrationTests**; broader **Hive.Tests** suit
 Developer verification on 2026-10-08 reported 749 tests with 748 passed and 1 failed: `FullDataMigration_RoundTripsAllCurrentDurableStateAndReprotectsSecrets` failed at its Embedded event-stream assertion because the migrated WorkItem stream contains 2 legitimate events (`work-item.created` version 1 plus `migration.representative` version 2), while the test still expected a single event. Migration destination fingerprint verification itself succeeded. This remained an in-scope Slice 4 migration-test assertion boundary and authorized same-slice remediation.
 
 Same-slice remediation updated the migration test to assert both persisted WorkItem events and their versions/types, and aligned the stored `EventSnapshotVersion` seed value with the representative snapshot at stream version 2. No production migration behavior was changed. Developer re-verification remains required.
+
+
+Developer verification on 2026-10-08 reported 749 tests with 748 passed and 1 failed: `FullDataMigration_RoundTripsAllCurrentDurableStateAndReprotectsSecrets` reached the second migration (Embedded → SQL Server), but the migration failed during destination fingerprint verification with `hive.persistence.data-migration.verification-failed`: "The migration destination does not exactly match the source logical dataset." The first SQL Server → Embedded migration fingerprint verification succeeded in the same run. The failure is confined to the Slice 4 cross-backend fingerprint/round-trip verification boundary and is therefore an in-scope same-slice remediation.
