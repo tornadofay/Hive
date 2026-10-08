@@ -444,6 +444,16 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 _embeddedPathTextBox.Text = dialog.FileName;
         }
 
+        private static string GetExistingDirectory(string path)
+        {
+            var directory = Path.GetDirectoryName(path);
+            return !string.IsNullOrWhiteSpace(directory) &&
+                   Directory.Exists(directory)
+                ? directory
+                : Environment.GetFolderPath(
+                    Environment.SpecialFolder.LocalApplicationData);
+        }
+
         private string DefaultEmbeddedPath() =>
             Path.Combine(
                 Environment.GetFolderPath(
@@ -506,7 +516,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         private static TableLayoutPanel CreateFormGrid(
             params Control[] controls)
         {
-            ArgumentException.ThrowIfNullOrEmpty(controls);
+            if (controls.Length == 0)
+                throw new ArgumentException(
+                    "At least one control is required.",
+                    nameof(controls));
 
             var grid = new TableLayoutPanel
             {
@@ -699,8 +712,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 Height = 36,
                 Margin = Padding.Empty
             };
-
-        private static NumericUpDown CreateTimeoutInputStatic() => CreateTimeoutInput();
 
         private static void SetReadOnlyVisualState(
             TextBox textBox,
