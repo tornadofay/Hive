@@ -113,7 +113,7 @@ public sealed class HiveSettingsView : UserControl
                 SettingsPageKey.Agents));
         var persistenceNode = CreatePageNode(
             "Persistence",
-            "One global SQL Server / LocalDB configuration editor and connection test.",
+            "One global Embedded / SQL Server persistence configuration editor with Database Setup and Data Migration.",
             SettingsPageKey.Persistence);
         navigationRoot.Nodes.Add(persistenceNode);
 
