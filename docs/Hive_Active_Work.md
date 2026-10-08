@@ -45,9 +45,9 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **IMPLEMENTATION COMPLETE; VERIFICATION PENDING**.
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 
-Developer verification evidence received: full `Hive.Tests` suite passed **752/752** (0 failed, 0 skipped) on 2026-10-08. The Slice 5 verification gate remains open because the required zero-warning developer build and Example Host manual verification have not yet been recorded.
+Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **754 tests: 750 passed, 4 failed, 0 skipped**. All four failures are the same in-scope persistence-settings construction defect: `HivePersistenceDataMigrationSettingsView` assigns `HiveEditorLayout.LabelColumnWidth = 0`, while `HiveEditorLayout` rejects zero values. The same constructor exception is also observed by the developer when opening Hive Configuration and when opening Persistence. This blocks the Slice 5 UI surface and requires same-slice remediation before returning to verification pending.
 
 Same-slice remediation completed within the recorded Slice 5 boundary. It remains limited to Database Setup and Data Migration presentation, SQL Server instance discovery/custom selection, authentication-aware field presentation, Embedded storage browsing, source/destination migration layout, top-row Direction + Scope placement, and footer status/actions. No new backend, migration capability, persistence contract, Slice 6 work, or 1.19 work was introduced.
 
@@ -58,7 +58,7 @@ Implementation checkpoint:
 - SQL Server instance discovery/custom picker, Browse-enabled Embedded storage, compact grouped setup/migration rows, Destination-left / Source-right migration roles, authentication-aware SQL destination controls, top-row Direction + Scope, and footer status/actions;
 - bounded automated coverage for Embedded host composition, first-run defaults, configuration fallback, Settings tabs/backend selector, and the persistence UX behavior.
 
-Verification status: developer reported post-remediation compile errors in `HiveUiPolishTests.cs` and the persistence settings UI. Those concrete same-slice compilation failures have been remediated: the picker now exposes its selector, the missing Embedded default-path helper is restored, nullable `Font` construction is guarded, layout helper return types are concrete, and the UI regression assertions use `ControlCollection.Contains` correctly. Developer rerun is required before this remediation can be considered verified.
+Verification status: the earlier post-remediation compilation failures were remediated, but the latest developer rerun exposed the runtime construction defect recorded above. Same-slice remediation is authorized only for this recorded Slice 5 failure boundary.
 
 ### Verification handoff
 
