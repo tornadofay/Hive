@@ -95,7 +95,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _databaseTextBox = CreateTextBox();
         SetReadOnlyVisualState(_databaseTextBox, themeManager);
-        _databaseTextBox.Width = 320;
+        _databaseTextBox.Width = 280;
         _databaseTextBox.Dock = DockStyle.Left;
 
         _authenticationComboBox = new HiveComboBox
@@ -141,9 +141,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _embeddedTimeoutNumeric = CreateTimeoutInput();
         _sqlTimeoutNumeric = CreateTimeoutInput();
 
-        _backendComboBox.Width = 220;
+        _backendComboBox.Width = 96;
         _backendComboBox.Dock = DockStyle.Left;
-        _authenticationComboBox.Width = 220;
+        _authenticationComboBox.Width = 160;
         _authenticationComboBox.Dock = DockStyle.Left;
 
         _statusLabel = CreateStatusLabel();
@@ -237,7 +237,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _databaseTextBox.Text = HivePersistenceConfiguration.BuildDatabaseName(_applicationName);
         _embeddedStorageTextBox.Text = DefaultEmbeddedStoragePath();
-        _serverPicker.SetValue("localhost", 1433);
+        _serverPicker.Port = 1433;
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(this);
@@ -854,7 +854,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             CreateFieldBlock(
                 "Database file",
                 CreateStorageLocationPanel(),
-                520));
+                720));
 
         var lifecycle = CreateFormGrid(
             CreateCheckBoxField(
@@ -1326,7 +1326,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
         if (SelectedBackend != HivePersistenceBackend.SqlServer)
             return;
 
-        var preferred = _serverPicker.ServerName;
+        var preferred = _loadedConfiguration is null
+            ? null
+            : _serverPicker.ServerName;
         SetStatus("Discovering visible SQL Server instances...", HiveStatusTone.Information);
 
         try
