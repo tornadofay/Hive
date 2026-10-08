@@ -105,7 +105,7 @@ Every known capability uses the same state-selector column. **Current** is the e
 
 This is the implemented Phase 1.16 follow-up capability presentation. See [Phase 1.16 Follow-Up — Model Information](../plan/Phase1/1.16-Follow-Up.md) for the detailed scope and verification contract.
 
-The Persistence page is one global `HivePersistenceConfiguration` editor using the existing HiveTabControl:
+The Persistence page is one global `HivePersistenceConfiguration` editor using the existing HiveTabControl. It uses a structured section hierarchy rather than the generic repeated-field editor: backend selection first, then one backend-specific connection section, with consistent label-above-input field blocks and grouped related settings:
 
 `[ Database Setup ] [ Data Migration ]`
 
@@ -115,11 +115,11 @@ The Persistence page is one global `HivePersistenceConfiguration` editor using t
 
 For **Embedded**, the page shows the configured local Hive storage location plus backend status and explicit initialization/readiness actions. It does not require an externally installed database server and does not expose a SQL connection string.
 
-For **SQL Server**, the Server / port field uses a Hive SQL Server instance picker. It lists currently visible SQL Server instances discovered through the SQL client enumerator, keeps Custom... as the final choice, and reveals a free-form server/instance textbox for custom targets. Discovery is best-effort and may not return every visible/available instance, so Custom... is always retained. Port remains an optional TCP value alongside the instance selector. The Database field remains read-only and assigned automatically to Hive's package database name.
+For **SQL Server**, the Server / port field uses a Hive SQL Server instance picker. It combines currently advertised SQL Server instances from the SQL client enumerator with installed local SQL Server instance names from the Windows SQL Server instance registry inventory, de-duplicates them, keeps `Custom...` as the final choice, and reveals a free-form server/instance textbox for custom targets. Discovery remains best-effort for network visibility, so `Custom...` is always retained. Port remains an optional TCP value alongside the instance selector. The Database field remains read-only and assigned automatically to Hive's package database name.
 
 Save and readiness/connection Test remain non-destructive. The explicit `Initialize Hive` lifecycle action may create or initialize the selected persistence backend when allowed and apply its schema migrations. Initialization must never occur implicitly from Save, Test, or ordinary Settings-page navigation.
 
-**Data Migration** is the complete bidirectional migration surface:
+**Data Migration** is the complete bidirectional migration surface. The page is a full-width two-column workspace rather than a free-form editor:
 
 `SQL Server → Embedded`
 `Embedded → SQL Server`
