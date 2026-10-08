@@ -151,11 +151,17 @@ Developer rerun reported **758 tests: 756 passed, 2 failed, 0 skipped**. The two
 
 These are same-slice remediation failures. They do not authorize Slice 6 or 1.19 work.
 
-### Remediation status
+### Remediation completed — 2026-10-08 21:24
 
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+- The Database Setup Backend selector now has a structurally bounded 80px field host, so the shared TableLayoutPanel sizing cannot stretch it to the full workspace width.
+- All explicitly bounded Database Setup editors now use fixed-width hosts plus matching minimum/maximum width constraints, preserving the requested professional field widths through nested WinForms layout.
+- The SQL password credential row now collapses its containing SQL section row when password authentication is not selected, preventing hidden credential controls from consuming layout height.
+- Database Setup vertical spacing was tightened within this Slice 5 view so the normal workspace does not reserve avoidable padding between sections, fields, and descriptions.
+- No migration contract, persistence backend, host composition boundary, Slice 6 behavior, or 1.19 work was changed.
 
-Implementation changes may now proceed only for the two recorded failures above. After remediation, Active Work must return to **VERIFICATION PENDING** with the focused/full rerun requirements preserved.
+Current state: **VERIFICATION PENDING**.
+
+Developer rerun is required against the corrected source. Preserve the existing focused/full-suite, zero-warning build, and Example Host manual verification requirements below.
 
 ### Verification handoff
 
