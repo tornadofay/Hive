@@ -174,8 +174,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 CreateFieldBlock("Backend", _backendComboBox)));
 
         _embeddedSection = CreateEmbeddedSection();
-        _sqlSection = CreateSqlSection();
         _sqlCredentialsField = CreateCredentialsField();
+        _sqlSection = CreateSqlSection();
 
         AddEditorSection(backendSection);
         AddEditorSection(_embeddedSection);
