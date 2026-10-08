@@ -142,6 +142,21 @@ These failures are same-slice regressions. They do not authorize Slice 6 or 1.19
 
 Developer re-verification is still required; the reported 758-test run remains the latest executed result.
 
+### Verification failure — 2026-10-08 21:24
+
+Developer rerun reported **758 tests: 756 passed, 2 failed, 0 skipped**. The two failures remain within the authorized Slice 5 UI/layout boundary:
+
+- `HivePersistenceSettingsView_UsesDatabaseSetupAndDataMigrationTabs`: the SQL Authentication selector is measured at **946 px**, outside the required bounded field width of **180–240 px**. The failing assertion is the focused compact-sizing contract for the Database Setup surface.
+- `HivePersistenceSettingsAndMigrationFitNormalWorkspaceWithoutScrollOverflow`: the Database Setup `HiveScrollHost` still reports `VerticalScrollState.CanScroll == true` at the normal 1160×760 workspace size, violating the Slice 5 requirement to fit the intended settings surface without avoidable vertical scrolling.
+
+These are same-slice remediation failures. They do not authorize Slice 6 or 1.19 work.
+
+### Remediation status
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+Implementation changes may now proceed only for the two recorded failures above. After remediation, Active Work must return to **VERIFICATION PENDING** with the focused/full rerun requirements preserved.
+
 ### Verification handoff
 
 Developer rerun is required:
