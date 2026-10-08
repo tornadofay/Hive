@@ -240,6 +240,35 @@ public sealed class HiveUiPolishTests
         Assert.Equal(16, statusLabel.Margin.Left);
     }
 
+    [WinFormsFact]
+    public void HivePersistenceSettingsView_UsesDatabaseSetupAndDataMigrationTabs()
+    {
+        var (management, _) =
+            HiveWorkspaceLifecycleTests.ManagementFacadeProxy.Create();
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var view = new HivePersistenceSettingsView(
+            management,
+            new ResourceAccessContext(
+                DeploymentId.New(),
+                TenantId.New(),
+                PrincipalId.New()),
+            themeManager,
+            "Hive.TestHost");
+
+        Assert.Equal(2, view.NavigationTabs.TabPages.Count);
+        Assert.Equal("Database Setup", view.NavigationTabs.TabPages[0].Text);
+        Assert.Equal("Data Migration", view.NavigationTabs.TabPages[1].Text);
+        Assert.Equal(2, view.BackendSelector.Items.Count);
+        Assert.Equal("Embedded", view.BackendSelector.Items[0]?.ToString());
+        Assert.Equal("SQL Server", view.BackendSelector.Items[1]?.ToString());
+
+        view.BackendSelector.SelectedIndex = 0;
+
+        var testButton = FindControl<HiveButton>(view, "Test readiness");
+        Assert.NotNull(testButton);
+    }
+
     [Fact]
     public void HiveSettingsView_OpensOverviewByDefault()
     {
