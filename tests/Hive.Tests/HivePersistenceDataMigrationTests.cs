@@ -1057,7 +1057,7 @@ public sealed class HivePersistenceDataMigrationTests
 
         var serverName = builder.DataSource;
         int? port = null;
-        var separator = serverName.LastIndexOf(',', StringComparison.Ordinal);
+        var separator = serverName.LastIndexOf(",", StringComparison.Ordinal);
 
         if (separator > 0 &&
             int.TryParse(
