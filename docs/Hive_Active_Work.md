@@ -45,7 +45,7 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **VERIFICATION PENDING**.
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 
 Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **756 tests: 752 passed, 4 failed, 0 skipped**.
 
@@ -54,6 +54,24 @@ Concrete same-slice failures reported:
 - Clicking Persistence in the Example Host reaches the same construction failure.
 - `HiveSqlServerInstanceDiscovery_FormatsLocalInstancesForLocalConnection` expects installed local SQL Server instances to be formatted as `localhost` / `localhost\\HiveSql`, but the implementation currently uses the supplied machine name (`DEVBOX`), producing `DEVBOX` / `DEVBOX\\HiveSql`.
 - These failures are within the already-authorized Slice 5 settings/discovery presentation boundary and do not authorize Slice 6 or 1.19 work.
+
+### Verification failure — 2026-10-08 10:54
+
+Developer reported a real Slice 5 manual/runtime failure:
+
+- Database Setup connection test reported `Connection test failed: SQL Server connection test failed.`
+
+The same feedback establishes the migration UI requirement that Source and Destination are independent editable endpoints. The existing Slice 5 implementation still derives the migration source from Hive's currently active persistence configuration in Management and was therefore designed too narrowly.
+
+### Remediation authorization
+
+The user explicitly authorized correction of this requirement after it was restated:
+
+- Source and Destination must both be editable endpoint configurations.
+- Migration direction must not depend on the current active Hive backend.
+- Management migration must consume the explicit SourceConfiguration supplied by the caller rather than loading the active configuration as the source.
+- SQL Server and Embedded source/destination editors must remain available in both directions.
+- This is a corrective expansion of the existing Slice 5 migration operation boundary, not authorization for Slice 6 or 1.19.
 
 ### New developer/manual feedback — 2026-10-08
 
