@@ -45,22 +45,23 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+Current state: **IMPLEMENTATION COMPLETE; VERIFICATION PENDING**.
 
 Developer verification evidence received: full `Hive.Tests` suite passed **752/752** (0 failed, 0 skipped) on 2026-10-08. The Slice 5 verification gate remains open because the required zero-warning developer build and Example Host manual verification have not yet been recorded.
 
-Same-slice remediation boundary: improve the already-authorized Slice 5 Persistence Settings UX only. This remediation is limited to Database Setup and Data Migration presentation, SQL Server instance discovery/custom selection, authentication-aware field presentation, Embedded storage browsing, source/destination migration layout, top-row Direction + Scope placement, and footer status/actions. No new backend, migration capability, persistence contract, Slice 6 work, or 1.19 work is authorized.
+Same-slice remediation completed within the recorded Slice 5 boundary. It remains limited to Database Setup and Data Migration presentation, SQL Server instance discovery/custom selection, authentication-aware field presentation, Embedded storage browsing, source/destination migration layout, top-row Direction + Scope placement, and footer status/actions. No new backend, migration capability, persistence contract, Slice 6 work, or 1.19 work was introduced.
 
-Implemented checkpoint:
+Implementation checkpoint:
 - backend-aware real host composition for SQL Server and Embedded;
 - Embedded first-run default under application-owned Local AppData storage while the direct/default developer configuration store remains SQL Server LocalDB;
 - Persistence Settings `Database Setup | Data Migration` tabs with backend selection, readiness/initialization controls, fixed `All Hive Data` migration scope, and Management-only migration invocation;
-- bounded automated coverage for Embedded host composition, first-run defaults, configuration fallback, and the Settings tabs/backend selector.
+- SQL Server instance discovery/custom picker, Browse-enabled Embedded storage, compact grouped setup/migration rows, Destination-left / Source-right migration roles, authentication-aware SQL destination controls, top-row Direction + Scope, and footer status/actions;
+- bounded automated coverage for Embedded host composition, first-run defaults, configuration fallback, Settings tabs/backend selector, and the persistence UX behavior.
 
-Verification results are intentionally not claimed yet because this environment could not execute the developer's Windows/.NET test and build commands, and the required Example Host manual verification has not been performed here.
+Verification status: the developer previously reported **752/752** tests passed before this UX remediation. The post-remediation implementation still requires developer rerun of the focused/full suite, the zero-warning developer build, and the required Example Host manual verification.
 
 ### Verification handoff
 
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
-Tests to run: `HiveUiPolishTests` for the persistence UX changes; then the full `Hive.Tests` suite and a zero-warning developer build under the repository's standing **Treat warnings as errors** configuration. Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`.
+Tests to run: `HiveUiPolishTests` for the persistence UX changes; then the full `Hive.Tests` suite and a zero-warning developer build under the repository's standing **Treat warnings as errors** configuration.
