@@ -280,6 +280,7 @@ internal sealed class HivePersistenceDataMigrator
         HivePersistenceConfiguration destinationConfiguration,
         SecretMaterial? destinationSqlCredential,
         Guid migrationId,
+        ResourceAccessContext accessContext,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(sourceConfiguration);
@@ -312,6 +313,7 @@ internal sealed class HivePersistenceDataMigrator
                     destinationSqlCredential,
                     destinationConfiguration,
                     migrationId,
+                    accessContext,
                     cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
@@ -333,6 +335,7 @@ internal sealed class HivePersistenceDataMigrator
         SecretMaterial? sourceSqlCredential,
         HivePersistenceConfiguration destinationConfiguration,
         Guid migrationId,
+        ResourceAccessContext accessContext,
         CancellationToken cancellationToken)
     {
         var sourceOptions = HiveDatabaseOptions.FromConfiguration(
@@ -376,6 +379,7 @@ internal sealed class HivePersistenceDataMigrator
         SecretMaterial? sourceSqlCredential,
         HivePersistenceConfiguration destinationConfiguration,
         Guid migrationId,
+        ResourceAccessContext accessContext,
         CancellationToken cancellationToken)
     {
         await using var source = new EmbeddedPersistenceDatabase(
