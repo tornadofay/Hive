@@ -149,8 +149,6 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     private readonly TableLayoutPanel _layout;
     private readonly TableLayoutPanel _topRow;
     private readonly TableLayoutPanel _customRow;
-    private CancellationTokenSource? _autoRefreshCts;
-    private bool _autoRefreshStarted;
     private bool _applyingValue;
 
     public event EventHandler? RefreshRequested;
@@ -241,38 +239,6 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     internal HiveComboBox ServerSelector => _serverComboBox;
 
     internal TextBox CustomServerInput => _customServerTextBox;
-
-    protected override void OnCreateControl()
-    {
-        base.OnCreateControl();
-
-        if (_autoRefreshStarted || DesignMode || IsDisposed || Disposing)
-            return;
-
-        _autoRefreshStarted = true;
-        _autoRefreshCts = new CancellationTokenSource();
-        _ = AutoRefreshAsync(_autoRefreshCts.Token);
-    }
-
-    private async Task AutoRefreshAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            await RefreshAsync(
-                    ServerName,
-                    cancellationToken)
-                .ConfigureAwait(true);
-        }
-        catch (OperationCanceledException)
-            when (cancellationToken.IsCancellationRequested)
-        {
-        }
-        catch
-        {
-            // Discovery is best-effort during initial presentation.
-            // Custom... remains available and the explicit Refresh action can retry.
-        }
-    }
 
     public string ServerName
     {
@@ -455,11 +421,6 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
 
-            var autoRefreshCts = Interlocked.Exchange(
-                ref _autoRefreshCts,
-                null);
-            autoRefreshCts?.Cancel();
-            autoRefreshCts?.Dispose();
         }
 
         base.Dispose(disposing);
