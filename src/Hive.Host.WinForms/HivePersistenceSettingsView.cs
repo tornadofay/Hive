@@ -273,6 +273,14 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
     internal Label StatusLabel => _statusLabel;
 
+    internal TextBox DatabaseInput => _databaseTextBox;
+
+    internal HiveComboBox AuthenticationSelector => _authenticationComboBox;
+
+    internal TextBox EmbeddedStorageInput => _embeddedStorageTextBox;
+
+    internal int SqlPort => _serverPicker.Port ?? 0;
+
     private async void TabsSelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_tabs.SelectedIndex != 1 ||
@@ -846,7 +854,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             CreateFieldBlock(
                 "Database file",
                 CreateStorageLocationPanel(),
-                600));
+                520));
 
         var lifecycle = CreateFormGrid(
             CreateCheckBoxField(
@@ -881,7 +889,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             CreateFieldBlock(
                 "Database",
                 _databaseTextBox,
-                320),
+                280),
             CreateFieldBlock(
                 "Authentication",
                 _authenticationComboBox,
@@ -891,7 +899,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             CreateFieldBlock(
                 "Connection security",
                 CreateSecurityCheckBoxHost(),
-                360),
+                280),
             CreateFieldBlock(
                 "Command timeout",
                 CreateTimeoutField(_sqlTimeoutNumeric),
