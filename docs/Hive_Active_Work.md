@@ -45,7 +45,7 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **VERIFICATION PENDING**.
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 
 Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **756 tests: 752 passed, 4 failed, 0 skipped**.
 
@@ -113,6 +113,16 @@ Developer verification reported eight in-scope Slice 5 compilation failures afte
 - \`PersistenceDataMigrationExampleView\`: Example Host still used the old one-argument \`HivePersistenceMigrationRequest\` constructor.
 
 These are same-slice remediation defects in the implementation just changed; no new roadmap capability is being requested.
+
+### Verification failure — 2026-10-08 18:55
+
+Developer rerun reported **758 tests: 752 passed, 6 failed, 0 skipped**. The six failures are within the Slice 5 UI/picker remediation boundary:
+
+- `HivePersistenceSettingsView_UsesSqlServerPickerCustomChoiceAndFooterStatus`: `HivePersistenceDataMigrationSettingsView.MigrationEndpointEditor` construction throws `ArgumentException` because its fixed-size one-cell `TableLayoutPanel` attempts to add both backend panels.
+- `HivePersistenceDataMigrationView_UsesTopDirectionAndScopeAndSqlAuthentication`: the same endpoint-editor fixed-size table-layout construction failure.
+- `HiveSqlServerInstancePicker_DefaultsPortByInstanceKind`: after the picker is reset with only `localhost` and a null preferred server, the stale named-instance selection is retained as a custom endpoint instead of selecting the discovered local default and applying port 1433.
+
+These failures are same-slice regressions. They do not authorize Slice 6 or 1.19 work.
 
 ### Compilation remediation completed — 2026-10-08 18:45
 
