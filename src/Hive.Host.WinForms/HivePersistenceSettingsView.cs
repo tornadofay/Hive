@@ -1115,7 +1115,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Margin = Padding.Empty
         };
 
-        editor.AutoSize = false;
+        var dynamicHeightEditor = editor is HiveSqlServerInstancePicker;
+
+        editor.AutoSize = dynamicHeightEditor;
         editor.Margin = Padding.Empty;
 
         if (editorWidth is > 0)
@@ -1139,17 +1141,21 @@ internal sealed class HivePersistenceSettingsView : UserControl
             {
                 Dock = DockStyle.Left,
                 AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Width = editorWidth.Value,
                 MinimumSize = new Size(
                     editorWidth.Value,
-                    editorHeight),
+                    dynamicHeightEditor ? 36 : editorHeight),
                 MaximumSize = new Size(
                     editorWidth.Value,
                     0),
                 Margin = Padding.Empty,
                 Padding = Padding.Empty
             };
-            editor.Height = editorHeight;
+
+            if (!dynamicHeightEditor)
+                editor.Height = editorHeight;
+
             editorHost.Controls.Add(editor);
 
             block.Controls.Add(label, 0, 0);
