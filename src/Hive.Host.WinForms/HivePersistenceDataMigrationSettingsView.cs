@@ -381,7 +381,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             ("Authentication", "—"),
             ("Mode", "Read-only source"));
 
-    private static Control CreateSummaryPanel(
+    private Control CreateSummaryPanel(
         string backend,
         string subtitle,
         params (string Title, string Value)[] fields)
@@ -414,7 +414,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 Text = subtitle,
                 Dock = DockStyle.Fill,
                 AutoEllipsis = true,
-                ForeColor = SystemColors.GrayText,
+                ForeColor = _themeManager.Theme.Palette.MutedText,
                 Margin = new Padding(0, 0, 0, 12)
             },
             0,
@@ -502,7 +502,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 Text = "Schema and data migration are controlled by the Management migration boundary.",
                 Dock = DockStyle.Fill,
                 AutoEllipsis = true,
-                ForeColor = SystemColors.GrayText,
+                ForeColor = _themeManager.Theme.Palette.MutedText,
                 Margin = new Padding(0, 8, 0, 0)
             },
             0,
