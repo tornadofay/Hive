@@ -266,6 +266,12 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
     internal HiveComboBox BackendSelector => _backendComboBox;
 
+    internal HiveSqlServerInstancePicker SqlServerPicker => _serverPicker;
+
+    internal HiveButton BrowseEmbeddedButton => _browseEmbeddedButton;
+
+    internal Label StatusLabel => _statusLabel;
+
     private async void TabsSelectedIndexChanged(object? sender, EventArgs e)
     {
         if (_tabs.SelectedIndex != 1 ||
@@ -1264,7 +1270,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
         if (disposing)
         {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
-            _editor.FooterPanel.Resize -= (_, _) => UpdateFooterStatusWidth();
 
             var operationCts = Interlocked.Exchange(
                 ref _operationCts,
