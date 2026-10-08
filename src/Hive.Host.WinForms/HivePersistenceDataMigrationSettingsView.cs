@@ -348,7 +348,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             Dock = DockStyle.Top,
             Height = 26,
             Font = new Font(
-                SystemFonts.MessageBoxFont,
+                SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
                 FontStyle.Bold),
             Margin = Padding.Empty
         };
@@ -402,7 +402,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             {
                 Text = backend,
                 Dock = DockStyle.Fill,
-                Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
+                Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
                 Margin = new Padding(0, 0, 0, 6)
             },
             0,
@@ -429,7 +429,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 {
                     Text = fields[i].Title,
                     Dock = DockStyle.Fill,
-                    Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
+                    Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
                     TextAlign = ContentAlignment.MiddleLeft,
                     Margin = Padding.Empty
                 },
@@ -584,7 +584,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         return panel;
     }
 
-    private Control CreateCredentialField()
+    private TableLayoutPanel CreateCredentialField()
     {
         var outer = new TableLayoutPanel
         {
@@ -602,7 +602,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             {
                 Text = "Authentication",
                 Dock = DockStyle.Fill,
-                Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
+                Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleLeft,
                 Margin = Padding.Empty
             },
@@ -632,7 +632,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             {
                 Text = "SQL credentials",
                 Dock = DockStyle.Top,
-                Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
+                Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
                 Margin = new Padding(0, 7, 0, 0)
             },
             0,
@@ -644,7 +644,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         return outer;
     }
 
-    private static Control CreateLabeledField(
+    private static TableLayoutPanel CreateLabeledField(
         string title,
         Control control)
     {
@@ -663,7 +663,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             {
                 Text = title,
                 Dock = DockStyle.Fill,
-                Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
+                Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleLeft,
                 Margin = Padding.Empty
             },
