@@ -69,6 +69,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private HivePersistenceConfiguration? _sourceConfiguration;
     private HiveBootstrapCredentialReference? _createdDestinationCredential;
     private bool _destinationConfigurationInitialized;
+    private bool _initializingDirection;
+    private bool _directionUserOverride;
 
     public HivePersistenceDataMigrationSettingsView(
         IHiveManagementFacade management,
@@ -222,9 +224,11 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             out _destinationHeader,
             out _destinationBody);
 
-        // Migration reads visually from destination on the left to source on the right.
-        roleColumns.Controls.Add(_destinationCard, 0, 0);
-        roleColumns.Controls.Add(_sourceCard, 1, 0);
+        // Migration reads from source on the left to destination on the right.
+        _sourceCard.Margin = new Padding(0, 0, 7, 0);
+        _destinationCard.Margin = new Padding(7, 0, 0, 0);
+        roleColumns.Controls.Add(_sourceCard, 0, 0);
+        roleColumns.Controls.Add(_destinationCard, 1, 0);
 
         _refreshButton.Click += async (_, _) =>
             await RunOperationAsync(RefreshStatusAsync).ConfigureAwait(true);
@@ -233,7 +237,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
         _directionComboBox.SelectedIndex = 0;
         _embeddedPathTextBox.Text = DefaultEmbeddedPath();
-        _sqlServerPicker.SetValue("localhost", null);
+        _sqlServerPicker.SetValue("localhost", 1433);
         _sqlDatabaseTextBox.Text =
             HivePersistenceConfiguration.BuildDatabaseName(_applicationName);
         _sqlAuthenticationComboBox.SelectedItem =
@@ -279,8 +283,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
 
-        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60f));
-        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40f));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55f));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45f));
 
         table.Controls.Add(
             CreateFieldBlock("Direction", _directionComboBox),
@@ -454,7 +458,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         stack.Controls.Add(
             CreateFieldBlock(
                 "Database file",
-                CreateEmbeddedPathPanelCore()));
+                CreateEmbeddedPathPanelCore(),
+                560));
 
         stack.Controls.Add(
             CreateFormGrid(
@@ -479,12 +484,16 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         stack.Controls.Add(
             CreateFieldBlock(
                 "SQL Server",
-                _sqlServerPicker));
+                _sqlServerPicker,
+                500));
 
         stack.Controls.Add(
             CreateFormGrid(
-                CreateFieldBlock("Database", _sqlDatabaseTextBox),
-                _sqlAuthenticationField));
+                CreateFieldBlock("Database", _sqlDatabaseTextBox, 300),
+                CreateFieldBlock(
+                    "Authentication",
+                    _sqlAuthenticationComboBox,
+                    220)));
 
         _sqlCredentialField = CreateCredentialField();
         stack.Controls.Add(_sqlCredentialField);
@@ -493,10 +502,12 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             CreateFormGrid(
                 CreateFieldBlock(
                     "Connection security",
-                    CreateSecurityPanelCore()),
+                    CreateSecurityPanelCore(),
+                    340),
                 CreateFieldBlock(
                     "Command timeout",
-                    _sqlTimeoutNumeric)));
+                    _sqlTimeoutNumeric,
+                    180)));
 
         stack.Controls.Add(
             CreateCheckBoxBlock(
@@ -546,8 +557,11 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
     private static TableLayoutPanel CreateFieldBlock(
         string title,
-        Control control)
+        Control control,
+        int? editorWidth = null)
     {
+        ArgumentNullException.ThrowIfNull(control);
+
         var block = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -561,7 +575,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         };
 
         block.RowStyles.Add(new RowStyle(SizeType.Absolute, 22f));
-        block.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
+        block.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         block.Controls.Add(
             new Label
@@ -569,6 +583,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 Text = title,
                 Dock = DockStyle.Fill,
                 AutoSize = false,
+                Height = 22,
                 Font = new Font(
                     SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
                     FontStyle.Bold),
@@ -578,8 +593,18 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             0,
             0);
 
-        control.Dock = DockStyle.Fill;
+        control.AutoSize = false;
+        control.Dock = editorWidth is > 0
+            ? DockStyle.Left
+            : DockStyle.Fill;
         control.Margin = Padding.Empty;
+
+        if (editorWidth is > 0)
+            control.Width = editorWidth.Value;
+
+        if (control.Height < 36)
+            control.Height = 36;
+
         block.Controls.Add(control, 0, 1);
         return block;
     }
@@ -736,6 +761,9 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
     private void DirectionChanged()
     {
+        if (!_initializingDirection)
+            _directionUserOverride = true;
+
         UpdateRolePanels();
 
         if (!_destinationConfigurationInitialized)
@@ -754,19 +782,19 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private void UpdateRolePanels()
     {
         var direction = SelectedDirection;
-        var sourceSql = direction == MigrationDirection.EmbeddedToSqlServer;
+        var sourceSql = direction == MigrationDirection.SqlServerToEmbedded;
         _sourceHeader.Text = sourceSql
-            ? "SOURCE · Embedded"
-            : "SOURCE · SQL Server";
+            ? "SOURCE · SQL Server"
+            : "SOURCE · Embedded";
         _destinationHeader.Text = sourceSql
-            ? "DESTINATION · SQL Server"
-            : "DESTINATION · Embedded";
+            ? "DESTINATION · Embedded"
+            : "DESTINATION · SQL Server";
 
-        ReplaceBody(_sourceBody, sourceSql ? _embeddedSourcePanel : _sqlSourcePanel);
-        ReplaceBody(_destinationBody, sourceSql ? _sqlDestinationPanel : _embeddedDestinationPanel);
+        ReplaceBody(_sourceBody, sourceSql ? _sqlSourcePanel : _embeddedSourcePanel);
+        ReplaceBody(_destinationBody, sourceSql ? _embeddedDestinationPanel : _sqlDestinationPanel);
 
         _destinationCard.Enabled = true;
-        _sourceCard.Enabled = true;
+        _sourceCard.Enabled = false;
         UpdateSqlAuthenticationState();
     }
 
@@ -805,20 +833,30 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         }
 
         _sourceConfiguration = source.Value!;
-        var expectedDirection =
-            _sourceConfiguration.Backend == HivePersistenceBackend.Embedded
-                ? MigrationDirection.EmbeddedToSqlServer
-                : MigrationDirection.SqlServerToEmbedded;
-        if (SelectedDirection != expectedDirection)
+
+        if (!_directionUserOverride)
         {
-            _directionComboBox.SelectedItem =
-                expectedDirection == MigrationDirection.EmbeddedToSqlServer
-                    ? new DirectionChoice(
-                        "Embedded → SQL Server",
-                        expectedDirection)
-                    : new DirectionChoice(
-                        "SQL Server → Embedded",
-                        expectedDirection);
+            var expectedDirection =
+                _sourceConfiguration.Backend == HivePersistenceBackend.Embedded
+                    ? MigrationDirection.EmbeddedToSqlServer
+                    : MigrationDirection.SqlServerToEmbedded;
+
+            _initializingDirection = true;
+            try
+            {
+                _directionComboBox.SelectedItem =
+                    expectedDirection == MigrationDirection.EmbeddedToSqlServer
+                        ? new DirectionChoice(
+                            "Embedded → SQL Server",
+                            expectedDirection)
+                        : new DirectionChoice(
+                            "SQL Server → Embedded",
+                            expectedDirection);
+            }
+            finally
+            {
+                _initializingDirection = false;
+            }
         }
 
         UpdateSourceSummary();
@@ -925,6 +963,17 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             }
 
             _sourceConfiguration = source.Value!;
+        }
+
+        var expectedSourceBackend =
+            SelectedDirection == MigrationDirection.SqlServerToEmbedded
+                ? HivePersistenceBackend.SqlServer
+                : HivePersistenceBackend.Embedded;
+
+        if (expectedSourceBackend != _sourceConfiguration.Backend)
+        {
+            throw new ArgumentException(
+                $"The selected source is {expectedSourceBackend}, but the currently active Hive backend is {_sourceConfiguration.Backend}. Select the direction that matches the active backend before running migration.");
         }
 
         var destination = await BuildDestinationConfigurationAsync(
