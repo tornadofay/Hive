@@ -390,10 +390,10 @@ public sealed class HiveUiPolishTests
         using var picker = new HiveSqlServerInstancePicker(themeManager);
 
         picker.SetDiscoveredInstances(
-            new[] { @"localhostHiveSql" },
+            new[] { @"localhost\HiveSql" },
             null);
 
-        Assert.Equal(@"localhostHiveSql", picker.ServerName);
+        Assert.Equal(@"localhost\HiveSql", picker.ServerName);
         Assert.Null(picker.Port);
 
         picker.SetDiscoveredInstances(
