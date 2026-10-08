@@ -178,6 +178,16 @@ Current state: **VERIFICATION PENDING**.
 
 Developer rerun is required against the corrected source. Preserve the existing focused/full-suite, zero-warning build, and Example Host manual verification requirements below.
 
+### Latest remediation completed — 2026-10-08
+
+- `HivePersistenceSettingsView` now explicitly reapplies `DockStyle.Fill` to the Data Migration view after adding it to the tab page, preserving the existing tab-host contract expected by the focused regression test.
+- Persistence Database Setup sections now use `DockStyle.Top` while remaining auto-sized, avoiding fill-driven preferred-size distortion inside the existing `HiveScrollHost` and keeping the change local to Slice 5.
+- No shared scroll infrastructure, migration contract, persistence backend, Slice 6 capability, or 1.19 work was changed.
+
+Current state: **VERIFICATION PENDING**.
+
+Developer rerun is required against the corrected source. Preserve the focused/full-suite, zero-warning build, and Example Host manual verification requirements below.
+
 ### Verification handoff
 
 Developer rerun is required:
