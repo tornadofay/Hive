@@ -514,12 +514,19 @@ public sealed class HivePersistenceDataMigrationTests
     [Fact]
     public async Task Migration_RejectsPartialSqlDestinationMetadata()
     {
-        var sourceDatabaseName = $"Hive_Test_Migration_PartialSource_{Guid.NewGuid():N}";
+        var sourceDirectory = CreateEmbeddedDirectory("partial-sql-source");
+        var sourcePath = Path.Combine(sourceDirectory, "hive.db");
         var destinationDatabaseName = $"Hive_Test_Migration_PartialDestination_{Guid.NewGuid():N}";
 
         try
         {
-            _ = await CreateSqlDatabaseAsync(sourceDatabaseName);
+            await using (var source = new EmbeddedPersistenceDatabase(
+                             HivePersistenceConfiguration.Embedded(sourcePath)))
+            {
+                var initialization = await source.InitializeAsync();
+                Assert.True(initialization.IsSuccess, initialization.Error?.Message);
+            }
+
             var destinationOptions = await CreateSqlDatabaseAsync(destinationDatabaseName);
             var database = new PersistenceTestDatabase(destinationDatabaseName);
             database.Reset();
@@ -550,7 +557,7 @@ public sealed class HivePersistenceDataMigrationTests
             }
 
             var result = await new HivePersistenceDataMigrator().MigrateAsync(
-                CreateSqlConfiguration(sourceDatabaseName),
+                HivePersistenceConfiguration.Embedded(sourcePath),
                 null,
                 CreateSqlConfiguration(destinationDatabaseName),
                 null,
@@ -564,7 +571,7 @@ public sealed class HivePersistenceDataMigrationTests
         }
         finally
         {
-            await DropSqlDatabaseAsync(sourceDatabaseName);
+            TryDeleteDirectory(sourceDirectory);
             await DropSqlDatabaseAsync(destinationDatabaseName);
         }
     }
