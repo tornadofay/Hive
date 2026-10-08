@@ -86,7 +86,7 @@ Additional same-slice Slice 5 UX failures were reported after the previous remed
 - Data Migration SQL destination controls also need bounded widths so they do not overwhelm or overflow the workspace.
 - The migration direction must remain user-selectable instead of being silently rewritten from the currently active backend. The current Management migration contract still reads the source from the active persistence graph, so the UI must expose the selected direction honestly and prevent an invalid execution rather than silently changing the user's choice.
 
-These remain within the authorized Slice 5 presentation/interaction boundary. They do not authorize Slice 6, a new migration contract, or 1.19.
+These remain within the authorized Slice 5 presentation/interaction and Management-boundary remediation. Slice 5 explicitly authorizes the corrected public migration request carrying SourceConfiguration + DestinationConfiguration. They do not authorize Slice 6 or 1.19.
 
 ### Remediation completed
 
