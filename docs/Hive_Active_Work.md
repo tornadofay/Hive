@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **IMPLEMENTATION IN PROGRESS — VERIFICATION PENDING**
+Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
 
 ## Phase 1.18A — Embedded Persistence Profile
 ### Slice 4 — Full-Data Migration
@@ -36,7 +36,7 @@ Implement the Management-owned logical full-data migration operation in both dir
 ### Verification gate
 Both directions must be developer-verified against complete representative Hive datasets, including stable identities, relationships, versions/lifecycle state, event/snapshot/outbox consistency, Base-Agent work state, and protected Secret Store records. Invalid/non-empty/incomplete destinations and unquiescent sources must fail safely.
 
-Developer verification reported compile failures on 2026-10-08. Same-slice remediation corrected all five reported compiler errors: both Secret Store migration-writer implementations now satisfy their internal interface; the Example Host imports the correct Agent contracts; and the migration test uses the nullable `SecretReference` value correctly.
+Developer verification reported additional compile failures on 2026-10-08 in `HivePersistenceDataMigrator.cs`: a table/column-definition argument mismatch, a stale `MigrationIncompatibleSourceError` reference, and a local `reader` scope collision. These are recorded as the current same-slice remediation boundary. No out-of-scope failure is recorded.
 
 Required verification is now **PENDING developer results**. Re-run the affected solution/build target, then `HivePersistenceDataMigrationTests`, followed by the full `Hive.Tests` suite. No execution is claimed by the agent.
 
