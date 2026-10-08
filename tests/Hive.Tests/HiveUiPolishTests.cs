@@ -403,6 +403,17 @@ public sealed class HiveUiPolishTests
         Assert.Equal("localhost", picker.ServerName);
         Assert.Equal(1433, picker.Port);
 
+        picker.SetDiscoveredInstances(
+            new[] { "localhost", @"localhost\HiveSql" },
+            null);
+        picker.ServerSelector.SelectedItem =
+            picker.ServerSelector.Items
+                .Cast<object>()
+                .First(item => item.ToString() == @"localhost\HiveSql");
+
+        Assert.Equal(@"localhost\HiveSql", picker.ServerName);
+        Assert.Null(picker.Port);
+
         picker.ServerSelector.SelectedItem =
             picker.ServerSelector.Items[^1];
 
