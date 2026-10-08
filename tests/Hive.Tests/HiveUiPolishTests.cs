@@ -294,6 +294,54 @@ public sealed class HiveUiPolishTests
 
     }
 
+    [WinFormsFact]
+    public void HivePersistenceSettingsAndMigrationFitNormalWorkspaceWithoutScrollOverflow()
+    {
+        var (management, _) =
+            HiveWorkspaceLifecycleTests.ManagementFacadeProxy.Create();
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        using var settings = new HivePersistenceSettingsView(
+            management,
+            context,
+            themeManager,
+            "Hive.TestHost");
+        settings.Size = new Size(1160, 760);
+        settings.CreateControl();
+        settings.PerformLayout();
+        Application.DoEvents();
+
+        var setupScrollHost =
+            FindControl<HiveScrollHost>(
+                settings.NavigationTabs.TabPages[0]);
+
+        Assert.NotNull(setupScrollHost);
+        setupScrollHost!.Synchronize();
+        Assert.False(setupScrollHost.HorizontalScrollState.CanScroll);
+        Assert.False(setupScrollHost.VerticalScrollState.CanScroll);
+
+        using var migration = new HivePersistenceDataMigrationSettingsView(
+            management,
+            context,
+            themeManager,
+            "Hive.TestHost");
+        migration.Size = new Size(1160, 760);
+        migration.CreateControl();
+        migration.PerformLayout();
+        Application.DoEvents();
+
+        var migrationScrollHost = FindControl<HiveScrollHost>(migration);
+
+        Assert.NotNull(migrationScrollHost);
+        migrationScrollHost!.Synchronize();
+        Assert.False(migrationScrollHost.HorizontalScrollState.CanScroll);
+        Assert.False(migrationScrollHost.VerticalScrollState.CanScroll);
+    }
+
     [Fact]
     public void HiveSqlServerInstanceDiscovery_CombinesLocalAndNetworkInstances()
     {
