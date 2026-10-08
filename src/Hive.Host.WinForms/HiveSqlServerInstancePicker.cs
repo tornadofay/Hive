@@ -356,17 +356,33 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
             else if (string.Equals(
                          preferred,
                          "localhost",
-                         StringComparison.OrdinalIgnoreCase) &&
-                     _serverComboBox.Items
-                         .OfType<ServerChoice>()
-                         .Any(static choice =>
-                             !choice.IsCustom &&
-                             choice.DisplayName.Contains('\\', StringComparison.Ordinal)))
+                         StringComparison.OrdinalIgnoreCase))
             {
                 // Recover from older configurations that represented an installed
                 // named local instance as bare "localhost".
-                _serverComboBox.SelectedIndex = 0;
-                _customServerTextBox.Clear();
+                var localInstance = _serverComboBox.Items
+                    .OfType<ServerChoice>()
+                    .FirstOrDefault(
+                        static choice =>
+                            !choice.IsCustom &&
+                            (string.Equals(
+                                 choice.DisplayName,
+                                 "localhost",
+                                 StringComparison.OrdinalIgnoreCase) ||
+                             choice.DisplayName.StartsWith(
+                                 @"localhost\\",
+                                 StringComparison.OrdinalIgnoreCase)));
+
+                if (localInstance is not null)
+                {
+                    _serverComboBox.SelectedItem = localInstance;
+                    _customServerTextBox.Clear();
+                }
+                else
+                {
+                    _serverComboBox.SelectedIndex = _serverComboBox.Items.Count - 1;
+                    _customServerTextBox.Text = preferred;
+                }
             }
             else
             {
@@ -376,10 +392,24 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         }
         else
         {
-            _serverComboBox.SelectedIndex =
-                _serverComboBox.Items.Count > 1
-                    ? 0
-                    : _serverComboBox.Items.Count - 1;
+            var localInstance = _serverComboBox.Items
+                .OfType<ServerChoice>()
+                .FirstOrDefault(
+                    static choice =>
+                        !choice.IsCustom &&
+                        (string.Equals(
+                             choice.DisplayName,
+                             "localhost",
+                             StringComparison.OrdinalIgnoreCase) ||
+                         choice.DisplayName.StartsWith(
+                             @"localhost\\",
+                             StringComparison.OrdinalIgnoreCase)));
+
+            _serverComboBox.SelectedItem =
+                localInstance ??
+                _serverComboBox.Items
+                    .OfType<ServerChoice>()
+                    .FirstOrDefault(static choice => !choice.IsCustom);
         }
 
         ApplyPortDefaultForSelection();
