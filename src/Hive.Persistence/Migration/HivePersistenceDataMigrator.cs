@@ -352,6 +352,10 @@ internal sealed class HivePersistenceDataMigrator
         await using var destination = new EmbeddedPersistenceDatabase(
             destinationConfiguration);
 
+        var sourceSecretStore = new SqlDpapiSecretStore(sourceOptions);
+        var destinationSecretWriter =
+            (IHiveSecretStoreMigrationWriter)new EmbeddedDpapiSecretStore(destination);
+
         var destinationPreflight = await PrepareEmbeddedDestinationAsync(
             destination,
             cancellationToken).ConfigureAwait(false);
@@ -371,6 +375,9 @@ internal sealed class HivePersistenceDataMigrator
             HivePersistenceBackend.Embedded,
             sourceConnection,
             destination,
+            sourceSecretStore,
+            destinationSecretWriter,
+            accessContext,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -409,26 +416,30 @@ internal sealed class HivePersistenceDataMigrator
             return Result<HivePersistenceMigrationExecutionResult>.Failure(
                 sourceShape.Error!);
 
-            var destinationOptions = HiveDatabaseOptions.FromConfiguration(
+        var destinationOptions = HiveDatabaseOptions.FromConfiguration(
                 destinationConfiguration,
                 sourceSqlCredential);
 
-            var destinationPreflight = await PrepareSqlDestinationAsync(
-                destinationOptions,
-                cancellationToken).ConfigureAwait(false);
+        var destinationPreflight = await PrepareSqlDestinationAsync(
+            destinationOptions,
+            cancellationToken).ConfigureAwait(false);
 
-            if (destinationPreflight.IsFailure)
-                return Result<HivePersistenceMigrationExecutionResult>.Failure(
-                    destinationPreflight.Error!);
+        if (destinationPreflight.IsFailure)
+            return Result<HivePersistenceMigrationExecutionResult>.Failure(
+                destinationPreflight.Error!);
 
-            await using var sourceConnection = await source.OpenConnectionAsync(
-                cancellationToken).ConfigureAwait(false);
+        await using var sourceConnection = await source.OpenConnectionAsync(
+            cancellationToken).ConfigureAwait(false);
 
-            await using var destinationConnection = new SqlConnection(
-                destinationOptions.ConnectionString);
+        await using var destinationConnection = new SqlConnection(
+            destinationOptions.ConnectionString);
 
-            await destinationConnection.OpenAsync(
-                cancellationToken).ConfigureAwait(false);
+        await destinationConnection.OpenAsync(
+            cancellationToken).ConfigureAwait(false);
+
+        var sourceSecretStore = new EmbeddedDpapiSecretStore(source);
+        var destinationSecretWriter =
+            (IHiveSecretStoreMigrationWriter)new SqlDpapiSecretStore(destinationOptions);
 
         return await TransferAndVerifyAsync(
             migrationId,
@@ -436,6 +447,9 @@ internal sealed class HivePersistenceDataMigrator
             HivePersistenceBackend.SqlServer,
             sourceConnection,
             destinationConnection,
+            sourceSecretStore,
+            destinationSecretWriter,
+            accessContext,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -445,6 +459,9 @@ internal sealed class HivePersistenceDataMigrator
         HivePersistenceBackend destinationBackend,
         DbConnection sourceConnection,
         object destinationDatabase,
+        ISecretStore sourceSecretStore,
+        IHiveSecretStoreMigrationWriter destinationSecretWriter,
+        ResourceAccessContext accessContext,
         CancellationToken cancellationToken)
     {
         if (destinationBackend == HivePersistenceBackend.Embedded)
@@ -459,6 +476,9 @@ internal sealed class HivePersistenceDataMigrator
                 destinationBackend,
                 sourceConnection,
                 destinationConnection,
+                sourceSecretStore,
+                destinationSecretWriter,
+                accessContext,
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -469,6 +489,9 @@ internal sealed class HivePersistenceDataMigrator
             destinationBackend,
             sourceConnection,
             sqlDestination,
+            sourceSecretStore,
+            destinationSecretWriter,
+            accessContext,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -478,6 +501,9 @@ internal sealed class HivePersistenceDataMigrator
         HivePersistenceBackend destinationBackend,
         DbConnection sourceConnection,
         DbConnection destinationConnection,
+        ISecretStore sourceSecretStore,
+        IHiveSecretStoreMigrationWriter destinationSecretWriter,
+        ResourceAccessContext accessContext,
         CancellationToken cancellationToken)
     {
         using var sourceFingerprint = new HiveMigrationFingerprintSet();
@@ -494,14 +520,26 @@ internal sealed class HivePersistenceDataMigrator
 
             if (table.Name == "HiveSecrets")
             {
-                await TransferSecretsAsync(
+                var secretTransfer = await TransferSecretsAsync(
                     sourceConnection,
                     destinationConnection,
                     transaction,
                     table,
+                    sourceSecretStore,
+                    destinationSecretWriter,
+                    accessContext,
                     sourceFingerprint,
                     rowCounts,
                     cancellationToken).ConfigureAwait(false);
+
+                if (secretTransfer.IsFailure)
+                {
+                    await transaction.RollbackAsync(
+                        cancellationToken).ConfigureAwait(false);
+
+                    return Result<HivePersistenceMigrationExecutionResult>.Failure(
+                        secretTransfer.Error!);
+                }
             }
             else
             {
