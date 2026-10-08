@@ -1622,8 +1622,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         }
 
         var viewportWidth = scrollHost.ClientSize.Width;
-        var viewportHeight = scrollHost.ClientSize.Height;
-        if (viewportWidth <= 0 || viewportHeight <= 0)
+        if (viewportWidth <= 0)
             return;
 
         _normalizingSetupLayout = true;
@@ -1632,12 +1631,16 @@ internal sealed class HivePersistenceSettingsView : UserControl
             _editor.FieldsPanel.Width = viewportWidth;
             _editor.FieldsPanel.PerformLayout();
 
-            var preferred = _editor.FieldsPanel.GetPreferredSize(
-                new Size(viewportWidth, 0));
-            var height = Math.Max(1, preferred.Height);
+            var contentBottom = _editor.FieldsPanel.Controls
+                .Cast<Control>()
+                .Where(static control => control.Visible)
+                .Select(static control => control.Bottom)
+                .DefaultIfEmpty(0)
+                .Max();
+
             _editor.FieldsPanel.Size = new Size(
                 viewportWidth,
-                height);
+                Math.Max(1, contentBottom));
 
             scrollHost.Synchronize();
         }
