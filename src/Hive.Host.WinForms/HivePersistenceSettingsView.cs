@@ -7,12 +7,22 @@ namespace Hive.Host.WinForms;
 
 internal sealed class HivePersistenceSettingsView : UserControl
 {
+    private sealed record BackendChoice(
+        string DisplayName,
+        HivePersistenceBackend Backend)
+    {
+        public override string ToString() => DisplayName;
+    }
+
     private readonly IHiveManagementFacade _management;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
     private readonly IHiveExampleOutput? _output;
     private readonly string _applicationName;
     private readonly HiveEditorLayout _editor;
+    private readonly HiveTabControl _tabs;
+    private readonly HiveComboBox _backendComboBox;
+    private readonly TextBox _embeddedStorageTextBox;
     private readonly TextBox _serverTextBox;
     private readonly TextBox _portTextBox;
     private readonly TextBox _databaseTextBox;
@@ -29,6 +39,10 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly HiveButton _saveButton;
     private readonly HiveButton _testButton;
     private readonly HiveButton _initializeButton;
+    private readonly HivePersistenceDataMigrationSettingsView _migrationView;
+    private readonly List<int> _sqlFieldRows = [];
+    private readonly Dictionary<int, float> _fieldRowHeights = [];
+    private int _embeddedStorageRow = -1;
     private HiveStatusTone _statusTone = HiveStatusTone.Neutral;
 
     private CancellationTokenSource? _operationCts;
@@ -53,6 +67,20 @@ internal sealed class HivePersistenceSettingsView : UserControl
         Margin = Padding.Empty;
 
         _editor = new HiveEditorLayout();
+
+        _backendComboBox = new HiveComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+        _backendComboBox.Items.AddRange(
+        [
+            new BackendChoice("Embedded", HivePersistenceBackend.Embedded),
+            new BackendChoice("SQL Server", HivePersistenceBackend.SqlServer)
+        ]);
+        _backendComboBox.SelectedIndexChanged += (_, _) =>
+            UpdateBackendState();
+
+        _embeddedStorageTextBox = CreateTextBox();
 
         _serverTextBox = CreateTextBox();
         _portTextBox = CreateTextBox();
@@ -127,27 +155,40 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _initializeButton.Click += async (_, _) => await RunOperationAsync(InitializeDatabaseAsync);
 
         _editor.AddField(
+            "Backend",
+            "Select which Hive persistence backend this configuration edits. Changing the selector does not activate the new backend and does not migrate data.",
+            _backendComboBox,
+            84);
+
+        _embeddedStorageRow = _editor.FieldsPanel.RowCount;
+        _editor.AddField(
+            "Embedded storage",
+            "Application-owned path for the single Embedded Hive database file. The default is under the current user's Local Application Data.",
+            _embeddedStorageTextBox,
+            84);
+
+        AddSqlField(
             "Server / instance",
             "Enter any SQL Server host or instance name. This may be a local server, named instance, remote host, IP address, or online SQL Server. Keep the port in the separate Port field.",
             _serverTextBox);
 
-        _editor.AddField(
+        AddSqlField(
             "Port",
             "Optional TCP port. Leave empty for the server default.",
             _portTextBox);
 
         SetReadOnlyVisualState(_databaseTextBox, themeManager);
-        _editor.AddField(
+        AddSqlField(
             "Database",
             "Assigned automatically by Hive. The Settings UI does not allow changing the Hive database name.",
             _databaseTextBox);
 
-        _editor.AddField(
+        AddSqlField(
             "Authentication",
             "Choose Windows integrated authentication or SQL login credentials.",
             _authenticationComboBox);
 
-        _editor.AddField(
+        AddSqlField(
             "SQL user",
             "Only used with SQL password authentication.",
             _userNameTextBox);
@@ -172,7 +213,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         passwordPanel.Controls.Add(_passwordTextBox, 0, 0);
         passwordPanel.Controls.Add(_credentialStatus, 0, 1);
 
-        _editor.AddField(
+        AddSqlField(
             "SQL password",
             "Never stored in the settings file. It is protected by the Windows user-scoped DPAPI bootstrap store; the settings file keeps only its bootstrap reference.",
             passwordPanel,
@@ -187,43 +228,114 @@ internal sealed class HivePersistenceSettingsView : UserControl
         };
         securityPanel.Controls.Add(_encryptCheckBox);
         securityPanel.Controls.Add(_trustServerCertificateCheckBox);
-        _editor.AddField(
+        AddSqlField(
             "Connection security",
             "Transport/security flags for the SQL Server connection.",
             securityPanel,
             88);
 
-        _editor.AddField(
+        AddSqlField(
             "Initialization",
             "This option is consumed only when Hive initialization is explicitly requested. Save and Test never create a database or apply migrations.",
             _createDatabaseCheckBox,
             72);
 
-        _editor.AddField(
+        AddSqlField(
             "Command timeout",
             "Default SQL command timeout in seconds.",
             _timeoutNumeric);
 
-        _editor.AddField(
+        AddSqlField(
             "Status",
             "Connection tests report server connectivity separately from database/schema state.",
             _statusLabel,
             72);
 
-        Controls.Add(_editor);
+        _migrationView = new HivePersistenceDataMigrationSettingsView(
+            _management,
+            _accessContext,
+            _themeManager,
+            _applicationName,
+            _output);
+
+        _tabs = new HiveTabControl
+        {
+            Dock = DockStyle.Fill,
+            AccessibleName = "Hive persistence settings tabs"
+        };
+
+        var setupTab = new TabPage("Database Setup")
+        {
+            Padding = Padding.Empty,
+            Margin = Padding.Empty
+        };
+        setupTab.Controls.Add(_editor);
+
+        var migrationTab = new TabPage("Data Migration")
+        {
+            Padding = new Padding(8),
+            Margin = Padding.Empty
+        };
+        migrationTab.Controls.Add(_migrationView);
+
+        _tabs.TabPages.Add(setupTab);
+        _tabs.TabPages.Add(migrationTab);
+        _tabs.SelectedIndexChanged += TabsSelectedIndexChanged;
+
+        Controls.Add(_tabs);
 
         _databaseTextBox.Text = HivePersistenceConfiguration.BuildDatabaseName(_applicationName);
+        _embeddedStorageTextBox.Text = DefaultEmbeddedStoragePath();
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(this);
+        _backendComboBox.SelectedItem =
+            new BackendChoice("SQL Server", HivePersistenceBackend.SqlServer);
         _authenticationComboBox.SelectedItem =
             HiveSqlAuthenticationMode.WindowsIntegrated;
-        UpdateAuthenticationState();
+        UpdateBackendState();
     }
 
     public Task InitializeAsync(
         CancellationToken cancellationToken = default) =>
         LoadAsync(cancellationToken);
+
+    internal HiveTabControl NavigationTabs => _tabs;
+
+    internal HiveComboBox BackendSelector => _backendComboBox;
+
+    private async void TabsSelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (_tabs.SelectedIndex != 1 ||
+            _migrationView.IsDisposed ||
+            _migrationView.Disposing)
+        {
+            return;
+        }
+
+        try
+        {
+            await _migrationView
+                .InitializeAsync()
+                .ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+        {
+            if (!IsDisposed && !Disposing)
+            {
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    exception,
+                    "Hive Persistence",
+                    "The Data Migration tab could not be initialized.",
+                    _output,
+                    _themeManager);
+            }
+        }
+    }
 
     private async Task LoadAsync(CancellationToken cancellationToken)
     {
@@ -411,10 +523,36 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private async Task InitializeDatabaseAsync(
         CancellationToken cancellationToken)
     {
-        var configuration = _loadedConfiguration;
+        HivePersistenceConfiguration configuration;
 
-        if (configuration is null)
+        try
         {
+            configuration = (await BuildConfigurationAsync(
+                    cancellationToken,
+                    persistCredential: false)
+                .ConfigureAwait(true)).Configuration;
+        }
+        catch (ArgumentException exception)
+        {
+            if (!IsDisposed && !Disposing)
+            {
+                SetStatus(
+                    "Persistence configuration is invalid. See technical details.",
+                    HiveStatusTone.Error);
+
+                HiveUiErrorReporter.Report(
+                    FindForm(),
+                    exception,
+                    "Hive Persistence",
+                    "The persistence configuration is invalid.",
+                    _output,
+                    _themeManager);
+            }
+
+            return;
+        }
+
+        SetStatus(
             if (IsDisposed || Disposing)
                 return;
 
@@ -470,7 +608,11 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
     private async Task TestAsync(CancellationToken cancellationToken)
     {
-        SetStatus("Testing SQL Server connection...", HiveStatusTone.Information);
+        SetStatus(
+            SelectedBackend == HivePersistenceBackend.Embedded
+                ? "Testing Embedded storage readiness..."
+                : "Testing SQL Server connection...",
+            HiveStatusTone.Information);
 
         HivePersistenceConfiguration configuration;
 
@@ -549,13 +691,27 @@ internal sealed class HivePersistenceSettingsView : UserControl
         CancellationToken cancellationToken,
         bool persistCredential = true)
     {
+        if (!int.TryParse(_timeoutNumeric.Value.ToString(), out var timeout))
+            timeout = 30;
+
+        var backend =
+            (_backendComboBox.SelectedItem as BackendChoice)?.Backend
+            ?? throw new ArgumentException("Choose a persistence backend.");
+
+        if (backend == HivePersistenceBackend.Embedded)
+        {
+            var embeddedConfiguration = HivePersistenceConfiguration.Embedded(
+                _embeddedStorageTextBox.Text,
+                createDatabaseIfMissing: _createDatabaseCheckBox.Checked,
+                commandTimeoutSeconds: timeout);
+
+            return (embeddedConfiguration, null);
+        }
+
         if (!int.TryParse(_portTextBox.Text.Trim(), out var port))
             port = 0;
 
         int? resolvedPort = port <= 0 ? null : port;
-
-        if (!int.TryParse(_timeoutNumeric.Value.ToString(), out var timeout))
-            timeout = 30;
 
         var authentication =
             _authenticationComboBox.SelectedItem is HiveSqlAuthenticationMode value
@@ -669,9 +825,16 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private void ApplyConfiguration(HivePersistenceConfiguration configuration)
     {
         _loadedConfiguration = configuration;
+        _backendComboBox.SelectedItem = configuration.Backend == HivePersistenceBackend.Embedded
+            ? new BackendChoice("Embedded", HivePersistenceBackend.Embedded)
+            : new BackendChoice("SQL Server", HivePersistenceBackend.SqlServer);
+        _embeddedStorageTextBox.Text =
+            configuration.EmbeddedStoragePath ?? DefaultEmbeddedStoragePath();
         _serverTextBox.Text = configuration.ServerName;
         _portTextBox.Text = configuration.Port?.ToString() ?? string.Empty;
-        _databaseTextBox.Text = HivePersistenceConfiguration.BuildDatabaseName(_applicationName);
+        _databaseTextBox.Text = configuration.Backend == HivePersistenceBackend.SqlServer
+            ? configuration.DatabaseName
+            : string.Empty;
         _authenticationComboBox.SelectedItem = configuration.AuthenticationMode;
         _userNameTextBox.Text = configuration.UserName ?? string.Empty;
         _passwordTextBox.Clear();
@@ -681,12 +844,88 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _timeoutNumeric.Value = Math.Min(
             _timeoutNumeric.Maximum,
             Math.Max(_timeoutNumeric.Minimum, configuration.CommandTimeoutSeconds));
-        UpdateCredentialStatus(configuration);
-        UpdateAuthenticationState();
+        UpdateBackendState();
     }
+
+    private HivePersistenceBackend SelectedBackend =>
+        (_backendComboBox.SelectedItem as BackendChoice)?.Backend
+        ?? HivePersistenceBackend.SqlServer;
+
+    private void UpdateBackendState()
+    {
+        var embedded = SelectedBackend == HivePersistenceBackend.Embedded;
+
+        SetFieldVisible(_embeddedStorageRow, embedded);
+
+        foreach (var row in _sqlFieldRows)
+            SetFieldVisible(row, !embedded);
+
+        UpdateAuthenticationState();
+
+        _testButton.Text = embedded
+            ? "Test readiness"
+            : "Test connection";
+    }
+
+    private void SetFieldVisible(
+        int row,
+        bool visible)
+    {
+        var fields = _editor.FieldsPanel;
+
+        if (row < 0 ||
+            row >= fields.RowCount)
+        {
+            return;
+        }
+
+        fields.GetControlFromPosition(0, row)?.SetVisibleSafe(visible);
+        fields.GetControlFromPosition(1, row)?.SetVisibleSafe(visible);
+
+        if (row >= fields.RowStyles.Count)
+            return;
+
+        if (visible)
+        {
+            if (_fieldRowHeights.TryGetValue(row, out var height))
+                fields.RowStyles[row].Height = height;
+        }
+        else
+        {
+            fields.RowStyles[row].Height = 0;
+        }
+    }
+
+    private void AddSqlField(
+        string title,
+        string description,
+        Control editor,
+        int height = 72)
+    {
+        var row = _editor.FieldsPanel.RowCount;
+        _editor.AddField(title, description, editor, height);
+        _sqlFieldRows.Add(row);
+        _fieldRowHeights[row] = _editor.FieldsPanel.RowStyles[row].Height;
+    }
+
+    private static string DefaultEmbeddedStoragePath() =>
+        Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData),
+            "Hive",
+            "hive.db");
 
     private void UpdateAuthenticationState()
     {
+        if (SelectedBackend == HivePersistenceBackend.Embedded)
+        {
+            _userNameTextBox.Enabled = false;
+            _passwordTextBox.Enabled = false;
+            _credentialStatus.Enabled = false;
+            _credentialStatus.Text = "Credential not used — Embedded persistence.";
+            return;
+        }
+
         var sqlPassword =
             _authenticationComboBox.SelectedItem is HiveSqlAuthenticationMode.SqlPassword;
 
@@ -877,6 +1116,10 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _saveButton.Enabled = !busy;
         _testButton.Enabled = !busy;
         _initializeButton.Enabled = !busy;
+        _backendComboBox.Enabled = !busy;
+        _embeddedStorageTextBox.Enabled = !busy;
+        if (!busy)
+            UpdateBackendState();
     }
 
     private static TextBox CreateTextBox() =>
