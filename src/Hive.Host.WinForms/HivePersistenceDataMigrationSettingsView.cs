@@ -563,7 +563,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 GrowStyle = TableLayoutPanelGrowStyle.FixedSize
             };
             block.RowStyles.Add(new RowStyle(SizeType.Absolute, 21f));
-            block.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
+            block.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
             block.Controls.Add(
                 new Label
