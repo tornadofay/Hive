@@ -188,6 +188,24 @@ Current state: **VERIFICATION PENDING**.
 
 Developer rerun is required against the corrected source. Preserve the focused/full-suite, zero-warning build, and Example Host manual verification requirements below.
 
+
+### Latest verification failure — 2026-10-08 (latest developer rerun)
+
+Developer rerun reported **758 tests: 756 passed, 2 failed, 0 skipped** again.
+
+- `HivePersistenceSettingsAndMigrationFitNormalWorkspaceWithoutScrollOverflow`: the Database Setup `HiveScrollHost` still reports `VerticalScrollState.CanScroll == true` at the normal 1160×760 workspace size.
+- `HivePersistenceSettingsView_UsesDatabaseSetupAndDataMigrationTabs`: the failing assertion is the Embedded database-file editor contract, `Assert.Equal(DockStyle.Fill, view.EmbeddedStorageInput.Dock)`; the editor currently reports `DockStyle.None`. The repository test source confirms this assertion is the one at the reported test location; it is not the migration-tab child Dock assertion.
+
+Root-cause inspection found that `CreateTextBox()` does not establish the expected fill docking for the Embedded database textbox, while the persistence setup's nested AutoSize layout is initially measured before its real viewport width/height exists. `HiveScrollHost.Attach` intentionally sets its directly hosted content to `DockStyle.None` and preserves explicit content size; the persistence settings view therefore needs to normalize its own fields content after the real setup viewport is laid out rather than changing shared scroll infrastructure.
+
+These are same-slice remediation failures. They do not authorize Slice 6 or 1.19 work.
+
+### Remediation status — latest
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+Implementation changes may now proceed only for the two recorded failures above. After remediation, Active Work must return to **VERIFICATION PENDING** with the focused/full-suite, zero-warning build, and Example Host verification requirements preserved.
+
 ### Verification handoff
 
 Developer rerun is required:
