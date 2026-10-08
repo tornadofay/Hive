@@ -57,7 +57,7 @@ internal sealed class ExampleConfigurationExampleView : UserControl
 
         _futureText = CreateSection(
             "Configuration grows with Hive",
-            "Persistence is a single global Hive configuration rather than a CRUD resource list. Future Hive-owned configuration such as Tools, Policy / Permissions, Runtime / Execution Defaults, Cognition, Knowledge, Skills, and Memory will appear in this same Settings center only when their authoritative contracts exist. Empty placeholder pages are not created just to fill the navigation.");
+            "Persistence is a single global Hive configuration rather than a CRUD resource list. Use Database Setup to choose Embedded or SQL Server, test backend readiness, and initialize storage explicitly. Use Data Migration for an explicit All Hive Data transfer between the supported backends; migration verifies the destination but does not activate it. Future Hive-owned configuration such as Tools, Policy / Permissions, Runtime / Execution Defaults, Cognition, Knowledge, Skills, and Memory will appear in this same Settings center only when their authoritative contracts exist. Empty placeholder pages are not created just to fill the navigation.");
 
         _openSettingsButton = new HiveButton
         {
