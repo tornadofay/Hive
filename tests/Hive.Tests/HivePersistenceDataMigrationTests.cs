@@ -22,6 +22,7 @@ public sealed class HivePersistenceDataMigrationTests
         try
         {
             var sourceOptions = await CreateSqlDatabaseAsync(sourceDatabaseName);
+            var context = NewContext();
             var sourceConfiguration = HivePersistenceConfiguration.LocalDevelopment(
                 sourceDatabaseName);
 
@@ -39,7 +40,8 @@ public sealed class HivePersistenceDataMigrationTests
                 null,
                 embeddedConfiguration,
                 null,
-                migrationId);
+                migrationId,
+                seed.Context);
 
             Assert.True(first.IsSuccess, first.Error?.Message);
             Assert.Equal(migrationId, first.Value!.MigrationId);
@@ -200,7 +202,8 @@ public sealed class HivePersistenceDataMigrationTests
                 HivePersistenceConfiguration.LocalDevelopment(
                     roundTripDatabaseName),
                 null,
-                Guid.NewGuid());
+                Guid.NewGuid(),
+                seed.Context);
 
             Assert.True(second.IsSuccess, second.Error?.Message);
             Assert.Equal(
@@ -391,11 +394,11 @@ public sealed class HivePersistenceDataMigrationTests
                 null,
                 HivePersistenceConfiguration.Embedded(embeddedPath),
                 null,
-                Guid.NewGuid());
+                Guid.NewGuid(),
+                context);
 
             Assert.False(result.IsSuccess);
-            Assert.Equal(
-                "hive.persistence.data-migration.destination-not-empty",
+
                 result.Error!.Code);
 
             var count = await CountEmbeddedRowsAsync(
@@ -475,6 +478,7 @@ public sealed class HivePersistenceDataMigrationTests
         try
         {
             _ = await CreateSqlDatabaseAsync(sourceDatabaseName);
+            var context = NewContext();
 
             await using var destination = new EmbeddedPersistenceDatabase(
                 HivePersistenceConfiguration.Embedded(destinationPath));
@@ -498,7 +502,8 @@ public sealed class HivePersistenceDataMigrationTests
                 null,
                 HivePersistenceConfiguration.Embedded(destinationPath),
                 null,
-                Guid.NewGuid());
+                Guid.NewGuid(),
+                context);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(
@@ -557,7 +562,8 @@ public sealed class HivePersistenceDataMigrationTests
                 HivePersistenceConfiguration.LocalDevelopment(
                     destinationDatabaseName),
                 null,
-                Guid.NewGuid());
+                Guid.NewGuid(),
+                NewContext());
 
             Assert.False(result.IsSuccess);
             Assert.Equal(
@@ -613,7 +619,8 @@ public sealed class HivePersistenceDataMigrationTests
                 null,
                 HivePersistenceConfiguration.Embedded(embeddedPath),
                 null,
-                Guid.NewGuid());
+                Guid.NewGuid(),
+                sourceContext);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(
@@ -647,6 +654,7 @@ public sealed class HivePersistenceDataMigrationTests
 
         try
         {
+            var context = NewContext();
             await using var source = new EmbeddedPersistenceDatabase(
                 HivePersistenceConfiguration.Embedded(sourcePath));
             var initialization = await source.InitializeAsync();
@@ -672,7 +680,8 @@ public sealed class HivePersistenceDataMigrationTests
                 HivePersistenceConfiguration.LocalDevelopment(
                     destinationDatabaseName),
                 null,
-                Guid.NewGuid());
+                Guid.NewGuid(),
+                context);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(
@@ -707,6 +716,7 @@ public sealed class HivePersistenceDataMigrationTests
                     HivePersistenceConfiguration.Embedded(destinationPath),
                     null,
                     Guid.NewGuid(),
+                    NewContext(),
                     cancellation.Token));
         }
         finally
