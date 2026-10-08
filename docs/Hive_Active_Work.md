@@ -241,11 +241,11 @@ These are same-slice Slice 5 settings-layout/composition failures. They do not a
 
 ### Remediation completed — latest
 
-- Replaced the persistence Database Setup page's whole-content preferred-size normalization with deterministic fixed-height section rows: Backend = 104px, Embedded = 190px, SQL Server = 500px. Sections remain ordinary top-docked controls inside the existing HiveEditorLayout, so the scroll extent is predictable rather than recursively derived from nested AutoSize layouts.
-- The Backend selector is now explicitly bounded to 120px, which is within the existing focused sizing contract while providing enough usable text area for values such as "SQL Server".
-- Removed redundant field-level Dock/Width assignments that were immediately overwritten by CreateFieldBlock, keeping the page composition easier to inspect and maintain.
-- The Custom SQL endpoint remediation remains intact and the previous custom-textbox visibility failure is no longer reported.
-- No shared HiveComboBox/HiveScrollHost changes, migration contract changes, persistence backend changes, Slice 6 work, or 1.19 work were introduced.
+- Removed the fixed Database Setup section heights. Backend, Embedded, and SQL Server are naturally auto-sized vertical sections, and the existing FieldsPanel is configured with AutoSize/GrowAndShrink so visible content determines the extent.
+- Kept the Backend selector explicitly bounded to 120px, preserving the requested compact professional field width while allowing values such as "SQL Server" to render.
+- Removed the view-specific scroll normalization and fixed-height section-row logic instead of layering another measurement workaround.
+- The Custom SQL endpoint visibility remediation remains intact; its previously failing focused assertion passed in the latest developer run.
+- No shared HiveComboBox/HiveScrollHost infrastructure, migration contract, persistence backend, Slice 6 work, or 1.19 work was changed.
 
 Current state: **VERIFICATION PENDING**.
 
