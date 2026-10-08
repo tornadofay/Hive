@@ -666,6 +666,12 @@ Required crash-safety properties:
 
 The outbox is not a general distributed message broker.
 
+### Full-data persistence migration
+
+Phase 1.18A Slice 4 adds a Management-owned full-data migration boundary over the two supported persistence profiles. `IHiveManagementFacade.MigratePersistenceDataAsync` transfers all current Hive-owned durable persistence represented by schema 15 between SQL Server and Embedded in either direction. The transfer preserves stable identities, relationships, resource versions/lifecycle/provenance, favorites, AgentDefinition state, WorkItem attachments, event/snapshot/outbox state, structured-extraction state carried by the event/snapshot boundary, Base-Agent work state, and Secret Store records. Secret material is decrypted only into `SecretMaterial` during migration and is re-protected for the destination DPAPI boundary; backend ciphertext is never copied as portable data.
+
+The operation is quiescence-gated and uses a clean/current destination. Transfer is deterministic and transactional on the destination; the destination is verified against a logical source fingerprint and the source is re-verified before commit. Failure, cancellation, incompatible/incomplete destinations, and source changes must leave the destination without a partial migrated dataset. The migration returns explicit migration identity and schema/result evidence and never changes the active configured backend.
+
 
 ## 10. Runtime Provider Usage Evidence Boundary
 
