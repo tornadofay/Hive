@@ -167,7 +167,6 @@ public sealed class HivePersistenceConnectionTester : IHivePersistenceConnection
                     exception));
         }
     }
-}
 
 
     private static async Task<Result<HivePersistenceConnectionTest>> TestEmbeddedAsync(
@@ -235,4 +234,5 @@ public sealed class HivePersistenceConnectionTester : IHivePersistenceConnection
 }
 
 
+}
 }
