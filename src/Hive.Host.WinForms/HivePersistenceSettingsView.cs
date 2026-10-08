@@ -1176,6 +1176,31 @@ internal sealed class HivePersistenceSettingsView : UserControl
             HivePersistenceConfiguration.BuildDatabaseName(_applicationName),
             "hive.db");
 
+    private void BrowseEmbeddedStorage()
+    {
+        using var dialog = new SaveFileDialog
+        {
+            Title = "Choose Embedded Hive database location",
+            Filter = "Hive database (*.db)|*.db|All files (*.*)|*.*",
+            DefaultExt = "db",
+            AddExtension = true,
+            FileName = Path.GetFileName(_embeddedStorageTextBox.Text),
+            InitialDirectory = GetExistingDirectory(_embeddedStorageTextBox.Text),
+            OverwritePrompt = false
+        };
+
+        if (dialog.ShowDialog(FindForm()) == DialogResult.OK)
+            _embeddedStorageTextBox.Text = dialog.FileName;
+    }
+
+    private static string GetExistingDirectory(string path)
+    {
+        var directory = Path.GetDirectoryName(path);
+        return !string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory)
+            ? directory
+            : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+    }
+
     private async Task RefreshSqlServerInstancesAsync(CancellationToken cancellationToken)
     {
         if (SelectedBackend != HivePersistenceBackend.SqlServer)
