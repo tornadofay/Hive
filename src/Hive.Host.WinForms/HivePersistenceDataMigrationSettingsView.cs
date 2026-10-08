@@ -57,6 +57,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private readonly NumericUpDown _sqlTimeoutNumeric;
     private readonly CheckBox _embeddedCreateDatabaseCheckBox;
     private readonly NumericUpDown _embeddedTimeoutNumeric;
+    private readonly TableLayoutPanel _sqlAuthenticationField;
     private TableLayoutPanel? _sqlCredentialField;
 
     private readonly HiveButton _refreshButton;
@@ -236,7 +237,14 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _sqlAuthenticationComboBox.SelectedItem =
             HiveSqlAuthenticationMode.WindowsIntegrated;
 
+        _sqlAuthenticationField = CreateFieldBlock(
+            "Authentication",
+            _sqlAuthenticationComboBox);
+
         Controls.Add(_editor);
+        Dock = DockStyle.Fill;
+        Margin = Padding.Empty;
+        MinimumSize = new Size(0, 0);
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(this);
         UpdateRolePanels();
@@ -264,50 +272,27 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         var table = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 3,
-            RowCount = 1,
-            Margin = new Padding(0, 8, 0, 8),
-            Padding = Padding.Empty
-        };
-        table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 78f));
-        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 152f));
-
-        table.Controls.Add(
-            new Label
-            {
-                Text = "Direction",
-                AutoSize = true,
-                Anchor = AnchorStyles.Left,
-                Margin = new Padding(0, 7, 8, 0)
-            },
-            0,
-            0);
-        table.Controls.Add(_directionComboBox, 1, 0);
-
-        var scope = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 2,
             RowCount = 1,
-            Margin = new Padding(18, 0, 0, 0),
-            Padding = Padding.Empty
+            Margin = new Padding(0, 4, 0, 12),
+            Padding = Padding.Empty,
+            GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
-        scope.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 52f));
-        scope.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        scope.Controls.Add(
-            new Label
-            {
-                Text = "Scope",
-                AutoSize = true,
-                Anchor = AnchorStyles.Left,
-                Margin = new Padding(0, 7, 8, 0)
-            },
+
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60f));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40f));
+
+        table.Controls.Add(
+            CreateFieldBlock("Direction", _directionComboBox),
             0,
             0);
-        scope.Controls.Add(_scopeLabel, 1, 0);
 
-        table.Controls.Add(scope, 2, 0);
+        var scope = CreateFieldBlock("Scope", _scopeLabel);
+        scope.Margin = new Padding(14, 0, 0, 0);
+        table.Controls.Add(scope, 1, 0);
+
         return table;
     }
 
@@ -318,15 +303,17 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 1,
-            Margin = new Padding(0, 0, 0, 8),
-            Padding = Padding.Empty
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
+
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
         return table;
     }
 
-    private static Panel CreateBackendCard(
+    private Panel CreateBackendCard(
         string title,
         out Label header,
         out Panel body)
@@ -334,8 +321,9 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         var card = new Panel
         {
             Dock = DockStyle.Fill,
-            Padding = new Padding(12),
-            Margin = new Padding(6),
+            AutoSize = false,
+            Padding = new Padding(14),
+            Margin = new Padding(0, 0, 7, 0),
             BorderStyle = BorderStyle.FixedSingle
         };
 
@@ -343,18 +331,20 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         {
             Text = title,
             Dock = DockStyle.Top,
-            Height = 26,
+            Height = 32,
             Font = new Font(
                 SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
                 FontStyle.Bold),
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            TextAlign = ContentAlignment.MiddleLeft
         };
 
         body = new Panel
         {
             Dock = DockStyle.Fill,
             Padding = new Padding(0, 8, 0, 0),
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            AutoScroll = false
         };
 
         card.Controls.Add(body);
@@ -365,386 +355,383 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private Control CreateEmbeddedSourcePanel() =>
         CreateSummaryPanel(
             "Embedded",
-            "Application-owned Hive database.",
+            "Application-owned Hive database. The source is read-only during migration.",
             ("Storage location", DefaultEmbeddedPath()),
-            ("Mode", "Read-only source"));
+            ("Role", "Read-only source"));
 
     private Control CreateSqlSourcePanel() =>
         CreateSummaryPanel(
             "SQL Server",
-            "Current active persistence backend.",
+            "Current active Hive database. The source is read-only during migration.",
             ("Server / port", "—"),
             ("Database", HivePersistenceConfiguration.BuildDatabaseName(_applicationName)),
             ("Authentication", "—"),
-            ("Mode", "Read-only source"));
+            ("SQL user", "—"),
+            ("Role", "Read-only source"));
 
     private Control CreateSummaryPanel(
         string backend,
         string subtitle,
         params (string Title, string Value)[] fields)
     {
-        var panel = new TableLayoutPanel
+        var stack = CreateVerticalStack();
+        stack.Padding = new Padding(2);
+
+        var heading = new Label
         {
+            Text = backend,
             Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = fields.Length + 2,
-            AutoScroll = false,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty
+            AutoSize = true,
+            Font = new Font(
+                SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
+                FontStyle.Bold),
+            Margin = new Padding(0, 0, 0, 2)
         };
-        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 112f));
-        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        panel.Controls.Add(
-            new Label
-            {
-                Text = backend,
-                Dock = DockStyle.Fill,
-                Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
-                Margin = new Padding(0, 0, 0, 6)
-            },
-            0,
-            0);
-        panel.SetColumnSpan(panel.Controls[^1], 2);
-        panel.Controls.Add(
-            new Label
-            {
-                Text = subtitle,
-                Dock = DockStyle.Fill,
-                AutoEllipsis = true,
-                ForeColor = _themeManager.Theme.Palette.MutedText,
-                Margin = new Padding(0, 0, 0, 12)
-            },
-            0,
-            1);
-        panel.SetColumnSpan(panel.Controls[^1], 2);
+        stack.Controls.Add(heading);
 
-        for (var i = 0; i < fields.Length; i++)
-        {
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 40f));
-            panel.Controls.Add(
-                new Label
-                {
-                    Text = fields[i].Title,
-                    Dock = DockStyle.Fill,
-                    Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
-                    TextAlign = ContentAlignment.MiddleLeft,
-                    Margin = Padding.Empty
-                },
-                0,
-                i + 2);
-            panel.Controls.Add(
-                new Label
-                {
-                    Text = fields[i].Value,
-                    Dock = DockStyle.Fill,
-                    AutoEllipsis = true,
-                    TextAlign = ContentAlignment.MiddleLeft,
-                    Margin = Padding.Empty
-                },
-                1,
-                i + 2);
-        }
+        var copy = CreateSectionDescription(subtitle);
+        copy.Margin = new Padding(0, 0, 0, 12);
+        stack.Controls.Add(copy);
 
-        panel.RowStyles[0] = new RowStyle(SizeType.Absolute, 26f);
-        panel.RowStyles[1] = new RowStyle(SizeType.Absolute, 34f);
-        return panel;
+        foreach (var field in fields)
+            stack.Controls.Add(CreateSummaryField(field.Title, field.Value));
+
+        return stack;
     }
 
-    private Control CreateEmbeddedDestinationPanel()
-    {
-        var panel = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 1,
-            RowCount = 4,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty
-        };
-        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 22f));
-        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
-        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
-        panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-
-        panel.Controls.Add(CreateSectionDescription(
-            "Embedded destination",
-            "The destination is verified before migration and is never activated automatically."), 0, 0);
-
-        var path = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = 1,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty
-        };
-        path.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        path.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
-        path.Controls.Add(_embeddedPathTextBox, 0, 0);
-        path.Controls.Add(_browseEmbeddedButton, 1, 0);
-        panel.Controls.Add(path, 0, 1);
-
-        panel.Controls.Add(
-            CreateSecurityTimeoutPanel(
-                includeSecurity: false,
-                firstSecurityControl: _embeddedCreateDatabaseCheckBox,
-                secondarySecurityControl: null,
-                timeout: _embeddedTimeoutNumeric,
-                secondaryCaption: "Initialize"),
-            0,
-            2);
-
-        panel.Controls.Add(
-            new Label
-            {
-                Text = "Schema and data migration are controlled by the Management migration boundary.",
-                Dock = DockStyle.Fill,
-                AutoEllipsis = true,
-                ForeColor = _themeManager.Theme.Palette.MutedText,
-                Margin = new Padding(0, 8, 0, 0)
-            },
-            0,
-            3);
-
-        return panel;
-    }
-
-    private Control CreateSqlDestinationPanel()
-    {
-        var panel = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 1,
-            RowCount = 7,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty
-        };
-        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 22f));
-        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 48f));
-        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 42f));
-        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 82f));
-        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 42f));
-        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 42f));
-        panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
-
-        panel.Controls.Add(
-            CreateSectionDescription(
-                "SQL Server destination",
-                "The destination SQL Server is initialized only by the explicit migration operation."),
-            0,
-            0);
-        panel.Controls.Add(
-            CreateLabeledField(
-                "Server / port",
-                _sqlServerPicker),
-            0,
-            1);
-        panel.Controls.Add(
-            CreateLabeledField(
-                "Database",
-                _sqlDatabaseTextBox),
-            0,
-            2);
-        _sqlCredentialField = CreateCredentialField();
-        panel.Controls.Add(
-            _sqlCredentialField,
-            0,
-            3);
-        panel.Controls.Add(
-            CreateLabeledField(
-                "Security / timeout",
-                CreateSecurityTimeoutPanel(
-                    includeSecurity: true,
-                    firstSecurityControl: _sqlEncryptCheckBox,
-                    secondarySecurityControl: _sqlTrustServerCertificateCheckBox,
-                    timeout: _sqlTimeoutNumeric,
-                    secondaryCaption: null)),
-            0,
-            4);
-        panel.Controls.Add(
-            CreateLabeledField(
-                "Initialization",
-                _sqlCreateDatabaseCheckBox),
-            0,
-            5);
-        panel.Controls.Add(
-            new Label
-            {
-                Text = "All Hive Data is migrated as one governed operation. Existing non-empty destinations are rejected.",
-                Dock = DockStyle.Fill,
-                AutoEllipsis = true,
-                ForeColor = SystemColors.GrayText,
-                Margin = new Padding(0, 8, 0, 0)
-            },
-            0,
-            6);
-
-        return panel;
-    }
-
-    private TableLayoutPanel CreateCredentialField()
-    {
-        var outer = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = 2,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty
-        };
-        outer.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 112f));
-        outer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-
-        outer.Controls.Add(
-            new Label
-            {
-                Text = "Authentication",
-                Dock = DockStyle.Fill,
-                Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleLeft,
-                Margin = Padding.Empty
-            },
-            0,
-            0);
-        outer.Controls.Add(_sqlAuthenticationComboBox, 1, 0);
-
-        var credentialRow = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = 2,
-            Margin = new Padding(0, 4, 0, 0),
-            Padding = Padding.Empty
-        };
-        credentialRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
-        credentialRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
-        credentialRow.RowStyles.Add(new RowStyle(SizeType.Absolute, 32f));
-        credentialRow.RowStyles.Add(new RowStyle(SizeType.Absolute, 20f));
-        credentialRow.Controls.Add(_sqlUserNameTextBox, 0, 0);
-        credentialRow.Controls.Add(_sqlPasswordTextBox, 1, 0);
-        credentialRow.Controls.Add(_sqlCredentialStatus, 0, 1);
-        credentialRow.SetColumnSpan(_sqlCredentialStatus, 2);
-
-        outer.Controls.Add(
-            new Label
-            {
-                Text = "SQL credentials",
-                Dock = DockStyle.Top,
-                Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
-                Margin = new Padding(0, 7, 0, 0)
-            },
-            0,
-            1);
-        outer.Controls.Add(credentialRow, 1, 1);
-        outer.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
-        outer.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
-
-        return outer;
-    }
-
-    private static TableLayoutPanel CreateLabeledField(
+    private static TableLayoutPanel CreateSummaryField(
         string title,
-        Control control)
+        string value)
     {
-        var host = new TableLayoutPanel
+        var row = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 2,
             RowCount = 1,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Margin = new Padding(0, 0, 0, 8),
+            Padding = Padding.Empty,
+            GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
-        host.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 112f));
-        host.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        host.Controls.Add(
+
+        row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120f));
+        row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+
+        row.Controls.Add(
             new Label
             {
                 Text = title,
                 Dock = DockStyle.Fill,
-                Font = new Font(SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont, FontStyle.Bold),
+                AutoSize = true,
+                Font = new Font(
+                    SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
+                    FontStyle.Bold),
+                TextAlign = ContentAlignment.TopLeft,
+                Margin = Padding.Empty
+            },
+            0,
+            0);
+
+        row.Controls.Add(
+            new Label
+            {
+                Text = value,
+                Dock = DockStyle.Fill,
+                AutoSize = true,
+                AutoEllipsis = true,
+                TextAlign = ContentAlignment.TopLeft,
+                Margin = Padding.Empty
+            },
+            1,
+            0);
+
+        return row;
+    }
+
+    private Control CreateEmbeddedDestinationPanel()
+    {
+        var stack = CreateDestinationStack();
+
+        stack.Controls.Add(
+            CreateFieldBlock(
+                "Database file",
+                CreateEmbeddedPathPanelCore()));
+
+        stack.Controls.Add(
+            CreateFormGrid(
+                CreateCheckBoxBlock(
+                    "Initialization",
+                    _embeddedCreateDatabaseCheckBox),
+                CreateFieldBlock(
+                    "Command timeout",
+                    CreateTimeoutInput(_embeddedTimeoutNumeric))));
+
+        stack.Controls.Add(
+            CreateSectionNote(
+                "Hive initializes the destination only when the explicit migration operation runs. An existing non-empty destination is rejected."));
+
+        return stack;
+    }
+
+    private Control CreateSqlDestinationPanel()
+    {
+        var stack = CreateDestinationStack();
+
+        stack.Controls.Add(
+            CreateFieldBlock(
+                "SQL Server",
+                _sqlServerPicker));
+
+        stack.Controls.Add(
+            CreateFormGrid(
+                CreateFieldBlock("Database", _sqlDatabaseTextBox),
+                _sqlAuthenticationField));
+
+        _sqlCredentialField = CreateCredentialField();
+        stack.Controls.Add(_sqlCredentialField);
+
+        stack.Controls.Add(
+            CreateFormGrid(
+                CreateFieldBlock(
+                    "Connection security",
+                    CreateSecurityPanelCore()),
+                CreateFieldBlock(
+                    "Command timeout",
+                    CreateTimeoutInput(_sqlTimeoutNumeric))));
+
+        stack.Controls.Add(
+            CreateCheckBoxBlock(
+                "Initialization",
+                _sqlCreateDatabaseCheckBox));
+
+        stack.Controls.Add(
+            CreateSectionNote(
+                "All Hive Data is migrated as one governed operation. The destination must be clean/current and is never activated automatically."));
+
+        return stack;
+    }
+
+    private static TableLayoutPanel CreateDestinationStack()
+    {
+        return new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 1,
+            RowCount = 0,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            GrowStyle = TableLayoutPanelGrowStyle.AddRows
+        };
+    }
+
+    private TableLayoutPanel CreateCredentialField()
+    {
+        var credentials = CreateFormGrid(
+            CreateFieldBlock("SQL user", _sqlUserNameTextBox),
+            CreateFieldBlock("Password", _sqlPasswordTextBox));
+
+        var wrapper = CreateVerticalStack();
+        wrapper.Controls.Add(
+            CreateSectionHeading("SQL credentials"));
+        wrapper.Controls.Add(
+            CreateSectionDescription(
+                "Required only for SQL Server Authentication. The password is stored through the protected bootstrap-credential boundary."));
+        wrapper.Controls.Add(credentials);
+        wrapper.Controls.Add(_sqlCredentialStatus);
+
+        _sqlCredentialStatus.Margin = new Padding(0, 6, 0, 0);
+        return wrapper;
+    }
+
+    private static TableLayoutPanel CreateFieldBlock(
+        string title,
+        Control control)
+    {
+        var block = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = new Padding(0, 0, 0, 10),
+            Padding = Padding.Empty,
+            GrowStyle = TableLayoutPanelGrowStyle.FixedSize
+        };
+
+        block.RowStyles.Add(new RowStyle(SizeType.Absolute, 22f));
+        block.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
+
+        block.Controls.Add(
+            new Label
+            {
+                Text = title,
+                Dock = DockStyle.Fill,
+                AutoSize = false,
+                Font = new Font(
+                    SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
+                    FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleLeft,
                 Margin = Padding.Empty
             },
             0,
             0);
-        host.Controls.Add(control, 1, 0);
-        return host;
+
+        control.Dock = DockStyle.Fill;
+        control.Margin = Padding.Empty;
+        block.Controls.Add(control, 0, 1);
+        return block;
     }
 
-    private static Control CreateSecurityTimeoutPanel(
-        bool includeSecurity,
-        CheckBox firstSecurityControl,
-        CheckBox? secondarySecurityControl,
-        NumericUpDown timeout,
-        string? secondaryCaption)
+    private static TableLayoutPanel CreateCheckBoxBlock(
+        string title,
+        CheckBox checkBox)
     {
-        var panel = new TableLayoutPanel
+        var block = CreateVerticalStack();
+        block.Margin = new Padding(0, 0, 0, 10);
+        block.Controls.Add(
+            new Label
+            {
+                Text = title,
+                Dock = DockStyle.Fill,
+                AutoSize = false,
+                Height = 22,
+                Font = new Font(
+                    SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
+                    FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = Padding.Empty
+            });
+
+        checkBox.AutoSize = true;
+        checkBox.Anchor = AnchorStyles.Left;
+        checkBox.Margin = new Padding(0, 5, 0, 0);
+        block.Controls.Add(checkBox);
+        return block;
+    }
+
+    private static TableLayoutPanel CreateFormGrid(
+        params Control[] controls)
+    {
+        var grid = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = includeSecurity ? 3 : 2,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = controls.Length,
             RowCount = 1,
             Margin = Padding.Empty,
-            Padding = Padding.Empty
+            Padding = Padding.Empty,
+            GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
 
-        if (includeSecurity)
+        var width = 100f / Math.Max(1, controls.Length);
+        for (var i = 0; i < controls.Length; i++)
         {
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32f));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42f));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 26f));
-            panel.Controls.Add(firstSecurityControl, 0, 0);
-            panel.Controls.Add(
-                secondarySecurityControl
-                    ?? throw new InvalidOperationException(
-                        "A secondary SQL security control is required."),
-                1,
-                0);
-            panel.Controls.Add(CreateTimeoutHost(timeout), 2, 0);
-        }
-        else
-        {
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62f));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38f));
-            panel.Controls.Add(firstSecurityControl, 0, 0);
-            panel.Controls.Add(CreateTimeoutHost(timeout), 1, 0);
+            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, width));
+            grid.Controls.Add(controls[i], i, 0);
         }
 
-        if (!string.IsNullOrWhiteSpace(secondaryCaption))
-            firstSecurityControl.Text = secondaryCaption;
-
-        return panel;
+        return grid;
     }
 
-    private static Control CreateTimeoutHost(NumericUpDown timeout)
+    private static TableLayoutPanel CreateEmbeddedPathPanel()
+    {
+        throw new InvalidOperationException(
+            "CreateEmbeddedPathPanel must be initialized by the view instance.");
+    }
+
+    private Control CreateEmbeddedPathPanelCore()
+    {
+        var path = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            GrowStyle = TableLayoutPanelGrowStyle.FixedSize
+        };
+
+        path.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        path.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100f));
+        path.Controls.Add(_embeddedPathTextBox, 0, 0);
+        path.Controls.Add(_browseEmbeddedButton, 1, 0);
+        return path;
+    }
+
+    private static Label CreateSectionHeading(string text) =>
+        new()
+        {
+            Text = text,
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            Height = 24,
+            Font = new Font(
+                SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
+                FontStyle.Bold),
+            Margin = new Padding(0, 0, 0, 4),
+            TextAlign = ContentAlignment.MiddleLeft
+        };
+
+    private static Label CreateSectionDescription(string text) =>
+        new()
+        {
+            Text = text,
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            MaximumSize = new Size(0, 48),
+            Margin = new Padding(0, 0, 0, 10)
+        };
+
+    private static Label CreateSectionNote(string text) =>
+        new()
+        {
+            Text = text,
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            MaximumSize = new Size(0, 48),
+            Margin = new Padding(0, 0, 0, 10)
+        };
+
+    private static Control CreateSecurityPanel()
+    {
+        throw new InvalidOperationException(
+            "CreateSecurityPanel must be initialized by the view instance.");
+    }
+
+    private Control CreateSecurityPanelCore()
     {
         var host = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
+            AutoSize = false,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false,
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        host.Controls.Add(
-            new Label
-            {
-                Text = "Timeout (s)",
-                AutoSize = true,
-                Margin = new Padding(0, 7, 6, 0)
-            });
-        host.Controls.Add(timeout);
+        host.Controls.Add(_sqlEncryptCheckBox);
+        host.Controls.Add(_sqlTrustServerCertificateCheckBox);
         return host;
     }
 
-    private static Label CreateSectionDescription(
-        string title,
-        string description)
+    private static TableLayoutPanel CreateVerticalStack()
     {
-        return new Label
+        return new TableLayoutPanel
         {
-            Text = $"{title} — {description}",
             Dock = DockStyle.Fill,
-            AutoEllipsis = true,
-            Margin = Padding.Empty
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 1,
+            RowCount = 0,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            GrowStyle = TableLayoutPanelGrowStyle.AddRows
         };
     }
 
@@ -1409,7 +1396,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             Text = text,
             Style = style,
             Width = width,
-            Height = 32,
+            Height = 36,
             Margin = new Padding(8, 0, 0, 0)
         };
 
@@ -1417,7 +1404,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         new()
         {
             Dock = DockStyle.Fill,
-            Height = 32,
+            Height = 36,
             AutoSize = false,
             BorderStyle = BorderStyle.FixedSingle,
             Margin = Padding.Empty
