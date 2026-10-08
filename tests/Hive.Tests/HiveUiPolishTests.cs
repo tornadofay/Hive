@@ -281,8 +281,15 @@ public sealed class HiveUiPolishTests
         view.SqlServerPicker.ServerSelector.SelectedItem =
             view.SqlServerPicker.ServerSelector.Items[^1];
 
+        view.PerformLayout();
+        view.SqlServerPicker.PerformLayout();
+
         Assert.True(view.SqlServerPicker.IsCustomSelected);
         Assert.True(view.SqlServerPicker.CustomServerInput.Visible);
+        Assert.True(view.SqlServerPicker.CustomServerInput.Height > 0);
+        Assert.True(
+            view.SqlServerPicker.CustomServerInput.Bottom <=
+            view.SqlServerPicker.ClientSize.Height);
 
         var migrationView =
             view.NavigationTabs.TabPages[1].Controls[0]
