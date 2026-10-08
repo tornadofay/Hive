@@ -23,16 +23,14 @@ internal static class HiveSqlServerInstanceDiscovery
 
                 return MergeCandidates(
                     network,
-                    local,
-                    "localhost");
+                    local);
             },
             cancellationToken);
     }
 
     internal static IReadOnlyList<string> MergeCandidates(
         IEnumerable<string> networkInstances,
-        IEnumerable<string> localInstances,
-        string localMachineName)
+        IEnumerable<string> localInstances)
     {
         ArgumentNullException.ThrowIfNull(networkInstances);
         ArgumentNullException.ThrowIfNull(localInstances);
