@@ -1088,7 +1088,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Margin = new Padding(0, 0, 0, 12)
         };
 
-    private TableLayoutPanel CreateSecurityCheckBoxHost()
+    private FlowLayoutPanel CreateSecurityCheckBoxHost()
     {
         var host = CreateHorizontalFlow();
         host.Controls.Add(_encryptCheckBox);
