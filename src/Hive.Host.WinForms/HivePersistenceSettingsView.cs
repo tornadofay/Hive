@@ -166,6 +166,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
             "Application-owned path for the single Embedded Hive database file. The default is under the current user's Local Application Data.",
             _embeddedStorageTextBox,
             84);
+        _fieldRowHeights[_embeddedStorageRow] =
+            _editor.FieldsPanel.RowStyles[_embeddedStorageRow].Height;
 
         AddSqlField(
             "Server / instance",
