@@ -870,7 +870,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             CreateFieldBlock(
                 "SQL Server",
                 _serverPicker,
-                520));
+                460));
 
         var initialization = CreateCheckBoxField(
             "Initialization",
@@ -931,8 +931,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private TableLayoutPanel CreateCredentialsField()
     {
         var credentials = CreateFormGrid(
-            CreateFieldBlock("SQL user", _userNameTextBox),
-            CreateFieldBlock("Password", _passwordTextBox));
+            CreateFieldBlock("SQL user", _userNameTextBox, 260),
+            CreateFieldBlock("Password", _passwordTextBox, 260));
 
         var container = CreateVerticalStack();
         container.Controls.Add(credentials);
