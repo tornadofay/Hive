@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Status: **IMPLEMENTATION IN PROGRESS — VERIFICATION PENDING**
 
 ## Phase 1.18A — Embedded Persistence Profile
 ### Slice 4 — Full-Data Migration
@@ -52,4 +52,6 @@ Example to run: **Persistence / Data Migration / Full-Data Migration / SQL Serve
 Tests to run: **HivePersistenceDataMigrationTests**; broader **Hive.Tests** suite for Slice 4 closure
 
 
-Developer verification on 2026-10-08 reported 749 tests with 748 passed and 1 failed: `FullDataMigration_RoundTripsAllCurrentDurableStateAndReprotectsSecrets` failed at its Embedded event-stream assertion because the migrated WorkItem stream contains 2 legitimate events (`work-item.created` version 1 plus `migration.representative` version 2), while the test still expects a single event. Migration destination fingerprint verification itself succeeded. This remains an in-scope Slice 4 migration-test assertion boundary; same-slice remediation is authorized only for this recorded failure.
+Developer verification on 2026-10-08 reported 749 tests with 748 passed and 1 failed: `FullDataMigration_RoundTripsAllCurrentDurableStateAndReprotectsSecrets` failed at its Embedded event-stream assertion because the migrated WorkItem stream contains 2 legitimate events (`work-item.created` version 1 plus `migration.representative` version 2), while the test still expected a single event. Migration destination fingerprint verification itself succeeded. This remained an in-scope Slice 4 migration-test assertion boundary and authorized same-slice remediation.
+
+Same-slice remediation updated the migration test to assert both persisted WorkItem events and their versions/types, and aligned the stored `EventSnapshotVersion` seed value with the representative snapshot at stream version 2. No production migration behavior was changed. Developer re-verification remains required.
