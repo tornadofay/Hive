@@ -45,9 +45,9 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **IMPLEMENTATION COMPLETE; VERIFICATION PENDING**.
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 
-Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **754 tests: 750 passed, 4 failed, 0 skipped**. All four failures were the same in-scope persistence-settings construction defect: `HivePersistenceDataMigrationSettingsView` assigned `HiveEditorLayout.LabelColumnWidth = 0`, while `HiveEditorLayout` rejects zero values. The same constructor exception was also observed when opening Hive Configuration and when opening Persistence. The invalid migration-only assignment has now been removed; developer rerun is required.
+Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **754 tests: 750 passed, 4 failed, 0 skipped**. The invalid zero label-width assignment has been remediated. Subsequent developer/manual verification reports new in-scope Slice 5 UX failures: SQL Server instance discovery returns no useful instances in the picker, the Database Setup and Data Migration controls have inconsistent sizing/alignment, and the Data Migration content renders as a small box in the upper-left instead of a full usable page. These failures affect the existing Slice 5 presentation boundary and require same-slice remediation.
 
 Same-slice remediation completed within the recorded Slice 5 boundary. It remains limited to Database Setup and Data Migration presentation, SQL Server instance discovery/custom selection, authentication-aware field presentation, Embedded storage browsing, source/destination migration layout, top-row Direction + Scope placement, and footer status/actions. No new backend, migration capability, persistence contract, Slice 6 work, or 1.19 work was introduced.
 
@@ -58,7 +58,7 @@ Implementation checkpoint:
 - SQL Server instance discovery/custom picker, Browse-enabled Embedded storage, compact grouped setup/migration rows, Destination-left / Source-right migration roles, authentication-aware SQL destination controls, top-row Direction + Scope, and footer status/actions;
 - bounded automated coverage for Embedded host composition, first-run defaults, configuration fallback, Settings tabs/backend selector, and the persistence UX behavior.
 
-Verification status: the earlier post-remediation compilation failures and the subsequent runtime construction defect have been remediated within the recorded Slice 5 failure boundary. The latest code change is unverified until the focused/full test rerun, zero-warning developer build, and required Example Host manual verification are completed.
+Verification status: the latest Slice 5 UX failures are recorded above. Same-slice remediation is authorized only for the existing Persistence Settings composition, discovery behavior, sizing/layout, and presentation failure boundary; no new backend or later-slice capability is authorized.
 
 ### Verification handoff
 
