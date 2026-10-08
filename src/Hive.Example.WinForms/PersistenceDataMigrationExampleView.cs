@@ -277,6 +277,7 @@ internal sealed class PersistenceDataMigrationExampleView : UserControl
             var migrationResult =
                 await management.MigratePersistenceDataAsync(
                     new HivePersistenceMigrationRequest(
+                        sourceConfiguration,
                         destinationConfiguration),
                     context,
                     cancellationToken);
