@@ -70,7 +70,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
         {
             Dock = DockStyle.Fill
         };
-        ConfigureEditorContent();
 
         _backendComboBox = new HiveComboBox
         {
@@ -782,23 +781,13 @@ internal sealed class HivePersistenceSettingsView : UserControl
         (_backendComboBox.SelectedItem as BackendChoice)?.Backend
         ?? HivePersistenceBackend.SqlServer;
 
-    private void ConfigureEditorContent()
-    {
-        var fields = _editor.FieldsPanel;
-        fields.AutoSize = true;
-        fields.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        fields.ColumnStyles.Clear();
-        fields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        fields.ColumnCount = 1;
-        fields.Padding = Padding.Empty;
-    }
-
     private void AddEditorSection(Control section)
     {
         var fields = _editor.FieldsPanel;
         var row = fields.RowCount++;
         fields.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         fields.Controls.Add(section, 0, row);
+        fields.SetColumnSpan(section, 2);
     }
 
     private TableLayoutPanel CreateEmbeddedSection()
