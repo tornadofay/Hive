@@ -13,6 +13,75 @@ public sealed class HivePersistenceConnectionTester : IHivePersistenceConnection
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
+        if (configuration.Backend == HivePersistenceBackend.Embedded)
+        {
+            return await TestEmbeddedAsync(
+                configuration,
+                cancellationToken).ConfigureAwait(false);
+            private static async Task<Result<HivePersistenceConnectionTest>> TestEmbeddedAsync(
+        HivePersistenceConfiguration configuration,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var database = new EmbeddedPersistenceDatabase(configuration);
+            var inspection = await database
+                .InspectAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (inspection.IsFailure)
+                return Result<HivePersistenceConnectionTest>.Failure(inspection.Error!);
+
+            var state = inspection.Value
+                ?? throw new InvalidOperationException(
+                    "Embedded persistence inspection returned no state.");
+
+            var message = state.DatabaseState switch
+            {
+                HiveDatabaseState.DatabaseNotFound =>
+                    "Embedded storage is available, but the Hive database does not exist yet.",
+                HiveDatabaseState.SchemaNotInitialized =>
+                    "Embedded storage is available and the Hive database exists, but its schema is not initialized.",
+                HiveDatabaseState.NeedsMigration =>
+                    "Embedded storage is available and the Hive database requires migration.",
+                HiveDatabaseState.FutureSchema =>
+                    "Embedded storage is available, but the Hive database schema is newer than this Hive build supports.",
+                HiveDatabaseState.Current =>
+                    "Embedded storage is available and the Hive schema is current.",
+                _ => "Embedded persistence storage inspection succeeded."
+            };
+
+            return Result<HivePersistenceConnectionTest>.Success(
+                new HivePersistenceConnectionTest(
+                    true,
+                    state.DatabaseState,
+                    state.SchemaVersion,
+                    EmbeddedPersistenceSchema.CurrentSchemaVersion,
+                    message));
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (ArgumentException)
+        {
+            return Result<HivePersistenceConnectionTest>.Failure(
+                Error.Validation(
+                    "hive.persistence.configuration-invalid",
+                    "The persistence configuration is invalid."));
+        }
+        catch (Exception exception)
+        {
+            return Result<HivePersistenceConnectionTest>.Failure(
+                HivePersistenceError.External(
+                    "hive.persistence.embedded.inspect-failed",
+                    "Embedded persistence readiness test failed.",
+                    exception));
+        }
+    }
+
+}
+
         if (configuration.Backend != HivePersistenceBackend.SqlServer)
         {
             return Result<HivePersistenceConnectionTest>.Failure(
