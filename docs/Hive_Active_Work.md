@@ -210,6 +210,21 @@ Current state: **VERIFICATION PENDING**.
 
 Developer rerun is required against the corrected source. Preserve the existing focused/full-suite, zero-warning build, and Example Host verification requirements below.
 
+### Verification failure — latest developer rerun
+
+Developer rerun reported **758 tests: 756 passed, 2 failed, 0 skipped**.
+
+- `HivePersistenceSettingsAndMigrationFitNormalWorkspaceWithoutScrollOverflow`: Database Setup still reports `VerticalScrollState.CanScroll == true` at 1160×760. The previous local remeasurement did not solve the actual nested layout extent problem.
+- `HivePersistenceSettingsView_UsesDatabaseSetupAndDataMigrationTabs`: after selecting the Custom SQL Server endpoint, `CustomServerInput.Visible` is `false` at the focused assertion. This is a same-slice SQL Server picker interaction regression introduced by the recent selection-state remediation.
+
+These failures are within the existing Slice 5 settings layout and SQL Server picker presentation boundary. They do not authorize Slice 6 or 1.19 work.
+
+### Remediation status — latest
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+Implementation changes may now proceed only for the two recorded failures above. The settings layout will be corrected at the view composition level rather than by further manipulating the shared `HiveScrollHost`; the Custom endpoint visibility state will be corrected in the existing picker without changing its discovery contract. After remediation, Active Work must return to **VERIFICATION PENDING**.
+
 ### Verification handoff
 
 Developer rerun is required:
