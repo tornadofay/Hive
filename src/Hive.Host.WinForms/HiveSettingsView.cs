@@ -164,28 +164,10 @@ public sealed class HiveSettingsView : UserControl
 
         _overviewView ??= new HiveSettingsOverviewView();
 
-        _providerConfigurationView ??= new HiveProvidersSettingsView(
-            _management,
-            _accessContext,
-            _themeManager,
-            _output);
-
-        _agentView ??= new HiveAgentSettingsView(
-            _management,
-            _accessContext,
-            _themeManager,
-            _output);
-
-        _persistenceView ??= new HivePersistenceSettingsView(
-            _management,
-            _accessContext,
-            _themeManager,
-            _applicationName,
-            _output);
-
+        // Keep Settings startup lightweight. Provider, Agent, and Persistence
+        // pages are constructed only when the user first navigates to them.
         // The Overview page is static and must be immediately usable without
-        // touching the configured Hive database. Other pages initialize lazily
-        // when the user navigates to them.
+        // touching the configured Hive database.
         await InitializePageAsync(
             SettingsPageKey.Overview,
             cancellationToken).ConfigureAwait(true);
