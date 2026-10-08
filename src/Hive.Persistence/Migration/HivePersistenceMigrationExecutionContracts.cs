@@ -2,7 +2,7 @@ using Hive.Core;
 
 namespace Hive.Persistence;
 
-public sealed record HivePersistenceMigrationExecutionResult(
+internal sealed record HivePersistenceMigrationExecutionResult(
     Guid MigrationId,
     HivePersistenceBackend SourceBackend,
     HivePersistenceBackend DestinationBackend,
