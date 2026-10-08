@@ -139,6 +139,12 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             84);
 
         _editor.AddField(
+            "Scope",
+            "The migration scope is fixed at All Hive Data. Partial migration, merge, synchronization, and destructive overwrite are not exposed by this surface.",
+            CreateReadOnlyLabel("All Hive Data"),
+            72);
+
+        _editor.AddField(
             "Embedded storage",
             "Destination path used only for SQL Server → Embedded migration. The path is application-owned and contains one Hive database file.",
             _embeddedPathTextBox,
@@ -658,6 +664,16 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             Height = 32,
             AutoSize = false,
             BorderStyle = BorderStyle.FixedSingle
+        };
+
+    private static Label CreateReadOnlyLabel(string text) =>
+        new()
+        {
+            AutoEllipsis = true,
+            AutoSize = true,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Text = text
         };
 
     private static void SetReadOnlyVisualState(
