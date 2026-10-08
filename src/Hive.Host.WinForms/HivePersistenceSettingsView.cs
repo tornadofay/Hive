@@ -124,7 +124,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         };
         _createDatabaseCheckBox = new CheckBox
         {
-            Text = "Allow database creation when initializing Hive",
+            Text = "Allow Hive to create the database file when initialization is requested.",
             AutoSize = true
         };
         _timeoutNumeric = CreateTimeoutInput();
@@ -836,9 +836,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 "Command timeout",
                 CreateTimeoutField(_timeoutNumeric)));
 
-        var initialization = CreateFormGrid(
-            CreateCheckBoxHost(
-                _createDatabaseCheckBox));
+        var initialization = CreateCheckBoxField(
+            "Initialization",
+            _createDatabaseCheckBox);
 
         var content = CreateSection(
             "SQL Server Connection",
@@ -872,6 +872,11 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private TableLayoutPanel CreateFormGrid(
         params Control[] controls)
     {
+        if (controls.Length == 0)
+            throw new ArgumentException(
+                "At least one control is required.",
+                nameof(controls));
+
         var grid = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -884,25 +889,50 @@ internal sealed class HivePersistenceSettingsView : UserControl
             GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
 
-        var width = 100f / Math.Max(1, controls.Length);
+        var width = 100f / controls.Length;
         for (var i = 0; i < controls.Length; i++)
         {
             grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, width));
-            grid.Controls.Add(controls[i], i, 0);
-        }
 
-        if (controls.Length > 1)
-        {
-            foreach (Control control in controls)
-                control.Margin = new Padding(0, 0, 10, 0);
+            var control = controls[i];
+            var rightGap = i < controls.Length - 1 ? 10 : 0;
+            control.Margin = new Padding(
+                control.Margin.Left,
+                control.Margin.Top,
+                rightGap,
+                control.Margin.Bottom);
+            grid.Controls.Add(control, i, 0);
         }
-
-        if (grid.Controls.Count > 0)
-            grid.Controls[^1].Margin = controls.Length > 1
-                ? new Padding(0, 0, 0, 0)
-                : Padding.Empty;
 
         return grid;
+    }
+
+    private static TableLayoutPanel CreateCheckBoxField(
+        string title,
+        CheckBox checkBox)
+    {
+        var field = CreateVerticalStack();
+        field.Margin = new Padding(0, 0, 0, 10);
+        field.Controls.Add(
+            new Label
+            {
+                Text = title,
+                Dock = DockStyle.Fill,
+                AutoSize = false,
+                Height = 22,
+                Font = new Font(
+                    SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
+                    FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = Padding.Empty
+            });
+
+        checkBox.AutoSize = true;
+        checkBox.Anchor = AnchorStyles.Left;
+        checkBox.Margin = new Padding(0, 5, 0, 0);
+        field.Controls.Add(checkBox);
+
+        return field;
     }
 
     private TableLayoutPanel CreateSection(
