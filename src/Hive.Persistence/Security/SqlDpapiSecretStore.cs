@@ -178,7 +178,7 @@ public sealed class SqlDpapiSecretStore : ISecretStore, IHiveSecretStoreMigratio
         }
     }
 
-    internal async Task<Result> ImportForMigrationAsync(
+    public async Task<Result> ImportForMigrationAsync(
         DbConnection connection,
         DbTransaction transaction,
         Secret secret,
