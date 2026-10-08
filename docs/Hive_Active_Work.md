@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Status: **IMPLEMENTATION IN PROGRESS — VERIFICATION PENDING**
 
 ## Phase 1.18A — Embedded Persistence Profile
 ### Slice 4 — Full-Data Migration
@@ -44,9 +44,10 @@ Developer verification on 2026-10-08 after the documented Slice 4 remediation re
 
 Same-slice remediation corrected the reported `CS1503` by using the valid `string.LastIndexOf(string, StringComparison)` overload for comma-separated SQL server/port parsing. No unrelated production or test boundary was changed. Developer re-verification remains required.
 
-Developer verification on 2026-10-08 reported 749 tests with 746 passed and 3 failed. The failures are confined to the Slice 4 migration-test boundary: `Migration_RejectsPartialSqlDestinationMetadata` expected `hive.persistence.data-migration.schema-incomplete` but received `hive.persistence.data-migration.backend-direction-invalid`; `Migration_RejectsFutureEmbeddedDestinationSchema` expected `hive.persistence.embedded.future-schema` but received `hive.persistence.data-migration.destination-...`; and `FullDataMigration_RoundTripsAllCurrentDurableStateAndReprotectsSecrets` still seeds an event stream at version 1 while supplying snapshot/expected version 0. Same-slice remediation is authorized only for these recorded failures.
+Developer verification on 2026-10-08 reported 749 tests with 746 passed and 3 failed. The failures are confined to the Slice 4 migration-test boundary: `Migration_RejectsPartialSqlDestinationMetadata` expected `hive.persistence.data-migration.schema-incomplete` but received `hive.persistence.data-migration.backend-direction-invalid`; `Migration_RejectsFutureEmbeddedDestinationSchema` expected `hive.persistence.embedded.future-schema` but received the generic destination-schema-incompatible migration error; and `FullDataMigration_RoundTripsAllCurrentDurableStateAndReprotectsSecrets` failed while appending the representative event because the WorkItem stream was already at version 1 while the fixture expected version 0. Same-slice remediation is authorized only for these recorded failures.
 
 ### Example / verification handoff
 
 Example to run: **Persistence / Data Migration / Full-Data Migration / SQL Server ↔ Embedded** — Hive.Example.WinForms
 Tests to run: **HivePersistenceDataMigrationTests**; broader **Hive.Tests** suite for Slice 4 closure
+
