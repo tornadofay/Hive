@@ -54,3 +54,9 @@ Implemented checkpoint:
 - bounded automated coverage for Embedded host composition, first-run defaults, configuration fallback, and the Settings tabs/backend selector.
 
 Verification results are intentionally not claimed yet because this environment could not execute the developer's Windows/.NET test and build commands, and the required Example Host manual verification has not been performed here.
+
+### Verification handoff
+
+Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
+
+Tests to run: `HiveHostCompositionTests`, `HiveConfigurationTests`, `HiveUiPolishTests`; then the full `Hive.Tests` suite and a zero-warning developer build under the repository's standing **Treat warnings as errors** configuration.
