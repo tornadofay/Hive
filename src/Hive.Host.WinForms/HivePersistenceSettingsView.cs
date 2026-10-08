@@ -141,7 +141,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _embeddedTimeoutNumeric = CreateTimeoutInput();
         _sqlTimeoutNumeric = CreateTimeoutInput();
 
-        _backendComboBox.Width = 96;
+        _backendComboBox.Width = 80;
         _backendComboBox.Dock = DockStyle.Left;
         _authenticationComboBox.Width = 160;
         _authenticationComboBox.Dock = DockStyle.Left;
@@ -638,7 +638,10 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         if (result.IsFailure)
         {
-            var failureMessage = $"Connection test failed: {result.Error!.Message}";
+            var failureMessage =
+                configuration.Backend == HivePersistenceBackend.SqlServer
+                    ? $"Connection test failed for SQL Server '{configuration.ServerName}' / database '{configuration.DatabaseName}': {result.Error!.Message}"
+                    : $"Connection test failed for Embedded storage '{configuration.EmbeddedStoragePath}': {result.Error!.Message}";
             SetStatus(failureMessage, HiveStatusTone.Error);
 
             HiveUiErrorReporter.Report(
@@ -813,7 +816,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             string.IsNullOrWhiteSpace(configuration.ServerName)
                 ? "localhost"
                 : configuration.ServerName,
-            configuration.Port ?? 1433);
+            configuration.Port);
         _databaseTextBox.Text = configuration.Backend == HivePersistenceBackend.SqlServer
             ? (string.IsNullOrWhiteSpace(configuration.DatabaseName)
                 ? HivePersistenceConfiguration.BuildDatabaseName(_applicationName)
