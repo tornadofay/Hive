@@ -45,25 +45,29 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **IMPLEMENTATION COMPLETE; VERIFICATION PENDING**.
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 
-Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **754 tests: 750 passed, 4 failed, 0 skipped**. The invalid zero label-width assignment has been remediated. Subsequent developer/manual verification reports new in-scope Slice 5 UX failures: SQL Server instance discovery returns no useful instances in the picker, the Database Setup and Data Migration controls have inconsistent sizing/alignment, and the Data Migration content renders as a small box in the upper-left instead of a full usable page. These failures affect the existing Slice 5 presentation boundary and require same-slice remediation.
+Developer verification evidence received on 2026-10-08: `Hive.Tests` completed with **756 tests: 752 passed, 4 failed, 0 skipped**.
 
-Same-slice remediation completed within the recorded Slice 5 boundary. It remains limited to Database Setup and Data Migration presentation, SQL Server instance discovery/custom selection, authentication-aware field presentation, Embedded storage browsing, source/destination migration layout, top-row Direction + Scope placement, footer status/actions, responsive full-width layout, and consistent field/section hierarchy. No new backend, migration capability, persistence contract, Slice 6 work, or 1.19 work was introduced.
+Concrete same-slice failures reported:
+- `HivePersistenceSettingsView` throws `ArgumentNullException (control)` during construction because `CreateSqlSection()` passes the not-yet-assigned `_sqlCredentialsField` into `CreateSection()`.
+- Clicking Persistence in the Example Host reaches the same construction failure.
+- `HiveSqlServerInstanceDiscovery_FormatsLocalInstancesForLocalConnection` expects installed local SQL Server instances to be formatted as `localhost` / `localhost\\HiveSql`, but the implementation currently uses the supplied machine name (`DEVBOX`), producing `DEVBOX` / `DEVBOX\\HiveSql`.
+- These failures are within the already-authorized Slice 5 settings/discovery presentation boundary and do not authorize Slice 6 or 1.19 work.
 
-Developer compilation feedback received on 2026-10-08 identified six same-slice UI compilation errors after the redesign: missing `BrowseEmbeddedStorage`, missing migration timeout-helper references, missing `CreateStorageLocationPanel`, one stale `_createDatabaseCheckBox` reference, and a `FlowLayoutPanel`/`TableLayoutPanel` return-type mismatch. These concrete errors have been remediated within the existing Slice 5 presentation boundary. Developer rerun remains required.
+### Required remediation
 
-Implementation checkpoint:
-- backend-aware real host composition for SQL Server and Embedded;
-- Embedded first-run default under application-owned Local AppData storage while the direct/default developer configuration store remains SQL Server LocalDB;
-- Persistence Settings `Database Setup | Data Migration` tabs with backend selection, readiness/initialization controls, fixed `All Hive Data` migration scope, and Management-only migration invocation;
-- SQL Server instance discovery/custom picker using both network enumeration and installed local SQL Server instance inventory, Browse-enabled Embedded storage, structured backend-specific sections with consistent field blocks, Destination-left / Source-right migration roles, authentication-aware SQL destination controls, top-row Direction + Scope, full-width tab/page docking, responsive two-column workspace layout, and footer status/actions;
-- bounded automated coverage for Embedded host composition, first-run defaults, configuration fallback, Settings tabs/backend selector, and the persistence UX behavior.
+1. Fix Slice 5 construction ordering so the SQL credentials field is created before `CreateSqlSection()` consumes it; preserve the existing structured section/field hierarchy.
+2. Correct installed-local SQL Server instance formatting so the local registry inventory yields `localhost` for the default instance and `localhost\\<Instance>` for named instances. Remote/network-discovered servers remain unchanged.
+3. Align the focused automated coverage with the intended local-connection representation, including the existing local/network merge assertions.
+4. Re-review the affected Slice 5 diff and documents for accidental changes before returning to **VERIFICATION PENDING**.
 
-Verification status: the latest Slice 5 UX failures have been remediated within the existing failure boundary. The current implementation is unverified until the developer reruns `HiveUiPolishTests` and the full `Hive.Tests` suite, performs the zero-warning developer build, and manually verifies the Example Host Persistence flow.
+No implementation outside this remediation boundary is authorized.
 
 ### Verification handoff
 
+After remediation, developer rerun is required:
+
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
-Tests to run: `HiveUiPolishTests` for the persistence UX changes; then the full `Hive.Tests` suite and a zero-warning developer build under the repository's standing **Treat warnings as errors** configuration. Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`.
+Tests to run: `HiveUiPolishTests` for the persistence UX/discovery changes; then the full `Hive.Tests` suite and a zero-warning developer build under the repository's standing **Treat warnings as errors** configuration.
