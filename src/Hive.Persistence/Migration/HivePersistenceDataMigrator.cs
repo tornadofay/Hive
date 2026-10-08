@@ -389,7 +389,7 @@ internal sealed class HivePersistenceDataMigrator
 
     private async Task<Result<HivePersistenceMigrationExecutionResult>> MigrateEmbeddedToSqlAsync(
         HivePersistenceConfiguration sourceConfiguration,
-        SecretMaterial? sourceSqlCredential,
+        SecretMaterial? destinationSqlCredential,
         HivePersistenceConfiguration destinationConfiguration,
         Guid migrationId,
         ResourceAccessContext accessContext,
