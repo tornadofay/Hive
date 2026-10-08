@@ -672,7 +672,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             _encryptCheckBox.Checked,
             _trustServerCertificateCheckBox.Checked,
             _sqlCreateDatabaseCheckBox.Checked,
-            timeout);
+            (int)_sqlTimeoutNumeric.Value);
 
         if (authentication != HiveSqlAuthenticationMode.SqlPassword)
             return (configuration, null);
@@ -777,10 +777,14 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _passwordTextBox.Clear();
         _encryptCheckBox.Checked = configuration.Encrypt;
         _trustServerCertificateCheckBox.Checked = configuration.TrustServerCertificate;
-        _createDatabaseCheckBox.Checked = configuration.CreateDatabaseIfMissing;
-        _timeoutNumeric.Value = Math.Min(
-            _timeoutNumeric.Maximum,
-            Math.Max(_timeoutNumeric.Minimum, configuration.CommandTimeoutSeconds));
+        _embeddedCreateDatabaseCheckBox.Checked = configuration.CreateDatabaseIfMissing;
+        _sqlCreateDatabaseCheckBox.Checked = configuration.CreateDatabaseIfMissing;
+        SetTimeoutValue(
+            _embeddedTimeoutNumeric,
+            configuration.CommandTimeoutSeconds);
+        SetTimeoutValue(
+            _sqlTimeoutNumeric,
+            configuration.CommandTimeoutSeconds);
         UpdateBackendState();
     }
 
@@ -1126,9 +1130,10 @@ internal sealed class HivePersistenceSettingsView : UserControl
             ? "Test readiness"
             : "Test connection";
 
-        _createDatabaseCheckBox.Text = embedded
-            ? "Allow Hive to create the Embedded database file when initializing"
-            : "Allow database creation when initializing Hive";
+        _embeddedCreateDatabaseCheckBox.Text =
+            "Allow Hive to create the Embedded database file when initialization is requested.";
+        _sqlCreateDatabaseCheckBox.Text =
+            "Allow database creation when initializing Hive.";
     }
 
     private void UpdateAuthenticationState()
