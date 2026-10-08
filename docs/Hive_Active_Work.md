@@ -45,7 +45,7 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+Current state: **IMPLEMENTATION COMPLETE; VERIFICATION PENDING**.
 
 Developer verification evidence received: full `Hive.Tests` suite passed **752/752** (0 failed, 0 skipped) on 2026-10-08. The Slice 5 verification gate remains open because the required zero-warning developer build and Example Host manual verification have not yet been recorded.
 
@@ -58,10 +58,10 @@ Implementation checkpoint:
 - SQL Server instance discovery/custom picker, Browse-enabled Embedded storage, compact grouped setup/migration rows, Destination-left / Source-right migration roles, authentication-aware SQL destination controls, top-row Direction + Scope, and footer status/actions;
 - bounded automated coverage for Embedded host composition, first-run defaults, configuration fallback, Settings tabs/backend selector, and the persistence UX behavior.
 
-Verification status: **VERIFICATION FAILED / REMEDIATION REQUIRED**. Developer reported post-remediation compile errors in `HiveUiPolishTests.cs` and the persistence settings UI. Same-slice remediation is authorized only for those concrete compilation failures. After remediation, the focused/full suite, zero-warning build, and required Example Host manual verification must be rerun.
+Verification status: developer reported post-remediation compile errors in `HiveUiPolishTests.cs` and the persistence settings UI. Those concrete same-slice compilation failures have been remediated: the picker now exposes its selector, the missing Embedded default-path helper is restored, nullable `Font` construction is guarded, layout helper return types are concrete, and the UI regression assertions use `ControlCollection.Contains` correctly. Developer rerun is required before this remediation can be considered verified.
 
 ### Verification handoff
 
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
-Tests to run: `HiveUiPolishTests` for the persistence UX changes; then the full `Hive.Tests` suite and a zero-warning developer build under the repository's standing **Treat warnings as errors** configuration.
+Tests to run: `HiveUiPolishTests` for the persistence UX changes; then the full `Hive.Tests` suite and a zero-warning developer build under the repository's standing **Treat warnings as errors** configuration. Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`.
