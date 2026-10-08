@@ -567,6 +567,8 @@ internal sealed class HivePersistenceDataMigrator
             destinationConnection,
             destinationBackend,
             transaction,
+            null,
+            accessContext,
             cancellationToken).ConfigureAwait(false);
 
         if (!sourceFingerprint.Matches(destinationFingerprint))
@@ -582,6 +584,8 @@ internal sealed class HivePersistenceDataMigrator
             sourceConnection,
             sourceBackend,
             null,
+            sourceSecretStore,
+            accessContext,
             cancellationToken).ConfigureAwait(false);
 
         if (!sourceFingerprint.Matches(sourceAfter))
@@ -739,6 +743,8 @@ internal sealed class HivePersistenceDataMigrator
         DbConnection connection,
         HivePersistenceBackend backend,
         DbTransaction? transaction,
+        ISecretStore? secretStore,
+        ResourceAccessContext accessContext,
         CancellationToken cancellationToken)
     {
         var set = new HiveMigrationFingerprintSet();
@@ -755,6 +761,8 @@ internal sealed class HivePersistenceDataMigrator
                     set,
                     backend,
                     transaction,
+                    secretStore,
+                    accessContext,
                     cancellationToken).ConfigureAwait(false);
             }
             else
@@ -804,8 +812,60 @@ internal sealed class HivePersistenceDataMigrator
         HiveMigrationFingerprintSet set,
         HivePersistenceBackend backend,
         DbTransaction? transaction,
+        ISecretStore? secretStore,
+        ResourceAccessContext accessContext,
         CancellationToken cancellationToken)
     {
+        if (transaction is null && secretStore is not null)
+        {
+            var select = BuildSelectSql(
+                table,
+                connection is SqliteConnection);
+
+            await using var sourceCommand = connection.CreateCommand();
+            sourceCommand.CommandText = select;
+
+            await using var reader = await sourceCommand.ExecuteReaderAsync(
+                CommandBehavior.SequentialAccess,
+                cancellationToken).ConfigureAwait(false);
+
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var values = ReadRow(reader, table);
+
+                if (values[0] is not Guid secretGuid)
+                {
+                    throw new InvalidOperationException(
+                        "Persisted SecretId has an invalid data representation.");
+                }
+
+                var secretResult = await secretStore.GetAsync(
+                    new SecretId(secretGuid),
+                    accessContext,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (secretResult.IsFailure)
+                    throw new HiveSecretMigrationResolutionException(
+                        secretResult.Error!);
+
+                var secretRead = secretResult.Value
+                    ?? throw new InvalidOperationException(
+                        "The source Secret Store returned no secret material.");
+
+                using var material = secretRead.Material;
+
+                set.AddRow(
+                    table.Name,
+                    table.Columns,
+                    values,
+                    material.Reveal());
+            }
+
+            return;
+        }
+
         const string encryptedColumn = "EncryptedValue";
         var selectColumns = string.Join(
             ", ",
