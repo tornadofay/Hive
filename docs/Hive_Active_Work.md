@@ -252,6 +252,17 @@ Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 
 Implementation changes may proceed only to correct these recorded failures. After remediation, Active Work must return to **VERIFICATION PENDING** with the existing focused/full-suite, zero-warning build, and Example Host manual verification requirements.
 
+### Remediation completed — 2026-10-09 custom picker and startup performance
+
+- `HiveSqlServerInstancePicker` now uses natural auto-sized layout for the optional Custom server row instead of forcing a fixed zero/78px outer height. Selecting `Custom...` keeps the picker available and expands the control to reveal the editable custom server/instance textbox.
+- `HivePersistenceSettingsView.CreateFieldBlock()` preserves auto-sizing for the SQL Server picker so its custom row can grow through the surrounding bounded field host; ordinary compact fields retain the 34px sizing contract.
+- `HiveSettingsView.InitializeAsync()` no longer constructs Provider, Agent, and Persistence pages during initial Settings startup. Those pages remain lazy and are constructed only when first navigated to, removing unnecessary control creation/theme/layout work from initial Settings paint.
+- No shared UI infrastructure, persistence contract, migration behavior, Slice 6, or 1.19 scope was changed.
+
+Current state: **VERIFICATION PENDING**.
+
+Developer rerun is required against the corrected source. Manual verification must specifically confirm that `Custom...` reveals an editable custom server/instance field and that initial Settings/Persistence presentation is responsive without the previous heavy first-open paint delay.
+
 ### Remediation completed — latest manual UI correction
 
 - HivePersistenceSettingsView.CreateFieldBlock() now uses an auto-sized fixed-width editor host instead of a fixed-height wrapper. This lets the normal compact controls use their 34px natural field height, while the SQL Server picker can expand when its Custom row is shown.
