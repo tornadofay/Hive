@@ -63,4 +63,4 @@ Verification results are intentionally not claimed yet because this environment 
 
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
-Tests to run: `HiveHostCompositionTests`, `HiveConfigurationTests`, `HiveUiPolishTests`; then the full `Hive.Tests` suite and a zero-warning developer build under the repository's standing **Treat warnings as errors** configuration.
+Tests to run: `HiveUiPolishTests` for the persistence UX changes; then the full `Hive.Tests` suite and a zero-warning developer build under the repository's standing **Treat warnings as errors** configuration. Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`.
