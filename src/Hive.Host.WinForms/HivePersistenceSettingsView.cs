@@ -1122,25 +1122,33 @@ internal sealed class HivePersistenceSettingsView : UserControl
         {
             editor.Dock = DockStyle.Fill;
             editor.Width = editorWidth.Value;
+
+            var editorHeight = Math.Max(
+                34,
+                editor.Height,
+                editor.MinimumSize.Height,
+                editor.PreferredSize.Height);
+
             editor.MinimumSize = new Size(
                 editorWidth.Value,
-                Math.Max(0, editor.MinimumSize.Height));
-            editor.MaximumSize = new Size(editorWidth.Value, 0);
+                editorHeight);
 
             var editorHost = new Panel
             {
                 Dock = DockStyle.Left,
-                AutoSize = false,
+                AutoSize = true,
                 Width = editorWidth.Value,
-                MinimumSize = new Size(editorWidth.Value, 0),
-                MaximumSize = new Size(editorWidth.Value, 0),
+                MinimumSize = new Size(
+                    editorWidth.Value,
+                    editorHeight),
+                MaximumSize = new Size(
+                    editorWidth.Value,
+                    0),
                 Margin = Padding.Empty,
                 Padding = Padding.Empty
             };
+            editor.Height = editorHeight;
             editorHost.Controls.Add(editor);
-
-            if (editor.Height < 36)
-                editor.Height = 36;
 
             block.Controls.Add(label, 0, 0);
             block.Controls.Add(editorHost, 0, 1);
@@ -1148,8 +1156,13 @@ internal sealed class HivePersistenceSettingsView : UserControl
         }
 
         editor.Dock = DockStyle.Fill;
-        if (editor.Height < 36)
-            editor.Height = 36;
+        var defaultEditorHeight = Math.Max(
+            34,
+            Math.Max(editor.Height, editor.MinimumSize.Height));
+        editor.MinimumSize = new Size(
+            editor.MinimumSize.Width,
+            defaultEditorHeight);
+        editor.Height = defaultEditorHeight;
 
         block.Controls.Add(label, 0, 0);
         block.Controls.Add(editor, 0, 1);
