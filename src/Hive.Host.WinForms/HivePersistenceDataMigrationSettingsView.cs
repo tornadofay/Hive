@@ -614,6 +614,11 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private static TableLayoutPanel CreateFormGrid(
         params Control[] controls)
     {
+        if (controls.Length == 0)
+            throw new ArgumentException(
+                "At least one control is required.",
+                nameof(controls));
+
         var grid = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
@@ -621,16 +626,24 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = controls.Length,
             RowCount = 1,
-            Margin = Padding.Empty,
+            Margin = new Padding(0, 0, 0, 10),
             Padding = Padding.Empty,
             GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
 
-        var width = 100f / Math.Max(1, controls.Length);
+        var width = 100f / controls.Length;
         for (var i = 0; i < controls.Length; i++)
         {
             grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, width));
-            grid.Controls.Add(controls[i], i, 0);
+
+            var control = controls[i];
+            var rightGap = i < controls.Length - 1 ? 10 : 0;
+            control.Margin = new Padding(
+                control.Margin.Left,
+                control.Margin.Top,
+                rightGap,
+                control.Margin.Bottom);
+            grid.Controls.Add(control, i, 0);
         }
 
         return grid;
