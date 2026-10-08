@@ -250,6 +250,20 @@ Current state: **VERIFICATION PENDING**.
 
 Developer rerun/manual verification is required against the corrected source. Preserve the focused/full-suite, zero-warning build, and Example Host verification requirements below.
 
+### Compilation failure — latest local developer/editor feedback
+
+A compile-time failure was reported in the latest Slice 5 sizing correction:
+
+- `HivePersistenceSettingsView.cs` line 1126: `CS1501` — `Math.Max` has no overload accepting four arguments.
+
+This is an in-scope same-slice compilation defect in the recently changed field-sizing expression. No new roadmap scope is authorized.
+
+### Remediation completed — latest
+
+- Replaced the invalid four-argument `Math.Max` call with equivalent nested two-argument `Math.Max` calls.
+- No layout behavior, persistence contract, migration behavior, shared UI infrastructure, Slice 6, or 1.19 scope was otherwise changed.
+- Active Work remains **VERIFICATION PENDING** until the developer reruns the affected tests/build and performs the required Example Host visual verification.
+
 ### Verification handoff
 
 Developer rerun is required:
