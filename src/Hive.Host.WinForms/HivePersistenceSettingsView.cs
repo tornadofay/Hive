@@ -47,7 +47,10 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private readonly TableLayoutPanel _sqlCredentialsField;
     private HiveStatusTone _statusTone = HiveStatusTone.Neutral;
     private bool _updatingBackendSelection;
-    private bool _normalizingSetupLayout;
+
+    private const int BackendSectionHeight = 104;
+    private const int EmbeddedSectionHeight = 190;
+    private const int SqlSectionHeight = 500;
 
     private CancellationTokenSource? _operationCts;
     private HivePersistenceConfiguration? _loadedConfiguration;
@@ -142,7 +145,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _embeddedTimeoutNumeric = CreateTimeoutInput();
         _sqlTimeoutNumeric = CreateTimeoutInput();
 
-        _backendComboBox.Width = 80;
+        _backendComboBox.Width = 120;
         _backendComboBox.Dock = DockStyle.Left;
         _authenticationComboBox.Width = 160;
         _authenticationComboBox.Dock = DockStyle.Left;
@@ -180,8 +183,9 @@ internal sealed class HivePersistenceSettingsView : UserControl
         var backendSection = CreateSection(
             "Persistence Backend",
             "Choose where Hive stores its durable state. Changing this selector does not migrate data or activate a new backend.",
+            BackendSectionHeight,
             CreateFormGrid(
-                CreateFieldBlock("Backend", _backendComboBox, 80)));
+                CreateFieldBlock("Backend", _backendComboBox, 120)));
 
         _updatingBackendSelection = true;
         try
@@ -259,12 +263,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         UpdateBackendState();
         UpdateFooterStatusWidth();
-    }
-
-    protected override void OnLayout(LayoutEventArgs e)
-    {
-        base.OnLayout(e);
-        NormalizeSetupScrollContent();
     }
 
     public Task InitializeAsync(
@@ -854,7 +852,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
     {
         var fields = _editor.FieldsPanel;
         var row = fields.RowCount++;
-        fields.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        fields.RowStyles.Add(
+            new RowStyle(SizeType.Absolute, section.Height));
         fields.Controls.Add(section, 0, row);
         fields.SetColumnSpan(section, 2);
     }
@@ -878,6 +877,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         return CreateSection(
             "Embedded Storage",
             "Application-owned local Hive database. Browse to another .db file when the default location is not suitable.",
+            EmbeddedSectionHeight,
             storagePath,
             lifecycle);
     }
@@ -918,6 +918,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         var content = CreateSection(
             "SQL Server Connection",
             "Connect to an existing SQL Server deployment. Discovery is automatic when SQL Server is selected; Custom... remains available for manual targets.",
+            SqlSectionHeight,
             server,
             initialization,
             identity,
@@ -1032,13 +1033,14 @@ internal sealed class HivePersistenceSettingsView : UserControl
     private TableLayoutPanel CreateSection(
         string title,
         string description,
+        int height,
         params Control[] content)
     {
         var section = new TableLayoutPanel
         {
             Dock = DockStyle.Top,
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            AutoSize = false,
+            Height = height,
             ColumnCount = 1,
             RowCount = 2,
             Margin = new Padding(0, 0, 0, 8),
@@ -1284,10 +1286,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
             return;
 
         var rowStyle = _editor.FieldsPanel.RowStyles[row];
-        rowStyle.SizeType = visible
-            ? SizeType.AutoSize
-            : SizeType.Absolute;
-        rowStyle.Height = visible ? 0 : 0;
+        rowStyle.SizeType = SizeType.Absolute;
+        rowStyle.Height = visible ? section.Height : 0;
     }
 
     private void UpdateAuthenticationState()
@@ -1610,45 +1610,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
             BorderStyle = BorderStyle.FixedSingle
         };
 
-
-    private void NormalizeSetupScrollContent()
-    {
-        if (_normalizingSetupLayout ||
-            IsDisposed ||
-            Disposing ||
-            _editor.FieldsPanel.Parent is not HiveScrollHost scrollHost)
-        {
-            return;
-        }
-
-        var viewportWidth = scrollHost.ClientSize.Width;
-        if (viewportWidth <= 0)
-            return;
-
-        _normalizingSetupLayout = true;
-        try
-        {
-            _editor.FieldsPanel.Width = viewportWidth;
-            _editor.FieldsPanel.PerformLayout();
-
-            var contentBottom = _editor.FieldsPanel.Controls
-                .Cast<Control>()
-                .Where(static control => control.Visible)
-                .Select(static control => control.Bottom)
-                .DefaultIfEmpty(0)
-                .Max();
-
-            _editor.FieldsPanel.Size = new Size(
-                viewportWidth,
-                Math.Max(1, contentBottom));
-
-            scrollHost.Synchronize();
-        }
-        finally
-        {
-            _normalizingSetupLayout = false;
-        }
-    }
 
     private static void SetReadOnlyVisualState(
         TextBox textBox,
