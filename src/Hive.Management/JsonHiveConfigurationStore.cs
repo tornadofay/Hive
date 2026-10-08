@@ -13,10 +13,12 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
 
     private readonly string _filePath;
     private readonly string _applicationName;
+    private readonly HivePersistenceConfiguration _defaultPersistenceConfiguration;
 
     public JsonHiveConfigurationStore(
         string? filePath = null,
-        string? applicationName = null)
+        string? applicationName = null,
+        HivePersistenceConfiguration? defaultPersistenceConfiguration = null)
     {
         _applicationName = string.IsNullOrWhiteSpace(applicationName)
             ? HivePersistenceConfiguration.DefaultApplicationName
@@ -29,6 +31,11 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
                 "Hive",
                 "hive-settings.json")
             : Path.GetFullPath(filePath);
+
+        _defaultPersistenceConfiguration =
+            defaultPersistenceConfiguration ??
+            HivePersistenceConfiguration.LocalDevelopmentForApplication(
+                _applicationName);
     }
 
     public async Task<Result<HivePersistenceConfiguration>> LoadPersistenceConfigurationAsync(
@@ -39,8 +46,7 @@ public sealed class JsonHiveConfigurationStore : IHiveConfigurationStore
             if (!File.Exists(_filePath))
             {
                 return Result<HivePersistenceConfiguration>.Success(
-                    HivePersistenceConfiguration.LocalDevelopmentForApplication(
-                        _applicationName));
+                    _defaultPersistenceConfiguration);
             }
 
             await using var stream = new FileStream(
