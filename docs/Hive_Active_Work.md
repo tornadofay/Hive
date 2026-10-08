@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Status: **IMPLEMENTATION IN PROGRESS — VERIFICATION PENDING**
 
 ## Phase 1.18A — Embedded Persistence Profile
 ### Slice 4 — Full-Data Migration
@@ -38,7 +38,7 @@ Both directions must be developer-verified against complete representative Hive 
 
 Developer verification reported additional compile failures on 2026-10-08 in `HivePersistenceDataMigrator.cs`: a table/column-definition argument mismatch, a stale `MigrationIncompatibleSourceError` reference, and a local `reader` scope collision. Same-slice remediation corrected all three reported errors: `AddParameters` now receives `table.Columns`, the source compatibility path uses the existing `MigrationIncompatibleSource` helper, and the later secret-fingerprint reader is scoped as `secretReader`. No out-of-scope failure is recorded.
 
-The 2026-10-08 developer run reached 749 tests with 742 passed and 7 failed. All seven failures are within the Slice 4 migration test boundary: five use a SQL configuration helper that defaults to `(localdb)\\MSSQLLocalDB` instead of the test instance, one representative event fixture supplies an invalid zero snapshot version, and the remaining failures are downstream manifestations of those two setup issues. Same-slice remediation is authorized only for these recorded failures.
+The 2026-10-08 developer run reached 749 tests with 742 passed and 7 failed. Six failures use `HivePersistenceConfiguration.LocalDevelopment(...)`, which points at `(localdb)\\MSSQLLocalDB` while the test database helper uses the configured SQL Server test instance. The seventh failure is the representative event fixture supplying `ResourceVersion.Initial` (version 0) as a snapshot for the first event, whose required snapshot version is 1. Same-slice remediation corrected these recorded failures; no out-of-scope failure is recorded.
 
 ### Example / verification handoff
 
