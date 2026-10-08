@@ -329,7 +329,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     {
         ArgumentNullException.ThrowIfNull(instances);
 
-        var preferred = preferredServer?.Trim() ?? ServerName;
+        var preferred = preferredServer?.Trim() ?? string.Empty;
         _serverComboBox.Items.Clear();
 
         foreach (var instance in instances
