@@ -353,6 +353,21 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
                 _serverComboBox.SelectedItem = discovered;
                 _customServerTextBox.Clear();
             }
+            else if (string.Equals(
+                         preferred,
+                         "localhost",
+                         StringComparison.OrdinalIgnoreCase) &&
+                     _serverComboBox.Items
+                         .OfType<ServerChoice>()
+                         .Any(static choice =>
+                             !choice.IsCustom &&
+                             choice.DisplayName.Contains('\\', StringComparison.Ordinal)))
+            {
+                // Recover from older configurations that represented an installed
+                // named local instance as bare "localhost".
+                _serverComboBox.SelectedIndex = 0;
+                _customServerTextBox.Clear();
+            }
             else
             {
                 _serverComboBox.SelectedIndex = _serverComboBox.Items.Count - 1;
@@ -367,7 +382,31 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
                     : _serverComboBox.Items.Count - 1;
         }
 
+        ApplyPortDefaultForSelection();
         UpdateCustomVisibility();
+    }
+
+    private void ApplyPortDefaultForSelection()
+    {
+        if (IsCustomSelected)
+        {
+            if (Port is null)
+                Port = 1433;
+            return;
+        }
+
+        var server = ServerName;
+
+        if (server.Contains('\\', StringComparison.Ordinal))
+        {
+            // Named SQL Server instances use SQL Server Browser/instance
+            // resolution unless the user explicitly supplies a port.
+            Port = null;
+            return;
+        }
+
+        if (Port is null)
+            Port = 1433;
     }
 
     public async Task RefreshAsync(
