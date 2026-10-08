@@ -45,7 +45,11 @@ Slice 5 stops at its own verification gate:
 - required automated tests/builds are developer-run and recorded from actual results;
 - required Example Host manual verification is recorded only when actually performed.
 
-Current state: **IMPLEMENTATION COMPLETE; VERIFICATION PENDING**.
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+Developer verification evidence received: full `Hive.Tests` suite passed **752/752** (0 failed, 0 skipped) on 2026-10-08. The Slice 5 verification gate remains open because the required zero-warning developer build and Example Host manual verification have not yet been recorded.
+
+Same-slice remediation boundary: improve the already-authorized Slice 5 Persistence Settings UX only. This remediation is limited to Database Setup and Data Migration presentation, SQL Server instance discovery/custom selection, authentication-aware field presentation, Embedded storage browsing, source/destination migration layout, top-row Direction + Scope placement, and footer status/actions. No new backend, migration capability, persistence contract, Slice 6 work, or 1.19 work is authorized.
 
 Implemented checkpoint:
 - backend-aware real host composition for SQL Server and Embedded;
