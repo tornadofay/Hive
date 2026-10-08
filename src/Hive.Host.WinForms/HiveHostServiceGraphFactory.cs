@@ -42,11 +42,7 @@ public sealed class HiveHostServiceGraphFactory :
             HivePersistenceBackend.SqlServer =>
                 CreateSqlServerAsync(configuration, cancellationToken),
             HivePersistenceBackend.Embedded =>
-                Task.FromResult(
-                    Result<HiveHostServiceGraph>.Failure(
-                        Error.Unsupported(
-                            "hive.host.embedded-persistence-unavailable",
-                            "Embedded persistence is not available in the current implementation slice."))),
+                CreateEmbeddedAsync(configuration, cancellationToken),
             _ =>
                 Task.FromResult(
                     Result<HiveHostServiceGraph>.Failure(
@@ -54,6 +50,84 @@ public sealed class HiveHostServiceGraphFactory :
                             "hive.host.persistence-backend-invalid",
                             "The persistence backend is invalid.")))
         }).ConfigureAwait(false);
+    }
+
+    private async Task<Result<HiveHostServiceGraph>> CreateEmbeddedAsync(
+        HivePersistenceConfiguration configuration,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        EmbeddedPersistenceDatabase? database = null;
+        HiveManagementFacade? management = null;
+
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            database = new EmbeddedPersistenceDatabase(configuration);
+
+            var secretStore = new EmbeddedDpapiSecretStore(database);
+            var eventPersistence = HiveEventPersistence.CreateEmbedded(database);
+            var agentExecution = new AgentExecutionService(
+                eventPersistence,
+                SharedHttpClient);
+            var structuredExtractionEngine =
+                new StructuredExtractionEngine(SharedHttpClient);
+            var structuredExtractionBatches =
+                new SqlStructuredExtractionBatchStore(eventPersistence);
+
+            management = new HiveManagementFacade(
+                new EmbeddedProviderResourceStore(database),
+                new EmbeddedAgentDefinitionResourceStore(database),
+                new EmbeddedWorkItemResourceStore(database),
+                secretStore,
+                new OpenAICompatibleProviderConnectionTester(),
+                _configurationStore,
+                new HivePersistenceConnectionTester(),
+                _bootstrapCredentials,
+                agentExecution,
+                new OpenAICompatibleProviderCapabilityDiscovery(
+                    SharedHttpClient),
+                executionTargetPreferences:
+                    new EmbeddedExecutionTargetPreferenceStore(database),
+                structuredExtractionBatches: structuredExtractionBatches,
+                structuredExtractionEngine: structuredExtractionEngine);
+
+            var graph = new HiveHostServiceGraph(
+                configuration,
+                management,
+                [database, management]);
+
+            database = null;
+            management = null;
+
+            return Result<HiveHostServiceGraph>.Success(graph);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (ArgumentException)
+        {
+            return Result<HiveHostServiceGraph>.Failure(
+                Error.Validation(
+                    "hive.host.persistence-configuration-invalid",
+                    "The persistence configuration is invalid."));
+        }
+        catch (Exception)
+        {
+            return Result<HiveHostServiceGraph>.Failure(
+                new Error(
+                    "hive.host.service-graph-construction-failed",
+                    ErrorCategory.External,
+                    "Hive service graph construction failed."));
+        }
+        finally
+        {
+            management?.Dispose();
+            database?.Dispose();
+        }
     }
 
     private async Task<Result<HiveHostServiceGraph>> CreateSqlServerAsync(
