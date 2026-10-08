@@ -277,6 +277,7 @@ public sealed class HivePersistenceDataMigrationTests
             {
                 var unavailableResult = await unavailable.MigratePersistenceDataAsync(
                     new HivePersistenceMigrationRequest(
+                        sourceConfiguration,
                         HivePersistenceConfiguration.Embedded(embeddedPath)),
                     context);
 
@@ -296,6 +297,7 @@ public sealed class HivePersistenceDataMigrationTests
 
             var result = await management.MigratePersistenceDataAsync(
                 new HivePersistenceMigrationRequest(
+                    sourceConfiguration,
                     HivePersistenceConfiguration.Embedded(embeddedPath)),
                 context);
 
