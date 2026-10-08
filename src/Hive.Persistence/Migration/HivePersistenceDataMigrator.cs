@@ -11,7 +11,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Hive.Persistence;
 
-public sealed class HivePersistenceDataMigrator
+internal sealed class HivePersistenceDataMigrator
 {
     private const string MigrationFailedCode = "hive.persistence.data-migration.failed";
     private const int CurrentSchemaVersion = HiveDatabaseSchema.CurrentSchemaVersion;
