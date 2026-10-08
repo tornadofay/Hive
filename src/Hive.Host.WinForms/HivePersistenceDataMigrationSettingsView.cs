@@ -489,10 +489,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         panel.Controls.Add(
             CreateSecurityTimeoutPanel(
                 includeSecurity: false,
-                _embeddedCreateDatabaseCheckBox,
+                firstSecurityControl: _embeddedCreateDatabaseCheckBox,
                 secondarySecurityControl: null,
-                _embeddedTimeoutNumeric,
-                "Initialize"),
+                timeout: _embeddedTimeoutNumeric,
+                secondaryCaption: "Initialize"),
             0,
             2);
 
@@ -557,10 +557,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 "Security / timeout",
                 CreateSecurityTimeoutPanel(
                     includeSecurity: true,
-                    _sqlEncryptCheckBox,
-                    _sqlTrustServerCertificateCheckBox,
-                    _sqlTimeoutNumeric,
-                    null)),
+                    firstSecurityControl: _sqlEncryptCheckBox,
+                    secondarySecurityControl: _sqlTrustServerCertificateCheckBox,
+                    timeout: _sqlTimeoutNumeric,
+                    secondaryCaption: null)),
             0,
             4);
         panel.Controls.Add(
