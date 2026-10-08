@@ -436,8 +436,10 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         if (server.Contains('\\', StringComparison.Ordinal))
         {
             // Named SQL Server instances use SQL Server Browser/instance
-            // resolution unless the user explicitly supplies a port.
-            Port = null;
+            // resolution by default. Preserve a user/configured non-default port.
+            if (Port == 1433)
+                Port = null;
+
             return;
         }
 
