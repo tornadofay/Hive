@@ -22,7 +22,6 @@ public sealed class HivePersistenceDataMigrationTests
         try
         {
             var sourceOptions = await CreateSqlDatabaseAsync(sourceDatabaseName);
-            var context = NewContext();
             var sourceConfiguration = HivePersistenceConfiguration.LocalDevelopment(
                 sourceDatabaseName);
 
@@ -398,7 +397,8 @@ public sealed class HivePersistenceDataMigrationTests
                 context);
 
             Assert.False(result.IsSuccess);
-
+            Assert.Equal(
+                "hive.persistence.data-migration.destination-not-empty",
                 result.Error!.Code);
 
             var count = await CountEmbeddedRowsAsync(
