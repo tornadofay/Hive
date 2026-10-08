@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Status: **IMPLEMENTATION IN PROGRESS — VERIFICATION PENDING**
 
 ## Phase 1.18A — Embedded Persistence Profile
 ### Slice 4 — Full-Data Migration
@@ -62,3 +62,5 @@ Developer verification on 2026-10-08 reported 749 tests with 748 passed and 1 fa
 Same-slice remediation aligned the SQL-side Secret Store fingerprint query with the existing cross-backend canonical ordering rule by routing its OrderByColumns through `BuildOrderByExpression`. This fixes the second-direction (Embedded → SQL Server) verification mismatch without weakening fingerprint verification or changing migration data semantics. No out-of-scope production behavior was changed. Developer re-verification remains required.
 
 Developer verification on 2026-10-08 re-ran 749 tests with 748 passed and 1 failed: `FullDataMigration_RoundTripsAllCurrentDurableStateAndReprotectsSecrets` again failed during the Embedded → SQL Server migration at destination fingerprint verification with `hive.persistence.data-migration.verification-failed`. The prior Secret Store ordering remediation did not eliminate the mismatch. This remains inside the Slice 4 cross-backend migration verification boundary and authorizes same-slice remediation.
+
+Same-slice remediation changed migration UtcDateTime destination parameters from generic `DbType.DateTime` to `DbType.DateTime2`, matching the existing SQL schema/persistence writers and preserving the full DATETIME2(7) precision during Embedded → SQL Server migration. The representative migration fixture now uses a fractional-second timestamp so this precision boundary is exercised by the focused round-trip test. No fingerprint verification was weakened and no out-of-scope behavior was changed. Developer re-verification remains required.
