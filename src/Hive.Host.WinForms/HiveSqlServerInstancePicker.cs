@@ -1,5 +1,6 @@
 using System.Data;
 using Microsoft.Data.Sql;
+using Microsoft.Win32;
 using System.ComponentModel;
 using Hive.Host.WinForms.UI.Controls;
 
@@ -11,29 +12,134 @@ internal static class HiveSqlServerInstanceDiscovery
         CancellationToken cancellationToken = default)
     {
         return Task.Run(
-            static () =>
+            () =>
             {
-                var table = SqlDataSourceEnumerator.Instance.GetDataSources();
-                var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+                cancellationToken.ThrowIfCancellationRequested();
 
-                foreach (DataRow row in table.Rows)
-                {
-                    var server = Convert.ToString(row["ServerName"])?.Trim();
-                    var instance = Convert.ToString(row["InstanceName"])?.Trim();
+                var network = DiscoverNetworkInstances();
+                var local = DiscoverInstalledLocalInstances();
 
-                    if (string.IsNullOrWhiteSpace(server))
-                        continue;
+                cancellationToken.ThrowIfCancellationRequested();
 
-                    var name = string.IsNullOrWhiteSpace(instance)
-                        ? server
-                        : $@"{server}\{instance}";
-
-                    names.Add(name);
-                }
-
-                return (IReadOnlyList<string>)names.ToArray();
+                return MergeCandidates(
+                    network,
+                    local,
+                    Environment.MachineName);
             },
             cancellationToken);
+    }
+
+    internal static IReadOnlyList<string> MergeCandidates(
+        IEnumerable<string> networkInstances,
+        IEnumerable<string> localInstances,
+        string localMachineName)
+    {
+        ArgumentNullException.ThrowIfNull(networkInstances);
+        ArgumentNullException.ThrowIfNull(localInstances);
+
+        var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var instance in networkInstances)
+        {
+            if (!string.IsNullOrWhiteSpace(instance))
+                names.Add(instance.Trim());
+        }
+
+        foreach (var instance in localInstances)
+        {
+            if (string.IsNullOrWhiteSpace(instance))
+                continue;
+
+            names.Add(
+                FormatLocalInstanceName(
+                    instance,
+                    localMachineName));
+        }
+
+        return names.ToArray();
+    }
+
+    internal static string FormatLocalInstanceName(
+        string instanceName,
+        string localMachineName)
+    {
+        var normalized = instanceName.Trim();
+        if (normalized.Length == 0)
+            throw new ArgumentException(
+                "SQL Server instance name is required.",
+                nameof(instanceName));
+
+        var machine = string.IsNullOrWhiteSpace(localMachineName)
+            ? "localhost"
+            : localMachineName.Trim();
+
+        return string.Equals(
+            normalized,
+            "MSSQLSERVER",
+            StringComparison.OrdinalIgnoreCase)
+            ? machine
+            : $@"{machine}\{normalized}";
+    }
+
+    private static IReadOnlyList<string> DiscoverNetworkInstances()
+    {
+        var table = SqlDataSourceEnumerator.Instance.GetDataSources();
+        var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (DataRow row in table.Rows)
+        {
+            var server = Convert.ToString(row["ServerName"])?.Trim();
+            var instance = Convert.ToString(row["InstanceName"])?.Trim();
+
+            if (string.IsNullOrWhiteSpace(server))
+                continue;
+
+            var name = string.IsNullOrWhiteSpace(instance)
+                ? server
+                : $@"{server}\{instance}";
+
+            names.Add(name);
+        }
+
+        return names.ToArray();
+    }
+
+    private static IReadOnlyList<string> DiscoverInstalledLocalInstances()
+    {
+        var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
+        {
+            try
+            {
+                using var baseKey = RegistryKey.OpenBaseKey(
+                    RegistryHive.LocalMachine,
+                    view);
+
+                using var instanceNames = baseKey.OpenSubKey(
+                    @"SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL");
+
+                if (instanceNames is null)
+                    continue;
+
+                foreach (var name in instanceNames.GetValueNames())
+                {
+                    if (!string.IsNullOrWhiteSpace(name))
+                        names.Add(name.Trim());
+                }
+            }
+            catch (SecurityException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+            catch (IOException)
+            {
+            }
+        }
+
+        return names.ToArray();
     }
 }
 
@@ -70,9 +176,11 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         _serverComboBox.SelectedIndexChanged += (_, _) => UpdateCustomVisibility();
 
         _customServerTextBox = CreateTextBox();
+        _customServerTextBox.PlaceholderText = "Custom server or instance";
         _customServerTextBox.Visible = false;
 
         _portTextBox = CreateTextBox();
+        _portTextBox.PlaceholderText = "Port";
 
         _refreshButton = new Hive.Host.WinForms.UI.Controls.HiveButton
         {
@@ -93,12 +201,12 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
             Padding = Padding.Empty
         };
         _topRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        _topRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 82f));
-        _topRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 104f));
+        _topRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92f));
+        _topRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 88f));
 
         _topRow.Controls.Add(_serverComboBox, 0, 0);
-        _topRow.Controls.Add(_refreshButton, 1, 0);
-        _topRow.Controls.Add(_portTextBox, 2, 0);
+        _topRow.Controls.Add(_portTextBox, 1, 0);
+        _topRow.Controls.Add(_refreshButton, 2, 0);
 
         _customRow = new TableLayoutPanel
         {
@@ -122,15 +230,15 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
             GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
         _layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32f));
-        _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38f));
+        _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
+        _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42f));
         _layout.Controls.Add(_topRow, 0, 0);
         _layout.Controls.Add(_customRow, 0, 1);
 
         Controls.Add(_layout);
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
-        MinimumSize = new Size(260, 38);
+        MinimumSize = new Size(0, 36);
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(this);
