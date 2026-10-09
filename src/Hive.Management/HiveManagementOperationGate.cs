@@ -58,6 +58,8 @@ public sealed class HiveManagementOperationGate :
             if (drainTask is not null)
                 await drainTask.WaitAsync(cancellationToken).ConfigureAwait(false);
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             return Result<IAsyncDisposable>.Success(
                 new GateLease(ReleaseQuiescence));
         }
