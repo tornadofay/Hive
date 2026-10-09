@@ -1,138 +1,10 @@
-using System.Data;
-using Microsoft.Data.Sql;
-using Microsoft.Win32;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using Hive.Host.WinForms.UI.Controls;
 
 namespace Hive.Host.WinForms;
-
-internal static class HiveSqlServerInstanceDiscovery
-{
-    public static Task<IReadOnlyList<string>> DiscoverAsync(
-        CancellationToken cancellationToken = default)
-    {
-        return Task.Run(
-            () =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var network = DiscoverNetworkInstances();
-                var local = DiscoverInstalledLocalInstances();
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                return MergeCandidates(
-                    network,
-                    local);
-            },
-            cancellationToken);
-    }
-
-    internal static IReadOnlyList<string> MergeCandidates(
-        IEnumerable<string> networkInstances,
-        IEnumerable<string> localInstances)
-    {
-        ArgumentNullException.ThrowIfNull(networkInstances);
-        ArgumentNullException.ThrowIfNull(localInstances);
-
-        var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var instance in networkInstances)
-        {
-            if (!string.IsNullOrWhiteSpace(instance))
-                names.Add(instance.Trim());
-        }
-
-        foreach (var instance in localInstances)
-        {
-            if (string.IsNullOrWhiteSpace(instance))
-                continue;
-
-            names.Add(
-                FormatInstalledInstanceName(instance));
-        }
-
-        return names.ToArray();
-    }
-
-    internal static string FormatInstalledInstanceName(
-        string instanceName)
-    {
-        var normalized = instanceName.Trim();
-        if (normalized.Length == 0)
-            throw new ArgumentException(
-                "SQL Server instance name is required.",
-                nameof(instanceName));
-
-        return string.Equals(
-            normalized,
-            "MSSQLSERVER",
-            StringComparison.OrdinalIgnoreCase)
-            ? "localhost"
-            : $@"localhost\{normalized}";
-    }
-
-    private static IReadOnlyList<string> DiscoverNetworkInstances()
-    {
-        var table = SqlDataSourceEnumerator.Instance.GetDataSources();
-        var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (DataRow row in table.Rows)
-        {
-            var server = Convert.ToString(row["ServerName"])?.Trim();
-            var instance = Convert.ToString(row["InstanceName"])?.Trim();
-
-            if (string.IsNullOrWhiteSpace(server))
-                continue;
-
-            var name = string.IsNullOrWhiteSpace(instance)
-                ? server
-                : $@"{server}\{instance}";
-
-            names.Add(name);
-        }
-
-        return names.ToArray();
-    }
-
-    private static IReadOnlyList<string> DiscoverInstalledLocalInstances()
-    {
-        var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
-        {
-            try
-            {
-                using var baseKey = RegistryKey.OpenBaseKey(
-                    RegistryHive.LocalMachine,
-                    view);
-
-                using var instanceNames = baseKey.OpenSubKey(
-                    @"SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL");
-
-                if (instanceNames is null)
-                    continue;
-
-                foreach (var name in instanceNames.GetValueNames())
-                {
-                    if (!string.IsNullOrWhiteSpace(name))
-                        names.Add(name.Trim());
-                }
-            }
-            catch (System.Security.SecurityException)
-            {
-            }
-            catch (UnauthorizedAccessException)
-            {
-            }
-            catch (IOException)
-            {
-            }
-        }
-
-        return names.ToArray();
-    }
-}
 
 internal sealed class HiveSqlServerInstancePicker : UserControl
 {
@@ -149,6 +21,19 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     private readonly TableLayoutPanel _layout;
     private readonly TableLayoutPanel _topRow;
     private readonly TableLayoutPanel _customRow;
+    private readonly TableLayoutPanel _statusRow;
+    private readonly ProgressBar _discoverySpinner;
+    private readonly Label _discoveryStatusLabel;
+    private readonly SqlServerInstanceDiscoveryCoordinator _discovery;
+    private CancellationTokenSource? _activeDiscoveryCts;
+    private DiscoverySnapshot? _activeDiscoverySnapshot;
+    private int _discoveryGeneration;
+    private sealed record DiscoverySnapshot(
+        int Generation,
+        int UserEditVersion,
+        string PreferredServer,
+        SynchronizationContext? SynchronizationContext);
+
     private bool _applyingValue;
     private bool _settingPort;
     private bool _portWasAutomaticallyDefaulted;
@@ -157,9 +42,11 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     public event EventHandler? RefreshRequested;
 
     public HiveSqlServerInstancePicker(
-        Hive.Host.WinForms.UI.Theme.IHiveThemeManager themeManager)
+        Hive.Host.WinForms.UI.Theme.IHiveThemeManager themeManager,
+        SqlServerInstanceDiscoveryCoordinator? discovery = null)
     {
         _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
+        _discovery = discovery ?? HiveSqlServerInstanceDiscovery.Shared;
 
         SuspendLayout();
 
@@ -249,13 +136,52 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         _customRow.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _customRow.Controls.Add(_customServerTextBox, 0, 0);
 
+        _statusRow = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = new Padding(0, 3, 0, 0),
+            Padding = Padding.Empty,
+            Visible = false
+        };
+        _statusRow.SuspendLayout();
+        _statusRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20f));
+        _statusRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        _statusRow.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+        _discoverySpinner = new ProgressBar
+        {
+            Style = ProgressBarStyle.Marquee,
+            MarqueeAnimationSpeed = 25,
+            Size = new Size(16, 16),
+            Margin = new Padding(0, 1, 4, 1),
+            Anchor = AnchorStyles.Left,
+            Visible = false
+        };
+        _discoveryStatusLabel = new Label
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            Height = 18,
+            TextAlign = ContentAlignment.MiddleLeft,
+            AutoEllipsis = true,
+            Margin = Padding.Empty,
+            Visible = false
+        };
+        _statusRow.Controls.Add(_discoverySpinner, 0, 0);
+        _statusRow.Controls.Add(_discoveryStatusLabel, 1, 0);
+        _statusRow.ResumeLayout(false);
+
         _layout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 1,
-            RowCount = 2,
+            RowCount = 3,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
             GrowStyle = TableLayoutPanelGrowStyle.FixedSize
@@ -264,8 +190,10 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         _layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
         _layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _layout.Controls.Add(_topRow, 0, 0);
-        _layout.Controls.Add(_customRow, 0, 1);
+        _layout.Controls.Add(_statusRow, 0, 1);
+        _layout.Controls.Add(_customRow, 0, 2);
 
         Controls.Add(_layout);
         Dock = DockStyle.Fill;
@@ -276,10 +204,12 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
 
         _topRow.ResumeLayout(false);
         _customRow.ResumeLayout(false);
+        _statusRow.ResumeLayout(false);
         _layout.ResumeLayout(false);
         ResumeLayout(false);
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
+        _discovery.NetworkResultsCompleted += DiscoveryOnNetworkResultsCompleted;
         SetDiscoveredInstances(Array.Empty<string>(), null);
     }
 
@@ -288,6 +218,12 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     internal TextBox CustomServerInput => _customServerTextBox;
 
     internal TableLayoutPanel CustomRow => _customRow;
+
+    internal TextBox PortInput => _portTextBox;
+
+    internal ProgressBar DiscoverySpinner => _discoverySpinner;
+
+    internal Label DiscoveryStatusLabel => _discoveryStatusLabel;
 
     public string ServerName
     {
@@ -506,7 +442,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
             return;
         }
 
-        if (Port is null)
+        if (Port is null && string.IsNullOrWhiteSpace(_portTextBox.Text))
             SetPortValue(1433, automaticallyDefaulted: true);
     }
 
@@ -527,33 +463,183 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         _portWasAutomaticallyDefaulted = automaticallyDefaulted;
     }
 
-    public async Task RefreshAsync(
+    public async Task<SqlServerInstanceDiscoveryResult> RefreshAsync(
         string? preferredServer = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool forceRefresh = false)
     {
-        var selectionVersion = _userEditVersion;
-        var preferred = preferredServer?.Trim() ?? ServerName;
-
-        var instances = await HiveSqlServerInstanceDiscovery
-            .DiscoverAsync(cancellationToken)
-            .ConfigureAwait(true);
-
-        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
-            return;
-
-        var userChangedSelection = selectionVersion != _userEditVersion;
-        var preserveCustomSelection = userChangedSelection && IsCustomSelected;
-        if (userChangedSelection)
+        if (IsDisposed || Disposing)
         {
-            preferred = preserveCustomSelection
-                ? _customServerTextBox.Text.Trim()
-                : ServerName;
+            return new SqlServerInstanceDiscoveryResult(
+                Array.Empty<string>(),
+                IsComplete: false,
+                IsTimedOut: false,
+                IsFromCache: false,
+                NetworkScanStillRunning: false,
+                StatusMessage: "Discovery was cancelled; Custom... remains available.");
         }
 
-        SetDiscoveredInstances(
-            instances,
-            preferred,
-            preserveCustomSelection);
+        var generation = Interlocked.Increment(ref _discoveryGeneration);
+        var snapshot = new DiscoverySnapshot(
+            generation,
+            _userEditVersion,
+            preferredServer?.Trim() ?? ServerName,
+            SynchronizationContext.Current);
+        Volatile.Write(ref _activeDiscoverySnapshot, snapshot);
+
+        var requestCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var previous = Interlocked.Exchange(ref _activeDiscoveryCts, requestCts);
+        CancelSafely(previous);
+        SetDiscoveryPresentation(true, HiveSqlServerInstanceDiscovery.SearchingStatusMessage);
+
+        var progress = new DiscoveryProgress(update => PostDiscoveryUpdate(update, snapshot));
+        try
+        {
+            var result = await _discovery
+                .DiscoverAsync(progress, forceRefresh, requestCts.Token)
+                .ConfigureAwait(true);
+            if (!result.NetworkScanStillRunning)
+                Interlocked.CompareExchange(ref _activeDiscoverySnapshot, null, snapshot);
+            return result;
+        }
+        catch (OperationCanceledException) when (requestCts.IsCancellationRequested)
+        {
+            if (generation == Volatile.Read(ref _discoveryGeneration) && !IsDisposed && !Disposing)
+            {
+                Interlocked.Increment(ref _discoveryGeneration);
+                Interlocked.CompareExchange(ref _activeDiscoverySnapshot, null, snapshot);
+                SetDiscoveryPresentation(false, "Discovery cancelled; available instances remain selectable.");
+            }
+            throw;
+        }
+        catch (Exception exception)
+        {
+            Trace.TraceWarning("SQL Server discovery request failed ({0}).", exception.GetType().Name);
+            var failure = new SqlServerInstanceDiscoveryResult(
+                Array.Empty<string>(),
+                IsComplete: false,
+                IsTimedOut: false,
+                IsFromCache: false,
+                NetworkScanStillRunning: false,
+                StatusMessage: "Discovery failed; refresh or enter Custom...");
+            if (generation == Volatile.Read(ref _discoveryGeneration) && !IsDisposed && !Disposing)
+            {
+                Interlocked.CompareExchange(ref _activeDiscoverySnapshot, null, snapshot);
+                SetDiscoveryPresentation(false, failure.StatusMessage);
+            }
+            return failure;
+        }
+        finally
+        {
+            Interlocked.CompareExchange(ref _activeDiscoveryCts, null, requestCts);
+            requestCts.Dispose();
+        }
+    }
+
+    private void DiscoveryOnNetworkResultsCompleted(SqlServerInstanceDiscoveryResult result)
+    {
+        var snapshot = Volatile.Read(ref _activeDiscoverySnapshot);
+        if (snapshot is null)
+            return;
+        PostDiscoveryUpdate(
+            new SqlServerInstanceDiscoveryUpdate(
+                SqlServerInstanceDiscoveryUpdateKind.Completed,
+                result,
+                IsSearching: false),
+            snapshot);
+    }
+
+    private void PostDiscoveryUpdate(
+        SqlServerInstanceDiscoveryUpdate update,
+        DiscoverySnapshot snapshot)
+    {
+        void ApplyUpdate()
+        {
+            if (IsDisposed || Disposing ||
+                snapshot.Generation != Volatile.Read(ref _discoveryGeneration))
+                return;
+
+            var editedDuringDiscovery = _userEditVersion != snapshot.UserEditVersion;
+            var preferred = editedDuringDiscovery ? ServerName : snapshot.PreferredServer;
+            var preserveCustom = editedDuringDiscovery && IsCustomSelected;
+            SetDiscoveredInstances(update.Result.Instances, preferred, preserveCustom);
+            SetDiscoveryPresentation(update.IsSearching, update.Result.StatusMessage);
+        }
+
+        try
+        {
+            if (snapshot.SynchronizationContext is not null)
+            {
+                snapshot.SynchronizationContext.Post(
+                    static state => ((Action)state!).Invoke(),
+                    (Action)ApplyUpdate);
+                return;
+            }
+            if (!IsHandleCreated || IsDisposed || Disposing)
+                return;
+            if (InvokeRequired)
+                BeginInvoke((Action)ApplyUpdate);
+            else
+                ApplyUpdate();
+        }
+        catch (ObjectDisposedException)
+        {
+            Trace.TraceInformation("Late SQL Server discovery update ignored after picker disposal.");
+        }
+        catch (InvalidAsynchronousStateException)
+        {
+            Trace.TraceInformation("Late SQL Server discovery update ignored after UI-context shutdown.");
+        }
+    }
+
+    internal void SetDiscoveryPresentation(bool isSearching, string statusMessage)
+    {
+        if (IsDisposed || Disposing)
+            return;
+        var hasStatus = !string.IsNullOrWhiteSpace(statusMessage);
+        var changed = _statusRow.Visible != hasStatus ||
+                      _discoverySpinner.Visible != isSearching ||
+                      _discoveryStatusLabel.Visible != hasStatus;
+        _discoveryStatusLabel.Text = statusMessage;
+        _discoveryStatusLabel.Visible = hasStatus;
+        _discoverySpinner.Visible = isSearching;
+        _statusRow.Visible = hasStatus;
+        if (changed)
+        {
+            _statusRow.PerformLayout();
+            _layout.PerformLayout();
+            PerformLayout();
+        }
+    }
+
+    internal void SetDiscoveryFailureStatus() =>
+        SetDiscoveryPresentation(false, "Discovery failed; refresh or enter Custom...");
+
+    internal void CancelPendingDiscovery()
+    {
+        Interlocked.Increment(ref _discoveryGeneration);
+        Interlocked.Exchange(ref _activeDiscoverySnapshot, null);
+        CancelSafely(Interlocked.Exchange(ref _activeDiscoveryCts, null));
+        if (!IsDisposed && !Disposing)
+            SetDiscoveryPresentation(false, string.Empty);
+    }
+
+    private static void CancelSafely(CancellationTokenSource? source)
+    {
+        if (source is null)
+            return;
+        try { source.Cancel(); }
+        catch (ObjectDisposedException)
+        {
+            Trace.TraceInformation("SQL Server discovery wait completed before cancellation.");
+        }
+    }
+
+    private sealed class DiscoveryProgress(
+        Action<SqlServerInstanceDiscoveryUpdate> report) :
+        IProgress<SqlServerInstanceDiscoveryUpdate>
+    {
+        public void Report(SqlServerInstanceDiscoveryUpdate value) => report(value);
     }
 
     public void SetEnabled(bool enabled)
@@ -584,7 +670,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         {
             _customRow.Visible = custom;
             _customServerTextBox.Visible = custom;
-            _layout.RowStyles[1].SizeType = SizeType.AutoSize;
+            _layout.RowStyles[2].SizeType = SizeType.AutoSize;
         }
         finally
         {
@@ -612,7 +698,10 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         if (disposing)
         {
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
-
+            _discovery.NetworkResultsCompleted -= DiscoveryOnNetworkResultsCompleted;
+            Interlocked.Increment(ref _discoveryGeneration);
+            Interlocked.Exchange(ref _activeDiscoverySnapshot, null);
+            CancelSafely(Interlocked.Exchange(ref _activeDiscoveryCts, null));
         }
 
         base.Dispose(disposing);

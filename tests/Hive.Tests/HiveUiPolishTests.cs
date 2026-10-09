@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Hive.Core;
@@ -247,6 +248,13 @@ public sealed class HiveUiPolishTests
             HiveWorkspaceLifecycleTests.ManagementFacadeProxy.Create();
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
 
+        using var host = new Form
+        {
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-2000, -2000),
+            ClientSize = new Size(1180, 760),
+            ShowInTaskbar = false
+        };
         using var view = new HivePersistenceSettingsView(
             management,
             new ResourceAccessContext(
@@ -254,7 +262,13 @@ public sealed class HiveUiPolishTests
                 TenantId.New(),
                 PrincipalId.New()),
             themeManager,
-            "Hive.TestHost");
+            "Hive.TestHost")
+        {
+            Dock = DockStyle.Fill
+        };
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
 
         Assert.Equal(2, view.NavigationTabs.TabPages.Count);
         Assert.Equal("Database Setup", view.NavigationTabs.TabPages[0].Text);
@@ -470,6 +484,135 @@ public sealed class HiveUiPolishTests
             @"localhost\HiveSql",
             picker.ServerName);
         Assert.Null(picker.Port);
+    }
+
+    [WinFormsFact]
+    public async Task HiveSqlServerInstancePicker_PreservesCustomTextAndExplicitPortDuringDiscovery()
+    {
+        var networkStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var releaseNetwork = new ManualResetEventSlim(false);
+        var networkCalls = 0;
+        var coordinator = new SqlServerInstanceDiscoveryCoordinator(
+            () => new SqlServerInstanceDiscoveryInventory(new[] { "MSSQLSERVER" }),
+            () =>
+            {
+                Interlocked.Increment(ref networkCalls);
+                networkStarted.TrySetResult(true);
+                releaseNetwork.Wait();
+                return new SqlServerInstanceDiscoveryInventory(new[] { @"REMOTE01\REPORTING" });
+            },
+            networkWaitTimeout: TimeSpan.FromSeconds(10));
+
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        using var host = new Form
+        {
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-2000, -2000),
+            ClientSize = new Size(700, 180),
+            ShowInTaskbar = false
+        };
+        using var picker = new HiveSqlServerInstancePicker(themeManager, coordinator) { Dock = DockStyle.Fill };
+        host.Controls.Add(picker);
+        host.Show();
+        Application.DoEvents();
+
+        picker.SetDiscoveredInstances(new[] { "localhost" }, "localhost");
+        var refresh = picker.RefreshAsync("localhost", forceRefresh: true);
+        Assert.True(picker.DiscoverySpinner.Visible);
+        Assert.Equal("Searching for SQL Server instances…", picker.DiscoveryStatusLabel.Text);
+        await networkStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Application.DoEvents();
+
+        picker.ServerSelector.SelectedItem = picker.ServerSelector.Items[^1];
+        picker.CustomServerInput.Text = @"manual-host\MyInstance";
+        picker.PortInput.Text = "51433";
+        Application.DoEvents();
+
+        releaseNetwork.Set();
+        await refresh.WaitAsync(TimeSpan.FromSeconds(5));
+        Application.DoEvents();
+
+        Assert.Equal(1, networkCalls);
+        Assert.True(picker.IsCustomSelected);
+        Assert.Equal(@"manual-host\MyInstance", picker.CustomServerInput.Text);
+        Assert.Equal(51433, picker.Port);
+        Assert.False(picker.DiscoverySpinner.Visible);
+        Assert.NotEqual("Searching for SQL Server instances…", picker.DiscoveryStatusLabel.Text);
+    }
+
+    [WinFormsFact]
+    public async Task HiveSqlServerInstancePicker_DisposalIgnoresLateDiscoveryCompletion()
+    {
+        var networkStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var networkFinished = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var releaseNetwork = new ManualResetEventSlim(false);
+        var coordinator = new SqlServerInstanceDiscoveryCoordinator(
+            () => new SqlServerInstanceDiscoveryInventory(new[] { "MSSQLSERVER" }),
+            () =>
+            {
+                networkStarted.TrySetResult(true);
+                releaseNetwork.Wait();
+                networkFinished.TrySetResult(true);
+                return new SqlServerInstanceDiscoveryInventory(new[] { @"REMOTE01\REPORTING" });
+            },
+            networkWaitTimeout: TimeSpan.FromSeconds(1),
+            delay: static (_, _) => Task.CompletedTask);
+
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        using var host = new Form
+        {
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-2000, -2000),
+            ClientSize = new Size(700, 180),
+            ShowInTaskbar = false
+        };
+        var picker = new HiveSqlServerInstancePicker(themeManager, coordinator) { Dock = DockStyle.Fill };
+        host.Controls.Add(picker);
+        host.Show();
+        Application.DoEvents();
+
+        var result = await picker.RefreshAsync(forceRefresh: true).WaitAsync(TimeSpan.FromSeconds(5));
+        await networkStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(result.IsTimedOut);
+        picker.Dispose();
+        releaseNetwork.Set();
+        await networkFinished.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Application.DoEvents();
+        Assert.True(picker.IsDisposed);
+    }
+
+    [WinFormsFact]
+    public void HiveSqlServerInstancePicker_ShowsInlineSearchingAndIncompleteStatus()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        using var host = new Form
+        {
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-2000, -2000),
+            ClientSize = new Size(700, 180),
+            ShowInTaskbar = false
+        };
+        using var picker = new HiveSqlServerInstancePicker(themeManager) { Dock = DockStyle.Fill };
+        host.Controls.Add(picker);
+        host.Show();
+        Application.DoEvents();
+
+        picker.SetDiscoveryPresentation(true, "Searching for SQL Server instances…");
+        Assert.True(picker.DiscoverySpinner.Visible);
+        Assert.Equal("Searching for SQL Server instances…", picker.DiscoveryStatusLabel.Text);
+
+        picker.ServerSelector.SelectedItem = picker.ServerSelector.Items[^1];
+        picker.CustomServerInput.Text = "manual-instance";
+        Assert.True(picker.CustomServerInput.Visible);
+        Assert.Equal("manual-instance", picker.CustomServerInput.Text);
+
+        picker.SetDiscoveryPresentation(
+            false,
+            "Discovery timed out; results may be incomplete. Refresh or enter Custom...");
+        Assert.False(picker.DiscoverySpinner.Visible);
+        Assert.Contains("timed out", picker.DiscoveryStatusLabel.Text);
+        Assert.True(picker.CustomServerInput.Visible);
+        Assert.Equal("manual-instance", picker.CustomServerInput.Text);
     }
 
     [Fact]

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Threading;
 using Hive.Core;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
@@ -98,7 +100,11 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _embeddedStorageTextBox.Margin = Padding.Empty;
         _serverPicker = new HiveSqlServerInstancePicker(_themeManager);
         _serverPicker.RefreshRequested += async (_, _) =>
-            await RunOperationAsync(RefreshSqlServerInstancesAsync).ConfigureAwait(true);
+        {
+            CancelBackgroundDiscovery();
+            await RefreshSqlServerInstancesAsync(CancellationToken.None, forceRefresh: true)
+                .ConfigureAwait(true);
+        };
 
         _databaseTextBox = CreateTextBox();
         SetReadOnlyVisualState(_databaseTextBox, themeManager);
@@ -1415,7 +1421,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             return;
         }
 
-        await RunOperationAsync(RefreshSqlServerInstancesAsync)
+        await RefreshSqlServerInstancesAsync(CancellationToken.None, forceRefresh: false)
             .ConfigureAwait(true);
     }
 
@@ -1542,60 +1548,37 @@ internal sealed class HivePersistenceSettingsView : UserControl
         }
     }
 
-    private void CancelBackgroundDiscovery() =>
-        Interlocked.Exchange(ref _backgroundDiscoveryCts, null)?.Cancel();
-
-    private async Task RefreshSqlServerInstancesAsync(CancellationToken cancellationToken)
+    private void CancelBackgroundDiscovery()
     {
-        if (SelectedBackend != HivePersistenceBackend.SqlServer ||
-            IsDisposed ||
-            Disposing)
-        {
+        Interlocked.Exchange(ref _backgroundDiscoveryCts, null)?.Cancel();
+        _serverPicker.CancelPendingDiscovery();
+    }
+
+    private async Task RefreshSqlServerInstancesAsync(
+        CancellationToken cancellationToken,
+        bool forceRefresh = false)
+    {
+        if (SelectedBackend != HivePersistenceBackend.SqlServer || IsDisposed || Disposing)
             return;
-        }
 
-        var preferred = _loadedConfiguration is null
-            ? null
-            : _serverPicker.ServerName;
-        SetStatus("Discovering visible SQL Server instances...", HiveStatusTone.Information);
-
+        var preferred = _loadedConfiguration is null ? null : _serverPicker.ServerName;
         try
         {
-            await _serverPicker
-                .RefreshAsync(preferred, cancellationToken)
+            await _serverPicker.RefreshAsync(preferred, cancellationToken, forceRefresh)
                 .ConfigureAwait(true);
-
-            if (cancellationToken.IsCancellationRequested ||
-                IsDisposed ||
-                Disposing ||
-                SelectedBackend != HivePersistenceBackend.SqlServer)
-            {
-                return;
-            }
-
-            SetStatus(
-                string.IsNullOrWhiteSpace(preferred)
-                    ? "SQL Server instance list refreshed."
-                    : $"SQL Server instance list refreshed. Current selection: {preferred}.",
-                HiveStatusTone.Success);
         }
         catch (OperationCanceledException)
         {
-            throw;
+            // A backend change, cancellation, or disposal ends this view's wait only.
+            return;
         }
         catch (Exception exception)
         {
-            SetStatus(
-                "SQL Server instance discovery failed; Custom... remains available.",
-                HiveStatusTone.Warning);
-
-            HiveUiErrorReporter.Report(
-                FindForm(),
-                exception,
-                "Hive Persistence",
-                "SQL Server instance discovery could not be completed. You can enter a server manually using Custom....",
-                _output,
-                _themeManager);
+            Trace.TraceWarning(
+                "Persistence SQL Server discovery request failed ({0}).",
+                exception.GetType().Name);
+            if (!IsDisposed && !Disposing)
+                _serverPicker.SetDiscoveryFailureStatus();
         }
     }
 
