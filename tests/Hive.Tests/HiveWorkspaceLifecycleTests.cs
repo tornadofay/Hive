@@ -117,6 +117,19 @@ public sealed class HiveWorkspaceLifecycleTests
             new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly TaskCompletionSource<HivePersistenceConfiguration> _persistenceConfigurationTested =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public HivePersistenceConfiguration PersistenceConfiguration { get; set; } =
+            new(
+                HivePersistenceBackend.SqlServer,
+                @"localhost\\MSSQLSERVER01",
+                port: null,
+                "Hive-Hive.TestHost",
+                HiveSqlAuthenticationMode.WindowsIntegrated,
+                userName: null,
+                bootstrapCredential: null,
+                encrypt: true,
+                trustServerCertificate: true,
+                createDatabaseIfMissing: true,
+                commandTimeoutSeconds: 37);
 
         public TaskCompletionSource<bool> PersistenceConnectionTestRequested =>
             _persistenceConnectionTestRequested;
@@ -148,6 +161,12 @@ public sealed class HiveWorkspaceLifecycleTests
             {
                 _workItemsRequested.TrySetResult(true);
                 return _workItemsCompletion.Task;
+            }
+
+            if (targetMethod?.Name == nameof(IHiveManagementFacade.GetPersistenceConfigurationAsync))
+            {
+                return Task.FromResult(
+                    Result<HivePersistenceConfiguration>.Success(PersistenceConfiguration));
             }
 
             if (targetMethod?.Name == nameof(IHiveManagementFacade.TestPersistenceConnectionAsync))
