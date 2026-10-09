@@ -411,6 +411,19 @@ internal static class SqlTestDatabaseLifecycle
                     continue;
                 }
 
+                // Re-read the ownership evidence after acquiring the exclusive
+                // token lock so the drop decision is based on the current marker,
+                // not only the earlier inventory read.
+                var markerAfterLock = ReadOwnershipMarker(
+                    targetBuilder.ConnectionString);
+                if (!string.Equals(markerAfterLock, marker, StringComparison.Ordinal) ||
+                    !OwnershipMarkerMatchesName(databaseName, markerAfterLock))
+                {
+                    Console.Error.WriteLine(
+                        $"Hive.Tests stale database recovery left '{databaseName}' untouched because its ownership marker changed during recovery.");
+                    continue;
+                }
+
                 DropDatabaseWithoutMarkerCheck(
                     masterConnectionString,
                     databaseName);
