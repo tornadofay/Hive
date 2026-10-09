@@ -843,7 +843,7 @@ public sealed class HiveUiPolishTests
         // inside its parent rather than clipping its bottom edge.
         Assert.False(view.DirectionSelector.AutoSize);
         Assert.True(
-            view.DirectionSelector.Bottom <= view.DirectionSelector.Parent.ClientSize.Height);
+            view.DirectionSelector.Bottom <= view.DirectionSelector.Parent!.ClientSize.Height);
 
         // A custom/named instance reveals additional picker rows. The endpoint
         // field and its stack must preserve the picker's auto-size behavior.
@@ -860,10 +860,10 @@ public sealed class HiveUiPolishTests
         Assert.True(view.SourceSqlServerPicker.Height > 36);
         Assert.True(
             view.SourceSqlServerPicker.Bottom <=
-            view.SourceSqlServerPicker.Parent.ClientSize.Height);
+            view.SourceSqlServerPicker.Parent!.ClientSize.Height);
         Assert.True(
             view.SourceSqlServerPicker.Right <=
-            view.SourceSqlServerPicker.Parent.ClientSize.Width);
+            view.SourceSqlServerPicker.Parent!.ClientSize.Width);
 
         var databaseAuthenticationRow = Assert.IsType<TableLayoutPanel>(
             view.SourceSqlServerLayout.GetControlFromPosition(0, 1));
