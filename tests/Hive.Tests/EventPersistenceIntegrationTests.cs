@@ -12,7 +12,7 @@ public sealed class EventPersistenceIntegrationTests
     [Fact]
     public async Task Append_PersistsEventSnapshotAndOutboxAndCanReadThemBack()
     {
-        var database = await PrepareDatabase("Hive_Test_EventAppend");
+        using var database = await PrepareDatabase("Hive_Test_EventAppend");
         var store = new SqlEventPersistenceStore(database.Options);
         var stream = new ResourceReference(
             ResourceKind.WorkItem,
@@ -88,7 +88,7 @@ public sealed class EventPersistenceIntegrationTests
     [Fact]
     public async Task Append_RejectsStaleExpectedVersionWithoutWritingAnything()
     {
-        var database = await PrepareDatabase("Hive_Test_EventStale");
+        using var database = await PrepareDatabase("Hive_Test_EventStale");
         var store = new SqlEventPersistenceStore(database.Options);
         var stream = new ResourceReference(
             ResourceKind.Agent,
@@ -128,7 +128,7 @@ public sealed class EventPersistenceIntegrationTests
     [Fact]
     public async Task ConcurrentFirstAppends_AllowOnlyOneStreamVersion()
     {
-        var database = await PrepareDatabase("Hive_Test_EventConcurrency");
+        using var database = await PrepareDatabase("Hive_Test_EventConcurrency");
         var store = new SqlEventPersistenceStore(database.Options);
         var stream = new ResourceReference(
             ResourceKind.Execution,
@@ -163,7 +163,7 @@ public sealed class EventPersistenceIntegrationTests
     [Fact]
     public async Task FailedTransaction_DoesNotLeaveEventSnapshotOrOutbox()
     {
-        var database = await PrepareDatabase("Hive_Test_EventRollback");
+        using var database = await PrepareDatabase("Hive_Test_EventRollback");
         var store = new SqlEventPersistenceStore(database.Options);
         var stream = new ResourceReference(
             ResourceKind.WorkItem,
@@ -210,7 +210,7 @@ public sealed class EventPersistenceIntegrationTests
 
     private static async Task<PersistenceTestDatabase> PrepareDatabase(string name)
     {
-        var database = new PersistenceTestDatabase(name);
+        using var database = new PersistenceTestDatabase(name);
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options)
