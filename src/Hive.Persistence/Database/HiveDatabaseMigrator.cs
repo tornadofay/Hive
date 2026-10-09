@@ -161,11 +161,24 @@ public sealed class HiveDatabaseMigrator
             }
 
             return Result<HiveDatabaseMigrationOutcome>.Failure(
-                new Error(
-                    "hive.persistence.migration-unexpected",
-                    ErrorCategory.External,
-                    "Hive database migration failed unexpectedly."));
+                CreateUnexpectedMigrationFailure(exception));
         }
+    }
+
+    internal static Error CreateUnexpectedMigrationFailure(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        var exceptionType = new string(
+            exception.GetType().Name
+                .Where(static character => !char.IsControl(character))
+                .Take(128)
+                .ToArray());
+
+        return new Error(
+            "hive.persistence.migration-unexpected",
+            ErrorCategory.External,
+            $"Hive database migration failed unexpectedly (exception type: {exceptionType}). The exception message and connection details were not exposed.");
     }
 
     internal static Error CreateSqlMigrationFailure(
