@@ -238,7 +238,7 @@ public sealed class HiveHostComposition : IDisposable
             {
                 try
                 {
-                    previous.Dispose();
+                    await previous.DisposeAsync().ConfigureAwait(false);
                 }
                 catch (Exception)
                 {
