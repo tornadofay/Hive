@@ -279,6 +279,12 @@ public sealed class HiveUiPolishTests
             HivePersistenceConfiguration.BuildDatabaseName("Hive.TestHost"),
             view.DatabaseInput.Text);
         Assert.Equal(DockStyle.Fill, view.EmbeddedStorageInput.Dock);
+        Assert.True(view.EmbeddedStorageInput.AutoSize);
+
+        var embeddedPathRow =
+            Assert.IsType<TableLayoutPanel>(view.EmbeddedStorageInput.Parent);
+        Assert.True(embeddedPathRow.AutoSize);
+        Assert.Equal(SizeType.AutoSize, embeddedPathRow.RowStyles[0].SizeType);
 
         view.SqlServerPicker.SetDiscoveredInstances(
             new[] { "localhost", @"localhost\HiveSql" },
@@ -291,6 +297,11 @@ public sealed class HiveUiPolishTests
 
         Assert.True(view.SqlServerPicker.IsCustomSelected);
         Assert.True(view.SqlServerPicker.CustomServerInput.Visible);
+        Assert.True(view.SqlServerPicker.CustomServerInput.AutoSize);
+        Assert.True(view.SqlServerPicker.CustomRow.AutoSize);
+        Assert.Equal(
+            SizeType.AutoSize,
+            view.SqlServerPicker.CustomRow.RowStyles[0].SizeType);
         Assert.True(view.SqlServerPicker.CustomServerInput.Height > 0);
         Assert.True(
             view.SqlServerPicker.CustomServerInput.Bottom <=
@@ -431,6 +442,10 @@ public sealed class HiveUiPolishTests
 
         Assert.True(picker.IsCustomSelected);
         Assert.Equal(1433, picker.Port);
+
+        picker.CustomServerInput.Text = @"localhost\MSSQLSERVER01";
+        Assert.Equal(@"localhost\MSSQLSERVER01", picker.ServerName);
+        Assert.Null(picker.Port);
 
         picker.SetDiscoveredInstances(
             [
