@@ -102,7 +102,7 @@ public sealed class HiveManagementFacadeTests
     [Fact]
     public async Task CrudFacade_PersistsProviderGraphAndAgentDefinition()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ManagementCrud");
+        using var database = new PersistenceTestDatabase("Hive_Test_ManagementCrud");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -187,7 +187,7 @@ public sealed class HiveManagementFacadeTests
     [Fact]
     public async Task RetiringConfiguredAgentDefinition_PreservesExecutionTargetReference()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ManagementAgentRetireTarget");
+        using var database = new PersistenceTestDatabase("Hive_Test_ManagementAgentRetireTarget");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -253,7 +253,7 @@ public sealed class HiveManagementFacadeTests
     [Fact]
     public async Task RetiredAgentDefinitionKey_CanBeReusedByNewActiveDefinition()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ManagementAgentKeyReuse");
+        using var database = new PersistenceTestDatabase("Hive_Test_ManagementAgentKeyReuse");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -309,7 +309,7 @@ public sealed class HiveManagementFacadeTests
     [Fact]
     public async Task RetiredResources_CanBeReactivatedOnlyAfterDependenciesAreActive()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ManagementReactivation");
+        using var database = new PersistenceTestDatabase("Hive_Test_ManagementReactivation");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -433,7 +433,7 @@ public sealed class HiveManagementFacadeTests
     [Fact]
     public async Task ReactivatingRetiredAgentDefinition_ReportsActiveKeyConflict()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ManagementReactivationKeyConflict");
+        using var database = new PersistenceTestDatabase("Hive_Test_ManagementReactivationKeyConflict");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -469,7 +469,7 @@ public sealed class HiveManagementFacadeTests
     [Fact]
     public async Task MultipleAgentDefinitions_CanShareExecutionTarget()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ManagementSharedTarget");
+        using var database = new PersistenceTestDatabase("Hive_Test_ManagementSharedTarget");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -514,7 +514,7 @@ public sealed class HiveManagementFacadeTests
     [Fact]
     public async Task PrepareInput_UsesAccessScopedVisionTargets()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ManagementInputPreparation");
+        using var database = new PersistenceTestDatabase("Hive_Test_ManagementInputPreparation");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -585,7 +585,7 @@ public sealed class HiveManagementFacadeTests
     [Fact]
     public async Task Facade_RejectsMissingIdentityResourceAndDefaultIdBeforePersistence()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ManagementValidation");
+        using var database = new PersistenceTestDatabase("Hive_Test_ManagementValidation");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -627,7 +627,7 @@ public sealed class HiveManagementFacadeTests
     [Fact]
     public async Task Facade_RejectsOwnerScopeAndStaleUpdates()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ManagementAuthorization");
+        using var database = new PersistenceTestDatabase("Hive_Test_ManagementAuthorization");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -694,7 +694,7 @@ public sealed class HiveManagementFacadeTests
     [Fact]
     public async Task Management_RejectsMissingUnauthorizedAndRetiredConfiguredTargets()
     {
-        var database = new PersistenceTestDatabase(
+        using var database = new PersistenceTestDatabase(
             "Hive_Test_ManagementAgentTargetValidation");
         database.Reset();
 
@@ -831,7 +831,7 @@ public sealed class HiveManagementFacadeTests
     [Fact]
     public async Task AgentDefinitionStore_EnforcesOwnerScopeAndConcurrency()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ManagementAgentDefinitionStore");
+        using var database = new PersistenceTestDatabase("Hive_Test_ManagementAgentDefinitionStore");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
