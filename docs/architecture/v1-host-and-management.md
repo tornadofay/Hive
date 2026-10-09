@@ -561,6 +561,26 @@ For the first-class Settings surface:
 
 Settings pages remain domain-owned for field semantics, validation, authorization, and Management operations. The reusable controls remain presentation infrastructure only.
 
+#### SQL Server instance discovery lifecycle
+
+SQL Server instance discovery is a Persistence Settings presentation concern owned by `Hive.Host.WinForms`. It does not belong in `Hive.Core`, `Hive.Management`, or the persistence backend contracts: it discovers connection candidates for the user and does not establish connectivity, validate credentials, initialize a database, or authorize a backend switch.
+
+The discovery lifecycle is intentionally demand-driven:
+
+- Opening the Settings window and its static Overview must not construct/open Persistence or start SQL Server network discovery.
+- First navigation to Persistence starts discovery only when the configured/selected backend is SQL Server. Selecting SQL Server starts it; selecting Embedded cancels that view's wait/subscription. Refresh explicitly requests a refresh.
+- The SQL instance picker always contains a selectable `Custom...` entry before discovery starts and when every discovery source fails. Custom server text and an explicitly entered port remain user-owned input, not values that background discovery can replace.
+- Installed local instances are inventoried independently from network enumeration. The local candidates are published first; network candidates are merged into the same sorted selector as an asynchronous update.
+
+`SqlDataSourceEnumerator.GetDataSources()` is synchronous and cannot be forcibly interrupted by cancelling a .NET cancellation token. Network enumeration therefore runs on one dedicated background worker, not on the WinForms thread and not as an unbounded ThreadPool workload. All concurrent requests coalesce onto the one in-flight scan. A caller's wait is bounded (three seconds by default); caller timeout/cancellation ends its wait and UI subscription, but does not pretend the underlying scan stopped. A timed-out worker remains the single in-flight scan until it actually returns. No second worker may start merely because a waiter timed out. An explicit Refresh bypasses a fresh result cache only when no worker is already running.
+
+Discovery caches local inventory for five minutes, completed network results for one minute, and incomplete/failure outcomes briefly (fifteen seconds). Navigation reuses valid cache entries; explicit Refresh bypasses the completed cache. Cache and in-flight state are shared across Persistence views. Cache lifetime changes affect only candidate discovery, never endpoint configuration or connection semantics.
+
+Discovery results distinguish local-inventory completeness, network completion, timeout, and failure. Local candidates survive network errors and timeouts; one registry-view failure must not discard results from the other view. A compact inline indeterminate indicator and the exact message `Searching for SQL Server instances…` are shown while a caller is waiting for network results. Completion, incompleteness, and failure are reported beside the picker, not through a modal dialog or page-wide overlay. On timeout, the indicator stops and the status explains that discovery is incomplete while Refresh and manual Custom entry remain available. If the shared scan later completes, a still-active, current view may merge its results; disposed views, cancelled subscriptions, stale request generations, and non-SQL-Server backend selection must ignore late UI updates.
+
+This discovery is advisory only. Users can always choose `Custom...`; discovered candidates never modify a saved endpoint except through the user's selection. Existing named-instance port handling and explicit ports remain authoritative, and the actual connection test continues to own endpoint/authentication/TLS diagnostics.
+
+
 #### Host recomposition
 
 Changing Persistence configuration changes the persistence dependency graph and therefore requires host/application recomposition rather than mutating the existing Management facade. The selected backend is a deployment/configuration choice; the host must not contain separate SQL and Embedded resource models.
