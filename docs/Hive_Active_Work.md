@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION PENDING**
+Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
 
 ## Phase 1.18A Slice 6 — Cross-Backend Hardening, Full Regression & Closure
 
@@ -72,6 +72,16 @@ Developer-reported results after the first Slice 6 implementation pass:
 - Dated evidence: [Slice 6 verification checkpoint](verification/phase-1/1.18A-slice-6-verification-2026-10-09.md).
 
 The supplied migration log does not explicitly identify its destination backend/direction. The bidirectional feature heading alone is not proof that both real-endpoint directions were manually exercised.
+
+### Developer-reported migration failure — 2026-10-09
+
+Verification status: **VERIFICATION FAILED / REMEDIATION REQUIRED** for the Embedded → SQL Server real-endpoint migration path.
+
+The developer reported renaming their local SQL Server database, then running Embedded → SQL Server full-data migration and receiving this UI message:
+
+`Migration failed: Hive persistence data migration could not be completed safely.`
+
+The available message is too generic to identify the underlying cause. The failure boundary is limited to the same-slice Embedded → SQL Server migration error path and safe diagnostics: preserve expected typed preflight/conflict errors, provide actionable non-secret failure details for endpoint/SQL failures, and add regression coverage proving the user-visible diagnostic is useful without emitting credentials or raw connection strings. Do not infer that the database rename itself is the root cause until the failure path is distinguishable. The failure is recorded before implementation changes.
 
 ### Remaining closure evidence
 
