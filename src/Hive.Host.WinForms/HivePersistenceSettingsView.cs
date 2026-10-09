@@ -51,6 +51,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
 
     private CancellationTokenSource? _operationCts;
+    private CancellationTokenSource? _backgroundDiscoveryCts;
     private HivePersistenceConfiguration? _loadedConfiguration;
 
     public HivePersistenceSettingsView(
@@ -374,7 +375,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
         // Let the configured page paint and become interactive before waiting on
         // potentially slow SQL Server network enumeration.
         if (result.Value!.Backend == HivePersistenceBackend.SqlServer)
-            _ = RefreshSqlServerInstancesInBackgroundAsync(cancellationToken);
+            _ = RefreshSqlServerInstancesInBackgroundAsync();
     }
 
     private async Task SaveAsync(CancellationToken cancellationToken)
@@ -1333,6 +1334,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
     private async Task BackendSelectionChangedAsync()
     {
+        CancelBackgroundDiscovery();
         UpdateBackendState();
 
         if (_updatingBackendSelection ||
@@ -1443,25 +1445,44 @@ internal sealed class HivePersistenceSettingsView : UserControl
             : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
     }
 
-    private async Task RefreshSqlServerInstancesInBackgroundAsync(
-        CancellationToken cancellationToken)
+    private async Task RefreshSqlServerInstancesInBackgroundAsync()
     {
+        var discoveryCts = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(
+            ref _backgroundDiscoveryCts,
+            discoveryCts);
+        previous?.Cancel();
+
         try
         {
-            await RefreshSqlServerInstancesAsync(cancellationToken)
+            await RefreshSqlServerInstancesAsync(discoveryCts.Token)
                 .ConfigureAwait(true);
         }
         catch (OperationCanceledException)
         {
-            // Page navigation/disposal cancels optional discovery. Observe the
-            // cancellation because this startup refresh is intentionally detached.
+            // Backend changes/disposal cancel optional startup discovery.
+        }
+        finally
+        {
+            Interlocked.CompareExchange(
+                ref _backgroundDiscoveryCts,
+                null,
+                discoveryCts);
+            discoveryCts.Dispose();
         }
     }
 
+    private void CancelBackgroundDiscovery() =>
+        Interlocked.Exchange(ref _backgroundDiscoveryCts, null)?.Cancel();
+
     private async Task RefreshSqlServerInstancesAsync(CancellationToken cancellationToken)
     {
-        if (SelectedBackend != HivePersistenceBackend.SqlServer)
+        if (SelectedBackend != HivePersistenceBackend.SqlServer ||
+            IsDisposed ||
+            Disposing)
+        {
             return;
+        }
 
         var preferred = _loadedConfiguration is null
             ? null
@@ -1473,6 +1494,14 @@ internal sealed class HivePersistenceSettingsView : UserControl
             await _serverPicker
                 .RefreshAsync(preferred, cancellationToken)
                 .ConfigureAwait(true);
+
+            if (cancellationToken.IsCancellationRequested ||
+                IsDisposed ||
+                Disposing ||
+                SelectedBackend != HivePersistenceBackend.SqlServer)
+            {
+                return;
+            }
 
             SetStatus(
                 string.IsNullOrWhiteSpace(preferred)
@@ -1725,6 +1754,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;
 
             _editor.FooterPanel.Resize -= FooterPanelOnResize;
+
+            CancelBackgroundDiscovery();
 
             var operationCts = Interlocked.Exchange(
                 ref _operationCts,
