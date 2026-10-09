@@ -420,6 +420,72 @@ public sealed class HiveHostCompositionTests
     }
 
     [Fact]
+    public async Task ReplacedGraph_DrainsInFlightOperationsBeforeDisposingOwnedStores()
+    {
+        var firstConfiguration = HivePersistenceConfiguration.LocalDevelopment(
+            "Hive_Composition_Drain_First");
+        var secondConfiguration = HivePersistenceConfiguration.LocalDevelopment(
+            "Hive_Composition_Drain_Second");
+        var configurationStore = new InMemoryConfigurationStore(firstConfiguration);
+        var operationGate = new HiveManagementOperationGate();
+        var ownedResource = new TrackingDisposable();
+        var options = HiveDatabaseOptions.FromConfiguration(firstConfiguration);
+        var management = new HiveManagementFacade(
+            new SqlProviderResourceStore(options),
+            new SqlAgentDefinitionResourceStore(options),
+            new SqlWorkItemResourceStore(options),
+            configurationStore: new InMemoryConfigurationStore(firstConfiguration),
+            persistenceMigrationQuiescence: operationGate,
+            managementOperationGate: operationGate);
+        var firstGraph = new HiveHostServiceGraph(
+            firstConfiguration,
+            management,
+            [ownedResource, management],
+            operationGate);
+        var secondGraph = CreateGraph(secondConfiguration);
+
+        using var composition = new HiveHostComposition(
+            configurationStore,
+            new ScriptedGraphFactory(
+                Result<HiveHostServiceGraph>.Success(firstGraph),
+                Result<HiveHostServiceGraph>.Success(secondGraph)));
+
+        var initialized = await composition.InitializeAsync();
+        Assert.True(initialized.IsSuccess, initialized.Error?.Message);
+
+        var inFlightOperation = operationGate.TryEnterOperation();
+        Assert.NotNull(inFlightOperation);
+
+        configurationStore.Configuration = secondConfiguration;
+        var replacementTask = composition.ReloadAsync();
+
+        Assert.Same(secondGraph, composition.Current);
+        Assert.False(
+            replacementTask.IsCompleted,
+            "Online graph replacement must await retirement of the old graph.");
+        Assert.Equal(
+            0,
+            ownedResource.DisposeCount);
+
+        await inFlightOperation!.DisposeAsync();
+
+        var replacement = await replacementTask.WaitAsync(
+            TimeSpan.FromSeconds(2));
+        Assert.True(replacement.IsSuccess, replacement.Error?.Message);
+        Assert.Same(secondGraph, composition.Current);
+        Assert.Equal(
+            1,
+            ownedResource.DisposeCount);
+        Assert.Null(operationGate.TryEnterOperation());
+
+        var queuedMigration = await operationGate.AcquireAsync();
+        Assert.True(queuedMigration.IsFailure);
+        Assert.Equal(
+            "hive.management.operation-gate-closed",
+            queuedMigration.Error!.Code);
+    }
+
+    [Fact]
     public async Task Graph_DisposesOwnedManagementFacade()
     {
         var configuration = HivePersistenceConfiguration.LocalDevelopment(
