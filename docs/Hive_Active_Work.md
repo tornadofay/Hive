@@ -316,6 +316,22 @@ These remain same-slice Slice 5 interaction, layout/performance, and connection-
 
 Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 
+### Remediation completed — 2026-10-09 persistence layout, first paint, and SQL Server connection
+
+- The SQL Server picker now tracks whether port 1433 was supplied automatically or explicitly. For the selected/typed Custom endpoint, an automatically populated 1433 is removed once the server name contains a named-instance separator (`\\`); explicitly typed ports remain unchanged.
+- Removed constructor-level forced `Port = 1433` assignments from both Database Setup and Data Migration. The picker owns its defaulting behavior, so named instances are not transformed into `localhost\\MSSQLSERVER01,1433` by a generic port default.
+- The Settings page normalizes the legacy persisted combination of named instance + port 1433 on load because older versions stored the picker's generic default. Users can still explicitly enter a port in the editor when a named instance is deliberately configured for one.
+- The Custom server TextBox and its TableLayoutPanel row now auto-size together. The Embedded database-path TextBox and its Browse row also auto-size naturally; Browse is aligned to the compact 32px field row.
+- Reduced first-open layout/repaint work by removing duplicate theme application from the Persistence view and picker constructors, applying a Settings page's theme while it is detached before attaching it onscreen, and suspending nested layout panels while their child controls are added.
+- Data Migration remains deferred until its tab is first opened. SQL Server instance discovery is started without blocking the first configured page paint, and its background cancellation/disposal checks prevent stale updates after backend switches or view disposal.
+- SQL connection test failures now report actionable, bounded guidance for named-instance/network resolution, Windows authentication, database access, and TLS certificate failures instead of only the generic connection-test message. The diagnostic does not echo a Windows account name for authentication failures.
+- Focused coverage was added/updated for named-instance configuration without an automatic port, clearing the automatic port when entering a Custom named instance, SQL failure guidance, and auto-sizing for the Custom and Embedded path rows.
+- No shared UI framework API, persistence contract, migration semantics, Slice 6, or 1.19 scope was introduced. The changes have been committed to `main`; the assistant has not run the tests, build, or Example Host.
+
+Current state: **VERIFICATION PENDING**.
+
+Developer verification must confirm the actual Windows-integrated named-instance connection, natural Custom/Embedded row sizing, and responsive first Persistence opening. If SQL Server still fails, capture the new specific connection-test diagnostic text (not credentials) so the remaining server/authentication condition can be isolated.
+
 ### Verification handoff
 
 Developer rerun is required:
