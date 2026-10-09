@@ -2,8 +2,6 @@
 
 Phase 1 is in progress. Completed slices are recorded here.
 
-- [Maintenance — UI: Settings Overview Layout & Configuration Guidance — 2026-10-09](../maintenance/ui-settings-overview-layout-configuration-guidance-2026-10-09.md)
-
 - [1.1 — Provider / ProviderAccount / ExecutionTarget](1.1.md)
 - [1.2 — Secret Store](1.2.md)
 - [1.3 — OpenAI-compatible Provider Adapter](1.3.md)
@@ -54,3 +52,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [1.18A Slice 6 — Active Work History Snapshot (pre-closure checkpoint) — 2026-10-09](1.18A-slice-6-active-work-history-2026-10-09.md)
 - [1.18A Slice 6 — Closure Verification — 2026-10-09](1.18A-slice-6-closure-2026-10-09.md)
 - [1.18A Closure — Documentation Revision Audit — 2026-10-09](1.18A-closure-documentation-revision-2026-10-09.md)
+- [Maintenance — UI: Settings Overview Layout & Configuration Guidance — 2026-10-09](../maintenance/ui-settings-overview-layout-configuration-guidance-2026-10-09.md)
