@@ -1422,7 +1422,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             HivePersistenceBackend.SqlServer =>
                 $"SQL Server '{configuration.ServerName}'" +
                 (configuration.Port is { } port
-                    ? $" on explicit port {port}"
+                    ? $" on configured port {port}"
                     : configuration.ServerName.Contains('\\')
                         ? " using named-instance port resolution"
                         : " using default SQL Server port resolution") +
