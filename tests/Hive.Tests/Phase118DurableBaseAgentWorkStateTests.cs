@@ -11,7 +11,7 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
     [Fact]
     public void Objective_SurvivesRuntimeRecreation_WithWorkItemBinding()
     {
-        var fixture = CreateFixture("Objective");
+        using var fixture = CreateFixture("Objective");
 
         var workItem = WorkItem.Create(
             WorkItemId.New(),
@@ -83,7 +83,7 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
     [Fact]
     public void Memory_SurvivesRuntimeRecreation_WithDeterministicOrderingAndEvidence()
     {
-        var fixture = CreateFixture("Memory");
+        using var fixture = CreateFixture("Memory");
 
         var later = fixture.Runtime.Work.Memory.Store(
             fixture.Context,
@@ -129,7 +129,7 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
     [Fact]
     public async Task Question_AnswersAfterRuntimeRecreation_AndWaitReturnsTerminalState()
     {
-        var fixture = CreateFixture("Question");
+        using var fixture = CreateFixture("Question");
 
         var question = fixture.Runtime.Work.Questions.Ask(
             fixture.Context,
@@ -171,7 +171,7 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
     [Fact]
     public async Task QuestionExpiry_IsDeterministicAfterRuntimeRecreation()
     {
-        var fixture = CreateFixture("Expiry");
+        using var fixture = CreateFixture("Expiry");
 
         var question = fixture.Runtime.Work.Questions.Ask(
             fixture.Context,
@@ -206,7 +206,7 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
     [Fact]
     public async Task QuestionWaitCancellation_DoesNotChangeDurableState()
     {
-        var fixture = CreateFixture("QuestionCancellation");
+        using var fixture = CreateFixture("QuestionCancellation");
 
         var question = fixture.Runtime.Work.Questions.Ask(
             fixture.Context,
@@ -257,7 +257,7 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
     [Fact]
     public void Delegation_SurvivesRestart_AndRemainsParticipantScoped()
     {
-        var fixture = CreateFixture("Delegation");
+        using var fixture = CreateFixture("Delegation");
 
         var delegateRuntimeId = RuntimeId.New();
 
@@ -327,7 +327,7 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
     [Fact]
     public void SharedDurableStores_IsolateRuntimeState()
     {
-        var fixture = CreateFixture("Isolation");
+        using var fixture = CreateFixture("Isolation");
 
         var otherRuntimeId = RuntimeId.New();
         var otherRuntime = fixture.Agent.CreateRuntimeInstance(
@@ -374,7 +374,9 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
         var database = new PersistenceTestDatabase(
             $"Hive_Test_Phase118_{name}_{Guid.NewGuid():N}");
 
-        database.Reset();
+        try
+        {
+            database.Reset();
 
         var migration = new HiveDatabaseMigrator(database.Options)
             .MigrateAsync()
@@ -415,17 +417,34 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
             workStores: stores,
             runtimeId: runtimeId);
 
-        return new Fixture(
-            database,
-            now,
-            clock,
-            agent,
-            runtime,
-            runtimeId,
-            stores,
-            deployment,
-            tenant,
-            principal);
+            return new Fixture(
+                database,
+                now,
+                clock,
+                agent,
+                runtime,
+                runtimeId,
+                stores,
+                deployment,
+                tenant,
+                principal);
+        }
+        catch (Exception creationFailure)
+        {
+            try
+            {
+                database.Dispose();
+            }
+            catch (Exception cleanupFailure)
+            {
+                throw new AggregateException(
+                    "Phase 1.18 test fixture creation failed and its SQL database could not be cleaned up.",
+                    creationFailure,
+                    cleanupFailure);
+            }
+
+            throw;
+        }
     }
 
     private static Agent CreateAgent(
@@ -447,7 +466,7 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
                         principal)))
             .Value!;
 
-    private sealed class Fixture
+    private sealed class Fixture : IDisposable
     {
         public Fixture(
             PersistenceTestDatabase database,
@@ -480,6 +499,8 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
         }
 
         public PersistenceTestDatabase Database { get; }
+
+        public void Dispose() => Database.Dispose();
 
         public DateTimeOffset Now { get; }
 
