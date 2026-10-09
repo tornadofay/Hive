@@ -941,7 +941,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private async Task InitializeCoreAsync(CancellationToken cancellationToken)
     {
         SetStatus(
-            "Review both endpoints, then select Refresh to test readiness before migration.",
+            "For a named SQL Server instance, choose Custom... and enter host\\instance; leave Port blank unless you know its fixed TCP port. Review both endpoints, then select Refresh to test readiness before migration.",
             HiveStatusTone.Information);
 
         try
