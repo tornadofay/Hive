@@ -113,6 +113,11 @@ public sealed class HiveWorkspaceLifecycleTests
             new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly TaskCompletionSource<Result<WorkItemListPage>> _workItemsCompletion =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<bool> _persistenceConnectionTestRequested =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource<bool> PersistenceConnectionTestRequested =>
+            _persistenceConnectionTestRequested;
 
         public TaskCompletionSource<bool> WorkItemsRequested =>
             _workItemsRequested;
@@ -139,6 +144,9 @@ public sealed class HiveWorkspaceLifecycleTests
                 _workItemsRequested.TrySetResult(true);
                 return _workItemsCompletion.Task;
             }
+
+            if (targetMethod?.Name == nameof(IHiveManagementFacade.TestPersistenceConnectionAsync))
+                _persistenceConnectionTestRequested.TrySetResult(true);
 
             throw new NotSupportedException(
                 $"The test proxy does not implement '{targetMethod?.Name}'.");
