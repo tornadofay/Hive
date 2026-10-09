@@ -462,3 +462,26 @@ Example to run: `Overview / Getting Started / Example Configuration → Settings
 Tests to run: `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, and `HiveSqlServerInstanceDiscoveryTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
 
 - Updated `docs/architecture/v1-host-and-management.md` to state explicitly that opening the tab may discover SQL instances but must not implicitly test endpoint connections; explicit Refresh and migration preflight own those tests.
+
+
+### Verification failure — 2026-10-09 Data Migration endpoint connection and layout
+
+Developer-reported same-slice runtime/UI failures after the latest migration-tab correction:
+
+- The SQL Server endpoint card in Data Migration has substantial unused whitespace and is not presenting its controls compactly enough to be usable.
+- The Embedded endpoint's database-file input needs to use the available row width; the current nested field/panel layout leaves unnecessary blank space.
+- Clicking **Migrate All Data** fails preflight with “Could not reach the SQL Server endpoint.” The provided report does not include the exact SQL error number or the selected server/database values, so the precise endpoint cause is not yet established. The implementation must make the failure actionable and ensure the migration's endpoint configuration uses the same proven named-instance/explicit-port rules as Database Setup, without weakening endpoint preflight.
+
+These are Slice 5 Data Migration presentation and connection-diagnostic corrections. Slice 6 and 1.19 remain unauthorized.
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+### Remediation authorization — Data Migration endpoint layout and diagnostics
+
+- Compact the SQL Server endpoint's vertical layout and remove excess whitespace while preserving all endpoint controls and the SOURCE-left / DESTINATION-right composition.
+- Let the Embedded database-file textbox expand to the usable endpoint-card width, with Browse adjacent and the path row auto-sized.
+- Improve failed endpoint-preflight status to identify whether SOURCE or DESTINATION failed, and include the endpoint server/instance, port when explicit, database, and safe actionable diagnostics returned by the existing Persistence connection tester. Do not expose secrets or swallow the underlying SQL error.
+- Align migration SQL endpoint/port behavior with the established Database Setup picker contract. Preserve explicit ports, preserve named-instance resolution when port is not explicitly entered, and retain the user-editable Custom endpoint.
+- Add focused layout and failure-diagnostic regression tests; do not bypass or relax preflight.
+
+This is same-slice corrective work, not authorization for Slice 6 or 1.19.
