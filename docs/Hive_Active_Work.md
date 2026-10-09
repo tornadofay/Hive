@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION PENDING**
+Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
 
 ## Phase 1.18A Slice 6 — Cross-Backend Hardening, Full Regression & Closure
 
@@ -146,6 +146,27 @@ Same-slice correction now committed to `main`:
 - Updated UI and host/management architecture documentation, and reconciled the stale `docs/ui/examples.md` statement that Slice 5 verification was still pending with its recorded closure.
 
 **Current state: VERIFICATION PENDING.** The developer's 783/783 result predates this latest change and does not verify it. The assistant has not run a build, test suite, launch, or real migration after the correction. Required local verification is listed below. If the migration still fails, copy the details from the modal HiveMessageBox; expected outcome is either a native SQL error code with guidance or, for a non-SQL exception, its type name only. Do not infer the underlying SQL cause until that diagnostic or a successful rerun is observed.
+
+### Developer-reported SQL Server file collision — 2026-10-09
+
+The latest real Embedded → SQL Server migration now exposes the native SQL Server failure instead of the former generic error:
+
+```text
+Error code: hive.persistence.migration-sql-failure
+SQL Server endpoint: localhost\\MSSQLSERVER01
+Database: Hive-Hive.Example.WinForms
+SQL error: 5170, state 4, class 16
+```
+
+SQL Server error 5170 indicates that SQL Server cannot create a database file because the target physical file path already exists. Given the developer's earlier database rename, the likely cause is a stale physical data/log filename retained by the renamed database while Hive attempts to create the configured old database name. That explanation is a strong diagnosis, not direct proof of which existing database owns the path, because raw server text and physical paths are deliberately omitted.
+
+Same-slice remediation boundary:
+- Add an explicit safe 5170 guidance branch to the shared SQL Server migration diagnostic mapper and regression coverage for both schema-migration and full-data-migration diagnostic paths.
+- Tell the operator to inspect ownership of the conflicting file path and not delete database files. Recommend a different unused destination database name or a deliberate SQL Server-managed physical-file relocation/rename after ownership and backups are confirmed.
+- Keep raw SQL text, actual physical file path, connection strings, and credentials out of Hive's UI diagnostic. Do not add destructive/automatic file cleanup or alter the migration's explicit destination configuration.
+- Update the historical diagnostic record, Current Status, and Active Work after the bounded correction.
+
+The developer's current report establishes SQL error 5170; it does not verify a successful migration. Record this failure before changing implementation. After the same-slice correction, return to **VERIFICATION PENDING** and require focused tests, the full suite, warnings-as-errors builds, and another safe migration attempt.
 
 ### Remaining closure evidence
 
