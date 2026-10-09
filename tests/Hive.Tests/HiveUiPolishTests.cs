@@ -620,6 +620,13 @@ public sealed class HiveUiPolishTests
 
         var result = await picker.RefreshAsync(forceRefresh: true).WaitAsync(TimeSpan.FromSeconds(5));
         await networkStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        for (var attempt = 0; attempt < 50 &&
+             !picker.DiscoveryStatusLabel.Text.Contains("timed out", StringComparison.OrdinalIgnoreCase); attempt++)
+        {
+            Application.DoEvents();
+            await Task.Delay(10);
+        }
+
         Assert.True(result.IsTimedOut);
         Assert.Contains("timed out", picker.DiscoveryStatusLabel.Text);
 

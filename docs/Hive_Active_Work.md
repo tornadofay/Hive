@@ -382,7 +382,19 @@ The user explicitly requested same-slice correction of SQL Server instance disco
 
 This is explicit remediation within the already-open Slice 5 settings/discovery boundary. It does not authorize unrelated UI framework work, Slice 6, or 1.19.
 
-Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+### Remediation completed — 2026-10-09 SQL Server instance discovery
 
-Before implementation, update the relevant architecture documentation with the discovery ownership, bounded synchronous-enumeration strategy, caching/coalescing, and partial-result/UI status contract. After remediation, return Active Work to **VERIFICATION PENDING** and require focused discovery/UI tests, the full `Hive.Tests` suite, a zero-warning Treat-Warnings-as-Errors build, and Example Host manual verification. No such verification has yet been performed by the assistant.
+- Extracted discovery into `SqlServerInstanceDiscoveryCoordinator`, shared by Persistence pickers. Local registry inventory and synchronous SQL network enumeration run independently; installed local instances can populate the selector before network enumeration returns.
+- The synchronous `SqlDataSourceEnumerator.GetDataSources()` call runs on one dedicated background worker. Each caller waits at most three seconds by default. Cancelling a token cancels only that caller's wait, not an already-running synchronous call. Refresh joins the in-flight scan instead of launching an overlapping worker.
+- Added shared TTL caching: local inventory five minutes, successful network inventory one minute, incomplete/failure results fifteen seconds. Automatic retries are disabled. Explicit Refresh bypasses a completed cache only when no scan is already running; an in-flight scan is joined until it returns.
+- Added inline marquee progress and the exact text `Searching for SQL Server instances…`, concise completion/incomplete/failure statuses, partial-result retention, and late-result updates guarded against stale generations, cancellation, backend switches, and disposal. Discovery failures are non-modal, and Custom entry stays available.
+- Preserved the Custom choice, current selection, custom-server edits, and manual port text while results are merged. Named-instance connection/port handling was not intentionally changed; the developer reported that their Windows-integrated named-instance connection succeeds after the earlier fix.
+- Added deterministic coordinator coverage for caching/coalescing, TTL expiry, local/network partial failure, timeout/no-overlap, and cancellation. WinForms regression coverage now checks spinner/status, Custom/port preservation, late-result merging, and disposal. The failing Custom visibility test now activates Database Setup before asserting effective visibility.
 
+Current state: **VERIFICATION PENDING**.
+
+Developer verification remains required. The assistant has not run a build, test suite, profiler, or Example Host. The latest developer run before these changes was 762 tests (761 passed, 1 failed); it does not verify the current source.
+
+Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
+
+Tests to run: `HiveSqlServerInstanceDiscoveryTests` and `HiveUiPolishTests`; then the full `Hive.Tests` suite and a zero-warning build under the repository's Treat-Warnings-as-Errors configuration. Manually verify that opening global Settings/Overview does not start discovery; Persistence renders without waiting for network enumeration; local results appear before network results; spinner/status transitions are correct; timeout/failure retain partial results and allow Custom entry; edits and explicit ports survive late results; and the named-instance Windows-integrated connection still succeeds.
