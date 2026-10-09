@@ -460,3 +460,5 @@ Developer rerun: rebuild the affected WinForms and test projects with Treat Warn
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
 Tests to run: `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, and `HiveSqlServerInstanceDiscoveryTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
+
+- Updated `docs/architecture/v1-host-and-management.md` to state explicitly that opening the tab may discover SQL instances but must not implicitly test endpoint connections; explicit Refresh and migration preflight own those tests.
