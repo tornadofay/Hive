@@ -222,7 +222,7 @@ The shared test-database lease creates a physical name in a reserved `Hive_TestO
 
 The owning test or multi-database test fixture must dispose every lease on success, assertion failure, and cancellation. Cleanup verifies the ownership marker before switching the database to single-user and dropping it. Cleanup failures must be reported with the database identity and safe SQL diagnostic context; they must not be silently swallowed or expose credentials. Migration tests must own every temporary source, destination, and round-trip database through the same lifecycle.
 
-At test startup, stale recovery may delete only databases that match the strict reserved generated-name format, exceed the configured age threshold, and have matching test-harness ownership evidence. Legacy databases that merely begin with `Hive_Test_` are not automatically treated as owned and must never be bulk-deleted by stale recovery. Test-run cleanup does not become a production persistence feature.
+At test startup, stale recovery may delete only databases that match the strict reserved generated-name format, exceed the configured age threshold, and have matching test-harness ownership evidence. Each test host holds a shared SQL application lock scoped to its run identity for the process lifetime; recovery must acquire the corresponding exclusive run lock before dropping a database, preventing one live parallel or long-running test host from reaping another host's database. Legacy databases that merely begin with `Hive_Test_` are not automatically treated as owned and must never be bulk-deleted by stale recovery. Test-run cleanup does not become a production persistence feature.
 
 #### Event test conventions
 
