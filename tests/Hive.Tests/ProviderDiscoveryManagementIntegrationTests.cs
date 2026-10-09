@@ -12,7 +12,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_DiscoveryIsCached_ForceRefreshes_AndEnforcesOwnership()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryManagement");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryManagement");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -85,7 +85,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_DiscoveryCacheIsSharedAcrossTargetsWithSameProviderAccountAndEndpoint()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoverySharedCache");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoverySharedCache");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -142,7 +142,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_SecretReplacementInvalidatesDiscoveryCache()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoverySecretReplacement");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoverySecretReplacement");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -232,7 +232,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_InFlightDiscoveryBeforeSecretReplacementDoesNotRepopulateCurrentCache()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoverySecretReplacementInFlight");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoverySecretReplacementInFlight");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -324,7 +324,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_RejectsMismatchedDiscoveryResult_AndDoesNotCacheIt()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryResultMismatch");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryResultMismatch");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -388,7 +388,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_RejectsDiscoveryResultWithDifferentEndpointPathCase()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryEndpointIdentity");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryEndpointIdentity");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -439,7 +439,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_ConcurrentDiscoveryRequestsShareOneInFlightDiscovery()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryConcurrency");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryConcurrency");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -491,7 +491,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_ForcedRefreshDoesNotReuseOverlappingNonForcedDiscovery()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryForcedAfterNonForced");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryForcedAfterNonForced");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -560,7 +560,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_ConcurrentForcedRefreshRequestsShareOneSuccessfulRefresh()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryForcedRefreshConcurrency");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryForcedRefreshConcurrency");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -626,7 +626,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_FailedForceRefreshLeavesLastSuccessfulDiscoveryCached()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryRefreshFailure");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryRefreshFailure");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -690,7 +690,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_StaleRefreshDoesNotUseSystemClockForEffectiveCapabilities()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryClockBoundary");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryClockBoundary");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -761,7 +761,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_InputPreparationPreservesDiscoveryFailure_WhenDiscoveryPreventsVisionRouting()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryInputFailure");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryInputFailure");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -825,7 +825,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_InputPreparationDoesNotDiscoverExplicitlyConfiguredRequiredCapability()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryConfiguredVision");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryConfiguredVision");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -884,7 +884,7 @@ public sealed class ProviderDiscoveryManagementIntegrationTests
     [Fact]
     public async Task Management_InputPreparationRefreshesStaleDiscovery_AndUsesDiscoveredVision()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryInput");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderDiscoveryInput");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
