@@ -13,6 +13,7 @@ Started: 2026-10-09
 - Repository branch: `main`
 - Starting commit: `c8165222cafc4d012c47fa9fa744970a4e9fb2c4`
 - Current implementation checkpoint: `6457b8d995f25f0a38c8ae64966e96275ead4886`
+- Latest verification report received: 2026-10-09; `Hive.Tests` 789/789 passed, 0 failed, 0 skipped in 2.6 minutes. The developer confirmed Visual Studio Treat Warnings as Errors was enabled and the Example Host runs correctly.
 - Phase 1.18A — Embedded Persistence Profile is closed and verified. This temporary maintenance slice does not authorize Phase 1.19 or any other roadmap advancement.
 - The prior Phase 1.18A closure evidence remains preserved at [Slice 6 closure verification](verification/phase-1/1.18A-slice-6-closure-2026-10-09.md).
 
@@ -39,10 +40,12 @@ Initial confirmed finding: `HiveSettingsOverviewView.AddCard` added the title, d
 
 ### Verification gate
 
-Status: **VERIFICATION PENDING** after same-slice remediation.
+Status: **VERIFICATION PENDING**. Automated re-verification is now reported passing: the complete `Hive.Tests` suite passed 789/789 (0 failed, 0 skipped); Visual Studio Treat Warnings as Errors was enabled; and the developer reports that the Example Host runs correctly. No separate build-success/zero-warning summary was included in the report.
 
-Failure and remediation history: the developer reported analyzer `xUnit2031` in `tests/Hive.Tests/HiveUiPolishTests.cs`, inside `HiveSettingsOverviewCards_UseSeparateRowsAndDescribeBothPersistenceBackends`, at line 1629. The assertion filtered labels with `.Where(...)` before calling `Assert.Single`. The failure was recorded before code changes, then corrected to use `Assert.Single(collection, predicate)` in commit `6457b8d995f25f0a38c8ae64966e96275ead4886`. The original failure is retained here as history; remediation is not considered verified until the developer reruns the checks.
+Failure and remediation history: the developer reported analyzer `xUnit2031` in `tests/Hive.Tests/HiveUiPolishTests.cs`, inside `HiveSettingsOverviewCards_UseSeparateRowsAndDescribeBothPersistenceBackends`, at line 1629. The assertion filtered labels with `.Where(...)` before calling `Assert.Single`. The failure was recorded before code changes, then corrected to use `Assert.Single(collection, predicate)` in commit `6457b8d995f25f0a38c8ae64966e96275ead4886`. The subsequent full-suite run passes.
+
+Remaining verification detail: the report says the Example Host runs correctly but does not explicitly confirm the requested visual inspection of the Settings Overview at normal and resized window sizes in both Light and Dark themes. Because this is a UI maintenance slice, keep the gate pending until that visual check is confirmed; do not rerun tests solely for this remaining manual check unless a visual defect is found.
 
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
 
-Tests to run: `HiveUiPolishTests`; then the full `Hive.Tests` suite. Build affected projects with Visual Studio **Treat warnings as errors** enabled and manually inspect the Settings Overview at normal and resized window sizes in Light and Dark themes.
+Tests to run: `HiveUiPolishTests`; then the full `Hive.Tests` suite. Both are reported passing. Remaining check: visually inspect the Settings Overview at normal and resized window sizes in Light and Dark themes.
