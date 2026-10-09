@@ -41,7 +41,7 @@ public sealed class AgentExecutionIntegrationTests
     [Fact]
     public async Task ExecuteConfiguredAgentAsync_UsesPersistedTargetAndRefreshesAfterTargetChange()
     {
-        var database = await PrepareDatabase("Hive_Test_ConfiguredAgentExecution");
+        using var database = await PrepareDatabase("Hive_Test_ConfiguredAgentExecution");
 
         await using var firstServer = new LocalAgentServer(
             HttpStatusCode.OK,
@@ -159,7 +159,7 @@ public sealed class AgentExecutionIntegrationTests
     [Fact]
     public async Task ExecuteConfiguredAgentAsync_RejectsUnconfiguredAgent()
     {
-        var database = await PrepareDatabase("Hive_Test_UnconfiguredAgentExecution");
+        using var database = await PrepareDatabase("Hive_Test_UnconfiguredAgentExecution");
         var eventStore = new SqlEventPersistenceStore(database.Options);
 
         using var httpClient = new HttpClient();
@@ -206,7 +206,7 @@ public sealed class AgentExecutionIntegrationTests
     [Fact]
     public async Task ExecuteConfiguredAgentAsync_RejectsInactiveProviderAccount()
     {
-        var database = await PrepareDatabase("Hive_Test_InactiveProviderAccountExecution");
+        using var database = await PrepareDatabase("Hive_Test_InactiveProviderAccountExecution");
         var eventStore = new SqlEventPersistenceStore(database.Options);
         var secretStore = new SqlDpapiSecretStore(database.Options);
 
@@ -305,7 +305,7 @@ public sealed class AgentExecutionIntegrationTests
     [Fact]
     public async Task ExecuteAsync_CompletesAndPersistsCorrelatedLifecycle()
     {
-        var database = await PrepareDatabase("Hive_Test_AgentExecution");
+        using var database = await PrepareDatabase("Hive_Test_AgentExecution");
         var store = new SqlEventPersistenceStore(database.Options);
 
         await using var server = new LocalAgentServer(
@@ -440,7 +440,7 @@ public sealed class AgentExecutionIntegrationTests
     [Fact]
     public async Task ExecuteAsync_MissingProviderUsage_IsExplicitlyUnknown()
     {
-        var database = await PrepareDatabase("Hive_Test_AgentExecutionMissingUsage");
+        using var database = await PrepareDatabase("Hive_Test_AgentExecutionMissingUsage");
         var store = new SqlEventPersistenceStore(database.Options);
 
         await using var server = new LocalAgentServer(
@@ -507,7 +507,7 @@ public sealed class AgentExecutionIntegrationTests
     [Fact]
     public async Task ExecuteAsync_ProviderFailure_PersistsFailedLifecycle()
     {
-        var database = await PrepareDatabase("Hive_Test_AgentExecutionFailure");
+        using var database = await PrepareDatabase("Hive_Test_AgentExecutionFailure");
         var store = new SqlEventPersistenceStore(database.Options);
 
         await using var server = new LocalAgentServer(
@@ -605,7 +605,7 @@ public sealed class AgentExecutionIntegrationTests
     [Fact]
     public async Task ExecuteAsync_UnexpectedFailure_DoesNotExposeExceptionMessage()
     {
-        var database = await PrepareDatabase("Hive_Test_AgentExecutionUnexpectedFailure");
+        using var database = await PrepareDatabase("Hive_Test_AgentExecutionUnexpectedFailure");
         var store = new SqlEventPersistenceStore(database.Options);
 
         using var httpClient = new HttpClient(
@@ -1093,7 +1093,7 @@ public sealed class AgentExecutionIntegrationTests
     [Fact]
     public async Task ExecuteAsync_TargetScopeMismatchFailsBeforeExecution()
     {
-        var database = await PrepareDatabase("Hive_Test_AgentExecutionScope");
+        using var database = await PrepareDatabase("Hive_Test_AgentExecutionScope");
         var store = new SqlEventPersistenceStore(database.Options);
 
         await using var server = new LocalAgentServer(
@@ -1162,7 +1162,7 @@ public sealed class AgentExecutionIntegrationTests
     [Fact]
     public async Task ExecuteAsync_Cancellation_PersistsCancelledLifecycle()
     {
-        var database = await PrepareDatabase("Hive_Test_AgentExecutionCancellation");
+        using var database = await PrepareDatabase("Hive_Test_AgentExecutionCancellation");
         var store = new SqlEventPersistenceStore(database.Options);
 
         await using var server = new LocalAgentServer(
@@ -1623,7 +1623,7 @@ public sealed class AgentExecutionIntegrationTests
     private static async Task<PersistenceTestDatabase> PrepareDatabase(
         string name)
     {
-        var database = new PersistenceTestDatabase(name);
+        using var database = new PersistenceTestDatabase(name);
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options)
