@@ -270,6 +270,8 @@ public sealed class HiveUiPolishTests
         host.Show();
         Application.DoEvents();
 
+        await view.InitializeAsync().WaitAsync(TimeSpan.FromSeconds(5));
+
         Assert.Equal(2, view.NavigationTabs.TabPages.Count);
         Assert.Equal("Database Setup", view.NavigationTabs.TabPages[0].Text);
         Assert.Equal("Data Migration", view.NavigationTabs.TabPages[1].Text);
@@ -286,6 +288,14 @@ public sealed class HiveUiPolishTests
             "select Refresh to test readiness",
             migrationView.StatusLabel.Text,
             StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(
+            managementProxy.PersistenceConfiguration.ServerName,
+            migrationView.SourceSqlServerPicker.ServerName);
+        Assert.Equal(
+            managementProxy.PersistenceConfiguration.DatabaseName,
+            migrationView.SourceDatabaseName);
+        Assert.True(migrationView.SourceTrustServerCertificate);
+        Assert.True(migrationView.SourceEncrypt);
 
         Assert.Equal(
             DockStyle.Fill,
@@ -779,6 +789,18 @@ public sealed class HiveUiPolishTests
     {
         var (management, managementProxy) =
             HiveWorkspaceLifecycleTests.ManagementFacadeProxy.Create();
+        managementProxy.PersistenceConfiguration = new HivePersistenceConfiguration(
+            HivePersistenceBackend.SqlServer,
+            @"localhost\MSSQLSERVER01",
+            port: null,
+            "Hive-Hive.TestHost",
+            HiveSqlAuthenticationMode.WindowsIntegrated,
+            userName: null,
+            bootstrapCredential: null,
+            encrypt: true,
+            trustServerCertificate: true,
+            createDatabaseIfMissing: true,
+            commandTimeoutSeconds: 37);
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
         var context = new ResourceAccessContext(
             DeploymentId.New(),
