@@ -928,13 +928,14 @@ public sealed class HiveUiPolishTests
         Assert.Equal("Hive Persistence", errorDialog.Title);
         Assert.Equal(HiveMessageType.Error, errorDialog.Type);
         Assert.True(errorDialog.DetailsExpanded);
+        var diagnosticDetails = Assert.IsType<string>(errorDialog.Details);
         Assert.Contains(
             "intercepted the endpoint preflight",
-            errorDialog.Details,
+            diagnosticDetails,
             StringComparison.OrdinalIgnoreCase);
         Assert.Contains(
             "named-instance port resolution",
-            errorDialog.Details,
+            diagnosticDetails,
             StringComparison.OrdinalIgnoreCase);
         Assert.Contains(
             "See the error dialog for details",
