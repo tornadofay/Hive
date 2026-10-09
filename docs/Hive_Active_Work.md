@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION PENDING**
+Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
 
 ## Phase 1.18A Slice 6 — Cross-Backend Hardening, Full Regression & Closure
 
@@ -108,6 +108,23 @@ The developer reported two CS0122 compile errors in `tests/Hive.Tests/HivePersis
 Added `src/Hive.Management/AssemblyInfo.cs` with `InternalsVisibleTo("Hive.Tests")`, following the established test-access pattern used by other implementation assemblies. This enables the focused internal sanitization test without making `HivePersistenceMigrationManagementService` public or changing the runtime/public API. Correction evidence: [compile-correction record](verification/phase-1/1.18A-slice-6-compile-correction-2026-10-09.md).
 
 **Current state: VERIFICATION PENDING.** This correction has not been compiled or tested by the assistant. The targeted tests, full test suite, and affected warnings-as-errors builds listed below must be run against the current checkpoint; then repeat the reported Embedded → SQL Server migration using Copy details if it still fails.
+
+### Developer-reported migration failure and UI feedback — 2026-10-09
+
+The developer reports:
+- Full `Hive.Tests` suite: **783/783 passed, 0 failed, 0 skipped**, in 2.8 minutes.
+- The real Embedded → SQL Server migration still reports `Error code: hive.persistence.migration-unexpected` and the sanitized generic message `Hive persistence data migration could not be completed safely.`
+- The developer requests that migration errors appear through `HiveMessageBox` rather than only in the diagnostic textbox below the migration workspace.
+
+Source inspection found the direct reason the previous diagnostics did not catch this case: `HiveDatabaseMigrator.MigrateCoreAsync` catches SQL Server exceptions and returns the generic `hive.persistence.migration-unexpected` Result. Embedded → SQL Server destination preflight/creation invokes this migrator, so the original `SqlException` never reaches `HivePersistenceDataMigrator`'s SQL-specific catch. Management then safely replaces that generic external error message again. This establishes the diagnostic loss path, but does not yet identify the underlying database/SQL error.
+
+Same-slice remediation boundary:
+- Preserve safe SQL-native number/state/class and endpoint identity from exceptions encountered by the SQL schema migrator, including wrapped SQL exceptions. Continue omitting raw exception messages, connection strings, and credentials.
+- Allow Management to preserve only explicitly curated SQL migration diagnostics and keep other unexpected errors generic.
+- Show returned migration failures in a themed `HiveMessageBox` error dialog instead of presenting them only in the inline diagnostic textbox. Keep a concise footer status; use the dialog's details/copy affordance for technical details where appropriate. Do not disclose raw exception or credential material.
+- Add focused tests for the previously swallowed SQL error and preserve test-access boundaries.
+
+The 783/783 automated result is accepted for the checkpoint immediately before this new remediation. The new failure and requested UI change are recorded before source modification. The actual underlying SQL failure remains unverified until the corrected UI yields a concrete diagnostic or the migration succeeds.
 
 ### Remaining closure evidence
 
