@@ -389,7 +389,7 @@ public sealed class HiveConfigurationTests
     [Fact]
     public async Task Management_InitializePersistence_CreatesAndMigratesHiveDatabase()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ManagementInitialization");
+        using var database = new PersistenceTestDatabase("Hive_Test_ManagementInitialization");
         database.Reset();
 
         var facade = new HiveManagementFacade(
@@ -541,7 +541,7 @@ public sealed class HiveConfigurationTests
     [Fact]
     public async Task Management_TestExecutionTargetConnection_LoadsProviderGraphAndInvokesTester()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ManagementProviderConnection");
+        using var database = new PersistenceTestDatabase("Hive_Test_ManagementProviderConnection");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
