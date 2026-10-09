@@ -52,6 +52,7 @@ public sealed class PersistenceTestDatabaseLifecycleTests
         Assert.NotEqual(first.DatabaseName, second.DatabaseName);
         Assert.StartsWith("Hive_TestOwned_", first.DatabaseName, StringComparison.Ordinal);
         Assert.StartsWith("Hive_TestOwned_", second.DatabaseName, StringComparison.Ordinal);
+        Assert.True(SqlTestDatabaseLifecycle.IsRunActive(first.RunId));
 
         Assert.True(await DatabaseExistsAsync(first.DatabaseName));
         Assert.True(await DatabaseExistsAsync(second.DatabaseName));
@@ -91,6 +92,7 @@ public sealed class PersistenceTestDatabaseLifecycleTests
     {
         await using var database = new PersistenceTestDatabase("OwnershipMismatch");
         var originalMarker = await ReadOwnershipMarkerAsync(database.Options.ConnectionString);
+        Assert.NotNull(originalMarker);
 
         await using (var connection = new SqlConnection(database.Options.ConnectionString))
         {
