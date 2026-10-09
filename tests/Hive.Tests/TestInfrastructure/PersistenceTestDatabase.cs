@@ -47,6 +47,8 @@ internal sealed class PersistenceTestDatabase : IDisposable, IAsyncDisposable
 
     public string DatabaseName { get; }
 
+    internal Guid OwnershipToken => _ownedDatabase.OwnershipToken;
+
     public HiveDatabaseOptions Options { get; }
 
     public static async Task<PersistenceTestDatabase> CreateMigratedAsync(
