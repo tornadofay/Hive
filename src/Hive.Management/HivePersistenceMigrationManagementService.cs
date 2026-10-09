@@ -173,11 +173,14 @@ internal sealed class HivePersistenceMigrationManagementService : HiveManagement
     {
         ArgumentNullException.ThrowIfNull(error);
 
-        var safeMessage = error.Code ==
-            "hive.persistence.data-migration.sql-failure"
-                // The persistence migrator constructs this diagnostic from a fixed
-                // SQL-error mapping and endpoint identity. It omits raw provider text,
-                // connection strings, and credentials.
+        var isCuratedSqlFailure = error.Code is
+            "hive.persistence.data-migration.sql-failure" or
+            "hive.persistence.migration-sql-failure";
+
+        var safeMessage = isCuratedSqlFailure
+                // Persistence constructs these diagnostics from fixed SQL-error
+                // mappings and endpoint identity. Raw provider text, connection
+                // strings, and credentials are omitted.
                 ? error.Message
                 : "Hive persistence data migration could not be completed safely.";
 
