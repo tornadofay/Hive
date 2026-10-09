@@ -652,7 +652,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             {
                 Dock = DockStyle.Fill,
                 AutoSize = true,
-                WrapContents = false,
+                WrapContents = true,
                 FlowDirection = FlowDirection.LeftToRight,
                 Margin = Padding.Empty,
                 Padding = Padding.Empty
@@ -701,7 +701,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 controls[i].Margin = new Padding(
                     controls[i].Margin.Left,
                     controls[i].Margin.Top,
-                    i < controls.Length - 1 ? 8 : controls[i].Margin.Right,
+                    i < controls.Length - 1 ? 4 : controls[i].Margin.Right,
                     controls[i].Margin.Bottom);
                 grid.Controls.Add(controls[i], i, 0);
             }
