@@ -841,11 +841,22 @@ internal sealed class HivePersistenceSettingsView : UserControl
             : new BackendChoice("SQL Server", HivePersistenceBackend.SqlServer);
         _embeddedStorageTextBox.Text =
             configuration.EmbeddedStoragePath ?? DefaultEmbeddedStoragePath();
-        _serverPicker.SetValue(
-            string.IsNullOrWhiteSpace(configuration.ServerName)
-                ? "localhost"
-                : configuration.ServerName,
-            configuration.Port);
+
+        var configuredServerName = string.IsNullOrWhiteSpace(configuration.ServerName)
+            ? "localhost"
+            : configuration.ServerName;
+        var configuredPort = configuration.Port;
+
+        // Earlier Settings versions applied the generic 1433 default to Custom
+        // named instances and persisted it. Named instances should use instance
+        // resolution unless a port is explicitly supplied in the current editor.
+        if (configuredPort == 1433 &&
+            configuredServerName.Contains('\\', StringComparison.Ordinal))
+        {
+            configuredPort = null;
+        }
+
+        _serverPicker.SetValue(configuredServerName, configuredPort);
         _databaseTextBox.Text = configuration.Backend == HivePersistenceBackend.SqlServer
             ? (string.IsNullOrWhiteSpace(configuration.DatabaseName)
                 ? HivePersistenceConfiguration.BuildDatabaseName(_applicationName)
