@@ -377,7 +377,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 _serverPicker.Port,
                 databaseName,
                 authentication)
-                ? _loadedConfiguration.BootstrapCredential
+                ? _loadedConfiguration?.BootstrapCredential
                 : null;
 
             return new HivePersistenceConfiguration(
