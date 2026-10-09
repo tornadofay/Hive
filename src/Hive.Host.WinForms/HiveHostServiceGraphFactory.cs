@@ -77,6 +77,7 @@ public sealed class HiveHostServiceGraphFactory :
             var structuredExtractionBatches =
                 new SqlStructuredExtractionBatchStore(eventPersistence);
 
+            var migrationOperationGate = new HiveManagementOperationGate();
             management = new HiveManagementFacade(
                 new EmbeddedProviderResourceStore(database),
                 new EmbeddedAgentDefinitionResourceStore(database),
@@ -92,7 +93,9 @@ public sealed class HiveHostServiceGraphFactory :
                 executionTargetPreferences:
                     new EmbeddedExecutionTargetPreferenceStore(database),
                 structuredExtractionBatches: structuredExtractionBatches,
-                structuredExtractionEngine: structuredExtractionEngine);
+                structuredExtractionEngine: structuredExtractionEngine,
+                persistenceMigrationQuiescence: new HiveManagementOperationGate(),
+                managementOperationGate: migrationOperationGate);
 
             var graph = new HiveHostServiceGraph(
                 configuration,
@@ -207,6 +210,7 @@ public sealed class HiveHostServiceGraphFactory :
             var structuredExtractionBatches =
                 new SqlStructuredExtractionBatchStore(eventPersistence);
 
+            var migrationOperationGate = new HiveManagementOperationGate();
             management = new HiveManagementFacade(
                 new SqlProviderResourceStore(options),
                 new SqlAgentDefinitionResourceStore(options),
