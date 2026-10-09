@@ -11,7 +11,7 @@ public sealed class EventOutboxPollerIntegrationTests
     [Fact]
     public async Task ProcessNext_DeliversEventAndRemovesOutboxRow()
     {
-        var database = await PrepareDatabase("Hive_Test_OutboxProcess");
+        using var database = await PrepareDatabase("Hive_Test_OutboxProcess");
         var store = new SqlEventPersistenceStore(database.Options);
         var eventEnvelope = CreateEvent("outbox.process");
         await AppendAsync(store, eventEnvelope);
@@ -32,7 +32,7 @@ public sealed class EventOutboxPollerIntegrationTests
     [Fact]
     public async Task CompleteOutbox_ExpiredLeaseIsRejectedAndRowRemains()
     {
-        var database = await PrepareDatabase("Hive_Test_OutboxExpiredCompletion");
+        using var database = await PrepareDatabase("Hive_Test_OutboxExpiredCompletion");
         var store = new SqlEventPersistenceStore(database.Options);
         var eventEnvelope = CreateEvent("outbox.expired-completion");
         await AppendAsync(store, eventEnvelope);
@@ -58,7 +58,7 @@ public sealed class EventOutboxPollerIntegrationTests
     [Fact]
     public async Task ProcessNext_FailedDeliveryIsRetriedAfterLeaseExpiryWithoutDuplicatingSideEffect()
     {
-        var database = await PrepareDatabase("Hive_Test_OutboxRetry");
+        using var database = await PrepareDatabase("Hive_Test_OutboxRetry");
         var store = new SqlEventPersistenceStore(database.Options);
         var eventEnvelope = CreateEvent("outbox.retry");
         await AppendAsync(store, eventEnvelope);
@@ -86,7 +86,7 @@ public sealed class EventOutboxPollerIntegrationTests
     [Fact]
     public async Task ProcessNext_HandlerCancellationLeavesLeaseForRecovery()
     {
-        var database = await PrepareDatabase("Hive_Test_OutboxHandlerCancellation");
+        using var database = await PrepareDatabase("Hive_Test_OutboxHandlerCancellation");
         var store = new SqlEventPersistenceStore(database.Options);
         var eventEnvelope = CreateEvent("outbox.handler-cancellation");
         await AppendAsync(store, eventEnvelope);
@@ -174,7 +174,7 @@ public sealed class EventOutboxPollerIntegrationTests
     [Fact]
     public async Task ProcessNext_RenewsLeaseForLongRunningDelivery()
     {
-        var database = await PrepareDatabase("Hive_Test_OutboxLeaseRenewal");
+        using var database = await PrepareDatabase("Hive_Test_OutboxLeaseRenewal");
         var store = new SqlEventPersistenceStore(database.Options);
         var eventEnvelope = CreateEvent("outbox.lease-renewal");
         await AppendAsync(store, eventEnvelope);
@@ -196,7 +196,7 @@ public sealed class EventOutboxPollerIntegrationTests
     [Fact]
     public async Task ProcessNext_CancellationAfterClaimLeavesLeaseForRecovery()
     {
-        var database = await PrepareDatabase("Hive_Test_OutboxCancellation");
+        using var database = await PrepareDatabase("Hive_Test_OutboxCancellation");
         var store = new SqlEventPersistenceStore(database.Options);
         var eventEnvelope = CreateEvent("outbox.cancellation");
         await AppendAsync(store, eventEnvelope);
@@ -217,7 +217,7 @@ public sealed class EventOutboxPollerIntegrationTests
     [Fact]
     public async Task ConcurrentPollers_OnlyOneClaimsTheSameOutboxRow()
     {
-        var database = await PrepareDatabase("Hive_Test_OutboxConcurrency");
+        using var database = await PrepareDatabase("Hive_Test_OutboxConcurrency");
         var store = new SqlEventPersistenceStore(database.Options);
         var eventEnvelope = CreateEvent("outbox.concurrent");
         await AppendAsync(store, eventEnvelope);
@@ -236,7 +236,7 @@ public sealed class EventOutboxPollerIntegrationTests
 
     private static async Task<PersistenceTestDatabase> PrepareDatabase(string name)
     {
-        var database = new PersistenceTestDatabase(name);
+        using var database = new PersistenceTestDatabase(name);
         database.Reset();
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
         Assert.True(
