@@ -170,42 +170,69 @@ public sealed class PersistenceTestDatabaseLifecycleTests
 
         try
         {
-            await using (var connection = new SqlConnection(masterBuilder.ConnectionString))
+            // A second testhost must not see this deliberately old database as
+            // abandoned while this test is still setting up its ownership marker.
+            await using (var runLeaseConnection = new SqlConnection(masterBuilder.ConnectionString))
             {
-                await connection.OpenAsync();
-                await using var command = connection.CreateCommand();
-                command.CommandText = $"CREATE DATABASE [{databaseName}];";
-                await command.ExecuteNonQueryAsync();
-                databaseCreated = true;
-            }
+                await runLeaseConnection.OpenAsync();
+                await using (var leaseCommand = runLeaseConnection.CreateCommand())
+                {
+                    leaseCommand.CommandText = """
+                        DECLARE @LockResult int;
+                        EXEC @LockResult = sys.sp_getapplock
+                            @Resource = @Resource,
+                            @LockMode = N'Shared',
+                            @LockOwner = N'Session',
+                            @LockTimeout = 0,
+                            @DbPrincipal = N'public';
+                        SELECT @LockResult;
+                        """;
+                    leaseCommand.Parameters.Add(
+                        new SqlParameter("@Resource", SqlDbType.NVarChar, 255)
+                        {
+                            Value = $"Hive.Tests.Run.{runId:N}"
+                        });
+                    var lockResult = Convert.ToInt32(
+                        await leaseCommand.ExecuteScalarAsync(),
+                        CultureInfo.InvariantCulture);
+                    Assert.True(lockResult >= 0, $"Could not reserve stale test-run fixture lock: {lockResult}.");
+                }
 
-            var databaseBuilder = new SqlConnectionStringBuilder(
-                masterBuilder.ConnectionString)
-            {
-                InitialCatalog = databaseName,
-                Pooling = false
-            };
+                await using (var createCommand = runLeaseConnection.CreateCommand())
+                {
+                    createCommand.CommandText = $"CREATE DATABASE [{databaseName}];";
+                    await createCommand.ExecuteNonQueryAsync();
+                    databaseCreated = true;
+                }
 
-            await using (var connection = new SqlConnection(databaseBuilder.ConnectionString))
-            {
-                await connection.OpenAsync();
-                await using var command = connection.CreateCommand();
-                command.CommandText = """
-                    EXEC sys.sp_addextendedproperty
-                        @name = @PropertyName,
-                        @value = @Marker;
-                    """;
-                command.Parameters.Add(
-                    new SqlParameter("@PropertyName", SqlDbType.NVarChar, 128)
-                    {
-                        Value = "Hive.Tests.Ownership"
-                    });
-                command.Parameters.Add(
-                    new SqlParameter("@Marker", SqlDbType.NVarChar, 256)
-                    {
-                        Value = marker
-                    });
-                await command.ExecuteNonQueryAsync();
+                var databaseBuilder = new SqlConnectionStringBuilder(
+                    masterBuilder.ConnectionString)
+                {
+                    InitialCatalog = databaseName,
+                    Pooling = false
+                };
+
+                await using (var databaseConnection = new SqlConnection(databaseBuilder.ConnectionString))
+                {
+                    await databaseConnection.OpenAsync();
+                    await using var markerCommand = databaseConnection.CreateCommand();
+                    markerCommand.CommandText = """
+                        EXEC sys.sp_addextendedproperty
+                            @name = @PropertyName,
+                            @value = @Marker;
+                        """;
+                    markerCommand.Parameters.Add(
+                        new SqlParameter("@PropertyName", SqlDbType.NVarChar, 128)
+                        {
+                            Value = "Hive.Tests.Ownership"
+                        });
+                    markerCommand.Parameters.Add(
+                        new SqlParameter("@Marker", SqlDbType.NVarChar, 256)
+                        {
+                            Value = marker
+                        });
+                    await markerCommand.ExecuteNonQueryAsync();
+                }
             }
 
             SqlTestDatabaseLifecycle.RecoverStaleOwnedDatabases();
