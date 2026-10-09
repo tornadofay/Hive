@@ -140,6 +140,64 @@ public sealed class HivePersistenceOptionsTests
     }
 
     [Fact]
+    public void FromConfiguration_PreservesNamedInstanceAndWindowsIntegrationWithoutAddingPort()
+    {
+        var configuration = new HivePersistenceConfiguration(
+            HivePersistenceBackend.SqlServer,
+            @"localhost\MSSQLSERVER01",
+            port: null,
+            "Hive-Hive.Example.WinForms",
+            HiveSqlAuthenticationMode.WindowsIntegrated,
+            userName: null,
+            bootstrapCredential: null,
+            encrypt: false,
+            trustServerCertificate: false,
+            createDatabaseIfMissing: false);
+
+        var options = HiveDatabaseOptions.FromConfiguration(configuration);
+        var builder = new SqlConnectionStringBuilder(options.ConnectionString);
+
+        Assert.Equal(@"localhost\MSSQLSERVER01", builder.DataSource);
+        Assert.Equal("Hive-Hive.Example.WinForms", builder.InitialCatalog);
+        Assert.True(builder.IntegratedSecurity);
+        Assert.False(builder.Encrypt);
+    }
+
+    [Fact]
+    public void DescribeSqlConnectionFailureProvidesWindowsAuthenticationGuidance()
+    {
+        var message = HivePersistenceConnectionTester.DescribeSqlConnectionFailure(
+            18456,
+            "Login failed for user 'MACHINE\\user'.");
+
+        Assert.Contains("rejected authentication", message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("current Windows account", message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("MACHINE", message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DescribeSqlConnectionFailureProvidesNamedInstanceGuidance()
+    {
+        var message = HivePersistenceConnectionTester.DescribeSqlConnectionFailure(
+            -1,
+            "A network-related or instance-specific error occurred while establishing a connection.");
+
+        Assert.Contains("named instance", message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("SQL Server Browser", message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void DescribeSqlConnectionFailureProvidesCertificateGuidance()
+    {
+        var message = HivePersistenceConnectionTester.DescribeSqlConnectionFailure(
+            -2146893019,
+            "The certificate chain was issued by an authority that is not trusted.");
+
+        Assert.Contains("TLS certificate validation failed", message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Trust server certificate", message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void ToString_DoesNotExposeConnectionString()
     {
         var options = new HiveDatabaseOptions(
