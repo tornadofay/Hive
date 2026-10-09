@@ -604,3 +604,20 @@ Code inspection confirms the host service-graph factory creates both SQL Server 
 This remains same-slice Phase 1.18A Slice 5 remediation. Correctly provide a real per-active-graph quiescence/drain lease (never a no-op), preserve Management-only migration and source/destination preflight/fingerprint safety, and make the Direction row content-sized without oversizing the control. Do not start Slice 6 or 1.19.
 
 Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+### Remediation completed — real host migration quiescence and compact Direction selector
+
+- Root cause of the user-reported migration failure: the SQL Server and Embedded branches of `HiveHostServiceGraphFactory` did not supply `IHivePersistenceMigrationQuiescence`, so the production Management facade correctly failed closed with `persistence-migration-quiescence-unavailable` before starting migration.
+- Added `HiveManagementOperationGate`, shared by each host graph's Management facade and migration service. Ordinary facade operations take a short-lived lease for their full asynchronous duration. Migration serializes against other migration requests, blocks admission of new ordinary calls, drains previously admitted calls, and holds an exclusive lease until migration completes. New ordinary calls during migration receive a retryable conflict rather than accessing the graph concurrently. Cancellation while draining releases quiescence and restores admission.
+- Wired the same gate instance into both SQL Server and Embedded graph factory branches. Migration still uses the explicit Source and Destination request; the gate does not substitute endpoints, skip preflight, suppress fingerprint checks, or activate the destination. A facade constructed without a quiescence gate still fails closed as required.
+- Added `ManagementOperationGate_DrainsInFlightCallsAndRejectsCallsDuringMigration` and `ManagementOperationGate_CancellationWhileDrainingReopensOperationAdmission`, plus host graph factory regressions proving neither backend's real Management facade reports the missing-quiescence error.
+- Removed the fixed 72-pixel top row that made Direction oversized. The top Direction + Scope panel and its FieldsPanel row now size to their content; Direction keeps its native 34-pixel field height, avoiding unnecessary stretching and clipping.
+- Updated the affected architecture and UI docs.
+
+Current state: **VERIFICATION PENDING**.
+
+The assistant has inspected the source and regression-test edits but has not built, run tests, or launched the Example Host. Build `Hive.Management`, `Hive.Host.WinForms`, and `Hive.Tests` with Treat Warnings as Errors. Run `HivePersistenceDataMigrationTests`, `HiveHostCompositionTests`, `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, `HiveSqlServerInstanceDiscoveryTests`, and `HivePersistenceErrorTests`, then the full `Hive.Tests` suite. In `Hive.Example.WinForms`, confirm migration no longer fails immediately with quiescence-unavailable, ordinary calls are not allowed to race an in-progress migration, and the Direction selector is fully visible at its normal compact size. Then exercise the relevant migration direction against real endpoints and verify source immutability, destination verification, and no implicit activation.
+
+Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
+
+Tests to run: `HivePersistenceDataMigrationTests`, `HiveHostCompositionTests`, `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, `HiveSqlServerInstanceDiscoveryTests`, and `HivePersistenceErrorTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
