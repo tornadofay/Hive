@@ -541,7 +541,7 @@ internal sealed class HivePersistenceDataMigrator
                 if (secretTransfer.IsFailure)
                 {
                     await transaction.RollbackAsync(
-                        cancellationToken).ConfigureAwait(false);
+                        CancellationToken.None).ConfigureAwait(false);
 
                     return Result<HivePersistenceMigrationExecutionResult>.Failure(
                         secretTransfer.Error!);
@@ -574,7 +574,7 @@ internal sealed class HivePersistenceDataMigrator
 
         if (!sourceFingerprint.Matches(destinationFingerprint))
         {
-            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
             return Result<HivePersistenceMigrationExecutionResult>.Failure(
                 Error.Conflict(
                     "hive.persistence.data-migration.verification-failed",
@@ -591,7 +591,7 @@ internal sealed class HivePersistenceDataMigrator
 
         if (!sourceFingerprint.Matches(sourceAfter))
         {
-            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
             return Result<HivePersistenceMigrationExecutionResult>.Failure(
                 Error.Concurrency(
                     "hive.persistence.data-migration.source-changed",
