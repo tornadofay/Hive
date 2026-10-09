@@ -340,6 +340,16 @@ This is an in-scope Slice 5 input-preservation/concurrency defect in the new bac
 
 Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 
+### Remediation completed — background discovery preserves user edits
+
+- `HiveSqlServerInstancePicker` now tracks user edits separately from programmatic item population. When discovery completes, it detects whether the user changed the selection, Custom server text, or port while the operation was in flight.
+- If the user chose `Custom...` or entered a custom server while discovery was running, the discovered list is refreshed without changing that selection or overwriting the text. A custom value is preserved even if the refreshed discovery list includes a matching server name.
+- Programmatic `SetValue` / discovery updates remain excluded from user-edit tracking so they do not create false concurrency conflicts. Focused UI regression coverage now exercises preserving a custom name while the updated discovery list contains that same endpoint.
+
+Current state: **VERIFICATION PENDING**.
+
+Rerun the persistence UX/discovery tests, the connection-options diagnostics tests, the full `Hive.Tests` suite, and a zero-warning developer build. Manually confirm the Custom text remains editable during a slow refresh and is not replaced when discovery completes.
+
 ### Verification handoff
 
 Developer rerun is required:
