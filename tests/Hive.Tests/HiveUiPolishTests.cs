@@ -839,6 +839,29 @@ public sealed class HiveUiPolishTests
         Assert.True(view.SourceTrustServerCertificate);
         Assert.Null(view.SourceSqlServerPicker.Port);
 
+        // The fixed top-row height must leave the complete custom ComboBox field
+        // inside its parent rather than clipping its bottom edge.
+        Assert.False(view.DirectionSelector.AutoSize);
+        Assert.True(
+            view.DirectionSelector.Bottom <= view.DirectionSelector.Parent.ClientSize.Height);
+
+        // A custom/named instance reveals additional picker rows. The endpoint
+        // field and its stack must preserve the picker's auto-size behavior.
+        view.SourceSqlServerPicker.SetDiscoveredInstances(
+            Array.Empty<string>(),
+            preferredServer: null);
+        view.SourceSqlServerPicker.SetValue(
+            @"localhost\MSSQLSERVER01",
+            port: null);
+        Application.DoEvents();
+
+        Assert.True(view.SourceSqlServerPicker.AutoSize);
+        Assert.True(view.SourceSqlServerPicker.CustomRow.Visible);
+        Assert.True(view.SourceSqlServerPicker.Height > 36);
+        Assert.True(
+            view.SourceSqlServerPicker.Bottom <=
+            view.SourceSqlServerPicker.Parent.ClientSize.Height);
+
         Assert.Equal(DockStyle.Top, view.SourceSqlServerLayout.Dock);
         Assert.NotEmpty(view.SourceSqlServerLayout.RowStyles.Cast<RowStyle>());
         Assert.All(
@@ -847,6 +870,7 @@ public sealed class HiveUiPolishTests
         Assert.True(view.SourceSqlServerLayout.Height < view.SourceCard.Height - 100);
 
         Assert.Equal(DockStyle.Fill, view.DestinationEmbeddedStorageInput.Dock);
+        Assert.True(view.DestinationEmbeddedStorageInput.AutoSize);
         Assert.True(view.DestinationEmbeddedStorageInput.Width >= 300);
         var embeddedPathPanel =
             Assert.IsType<TableLayoutPanel>(view.DestinationEmbeddedStorageInput.Parent);
