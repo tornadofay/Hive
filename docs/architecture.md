@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-10-10 (rev 60 — bounded Base-Agent problem-solving architecture)
+Last updated: 2026-10-10 (rev 61 — bounded Base-Agent problem-solving boundary review)
 
 
 

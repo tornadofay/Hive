@@ -453,6 +453,8 @@ Execution Target
     ↓
 MAF execution / model call
 
+The `Reasoning Requirement` stage above describes the CognitiveAgent-owned contract planned for Phase 4.3; it is not a prerequisite for V1 Base-Agent execution. V1 callers continue through the existing request and target-selection inputs, and Phase 1.31's Base-Agent loop reuses the current Execution Planner without introducing that cognitive contract. Phase 4.3 may later supply its provider-neutral requirement to the same planner.
+
 LLM mode is a V1 Workspace interaction path where the user chooses the execution target. Agent mode selects an Agent, which uses this planner on behalf of that Agent; after Phase 2 adds persistent Hive/Swarm coordination, Hive-level Agentic behavior extends the same planner boundary. Any explicitly pinned Agent target is the exact durable `ExecutionTarget` identity, not a model-name string.
 ```
 
@@ -477,7 +479,7 @@ Terminal execution state cannot be overwritten by a late provider result.
 
 ### Bounded reasoning attempts and verification evidence
 
-The bounded Base-Agent problem-solving loop uses the existing Reasoning Requirement, Execution Planner, MAF invocation, Tool, WorkItem, and resource-control boundaries. Reasoning effort is provider/model-specific: Hive may request a supported level where the configured target explicitly supports it, but missing or Unknown metadata must not be treated as support for an invented request parameter. Reasoning effort remains separate from capability, authorization, target selection, and budget enforcement.
+The bounded Base-Agent problem-solving loop reuses the existing Execution Planner, MAF invocation, Tool, WorkItem, provider-capability, and resource-control boundaries. It does not depend on the CognitiveAgent-owned Reasoning Requirement contract planned for Phase 4.3. Optional provider/model reasoning-effort settings may be used only when the existing adapter request contract exposes the setting and the configured target's capability evidence confirms support; otherwise Hive must omit the setting rather than invent a request parameter. Reasoning effort remains separate from authorization, target selection, and budget enforcement.
 
 Candidate outputs and model-generated critiques are untrusted candidate evidence. A single problem-solving run may span multiple provider Executions; preserve a parent run/task correlation using the existing owning WorkItem or caller task/interaction boundary, and link each attempt and individual Execution to it. Do not mistake one ExecutionId for the identity of the whole loop. Introduce a minimal task-local run identity only if existing contracts cannot express this relationship; it is not a new global Resource or second execution engine. When a suitable independent check exists, its result should be recorded against the precise claim, candidate, artifact/input version, and relevant run/execution identity. A verification record should identify the verifier/Tool and version where available, the check configuration and assumptions that materially affect its meaning, the result/status, time/correlation, and provenance. Store only bounded evidence needed to reproduce or interpret the check; never include credential material or assume raw provider responses must be retained.
 

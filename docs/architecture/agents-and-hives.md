@@ -127,7 +127,7 @@ The base work-protocol APIs are additive to Agent and RuntimeInstance; they do n
 
 ### Bounded Base-Agent Problem-Solving Loop
 
-A normal Base Agent may use a bounded problem-solving loop for a difficult task. The loop orchestrates useful reasoning steps around model output; it does not attempt to expose or persist every internal token of the model's private reasoning. A provider may expose a supported reasoning-effort setting, but Hive must consult the existing capability/provider contract and must not assume every model supports the same controls.
+A normal Base Agent may use a bounded problem-solving loop for a difficult task. The loop orchestrates useful reasoning steps around model output; it does not attempt to expose or persist every internal token of the model's private reasoning. A provider may expose a supported reasoning-effort setting, but Hive may use it only when the existing provider/adapter request contract exposes the setting and the configured target's capability evidence confirms support; it must not assume every model supports the same controls.
 
 The task-local loop is:
 

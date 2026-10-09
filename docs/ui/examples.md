@@ -90,6 +90,7 @@ Planned V1 interaction and operations examples should also cover:
 - Agent execution configuration (`Auto` / `Favorites`) is part of `Workspace / Agent Interaction`, not Provider Settings. With no saved favorites, Auto uses the normal eligible ExecutionTarget set. Once one or more favorites exist, Auto uses only those favorites; Favorites explicit selection shows only saved favorites, even when there is one, and persists the exact durable ExecutionTarget identity. A non-empty favorite pool never falls back to non-favorites.
 - V1 Workspace foundation and direct LLM interaction → `Workspace / Direct LLM`;
 - Agent-directed Workspace interaction, including application-wide and form-associated specialist Agents → `Workspace / Agent Interaction`;
+- Phase 1.31 bounded Base-Agent problem-solving loop → `Workspace / Agent Interaction / Bounded Problem-Solving Loop`; demonstrate direct one-attempt completion for simple tasks, materially different methods versus repeated retries, observable progress/stagnation, bounded challenges, evidence-scoped checks, and explicit unresolved results within configured budgets;
 - multiple independent Agents assigned concurrent WorkItems without Hive/Swarm membership → `Workspace / Multi-Agent Work Assignment`;
 - governed Tool, policy, permission, and human-intervention behavior → `Management / Governance`;
 - authoritative resource inventory and runtime/execution diagnostics → `Operations / Resource Inventory`;
