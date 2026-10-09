@@ -591,3 +591,16 @@ No build, automated tests, or Example Host launch were run by the assistant. Reb
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
 Tests to run: `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, `HiveSqlServerInstanceDiscoveryTests`, and `HivePersistenceErrorTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
+
+### Verification failure — 2026-10-09 migration quiescence unavailable and Direction selector clipping
+
+Developer-reported runtime/UI failures after the last layout change:
+
+- Clicking migration returns: `Migration failed: Hive persistence migration cannot proceed because the active service graph cannot be quiesced.`
+- The Direction selector is now too large and part of it is clipped.
+
+Code inspection confirms the host service-graph factory creates both SQL Server and Embedded `HiveManagementFacade` instances without supplying `persistenceMigrationQuiescence`, so the Management migration service has a null quiescence gate and fails closed before attempting the actual migration. The layout change made the top FieldsPanel row a fixed 72-pixel height, while its selector/block also has fixed sizing; raising that fixed row is not a reliable DPI/resizing-safe solution.
+
+This remains same-slice Phase 1.18A Slice 5 remediation. Correctly provide a real per-active-graph quiescence/drain lease (never a no-op), preserve Management-only migration and source/destination preflight/fingerprint safety, and make the Direction row content-sized without oversizing the control. Do not start Slice 6 or 1.19.
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
