@@ -11,7 +11,7 @@ public sealed class Phase116FollowUpManagementTests
     [Fact]
     public async Task EndpointScopedDiscovery_UsesTransientProbe_AndDoesNotCreateExecutionTarget()
     {
-        var database = new PersistenceTestDatabase(
+        using var database = new PersistenceTestDatabase(
             "Hive_Test_Phase116FollowUp_EndpointDiscovery");
         database.Reset();
 
