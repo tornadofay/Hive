@@ -300,6 +300,9 @@ public sealed class HiveUiPolishTests
         Assert.True(embeddedPathRow.AutoSize);
         Assert.Equal(SizeType.AutoSize, embeddedPathRow.RowStyles[0].SizeType);
 
+        view.NavigationTabs.SelectedIndex = 0;
+        Application.DoEvents();
+
         view.SqlServerPicker.SetDiscoveredInstances(
             new[] { "localhost", @"localhost\HiveSql" },
             null);
@@ -579,6 +582,65 @@ public sealed class HiveUiPolishTests
         await networkFinished.Task.WaitAsync(TimeSpan.FromSeconds(5));
         Application.DoEvents();
         Assert.True(picker.IsDisposed);
+    }
+
+    [WinFormsFact]
+    public async Task HiveSqlServerInstancePicker_MergesNetworkResultsWhenTimedOutScanLaterCompletes()
+    {
+        var networkStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var networkFinished = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var releaseNetwork = new ManualResetEventSlim(false);
+        var coordinator = new SqlServerInstanceDiscoveryCoordinator(
+            () => new SqlServerInstanceDiscoveryInventory(new[] { "MSSQLSERVER" }),
+            () =>
+            {
+                networkStarted.TrySetResult(true);
+                releaseNetwork.Wait();
+                networkFinished.TrySetResult(true);
+                return new SqlServerInstanceDiscoveryInventory(new[] { @"REMOTE01\REPORTING" });
+            },
+            networkWaitTimeout: TimeSpan.FromSeconds(1),
+            delay: static (_, _) => Task.CompletedTask);
+        var completed = new TaskCompletionSource<SqlServerInstanceDiscoveryResult>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        coordinator.NetworkResultsCompleted += result => completed.TrySetResult(result);
+
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        using var host = new Form
+        {
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-2000, -2000),
+            ClientSize = new Size(700, 180),
+            ShowInTaskbar = false
+        };
+        using var picker = new HiveSqlServerInstancePicker(themeManager, coordinator) { Dock = DockStyle.Fill };
+        host.Controls.Add(picker);
+        host.Show();
+        Application.DoEvents();
+
+        var result = await picker.RefreshAsync(forceRefresh: true).WaitAsync(TimeSpan.FromSeconds(5));
+        await networkStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(result.IsTimedOut);
+        Assert.Contains("timed out", picker.DiscoveryStatusLabel.Text);
+
+        releaseNetwork.Set();
+        var lateResult = await completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await networkFinished.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Contains(@"REMOTE01\REPORTING", lateResult.Instances);
+
+        for (var attempt = 0; attempt < 50; attempt++)
+        {
+            Application.DoEvents();
+            if (picker.ServerSelector.Items.Cast<object>()
+                .Any(item => string.Equals(item.ToString(), @"REMOTE01\REPORTING", StringComparison.OrdinalIgnoreCase)))
+                break;
+            await Task.Delay(10);
+        }
+
+        Assert.Contains(
+            @"REMOTE01\REPORTING",
+            picker.ServerSelector.Items.Cast<object>().Select(item => item.ToString()));
+        Assert.DoesNotContain("timed out", picker.DiscoveryStatusLabel.Text, StringComparison.OrdinalIgnoreCase);
     }
 
     [WinFormsFact]

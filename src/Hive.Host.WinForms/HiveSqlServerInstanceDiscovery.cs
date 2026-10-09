@@ -253,7 +253,6 @@ internal sealed class SqlServerInstanceDiscoveryCoordinator
     private void CacheLocalScan(Task<SqlServerInstanceDiscoveryInventory> completed)
     {
         var inventory = ReadCompletedScan(completed, "local");
-        SqlServerInstanceDiscoveryResult? notification = null;
         lock (_gate)
         {
             if (!ReferenceEquals(_localScan, completed))
@@ -261,21 +260,7 @@ internal sealed class SqlServerInstanceDiscoveryCoordinator
 
             _cachedLocal = new CachedInventory(inventory, _utcNow());
             _localScan = null;
-
-            // A network scan may have completed before the local registry scan.
-            // Publish the combined late result only after both inventories exist.
-            if (_networkScan is null && _cachedNetwork is not null)
-            {
-                notification = CreateResult(
-                    inventory,
-                    _cachedNetwork.Inventory,
-                    isTimedOut: false,
-                    isFromCache: false,
-                    networkScanStillRunning: false);
-            }
         }
-
-        NotifyNetworkResultsCompleted(notification);
     }
 
     private void CacheNetworkScan(Task<SqlServerInstanceDiscoveryInventory> completed)
