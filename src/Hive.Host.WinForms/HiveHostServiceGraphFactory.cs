@@ -100,7 +100,8 @@ public sealed class HiveHostServiceGraphFactory :
             var graph = new HiveHostServiceGraph(
                 configuration,
                 management,
-                [database, management]);
+                [database, management],
+                migrationOperationGate);
 
             database = null;
             management = null;
@@ -232,7 +233,8 @@ public sealed class HiveHostServiceGraphFactory :
             var graph = new HiveHostServiceGraph(
                 configuration,
                 management,
-                [management]);
+                [management],
+                migrationOperationGate);
 
             management = null;
 
