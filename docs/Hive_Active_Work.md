@@ -357,3 +357,32 @@ Developer rerun is required:
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
 Tests to run: `HiveUiPolishTests` for the persistence UX/discovery changes; then the full `Hive.Tests` suite and a zero-warning developer build under the repository's standing **Treat warnings as errors** configuration.
+
+### Verification failure — 2026-10-09 SQL Server discovery/UI rerun
+
+Developer-reported verification after pulling commit `99cc10ef71762fecc5562aa1050bf739c2ed3e66`:
+
+- The first full run reported **758 tests: 756 passed, 2 failed, 0 skipped**. `HivePersistenceSettingsAndMigrationFitNormalWorkspaceWithoutScrollOverflow` failed because the setup `HiveScrollHost` reported vertical scrolling at 1160×760. The tab/picker test also failed during the same run.
+- The subsequent discovery/full run found **762 tests** and reported **762 tests: 761 passed, 1 failed, 0 skipped**. The remaining failure is `HivePersistenceSettingsView_UsesDatabaseSetupAndDataMigrationTabs`: selecting the final `Custom...` item does not leave `CustomServerInput.Visible` true (reported at test line 299).
+
+The latest remaining failure is within Slice 5's existing SQL instance picker/presentation boundary. The supplied results do not authorize Slice 6 or 1.19 work.
+
+### Remediation authorization — SQL Server discovery responsiveness and failure handling
+
+The user explicitly requested same-slice correction of SQL Server instance discovery and its Persistence UI lifecycle. The bounded work is:
+
+- Open Settings/Overview without opening Persistence or triggering SQL network discovery; navigating to Persistence should construct and show the page before discovery completes.
+- Start discovery only when Persistence is opened while SQL Server is selected, when SQL Server is selected, or on explicit Refresh.
+- Read installed local instances independently and show them promptly; merge network-discovered candidates asynchronously.
+- Keep a final, immediately selectable `Custom...` choice and preserve custom text, selection, and explicit port values while discovery completes.
+- Add an inline indeterminate progress indicator and the exact loading message `Searching for SQL Server instances…`; show concise success/incomplete/failure status, preserve partial results, and keep the page interactive.
+- Coalesce concurrent scans and TTL-cache results; bound how long a caller waits for synchronous `SqlDataSourceEnumerator.GetDataSources()`, while recognizing cancellation cannot stop a call already executing. Never start an overlapping enumeration merely because its wait timed out.
+- Guard late results against stale requests, cancellation, view disposal, and backend changes.
+- Add deterministic focused regression coverage for cache/coalescing, partial failure, timeout/cancellation/disposal, UI status, custom-edit/selection/port preservation, and the reported Custom visibility failure.
+
+This is explicit remediation within the already-open Slice 5 settings/discovery boundary. It does not authorize unrelated UI framework work, Slice 6, or 1.19.
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+Before implementation, update the relevant architecture documentation with the discovery ownership, bounded synchronous-enumeration strategy, caching/coalescing, and partial-result/UI status contract. After remediation, return Active Work to **VERIFICATION PENDING** and require focused discovery/UI tests, the full `Hive.Tests` suite, a zero-warning Treat-Warnings-as-Errors build, and Example Host manual verification. No such verification has yet been performed by the assistant.
+
