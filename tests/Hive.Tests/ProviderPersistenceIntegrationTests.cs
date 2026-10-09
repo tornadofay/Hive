@@ -11,7 +11,7 @@ public sealed class ProviderPersistenceIntegrationTests
     [Fact]
     public async Task ProviderGraph_CrudOwnershipScopeAndConcurrency_AreEnforced()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderCrud");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderCrud");
         database.Reset();
 
         var migrator = new HiveDatabaseMigrator(database.Options);
@@ -170,7 +170,7 @@ public sealed class ProviderPersistenceIntegrationTests
     [Fact]
     public async Task ProviderAccount_CredentialSecretReference_PersistsAndUpdates()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderCredentialRef");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderCredentialRef");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -263,7 +263,7 @@ public sealed class ProviderPersistenceIntegrationTests
     [Fact]
     public async Task ProviderAccount_UpdateAuthorizesTargetBeforeValidatingCredentialSecret()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderCredentialAuthorization");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderCredentialAuthorization");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -315,7 +315,7 @@ public sealed class ProviderPersistenceIntegrationTests
     [Fact]
     public async Task ProviderAccount_MissingCredentialSecretReference_IsRejected()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderMissingCredential");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderMissingCredential");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -353,7 +353,7 @@ public sealed class ProviderPersistenceIntegrationTests
     [Fact]
     public async Task MalformedCapabilityState_IsRejectedWithoutReturningCorruptDomainState()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ProviderMalformed");
+        using var database = new PersistenceTestDatabase("Hive_Test_ProviderMalformed");
         database.Reset();
 
         var migrator = new HiveDatabaseMigrator(database.Options);
