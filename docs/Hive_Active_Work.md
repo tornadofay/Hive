@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **IMPLEMENTATION IN PROGRESS**
+Status: **VERIFICATION PENDING**
 
 ## Active corrective slice
 
@@ -12,20 +12,26 @@ Started: 2026-10-10
 
 - Repository branch: `main`
 - Starting commit: `05950472e4725506de6d568e6fd1bd35f882b2be`
-- No source changes have been made in this slice yet.
-- Reported defect: SQL integration-test databases with the `Hive_Test_` prefix accumulate because the shared test database helper creates/resets databases without deleting them; some migration-test cleanup also suppresses SQL exceptions.
-- The existing legacy databases are out of scope for automatic deletion unless the new ownership/recovery scheme can positively identify them as created by this test infrastructure. No database will be deleted manually as part of this implementation.
+- Implementation checkpoint: `88cfa66efb2c1543e92830d20e2a6579f4e8b509`
+- Source implementation and regression coverage are in place; the assistant has not run builds or tests. Developer verification is required before closure.
+- Reported defect: SQL integration-test databases with the `Hive_Test_` prefix accumulated because the shared helper created/reset databases without deleting them; some migration-test cleanup suppressed SQL exceptions.
+- Existing legacy databases are deliberately excluded from automatic recovery. The new reaper only considers the strict `Hive_TestOwned_` physical naming format, a matching database-level ownership marker, a 24-hour minimum age, and a successful exclusive lease-lock acquisition. It will not bulk-delete databases merely because they begin with `Hive_Test_`.
 
 ### Authorized scope
 
 Correct the existing `Hive.Tests` SQL Server test-database lifecycle so database creation, ownership, test teardown, parallel test isolation, and interrupted-run recovery have one explicit test-only owner.
 
-- Give each test-owned SQL database a reserved, collision-resistant physical name and explicit ownership evidence.
-- Make successful test teardown dispose/drop the databases created for that test and all temporary source/destination databases created by migration tests.
-- Keep SQL Server integration tests isolated under parallel execution; do not replace isolated databases with a single shared mutable database.
-- Surface cleanup failures with database identity and diagnostic details, without empty catches and without leaking or deleting unrelated databases.
-- Add conservative recovery for stale databases only when the reserved test naming format, age threshold, and ownership evidence agree. Do not automatically delete arbitrary legacy `Hive_Test_*` databases.
-- Update the relevant test-harness architecture guidance and add regression coverage for ownership, cleanup, stale-recovery safety, and isolation.
+### Implementation review
+
+- Added `SqlTestDatabaseLifecycle`: each lease gets a generated physical database name in the reserved `Hive_TestOwned_` namespace, a database-level extended-property ownership marker (not a user table), disabled SQL connection pooling, and a shared SQL application lock held for that individual database lease.
+- Normal cleanup verifies both the ownership marker and the still-held lease before dropping a database, then releases the lease. Cleanup failures propagate; stale recovery reports candidate failures without swallowing SQL exceptions.
+- Stale recovery only considers correctly formatted generated names older than 24 hours, verifies the marker against the name, acquires the matching exclusive per-database lease lock, and rechecks the marker before dropping. This protects parallel and long-running tests without a process-wide lock lingering after successful test runs.
+- Added `PersistenceTestDatabase.CreateMigratedAsync` so database setup and migration failures dispose the lease, and migrated the returning fixture helpers to it.
+- Converted SQL integration tests to `using` / `await using` ownership, including Phase 1.18 fixtures, provider/event integration fixtures, parity backends, and all SQL source/destination/round-trip databases in the full-data migration tests.
+- Removed the data-migration tests' local `DropSqlDatabaseAsync` helper, which swallowed `SqlException`; cleanup now uses the same ownership-aware lease. Embedded temporary-directory cleanup reports errors rather than silently ignoring them.
+- Added `PersistenceTestDatabaseLifecycleTests` covering strict ownership-name and age rules, marker mismatch refusal, unique lease creation and successful drop, active lease protection, and end-to-end stale recovery of a marked abandoned database.
+- Updated the persistence test strategy in `docs/architecture/foundations.md`.
+- Audited the remaining direct `Hive_Test_` references in tests. The plain-text input-selection occurrence names a temporary directory, and the already-cancelled migration test throws before migration work starts; neither creates an unleased SQL database.
 
 ### Boundaries and exclusions
 
@@ -35,13 +41,13 @@ Correct the existing `Hive.Tests` SQL Server test-database lifecycle so database
 - Do not add external dependencies.
 - Do not claim builds or tests ran unless the developer reports the results.
 
-### Required review / verification
+### Required verification
 
-- Audit every SQL Server database creation path in `Hive.Tests`, including `PersistenceTestDatabase`, phase/parity helpers, and full-data migration source/destination databases.
-- Verify per-test cleanup after success and failure, ownership checks before deletion, uniqueness under parallel runs, marker/name/age checks for stale recovery, and failure diagnostics.
-- Developer verification target: focused SQL persistence/migration tests, then full `Hive.Tests` with Visual Studio Treat Warnings as Errors enabled.
-- Keep status open until actual developer verification results are received. Once closed, archive evidence, update Current Status and the verification index, and clear this file back to the exact no-active-work state.
+- Run focused tests: `PersistenceTestDatabaseLifecycleTests`, `HivePersistenceDataMigrationTests`, `EmbeddedPersistenceParityTests`, and `Phase118DurableBaseAgentWorkStateTests`.
+- Then run the full `Hive.Tests` suite with Visual Studio Treat Warnings as Errors enabled.
+- Review any compile/analyzer/test failure as a verification gate before remediation. Confirm the resulting SQL Server database inventory contains no newly created test-owned databases after the passing suite.
+- Keep the slice open until actual developer verification results arrive. On closure, archive evidence, update Current Status and the verification index, and clear this file back to the exact no-active-work state.
 
 Example to run: Not applicable; this is test infrastructure.
 
-Tests to run: focused SQL persistence and data-migration tests; then the full `Hive.Tests` suite.
+Tests to run: focused SQL persistence/migration lifecycle tests listed above; then the full `Hive.Tests` suite.
