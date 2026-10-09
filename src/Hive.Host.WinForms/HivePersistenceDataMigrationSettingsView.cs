@@ -935,6 +935,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private readonly HiveButton _migrateButton;
     private readonly HiveButton _copyDetailsButton;
     private readonly Label _statusLabel;
+    private readonly TableLayoutPanel _diagnosticPanel;
+    private readonly TextBox _diagnosticTextBox;
 
     private string? _lastDiagnosticDetails;
     private HiveStatusTone _statusTone = HiveStatusTone.Neutral;
@@ -1020,6 +1022,52 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _sourceBody.Controls.Add(_sourceEndpoint.View);
         _destinationBody.Controls.Add(_destinationEndpoint.View);
 
+        _diagnosticTextBox = new TextBox
+        {
+            Dock = DockStyle.Fill,
+            Multiline = true,
+            ReadOnly = true,
+            WordWrap = true,
+            ScrollBars = ScrollBars.Vertical,
+            Height = 76,
+            BorderStyle = BorderStyle.FixedSingle,
+            Margin = Padding.Empty,
+            AccessibleName = "Copyable migration diagnostic details",
+            AccessibleDescription = "Select and copy the endpoint failure details, or use Copy details."
+        };
+        _diagnosticPanel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            GrowStyle = TableLayoutPanelGrowStyle.FixedSize,
+            Visible = false,
+            RowStyles =
+            {
+                new RowStyle(SizeType.Absolute, 22f),
+                new RowStyle(SizeType.Absolute, 76f)
+            },
+            Controls =
+            {
+                new Label
+                {
+                    Text = "Diagnostic details (select and copy)",
+                    Dock = DockStyle.Fill,
+                    AutoSize = false,
+                    Height = 22,
+                    Font = new Font(
+                        SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
+                        FontStyle.Bold),
+                    Margin = Padding.Empty
+                },
+                _diagnosticTextBox
+            }
+        };
+
         _roleColumns.Controls.Add(_sourceCard, 0, 0);
         _roleColumns.Controls.Add(_destinationCard, 1, 0);
 
@@ -1029,12 +1077,16 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _editor.FieldsPanel.SetColumnSpan(top, 2);
         _editor.FieldsPanel.Controls.Add(_roleColumns, 0, 1);
         _editor.FieldsPanel.SetColumnSpan(_roleColumns, 2);
+        _editor.FieldsPanel.Controls.Add(_diagnosticPanel, 0, 2);
+        _editor.FieldsPanel.SetColumnSpan(_diagnosticPanel, 2);
         _editor.FieldsPanel.RowStyles.Clear();
         _editor.FieldsPanel.RowStyles.Add(
             new RowStyle(SizeType.Absolute, 64f));
         _editor.FieldsPanel.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
-        _editor.FieldsPanel.RowCount = 2;
+        _editor.FieldsPanel.RowStyles.Add(
+            new RowStyle(SizeType.AutoSize));
+        _editor.FieldsPanel.RowCount = 3;
 
         _refreshButton = _editor.AddActionButton(
             "Refresh",
@@ -1678,6 +1730,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         HiveStatusTone tone)
     {
         _lastDiagnosticDetails = diagnosticDetails;
+        _diagnosticTextBox.Text = diagnosticDetails;
+        _diagnosticPanel.Visible = true;
         _copyDetailsButton.Visible = true;
         _copyDetailsButton.Enabled = true;
         SetStatus(statusMessage, tone);
@@ -1687,6 +1741,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private void ClearDiagnosticDetails()
     {
         _lastDiagnosticDetails = null;
+        _diagnosticTextBox.Clear();
+        _diagnosticPanel.Visible = false;
         _copyDetailsButton.Visible = false;
         _copyDetailsButton.Enabled = false;
         UpdateFooterStatusWidth();
