@@ -11,6 +11,49 @@ namespace Hive.Tests;
 
 public sealed class HivePersistenceDataMigrationTests
 {
+    [Theory]
+    [InlineData(911, "exact current name")]
+    [InlineData(4060, "especially if the database was renamed")]
+    public void SqlMigrationFailureDiagnostic_ExplainsRenamedDatabaseErrorsWithoutSecrets(
+        int sqlErrorNumber,
+        string expectedGuidance)
+    {
+        var sourceConfiguration = HivePersistenceConfiguration.Embedded(
+            Path.Combine(
+                Path.GetTempPath(),
+                "Hive-Migration-Diagnostic",
+                Guid.NewGuid().ToString("N"),
+                "hive.db"));
+        var destinationConfiguration = new HivePersistenceConfiguration(
+            HivePersistenceBackend.SqlServer,
+            @"localhost\\MSSQLSERVER01",
+            null,
+            "Hive_Renamed",
+            HiveSqlAuthenticationMode.WindowsIntegrated,
+            null,
+            null,
+            encrypt: true,
+            trustServerCertificate: true,
+            createDatabaseIfMissing: false);
+
+        var details = HivePersistenceDataMigrator.DescribeSqlMigrationFailure(
+            sourceConfiguration,
+            destinationConfiguration,
+            sqlErrorNumber,
+            state: 1,
+            errorClass: 16);
+
+        Assert.Contains("destination SQL Server endpoint", details);
+        Assert.Contains("localhost\\\\MSSQLSERVER01", details);
+        Assert.Contains("database 'Hive_Renamed'", details);
+        Assert.Contains($"SQL error {sqlErrorNumber}", details);
+        Assert.Contains(expectedGuidance, details);
+        Assert.DoesNotContain("Password=", details, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("User ID=", details, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Trusted_Connection=", details, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Initial Catalog=", details, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public async Task FullDataMigration_RoundTripsAllCurrentDurableStateAndReprotectsSecrets()
     {
