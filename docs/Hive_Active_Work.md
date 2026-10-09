@@ -549,3 +549,16 @@ Developer-reported Visual Studio compilation error in `src/Hive.Host.WinForms/Hi
 The failure is in the recent named-instance port normalization condition. This is an in-scope compilation regression in the existing Slice 5 Data Migration correction. The next edit is restricted to correcting the malformed backslash character check; no Slice 6 or 1.19 work is authorized.
 
 Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+### Remediation completed — Data Migration character-literal compilation fix
+
+- Corrected the named-instance check at line 248 from an invalid multi-character C# character literal (and unnecessary comparison argument) to the valid single-backslash check `serverName.Contains('\\')`. The existing behavior is preserved: if the stored port is 1433 for a named instance, clear it so instance-port resolution is not overridden.
+- Source was read back from `main` and the corrected line was confirmed. No build or tests were run by the assistant.
+
+Current state: **VERIFICATION PENDING**.
+
+Developer rerun required: build `Hive.Host.WinForms` and `Hive.Tests` with Treat Warnings as Errors; run `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, `HiveSqlServerInstanceDiscoveryTests`, and `HivePersistenceErrorTests`; then run the full `Hive.Tests` suite. The earlier 772/772 result predates the current migration changes and does not verify this correction.
+
+Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
+
+Tests to run: `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, `HiveSqlServerInstanceDiscoveryTests`, and `HivePersistenceErrorTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
