@@ -880,6 +880,9 @@ public sealed class HiveUiPolishTests
             view.StatusLabel.Text,
             StringComparison.OrdinalIgnoreCase);
         var diagnosticDetails = Assert.IsType<string>(view.LastDiagnosticDetails);
+        Assert.True(view.DiagnosticDetailsInput.Visible);
+        Assert.True(view.DiagnosticDetailsInput.ReadOnly);
+        Assert.Equal(diagnosticDetails, view.DiagnosticDetailsInput.Text);
         Assert.Contains(
             "intercepted the endpoint preflight",
             diagnosticDetails,
