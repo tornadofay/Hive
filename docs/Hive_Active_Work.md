@@ -539,3 +539,13 @@ No build or automated tests have been run by the assistant. The prior developer-
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
 Tests to run: `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, `HiveSqlServerInstanceDiscoveryTests`, and `HivePersistenceErrorTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
+
+### Verification failure — 2026-10-09 Data Migration compile error
+
+Developer-reported Visual Studio compilation error in `src/Hive.Host.WinForms/HivePersistenceDataMigrationSettingsView.cs:248`:
+
+- `CS1012: Too many characters in character literal`.
+
+The failure is in the recent named-instance port normalization condition. This is an in-scope compilation regression in the existing Slice 5 Data Migration correction. The next edit is restricted to correcting the malformed backslash character check; no Slice 6 or 1.19 work is authorized.
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
