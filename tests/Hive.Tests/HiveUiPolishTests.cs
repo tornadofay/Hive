@@ -805,6 +805,18 @@ public sealed class HiveUiPolishTests
         host.Show();
         Application.DoEvents();
 
+        await view.InitializeAsync().WaitAsync(TimeSpan.FromSeconds(6));
+
+        Assert.Equal(
+            managementProxy.PersistenceConfiguration.ServerName,
+            view.SourceSqlServerPicker.ServerName);
+        Assert.Equal(
+            managementProxy.PersistenceConfiguration.DatabaseName,
+            view.SourceDatabaseName);
+        Assert.True(view.SourceEncrypt);
+        Assert.True(view.SourceTrustServerCertificate);
+        Assert.Null(view.SourceSqlServerPicker.Port);
+
         Assert.Equal(DockStyle.Top, view.SourceSqlServerLayout.Dock);
         Assert.NotEmpty(view.SourceSqlServerLayout.RowStyles.Cast<RowStyle>());
         Assert.All(
@@ -831,24 +843,35 @@ public sealed class HiveUiPolishTests
         var testedConfiguration = await managementProxy.PersistenceConfigurationTested.Task
             .WaitAsync(TimeSpan.FromSeconds(5));
         WaitForUi(
-            () => view.StatusLabel.Text.Contains(
-                "Source preflight failed",
-                StringComparison.OrdinalIgnoreCase),
-            "The migration did not report the intercepted source preflight result.");
+            () => view.CopyDetailsButton.Visible,
+            "A failed endpoint preflight did not expose Copy details.");
 
         Assert.Equal(@"localhost\MSSQLSERVER01", testedConfiguration.ServerName);
         Assert.Null(testedConfiguration.Port);
         Assert.Equal(
-            HivePersistenceConfiguration.BuildDatabaseName("Hive.TestHost"),
+            managementProxy.PersistenceConfiguration.DatabaseName,
             testedConfiguration.DatabaseName);
-        Assert.Contains(
-            "named-instance port resolution",
+        Assert.True(testedConfiguration.Encrypt);
+        Assert.True(testedConfiguration.TrustServerCertificate);
+        Assert.DoesNotContain(
+            "intercepted the endpoint preflight",
             view.StatusLabel.Text,
             StringComparison.OrdinalIgnoreCase);
         Assert.Contains(
             "intercepted the endpoint preflight",
-            view.StatusLabel.Text,
+            view.LastDiagnosticDetails,
             StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(
+            "named-instance port resolution",
+            view.LastDiagnosticDetails,
+            StringComparison.OrdinalIgnoreCase);
+
+        view.CopyDetailsButton.PerformClick();
+
+        Assert.Equal(
+            "Diagnostic details copied. Paste them into your message.",
+            view.StatusLabel.Text);
+        Assert.Equal(view.LastDiagnosticDetails, Clipboard.GetText());
     }
 
     [Fact]
