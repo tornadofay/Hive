@@ -413,7 +413,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         {
             serverPicker = new HiveSqlServerInstancePicker(_themeManager)
             {
-                Width = 420
+                Dock = DockStyle.Fill,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Margin = Padding.Empty
             };
 
             databaseTextBox = CreateTextBox();
@@ -469,8 +472,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
             authenticationField = CreateFieldBlock(
                 "Authentication",
-                authenticationComboBox,
-                180);
+                authenticationComboBox);
 
             credentialField = CreateCredentialField(
                 userNameTextBox,
@@ -484,15 +486,14 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 CreateFieldBlock(
                     "SQL Server",
                     serverPicker,
-                    420));
+                    preserveControlAutoSize: true));
 
             AddVerticalStackRow(
                 panel,
                 CreateFormGrid(
                     CreateFieldBlock(
                         "Database",
-                        databaseTextBox,
-                        230),
+                        databaseTextBox),
                     authenticationField));
 
             AddVerticalStackRow(panel, credentialField);
@@ -503,8 +504,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                     "Connection security",
                     CreateSecurityPanel(
                         encryptCheckBox,
-                        trustServerCertificateCheckBox),
-                    300));
+                        trustServerCertificateCheckBox)));
 
             AddVerticalStackRow(
                 panel,
@@ -556,8 +556,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 {
                     CreateSectionHeading("SQL credentials"),
                     CreateFormGrid(
-                        CreateFieldBlock("SQL user", userNameTextBox, 165),
-                        CreateFieldBlock("Password", passwordTextBox, 165)),
+                        CreateFieldBlock("SQL user", userNameTextBox),
+                        CreateFieldBlock("Password", passwordTextBox)),
                     statusLabel
                 }
             };
@@ -636,7 +636,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             };
 
             pathTextBox.Dock = DockStyle.Fill;
-            pathTextBox.AutoSize = false;
+            pathTextBox.AutoSize = true;
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 88f));
             panel.Controls.Add(pathTextBox, 0, 0);
@@ -688,7 +688,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 ColumnCount = controls.Length,
                 RowCount = 1,
-                Margin = new Padding(0, 0, 0, 8),
+                Margin = new Padding(0, 0, 0, 4),
                 Padding = Padding.Empty,
                 GrowStyle = TableLayoutPanelGrowStyle.FixedSize
             };
@@ -712,11 +712,13 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         private static TableLayoutPanel CreateFieldBlock(
             string title,
             Control control,
-            int? width = null)
+            int? width = null,
+            bool preserveControlAutoSize = false)
         {
             ArgumentNullException.ThrowIfNull(control);
 
-            control.AutoSize = false;
+            if (!preserveControlAutoSize)
+                control.AutoSize = false;
             control.Dock = width is > 0 ? DockStyle.Left : DockStyle.Fill;
             if (width is > 0)
                 control.Width = width.Value;
@@ -731,7 +733,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 ColumnCount = 1,
                 RowCount = 2,
-                Margin = new Padding(0, 0, 8, 0),
+                Margin = new Padding(0, 0, 4, 0),
                 Padding = Padding.Empty,
                 GrowStyle = TableLayoutPanelGrowStyle.FixedSize
             };
@@ -1081,7 +1083,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _editor.FieldsPanel.SetColumnSpan(_diagnosticPanel, 2);
         _editor.FieldsPanel.RowStyles.Clear();
         _editor.FieldsPanel.RowStyles.Add(
-            new RowStyle(SizeType.Absolute, 64f));
+            new RowStyle(SizeType.Absolute, 72f));
         _editor.FieldsPanel.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
         _editor.FieldsPanel.RowStyles.Add(
