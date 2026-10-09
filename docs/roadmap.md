@@ -444,6 +444,16 @@ Scope and non-goals: telemetry and budgets observe/control execution without lea
 
 Verify: hard budget stopping, provider/model metrics, correlation, token/cost tracking, cancellation, OpenTelemetry traces/metrics, quota handling, and secret redaction.
 
+## 1.31 — Bounded Base-Agent Problem-Solving Loop
+
+Detailed implementation plan: [1.31 — Bounded Base-Agent Problem-Solving Loop](plan/Phase1/1.31.md)
+
+Objective: make model reasoning useful for difficult normal-Agent tasks through bounded task-local iteration, materially different approaches, progress/stagnation assessment, candidate comparison, challenge, and applicable verification.
+
+Scope and non-goals: this is an additive Base-Agent capability, not a CognitiveAgent generation or a replacement for the V1 business workflow. The first slice establishes bounded single-Agent problem-solving and scoped attempt/candidate history; independent multi-Agent approach assignment belongs to Phase 2 coordination. It reuses existing MAF execution, WorkItem/Execution, Tool, provider capability, and budget boundaries. It does not persist raw hidden chain-of-thought, autonomously learn durable strategy, or introduce a second orchestration engine or universal verifier platform.
+
+Verify: direct/simple task finishes without unnecessary extra calls; bounded iterative refinement; materially different approach versus repeated retry; observable progress and stagnation; challenge and evidence-scoped checks; candidate/provenance isolation; deterministic stop behavior on success, contradiction, no progress, cancellation, stale state, and exhausted attempt/time/token/cost budgets; provider reasoning-effort support and Unknown/Unsupported behavior; existing V1 pipeline, authorization, and Review semantics remain unchanged.
+
 # Phase 2 — Base Hive Membership & Coordination
 
 ## 2.1 — HiveDefinition & Membership
@@ -469,6 +479,8 @@ Allow an authorized Hive to create or reuse Agents of any supported generation f
 
 Define Swarm as the active subset of Hive members collaborating on a WorkItem, Question, or bounded problem. Swarm is derived/session state, not a persistent resource. A member Agent normally requests missing specialists through the parent Hive rather than recursively creating a child Hive.
 
+For suitable difficult tasks, Hive may assign independent members materially different approaches, decompositions, assumptions, or specialist investigations. Preserve the identity and method of each attempt, prevent accidental duplication of identical work, compare results against common success criteria, and retain conflicting/unsuccessful evidence when useful. Parallel attempts are optional and bounded by the task's time, cost, concurrency, cancellation, and authorization policy; a Swarm is not the default for every task.
+
 All coordination uses MAF orchestration primitives where applicable; Hive does not become a second workflow engine.
 
 ## 2.8 — Hive Coordination Workspace & Swarm Extensions
@@ -482,6 +494,7 @@ Scope:
 - Hive-level coordination;
 - collective work context;
 - Workspace representation of persistent Hive membership;
+- candidate/attempt portfolio for active collective problem-solving, including method identity, progress/stagnation status, verification evidence, disagreement, and bounded resource usage;
 - Agentic behavior that specifically depends on Hive membership or Swarm state.
 
 Basic LLM mode, basic Agent mode, ordinary multi-Agent application work, and single-application Agent assignment remain V1 capabilities.
@@ -495,7 +508,7 @@ Define manager/supervisor selection and authority policy.
 Add the first explicit voting rule and deterministic tie/insufficient-vote behavior.
 
 ## 3.3 — Adversarial/Critique Strategy
-Add critique/challenge roles and bounded conflict reporting.
+Add critique/challenge roles and bounded conflict reporting. A challenge role must seek concrete counterexamples, contradictions, unsupported assumptions, edge cases, and materially simpler or safer alternatives to a candidate. Preserve the challenge as attributable evidence; a critic's assertion neither authoritatively rejects a candidate nor proves it correct. Where available, distinguish model critique from independent deterministic/tool-based verification. Bound critique/revision cycles by the same budgets, cancellation, scope, and stopping policy as the task.
 
 ## 3.4 — Governance Strategy Selection UI
 Expose governance mode and policy through Hive.Management.
@@ -510,9 +523,9 @@ The base Agent and V1 pipeline continue working unchanged throughout this phase.
 Persistent cognitive identity binding, lifecycle, state versioning, recovery, and per-runtime concurrency ownership.
 
 ## 4.2 — Cognitive Strategy
-Replaceable strategy contract capable of deterministic decisions and explicit no-model paths, including adaptive interpretation of evaluated outcomes, contextual Risk/Fear/Confidence, reconsideration, and selection among direct execution, Questions, Hive assistance, Dreams, decomposition, and previously governed strategy/resource adaptations. This slice defines the extension point for learned deterministic shortcuts but does not implement Learning Candidate promotion from later Phase 5 work.
+Replaceable strategy contract capable of deterministic decisions and explicit no-model paths, including adaptive interpretation of evaluated outcomes, contextual Risk/Fear/Confidence, reconsideration, and selection among direct execution, Questions, Hive assistance, Dreams, decomposition, and previously governed strategy/resource adaptations. Add evidence-backed decisions to continue, stop, refine, or materially switch methods when progress stalls; choose whether additional reasoning effort, a challenger, a specialist, or a deterministic procedure is worth its cost. Strategy may use attempt history and verification evidence, but must not mistake model self-reports for objective progress or mistake a retry of the same method for a distinct approach. This slice defines the extension point for learned deterministic shortcuts but does not implement Learning Candidate promotion from later Phase 5 work.
 
-Verify: strategy decisions can consume cognitive evidence and Risk/Fear/Confidence without bypassing authorization, capability, scope, budget, or execution planning; any promoted adaptation is consumed only through its owning governed contract.
+Verify: strategy decisions can consume cognitive evidence, attempt history, observable progress/stagnation and Risk/Fear/Confidence without bypassing authorization, capability, scope, budget, or execution planning; no-model paths remain supported; any promoted adaptation is consumed only through its owning governed contract.
 
 ## 4.3 — Reasoning Requirement
 Provider-neutral reasoning requirements kept separate from concrete Execution Target planning.
@@ -535,7 +548,9 @@ Define mutually exclusive outcome semantics for one evaluation:
 
 Technical execution failure is not automatically a Mistake. Technical execution success is not automatically a cognitive Success. Attribution of the failure or success remains a separate evidence problem and may involve the Agent, tools, specialists, the environment, or other factors.
 
-Verify: outcome evaluation preserves evidence, attribution, and the distinction between outcome correctness and method/strategy quality; actual/simulated evidence remain distinguishable; technical failure/success cannot be silently mapped to cognitive learning labels; partial and unresolved outcomes remain representable.
+Where a problem-solving loop produced multiple attempts, preserve the linkage between each candidate, its method, actual or simulated origin, observed progress, switch/retry reason, supporting/challenging evidence, and applicable verifier results. Outcome correctness remains distinct from whether the chosen method was effective, economical, robust, or reusable. A model's conclusion that it has solved a task is not itself an evaluated outcome.
+
+Verify: outcome evaluation preserves evidence, attribution, attempt/method history, and the distinction between outcome correctness and method/strategy quality; actual/simulated evidence remain distinguishable; technical failure/success cannot be silently mapped to cognitive learning labels; partial and unresolved outcomes remain representable.
 
 ## 4.6 — Death / Wake / Reincarnation Lifecycle
 Define death as complete termination of the current runtime/incarnation, preserve Agent identity and cognitive state, support inactive periods with no live runtime, and explicitly reconstruct a new runtime from durable state when the Agent wakes.
@@ -554,9 +569,9 @@ Dream processing is governed by applicable authorization, provider/model quota, 
 
 Dream evidence remains simulated/predicted evidence and cannot become actual experience. Counterfactual conclusions such as Regret must remain distinguishable from information actually available at the time of the original decision.
 
-After a Mistake, Cognitive Strategy may retry with a revised method directly or may first use Questions, Hive assistance, or a Recovery Dream when the expected benefit justifies the additional work. After a Success, it may use Optimization and Nightmare/Stress-Test Dreams before adopting a broader lesson.
+After a Mistake, Cognitive Strategy may retry with a revised method directly or may first use Questions, Hive assistance, or a Recovery Dream when the expected benefit justifies the additional work. After a Success, it may use Optimization and Nightmare/Stress-Test Dreams before adopting a broader lesson. Dreams may examine candidates from prior attempts, invent materially different hypothetical methods, compare predicted trade-offs, and deliberately seek conditions that would invalidate a candidate's applicability. These remain simulated evidence, not actual failures or proof that a real-world candidate works.
 
-Verify: evaluated Mistake → Recovery proposal or bounded revised retry; evaluated Success → Optimization proposal; evaluated Success → Nightmare/Stress-Test proposal; Dream results remain simulated; Dream processing works while the Agent runtime is inactive; an inactive-runtime Dream requires an already authorized request or durable policy trigger; budgets/cancellation/concurrency are enforced.
+Verify: evaluated Mistake → Recovery proposal or bounded revised retry; evaluated Success → Optimization proposal; evaluated Success → Nightmare/Stress-Test proposal; alternatives and predicted outcomes preserve provenance and simulated status; Dream processing works while the Agent runtime is inactive; an inactive-runtime Dream requires an already authorized request or durable policy trigger; budgets/cancellation/concurrency are enforced.
 
 ## 4.8 — Questions
 Define first-class Questions with structured context, specialty, provenance, answer type, evidence requirements, status, and confidence/uncertainty where applicable. Support specialty-specific questions so different Agents can investigate different aspects of the same user objective.
@@ -606,9 +621,10 @@ Each candidate preserves:
 - applicability conditions;
 - the proposed target of adaptation (Skill, Method, strategy/routing rule, safeguard, memory/knowledge update, or other owned cognitive resource);
 - conditions for invalidation, revision, or retirement;
-- validation status.
+- validation status;
+- links to supporting attempt/candidate history, method-switch or stagnation evidence, counterexamples/challenges, and independent verification where available.
 
-Promotion may change an appropriate Skill, method, applicability rule, memory/knowledge representation, or Cognitive Strategy routing according to explicit ownership rules.
+Promotion may change an appropriate Skill, method, applicability rule, memory/knowledge representation, or Cognitive Strategy routing according to explicit ownership rules. A single model-generated answer or a single unverified Success is not enough to establish a generally reusable rule. Proposed adaptations must state their applicability boundary and expected failure signals, retain conflicting evidence, and remain revocable/revisable when later evidence invalidates or narrows them.
 
 A candidate may learn that a deterministic procedure is preferable to another model call for a known class of situations, but promotion must remain governed. The promoted shortcut must identify its applicability boundary and remain revocable/revisable when later evidence invalidates or narrows it. No direct authoritative mutation from model output or Dream output.
 
@@ -622,13 +638,13 @@ Verify: positive, negative, partial, mixed, human-corrected, and simulated evide
 Hive-level collective state is distinct from each member's own Agent/CognitiveAgent state.
 
 ## 6.2 — Collective Strategy
-Coordinate planning/reasoning across members without moving member cognition into the Hive itself.
+Coordinate planning/reasoning across members without moving member cognition into the Hive itself. When useful, assign different approaches or lines of investigation, allocate bounded effort, stop unproductive duplicate work, and compare candidate results and verification evidence without replacing individual member cognition or treating votes as proof.
 
 ## 6.3 — Collective Questions & Specialty Routing
 Route Questions by Agent specialty, avoid semantically duplicate work where evidence already exists, and allow each Agent to retain its own Questions and answers.
 
 ## 6.4 — Cross-Agent Evidence & Synthesis
-Combine attributable answers, experiences, evaluated outcomes, Mistakes, Successes, Dreams, observations, and other evidence into collective reasoning without erasing individual provenance or actual-versus-simulated evidence status.
+Combine attributable answers, experiences, evaluated outcomes, Mistakes, Successes, Dreams, observations, candidate attempts, critiques, and verifier results into collective reasoning without erasing individual provenance or actual-versus-simulated evidence status. Compare alternatives against the same objective and success criteria; preserve disagreement, method differences, uncertainty, and negative evidence rather than flattening them into a majority answer.
 
 ## 6.5 — Collective Conflict & Consensus
 Bounded coordination, conflict resolution, disagreement handling, and consensus mechanisms.
@@ -710,7 +726,7 @@ Operational diagnostics, safe support exports, and controlled replay tooling.
 
 ## Ordering invariant
 
-The order is intentional. Base Agent contracts reserve reusable mechanisms such as Objectives, Question transport, patience/understanding gates, memory infrastructure, simulation interfaces, delegation, and Hive sponsorship. Implementation is pulled into the earliest phase only when the current V1 boundary requires it. The cognitive lifecycle, Dreams, and adaptive Questions remain CognitiveAgent-generation capabilities; CognitiveHive later extends them with cross-agent coordination without moving individual cognition into the Hive.
+The order is intentional. Base Agent contracts reserve reusable mechanisms such as Objectives, Question transport, patience/understanding gates, memory infrastructure, simulation interfaces, delegation, Hive sponsorship, and the bounded problem-solving loop introduced by 1.31. The loop's current-task attempt/approach management is Base-Agent behavior; cross-Agent approach assignment and synthesis are added by Hive coordination; persistent adaptive interpretation and governed learning remain CognitiveAgent/resource capabilities. Implementation is pulled into the earliest phase only when the current V1 boundary requires it. The cognitive lifecycle, Dreams, and adaptive Questions remain CognitiveAgent-generation capabilities; CognitiveHive later extends them with cross-agent coordination without moving individual cognition into the Hive.
 
 ```
 Foundations

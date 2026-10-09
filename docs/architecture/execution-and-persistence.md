@@ -475,6 +475,18 @@ Running executions use immutable effective configuration snapshots.
 
 Terminal execution state cannot be overwritten by a late provider result.
 
+### Bounded reasoning attempts and verification evidence
+
+The bounded Base-Agent problem-solving loop uses the existing Reasoning Requirement, Execution Planner, MAF invocation, Tool, WorkItem, and resource-control boundaries. Reasoning effort is provider/model-specific: Hive may request a supported level where the configured target explicitly supports it, but missing or Unknown metadata must not be treated as support for an invented request parameter. Reasoning effort remains separate from capability, authorization, target selection, and budget enforcement.
+
+Candidate outputs and model-generated critiques are untrusted candidate evidence. When a suitable independent check exists, its result should be recorded against the precise claim, candidate, artifact/input version, and relevant execution/work identity. A verification record should identify the verifier/Tool and version where available, the check configuration and assumptions that materially affect its meaning, the result/status, time/correlation, and provenance. Store only the evidence needed to reproduce or interpret the check; never include credential material or assume raw provider responses must be retained.
+
+Verification statements must be scoped. Passing a unit test proves that test passed against the tested artifact and fixture; it does not prove the entire program correct. A formal checker proves the encoded statement under its formal definitions and permitted assumptions; it does not by itself prove an informal claim was encoded correctly. A model critiquing its own output is useful review evidence but is not independent verification. A verifier failure may identify a defect, an unsupported assumption, or a checker limitation; Hive must retain that distinction where the checker contract supports it.
+
+Do not introduce a universal standalone verification platform merely for this loop. Reuse existing deterministic validation, Tests, and authorized Tools first. Add a replaceable verifier contract only when multiple actual verification consumers establish a stable common responsibility boundary. Verification is evidence, not permission: it cannot bypass policy, approval, host validation, WorkItem lifecycle, or any existing Review/receipt semantics.
+
+Every extra attempt, critique, tool invocation, or verifier consumes the same applicable execution budgets and is subject to cancellation, concurrency, authorization, immutable execution configuration, and failure boundaries. The loop must stop at its configured attempt/time/token/cost limits and return an explicit unresolved/partial result when evidence is insufficient.
+
 ### Cognitive evidence and adaptation boundary
 
 For CognitiveAgent generations, execution produces evidence that is later interpreted by the cognitive layer.

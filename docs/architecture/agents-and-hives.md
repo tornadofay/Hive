@@ -66,6 +66,7 @@ Base Agent mechanisms may include:
 - **Patience / Understanding Gate** = a deterministic or policy-driven gate that prevents consequential work until required information or explicit confirmation is available. The principle is **understand the minimum required information before trying to solve**; it does not require the Agent to understand everything.
 - **Simulation infrastructure** = generic bounded simulation/job execution, scenario inputs, predicted outputs, parallel simulation execution, and result storage. Cognitive `Dreams` are a higher-level use of this infrastructure.
 - **Delegation and coordination interfaces** = request work from another Agent/Hive, await answers, and preserve provenance without requiring autonomous cognitive delegation decisions.
+- **Bounded problem-solving loop** = task-scoped use of model reasoning, candidate attempts, progress assessment, approach switching, challenge, and applicable verification. It improves work on the current task without granting persistent self-adaptation or changing the Agent generation.
 - **Lifecycle and persistence** = creation, suspension, death of an execution/incarnation, wake/recreation, durable state, and human management of inactive state.
 
 These mechanisms are intentionally reusable by later CognitiveAgent implementations.
@@ -123,6 +124,44 @@ Durable persistence is SQL-backed and uses the established Hive event/snapshot/o
 Ownership, scope, provenance, resource version, authorization checks, deterministic ordering, cancellation, and cross-runtime isolation remain enforced at the base work-protocol boundary. No CognitiveAgent beliefs, goals, learning, Dream processing, vector storage, or automatic delegation orchestration is introduced by this phase.
 
 The base work-protocol APIs are additive to Agent and RuntimeInstance; they do not alter the Agent generation contract and do not create CognitiveAgent behavior. Cognitive generations may later build adaptive interpretation and revision over these same stable mechanisms.
+
+### Bounded Base-Agent Problem-Solving Loop
+
+A normal Base Agent may use a bounded problem-solving loop for a difficult task. The loop orchestrates useful reasoning steps around model output; it does not attempt to expose or persist every internal token of the model's private reasoning. A provider may expose a supported reasoning-effort setting, but Hive must consult the existing capability/provider contract and must not assume every model supports the same controls.
+
+The task-local loop is:
+
+```
+objective, success criteria, constraints, current evidence
+                         ↓
+              reason / propose an approach
+                         ↓
+                candidate attempt/result
+                         ↓
+       assess observable progress and evidence
+                         ↓
+        challenge / verify where appropriate
+                         ↓
+      finish, refine, switch method, ask, or stop
+```
+
+The model may perform several reasoning steps within one invocation. Hive adds another invocation only when the task policy and available evidence justify it; the loop must not translate every thought into a separate call. It reuses the existing MAF execution boundary and applicable Hive work/Tool contracts rather than creating a second general-purpose orchestration engine.
+
+An attempt/candidate record is scoped to the owning WorkItem, execution, or explicit problem-solving operation. It may retain the selected method, concise rationale/approach summary, relevant assumptions, candidate output, parent/previous-attempt reference, tool/check evidence, verification result, observed progress, reason for retry or method switch, status, cost, and elapsed time. It must preserve ownership, scope, provenance, correlation, and applicable resource versions. It does not store raw hidden chain-of-thought as required state and does not create a global Resource type merely to represent each attempt.
+
+The loop distinguishes:
+- **Retry** — another attempt using substantially the same method, generally after correcting a concrete defect.
+- **Alternative approach** — a materially different method, decomposition, algorithm, evidence source, tool, model configuration, or specialist assignment.
+- **Progress** — an observable new result, satisfied condition, discovered constraint, removed uncertainty, or other task-relevant evidence.
+- **Stagnation** — repeated attempts produce no meaningful new result or evidence over the policy's bounded observation window.
+- **Contradiction** — evidence conflicts with a candidate or one of its assumptions.
+- **Unresolved** — success criteria cannot be established with available evidence, capability, or remaining budget.
+
+Model self-assessment can suggest progress or stagnation, but does not establish it by itself. Use deterministic tests, Tool results, changed candidate content, newly established constraints, or other observable signals where available. A critique produces a challenge/evidence record; it does not automatically invalidate or approve the candidate.
+
+The loop must enforce maximum attempts, elapsed-time and token/cost budgets, concurrency bounds, cancellation, stale-state protection, and deterministic stopping rules. On exhaustion it returns the strongest supported candidate with its limitations or an explicit unresolved result; it never invents success merely to complete the loop. Comparison may consider correctness evidence, success criteria, robustness, applicability, safety, simplicity, latency, and cost as relevant to the task; unsupported confidence scores are not a substitute for evidence.
+
+Base-Agent problem-solving is current-task behavior. It may choose among approaches under the current policy, but it does not autonomously promote persistent methods, rewrite durable strategy, create Dreams, or acquire CognitiveAgent beliefs/goals/learning. Later CognitiveAgent phases may interpret the recorded actual outcomes and simulated evidence through their own lifecycle and governed learning contracts.
 
 ### Cognitive Kernel vs Cognitive Strategy
 
@@ -397,6 +436,8 @@ It remains compatible with the ordinary Agent execution boundary and MAF.
 
 Collective cognition is additive. A CognitiveAgent remains a complete autonomous cognitive entity when outside a Hive, and a Hive does not become the owner of the member's individual goals, beliefs, plans, memory, self-model, or lifecycle.
 
+When collective work benefits from independent approaches, CognitiveHive may assign different members distinct methods, assumptions to examine, or specialist perspectives. It compares attributable candidate results and verification evidence, preserves disagreement and unresolved uncertainty, and does not treat majority vote, model confidence, or repeated copies of the same approach as proof. Each member retains its own attempt history and cognitive ownership; collective synthesis creates no hidden overwrite of member state.
+
 It must not turn the base Hive into a requirement for ordinary Agents.
 
 ### Cognitive lifecycle
@@ -442,9 +483,9 @@ A CognitiveAgent may remain fully usable as persistent state while no Agent runt
 Dreams may:
 
 - replay or analyze historical experience;
-- generate hypothetical alternatives;
+- generate materially different hypothetical methods, plans, or assumptions;
 - run multiple bounded simulations in parallel;
-- compare predicted outcomes;
+- compare predicted outcomes and search for failure conditions in a promising candidate;
 - explore plans or strategies before the next wake;
 - identify unresolved questions or candidate state changes.
 

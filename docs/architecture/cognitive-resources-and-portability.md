@@ -91,7 +91,9 @@ Examples include:
 - Dream evidence suggesting an alternative method or exposing a hidden failure condition;
 - repeated evidence showing that a deterministic procedure can replace an unnecessary model call.
 
-A candidate must preserve its evidence, applicability, and intended adaptation target rather than storing only a sentence such as "this works."
+A candidate must preserve its evidence, applicability, and intended adaptation target rather than storing only a sentence such as "this works." Where relevant, it also links to the task-scoped attempts/candidates that produced the evidence, the materially distinct methods tried, the observed basis for stagnation or method switching, applicable critique/check results, and the conditions under which each method did or did not work. It must distinguish repeated trials of one method from genuinely independent approaches and distinguish model self-assessment from external or deterministic verification.
+
+A Learning Candidate may propose that a method should be preferred, avoided, refined, or checked more heavily under stated conditions. A single successful output or model assertion does not establish general reliability. Candidate promotion remains governed, versioned, scoped, revocable, and subject to later contradictory evidence; simulated/Dream results can inform a candidate but never become actual experience.
 
 ### 11.3 Dream evidence and Nightmares
 

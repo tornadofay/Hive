@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-10-07 (rev 59 — 1.18A six-slice implementation structure)
+Last updated: 2026-10-10 (rev 60 — bounded Base-Agent problem-solving architecture)
 
 
 
@@ -102,6 +102,7 @@ Longer-term capabilities such as persistent individual cognition, offline Dream 
 8. Microsoft Agent Framework (MAF) wherever MAF already owns the required mechanism.
 9. CognitiveAgents learn from evaluated real outcomes and bounded simulated evidence: they can recover from mistakes, reinforce and optimize successes, stress-test apparently successful methods, and adapt future strategy without confusing simulation with experience.
 10. First-class cognitive semantics require explicit contracts, ownership, provenance, lifecycle, and persistence meaning; they may share implementation mechanisms when responsibilities fit, or use separate components/subsystems when a real boundary justifies separation.
+11. Normal Base Agents can use bounded reasoning, alternative attempts, progress assessment, challenge, and verification without acquiring CognitiveAgent learning semantics.
 
 ### Logical ownership hierarchy
 
@@ -357,6 +358,12 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 84. Favorite ExecutionTarget state is a deployment- and user/scope-aware preference over durable ExecutionTarget identities, not part of target provider/account/model/capability configuration. Its preference scope follows Hive's canonical resource-scope contract, including the requirement for all identities needed to establish the selected scope; missing required scope identity must fail closed rather than silently broadening the preference scope. As a reusable contract, a non-empty favorite set filters a supplied candidate pool only; capability qualification and the existing selector policy remain authoritative, and no fallback to non-favorite targets is implied.
 85. Favorite ExecutionTarget state is not authorization, lifecycle state, capability state, automatic/manual management state, or a ranking signal. Retired target identities may remain favorited so durable user preference survives target lifecycle changes.
 86. The V1 Agent interaction consumer gives the favorite set a conditional user-facing role. The Agent-facing `Auto` / `Favorites` distinction selects the candidate source before the existing execution-target selector and does not replace or extend the selector's internal policy modes. With an empty favorite set, Agent `Auto` preserves normal behavior and considers all otherwise eligible ExecutionTargets. With one or more favorites, Agent `Auto` filters the candidate pool to favorites before applying the existing capability-aware selection policy. Agent `Favorites` is the explicit favorite-only target source: it lists only saved favorites, even when there is one, and persists the exact selected ExecutionTarget identity. A non-empty favorite pool never falls back to non-favorites when no favorite qualifies; an empty Favorites source has no selectable target. A selected favorite that later becomes unusable fails under the exact-target boundary rather than silently switching.
+87. A Base Agent may run a bounded, task-scoped problem-solving loop; this does not authorize persistent autonomous adaptation or make cognitive-generation behavior a Base-Agent prerequisite.
+88. Model-produced reasoning, claims, plans, and candidate results are fallible inputs. Hive must not require access to hidden chain-of-thought or treat model confidence, self-critique, or self-reported progress as authoritative evidence, fact, or authorization.
+89. Problem-solving attempts and candidate results remain tied to their owning task/WorkItem/execution context with provenance and bounded retention; they do not create a second global resource model by default.
+90. A retry is not a distinct approach unless the method materially changes. Stagnation and progress assessments use observable task/evidence changes where possible; attempt count, concurrency, time, token/cost, and cancellation bounds are enforced, and MAF remains the execution/orchestration owner where applicable.
+91. Verification evidence is scoped to the exact claim/result/artifact and check configuration that produced it. Self-critique is not independent verification, a check result does not prove more than it checked, and verification never grants authorization or approval.
+92. Durable strategy adaptation from experience belongs to CognitiveAgent and the governed learning/resource boundary. Base-Agent problem-solving may select among current-task approaches but must not silently learn or persist a new strategy from raw model output.
 
 
 ---
