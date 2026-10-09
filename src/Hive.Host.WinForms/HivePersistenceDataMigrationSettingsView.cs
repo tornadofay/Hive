@@ -1083,7 +1083,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _editor.FieldsPanel.SetColumnSpan(_diagnosticPanel, 2);
         _editor.FieldsPanel.RowStyles.Clear();
         _editor.FieldsPanel.RowStyles.Add(
-            new RowStyle(SizeType.Absolute, 72f));
+            new RowStyle(SizeType.AutoSize));
         _editor.FieldsPanel.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
         _editor.FieldsPanel.RowStyles.Add(
@@ -1278,17 +1278,18 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     {
         var table = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
-            AutoSize = false,
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 2,
             RowCount = 1,
-            Margin = new Padding(0, 0, 0, 8),
+            Margin = new Padding(0, 0, 0, 4),
             Padding = Padding.Empty,
             GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
 
-        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55f));
-        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45f));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
         table.Controls.Add(
             CreateTopFieldBlock(
@@ -1319,13 +1320,13 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         control.AutoSize = false;
         control.Dock = DockStyle.Left;
         control.Width = width;
-        if (control.Height < 36)
-            control.Height = 36;
+        control.Height = Math.Max(control.MinimumSize.Height, control.Height);
 
         var block = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
-            AutoSize = false,
+            Dock = DockStyle.Left,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 1,
             RowCount = 2,
             Margin = new Padding(0, 0, 8, 0),
@@ -1334,7 +1335,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         };
 
         block.RowStyles.Add(new RowStyle(SizeType.Absolute, 21f));
-        block.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
+        block.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         block.Controls.Add(
             new Label
