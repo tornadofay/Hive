@@ -176,11 +176,19 @@ internal sealed class HivePersistenceMigrationManagementService : HiveManagement
         var isCuratedSqlFailure = error.Code is
             "hive.persistence.data-migration.sql-failure" or
             "hive.persistence.migration-sql-failure";
+        var isSafeUnexpectedSchemaFailure =
+            error.Code == "hive.persistence.migration-unexpected" &&
+            error.Message.StartsWith(
+                "Hive database migration failed unexpectedly (exception type: ",
+                StringComparison.Ordinal) &&
+            error.Message.EndsWith(
+                "). The exception message and connection details were not exposed.",
+                StringComparison.Ordinal);
 
-        var safeMessage = isCuratedSqlFailure
+        var safeMessage = isCuratedSqlFailure || isSafeUnexpectedSchemaFailure
                 // Persistence constructs these diagnostics from fixed SQL-error
-                // mappings and endpoint identity. Raw provider text, connection
-                // strings, and credentials are omitted.
+                // mappings or an exception type only. Raw provider text, connection
+                // strings, stack traces, and credentials are omitted.
                 ? error.Message
                 : "Hive persistence data migration could not be completed safely.";
 
