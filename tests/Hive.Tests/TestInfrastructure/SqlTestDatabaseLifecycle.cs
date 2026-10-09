@@ -109,6 +109,9 @@ internal static class SqlTestDatabaseLifecycle
                 throw;
             }
         }
+
+        throw new InvalidOperationException(
+            "Hive.Tests could not reserve a unique SQL test database name after five attempts.");
     }
 
     public static async ValueTask DropOwnedAsync(
@@ -325,7 +328,7 @@ internal static class SqlTestDatabaseLifecycle
         return Convert.ToInt32(result, CultureInfo.InvariantCulture);
     }
 
-    private static void RecoverStaleOwnedDatabases()
+    internal static void RecoverStaleOwnedDatabases()
     {
         var masterConnectionString = CreateMasterConnectionString();
         var candidates = new List<string>();
