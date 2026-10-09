@@ -12,7 +12,7 @@ public sealed class HivePersistenceIntegrationTests
     [Fact]
     public async Task CleanAndRepeatMigration_IsIdempotentAndRecordsCurrentSchema()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_CleanRepeat");
+        using var database = new PersistenceTestDatabase("Hive_Test_CleanRepeat");
         database.Reset();
         var options = database.Options;
 
@@ -98,7 +98,7 @@ public sealed class HivePersistenceIntegrationTests
     [Fact]
     public async Task FutureSchemaVersion_IsRejectedBeforeMigration()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_FutureSchema");
+        using var database = new PersistenceTestDatabase("Hive_Test_FutureSchema");
         database.Reset();
         var options = database.Options;
 
@@ -125,7 +125,7 @@ public sealed class HivePersistenceIntegrationTests
     [Fact]
     public async Task FailedMigration_DoesNotAdvanceSchemaVersionOrLeavePartialChanges()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_FailedMigration");
+        using var database = new PersistenceTestDatabase("Hive_Test_FailedMigration");
         database.Reset();
         var options = database.Options;
 
