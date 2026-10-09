@@ -443,14 +443,17 @@ public sealed class HiveSettingsView : UserControl
         {
             _content.Controls.Clear();
             control.Dock = DockStyle.Fill;
+
+            // Apply the theme while the page is detached. Attaching it afterwards
+            // lets its first visible paint use the final palette without a second
+            // full-tree invalidate/repaint immediately after it becomes visible.
+            _themeManager.Apply(control);
             _content.Controls.Add(control);
         }
         finally
         {
             _content.ResumeLayout(true);
         }
-
-        _themeManager.Apply(control);
     }
 
     private void DisposeDetachedPage(Control? page)
