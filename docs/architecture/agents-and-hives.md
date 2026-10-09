@@ -142,16 +142,17 @@ objective, success criteria, constraints, current evidence
                          ↓
         challenge / verify where appropriate
                          ↓
-      finish, refine, switch method, ask, or stop
+  finish, refine, switch method, seek needed information
+             through an available interaction path, or stop
 ```
 
-The model may perform several reasoning steps within one invocation. Hive adds another invocation only when the task policy and available evidence justify it; the loop must not translate every thought into a separate call. It reuses the existing MAF execution boundary and applicable Hive work/Tool contracts rather than creating a second general-purpose orchestration engine.
+The model may perform several reasoning steps within one invocation. Hive adds another invocation only when the task policy and available evidence justify it; the loop must not translate every thought into a separate call. It reuses the existing MAF execution boundary and applicable Hive work/Tool contracts rather than creating a second general-purpose orchestration engine. Seeking missing information uses an interaction or Question path already available and authorized for the caller; this loop does not add autonomous Base-Agent Question-generation semantics.
 
 An attempt/candidate record is scoped to the owning WorkItem, execution, or explicit problem-solving operation. It may retain the selected method, concise rationale/approach summary, relevant assumptions, candidate output, parent/previous-attempt reference, tool/check evidence, verification result, observed progress, reason for retry or method switch, status, cost, and elapsed time. It must preserve ownership, scope, provenance, correlation, and applicable resource versions. It does not store raw hidden chain-of-thought as required state and does not create a global Resource type merely to represent each attempt.
 
 The loop distinguishes:
 - **Retry** — another attempt using substantially the same method, generally after correcting a concrete defect.
-- **Alternative approach** — a materially different method, decomposition, algorithm, evidence source, tool, model configuration, or specialist assignment.
+- **Alternative approach** — a materially different method, decomposition, algorithm, evidence source, or supported model configuration. Specialist assignment is available only through an already-authorized coordinator; Phase 1.31 itself does not dispatch or orchestrate specialist work.
 - **Progress** — an observable new result, satisfied condition, discovered constraint, removed uncertainty, or other task-relevant evidence.
 - **Stagnation** — repeated attempts produce no meaningful new result or evidence over the policy's bounded observation window.
 - **Contradiction** — evidence conflicts with a candidate or one of its assumptions.
