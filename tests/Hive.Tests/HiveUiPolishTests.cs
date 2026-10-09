@@ -1627,9 +1627,8 @@ public sealed class HiveUiPolishTests
                     "Persistence settings overview",
                     StringComparison.Ordinal)));
         var description = Assert.Single(
-            persistenceCard.Controls
-                .OfType<Label>()
-                .Where(label => label.Text.Contains("Configure Hive's", StringComparison.Ordinal)))
+            persistenceCard.Controls.OfType<Label>(),
+            label => label.Text.Contains("Configure Hive's", StringComparison.Ordinal))
             .Text;
 
         Assert.Contains("Embedded", description, StringComparison.Ordinal);
