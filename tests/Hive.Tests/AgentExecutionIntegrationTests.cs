@@ -1620,23 +1620,9 @@ public sealed class AgentExecutionIntegrationTests
                 new InvalidOperationException(_message));
     }
 
-    private static async Task<PersistenceTestDatabase> PrepareDatabase(
-        string name)
-    {
-        var database = new PersistenceTestDatabase(name);
-        database.Reset();
-
-        var migration = await new HiveDatabaseMigrator(database.Options)
-            .MigrateAsync();
-
-        Assert.True(
-            migration.IsSuccess,
-            migration.Error is null
-                ? "Migration failed without an error."
-                : $"Migration failed: {migration.Error.Code} [{migration.Error.Category}] {migration.Error.Message}");
-
-        return database;
-    }
+    private static Task<PersistenceTestDatabase> PrepareDatabase(
+        string name) =>
+        PersistenceTestDatabase.CreateMigratedAsync(name);
 
     private sealed class LocalAgentServer : IAsyncDisposable
     {
