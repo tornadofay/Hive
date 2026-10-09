@@ -17,6 +17,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
     private readonly HiveExecutionTargetPreferenceManagementService _executionTargetPreferences;
     private readonly HivePersistenceMigrationManagementService _persistenceMigration;
     private readonly object _lifetimeGate = new();
+    private readonly IHiveManagementOperationGate? _operationGate;
     private int _disposed;
 
     public HiveManagementFacade(
@@ -34,7 +35,8 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         IExecutionTargetPreferenceStore? executionTargetPreferences = null,
         IStructuredExtractionBatchStore? structuredExtractionBatches = null,
         StructuredExtractionEngine? structuredExtractionEngine = null,
-        IHivePersistenceMigrationQuiescence? persistenceMigrationQuiescence = null)
+        IHivePersistenceMigrationQuiescence? persistenceMigrationQuiescence = null,
+        IHiveManagementOperationGate? managementOperationGate = null)
     {
         _configuration = new HiveConfigurationManagementService(
             configurationStore,
@@ -69,6 +71,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         _persistenceMigration = new HivePersistenceMigrationManagementService(
             bootstrapCredentials,
             persistenceMigrationQuiescence);
+        _operationGate = managementOperationGate;
     }
 
     public void Dispose()
@@ -124,7 +127,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
     public Task<Result<HivePersistenceMigrationResult>> MigratePersistenceDataAsync(
         HivePersistenceMigrationRequest request,
         ResourceAccessContext accessContext,
-        CancellationToken cancellationToken = default) => Run(() =>
+        CancellationToken cancellationToken = default) => RunWithoutOperationGate(() =>
         _persistenceMigration.MigrateAsync(
             request,
             accessContext,
@@ -586,7 +589,75 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         CancellationToken cancellationToken = default) => Run(() =>
         _workItems.RejectWorkItemAsync(workItemId, expectedVersion, accessContext, reason, cancellationToken));
 
-    private Task<Result<T>> Run<T>(Func<Task<Result<T>>> operation)
+    private async Task<Result<T>> Run<T>(Func<Task<Result<T>>> operation)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+
+        IAsyncDisposable? operationLease = null;
+        try
+        {
+            Task<Result<T>> operationTask;
+            lock (_lifetimeGate)
+            {
+                if (_disposed != 0)
+                    return Result<T>.Failure(DisposedError());
+
+                if (_operationGate is not null)
+                {
+                    operationLease = _operationGate.TryEnterOperation();
+                    if (operationLease is null)
+                    {
+                        return Result<T>.Failure(
+                            OperationQuiescingError());
+                    }
+                }
+
+                operationTask = operation();
+            }
+
+            return await operationTask.ConfigureAwait(false);
+        }
+        finally
+        {
+            if (operationLease is not null)
+                await operationLease.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    private async Task<Result> Run(Func<Task<Result>> operation)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+
+        IAsyncDisposable? operationLease = null;
+        try
+        {
+            Task<Result> operationTask;
+            lock (_lifetimeGate)
+            {
+                if (_disposed != 0)
+                    return Result.Failure(DisposedError());
+
+                if (_operationGate is not null)
+                {
+                    operationLease = _operationGate.TryEnterOperation();
+                    if (operationLease is null)
+                        return Result.Failure(OperationQuiescingError());
+                }
+
+                operationTask = operation();
+            }
+
+            return await operationTask.ConfigureAwait(false);
+        }
+        finally
+        {
+            if (operationLease is not null)
+                await operationLease.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    private Task<Result<T>> RunWithoutOperationGate<T>(
+        Func<Task<Result<T>>> operation)
     {
         ArgumentNullException.ThrowIfNull(operation);
 
@@ -598,17 +669,10 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         }
     }
 
-    private Task<Result> Run(Func<Task<Result>> operation)
-    {
-        ArgumentNullException.ThrowIfNull(operation);
-
-        lock (_lifetimeGate)
-        {
-            return _disposed != 0
-                ? Task.FromResult(Result.Failure(DisposedError()))
-                : operation();
-        }
-    }
+    private static Error OperationQuiescingError() =>
+        Error.Conflict(
+            "hive.management.operation-quiescing",
+            "Hive is quiescing for persistence migration. Retry this operation after migration completes.");
 
     private static Error DisposedError() =>
         Error.Unsupported(
