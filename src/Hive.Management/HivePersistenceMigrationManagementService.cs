@@ -111,10 +111,21 @@ internal sealed class HivePersistenceMigrationManagementService : HiveManagement
                 .ConfigureAwait(false);
 
             if (execution.IsFailure)
+            {
+                var executionError = execution.Error!;
+                var safeMessage = executionError.Code ==
+                    "hive.persistence.data-migration.sql-failure"
+                        // The persistence migrator constructs this diagnostic from a
+                        // fixed SQL-error mapping and endpoint identity. It omits raw
+                        // provider text, connection strings, and credentials.
+                        ? executionError.Message
+                        : "Hive persistence data migration could not be completed safely.";
+
                 return Result<HivePersistenceMigrationResult>.Failure(
                     SanitizeTechnicalError(
-                        execution.Error!,
-                        "Hive persistence data migration could not be completed safely."));
+                        executionError,
+                        safeMessage));
+            }
 
             var evidence = execution.Value
                 ?? throw new InvalidOperationException(
