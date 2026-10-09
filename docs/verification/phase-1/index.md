@@ -49,6 +49,6 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [1.18A Slice 6 — SQL Server Error 5170 Diagnostic Remediation — 2026-10-09](1.18A-slice-6-sql-file-collision-5170-remediation-2026-10-09.md)
 - [1.18A Slice 6 — SQL Server File-Collision Resolution Verification — 2026-10-09](1.18A-slice-6-sql-file-collision-verification-2026-10-09.md)
 - [1.18A Slice 6 — Final Regression, Bidirectional Migration & Lifecycle Review — 2026-10-09](1.18A-slice-6-final-regression-and-migration-evidence-2026-10-09.md)
+- [1.18A Slice 6 — Active Work History Snapshot (pre-closure checkpoint) — 2026-10-09](1.18A-slice-6-active-work-history-2026-10-09.md)
 - [1.18A Slice 6 — Closure Verification — 2026-10-09](1.18A-slice-6-closure-2026-10-09.md)
-- [1.18A Slice 6 — Active Work History Snapshot — 2026-10-09](1.18A-slice-6-active-work-history-2026-10-09.md)
 - [1.18A Closure — Documentation Revision Audit — 2026-10-09](1.18A-closure-documentation-revision-2026-10-09.md)
