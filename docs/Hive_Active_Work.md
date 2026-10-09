@@ -420,3 +420,26 @@ Current state: **VERIFICATION PENDING**.
 
 Developer rerun: rebuild `Hive.Host.WinForms` with Treat Warnings as Errors, then run `HiveSqlServerInstanceDiscoveryTests`, `HiveUiPolishTests`, and the full `Hive.Tests` suite. If a new compiler diagnostic remains, report the first/root error with its line; the current source has only received the syntax correction and has not been compiled here.
 
+
+
+### Verification failure — 2026-10-09 Data Migration tab initialization
+
+Developer-reported debugger/runtime exceptions when opening the Data Migration tab, followed by a full-suite result of **772 tests: 772 passed, 0 failed, 0 skipped**:
+
+- `HivePersistenceDataMigrationSettingsView.InitializeAsync()` currently calls `RefreshStatusAsync()`, which immediately probes both endpoint connections through `IHiveManagementFacade.TestPersistenceConnectionAsync`. UI layout tests use a deliberately limited Management proxy, so opening the tab invokes an unimplemented method even though the tests themselves complete successfully. More generally, merely navigating to the tab should not run connection tests without an explicit user request.
+- The migration view selects its default direction after subscribing to `SelectedIndexChanged`. That event starts SQL discovery during construction, and the first tab initialization starts another discovery request for the same picker. Starting the second request cancels the first wait, allowing a `TaskCanceledException` to escape the async-void direction-change handler.
+
+These are same-slice Slice 5 initialization/lifecycle defects. The reported passing test count does not remove the manually observed/debugger-visible exceptions. They do not authorize Slice 6 or 1.19 work.
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+### Remediation authorization — Data Migration tab initialization
+
+Correct only the existing Slice 5 migration-tab initialization path:
+
+- Do not test source/destination database connections automatically just because the tab is opened. Keep readiness/connection tests on the explicit Refresh action and migration preflight.
+- Ensure the default direction selection does not fire its change handler while the view is being constructed; initialize discovery once when the view is first opened.
+- Make initialization idempotent across tab revisits and treat cancellation of an obsolete discovery wait as expected lifecycle control, not as an unhandled async-void exception.
+- Preserve automatic SQL instance discovery for visible SQL endpoint editors, Custom/manual endpoint editing, explicit Refresh behavior, and migration preflight correctness.
+
+This is corrective work within Slice 5. It does not authorize unrelated UI changes, Slice 6, or 1.19.
