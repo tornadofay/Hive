@@ -626,6 +626,8 @@ dispose old graph
 
 The concrete bootstrap-secret storage mechanism is an infrastructure implementation behind that contract. The composition boundary must not depend on DPAPI/file details. A failed candidate build must leave the currently published graph intact.
 
+During online graph replacement, publishing the fully constructed candidate does not mean the old graph can be disposed immediately: previously admitted Management operations may still be using its stores. The composition root must asynchronously acquire the old graph's exclusive quiescence lease, which waits for any earlier migration and drains admitted Management calls, then permanently close operation admission on that retired graph before disposing its Management facade and persistence stores. A migration request already queued against the retired graph must fail safely after admission closes rather than start against disposed stores. The new graph remains published while this retirement happens. The synchronous host-shutdown path must not block the WinForms thread waiting for asynchronous work; online replacement uses the explicit async disposal path.
+
 Provider/ProviderAccount/ExecutionTarget/AgentDefinition changes do not require persistence graph reconstruction. They require authoritative Management reads and host state refresh.
 
 Running executions use their already-established effective configuration snapshot; later Settings changes do not silently alter an execution already in progress.
