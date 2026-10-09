@@ -17,9 +17,32 @@ internal sealed class PersistenceTestDatabase : IDisposable, IAsyncDisposable
     {
         _ownedDatabase = SqlTestDatabaseLifecycle.Create(databaseName);
         DatabaseName = _ownedDatabase.DatabaseName;
-        Options = new HiveDatabaseOptions(
-            _ownedDatabase.ConnectionString,
-            createDatabaseIfMissing: true);
+
+        try
+        {
+            Options = new HiveDatabaseOptions(
+                _ownedDatabase.ConnectionString,
+                createDatabaseIfMissing: true);
+        }
+        catch (Exception creationFailure)
+        {
+            try
+            {
+                SqlTestDatabaseLifecycle.DropOwnedAsync(_ownedDatabase)
+                    .AsTask()
+                    .GetAwaiter()
+                    .GetResult();
+            }
+            catch (Exception cleanupFailure)
+            {
+                throw new AggregateException(
+                    $"Hive.Tests database '{DatabaseName}' failed during configuration and could not be cleaned up.",
+                    creationFailure,
+                    cleanupFailure);
+            }
+
+            throw;
+        }
     }
 
     public string DatabaseName { get; }
