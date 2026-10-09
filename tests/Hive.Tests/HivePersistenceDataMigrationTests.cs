@@ -252,6 +252,40 @@ public sealed class HivePersistenceDataMigrationTests
     }
 
     [Fact]
+    public async Task ManagementOperationGate_DrainsInFlightCallsAndRejectsCallsDuringMigration()
+    {
+        var gate = new HiveManagementOperationGate();
+        var ordinaryOperation = gate.TryEnterOperation();
+
+        Assert.NotNull(ordinaryOperation);
+
+        var migrationTask = gate.AcquireAsync();
+
+        Assert.False(
+            migrationTask.IsCompleted,
+            "Migration must wait for all already-admitted Management operations to finish.");
+        Assert.Null(
+            gate.TryEnterOperation());
+
+        await ordinaryOperation!.DisposeAsync();
+
+        var migrationLeaseResult = await migrationTask.WaitAsync(
+            TimeSpan.FromSeconds(2));
+        Assert.True(migrationLeaseResult.IsSuccess, migrationLeaseResult.Error?.Message);
+        var migrationLease = migrationLeaseResult.Value;
+        Assert.NotNull(migrationLease);
+
+        Assert.Null(
+            gate.TryEnterOperation());
+
+        await migrationLease!.DisposeAsync();
+
+        var operationAfterMigration = gate.TryEnterOperation();
+        Assert.NotNull(operationAfterMigration);
+        await operationAfterMigration!.DisposeAsync();
+    }
+
+    [Fact]
     public async Task ManagementMigration_RequiresQuiescenceAndLeavesDestinationInactive()
     {
         var sourceDatabaseName = $"Hive_Test_Migration_Management_{Guid.NewGuid():N}";
