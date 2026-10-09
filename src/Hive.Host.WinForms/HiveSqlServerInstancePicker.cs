@@ -28,11 +28,34 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     private CancellationTokenSource? _activeDiscoveryCts;
     private DiscoverySnapshot? _activeDiscoverySnapshot;
     private int _discoveryGeneration;
-    private sealed record DiscoverySnapshot(
-        int Generation,
-        int UserEditVersion,
-        string PreferredServer,
-        SynchronizationContext? SynchronizationContext);
+    private sealed class DiscoverySnapshot
+    {
+        private int _networkCompleted;
+
+        public DiscoverySnapshot(
+            int generation,
+            int userEditVersion,
+            string preferredServer,
+            SynchronizationContext? synchronizationContext)
+        {
+            Generation = generation;
+            UserEditVersion = userEditVersion;
+            PreferredServer = preferredServer;
+            SynchronizationContext = synchronizationContext;
+        }
+
+        public int Generation { get; }
+
+        public int UserEditVersion { get; }
+
+        public string PreferredServer { get; }
+
+        public SynchronizationContext? SynchronizationContext { get; }
+
+        public bool NetworkCompleted => Volatile.Read(ref _networkCompleted) != 0;
+
+        public void MarkNetworkCompleted() => Interlocked.Exchange(ref _networkCompleted, 1);
+    }
 
     private bool _applyingValue;
     private bool _settingPort;
@@ -541,6 +564,8 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         var snapshot = Volatile.Read(ref _activeDiscoverySnapshot);
         if (snapshot is null)
             return;
+
+        snapshot.MarkNetworkCompleted();
         PostDiscoveryUpdate(
             new SqlServerInstanceDiscoveryUpdate(
                 SqlServerInstanceDiscoveryUpdateKind.Completed,
@@ -553,11 +578,24 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         SqlServerInstanceDiscoveryUpdate update,
         DiscoverySnapshot snapshot)
     {
+        if (update.Kind == SqlServerInstanceDiscoveryUpdateKind.Completed)
+            snapshot.MarkNetworkCompleted();
+
+        if (update.Kind == SqlServerInstanceDiscoveryUpdateKind.TimedOut &&
+            snapshot.NetworkCompleted)
+        {
+            return;
+        }
+
         void ApplyUpdate()
         {
             if (IsDisposed || Disposing ||
-                snapshot.Generation != Volatile.Read(ref _discoveryGeneration))
+                snapshot.Generation != Volatile.Read(ref _discoveryGeneration) ||
+                (update.Kind == SqlServerInstanceDiscoveryUpdateKind.TimedOut &&
+                 snapshot.NetworkCompleted))
+            {
                 return;
+            }
 
             var editedDuringDiscovery = _userEditVersion != snapshot.UserEditVersion;
             var preferred = editedDuringDiscovery ? ServerName : snapshot.PreferredServer;
