@@ -73,9 +73,9 @@ public sealed class EmbeddedPersistenceParityTests
         var accountId = ProviderAccountId.New();
         var targetId = ExecutionTargetId.New();
         var definitionId = AgentDefinitionId.New();
-        var workItemId = WorkItemId.New();
+        WorkItemId workItemId = default;
         var eventId = EventId.New();
-        var eventStream = new ResourceReference(ResourceKind.WorkItem, workItemId.Value);
+        ResourceReference eventStream = default;
         var runtimeId = RuntimeId.New();
         var objectiveId = ObjectiveId.New();
         var memoryId = MemoryId.New();
