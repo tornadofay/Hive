@@ -849,6 +849,9 @@ public sealed class HiveUiPolishTests
         Assert.True(
             view.DirectionSelector.Bottom <= view.DirectionSelector.Parent!.ClientSize.Height);
 
+        // Isolate the custom-row layout assertion from the shared asynchronous
+        // discovery scan, which may legitimately select this same installed instance.
+        view.SourceSqlServerPicker.CancelPendingDiscovery();
         // A custom/named instance reveals additional picker rows. The endpoint
         // field and its stack must preserve the picker's auto-size behavior.
         view.SourceSqlServerPicker.SetDiscoveredInstances(
