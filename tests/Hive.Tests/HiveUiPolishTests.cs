@@ -774,6 +774,83 @@ public sealed class HiveUiPolishTests
             view.RoleColumns.GetControlFromPosition(1, 0));
     }
 
+    [WinFormsFact]
+    public async Task HivePersistenceDataMigration_UsesCompactEndpointLayoutAndNamedInstanceResolution()
+    {
+        var (management, managementProxy) =
+            HiveWorkspaceLifecycleTests.ManagementFacadeProxy.Create();
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        using var host = new Form
+        {
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-2000, -2000),
+            ClientSize = new Size(1180, 760),
+            ShowInTaskbar = false
+        };
+        using var view = new HivePersistenceDataMigrationSettingsView(
+            management,
+            context,
+            themeManager,
+            "Hive.TestHost")
+        {
+            Dock = DockStyle.Fill
+        };
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        Assert.Equal(DockStyle.Top, view.SourceSqlServerLayout.Dock);
+        Assert.NotEmpty(view.SourceSqlServerLayout.RowStyles.Cast<RowStyle>());
+        Assert.All(
+            view.SourceSqlServerLayout.RowStyles.Cast<RowStyle>(),
+            static row => Assert.Equal(SizeType.AutoSize, row.SizeType));
+        Assert.True(view.SourceSqlServerLayout.Height < view.SourceCard.Height - 100);
+
+        Assert.Equal(DockStyle.Fill, view.DestinationEmbeddedStorageInput.Dock);
+        Assert.True(view.DestinationEmbeddedStorageInput.Width >= 300);
+        var embeddedPathPanel =
+            Assert.IsType<TableLayoutPanel>(view.DestinationEmbeddedStorageInput.Parent);
+        Assert.True(
+            view.DestinationEmbeddedStorageInput.Width >=
+            embeddedPathPanel.ClientSize.Width - 100);
+
+        // Named instances resolve their own TCP port unless the user explicitly
+        // entered one; migration must not force port 1433 onto this endpoint.
+        view.SourceSqlServerPicker.SetValue(@"localhost\MSSQLSERVER01", port: null);
+
+        var migrateButton = FindButton(view, "Migrate All Data");
+        Assert.NotNull(migrateButton);
+        migrateButton!.PerformClick();
+
+        var testedConfiguration = await managementProxy.PersistenceConfigurationTested.Task
+            .WaitAsync(TimeSpan.FromSeconds(5));
+        WaitForUi(
+            () => view.StatusLabel.Text.Contains(
+                "Source preflight failed",
+                StringComparison.OrdinalIgnoreCase),
+            "The migration did not report the intercepted source preflight result.");
+
+        Assert.Equal(@"localhost\MSSQLSERVER01", testedConfiguration.ServerName);
+        Assert.Null(testedConfiguration.Port);
+        Assert.Equal(
+            HivePersistenceConfiguration.BuildDatabaseName("Hive.TestHost"),
+            testedConfiguration.DatabaseName);
+        Assert.Contains(
+            "named-instance port resolution",
+            view.StatusLabel.Text,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(
+            "intercepted the endpoint preflight",
+            view.StatusLabel.Text,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public void HiveSettingsView_OpensOverviewByDefault()
     {
