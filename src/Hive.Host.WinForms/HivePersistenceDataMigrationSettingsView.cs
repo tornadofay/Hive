@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Hive.Core;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
@@ -927,7 +928,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private readonly HiveButton _copyDetailsButton;
     private readonly Label _statusLabel;
 
-    private HivePersistenceConfiguration? _savedConfiguration;
     private string? _lastDiagnosticDetails;
     private HiveStatusTone _statusTone = HiveStatusTone.Neutral;
     private CancellationTokenSource? _operationCts;
@@ -1084,6 +1084,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             "Loading saved endpoint settings. Review both endpoints, then select Refresh to test readiness.",
             HiveStatusTone.Information);
 
+        var configurationLoaded = false;
         try
         {
             var saved = await _management
@@ -1093,15 +1094,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
                 return;
 
-            if (saved.IsSuccess && saved.Value is { } configuration)
-            {
-                _savedConfiguration = configuration;
-                // Prefill a matching SOURCE editor as a convenience only. Direction
-                // remains user-selected, and the migration request still contains
-                // the two fully explicit, independently editable endpoint values.
-                _sourceEndpoint.ApplyConfiguration(configuration);
-            }
-            else if (saved.IsFailure)
+            if (saved.IsFailure)
             {
                 Trace.TraceWarning(
                     "Could not load saved persistence configuration for migration prefill ({0}).",
@@ -1110,18 +1103,29 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                     "Saved connection settings could not be loaded. Enter the source and destination manually.",
                     HiveStatusTone.Warning);
             }
+            else if (saved.Value is { } configuration)
+            {
+                configurationLoaded = _sourceEndpoint.ApplyConfiguration(configuration);
+                // Prefill a matching SOURCE editor as a convenience only. Direction
+                // remains user-selected, and migration still receives both explicit,
+                // independently editable endpoint configurations from these editors.
+            }
 
             // Loading settings is not a database connection test. This only
             // populates visible SQL Server instance choices after saved values.
             await RefreshVisibleSqlServerInstancesAsync(cancellationToken)
                 .ConfigureAwait(true);
 
-            if (!IsDisposed && !Disposing && _lastDiagnosticDetails is null)
+            if (!IsDisposed && !Disposing && configurationLoaded)
             {
                 SetStatus(
-                    _sourceEndpoint.HasUserEdited
-                        ? "Source settings loaded; review endpoints and select Refresh to test readiness."
-                        : "Saved source settings are prefilled and editable. Select Refresh to test readiness before migration.",
+                    "Saved source settings are prefilled and editable. Select Refresh to test readiness before migration.",
+                    HiveStatusTone.Information);
+            }
+            else if (!IsDisposed && !Disposing && !saved.IsFailure)
+            {
+                SetStatus(
+                    "Saved settings are for a different backend than SOURCE. Enter both endpoints, then select Refresh to test readiness.",
                     HiveStatusTone.Information);
             }
         }
