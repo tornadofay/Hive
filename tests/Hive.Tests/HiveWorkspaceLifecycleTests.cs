@@ -120,12 +120,12 @@ public sealed class HiveWorkspaceLifecycleTests
         public HivePersistenceConfiguration PersistenceConfiguration { get; set; } =
             new(
                 HivePersistenceBackend.SqlServer,
-                @"localhost\\MSSQLSERVER01",
-                port: null,
+                @"localhost\MSSQLSERVER01",
+                null,
                 "Hive-Hive.TestHost",
                 HiveSqlAuthenticationMode.WindowsIntegrated,
-                userName: null,
-                bootstrapCredential: null,
+                null,
+                null,
                 encrypt: true,
                 trustServerCertificate: true,
                 createDatabaseIfMissing: true,
