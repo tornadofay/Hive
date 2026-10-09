@@ -861,6 +861,19 @@ public sealed class HiveHostCompositionTests
                 TenantId.New(),
                 PrincipalId.New());
 
+            var migrationGateCheck = await graph.Management
+                .MigratePersistenceDataAsync(
+                    new HivePersistenceMigrationRequest(
+                        configuration,
+                        HivePersistenceConfiguration.Embedded(
+                            Path.Combine(directory, "other.db"))),
+                    context);
+
+            Assert.False(migrationGateCheck.IsSuccess);
+            Assert.Equal(
+                "hive.management.persistence-migration.backend-direction-invalid",
+                migrationGateCheck.Error!.Code);
+
             var beforeInitialization = await graph.Management
                 .TestPersistenceConnectionAsync(
                     configuration,
