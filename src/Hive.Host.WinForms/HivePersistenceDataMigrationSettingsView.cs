@@ -56,7 +56,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
         private HivePersistenceBackend _backend;
         private bool _applyingConfiguration;
-        private bool _userEdited;
+        private bool _sqlUserEdited;
+        private bool _embeddedUserEdited;
         private HivePersistenceConfiguration? _prefilledConfiguration;
         private int? _prefilledPort;
 
@@ -121,7 +122,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
         public TableLayoutPanel SqlPanel => _sqlPanel;
 
-        public bool HasUserEdited => _userEdited;
+        public bool HasUserEdited =>
+            Backend == HivePersistenceBackend.Embedded
+                ? _embeddedUserEdited
+                : _sqlUserEdited;
 
         public string SqlDatabaseName => _sqlDatabaseTextBox.Text.Trim();
 
@@ -224,8 +228,12 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         public bool ApplyConfiguration(HivePersistenceConfiguration configuration)
         {
             ArgumentNullException.ThrowIfNull(configuration);
-            if (_userEdited || configuration.Backend != Backend)
+            if (configuration.Backend != Backend ||
+                (Backend == HivePersistenceBackend.Embedded && _embeddedUserEdited) ||
+                (Backend == HivePersistenceBackend.SqlServer && _sqlUserEdited))
+            {
                 return false;
+            }
 
             _applyingConfiguration = true;
             try
@@ -295,28 +303,34 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
         private void TrackUserEdits()
         {
-            void MarkEdited(object? _, EventArgs __)
+            void MarkSqlEdited(object? _, EventArgs __)
             {
                 if (!_applyingConfiguration)
-                    _userEdited = true;
+                    _sqlUserEdited = true;
             }
 
-            _sqlServerPicker.ServerSelector.SelectedIndexChanged += MarkEdited;
-            _sqlServerPicker.CustomServerInput.TextChanged += MarkEdited;
-            _sqlServerPicker.PortInput.TextChanged += MarkEdited;
-            _embeddedPathTextBox.TextChanged += MarkEdited;
-            _sqlDatabaseTextBox.TextChanged += MarkEdited;
-            _sqlAuthenticationComboBox.SelectedIndexChanged += MarkEdited;
-            _sqlUserNameTextBox.TextChanged += MarkEdited;
-            _sqlPasswordTextBox.TextChanged += MarkEdited;
-            _sqlEncryptCheckBox.CheckedChanged += MarkEdited;
-            _sqlTrustServerCertificateCheckBox.CheckedChanged += MarkEdited;
-            _embeddedTimeoutNumeric.ValueChanged += MarkEdited;
-            _sqlTimeoutNumeric.ValueChanged += MarkEdited;
+            void MarkEmbeddedEdited(object? _, EventArgs __)
+            {
+                if (!_applyingConfiguration)
+                    _embeddedUserEdited = true;
+            }
+
+            _sqlServerPicker.ServerSelector.SelectedIndexChanged += MarkSqlEdited;
+            _sqlServerPicker.CustomServerInput.TextChanged += MarkSqlEdited;
+            _sqlServerPicker.PortInput.TextChanged += MarkSqlEdited;
+            _sqlDatabaseTextBox.TextChanged += MarkSqlEdited;
+            _sqlAuthenticationComboBox.SelectedIndexChanged += MarkSqlEdited;
+            _sqlUserNameTextBox.TextChanged += MarkSqlEdited;
+            _sqlPasswordTextBox.TextChanged += MarkSqlEdited;
+            _sqlEncryptCheckBox.CheckedChanged += MarkSqlEdited;
+            _sqlTrustServerCertificateCheckBox.CheckedChanged += MarkSqlEdited;
+            _sqlTimeoutNumeric.ValueChanged += MarkSqlEdited;
+            _embeddedPathTextBox.TextChanged += MarkEmbeddedEdited;
+            _embeddedTimeoutNumeric.ValueChanged += MarkEmbeddedEdited;
             if (_embeddedCreateDatabaseCheckBox is not null)
-                _embeddedCreateDatabaseCheckBox.CheckedChanged += MarkEdited;
+                _embeddedCreateDatabaseCheckBox.CheckedChanged += MarkEmbeddedEdited;
             if (_sqlCreateDatabaseCheckBox is not null)
-                _sqlCreateDatabaseCheckBox.CheckedChanged += MarkEdited;
+                _sqlCreateDatabaseCheckBox.CheckedChanged += MarkSqlEdited;
         }
 
         private static void SetTimeoutValue(NumericUpDown input, int seconds)
@@ -912,6 +926,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private readonly IHiveExampleOutput? _output;
     private readonly string _applicationName;
     private readonly HiveEditorLayout _editor;
+    private HivePersistenceConfiguration? _initialSourceConfiguration;
     private readonly HiveComboBox _directionComboBox;
     private readonly Label _scopeLabel;
     private readonly Panel _sourceCard;
@@ -1085,31 +1100,38 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             HiveStatusTone.Information);
 
         var configurationLoaded = false;
+        var configurationLoadFailed = false;
         try
         {
-            var saved = await _management
-                .GetPersistenceConfigurationAsync(_accessContext, cancellationToken)
-                .ConfigureAwait(true);
-
-            if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
-                return;
-
-            if (saved.IsFailure)
+            var configuration = _initialSourceConfiguration;
+            if (configuration is null)
             {
-                Trace.TraceWarning(
-                    "Could not load saved persistence configuration for migration prefill ({0}).",
-                    saved.Error?.Code ?? "unknown");
-                SetStatus(
-                    "Saved connection settings could not be loaded. Enter the source and destination manually.",
-                    HiveStatusTone.Warning);
+                var saved = await _management
+                    .GetPersistenceConfigurationAsync(_accessContext, cancellationToken)
+                    .ConfigureAwait(true);
+
+                if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+                    return;
+
+                if (saved.IsFailure)
+                {
+                    configurationLoadFailed = true;
+                    Trace.TraceWarning(
+                        "Could not load saved persistence configuration for migration prefill ({0}).",
+                        saved.Error?.Code ?? "unknown");
+                    SetStatus(
+                        "Saved connection settings could not be loaded. Enter the source and destination manually.",
+                        HiveStatusTone.Warning);
+                }
+                else if (saved.Value is { } loadedConfiguration)
+                {
+                    configuration = loadedConfiguration;
+                    _initialSourceConfiguration = loadedConfiguration;
+                }
             }
-            else if (saved.Value is { } configuration)
-            {
+
+            if (configuration is not null)
                 configurationLoaded = _sourceEndpoint.ApplyConfiguration(configuration);
-                // Prefill a matching SOURCE editor as a convenience only. Direction
-                // remains user-selected, and migration still receives both explicit,
-                // independently editable endpoint configurations from these editors.
-            }
 
             // Loading settings is not a database connection test. This only
             // populates visible SQL Server instance choices after saved values.
@@ -1119,13 +1141,13 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             if (!IsDisposed && !Disposing && configurationLoaded)
             {
                 SetStatus(
-                    "Saved source settings are prefilled and editable. Select Refresh to test readiness before migration.",
+                    "Source settings are prefilled and editable. Select Refresh to test readiness before migration.",
                     HiveStatusTone.Information);
             }
-            else if (!IsDisposed && !Disposing && !saved.IsFailure)
+            else if (!IsDisposed && !Disposing && !configurationLoadFailed)
             {
                 SetStatus(
-                    "Saved settings are for a different backend than SOURCE. Enter both endpoints, then select Refresh to test readiness.",
+                    "Saved settings do not match the SOURCE backend. Enter both endpoints, then select Refresh to test readiness.",
                     HiveStatusTone.Information);
             }
         }
@@ -1146,6 +1168,15 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                     "Saved settings could not be prefilled. Review both endpoints or use Refresh to check readiness.",
                     HiveStatusTone.Warning);
         }
+    }
+
+    internal void SetInitialSourceConfiguration(
+        HivePersistenceConfiguration? configuration)
+    {
+        if (IsDisposed || Disposing || _initializationTask is not null)
+            return;
+
+        _initialSourceConfiguration = configuration;
     }
 
     internal HiveComboBox DirectionSelector => _directionComboBox;
@@ -1361,6 +1392,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private async Task DirectionChangedAsync()
     {
         ApplyDirection();
+        if (_initialSourceConfiguration is { } configuration)
+            _sourceEndpoint.ApplyConfiguration(configuration);
 
         SetStatus(
             "Migration direction changed. Both endpoints remain independently editable. Review them before refreshing readiness.",
