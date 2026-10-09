@@ -120,8 +120,8 @@ public sealed class HiveWorkspaceLifecycleTests
         public HivePersistenceConfiguration PersistenceConfiguration { get; set; } =
             new(
                 HivePersistenceBackend.SqlServer,
-                @"localhost\MSSQLSERVER01",
-                null,
+                "localhost",
+                1433,
                 "Hive-Hive.TestHost",
                 HiveSqlAuthenticationMode.WindowsIntegrated,
                 null,
