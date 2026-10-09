@@ -11,7 +11,7 @@ public sealed class ExecutionTargetFavoriteManagementTests
     [Fact]
     public async Task Favorites_PersistInOrder_AndReloadForSamePrincipalAndScope()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ExecutionTargetFavorites");
+        using var database = new PersistenceTestDatabase("Hive_Test_ExecutionTargetFavorites");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -80,7 +80,7 @@ public sealed class ExecutionTargetFavoriteManagementTests
     [Fact]
     public async Task SaveFavorites_RejectsDuplicateAndInaccessibleTargets()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ExecutionTargetFavoriteAuthorization");
+        using var database = new PersistenceTestDatabase("Hive_Test_ExecutionTargetFavoriteAuthorization");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -149,7 +149,7 @@ public sealed class ExecutionTargetFavoriteManagementTests
     [Fact]
     public async Task RetiredFavorite_RemainsPersisted_AndBecomesEligibleAgainAfterReactivation()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ExecutionTargetFavoriteLifecycle");
+        using var database = new PersistenceTestDatabase("Hive_Test_ExecutionTargetFavoriteLifecycle");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -208,7 +208,7 @@ public sealed class ExecutionTargetFavoriteManagementTests
     [Fact]
     public async Task EmptyFavorites_ClearsPreferenceState()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_ExecutionTargetFavoriteClear");
+        using var database = new PersistenceTestDatabase("Hive_Test_ExecutionTargetFavoriteClear");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
