@@ -16,7 +16,7 @@ public sealed class PersistenceTestDatabaseLifecycleTests
             .ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture);
         var runId = Guid.NewGuid();
         var ownershipToken = Guid.NewGuid();
-        var name = $"Hive_TestOwned_{createdAt}_{runId.ToString("N")[..8].ToUpperInvariant()}_{ownershipToken.ToString("N")[..8].ToUpperInvariant()}_LifecycleRegression";
+        var name = $"Hive_TestOwned_{createdAt}_{runId.ToString("N")[..8].ToUpperInvariant()}_{ownershipToken.ToString("N").ToUpperInvariant()}_LifecycleRegression";
         var marker = $"v1|{runId:N}|{ownershipToken:N}|{createdAt}";
 
         Assert.True(SqlTestDatabaseLifecycle.IsStrictOwnedName(name));
@@ -156,7 +156,7 @@ public sealed class PersistenceTestDatabaseLifecycleTests
         var runId = Guid.NewGuid();
         var ownershipToken = Guid.NewGuid();
         var runToken = runId.ToString("N")[..8].ToUpperInvariant();
-        var databaseToken = ownershipToken.ToString("N")[..8].ToUpperInvariant();
+        var databaseToken = ownershipToken.ToString("N").ToUpperInvariant();
         var databaseName = $"Hive_TestOwned_{createdAt}_{runToken}_{databaseToken}_StaleRecoveryRegression";
         var marker = $"v1|{runId:N}|{ownershipToken:N}|{createdAt}";
         var masterBuilder = new SqlConnectionStringBuilder(
