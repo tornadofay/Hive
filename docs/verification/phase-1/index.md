@@ -2,6 +2,8 @@
 
 Phase 1 is in progress. Completed slices are recorded here.
 
+- [Maintenance — UI: Settings Overview Layout & Configuration Guidance — 2026-10-09](../maintenance/ui-settings-overview-layout-configuration-guidance-2026-10-09.md)
+
 - [1.1 — Provider / ProviderAccount / ExecutionTarget](1.1.md)
 - [1.2 — Secret Store](1.2.md)
 - [1.3 — OpenAI-compatible Provider Adapter](1.3.md)
