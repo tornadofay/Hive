@@ -11,7 +11,7 @@ public sealed class StructuredExtractionPersistenceIntegrationTests
     [Fact]
     public async Task BatchState_SurvivesStoreRecreationAndOptimisticConcurrency()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_Phase117_Batch");
+        using var database = new PersistenceTestDatabase("Hive_Test_Phase117_Batch");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
