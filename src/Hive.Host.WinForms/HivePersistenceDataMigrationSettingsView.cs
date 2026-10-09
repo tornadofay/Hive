@@ -54,6 +54,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         private readonly TableLayoutPanel _sqlAuthenticationField;
 
         private HivePersistenceBackend _backend;
+        private bool _applyingConfiguration;
+        private bool _userEdited;
+        private HivePersistenceConfiguration? _prefilledConfiguration;
+        private int? _prefilledPort;
 
         public MigrationEndpointEditor(
             EndpointRole role,
@@ -108,12 +112,32 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
             _themeManager.ThemeChanged += ThemeManagerOnChanged;
 
+            TrackUserEdits();
             Backend = HivePersistenceBackend.Embedded;
         }
 
         public Control View => _root;
 
         public TableLayoutPanel SqlPanel => _sqlPanel;
+
+        public bool HasUserEdited => _userEdited;
+
+        public string SqlDatabaseName => _sqlDatabaseTextBox.Text.Trim();
+
+        public bool SqlEncrypt => _sqlEncryptCheckBox.Checked;
+
+        public bool SqlTrustServerCertificate =>
+            _sqlTrustServerCertificateCheckBox.Checked;
+
+        public HiveSqlAuthenticationMode SqlAuthentication =>
+            _sqlAuthenticationComboBox.SelectedItem is HiveSqlAuthenticationMode value
+                ? value
+                : HiveSqlAuthenticationMode.WindowsIntegrated;
+
+        public HiveBootstrapCredentialReference? ReusableBootstrapCredential =>
+            IsPrefilledSqlConfigurationUnchanged()
+                ? _prefilledConfiguration?.BootstrapCredential
+                : null;
 
         public HivePersistenceBackend Backend
         {
@@ -195,6 +219,112 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
         public void SetSqlCredentialStatus(string text) =>
             _sqlCredentialStatus.Text = text;
+
+        public bool ApplyConfiguration(HivePersistenceConfiguration configuration)
+        {
+            ArgumentNullException.ThrowIfNull(configuration);
+            if (_userEdited || configuration.Backend != Backend)
+                return false;
+
+            _applyingConfiguration = true;
+            try
+            {
+                if (Backend == HivePersistenceBackend.Embedded)
+                {
+                    _embeddedPathTextBox.Text = configuration.EmbeddedStoragePath;
+                    if (_embeddedCreateDatabaseCheckBox is not null)
+                        _embeddedCreateDatabaseCheckBox.Checked =
+                            configuration.CreateDatabaseIfMissing;
+                    SetTimeoutValue(_embeddedTimeoutNumeric, configuration.CommandTimeoutSeconds);
+                    return true;
+                }
+
+                var serverName = string.IsNullOrWhiteSpace(configuration.ServerName)
+                    ? "localhost"
+                    : configuration.ServerName.Trim();
+                var port = configuration.Port;
+                if (port == 1433 && serverName.Contains('\\\\', StringComparison.Ordinal))
+                    port = null;
+
+                _sqlServerPicker.SetValue(serverName, port);
+                _sqlDatabaseTextBox.Text = configuration.DatabaseName;
+                _sqlAuthenticationComboBox.SelectedItem = configuration.AuthenticationMode;
+                _sqlUserNameTextBox.Text = configuration.UserName ?? string.Empty;
+                _sqlPasswordTextBox.Clear();
+                _sqlEncryptCheckBox.Checked = configuration.Encrypt;
+                _sqlTrustServerCertificateCheckBox.Checked =
+                    configuration.TrustServerCertificate;
+                if (_sqlCreateDatabaseCheckBox is not null)
+                    _sqlCreateDatabaseCheckBox.Checked = configuration.CreateDatabaseIfMissing;
+                SetTimeoutValue(_sqlTimeoutNumeric, configuration.CommandTimeoutSeconds);
+
+                _prefilledConfiguration = configuration;
+                _prefilledPort = port;
+                UpdateSqlAuthenticationState();
+                return true;
+            }
+            finally
+            {
+                _applyingConfiguration = false;
+            }
+        }
+
+        private bool IsPrefilledSqlConfigurationUnchanged()
+        {
+            var configuration = _prefilledConfiguration;
+            return configuration is not null &&
+                Backend == HivePersistenceBackend.SqlServer &&
+                string.Equals(
+                    SqlServerName,
+                    configuration.ServerName,
+                    StringComparison.OrdinalIgnoreCase) &&
+                SqlPort == _prefilledPort &&
+                string.Equals(
+                    SqlDatabaseName,
+                    configuration.DatabaseName,
+                    StringComparison.OrdinalIgnoreCase) &&
+                SqlAuthentication == configuration.AuthenticationMode &&
+                string.Equals(
+                    SqlUserName,
+                    configuration.UserName ?? string.Empty,
+                    StringComparison.Ordinal) &&
+                SqlEncrypt == configuration.Encrypt &&
+                SqlTrustServerCertificate == configuration.TrustServerCertificate;
+        }
+
+        private void TrackUserEdits()
+        {
+            void MarkEdited(object? _, EventArgs __)
+            {
+                if (!_applyingConfiguration)
+                    _userEdited = true;
+            }
+
+            _sqlServerPicker.ServerSelector.SelectedIndexChanged += MarkEdited;
+            _sqlServerPicker.CustomServerInput.TextChanged += MarkEdited;
+            _sqlServerPicker.PortInput.TextChanged += MarkEdited;
+            _embeddedPathTextBox.TextChanged += MarkEdited;
+            _sqlDatabaseTextBox.TextChanged += MarkEdited;
+            _sqlAuthenticationComboBox.SelectedIndexChanged += MarkEdited;
+            _sqlUserNameTextBox.TextChanged += MarkEdited;
+            _sqlPasswordTextBox.TextChanged += MarkEdited;
+            _sqlEncryptCheckBox.CheckedChanged += MarkEdited;
+            _sqlTrustServerCertificateCheckBox.CheckedChanged += MarkEdited;
+            _embeddedTimeoutNumeric.ValueChanged += MarkEdited;
+            _sqlTimeoutNumeric.ValueChanged += MarkEdited;
+            if (_embeddedCreateDatabaseCheckBox is not null)
+                _embeddedCreateDatabaseCheckBox.CheckedChanged += MarkEdited;
+            if (_sqlCreateDatabaseCheckBox is not null)
+                _sqlCreateDatabaseCheckBox.CheckedChanged += MarkEdited;
+        }
+
+        private static void SetTimeoutValue(NumericUpDown input, int seconds)
+        {
+            input.Value = Math.Clamp(
+                seconds,
+                decimal.ToInt32(input.Minimum),
+                decimal.ToInt32(input.Maximum));
+        }
 
         private TableLayoutPanel CreateEmbeddedPanel(
             EndpointRole role,
@@ -794,8 +924,11 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private readonly MigrationEndpointEditor _destinationEndpoint;
     private readonly HiveButton _refreshButton;
     private readonly HiveButton _migrateButton;
+    private readonly HiveButton _copyDetailsButton;
     private readonly Label _statusLabel;
 
+    private HivePersistenceConfiguration? _savedConfiguration;
+    private string? _lastDiagnosticDetails;
     private HiveStatusTone _statusTone = HiveStatusTone.Neutral;
     private CancellationTokenSource? _operationCts;
     private HiveBootstrapCredentialReference? _createdSourceCredential;
@@ -903,6 +1036,12 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             "Migrate All Data",
             HiveButtonStyle.Primary,
             132);
+        _copyDetailsButton = _editor.AddActionButton(
+            "Copy details",
+            HiveButtonStyle.Secondary,
+            104);
+        _copyDetailsButton.Visible = false;
+        _copyDetailsButton.Click += (_, _) => CopyDiagnosticDetails();
 
         _statusLabel = CreateStatusLabel();
         _editor.FooterPanel.Controls.Add(_statusLabel);
@@ -940,17 +1079,51 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
     private async Task InitializeCoreAsync(CancellationToken cancellationToken)
     {
+        ClearDiagnosticDetails();
         SetStatus(
-            "For a named SQL Server instance, choose Custom... and enter host\\instance; leave Port blank unless you know its fixed TCP port. Review both endpoints, then select Refresh to test readiness before migration.",
+            "Loading saved endpoint settings. Review both endpoints, then select Refresh to test readiness.",
             HiveStatusTone.Information);
 
         try
         {
-            // Opening the tab may discover SQL Server candidates, but it must not
-            // initiate endpoint connection tests. Refresh and migration preflight
-            // remain the explicit readiness-test boundaries.
+            var saved = await _management
+                .GetPersistenceConfigurationAsync(_accessContext, cancellationToken)
+                .ConfigureAwait(true);
+
+            if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+                return;
+
+            if (saved.IsSuccess && saved.Value is { } configuration)
+            {
+                _savedConfiguration = configuration;
+                // Prefill a matching SOURCE editor as a convenience only. Direction
+                // remains user-selected, and the migration request still contains
+                // the two fully explicit, independently editable endpoint values.
+                _sourceEndpoint.ApplyConfiguration(configuration);
+            }
+            else if (saved.IsFailure)
+            {
+                Trace.TraceWarning(
+                    "Could not load saved persistence configuration for migration prefill ({0}).",
+                    saved.Error?.Code ?? "unknown");
+                SetStatus(
+                    "Saved connection settings could not be loaded. Enter the source and destination manually.",
+                    HiveStatusTone.Warning);
+            }
+
+            // Loading settings is not a database connection test. This only
+            // populates visible SQL Server instance choices after saved values.
             await RefreshVisibleSqlServerInstancesAsync(cancellationToken)
                 .ConfigureAwait(true);
+
+            if (!IsDisposed && !Disposing && _lastDiagnosticDetails is null)
+            {
+                SetStatus(
+                    _sourceEndpoint.HasUserEdited
+                        ? "Source settings loaded; review endpoints and select Refresh to test readiness."
+                        : "Saved source settings are prefilled and editable. Select Refresh to test readiness before migration.",
+                    HiveStatusTone.Information);
+            }
         }
         catch (OperationCanceledException)
         {
@@ -958,6 +1131,16 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             // Disposal and caller cancellation are also expected lifecycle events.
             if (cancellationToken.IsCancellationRequested && !IsDisposed && !Disposing)
                 _initializationTask = null;
+        }
+        catch (Exception exception)
+        {
+            Trace.TraceWarning(
+                "Could not initialize Data Migration from saved settings ({0}).",
+                exception.GetType().Name);
+            if (!IsDisposed && !Disposing)
+                SetStatus(
+                    "Saved settings could not be prefilled. Review both endpoints or use Refresh to check readiness.",
+                    HiveStatusTone.Warning);
         }
     }
 
@@ -969,6 +1152,17 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _destinationEndpoint.SqlAuthenticationSelector;
 
     internal Label StatusLabel => _statusLabel;
+
+    internal HiveButton CopyDetailsButton => _copyDetailsButton;
+
+    internal string? LastDiagnosticDetails => _lastDiagnosticDetails;
+
+    internal string SourceDatabaseName => _sourceEndpoint.SqlDatabaseName;
+
+    internal bool SourceEncrypt => _sourceEndpoint.SqlEncrypt;
+
+    internal bool SourceTrustServerCertificate =>
+        _sourceEndpoint.SqlTrustServerCertificate;
 
     internal FlowLayoutPanel FooterPanel => _editor.FooterPanel;
 
@@ -1171,6 +1365,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         if (_busy || IsDisposed || Disposing)
             return;
 
+        ClearDiagnosticDetails();
         try
         {
             await RefreshVisibleSqlServerInstancesAsync(CancellationToken.None)
@@ -1239,6 +1434,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private async Task RefreshStatusAsync(
         CancellationToken cancellationToken)
     {
+        ClearDiagnosticDetails();
         try
         {
             await RefreshVisibleSqlServerInstancesAsync(
@@ -1265,12 +1461,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
             if (sourceTest.IsFailure)
             {
-                SetStatus(
-                    DescribeEndpointFailure(
-                        "Source",
-                        source,
-                        sourceTest.Error!.Message),
-                    HiveStatusTone.Warning);
+                SetEndpointFailure(
+                    "Source",
+                    source,
+                    sourceTest.Error!.Message);
                 return;
             }
 
@@ -1283,9 +1477,11 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
             if (destinationTest.IsFailure)
             {
-                SetStatus(
-                    $"Source: ready. {DescribeEndpointFailure("Destination", destination, destinationTest.Error!.Message)}",
-                    HiveStatusTone.Warning);
+                SetEndpointFailure(
+                    "Destination",
+                    destination,
+                    destinationTest.Error!.Message,
+                    prefix: "Source connection succeeded. ");
                 return;
             }
 
@@ -1319,6 +1515,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private async Task RunMigrationAsync(
         CancellationToken cancellationToken)
     {
+        ClearDiagnosticDetails();
         var source = await BuildEndpointConfigurationAsync(
             _sourceEndpoint,
             EndpointRole.Source,
@@ -1347,12 +1544,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         if (sourcePreflight.IsFailure)
         {
             await CleanupTemporaryCredentialsAsync().ConfigureAwait(true);
-            SetStatus(
-                DescribeEndpointFailure(
-                    "Source",
-                    source,
-                    sourcePreflight.Error!.Message),
-                HiveStatusTone.Error);
+            SetEndpointFailure(
+                "Source",
+                source,
+                sourcePreflight.Error!.Message);
             return;
         }
 
@@ -1366,12 +1561,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         if (destinationPreflight.IsFailure)
         {
             await CleanupTemporaryCredentialsAsync().ConfigureAwait(true);
-            SetStatus(
-                DescribeEndpointFailure(
-                    "Destination",
-                    destination,
-                    destinationPreflight.Error!.Message),
-                HiveStatusTone.Error);
+            SetEndpointFailure(
+                "Destination",
+                destination,
+                destinationPreflight.Error!.Message);
             return;
         }
 
@@ -1432,7 +1625,53 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             _ => $"persistence backend '{configuration.Backend}'"
         };
 
-        return $"{role} preflight failed for {endpointDescription}: {failureMessage}";
+        return $"{role} endpoint: {endpointDescription}{Environment.NewLine}Diagnostic: {failureMessage}";
+    }
+
+    private void SetEndpointFailure(
+        string role,
+        HivePersistenceConfiguration configuration,
+        string failureMessage,
+        string prefix = "")
+    {
+        _lastDiagnosticDetails = DescribeEndpointFailure(role, configuration, failureMessage);
+        _copyDetailsButton.Visible = true;
+        _copyDetailsButton.Enabled = true;
+        SetStatus(
+            $"{prefix}{role} connection failed. Click Copy details to copy the diagnostic.",
+            HiveStatusTone.Error);
+        UpdateFooterStatusWidth();
+    }
+
+    private void ClearDiagnosticDetails()
+    {
+        _lastDiagnosticDetails = null;
+        _copyDetailsButton.Visible = false;
+        _copyDetailsButton.Enabled = false;
+        UpdateFooterStatusWidth();
+    }
+
+    private void CopyDiagnosticDetails()
+    {
+        if (string.IsNullOrWhiteSpace(_lastDiagnosticDetails))
+            return;
+
+        try
+        {
+            Clipboard.SetText(_lastDiagnosticDetails);
+            SetStatus(
+                "Diagnostic details copied. Paste them into your message.",
+                HiveStatusTone.Information);
+        }
+        catch (Exception exception)
+        {
+            Trace.TraceWarning(
+                "Could not copy SQL endpoint diagnostics ({0}).",
+                exception.GetType().Name);
+            SetStatus(
+                "Clipboard unavailable. Try again after closing other clipboard operations.",
+                HiveStatusTone.Warning);
+        }
     }
 
     private async Task<HivePersistenceConfiguration> BuildEndpointConfigurationAsync(
@@ -1464,7 +1703,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
         HiveBootstrapCredentialReference? credential =
             role == EndpointRole.Source
-                ? _createdSourceCredential
+                ? _createdSourceCredential ?? endpoint.ReusableBootstrapCredential
                 : _createdDestinationCredential;
 
         if (endpoint.SqlAuthentication == HiveSqlAuthenticationMode.SqlPassword)
@@ -1686,6 +1925,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     {
         var buttonWidth = _editor.FooterPanel.Controls
             .OfType<HiveButton>()
+            .Where(static button => button.Visible)
             .Sum(static button => button.Width + button.Margin.Horizontal + 8);
 
         _statusLabel.Width = Math.Max(
