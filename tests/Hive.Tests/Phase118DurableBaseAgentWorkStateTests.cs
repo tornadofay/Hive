@@ -378,44 +378,44 @@ public sealed class Phase118DurableBaseAgentWorkStateTests
         {
             database.Reset();
 
-        var migration = new HiveDatabaseMigrator(database.Options)
-            .MigrateAsync()
-            .GetAwaiter()
-            .GetResult();
+            var migration = new HiveDatabaseMigrator(database.Options)
+                .MigrateAsync()
+                .GetAwaiter()
+                .GetResult();
 
-        Assert.True(migration.IsSuccess, migration.Error?.Message);
+            Assert.True(migration.IsSuccess, migration.Error?.Message);
 
-        var now = new DateTimeOffset(
-            2026,
-            10,
-            7,
-            7,
-            0,
-            0,
-            TimeSpan.Zero);
+            var now = new DateTimeOffset(
+                2026,
+                10,
+                7,
+                7,
+                0,
+                0,
+                TimeSpan.Zero);
 
-        var clock = new FixedClock(now);
-        var deployment = DeploymentId.New();
-        var tenant = TenantId.New();
-        var principal = PrincipalId.New();
+            var clock = new FixedClock(now);
+            var deployment = DeploymentId.New();
+            var tenant = TenantId.New();
+            var principal = PrincipalId.New();
 
-        var agent = CreateAgent(
-            deployment,
-            tenant,
-            principal,
-            clock);
+            var agent = CreateAgent(
+                deployment,
+                tenant,
+                principal,
+                clock);
 
-        var stores = HiveAgentWorkPersistence.CreateSql(
-            database.Options,
-            clock);
+            var stores = HiveAgentWorkPersistence.CreateSql(
+                database.Options,
+                clock);
 
-        var runtimeId = RuntimeId.New();
+            var runtimeId = RuntimeId.New();
 
-        var runtime = agent.CreateRuntimeInstance(
-            now,
-            clock: clock,
-            workStores: stores,
-            runtimeId: runtimeId);
+            var runtime = agent.CreateRuntimeInstance(
+                now,
+                clock: clock,
+                workStores: stores,
+                runtimeId: runtimeId);
 
             return new Fixture(
                 database,
