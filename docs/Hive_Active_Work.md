@@ -399,3 +399,14 @@ Developer verification remains required. The assistant has not run a build, test
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
 Tests to run: `HiveSqlServerInstanceDiscoveryTests` and `HiveUiPolishTests`; then the full `Hive.Tests` suite and a zero-warning build under the repository's Treat-Warnings-as-Errors configuration. Manually verify that opening global Settings/Overview does not start discovery; Persistence renders without waiting for network enumeration; local results appear before network results; spinner/status transitions are correct; timeout/failure retain partial results and allow Custom entry; edits and explicit ports survive late results; and the named-instance Windows-integrated connection still succeeds.
+
+### Compilation failure — 2026-10-09 discovery coordinator default delay
+
+Developer-reported compiler errors at `src/Hive.Host.WinForms/HiveSqlServerInstanceDiscovery.cs:79`:
+
+- `CS1002`, `CS1525`, `CS0106`, `CS0246`, and `CS0103` around `_delay = delay ?? static (duration, token) => Task.Delay(duration, token);`.
+
+This is a same-slice C# syntax failure in the default injected-delay expression. The lambda following the null-coalescing operator must be parenthesized. It does not authorize additional discovery behavior, Slice 6, or 1.19.
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
