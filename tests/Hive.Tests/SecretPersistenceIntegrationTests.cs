@@ -12,7 +12,7 @@ public sealed class SecretPersistenceIntegrationTests
     [Fact]
     public async Task SecretStore_CreateReadReplaceDelete_EnforcesProtectionAuthorizationAndConcurrency()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_SecretStore");
+        using var database = new PersistenceTestDatabase("Hive_Test_SecretStore");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options)
@@ -185,7 +185,7 @@ public sealed class SecretPersistenceIntegrationTests
     [Fact]
     public async Task SecretStore_RefusesDeletionWhileProviderAccountReferencesSecret()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_SecretInUse");
+        using var database = new PersistenceTestDatabase("Hive_Test_SecretInUse");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
