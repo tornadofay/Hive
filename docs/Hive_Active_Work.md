@@ -644,3 +644,21 @@ No build or tests have been run by the assistant. Rerun `HiveUiPolishTests`, the
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
 Tests to run: `HiveUiPolishTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
+
+### Verification result — 2026-10-09 deterministic layout-test correction
+
+Developer rerun after commit `c350d92`:
+
+- Full `Hive.Tests`: **777 passed, 0 failed, 0 skipped** in 2.6 minutes on .NET 10.0.1.
+- The developer reports the Example Host workflow works correctly now.
+- The previously failing `HivePersistenceDataMigration_UsesCompactEndpointLayoutAndNamedInstanceResolution` test is included in the passing full suite.
+
+The single failing assertion was resolved by making the UI test stop its own pending discovery wait before applying deterministic custom-instance fixture data. No production UI behavior was changed by that correction.
+
+Current state: **VERIFICATION PENDING**.
+
+The full test suite and Example Host workflow are now reported successful. The user has not separately reported the Treat Warnings as Errors / zero-warning build result or supplied migration-specific confirmation of source immutability, destination verification, and no implicit destination activation after the latest quiescence wiring. Confirm those remaining Slice 5 verification points before closure; do not repeat the successful full suite or Example UI workflow unless the remaining checks uncover a regression.
+
+Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
+
+Tests to run: no test rerun is currently requested; report the Treat Warnings as Errors / zero-warning build result and confirm the relevant real-endpoint migration safety checks.
