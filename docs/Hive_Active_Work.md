@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Status: **VERIFICATION PENDING**
 
 ## Phase 1.18A Slice 6 — Cross-Backend Hardening, Full Regression & Closure
 
@@ -104,6 +104,12 @@ The earlier 780/780 test result predates this remediation and does not verify th
 The developer reports two CS0122 compile errors in `tests/Hive.Tests/HivePersistenceDataMigrationTests.cs` (lines 63 and 70): `HivePersistenceMigrationManagementService` is inaccessible due to its protection level. The new test directly calls an internal Management implementation type from the test assembly. This is a same-slice regression introduced by the diagnostic remediation, not a reason to widen the production type's visibility.
 
 Remediation boundary: remove the test's direct dependency on the internal service class and verify the sanitization behavior through an already-public Management contract if practical; otherwise remove that invalid test rather than exposing an internal service as public. Keep coverage for the safe diagnostic mapping, and add/retain an accessible regression for the management/UI boundary if it can be done using existing public contracts. No unrelated API/visibility expansion is authorized. This compile failure is recorded before further source changes.
+
+### Compile correction — 2026-10-09
+
+Added `src/Hive.Management/AssemblyInfo.cs` with `InternalsVisibleTo("Hive.Tests")`, following the established test-access pattern used by other implementation assemblies. This enables the focused internal sanitization test without making `HivePersistenceMigrationManagementService` public or changing the runtime/public API. Correction evidence: [compile-correction record](verification/phase-1/1.18A-slice-6-compile-correction-2026-10-09.md).
+
+**Current state: VERIFICATION PENDING.** This correction has not been compiled or tested by the assistant. The targeted tests, full test suite, and affected warnings-as-errors builds listed below must be run against the current checkpoint; then repeat the reported Embedded → SQL Server migration using Copy details if it still fails.
 
 ### Remaining closure evidence
 
