@@ -400,7 +400,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
                                      "localhost",
                                      StringComparison.OrdinalIgnoreCase) ||
                                  choice.DisplayName.StartsWith(
-                                     @"localhost\\",
+                                     @"localhost\",
                                      StringComparison.OrdinalIgnoreCase)));
 
                     if (localInstance is not null)
@@ -432,7 +432,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
                                  "localhost",
                                  StringComparison.OrdinalIgnoreCase) ||
                              choice.DisplayName.StartsWith(
-                                 @"localhost\\",
+                                 @"localhost\",
                                  StringComparison.OrdinalIgnoreCase)));
 
                 _serverComboBox.SelectedItem =
