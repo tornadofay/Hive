@@ -574,3 +574,20 @@ The user manually inspected the Data Migration page and reported three remaining
 These are the final reported Slice 5 presentation defects. Same-slice remediation is authorized only for these layout issues and their focused regression coverage. Do not start Slice 6 or 1.19. Preserve existing endpoint behavior, copyable diagnostics, and explicit migration configuration.
 
 Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+### Remediation completed — final Data Migration layout corrections
+
+- Removed the Direction selector clipping by raising its dedicated FieldsPanel row from 64 to 72 logical pixels. The selector remains explicitly non-auto-sized at the field level; the parent row now provides enough room for the 21-pixel label, 36-pixel control, and bottom margin.
+- Made the SQL Server instance picker retain `AutoSize` / `GrowAndShrink` through its field block, so choosing `Custom...` can reveal the server/instance row and discovery status without the picker being clamped to 36 pixels and clipped.
+- Removed fixed widths from the SQL Server, Database, Authentication, SQL user/password, and Connection Security field blocks where the available endpoint-card width should govern sizing. Reduced field/grid gaps and enabled wrapping for the Connection Security row. This preserves the same fields and operation behavior while preventing typical half-width cards from forcing controls outside their layout bounds.
+- Set the Embedded database-file textbox's `AutoSize` to `true` while retaining `DockStyle.Fill` and the adjacent Browse button.
+- Extended `HivePersistenceDataMigration_UsesCompactEndpointLayoutAndNamedInstanceResolution` to check the Direction selector's vertical bounds, custom named-instance picker auto-sizing/expanded row, and Embedded path textbox AutoSize/available width.
+- Updated `docs/ui/forms.md` and `docs/architecture/v1-host-and-management.md` with the corrected compact/responsive layout contract.
+
+Current state: **VERIFICATION PENDING**.
+
+No build, automated tests, or Example Host launch were run by the assistant. Rebuild `Hive.Host.WinForms`, `Hive.Host.WinForms.UI`, and `Hive.Tests` with Treat Warnings as Errors. Run `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, `HiveSqlServerInstanceDiscoveryTests`, and `HivePersistenceErrorTests`, then the full `Hive.Tests` suite. Manually verify the Direction selector is fully visible, the SQL custom-instance row and all controls remain inside both endpoint cards, and the Embedded database-file textbox grows across its row with Browse beside it.
+
+Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
+
+Tests to run: `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, `HiveSqlServerInstanceDiscoveryTests`, and `HivePersistenceErrorTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
