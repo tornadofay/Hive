@@ -16,7 +16,7 @@ internal static class SqlTestDatabaseLifecycle
     private const string OwnershipPropertyName = "Hive.Tests.Ownership";
     private static readonly TimeSpan StaleDatabaseAge = TimeSpan.FromHours(24);
     private static readonly Regex OwnedDatabaseNamePattern = new(
-        @"^Hive_TestOwned_(?<created>\d{14})_(?<run>[0-9A-F]{8})_(?<token>[0-9A-F]{8})_(?<label>[A-Za-z0-9_]{1,40})$",
+        @"^Hive_TestOwned_(?<created>\d{14})_(?<run>[0-9A-F]{8})_(?<token>[0-9A-F]{32})_(?<label>[A-Za-z0-9_]{1,40})$",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     private static readonly Guid CurrentRunId = Guid.NewGuid();
@@ -45,7 +45,7 @@ internal static class SqlTestDatabaseLifecycle
                 "yyyyMMddHHmmss",
                 CultureInfo.InvariantCulture);
             var runToken = CurrentRunId.ToString("N")[..8].ToUpperInvariant();
-            var databaseToken = ownershipToken.ToString("N")[..8].ToUpperInvariant();
+            var databaseToken = ownershipToken.ToString("N").ToUpperInvariant();
             var databaseName = $"{ReservedPrefix}{timestamp}_{runToken}_{databaseToken}_{label}";
             var marker = CreateOwnershipMarker(CurrentRunId, ownershipToken, timestamp);
 
@@ -217,7 +217,7 @@ internal static class SqlTestDatabaseLifecycle
                    match.Groups["run"].Value,
                    StringComparison.OrdinalIgnoreCase)
             && string.Equals(
-                   ownershipToken.ToString("N")[..8],
+                   ownershipToken.ToString("N"),
                    match.Groups["token"].Value,
                    StringComparison.OrdinalIgnoreCase)
             && string.Equals(parts[3], createdAt, StringComparison.Ordinal);
