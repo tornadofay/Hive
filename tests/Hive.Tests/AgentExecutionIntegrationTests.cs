@@ -1623,7 +1623,7 @@ public sealed class AgentExecutionIntegrationTests
     private static async Task<PersistenceTestDatabase> PrepareDatabase(
         string name)
     {
-        using var database = new PersistenceTestDatabase(name);
+        var database = new PersistenceTestDatabase(name);
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options)
