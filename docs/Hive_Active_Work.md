@@ -303,7 +303,7 @@ Developer rerun is required against the corrected source. Manual verification mu
 
 The developer reports that after the prior remediation, the first opening of Persistence still incurs excessive painting/nested layout, and the SQL Server connection using their existing Windows-integrated endpoint fails:
 
-`Server=localhost\\MSSQLSERVER01;Database=Hive-Hive.Example.WinForms;Trusted_Connection=True;`
+`Server=localhost\MSSQLSERVER01;Database=Hive-Hive.Example.WinForms;Trusted_Connection=True;`
 
 Requested same-slice UI corrections:
 
@@ -318,8 +318,8 @@ Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 
 ### Remediation completed — 2026-10-09 persistence layout, first paint, and SQL Server connection
 
-- The SQL Server picker now tracks whether port 1433 was supplied automatically or explicitly. For the selected/typed Custom endpoint, an automatically populated 1433 is removed once the server name contains a named-instance separator (`\\`); explicitly typed ports remain unchanged.
-- Removed constructor-level forced `Port = 1433` assignments from both Database Setup and Data Migration. The picker owns its defaulting behavior, so named instances are not transformed into `localhost\\MSSQLSERVER01,1433` by a generic port default.
+- The SQL Server picker now tracks whether port 1433 was supplied automatically or explicitly. For the selected/typed Custom endpoint, an automatically populated 1433 is removed once the server name contains a named-instance separator (`\`); explicitly typed ports remain unchanged.
+- Removed constructor-level forced `Port = 1433` assignments from both Database Setup and Data Migration. The picker owns its defaulting behavior, so named instances are not transformed into `localhost\MSSQLSERVER01,1433` by a generic port default.
 - The Settings page normalizes the legacy persisted combination of named instance + port 1433 on load because older versions stored the picker's generic default. Users can still explicitly enter a port in the editor when a named instance is deliberately configured for one.
 - The Custom server TextBox and its TableLayoutPanel row now auto-size together. The Embedded database-path TextBox and its Browse row also auto-size naturally; Browse is aligned to the compact 32px field row.
 - Reduced first-open layout/repaint work by removing duplicate theme application from the Persistence view and picker constructors, applying a Settings page's theme while it is detached before attaching it onscreen, and suspending nested layout panels while their child controls are added.
