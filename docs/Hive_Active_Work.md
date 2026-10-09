@@ -657,8 +657,8 @@ The single failing assertion was resolved by making the UI test stop its own pen
 
 Current state: **VERIFICATION PENDING**.
 
-The full test suite and Example Host workflow are now reported successful. The user has not separately reported the Treat Warnings as Errors / zero-warning build result or supplied migration-specific confirmation of source immutability, destination verification, and no implicit destination activation after the latest quiescence wiring. Confirm those remaining Slice 5 verification points before closure; do not repeat the successful full suite or Example UI workflow unless the remaining checks uncover a regression.
+The full test suite and Example Host workflow are reported successful. The developer has now confirmed a successful build with Treat Warnings as Errors enabled and zero warnings. Still required before Slice 5 closure: migration-specific confirmation after the latest quiescence wiring that the source remains unchanged, the destination is verified, and the destination is not implicitly activated. Do not repeat the successful full suite or Example UI workflow unless the remaining migration checks uncover a regression.
 
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
-Tests to run: no test rerun is currently requested; report the Treat Warnings as Errors / zero-warning build result and confirm the relevant real-endpoint migration safety checks.
+Tests to run: no test rerun is currently requested; complete the relevant real-endpoint migration safety checks and report source immutability, destination verification, and no implicit destination activation.
