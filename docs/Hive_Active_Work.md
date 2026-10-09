@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION PENDING**
+Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
 
 ## Phase 1.18A Slice 6 — Cross-Backend Hardening, Full Regression & Closure
 
@@ -98,6 +98,12 @@ The earlier 780/780 test result predates this remediation and does not verify th
 - The full `Hive.Tests` suite.
 - All affected builds with Visual Studio **Treat Warnings as Errors** enabled and zero warnings.
 - The reported Embedded → SQL Server migration against the intended renamed database. If it still fails, use **Copy details** and provide the new diagnostic; it now includes a curated SQL error number and endpoint context without credentials or raw connection strings.
+
+### Developer-reported compile failure — 2026-10-09
+
+The developer reports two CS0122 compile errors in `tests/Hive.Tests/HivePersistenceDataMigrationTests.cs` (lines 63 and 70): `HivePersistenceMigrationManagementService` is inaccessible due to its protection level. The new test directly calls an internal Management implementation type from the test assembly. This is a same-slice regression introduced by the diagnostic remediation, not a reason to widen the production type's visibility.
+
+Remediation boundary: remove the test's direct dependency on the internal service class and verify the sanitization behavior through an already-public Management contract if practical; otherwise remove that invalid test rather than exposing an internal service as public. Keep coverage for the safe diagnostic mapping, and add/retain an accessible regression for the management/UI boundary if it can be done using existing public contracts. No unrelated API/visibility expansion is authorized. This compile failure is recorded before further source changes.
 
 ### Remaining closure evidence
 
