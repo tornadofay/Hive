@@ -581,7 +581,7 @@ Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 - Made the SQL Server instance picker retain `AutoSize` / `GrowAndShrink` through its field block, so choosing `Custom...` can reveal the server/instance row and discovery status without the picker being clamped to 36 pixels and clipped.
 - Removed fixed widths from the SQL Server, Database, Authentication, SQL user/password, and Connection Security field blocks where the available endpoint-card width should govern sizing. Reduced field/grid gaps and enabled wrapping for the Connection Security row. This preserves the same fields and operation behavior while preventing typical half-width cards from forcing controls outside their layout bounds.
 - Set the Embedded database-file textbox's `AutoSize` to `true` while retaining `DockStyle.Fill` and the adjacent Browse button.
-- Extended `HivePersistenceDataMigration_UsesCompactEndpointLayoutAndNamedInstanceResolution` to check the Direction selector's vertical bounds, custom named-instance picker auto-sizing/expanded row, and Embedded path textbox AutoSize/available width.
+- Extended `HivePersistenceDataMigration_UsesCompactEndpointLayoutAndNamedInstanceResolution` to check the Direction selector's vertical bounds, custom named-instance picker auto-sizing/expanded row and width bounds, the Database/Authentication row bounds, and Embedded path textbox AutoSize/available width.
 - Updated `docs/ui/forms.md` and `docs/architecture/v1-host-and-management.md` with the corrected compact/responsive layout contract.
 
 Current state: **VERIFICATION PENDING**.
