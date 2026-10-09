@@ -710,6 +710,57 @@ public sealed class HiveHostCompositionTests
     }
 
     [Fact]
+    public async Task GraphFactory_WiresMigrationQuiescenceForSqlServerGraph()
+    {
+        var configuration = new HivePersistenceConfiguration(
+            HivePersistenceBackend.SqlServer,
+            "localhost",
+            1433,
+            "Hive_HostFactory_MigrationGate",
+            HiveSqlAuthenticationMode.WindowsIntegrated,
+            null,
+            null,
+            encrypt: true,
+            trustServerCertificate: true,
+            createDatabaseIfMissing: false);
+        var factory = new HiveHostServiceGraphFactory(
+            new TrackingBootstrapCredentialStore(),
+            new InMemoryConfigurationStore(configuration));
+        var result = await factory.CreateAsync(configuration);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        using var graph = result.Value!;
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        // Same-backend requests are rejected by migration validation. Receiving
+        // this validation error proves host composition supplied the real gate;
+        // without it the facade reports quiescence-unavailable instead.
+        var migration = await graph.Management.MigratePersistenceDataAsync(
+            new HivePersistenceMigrationRequest(
+                configuration,
+                new HivePersistenceConfiguration(
+                    HivePersistenceBackend.SqlServer,
+                    "localhost",
+                    1433,
+                    "Hive_HostFactory_MigrationGate_Destination",
+                    HiveSqlAuthenticationMode.WindowsIntegrated,
+                    null,
+                    null,
+                    encrypt: true,
+                    trustServerCertificate: true,
+                    createDatabaseIfMissing: false)),
+            context);
+
+        Assert.False(migration.IsSuccess);
+        Assert.Equal(
+            "hive.management.persistence-migration.backend-direction-invalid",
+            migration.Error!.Code);
+    }
+
+    [Fact]
     public async Task GraphFactory_SanitizesBootstrapResolutionErrors()
     {
         var configuration = new HivePersistenceConfiguration(
