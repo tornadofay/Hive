@@ -26,7 +26,7 @@ public sealed class HivePersistenceDataMigrationTests
                 "hive.db"));
         var destinationConfiguration = new HivePersistenceConfiguration(
             HivePersistenceBackend.SqlServer,
-            @"localhost\\MSSQLSERVER01",
+            @"localhost\MSSQLSERVER01",
             null,
             "Hive_Renamed",
             HiveSqlAuthenticationMode.WindowsIntegrated,
@@ -44,14 +44,39 @@ public sealed class HivePersistenceDataMigrationTests
             errorClass: 16);
 
         Assert.Contains("destination SQL Server endpoint", details);
-        Assert.Contains("localhost\\\\MSSQLSERVER01", details);
+        Assert.Contains("localhost\\MSSQLSERVER01", details);
         Assert.Contains("database 'Hive_Renamed'", details);
         Assert.Contains($"SQL error {sqlErrorNumber}", details);
         Assert.Contains(expectedGuidance, details);
-        Assert.DoesNotContain("Password=", details, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("User ID=", details, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("Trusted_Connection=", details, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("Initial Catalog=", details, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Password=", details);
+        Assert.DoesNotContain("User ID=", details);
+        Assert.DoesNotContain("Trusted_Connection=", details);
+        Assert.DoesNotContain("Initial Catalog=", details);
+    }
+
+    [Fact]
+    public void ManagementMigrationErrorSanitization_PreservesOnlyCuratedSqlDiagnostics()
+    {
+        const string safeDiagnostic =
+            "The destination SQL Server endpoint 'localhost\\\\MSSQLSERVER01', database 'Hive_Renamed' failed during migration (SQL error 911, state 1, class 16). Verify the configured database name.";
+
+        var curated = HivePersistenceMigrationManagementService.SanitizeMigrationExecutionError(
+            new Error(
+                "hive.persistence.data-migration.sql-failure",
+                ErrorCategory.External,
+                safeDiagnostic));
+        Assert.Equal(safeDiagnostic, curated.Message);
+
+        var uncurated = HivePersistenceMigrationManagementService.SanitizeMigrationExecutionError(
+            new Error(
+                "hive.persistence.data-migration.failed",
+                ErrorCategory.External,
+                "Sensitive raw exception details"));
+
+        Assert.Equal(
+            "Hive persistence data migration could not be completed safely.",
+            uncurated.Message);
+        Assert.DoesNotContain("Sensitive", uncurated.Message);
     }
 
     [Fact]
