@@ -103,8 +103,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             _embeddedPathTextBox.Text = DefaultEmbeddedPath();
             _sqlDatabaseTextBox.Text =
                 HivePersistenceConfiguration.BuildDatabaseName(_applicationName);
-            _sqlServerPicker.Port = 1433;
-            _sqlAuthenticationComboBox.SelectedItem =
+                        _sqlAuthenticationComboBox.SelectedItem =
                 HiveSqlAuthenticationMode.WindowsIntegrated;
 
             _themeManager.ThemeChanged += ThemeManagerOnChanged;
