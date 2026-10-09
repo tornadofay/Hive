@@ -1141,27 +1141,16 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Margin = Padding.Empty
         };
 
-        var autoSizedContainer = editor is
-            TableLayoutPanel or Panel or FlowLayoutPanel or HiveSqlServerInstancePicker;
+        var autoSizedContainer =
+            editor is Panel || editor is HiveSqlServerInstancePicker;
 
         editor.AutoSize = autoSizedContainer;
         editor.Margin = Padding.Empty;
 
-        switch (editor)
-        {
-            case TableLayoutPanel table:
-                table.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-                break;
-            case Panel panel:
-                panel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-                break;
-            case FlowLayoutPanel flow:
-                flow.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-                break;
-            case HiveSqlServerInstancePicker picker:
-                picker.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-                break;
-        }
+        if (editor is Panel panel)
+            panel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        else if (editor is HiveSqlServerInstancePicker picker)
+            picker.AutoSizeMode = AutoSizeMode.GrowAndShrink;
 
         if (editorWidth is > 0)
         {
