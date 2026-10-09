@@ -3,8 +3,8 @@ using Hive.Core;
 namespace Hive.Management;
 
 /// <summary>
-/// Drains in-flight Management facade operations and rejects new operations
-/// while a persistence migration owns the exclusive lease.
+/// Coordinates ordinary Management operations with exclusive persistence migration
+/// and graph-retirement leases.
 /// </summary>
 public sealed class HiveManagementOperationGate :
     IHiveManagementOperationGate,
@@ -87,8 +87,8 @@ public sealed class HiveManagementOperationGate :
 
     /// <summary>
     /// Permanently prevents new ordinary Management calls and queued migrations from
-    /// starting after the current exclusive lease is released. The caller must first
-    /// acquire the retirement lease so admitted operations have drained.
+    /// starting. Online graph retirement calls this while holding the retirement lease;
+    /// synchronous process shutdown may close admission before immediate disposal.
     /// </summary>
     public void CloseAdmission()
     {
