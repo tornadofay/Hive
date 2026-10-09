@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **IN PROGRESS**
+Status: **VERIFICATION PENDING**
 
 ## Phase 1.18A Slice 6 — Cross-Backend Hardening, Full Regression & Closure
 
@@ -50,10 +50,29 @@ Slice 6 closes only when all of the following are evidenced:
 - The required Example Host scenario is manually exercised for Embedded first-run initialization, reopen/restart durability, Database Setup, Data Migration in both directions, full-data verification, failure/preflight behavior, secret safety, explicit backend activation, and retained SQL Server configuration.
 - Current Status, Active Work, the relevant phase plan/architecture guidance if needed, and a dated verification archive accurately reflect the final developer evidence. Phase 1.18A is not marked complete before this gate passes.
 
-### Initial inspection checkpoint
+### Implementation and review checkpoint — 2026-10-09
 
-No Slice 6 source edits, builds, automated tests, database operations, or Example Host launches have been performed by the assistant at activation. The next step is source/test inspection to identify concrete, prioritized gaps before implementation.
+The first Slice 6 implementation pass makes these bounded changes:
+
+- Full-data migration now uses `CancellationToken.None` for each explicit destination rollback path. Caller cancellation remains effective for transfer work, but cannot also cancel an explicit rollback attempt.
+- Strengthened `Migration_RollsBackDestinationWhenTransferFails`: the deterministic Embedded trigger now fails on the ExecutionTarget insert, after Provider and ProviderAccount rows have been inserted in the same destination transaction. The regression asserts all migration data tables remain empty after failure.
+- Added `EmbeddedDatabase_ReopenPreservesCurrentDurableState`. It closes one Embedded database instance and reopens the same file through a new instance, then verifies the current schema and durable Provider / ProviderAccount / ExecutionTarget relationships, favorites, AgentDefinition target binding, WorkItem attachment bytes, event/snapshot/outbox state, and Base-Agent objective/memory.
+- Added an async retirement lifecycle for published host graphs. Online recomposition now awaits the previous graph's `DisposeAsync`; the graph acquires an exclusive retirement lease, stops admission before waiting, drains active Management operations, rejects queued migrations against the retired graph, then disposes Management and its owned persistence resources. Both SQL Server and Embedded graph factories pass the same per-graph operation gate to graph ownership. The synchronous shutdown path remains non-blocking and uses immediate disposal.
+- Added focused regressions for Management-gate retirement / queued-migration rejection and for host composition waiting to dispose old graph resources until registered operations drain.
+- Updated persistence and host lifecycle architecture guidance before the structural lifecycle changes.
+
+### Verification boundary — initial Slice 6 implementation pass
+
+Current state: **VERIFICATION PENDING**.
+
+No build, automated test, database migration, or Example Host launch has been run by the assistant after these changes. Static source review only; compilation and runtime behavior are not verified here.
+
+Developer rerun required:
+- Build `Hive.Management`, `Hive.Persistence`, `Hive.Host.WinForms`, and `Hive.Tests` with Visual Studio **Treat Warnings as Errors** enabled and zero warnings.
+- Run `HivePersistenceDataMigrationTests`, `EmbeddedPersistenceParityTests`, and `HiveHostCompositionTests`.
+- Run `EmbeddedPersistenceFoundationTests`, `HivePersistenceIntegrationTests`, `SecretPersistenceIntegrationTests`, and `HivePersistenceErrorTests`; then run the full `Hive.Tests` suite.
+- In the Example Host, exercise Persistence graph replacement and confirm that a live operation is allowed to finish before old stores are disposed; confirm normal settings flow still works after replacement. Reconfirm both Data Migration directions after the operation-gate retirement changes, including source immutability, destination verification, secret re-protection/readability, and no automatic destination activation. Complete the Slice 6 manual gate for Embedded first-run, close/reopen/restart durability, both migration directions, invalid/preflight/failure behavior, explicit activation, and retained SQL Server support.
 
 Example to run: `Persistence / Data Migration / Full-Data Migration / SQL Server ↔ Embedded` — `Hive.Example.WinForms`
 
-Tests to run: `EmbeddedPersistenceFoundationTests`, `EmbeddedPersistenceParityTests`, `HivePersistenceDataMigrationTests`, `HivePersistenceIntegrationTests`, `HiveHostCompositionTests`, `SecretPersistenceIntegrationTests`, `HivePersistenceErrorTests`; broader-suite requirement: full `Hive.Tests` and a zero-warning developer build.
+Tests to run: `HivePersistenceDataMigrationTests`, `EmbeddedPersistenceParityTests`, `HiveHostCompositionTests`, `EmbeddedPersistenceFoundationTests`, `HivePersistenceIntegrationTests`, `SecretPersistenceIntegrationTests`, and `HivePersistenceErrorTests`; broader-suite requirement: full `Hive.Tests` and a zero-warning developer build.
