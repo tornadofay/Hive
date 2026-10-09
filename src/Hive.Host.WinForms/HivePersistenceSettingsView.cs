@@ -195,9 +195,17 @@ internal sealed class HivePersistenceSettingsView : UserControl
             _updatingBackendSelection = false;
         }
 
-        AddEditorSection(backendSection);
-        AddEditorSection(_embeddedSection);
-        AddEditorSection(_sqlSection);
+        _editor.FieldsPanel.SuspendLayout();
+        try
+        {
+            AddEditorSection(backendSection);
+            AddEditorSection(_embeddedSection);
+            AddEditorSection(_sqlSection);
+        }
+        finally
+        {
+            _editor.FieldsPanel.ResumeLayout(false);
+        }
 
         _tabs = new HiveTabControl
         {
@@ -1048,24 +1056,32 @@ internal sealed class HivePersistenceSettingsView : UserControl
     {
         var field = CreateVerticalStack();
         field.Margin = new Padding(0, 0, 0, 8);
-        field.Controls.Add(
-            new Label
-            {
-                Text = title,
-                Dock = DockStyle.Fill,
-                AutoSize = false,
-                Height = 20,
-                Font = new Font(
-                    SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
-                    FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleLeft,
-                Margin = Padding.Empty
-            });
+        field.SuspendLayout();
+        try
+        {
+            field.Controls.Add(
+                new Label
+                {
+                    Text = title,
+                    Dock = DockStyle.Fill,
+                    AutoSize = false,
+                    Height = 20,
+                    Font = new Font(
+                        SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
+                        FontStyle.Bold),
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Margin = Padding.Empty
+                });
 
-        checkBox.AutoSize = true;
-        checkBox.Anchor = AnchorStyles.Left;
-        checkBox.Margin = new Padding(0, 5, 0, 0);
-        field.Controls.Add(checkBox);
+            checkBox.AutoSize = true;
+            checkBox.Anchor = AnchorStyles.Left;
+            checkBox.Margin = new Padding(0, 5, 0, 0);
+            field.Controls.Add(checkBox);
+        }
+        finally
+        {
+            field.ResumeLayout(false);
+        }
 
         return field;
     }
@@ -1169,107 +1185,119 @@ internal sealed class HivePersistenceSettingsView : UserControl
         };
         block.RowStyles.Add(new RowStyle(SizeType.Absolute, 20f));
         block.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        block.SuspendLayout();
 
-        var label = new Label
+        try
         {
-            Text = title,
-            Dock = DockStyle.Fill,
-            AutoSize = false,
-            Height = 20,
-            Font = new Font(
-                SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
-                FontStyle.Bold),
-            TextAlign = ContentAlignment.MiddleLeft,
-            Margin = Padding.Empty
-        };
-
-        var autoSizedContainer =
-            editor is Panel || editor is HiveSqlServerInstancePicker;
-
-        editor.AutoSize = autoSizedContainer;
-        editor.Margin = Padding.Empty;
-
-        if (editor is Panel panel)
-            panel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        else if (editor is HiveSqlServerInstancePicker picker)
-            picker.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-
-        if (editorWidth is > 0)
-        {
-            editor.Dock = DockStyle.Fill;
-            editor.Width = editorWidth.Value;
-
-            if (autoSizedContainer)
+            var label = new Label
             {
-                var minimumHeight = Math.Max(34, editor.MinimumSize.Height);
-                editor.MinimumSize = new Size(editorWidth.Value, minimumHeight);
+                Text = title,
+                Dock = DockStyle.Fill,
+                AutoSize = false,
+                Height = 20,
+                Font = new Font(
+                    SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
+                    FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = Padding.Empty
+            };
 
-                var containerHost = new Panel
+            var autoSizedContainer =
+                editor is Panel || editor is HiveSqlServerInstancePicker;
+
+            editor.AutoSize = autoSizedContainer;
+            editor.Margin = Padding.Empty;
+
+            if (editor is Panel panel)
+                panel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            else if (editor is HiveSqlServerInstancePicker picker)
+                picker.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+
+            if (editorWidth is > 0)
+            {
+                editor.Dock = DockStyle.Fill;
+                editor.Width = editorWidth.Value;
+
+                if (autoSizedContainer)
+                {
+                    var minimumHeight = Math.Max(34, editor.MinimumSize.Height);
+                    editor.MinimumSize = new Size(editorWidth.Value, minimumHeight);
+
+                    var containerHost = new Panel
+                    {
+                        Dock = DockStyle.Left,
+                        AutoSize = true,
+                        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                        Width = editorWidth.Value,
+                        MinimumSize = new Size(editorWidth.Value, minimumHeight),
+                        MaximumSize = new Size(editorWidth.Value, 0),
+                        Margin = Padding.Empty,
+                        Padding = Padding.Empty
+                    };
+                    containerHost.SuspendLayout();
+                    containerHost.Controls.Add(editor);
+                    containerHost.ResumeLayout(false);
+                    block.Controls.Add(label, 0, 0);
+                    block.Controls.Add(containerHost, 0, 1);
+                    return block;
+                }
+
+                var editorHeight = Math.Max(
+                    34,
+                    Math.Max(
+                        editor.Height,
+                        Math.Max(
+                            editor.MinimumSize.Height,
+                            editor.PreferredSize.Height)));
+
+                editor.MinimumSize = new Size(editorWidth.Value, editorHeight);
+                editor.Height = editorHeight;
+
+                var editorHost = new Panel
                 {
                     Dock = DockStyle.Left,
                     AutoSize = true,
                     AutoSizeMode = AutoSizeMode.GrowAndShrink,
                     Width = editorWidth.Value,
-                    MinimumSize = new Size(editorWidth.Value, minimumHeight),
+                    MinimumSize = new Size(editorWidth.Value, editorHeight),
                     MaximumSize = new Size(editorWidth.Value, 0),
                     Margin = Padding.Empty,
                     Padding = Padding.Empty
                 };
-                containerHost.Controls.Add(editor);
+                editorHost.SuspendLayout();
+                editorHost.Controls.Add(editor);
+                editorHost.ResumeLayout(false);
+
                 block.Controls.Add(label, 0, 0);
-                block.Controls.Add(containerHost, 0, 1);
+                block.Controls.Add(editorHost, 0, 1);
                 return block;
             }
 
-            var editorHeight = Math.Max(
-                34,
-                Math.Max(
-                    editor.Height,
-                    Math.Max(
-                        editor.MinimumSize.Height,
-                        editor.PreferredSize.Height)));
-
-            editor.MinimumSize = new Size(editorWidth.Value, editorHeight);
-            editor.Height = editorHeight;
-
-            var editorHost = new Panel
+            if (autoSizedContainer)
             {
-                Dock = DockStyle.Left,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Width = editorWidth.Value,
-                MinimumSize = new Size(editorWidth.Value, editorHeight),
-                MaximumSize = new Size(editorWidth.Value, 0),
-                Margin = Padding.Empty,
-                Padding = Padding.Empty
-            };
-            editorHost.Controls.Add(editor);
+                editor.Dock = DockStyle.Fill;
+                block.Controls.Add(label, 0, 0);
+                block.Controls.Add(editor, 0, 1);
+                return block;
+            }
 
-            block.Controls.Add(label, 0, 0);
-            block.Controls.Add(editorHost, 0, 1);
-            return block;
-        }
-
-        if (autoSizedContainer)
-        {
             editor.Dock = DockStyle.Fill;
+            var editorDefaultHeight = Math.Max(
+                34,
+                Math.Max(editor.Height, editor.MinimumSize.Height));
+            editor.MinimumSize = new Size(
+                editor.MinimumSize.Width,
+                editorDefaultHeight);
+            editor.Height = editorDefaultHeight;
+
             block.Controls.Add(label, 0, 0);
             block.Controls.Add(editor, 0, 1);
             return block;
         }
-
-        editor.Dock = DockStyle.Fill;
-        var editorDefaultHeight = Math.Max(
-            34,
-            Math.Max(editor.Height, editor.MinimumSize.Height));
-        editor.MinimumSize = new Size(
-            editor.MinimumSize.Width,
-            editorDefaultHeight);
-        editor.Height = editorDefaultHeight;
-
-        block.Controls.Add(label, 0, 0);
-        block.Controls.Add(editor, 0, 1);
-        return block;
+        finally
+        {
+            block.ResumeLayout(false);
+        }
     }
 
     private static Label CreateSectionHeading(string text) =>
