@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Status: **VERIFICATION PENDING**
 
 ## Phase 1.18A Slice 6 — Cross-Backend Hardening, Full Regression & Closure
 
@@ -89,7 +89,7 @@ The reported failure was traced to the error-reporting boundary: unexpected SQL 
 
 - SQL Server exceptions now produce a curated, non-secret diagnostic with the source/destination role, configured server/database, SQL error number/state/class, and fixed guidance for common renamed/missing database, access/permission, authentication, duplicate/schema, timeout, and endpoint-resolution failures.
 - Raw SQL exception text, SQL statements, connection strings, and credentials remain omitted. Management only preserves the explicitly curated migration SQL diagnostic; other unexpected technical errors remain generic.
-- The Example Host's Copy details field now includes the stable error code.
+- The initial UI pass exposed copyable inline diagnostic text with the stable error code; the later follow-up below replaces that textbox with a themed HiveMessageBox dialog.
 - Added diagnostic-mapping and Management sanitization regression tests. Architecture/UI guidance and a separate dated remediation record were updated.
 - The original SQL failure's root cause is still **unknown**. No build, test, host launch, or database migration was run by the assistant after these changes.
 
@@ -97,7 +97,7 @@ The earlier 780/780 test result predates this remediation and does not verify th
 - Focused `HivePersistenceDataMigrationTests` and `HiveUiPolishTests`.
 - The full `Hive.Tests` suite.
 - All affected builds with Visual Studio **Treat Warnings as Errors** enabled and zero warnings.
-- The reported Embedded → SQL Server migration against the intended renamed database. If it still fails, use **Copy details** and provide the new diagnostic; it now includes a curated SQL error number and endpoint context without credentials or raw connection strings.
+- The reported Embedded → SQL Server migration against the intended renamed database. If it still fails, copy the expanded diagnostic from the HiveMessageBox error dialog; it now includes curated SQL error metadata and endpoint context without credentials or raw connection strings.
 
 ### Developer-reported compile failure — 2026-10-09
 
@@ -126,6 +126,27 @@ Same-slice remediation boundary:
 
 The 783/783 automated result is accepted for the checkpoint immediately before this new remediation. The new failure and requested UI change are recorded before source modification. The actual underlying SQL failure remains unverified until the corrected UI yields a concrete diagnostic or the migration succeeds.
 
+### Same-slice SQL migration exception and modal error remediation — 2026-10-09
+
+The developer subsequently reported that `Hive.Tests` passed **783/783** (0 failed, 0 skipped) in 2.8 minutes, but the real Embedded → SQL Server migration still displayed:
+
+```text
+Error code: hive.persistence.migration-unexpected
+Hive persistence data migration could not be completed safely.
+```
+
+Inspection located the additional sanitization gap in `HiveDatabaseMigrator.MigrateCoreAsync`: it caught exceptions during SQL database/schema setup and converted every exception to `hive.persistence.migration-unexpected`, so the outer full-data migrator never received the underlying SQL exception. The actual SQL error has not yet been established.
+
+Same-slice correction now committed to `main`:
+- Added shared `HiveSqlServerFailureDiagnostics` mapping for the known SQL Server failure categories. It uses only fixed guidance, configured endpoint/server/database identity, and SQL error number/state/class; it does not surface provider exception text, SQL text, connection strings, or credentials.
+- `HiveDatabaseMigrator` now finds a nested `SqlException` and returns `hive.persistence.migration-sql-failure` with the safe diagnostic. If the exception is not a SQL exception, it preserves only the exception type in the existing `hive.persistence.migration-unexpected` diagnostic, never the exception message.
+- Management preserves only the two curated SQL-diagnostic codes and the exact fixed-format type-only fallback; unrelated errors still become the generic safe message.
+- The migration/settings view now opens a themed `HiveMessageBox` dialog for endpoint preflight, invalid-configuration, and migration failures. The dialog has a concise message and expanded/copyable safe details. The inline diagnostic textbox and footer Copy details button have been removed, so errors no longer appear only in a textbox below the workspace.
+- Added focused SQL-schema-diagnostic tests and changed the UI regression to assert the modal error options and detail payload through an injected test presenter.
+- Updated UI and host/management architecture documentation.
+
+**Current state: VERIFICATION PENDING.** The developer's 783/783 result predates this latest change and does not verify it. The assistant has not run a build, test suite, launch, or real migration after the correction. Required local verification is listed below. If the migration still fails, copy the details from the modal HiveMessageBox; expected outcome is either a native SQL error code with guidance or, for a non-SQL exception, its type name only. Do not infer the underlying SQL cause until that diagnostic or a successful rerun is observed.
+
 ### Remaining closure evidence
 
 The reported migration failure authorized same-slice remediation. Because remediation changed source after the 780/780 result, the targeted tests, full suite, and affected warnings-as-errors builds must now be rerun as listed above.
@@ -139,4 +160,4 @@ The new automated coverage for rollback, database reopen, and operation-gate ret
 
 Example to run: `Persistence / Data Migration / Full-Data Migration / SQL Server ↔ Embedded` — `Hive.Example.WinForms`
 
-Tests to run: `HivePersistenceDataMigrationTests` and `HiveUiPolishTests`, then the full `Hive.Tests` suite and all affected project builds with Treat Warnings as Errors enabled and zero warnings. After automated verification, repeat the reported Embedded → SQL Server endpoint migration and continue the remaining Slice 6 real-endpoint/lifecycle gates. The prior 780/780 run predates the diagnostic remediation and does not verify the current source.
+Tests to run: `HivePersistenceDataMigrationTests` and `HiveUiPolishTests`, then the full `Hive.Tests` suite and all affected project builds (`Hive.Persistence`, `Hive.Management`, `Hive.Host.WinForms`, and `Hive.Tests` plus dependent solution projects) with Treat Warnings as Errors enabled and zero warnings. After automated verification, repeat the reported Embedded → SQL Server endpoint migration and copy the HiveMessageBox details if it still fails, then continue the remaining Slice 6 real-endpoint/lifecycle gates. The reported 783/783 run predates this newest SQL schema-diagnostic and modal-UI correction.
