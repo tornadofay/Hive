@@ -56,6 +56,8 @@ internal static class HiveSqlServerFailureDiagnostics
                 "SQL Server rejected authentication. Verify Windows-integrated access or the configured SQL login without sharing credential material.",
             1801 =>
                 "SQL Server reports that a database with this name already exists. Check the selected destination name and whether the intended destination is already present.",
+            5170 =>
+                "SQL Server cannot create a database file because its physical path already exists. After a database rename, its data/log files may still use the previous physical filenames. Inspect which database owns the conflicting path before retrying; never delete the file manually. Choose a different unused destination database name, or deliberately relocate the existing files through a SQL Server-managed procedure after confirming ownership and a usable backup.",
             229 or 262 =>
                 "SQL Server denied a required operation. The migration account may need database creation, schema initialization, and read/write permissions for the selected migration direction.",
             2627 or 2601 =>
