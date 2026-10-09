@@ -1536,7 +1536,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         }
         catch (ArgumentException exception)
         {
-            SetStatus(
+            SetCopyableDiagnostic(
+                "Migration configuration is invalid. Click Copy details to copy the diagnostic.",
                 $"Migration configuration: {exception.Message}",
                 HiveStatusTone.Warning);
         }
@@ -1615,7 +1616,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
         if (result.IsFailure)
         {
-            SetStatus(
+            SetCopyableDiagnostic(
+                "Migration failed. Click Copy details to copy the diagnostic.",
                 $"Migration failed: {result.Error!.Message}",
                 HiveStatusTone.Error);
             return;
@@ -1664,12 +1666,21 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         string failureMessage,
         string prefix = "")
     {
-        _lastDiagnosticDetails = DescribeEndpointFailure(role, configuration, failureMessage);
+        SetCopyableDiagnostic(
+            $"{prefix}{role} connection failed. Click Copy details to copy the diagnostic.",
+            DescribeEndpointFailure(role, configuration, failureMessage),
+            HiveStatusTone.Error);
+    }
+
+    private void SetCopyableDiagnostic(
+        string statusMessage,
+        string diagnosticDetails,
+        HiveStatusTone tone)
+    {
+        _lastDiagnosticDetails = diagnosticDetails;
         _copyDetailsButton.Visible = true;
         _copyDetailsButton.Enabled = true;
-        SetStatus(
-            $"{prefix}{role} connection failed. Click Copy details to copy the diagnostic.",
-            HiveStatusTone.Error);
+        SetStatus(statusMessage, tone);
         UpdateFooterStatusWidth();
     }
 
@@ -1870,7 +1881,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         }
         catch (ArgumentException exception)
         {
-            SetStatus(
+            SetCopyableDiagnostic(
+                "Migration configuration is invalid. Click Copy details to copy the diagnostic.",
                 exception.Message,
                 HiveStatusTone.Error);
             HiveUiErrorReporter.Report(
