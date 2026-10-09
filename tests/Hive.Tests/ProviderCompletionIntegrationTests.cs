@@ -72,7 +72,7 @@ public sealed class ProviderCompletionIntegrationTests
     [Fact]
     public async Task ExecuteConfiguredAgentAsync_UsesFreshCachedPricingWithoutDiscoveringDuringExecution()
     {
-        var database = await PrepareDatabase("Hive_Test_ProviderCompletionIntegration");
+        using var database = await PrepareDatabase("Hive_Test_ProviderCompletionIntegration");
         var eventStore = new SqlEventPersistenceStore(database.Options);
 
         var clock = new FixedClock(
@@ -257,7 +257,7 @@ public sealed class ProviderCompletionIntegrationTests
     [Fact]
     public async Task ExecuteConfiguredAgentAsync_RejectsNativeProviderBeforeAdapterInvocation()
     {
-        var database = await PrepareDatabase("Hive_Test_ProviderCompletionNativeBoundary");
+        using var database = await PrepareDatabase("Hive_Test_ProviderCompletionNativeBoundary");
         var eventStore = new SqlEventPersistenceStore(database.Options);
         var clock = new FixedClock(
             new DateTimeOffset(2026, 10, 5, 0, 0, 0, TimeSpan.Zero));
@@ -327,7 +327,7 @@ public sealed class ProviderCompletionIntegrationTests
     [Fact]
     public async Task ExecuteConfiguredAgentAsync_RejectsNonOpenAICompatibleProviderBeforeAdapterInvocation()
     {
-        var database = await PrepareDatabase("Hive_Test_ProviderCompletionTransportBoundary");
+        using var database = await PrepareDatabase("Hive_Test_ProviderCompletionTransportBoundary");
         var eventStore = new SqlEventPersistenceStore(database.Options);
         var clock = new FixedClock(
             new DateTimeOffset(2026, 10, 5, 0, 0, 0, TimeSpan.Zero));
@@ -398,7 +398,7 @@ public sealed class ProviderCompletionIntegrationTests
     [Fact]
     public async Task ExecuteAsync_StalePricingEvidence_IsNotPersistedAsExecutionEvidence()
     {
-        var database = await PrepareDatabase("Hive_Test_ProviderCompletionStalePricing");
+        using var database = await PrepareDatabase("Hive_Test_ProviderCompletionStalePricing");
         var eventStore = new SqlEventPersistenceStore(database.Options);
 
         var clock = new FixedClock(
