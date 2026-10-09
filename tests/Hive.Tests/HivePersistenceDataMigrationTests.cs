@@ -54,6 +54,33 @@ public sealed class HivePersistenceDataMigrationTests
         Assert.DoesNotContain("Initial Catalog=", details);
     }
 
+    [Theory]
+    [InlineData(911, "exact current name")]
+    [InlineData(4060, "especially if the database was renamed")]
+    public void SqlSchemaMigrationFailure_PreservesSafeSqlErrorDetails(
+        int sqlErrorNumber,
+        string expectedGuidance)
+    {
+        var options = new HiveDatabaseOptions(
+            @"Server=localhost\\MSSQLSERVER01;Database=Hive_Renamed;Trusted_Connection=True;",
+            createDatabaseIfMissing: true);
+
+        var error = HiveDatabaseMigrator.CreateSqlMigrationFailure(
+            options,
+            sqlErrorNumber,
+            state: 1,
+            errorClass: 16);
+
+        Assert.Equal("hive.persistence.migration-sql-failure", error.Code);
+        Assert.Contains("configured SQL Server endpoint", error.Message);
+        Assert.Contains("localhost\\\\MSSQLSERVER01", error.Message);
+        Assert.Contains("database 'Hive_Renamed'", error.Message);
+        Assert.Contains($"SQL error {sqlErrorNumber}", error.Message);
+        Assert.Contains(expectedGuidance, error.Message);
+        Assert.DoesNotContain("Trusted_Connection=", error.Message);
+        Assert.DoesNotContain("Password=", error.Message);
+    }
+
     [Fact]
     public void ManagementMigrationErrorSanitization_PreservesOnlyCuratedSqlDiagnostics()
     {
@@ -66,6 +93,17 @@ public sealed class HivePersistenceDataMigrationTests
                 ErrorCategory.External,
                 safeDiagnostic));
         Assert.Equal(safeDiagnostic, curated.Message);
+
+        var schemaMigration = HiveDatabaseMigrator.CreateSqlMigrationFailure(
+            new HiveDatabaseOptions(
+                @"Server=localhost\\MSSQLSERVER01;Database=Hive_Renamed;Trusted_Connection=True;"),
+            911,
+            state: 1,
+            errorClass: 16);
+        var curatedSchemaMigration =
+            HivePersistenceMigrationManagementService.SanitizeMigrationExecutionError(
+                schemaMigration);
+        Assert.Equal(schemaMigration.Message, curatedSchemaMigration.Message);
 
         var uncurated = HivePersistenceMigrationManagementService.SanitizeMigrationExecutionError(
             new Error(
