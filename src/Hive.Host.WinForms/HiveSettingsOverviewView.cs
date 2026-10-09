@@ -81,7 +81,7 @@ internal sealed class HiveSettingsOverviewView : UserControl
 
         AddCard(
             "Persistence",
-            "Configure the SQL Server / LocalDB location used by Hive's package database.",
+            "Configure Hive's Embedded local database or connect to an existing SQL Server deployment.",
             "Initialization is always an explicit action.");
 
         var flowHeading = new Label
@@ -138,14 +138,24 @@ internal sealed class HiveSettingsOverviewView : UserControl
         string description,
         string note)
     {
-        var card = new Panel
+        var card = new TableLayoutPanel
         {
-            Size = new Size(260, 124),
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 1,
+            RowCount = 3,
+            MinimumSize = new Size(260, 0),
+            MaximumSize = new Size(260, 0),
             Margin = new Padding(0, 0, 12, 12),
             Padding = new Padding(14),
             BorderStyle = BorderStyle.FixedSingle,
+            GrowStyle = TableLayoutPanelGrowStyle.FixedSize,
             AccessibleName = $"{title} settings overview"
         };
+        card.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        card.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        card.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        card.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         var titleFont = new Font(
             _headingFont.FontFamily,
@@ -156,6 +166,7 @@ internal sealed class HiveSettingsOverviewView : UserControl
         var titleLabel = new Label
         {
             AutoSize = true,
+            MaximumSize = new Size(228, 0),
             Font = titleFont,
             Text = title,
             Margin = Padding.Empty,
@@ -180,9 +191,18 @@ internal sealed class HiveSettingsOverviewView : UserControl
             Padding = Padding.Empty
         };
 
-        card.Controls.Add(noteLabel);
-        card.Controls.Add(descriptionLabel);
-        card.Controls.Add(titleLabel);
+        card.SuspendLayout();
+        try
+        {
+            card.Controls.Add(titleLabel, 0, 0);
+            card.Controls.Add(descriptionLabel, 0, 1);
+            card.Controls.Add(noteLabel, 0, 2);
+        }
+        finally
+        {
+            card.ResumeLayout(true);
+        }
+
         _cards.Controls.Add(card);
     }
 }
