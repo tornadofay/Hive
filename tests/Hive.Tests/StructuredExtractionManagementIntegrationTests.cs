@@ -17,7 +17,7 @@ public sealed class StructuredExtractionManagementIntegrationTests
     [Fact]
     public async Task SpreadsheetMapping_IsProposedOnceAndReusedAcrossRows()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_Phase117_Management");
+        using var database = new PersistenceTestDatabase("Hive_Test_Phase117_Management");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
