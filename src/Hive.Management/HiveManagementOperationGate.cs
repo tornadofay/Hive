@@ -15,6 +15,7 @@ public sealed class HiveManagementOperationGate :
 
     private int _activeOperations;
     private bool _quiescing;
+    private bool _retiring;
     private bool _closed;
     private TaskCompletionSource? _operationsDrained;
 
@@ -22,7 +23,7 @@ public sealed class HiveManagementOperationGate :
     {
         lock (_sync)
         {
-            if (_quiescing || _closed)
+            if (_quiescing || _retiring || _closed)
                 return null;
 
             _activeOperations++;
@@ -41,7 +42,7 @@ public sealed class HiveManagementOperationGate :
             Task? drainTask;
             lock (_sync)
             {
-                if (_closed)
+                if (_retiring || _closed)
                 {
                     _migrationGate.Release();
                     return Result<IAsyncDisposable>.Failure(
@@ -93,6 +94,7 @@ public sealed class HiveManagementOperationGate :
     {
         lock (_sync)
         {
+            _retiring = true;
             _closed = true;
         }
     }
@@ -100,9 +102,16 @@ public sealed class HiveManagementOperationGate :
     /// <summary>
     /// Closes admission to this graph, waits for any active migration and ordinary
     /// operations to finish, and returns the exclusive lease for safe graph disposal.
+    /// The retiring flag is published before waiting on the migration semaphore, so
+    /// queued/new migrations are rejected instead of delaying retirement.
     /// </summary>
     public async Task<IAsyncDisposable> AcquireRetirementLeaseAsync()
     {
+        lock (_sync)
+        {
+            _retiring = true;
+        }
+
         await _migrationGate.WaitAsync().ConfigureAwait(false);
 
         var quiescenceStarted = false;
