@@ -410,3 +410,13 @@ This is a same-slice C# syntax failure in the default injected-delay expression.
 
 Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 
+### Remediation completed — 2026-10-09 discovery coordinator syntax
+
+- Parenthesized the static lambda on the right-hand side of the null-coalescing expression in `HiveSqlServerInstanceDiscoveryCoordinator`: `_delay = delay ?? (static (duration, token) => Task.Delay(duration, token));`.
+- This resolves the reported parser-level issue at line 79 without changing delay semantics or discovery behavior. The reported follow-on diagnostics are consistent with the same malformed expression.
+- No build or tests have been run by the assistant after the correction.
+
+Current state: **VERIFICATION PENDING**.
+
+Developer rerun: rebuild `Hive.Host.WinForms` with Treat Warnings as Errors, then run `HiveSqlServerInstanceDiscoveryTests`, `HiveUiPolishTests`, and the full `Hive.Tests` suite. If a new compiler diagnostic remains, report the first/root error with its line; the current source has only received the syntax correction and has not been compiled here.
+
