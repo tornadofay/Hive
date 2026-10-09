@@ -93,6 +93,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
             await BackendSelectionChangedAsync().ConfigureAwait(true);
 
         _embeddedStorageTextBox = CreateTextBox();
+        _embeddedStorageTextBox.AutoSize = true;
+        _embeddedStorageTextBox.Margin = Padding.Empty;
         _serverPicker = new HiveSqlServerInstancePicker(_themeManager);
         _serverPicker.RefreshRequested += async (_, _) =>
             await RunOperationAsync(RefreshSqlServerInstancesAsync).ConfigureAwait(true);
@@ -160,7 +162,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Text = "Browse...",
             Style = HiveButtonStyle.Secondary,
             Width = 92,
-            Height = 36,
+            Height = 32,
             Margin = new Padding(8, 0, 0, 0)
         };
         _browseEmbeddedButton.Click += (_, _) => BrowseEmbeddedStorage();
@@ -227,7 +229,6 @@ internal sealed class HivePersistenceSettingsView : UserControl
         _serverPicker.Port = 1433;
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
-        _themeManager.Apply(this);
 
         _updatingBackendSelection = true;
         try
@@ -369,9 +370,12 @@ internal sealed class HivePersistenceSettingsView : UserControl
             _updatingBackendSelection = false;
         }
 
-        if (result.Value!.Backend == HivePersistenceBackend.SqlServer)
-            await RefreshSqlServerInstancesAsync(cancellationToken).ConfigureAwait(true);
         SetStatus("Persistence configuration loaded.", HiveStatusTone.Success);
+
+        // Let the configured page paint and become interactive before waiting on
+        // potentially slow SQL Server network enumeration.
+        if (result.Value!.Backend == HivePersistenceBackend.SqlServer)
+            _ = RefreshSqlServerInstancesInBackgroundAsync(cancellationToken);
     }
 
     private async Task SaveAsync(CancellationToken cancellationToken)
@@ -941,6 +945,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
         var panel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 2,
             RowCount = 1,
             Margin = Padding.Empty,
@@ -950,6 +956,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92f));
+        panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         panel.Controls.Add(_embeddedStorageTextBox, 0, 0);
         panel.Controls.Add(_browseEmbeddedButton, 1, 0);
         return panel;
@@ -1134,15 +1141,54 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Margin = Padding.Empty
         };
 
-        var dynamicHeightEditor = editor is HiveSqlServerInstancePicker;
+        var autoSizedContainer = editor is
+            TableLayoutPanel or Panel or FlowLayoutPanel or HiveSqlServerInstancePicker;
 
-        editor.AutoSize = dynamicHeightEditor;
+        editor.AutoSize = autoSizedContainer;
         editor.Margin = Padding.Empty;
+
+        switch (editor)
+        {
+            case TableLayoutPanel table:
+                table.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+                break;
+            case Panel panel:
+                panel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+                break;
+            case FlowLayoutPanel flow:
+                flow.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+                break;
+            case HiveSqlServerInstancePicker picker:
+                picker.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+                break;
+        }
 
         if (editorWidth is > 0)
         {
             editor.Dock = DockStyle.Fill;
             editor.Width = editorWidth.Value;
+
+            if (autoSizedContainer)
+            {
+                var minimumHeight = Math.Max(34, editor.MinimumSize.Height);
+                editor.MinimumSize = new Size(editorWidth.Value, minimumHeight);
+
+                var containerHost = new Panel
+                {
+                    Dock = DockStyle.Left,
+                    AutoSize = true,
+                    AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                    Width = editorWidth.Value,
+                    MinimumSize = new Size(editorWidth.Value, minimumHeight),
+                    MaximumSize = new Size(editorWidth.Value, 0),
+                    Margin = Padding.Empty,
+                    Padding = Padding.Empty
+                };
+                containerHost.Controls.Add(editor);
+                block.Controls.Add(label, 0, 0);
+                block.Controls.Add(containerHost, 0, 1);
+                return block;
+            }
 
             var editorHeight = Math.Max(
                 34,
@@ -1152,9 +1198,8 @@ internal sealed class HivePersistenceSettingsView : UserControl
                         editor.MinimumSize.Height,
                         editor.PreferredSize.Height)));
 
-            editor.MinimumSize = new Size(
-                editorWidth.Value,
-                editorHeight);
+            editor.MinimumSize = new Size(editorWidth.Value, editorHeight);
+            editor.Height = editorHeight;
 
             var editorHost = new Panel
             {
@@ -1162,19 +1207,11 @@ internal sealed class HivePersistenceSettingsView : UserControl
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Width = editorWidth.Value,
-                MinimumSize = new Size(
-                    editorWidth.Value,
-                    dynamicHeightEditor ? 36 : editorHeight),
-                MaximumSize = new Size(
-                    editorWidth.Value,
-                    0),
+                MinimumSize = new Size(editorWidth.Value, editorHeight),
+                MaximumSize = new Size(editorWidth.Value, 0),
                 Margin = Padding.Empty,
                 Padding = Padding.Empty
             };
-
-            if (!dynamicHeightEditor)
-                editor.Height = editorHeight;
-
             editorHost.Controls.Add(editor);
 
             block.Controls.Add(label, 0, 0);
@@ -1182,14 +1219,22 @@ internal sealed class HivePersistenceSettingsView : UserControl
             return block;
         }
 
+        if (autoSizedContainer)
+        {
+            editor.Dock = DockStyle.Fill;
+            block.Controls.Add(label, 0, 0);
+            block.Controls.Add(editor, 0, 1);
+            return block;
+        }
+
         editor.Dock = DockStyle.Fill;
-        var defaultEditorHeight = Math.Max(
+        var editorDefaultHeight = Math.Max(
             34,
             Math.Max(editor.Height, editor.MinimumSize.Height));
         editor.MinimumSize = new Size(
             editor.MinimumSize.Width,
-            defaultEditorHeight);
-        editor.Height = defaultEditorHeight;
+            editorDefaultHeight);
+        editor.Height = editorDefaultHeight;
 
         block.Controls.Add(label, 0, 0);
         block.Controls.Add(editor, 0, 1);
@@ -1397,6 +1442,21 @@ internal sealed class HivePersistenceSettingsView : UserControl
         return !string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory)
             ? directory
             : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+    }
+
+    private async Task RefreshSqlServerInstancesInBackgroundAsync(
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await RefreshSqlServerInstancesAsync(cancellationToken)
+                .ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            // Page navigation/disposal cancels optional discovery. Observe the
+            // cancellation because this startup refresh is intentionally detached.
+        }
     }
 
     private async Task RefreshSqlServerInstancesAsync(CancellationToken cancellationToken)
