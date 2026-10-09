@@ -630,3 +630,17 @@ This is an in-scope Slice 5 verification failure in the existing Data Migration 
 
 Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 
+### Remediation completed — deterministic Data Migration picker layout assertion
+
+- The failed assertion at `HiveUiPolishTests.cs:863` expects the custom SQL Server instance row to remain visible after the test manually replaces the picker's discovered-instance list.
+- `InitializeAsync` also starts the real shared asynchronous instance-discovery scan. On a machine where that scan finds the configured named instance, its later completion can legitimately select the discovered entry and hide the Custom-only row after the test's setup, making the layout assertion nondeterministic.
+- The regression test now cancels that picker's pending discovery wait before installing its deliberately empty discovery list and setting `localhost\\MSSQLSERVER01` as a custom instance. It can then test the custom-row layout without racing the shared discovery scan. No production UI or migration behavior was changed.
+- The developer reports the Example workflow and UI now look good. The reported **777-test** result (776 passed, 1 failed) predates this test-fixture correction.
+
+Current state: **VERIFICATION PENDING**.
+
+No build or tests have been run by the assistant. Rerun `HiveUiPolishTests`, then the full `Hive.Tests` suite, and build with Treat Warnings as Errors. Preserve the user's reported successful Example/UI result; repeat only if the new run shows a regression.
+
+Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
+
+Tests to run: `HiveUiPolishTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
