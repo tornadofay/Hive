@@ -61,18 +61,29 @@ The first Slice 6 implementation pass makes these bounded changes:
 - Added focused regressions for Management-gate retirement / queued-migration rejection and for host composition waiting to dispose old graph resources until registered operations drain.
 - Updated persistence and host lifecycle architecture guidance before the structural lifecycle changes.
 
-### Verification boundary — initial Slice 6 implementation pass
+### Developer verification update — 2026-10-09
 
 Current state: **VERIFICATION PENDING**.
 
-No build, automated test, database migration, or Example Host launch has been run by the assistant after these changes. Static source review only; compilation and runtime behavior are not verified here.
+Developer-reported results after the first Slice 6 implementation pass:
+- Full `Hive.Tests`: **780/780 passed, 0 failed, 0 skipped** in approximately 2.6 minutes on .NET 10.0.1.
+- All affected projects were reported built successfully with zero errors under the standing Treat Warnings as Errors configuration.
+- The Example Host reported a successful full-data migration. Its supplied run log records schema 15 → 15, 11 records, source verified unchanged, destination verified, destination activation false, quiescence acquired/released, credential reference and target/favorite identities preserved, AgentDefinition/WorkItem/attachment preservation, and Secret Store re-protection/readability without printing the secret.
+- Dated evidence: [Slice 6 verification checkpoint](verification/phase-1/1.18A-slice-6-verification-2026-10-09.md).
 
-Developer rerun required:
-- Build `Hive.Management`, `Hive.Persistence`, `Hive.Host.WinForms`, and `Hive.Tests` with Visual Studio **Treat Warnings as Errors** enabled and zero warnings.
-- Run `HivePersistenceDataMigrationTests`, `EmbeddedPersistenceParityTests`, and `HiveHostCompositionTests`.
-- Run `EmbeddedPersistenceFoundationTests`, `HivePersistenceIntegrationTests`, `SecretPersistenceIntegrationTests`, and `HivePersistenceErrorTests`; then run the full `Hive.Tests` suite.
-- In the Example Host, exercise Persistence graph replacement and confirm that a live operation is allowed to finish before old stores are disposed; confirm normal settings flow still works after replacement. Reconfirm both Data Migration directions after the operation-gate retirement changes, including source immutability, destination verification, secret re-protection/readability, and no automatic destination activation. Complete the Slice 6 manual gate for Embedded first-run, close/reopen/restart durability, both migration directions, invalid/preflight/failure behavior, explicit activation, and retained SQL Server support.
+The supplied migration log does not explicitly identify its destination backend/direction. The bidirectional feature heading alone is not proof that both real-endpoint directions were manually exercised.
+
+### Remaining closure evidence
+
+No code change is authorized or indicated by the reported passing test run. Do not rerun the successful suites merely to repeat the same evidence unless subsequent changes or a concrete regression require it.
+
+Before Slice 6 can close, confirm the remaining manual acceptance boundary after the graph-retirement change:
+- Explicit Example Host verification of both **SQL Server → Embedded** and **Embedded → SQL Server** full-data migrations against representative real endpoints. Each direction must leave the source unchanged, verify the destination, preserve protected-secret readability, and keep destination activation explicit.
+- Persistence graph replacement with an operation already in flight: the operation must finish before old stores are disposed; queued migration work on the retired graph must be rejected safely.
+- Embedded first-run and close/reopen/application-restart durability, normal Settings behavior after graph replacement, failure/preflight safety, and retained SQL Server setup/connectivity.
+
+The new automated coverage for rollback, database reopen, and operation-gate retirement passed in the reported 780-test suite. The assistant has not itself built, run tests, launched the Example Host, or executed a database migration.
 
 Example to run: `Persistence / Data Migration / Full-Data Migration / SQL Server ↔ Embedded` — `Hive.Example.WinForms`
 
-Tests to run: `HivePersistenceDataMigrationTests`, `EmbeddedPersistenceParityTests`, `HiveHostCompositionTests`, `EmbeddedPersistenceFoundationTests`, `HivePersistenceIntegrationTests`, `SecretPersistenceIntegrationTests`, and `HivePersistenceErrorTests`; broader-suite requirement: full `Hive.Tests` and a zero-warning developer build.
+Tests to run: No rerun currently requested; `Hive.Tests` passed 780/780 and affected projects were reported built successfully. If a concrete regression or further implementation change occurs, rerun `HivePersistenceDataMigrationTests`, `EmbeddedPersistenceParityTests`, `HiveHostCompositionTests`, `EmbeddedPersistenceFoundationTests`, `HivePersistenceIntegrationTests`, `SecretPersistenceIntegrationTests`, and `HivePersistenceErrorTests`, then the full suite and warnings-as-errors build.
