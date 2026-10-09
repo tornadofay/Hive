@@ -115,9 +115,14 @@ public sealed class HiveWorkspaceLifecycleTests
             new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly TaskCompletionSource<bool> _persistenceConnectionTestRequested =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<HivePersistenceConfiguration> _persistenceConfigurationTested =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public TaskCompletionSource<bool> PersistenceConnectionTestRequested =>
             _persistenceConnectionTestRequested;
+
+        public TaskCompletionSource<HivePersistenceConfiguration> PersistenceConfigurationTested =>
+            _persistenceConfigurationTested;
 
         public TaskCompletionSource<bool> WorkItemsRequested =>
             _workItemsRequested;
@@ -146,7 +151,17 @@ public sealed class HiveWorkspaceLifecycleTests
             }
 
             if (targetMethod?.Name == nameof(IHiveManagementFacade.TestPersistenceConnectionAsync))
+            {
                 _persistenceConnectionTestRequested.TrySetResult(true);
+                _persistenceConfigurationTested.TrySetResult(
+                    (HivePersistenceConfiguration)args![0]!);
+
+                return Task.FromResult(
+                    Result<HivePersistenceConnectionTest>.Failure(
+                        Error.Validation(
+                            "hive.tests.persistence-connection-intercepted",
+                            "The test proxy intercepted the endpoint preflight.")));
+            }
 
             throw new NotSupportedException(
                 $"The test proxy does not implement '{targetMethod?.Name}'.");
