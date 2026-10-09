@@ -310,16 +310,7 @@ public sealed class EmbeddedPersistenceParityTests
         }
         finally
         {
-            try
-            {
-                Directory.Delete(directory, recursive: true);
-            }
-            catch (IOException)
-            {
-            }
-            catch (UnauthorizedAccessException)
-            {
-            }
+            Directory.Delete(directory, recursive: true);
         }
     }
 
