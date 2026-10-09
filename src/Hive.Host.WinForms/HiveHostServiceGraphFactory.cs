@@ -94,7 +94,7 @@ public sealed class HiveHostServiceGraphFactory :
                     new EmbeddedExecutionTargetPreferenceStore(database),
                 structuredExtractionBatches: structuredExtractionBatches,
                 structuredExtractionEngine: structuredExtractionEngine,
-                persistenceMigrationQuiescence: new HiveManagementOperationGate(),
+                persistenceMigrationQuiescence: migrationOperationGate,
                 managementOperationGate: migrationOperationGate);
 
             var graph = new HiveHostServiceGraph(
@@ -225,7 +225,9 @@ public sealed class HiveHostServiceGraphFactory :
                     SharedHttpClient),
                 executionTargetPreferences: new SqlExecutionTargetPreferenceStore(options),
                 structuredExtractionBatches: structuredExtractionBatches,
-                structuredExtractionEngine: structuredExtractionEngine);
+                structuredExtractionEngine: structuredExtractionEngine,
+                persistenceMigrationQuiescence: migrationOperationGate,
+                managementOperationGate: migrationOperationGate);
 
             var graph = new HiveHostServiceGraph(
                 configuration,
