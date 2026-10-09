@@ -443,3 +443,20 @@ Correct only the existing Slice 5 migration-tab initialization path:
 - Preserve automatic SQL instance discovery for visible SQL endpoint editors, Custom/manual endpoint editing, explicit Refresh behavior, and migration preflight correctness.
 
 This is corrective work within Slice 5. It does not authorize unrelated UI changes, Slice 6, or 1.19.
+
+
+### Remediation completed — Data Migration tab initialization
+
+- The migration view now sets its default direction before subscribing to direction-change events, so constructor setup cannot start a discovery wait that tab initialization immediately cancels.
+- First tab initialization is idempotent and only starts visible SQL Server instance discovery. It displays guidance to use the explicit **Refresh** action to test source/destination connection readiness; opening/revisiting the tab no longer implicitly calls `TestPersistenceConnectionAsync`.
+- Direction-change and operation handlers absorb expected cancellation of an obsolete picker wait, while disposal/caller cancellation remain non-failure lifecycle events. The explicit Refresh path still tests both endpoints, and migration preflight still tests both endpoints immediately before the migration operation.
+- The focused Database Setup/Data Migration UI test awaits first initialization, asserts the ready-for-explicit-Refresh status, and records/fails if its limited Management proxy is unexpectedly asked to run a connection test.
+- Code/test commits: `3150ec0`, `f04a401`, and `915375c`. The developer-reported 772/772 test run occurred before these changes; the assistant has not run a build or tests after them.
+
+Current state: **VERIFICATION PENDING**.
+
+Developer rerun: rebuild the affected WinForms and test projects with Treat Warnings as Errors; run `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, `HiveSqlServerInstanceDiscoveryTests`, then the full `Hive.Tests` suite. Manually open Data Migration repeatedly and confirm there are no connection-test proxy or cancellation exceptions; verify SQL instance discovery/status; click Refresh to test both endpoints; and confirm migration preflight continues to reject invalid or unavailable endpoints before migration starts.
+
+Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
+
+Tests to run: `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, and `HiveSqlServerInstanceDiscoveryTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
