@@ -52,7 +52,7 @@ public sealed class PersistenceTestDatabaseLifecycleTests
         Assert.NotEqual(first.DatabaseName, second.DatabaseName);
         Assert.StartsWith("Hive_TestOwned_", first.DatabaseName, StringComparison.Ordinal);
         Assert.StartsWith("Hive_TestOwned_", second.DatabaseName, StringComparison.Ordinal);
-        Assert.True(SqlTestDatabaseLifecycle.IsRunActive(first.RunId));
+        Assert.True(SqlTestDatabaseLifecycle.IsDatabaseLeaseActive(first.OwnershipToken));
 
         Assert.True(await DatabaseExistsAsync(first.DatabaseName));
         Assert.True(await DatabaseExistsAsync(second.DatabaseName));
@@ -190,7 +190,7 @@ public sealed class PersistenceTestDatabaseLifecycleTests
                     leaseCommand.Parameters.Add(
                         new SqlParameter("@Resource", SqlDbType.NVarChar, 255)
                         {
-                            Value = $"Hive.Tests.Run.{runId:N}"
+                            Value = $"Hive.Tests.Database.{ownershipToken:N}"
                         });
                     var lockResult = Convert.ToInt32(
                         await leaseCommand.ExecuteScalarAsync(),
