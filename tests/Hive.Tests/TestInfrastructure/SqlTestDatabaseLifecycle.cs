@@ -22,6 +22,7 @@ internal static class SqlTestDatabaseLifecycle
     private static readonly Guid CurrentRunId = Guid.NewGuid();
     private static readonly object RecoveryLock = new();
     private static bool _staleRecoveryAttempted;
+    private static SqlConnection? _runLeaseConnection;
 
     public static OwnedDatabase Create(string logicalName)
     {
@@ -33,11 +34,12 @@ internal static class SqlTestDatabaseLifecycle
         }
 
         EnsureStaleRecoveryAttempted();
+        EnsureCurrentRunLease();
 
         var label = SanitizeLabel(logicalName);
         var baseConnectionString = CreateMasterConnectionString();
 
-        while (true)
+        for (var attempt = 0; attempt < 5; attempt++)
         {
             var ownershipToken = Guid.NewGuid();
             var createdAtUtc = DateTimeOffset.UtcNow;
@@ -57,7 +59,11 @@ internal static class SqlTestDatabaseLifecycle
             {
                 // A name collision is extraordinarily unlikely, but a collision
                 // must never cause reuse or deletion of an existing database.
-                continue;
+                if (attempt < 4)
+                    continue;
+
+                throw new InvalidOperationException(
+                    "Hive.Tests could not reserve a unique SQL test database name after five attempts.");
             }
 
             try
@@ -203,7 +209,12 @@ internal static class SqlTestDatabaseLifecycle
             if (_staleRecoveryAttempted)
                 return;
 
-            _staleRecoveryAttempted = true;
+            // A shared run lock is held for this test-host process. The stale
+            // recovery path must acquire the matching exclusive run lock before
+            // it can drop databases from a previous run, so a second live
+            // testhost cannot reap databases owned by a long-running test.
+            EnsureCurrentRunLease();
+
             try
             {
                 RecoverStaleOwnedDatabases();
@@ -214,7 +225,96 @@ internal static class SqlTestDatabaseLifecycle
                     "<stale Hive test database scan>",
                     exception);
             }
+            finally
+            {
+                _staleRecoveryAttempted = true;
+            }
         }
+    }
+
+    private static void EnsureCurrentRunLease()
+    {
+        if (_runLeaseConnection?.State == ConnectionState.Open)
+            return;
+
+        _runLeaseConnection?.Dispose();
+        _runLeaseConnection = null;
+
+        var connection = new SqlConnection(CreateMasterConnectionString());
+        try
+        {
+            connection.Open();
+            var result = ExecuteRunLock(connection, CurrentRunId, "Shared");
+            if (result < 0)
+            {
+                throw new InvalidOperationException(
+                    $"Hive.Tests could not acquire its SQL test-run lease (sp_getapplock returned {result}).");
+            }
+
+            _runLeaseConnection = connection;
+        }
+        catch
+        {
+            connection.Dispose();
+            throw;
+        }
+    }
+
+    private static SqlConnection? TryAcquireStaleRunLock(
+        string masterConnectionString,
+        Guid staleRunId)
+    {
+        var connection = new SqlConnection(masterConnectionString);
+        try
+        {
+            connection.Open();
+            var result = ExecuteRunLock(connection, staleRunId, "Exclusive");
+            if (result >= 0)
+                return connection;
+
+            connection.Dispose();
+            if (result == -1)
+                return null;
+
+            throw new InvalidOperationException(
+                $"Hive.Tests could not establish stale-run ownership safely (sp_getapplock returned {result}).");
+        }
+        catch
+        {
+            connection.Dispose();
+            throw;
+        }
+    }
+
+    private static int ExecuteRunLock(
+        SqlConnection connection,
+        Guid runId,
+        string lockMode)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            DECLARE @LockResult int;
+            EXEC @LockResult = sys.sp_getapplock
+                @Resource = @Resource,
+                @LockMode = @LockMode,
+                @LockOwner = N'Session',
+                @LockTimeout = 0,
+                @DbPrincipal = N'public';
+            SELECT @LockResult;
+            """;
+        command.Parameters.Add(
+            new SqlParameter("@Resource", SqlDbType.NVarChar, 255)
+            {
+                Value = $"Hive.Tests.Run.{runId:N}"
+            });
+        command.Parameters.Add(
+            new SqlParameter("@LockMode", SqlDbType.VarChar, 32)
+            {
+                Value = lockMode
+            });
+
+        var result = command.ExecuteScalar();
+        return Convert.ToInt32(result, CultureInfo.InvariantCulture);
     }
 
     private static void RecoverStaleOwnedDatabases()
@@ -270,6 +370,24 @@ internal static class SqlTestDatabaseLifecycle
                 {
                     Console.Error.WriteLine(
                         $"Hive.Tests stale database recovery left '{databaseName}' untouched because its ownership marker was missing or inconsistent.");
+                    continue;
+                }
+
+                var markerParts = marker!.Split('|');
+                if (!Guid.TryParseExact(markerParts[1], "N", out var ownerRunId))
+                {
+                    Console.Error.WriteLine(
+                        $"Hive.Tests stale database recovery left '{databaseName}' untouched because its run identity was invalid.");
+                    continue;
+                }
+
+                using var staleRunLock = TryAcquireStaleRunLock(
+                    masterConnectionString,
+                    ownerRunId);
+                if (staleRunLock is null)
+                {
+                    Console.Error.WriteLine(
+                        $"Hive.Tests stale database recovery left '{databaseName}' untouched because its owning test run is still active.");
                     continue;
                 }
 
