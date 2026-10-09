@@ -113,6 +113,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
         public Control View => _root;
 
+        public TableLayoutPanel SqlPanel => _sqlPanel;
+
         public HivePersistenceBackend Backend
         {
             get => _backend;
@@ -273,7 +275,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         {
             serverPicker = new HiveSqlServerInstancePicker(_themeManager)
             {
-                Width = 340
+                Width = 420
             };
 
             databaseTextBox = CreateTextBox();
@@ -344,7 +346,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 CreateFieldBlock(
                     "SQL Server",
                     serverPicker,
-                    340));
+                    420));
 
             AddVerticalStackRow(
                 panel,
@@ -352,7 +354,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                     CreateFieldBlock(
                         "Database",
                         databaseTextBox,
-                        180),
+                        230),
                     authenticationField));
 
             AddVerticalStackRow(panel, credentialField);
@@ -364,7 +366,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                     CreateSecurityPanel(
                         encryptCheckBox,
                         trustServerCertificateCheckBox),
-                    260));
+                    300));
 
             AddVerticalStackRow(
                 panel,
@@ -495,6 +497,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 GrowStyle = TableLayoutPanelGrowStyle.FixedSize
             };
 
+            pathTextBox.Dock = DockStyle.Fill;
+            pathTextBox.AutoSize = false;
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 88f));
             panel.Controls.Add(pathTextBox, 0, 0);
@@ -980,6 +984,9 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     internal HiveSqlServerInstancePicker SourceSqlServerPicker =>
         _sourceEndpoint.SqlServerPicker;
 
+    internal TableLayoutPanel SourceSqlServerLayout =>
+        _sourceEndpoint.SqlPanel;
+
     internal HiveSqlServerInstancePicker DestinationSqlServerPicker =>
         _destinationEndpoint.SqlServerPicker;
 
@@ -1416,7 +1423,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 $"SQL Server '{configuration.ServerName}'" +
                 (configuration.Port is { } port
                     ? $" on explicit port {port}"
-                    : configuration.ServerName.Contains('\\', StringComparison.Ordinal)
+                    : configuration.ServerName.Contains('\\')
                         ? " using named-instance port resolution"
                         : " using default SQL Server port resolution") +
                 $", database '{configuration.DatabaseName}'",
