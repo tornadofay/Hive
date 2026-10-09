@@ -226,8 +226,7 @@ internal sealed class HivePersistenceSettingsView : UserControl
 
         _databaseTextBox.Text = HivePersistenceConfiguration.BuildDatabaseName(_applicationName);
         _embeddedStorageTextBox.Text = DefaultEmbeddedStoragePath();
-        _serverPicker.Port = 1433;
-
+        
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
 
         _updatingBackendSelection = true;
