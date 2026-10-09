@@ -127,17 +127,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 ? _embeddedUserEdited
                 : _sqlUserEdited;
 
-        public string SqlDatabaseName => _sqlDatabaseTextBox.Text.Trim();
-
         public bool SqlEncrypt => _sqlEncryptCheckBox.Checked;
 
         public bool SqlTrustServerCertificate =>
             _sqlTrustServerCertificateCheckBox.Checked;
-
-        public HiveSqlAuthenticationMode SqlAuthentication =>
-            _sqlAuthenticationComboBox.SelectedItem is HiveSqlAuthenticationMode value
-                ? value
-                : HiveSqlAuthenticationMode.WindowsIntegrated;
 
         public HiveBootstrapCredentialReference? ReusableBootstrapCredential =>
             IsPrefilledSqlConfigurationUnchanged()
