@@ -332,6 +332,14 @@ Current state: **VERIFICATION PENDING**.
 
 Developer verification must confirm the actual Windows-integrated named-instance connection, natural Custom/Embedded row sizing, and responsive first Persistence opening. If SQL Server still fails, capture the new specific connection-test diagnostic text (not credentials) so the remaining server/authentication condition can be isolated.
 
+### Same-slice review finding — background discovery could overwrite in-progress edits
+
+Final review found a race in the nonblocking SQL Server discovery change: the picker captures a preferred server before awaiting discovery, then applies that stale preference when discovery completes. If the user starts selecting `Custom...` or types the custom server/instance while discovery is still running, the completion could restore the previous selection and discard the edit.
+
+This is an in-scope Slice 5 input-preservation/concurrency defect in the new background discovery path. It does not authorize additional roadmap work.
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
 ### Verification handoff
 
 Developer rerun is required:
