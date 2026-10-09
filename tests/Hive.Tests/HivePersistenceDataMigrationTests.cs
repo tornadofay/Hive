@@ -58,7 +58,7 @@ public sealed class HivePersistenceDataMigrationTests
     public void ManagementMigrationErrorSanitization_PreservesOnlyCuratedSqlDiagnostics()
     {
         const string safeDiagnostic =
-            "The destination SQL Server endpoint 'localhost\\\\MSSQLSERVER01', database 'Hive_Renamed' failed during migration (SQL error 911, state 1, class 16). Verify the configured database name.";
+            "The destination SQL Server endpoint 'localhost\\MSSQLSERVER01', database 'Hive_Renamed' failed during migration (SQL error 911, state 1, class 16). Verify the configured database name.";
 
         var curated = HivePersistenceMigrationManagementService.SanitizeMigrationExecutionError(
             new Error(
