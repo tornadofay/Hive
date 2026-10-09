@@ -332,10 +332,117 @@ internal sealed class HivePersistenceSettingsView : UserControl
             Margin = Padding.Empty
         };
 
+        migrationView.SetInitialSourceConfiguration(
+            CreateCurrentMigrationSourceConfigurationSnapshot());
+
         _migrationTab.Controls.Clear();
         _migrationTab.Controls.Add(migrationView);
         _migrationView = migrationView;
         return migrationView;
+    }
+
+    private HivePersistenceConfiguration? CreateCurrentMigrationSourceConfigurationSnapshot()
+    {
+        if (_loadedConfiguration is null)
+            return null;
+
+        try
+        {
+            var timeout = SelectedBackend == HivePersistenceBackend.Embedded
+                ? (int)_embeddedTimeoutNumeric.Value
+                : (int)_sqlTimeoutNumeric.Value;
+
+            if (SelectedBackend == HivePersistenceBackend.Embedded)
+            {
+                return HivePersistenceConfiguration.Embedded(
+                    _embeddedStorageTextBox.Text,
+                    createDatabaseIfMissing: false,
+                    commandTimeoutSeconds: timeout);
+            }
+
+            var serverName = _serverPicker.ServerName;
+            if (string.IsNullOrWhiteSpace(serverName))
+                return null;
+
+            var databaseName = string.IsNullOrWhiteSpace(_databaseTextBox.Text)
+                ? HivePersistenceConfiguration.BuildDatabaseName(_applicationName)
+                : _databaseTextBox.Text.Trim();
+            var authentication =
+                _authenticationComboBox.SelectedItem is HiveSqlAuthenticationMode value
+                    ? value
+                    : HiveSqlAuthenticationMode.WindowsIntegrated;
+
+            var credential = IsLoadedBootstrapCredentialForCurrentSqlEndpoint(
+                serverName,
+                _serverPicker.Port,
+                databaseName,
+                authentication)
+                ? _loadedConfiguration.BootstrapCredential
+                : null;
+
+            return new HivePersistenceConfiguration(
+                HivePersistenceBackend.SqlServer,
+                serverName,
+                _serverPicker.Port,
+                databaseName,
+                authentication,
+                authentication == HiveSqlAuthenticationMode.SqlPassword
+                    ? _userNameTextBox.Text
+                    : null,
+                credential,
+                _encryptCheckBox.Checked,
+                _trustServerCertificateCheckBox.Checked,
+                createDatabaseIfMissing: false,
+                commandTimeoutSeconds: timeout);
+        }
+        catch (ArgumentException)
+        {
+            // An incomplete/unvalidated editor is not an endpoint snapshot.
+            // The migration view can still prefill from the saved configuration.
+            return null;
+        }
+    }
+
+    private bool IsLoadedBootstrapCredentialForCurrentSqlEndpoint(
+        string serverName,
+        int? port,
+        string databaseName,
+        HiveSqlAuthenticationMode authentication)
+    {
+        var loaded = _loadedConfiguration;
+        if (loaded is null ||
+            loaded.Backend != HivePersistenceBackend.SqlServer ||
+            authentication != HiveSqlAuthenticationMode.SqlPassword ||
+            loaded.AuthenticationMode != authentication ||
+            loaded.BootstrapCredential is null ||
+            !string.IsNullOrWhiteSpace(_passwordTextBox.Text))
+        {
+            return false;
+        }
+
+        var loadedServer = loaded.ServerName;
+        var loadedPort = loaded.Port;
+        if (loadedPort == 1433 &&
+            loadedServer.Contains('\\', StringComparison.Ordinal))
+        {
+            loadedPort = null;
+        }
+
+        return string.Equals(
+                   serverName,
+                   loadedServer,
+                   StringComparison.OrdinalIgnoreCase) &&
+               port == loadedPort &&
+               string.Equals(
+                   databaseName,
+                   loaded.DatabaseName,
+                   StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(
+                   _userNameTextBox.Text,
+                   loaded.UserName,
+                   StringComparison.Ordinal) &&
+               _encryptCheckBox.Checked == loaded.Encrypt &&
+               _trustServerCertificateCheckBox.Checked == loaded.TrustServerCertificate;
     }
 
     private static Control CreateDeferredMigrationPlaceholder() =>
