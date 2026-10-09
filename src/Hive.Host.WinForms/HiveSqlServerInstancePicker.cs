@@ -359,9 +359,15 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         }
         finally
         {
-            _applyingValue = false;
-            ApplyPortDefaultForSelection();
-            UpdateCustomVisibility();
+            try
+            {
+                ApplyPortDefaultForSelection();
+                UpdateCustomVisibility();
+            }
+            finally
+            {
+                _applyingValue = false;
+            }
         }
     }
 
@@ -472,9 +478,15 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         }
         finally
         {
-            _applyingValue = false;
-            ApplyPortDefaultForSelection();
-            UpdateCustomVisibility();
+            try
+            {
+                ApplyPortDefaultForSelection();
+                UpdateCustomVisibility();
+            }
+            finally
+            {
+                _applyingValue = false;
+            }
         }
     }
 
