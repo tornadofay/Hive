@@ -562,3 +562,15 @@ Developer rerun required: build `Hive.Host.WinForms` and `Hive.Tests` with Treat
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
 Tests to run: `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, `HiveSqlServerInstanceDiscoveryTests`, and `HivePersistenceErrorTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
+
+### Verification failure — 2026-10-09 final Data Migration layout polish
+
+The user manually inspected the Data Migration page and reported three remaining in-scope UI defects:
+
+- The Direction selector is clipped, with only part of the control visibly rendered.
+- SQL Server endpoint controls have excessive empty spacing and some fields exceed the available card bounds.
+- The Embedded database-file textbox should auto-size with the available path-row width.
+
+These are the final reported Slice 5 presentation defects. Same-slice remediation is authorized only for these layout issues and their focused regression coverage. Do not start Slice 6 or 1.19. Preserve existing endpoint behavior, copyable diagnostics, and explicit migration configuration.
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
