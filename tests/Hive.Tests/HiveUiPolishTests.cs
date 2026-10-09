@@ -945,6 +945,85 @@ public sealed class HiveUiPolishTests
 
     }
 
+    [WinFormsFact]
+    public async Task HivePersistenceDataMigration_ShowsReturnedFailureInHiveMessageBox()
+    {
+        var (management, managementProxy) =
+            HiveWorkspaceLifecycleTests.ManagementFacadeProxy.Create();
+        managementProxy.PersistenceConnectionTestResult =
+            new HivePersistenceConnectionTest(
+                true,
+                HiveDatabaseState.Current,
+                15,
+                15,
+                "Endpoint readiness succeeded.");
+        managementProxy.PersistenceMigrationResult =
+            Result<HivePersistenceMigrationResult>.Failure(
+                new Error(
+                    "hive.persistence.migration-sql-failure",
+                    ErrorCategory.External,
+                    "The SQL Server database schema migration failed for the configured SQL Server endpoint 'localhost\\MSSQLSERVER01', database 'Hive_Renamed' (SQL error 911, state 1, class 16). If the database was renamed, verify its exact current name."));
+
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        HiveMessageOptions? shownMessage = null;
+
+        using var host = new Form
+        {
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-2000, -2000),
+            ClientSize = new Size(1180, 760),
+            ShowInTaskbar = false
+        };
+        using var view = new HivePersistenceDataMigrationSettingsView(
+            management,
+            context,
+            themeManager,
+            "Hive.TestHost",
+            showMessage: options => { shownMessage = options; })
+        {
+            Dock = DockStyle.Fill
+        };
+
+        host.Controls.Add(view);
+        host.Show();
+        Application.DoEvents();
+
+        await view.InitializeAsync().WaitAsync(TimeSpan.FromSeconds(6));
+
+        var migrateButton = FindButton(view, "Migrate All Data");
+        Assert.NotNull(migrateButton);
+        migrateButton!.PerformClick();
+
+        await managementProxy.PersistenceMigrationRequested.Task
+            .WaitAsync(TimeSpan.FromSeconds(5));
+        WaitForUi(
+            () => shownMessage is not null,
+            "A returned Management migration failure did not show the HiveMessageBox error.");
+
+        var errorDialog = Assert.IsType<HiveMessageOptions>(shownMessage);
+        Assert.Equal("Hive Persistence", errorDialog.Title);
+        Assert.Equal(HiveMessageType.Error, errorDialog.Type);
+        Assert.True(errorDialog.DetailsExpanded);
+        Assert.Equal(
+            "Hive could not complete the full-data migration.",
+            errorDialog.Message);
+
+        var details = Assert.IsType<string>(errorDialog.Details);
+        Assert.Contains("hive.persistence.migration-sql-failure", details);
+        Assert.Contains("SQL error 911", details);
+        Assert.Contains("Hive_Renamed", details);
+        Assert.Contains(
+            "See the error dialog for details",
+            view.StatusLabel.Text,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("SQL error 911", view.StatusLabel.Text);
+        Assert.Null(FindButton(view, "Copy details"));
+    }
+
     [Fact]
     public void HiveSettingsView_OpensOverviewByDefault()
     {
