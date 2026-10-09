@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Status: **VERIFICATION PENDING**
 
 ## Active corrective slice
 
@@ -12,7 +12,7 @@ Started: 2026-10-09
 
 - Repository branch: `main`
 - Starting commit: `c8165222cafc4d012c47fa9fa744970a4e9fb2c4`
-- Current implementation checkpoint: `45cd6dddba5ef9dc013a6429ebfebdf88135678d`
+- Current implementation checkpoint: `6457b8d995f25f0a38c8ae64966e96275ead4886`
 - Phase 1.18A — Embedded Persistence Profile is closed and verified. This temporary maintenance slice does not authorize Phase 1.19 or any other roadmap advancement.
 - The prior Phase 1.18A closure evidence remains preserved at [Slice 6 closure verification](verification/phase-1/1.18A-slice-6-closure-2026-10-09.md).
 
@@ -39,9 +39,9 @@ Initial confirmed finding: `HiveSettingsOverviewView.AddCard` added the title, d
 
 ### Verification gate
 
-Status: **VERIFICATION FAILED / REMEDIATION REQUIRED** based on developer-reported compiler/analyzer output.
+Status: **VERIFICATION PENDING** after same-slice remediation.
 
-Failure boundary: `tests/Hive.Tests/HiveUiPolishTests.cs`, `HiveSettingsOverviewCards_UseSeparateRowsAndDescribeBothPersistenceBackends`, reported at line 1629: analyzer `xUnit2031` rejects filtering with `.Where(...)` before calling `Assert.Single`. This is an in-scope test-code failure. No other failure has been reported in this handoff.
+Failure and remediation history: the developer reported analyzer `xUnit2031` in `tests/Hive.Tests/HiveUiPolishTests.cs`, inside `HiveSettingsOverviewCards_UseSeparateRowsAndDescribeBothPersistenceBackends`, at line 1629. The assertion filtered labels with `.Where(...)` before calling `Assert.Single`. The failure was recorded before code changes, then corrected to use `Assert.Single(collection, predicate)` in commit `6457b8d995f25f0a38c8ae64966e96275ead4886`. The original failure is retained here as history; remediation is not considered verified until the developer reruns the checks.
 
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
 
