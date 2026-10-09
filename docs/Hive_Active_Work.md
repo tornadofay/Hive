@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Status: **VERIFICATION PENDING**
 
 ## Phase 1.18A Slice 6 — Cross-Backend Hardening, Full Regression & Closure
 
@@ -83,9 +83,25 @@ The developer reported renaming their local SQL Server database, then running Em
 
 The available message is too generic to identify the underlying cause. The failure boundary is limited to the same-slice Embedded → SQL Server migration error path and safe diagnostics: preserve expected typed preflight/conflict errors, provide actionable non-secret failure details for endpoint/SQL failures, and add regression coverage proving the user-visible diagnostic is useful without emitting credentials or raw connection strings. Do not infer that the database rename itself is the root cause until the failure path is distinguishable. The failure is recorded before implementation changes.
 
+### Same-slice diagnostic remediation — 2026-10-09
+
+The reported failure was traced to the error-reporting boundary: unexpected SQL Server exceptions were reduced to a generic message by the persistence migrator and then sanitized again by Management. That diagnostic gap is corrected in the same Slice 6 migration-hardening scope.
+
+- SQL Server exceptions now produce a curated, non-secret diagnostic with the source/destination role, configured server/database, SQL error number/state/class, and fixed guidance for common renamed/missing database, access/permission, authentication, duplicate/schema, timeout, and endpoint-resolution failures.
+- Raw SQL exception text, SQL statements, connection strings, and credentials remain omitted. Management only preserves the explicitly curated migration SQL diagnostic; other unexpected technical errors remain generic.
+- The Example Host's Copy details field now includes the stable error code.
+- Added diagnostic-mapping and Management sanitization regression tests. Architecture/UI guidance and a separate dated remediation record were updated.
+- The original SQL failure's root cause is still **unknown**. No build, test, host launch, or database migration was run by the assistant after these changes.
+
+The earlier 780/780 test result predates this remediation and does not verify the current source. Return to this gate only after the developer runs:
+- Focused `HivePersistenceDataMigrationTests` and `HiveUiPolishTests`.
+- The full `Hive.Tests` suite.
+- All affected builds with Visual Studio **Treat Warnings as Errors** enabled and zero warnings.
+- The reported Embedded → SQL Server migration against the intended renamed database. If it still fails, use **Copy details** and provide the new diagnostic; it now includes a curated SQL error number and endpoint context without credentials or raw connection strings.
+
 ### Remaining closure evidence
 
-No code change is authorized or indicated by the reported passing test run. Do not rerun the successful suites merely to repeat the same evidence unless subsequent changes or a concrete regression require it.
+The reported migration failure authorized same-slice remediation. Because remediation changed source after the 780/780 result, the targeted tests, full suite, and affected warnings-as-errors builds must now be rerun as listed above.
 
 Before Slice 6 can close, confirm the remaining manual acceptance boundary after the graph-retirement change:
 - Explicit Example Host verification of both **SQL Server → Embedded** and **Embedded → SQL Server** full-data migrations against representative real endpoints. Each direction must leave the source unchanged, verify the destination, preserve protected-secret readability, and keep destination activation explicit.
@@ -96,4 +112,4 @@ The new automated coverage for rollback, database reopen, and operation-gate ret
 
 Example to run: `Persistence / Data Migration / Full-Data Migration / SQL Server ↔ Embedded` — `Hive.Example.WinForms`
 
-Tests to run: No rerun currently requested; `Hive.Tests` passed 780/780 and affected projects were reported built successfully. If a concrete regression or further implementation change occurs, rerun `HivePersistenceDataMigrationTests`, `EmbeddedPersistenceParityTests`, `HiveHostCompositionTests`, `EmbeddedPersistenceFoundationTests`, `HivePersistenceIntegrationTests`, `SecretPersistenceIntegrationTests`, and `HivePersistenceErrorTests`, then the full suite and warnings-as-errors build.
+Tests to run: `HivePersistenceDataMigrationTests` and `HiveUiPolishTests`, then the full `Hive.Tests` suite and all affected project builds with Treat Warnings as Errors enabled and zero warnings. After automated verification, repeat the reported Embedded → SQL Server endpoint migration and continue the remaining Slice 6 real-endpoint/lifecycle gates. The prior 780/780 run predates the diagnostic remediation and does not verify the current source.
