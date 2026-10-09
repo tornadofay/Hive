@@ -857,13 +857,14 @@ public sealed class HiveUiPolishTests
             "intercepted the endpoint preflight",
             view.StatusLabel.Text,
             StringComparison.OrdinalIgnoreCase);
+        var diagnosticDetails = Assert.IsType<string>(view.LastDiagnosticDetails);
         Assert.Contains(
             "intercepted the endpoint preflight",
-            view.LastDiagnosticDetails,
+            diagnosticDetails,
             StringComparison.OrdinalIgnoreCase);
         Assert.Contains(
             "named-instance port resolution",
-            view.LastDiagnosticDetails,
+            diagnosticDetails,
             StringComparison.OrdinalIgnoreCase);
 
         view.CopyDetailsButton.PerformClick();
@@ -871,7 +872,7 @@ public sealed class HiveUiPolishTests
         Assert.Equal(
             "Diagnostic details copied. Paste them into your message.",
             view.StatusLabel.Text);
-        Assert.Equal(view.LastDiagnosticDetails, Clipboard.GetText());
+        Assert.Equal(diagnosticDetails, Clipboard.GetText());
     }
 
     [Fact]
