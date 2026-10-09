@@ -1,5 +1,6 @@
 using System.Reflection;
 using DbUp;
+using Microsoft.Data.SqlClient;
 using DbUp.Engine.Output;
 using Hive.Core;
 
@@ -139,13 +140,63 @@ public sealed class HiveDatabaseMigrator
         {
             throw;
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            var sqlException = FindSqlException(exception);
+            if (sqlException is not null)
+            {
+                var firstError = sqlException.Errors
+                    .Cast<SqlError>()
+                    .FirstOrDefault(static error => error.Number != 0)
+                    ?? (sqlException.Errors.Count > 0
+                        ? sqlException.Errors[0]
+                        : null);
+
+                return Result<HiveDatabaseMigrationOutcome>.Failure(
+                    CreateSqlMigrationFailure(
+                        _options,
+                        firstError?.Number ?? sqlException.Number,
+                        firstError?.State ?? 0,
+                        firstError?.Class ?? 0));
+            }
+
             return Result<HiveDatabaseMigrationOutcome>.Failure(
                 new Error(
                     "hive.persistence.migration-unexpected",
                     ErrorCategory.External,
                     "Hive database migration failed unexpectedly."));
         }
+    }
+
+    internal static Error CreateSqlMigrationFailure(
+        HiveDatabaseOptions options,
+        int errorNumber,
+        byte state,
+        byte errorClass)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        return new Error(
+            "hive.persistence.migration-sql-failure",
+            ErrorCategory.External,
+            HiveSqlServerFailureDiagnostics.DescribeMigrationFailure(
+                "SQL Server database schema migration",
+                "configured",
+                options.ServerName,
+                options.DatabaseName,
+                errorNumber,
+                state,
+                errorClass));
+    }
+
+    private static SqlException? FindSqlException(Exception exception)
+    {
+        for (Exception? current = exception; current is not null; current = current.InnerException)
+        {
+            if (current is SqlException sqlException)
+                return sqlException;
+        }
+
+        return null;
     }
 }
