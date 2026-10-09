@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **IN PROGRESS**
+Status: **VERIFICATION PENDING**
 
 ## Active corrective slice
 
@@ -12,6 +12,7 @@ Started: 2026-10-09
 
 - Repository branch: `main`
 - Starting commit: `c8165222cafc4d012c47fa9fa744970a4e9fb2c4`
+- Current implementation checkpoint: `45cd6dddba5ef9dc013a6429ebfebdf88135678d`
 - Phase 1.18A — Embedded Persistence Profile is closed and verified. This temporary maintenance slice does not authorize Phase 1.19 or any other roadmap advancement.
 - The prior Phase 1.18A closure evidence remains preserved at [Slice 6 closure verification](verification/phase-1/1.18A-slice-6-closure-2026-10-09.md).
 
@@ -19,7 +20,7 @@ Started: 2026-10-09
 
 Perform a bounded production audit of the existing Hive WinForms/UI presentation boundary, with emphasis on the global Settings Overview and reusable layout/theme/lifecycle behavior. Correct only concrete defects that restore or preserve existing UI behavior. Add focused regression coverage and keep user-facing configuration guidance aligned with the existing Embedded and SQL Server functionality.
 
-Initial confirmed finding: `HiveSettingsOverviewView.AddCard` adds the title, description, and note labels to a plain `Panel` without distinct layout positions or a layout container, causing the labels to share the default origin and overlap. The Persistence card also still describes only SQL Server / LocalDB despite the implemented Embedded profile.
+Initial confirmed finding: `HiveSettingsOverviewView.AddCard` added the title, description, and note labels to a plain `Panel` without distinct layout positions or a layout container, causing them to share the default origin and overlap. The Persistence card also described only SQL Server / LocalDB despite the implemented Embedded profile.
 
 ### Boundaries and exclusions
 
@@ -28,11 +29,17 @@ Initial confirmed finding: `HiveSettingsOverviewView.AddCard` adds the title, de
 - Keep Hive.Host.WinForms.UI as the presentation owner and preserve the consumer-host boundary.
 - Do not claim builds, tests, or manual UI verification unless the developer reports those results.
 
-### Implementation and verification
+### Implementation review
 
-- Correct the card layout using standard WinForms layout containers and content-driven sizing; update the outdated Persistence card wording.
-- Add focused regression coverage for non-overlapping card content and current backend guidance.
-- After changes, status must be **VERIFICATION PENDING** until developer verification is reported.
+- Replaced the Settings Overview card's overlapping child placement with a content-sized three-row `TableLayoutPanel`; the title, description, and note each receive their own row, and long text can wrap within the card width.
+- Updated the Persistence card text to describe the Embedded local database and SQL Server deployment.
+- Added `HiveSettingsOverviewCards_UseSeparateRowsAndDescribeBothPersistenceBackends` in `HiveUiPolishTests` to assert separate row placement for all three cards and accurate backend wording.
+- Reviewed the focused source/test diffs after the changes. The implementation changes are limited to `src/Hive.Host.WinForms/HiveSettingsOverviewView.cs` and `tests/Hive.Tests/HiveUiPolishTests.cs`, plus this Active Work record. No roadmap or architecture changes were made.
+- This assistant did not run builds/tests or launch the Example Host. Compile/runtime and visual behavior remain unverified until developer results are reported.
+
+### Verification gate
+
+Status: **VERIFICATION PENDING**. Do not close this slice or authorize another slice until developer verification results arrive.
 
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
 
