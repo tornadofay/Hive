@@ -216,7 +216,13 @@ Phase 0.5 establishes reusable verification infrastructure without creating prod
 
 #### Persistence test strategy
 
-Persistence integration tests use an explicit connection string stored in `Hive.Tests/HivePersistenceTestConfiguration.cs`, with the Hive test database names derived by each test. The tests create the database automatically when missing and may reuse a database only when the test explicitly resets the relevant schema. No environment variables or hidden machine-specific prerequisites are required.
+Persistence integration tests use the explicit developer SQL Server connection in `Hive.Tests/HivePersistenceTestConfiguration.cs`; no hidden environment variables or vendor credentials are required. Every SQL integration-test database is a temporary, uniquely named resource owned by the test harness, not a reusable long-lived database.
+
+The shared test-database lease creates a physical name in a reserved `Hive_TestOwned_` namespace, disables connection pooling for its database connections, and writes a database-local ownership marker containing the generated ownership token and run identity. Tests retain isolation when run in parallel; a database name supplied by a test is a diagnostic label only, not the physical database name or deletion authority.
+
+The owning test or multi-database test fixture must dispose every lease on success, assertion failure, and cancellation. Cleanup verifies the ownership marker before switching the database to single-user and dropping it. Cleanup failures must be reported with the database identity and safe SQL diagnostic context; they must not be silently swallowed or expose credentials. Migration tests must own every temporary source, destination, and round-trip database through the same lifecycle.
+
+At test startup, stale recovery may delete only databases that match the strict reserved generated-name format, exceed the configured age threshold, and have matching test-harness ownership evidence. Legacy databases that merely begin with `Hive_Test_` are not automatically treated as owned and must never be bulk-deleted by stale recovery. Test-run cleanup does not become a production persistence feature.
 
 #### Event test conventions
 
