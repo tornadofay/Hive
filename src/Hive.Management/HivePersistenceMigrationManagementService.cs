@@ -111,21 +111,8 @@ internal sealed class HivePersistenceMigrationManagementService : HiveManagement
                 .ConfigureAwait(false);
 
             if (execution.IsFailure)
-            {
-                var executionError = execution.Error!;
-                var safeMessage = executionError.Code ==
-                    "hive.persistence.data-migration.sql-failure"
-                        // The persistence migrator constructs this diagnostic from a
-                        // fixed SQL-error mapping and endpoint identity. It omits raw
-                        // provider text, connection strings, and credentials.
-                        ? executionError.Message
-                        : "Hive persistence data migration could not be completed safely.";
-
                 return Result<HivePersistenceMigrationResult>.Failure(
-                    SanitizeTechnicalError(
-                        executionError,
-                        safeMessage));
-            }
+                    SanitizeMigrationExecutionError(execution.Error!));
 
             var evidence = execution.Value
                 ?? throw new InvalidOperationException(
@@ -180,6 +167,21 @@ internal sealed class HivePersistenceMigrationManagementService : HiveManagement
             destinationCredential?.Dispose();
             sourceCredential?.Dispose();
         }
+    }
+
+    internal static Error SanitizeMigrationExecutionError(Error error)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+
+        var safeMessage = error.Code ==
+            "hive.persistence.data-migration.sql-failure"
+                // The persistence migrator constructs this diagnostic from a fixed
+                // SQL-error mapping and endpoint identity. It omits raw provider text,
+                // connection strings, and credentials.
+                ? error.Message
+                : "Hive persistence data migration could not be completed safely.";
+
+        return SanitizeTechnicalError(error, safeMessage);
     }
 
     private async Task<Result<SecretMaterial?>> ResolveSqlCredentialAsync(
