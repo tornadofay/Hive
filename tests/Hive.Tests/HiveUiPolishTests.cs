@@ -1591,6 +1591,53 @@ public sealed class HiveUiPolishTests
     }
 
     [WinFormsFact]
+    public void HiveSettingsOverviewCards_UseSeparateRowsAndDescribeBothPersistenceBackends()
+    {
+        using var view = new HiveSettingsOverviewView
+        {
+            Size = new Size(1000, 700)
+        };
+        view.CreateControl();
+
+        var scrollHost = Assert.Single(view.Controls.OfType<HiveScrollHost>());
+        var root = Assert.IsType<TableLayoutPanel>(scrollHost.Content);
+        var cardFlow = Assert.Single(root.Controls.OfType<FlowLayoutPanel>());
+        var cards = cardFlow.Controls.Cast<Control>().ToArray();
+
+        Assert.Equal(3, cards.Length);
+        foreach (var card in cards)
+        {
+            var layout = Assert.IsType<TableLayoutPanel>(card);
+            Assert.True(layout.AutoSize);
+            Assert.Equal(3, layout.RowCount);
+            Assert.Equal(3, layout.Controls.Count);
+
+            var rows = layout.Controls
+                .Cast<Control>()
+                .Select(control => layout.GetPositionFromControl(control).Row)
+                .ToArray();
+            Assert.Equal(3, rows.Distinct().Count());
+            Assert.DoesNotContain(-1, rows);
+        }
+
+        var persistenceCard = Assert.IsType<TableLayoutPanel>(
+            cards.Single(card =>
+                string.Equals(
+                    card.AccessibleName,
+                    "Persistence settings overview",
+                    StringComparison.Ordinal)));
+        var description = Assert.Single(
+            persistenceCard.Controls
+                .OfType<Label>()
+                .Where(label => label.Text.Contains("Configure Hive's", StringComparison.Ordinal)))
+            .Text;
+
+        Assert.Contains("Embedded", description, StringComparison.Ordinal);
+        Assert.Contains("SQL Server", description, StringComparison.Ordinal);
+        Assert.False(description.Contains("LocalDB", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [WinFormsFact]
     public void HiveAdvancedOverview_UsesHiveScrollHost()
     {
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
