@@ -1235,6 +1235,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
     internal HiveButton CopyDetailsButton => _copyDetailsButton;
 
+    internal TextBox DiagnosticDetailsInput => _diagnosticTextBox;
+
     internal string? LastDiagnosticDetails => _lastDiagnosticDetails;
 
     internal string SourceDatabaseName => _sourceEndpoint.SqlDatabaseName;
