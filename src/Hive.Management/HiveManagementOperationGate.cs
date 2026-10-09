@@ -15,13 +15,14 @@ public sealed class HiveManagementOperationGate :
 
     private int _activeOperations;
     private bool _quiescing;
+    private bool _closed;
     private TaskCompletionSource? _operationsDrained;
 
     public IAsyncDisposable? TryEnterOperation()
     {
         lock (_sync)
         {
-            if (_quiescing)
+            if (_quiescing || _closed)
                 return null;
 
             _activeOperations++;
@@ -40,6 +41,15 @@ public sealed class HiveManagementOperationGate :
             Task? drainTask;
             lock (_sync)
             {
+                if (_closed)
+                {
+                    _migrationGate.Release();
+                    return Result<IAsyncDisposable>.Failure(
+                        Error.Conflict(
+                            "hive.management.operation-gate-closed",
+                            "The Hive management graph is being retired and no longer accepts persistence migrations."));
+                }
+
                 _quiescing = true;
                 quiescenceStarted = true;
 
@@ -62,6 +72,65 @@ public sealed class HiveManagementOperationGate :
 
             return Result<IAsyncDisposable>.Success(
                 new GateLease(ReleaseQuiescence));
+        }
+        catch
+        {
+            if (quiescenceStarted)
+                ReleaseQuiescence();
+            else
+                _migrationGate.Release();
+
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Permanently prevents new ordinary Management calls and queued migrations from
+    /// starting after the current exclusive lease is released. The caller must first
+    /// acquire the retirement lease so admitted operations have drained.
+    /// </summary>
+    public void CloseAdmission()
+    {
+        lock (_sync)
+        {
+            _closed = true;
+        }
+    }
+
+    /// <summary>
+    /// Closes admission to this graph, waits for any active migration and ordinary
+    /// operations to finish, and returns the exclusive lease for safe graph disposal.
+    /// </summary>
+    public async Task<IAsyncDisposable> AcquireRetirementLeaseAsync()
+    {
+        await _migrationGate.WaitAsync().ConfigureAwait(false);
+
+        var quiescenceStarted = false;
+        try
+        {
+            Task? drainTask;
+            lock (_sync)
+            {
+                _closed = true;
+                _quiescing = true;
+                quiescenceStarted = true;
+
+                if (_activeOperations == 0)
+                {
+                    drainTask = null;
+                }
+                else
+                {
+                    _operationsDrained ??= new TaskCompletionSource(
+                        TaskCreationOptions.RunContinuationsAsynchronously);
+                    drainTask = _operationsDrained.Task;
+                }
+            }
+
+            if (drainTask is not null)
+                await drainTask.ConfigureAwait(false);
+
+            return new GateLease(ReleaseQuiescence);
         }
         catch
         {
