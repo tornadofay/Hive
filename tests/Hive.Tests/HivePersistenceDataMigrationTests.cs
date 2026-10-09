@@ -309,6 +309,48 @@ public sealed class HivePersistenceDataMigrationTests
     }
 
     [Fact]
+    public async Task ManagementFacade_RejectsOrdinaryCallsDuringMigrationQuiescence()
+    {
+        var configuration = HivePersistenceConfiguration.LocalDevelopment(
+            $"Hive_Test_OperationGate_{Guid.NewGuid():N}");
+        var options = HiveDatabaseOptions.FromConfiguration(configuration);
+        var gate = new HiveManagementOperationGate();
+        using var management = new HiveManagementFacade(
+            new SqlProviderResourceStore(options),
+            new SqlAgentDefinitionResourceStore(options),
+            new SqlWorkItemResourceStore(options),
+            configurationStore: new TestConfigurationStore(configuration),
+            persistenceMigrationQuiescence: gate,
+            managementOperationGate: gate);
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+
+        var leaseResult = await gate.AcquireAsync();
+        Assert.True(leaseResult.IsSuccess, leaseResult.Error?.Message);
+        var migrationLease = leaseResult.Value!;
+
+        try
+        {
+            var duringMigration = await management.GetPersistenceConfigurationAsync(context);
+
+            Assert.False(duringMigration.IsSuccess);
+            Assert.Equal(
+                "hive.management.operation-quiescing",
+                duringMigration.Error!.Code);
+        }
+        finally
+        {
+            await migrationLease.DisposeAsync();
+        }
+
+        var afterMigration = await management.GetPersistenceConfigurationAsync(context);
+        Assert.True(afterMigration.IsSuccess, afterMigration.Error?.Message);
+        Assert.Equal(configuration, afterMigration.Value);
+    }
+
+    [Fact]
     public async Task ManagementMigration_RequiresQuiescenceAndLeavesDestinationInactive()
     {
         var sourceDatabaseName = $"Hive_Test_Migration_Management_{Guid.NewGuid():N}";
