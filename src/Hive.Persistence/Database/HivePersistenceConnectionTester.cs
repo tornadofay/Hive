@@ -159,9 +159,10 @@ public sealed class HivePersistenceConnectionTester : IHivePersistenceConnection
         }
         catch (SqlException exception)
         {
-            var firstError = exception.Errors.Count > 0
-                ? exception.Errors[0]
-                : null;
+            var firstError = exception.Errors
+                .Cast<SqlError>()
+                .FirstOrDefault(static error => error.Number != 0)
+                ?? (exception.Errors.Count > 0 ? exception.Errors[0] : null);
             var errorNumber = firstError?.Number ?? exception.Number;
             var errorMessage = firstError?.Message ?? exception.Message;
 
@@ -213,7 +214,7 @@ public sealed class HivePersistenceConnectionTester : IHivePersistenceConnection
             return $"SQL Server was reached, but access to the configured Hive database was denied or the database could not be opened (SQL error {errorNumber}). Confirm the database name and the current Windows account's database permissions.";
         }
 
-        if (errorNumber is -1 or 2 or 26 or 40 or 53 ||
+        if (errorNumber is -1 or -2 or 2 or 26 or 40 or 53 or 11001 or 11004 ||
             detail.Contains("network-related or instance-specific", StringComparison.OrdinalIgnoreCase))
         {
             return $"Could not reach the SQL Server endpoint (SQL error {errorNumber}). Check the server/instance name and SQL Server service. For a named instance, verify SQL Server Browser/instance resolution or configure a TCP port. Details: {detail}";
