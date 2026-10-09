@@ -24,7 +24,7 @@ public sealed class ProviderSettingsIntegrationTests
 
         using var credential = SecretMaterial.Create("catalog-secret");
 
-        var database = CreateDatabase("Hive_Test_ProviderSettingsCatalog");
+        using var database = CreateDatabase("Hive_Test_ProviderSettingsCatalog");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -56,7 +56,7 @@ public sealed class ProviderSettingsIntegrationTests
     [Fact]
     public async Task ConfigureBuiltInProvider_CreatesDefaultAccountAndAutomaticTargets()
     {
-        var database = CreateDatabase("Hive_Test_ProviderSettingsOnboarding");
+        using var database = CreateDatabase("Hive_Test_ProviderSettingsOnboarding");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -128,7 +128,7 @@ public sealed class ProviderSettingsIntegrationTests
     [Fact]
     public async Task ReplaceBuiltInProviderCredential_RefreshesUsingNewCredentialAndPreservesTargetIdentity()
     {
-        var database = CreateDatabase("Hive_Test_ProviderSettingsCredentialReplacement");
+        using var database = CreateDatabase("Hive_Test_ProviderSettingsCredentialReplacement");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -206,7 +206,7 @@ public sealed class ProviderSettingsIntegrationTests
     [Fact]
     public async Task RefreshProvider_ReconcilesModelChurn_AndPreservesManualTargets()
     {
-        var database = CreateDatabase("Hive_Test_ProviderSettingsReconciliation");
+        using var database = CreateDatabase("Hive_Test_ProviderSettingsReconciliation");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -348,7 +348,7 @@ public sealed class ProviderSettingsIntegrationTests
     [Fact]
     public async Task FailedProviderRefresh_PreservesExistingAutomaticTargets()
     {
-        var database = CreateDatabase("Hive_Test_ProviderSettingsFailurePreservation");
+        using var database = CreateDatabase("Hive_Test_ProviderSettingsFailurePreservation");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -420,7 +420,7 @@ public sealed class ProviderSettingsIntegrationTests
     [Fact]
     public async Task ConcurrentProviderRefreshes_AreIdempotentForAutomaticTargets()
     {
-        var database = CreateDatabase("Hive_Test_ProviderSettingsConcurrency");
+        using var database = CreateDatabase("Hive_Test_ProviderSettingsConcurrency");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
