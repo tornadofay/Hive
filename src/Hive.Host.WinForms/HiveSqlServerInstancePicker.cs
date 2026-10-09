@@ -150,6 +150,8 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     private readonly TableLayoutPanel _topRow;
     private readonly TableLayoutPanel _customRow;
     private bool _applyingValue;
+    private bool _settingPort;
+    private bool _portWasAutomaticallyDefaulted;
 
     public event EventHandler? RefreshRequested;
 
@@ -166,18 +168,30 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         };
         _serverComboBox.SelectedIndexChanged += (_, _) =>
         {
-            if (!_applyingValue)
-                ApplyPortDefaultForSelection();
+            if (_applyingValue)
+                return;
 
+            ApplyPortDefaultForSelection();
             UpdateCustomVisibility();
         };
 
-        _customServerTextBox = CreateTextBox();
+        _customServerTextBox = CreateTextBox(autoSize: true);
         _customServerTextBox.PlaceholderText = "Custom server or instance";
         _customServerTextBox.Visible = false;
 
+        _customServerTextBox.TextChanged += (_, _) =>
+        {
+            if (!_applyingValue && IsCustomSelected)
+                ApplyPortDefaultForSelection();
+        };
+
         _portTextBox = CreateTextBox();
         _portTextBox.PlaceholderText = "Port";
+        _portTextBox.TextChanged += (_, _) =>
+        {
+            if (!_settingPort)
+                _portWasAutomaticallyDefaulted = false;
+        };
 
         _refreshButton = new Hive.Host.WinForms.UI.Controls.HiveButton
         {
@@ -217,6 +231,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
             Visible = false
         };
         _customRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        _customRow.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _customRow.Controls.Add(_customServerTextBox, 0, 0);
 
         _layout = new TableLayoutPanel
@@ -244,13 +259,14 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         MinimumSize = new Size(0, 36);
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
-        _themeManager.Apply(this);
         SetDiscoveredInstances(Array.Empty<string>(), null);
     }
 
     internal HiveComboBox ServerSelector => _serverComboBox;
 
     internal TextBox CustomServerInput => _customServerTextBox;
+
+    internal TableLayoutPanel CustomRow => _customRow;
 
     public string ServerName
     {
@@ -269,9 +285,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         get => int.TryParse(_portTextBox.Text.Trim(), out var port) && port > 0
             ? port
             : null;
-        set => _portTextBox.Text = value is > 0
-            ? value.Value.ToString()
-            : string.Empty;
+        set => SetPortValue(value, automaticallyDefaulted: false);
     }
 
     public bool IsCustomSelected =>
@@ -325,6 +339,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         finally
         {
             _applyingValue = false;
+            ApplyPortDefaultForSelection();
             UpdateCustomVisibility();
         }
     }
@@ -336,42 +351,77 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         ArgumentNullException.ThrowIfNull(instances);
 
         var preferred = preferredServer?.Trim() ?? string.Empty;
-        _serverComboBox.Items.Clear();
-
-        foreach (var instance in instances
-                     .Where(static value => !string.IsNullOrWhiteSpace(value))
-                     .Select(static value => value.Trim())
-                     .Distinct(StringComparer.OrdinalIgnoreCase)
-                     .OrderBy(static value => value, StringComparer.OrdinalIgnoreCase))
+        _applyingValue = true;
+        try
         {
-            _serverComboBox.Items.Add(new ServerChoice(instance, false));
-        }
+            _serverComboBox.Items.Clear();
 
-        _serverComboBox.Items.Add(new ServerChoice("Custom...", true));
-
-        if (!string.IsNullOrWhiteSpace(preferred))
-        {
-            var discovered = _serverComboBox.Items
-                .OfType<ServerChoice>()
-                .FirstOrDefault(
-                    choice => !choice.IsCustom &&
-                        string.Equals(
-                            choice.DisplayName,
-                            preferred,
-                            StringComparison.OrdinalIgnoreCase));
-
-            if (discovered is not null)
+            foreach (var instance in instances
+                         .Where(static value => !string.IsNullOrWhiteSpace(value))
+                         .Select(static value => value.Trim())
+                         .Distinct(StringComparer.OrdinalIgnoreCase)
+                         .OrderBy(static value => value, StringComparer.OrdinalIgnoreCase))
             {
-                _serverComboBox.SelectedItem = discovered;
-                _customServerTextBox.Clear();
+                _serverComboBox.Items.Add(new ServerChoice(instance, false));
             }
-            else if (string.Equals(
-                         preferred,
-                         "localhost",
-                         StringComparison.OrdinalIgnoreCase))
+
+            _serverComboBox.Items.Add(new ServerChoice("Custom...", true));
+
+            if (!string.IsNullOrWhiteSpace(preferred))
             {
-                // Recover from older configurations that represented an installed
-                // named local instance as bare "localhost".
+                var discovered = _serverComboBox.Items
+                    .OfType<ServerChoice>()
+                    .FirstOrDefault(
+                        choice => !choice.IsCustom &&
+                            string.Equals(
+                                choice.DisplayName,
+                                preferred,
+                                StringComparison.OrdinalIgnoreCase));
+
+                if (discovered is not null)
+                {
+                    _serverComboBox.SelectedItem = discovered;
+                    _customServerTextBox.Clear();
+                }
+                else if (string.Equals(
+                             preferred,
+                             "localhost",
+                             StringComparison.OrdinalIgnoreCase))
+                {
+                    // Recover from older configurations that represented an installed
+                    // named local instance as bare "localhost".
+                    var localInstance = _serverComboBox.Items
+                        .OfType<ServerChoice>()
+                        .FirstOrDefault(
+                            static choice =>
+                                !choice.IsCustom &&
+                                (string.Equals(
+                                     choice.DisplayName,
+                                     "localhost",
+                                     StringComparison.OrdinalIgnoreCase) ||
+                                 choice.DisplayName.StartsWith(
+                                     @"localhost\\",
+                                     StringComparison.OrdinalIgnoreCase)));
+
+                    if (localInstance is not null)
+                    {
+                        _serverComboBox.SelectedItem = localInstance;
+                        _customServerTextBox.Clear();
+                    }
+                    else
+                    {
+                        _serverComboBox.SelectedIndex = _serverComboBox.Items.Count - 1;
+                        _customServerTextBox.Text = preferred;
+                    }
+                }
+                else
+                {
+                    _serverComboBox.SelectedIndex = _serverComboBox.Items.Count - 1;
+                    _customServerTextBox.Text = preferred;
+                }
+            }
+            else
+            {
                 var localInstance = _serverComboBox.Items
                     .OfType<ServerChoice>()
                     .FirstOrDefault(
@@ -382,75 +432,59 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
                                  "localhost",
                                  StringComparison.OrdinalIgnoreCase) ||
                              choice.DisplayName.StartsWith(
-                                 @"localhost\",
+                                 @"localhost\\",
                                  StringComparison.OrdinalIgnoreCase)));
 
-                if (localInstance is not null)
-                {
-                    _serverComboBox.SelectedItem = localInstance;
-                    _customServerTextBox.Clear();
-                }
-                else
-                {
-                    _serverComboBox.SelectedIndex = _serverComboBox.Items.Count - 1;
-                    _customServerTextBox.Text = preferred;
-                }
-            }
-            else
-            {
-                _serverComboBox.SelectedIndex = _serverComboBox.Items.Count - 1;
-                _customServerTextBox.Text = preferred;
+                _serverComboBox.SelectedItem =
+                    localInstance ??
+                    _serverComboBox.Items
+                        .OfType<ServerChoice>()
+                        .FirstOrDefault(static choice => !choice.IsCustom);
             }
         }
-        else
+        finally
         {
-            var localInstance = _serverComboBox.Items
-                .OfType<ServerChoice>()
-                .FirstOrDefault(
-                    static choice =>
-                        !choice.IsCustom &&
-                        (string.Equals(
-                             choice.DisplayName,
-                             "localhost",
-                             StringComparison.OrdinalIgnoreCase) ||
-                         choice.DisplayName.StartsWith(
-                             @"localhost\",
-                             StringComparison.OrdinalIgnoreCase)));
-
-            _serverComboBox.SelectedItem =
-                localInstance ??
-                _serverComboBox.Items
-                    .OfType<ServerChoice>()
-                    .FirstOrDefault(static choice => !choice.IsCustom);
+            _applyingValue = false;
+            ApplyPortDefaultForSelection();
+            UpdateCustomVisibility();
         }
-
-        ApplyPortDefaultForSelection();
-        UpdateCustomVisibility();
     }
 
     private void ApplyPortDefaultForSelection()
     {
-        if (IsCustomSelected)
-        {
-            if (Port is null)
-                Port = 1433;
-            return;
-        }
-
-        var server = ServerName;
+        var server = IsCustomSelected
+            ? _customServerTextBox.Text.Trim()
+            : ServerName;
 
         if (server.Contains('\\', StringComparison.Ordinal))
         {
-            // Named SQL Server instances use SQL Server Browser/instance
-            // resolution by default. Preserve a user/configured non-default port.
-            if (Port == 1433)
-                Port = null;
+            // Named instances use instance resolution unless the user explicitly
+            // entered a port. Remove only the picker's automatic 1433 default.
+            if (_portWasAutomaticallyDefaulted && Port == 1433)
+                SetPortValue(null, automaticallyDefaulted: true);
 
             return;
         }
 
         if (Port is null)
-            Port = 1433;
+            SetPortValue(1433, automaticallyDefaulted: true);
+    }
+
+    private void SetPortValue(int? value, bool automaticallyDefaulted)
+    {
+        _settingPort = true;
+        try
+        {
+            _portTextBox.Text = value is > 0
+                ? value.Value.ToString()
+                : string.Empty;
+        }
+        finally
+        {
+            _settingPort = false;
+        }
+
+        _portWasAutomaticallyDefaulted = automaticallyDefaulted;
     }
 
     public async Task RefreshAsync(
@@ -477,31 +511,42 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     private void UpdateCustomVisibility()
     {
         var custom = IsCustomSelected;
-        _customRow.Visible = custom;
-        _customServerTextBox.Visible = custom;
-        _layout.RowStyles[1].SizeType = SizeType.AutoSize;
 
-        if (!custom)
+        if (!custom && _customServerTextBox.TextLength > 0)
             _customServerTextBox.Clear();
 
-        _layout.PerformLayout();
-
-        if (!_applyingValue)
+        if (_customRow.Visible == custom &&
+            _customServerTextBox.Visible == custom)
         {
-            PerformLayout();
-            Parent?.PerformLayout();
+            return;
+        }
+
+        SuspendLayout();
+        _layout.SuspendLayout();
+        _customRow.SuspendLayout();
+        try
+        {
+            _customRow.Visible = custom;
+            _customServerTextBox.Visible = custom;
+            _layout.RowStyles[1].SizeType = SizeType.AutoSize;
+        }
+        finally
+        {
+            _customRow.ResumeLayout(false);
+            _layout.ResumeLayout(true);
+            ResumeLayout(true);
         }
     }
 
     private void ThemeManagerOnChanged(object? sender, EventArgs e) =>
         _themeManager.Apply(this);
 
-    private static TextBox CreateTextBox() =>
+    private static TextBox CreateTextBox(bool autoSize = false) =>
         new()
         {
             Dock = DockStyle.Fill,
             Height = 32,
-            AutoSize = false,
+            AutoSize = autoSize,
             BorderStyle = BorderStyle.FixedSingle,
             Margin = Padding.Empty
         };
