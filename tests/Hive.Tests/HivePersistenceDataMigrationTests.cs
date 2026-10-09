@@ -14,7 +14,8 @@ public sealed class HivePersistenceDataMigrationTests
     [Theory]
     [InlineData(911, "exact current name")]
     [InlineData(4060, "especially if the database was renamed")]
-    public void SqlMigrationFailureDiagnostic_ExplainsRenamedDatabaseErrorsWithoutSecrets(
+    [InlineData(5170, "physical path already exists")]
+    public void SqlMigrationFailureDiagnostic_ExplainsDatabaseCreationErrorsWithoutSecrets(
         int sqlErrorNumber,
         string expectedGuidance)
     {
@@ -57,6 +58,7 @@ public sealed class HivePersistenceDataMigrationTests
     [Theory]
     [InlineData(911, "exact current name")]
     [InlineData(4060, "especially if the database was renamed")]
+    [InlineData(5170, "physical path already exists")]
     public void SqlSchemaMigrationFailure_PreservesSafeSqlErrorDetails(
         int sqlErrorNumber,
         string expectedGuidance)
