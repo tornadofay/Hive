@@ -1250,39 +1250,9 @@ public sealed class HivePersistenceDataMigrationTests
             now);
     }
 
-    private static async Task<PersistenceTestDatabase> CreateSqlDatabaseAsync(
-        string databaseName)
-    {
-        var database = new PersistenceTestDatabase(databaseName);
-        try
-        {
-            database.Reset();
-
-            var migration = await new HiveDatabaseMigrator(
-                database.Options).MigrateAsync();
-            Assert.True(
-                migration.IsSuccess,
-                migration.Error?.Message);
-
-            return database;
-        }
-        catch (Exception creationFailure)
-        {
-            try
-            {
-                await database.DisposeAsync();
-            }
-            catch (Exception cleanupFailure)
-            {
-                throw new AggregateException(
-                    $"SQL migration test database '{database.DatabaseName}' failed to initialize and could not be cleaned up.",
-                    creationFailure,
-                    cleanupFailure);
-            }
-
-            throw;
-        }
-    }
+    private static Task<PersistenceTestDatabase> CreateSqlDatabaseAsync(
+        string databaseName) =>
+        PersistenceTestDatabase.CreateMigratedAsync(databaseName);
 
     private static async Task<Dictionary<string, long>> ReadSqlCountsAsync(
         HiveDatabaseOptions options)
