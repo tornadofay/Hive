@@ -245,7 +245,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                     ? "localhost"
                     : configuration.ServerName.Trim();
                 var port = configuration.Port;
-                if (port == 1433 && serverName.Contains('\\\\', StringComparison.Ordinal))
+                if (port == 1433 && serverName.Contains('\\'))
                     port = null;
 
                 _sqlServerPicker.SetValue(serverName, port);
