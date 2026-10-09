@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION PENDING**
+Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
 
 ## Active corrective slice
 
@@ -39,7 +39,9 @@ Initial confirmed finding: `HiveSettingsOverviewView.AddCard` added the title, d
 
 ### Verification gate
 
-Status: **VERIFICATION PENDING**. Do not close this slice or authorize another slice until developer verification results arrive.
+Status: **VERIFICATION FAILED / REMEDIATION REQUIRED** based on developer-reported compiler/analyzer output.
+
+Failure boundary: `tests/Hive.Tests/HiveUiPolishTests.cs`, `HiveSettingsOverviewCards_UseSeparateRowsAndDescribeBothPersistenceBackends`, reported at line 1629: analyzer `xUnit2031` rejects filtering with `.Where(...)` before calling `Assert.Single`. This is an in-scope test-code failure. No other failure has been reported in this handoff.
 
 Example to run: Overview / Getting Started / Example Configuration — Hive.Example.WinForms
 
