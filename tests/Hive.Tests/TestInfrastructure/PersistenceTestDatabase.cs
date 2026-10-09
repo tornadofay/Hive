@@ -26,6 +26,42 @@ internal sealed class PersistenceTestDatabase : IDisposable, IAsyncDisposable
 
     public HiveDatabaseOptions Options { get; }
 
+    public static async Task<PersistenceTestDatabase> CreateMigratedAsync(
+        string logicalName)
+    {
+        var database = new PersistenceTestDatabase(logicalName);
+        try
+        {
+            database.Reset();
+
+            var migration = await new HiveDatabaseMigrator(
+                database.Options).MigrateAsync().ConfigureAwait(false);
+            if (migration.IsFailure)
+            {
+                throw new InvalidOperationException(
+                    $"Hive.Tests database '{database.DatabaseName}' could not be migrated: {migration.Error?.Code ?? "unknown"} — {migration.Error?.Message ?? "No migration error details were returned."}");
+            }
+
+            return database;
+        }
+        catch (Exception creationFailure)
+        {
+            try
+            {
+                await database.DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception cleanupFailure)
+            {
+                throw new AggregateException(
+                    $"Hive.Tests database '{database.DatabaseName}' failed to initialize and could not be cleaned up.",
+                    creationFailure,
+                    cleanupFailure);
+            }
+
+            throw;
+        }
+    }
+
     public void Reset()
     {
         using var connection = new SqlConnection(Options.ConnectionString);
