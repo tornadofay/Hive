@@ -242,9 +242,9 @@ public sealed class HiveUiPolishTests
     }
 
     [WinFormsFact]
-    public void HivePersistenceSettingsView_UsesDatabaseSetupAndDataMigrationTabs()
+    public async Task HivePersistenceSettingsView_UsesDatabaseSetupAndDataMigrationTabs()
     {
-        var (management, _) =
+        var (management, managementProxy) =
             HiveWorkspaceLifecycleTests.ManagementFacadeProxy.Create();
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
 
@@ -277,6 +277,15 @@ public sealed class HiveUiPolishTests
 
         view.NavigationTabs.SelectedIndex = 1;
         Application.DoEvents();
+
+        var migrationView = Assert.IsType<HivePersistenceDataMigrationSettingsView>(
+            view.NavigationTabs.TabPages[1].Controls[0]);
+        await migrationView.InitializeAsync().WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.False(managementProxy.PersistenceConnectionTestRequested.Task.IsCompleted);
+        Assert.Contains(
+            "select Refresh to test readiness",
+            migrationView.StatusLabel.Text,
+            StringComparison.OrdinalIgnoreCase);
 
         Assert.Equal(
             DockStyle.Fill,
@@ -324,12 +333,7 @@ public sealed class HiveUiPolishTests
             view.SqlServerPicker.CustomServerInput.Bottom <=
             view.SqlServerPicker.ClientSize.Height);
 
-        var migrationView =
-            view.NavigationTabs.TabPages[1].Controls[0]
-                as HivePersistenceDataMigrationSettingsView;
-
-        Assert.NotNull(migrationView);
-        Assert.True(migrationView!.SourceCard.Enabled);
+        Assert.True(migrationView.SourceCard.Enabled);
         Assert.True(migrationView.DestinationCard.Enabled);
         Assert.Same(
             migrationView.SourceCard,
