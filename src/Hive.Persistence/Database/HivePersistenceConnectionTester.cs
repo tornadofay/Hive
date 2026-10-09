@@ -159,10 +159,16 @@ public sealed class HivePersistenceConnectionTester : IHivePersistenceConnection
         }
         catch (SqlException exception)
         {
+            var firstError = exception.Errors.Count > 0
+                ? exception.Errors[0]
+                : null;
+            var errorNumber = firstError?.Number ?? exception.Number;
+            var errorMessage = firstError?.Message ?? exception.Message;
+
             return Result<HivePersistenceConnectionTest>.Failure(
                 HivePersistenceError.External(
                     "hive.persistence.connection-failed",
-                    "SQL Server connection test failed.",
+                    DescribeSqlConnectionFailure(errorNumber, errorMessage),
                     exception));
         }
         catch (Exception exception)
@@ -173,6 +179,47 @@ public sealed class HivePersistenceConnectionTester : IHivePersistenceConnection
                     "Persistence connection test failed unexpectedly.",
                     exception));
         }
+    }
+
+    internal static string DescribeSqlConnectionFailure(
+        int errorNumber,
+        string errorMessage)
+    {
+        var detail = string.Join(
+            " ",
+            (errorMessage ?? string.Empty).Split(
+                (char[]?)null,
+                StringSplitOptions.RemoveEmptyEntries));
+
+        if (detail.Length > 600)
+            detail = detail[..600];
+
+        if (detail.Contains("certificate chain", StringComparison.OrdinalIgnoreCase) ||
+            (detail.Contains("SSL Provider", StringComparison.OrdinalIgnoreCase) &&
+             detail.Contains("certificate", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "SQL Server TLS certificate validation failed. For a local development instance, enable Trust server certificate; otherwise install a certificate trusted by this computer.";
+        }
+
+        if (errorNumber == 18456 ||
+            detail.Contains("Login failed for user", StringComparison.OrdinalIgnoreCase))
+        {
+            return "SQL Server rejected authentication. For Windows integration, confirm that the current Windows account is allowed to connect to this instance and access the Hive database.";
+        }
+
+        if (errorNumber is 4060 or 916 ||
+            detail.Contains("Cannot open database", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"SQL Server was reached, but access to the configured Hive database was denied or the database could not be opened (SQL error {errorNumber}). Confirm the database name and the current Windows account's database permissions.";
+        }
+
+        if (errorNumber is -1 or 2 or 26 or 40 or 53 ||
+            detail.Contains("network-related or instance-specific", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"Could not reach the SQL Server endpoint (SQL error {errorNumber}). Check the server/instance name and SQL Server service. For a named instance, verify SQL Server Browser/instance resolution or configure a TCP port. Details: {detail}";
+        }
+
+        return $"SQL Server connection test failed (SQL error {errorNumber}): {detail}";
     }
 
     private static async Task<Result<HivePersistenceConnectionTest>> TestEmbeddedAsync(
