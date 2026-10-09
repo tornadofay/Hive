@@ -86,10 +86,7 @@ internal static class SqlTestDatabaseLifecycle
 
                 return new OwnedDatabase(
                     databaseName,
-                    logicalName,
-                    CurrentRunId,
                     ownershipToken,
-                    timestamp,
                     marker,
                     databaseLeaseConnection,
                     databaseBuilder.ConnectionString);
@@ -636,7 +633,7 @@ internal static class SqlTestDatabaseLifecycle
         Exception exception)
     {
         var sqlNumber = exception is SqlException sqlException
-            ? $" SQL error {sqlException.Number}."
+            ? $" SQL error {sqlException.Number}, state {sqlException.State}, class {sqlException.Class}."
             : string.Empty;
 
         Console.Error.WriteLine(
@@ -645,10 +642,7 @@ internal static class SqlTestDatabaseLifecycle
 
     internal sealed record OwnedDatabase(
         string DatabaseName,
-        string LogicalName,
-        Guid RunId,
         Guid OwnershipToken,
-        string CreatedAtTimestamp,
         string OwnershipMarker,
         SqlConnection LeaseLockConnection,
         string ConnectionString);
