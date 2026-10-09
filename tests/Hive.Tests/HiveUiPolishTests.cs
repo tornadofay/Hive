@@ -449,6 +449,18 @@ public sealed class HiveUiPolishTests
 
         picker.SetDiscoveredInstances(
             [
+                "localhost",
+                @"localhost\MSSQLSERVER01"
+            ],
+            @"localhost\MSSQLSERVER01",
+            preserveCustomSelection: true);
+
+        Assert.True(picker.IsCustomSelected);
+        Assert.Equal(@"localhost\MSSQLSERVER01", picker.ServerName);
+        Assert.Null(picker.Port);
+
+        picker.SetDiscoveredInstances(
+            [
                 @"REMOTE01\SQL",
                 @"localhost\HiveSql"
             ],
