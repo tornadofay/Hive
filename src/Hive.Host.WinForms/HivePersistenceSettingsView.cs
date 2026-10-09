@@ -954,11 +954,20 @@ internal sealed class HivePersistenceSettingsView : UserControl
             GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
 
-        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92f));
-        panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        panel.Controls.Add(_embeddedStorageTextBox, 0, 0);
-        panel.Controls.Add(_browseEmbeddedButton, 1, 0);
+        panel.SuspendLayout();
+        try
+        {
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92f));
+            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            panel.Controls.Add(_embeddedStorageTextBox, 0, 0);
+            panel.Controls.Add(_browseEmbeddedButton, 1, 0);
+        }
+        finally
+        {
+            panel.ResumeLayout(false);
+        }
+
         return panel;
     }
 
@@ -969,9 +978,17 @@ internal sealed class HivePersistenceSettingsView : UserControl
             CreateFieldBlock("Password", _passwordTextBox, 260));
 
         var container = CreateVerticalStack();
-        container.Controls.Add(credentials);
-        container.Controls.Add(_credentialStatus);
-        _credentialStatus.Margin = new Padding(0, 6, 0, 0);
+        container.SuspendLayout();
+        try
+        {
+            container.Controls.Add(credentials);
+            container.Controls.Add(_credentialStatus);
+            _credentialStatus.Margin = new Padding(0, 6, 0, 0);
+        }
+        finally
+        {
+            container.ResumeLayout(false);
+        }
 
         return CreateLabeledContainer(
             "SQL credentials",
@@ -999,19 +1016,27 @@ internal sealed class HivePersistenceSettingsView : UserControl
             GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
 
-        var width = 100f / controls.Length;
-        for (var i = 0; i < controls.Length; i++)
+        grid.SuspendLayout();
+        try
         {
-            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, width));
+            var width = 100f / controls.Length;
+            for (var i = 0; i < controls.Length; i++)
+            {
+                grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, width));
 
-            var control = controls[i];
-            var rightGap = i < controls.Length - 1 ? 10 : 0;
-            control.Margin = new Padding(
-                control.Margin.Left,
-                control.Margin.Top,
-                rightGap,
-                control.Margin.Bottom);
-            grid.Controls.Add(control, i, 0);
+                var control = controls[i];
+                var rightGap = i < controls.Length - 1 ? 10 : 0;
+                control.Margin = new Padding(
+                    control.Margin.Left,
+                    control.Margin.Top,
+                    rightGap,
+                    control.Margin.Bottom);
+                grid.Controls.Add(control, i, 0);
+            }
+        }
+        finally
+        {
+            grid.ResumeLayout(false);
         }
 
         return grid;
@@ -1064,17 +1089,25 @@ internal sealed class HivePersistenceSettingsView : UserControl
             AccessibleName = title
         };
 
-        var heading = CreateSectionHeading(title);
-        var copy = CreateSectionDescription(description);
-
-        section.Controls.Add(heading, 0, 0);
-        section.Controls.Add(copy, 0, 1);
-
-        foreach (var child in content)
+        section.SuspendLayout();
+        try
         {
-            var row = section.RowCount++;
-            section.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            section.Controls.Add(child, 0, row);
+            var heading = CreateSectionHeading(title);
+            var copy = CreateSectionDescription(description);
+
+            section.Controls.Add(heading, 0, 0);
+            section.Controls.Add(copy, 0, 1);
+
+            foreach (var child in content)
+            {
+                var row = section.RowCount++;
+                section.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                section.Controls.Add(child, 0, row);
+            }
+        }
+        finally
+        {
+            section.ResumeLayout(false);
         }
 
         return section;
@@ -1086,9 +1119,18 @@ internal sealed class HivePersistenceSettingsView : UserControl
         Control content)
     {
         var wrapper = CreateVerticalStack();
-        wrapper.Controls.Add(CreateSectionHeading(title));
-        wrapper.Controls.Add(CreateSectionDescription(description));
-        wrapper.Controls.Add(content);
+        wrapper.SuspendLayout();
+        try
+        {
+            wrapper.Controls.Add(CreateSectionHeading(title));
+            wrapper.Controls.Add(CreateSectionDescription(description));
+            wrapper.Controls.Add(content);
+        }
+        finally
+        {
+            wrapper.ResumeLayout(false);
+        }
+
         return wrapper;
     }
 
