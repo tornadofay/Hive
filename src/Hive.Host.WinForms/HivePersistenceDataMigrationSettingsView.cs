@@ -935,12 +935,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private readonly MigrationEndpointEditor _destinationEndpoint;
     private readonly HiveButton _refreshButton;
     private readonly HiveButton _migrateButton;
-    private readonly HiveButton _copyDetailsButton;
     private readonly Label _statusLabel;
-    private readonly TableLayoutPanel _diagnosticPanel;
-    private readonly TextBox _diagnosticTextBox;
-
-    private string? _lastDiagnosticDetails;
+    private readonly Action<HiveMessageOptions> _showMessage;
     private HiveStatusTone _statusTone = HiveStatusTone.Neutral;
     private CancellationTokenSource? _operationCts;
     private HiveBootstrapCredentialReference? _createdSourceCredential;
@@ -953,11 +949,13 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         ResourceAccessContext accessContext,
         IHiveThemeManager themeManager,
         string? applicationName = null,
-        IHiveExampleOutput? output = null)
+        IHiveExampleOutput? output = null,
+        Action<HiveMessageOptions>? showMessage = null)
     {
         _management = management ?? throw new ArgumentNullException(nameof(management));
         _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
         _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
+        _showMessage = showMessage ?? ShowMessageDialog;
         _output = output;
         _applicationName = string.IsNullOrWhiteSpace(applicationName)
             ? HivePersistenceConfiguration.DefaultApplicationName
@@ -1024,52 +1022,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _sourceBody.Controls.Add(_sourceEndpoint.View);
         _destinationBody.Controls.Add(_destinationEndpoint.View);
 
-        _diagnosticTextBox = new TextBox
-        {
-            Dock = DockStyle.Fill,
-            Multiline = true,
-            ReadOnly = true,
-            WordWrap = true,
-            ScrollBars = ScrollBars.Vertical,
-            Height = 76,
-            BorderStyle = BorderStyle.FixedSingle,
-            Margin = Padding.Empty,
-            AccessibleName = "Copyable migration diagnostic details",
-            AccessibleDescription = "Select and copy the endpoint failure details, or use Copy details."
-        };
-        _diagnosticPanel = new TableLayoutPanel
-        {
-            Dock = DockStyle.Top,
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            ColumnCount = 1,
-            RowCount = 2,
-            Margin = Padding.Empty,
-            Padding = Padding.Empty,
-            GrowStyle = TableLayoutPanelGrowStyle.FixedSize,
-            Visible = false,
-            RowStyles =
-            {
-                new RowStyle(SizeType.Absolute, 22f),
-                new RowStyle(SizeType.Absolute, 76f)
-            },
-            Controls =
-            {
-                new Label
-                {
-                    Text = "Diagnostic details (select and copy)",
-                    Dock = DockStyle.Fill,
-                    AutoSize = false,
-                    Height = 22,
-                    Font = new Font(
-                        SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
-                        FontStyle.Bold),
-                    Margin = Padding.Empty
-                },
-                _diagnosticTextBox
-            }
-        };
-
         _roleColumns.Controls.Add(_sourceCard, 0, 0);
         _roleColumns.Controls.Add(_destinationCard, 1, 0);
 
@@ -1079,16 +1031,12 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _editor.FieldsPanel.SetColumnSpan(top, 2);
         _editor.FieldsPanel.Controls.Add(_roleColumns, 0, 1);
         _editor.FieldsPanel.SetColumnSpan(_roleColumns, 2);
-        _editor.FieldsPanel.Controls.Add(_diagnosticPanel, 0, 2);
-        _editor.FieldsPanel.SetColumnSpan(_diagnosticPanel, 2);
         _editor.FieldsPanel.RowStyles.Clear();
         _editor.FieldsPanel.RowStyles.Add(
             new RowStyle(SizeType.AutoSize));
         _editor.FieldsPanel.RowStyles.Add(
             new RowStyle(SizeType.Percent, 100f));
-        _editor.FieldsPanel.RowStyles.Add(
-            new RowStyle(SizeType.AutoSize));
-        _editor.FieldsPanel.RowCount = 3;
+        _editor.FieldsPanel.RowCount = 2;
 
         _refreshButton = _editor.AddActionButton(
             "Refresh",
@@ -1098,12 +1046,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             "Migrate All Data",
             HiveButtonStyle.Primary,
             132);
-        _copyDetailsButton = _editor.AddActionButton(
-            "Copy details",
-            HiveButtonStyle.Secondary,
-            104);
-        _copyDetailsButton.Visible = false;
-        _copyDetailsButton.Click += (_, _) => CopyDiagnosticDetails();
 
         _statusLabel = CreateStatusLabel();
         _editor.FooterPanel.Controls.Add(_statusLabel);
@@ -1141,7 +1083,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
     private async Task InitializeCoreAsync(CancellationToken cancellationToken)
     {
-        ClearDiagnosticDetails();
         SetStatus(
             "Loading saved endpoint settings. Review both endpoints, then select Refresh to test readiness.",
             HiveStatusTone.Information);
@@ -1234,12 +1175,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         _destinationEndpoint.SqlAuthenticationSelector;
 
     internal Label StatusLabel => _statusLabel;
-
-    internal HiveButton CopyDetailsButton => _copyDetailsButton;
-
-    internal TextBox DiagnosticDetailsInput => _diagnosticTextBox;
-
-    internal string? LastDiagnosticDetails => _lastDiagnosticDetails;
 
     internal string SourceDatabaseName => _sourceEndpoint.SqlDatabaseName;
 
@@ -1452,7 +1387,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         if (_busy || IsDisposed || Disposing)
             return;
 
-        ClearDiagnosticDetails();
         try
         {
             await RefreshVisibleSqlServerInstancesAsync(CancellationToken.None)
@@ -1521,7 +1455,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private async Task RefreshStatusAsync(
         CancellationToken cancellationToken)
     {
-        ClearDiagnosticDetails();
         try
         {
             await RefreshVisibleSqlServerInstancesAsync(
@@ -1593,8 +1526,9 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         }
         catch (ArgumentException exception)
         {
-            SetCopyableDiagnostic(
-                "Migration configuration is invalid. Click Copy details to copy the diagnostic.",
+            ShowDiagnostic(
+                "Migration configuration is invalid. See the error dialog for details.",
+                "Review the persistence migration configuration.",
                 $"Migration configuration: {exception.Message}",
                 HiveStatusTone.Warning);
         }
@@ -1603,7 +1537,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private async Task RunMigrationAsync(
         CancellationToken cancellationToken)
     {
-        ClearDiagnosticDetails();
         var source = await BuildEndpointConfigurationAsync(
             _sourceEndpoint,
             EndpointRole.Source,
@@ -1674,8 +1607,9 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         if (result.IsFailure)
         {
             var migrationError = result.Error!;
-            SetCopyableDiagnostic(
-                "Migration failed. Click Copy details to copy the diagnostic.",
+            ShowDiagnostic(
+                "Migration failed. See the error dialog for details.",
+                "Hive could not complete the full-data migration.",
                 $"Error code: {migrationError.Code}{Environment.NewLine}{migrationError.Message}",
                 HiveStatusTone.Error);
             return;
@@ -1724,57 +1658,49 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         string failureMessage,
         string prefix = "")
     {
-        SetCopyableDiagnostic(
-            $"{prefix}{role} connection failed. Click Copy details to copy the diagnostic.",
+        ShowDiagnostic(
+            $"{prefix}{role} connection failed. See the error dialog for details.",
+            $"{prefix}{role} persistence endpoint connection failed.",
             DescribeEndpointFailure(role, configuration, failureMessage),
             HiveStatusTone.Error);
     }
 
-    private void SetCopyableDiagnostic(
+    private void ShowDiagnostic(
         string statusMessage,
+        string userMessage,
         string diagnosticDetails,
         HiveStatusTone tone)
     {
-        _lastDiagnosticDetails = diagnosticDetails;
-        _diagnosticTextBox.Text = diagnosticDetails;
-        _diagnosticPanel.Visible = true;
-        _copyDetailsButton.Visible = true;
-        _copyDetailsButton.Enabled = true;
         SetStatus(statusMessage, tone);
-        UpdateFooterStatusWidth();
-    }
 
-    private void ClearDiagnosticDetails()
-    {
-        _lastDiagnosticDetails = null;
-        _diagnosticTextBox.Clear();
-        _diagnosticPanel.Visible = false;
-        _copyDetailsButton.Visible = false;
-        _copyDetailsButton.Enabled = false;
-        UpdateFooterStatusWidth();
-    }
-
-    private void CopyDiagnosticDetails()
-    {
-        if (string.IsNullOrWhiteSpace(_lastDiagnosticDetails))
+        if (IsDisposed || Disposing)
             return;
 
-        try
+        var messageType = tone switch
         {
-            Clipboard.SetText(_lastDiagnosticDetails);
-            SetStatus(
-                "Diagnostic details copied. Paste them into your message.",
-                HiveStatusTone.Information);
-        }
-        catch (Exception exception)
-        {
-            Trace.TraceWarning(
-                "Could not copy SQL endpoint diagnostics ({0}).",
-                exception.GetType().Name);
-            SetStatus(
-                "Clipboard unavailable. Try again after closing other clipboard operations.",
-                HiveStatusTone.Warning);
-        }
+            HiveStatusTone.Error => HiveMessageType.Error,
+            HiveStatusTone.Warning => HiveMessageType.Warning,
+            HiveStatusTone.Success => HiveMessageType.Success,
+            HiveStatusTone.Information => HiveMessageType.Information,
+            _ => HiveMessageType.Information
+        };
+
+        _showMessage(
+            new HiveMessageOptions(
+                "Hive Persistence",
+                userMessage,
+                messageType,
+                MessageBoxButtons.OK,
+                diagnosticDetails,
+                DetailsExpanded: true));
+    }
+
+    private void ShowMessageDialog(HiveMessageOptions options)
+    {
+        _ = HiveMessageBox.Show(
+            FindForm(),
+            options,
+            _themeManager);
     }
 
     private async Task<HivePersistenceConfiguration> BuildEndpointConfigurationAsync(
@@ -1943,9 +1869,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         }
         catch (ArgumentException exception)
         {
-            SetCopyableDiagnostic(
-                "Migration configuration is invalid. Click Copy details to copy the diagnostic.",
-                exception.Message,
+            SetStatus(
+                "Migration configuration is invalid. See the error dialog for details.",
                 HiveStatusTone.Error);
             HiveUiErrorReporter.Report(
                 FindForm(),
