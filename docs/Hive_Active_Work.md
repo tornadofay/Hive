@@ -502,3 +502,23 @@ The user-reported **772/772** run predates this remediation; the assistant has n
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
 Tests to run: `HiveUiPolishTests` and `HivePersistenceErrorTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
+
+
+### Verification failure — 2026-10-09 Data Migration still cannot connect; diagnostics not copyable
+
+The user reports that the previous layout/port correction did not resolve their real SQL Server connection: Database Setup's SQL connection works, but clicking migration still fails with “cannot reach SQL Server endpoint.” They also explicitly report that the migration error is placed in the status message, where it is impractical to select/copy, and that this was not an acceptable way to deliver diagnostics.
+
+Source inspection establishes a migration-vs-Database-Setup configuration gap: Database Setup loads the saved `HivePersistenceConfiguration` into its picker and applies its server/port, database, authentication, encryption, and Trust Server Certificate settings. Data Migration currently constructs a fresh endpoint editor with defaults and never reads the saved settings to initialize a matching SQL SOURCE editor; its TLS/server/port values can therefore differ from the settings that the user already proved can connect. The latest null-port fix alone does not align these connection options. The migration's preflight still correctly owns the explicit source/destination endpoint configurations, but its UI must make a matching saved configuration available as an editable starting value instead of making the user unknowingly reconnect with defaults.
+
+This is an in-scope Slice 5 connection and UX remediation. Slice 6 and 1.19 remain unauthorized.
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
+### Remediation authorization — use saved endpoint settings and provide copyable diagnostics
+
+- During first Data Migration initialization, read the persisted configuration through `IHiveManagementFacade.GetPersistenceConfigurationAsync` without testing a database connection. If its backend matches the selected SOURCE editor backend, prefill that editor with the saved endpoint settings (server, nullable/explicit port, database, authentication, Encrypt, Trust Server Certificate, and command timeout) as editable initial values. Do not silently change Direction; do not substitute the active configuration during migration execution; keep SOURCE and DESTINATION independently editable and keep both explicit configurations in the migration request.
+- Preserve the saved bootstrap credential reference for the prefilled source only while the endpoint settings that establish its identity remain unchanged; never copy or reveal password material. Any new manually entered SQL password continues through the existing temporary protected-credential boundary.
+- Add a copyable diagnostic surface for failed Refresh/preflight. Keep the footer status short and non-sensitive; put the full safe endpoint description and connection-tester message in a read-only/selectable diagnostics control and provide a **Copy details** action. Diagnostics must not include a connection string or secret. Clipboard failure must be contained and reported clearly.
+- Add deterministic UI coverage proving settings are loaded without a connection test, saved connection options are reflected in the SOURCE editor/configuration (including `TrustServerCertificate` and an unset named-instance port), and preflight details can be copied while the footer remains concise.
+
+This is same-slice remediation within the existing Settings/Data Migration surface. It does not authorize Slice 6 or 1.19.
