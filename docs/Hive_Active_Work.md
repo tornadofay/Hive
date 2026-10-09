@@ -12,7 +12,7 @@ Started: 2026-10-10
 
 - Repository branch: `main`
 - Starting commit: `05950472e4725506de6d568e6fd1bd35f882b2be`
-- Implementation checkpoint: `724152eb62ab0a861769289eb757446e61a6a6c4`
+- Implementation checkpoint: `66f6d074163713fc5ff932d9b993653f9295bc4e`
 - Source implementation and regression coverage are in place; the assistant has not run builds or tests. Developer verification is required before closure.
 - Reported defect: SQL integration-test databases with the `Hive_Test_` prefix accumulated because the shared helper created/reset databases without deleting them; some migration-test cleanup suppressed SQL exceptions.
 - Existing legacy databases are deliberately excluded from automatic recovery. The new reaper only considers the strict `Hive_TestOwned_` physical naming format, a matching database-level ownership marker, a 24-hour minimum age, and a successful exclusive lease-lock acquisition. It will not bulk-delete databases merely because they begin with `Hive_Test_`.
