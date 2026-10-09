@@ -101,9 +101,7 @@ The earlier 780/780 test result predates this remediation and does not verify th
 
 ### Developer-reported compile failure — 2026-10-09
 
-The developer reports two CS0122 compile errors in `tests/Hive.Tests/HivePersistenceDataMigrationTests.cs` (lines 63 and 70): `HivePersistenceMigrationManagementService` is inaccessible due to its protection level. The new test directly calls an internal Management implementation type from the test assembly. This is a same-slice regression introduced by the diagnostic remediation, not a reason to widen the production type's visibility.
-
-Remediation boundary: remove the test's direct dependency on the internal service class and verify the sanitization behavior through an already-public Management contract if practical; otherwise remove that invalid test rather than exposing an internal service as public. Keep coverage for the safe diagnostic mapping, and add/retain an accessible regression for the management/UI boundary if it can be done using existing public contracts. No unrelated API/visibility expansion is authorized. This compile failure is recorded before further source changes.
+The developer reported two CS0122 compile errors in `tests/Hive.Tests/HivePersistenceDataMigrationTests.cs` because the new regression directly referenced the internal `HivePersistenceMigrationManagementService` type. This was a same-slice regression introduced by the diagnostic remediation. The correction is recorded below: grant `Hive.Tests` test-only internal access in `Hive.Management`, retaining the service's internal visibility and leaving the public/runtime API unchanged. No public type visibility was widened.
 
 ### Compile correction — 2026-10-09
 
