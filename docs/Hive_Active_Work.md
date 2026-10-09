@@ -88,7 +88,7 @@ The available message is too generic to identify the underlying cause. The failu
 The reported failure was traced to the error-reporting boundary: unexpected SQL Server exceptions were reduced to a generic message by the persistence migrator and then sanitized again by Management. That diagnostic gap is corrected in the same Slice 6 migration-hardening scope.
 
 - SQL Server exceptions now produce a curated, non-secret diagnostic with the source/destination role, configured server/database, SQL error number/state/class, and fixed guidance for common renamed/missing database, access/permission, authentication, duplicate/schema, timeout, and endpoint-resolution failures.
-- Raw SQL exception text, SQL statements, connection strings, and credentials remain omitted. Management only preserves the explicitly curated migration SQL diagnostic; other unexpected technical errors remain generic.
+- Raw SQL exception text, SQL statements, connection strings, and credentials remain omitted. Management preserves the explicitly curated SQL diagnostic and, after the follow-up below, a fixed-format exception-type-only fallback for unexpected schema-migration failures; other unexpected technical errors remain generic.
 - The initial UI pass exposed copyable inline diagnostic text with the stable error code; the later follow-up below replaces that textbox with a themed HiveMessageBox dialog.
 - Added diagnostic-mapping and Management sanitization regression tests. Architecture/UI guidance and a separate dated remediation record were updated.
 - The original SQL failure's root cause is still **unknown**. No build, test, host launch, or database migration was run by the assistant after these changes.
