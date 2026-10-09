@@ -695,12 +695,44 @@ public sealed class HivePersistenceDataMigrationTests
         {
             var sourceOptions = await CreateSqlDatabaseAsync(sourceDatabaseName);
             var sourceContext = NewContext();
+            var now = new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero);
             var provider = CreateProvider(sourceContext, "rollback");
             var providerStore = new SqlProviderResourceStore(sourceOptions);
             var created = await providerStore.CreateProviderAsync(
                 provider,
                 sourceContext);
             Assert.True(created.IsSuccess, created.Error?.Message);
+
+            var account = new ProviderAccount(
+                new ResourceEnvelope<ProviderAccountId>(
+                    ResourceKind.ProviderAccount,
+                    ProviderAccountId.New(),
+                    sourceContext.PrincipalId!.Value,
+                    ResourceScope.Tenant(sourceContext.TenantId!.Value),
+                    ResourceVersion.Initial,
+                    Provenance(sourceContext.PrincipalId.Value, now),
+                    ResourceLifecycle.Active(now)),
+                provider.Id,
+                "rollback-account",
+                "Rollback Account",
+                null,
+                null);
+            var accountCreated = await providerStore.CreateProviderAccountAsync(
+                account,
+                sourceContext);
+            Assert.True(accountCreated.IsSuccess, accountCreated.Error?.Message);
+
+            var target = CreateTarget(
+                provider.Id,
+                account.Id,
+                sourceContext.PrincipalId.Value,
+                sourceContext.TenantId!.Value,
+                "rollback",
+                now);
+            var targetCreated = await providerStore.CreateExecutionTargetAsync(
+                target,
+                sourceContext);
+            Assert.True(targetCreated.IsSuccess, targetCreated.Error?.Message);
 
             await using var destination = new EmbeddedPersistenceDatabase(
                 HivePersistenceConfiguration.Embedded(embeddedPath));
@@ -712,7 +744,7 @@ public sealed class HivePersistenceDataMigrationTests
                 await using var command = connection.CreateCommand();
                 command.CommandText = """
                     CREATE TRIGGER [HiveMigrationFailureProbe]
-                    AFTER INSERT ON [HiveProviders]
+                    AFTER INSERT ON [HiveExecutionTargets]
                     BEGIN
                         SELECT RAISE(ABORT, 'migration probe');
                     END;
@@ -733,16 +765,13 @@ public sealed class HivePersistenceDataMigrationTests
                 "hive.persistence.data-migration.failed",
                 result.Error!.Code);
 
-            Assert.Equal(
-                0,
-                await CountEmbeddedRowsAsync(
-                    destination,
-                    "HiveProviders"));
-            Assert.Equal(
-                0,
-                await CountEmbeddedRowsAsync(
-                    destination,
-                    "HiveProviderAccounts"));
+            var emptyCounts = MigrationTableNames.ToDictionary(
+                static table => table,
+                static _ => 0L,
+                StringComparer.Ordinal);
+            AssertCountsEqual(
+                emptyCounts,
+                await ReadEmbeddedCountsAsync(destination));
         }
         finally
         {
