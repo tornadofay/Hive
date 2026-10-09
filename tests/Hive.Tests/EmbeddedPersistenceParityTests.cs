@@ -657,29 +657,48 @@ public sealed class EmbeddedPersistenceParityTests
 
     private static async Task<Backend> CreateSqlBackendAsync(string name)
     {
-        var database = new PersistenceTestDatabase(
-            $"{name}_{Guid.NewGuid():N}");
-        database.Reset();
+        var database = new PersistenceTestDatabase(name);
+        try
+        {
+            database.Reset();
 
-        var migration = await new HiveDatabaseMigrator(
-            database.Options).MigrateAsync();
+            var migration = await new HiveDatabaseMigrator(
+                database.Options).MigrateAsync();
 
-        Assert.True(
-            migration.IsSuccess,
-            migration.Error?.Message);
+            Assert.True(
+                migration.IsSuccess,
+                migration.Error?.Message);
 
-        var events = HiveEventPersistence.CreateSql(
-            database.Options);
+            var events = HiveEventPersistence.CreateSql(
+                database.Options);
 
-        return new Backend(
-            new SqlProviderResourceStore(database.Options),
-            new SqlAgentDefinitionResourceStore(database.Options),
-            new SqlWorkItemResourceStore(database.Options),
-            new SqlExecutionTargetPreferenceStore(database.Options),
-            events.EventStore,
-            HiveAgentWorkPersistence.CreateSql(database.Options),
-            null,
-            null);
+            return new Backend(
+                new SqlProviderResourceStore(database.Options),
+                new SqlAgentDefinitionResourceStore(database.Options),
+                new SqlWorkItemResourceStore(database.Options),
+                new SqlExecutionTargetPreferenceStore(database.Options),
+                events.EventStore,
+                HiveAgentWorkPersistence.CreateSql(database.Options),
+                database,
+                null,
+                null);
+        }
+        catch (Exception creationFailure)
+        {
+            try
+            {
+                await database.DisposeAsync();
+            }
+            catch (Exception cleanupFailure)
+            {
+                throw new AggregateException(
+                    "SQL parity backend creation failed and its owned database could not be cleaned up.",
+                    creationFailure,
+                    cleanupFailure);
+            }
+
+            throw;
+        }
     }
 
     private static async Task<Backend> CreateEmbeddedBackendAsync(string name)
@@ -711,18 +730,36 @@ public sealed class EmbeddedPersistenceParityTests
                 new EmbeddedExecutionTargetPreferenceStore(database),
                 events.EventStore,
                 HiveAgentWorkPersistence.CreateEmbedded(database),
+                null,
                 database,
                 directory);
         }
-        catch
+        catch (Exception creationFailure)
         {
-            await database.DisposeAsync();
+            var cleanupFailures = new List<Exception>();
+            try
+            {
+                await database.DisposeAsync();
+            }
+            catch (Exception cleanupFailure)
+            {
+                cleanupFailures.Add(cleanupFailure);
+            }
+
             try
             {
                 Directory.Delete(directory, recursive: true);
             }
-            catch
+            catch (Exception cleanupFailure)
             {
+                cleanupFailures.Add(cleanupFailure);
+            }
+
+            if (cleanupFailures.Count > 0)
+            {
+                throw new AggregateException(
+                    "Embedded parity backend creation failed and cleanup was incomplete.",
+                    new[] { creationFailure }.Concat(cleanupFailures));
             }
 
             throw;
@@ -775,6 +812,7 @@ public sealed class EmbeddedPersistenceParityTests
             IExecutionTargetPreferenceStore favorites,
             IEventPersistenceStore events,
             RuntimeWorkProtocolStores agentWork,
+            PersistenceTestDatabase? sqlDatabase,
             EmbeddedPersistenceDatabase? embeddedDatabase,
             string? embeddedDirectory)
         {
@@ -784,6 +822,7 @@ public sealed class EmbeddedPersistenceParityTests
             Favorites = favorites;
             Events = events;
             AgentWork = agentWork;
+            SqlDatabase = sqlDatabase;
             EmbeddedDatabase = embeddedDatabase;
             EmbeddedDirectory = embeddedDirectory;
         }
@@ -794,12 +833,37 @@ public sealed class EmbeddedPersistenceParityTests
         public IExecutionTargetPreferenceStore Favorites { get; }
         public IEventPersistenceStore Events { get; }
         public RuntimeWorkProtocolStores AgentWork { get; }
+        private PersistenceTestDatabase? SqlDatabase { get; }
         private EmbeddedPersistenceDatabase? EmbeddedDatabase { get; }
         private string? EmbeddedDirectory { get; }
+
         public async ValueTask DisposeAsync()
         {
+            var cleanupFailures = new List<Exception>();
+
             if (EmbeddedDatabase is not null)
-                await EmbeddedDatabase.DisposeAsync();
+            {
+                try
+                {
+                    await EmbeddedDatabase.DisposeAsync();
+                }
+                catch (Exception cleanupFailure)
+                {
+                    cleanupFailures.Add(cleanupFailure);
+                }
+            }
+
+            if (SqlDatabase is not null)
+            {
+                try
+                {
+                    await SqlDatabase.DisposeAsync();
+                }
+                catch (Exception cleanupFailure)
+                {
+                    cleanupFailures.Add(cleanupFailure);
+                }
+            }
 
             if (EmbeddedDirectory is not null)
             {
@@ -809,9 +873,17 @@ public sealed class EmbeddedPersistenceParityTests
                         EmbeddedDirectory,
                         recursive: true);
                 }
-                catch
+                catch (Exception cleanupFailure)
                 {
+                    cleanupFailures.Add(cleanupFailure);
                 }
+            }
+
+            if (cleanupFailures.Count > 0)
+            {
+                throw new AggregateException(
+                    "Parity backend cleanup was incomplete.",
+                    cleanupFailures);
             }
         }
     }
