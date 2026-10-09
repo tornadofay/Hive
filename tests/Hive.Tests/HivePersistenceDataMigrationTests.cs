@@ -286,6 +286,29 @@ public sealed class HivePersistenceDataMigrationTests
     }
 
     [Fact]
+    public async Task ManagementOperationGate_CancellationWhileDrainingReopensOperationAdmission()
+    {
+        var gate = new HiveManagementOperationGate();
+        var inFlightOperation = gate.TryEnterOperation();
+        Assert.NotNull(inFlightOperation);
+
+        using var cancellation = new CancellationTokenSource();
+        var migrationTask = gate.AcquireAsync(cancellation.Token);
+
+        Assert.Null(gate.TryEnterOperation());
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            async () => await migrationTask);
+
+        var nextOperation = gate.TryEnterOperation();
+        Assert.NotNull(nextOperation);
+
+        await nextOperation!.DisposeAsync();
+        await inFlightOperation!.DisposeAsync();
+    }
+
+    [Fact]
     public async Task ManagementMigration_RequiresQuiescenceAndLeavesDestinationInactive()
     {
         var sourceDatabaseName = $"Hive_Test_Migration_Management_{Guid.NewGuid():N}";
