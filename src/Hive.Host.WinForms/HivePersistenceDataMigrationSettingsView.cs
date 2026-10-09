@@ -225,12 +225,14 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             timeoutNumeric = CreateTimeoutInput();
 
             var panel = CreateVerticalStack();
-            panel.Controls.Add(
+            AddVerticalStackRow(
+                panel,
                 CreateFieldBlock(
                     "Database file",
                     CreatePathPanel(pathTextBox, browseButton)));
 
-            panel.Controls.Add(
+            AddVerticalStackRow(
+                panel,
                 CreateFormGrid(
                     role == EndpointRole.Destination
                         ? CreateCheckBoxBlock(
@@ -245,7 +247,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
             if (role == EndpointRole.Destination)
             {
-                panel.Controls.Add(
+                AddVerticalStackRow(
+                    panel,
                     CreateSectionNote(
                         "Migration may create the destination file only when this explicit operation runs. Existing non-empty destinations are rejected."));
             }
@@ -336,13 +339,15 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
             var panel = CreateVerticalStack();
 
-            panel.Controls.Add(
+            AddVerticalStackRow(
+                panel,
                 CreateFieldBlock(
                     "SQL Server",
                     serverPicker,
                     340));
 
-            panel.Controls.Add(
+            AddVerticalStackRow(
+                panel,
                 CreateFormGrid(
                     CreateFieldBlock(
                         "Database",
@@ -350,9 +355,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                         180),
                     authenticationField));
 
-            panel.Controls.Add(credentialField);
+            AddVerticalStackRow(panel, credentialField);
 
-            panel.Controls.Add(
+            AddVerticalStackRow(
+                panel,
                 CreateFieldBlock(
                     "Connection security",
                     CreateSecurityPanel(
@@ -360,7 +366,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                         trustServerCertificateCheckBox),
                     260));
 
-            panel.Controls.Add(
+            AddVerticalStackRow(
+                panel,
                 CreateFormGrid(
                     role == EndpointRole.Destination
                         ? CreateCheckBoxBlock(
@@ -375,7 +382,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
             if (role == EndpointRole.Destination)
             {
-                panel.Controls.Add(
+                AddVerticalStackRow(
+                    panel,
                     CreateSectionNote(
                         "The destination may be created only by the explicit migration operation. Existing non-empty destinations are rejected."));
             }
@@ -390,7 +398,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         {
             return new TableLayoutPanel
             {
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 ColumnCount = 1,
@@ -398,6 +406,12 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 Margin = Padding.Empty,
                 Padding = Padding.Empty,
                 GrowStyle = TableLayoutPanelGrowStyle.FixedSize,
+                RowStyles =
+                {
+                    new RowStyle(SizeType.AutoSize),
+                    new RowStyle(SizeType.AutoSize),
+                    new RowStyle(SizeType.AutoSize)
+                },
                 Controls =
                 {
                     CreateSectionHeading("SQL credentials"),
@@ -608,7 +622,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         {
             var block = CreateVerticalStack();
             block.Margin = new Padding(0, 0, 8, 0);
-            block.Controls.Add(
+            AddVerticalStackRow(
+                block,
                 new Label
                 {
                     Text = title,
@@ -623,7 +638,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 });
             checkBox.AutoSize = true;
             checkBox.Margin = new Padding(0, 4, 0, 0);
-            block.Controls.Add(checkBox);
+            AddVerticalStackRow(block, checkBox);
             return block;
         }
 
@@ -652,15 +667,35 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         private static TableLayoutPanel CreateVerticalStack() =>
             new()
             {
-                Dock = DockStyle.Fill,
+                // A top-docked, auto-sized stack uses its real preferred height
+                // instead of stretching every implicit row through the full card.
+                // DockStyle.Top still tracks the available endpoint-card width.
+                Dock = DockStyle.Top,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 ColumnCount = 1,
                 RowCount = 0,
                 Margin = Padding.Empty,
                 Padding = Padding.Empty,
-                GrowStyle = TableLayoutPanelGrowStyle.AddRows
+                GrowStyle = TableLayoutPanelGrowStyle.AddRows,
+                ColumnStyles =
+                {
+                    new ColumnStyle(SizeType.Percent, 100f)
+                }
             };
+
+        private static void AddVerticalStackRow(
+            TableLayoutPanel stack,
+            Control control)
+        {
+            ArgumentNullException.ThrowIfNull(stack);
+            ArgumentNullException.ThrowIfNull(control);
+
+            var row = stack.Controls.Count;
+            stack.RowCount = row + 1;
+            stack.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            stack.Controls.Add(control, 0, row);
+        }
 
         private static Label CreateSectionHeading(string text) =>
             new()
@@ -1224,7 +1259,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             if (sourceTest.IsFailure)
             {
                 SetStatus(
-                    $"Source: {sourceTest.Error!.Message}",
+                    DescribeEndpointFailure(
+                        "Source",
+                        source,
+                        sourceTest.Error!.Message),
                     HiveStatusTone.Warning);
                 return;
             }
@@ -1239,7 +1277,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             if (destinationTest.IsFailure)
             {
                 SetStatus(
-                    $"Source: ready. Destination: {destinationTest.Error!.Message}",
+                    $"Source: ready. {DescribeEndpointFailure("Destination", destination, destinationTest.Error!.Message)}",
                     HiveStatusTone.Warning);
                 return;
             }
@@ -1303,7 +1341,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         {
             await CleanupTemporaryCredentialsAsync().ConfigureAwait(true);
             SetStatus(
-                $"Source preflight failed: {sourcePreflight.Error!.Message}",
+                DescribeEndpointFailure(
+                    "Source",
+                    source,
+                    sourcePreflight.Error!.Message),
                 HiveStatusTone.Error);
             return;
         }
@@ -1319,7 +1360,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         {
             await CleanupTemporaryCredentialsAsync().ConfigureAwait(true);
             SetStatus(
-                $"Destination preflight failed: {destinationPreflight.Error!.Message}",
+                DescribeEndpointFailure(
+                    "Destination",
+                    destination,
+                    destinationPreflight.Error!.Message),
                 HiveStatusTone.Error);
             return;
         }
@@ -1359,6 +1403,29 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             FindForm(),
             $"Full-data migration completed successfully. {value.TotalRecordsMigrated} records were migrated. The destination was verified but was not activated.",
             "Hive Persistence");
+    }
+
+    private static string DescribeEndpointFailure(
+        string role,
+        HivePersistenceConfiguration configuration,
+        string failureMessage)
+    {
+        var endpointDescription = configuration.Backend switch
+        {
+            HivePersistenceBackend.SqlServer =>
+                $"SQL Server '{configuration.ServerName}'" +
+                (configuration.Port is { } port
+                    ? $" on explicit port {port}"
+                    : configuration.ServerName.Contains('\\', StringComparison.Ordinal)
+                        ? " using named-instance port resolution"
+                        : " using default SQL Server port resolution") +
+                $", database '{configuration.DatabaseName}'",
+            HivePersistenceBackend.Embedded =>
+                $"Embedded database file '{configuration.EmbeddedStoragePath}'",
+            _ => $"persistence backend '{configuration.Backend}'"
+        };
+
+        return $"{role} preflight failed for {endpointDescription}: {failureMessage}";
     }
 
     private async Task<HivePersistenceConfiguration> BuildEndpointConfigurationAsync(
@@ -1431,7 +1498,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         return new HivePersistenceConfiguration(
             HivePersistenceBackend.SqlServer,
             endpoint.SqlServerName,
-            endpoint.SqlPort ?? 1433,
+            endpoint.SqlPort,
             databaseName,
             endpoint.SqlAuthentication,
             endpoint.SqlAuthentication == HiveSqlAuthenticationMode.SqlPassword
