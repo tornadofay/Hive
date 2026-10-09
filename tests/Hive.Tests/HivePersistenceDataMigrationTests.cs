@@ -309,6 +309,41 @@ public sealed class HivePersistenceDataMigrationTests
     }
 
     [Fact]
+    public async Task ManagementOperationGate_RetirementDrainsCallsAndRejectsQueuedMigrations()
+    {
+        var gate = new HiveManagementOperationGate();
+        var inFlightOperation = gate.TryEnterOperation();
+
+        Assert.NotNull(inFlightOperation);
+
+        var retirementTask = gate.AcquireRetirementLeaseAsync();
+
+        Assert.False(
+            retirementTask.IsCompleted,
+            "Graph retirement must wait for already-admitted Management operations.");
+        Assert.Null(gate.TryEnterOperation());
+
+        var queuedMigrationTask = gate.AcquireAsync();
+
+        await inFlightOperation!.DisposeAsync();
+
+        var retirementLease = await retirementTask.WaitAsync(
+            TimeSpan.FromSeconds(2));
+        Assert.NotNull(retirementLease);
+        Assert.Null(gate.TryEnterOperation());
+
+        await retirementLease.DisposeAsync();
+
+        var queuedMigrationResult = await queuedMigrationTask.WaitAsync(
+            TimeSpan.FromSeconds(2));
+        Assert.True(queuedMigrationResult.IsFailure);
+        Assert.Equal(
+            "hive.management.operation-gate-closed",
+            queuedMigrationResult.Error!.Code);
+        Assert.Null(gate.TryEnterOperation());
+    }
+
+    [Fact]
     public async Task ManagementFacade_RejectsOrdinaryCallsDuringMigrationQuiescence()
     {
         var configuration = HivePersistenceConfiguration.LocalDevelopment(
