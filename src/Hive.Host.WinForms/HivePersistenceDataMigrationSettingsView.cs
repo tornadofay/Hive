@@ -232,7 +232,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             {
                 if (Backend == HivePersistenceBackend.Embedded)
                 {
-                    _embeddedPathTextBox.Text = configuration.EmbeddedStoragePath;
+                    _embeddedPathTextBox.Text = configuration.EmbeddedStoragePath ?? string.Empty;
                     if (_embeddedCreateDatabaseCheckBox is not null)
                         _embeddedCreateDatabaseCheckBox.Checked =
                             configuration.CreateDatabaseIfMissing;
