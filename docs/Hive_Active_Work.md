@@ -621,3 +621,12 @@ The assistant has inspected the source and regression-test edits but has not bui
 Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
 
 Tests to run: `HivePersistenceDataMigrationTests`, `HiveHostCompositionTests`, `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, `HiveSqlServerInstanceDiscoveryTests`, and `HivePersistenceErrorTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
+
+### Verification failure — 2026-10-09 Data Migration layout regression assertion
+
+Developer verification reports that the Example Host workflow and visible Data Migration UI now work correctly. The full `Hive.Tests` run completed with **777 tests: 776 passed, 1 failed, 0 skipped**. The sole failure is `Hive.Tests.HiveUiPolishTests.HivePersistenceDataMigration_UsesCompactEndpointLayoutAndNamedInstanceResolution` at `tests/Hive.Tests/HiveUiPolishTests.cs:863`.
+
+This is an in-scope Slice 5 verification failure in the existing Data Migration layout/picker regression test. The reported Example Host/UI behavior is good; inspect the exact failed assertion against the current control layout, then correct only a stale or incorrect assertion or a demonstrated layout defect. Preserve the working UI, endpoint behavior, migration quiescence, and diagnostics. Do not start Slice 6 or 1.19.
+
+Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
+
