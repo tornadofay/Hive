@@ -62,7 +62,7 @@ public sealed class HivePersistenceDataMigrationTests
         string expectedGuidance)
     {
         var options = new HiveDatabaseOptions(
-            @"Server=localhost\\MSSQLSERVER01;Database=Hive_Renamed;Trusted_Connection=True;",
+            @"Server=localhost\MSSQLSERVER01;Database=Hive_Renamed;Trusted_Connection=True;",
             createDatabaseIfMissing: true);
 
         var error = HiveDatabaseMigrator.CreateSqlMigrationFailure(
@@ -73,7 +73,7 @@ public sealed class HivePersistenceDataMigrationTests
 
         Assert.Equal("hive.persistence.migration-sql-failure", error.Code);
         Assert.Contains("configured SQL Server endpoint", error.Message);
-        Assert.Contains("localhost\\\\MSSQLSERVER01", error.Message);
+        Assert.Contains("localhost\\MSSQLSERVER01", error.Message);
         Assert.Contains("database 'Hive_Renamed'", error.Message);
         Assert.Contains($"SQL error {sqlErrorNumber}", error.Message);
         Assert.Contains(expectedGuidance, error.Message);
@@ -96,7 +96,7 @@ public sealed class HivePersistenceDataMigrationTests
 
         var schemaMigration = HiveDatabaseMigrator.CreateSqlMigrationFailure(
             new HiveDatabaseOptions(
-                @"Server=localhost\\MSSQLSERVER01;Database=Hive_Renamed;Trusted_Connection=True;"),
+                @"Server=localhost\MSSQLSERVER01;Database=Hive_Renamed;Trusted_Connection=True;"),
             911,
             state: 1,
             errorClass: 16);
