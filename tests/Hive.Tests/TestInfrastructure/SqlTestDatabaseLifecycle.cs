@@ -145,6 +145,14 @@ internal static class SqlTestDatabaseLifecycle
             cancellationToken).ConfigureAwait(false);
     }
 
+    internal static bool IsRunActive(Guid runId)
+    {
+        using var cleanupProbe = TryAcquireStaleRunLock(
+            CreateMasterConnectionString(),
+            runId);
+        return cleanupProbe is null;
+    }
+
     internal static bool IsStrictOwnedName(string databaseName)
     {
         return OwnedDatabaseNamePattern.IsMatch(databaseName);
