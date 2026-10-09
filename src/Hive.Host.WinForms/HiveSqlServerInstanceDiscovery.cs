@@ -76,7 +76,7 @@ internal sealed class SqlServerInstanceDiscoveryCoordinator
         _failureCacheTtl = failureCacheTtl ?? TimeSpan.FromSeconds(15);
         _networkWaitTimeout = networkWaitTimeout ?? TimeSpan.FromSeconds(3);
         _utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
-        _delay = delay ?? static (duration, token) => Task.Delay(duration, token);
+        _delay = delay ?? (static (duration, token) => Task.Delay(duration, token));
 
         if (_localCacheTtl <= TimeSpan.Zero ||
             _networkCacheTtl <= TimeSpan.Zero ||
