@@ -181,17 +181,23 @@ The bounded correction now committed to `main`:
 
 **Current state: VERIFICATION PENDING.** The earlier 783/783 result predates the 5170-specific mapping and its regression cases. The assistant has not run a build, tests, Example Host, or migration after this correction. Run `HivePersistenceDataMigrationTests` and `HiveUiPolishTests`, the full `Hive.Tests` suite, and all affected builds with Treat Warnings as Errors enabled and zero warnings. Then resolve the SQL Server file collision safely and retry Embedded → SQL Server. The remaining Slice 6 bidirectional real-endpoint, graph-retirement, Embedded first-run/restart, source-immutability, secret-readability, and explicit activation gates remain required.
 
+### Developer verification after SQL Server 5170 correction — 2026-10-09
+
+The developer reports that the real Embedded → SQL Server full-data migration succeeded after correcting the destination database name. Visual Studio **Treat Warnings as Errors** was enabled. The full `Hive.Tests` suite passed **786/786**, 0 failed, 0 skipped, in 2.5 minutes on .NET 10.0.1.
+
+This verification follows the 5170-specific diagnostic and test correction, so the prior SQL error is no longer blocking the reported migration attempt. The developer's update did not include a separate affected-project build/zero-warning summary, nor explicit details for source-unchanged verification, destination verification, protected-secret readability, or destination activation; do not claim those acceptance checks as established by this report. Dated evidence: [successful retry and 786-test verification](verification/phase-1/1.18A-slice-6-sql-file-collision-verification-2026-10-09.md).
+
+**Current state: VERIFICATION PENDING.** The automated suite now has a developer-reported passing result after the latest diagnostic correction, and the immediate Embedded → SQL Server real-endpoint attempt reportedly succeeded. Slice 6 remains open until the remaining manual/bidirectional gates below have evidence. No build, test, Example Host launch, or migration was executed by the assistant.
+
 ### Remaining closure evidence
 
-The reported migration failure authorized same-slice remediation. Because remediation changed source after the 780/780 result, the targeted tests, full suite, and affected warnings-as-errors builds must now be rerun as listed above.
+The current developer report closes the immediate SQL Server 5170 failure scenario and reports the full automated test suite passing. Before Slice 6 can close, confirm all remaining acceptance gates with actual developer evidence:
 
-Before Slice 6 can close, confirm the remaining manual acceptance boundary after the graph-retirement change:
-- Explicit Example Host verification of both **SQL Server → Embedded** and **Embedded → SQL Server** full-data migrations against representative real endpoints. Each direction must leave the source unchanged, verify the destination, preserve protected-secret readability, and keep destination activation explicit.
-- Persistence graph replacement with an operation already in flight: the operation must finish before old stores are disposed; queued migration work on the retired graph must be rejected safely.
-- Embedded first-run and close/reopen/application-restart durability, normal Settings behavior after graph replacement, failure/preflight safety, and retained SQL Server setup/connectivity.
-
-The new automated coverage for rollback, database reopen, and operation-gate retirement passed in the reported 780-test suite. The assistant has not itself built, run tests, launched the Example Host, or executed a database migration.
+- Provide a separate affected-project build result with Visual Studio **Treat Warnings as Errors** enabled and zero warnings (the latest report says the setting was enabled but does not explicitly report the affected-project build/zero-warning outcome).
+- Explicitly verify both **SQL Server → Embedded** and **Embedded → SQL Server** full-data migrations against representative real endpoints. For each direction confirm source immutability, destination verification, preservation and readability of protected secrets, and that destination activation remains false until explicit user action. The latest report confirms the successful Embedded → SQL Server attempt but did not report these detailed assertions for that retry.
+- Verify persistence graph replacement while an operation is in flight: the active operation drains before old stores are disposed and queued migration work on a retired graph is rejected safely.
+- Verify Embedded first-run and close/reopen/application-restart durability, normal Settings behavior after graph replacement, preflight/failure safety, and retained SQL Server setup/connectivity.
 
 Example to run: `Persistence / Data Migration / Full-Data Migration / SQL Server ↔ Embedded` — `Hive.Example.WinForms`
 
-Tests to run: `HivePersistenceDataMigrationTests` and `HiveUiPolishTests`, then the full `Hive.Tests` suite and all affected project builds (`Hive.Persistence`, `Hive.Management`, `Hive.Host.WinForms`, and `Hive.Tests` plus dependent solution projects) with Treat Warnings as Errors enabled and zero warnings. After automated verification, repeat the reported Embedded → SQL Server endpoint migration and copy the HiveMessageBox details if it still fails, then continue the remaining Slice 6 real-endpoint/lifecycle gates. The reported 783/783 run predates this newest SQL schema-diagnostic and modal-UI correction.
+Tests to run: The developer reports the full `Hive.Tests` suite passed **786/786** after the current diagnostic correction, including focused migration-diagnostic and UI regressions. No automatic tests are currently reported failing. For final closure, supply the separate affected-project warnings-as-errors / zero-warning build evidence and the remaining manual acceptance evidence above. Phase 1.19 remains unauthorized until Phase 1.18A is closed.
