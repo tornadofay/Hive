@@ -145,11 +145,11 @@ public sealed class HivePersistenceOptionsTests
         var configuration = new HivePersistenceConfiguration(
             HivePersistenceBackend.SqlServer,
             @"localhost\MSSQLSERVER01",
-            port: null,
+            null,
             "Hive-Hive.Example.WinForms",
             HiveSqlAuthenticationMode.WindowsIntegrated,
-            userName: null,
-            bootstrapCredential: null,
+            null,
+            null,
             encrypt: false,
             trustServerCertificate: false,
             createDatabaseIfMissing: false);
