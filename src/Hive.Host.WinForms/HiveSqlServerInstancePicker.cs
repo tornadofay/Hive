@@ -160,6 +160,8 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     {
         _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
 
+        SuspendLayout();
+
         _serverComboBox = new Hive.Host.WinForms.UI.Controls.HiveComboBox
         {
             DropDownStyle = ComboBoxStyle.DropDownList,
@@ -211,6 +213,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
+        _topRow.SuspendLayout();
         _topRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         _topRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92f));
         _topRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 88f));
@@ -230,6 +233,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
             Padding = Padding.Empty,
             Visible = false
         };
+        _customRow.SuspendLayout();
         _customRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         _customRow.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _customRow.Controls.Add(_customServerTextBox, 0, 0);
@@ -245,6 +249,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
             Padding = Padding.Empty,
             GrowStyle = TableLayoutPanelGrowStyle.FixedSize
         };
+        _layout.SuspendLayout();
         _layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
         _layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36f));
         _layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -257,6 +262,11 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         AutoSize = true;
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
         MinimumSize = new Size(0, 36);
+
+        _topRow.ResumeLayout(false);
+        _customRow.ResumeLayout(false);
+        _layout.ResumeLayout(false);
+        ResumeLayout(false);
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         SetDiscoveredInstances(Array.Empty<string>(), null);
