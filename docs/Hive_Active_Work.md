@@ -485,3 +485,20 @@ Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 - Add focused layout and failure-diagnostic regression tests; do not bypass or relax preflight.
 
 This is same-slice corrective work, not authorization for Slice 6 or 1.19.
+
+
+### Remediation completed — Data Migration endpoint layout and SQL connection resolution
+
+- SQL and Embedded migration endpoint stacks now use explicit auto-sized rows and top-docked content. This prevents the vertical input rows from stretching across the full card height. The SQL instance picker and related fields use more of the endpoint card while staying bounded; the Embedded database-file TextBox is explicitly fill-docked in the percent-width path row, with Browse immediately adjacent.
+- Corrected a definite migration-only named-instance configuration defect: `BuildEndpointConfigurationAsync` previously used `endpoint.SqlPort ?? 1433`, overriding the picker's intentional null port for a named instance. It now preserves `endpoint.SqlPort` as configured. A named instance such as `localhost\\MSSQLSERVER01` can use SQL Server instance/Browser resolution unless the user explicitly enters a TCP port; the plain/default endpoint still gets the picker's default 1433 when appropriate. Explicitly entered ports remain preserved.
+- Source and Destination readiness/preflight failures now identify the failing endpoint role and its server/instance, database, and explicit/default/instance-resolved port mode, while preserving the existing connection-tester diagnostic and not exposing credentials. The migration tab now includes brief named-instance connection guidance.
+- Added focused UI coverage for compact row sizing, the Embedded path editor expanding to the available width, and the actual built source migration configuration retaining a null port for a named SQL instance. The deterministic Management proxy intercepts the source preflight so this coverage does not open a real SQL connection.
+- Updated `docs/architecture/v1-host-and-management.md` and `docs/Hive_Current_Status.md` with the corrected endpoint layout/connection contract and current verification status. Source/test commits: `80891aa`, `63f2c95`, `f9b2e10`, `8e90240`, and `7e12d48`.
+
+Current state: **VERIFICATION PENDING**.
+
+The user-reported **772/772** run predates this remediation; the assistant has not compiled, run automated tests, or launched the Example Host after these edits. Rebuild the affected WinForms and test projects with Treat Warnings as Errors; run `HiveUiPolishTests`, `HivePersistenceErrorTests`, and the full `Hive.Tests` suite. Manually use Data Migration in both directions: for the reported local named instance choose `Custom...`, enter `localhost\\MSSQLSERVER01`, keep Windows Integrated authentication, and leave Port blank unless you have the instance's fixed TCP port; verify the displayed database name matches the real source database, then use Refresh before Migrate. Confirm endpoint failure output names SOURCE/DESTINATION and displays the actual connection-tester diagnostic, the SQL layout is compact, and the Embedded database-file input fills its row.
+
+Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
+
+Tests to run: `HiveUiPolishTests` and `HivePersistenceErrorTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
