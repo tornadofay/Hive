@@ -390,6 +390,7 @@ This is explicit remediation within the already-open Slice 5 settings/discovery 
 - Added inline marquee progress and the exact text `Searching for SQL Server instances…`, concise completion/incomplete/failure statuses, partial-result retention, and late-result updates guarded against stale generations, cancellation, backend switches, and disposal. Discovery failures are non-modal, and Custom entry stays available.
 - Preserved the Custom choice, current selection, custom-server edits, and manual port text while results are merged. Named-instance connection/port handling was not intentionally changed; the developer reported that their Windows-integrated named-instance connection succeeds after the earlier fix.
 - Added deterministic coordinator coverage for caching/coalescing, TTL expiry, local/network partial failure, timeout/no-overlap, and cancellation. WinForms regression coverage now checks spinner/status, Custom/port preservation, late-result merging, and disposal. The failing Custom visibility test now activates Database Setup before asserting effective visibility.
+- Final concurrency review added a thread-safe completion marker so a timeout update cannot overwrite a completed scan's status if both events race on the WinForms message queue (commit `2a77a2c`).
 
 Current state: **VERIFICATION PENDING**.
 
