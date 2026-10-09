@@ -522,3 +522,20 @@ Current state: **VERIFICATION FAILED / REMEDIATION REQUIRED**.
 - Add deterministic UI coverage proving settings are loaded without a connection test, saved connection options are reflected in the SOURCE editor/configuration (including `TrustServerCertificate` and an unset named-instance port), and preflight details can be copied while the footer remains concise.
 
 This is same-slice remediation within the existing Settings/Data Migration surface. It does not authorize Slice 6 or 1.19.
+
+
+### Remediation completed — Data Migration uses working Setup settings and copyable failures
+
+- Data Migration now uses the current Database Setup editor values as an editable SOURCE prefill when the selected migration direction's SOURCE backend matches the Setup backend. This captures the connection settings the user has actually been testing in the current view, including server/instance, current nullable/explicit port, database name, authentication mode/user, Encrypt, Trust Server Certificate, and timeout. If the current Setup snapshot is unavailable (for example, a directly hosted migration view), it loads the saved Management configuration and uses it only when the backend matches SOURCE.
+- Prefilling never rewrites migration direction, never fills DESTINATION from the active store, and never substitutes an active configuration into the Management migration request. SOURCE and DESTINATION remain editable; the request still carries the explicit endpoint values. Saved bootstrap credential references are reusable only while the prefilled SQL endpoint identity/options still match, and password material is never copied into fields or diagnostics. Embedded paths are nullable-guarded while being applied.
+- Preflight/Refresh failures now leave a short status such as “Source connection failed. Click Copy details to copy the diagnostic.” A conditional **Copy details** footer action copies the safe endpoint description and connection-tester message to the clipboard. The same concise/copyable behavior now covers returned Management migration failures and configuration validation messages; the full diagnostic is not stuffed into the status label.
+- Extended the UI regression coverage to verify a working Setup configuration is loaded into the migration SOURCE without triggering connection tests, the Trust Server Certificate/encryption/database/port values are carried into preflight configuration, a named instance remains unported by default, and clicking Copy details places the full diagnostic on the clipboard while the footer status stays concise.
+- The test Management proxy provides a deterministic SQL configuration and intercepts preflight; the focused regression does not attempt a real SQL Server connection. Architecture docs now describe the current-Setup prefill and copyable error contract.
+
+Current state: **VERIFICATION PENDING**.
+
+No build or automated tests have been run by the assistant. The prior developer-reported 772/772 run predates these changes. Rebuild with Treat Warnings as Errors; run `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, `HiveSqlServerInstanceDiscoveryTests`, `HivePersistenceErrorTests`, then the full `Hive.Tests` suite. In the Example Host, confirm the Source endpoint receives the actual Database Setup server, database, authentication, encryption, Trust Server Certificate, and port settings; change a field and verify it remains editable; run Refresh and Migrate preflight; and verify **Copy details** makes the full safe diagnostic pasteable while the status remains concise. Confirm the SQL cards no longer stretch vertically and the Embedded database-file editor fills its row.
+
+Example to run: `Overview / Getting Started / Example Configuration → Settings → Persistence` — `Hive.Example.WinForms`
+
+Tests to run: `HiveUiPolishTests`, `HiveWorkspaceLifecycleTests`, `HiveSqlServerInstanceDiscoveryTests`, and `HivePersistenceErrorTests`; then the full `Hive.Tests` suite and a zero-warning developer build.
