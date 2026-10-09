@@ -36,7 +36,7 @@ Initial confirmed finding: `HiveSettingsOverviewView.AddCard` added the title, d
 - Updated the Persistence card text to describe the Embedded local database and SQL Server deployment.
 - Added `HiveSettingsOverviewCards_UseSeparateRowsAndDescribeBothPersistenceBackends` in `HiveUiPolishTests` to assert separate row placement for all three cards and accurate backend wording.
 - Reviewed the focused source/test diffs after the changes. The implementation changes are limited to `src/Hive.Host.WinForms/HiveSettingsOverviewView.cs` and `tests/Hive.Tests/HiveUiPolishTests.cs`, plus this Active Work record. No roadmap or architecture changes were made.
-- This assistant did not run builds/tests or launch the Example Host. Compile/runtime and visual behavior remain unverified until developer results are reported.
+- The assistant did not independently run builds/tests or launch the Example Host. The developer has since reported the full test-suite result and that the Example Host runs correctly; the remaining visual-state confirmation is recorded under the verification gate below.
 
 ### Verification gate
 
