@@ -152,6 +152,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
     private bool _applyingValue;
     private bool _settingPort;
     private bool _portWasAutomaticallyDefaulted;
+    private int _userEditVersion;
 
     public event EventHandler? RefreshRequested;
 
@@ -173,6 +174,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
             if (_applyingValue)
                 return;
 
+            _userEditVersion++;
             ApplyPortDefaultForSelection();
             UpdateCustomVisibility();
         };
@@ -183,7 +185,12 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
 
         _customServerTextBox.TextChanged += (_, _) =>
         {
-            if (!_applyingValue && IsCustomSelected)
+            if (_applyingValue)
+                return;
+
+            _userEditVersion++;
+
+            if (IsCustomSelected)
                 ApplyPortDefaultForSelection();
         };
 
@@ -191,8 +198,12 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         _portTextBox.PlaceholderText = "Port";
         _portTextBox.TextChanged += (_, _) =>
         {
-            if (!_settingPort)
-                _portWasAutomaticallyDefaulted = false;
+            if (_settingPort)
+                return;
+
+            _portWasAutomaticallyDefaulted = false;
+            if (!_applyingValue)
+                _userEditVersion++;
         };
 
         _refreshButton = new Hive.Host.WinForms.UI.Controls.HiveButton
@@ -356,11 +367,13 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
 
     public void SetDiscoveredInstances(
         IReadOnlyList<string> instances,
-        string? preferredServer)
+        string? preferredServer,
+        bool preserveCustomSelection = false)
     {
         ArgumentNullException.ThrowIfNull(instances);
 
         var preferred = preferredServer?.Trim() ?? string.Empty;
+        var currentCustomServer = _customServerTextBox.Text;
         _applyingValue = true;
         try
         {
@@ -377,7 +390,12 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
 
             _serverComboBox.Items.Add(new ServerChoice("Custom...", true));
 
-            if (!string.IsNullOrWhiteSpace(preferred))
+            if (preserveCustomSelection)
+            {
+                _serverComboBox.SelectedIndex = _serverComboBox.Items.Count - 1;
+                _customServerTextBox.Text = currentCustomServer;
+            }
+            else if (!string.IsNullOrWhiteSpace(preferred))
             {
                 var discovered = _serverComboBox.Items
                     .OfType<ServerChoice>()
@@ -501,6 +519,7 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         string? preferredServer = null,
         CancellationToken cancellationToken = default)
     {
+        var selectionVersion = _userEditVersion;
         var preferred = preferredServer?.Trim() ?? ServerName;
 
         var instances = await HiveSqlServerInstanceDiscovery
@@ -510,7 +529,19 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
         if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
             return;
 
-        SetDiscoveredInstances(instances, preferred);
+        var userChangedSelection = selectionVersion != _userEditVersion;
+        var preserveCustomSelection = userChangedSelection && IsCustomSelected;
+        if (userChangedSelection)
+        {
+            preferred = preserveCustomSelection
+                ? _customServerTextBox.Text.Trim()
+                : ServerName;
+        }
+
+        SetDiscoveredInstances(
+            instances,
+            preferred,
+            preserveCustomSelection);
     }
 
     public void SetEnabled(bool enabled)
