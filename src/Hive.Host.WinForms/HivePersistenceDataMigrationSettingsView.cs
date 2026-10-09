@@ -1673,9 +1673,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
 
         if (result.IsFailure)
         {
+            var migrationError = result.Error!;
             SetCopyableDiagnostic(
                 "Migration failed. Click Copy details to copy the diagnostic.",
-                $"Migration failed: {result.Error!.Message}",
+                $"Error code: {migrationError.Code}{Environment.NewLine}{migrationError.Message}",
                 HiveStatusTone.Error);
             return;
         }
