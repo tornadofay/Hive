@@ -839,8 +839,8 @@ public sealed class HiveUiPolishTests
         Assert.True(view.SourceTrustServerCertificate);
         Assert.Null(view.SourceSqlServerPicker.Port);
 
-        // The fixed top-row height must leave the complete custom ComboBox field
-        // inside its parent rather than clipping its bottom edge.
+        // The content-sized top row keeps the complete custom ComboBox field
+        // inside its parent at its native field height.
         Assert.False(view.DirectionSelector.AutoSize);
         Assert.InRange(
             view.DirectionSelector.Height,
