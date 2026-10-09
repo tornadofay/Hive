@@ -147,6 +147,101 @@ public sealed class PersistenceTestDatabaseLifecycleTests
         Assert.False(await DatabaseExistsAsync(database.DatabaseName));
     }
 
+    [Fact]
+    public async Task StaleRecoveryDropsStrictlyOwnedAbandonedDatabase()
+    {
+        var createdAt = DateTimeOffset.UtcNow
+            .AddDays(-2)
+            .ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture);
+        var runId = Guid.NewGuid();
+        var ownershipToken = Guid.NewGuid();
+        var runToken = runId.ToString("N")[..8].ToUpperInvariant();
+        var databaseToken = ownershipToken.ToString("N")[..8].ToUpperInvariant();
+        var databaseName = $"Hive_TestOwned_{createdAt}_{runToken}_{databaseToken}_StaleRecoveryRegression";
+        var marker = $"v1|{runId:N}|{ownershipToken:N}|{createdAt}";
+        var masterBuilder = new SqlConnectionStringBuilder(
+            HivePersistenceTestConfiguration.ConnectionString)
+        {
+            InitialCatalog = "master",
+            ApplicationName = "Hive.Tests stale recovery regression",
+            Pooling = false
+        };
+        var databaseCreated = false;
+
+        try
+        {
+            await using (var connection = new SqlConnection(masterBuilder.ConnectionString))
+            {
+                await connection.OpenAsync();
+                await using var command = connection.CreateCommand();
+                command.CommandText = $"CREATE DATABASE [{databaseName}];";
+                await command.ExecuteNonQueryAsync();
+                databaseCreated = true;
+            }
+
+            var databaseBuilder = new SqlConnectionStringBuilder(
+                masterBuilder.ConnectionString)
+            {
+                InitialCatalog = databaseName,
+                Pooling = false
+            };
+
+            await using (var connection = new SqlConnection(databaseBuilder.ConnectionString))
+            {
+                await connection.OpenAsync();
+                await using var command = connection.CreateCommand();
+                command.CommandText = """
+                    EXEC sys.sp_addextendedproperty
+                        @name = @PropertyName,
+                        @value = @Marker;
+                    """;
+                command.Parameters.Add(
+                    new SqlParameter("@PropertyName", SqlDbType.NVarChar, 128)
+                    {
+                        Value = "Hive.Tests.Ownership"
+                    });
+                command.Parameters.Add(
+                    new SqlParameter("@Marker", SqlDbType.NVarChar, 256)
+                    {
+                        Value = marker
+                    });
+                await command.ExecuteNonQueryAsync();
+            }
+
+            SqlTestDatabaseLifecycle.RecoverStaleOwnedDatabases();
+
+            var stillExists = await DatabaseExistsAsync(databaseName);
+            if (!stillExists)
+                databaseCreated = false;
+
+            Assert.False(
+                stillExists,
+                "A strictly named, sufficiently old database with a matching ownership marker and no active run lease should be recovered.");
+        }
+        finally
+        {
+            if (databaseCreated && await DatabaseExistsAsync(databaseName))
+            {
+                await using var connection = new SqlConnection(masterBuilder.ConnectionString);
+                await connection.OpenAsync();
+                await using var command = connection.CreateCommand();
+                command.CommandText = $"""
+                    IF DB_ID(@DatabaseName) IS NOT NULL
+                    BEGIN
+                        ALTER DATABASE [{databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+                        DROP DATABASE [{databaseName}];
+                    END;
+                    """;
+                command.Parameters.Add(
+                    new SqlParameter("@DatabaseName", SqlDbType.NVarChar, 128)
+                    {
+                        Value = databaseName
+                    });
+                await command.ExecuteNonQueryAsync();
+            }
+        }
+    }
+
     private static async Task<bool> DatabaseExistsAsync(string databaseName)
     {
         var builder = new SqlConnectionStringBuilder(
