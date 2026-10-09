@@ -245,29 +245,32 @@ internal static class SqlTestDatabaseLifecycle
 
     private static void EnsureCurrentRunLease()
     {
-        if (_runLeaseConnection?.State == ConnectionState.Open)
-            return;
-
-        _runLeaseConnection?.Dispose();
-        _runLeaseConnection = null;
-
-        var connection = new SqlConnection(CreateMasterConnectionString());
-        try
+        lock (RecoveryLock)
         {
-            connection.Open();
-            var result = ExecuteRunLock(connection, CurrentRunId, "Shared");
-            if (result < 0)
+            if (_runLeaseConnection?.State == ConnectionState.Open)
+                return;
+
+            _runLeaseConnection?.Dispose();
+            _runLeaseConnection = null;
+
+            var connection = new SqlConnection(CreateMasterConnectionString());
+            try
             {
-                throw new InvalidOperationException(
-                    $"Hive.Tests could not acquire its SQL test-run lease (sp_getapplock returned {result}).");
-            }
+                connection.Open();
+                var result = ExecuteRunLock(connection, CurrentRunId, "Shared");
+                if (result < 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Hive.Tests could not acquire its SQL test-run lease (sp_getapplock returned {result}).");
+                }
 
-            _runLeaseConnection = connection;
-        }
-        catch
-        {
-            connection.Dispose();
-            throw;
+                _runLeaseConnection = connection;
+            }
+            catch
+            {
+                connection.Dispose();
+                throw;
+            }
         }
     }
 
