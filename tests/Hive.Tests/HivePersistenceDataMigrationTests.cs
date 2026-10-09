@@ -105,6 +105,25 @@ public sealed class HivePersistenceDataMigrationTests
                 schemaMigration);
         Assert.Equal(schemaMigration.Message, curatedSchemaMigration.Message);
 
+        var unexpectedSchemaMigration =
+            HiveDatabaseMigrator.CreateUnexpectedMigrationFailure(
+                new InvalidOperationException("Password=must-not-be-shown"));
+        var sanitizedUnexpectedSchemaMigration =
+            HivePersistenceMigrationManagementService.SanitizeMigrationExecutionError(
+                unexpectedSchemaMigration);
+        Assert.Equal(
+            "hive.persistence.migration-unexpected",
+            sanitizedUnexpectedSchemaMigration.Code);
+        Assert.Contains(
+            "InvalidOperationException",
+            sanitizedUnexpectedSchemaMigration.Message);
+        Assert.DoesNotContain(
+            "must-not-be-shown",
+            sanitizedUnexpectedSchemaMigration.Message);
+        Assert.DoesNotContain(
+            "Password=",
+            sanitizedUnexpectedSchemaMigration.Message);
+
         var uncurated = HivePersistenceMigrationManagementService.SanitizeMigrationExecutionError(
             new Error(
                 "hive.persistence.data-migration.failed",
