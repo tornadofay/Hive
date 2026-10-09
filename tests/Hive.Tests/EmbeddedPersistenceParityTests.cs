@@ -39,6 +39,290 @@ public sealed class EmbeddedPersistenceParityTests
         await ExerciseAgentWorkAsync(embedded);
     }
 
+
+    [Fact]
+    public async Task EmbeddedDatabase_ReopenPreservesCurrentDurableState()
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            "Hive.Tests",
+            "Embedded",
+            $"Reopen_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "hive.db");
+        var configuration = HivePersistenceConfiguration.Embedded(path);
+        var now = new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero);
+        var clock = new FixedClock(now);
+        var deployment = DeploymentId.New();
+        var tenant = TenantId.New();
+        var principal = PrincipalId.New();
+        var context = new ResourceAccessContext(deployment, tenant, principal);
+
+        var provider = new Provider(
+            new ResourceEnvelope<ProviderId>(
+                ResourceKind.Provider,
+                ProviderId.New(),
+                principal,
+                ResourceScope.Tenant(tenant),
+                ResourceVersion.Initial,
+                Provenance(principal, now),
+                ResourceLifecycle.Active(now)),
+            $"reopen-provider-{Guid.NewGuid():N}",
+            "Reopen Provider",
+            "openai-compatible");
+        var accountId = ProviderAccountId.New();
+        var targetId = ExecutionTargetId.New();
+        var definitionId = AgentDefinitionId.New();
+        var workItemId = WorkItemId.New();
+        var eventId = EventId.New();
+        var eventStream = new ResourceReference(ResourceKind.WorkItem, workItemId.Value);
+        var runtimeId = RuntimeId.New();
+        var objectiveId = ObjectiveId.New();
+        var memoryId = MemoryId.New();
+        var attachmentContent = new byte[] { 1, 3, 5, 7, 9 };
+        const string memoryContent = "state recovered after reopening the database";
+        var agent = new AgentFactory(
+            new AllowBaseAgentCreationAuthorizer(),
+            clock)
+            .Create<Agent>(
+                new AgentDefinition("reopen-agent", "Reopen Agent"),
+                new AgentCreationContext(context))
+            .Value!;
+
+        try
+        {
+            await using (var database = new EmbeddedPersistenceDatabase(configuration))
+            {
+                var initialized = await database.InitializeAsync();
+                Assert.True(initialized.IsSuccess, initialized.Error?.Message);
+
+                var providers = new EmbeddedProviderResourceStore(database);
+                Assert.True((await providers.CreateProviderAsync(provider, context)).IsSuccess);
+
+                var account = new ProviderAccount(
+                    new ResourceEnvelope<ProviderAccountId>(
+                        ResourceKind.ProviderAccount,
+                        accountId,
+                        principal,
+                        ResourceScope.Tenant(tenant),
+                        ResourceVersion.Initial,
+                        Provenance(principal, now),
+                        ResourceLifecycle.Active(now)),
+                    provider.Id,
+                    "reopen-account",
+                    "Reopen Account",
+                    "reopen-external-account");
+                Assert.True((await providers.CreateProviderAccountAsync(account, context)).IsSuccess);
+
+                var target = new ExecutionTarget(
+                    new ResourceEnvelope<ExecutionTargetId>(
+                        ResourceKind.ExecutionTarget,
+                        targetId,
+                        principal,
+                        ResourceScope.Tenant(tenant),
+                        ResourceVersion.Initial,
+                        Provenance(principal, now),
+                        ResourceLifecycle.Active(now)),
+                    provider.Id,
+                    accountId,
+                    "reopen-target",
+                    "Reopen Target",
+                    new Uri("https://example.test/v1"),
+                    "reopen-model",
+                    null,
+                    [
+                        new CapabilityStateEntry(
+                            HiveCapabilityKeys.TextGeneration,
+                            CapabilityState.Supported)
+                    ]);
+                Assert.True((await providers.CreateExecutionTargetAsync(target, context)).IsSuccess);
+
+                var favoriteWrite = await new EmbeddedExecutionTargetPreferenceStore(database)
+                    .ReplaceFavoriteExecutionTargetIdsAsync([targetId], context);
+                Assert.True(favoriteWrite.IsSuccess, favoriteWrite.Error?.Message);
+
+                var definition = new AgentDefinition(
+                    new ResourceEnvelope<AgentDefinitionId>(
+                        ResourceKind.AgentDefinition,
+                        definitionId,
+                        principal,
+                        ResourceScope.Tenant(tenant),
+                        ResourceVersion.Initial,
+                        Provenance(principal, now),
+                        ResourceLifecycle.Active(now)),
+                    "reopen-definition",
+                    "Reopen Definition",
+                    AgentGeneration.Base,
+                    targetId);
+                Assert.True(
+                    (await new EmbeddedAgentDefinitionResourceStore(database)
+                        .CreateAgentDefinitionAsync(definition, context)).IsSuccess);
+
+                var workItemResult = await new EmbeddedWorkItemResourceStore(database)
+                    .CreateImageWorkItemAsync(
+                        new WorkItemImageSubmission("reopen.png", "image/png", attachmentContent),
+                        context);
+                Assert.True(workItemResult.IsSuccess, workItemResult.Error?.Message);
+                workItemId = workItemResult.Value!.Id;
+                eventStream = new ResourceReference(ResourceKind.WorkItem, workItemId.Value);
+
+                var envelope = new JsonEventSerializer().CreateEnvelope(
+                    eventId,
+                    now.AddMinutes(1),
+                    new EventType("persistence.reopen-probe"),
+                    new EventPayloadVersion(1),
+                    CorrelationId.New(),
+                    null,
+                    new { state = "persisted" });
+                var append = await HiveEventPersistence.CreateEmbedded(database).EventStore.AppendAsync(
+                    new EventAppendRequest(
+                        eventStream,
+                        new ResourceVersion(1),
+                        envelope,
+                        new EventSnapshot(
+                            eventStream,
+                            new ResourceVersion(2),
+                            new EventPayloadVersion(1),
+                            JsonSerializer.SerializeToElement(new { state = "persisted" }))));
+                Assert.True(append.IsSuccess, append.Error?.Message);
+
+                var agentWork = HiveAgentWorkPersistence.CreateEmbedded(database);
+                var runtime = agent.CreateRuntimeInstance(
+                    now,
+                    clock: clock,
+                    workStores: agentWork,
+                    runtimeId: runtimeId);
+                var runtimeContext = new ResourceAccessContext(
+                    deployment,
+                    tenant,
+                    principal,
+                    AgentId: agent.Id,
+                    RuntimeId: runtimeId);
+                var boundWorkItem = WorkItem.Create(
+                    WorkItemId.New(),
+                    principal,
+                    ResourceScope.Runtime(runtimeId),
+                    Provenance(principal, now),
+                    now);
+                var binding = runtime.Work.BindWorkItem(
+                    runtimeContext,
+                    boundWorkItem,
+                    now,
+                    CorrelationId.New());
+                Assert.True(binding.IsSuccess, binding.Error?.Message);
+
+                var objective = runtime.Work.Objectives.Create(
+                    runtimeContext,
+                    agent.Id,
+                    runtimeId,
+                    "Reopen objective",
+                    new ObjectiveUpdate("Durable work survives a full database reopen.", 10, null, []),
+                    now,
+                    binding.Value);
+                Assert.True(objective.IsSuccess, objective.Error?.Message);
+                objectiveId = objective.Value!.Id;
+
+                var memory = runtime.Work.Memory.Store(
+                    runtimeContext,
+                    agent.Id,
+                    runtimeId,
+                    "reopen",
+                    memoryContent,
+                    now,
+                    evidenceKind: MemoryEvidenceKind.Actual);
+                Assert.True(memory.IsSuccess, memory.Error?.Message);
+                memoryId = memory.Value!.Id;
+            }
+
+            await using (var reopened = new EmbeddedPersistenceDatabase(configuration))
+            {
+                var status = await reopened.InspectAsync();
+                Assert.True(status.IsSuccess, status.Error?.Message);
+                Assert.Equal(HiveDatabaseState.Current, status.Value!.DatabaseState);
+                Assert.Equal(EmbeddedPersistenceSchema.CurrentSchemaVersion, status.Value.SchemaVersion);
+
+                var providers = new EmbeddedProviderResourceStore(reopened);
+                var reloadedProvider = await providers.GetProviderAsync(provider.Id, context);
+                Assert.True(reloadedProvider.IsSuccess, reloadedProvider.Error?.Message);
+                var reloadedAccount = await providers.GetProviderAccountAsync(accountId, context);
+                Assert.True(reloadedAccount.IsSuccess, reloadedAccount.Error?.Message);
+                Assert.Equal(provider.Id, reloadedAccount.Value!.ProviderId);
+                var reloadedTarget = await providers.GetExecutionTargetAsync(targetId, context);
+                Assert.True(reloadedTarget.IsSuccess, reloadedTarget.Error?.Message);
+                Assert.Equal(accountId, reloadedTarget.Value!.ProviderAccountId);
+
+                var favorites = await new EmbeddedExecutionTargetPreferenceStore(reopened)
+                    .GetFavoriteExecutionTargetIdsAsync(context);
+                Assert.True(favorites.IsSuccess, favorites.Error?.Message);
+                Assert.Equal([targetId], favorites.Value);
+
+                var reloadedDefinition = await new EmbeddedAgentDefinitionResourceStore(reopened)
+                    .GetAgentDefinitionAsync(definitionId, context);
+                Assert.True(reloadedDefinition.IsSuccess, reloadedDefinition.Error?.Message);
+                Assert.Equal(targetId, reloadedDefinition.Value!.ConfiguredExecutionTargetId);
+
+                var workItems = new EmbeddedWorkItemResourceStore(reopened);
+                var reloadedWorkItem = await workItems.GetWorkItemAsync(workItemId, context);
+                Assert.True(reloadedWorkItem.IsSuccess, reloadedWorkItem.Error?.Message);
+                var attachment = await workItems.GetWorkItemAttachmentAsync(workItemId, context);
+                Assert.True(attachment.IsSuccess, attachment.Error?.Message);
+                Assert.Equal(attachmentContent, attachment.Value!.Content.ToArray());
+
+                var events = HiveEventPersistence.CreateEmbedded(reopened).EventStore;
+                var reloadedEvents = await events.ReadEventsAsync(eventStream);
+                Assert.True(reloadedEvents.IsSuccess, reloadedEvents.Error?.Message);
+                Assert.Equal(2, reloadedEvents.Value!.Count);
+                Assert.Equal(eventId, reloadedEvents.Value[1].Envelope.EventId);
+                var snapshot = await events.GetSnapshotAsync(eventStream);
+                Assert.True(snapshot.IsSuccess, snapshot.Error?.Message);
+                Assert.Equal(new ResourceVersion(2), snapshot.Value!.Version);
+                Assert.Equal("persisted", snapshot.Value.State.GetProperty("state").GetString());
+                var outbox = await events.GetOutboxAsync(eventId);
+                Assert.True(outbox.IsSuccess, outbox.Error?.Message);
+                Assert.NotNull(outbox.Value);
+
+                var recovered = agent.CreateRuntimeInstance(
+                    now.AddMinutes(1),
+                    clock: clock,
+                    workStores: HiveAgentWorkPersistence.CreateEmbedded(reopened),
+                    runtimeId: runtimeId);
+                var runtimeContext = new ResourceAccessContext(
+                    deployment,
+                    tenant,
+                    principal,
+                    AgentId: agent.Id,
+                    RuntimeId: runtimeId);
+                var reloadedObjective = recovered.Work.Objectives.Get(
+                    runtimeContext,
+                    agent.Id,
+                    runtimeId,
+                    objectiveId);
+                Assert.True(reloadedObjective.IsSuccess, reloadedObjective.Error?.Message);
+                Assert.Equal(objectiveId, reloadedObjective.Value!.Id);
+                var reloadedMemory = recovered.Work.Memory.Get(
+                    runtimeContext,
+                    agent.Id,
+                    runtimeId,
+                    memoryId);
+                Assert.True(reloadedMemory.IsSuccess, reloadedMemory.Error?.Message);
+                Assert.Equal(memoryContent, reloadedMemory.Value!.Content);
+            }
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+    }
+
     private static async Task ExerciseCoreResourcesAsync(Backend backend)
     {
         var now = new DateTimeOffset(
