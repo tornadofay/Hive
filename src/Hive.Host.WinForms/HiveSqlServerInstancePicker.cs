@@ -497,6 +497,9 @@ internal sealed class HiveSqlServerInstancePicker : UserControl
             .DiscoverAsync(cancellationToken)
             .ConfigureAwait(true);
 
+        if (cancellationToken.IsCancellationRequested || IsDisposed || Disposing)
+            return;
+
         SetDiscoveredInstances(instances, preferred);
     }
 
