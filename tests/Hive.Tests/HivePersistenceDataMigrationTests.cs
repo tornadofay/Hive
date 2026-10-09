@@ -148,8 +148,9 @@ public sealed class HivePersistenceDataMigrationTests
 
         try
         {
-            var sourceOptions = await CreateSqlDatabaseAsync(sourceDatabaseName);
-            var sourceConfiguration = CreateSqlConfiguration(sourceDatabaseName);
+            await using var sourceDatabase = await CreateSqlDatabaseAsync(sourceDatabaseName);
+            var sourceOptions = sourceDatabase.Options;
+            var sourceConfiguration = CreateSqlConfiguration(sourceDatabase.Options);
 
             var seed = await SeedRepresentativeSqlDataAsync(
                 sourceOptions);
@@ -324,10 +325,12 @@ public sealed class HivePersistenceDataMigrationTests
                     sourceSecretAfter.Value.Material.Reveal());
             }
 
+            await using var roundTripDatabase = new PersistenceTestDatabase(roundTripDatabaseName);
+
             var second = await migrator.MigrateAsync(
                 embeddedConfiguration,
                 null,
-                CreateSqlConfiguration(roundTripDatabaseName),
+                CreateSqlConfiguration(roundTripDatabase.Options),
                 null,
                 Guid.NewGuid(),
                 seed.Context);
@@ -342,14 +345,7 @@ public sealed class HivePersistenceDataMigrationTests
             Assert.True(second.Value.SourceVerifiedUnchanged);
             Assert.True(second.Value.DestinationVerified);
 
-            var roundTripOptions = new HiveDatabaseOptions(
-                new SqlConnectionStringBuilder(
-                    HivePersistenceTestConfiguration.ConnectionString)
-                {
-                    InitialCatalog = roundTripDatabaseName,
-                    ApplicationName = "Hive.Tests"
-                }.ConnectionString,
-                createDatabaseIfMissing: true);
+            var roundTripOptions = roundTripDatabase.Options;
 
             var roundTripCounts = await ReadSqlCountsAsync(
                 roundTripOptions);
@@ -372,8 +368,6 @@ public sealed class HivePersistenceDataMigrationTests
         }
         finally
         {
-            await DropSqlDatabaseAsync(sourceDatabaseName);
-            await DropSqlDatabaseAsync(roundTripDatabaseName);
             TryDeleteDirectory(embeddedDirectory);
         }
     }
@@ -521,8 +515,9 @@ public sealed class HivePersistenceDataMigrationTests
 
         try
         {
-            var sourceOptions = await CreateSqlDatabaseAsync(sourceDatabaseName);
-            var sourceConfiguration = CreateSqlConfiguration(sourceDatabaseName);
+            await using var sourceDatabase = await CreateSqlDatabaseAsync(sourceDatabaseName);
+            var sourceOptions = sourceDatabase.Options;
+            var sourceConfiguration = CreateSqlConfiguration(sourceDatabase.Options);
             // Deliberately point the persisted active configuration somewhere else.
             // Management migration must use the explicit request source instead.
             var configurationStore = new TestConfigurationStore(
@@ -576,7 +571,6 @@ public sealed class HivePersistenceDataMigrationTests
         }
         finally
         {
-            await DropSqlDatabaseAsync(sourceDatabaseName);
             TryDeleteDirectory(embeddedDirectory);
         }
     }
@@ -590,8 +584,9 @@ public sealed class HivePersistenceDataMigrationTests
 
         try
         {
-            var sourceOptions = await CreateSqlDatabaseAsync(sourceDatabaseName);
-            var sourceConfiguration = CreateSqlConfiguration(sourceDatabaseName);
+            await using var sourceDatabase = await CreateSqlDatabaseAsync(sourceDatabaseName);
+            var sourceOptions = sourceDatabase.Options;
+            var sourceConfiguration = CreateSqlConfiguration(sourceDatabase.Options);
             var configurationStore = new TestConfigurationStore(
                 sourceConfiguration);
             var quiescence = new RecordingQuiescence
@@ -625,7 +620,6 @@ public sealed class HivePersistenceDataMigrationTests
         }
         finally
         {
-            await DropSqlDatabaseAsync(sourceDatabaseName);
             TryDeleteDirectory(embeddedDirectory);
         }
     }
@@ -639,8 +633,9 @@ public sealed class HivePersistenceDataMigrationTests
 
         try
         {
-            var sourceOptions = await CreateSqlDatabaseAsync(sourceDatabaseName);
-            var sourceConfiguration = CreateSqlConfiguration(sourceDatabaseName);
+            await using var sourceDatabase = await CreateSqlDatabaseAsync(sourceDatabaseName);
+            var sourceOptions = sourceDatabase.Options;
+            var sourceConfiguration = CreateSqlConfiguration(sourceDatabase.Options);
 
             await using var destination = new EmbeddedPersistenceDatabase(
                 HivePersistenceConfiguration.Embedded(embeddedPath));
@@ -673,7 +668,6 @@ public sealed class HivePersistenceDataMigrationTests
         }
         finally
         {
-            await DropSqlDatabaseAsync(sourceDatabaseName);
             TryDeleteDirectory(embeddedDirectory);
         }
     }
@@ -698,8 +692,9 @@ public sealed class HivePersistenceDataMigrationTests
                     initialization.Error?.Message);
             }
 
-            var destinationOptions = await CreateSqlDatabaseAsync(
-                destinationDatabaseName);
+            await using var destinationDatabase = await CreateSqlDatabaseAsync(destinationDatabaseName);
+
+            var destinationOptions = destinationDatabase.Options;
 
             var context = NewContext();
             var provider = CreateProvider(context, "non-empty-sql");
@@ -710,7 +705,7 @@ public sealed class HivePersistenceDataMigrationTests
             var result = await new HivePersistenceDataMigrator().MigrateAsync(
                 HivePersistenceConfiguration.Embedded(sourcePath),
                 null,
-                CreateSqlConfiguration(destinationDatabaseName),
+                CreateSqlConfiguration(destinationDatabase.Options),
                 null,
                 Guid.NewGuid(),
                 context);
@@ -727,8 +722,6 @@ public sealed class HivePersistenceDataMigrationTests
         }
         finally
         {
-            await DropSqlDatabaseAsync(sourceDatabaseName);
-            await DropSqlDatabaseAsync(destinationDatabaseName);
             TryDeleteDirectory(sourceDirectory);
         }
     }
@@ -742,7 +735,7 @@ public sealed class HivePersistenceDataMigrationTests
 
         try
         {
-            _ = await CreateSqlDatabaseAsync(sourceDatabaseName);
+            await using var sourceDatabase = await CreateSqlDatabaseAsync(sourceDatabaseName);
             var context = NewContext();
 
             await using var destination = new EmbeddedPersistenceDatabase(
@@ -762,7 +755,7 @@ public sealed class HivePersistenceDataMigrationTests
             }
 
             var result = await new HivePersistenceDataMigrator().MigrateAsync(
-                CreateSqlConfiguration(sourceDatabaseName),
+                CreateSqlConfiguration(sourceDatabase.Options),
                 null,
                 HivePersistenceConfiguration.Embedded(destinationPath),
                 null,
@@ -776,7 +769,6 @@ public sealed class HivePersistenceDataMigrationTests
         }
         finally
         {
-            await DropSqlDatabaseAsync(sourceDatabaseName);
             TryDeleteDirectory(destinationDirectory);
         }
     }
@@ -797,9 +789,10 @@ public sealed class HivePersistenceDataMigrationTests
                 Assert.True(initialization.IsSuccess, initialization.Error?.Message);
             }
 
-            var destinationOptions = await CreateSqlDatabaseAsync(destinationDatabaseName);
-            var database = new PersistenceTestDatabase(destinationDatabaseName);
-            database.Reset();
+            await using var destinationDatabase = await CreateSqlDatabaseAsync(destinationDatabaseName);
+
+            var destinationOptions = destinationDatabase.Options;
+            destinationDatabase.Reset();
 
             await using (var connection = new SqlConnection(
                              destinationOptions.ConnectionString))
@@ -829,7 +822,7 @@ public sealed class HivePersistenceDataMigrationTests
             var result = await new HivePersistenceDataMigrator().MigrateAsync(
                 HivePersistenceConfiguration.Embedded(sourcePath),
                 null,
-                CreateSqlConfiguration(destinationDatabaseName),
+                CreateSqlConfiguration(destinationDatabase.Options),
                 null,
                 Guid.NewGuid(),
                 NewContext());
@@ -842,7 +835,6 @@ public sealed class HivePersistenceDataMigrationTests
         finally
         {
             TryDeleteDirectory(sourceDirectory);
-            await DropSqlDatabaseAsync(destinationDatabaseName);
         }
     }
 
@@ -855,7 +847,8 @@ public sealed class HivePersistenceDataMigrationTests
 
         try
         {
-            var sourceOptions = await CreateSqlDatabaseAsync(sourceDatabaseName);
+            await using var sourceDatabase = await CreateSqlDatabaseAsync(sourceDatabaseName);
+            var sourceOptions = sourceDatabase.Options;
             var sourceContext = NewContext();
             var now = new DateTimeOffset(2030, 1, 2, 3, 4, 5, TimeSpan.Zero);
             var provider = CreateProvider(sourceContext, "rollback");
@@ -915,7 +908,7 @@ public sealed class HivePersistenceDataMigrationTests
             }
 
             var result = await new HivePersistenceDataMigrator().MigrateAsync(
-                CreateSqlConfiguration(sourceDatabaseName),
+                CreateSqlConfiguration(sourceDatabase.Options),
                 null,
                 HivePersistenceConfiguration.Embedded(embeddedPath),
                 null,
@@ -937,7 +930,6 @@ public sealed class HivePersistenceDataMigrationTests
         }
         finally
         {
-            await DropSqlDatabaseAsync(sourceDatabaseName);
             TryDeleteDirectory(embeddedDirectory);
         }
     }
@@ -969,12 +961,12 @@ public sealed class HivePersistenceDataMigrationTests
                 await command.ExecuteNonQueryAsync();
             }
 
-            _ = await CreateSqlDatabaseAsync(destinationDatabaseName);
+            await using var destinationDatabase = await CreateSqlDatabaseAsync(destinationDatabaseName);
 
             var result = await new HivePersistenceDataMigrator().MigrateAsync(
                 HivePersistenceConfiguration.Embedded(sourcePath),
                 null,
-                CreateSqlConfiguration(destinationDatabaseName),
+                CreateSqlConfiguration(destinationDatabase.Options),
                 null,
                 Guid.NewGuid(),
                 context);
@@ -986,7 +978,6 @@ public sealed class HivePersistenceDataMigrationTests
         }
         finally
         {
-            await DropSqlDatabaseAsync(destinationDatabaseName);
             TryDeleteDirectory(sourceDirectory);
         }
     }
@@ -1002,11 +993,11 @@ public sealed class HivePersistenceDataMigrationTests
 
         try
         {
-            _ = await CreateSqlDatabaseAsync(sourceDatabaseName);
+            await using var sourceDatabase = await CreateSqlDatabaseAsync(sourceDatabaseName);
 
             await Assert.ThrowsAsync<OperationCanceledException>(
                 () => new HivePersistenceDataMigrator().MigrateAsync(
-                    CreateSqlConfiguration(sourceDatabaseName),
+                    CreateSqlConfiguration(sourceDatabase.Options),
                     null,
                     HivePersistenceConfiguration.Embedded(destinationPath),
                     null,
@@ -1016,7 +1007,6 @@ public sealed class HivePersistenceDataMigrationTests
         }
         finally
         {
-            await DropSqlDatabaseAsync(sourceDatabaseName);
             TryDeleteDirectory(destinationDirectory);
         }
     }
@@ -1260,19 +1250,38 @@ public sealed class HivePersistenceDataMigrationTests
             now);
     }
 
-    private static async Task<HiveDatabaseOptions> CreateSqlDatabaseAsync(
+    private static async Task<PersistenceTestDatabase> CreateSqlDatabaseAsync(
         string databaseName)
     {
         var database = new PersistenceTestDatabase(databaseName);
-        database.Reset();
+        try
+        {
+            database.Reset();
 
-        var migration = await new HiveDatabaseMigrator(
-            database.Options).MigrateAsync();
-        Assert.True(
-            migration.IsSuccess,
-            migration.Error?.Message);
+            var migration = await new HiveDatabaseMigrator(
+                database.Options).MigrateAsync();
+            Assert.True(
+                migration.IsSuccess,
+                migration.Error?.Message);
 
-        return database.Options;
+            return database;
+        }
+        catch (Exception creationFailure)
+        {
+            try
+            {
+                await database.DisposeAsync();
+            }
+            catch (Exception cleanupFailure)
+            {
+                throw new AggregateException(
+                    $"SQL migration test database '{database.DatabaseName}' failed to initialize and could not be cleaned up.",
+                    creationFailure,
+                    cleanupFailure);
+            }
+
+            throw;
+        }
     }
 
     private static async Task<Dictionary<string, long>> ReadSqlCountsAsync(
@@ -1357,10 +1366,10 @@ public sealed class HivePersistenceDataMigrationTests
     }
 
     private static HivePersistenceConfiguration CreateSqlConfiguration(
-        string databaseName)
+        HiveDatabaseOptions options)
     {
         var builder = new SqlConnectionStringBuilder(
-            HivePersistenceTestConfiguration.ConnectionString);
+            options.ConnectionString);
 
         var serverName = builder.DataSource;
         int? port = null;
@@ -1385,7 +1394,7 @@ public sealed class HivePersistenceDataMigrationTests
             HivePersistenceBackend.SqlServer,
             serverName,
             port,
-            databaseName,
+            builder.InitialCatalog,
             HiveSqlAuthenticationMode.WindowsIntegrated,
             null,
             null,
@@ -1467,53 +1476,16 @@ public sealed class HivePersistenceDataMigrationTests
         return directory;
     }
 
-    private static async Task DropSqlDatabaseAsync(
-        string databaseName)
-    {
-        if (string.IsNullOrWhiteSpace(databaseName))
-            return;
-
-        try
-        {
-            var builder = new SqlConnectionStringBuilder(
-                HivePersistenceTestConfiguration.ConnectionString)
-            {
-                InitialCatalog = "master",
-                ApplicationName = "Hive.Tests"
-            };
-
-            await using var connection = new SqlConnection(
-                builder.ConnectionString);
-            await connection.OpenAsync();
-
-            var quoted = $"[{databaseName.Replace("]", "]]", StringComparison.Ordinal)}]";
-
-            await using var command = connection.CreateCommand();
-            command.CommandText = $"""
-                IF DB_ID(@DatabaseName) IS NOT NULL
-                BEGIN
-                    ALTER DATABASE {quoted} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-                    DROP DATABASE {quoted};
-                END;
-                """;
-            command.Parameters.Add(
-                new SqlParameter("@DatabaseName", databaseName));
-
-            await command.ExecuteNonQueryAsync();
-        }
-        catch (SqlException)
-        {
-        }
-    }
-
     private static void TryDeleteDirectory(string directory)
     {
         try
         {
             Directory.Delete(directory, recursive: true);
         }
-        catch
+        catch (Exception exception)
         {
+            Console.Error.WriteLine(
+                $"Hive.Tests could not delete its temporary Embedded directory '{directory}'. Exception: {exception.GetType().Name}.");
         }
     }
 
