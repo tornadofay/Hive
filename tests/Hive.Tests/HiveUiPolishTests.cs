@@ -806,6 +806,7 @@ public sealed class HiveUiPolishTests
             DeploymentId.New(),
             TenantId.New(),
             PrincipalId.New());
+        HiveMessageOptions? shownMessage = null;
 
         using var host = new Form
         {
@@ -818,7 +819,8 @@ public sealed class HiveUiPolishTests
             management,
             context,
             themeManager,
-            "Hive.TestHost")
+            "Hive.TestHost",
+            showMessage: options => { shownMessage = options; })
         {
             Dock = DockStyle.Fill
         };
@@ -907,8 +909,8 @@ public sealed class HiveUiPolishTests
         var testedConfiguration = await managementProxy.PersistenceConfigurationTested.Task
             .WaitAsync(TimeSpan.FromSeconds(5));
         WaitForUi(
-            () => view.CopyDetailsButton.Visible,
-            "A failed endpoint preflight did not expose Copy details.");
+            () => shownMessage is not null,
+            "A failed endpoint preflight did not show a HiveMessageBox error.");
 
         Assert.Equal(@"localhost\MSSQLSERVER01", testedConfiguration.ServerName);
         Assert.Null(testedConfiguration.Port);
@@ -921,25 +923,25 @@ public sealed class HiveUiPolishTests
             "intercepted the endpoint preflight",
             view.StatusLabel.Text,
             StringComparison.OrdinalIgnoreCase);
-        var diagnosticDetails = Assert.IsType<string>(view.LastDiagnosticDetails);
-        Assert.True(view.DiagnosticDetailsInput.Visible);
-        Assert.True(view.DiagnosticDetailsInput.ReadOnly);
-        Assert.Equal(diagnosticDetails, view.DiagnosticDetailsInput.Text);
+
+        var errorDialog = Assert.IsType<HiveMessageOptions>(shownMessage);
+        Assert.Equal("Hive Persistence", errorDialog.Title);
+        Assert.Equal(HiveMessageType.Error, errorDialog.Type);
+        Assert.True(errorDialog.DetailsExpanded);
         Assert.Contains(
             "intercepted the endpoint preflight",
-            diagnosticDetails,
+            errorDialog.Details,
             StringComparison.OrdinalIgnoreCase);
         Assert.Contains(
             "named-instance port resolution",
-            diagnosticDetails,
+            errorDialog.Details,
             StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(
+            "See the error dialog for details",
+            view.StatusLabel.Text,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.Null(FindButton(view, "Copy details"));
 
-        view.CopyDetailsButton.PerformClick();
-
-        Assert.Equal(
-            "Diagnostic details copied. Paste them into your message.",
-            view.StatusLabel.Text);
-        Assert.Equal(diagnosticDetails, Clipboard.GetText());
     }
 
     [Fact]
