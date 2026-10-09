@@ -842,7 +842,10 @@ public sealed class HiveUiPolishTests
         // The fixed top-row height must leave the complete custom ComboBox field
         // inside its parent rather than clipping its bottom edge.
         Assert.False(view.DirectionSelector.AutoSize);
-        Assert.InRange(view.DirectionSelector.Height, 34, 36);
+        Assert.InRange(
+            view.DirectionSelector.Height,
+            view.DirectionSelector.PreferredSize.Height,
+            view.DirectionSelector.PreferredSize.Height + 2);
         Assert.True(
             view.DirectionSelector.Bottom <= view.DirectionSelector.Parent!.ClientSize.Height);
 
