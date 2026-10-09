@@ -761,6 +761,7 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     private CancellationTokenSource? _operationCts;
     private HiveBootstrapCredentialReference? _createdSourceCredential;
     private HiveBootstrapCredentialReference? _createdDestinationCredential;
+    private Task? _initializationTask;
     private bool _busy;
 
     public HivePersistenceDataMigrationSettingsView(
@@ -795,9 +796,6 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
                 "Embedded → SQL Server",
                 MigrationDirection.EmbeddedToSqlServer)
         ]);
-        _directionComboBox.SelectedIndexChanged += async (_, _) =>
-            await DirectionChangedAsync().ConfigureAwait(true);
-
         _scopeLabel = new Label
         {
             Text = "All Hive Data",
@@ -877,6 +875,8 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             await RunOperationAsync(RunMigrationAsync).ConfigureAwait(true);
 
         _directionComboBox.SelectedIndex = 0;
+        _directionComboBox.SelectedIndexChanged += async (_, _) =>
+            await DirectionChangedAsync().ConfigureAwait(true);
 
         Controls.Add(_editor);
         Dock = DockStyle.Fill;
@@ -891,8 +891,36 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
     }
 
     public Task InitializeAsync(
-        CancellationToken cancellationToken = default) =>
-        RefreshStatusAsync(cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        if (IsDisposed || Disposing)
+            return Task.CompletedTask;
+
+        return _initializationTask ??= InitializeCoreAsync(cancellationToken);
+    }
+
+    private async Task InitializeCoreAsync(CancellationToken cancellationToken)
+    {
+        SetStatus(
+            "Review both endpoints, then select Refresh to test readiness before migration.",
+            HiveStatusTone.Information);
+
+        try
+        {
+            // Opening the tab may discover SQL Server candidates, but it must not
+            // initiate endpoint connection tests. Refresh and migration preflight
+            // remain the explicit readiness-test boundaries.
+            await RefreshVisibleSqlServerInstancesAsync(cancellationToken)
+                .ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer direction/refresh request can supersede this picker wait.
+            // Disposal and caller cancellation are also expected lifecycle events.
+            if (cancellationToken.IsCancellationRequested && !IsDisposed && !Disposing)
+                _initializationTask = null;
+        }
+    }
 
     internal HiveComboBox DirectionSelector => _directionComboBox;
 
@@ -1101,8 +1129,16 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
         if (_busy || IsDisposed || Disposing)
             return;
 
-        await RefreshVisibleSqlServerInstancesAsync(CancellationToken.None)
-            .ConfigureAwait(true);
+        try
+        {
+            await RefreshVisibleSqlServerInstancesAsync(CancellationToken.None)
+                .ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            // The picker cancels an obsolete wait when a newer discovery request
+            // for the same endpoint supersedes it. The newer request owns status.
+        }
     }
 
     private MigrationDirection SelectedDirection =>
@@ -1483,9 +1519,10 @@ internal sealed class HivePersistenceDataMigrationSettingsView : UserControl
             await operation(operationCts.Token).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
-            when (operationCts.IsCancellationRequested)
         {
-            if (!IsDisposed && !Disposing)
+            // A picker can cancel an obsolete discovery wait when a newer request
+            // supersedes it, even when this operation's own token was not cancelled.
+            if (!IsDisposed && !Disposing && operationCts.IsCancellationRequested)
                 SetStatus("Operation cancelled.", HiveStatusTone.Warning);
         }
         catch (ArgumentException exception)
