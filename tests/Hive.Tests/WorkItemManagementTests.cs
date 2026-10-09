@@ -11,7 +11,7 @@ public sealed class WorkItemManagementTests
     [Fact]
     public async Task ImageSubmission_PersistsWorkItemAttachmentAndActivity()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_WorkItemSubmission");
+        using var database = new PersistenceTestDatabase("Hive_Test_WorkItemSubmission");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -62,7 +62,7 @@ public sealed class WorkItemManagementTests
     [Fact]
     public async Task WorkItemListing_UsesBoundedDeterministicPages()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_WorkItemPaging");
+        using var database = new PersistenceTestDatabase("Hive_Test_WorkItemPaging");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -127,7 +127,7 @@ public sealed class WorkItemManagementTests
     [Fact]
     public async Task WorkItemListing_PagedOrderMatchesLegacyOrderWhenTimestampsTie()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_WorkItemPagingOrder");
+        using var database = new PersistenceTestDatabase("Hive_Test_WorkItemPagingOrder");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -194,7 +194,7 @@ public sealed class WorkItemManagementTests
     [Fact]
     public async Task WorkItemActivity_RejectsUndefinedStringStatus()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_WorkItemActivityInvalidStatus");
+        using var database = new PersistenceTestDatabase("Hive_Test_WorkItemActivityInvalidStatus");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -261,7 +261,7 @@ public sealed class WorkItemManagementTests
     [Fact]
     public async Task WorkItemActivity_RejectsMalformedReasonValue()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_WorkItemActivityInvalidReason");
+        using var database = new PersistenceTestDatabase("Hive_Test_WorkItemActivityInvalidReason");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -327,7 +327,7 @@ public sealed class WorkItemManagementTests
     [Fact]
     public async Task WorkItemApproval_UsesExpectedVersionAndEnforcesState()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_WorkItemApproval");
+        using var database = new PersistenceTestDatabase("Hive_Test_WorkItemApproval");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -388,7 +388,7 @@ public sealed class WorkItemManagementTests
     [Fact]
     public async Task WorkItemRejection_RequiresReasonAndCurrentPendingVersion()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_WorkItemRejection");
+        using var database = new PersistenceTestDatabase("Hive_Test_WorkItemRejection");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
@@ -440,7 +440,7 @@ public sealed class WorkItemManagementTests
     [Fact]
     public async Task WorkItemAccess_IsOwnerAndScopeIsolated()
     {
-        var database = new PersistenceTestDatabase("Hive_Test_WorkItemAccess");
+        using var database = new PersistenceTestDatabase("Hive_Test_WorkItemAccess");
         database.Reset();
 
         var migration = await new HiveDatabaseMigrator(database.Options).MigrateAsync();
