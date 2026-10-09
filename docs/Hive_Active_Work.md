@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **VERIFICATION FAILED / REMEDIATION REQUIRED**
+Status: **VERIFICATION PENDING**
 
 ## Phase 1.18A Slice 6 — Cross-Backend Hardening, Full Regression & Closure
 
@@ -167,6 +167,19 @@ Same-slice remediation boundary:
 - Update the historical diagnostic record, Current Status, and Active Work after the bounded correction.
 
 The developer's current report establishes SQL error 5170; it does not verify a successful migration. Record this failure before changing implementation. After the same-slice correction, return to **VERIFICATION PENDING** and require focused tests, the full suite, warnings-as-errors builds, and another safe migration attempt.
+
+### Same-slice SQL Server 5170 diagnostic correction — 2026-10-09
+
+After the last migration retry supplied native SQL error 5170 / state 4 / class 16 for destination database `Hive-Hive.Example.WinForms` at `localhost\\MSSQLSERVER01`, the error-mapping gap was recorded as a verification failure before source changes. SQL Server error 5170 means a database file cannot be created because the physical file path already exists. The previous database rename makes retained original data/log filenames a likely explanation, but the owner of the conflicting path has not been inspected, so that part remains an informed hypothesis.
+
+The bounded correction now committed to `main`:
+- `HiveSqlServerFailureDiagnostics` maps error 5170 to specific, fixed guidance that explains the physical-file collision and possible retained filenames after database rename.
+- The guidance directs the operator to inspect registered file ownership, explicitly warns not to delete a conflicting file manually, and suggests a different unused destination name or deliberate SQL Server-managed file relocation after ownership and backup are confirmed.
+- Added `5170` regression cases to both full-data-migration and SQL schema-migration diagnostic coverage. The diagnostic still excludes raw provider text, physical paths, SQL statements, connection strings, and credentials.
+- No database files are altered automatically, no destination is renamed implicitly, and clean-destination / explicit-activation migration behavior is unchanged.
+- Dated evidence: [SQL Server 5170 diagnostic remediation](verification/phase-1/1.18A-slice-6-sql-file-collision-5170-remediation-2026-10-09.md).
+
+**Current state: VERIFICATION PENDING.** The earlier 783/783 result predates the 5170-specific mapping and its regression cases. The assistant has not run a build, tests, Example Host, or migration after this correction. Run `HivePersistenceDataMigrationTests` and `HiveUiPolishTests`, the full `Hive.Tests` suite, and all affected builds with Treat Warnings as Errors enabled and zero warnings. Then resolve the SQL Server file collision safely and retry Embedded → SQL Server. The remaining Slice 6 bidirectional real-endpoint, graph-retirement, Embedded first-run/restart, source-immutability, secret-readability, and explicit activation gates remain required.
 
 ### Remaining closure evidence
 
