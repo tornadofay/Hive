@@ -53,3 +53,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [1.18A Slice 6 — Closure Verification — 2026-10-09](1.18A-slice-6-closure-2026-10-09.md)
 - [1.18A Closure — Documentation Revision Audit — 2026-10-09](1.18A-closure-documentation-revision-2026-10-09.md)
 - [Maintenance — UI: Settings Overview Layout & Configuration Guidance — 2026-10-09](../maintenance/ui-settings-overview-layout-configuration-guidance-2026-10-09.md)
+- [Maintenance — Test Database Lifecycle & Cleanup — 2026-10-10](../maintenance/test-database-lifecycle-cleanup-2026-10-10.md)
