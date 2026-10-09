@@ -861,6 +861,17 @@ public sealed class HiveUiPolishTests
         Assert.True(
             view.SourceSqlServerPicker.Bottom <=
             view.SourceSqlServerPicker.Parent.ClientSize.Height);
+        Assert.True(
+            view.SourceSqlServerPicker.Right <=
+            view.SourceSqlServerPicker.Parent.ClientSize.Width);
+
+        var databaseAuthenticationRow = Assert.IsType<TableLayoutPanel>(
+            view.SourceSqlServerLayout.GetControlFromPosition(0, 1));
+        Assert.All(
+            databaseAuthenticationRow.Controls.Cast<Control>(),
+            control => Assert.True(
+                control.Right <= databaseAuthenticationRow.ClientSize.Width,
+                $"{control.GetType().Name} exceeds the SQL database/authentication row."));
 
         Assert.Equal(DockStyle.Top, view.SourceSqlServerLayout.Dock);
         Assert.NotEmpty(view.SourceSqlServerLayout.RowStyles.Cast<RowStyle>());
