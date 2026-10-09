@@ -117,6 +117,12 @@ public sealed class HiveWorkspaceLifecycleTests
             new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly TaskCompletionSource<HivePersistenceConfiguration> _persistenceConfigurationTested =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<bool> _persistenceMigrationRequested =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public HivePersistenceConnectionTest? PersistenceConnectionTestResult { get; set; }
+        public Result<HivePersistenceMigrationResult>? PersistenceMigrationResult { get; set; }
+
         public HivePersistenceConfiguration PersistenceConfiguration { get; set; } =
             new(
                 HivePersistenceBackend.SqlServer,
@@ -136,6 +142,9 @@ public sealed class HiveWorkspaceLifecycleTests
 
         public TaskCompletionSource<HivePersistenceConfiguration> PersistenceConfigurationTested =>
             _persistenceConfigurationTested;
+
+        public TaskCompletionSource<bool> PersistenceMigrationRequested =>
+            _persistenceMigrationRequested;
 
         public TaskCompletionSource<bool> WorkItemsRequested =>
             _workItemsRequested;
@@ -175,11 +184,28 @@ public sealed class HiveWorkspaceLifecycleTests
                 _persistenceConfigurationTested.TrySetResult(
                     (HivePersistenceConfiguration)args![0]!);
 
+                if (PersistenceConnectionTestResult is { } configuredResult)
+                {
+                    return Task.FromResult(
+                        Result<HivePersistenceConnectionTest>.Success(configuredResult));
+                }
+
                 return Task.FromResult(
                     Result<HivePersistenceConnectionTest>.Failure(
                         Error.Validation(
                             "hive.tests.persistence-connection-intercepted",
                             "The test proxy intercepted the endpoint preflight.")));
+            }
+
+            if (targetMethod?.Name == nameof(IHiveManagementFacade.MigratePersistenceDataAsync))
+            {
+                _persistenceMigrationRequested.TrySetResult(true);
+                return Task.FromResult(
+                    PersistenceMigrationResult ??
+                    Result<HivePersistenceMigrationResult>.Failure(
+                        Error.Conflict(
+                            "hive.tests.persistence-migration-not-configured",
+                            "The test proxy did not configure a migration result.")));
             }
 
             throw new NotSupportedException(
