@@ -393,12 +393,28 @@ public sealed class HiveDirectLlmConversationView : UserControl
         }
 
         var conversationId = _selectedConversation.Id;
-        var result = await _management.SendDirectLlmMessageAsync(
-            conversationId,
-            target.Target.Id,
-            message,
-            _accessContext,
-            cancellationToken).ConfigureAwait(true);
+        Result<DirectLlmConversation> result;
+        try
+        {
+            result = await _management.SendDirectLlmMessageAsync(
+                conversationId,
+                target.Target.Id,
+                message,
+                _accessContext,
+                cancellationToken).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            if (!IsUnavailable())
+            {
+                await RefreshConversationsAsync(
+                    conversationId,
+                    CancellationToken.None).ConfigureAwait(true);
+                _statusLabel.Text = "Request cancelled; conversation state refreshed.";
+            }
+
+            return;
+        }
 
         if (IsUnavailable())
             return;
