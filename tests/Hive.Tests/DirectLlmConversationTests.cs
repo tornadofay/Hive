@@ -275,6 +275,108 @@ public sealed class DirectLlmConversationTests
         }
     }
 
+    [Fact]
+    public async Task SendDirectLlmMessageAsync_RejectsExplicitlyUnsupportedTextGeneration()
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            "Hive.Tests",
+            "DirectLlm",
+            Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "hive.db");
+        var configuration = HivePersistenceConfiguration.Embedded(path);
+        EmbeddedPersistenceDatabase? database = null;
+        HiveManagementFacade? management = null;
+        HttpClient? httpClient = null;
+
+        try
+        {
+            database = new EmbeddedPersistenceDatabase(configuration);
+            var initialized = await database.InitializeAsync();
+            Assert.True(initialized.IsSuccess, initialized.Error?.Message);
+
+            var now = new DateTimeOffset(2026, 10, 10, 12, 0, 0, TimeSpan.Zero);
+            var principal = PrincipalId.New();
+            var tenant = TenantId.New();
+            var context = new ResourceAccessContext(
+                DeploymentId.New(),
+                tenant,
+                principal);
+            var handler = new RecordingChatHandler("{}");
+            httpClient = new HttpClient(handler);
+            management = CreateManagement(database, httpClient);
+
+            var provider = CreateProvider(principal, tenant, now);
+            var providerResult = await management.CreateProviderAsync(provider, context);
+            Assert.True(providerResult.IsSuccess, providerResult.Error?.Message);
+
+            var account = CreateAccount(
+                provider.Id,
+                principal,
+                tenant,
+                now,
+                "direct-unsupported-account");
+            var accountResult = await management.CreateProviderAccountAsync(account, context);
+            Assert.True(accountResult.IsSuccess, accountResult.Error?.Message);
+
+            var target = CreateTarget(
+                provider.Id,
+                account.Id,
+                principal,
+                tenant,
+                now,
+                "unsupported",
+                "unsupported-model",
+                CapabilityState.Unsupported);
+            var targetResult = await management.CreateExecutionTargetAsync(target, context);
+            Assert.True(targetResult.IsSuccess, targetResult.Error?.Message);
+
+            var conversation = await management.CreateDirectLlmConversationAsync(context);
+            Assert.True(conversation.IsSuccess, conversation.Error?.Message);
+
+            var result = await management.SendDirectLlmMessageAsync(
+                conversation.Value!.Id,
+                target.Id,
+                "Do not execute this request.",
+                context);
+
+            Assert.True(result.IsFailure);
+            Assert.Equal(ErrorCategory.Unsupported, result.Error!.Category);
+            Assert.Equal(
+                "hive.direct-llm.target-text-generation-unsupported",
+                result.Error.Code);
+            Assert.Equal(0, handler.RequestCount);
+
+            var history = await management.GetDirectLlmConversationAsync(
+                conversation.Value.Id,
+                context);
+            Assert.True(history.IsSuccess, history.Error?.Message);
+            Assert.Empty(history.Value!.Messages);
+            Assert.Equal(DirectLlmConversationStatus.Ready, history.Value.Summary.Status);
+        }
+        finally
+        {
+            management?.Dispose();
+            httpClient?.Dispose();
+
+            if (database is not null)
+                await database.DisposeAsync();
+
+            try
+            {
+                if (Directory.Exists(directory))
+                    Directory.Delete(directory, recursive: true);
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+    }
+
     private static HiveManagementFacade CreateManagement(
         EmbeddedPersistenceDatabase database,
         HttpClient httpClient)
@@ -331,7 +433,8 @@ public sealed class DirectLlmConversationTests
         TenantId tenant,
         DateTimeOffset now,
         string suffix,
-        string model) =>
+        string model,
+        CapabilityState textGenerationState = CapabilityState.Supported) =>
         new(
             new ResourceEnvelope<ExecutionTargetId>(
                 ResourceKind.ExecutionTarget,
@@ -351,7 +454,7 @@ public sealed class DirectLlmConversationTests
             [
                 new CapabilityStateEntry(
                     HiveCapabilityKeys.TextGeneration,
-                    CapabilityState.Supported)
+                    textGenerationState)
             ]);
 
     private static ResourceProvenance Provenance(
