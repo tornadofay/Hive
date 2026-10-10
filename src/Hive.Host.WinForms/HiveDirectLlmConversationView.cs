@@ -224,8 +224,13 @@ public sealed class HiveDirectLlmConversationView : UserControl
 
                 foreach (var target in targetResult.Value!)
                 {
-                    if (target.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
+                    if (target.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active ||
+                        target.Capabilities.Any(static capability =>
+                            capability.Capability == HiveCapabilityKeys.TextGeneration &&
+                            capability.State == CapabilityState.Unsupported))
+                    {
                         continue;
+                    }
 
                     targets.Add(new TargetOption(
                         target,
@@ -675,7 +680,7 @@ public sealed class HiveDirectLlmConversationView : UserControl
         workspace.SizeChanged += (_, _) =>
         {
             var availableWidth = workspace.ClientSize.Width - workspace.SplitterWidth;
-            if (availableWidth > 0)
+            if (availableWidth >= 50)
                 workspace.SplitterDistance = Math.Clamp(250, 25, availableWidth - 25);
         };
 
