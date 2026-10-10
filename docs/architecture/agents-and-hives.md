@@ -248,7 +248,7 @@ Risk, Fear, and Confidence are cognitive state used by Cognitive Strategy rather
 
 **Fear** represents the Agent's strategy-level response to perceived risk, consequence, and adverse experience. It is allowed to change how cautiously the Agent approaches a problem. For example, increasing Fear may cause the strategy to decompose a difficult objective, obtain more evidence, ask a Question, invoke a specialist through Hive, or run a Dream before acting. Repeated successful evidence under comparable conditions may reduce Fear when it lowers estimated risk, but success does not automatically erase known risk.
 
-**Confidence** represents evidence-backed support for a belief, method, plan, or strategy under stated conditions. Confidence is contextual rather than global. Repeated success can increase confidence in a method without establishing that it is universally reliable.
+**Confidence** represents evidence-backed support for a belief, method, plan, or strategy under stated conditions. Confidence is contextual rather than global. Repeated success can increase confidence in a method without establishing that it is universally reliable. Repeated Mistakes may increase Fear or caution, but they do not prove that the Agent caused those outcomes when attribution remains uncertain.
 
 Risk/Fear/Confidence may influence:
 
