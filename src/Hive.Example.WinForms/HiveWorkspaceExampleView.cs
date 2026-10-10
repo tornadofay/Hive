@@ -22,10 +22,7 @@ internal sealed class HiveWorkspaceExampleView : UserControl
         _management = services.GetManagementFacade();
         _output = services.GetExampleOutput();
 
-        _context = new ResourceAccessContext(
-            DeploymentId.New(),
-            TenantId.New(),
-            PrincipalId.New());
+        _context = services.GetExampleAccessContext();
 
         Dock = DockStyle.Fill;
         Padding = new Padding(16);
@@ -55,7 +52,7 @@ internal sealed class HiveWorkspaceExampleView : UserControl
         var description = new Label
         {
             Dock = DockStyle.Fill,
-            Text = "V1 Workspace over Hive.Management. Create an image-backed WorkItem, request approval, then Approve or Reject it. The execution/provider panel remains intentionally inactive until later V1 pipeline slices.",
+            Text = "V1 Workspace over Hive.Management. Use Direct LLM for explicit-target chat with saved conversation history, or Work Items for image intake and approval operations.",
             AutoEllipsis = true,
             TextAlign = ContentAlignment.MiddleLeft,
             Padding = new Padding(0, 0, 12, 0)
