@@ -19,6 +19,7 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+    private readonly HiveProviderManagementService _providers;
     private readonly IProviderResourceStore _providerResources;
     private readonly ISecretStore? _secrets;
     private readonly IEventPersistenceStore? _eventStore;
@@ -27,12 +28,14 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
     private readonly ConcurrentDictionary<Guid, byte> _activeRequests = new();
 
     internal HiveDirectLlmManagementService(
+        HiveProviderManagementService providers,
         IProviderResourceStore providerResources,
         ISecretStore? secrets,
         IEventPersistenceStore? eventStore,
         DirectLlmCompletionService? completionService,
         IClock? clock = null)
     {
+        _providers = providers ?? throw new ArgumentNullException(nameof(providers));
         _providerResources = providerResources
             ?? throw new ArgumentNullException(nameof(providerResources));
         _secrets = secrets;
@@ -569,15 +572,37 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
                     "The selected ExecutionTarget is not active."));
         }
 
-        if (target.Capabilities.Any(static capability =>
-                capability.Capability == HiveCapabilityKeys.TextGeneration &&
-                capability.State == CapabilityState.Unsupported))
+        var capabilityResolution = await _providers
+            .GetExecutionTargetCapabilityOverridesAsync(
+                [target],
+                HiveCapabilityKeys.TextGeneration,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+        if (capabilityResolution.IsFailure)
+            return Result<ResolvedExecutionTarget>.Failure(capabilityResolution.Error!);
+
+        var selection = ExecutionTargetSelector.Select(
+            new ExecutionTargetSelectionRequest(
+                [target],
+                [
+                    new CapabilityRequirement(
+                        HiveCapabilityKeys.TextGeneration,
+                        CapabilityRequirementKind.Required)
+                ],
+                mode: ExecutionTargetSelectionMode.Fixed,
+                fixedTargetId: target.Id),
+            capabilityResolution.Value!.Overrides);
+
+        if (selection.IsFailure)
         {
             return Result<ResolvedExecutionTarget>.Failure(
                 Error.Unsupported(
                     "hive.direct-llm.target-text-generation-unsupported",
-                    "The selected ExecutionTarget is explicitly configured as not supporting text generation."));
+                    "The selected ExecutionTarget does not satisfy the required text-generation capability policy."));
         }
+
+        target = selection.Value!.SelectedTarget;
 
         var accountResult = await _providerResources.GetProviderAccountAsync(
             target.ProviderAccountId,
