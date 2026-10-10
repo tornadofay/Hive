@@ -658,8 +658,8 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
     {
         if (current.State.Status != DirectLlmConversationStatus.Running ||
             _activeRequests.ContainsKey(conversationId.Value) ||
-            current.State.LastRequestStartedAtUtc is not { } requestStartedAt ||
-            _clock.UtcNow - requestStartedAt < StaleExecutionWindow)
+            current.State.LastRequestStartedAtUtc is null ||
+            _clock.UtcNow - current.State.LastRequestStartedAtUtc.Value < StaleExecutionWindow)
         {
             return Result<SnapshotAndState>.Success(current);
         }
