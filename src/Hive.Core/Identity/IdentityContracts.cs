@@ -249,6 +249,20 @@ public readonly record struct DelegationId
     public override string ToString() => Value.ToString("D");
 }
 
+public readonly record struct ConversationId
+{
+    public ConversationId(Guid value) => Value = IdentityValue.Require(value, nameof(value));
+    public Guid Value { get; }
+    public static ConversationId New() => new(Guid.NewGuid());
+    public static ConversationId Parse(string value) => new(IdentityValue.Parse(value, nameof(value), nameof(ConversationId)));
+    public static bool TryParse(string? value, out ConversationId result)
+    {
+        if (IdentityValue.TryParse(value, out var parsed)) { result = new(parsed); return true; }
+        result = default; return false;
+    }
+    public override string ToString() => Value.ToString("D");
+}
+
 public enum ResourceKind
 {
     Deployment,
@@ -271,5 +285,6 @@ public enum ResourceKind
     Secret,
     AgentDefinition,
     StructuredExtractionBatch,
-    Delegation
+    Delegation,
+    Conversation
 }
