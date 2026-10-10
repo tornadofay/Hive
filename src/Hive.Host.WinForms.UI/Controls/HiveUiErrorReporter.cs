@@ -22,18 +22,24 @@ public static class HiveUiErrorReporter
             : HiveUiExceptionDiagnostics.SanitizeMessage(message);
 
         var technicalDetails = HiveUiExceptionDiagnostics.Format(exception);
-        output?.Write("EXCEPTION", technicalDetails);
+        RunObserverSafely(
+            () => output?.Write("EXCEPTION", technicalDetails),
+            "Output-panel diagnostic write",
+            technicalDetails);
 
-        HiveMessageBox.Show(
-            owner,
-            new HiveMessageOptions(
-                title,
-                safeMessage,
-                HiveMessageType.Error,
-                MessageBoxButtons.OK,
-                technicalDetails,
-                DetailsExpanded: true),
-            themeManager);
+        RunObserverSafely(
+            () => HiveMessageBox.Show(
+                owner,
+                new HiveMessageOptions(
+                    title,
+                    safeMessage,
+                    HiveMessageType.Error,
+                    MessageBoxButtons.OK,
+                    technicalDetails,
+                    DetailsExpanded: true),
+                themeManager),
+            "HiveMessageBox presentation",
+            technicalDetails);
     }
 
     public static void Report(
@@ -48,13 +54,58 @@ public static class HiveUiErrorReporter
         else
             message = HiveUiExceptionDiagnostics.SanitizeMessage(message);
 
-        output?.Write("ERROR", message);
+        RunObserverSafely(
+            () => output?.Write("ERROR", message),
+            "Output-panel error write",
+            message);
 
-        HiveMessageBox.ShowError(
-            owner,
-            message,
-            title,
-            themeManager);
+        RunObserverSafely(
+            () => HiveMessageBox.ShowError(
+                owner,
+                message,
+                title,
+                themeManager),
+            "HiveMessageBox error presentation",
+            message);
+    }
+
+    internal static void RunObserverSafely(
+        Action observer,
+        string boundary,
+        string safeDiagnostic)
+    {
+        ArgumentNullException.ThrowIfNull(observer);
+
+        try
+        {
+            observer();
+        }
+        catch (Exception observerException)
+        {
+            string failureDetails;
+            try
+            {
+                failureDetails = HiveUiExceptionDiagnostics.Format(observerException);
+            }
+            catch
+            {
+                failureDetails =
+                    observerException.GetType().FullName ??
+                    observerException.GetType().Name;
+            }
+
+            try
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"HiveUiErrorReporter: {boundary} failed.{Environment.NewLine}" +
+                    $"Original safe diagnostic: {safeDiagnostic}{Environment.NewLine}" +
+                    $"Reporter exception: {failureDetails}");
+            }
+            catch
+            {
+                // A broken diagnostic listener must not escape this observer boundary.
+            }
+        }
     }
 }
 
