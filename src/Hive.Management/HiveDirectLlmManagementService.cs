@@ -11,7 +11,7 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
 {
     private const int MaxConversationPageSize = 100;
     private const int MaxPromptLength = 64 * 1024;
-    private const int MaxStoredResponseLength = 128 * 1024;
+    private const int MaxStoredResponseLength = 64 * 1024;
     private const int MaxProviderContextMessages = 40;
     private static readonly TimeSpan StaleExecutionWindow = TimeSpan.FromMinutes(12);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
