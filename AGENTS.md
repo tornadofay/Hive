@@ -72,6 +72,8 @@ Never claim execution that did not happen. Use precise terms such as Inspected, 
 
 By default, the agent does not run builds, tests, launches, migrations, performance measurements, or external integrations unless explicitly authorized or required by repository workflow.
 
+Hive's root `Directory.Build.props` sets `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` as standing repository configuration. For routine verification, do not ask the developer to enable or separately confirm this setting. Ask for the actual build result and any reported warnings/errors instead. Revisit the setting only when build-configuration work is explicitly in scope or evidence indicates an override.
+
 ## 5. Engineering standard
 
 Keep scope bounded, but make engineering complete and production-grade within the authorized boundary.
