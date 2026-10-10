@@ -1,34 +1,22 @@
 # Hive — Active Work
 
-Status: VERIFICATION PENDING — Phase 1.20 / Slice 1 — Direct LLM Conversation Path
+Status: VERIFICATION FAILED / REMEDIATION REQUIRED — Phase 1.20 / Slice 1 — Direct LLM Conversation Path
 
 ## Authorization
 Explicitly authorized by `Hive: Start Phase 1.20` on 2026-10-10. The owning plan is [Phase 1.20 — V1 Workspace Foundation](plan/Phase1/1.20.md).
 
-## Objective
-Deliver the first end-to-end Phase 1.20 capability: direct LLM conversation inside the V1 Workspace, with explicit ExecutionTarget selection and a Management-owned execution boundary. This is direct LLM mode, not Agent mode.
+## Remediation boundary
+Developer-reported compile/analyzer failures in Slice 1:
+- `Hive.Tests/DirectLlmConversationTests.cs:135` — xUnit2009: use `Assert.EndsWith` instead of `Assert.True(string.EndsWith(...))`.
+- `Hive.Host.WinForms/HiveDirectLlmConversationView.cs:646` — CS1061: `AccessibleRole.Heading` does not exist.
 
-## Implemented scope awaiting local verification
-- Public Management contracts and implementation to create, list, read, and send messages in conversations.
-- Exact active ExecutionTarget resolution, Provider/ProviderAccount consistency checks, Secret Store access, and required effective text-generation capability policy; no target substitution or fallback.
-- Conversation messages, execution outcomes, correlation/status, and history persisted through the shared event/snapshot infrastructure for SQL Server and Embedded.
-- Owner/Deployment/Tenant/optional Workspace checks, optimistic stream versioning, concurrent-request rejection, cancellation, timeout/failure handling, and abandoned-running-request reconciliation.
-- A Direct LLM Workspace view alongside the existing Work Items mode, using Management APIs only.
-- Example Host scenario and focused tests for Embedded restart durability, SQL Server persistence, explicit target/model use, owner isolation, target capability rejection, missing-target validation, and Workspace mode/startup behavior.
-- The Workspace architecture section now documents the direct conversation boundary and capability policy.
+Authorized remediation is limited to correcting these errors, reviewing the exact resulting changes, and restoring the prior verification gate. Do not add streaming, Agent mode, or other new features under this remediation.
 
-These changes are source-present on `main` but are **not verified** until the developer completes the gates below. No local build or test result is claimed.
+## Existing Slice 1 scope
+Direct LLM conversations in Workspace with an explicitly selected eligible ExecutionTarget; Management-owned provider/capability/credential resolution; durable shared event/snapshot state for SQL Server and Embedded; ownership, cancellation, safe failure and recovery handling; focused tests and Example Host scenario. See [Phase 1.20 plan](plan/Phase1/1.20.md) and the direct-conversation boundary in [architecture](architecture/v1-host-and-management.md).
 
-## Explicit exclusions
-Phase 1.21 Agent-directed Workspace interaction, Agent selection/configuration (including Auto/Favorites), application/form-associated Agents, Hive/Swarm membership, governed Tools/intervention, consequential host-business writes, remaining Phase 1.20 modes/runtime visibility, later V1 pipeline phases, vector retrieval, and unrelated cleanup.
-
-## Verification boundary — required before any next slice
-1. In Visual Studio, build the affected projects/solution with Treat Warnings as Errors enabled. The change touches `Hive.Core`, `Hive.Coordination`, `Hive.Management`, `Hive.Host.WinForms`, `Hive.Example.WinForms`, and `Hive.Tests`; include their project dependencies.
-2. Run focused tests: `DirectLlmConversationTests.cs` and `HiveWorkspaceLifecycleTests.cs`. The direct-conversation tests exercise both Embedded and SQL Server persistence, so run them in the same configured environment as the existing SQL Server tests.
-3. Run the entire `Hive.Tests` suite and report passed/failed/skipped counts.
-4. Manually exercise the Example Host scenario below using an active OpenAI-compatible target whose effective text-generation capability is Supported. Verify explicit target/model selection, send/response, refresh and history reload, and application restart durability. Confirm unsupported/unknown text capability is rejected rather than falling back to another target.
-
-Do not start another implementation slice until those results are reported, any failures are corrected within this slice, and this file is updated to close Slice 1.
+## Verification boundary
+After the two corrections, return this status to **VERIFICATION PENDING**. The developer must rebuild the affected projects with the repository's Treat Warnings as Errors setting, rerun `DirectLlmConversationTests.cs` and `HiveWorkspaceLifecycleTests.cs`, run all `Hive.Tests`, and exercise the Example Host scenario. No new slice may start before those results pass and Slice 1 is explicitly closed.
 
 ## Required handoff
 - Example to run: **Workspace / Direct LLM / Direct LLM Conversation — Hive.Example.WinForms**
