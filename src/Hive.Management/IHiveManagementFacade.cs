@@ -232,6 +232,27 @@ public interface IHiveManagementFacade
         string userMessage,
         CancellationToken cancellationToken = default);
 
+    Task<Result<DirectLlmConversationSummary>> CreateDirectLlmConversationAsync(
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<IReadOnlyList<DirectLlmConversationSummary>>> ListDirectLlmConversationsAsync(
+        ResourceAccessContext accessContext,
+        int pageSize = 30,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<DirectLlmConversation>> GetDirectLlmConversationAsync(
+        ConversationId conversationId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<DirectLlmConversation>> SendDirectLlmMessageAsync(
+        ConversationId conversationId,
+        ExecutionTargetId executionTargetId,
+        string userMessage,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default);
+
     Task<Result<InputPreparationResult>> PrepareInputAsync(
         InputSubmission submission,
         ResourceAccessContext accessContext,
