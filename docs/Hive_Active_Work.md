@@ -1,24 +1,30 @@
 # Hive — Active Work
 
-Status: **NO ACTIVE WORK**
+Status: **IMPLEMENTATION IN PROGRESS**
 
-## Last closed corrective slice
+## Authorized temporary corrective slice
 
-**Maintenance — Test Database Lifecycle & Cleanup** is complete and verified on 2026-10-10.
+**Maintenance — UI: Contain UI Error-Reporting Observer Failures**
 
-Closure evidence: [Maintenance verification record](verification/maintenance/test-database-lifecycle-cleanup-2026-10-10.md).
+Authorization: the user explicitly requested `Hive: Maintenance - UI`. With no active roadmap slice, this temporary slice is limited to correcting existing UI behavior; it does not advance the roadmap or add a capability.
 
-The developer reported:
-- The full `Hive.Tests` suite passed **793/793** (0 failed, 0 skipped) in approximately 3.2 minutes.
-- Approximately 500 accumulated legacy SQL Server test databases were removed, and SQL Server database cleanup was completed.
-- The assistant did not run the tests/build or query the developer's SQL Server instance. No separate build-success or zero-warning report was supplied.
+### Scope
 
-The corrective work gives SQL Server integration-test databases unique generated ownership, explicit disposable leases, marker-checked normal cleanup, and guarded stale recovery. It removes the previous migration-test cleanup path that swallowed `SqlException`. The existing embedded parity fixtures also dispose Embedded databases and remove their temporary directories while surfacing cleanup failures.
+- Ownership boundary: `Hive.Host.WinForms.UI`, specifically the existing `HiveUiErrorReporter` and its focused tests.
+- Ensure failures in optional Output-panel logging or themed message-box presentation cannot escape the error reporter and become a second unhandled UI failure.
+- Preserve the existing sanitized diagnostic content and attempt both independent reporting surfaces even when one of them fails.
+- Add deterministic focused regression coverage for the observer-failure containment contract.
 
-The global xUnit parallelization setting remains disabled in `tests/Hive.Tests/AssemblyMarker.cs`. This slice did not change it. Repository history records parallelization toggled off/on on 2026-10-05, but the commit messages do not identify the specific test that failed. Do not infer a known culprit or re-enable parallelism without a separate, evidence-backed isolation review.
+### Exclusions
 
-The detailed scope, implementation review, developer-reported verification, and limits of what was independently verified are preserved in the [verification archive](verification/maintenance/test-database-lifecycle-cleanup-2026-10-10.md).
+- No new user-facing capability or public-contract expansion.
+- No persistence, provider, host composition, navigation, theme redesign, broad cleanup, or roadmap implementation.
+- Do not run builds/tests/launches or claim verification; the developer performs verification locally.
 
-## Authorization boundary
+### Verification gate
 
-There is no active implementation slice. Do not infer authorization for unrelated maintenance, test-profile implementation, or roadmap advancement from this closure. Establish a new, explicitly bounded slice in this file before beginning additional implementation.
+After implementation, return this slice to **VERIFICATION PENDING** with the exact focused test target and broader-suite requirement. Closure requires actual developer-reported verification; do not infer build or test results.
+
+Focused test target: `tests/Hive.Tests/HiveUiExceptionDiagnosticsTests.cs` (`HiveUiExceptionDiagnosticsTests`).
+
+Repository checkpoint when this slice was opened: `main` at `d7552e4634d8f6490a2188b4f0cb63281d2f4c7f`.
