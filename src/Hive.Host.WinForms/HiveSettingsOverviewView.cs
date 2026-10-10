@@ -83,8 +83,8 @@ internal sealed class HiveSettingsOverviewView : UserControl
 
         AddCard(
             "Agents",
-            "Define the persisted AgentDefinitions used by configured-host execution.",
-            "Agents use exact targets; Agent Auto selection is configured in the later Agent interaction workflow.");
+            "Define the agents used by your configured workflows.",
+            "Each agent is linked to a specific execution target.");
 
         AddCard(
             "Persistence",
