@@ -131,6 +131,13 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
             if (state.IsFailure)
                 return Result<IReadOnlyList<DirectLlmConversationSummary>>.Failure(state.Error!);
 
+            if (snapshot.Stream.Kind != ResourceKind.Conversation ||
+                snapshot.Stream.Identity != state.Value!.ConversationId)
+            {
+                return Result<IReadOnlyList<DirectLlmConversationSummary>>.Failure(
+                    CorruptConversationError());
+            }
+
             if (OwnsConversation(state.Value!, accessContext))
                 visible.Add((state.Value!, snapshot.Version));
         }
@@ -659,6 +666,11 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
             return Result<SnapshotAndState>.Failure(stateResult.Error!);
 
         var state = stateResult.Value!;
+        if (state.ConversationId != conversationId.Value)
+        {
+            return Result<SnapshotAndState>.Failure(CorruptConversationError());
+        }
+
         if (!OwnsConversation(state, accessContext))
         {
             return Result<SnapshotAndState>.Failure(
