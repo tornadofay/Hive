@@ -288,6 +288,25 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
         var targetContext = targetContextResult.Value!;
         try
         {
+            // Reconcile an abandoned request before taking the in-process request lock.
+            // Once the lock is held, RecoverStaleExecutionAsync correctly treats this
+            // service instance's active request as live.
+            var preflight = await GetOwnedSnapshotAsync(
+                conversationId,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+            if (preflight.IsFailure)
+                return Result<DirectLlmConversation>.Failure(preflight.Error!);
+
+            var recoveredPreflight = await RecoverStaleExecutionAsync(
+                conversationId,
+                preflight.Value!,
+                cancellationToken).ConfigureAwait(false);
+
+            if (recoveredPreflight.IsFailure)
+                return Result<DirectLlmConversation>.Failure(recoveredPreflight.Error!);
+
             if (!_activeRequests.TryAdd(conversationId.Value, 0))
             {
                 return Result<DirectLlmConversation>.Failure(
@@ -873,7 +892,8 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
         context.PrincipalId is { } principalId &&
         state.DeploymentId == deploymentId.Value &&
         state.TenantId == tenantId.Value &&
-        state.OwnerPrincipalId == principalId.Value;
+        state.OwnerPrincipalId == principalId.Value &&
+        state.WorkspaceId == context.WorkspaceId?.Value;
 
     private static Error? ValidateConversationContext(ResourceAccessContext accessContext)
     {
