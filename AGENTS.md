@@ -123,6 +123,8 @@ Tests to run: <exact focused test class/file>; broader-suite requirement if appl
 
 When a slice closes, archive historical verification evidence as needed, update Current Status from real evidence, remove the closed slice from Active Work, and leave only the current no-slice state unless another slice is already authorized.
 
+When adding or removing numbered sections in this file, renumber affected headings and verify there are no duplicate or missing section numbers.
+
 ## 9. Git and final review
 
 Work directly on `main` unless explicitly instructed otherwise. Do not create branches/PRs, rewrite history, force-push, or overwrite unrelated changes unless requested.
