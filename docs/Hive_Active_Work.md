@@ -35,14 +35,16 @@ Developer-reported on 2026-10-10:
 - Full `Hive.Tests`: **798 passed, 0 failed, 0 skipped** in 3.3 minutes on .NET 10.0.1.
 - `HiveUiPolishTests` is included in the full suite, including the new regression coverage.
 - Example Host and Settings screens are reported to be working well.
+- The long `HiveMessageBox` message was manually confirmed to scroll all the way to the end.
 
 No builds, tests, or application launch were performed by the assistant. The source/diff review is not presented as independent verification.
 
 ## Remaining manual acceptance
 
-**VERIFICATION PENDING** only for targeted visual checks not explicit in the supplied report:
-1. Display a message exceeding the 250px viewport, scroll all the way to the end, and confirm no text is clipped. Exercise details expanded/collapsed, keyboard focus, and dialog dismissal.
-2. Confirm Light, Dark, and System themes plus normal/compact sizing on the affected Settings / Provider Settings surfaces; recheck selected, disabled, loading, error, empty/no-result, navigation, and resize states.
+**VERIFICATION PENDING** only for targeted visual checks still not confirmed:
+1. On `HiveMessageBox`, exercise technical details expanded/collapsed, keyboard focus, and dialog dismissal.
+2. Confirm Light, Dark, and System themes plus normal/compact sizing on the affected Settings / Provider Settings surfaces, including the Administrative button's non-destructive appearance.
+3. Recheck selected, disabled, loading, error, empty/no-result, navigation, and resize states on representative Settings/CRUD surfaces.
 
 Detailed evidence and remaining checks: [WinForms UI/UX Audit and Corrective Polish](verification/maintenance/hive-winforms-ui-ux-audit-2026-10-10.md).
 
