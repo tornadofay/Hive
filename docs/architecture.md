@@ -163,7 +163,7 @@ Hive is built for production real-world applications. The default coding standar
 - Nullable reference types remain enabled. Nullability mismatches are fixed at the contract boundary; they are not suppressed.
 - Affected projects must compile with zero errors and zero new warnings before a slice is considered complete.
 - Public APIs expose only required consumer contracts and avoid leaking framework/vendor implementation types.
-- One authoritative implementation owns each validation, state transition, serialization rule, calculation, or policy decision.
+- One authoritative implementation owns each validation, state transition, serialization rule, calculation, or policy decision. Use one JSON serialization stack across Hive; do not introduce parallel serializers with divergent defaults for the same contracts. Configuration must drive the behavior it claims to configure, and tests must prove that relationship.
 - Failures use structured/typed classification with useful context. Boundary catches must not silently swallow the underlying cause.
 - A public `Error` carries a stable Hive-authored code, category, and message. Raw exception `Message` text is diagnostic context and must not be forwarded into a public error, because Hive-authored control-flow exceptions can interpolate document, provider, or environment-supplied values. `Hive.Persistence` establishes this through `HivePersistenceError`, `Hive.Core/Input` establishes it through `InputPreparationFailureCatalog`, and an unregistered failure code resolves to a category-appropriate generic message rather than to exception detail.
 
@@ -242,23 +242,38 @@ Hive.Example.WinForms
 Hive.Tests
 ```
 
-Reference direction:
+Reference direction ( `A → B` means project A references project B):
 
 ```
-Hive.Core
-   ↑
-Agents / Persistence / Tools / Providers
-   ↑
-Coordination
-   ↑
-Management
-   ↑
-Host.WinForms
-   ↑
-Host.WinForms.UI
+Hive.Agents ───────────────────────────────→ Hive.Core
+Hive.Persistence ─────────────────────────→ Hive.Core
+Hive.Tools ───────────────────────────────→ Hive.Core
+Hive.Providers.OpenAICompatible ───────────→ Hive.Core
 
-Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contracts
+Hive.Coordination ────────────────────────→ Hive.Core
+                  ├──────────────────────→ Hive.Agents
+                  ├──────────────────────→ Hive.Persistence
+                  └──────────────────────→ Hive.Providers.OpenAICompatible
+
+Hive.Management ─────────────────────────→ Hive.Core
+                 ├───────────────────────→ Hive.Agents
+                 ├───────────────────────→ Hive.Persistence
+                 ├───────────────────────→ Hive.Coordination
+                 └───────────────────────→ Hive.Tools
+
+Hive.Host.WinForms ──────────────────────→ Hive.Management
+                   ├─────────────────────→ Hive.Persistence
+                   ├─────────────────────→ Hive.Providers.OpenAICompatible
+                   └─────────────────────→ Hive.Host.WinForms.UI
+
+Hive.Host.WinForms.UI ───────────────────→ Hive.Core
+
+Hive.Example.WinForms ───────────────────→ Hive.Host.WinForms
+                      ├──────────────────→ Hive.Host.WinForms.UI
+                      └──────────────────→ public platform contracts
 ```
+
+`Hive.Tests` references the projects and test dependencies it exercises. The graph above summarizes production project dependencies rather than every project-file reference.
 
 `Hive.Coordination` is the execution-composition boundary. It may reference `Hive.Agents`, `Hive.Persistence`, approved provider adapters, and Microsoft Agent Framework to assemble one execution path. It must not own SQL schema/persistence implementation, provider transport implementation, or a second orchestration engine.
 
@@ -272,99 +287,41 @@ Example.WinForms → Host.WinForms + Host.WinForms.UI + public platform contract
 
 ## Non-Negotiable Architectural Rules
 
-1. Hive is general-purpose, but V1 build order is determined by the real data-entry forcing function.
-2. Use MAF where MAF already owns the required mechanism.
-3. Never build a second orchestration engine to replace MAF.
-4. `Agent` and `Hive` are complete useful base types.
-5. `CognitiveAgent` and `CognitiveHive` are optional additive descendants.
-6. Concrete type is selected at creation; there is no runtime promotion/demotion.
-7. Different generations may coexist without requiring ancestor changes.
-8. Host business/domain state remains host-owned.
-9. Hive's database is isolated from host business data.
-10. Capability state is Supported / Unsupported / Unknown.
-11. Capability requirements are Required / Preferred / Optional / Forbidden.
-12. Quota, rate, health, capacity, cost, modality, model limits, and capability remain separate concerns.
-13. Secrets are encrypted at rest and redacted from diagnostics.
-14. The LLM is a reasoning/request component, never an authorization authority.
-15. Authorization is enforced in code.
-16. Running executions use immutable effective configuration snapshots.
-17. Terminal execution state is protected from late results.
-18. Private runtime state is isolated by explicit ownership.
-19. Generic cross-host integration is built only when a second real host requires it; V1 uses neutral host-integration contracts with a concrete WinForms adapter, while broader host technology generalization remains later.
-20. Host discovery never grants tool permission.
-21. Approval is one intervention action; V1 uses Approve/Reject at the business-app write, while post-write correctness is represented separately through a durable business-operation receipt and Review.
-22. State-changing persistence is append-oriented; snapshots are recovery aids.
-23. Outbox work is transactional with its triggering durable state change.
-24. No empty catch blocks.
-25. Use one JSON serialization stack.
-26. Do not duplicate the same computation in multiple layers.
-27. Prefer structured error classification over string matching.
-28. Timeout and budget limits are explicit and validated, including aggregate expansion/output budgets at boundaries where compressed or structured input can amplify memory, CPU, or prepared-object volume.
-29. Configuration must actually drive the behavior it configures and have tests.
-30. Repeated lookup paths use real indexes.
-31. Network-provider tests never use real vendor accounts.
-32. Every implementation slice has the required unit/edge/integration/recovery/security coverage for its boundary, plus manual developer verification of user-facing UI behavior where applicable.
-33. Do not claim verification that was not actually performed.
-34. Update architecture before structural code changes.
-35. Complete the active slice before starting future slices.
-36. Do not implement future cognitive generations as hidden prerequisites of the base Agent/Hive.
-37. Do not silently broaden the V1 host integration boundary.
-38. Do not make document/image extraction the permanent definition of Hive.
-39. Do not make persistent cognition a prerequisite for the V1 Agent.
-40. Do not force every Agent into a Hive.
-41. Do not force every Hive member to use the same Agent generation.
-42. Descendant-owned state must not alter the semantics of ancestor-owned state.
-43. New generations must remain replaceable/coexistable through stable base contracts.
-44. The example host uses the same public APIs and enforcement boundaries as real hosts.
-45. Status lives only in `Hive_Current_Status.md`.
-46. Current work lives only in `Hive_Active_Work.md`.
-47. `roadmap.md` is the ordered implementation plan and must match this architecture's phase order.
-48. Phase and slice numbers are ordinal, not version numbers.
-49. Do not create documentation that contradicts these source-of-truth boundaries.
-50. When adding or removing rules in `AGENTS.md`, renumber the whole list and verify that there are no duplicates or gaps.
-51. An Agent's persistent cognitive identity/state may outlive every individual runtime incarnation.
-52. Death ends the current Agent runtime/incarnation; it does not delete the Agent or its persistent cognitive state.
-53. Dream processing may operate while no Agent runtime is active, and may continue across host-application shutdown/restart through durable state.
-54. Dream outputs are simulated/predicted/hypothetical evidence and must never be recorded as actual experience.
-55. Human edits made while an Agent is inactive are part of versioned persistent state and must be incorporated by the next valid wake/reincarnation path.
-56. Questions are first-class, provenance-bearing, specialization-aware cognitive objects; semantically duplicate questions should be avoided when existing evidence is sufficient.
-57. CognitiveAgents remain complete autonomous cognitive entities; CognitiveHive adds collective cognition without owning or replacing member cognition.
-58. New lifecycle, Dream, Question, or collective-cognition behavior must remain additive to the generation that owns it and must not become an implicit prerequisite of the base Agent/Hive.
-59. CognitiveAgent outcome evaluation is distinct from technical execution status: an execution failure is not automatically a cognitive Mistake, and an execution success is not automatically a cognitive Success.
-60. A CognitiveAgent outcome evaluation preserves the relevant expected result or success criteria, observed actual result, evaluation evidence, provenance, and attribution/credit context. Outcome correctness and method/strategy quality are distinct evaluations: a correct result does not by itself prove the chosen method was good, and an incorrect result does not by itself prove the Agent's method caused it.
-61. Mistake and Success are first-class cognitive outcome concepts. OutcomeEvaluation establishes which applicable outcome classification is supported by the evidence; specialized Mistake/Success processing may consume those classifications without making them mere aliases for execution states. Success represents an evaluated outcome in which all applicable success criteria were satisfied. Partial represents an evaluated outcome in which some but not all applicable criteria were satisfied and the result is incomplete rather than wholly incorrect. Mistake represents an evaluated outcome known to be wrong relative to the intended objective or success criteria and not better classified as Partial; Unknown represents an outcome for which the available evidence cannot establish the substantive result. These outcome classifications are mutually exclusive for a single evaluation. Attribution of the cause is a separate question and may remain uncertain. None of these classifications is defined solely by transport or execution status.
-62. Cognitive Risk, Fear, and Confidence are first-class CognitiveAgent state used by Cognitive Strategy. They are contextual and evidence-backed, may change strategy, and never grant, remove, or bypass authorization, capability, safety, scope, budget, or host-policy enforcement.
-63. Dreams may be purpose-specific cognitive simulations, including Recovery, Optimization, Nightmare/Stress-Test, Reconsideration, and Preparation. Dream results are first-class simulated evidence and may produce proposed cognitive updates or inputs to later governed learning, but they remain simulated/predicted/hypothetical and are never recorded as actual experience.
-64. A Recovery Dream may explore alternatives after a Mistake. An Optimization Dream may search for a better way to reproduce a Success. A Nightmare/Stress-Test Dream may actively search for plausible conditions under which a successful strategy would fail. Dream purpose affects the interpretation of its simulated evidence; it does not by itself authorize an authoritative state change.
-65. Counterfactual conclusions, including Regret, must remain distinguishable from observations and information that were actually available at the original decision point. Dream/forecast conclusions must likewise remain distinguishable from actual outcomes, including when a simulated scenario closely matches a later real event.
-66. Learning may use both positive and negative evidence, but a learned rule or strategy change must preserve applicability conditions, provenance, evidence type, confidence/support, and attribution rather than collapsing evidence into an unconditional rule. Governed learning changes apply to future strategy/resource selection; they do not mutate an already-started execution's immutable effective snapshot.
-67. Repeated Success may increase support for a method under observed conditions and may reduce Fear when the evidence lowers estimated risk; repeated Mistakes may increase Fear or caution without proving one cause when attribution remains uncertain. Success does not by itself erase risk, and failure does not by itself prove the Agent was at fault.
-68. Cognitive adaptation may learn that a task can be solved deterministically or with fewer model calls; such optimization is a governed strategy/resource change, not an implicit runtime authorization or an automatic change to the base Agent generation.
-69. Pure V1 host-integration semantic contracts belong in Hive.Core; host-specific adapters belong outside Core.
-70. Host adapters translate or execute authorized capabilities; they never become the host application's database, business-logic, or authorization owner.
-71. Consequential host row operations require stable row identity for the operation; row position is never authoritative identity. A host key may be mutable, so an update must retain the authoritative pre-operation identity and applicable concurrency/version evidence when available.
-72. A business-operation receipt records the disposition and affected host identities of a consequential host operation, including the authoritative pre-operation target identity and resulting identity when a host key changes; it does not make Hive a mirror of host business state.
-73. Approval and post-write Review are distinct lifecycle boundaries; Review uses authoritative host state and policy-governed verification.
-74. Hive.Management orchestrates authorized host/business operations through Core-defined integration ports; concrete host adapters are supplied by application composition and are never referenced back from Management.
-75. A write Tool is an authorized invocation surface for a business capability; the business operation's semantic contract remains owned by the host-integration/business-operation boundary, not by the Tool or the model.
-76. V1 vector retrieval is behind a replaceable `IVectorStore`. The SQL Server persistence profile uses SQL Server's native vector capability where the selected deployment supports it and reports `Unsupported` where the required capability is unavailable. The planned Embedded Persistence Profile will use its own local vector implementation behind the same `IVectorStore` boundary. Vector storage is derived retrieval infrastructure, not a second Hive resource model or a reason to introduce a separate external vector database. Semantic vector retrieval still requires an embedding/vectorization capability.
-77. Hive's architecture defines a first-class Embedded Persistence Profile for lightweight/local deployments behind the same Hive persistence/resource contracts as SQL Server. 1.18A adds the Embedded backend and brings it to parity with the current SQL Server-backed Hive persistence surface; it does not replace or redesign the existing SQL Server implementation. The selected persistence backend is a deployment/configuration concern, must preserve the same logical resource model and ownership/scope semantics, and, when implemented, must not require an externally installed database server. After 1.18A, higher-level Hive phases consume backend-neutral persistence contracts and must not duplicate feature logic for SQL Server versus Embedded. A custom database engine is not assumed unless a measured requirement justifies building one.
-78. V1 WinForms integration may expose bounded semantics for application-owned/custom controls and data-bound grids, including related/child data, binding, column, lookup, row-operation, and sensitive-field metadata; sensitive field values are redacted from passive host-context snapshots and captured current values, and discovery or metadata never grants database or business authorization.
-79. Public Hive architecture and usage documentation must describe host integration at the neutral contract/semantic level. Private host class names, source excerpts, source-specific event/property mappings, private business conventions, and other implementation details must not be promoted into public Hive contracts merely because an adapter uses them.
-80. V1 Review correctness and CognitiveAgent outcome evaluation are distinct semantics: Review verifies the correctness of a resulting host/business state for a WorkItem, while cognitive outcome evaluation determines whether a CognitiveAgent's objective or success criteria were satisfied for learning and strategy purposes. Neither substitutes for the other.
-81. Experience, OutcomeEvaluation, Mistake, Success, Partial, Unknown, Regret, Risk, Fear, Confidence, Dream, and LearningCandidate are first-class cognitive concepts with explicit semantic boundaries. They may be implemented by shared infrastructure or separate components/subsystems when their lifecycle, persistence, processing, or replacement boundary warrants it; architecture must not prohibit separation merely for structural uniformity.
-82. Human review/correction may become cognitive evidence when explicitly authorized and attributed, but Review state itself remains owned by the V1 host/work-operation boundary and must not be silently reclassified as a cognitive outcome.
-83. V1 host integration is contract-first: Hive.Core owns the neutral host-integration contracts, host applications implement those contracts against their own types, and Hive should provide reusable discovery/adaptation/governance infrastructure so host-specific integration code remains as small as practical. Private host implementations never become Hive public dependencies.
-84. Favorite ExecutionTarget state is a deployment- and user/scope-aware preference over durable ExecutionTarget identities, not part of target provider/account/model/capability configuration. Its preference scope follows Hive's canonical resource-scope contract, including the requirement for all identities needed to establish the selected scope; missing required scope identity must fail closed rather than silently broadening the preference scope. As a reusable contract, a non-empty favorite set filters a supplied candidate pool only; capability qualification and the existing selector policy remain authoritative, and no fallback to non-favorite targets is implied.
-85. Favorite ExecutionTarget state is not authorization, lifecycle state, capability state, automatic/manual management state, or a ranking signal. Retired target identities may remain favorited so durable user preference survives target lifecycle changes.
-86. The V1 Agent interaction consumer gives the favorite set a conditional user-facing role. The Agent-facing `Auto` / `Favorites` distinction selects the candidate source before the existing execution-target selector and does not replace or extend the selector's internal policy modes. With an empty favorite set, Agent `Auto` preserves normal behavior and considers all otherwise eligible ExecutionTargets. With one or more favorites, Agent `Auto` filters the candidate pool to favorites before applying the existing capability-aware selection policy. Agent `Favorites` is the explicit favorite-only target source: it lists only saved favorites, even when there is one, and persists the exact selected ExecutionTarget identity. A non-empty favorite pool never falls back to non-favorites when no favorite qualifies; an empty Favorites source has no selectable target. A selected favorite that later becomes unusable fails under the exact-target boundary rather than silently switching.
-87. A Base Agent may run a bounded, task-scoped problem-solving loop; this does not authorize persistent autonomous adaptation or make cognitive-generation behavior a Base-Agent prerequisite.
-88. Model-produced reasoning, claims, plans, and candidate results are fallible inputs. Hive must not require access to hidden chain-of-thought or treat model confidence, self-critique, or self-reported progress as authoritative evidence, fact, or authorization.
-89. Problem-solving attempts and candidate results remain tied to their owning task/WorkItem/execution context with provenance and bounded retention; they do not create a second global resource model by default.
-90. A retry is not a distinct approach unless the method materially changes. Stagnation and progress assessments use observable task/evidence changes where possible; attempt count, concurrency, time, token/cost, and cancellation bounds are enforced, and MAF remains the execution/orchestration owner where applicable.
-91. Verification evidence is scoped to the exact claim/result/artifact and check configuration that produced it. Self-critique is not independent verification, a check result does not prove more than it checked, and verification never grants authorization or approval.
-92. Durable strategy adaptation from experience belongs to CognitiveAgent and the governed learning/resource boundary. Base-Agent problem-solving may select among current-task approaches but must not silently learn or persist a new strategy from raw model output.
+This section contains only cross-cutting invariants. Detailed domain contracts belong to the owning architecture document listed below; those documents retain the full semantics, edge cases, and phase-specific boundaries. Do not create a competing second definition here.
 
+1. **Product scope:** Hive is a general-purpose Agent/Hive platform. The V1 business-data-entry workflow determines implementation order; it is not Hive's permanent definition.
+2. **MAF-first execution:** use Microsoft Agent Framework wherever it owns the required execution/orchestration mechanism. Hive must not create a competing workflow engine.
+3. **Dependency and ownership direction:** Core stays dependency-light and host/provider-neutral; Persistence owns database implementation; Management owns application operations and authorization; presentation projects consume those boundaries; the Example Host is a consumer, never a platform dependency.
+4. **Additive generations:** Base Agent and Base Hive remain useful independently. CognitiveAgent and CognitiveHive are optional descendants selected explicitly at creation. Descendants do not redefine ancestor contracts, and cognitive features must not become hidden prerequisites for V1 or the base generations.
+5. **Host-state boundary:** the host application owns its business state and business rules. Hive's database is separate and is never a gateway to the host database. Host integration uses neutral public contracts and bounded adapters; broader cross-host generalization waits for evidence from another materially different host.
+6. **Untrusted model boundary:** model output, plans, critiques, confidence, discovery metadata, and UI visibility are not authorization or proof. Authorization and consequential-operation policy are enforced by code; discovery and inspection never grant action permission.
+7. **Provider evidence semantics:** capability state is `Supported` / `Unsupported` / `Unknown`; capability requirements are separate policy inputs. Capability, modality, limits, cost, quota, rate, health, availability, and capacity remain distinct. Missing evidence must not be silently treated as support, unlimited capacity, health, or free pricing.
+8. **Secret handling:** credentials remain behind the Secret Store/bootstrap-secret boundaries, are protected at rest where specified, and are excluded from public contracts and diagnostics. Migration re-protects secrets for the destination rather than copying backend-specific ciphertext.
+9. **Execution isolation:** running work uses immutable effective configuration snapshots where configuration can affect it. Ownership and scope are explicit, and late provider results cannot overwrite terminal execution state.
+10. **Durable-state consistency:** state-changing persistence follows the owning event/snapshot/outbox contract. Events are append-oriented, snapshots support recovery, and the triggering durable change plus its outbox work commit atomically where that contract applies.
+11. **Consequential host operations:** proposals, authorization/approval, host execution, durable operation receipts/reconciliation, and post-write Review are distinct boundaries. Review assesses resulting host state; it does not substitute for approval or silently turn Hive into a mirror of host data.
+12. **Persistence-profile parity:** SQL Server and Embedded are deployment profiles over one logical Hive resource/ownership model. Higher-level behavior consumes shared contracts rather than duplicating features per backend. Vector indexes are derived/rebuildable retrieval data, not an alternative authoritative resource model.
+13. **Cognitive evidence integrity:** technical execution status is not itself cognitive Success/Mistake. Outcome evaluations preserve success criteria, observations, provenance, and attribution; actual, simulated, predicted, counterfactual, human-corrected, and external evidence remain distinguishable.
+14. **Bounded Base-Agent reasoning:** task-local retries, alternative approaches, challenge, progress assessment, and verification remain bounded by policy, budgets, cancellation, and scope. Model self-assessment is not authoritative; Base-Agent task solving does not silently persist learned strategy.
+15. **Execution-target preferences:** favorites are scoped candidate preferences, not authorization, capability, lifecycle state, or ranking. They do not imply fallback to non-favorites when a non-empty favorite pool has no qualifying target.
+16. **Engineering consistency:** public contracts remain neutral and minimal; errors are structured; catches do not hide causes; the same computation or policy is not independently reimplemented in multiple layers; configured behavior is real and tested; resource lifetimes and repeated lookup performance are handled deliberately.
+17. **Verification and examples:** tests cover contract-relevant normal, invalid, boundary, failure, cancellation, concurrency, recovery, and security behavior. Provider tests use fakes/local infrastructure, not real vendor accounts. Meaningful public capabilities have Example Host scenarios using the public APIs and enforcement boundaries. Report only verification that actually ran.
+18. **Repository authority:** `AGENTS.md` owns agent workflow and authorization rules; `Hive_Active_Work.md` owns the current implementation slice and verification gate; `Hive_Current_Status.md` owns status; `roadmap.md` defines order but never authorizes work. A future roadmap concept does not authorize implementation or become an implicit prerequisite of an earlier slice.
+
+### Domain-owned architectural contracts
+
+The following documents are authoritative for their domain details. This index states their boundary but does not repeat their detailed rules.
+
+| Domain | Authoritative detail |
+|---|---|
+| Identity, scope, persistence bootstrap, SQL Server/Embedded foundation and parity, test harness, UI foundation | [`architecture/foundations.md`](architecture/foundations.md) |
+| MAF integration, providers/discovery, capability and target selection, resource persistence, budgets, verification evidence, events/snapshots/outbox, receipts, and Review handoffs | [`architecture/execution-and-persistence.md`](architecture/execution-and-persistence.md) |
+| Agent/Hive hierarchy, Base-Agent work protocols and problem-solving, cognitive lifecycle, outcomes, Dreams, Questions, and governed adaptation | [`architecture/agents-and-hives.md`](architecture/agents-and-hives.md) |
+| Workspace, Management, settings, host composition, and Example Host responsibilities | [`architecture/v1-host-and-management.md`](architecture/v1-host-and-management.md) |
+| Neutral host-integration contracts, semantic data surfaces, stable identity, authorized operations, receipts, reconciliation, and post-write Review | [`architecture/v1-business-app-integration.md`](architecture/v1-business-app-integration.md) |
+| Cognitive resource families, actual-versus-simulated learning evidence, vector representation, and configuration portability | [`architecture/cognitive-resources-and-portability.md`](architecture/cognitive-resources-and-portability.md) |
+
+When a rule's interpretation or implementation detail is domain-specific, update its owning detail document and keep this index to the minimum cross-cutting invariant needed to prevent architectural drift.
 
 ---
 
