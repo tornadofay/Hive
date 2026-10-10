@@ -284,7 +284,31 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
         if (!IsAvailable)
             return Result<DirectLlmConversation>.Failure(UnavailableError());
 
-        // Resolve all target and secret state before recording the user request.
+        // Verify ownership and reconcile stale state before resolving any credential.
+        var preflight = await GetOwnedSnapshotAsync(
+            conversationId,
+            accessContext,
+            cancellationToken).ConfigureAwait(false);
+
+        if (preflight.IsFailure)
+            return Result<DirectLlmConversation>.Failure(preflight.Error!);
+
+        var recoveredPreflight = await RecoverStaleExecutionAsync(
+            conversationId,
+            preflight.Value!,
+            cancellationToken).ConfigureAwait(false);
+
+        if (recoveredPreflight.IsFailure)
+            return Result<DirectLlmConversation>.Failure(recoveredPreflight.Error!);
+
+        if (recoveredPreflight.Value!.State.Status == DirectLlmConversationStatus.Running)
+        {
+            return Result<DirectLlmConversation>.Failure(
+                Error.Conflict(
+                    "hive.direct-llm.conversation-request-in-progress",
+                    "This conversation already has a request in progress."));
+        }
+
         var targetContextResult = await ResolveTargetAsync(
             executionTargetId,
             accessContext,
@@ -296,25 +320,6 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
         var targetContext = targetContextResult.Value!;
         try
         {
-            // Reconcile an abandoned request before taking the in-process request lock.
-            // Once the lock is held, RecoverStaleExecutionAsync correctly treats this
-            // service instance's active request as live.
-            var preflight = await GetOwnedSnapshotAsync(
-                conversationId,
-                accessContext,
-                cancellationToken).ConfigureAwait(false);
-
-            if (preflight.IsFailure)
-                return Result<DirectLlmConversation>.Failure(preflight.Error!);
-
-            var recoveredPreflight = await RecoverStaleExecutionAsync(
-                conversationId,
-                preflight.Value!,
-                cancellationToken).ConfigureAwait(false);
-
-            if (recoveredPreflight.IsFailure)
-                return Result<DirectLlmConversation>.Failure(recoveredPreflight.Error!);
-
             if (!_activeRequests.TryAdd(conversationId.Value, 0))
             {
                 return Result<DirectLlmConversation>.Failure(
@@ -542,6 +547,16 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
                 Error.Unsupported(
                     "hive.direct-llm.execution-target-inactive",
                     "The selected ExecutionTarget is not active."));
+        }
+
+        if (target.Capabilities.Any(static capability =>
+                capability.Capability == HiveCapabilityKeys.TextGeneration &&
+                capability.State == CapabilityState.Unsupported))
+        {
+            return Result<ResolvedExecutionTarget>.Failure(
+                Error.Unsupported(
+                    "hive.direct-llm.target-text-generation-unsupported",
+                    "The selected ExecutionTarget is explicitly configured as not supporting text generation."));
         }
 
         var accountResult = await _providerResources.GetProviderAccountAsync(
