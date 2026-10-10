@@ -34,12 +34,16 @@ No roadmap phase, business logic, persistence behavior, public feature, dependen
 
 The test run and general screen check are developer-reported evidence. The assistant did not run builds, tests, or the application.
 
+## Additional developer-reported manual check — 2026-10-10
+
+The developer confirmed that a long `HiveMessageBox` message can be scrolled all the way to the end. The specific scrolling check is therefore complete.
+
 ## Remaining manual acceptance checks
 
-**VERIFICATION PENDING** until the specific changed MessageBox behavior and broader visual state coverage have been confirmed. The message-layout regression passed in the full test suite, but the report does not explicitly confirm the rendered message can be scrolled all the way to its end.
+**VERIFICATION PENDING** only for the following checks not yet reported as confirmed:
 
-1. Display a message long enough to exceed the 250px viewport, scroll to its end, and confirm no content is clipped. Exercise technical details expanded/collapsed, keyboard focus, and dialog dismissal.
+1. On `HiveMessageBox`, exercise technical details expanded/collapsed, keyboard focus, and dialog dismissal.
 2. Confirm the affected Settings / Provider Settings surfaces in Light, Dark, and System themes at normal and compact sizes, including the Administrative button's non-destructive appearance.
 3. Recheck existing selected, disabled, loading, error, empty/no-result, navigation, and resize states on representative Settings/CRUD surfaces.
 
-No remediation is currently indicated by the supplied results. Keep the maintenance task pending only for these unconfirmed visual acceptance checks.
+No remediation is currently indicated by the supplied results. Keep the maintenance task pending only for these remaining visual acceptance checks.
