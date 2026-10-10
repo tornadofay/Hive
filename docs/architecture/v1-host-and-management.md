@@ -329,6 +329,19 @@ Workspace mode semantics are:
 - In **Agent mode**, the user selects an Agent; that Agent uses the normal Execution Planner and policy boundary to choose its `ExecutionTarget`. The user is not required to select a target for every Agent decision.
 - Workspace may display the selected target and relevant diagnostics, but it does not become the authorization authority or execution engine.
 
+### 5.1 Direct LLM conversation boundary — Phase 1.20
+
+Direct LLM conversation is a Management-owned conversation aggregate, not an Agent or Runtime execution:
+
+- Each conversation has a typed `ConversationId` and is persisted through the selected backend's existing generic event/snapshot contract. SQL Server and Embedded share the same conversation implementation.
+- Conversation ownership is bound to Deployment, Tenant, Principal, and the optional Workspace identity from the request's `ResourceAccessContext`. Reads and writes fail closed for a different owner or Workspace; a missing/inaccessible conversation is not disclosed to another owner.
+- Every submitted message names one exact `ExecutionTargetId`. Management resolves that target, its Provider and ProviderAccount, and any credential through the existing Secret Store boundary. The chosen target is never substituted or automatically retried against another target.
+- Only active OpenAI-compatible text-completion targets are eligible for this direct mode. A target explicitly marked Unsupported for text generation is ineligible; native-only provider integrations and unsupported transports return typed failures instead of invoking a different execution path.
+- A message submission, running status/correlation, terminal status, and provider response are persisted with optimistic stream-version checks. Concurrent submissions to one conversation conflict rather than interleave. Cancellation and provider failures are recorded where the persistence boundary remains available; an abandoned running request is reconciled as Interrupted on a later read/send.
+- Workspace is presentation only. It obtains provider, target, credential, and conversation state through `IHiveManagementFacade`; no direct Persistence access or provider-secret access is permitted in UI code. Direct mode does not create an Agent, Runtime, Hive/Swarm membership, invoke governed Tools, or perform consequential host-business writes.
+
+Phase 1.20 Slice 1 verifies the direct conversation path and its durable history. Agent selection/interaction, Agent target-selection policy, application/form-associated Agents, execution-planner behavior, tool governance, and later business-operation stages remain with their owning later phases.
+
 V1 Agent interaction can therefore follow a bounded application pattern such as:
 
 ```text
