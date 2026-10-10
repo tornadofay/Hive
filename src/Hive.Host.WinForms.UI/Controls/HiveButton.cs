@@ -384,15 +384,19 @@ public sealed class HiveButton : UserControl, IButtonControl
                 break;
 
             case HiveButtonStyle.Administrative:
-                // Administrative actions need to stand out without carrying the
-                // destructive meaning of Danger. Reuse the semantic error hue,
-                // but deepen it into a restrained administrative treatment.
-                background = ControlPaint.Dark(theme.VisualStates.Error, 0.28f);
-                hover = ControlPaint.Dark(theme.VisualStates.Error, 0.18f);
-                pressed = ControlPaint.Dark(theme.VisualStates.Error, 0.36f);
-                foreground = Color.White;
-                border = ControlPaint.Dark(theme.VisualStates.Error, 0.12f);
-                focusBorder = Color.White;
+                // Administrative entry points need more emphasis than a
+                // secondary action, but must not imply an error or destructive
+                // operation. Use the shared selected-navigation treatment.
+                background = theme.VisualStates.NavigationSelected;
+                hover = ControlPaint.Dark(
+                    theme.VisualStates.NavigationSelected,
+                    0.04f);
+                pressed = ControlPaint.Dark(
+                    theme.VisualStates.NavigationSelected,
+                    0.1f);
+                foreground = theme.VisualStates.NavigationSelectedText;
+                border = theme.Palette.Accent;
+                focusBorder = theme.Palette.Accent;
                 break;
 
             default:
