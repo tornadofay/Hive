@@ -115,15 +115,27 @@ Tests to run: <exact focused test class/file>; broader-suite requirement if appl
 
 ## 8. Source-of-truth documents
 
-- `docs/Hive_Active_Work.md` — current slice, checkpoint, scope, and verification state only.
-- `docs/Hive_Current_Status.md` — current status only.
-- `docs/verification/` — historical verification evidence; never overwrite earlier attempts.
-- `docs/roadmap.md` — ordered plan, not permission.
-- `.agents/skills/` — reusable workflow procedure/checklists, not current Hive state.
-- `docs/ui/` and `docs/examples/` — usage guidance.
-- Do not document planned behavior as implemented.
+Each document has one job:
 
-When a slice closes, archive historical verification evidence as needed, update Current Status from real evidence, remove the closed slice from Active Work, and leave only the current no-slice state unless another slice is already authorized.
+- `docs/Hive_Active_Work.md` — current authorization, bounded task, checkpoint, and verification gate. Keep it short; when no task is active, state that plainly.
+- `docs/Hive_Current_Status.md` — concise present-day project/phase state and links to important milestones. It is not a chronological diary or a duplicate of the verification archive.
+- `docs/verification/` — compact, factual evidence for completed work. Record scope/outcome, meaningful changes, actual developer-reported or tool-run verification, and remaining limitations. Link relevant implementation commits where useful.
+- `docs/roadmap.md` — ordered future work, not permission.
+- `AGENTS.md` and `.agents/skills/` — stable repository rules and reusable workflows, not a history of individual tasks.
+- Architecture, UI, and example documents — durable design decisions and usage guidance in their owning locations.
+- Source and tests remain authoritative for what is implemented and exercised. Do not document planned behavior as implemented.
+
+### Documentation quality rules
+
+- Record information because it helps future implementation, review, operation, or verification—not merely because it happened.
+- Prefer a concise result over a full console transcript. Preserve exact output only when it is needed to diagnose a failure, reproduce a behavior, or substantiate an important claim.
+- Do not permanently record every typo, temporary compile error, retry, debugging step, or intermediate test count. Retain a resolved failure only when its cause or lesson is likely to prevent recurrence or explains a non-obvious design choice.
+- Avoid duplicating the same implementation narrative or verification result across Current Status, Active Work, indexes, and verification records. Use a short summary and a link to the owning record instead.
+- Keep one concise closure record for a completed task. Separate attempt/checkpoint records are justified only when they preserve materially useful failure analysis, distinct verification evidence, or an audit that cannot be represented clearly in the closure record.
+- Preserve meaningful architectural decisions, compatibility constraints, security/safety findings, and final verification evidence. Do not delete history merely because it is old.
+- Before a broad cleanup that deletes, merges, or materially rewrites existing historical documents, list the exact files/sections proposed for removal or consolidation and why. Wait for the user's approval before making those destructive cleanup changes.
+
+When a task closes, update Current Status only if the current state changed, record concise verification evidence under `docs/verification/` when useful, and clear the closed task from Active Work. Do not add a Current Status history entry that merely repeats the verification record; link the record when a milestone materially matters to present-day status.
 
 When adding or removing numbered sections in this file, renumber affected headings and verify there are no duplicate or missing section numbers.
 
