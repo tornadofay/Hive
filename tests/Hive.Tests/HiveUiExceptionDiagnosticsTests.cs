@@ -95,6 +95,49 @@ public sealed class HiveUiExceptionDiagnosticsTests
         Assert.Contains("password=[REDACTED]", details, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void RunObserverSafely_ContainsObserverFailures()
+    {
+        var invoked = false;
+
+        var escaped = Record.Exception(() =>
+            HiveUiErrorReporter.RunObserverSafely(
+                () =>
+                {
+                    invoked = true;
+                    throw new InvalidOperationException(
+                        "password=observer-secret");
+                },
+                "Test observer",
+                "Safe original diagnostic"));
+
+        Assert.Null(escaped);
+        Assert.True(invoked);
+    }
+
+    [Fact]
+    public void RunObserverSafely_AllowsTheNextReportingSurfaceAfterFailure()
+    {
+        var secondObserverInvoked = false;
+
+        var escaped = Record.Exception(() =>
+        {
+            HiveUiErrorReporter.RunObserverSafely(
+                () => throw new InvalidOperationException(
+                    "synthetic Output sink failure"),
+                "Output-panel diagnostic write",
+                "Safe original diagnostic");
+
+            HiveUiErrorReporter.RunObserverSafely(
+                () => secondObserverInvoked = true,
+                "Themed dialog presentation",
+                "Safe original diagnostic");
+        });
+
+        Assert.Null(escaped);
+        Assert.True(secondObserverInvoked);
+    }
+
     private static int Count(string text, string value)
     {
         var count = 0;
