@@ -643,7 +643,7 @@ public sealed class HiveDirectLlmConversationView : UserControl
             Font = new Font(Font, FontStyle.Bold),
             Text = "Direct LLM",
             TextAlign = ContentAlignment.MiddleLeft,
-            AccessibleRole = AccessibleRole.Heading
+            AccessibleRole = AccessibleRole.StaticText
         };
 
         var headerActions = new FlowLayoutPanel
