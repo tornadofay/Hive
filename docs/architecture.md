@@ -247,6 +247,7 @@ Reference direction ( `A → B` means project A references project B):
 ```
 Hive.Agents ───────────────────────────────→ Hive.Core
 Hive.Persistence ─────────────────────────→ Hive.Core
+                 └────────────────────────→ Hive.Agents
 Hive.Tools ───────────────────────────────→ Hive.Core
 Hive.Providers.OpenAICompatible ───────────→ Hive.Core
 
