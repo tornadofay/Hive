@@ -5,6 +5,7 @@ using Hive.Core;
 using Hive.Coordination;
 using Hive.Management;
 using Hive.Persistence;
+using Hive.Tests.TestInfrastructure;
 using Xunit;
 
 namespace Hive.Tests;
@@ -201,6 +202,75 @@ public sealed class DirectLlmConversationTests
                 // Preserve the test's primary result; temporary files are outside the repo.
             }
         }
+    }
+
+    [Fact]
+    public async Task SendDirectLlmMessageAsync_PersistsConversationThroughSqlServerEventStore()
+    {
+        await using var database = await PersistenceTestDatabase.CreateMigratedAsync(
+            "direct-llm-conversation");
+        using var httpClient = new HttpClient(new RecordingChatHandler(
+            """
+            {"id":"chatcmpl-sql-direct","model":"sql-reported-model","choices":[{"index":0,"message":{"role":"assistant","content":"SQL-backed reply."},"finish_reason":"stop"}]}
+            """));
+        using var management = new HiveManagementFacade(
+            new SqlProviderResourceStore(database.Options),
+            new SqlAgentDefinitionResourceStore(database.Options),
+            new SqlWorkItemResourceStore(database.Options),
+            directLlmCompletion: new DirectLlmCompletionService(httpClient),
+            eventPersistence: HiveEventPersistence.CreateSql(database.Options));
+
+        var now = new DateTimeOffset(2026, 10, 10, 12, 0, 0, TimeSpan.Zero);
+        var principal = PrincipalId.New();
+        var tenant = TenantId.New();
+        var context = new ResourceAccessContext(
+            DeploymentId.New(),
+            tenant,
+            principal);
+
+        var provider = CreateProvider(principal, tenant, now);
+        var providerResult = await management.CreateProviderAsync(provider, context);
+        Assert.True(providerResult.IsSuccess, providerResult.Error?.Message);
+
+        var account = CreateAccount(
+            provider.Id,
+            principal,
+            tenant,
+            now,
+            "direct-sql-account");
+        var accountResult = await management.CreateProviderAccountAsync(account, context);
+        Assert.True(accountResult.IsSuccess, accountResult.Error?.Message);
+
+        var target = CreateTarget(
+            provider.Id,
+            account.Id,
+            principal,
+            tenant,
+            now,
+            "sql",
+            "sql-direct-model");
+        var targetResult = await management.CreateExecutionTargetAsync(target, context);
+        Assert.True(targetResult.IsSuccess, targetResult.Error?.Message);
+
+        var created = await management.CreateDirectLlmConversationAsync(context);
+        Assert.True(created.IsSuccess, created.Error?.Message);
+
+        var sent = await management.SendDirectLlmMessageAsync(
+            created.Value!.Id,
+            target.Id,
+            "Verify SQL persistence.",
+            context);
+
+        Assert.True(sent.IsSuccess, sent.Error?.Message);
+        Assert.Equal(DirectLlmConversationStatus.Completed, sent.Value!.Summary.Status);
+        Assert.Equal("SQL-backed reply.", sent.Value.Messages[1].Content);
+
+        var reloaded = await management.GetDirectLlmConversationAsync(
+            created.Value.Id,
+            context);
+        Assert.True(reloaded.IsSuccess, reloaded.Error?.Message);
+        Assert.Equal("Verify SQL persistence.", reloaded.Value!.Messages[0].Content);
+        Assert.Equal("SQL-backed reply.", reloaded.Value.Messages[1].Content);
     }
 
     [Fact]
