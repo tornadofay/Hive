@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Windows.Forms;
 using Hive.Core;
 using Hive.Host.WinForms;
+using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 using Hive.Management;
 using Xunit;
@@ -31,6 +32,31 @@ public sealed class HiveWorkspaceLifecycleTests
 
         Assert.NotNull(state);
         Assert.True(state!.Visible);
+    }
+
+    [Fact]
+    public void Constructor_ExposesWorkItemsAndDirectLlmModesWithoutStartingManagementCalls()
+    {
+        var (management, proxy) = ManagementFacadeProxy.Create();
+        var accessContext = new ResourceAccessContext(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+
+        using var workspace = new HiveWorkspaceView(
+            management,
+            accessContext,
+            themeManager);
+
+        var tabs = FindControl<HiveTabControl>(workspace);
+
+        Assert.NotNull(tabs);
+        Assert.Equal(2, tabs!.TabPages.Count);
+        Assert.Equal("Work Items", tabs.TabPages[0].Text);
+        Assert.Equal("Direct LLM", tabs.TabPages[1].Text);
+        Assert.Equal(0, tabs.SelectedIndex);
+        Assert.False(proxy.WorkItemsRequested.Task.IsCompleted);
     }
 
     [Fact]
@@ -80,6 +106,23 @@ public sealed class HiveWorkspaceLifecycleTests
             }
 
             var nested = FindLabel(child, text);
+            if (nested is not null)
+                return nested;
+        }
+
+        return null;
+    }
+
+    private static TControl? FindControl<TControl>(
+        Control root)
+        where TControl : Control
+    {
+        foreach (Control child in root.Controls)
+        {
+            if (child is TControl target)
+                return target;
+
+            var nested = FindControl<TControl>(child);
             if (nested is not null)
                 return nested;
         }
