@@ -1737,6 +1737,26 @@ public sealed class HiveUiPolishTests
             Assert.DoesNotContain(-1, rows);
         }
 
+        var agentsCard = Assert.IsType<TableLayoutPanel>(
+            cards.Single(card =>
+                string.Equals(
+                    card.AccessibleName,
+                    "Agents settings overview",
+                    StringComparison.Ordinal)));
+        var agentDescription = Assert.Single(
+            agentsCard.Controls.OfType<Label>(),
+            label => label.Text.StartsWith("Define the agents", StringComparison.Ordinal));
+        var agentNote = Assert.Single(
+            agentsCard.Controls.OfType<Label>(),
+            label => label.Text.StartsWith("Each agent", StringComparison.Ordinal));
+
+        Assert.Equal(
+            "Define the agents used by your configured workflows.",
+            agentDescription.Text);
+        Assert.Equal(
+            "Each agent is linked to a specific execution target.",
+            agentNote.Text);
+
         var persistenceCard = Assert.IsType<TableLayoutPanel>(
             cards.Single(card =>
                 string.Equals(
