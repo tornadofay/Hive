@@ -145,7 +145,7 @@ public sealed class HiveUiPolishTests
         var themeManager = new HiveThemeManager(HiveThemeMode.Light);
         var dialogType = typeof(HiveMessageBox).GetNestedType(
             "HiveMessageDialog",
-            BindingFlags.Instance | BindingFlags.NonPublic);
+            BindingFlags.NonPublic);
 
         Assert.NotNull(dialogType);
 
@@ -166,6 +166,10 @@ public sealed class HiveUiPolishTests
                 "_messageViewport",
                 BindingFlags.Instance | BindingFlags.NonPublic)!
             .GetValue(dialog));
+
+        dialog.PerformLayout();
+        message.PerformLayout();
+        viewport.PerformLayout();
 
         Assert.True(viewport.AutoScroll);
         Assert.Equal(0, message.MaximumSize.Height);
