@@ -345,8 +345,11 @@ public sealed class DirectLlmConversationTests
         }
     }
 
-    [Fact]
-    public async Task SendDirectLlmMessageAsync_RejectsExplicitlyUnsupportedTextGeneration()
+    [Theory]
+    [InlineData(CapabilityState.Unsupported)]
+    [InlineData(CapabilityState.Unknown)]
+    public async Task SendDirectLlmMessageAsync_RejectsTargetsWithoutExplicitTextGenerationSupport(
+        CapabilityState textGenerationState)
     {
         var directory = Path.Combine(
             Path.GetTempPath(),
@@ -398,7 +401,7 @@ public sealed class DirectLlmConversationTests
                 now,
                 "unsupported",
                 "unsupported-model",
-                CapabilityState.Unsupported);
+                textGenerationState);
             var targetResult = await management.CreateExecutionTargetAsync(target, context);
             Assert.True(targetResult.IsSuccess, targetResult.Error?.Message);
 
@@ -414,7 +417,7 @@ public sealed class DirectLlmConversationTests
             Assert.True(result.IsFailure);
             Assert.Equal(ErrorCategory.Unsupported, result.Error!.Category);
             Assert.Equal(
-                "hive.direct-llm.target-text-generation-unsupported",
+                "hive.direct-llm.target-text-generation-not-supported",
                 result.Error.Code);
             Assert.Equal(0, handler.RequestCount);
 
