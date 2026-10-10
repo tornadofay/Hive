@@ -870,6 +870,8 @@ The model never receives:
 - arbitrary method invocation;
 - secret fields.
 
+The neutral host-context contract must omit or redact sensitive field values from passive host-context snapshots and captured-current-value projections before those values become model context. Hiding a field in the UI is not sufficient to make its value safe to include.
+
 ## 17. Contract-first host implementation model
 
 Phase 1.14 is contract-first, but the host-facing WinForms experience is intentionally implementation-assisted. Hive owns the neutral public integration contracts and provides reusable WinForms base forms/controls on top of those contracts. The host application supplies only the application-specific semantics and behaviors that Hive cannot safely infer.
