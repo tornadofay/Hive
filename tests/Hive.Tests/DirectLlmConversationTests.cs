@@ -110,7 +110,7 @@ public sealed class DirectLlmConversationTests
 
             Assert.True(sent.IsSuccess, sent.Error?.Message);
             Assert.Equal(DirectLlmConversationStatus.Completed, sent.Value!.Summary.Status);
-            Assert.Equal(chosenTarget.Id, sent.Value.Summary.LastExecutionTargetId);
+            Assert.Equal(chosenTarget.Id, sent.Value.Summary.LastExecutionTargetId!.Value);
             Assert.Equal(2, sent.Value.Summary.MessageCount);
             Assert.Collection(
                 sent.Value.Messages,
@@ -118,7 +118,7 @@ public sealed class DirectLlmConversationTests
                 {
                     Assert.Equal(DirectLlmConversationMessageRole.User, message.Role);
                     Assert.Equal("Say hello.", message.Content);
-                    Assert.Equal(chosenTarget.Id, message.ExecutionTargetId);
+                    Assert.Equal(chosenTarget.Id, message.ExecutionTargetId!.Value);
                 },
                 message =>
                 {
@@ -131,10 +131,10 @@ public sealed class DirectLlmConversationTests
             Assert.Equal(
                 "chosen-direct-model",
                 handler.LastRequestModel);
-            Assert.EndsWith(
-                "/chat/completions",
-                handler.LastRequestUri!.AbsolutePath,
-                StringComparison.OrdinalIgnoreCase);
+            Assert.True(
+                handler.LastRequestUri!.AbsolutePath.EndsWith(
+                    "/chat/completions",
+                    StringComparison.OrdinalIgnoreCase));
 
             var summaries = await management.ListDirectLlmConversationsAsync(accessContext);
             Assert.True(summaries.IsSuccess, summaries.Error?.Message);
@@ -228,7 +228,8 @@ public sealed class DirectLlmConversationTests
                 DeploymentId.New(),
                 TenantId.New(),
                 PrincipalId.New());
-            httpClient = new HttpClient(new RecordingChatHandler("{}"));
+            var handler = new RecordingChatHandler("{}");
+            httpClient = new HttpClient(handler);
             management = CreateManagement(database, httpClient);
 
             var conversation = await management.CreateDirectLlmConversationAsync(context);
@@ -243,7 +244,7 @@ public sealed class DirectLlmConversationTests
             Assert.True(result.IsFailure);
             Assert.Equal(ErrorCategory.Validation, result.Error!.Category);
             Assert.Equal("hive.direct-llm.execution-target-required", result.Error.Code);
-            Assert.Equal(0, ((RecordingChatHandler)httpClientGetHandler(httpClient)).RequestCount);
+            Assert.Equal(0, handler.RequestCount);
 
             var history = await management.GetDirectLlmConversationAsync(
                 conversation.Value.Id,
@@ -399,6 +400,4 @@ public sealed class DirectLlmConversationTests
         }
     }
 
-    private static HttpMessageHandler httpClientGetHandler(HttpClient _) =>
-        throw new NotSupportedException("The handler reference is captured directly in the test.");
 }
