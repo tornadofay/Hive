@@ -598,7 +598,7 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
         {
             return Result<ResolvedExecutionTarget>.Failure(
                 Error.Unsupported(
-                    "hive.direct-llm.target-text-generation-unsupported",
+                    "hive.direct-llm.target-text-generation-not-supported",
                     "The selected ExecutionTarget does not satisfy the required text-generation capability policy."));
         }
 
