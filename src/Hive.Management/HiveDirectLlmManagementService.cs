@@ -572,38 +572,6 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
                     "The selected ExecutionTarget is not active."));
         }
 
-        var capabilityResolution = await _providers
-            .GetExecutionTargetCapabilityOverridesAsync(
-                [target],
-                HiveCapabilityKeys.TextGeneration,
-                accessContext,
-                cancellationToken).ConfigureAwait(false);
-
-        if (capabilityResolution.IsFailure)
-            return Result<ResolvedExecutionTarget>.Failure(capabilityResolution.Error!);
-
-        var selection = ExecutionTargetSelector.Select(
-            new ExecutionTargetSelectionRequest(
-                [target],
-                [
-                    new CapabilityRequirement(
-                        HiveCapabilityKeys.TextGeneration,
-                        CapabilityRequirementKind.Required)
-                ],
-                mode: ExecutionTargetSelectionMode.Fixed,
-                fixedTargetId: target.Id),
-            capabilityResolution.Value!.Overrides);
-
-        if (selection.IsFailure)
-        {
-            return Result<ResolvedExecutionTarget>.Failure(
-                Error.Unsupported(
-                    "hive.direct-llm.target-text-generation-not-supported",
-                    "The selected ExecutionTarget does not satisfy the required text-generation capability policy."));
-        }
-
-        target = selection.Value!.SelectedTarget;
-
         var accountResult = await _providerResources.GetProviderAccountAsync(
             target.ProviderAccountId,
             accessContext,
@@ -672,6 +640,38 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
                     "hive.direct-llm.provider-transport-unsupported",
                     "The selected Provider does not use the supported OpenAI-compatible chat transport."));
         }
+
+        var capabilityResolution = await _providers
+            .GetExecutionTargetCapabilityOverridesAsync(
+                [target],
+                HiveCapabilityKeys.TextGeneration,
+                accessContext,
+                cancellationToken).ConfigureAwait(false);
+
+        if (capabilityResolution.IsFailure)
+            return Result<ResolvedExecutionTarget>.Failure(capabilityResolution.Error!);
+
+        var selection = ExecutionTargetSelector.Select(
+            new ExecutionTargetSelectionRequest(
+                [target],
+                [
+                    new CapabilityRequirement(
+                        HiveCapabilityKeys.TextGeneration,
+                        CapabilityRequirementKind.Required)
+                ],
+                mode: ExecutionTargetSelectionMode.Fixed,
+                fixedTargetId: target.Id),
+            capabilityResolution.Value!.Overrides);
+
+        if (selection.IsFailure)
+        {
+            return Result<ResolvedExecutionTarget>.Failure(
+                Error.Unsupported(
+                    "hive.direct-llm.target-text-generation-not-supported",
+                    "The selected ExecutionTarget does not satisfy the required text-generation capability policy."));
+        }
+
+        target = selection.Value!.SelectedTarget;
 
         SecretMaterial? credential = null;
         if (account.CredentialSecret is not null)
