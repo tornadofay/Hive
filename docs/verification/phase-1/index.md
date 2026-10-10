@@ -1,5 +1,7 @@
 # Phase 1 — Verification Archive
 
+This index points to completed closure records and supporting historical records that retain distinct technical or verification value. Superseded intermediate attempts are omitted once their final outcome and durable lessons are captured in the closure record.
+
 Phase 1 is in progress. Completed slices are recorded here.
 
 - [1.1 — Provider / ProviderAccount / ExecutionTarget](1.1.md)
@@ -42,15 +44,9 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [1.18A — Slice 2: Embedded Persistence Foundation — 2026-10-07](1.18A-slice-2-embedded-persistence-foundation-closure-2026-10-07.md)
 - [1.18A — Slice 3: Embedded Persistence Parity — 2026-10-08](1.18A-slice-3-embedded-persistence-parity-closure-2026-10-08.md)
 - [1.18A — Slice 4: Full-Data Migration — 2026-10-08](1.18A-slice-4-full-data-migration-closure-2026-10-08.md)
-- [1.18A Slice 6 — Developer Verification Checkpoint — 2026-10-09](1.18A-slice-6-verification-2026-10-09.md)
-- [1.18A Slice 6 — Embedded-to-SQL Server Migration Failure Diagnostic Remediation — 2026-10-09](1.18A-slice-6-migration-failure-diagnostic-remediation-2026-10-09.md)
-- [1.18A Slice 6 — Migration Diagnostic Test Compile Correction — 2026-10-09](1.18A-slice-6-compile-correction-2026-10-09.md)
-- [1.18A Slice 6 — SQL Diagnostic and MessageBox Follow-Up — 2026-10-09](1.18A-slice-6-migration-diagnostic-messagebox-followup-2026-10-09.md)
-- [1.18A Slice 6 — SQL Server Error 5170 Diagnostic Remediation — 2026-10-09](1.18A-slice-6-sql-file-collision-5170-remediation-2026-10-09.md)
-- [1.18A Slice 6 — SQL Server File-Collision Resolution Verification — 2026-10-09](1.18A-slice-6-sql-file-collision-verification-2026-10-09.md)
-- [1.18A Slice 6 — Final Regression, Bidirectional Migration & Lifecycle Review — 2026-10-09](1.18A-slice-6-final-regression-and-migration-evidence-2026-10-09.md)
-- [1.18A Slice 6 — Active Work History Snapshot (pre-closure checkpoint) — 2026-10-09](1.18A-slice-6-active-work-history-2026-10-09.md)
+- [1.18A — Slice 5: Host Composition, Settings UI & First-Run Default — 2026-10-09](1.18A-slice-5-host-composition-settings-ui-first-run-default-closure-2026-10-09.md)
 - [1.18A Slice 6 — Closure Verification — 2026-10-09](1.18A-slice-6-closure-2026-10-09.md)
 - [1.18A Closure — Documentation Revision Audit — 2026-10-09](1.18A-closure-documentation-revision-2026-10-09.md)
 - [Maintenance — UI: Settings Overview Layout & Configuration Guidance — 2026-10-09](../maintenance/ui-settings-overview-layout-configuration-guidance-2026-10-09.md)
 - [Maintenance — Test Database Lifecycle & Cleanup — 2026-10-10](../maintenance/test-database-lifecycle-cleanup-2026-10-10.md)
+- [Maintenance — UI: Error-Reporting Observer Containment — 2026-10-10](../maintenance/ui-error-reporting-observer-containment-2026-10-10.md)
