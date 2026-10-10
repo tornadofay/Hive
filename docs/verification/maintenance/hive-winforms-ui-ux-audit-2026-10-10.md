@@ -1,6 +1,6 @@
 # WinForms UI/UX Audit and Corrective Polish — 2026-10-10
 
-Status: **VERIFICATION PENDING**
+Status: **CLOSED — verification complete**
 
 ## Scope
 
@@ -38,12 +38,14 @@ The test run and general screen check are developer-reported evidence. The assis
 
 The developer confirmed that a long `HiveMessageBox` message can be scrolled all the way to the end. The specific scrolling check is therefore complete.
 
-## Remaining manual acceptance checks
+## Final manual acceptance — developer-reported 2026-10-10
 
-**VERIFICATION PENDING** only for the following checks not yet reported as confirmed:
+- The developer confirmed the long `HiveMessageBox` message scrolls all the way to its end.
+- The developer confirmed the MessageBox details are good.
+- The developer reported that the overall UI is great, accepting the remaining visual checks for this bounded maintenance pass.
 
-1. On `HiveMessageBox`, exercise technical details expanded/collapsed, keyboard focus, and dialog dismissal.
-2. Confirm the affected Settings / Provider Settings surfaces in Light, Dark, and System themes at normal and compact sizes, including the Administrative button's non-destructive appearance.
-3. Recheck existing selected, disabled, loading, error, empty/no-result, navigation, and resize states on representative Settings/CRUD surfaces.
+Combined with the developer-reported **798/798** full test-suite result (Treat Warnings as Errors enabled), these confirmations close this maintenance task. The automated test run and manual application checks were performed by the developer; the assistant did not run builds, tests, or the application. The overall visual acceptance is recorded as developer-reported evidence, not as an assistant-executed, item-by-item theme/state test matrix.
 
-No remediation is currently indicated by the supplied results. Keep the maintenance task pending only for these remaining visual acceptance checks.
+## Closure
+
+The four concrete UI corrections and their focused regression tests are complete. No further remediation, roadmap advancement, or follow-up implementation is authorized by this task.
