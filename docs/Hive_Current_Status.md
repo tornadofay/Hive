@@ -12,7 +12,7 @@ Last updated: 2026-10-10
 
 ## Latest verification
 
-On 2026-10-10, the developer reported the full `Hive.Tests` suite passing **798/798** (0 failed, 0 skipped) with Treat Warnings as Errors enabled and confirmed the Example Host / Settings screens are working well. The current UI/UX maintenance record captures the remaining targeted visual acceptance checks. [UI/UX audit verification](verification/maintenance/hive-winforms-ui-ux-audit-2026-10-10.md)
+On 2026-10-10, the developer reported the full `Hive.Tests` suite passing **798/798** (0 failed, 0 skipped) with Treat Warnings as Errors enabled, confirmed the Example Host / Settings screens are working well, and verified a long MessageBox can be scrolled to its end. The current UI/UX maintenance record captures the remaining targeted visual acceptance checks. [UI/UX audit verification](verification/maintenance/hive-winforms-ui-ux-audit-2026-10-10.md)
 
 ## Deferred work
 
