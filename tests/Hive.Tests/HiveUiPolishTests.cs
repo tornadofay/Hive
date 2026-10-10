@@ -82,6 +82,97 @@ public sealed class HiveUiPolishTests
         Assert.Equal("Completed.", surface.StatusLabel.Text);
     }
 
+    [WinFormsFact]
+    public void HiveButton_AdministrativeStyleUsesNonDestructiveThemeColors()
+    {
+        foreach (var mode in new[] { HiveThemeMode.Light, HiveThemeMode.Dark })
+        {
+            var themeManager = new HiveThemeManager(mode);
+            using var administrative = new HiveButton
+            {
+                Text = "Advanced",
+                Style = HiveButtonStyle.Administrative,
+                Size = new Size(120, 38)
+            };
+            themeManager.Apply(administrative);
+
+            using var administrativeBitmap = new Bitmap(
+                administrative.Width,
+                administrative.Height);
+            administrative.DrawToBitmap(
+                administrativeBitmap,
+                administrative.ClientRectangle);
+
+            Assert.Equal(
+                themeManager.Theme.VisualStates.NavigationSelected,
+                administrativeBitmap.GetPixel(
+                    administrative.Width - 16,
+                    administrative.Height / 2));
+
+            using var danger = new HiveButton
+            {
+                Text = "Delete",
+                Style = HiveButtonStyle.Danger,
+                Size = new Size(120, 38)
+            };
+            themeManager.Apply(danger);
+
+            using var dangerBitmap = new Bitmap(
+                danger.Width,
+                danger.Height);
+            danger.DrawToBitmap(dangerBitmap, danger.ClientRectangle);
+
+            Assert.Equal(
+                themeManager.Theme.VisualStates.Error,
+                dangerBitmap.GetPixel(
+                    danger.Width - 16,
+                    danger.Height / 2));
+        }
+    }
+
+    [WinFormsFact]
+    public void HiveMessageBox_LongMessageRemainsScrollableBeyondViewportLimit()
+    {
+        var messageText = string.Join(
+            " ",
+            Enumerable.Repeat(
+                "Long operational message content must remain readable.",
+                300));
+        var options = new HiveMessageOptions(
+            "Operation details",
+            messageText,
+            HiveMessageType.Error);
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var dialogType = typeof(HiveMessageBox).GetNestedType(
+            "HiveMessageDialog",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.NotNull(dialogType);
+
+        using var dialog = (Form)Activator.CreateInstance(
+            dialogType!,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            binder: null,
+            args: new object?[] { options, themeManager },
+            culture: null)!;
+
+        var message = Assert.IsType<Label>(
+            dialogType!.GetField(
+                "_message",
+                BindingFlags.Instance | BindingFlags.NonPublic)!
+            .GetValue(dialog));
+        var viewport = Assert.IsType<Panel>(
+            dialogType.GetField(
+                "_messageViewport",
+                BindingFlags.Instance | BindingFlags.NonPublic)!
+            .GetValue(dialog));
+
+        Assert.True(viewport.AutoScroll);
+        Assert.Equal(0, message.MaximumSize.Height);
+        Assert.True(viewport.Height <= 250);
+        Assert.True(message.Height > viewport.Height);
+    }
+
     [Fact]
     public void HiveEditorLayout_KeepsSingleLineEditorsAtCompactHeight()
     {
@@ -1583,7 +1674,7 @@ public sealed class HiveUiPolishTests
     [WinFormsFact]
     public void HiveSettingsOverview_UsesHiveScrollHost()
     {
-        using var view = new HiveSettingsOverviewView();
+        using var view = new HiveSettingsOverviewView(new HiveThemeManager(HiveThemeMode.Light));
 
         Assert.False(view.AutoScroll);
         var host = Assert.Single(view.Controls.OfType<HiveScrollHost>());
@@ -1591,9 +1682,31 @@ public sealed class HiveUiPolishTests
     }
 
     [WinFormsFact]
+    public void HiveSettingsOverview_UsesSharedThemeTypography()
+    {
+        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        using var view = new HiveSettingsOverviewView(themeManager);
+
+        var heading = FindLabel(view, "Overview");
+        var section = FindLabel(view, "Configuration flow");
+        var cardTitle = FindLabel(view, "Providers");
+
+        Assert.NotNull(heading);
+        Assert.NotNull(section);
+        Assert.NotNull(cardTitle);
+        Assert.Equal(themeManager.Theme.Typography.TitleSize, heading!.Font.Size);
+        Assert.Equal(themeManager.Theme.Typography.SectionSize, section!.Font.Size);
+        Assert.Equal(
+            Math.Max(
+                themeManager.Theme.Typography.SectionSize,
+                themeManager.Theme.Typography.TitleSize - 3f),
+            cardTitle!.Font.Size);
+    }
+
+    [WinFormsFact]
     public void HiveSettingsOverviewCards_UseSeparateRowsAndDescribeBothPersistenceBackends()
     {
-        using var view = new HiveSettingsOverviewView
+        using var view = new HiveSettingsOverviewView(new HiveThemeManager(HiveThemeMode.Light))
         {
             Size = new Size(1000, 700)
         };
