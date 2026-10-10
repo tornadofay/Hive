@@ -72,7 +72,6 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
             null,
             null,
             null,
-            null,
             null);
 
         var persisted = await AppendAsync(
@@ -659,7 +658,8 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
     {
         if (current.State.Status != DirectLlmConversationStatus.Running ||
             _activeRequests.ContainsKey(conversationId.Value) ||
-            _clock.UtcNow - current.State.LastRequestStartedAtUtc < StaleExecutionWindow)
+            current.State.LastRequestStartedAtUtc is not { } requestStartedAt ||
+            _clock.UtcNow - requestStartedAt < StaleExecutionWindow)
         {
             return Result<SnapshotAndState>.Success(current);
         }
@@ -991,8 +991,7 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
         string? LastErrorCode,
         string? LastErrorMessage,
         string? LastProviderReportedModelId,
-        DateTimeOffset? LastRequestStartedAtUtc,
-        string? Reserved);
+        DateTimeOffset? LastRequestStartedAtUtc);
 
     private sealed record ConversationEventPayload(
         Guid? MessageId = null,
