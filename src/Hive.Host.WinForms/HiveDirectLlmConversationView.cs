@@ -670,10 +670,13 @@ public sealed class HiveDirectLlmConversationView : UserControl
             Dock = DockStyle.Fill,
             Orientation = Orientation.Vertical,
             SplitterWidth = 6,
-            Panel1MinSize = 180,
-            Panel2MinSize = 300,
-            SplitterDistance = 250,
             FixedPanel = FixedPanel.Panel1
+        };
+        workspace.SizeChanged += (_, _) =>
+        {
+            var availableWidth = workspace.ClientSize.Width - workspace.SplitterWidth;
+            if (availableWidth > 0)
+                workspace.SplitterDistance = Math.Clamp(250, 25, availableWidth - 25);
         };
 
         var historyPanel = new TableLayoutPanel
