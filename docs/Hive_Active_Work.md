@@ -16,7 +16,7 @@ These source corrections have not been compiled or test-run here. This returns S
 Direct LLM conversations in Workspace with an explicitly selected eligible ExecutionTarget; Management-owned provider/capability/credential resolution; durable shared event/snapshot state for SQL Server and Embedded; ownership, cancellation, safe failure and recovery handling; focused tests and Example Host scenario. See [Phase 1.20 plan](plan/Phase1/1.20.md) and the direct-conversation boundary in [architecture](architecture/v1-host-and-management.md).
 
 ## Verification boundary
-After the two corrections, return this status to **VERIFICATION PENDING**. The developer must rebuild the affected projects with the repository's Treat Warnings as Errors setting, rerun `DirectLlmConversationTests.cs` and `HiveWorkspaceLifecycleTests.cs`, run all `Hive.Tests`, and exercise the Example Host scenario. No new slice may start before those results pass and Slice 1 is explicitly closed.
+This status remains **VERIFICATION PENDING** until developer verification is reported. The developer must rebuild the affected projects (the repository already sets Treat Warnings as Errors), rerun `DirectLlmConversationTests.cs` and `HiveWorkspaceLifecycleTests.cs`, run all `Hive.Tests`, and exercise the Example Host scenario. No new slice may start before those results pass and Slice 1 is explicitly closed.
 
 ## Required handoff
 - Example to run: **Workspace / Direct LLM / Direct LLM Conversation — Hive.Example.WinForms**
