@@ -72,6 +72,7 @@ public sealed class HiveHostServiceGraphFactory :
             var agentExecution = new AgentExecutionService(
                 eventPersistence,
                 SharedHttpClient);
+            var directLlmCompletion = new DirectLlmCompletionService(SharedHttpClient);
             var structuredExtractionEngine =
                 new StructuredExtractionEngine(SharedHttpClient);
             var structuredExtractionBatches =
@@ -95,7 +96,9 @@ public sealed class HiveHostServiceGraphFactory :
                 structuredExtractionBatches: structuredExtractionBatches,
                 structuredExtractionEngine: structuredExtractionEngine,
                 persistenceMigrationQuiescence: migrationOperationGate,
-                managementOperationGate: migrationOperationGate);
+                managementOperationGate: migrationOperationGate,
+                directLlmCompletion: directLlmCompletion,
+                eventPersistence: eventPersistence);
 
             var graph = new HiveHostServiceGraph(
                 configuration,
@@ -206,6 +209,7 @@ public sealed class HiveHostServiceGraphFactory :
             var agentExecution = new AgentExecutionService(
                 eventPersistence,
                 SharedHttpClient);
+            var directLlmCompletion = new DirectLlmCompletionService(SharedHttpClient);
             var structuredExtractionEngine =
                 new StructuredExtractionEngine(SharedHttpClient);
             var structuredExtractionBatches =
@@ -228,7 +232,9 @@ public sealed class HiveHostServiceGraphFactory :
                 structuredExtractionBatches: structuredExtractionBatches,
                 structuredExtractionEngine: structuredExtractionEngine,
                 persistenceMigrationQuiescence: migrationOperationGate,
-                managementOperationGate: migrationOperationGate);
+                managementOperationGate: migrationOperationGate,
+                directLlmCompletion: directLlmCompletion,
+                eventPersistence: eventPersistence);
 
             var graph = new HiveHostServiceGraph(
                 configuration,
