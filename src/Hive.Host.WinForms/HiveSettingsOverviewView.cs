@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 using Hive.Host.WinForms.UI.Controls;
+using Hive.Host.WinForms.UI.Theme;
 
 namespace Hive.Host.WinForms;
 
@@ -10,23 +11,29 @@ internal sealed class HiveSettingsOverviewView : UserControl
     private readonly Font _headingFont;
     private readonly Font _sectionFont;
     private readonly List<Font> _cardTitleFonts = new();
+    private readonly float _cardTitleSize;
 
-    public HiveSettingsOverviewView()
+    internal HiveSettingsOverviewView(IHiveThemeManager themeManager)
     {
+        ArgumentNullException.ThrowIfNull(themeManager);
+
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
         Padding = new Padding(4, 0, 4, 4);
         AutoScroll = false;
 
-        var fallbackFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+        var typography = themeManager.Theme.Typography;
         _headingFont = new Font(
-            fallbackFont.FontFamily,
-            Math.Max(13f, fallbackFont.Size + 3f),
+            typography.FontFamily,
+            typography.TitleSize,
             FontStyle.Bold);
         _sectionFont = new Font(
-            fallbackFont.FontFamily,
-            fallbackFont.Size + 1f,
+            typography.FontFamily,
+            typography.SectionSize,
             FontStyle.Bold);
+        _cardTitleSize = Math.Max(
+            typography.SectionSize,
+            typography.TitleSize - 3f);
 
         var root = new TableLayoutPanel
         {
@@ -159,7 +166,7 @@ internal sealed class HiveSettingsOverviewView : UserControl
 
         var titleFont = new Font(
             _headingFont.FontFamily,
-            Math.Max(9.25f, _headingFont.Size - 2.5f),
+            _cardTitleSize,
             FontStyle.Bold);
         _cardTitleFonts.Add(titleFont);
 
