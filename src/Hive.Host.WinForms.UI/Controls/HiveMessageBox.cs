@@ -865,7 +865,9 @@ public static class HiveMessageBox
             contentWidth = Math.Max(260, contentWidth);
 
             var maxMessageHeight = MaxMessageHeight;
-            _message.MaximumSize = new Size(contentWidth, maxMessageHeight);
+            // Bound the viewport, not the message itself. An AutoSize Label
+            // with a maximum height cannot expose the remainder to AutoScroll.
+            _message.MaximumSize = new Size(contentWidth, 0);
 
             var messageMeasured = TextRenderer.MeasureText(
                 _message.Text,
