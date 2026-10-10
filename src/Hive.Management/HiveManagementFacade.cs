@@ -16,6 +16,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
     private readonly HiveStructuredExtractionManagementService _structuredExtraction;
     private readonly HiveExecutionTargetPreferenceManagementService _executionTargetPreferences;
     private readonly HivePersistenceMigrationManagementService _persistenceMigration;
+    private readonly HiveDirectLlmManagementService _directLlm;
     private readonly object _lifetimeGate = new();
     private readonly IHiveManagementOperationGate? _operationGate;
     private int _disposed;
@@ -36,7 +37,9 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         IStructuredExtractionBatchStore? structuredExtractionBatches = null,
         StructuredExtractionEngine? structuredExtractionEngine = null,
         IHivePersistenceMigrationQuiescence? persistenceMigrationQuiescence = null,
-        IHiveManagementOperationGate? managementOperationGate = null)
+        IHiveManagementOperationGate? managementOperationGate = null,
+        DirectLlmCompletionService? directLlmCompletion = null,
+        HiveEventPersistenceComposition? eventPersistence = null)
     {
         _configuration = new HiveConfigurationManagementService(
             configurationStore,
@@ -71,6 +74,12 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         _persistenceMigration = new HivePersistenceMigrationManagementService(
             bootstrapCredentials,
             persistenceMigrationQuiescence);
+        _directLlm = new HiveDirectLlmManagementService(
+            providerResources,
+            secrets,
+            eventPersistence?.EventStore,
+            directLlmCompletion,
+            clock);
         _operationGate = managementOperationGate;
     }
 
@@ -421,6 +430,36 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
         string userMessage,
         CancellationToken cancellationToken = default) => Run(() =>
         _agents.ExecuteConfiguredAgentAsync(agentDefinitionId, accessContext, userMessage, cancellationToken));
+
+    public Task<Result<DirectLlmConversationSummary>> CreateDirectLlmConversationAsync(
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _directLlm.CreateAsync(accessContext, cancellationToken));
+
+    public Task<Result<IReadOnlyList<DirectLlmConversationSummary>>> ListDirectLlmConversationsAsync(
+        ResourceAccessContext accessContext,
+        int pageSize = 30,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _directLlm.ListAsync(accessContext, pageSize, cancellationToken));
+
+    public Task<Result<DirectLlmConversation>> GetDirectLlmConversationAsync(
+        ConversationId conversationId,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _directLlm.GetAsync(conversationId, accessContext, cancellationToken));
+
+    public Task<Result<DirectLlmConversation>> SendDirectLlmMessageAsync(
+        ConversationId conversationId,
+        ExecutionTargetId executionTargetId,
+        string userMessage,
+        ResourceAccessContext accessContext,
+        CancellationToken cancellationToken = default) => Run(() =>
+        _directLlm.SendMessageAsync(
+            conversationId,
+            executionTargetId,
+            userMessage,
+            accessContext,
+            cancellationToken));
 
     public Task<Result<InputPreparationResult>> PrepareInputAsync(
         InputSubmission submission,
