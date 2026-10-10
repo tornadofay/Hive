@@ -423,7 +423,7 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
                             cancellationToken)
                         .ConfigureAwait(false);
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
                     await PersistTerminalFailureAsync(
                         conversationId,
@@ -433,10 +433,30 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
                         DirectLlmConversationStatus.Cancelled,
                         new Error(
                             "hive.direct-llm.execution-cancelled",
-                            ErrorCategory.Conflict,
+                            ErrorCategory.Cancelled,
                             "The direct LLM request was cancelled."),
                         CancellationToken.None).ConfigureAwait(false);
                     throw;
+                }
+                catch (OperationCanceledException)
+                {
+                    var timeoutError = new Error(
+                        "hive.direct-llm.execution-timeout",
+                        ErrorCategory.Timeout,
+                        "The direct LLM provider request timed out.");
+
+                    var timedOut = await PersistTerminalFailureAsync(
+                        conversationId,
+                        submitted.Value!.Event.StreamVersion,
+                        runningState,
+                        correlationId,
+                        DirectLlmConversationStatus.Failed,
+                        timeoutError,
+                        CancellationToken.None).ConfigureAwait(false);
+
+                    return timedOut.IsFailure
+                        ? Result<DirectLlmConversation>.Failure(timedOut.Error!)
+                        : Result<DirectLlmConversation>.Failure(timeoutError);
                 }
 
                 if (completion.IsFailure)
