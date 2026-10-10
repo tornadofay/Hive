@@ -97,7 +97,25 @@ public sealed class HiveWorkspaceView : UserControl
             AccessibleRole = AccessibleRole.StatusBar
         };
 
-        Controls.Add(BuildLayout());
+        var workspaceTabs = new HiveTabControl
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            AccessibleName = "Workspace modes"
+        };
+        var workItemsPage = workspaceTabs.TabPages.Add("Work Items");
+        workItemsPage.AccessibleName = "Work Item operations";
+        workItemsPage.Controls.Add(BuildLayout());
+
+        var directLlmPage = workspaceTabs.TabPages.Add("Direct LLM");
+        directLlmPage.AccessibleName = "Direct LLM conversations";
+        directLlmPage.Controls.Add(
+            new HiveDirectLlmConversationView(
+                _management,
+                _accessContext,
+                _themeManager));
+
+        Controls.Add(workspaceTabs);
 
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
