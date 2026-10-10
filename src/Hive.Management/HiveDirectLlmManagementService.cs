@@ -72,6 +72,7 @@ internal sealed class HiveDirectLlmManagementService : HiveManagementServiceBase
             null,
             null,
             null,
+            null,
             null);
 
         var persisted = await AppendAsync(
