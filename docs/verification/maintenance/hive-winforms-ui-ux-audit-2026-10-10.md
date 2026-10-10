@@ -25,14 +25,21 @@ Focused regression coverage was added to `HiveUiPolishTests` for the administrat
 
 No roadmap phase, business logic, persistence behavior, public feature, dependency, or architecture was added or changed.
 
-## Verification still required
+## Developer-reported verification — 2026-10-10
 
-**No build, test run, or Example Host/manual visual inspection was performed by the assistant.** The source changes and diff were reviewed, but that is not a substitute for developer verification.
+- Treat Warnings as Errors was enabled.
+- Full `Hive.Tests` suite: **798 passed, 0 failed, 0 skipped**, 3.3 minutes, .NET 10.0.1 / xUnit.net VSTest Adapter v3.1.5+1b188a7b0a.
+- The full suite includes `HiveUiPolishTests`, including the added button-state, long-message-layout, typography, and Overview-copy regressions.
+- The developer reports that the Example Host and Settings screen are working well.
 
-1. Build `Hive.Host.WinForms.UI`, `Hive.Host.WinForms`, and `Hive.Tests` with the repository's Treat Warnings as Errors policy enabled and zero warnings.
-2. Run `HiveUiPolishTests`, then the full `Hive.Tests` suite.
-3. In the Example Host, inspect Settings Overview and Provider Settings in Light, Dark, and System themes; verify the Administrative button is not presented as destructive and that heading/card hierarchy remains balanced at normal and compact sizes.
-4. Display a message long enough to exceed the 250px viewport, scroll to its end, and confirm no content is clipped. Also exercise a normal message, technical details expanded/collapsed, keyboard focus, and dialog dismissal.
-5. Recheck existing selected, disabled, loading, error, empty/no-result, navigation, and resize states on representative Settings/CRUD surfaces.
+The test run and general screen check are developer-reported evidence. The assistant did not run builds, tests, or the application.
 
-Keep this maintenance task open until developer verification results are supplied and reviewed.
+## Remaining manual acceptance checks
+
+**VERIFICATION PENDING** until the specific changed MessageBox behavior and broader visual state coverage have been confirmed. The message-layout regression passed in the full test suite, but the report does not explicitly confirm the rendered message can be scrolled all the way to its end.
+
+1. Display a message long enough to exceed the 250px viewport, scroll to its end, and confirm no content is clipped. Exercise technical details expanded/collapsed, keyboard focus, and dialog dismissal.
+2. Confirm the affected Settings / Provider Settings surfaces in Light, Dark, and System themes at normal and compact sizes, including the Administrative button's non-destructive appearance.
+3. Recheck existing selected, disabled, loading, error, empty/no-result, navigation, and resize states on representative Settings/CRUD surfaces.
+
+No remediation is currently indicated by the supplied results. Keep the maintenance task pending only for these unconfirmed visual acceptance checks.
