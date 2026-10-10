@@ -24,11 +24,11 @@ Authorization: the user explicitly requested `Hive: Maintenance - UI`. With no a
 
 ### Verification gate
 
-**VERIFICATION PENDING** — the assistant did not run builds or tests. The developer must verify before closure.
+**VERIFICATION PENDING** — the developer has reported a passing full test run, but build verification has not yet been reported. The assistant did not run builds or tests.
 
 1. Build affected projects with Visual Studio **Treat Warnings as Errors** enabled and confirm zero warnings/errors: `Hive.Host.WinForms.UI` and `Hive.Tests`.
-2. Run focused tests: `tests/Hive.Tests/HiveUiExceptionDiagnosticsTests.cs` (`HiveUiExceptionDiagnosticsTests`).
-3. Run the full `Hive.Tests` suite.
+2. Developer-reported full `Hive.Tests` run on 2026-10-10: **795 passed, 0 failed, 0 skipped**, in 3.2 minutes. This full-suite result includes the focused `HiveUiExceptionDiagnosticsTests` cases.
+3. Once the required builds are confirmed, review the final repository diff and close this temporary maintenance slice with a verification record.
 
 No Example Host scenario is required: this is internal error-boundary hardening, not a new externally usable capability.
 
