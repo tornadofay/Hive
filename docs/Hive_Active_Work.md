@@ -28,17 +28,25 @@ No new capability, roadmap advancement, business-logic/architecture change, unre
 
 Detailed record: [WinForms UI/UX Audit and Corrective Polish](verification/maintenance/hive-winforms-ui-ux-audit-2026-10-10.md).
 
-## Verification boundary
+## Verification received
 
-**VERIFICATION PENDING.** No build, automated test run, Example Host launch, or manual visual inspection was executed by the assistant.
+Developer-reported on 2026-10-10:
+- Treat Warnings as Errors enabled.
+- Full `Hive.Tests`: **798 passed, 0 failed, 0 skipped** in 3.3 minutes on .NET 10.0.1.
+- `HiveUiPolishTests` is included in the full suite, including the new regression coverage.
+- Example Host and Settings screens are reported to be working well.
 
-Required before closure:
-1. Build `Hive.Host.WinForms.UI`, `Hive.Host.WinForms`, and `Hive.Tests` with repository Treat Warnings as Errors enabled and zero warnings.
-2. Run `HiveUiPolishTests`, then the full `Hive.Tests` suite.
-3. Manually inspect representative Example Host/Settings surfaces at supported sizes in Light, Dark, and System themes, including keyboard/focus, dialogs, selected/disabled, loading/error/empty/no-result, and resize states.
-4. Test a message exceeding the viewport height and scroll to its end to confirm the complete message remains readable.
+No builds, tests, or application launch were performed by the assistant. The source/diff review is not presented as independent verification.
 
-Do not close this task until developer results are supplied and reviewed.
+## Remaining manual acceptance
+
+**VERIFICATION PENDING** only for targeted visual checks not explicit in the supplied report:
+1. Display a message exceeding the 250px viewport, scroll all the way to the end, and confirm no text is clipped. Exercise details expanded/collapsed, keyboard focus, and dialog dismissal.
+2. Confirm Light, Dark, and System themes plus normal/compact sizing on the affected Settings / Provider Settings surfaces; recheck selected, disabled, loading, error, empty/no-result, navigation, and resize states.
+
+Detailed evidence and remaining checks: [WinForms UI/UX Audit and Corrective Polish](verification/maintenance/hive-winforms-ui-ux-audit-2026-10-10.md).
+
+Do not close this task until the remaining visual acceptance checks are confirmed.
 
 ## Checkpoint
 
