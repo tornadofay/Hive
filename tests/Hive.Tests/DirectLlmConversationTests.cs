@@ -132,10 +132,10 @@ public sealed class DirectLlmConversationTests
             Assert.Equal(
                 "chosen-direct-model",
                 handler.LastRequestModel);
-            Assert.True(
-                handler.LastRequestUri!.AbsolutePath.EndsWith(
-                    "/chat/completions",
-                    StringComparison.OrdinalIgnoreCase));
+            Assert.EndsWith(
+                "/chat/completions",
+                handler.LastRequestUri!.AbsolutePath,
+                StringComparison.OrdinalIgnoreCase);
 
             var summaries = await management.ListDirectLlmConversationsAsync(accessContext);
             Assert.True(summaries.IsSuccess, summaries.Error?.Message);
