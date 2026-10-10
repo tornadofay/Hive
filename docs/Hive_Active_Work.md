@@ -1,6 +1,6 @@
 # Hive — Active Work
 
-Status: **IMPLEMENTATION IN PROGRESS**
+Status: **VERIFICATION PENDING**
 
 ## Authorized temporary corrective slice
 
@@ -12,19 +12,24 @@ Authorization: the user explicitly requested `Hive: Maintenance - UI`. With no a
 
 - Ownership boundary: `Hive.Host.WinForms.UI`, specifically the existing `HiveUiErrorReporter` and its focused tests.
 - Ensure failures in optional Output-panel logging or themed message-box presentation cannot escape the error reporter and become a second unhandled UI failure.
-- Preserve the existing sanitized diagnostic content and attempt both independent reporting surfaces even when one of them fails.
+- Preserve existing sanitized diagnostic content and attempt both independent reporting surfaces even when one fails.
 - Add deterministic focused regression coverage for the observer-failure containment contract.
 
-### Exclusions
+### Implementation reviewed
 
-- No new user-facing capability or public-contract expansion.
-- No persistence, provider, host composition, navigation, theme redesign, broad cleanup, or roadmap implementation.
-- Do not run builds/tests/launches or claim verification; the developer performs verification locally.
+- Both `HiveUiErrorReporter.Report` overloads execute Output-panel and themed-message-box observers through one contained helper.
+- A failed observer is recorded through best-effort Debug output with the safe original diagnostic and sanitized reporter exception details; failures in the Debug listener are also contained.
+- Added focused tests for observer exceptions and continued execution of the next reporting surface.
+- Review found no changes outside this bounded UI reporting correction, its focused tests, and this Active Work record.
 
 ### Verification gate
 
-After implementation, return this slice to **VERIFICATION PENDING** with the exact focused test target and broader-suite requirement. Closure requires actual developer-reported verification; do not infer build or test results.
+**VERIFICATION PENDING** — the assistant did not run builds or tests. The developer must verify before closure.
 
-Focused test target: `tests/Hive.Tests/HiveUiExceptionDiagnosticsTests.cs` (`HiveUiExceptionDiagnosticsTests`).
+1. Build affected projects with Visual Studio **Treat Warnings as Errors** enabled and confirm zero warnings/errors: `Hive.Host.WinForms.UI` and `Hive.Tests`.
+2. Run focused tests: `tests/Hive.Tests/HiveUiExceptionDiagnosticsTests.cs` (`HiveUiExceptionDiagnosticsTests`).
+3. Run the full `Hive.Tests` suite.
+
+No Example Host scenario is required: this is internal error-boundary hardening, not a new externally usable capability.
 
 Repository checkpoint when this slice was opened: `main` at `d7552e4634d8f6490a2188b4f0cb63281d2f4c7f`.
