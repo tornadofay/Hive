@@ -162,7 +162,7 @@ public sealed class HiveSettingsView : UserControl
 
         _lifetimeCts ??= new CancellationTokenSource();
 
-        _overviewView ??= new HiveSettingsOverviewView();
+        _overviewView ??= new HiveSettingsOverviewView(_themeManager);
 
         // Keep Settings startup lightweight. Provider, Agent, and Persistence
         // pages are constructed only when the user first navigates to them.
@@ -410,7 +410,7 @@ public sealed class HiveSettingsView : UserControl
     {
         Control control = page.Key switch
         {
-            SettingsPageKey.Overview => _overviewView ??= new HiveSettingsOverviewView(),
+            SettingsPageKey.Overview => _overviewView ??= new HiveSettingsOverviewView(_themeManager),
 
             SettingsPageKey.ProviderConfiguration => _providerConfigurationView ??=
                 new HiveProvidersSettingsView(
