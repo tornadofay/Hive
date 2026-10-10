@@ -55,7 +55,7 @@ Hive must never build a second workflow/orchestration engine merely because Hive
 | Agent programming model | Microsoft Agent Framework | Reuse MAF execution/orchestration |
 | Execution model | Ephemeral execution + durable Agent/Hive state + transactional outbox | Execution objects and Agent incarnations may end; durable state survives; a WorkItem is the durable unit of user-visible work and a submission may produce one or multiple WorkItems |
 | Persistence | SQL Server profile + Embedded Persistence Profile; LocalDB for SQL development | Hive database is isolated from host business data; 1.18A adds Embedded parity with the current SQL Server persistence surface; selected backend is a deployment/configuration concern |
-| Vector storage | SQL Server native `VECTOR` for the SQL Server profile + embedded vector implementation behind `IVectorStore` | 1.19 bounded storage/search infrastructure; vector index is derived retrieval data and no separate external vector database is required |
+| Vector retrieval | Deferred; reassess with Phase 5.1 Memory Resource Families | If a concrete consumer justifies it, select backend-neutral contracts and SQL Server/Embedded mechanisms then. Treat indexes as derived/rebuildable rather than authoritative. No vector implementation or `IVectorStore` contract is authorized now. |
 | Provider adapter | One shared OpenAI-compatible adapter | Compatible providers are configurations, not new adapter implementations |
 | Provider | Vendor/service integration | Transport identity |
 | ProviderAccount | Credential/account/project under Provider | Credential/account boundary |
@@ -72,7 +72,7 @@ The Phase 1.12 Settings boundary uses one typed persistence configuration contra
 
 Current V1 provider configurations include compatible hosted/local targets such as Groq, OpenRouter, Cloudflare, Cerebras, NVIDIA, Google, and local OpenAI-compatible servers. The adapter contract remains vendor-neutral; adding another compatible provider should normally require configuration, not another transport implementation.
 
-Deferred until a measured requirement exists: Temporal, Dapr, PostgreSQL/pgvector, Elasticsearch/OpenSearch, Akka.NET, Orleans, DiskANN, a custom Hive workflow engine, a separate external secrets-vault architecture, and any database engine beyond the supported SQL Server and Embedded profiles. V1 does not require a separate vector database. The Embedded Persistence Profile should use a mature embedded relational technology behind the existing Hive persistence/resource contracts; its vector implementation is a separate 1.19 boundary and must remain replaceable behind `IVectorStore`.
+Deferred until a measured requirement exists: Temporal, Dapr, PostgreSQL/pgvector, Elasticsearch/OpenSearch, Akka.NET, Orleans, DiskANN, a custom Hive workflow engine, a separate external secrets-vault architecture, any database engine beyond the supported SQL Server and Embedded profiles, and vector retrieval/indexing before a concrete memory consumer is established. V1 does not require a separate vector database. Reassess vector retrieval with Phase 5.1 Memory Resource Families; choose any `IVectorStore` abstraction and the SQL Server/Embedded implementation strategy only after concrete retrieval requirements have been identified.
 
 ---
 

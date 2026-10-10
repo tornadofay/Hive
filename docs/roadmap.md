@@ -310,23 +310,16 @@ Implementation structure: **1.18A remains one roadmap phase containing six seque
 5. **Slice 5 — Host Composition, Settings UI & First-Run Default:** safe backend-aware host recomposition, Database Setup/Data Migration UI, Management-only operations, and verified normal-user Embedded first-run behavior.
 6. **Slice 6 — Cross-Backend Hardening, Full Regression & Closure:** complete restart/crash/concurrency/cancellation/security/migration regression, Example Host verification, and final documentation/status closure.
 
-Scope and non-goals: the six slices together cover the current SQL Server-backed persistence surface as the Embedded catch-up baseline; backend-aware composition and configuration; initialization, schema/version migration, reopen/restart, crash/recovery, and safe host recomposition; the existing Persistence Settings page; complete bidirectional full-data migration; and final cross-backend hardening. Embedded vector indexing/search is explicitly deferred to 1.19, while live synchronization and cognitive/semantic features remain out of scope.
+Scope and non-goals: the six slices together cover the current SQL Server-backed persistence surface as the Embedded catch-up baseline; backend-aware composition and configuration; initialization, schema/version migration, reopen/restart, crash/recovery, and safe host recomposition; the existing Persistence Settings page; complete bidirectional full-data migration; and final cross-backend hardening. Embedded vector indexing/search is outside this phase and is deferred for reconsideration with Phase 5.1 — Memory Resource Families, where a concrete retrieval consumer can be established. This deferral does not authorize implementation. Live synchronization and cognitive/semantic features remain out of scope of 1.18A.
 
 Verify: **all six slice gates** must pass. The final phase verification includes clean first-run initialization; parity with the current SQL Server durable persistence surface; persistence and reload across application restart; schema/version handling and migration failure boundaries; secret/configuration safety; host recomposition and failed-candidate rollback; SQL Server regression behavior; backend selection through the Management/Settings boundary; deterministic persistence; successful full-data SQL Server ↔ Embedded migration in both directions with identity, relationship, and durability verification; required Example Host manual verification; and the intended normal-user Embedded first-run behavior.
 
-## 1.19 — V1 Vector Retrieval Infrastructure
-
-Detailed implementation plan: [1.19 — V1 Vector Retrieval Infrastructure](plan/Phase1/1.19.md)
-
-Objective: establish bounded, replaceable vector storage and similarity retrieval for later Hive capabilities across the SQL Server and Embedded persistence profiles established by 1.18A.
-
-Scope and non-goals: use the `IVectorStore` boundary with SQL Server native vector support for the SQL Server profile and a local embedded vector implementation for the Embedded Persistence Profile. 1.19 consumes those backend implementations through persistence/vector contracts; it must not duplicate higher-level feature logic for SQL Server versus Embedded. This is retrieval infrastructure, not the Phase 5 semantic-memory/learning system. The authoritative logical resource/state records remain in the selected Hive persistence backend, and vector indexes are derived/rebuildable retrieval data.
-
-Verify: insertion/search for each supported persistence profile, deterministic ordering/ties, ownership/scope, invalid vectors, result bounds, cancellation, persistence/reload/rebuild, and isolation.
 
 ## 1.19A — Execution Target Preferences & Favorite Target Pool
 
 Detailed implementation plan: [1.19 Follow-Up — Execution Target Preferences & Favorite Target Pool](plan/Phase1/1.19-Follow-Up.md)
+
+Historical ordering note: this completed slice retains its original identifier and is independent of vector retrieval, which is deferred for assessment with Phase 5.1.
 
 Objective: establish a durable user/scope-aware favorite ExecutionTarget pool that acts only as an optional candidate filter for later target selection, with a simple Provider Settings Favorites preference CRUD surface. Adding a favorite uses a compact Provider → Account → Execution Target picker so Provider / Account filters reduce the target choices instead of forcing the user through a long global target list. Agent and other target-selection behavior remains unchanged in this slice and is owned by the relevant later phase.
 
@@ -594,6 +587,8 @@ Verify: concurrent human/Dream updates do not lose evidence; actual experience c
 ## 5.1 — Memory Resource Families
 Working, episodic, semantic, procedural, and future extensible families with explicit scope/ownership.
 
+Deferred retrieval consideration: assess whether these memory families have a concrete need for vector-based similarity retrieval. See [Deferred Vector Retrieval assessment](plan/Deferred/Vector-Retrieval.md). This is a design/reassessment reference, not an authorized implementation slice. Decide during Phase 5.1 whether vector retrieval is needed and, only if justified, whether it belongs inside the memory work or needs a separate follow-up slice.
+
 ## 5.2 — Knowledge / Wiki
 Versioned, permissioned knowledge resources and managed Wiki source.
 
@@ -694,9 +689,9 @@ Scope:
 - explicit upgrade/migration tooling for moving a local installation to a server-oriented deployment;
 - compatibility/conflict handling for deployment-profile changes;
 - operational guidance and supported migration paths;
-- later cross-profile portability concerns that are intentionally outside 1.18A and 1.19.
+- later cross-profile portability concerns that are intentionally outside 1.18A and the deferred vector-retrieval assessment.
 
-This slice does not redefine the Hive resource model, create a third persistence backend, or retroactively move Embedded persistence implementation into Phase 8. Initial embedded relational persistence and backend-aware Settings belong to 1.18A; vector storage/search belongs to 1.19.
+This slice does not redefine the Hive resource model, create a third persistence backend, or retroactively move Embedded persistence implementation into Phase 8. Initial embedded relational persistence and backend-aware Settings belong to 1.18A; vector storage/search is deferred for reconsideration with Phase 5.1 and is not owned by Phase 8.6.
 
 Verify: supported export/import or migration workflows, compatibility/conflict handling, preservation of resource identity/ownership/scope/provenance, failure recovery, secret/export safety, and deterministic post-migration state where those portability contracts are provided.
 
