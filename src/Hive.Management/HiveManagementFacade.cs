@@ -75,6 +75,7 @@ public sealed class HiveManagementFacade : IHiveManagementFacade, IDisposable
             bootstrapCredentials,
             persistenceMigrationQuiescence);
         _directLlm = new HiveDirectLlmManagementService(
+            _providers,
             providerResources,
             secrets,
             eventPersistence?.EventStore,
