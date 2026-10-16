@@ -56,6 +56,14 @@ All files under `docs/architecture/` are part of the same architecture source of
 
 Hive is a general-purpose C# / .NET 10 platform for building, running, coordinating, observing, governing, and evolving multi-agent systems.
 
+### Product thesis and terminology
+
+**Hive Platform** refers to this software project and its shared capabilities. A **governing Hive** is a persistent collective created and managed by the platform. These are different meanings of the same product name, not separate products or coordination engines.
+
+Hive's intended intelligence model is governed refinement: interpret a goal, identify the perspectives and expertise likely to help, find or create suitable Agents when authorized, coordinate independent work and targeted critique, evaluate evidence, and synthesize a result. The same model can support conversation, investigation, creative work, analysis, and authorized Agentic execution. It is adaptive rather than mandatory: simple requests may use direct LLM interaction or one Agent without forming a Hive or adding unnecessary reasoning rounds.
+
+The governing Hive owns the collaborative problem-solving decisions for its goal. The Queen/Manager is a coordinating role within that authority, not a parallel workflow engine. Hive proposes and governs assignments and refinement policy; code-enforced policy controls authorization and consequential actions; Microsoft Agent Framework (MAF) owns the execution/orchestration mechanics it already provides. Model output, including a proposed plan or critique, is evidence or a proposal—not authority or proof.
+
 ### V1 forcing function
 
 V1 has a real forcing function: automate data entry from supported input sources into the user's existing business application.
@@ -115,10 +123,12 @@ Tenant
             │    │    └── Executions
             │    └── Resources
             └── Hives
-                 └── Members (Agents and/or future Hive generations)
+                 └── Members (Agents)
 ```
 
 Not every deployment must use every level.
+
+The term `Workspace` is used for both the human-facing interaction surface and a resource/scope identity. Those are distinct concepts: the UI surface is not itself proof of resource identity, ownership, or authorization. New contracts and explanatory text should name the intended meaning explicitly.
 
 ### Provider model discovery architecture
 
@@ -308,6 +318,8 @@ This section contains only cross-cutting invariants. Detailed domain contracts b
 16. **Engineering consistency:** public contracts remain neutral and minimal; errors are structured; catches do not hide causes; the same computation or policy is not independently reimplemented in multiple layers; configured behavior is real and tested; resource lifetimes and repeated lookup performance are handled deliberately.
 17. **Verification and examples:** tests cover contract-relevant normal, invalid, boundary, failure, cancellation, concurrency, recovery, and security behavior. Provider tests use fakes/local infrastructure, not real vendor accounts. Meaningful public capabilities have Example Host scenarios using the public APIs and enforcement boundaries. Report only verification that actually ran.
 18. **Repository authority:** `AGENTS.md` owns agent workflow and authorization rules; `Hive_Active_Work.md` owns the current implementation slice and verification gate; `Hive_Current_Status.md` owns status; `roadmap.md` defines order but never authorizes work. Phase and slice numbers are ordinal work identifiers, not software-version numbers. Other documents must not contradict these ownership boundaries. A future roadmap concept does not authorize implementation or become an implicit prerequisite of an earlier slice.
+19. **One governing authority per collaborative goal:** a governing Hive coordinates work only through Agents in its own membership. It may request authorized population changes through the Hive Platform, but it does not delegate its goal to another Hive. An independent Agent's explicitly authorized creation or sponsorship of a Hive is a separate lifecycle relationship, not Hive-to-Hive delegation.
+20. **Specialization and learning are distinct:** an Agent's specialty is orthogonal to its Agent generation and Hive membership. Parent lineage describes configuration derivation, not lifecycle ownership, inherited authority, or automatic sharing of private memory. Persistent memory does not itself constitute learning; improved future behavior requires relevant use of evidence and, for adaptive learning, evaluation and governed changes.
 
 ### Domain-owned architectural contracts
 
