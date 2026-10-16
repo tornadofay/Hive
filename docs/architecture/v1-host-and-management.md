@@ -329,6 +329,18 @@ Workspace mode semantics are:
 - In **Agent mode**, the user selects an Agent; that Agent uses the normal Execution Planner and policy boundary to choose its `ExecutionTarget`. The user is not required to select a target for every Agent decision.
 - Workspace may display the selected target and relevant diagnostics, but it does not become the authorization authority or execution engine.
 
+### Target Agent Management surface — Specialized Agents
+
+The intended Agent-management page retains the existing general Agent configuration as its first tab and adds a **Specialized Agents** tab for the platform's specialist catalog. This is target architecture, not a claim that the current UI or public contracts already implement the feature.
+
+The first tab continues to configure the general Agent and its existing execution preferences. The second tab presents factory-provided specialist templates and persistent specialized Agents as distinct items: a template is a reusable starting definition; an Agent created from it is a complete, persistent Agent with its own identity and lifecycle. User-created and runtime-created specialists should be discoverable alongside factory-derived specialists, with their source, specialty, parent/configuration lineage, configuration version, lifecycle, and relevant history summary visible where appropriate.
+
+Creating a customized specialist must not silently mutate a shipped factory template or unrelated Agent definitions. Parent-configuration updates require explicit, versioned application/rebase semantics. The catalog is a management view over authoritative Management contracts, not an authority over Agent identity, Hive membership, permissions, or execution. The UI must not access Persistence directly, resolve secrets itself, or create Hive membership simply because an Agent is visible.
+
+For ordinary user requests, Workspace should not require manually assembling a specialist team. The governing Hive selects or requests creation of suitable Agents when collective work is warranted; direct LLM and single-Agent paths remain available without implicit Hive/Swarm creation.
+
+The same neutral Management/application contracts must remain usable independently of WinForms presentation. Future WPF, console, web, or other hosts should consume those shared contracts rather than reimplementing specialist selection, collaboration policy, authorization, or learning in a host-specific layer.
+
 ### 5.1 Direct LLM conversation boundary — Phase 1.20
 
 Direct LLM conversation is a Management-owned conversation aggregate, not an Agent or Runtime execution:
