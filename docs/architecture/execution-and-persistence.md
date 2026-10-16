@@ -456,6 +456,16 @@ MAF execution / model call
 The `Reasoning Requirement` stage above describes the CognitiveAgent-owned contract planned for Phase 4.3; it is not a prerequisite for V1 Base-Agent execution. V1 callers continue through the existing request and target-selection inputs, and Phase 1.31's Base-Agent loop reuses the current Execution Planner without introducing that cognitive contract. Phase 4.3 may later supply its provider-neutral requirement to the same planner.
 
 LLM mode is a V1 Workspace interaction path where the user chooses the execution target. Agent mode selects an Agent, which uses this planner on behalf of that Agent; after Phase 2 adds persistent Hive/Swarm coordination, Hive-level Agentic behavior extends the same planner boundary. Any explicitly pinned Agent target is the exact durable `ExecutionTarget` identity, not a model-name string.
+
+### One governed collaborative-goal lifecycle
+
+Direct LLM interaction, single-Agent problem solving, and Hive-coordinated multi-Agent work are paths within one product model, not separate workflow engines. Direct LLM interaction remains lightweight and does not implicitly create an Agent, Hive, or Swarm.
+
+For a user goal, reuse the existing owning interaction/task correlation or WorkItem where its semantics fit. A direct LLM conversation remains a Management-owned conversation aggregate; a WorkItem remains the durable user-visible work aggregate and represents a logical business operation when one is required. Do not create a new WorkItem for every reasoning round, critique, or provider Execution. Agent Objectives represent bounded Agent work and link to the owning WorkItem/task when applicable. A problem-solving run may span multiple provider Executions and must preserve that correlation rather than using one `ExecutionId` as the identity of the whole effort.
+
+For a Hive-coordinated goal, the governing Hive owns problem decomposition, specialist discovery/creation requests, assignments within its membership, common success criteria, evidence collection, synthesis, refinement decisions, and stopping policy. Individual Agents retain their own Objective/attempt history and experience ownership. MAF executes the selected workflow/coordination primitives where it provides the required mechanics; Hive adds the domain-specific coordination and governance state it owns, not a competing workflow engine.
+
+The same governed loop should support both a one-attempt path and bounded iterative refinement. Additional Agents, critique rounds, tool calls, and verification are optional and budgeted according to expected value and risk. A model's claim of progress is not sufficient evidence by itself, and the process returns an explicit partial/unresolved outcome when available evidence cannot establish success.
 ```
 
 A required capability must be explicitly supported. Unknown capability evidence does not qualify for a hard requirement.
