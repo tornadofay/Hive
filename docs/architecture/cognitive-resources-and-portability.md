@@ -125,6 +125,27 @@ A future vector representation used for retrieval is derived data. It is not the
 
 Changing persistence backend does not change the meaning of a cognitive resource. The direct SQL Server ↔ Embedded Hive-data migration boundary is established by 1.18A; broader configuration/resource portability remains a later concern. Neither migration nor synchronization may be implemented as a semantic-learning mechanism.
 
+### 11.6 Agent-level experience, memory ownership, and knowledge exchange
+
+Hive distinguishes four information boundaries that serve different purposes:
+
+- **Runtime working state** — context and records tied to a particular RuntimeInstance or execution, useful for active work and recovery.
+- **Persistent Agent experience** — attributable history that belongs to the stable Agent identity across runtime incarnations, including actual observations, evaluated outcomes, corrections, methods tried, and their applicability conditions.
+- **Hive-shared problem evidence** — findings, objections, candidate answers, and checks deliberately contributed to one collaborative goal.
+- **Reusable expertise** — governed Knowledge and versioned Skills or adaptations that can be discovered by other authorized Agents/Hives.
+
+These are logical ownership distinctions, not a mandate to create four parallel storage engines or make every concept a generic Resource. Reuse the established persistence/event/snapshot contracts and introduce a dedicated lifecycle boundary only when its semantics require one.
+
+The current Base-Agent `IAgentMemoryStore` is RuntimeInstance-scoped. Its durable persistence supports existing runtime work-state semantics, but it is not by itself the future Agent-level experience repository described above. A later Agent-level experience contract must preserve stable Agent ownership while retaining origin RuntimeId, owning task/WorkItem or conversation correlation where applicable, source/execution references, time, provenance, and actual/simulated/human-corrected/external evidence classification. Runtime reincarnation must not create a false second experience or erase the original context.
+
+Memory storage is not learning. A stored record can affect a future result only if Hive retrieves relevant information, supplies it to an appropriate decision or method, and evaluates what happened. Adaptive learning additionally requires outcome interpretation, attribution where possible, a proposed change, validation, versioned promotion, and later evaluation of that change. This is not model-weight training, and no claim that memory volume alone improves intelligence is permitted.
+
+An Agent may offer an explicit contribution to its parent or another authorized recipient: selected source experiences, an evaluation, a candidate lesson, a procedure, or evidence needed to assess a claim. A parent may also pull relevant records when authorized, including more detailed source records when a summary is inadequate. The recipient independently evaluates what the evidence supports before incorporating it into its own memory, cognitive state, or a reusable resource. Acceptance by one Agent does not automatically certify a claim for all Agents.
+
+Do not bulk-copy a child's entire private memory into its parent by default. Keep source records attributable, preserve applicability limits and contradictions, and distinguish the recipient's own assessment from the source Agent's conclusion. Parent lineage does not grant data access: scope, permissions, privacy, and any host/tenant restrictions remain authoritative. This controlled exchange is available to authorized Agents generally; it is not Hive-to-Hive delegation.
+
+A dormant parent may request or retrieve selected child contributions without requiring every child runtime to be active, provided the source records are durable and the access is authorized. Any resulting adaptation still passes through the recipient's normal validation and governance boundary.
+
 ---
 
 
@@ -149,7 +170,11 @@ Possible contents include:
 - permissions/policies;
 - runtime defaults.
 
-Live executions, synchronization primitives, transient process state, arbitrary host objects, and executable handlers are excluded.
+Configuration packages and portable specialist packages are related but distinct. A configuration package primarily carries definitions and settings. A future **portable specialist package** may additionally include selected Agent experience and approved cognitive resources for which export is authorized. It should preserve the specialty profile, configuration lineage, package/source identity, relevant Experience/OutcomeEvaluation provenance, applicability conditions, approved Skills/Knowledge, and compatibility versions. It must not imply that all private memory is exportable or that the destination has the same operating conditions.
+
+Live executions, live runtime handles, synchronization primitives, transient process state, arbitrary host objects, opaque executable handlers, credentials, and authorization grants are excluded. A selected experience payload may refer to originating runtimes/executions as provenance but does not restore them as live resources. Export of private history must be explicit and scoped; it is not the default for ordinary configuration export.
+
+Import creates or maps to local resource identities and resolves target-specific dependencies through the destination platform's authorized Management boundary. Preserve origin/package lineage without blindly copying credentials, execution-target identities, host integration bindings, or permission grants. The destination must validate compatibility and applicability before using imported experience or skills.
 
 Credentials are excluded by default.
 
