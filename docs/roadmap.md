@@ -455,6 +455,8 @@ Define Hive identity, membership, roles, and membership lifecycle.
 ## 2.2 — Configurable Agent Composition
 Add/remove/reorder Agents through Hive.Management without hard-coded application wiring.
 
+Establish the specialist catalog's management foundation: structured specialty profiles, factory templates distinct from persistent Agent identities, parent Agent/configuration lineage, versioned inherited configuration with explicit specialist overrides, and the Agent page's Specialized Agents tab. A specialized Agent remains a complete ordinary Agent; specialization is not a distinct AgentGeneration. This phase owns defining/configuring/cataloging specialists; governing-Hive runtime population and assignment belongs to Phase 2.7.
+
 ## 2.3 — Hive ↔ Agent Communication
 Use explicit message/DTO contracts with correlation/provenance.
 
@@ -468,9 +470,11 @@ Observe/pause/stop members through Hive/MAF-supported mechanisms.
 Allow an Agent to explicitly create/sponsor a persistent Hive for a bounded need without changing the Agent's own type. Sponsorship is a relationship, not implicit lifecycle ownership; sponsor death/retirement/deletion does not automatically delete the Hive or its members.
 
 ## 2.7 — Specialty-Driven Population & Swarm Participation
-Allow an authorized Hive to create or reuse Agents of any supported generation for missing specialties, including CognitiveAgents when the Hive's population policy explicitly permits that generation.
+Allow an authorized governing Hive to search the platform catalog and create, activate, or reuse complete specialist Agents for missing or insufficient specialties, including CognitiveAgents only when the Hive's population policy explicitly permits that generation. Enforce specialty matching, duplicate/population guards, provenance, budgets, authorization, and persistent Agent lifecycle. Runtime-created specialists are not disposable per-prompt roles.
 
-Define Swarm as the active subset of Hive members collaborating on a WorkItem, Question, or bounded problem. Swarm is derived/session state, not a persistent resource. A member Agent normally requests missing specialists through the parent Hive rather than recursively creating a child Hive.
+The governing Hive coordinates only Agents in its own membership and never delegates a goal to another Hive. A member Agent requests missing expertise from its governing Hive. An independent Agent may explicitly sponsor a Hive only through the separately authorized Hive-creation lifecycle; this is not Hive-to-Hive delegation. Parent/configuration lineage does not confer lifecycle ownership or automatic memory access.
+
+Define Swarm as the active subset of Hive members collaborating on a WorkItem, Question, or bounded problem. Swarm is derived/session state, not a persistent resource. The Swarm is not required for all Hive work.
 
 For suitable difficult tasks, Hive may assign independent members materially different approaches, decompositions, assumptions, or specialist investigations. Preserve the identity and method of each attempt, prevent accidental duplication of identical work, compare results against common success criteria, and retain conflicting/unsuccessful evidence when useful. Parallel attempts are optional and bounded by the task's time, cost, concurrency, cancellation, and authorization policy; a Swarm is not the default for every task.
 
@@ -533,6 +537,10 @@ Verify: versioned cognitive-state transitions preserve context/provenance for Ri
 ## 4.5 — Experience, Outcome Evaluation & Cognitive Event History
 Bounded experience capture, provenance, expected-versus-observed results, outcome evaluation, attribution/credit context, and replayable supported transitions. OutcomeEvaluation is a first-class cognitive contract/process that establishes a provenance-bearing outcome classification from the observed evidence and applicable success criteria. Success, Mistake, Partial, and Unknown are first-class cognitive outcome concepts associated with that evaluation; specialized processing may consume them without making them aliases for execution states. Outcome correctness remains distinct from method/strategy quality and causal attribution. Actual observations/experiences remain distinguishable from simulated, predicted, counterfactual, human-corrected, and external evidence.
 
+Persistent Agent experience belongs to the stable Agent identity across runtime incarnations, while runtime working memory remains scoped to its RuntimeInstance. Preserve source RuntimeId/Execution, owning Objective/WorkItem or task correlation where applicable, configuration/method context, and actual/simulated/human-corrected/external provenance. Restarting a runtime must not erase experience or duplicate an observation.
+
+Experience records are evidence, not automatic learning. They must be retrievable in relevant contexts and evaluated against applicable success criteria before supporting adaptations. The phase should provide the experience ownership boundary used by later learning and parent/child knowledge exchange without requiring bulk memory copying.
+
 Define mutually exclusive outcome semantics for one evaluation:
 - Success = all applicable success criteria were actually satisfied;
 - Partial = some but not all applicable criteria were satisfied and the result is incomplete rather than wholly incorrect;
@@ -550,6 +558,8 @@ Define death as complete termination of the current runtime/incarnation, preserv
 
 ## 4.7 — Postmortem & Dream Processing
 Define bounded postmortem processing plus a first-class Dream subsystem that can inspect history, generate hypothetical alternatives, run multiple simulations in parallel, compare predicted outcomes, and produce proposed cognitive updates without requiring the Agent runtime to remain alive. Dream purposes have explicit semantics and provenance; purpose-specific processors may share the core Dream contract or be separately replaceable when scheduling, lifecycle, or resource boundaries justify that split. Proposed changes are not authoritative state transitions; reconciliation and the owning resource/governance boundary decide whether they are accepted.
+
+Dream processing may prepare a dormant specialist for future work and may produce a proposed learning contribution for its parent or another authorized recipient. The recipient must evaluate the contribution before incorporation. Parent wake/review may retrieve selected durable child experience while a child runtime is inactive, but does not bulk-copy private memory or treat simulated Dream output as actual experience.
 
 Dream purposes include:
 - Recovery — explore alternatives after a Mistake or unresolved outcome;
@@ -587,6 +597,8 @@ Verify: concurrent human/Dream updates do not lose evidence; actual experience c
 ## 5.1 — Memory Resource Families
 Working, episodic, semantic, procedural, and future extensible families with explicit scope/ownership.
 
+Define the boundaries between runtime working memory, durable Agent-level experience across runtime incarnations, Hive-shared evidence for one collaborative goal, and reusable Knowledge/Skills. Retrieval and relevance are explicit: stored volume is not a measure of intelligence, and memory affects behavior only when applicable information is retrieved and used. Learning semantics remain with outcome evaluation and governed adaptation, not the raw memory store.
+
 Deferred retrieval consideration: assess whether these memory families have a concrete need for vector-based similarity retrieval. See [Deferred Vector Retrieval assessment](plan/Deferred/Vector-Retrieval.md). This is a design/reassessment reference, not an authorized implementation slice. Decide during Phase 5.1 whether vector retrieval is needed and, only if justified, whether it belongs inside the memory work or needs a separate follow-up slice.
 
 ## 5.2 — Knowledge / Wiki
@@ -595,8 +607,12 @@ Versioned, permissioned knowledge resources and managed Wiki source.
 ## 5.3 — Skills
 Versioned reusable procedures, dependencies, constraints, provenance, and assignments.
 
+Skills may be proposed from evaluated Agent experience or Learning Candidates. Each promoted procedure must state applicability conditions, required inputs/capabilities, evidence basis, failure signals, and revision/retirement semantics. Shared Skills are distinct from private Agent memories and must not be promoted directly from unverified model or Dream output.
+
 ## 5.4 — Learning Candidates & Governance
 Transform evaluated cognitive evidence into governed Learning Candidates through a first-class learning/governance boundary. The implementation may use a dedicated learning component or shared cognitive-resource infrastructure, but promotion remains explicit and governed.
+
+Support controlled Agent-to-Agent knowledge exchange: an Agent may offer or be asked for selected experience, evidence, or candidate lessons; a receiving Agent evaluates them independently before changing its own memory, cognitive state, strategy, or reusable resources. Preserve origin, attribution, applicable context, contradictions, and the recipient's decision. Parent/child lineage can guide discoverability but does not grant memory access or cause automatic inheritance of experience.
 
 Evidence sources include:
 - evaluated Success outcomes;
@@ -638,8 +654,12 @@ Coordinate planning/reasoning across members without moving member cognition int
 ## 6.3 — Collective Questions & Specialty Routing
 Route Questions by Agent specialty, avoid semantically duplicate work where evidence already exists, and allow each Agent to retain its own Questions and answers.
 
+Specialty discovery consults the platform catalog and the governing Hive's authorized membership/pool. Missing expertise is created or activated through that Hive's population policy; it is not obtained by delegating to another Hive.
+
 ## 6.4 — Cross-Agent Evidence & Synthesis
 Combine attributable answers, experiences, evaluated outcomes, Mistakes, Successes, Dreams, observations, candidate attempts, critiques, and verifier results into collective reasoning without erasing individual provenance or actual-versus-simulated evidence status. Compare alternatives against the same objective and success criteria; preserve disagreement, method differences, uncertainty, and negative evidence rather than flattening them into a majority answer.
+
+Hive-shared evidence for the current goal remains distinct from an Agent's private experience and from reusable platform Knowledge/Skills. Collective synthesis may offer a Learning Candidate to an Agent or platform resource owner, but does not silently rewrite member memory or promote collective claims as universally valid.
 
 ## 6.5 — Collective Conflict & Consensus
 Bounded coordination, conflict resolution, disagreement handling, and consensus mechanisms.
@@ -671,6 +691,8 @@ Re-evaluate Temporal/Dapr/distributed execution only from measured operational r
 
 ## 8.3 — Configuration Import/Export
 Versioned Hive configuration packages with compatibility/conflict handling.
+
+Define a separate opt-in portable specialist package that can include a specialist definition/profile, configuration lineage, approved Skills/Knowledge, and selected Agent experience/outcome evidence when authorized. Preserve provenance, applicability, and origin identity while mapping resources to destination-local identities. Exclude credentials, authorization grants, live runtimes/executions, and host-specific bindings; private experience is not included in ordinary configuration exports by default.
 
 ## 8.4 — MCP / Tool Extensibility
 Additional governed tool-extension boundary.
