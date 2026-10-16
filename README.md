@@ -71,7 +71,7 @@ The base `Agent` is allowed to be capable without being cognitive. It may provid
 - a first-class **Question/Answer protocol** with provenance, ownership, status, waiting, and timeout;
 - a **Patience / Understanding Gate** that blocks consequential work until required information or confirmation is available;
 - bounded **Simulation infrastructure** that can execute and compare hypothetical scenarios in parallel;
-- **Delegation/coordination** interfaces for requesting work from other Agents or Hives;
+- **Delegation/coordination** interfaces for requesting work from Agents within an authorized coordination context; a governing Hive does not delegate goals to other Hives;
 - lifecycle and persistence controls that allow runtime death, dormancy, and later recreation.
 
 These mechanisms become cognitive only when a CognitiveAgent can autonomously interpret, revise, select, or learn from them—for example forming Goals, revising Beliefs, choosing Questions, selecting Dreams, interpreting simulation outcomes, or changing strategy from experience.
