@@ -54,6 +54,27 @@ Future generations remain open-ended and may coexist with older generations.
 
 This gives Hive long-term flexibility without making type mutation a correctness problem.
 
+### Specialized Agents, configuration lineage, and the platform catalog
+
+A **specialized Agent** is a complete, independently usable Agent configured for a defined specialty. Specialization is not a new `AgentGeneration`, does not require a C# subclass, and does not imply Hive membership. A specialist may be a Base Agent today and may use cognitive capabilities only when its selected generation and the relevant future capabilities support them. “Complete Agent” means independent identity and lifecycle, not that every future cognitive feature is already implemented.
+
+Keep these concepts distinct:
+
+- **Factory specialist template** — a versioned, reusable starting package supplied by the Hive Platform. It is not itself a running or persistent Agent.
+- **AgentDefinition** — the configuration definition/version from which an Agent is created, including its specialty profile and applicable execution defaults.
+- **Persistent Agent identity** — the individual specialist that accumulates its own experience and lifecycle state.
+- **RuntimeInstance / Execution** — an active incarnation and a specific operation; neither is the specialist's identity.
+
+A specialized Agent may be derived from a parent's Agent configuration. Record the parent Agent/definition lineage and the exact source configuration version used. The child receives a configuration snapshot plus an explicit specialty and override set. Parent edits do not silently rewrite existing specialists; applying compatible parent changes to a child is a deliberate, versioned rebase that preserves the child's specialty and explicit overrides unless the user or authorized policy changes them.
+
+Parentage is lineage, not lifecycle ownership. The parent does not own the child's identity, memory, experience, permissions, or runtime. Retiring a parent definition does not automatically retire a specialist. Siblings derived from one parent may share defaults, but they do not automatically share private working state or experience. Configuration inheritance never grants authorization, credentials, host access, or approval rights.
+
+The Hive Platform may provide factory templates, user-defined specialist definitions, and persistent Agents created during authorized Hive operation. These should be discoverable through a managed specialist catalog, with source and lineage visible. A governing Hive searches for a suitable existing specialist first; when none is suitable, it may request creation from a template or configuration only under its population policy, duplicate/recursion guards, resource budgets, and authorization. Runtime-created specialists are complete persistent Agents, not disposable per-prompt roles.
+
+A governing Hive assigns work only to Agents within its own membership. If a member Agent needs missing expertise, it requests that expertise from its governing Hive. There is no Hive-to-Hive delegation. A standalone Agent may explicitly sponsor or create a Hive where the supported lifecycle contract permits it; that is a distinct operation and does not authorize an existing Hive to send its goal to another Hive.
+
+The current `AgentDefinition` implementation is narrower than this target model: its present contract includes a key, display name, generation, and optional configured execution target. Specialty profiles, parent lineage, factory-template management, and explicit configuration rebasing are future architecture/contract work, not capabilities implied by the current definition.
+
 ### Base Agent mechanisms vs CognitiveAgent semantics
 
 A base `Agent` may be substantially capable without being a `CognitiveAgent`. The boundary is **not** "simple features versus smart features"; it is whether the Agent owns adaptive cognitive interpretation and revision.
@@ -65,7 +86,7 @@ Base Agent mechanisms may include:
 - **Question protocol** = first-class question/answer transport, provenance, ownership, status, timeout, answer type, and waiting. The base Agent may know what required information is missing without dynamically generating cognitive inquiry strategies.
 - **Patience / Understanding Gate** = a deterministic or policy-driven gate that prevents consequential work until required information or explicit confirmation is available. The principle is **understand the minimum required information before trying to solve**; it does not require the Agent to understand everything.
 - **Simulation infrastructure** = generic bounded simulation/job execution, scenario inputs, predicted outputs, parallel simulation execution, and result storage. Cognitive `Dreams` are a higher-level use of this infrastructure.
-- **Delegation and coordination interfaces** = request work from another Agent/Hive, await answers, and preserve provenance without requiring autonomous cognitive delegation decisions.
+- **Delegation and coordination interfaces** = request work from another Agent within an authorized coordination context, await answers, and preserve provenance without requiring autonomous cognitive delegation decisions. A governing Hive does not delegate to another Hive; a member requests missing specialists through its governing Hive.
 - **Bounded problem-solving loop** = task-scoped use of model reasoning, candidate attempts, progress assessment, approach switching, challenge, and applicable verification. It improves work on the current task without granting persistent self-adaptation or changing the Agent generation.
 - **Lifecycle and persistence** = creation, suspension, death of an execution/incarnation, wake/recreation, durable state, and human management of inactive state.
 
@@ -356,7 +377,7 @@ A candidate lesson must retain whether its evidence came from actual experience,
 
 ### Dynamic Hives, population, and Swarms
 
-A base Agent may sponsor one or more persistent Hives as a normal delegation/coordination capability. The Agent does not become a Hive and does not need to be cognitively upgraded to create one.
+An independent base Agent may explicitly sponsor one or more persistent Hives when authorized. Sponsorship is a creation/lifecycle relationship, not a mechanism for an existing governing Hive to delegate work to another Hive. The Agent does not become a Hive and does not need to be cognitively upgraded to sponsor one.
 
 A Hive may:
 
@@ -395,7 +416,7 @@ Hive may become Dormant
 
 For an Agent that is already a member of a Hive, the default rule is different:
 
-> A member Agent does not independently create a child Hive during normal Hive-managed work. It requests missing capabilities/specialists from the parent Hive, and the parent Hive remains the population authority.
+> A member Agent does not independently create a child Hive during normal Hive-managed work. It requests missing capabilities/specialists from the governing Hive, and that Hive remains the population authority. The governing Hive assigns or delegates the work to its own Agents; it does not delegate the goal to another Hive.
 
 A Hive may create or reuse a specialist Agent when a required specialty is missing. The created Agent remains an independent Agent entity with its own generation, identity, state, memory, and later lifecycle. A Hive may create a CognitiveAgent specialist when explicitly authorized by its population policy; the generation is not inferred automatically.
 
