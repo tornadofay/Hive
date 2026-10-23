@@ -15,7 +15,7 @@ Absolute ceilings (concrete, non-toggleable) — proposed values, subject to dev
 - Max creation count (lifetime): 256 specialists per governing Hive instance (includes dormant). Scope: per Hive lifetime; counter survives application restart via persisted state. Reset only on explicit authorized Hive archive/reset, which establishes a fresh allowance; dormancy does not reset it. Archiving/resetting requires the same authorization as other destructive management actions and is recorded as evidence.
 - Max creation count (per task): effective task cap = min(configured task population cap, effective persistent membership allowance). The task-population cap counts total participating Agent identities in the run, including the Manager and critic and any reused specialists (not only newly created specialists). A run with N already-participating identities and cap C admits at most C-N additional participants. Independently, a new persistent specialist is admitted only if remaining persistent membership capacity is available; reused existing members do not consume new capacity. If either bound is exhausted, admission is rejected with a typed, attributable reason. Scope: per task run. Reset: end of task.
 - Authorization enforcement, sandbox, secret redaction, process termination, exact duplicate prevention, provider/platform quotas: hard floors; not numeric.
-- Task population vs. membership: the effective task cap can never exceed the available membership allowance (min(configured task cap, effective membership cap)). Configurable caps are always ≤ the corresponding absolute ceiling; Settings may lower but never raise above the ceiling.
+- Task population vs. membership: the effective task cap can never exceed the available membership allowance (min(configured task cap, effective membership cap)).
 
 Scope:
 - Relationship to configurable limits: configurable caps (membership 4–64, task population 1–16, concurrent 1–8) are always ≤ the corresponding absolute ceiling; Settings may lower but never raise above the ceiling. Disabling a configurable restriction never disables its enforcement mechanism.
@@ -24,7 +24,6 @@ Scope:
 - per-run policy snapshot captures operating policy (limits/preferences) only. Live enforcement is never snapshotted: current authorization, credential validity, cancellation, emergency stop, and hard safety requirements are evaluated on every consequential action. A snapshot must never grant authority that has since been revoked.
 - concurrent specialty creation dedups at the catalog boundary;
 - reversible dormancy instead of destructive auto-retirement; dormancy retains the Preview 1 retained state (AgentDefinition + specialty profile, configuration, assignment history, produced artifacts, and explicitly persisted working context) and does NOT retain CognitiveAgent-style learning, evaluation, adaptation, or experience-based strategy revision (reserved for Phase 4).
-- guard decisions recorded as attributable evidence.
 
 Budget enforcement (atomic):
 - Shared budget reservation: before any concurrent specialist work begins, reserve the estimated token/cost against a shared budget ledger keyed by run; admission fails closed when the reservation would exceed the per-run cap or provider/platform quota.
@@ -47,7 +46,7 @@ Verify:
 - Settings change mid-run does not alter in-flight authority, but revocation/cancellation/emergency stop take effect immediately;
 - two concurrent identical creation requests yield one specialist;
 - exact duplicate never possible regardless of strictness setting;
-- dormancy preserves the Preview 1 retained state (AgentDefinition + specialty profile, configuration, assignment history, produced artifacts, and explicitly persisted working context) and is reversible; it does not retain CognitiveAgent-style learning, evaluation, adaptation, or experience-based strategy revision (reserved for Phase 4).
+- dormancy is reversible and preserves Preview 1 retained state (see Scope); it does not retain CognitiveAgent-style learning (reserved for Phase 4).
 - guard decisions and configuration changes recorded as attributable evidence (actor, time, previous and new values, affected scope, applicable policy profile);
 - "creation-log visibility" changes presentation only and never disables recording of guard evidence.
 - SQL Server and Embedded parity for guard/policy persistence where applicable.
