@@ -10,12 +10,15 @@ These sources have different authoritative roles:
 2. `docs/architecture.md` and relevant `docs/architecture/*.md` — intended architecture and ownership.
 3. `docs/Hive_Active_Work.md` — current authorization, implementation slice, and verification gate.
 4. `docs/roadmap.md` — ordered future work, not authorization.
-5. Source/project files — implementation reality.
-6. Tests — behavior actually exercised.
-7. `docs/Hive_Current_Status.md` — current status only.
-8. `docs/verification/` — historical verification evidence.
-9. `docs/ui/` and `docs/examples/` — usage guidance.
-10. `README.md` — project overview.
+5. `docs/plan/` — detailed scope and verification criteria for a roadmap item. Plans are subordinate to the architecture: a conflict means the plan is corrected. A plan never authorizes work by itself.
+6. Source/project files — implementation reality.
+7. Tests — behavior actually exercised.
+8. `docs/Hive_Current_Status.md` — current status only.
+9. `docs/verification/` — historical verification evidence.
+10. `docs/ui/` and `docs/examples/` — usage guidance.
+11. `README.md` — project overview.
+
+`docs/off-work/` holds preserved design and planning notes. It is not an authority and never authorizes implementation; current decisions live in the architecture, roadmap, and plan documents. Preserve its contents unless the user explicitly authorizes deletion.
 
 Do not treat this as a simple precedence chain across different concerns. Apply the source that governs the decision. Previous chat history is not repository authority.
 
@@ -45,14 +48,27 @@ Active Work is the maximum implementation boundary.
 - `Again` repeats the same task or Revision pass.
 - `Polish` / `Polish again` repeats the same maintenance/polish scope.
 - `Maintenance — Backend`, `Maintenance — UI`, and `Maintenance — Host/UI` are bounded production audit/correction modes.
-- `Workflow Review` is read-only and never creates implementation authorization. `Architecture` is analysis/design-only unless implementation is explicitly authorized.
+- `Repository Review` (repository-wide) and `Workflow Review` (governance documents only) are read-only and never create implementation authorization.
+- `Architecture` is analysis/design-only unless implementation is explicitly authorized. It does not change the repository unless the user explicitly requests documentation updates, which follow the documentation rule below.
+- `Verification` reconciles actual developer results with the current scope (see section 4).
 - None of these commands advances the roadmap or silently widens an implementation boundary.
 
-When Active Work is closed or absent, an explicitly requested bounded corrective task may establish a temporary Active Work slice before implementation only when repository evidence confirms that it restores, preserves, or corrects existing behavior without a new capability or material public-contract expansion. A Revision may use this rule only when its immediately preceding task was implementation/corrective work. A Workflow Review does not qualify. Architecture Revision remains analysis-only. Workflow-documentation Revision remains within the governance/documentation files and does not create an implementation slice.
+Terminology:
+
+- A **phase** is a numbered roadmap item such as `1.20` or `1.19A`.
+- A **slice** is an internal implementation and verification unit of one phase, recorded in Active Work as `Phase X.Y / Slice N`.
+- `Hive: Start Phase X.Y` authorizes that phase and the slice recorded in Active Work. `Hive: Start the next roadmap phase` authorizes only the next roadmap item; the older wording `Hive: Start the next roadmap slice` is an accepted alias.
+- `Hive: Start next slice` advances only within the already authorized phase, and only after the current slice is closed. It never crosses into another phase.
+- `Continue` never authorizes another slice or phase. No advance is permitted while Active Work is `VERIFICATION PENDING` or `VERIFICATION FAILED / REMEDIATION REQUIRED`.
+- ASCII spellings of command names, such as `Maintenance: Backend`, are accepted.
+
+When Active Work is closed or absent, an explicitly requested bounded corrective task may establish a temporary Active Work slice before implementation only when repository evidence confirms that it restores, preserves, or corrects existing behavior without a new capability or material public-contract expansion. A Revision may use this rule only when its immediately preceding task was implementation/corrective work. A Repository Review or Workflow Review does not qualify. Architecture Revision remains analysis-only. Workflow-documentation Revision remains within the governance/documentation files and does not create an implementation slice.
 
 If a corrective pass requires a new capability, material public-contract expansion, future roadmap work, or another scope, stop that portion and require explicit authorization. Mixed corrective + feature requests do not auto-open.
 
-A new roadmap slice requires explicit user authorization such as `Hive: Start Phase X.Y` or `Hive: Start the next roadmap slice`.
+Documentation-only work (architecture, roadmap, plans, UI, examples, workflow documents) is not implementation-affecting. When the user explicitly requests it, it may proceed while Active Work is `VERIFICATION PENDING`, provided it does not change the contract or acceptance criteria being verified. A documentation change that does alter them must be separately authorized, recorded in Active Work, and assessed for whether earlier verification still applies or the affected checks must be rerun. Documentation work never edits Active Work's verification state and never claims verification that did not happen.
+
+A new roadmap phase requires explicit user authorization as defined in the terminology above.
 
 ## 4. Verification
 
@@ -67,6 +83,10 @@ When developer results arrive:
 5. require developer re-verification.
 
 Out-of-scope or new-capability failures require separate authorization.
+
+A **partial** result (some required checks reported, others not) keeps Active Work at `VERIFICATION PENDING` and lists the exact checks still missing. A slice closes only when every required check in the Active Work handoff is reported passing or is explicitly waived by the developer. A waiver is recorded separately in the closure record with its date, the exact waived check, and the reason, and the slice is recorded as `Closed with accepted verification exception`, never as fully verified. A waived check is never recorded as passing.
+
+Verification is developer-run by design at present. Automated CI is planned under roadmap 9.3 and is not a prerequisite for any current slice; it must not be described as existing.
 
 Never claim execution that did not happen. Use precise terms such as Inspected, Reasoned, Compiled, Automated-tested, Integration-tested, Manually verified, and Not verified.
 
@@ -124,6 +144,7 @@ Each document has one job:
 - `AGENTS.md` and `.agents/skills/` — stable repository rules and reusable workflows, not a history of individual tasks.
 - Architecture, UI, and example documents — durable design decisions and usage guidance in their owning locations.
 - Source and tests remain authoritative for what is implemented and exercised. Do not document planned behavior as implemented.
+- Architecture documents may label a section `[Implemented]`, `[Target]`, or `[Deferred]` where current and intended behavior are mixed. A label describes implementation status only; verification evidence lives under `docs/verification/`. Update a label only when an authorized change actually affects it.
 
 ### Documentation quality rules
 

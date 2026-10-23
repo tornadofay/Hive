@@ -24,18 +24,20 @@ For revisions of this skill, inspect the complete workflow-skill directory plus 
 
 Active Work is the implementation boundary.
 
-Follow the command meanings in `references/modes.md`. In general:
+Follow the command meanings in `references/modes.md` (`references/cheat-sheet.md` is a short pointer only). In general:
 
 - implementation-affecting work stays inside Active Work;
 - Revision re-audits and corrects the immediately preceding task;
 - Maintenance performs a broader bounded production audit in its named domain;
-- Review is read-only;
+- Repository Review and Workflow Review are read-only;
 - Architecture does not implement without explicit authorization;
 - roadmap advancement requires explicit authorization.
 
 With no Active Work, an explicit bounded corrective request may establish a temporary slice only when it is genuinely corrective. Revision may do so only after an implementation/corrective task. Workflow-documentation work stays in governance documents. New capability, material public-contract expansion, or roadmap work requires explicit authorization.
 
 If Active Work is `VERIFICATION PENDING`, implementation stops. After a recorded `VERIFICATION FAILED / REMEDIATION REQUIRED` state, same-slice remediation may proceed inside the recorded failure boundary, then must return to `VERIFICATION PENDING`.
+
+Explicitly requested documentation-only work may proceed during a gate only under the documentation rule in `AGENTS.md` section 3.
 
 Before every write, refresh the branch checkpoint if the repository moved.
 
@@ -45,7 +47,7 @@ For implementation, Revision, and Maintenance:
 
 1. capture the authorized requirement and exclusions;
 2. identify the affected ownership boundary;
-3. read the applicable reference checklist;
+3. read the applicable reference checklist (`references/maintenance-checklists.md` for Maintenance, `references/revision-checklist.md` for Revision and other production re-review passes);
 4. inspect implementation, tests, examples, docs, and surrounding ownership;
 5. correct concrete root causes and required supporting changes within scope;
 6. review the corrected result again.
@@ -64,6 +66,8 @@ For an in-scope failure:
 3. return to `VERIFICATION PENDING` with exact rerun targets.
 
 Never convert inspection or reasoning into verification. Never invent results.
+
+A partial result keeps the slice pending with the missing checks listed. A waiver is recorded separately and never as a pass (see `AGENTS.md` section 4).
 
 ## 5. Governance documentation
 

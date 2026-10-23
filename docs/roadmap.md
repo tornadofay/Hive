@@ -1,10 +1,10 @@
 # Hive — Roadmap
 
-This is the ordered slice-level roadmap and navigation index. Each slice links to its detailed plan under `docs/plan/`. `docs/architecture.md` is the architectural source of truth; this file defines implementation order. Status belongs in `Hive_Current_Status.md`.
+This is the ordered phase-level roadmap and navigation index. Each roadmap item (phase) links to its detailed plan under `docs/plan/`; a phase may be divided into internal slices that are verified one at a time. `docs/architecture.md` is the architectural source of truth; this file defines implementation order. Status belongs in `Hive_Current_Status.md`.
 
 ## Slice completion gate
 
-Every implementation slice is incomplete until the required verification has actually been performed.
+Every implementation slice, and therefore its phase, is incomplete until the required verification has actually been performed.
 
 Depending on the slice boundary, required coverage includes:
 

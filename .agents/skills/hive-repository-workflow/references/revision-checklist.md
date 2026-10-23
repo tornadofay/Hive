@@ -29,7 +29,7 @@ Use for Revision and other production re-review passes. It is a quality aid, not
 - exact verification handoff preserved while pending
 
 ## Verification remediation
-While Active Work is `VERIFICATION PENDING`, do not begin implementation-affecting work while awaiting developer results. If verification failed/was partial, confirm the failure was recorded before implementation changes. After remediation, return to `VERIFICATION PENDING` and rerun the affected checks.
+While Active Work is `VERIFICATION PENDING`, do not begin implementation-affecting work while awaiting developer results. If verification failed, confirm the failure was recorded before implementation changes. If it was partial, the slice stays `VERIFICATION PENDING` with the missing checks listed; a waiver is recorded separately and never as a pass. After remediation, return to `VERIFICATION PENDING` and rerun the affected checks.
 
 ## Evidence
 - preserve earlier verification attempts
