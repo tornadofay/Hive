@@ -26,6 +26,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
     private HiveCardPanel _historyCard = null!;
     private HiveCardPanel _transcriptCard = null!;
     private HiveCardPanel _composerCard = null!;
+    private HiveEmptyState _conversationEmptyState = null!;
     private readonly CancellationTokenSource _lifetimeCts = new();
 
     private readonly List<DirectLlmTargetOption> _targets = [];
@@ -68,6 +69,10 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
             AccessibleDescription = "Select a saved conversation to open its history."
         };
         _conversationList.SelectedIndexChanged += ConversationSelectionChanged;
+
+        _conversationEmptyState = new HiveEmptyState(
+            "No conversations yet",
+            "Start a new conversation to see it here.");
 
         _transcriptPanel = new ChatTranscriptPanel
         {
@@ -120,6 +125,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(this);
         _historyCard.ApplyTheme(_themeManager.Theme);
+        _conversationEmptyState.ApplyTheme(_themeManager.Theme);
         _transcriptCard.ApplyTheme(_themeManager.Theme);
         _composerCard.ApplyTheme(_themeManager.Theme);
         _transcriptPanel.ApplyTheme(_themeManager);
@@ -251,6 +257,8 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
             _conversationList.EndUpdate();
             _suppressConversationSelection = false;
         }
+
+        UpdateConversationEmptyState();
 
         if (preferredConversationId is { } selectedId &&
             options.Any(option => option.Conversation.Id == selectedId))
@@ -544,6 +552,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
     private void ThemeManagerOnChanged(object? sender, EventArgs e)
     {
         _historyCard.ApplyTheme(_themeManager.Theme);
+        _conversationEmptyState.ApplyTheme(_themeManager.Theme);
         _transcriptCard.ApplyTheme(_themeManager.Theme);
         _composerCard.ApplyTheme(_themeManager.Theme);
         _transcriptPanel.ApplyTheme(_themeManager);
@@ -668,6 +677,9 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         historyPanel.Controls.Add(CreateSectionLabel("Conversations"), 0, 0);
         _historyCard = new HiveCardPanel { Dock = DockStyle.Fill, Padding = new Padding(8) };
         _historyCard.Controls.Add(_conversationList);
+        _historyCard.Controls.Add(_conversationEmptyState);
+        _conversationEmptyState.BringToFront();
+        _conversationEmptyState.Visible = false;
         historyPanel.Controls.Add(_historyCard, 0, 1);
         workspace.Panel1.Controls.Add(historyPanel);
 
@@ -739,6 +751,18 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
             Margin = new Padding(0, 0, 6, 0),
             AutoSize = true
         };
+
+    private void UpdateConversationEmptyState()
+    {
+        if (IsUnavailable())
+            return;
+
+        var hasConversations = _conversationList.Items.Count > 0;
+        _conversationList.Visible = hasConversations;
+        _conversationEmptyState.Visible = !hasConversations;
+        if (!hasConversations)
+            _conversationEmptyState.BringToFront();
+    }
 
     private bool IsUnavailable() =>
         _disposed || IsDisposed || Disposing;

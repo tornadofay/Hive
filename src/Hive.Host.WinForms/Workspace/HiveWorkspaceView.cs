@@ -37,7 +37,10 @@ public sealed class HiveWorkspaceView : UserControl
         Padding = new Padding(12);
         AccessibleName = "Hive Workspace";
 
-        _headingFont = new Font(Font, FontStyle.Bold);
+        _headingFont = new Font(
+            _context.ThemeManager.Theme.Typography.FontFamily,
+            _context.ThemeManager.Theme.Typography.SectionSize,
+            FontStyle.Bold);
 
         _navigation = new ListBox
         {
@@ -85,6 +88,22 @@ public sealed class HiveWorkspaceView : UserControl
         Controls.Add(navigationPanel);
 
         _context.ManagementChanged += ContextOnManagementChanged;
+        _context.ThemeManager.ThemeChanged += ThemeManagerOnThemeChanged;
+        _context.ThemeManager.Apply(this);
+    }
+
+    private void ThemeManagerOnThemeChanged(object? sender, EventArgs e)
+    {
+        if (_disposed || IsDisposed || Disposing)
+            return;
+
+        if (InvokeRequired)
+        {
+            if (IsHandleCreated)
+                BeginInvoke(new Action(() => ThemeManagerOnThemeChanged(sender, e)));
+            return;
+        }
+
         _context.ThemeManager.Apply(this);
     }
 
@@ -152,6 +171,7 @@ public sealed class HiveWorkspaceView : UserControl
         {
             _disposed = true;
             _context.ManagementChanged -= ContextOnManagementChanged;
+            _context.ThemeManager.ThemeChanged -= ThemeManagerOnThemeChanged;
             _navigation.SelectedIndexChanged -= NavigationSelectedIndexChanged;
             _lifetimeCts.Cancel();
             _lifetimeCts.Dispose();

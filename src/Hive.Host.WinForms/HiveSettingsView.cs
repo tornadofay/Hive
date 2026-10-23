@@ -143,6 +143,7 @@ public sealed class HiveSettingsView : UserControl
         Controls.Add(_description);
         Controls.Add(_title);
 
+        _themeManager.ThemeChanged += ThemeManagerOnThemeChanged;
         _themeManager.Apply(this);
 
         _navigation.AfterSelect += NavigationAfterSelect;
@@ -276,11 +277,36 @@ public sealed class HiveSettingsView : UserControl
         }
     }
 
+    private void ThemeManagerOnThemeChanged(object? sender, EventArgs e)
+    {
+        if (IsDisposed || Disposing)
+            return;
+
+        if (InvokeRequired)
+        {
+            if (IsHandleCreated)
+                BeginInvoke(new Action(() => ThemeManagerOnThemeChanged(sender, e)));
+            return;
+        }
+
+        _themeManager.Apply(this);
+
+        if (_overviewView is not null)
+            _themeManager.Apply(_overviewView);
+        if (_providerConfigurationView is not null)
+            _themeManager.Apply(_providerConfigurationView);
+        if (_agentView is not null)
+            _themeManager.Apply(_agentView);
+        if (_persistenceView is not null)
+            _themeManager.Apply(_persistenceView);
+    }
+
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
             _navigation.AfterSelect -= NavigationAfterSelect;
+            _themeManager.ThemeChanged -= ThemeManagerOnThemeChanged;
 
             var navigationCts = Interlocked.Exchange(ref _navigationCts, null);
             navigationCts?.Cancel();
