@@ -98,7 +98,7 @@ durable operation attempt / receipt
 policy-governed verification / Review
 ```
 
-Image is the first V1 input boundary. Supported inputs are prepared and routed by type: images through a vision-capable ExecutionTarget, `.xlsx` workbooks through worksheet and row mapping, and `.txt` text, and all converge on one structured-candidate boundary.
+Image is the first V1 input boundary. Supported inputs are prepared and routed by type: images through a vision-capable ExecutionTarget, `.xlsx` workbooks through worksheet and row mapping, and `.txt` text files. All of them converge on one structured-candidate boundary.
 
 A single submission may produce one or many independent WorkItems. A WorkItem is the durable unit of user-visible work and represents one logical business operation when one is required. Batch grouping never replaces a WorkItem's identity, lifecycle, provenance, authorization, receipt, or Review state.
 
