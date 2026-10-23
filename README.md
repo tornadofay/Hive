@@ -296,7 +296,9 @@ The solution and project files are the implementation source for the actual proj
 
 **Phase 0 — Foundations: Complete.**
 
-**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1):** Phase 1.16 Provider / Model Capability Discovery and bounded Revisions 1–7 are complete and verified. The initial **Phase 1.16 — UI — Provider Configuration, Discovery & Target Reconciliation** slice and its bounded same-slice revision are complete and verified. Final developer verification of the revision on 2026-09-29 reported the matching **Overview / Getting Started / Example Configuration** workflow running successfully and the full `Hive.Tests` suite passing **474/474** (0 failed, 0 skipped). The **Phase 1.16 Follow-Up — Complete Provider Model Metadata Discovery** is complete and verified; its final follow-up verification passed **498/498** on 2026-10-01. The Advanced Provider Configuration surface uses HiveTabControl tabs for Providers, Accounts / Credentials, Execution Targets, and Model Information, with no separate Overview tab. The bounded Model Information UI/layout correction is complete and verified; final developer verification passed **681/681** tests on 2026-10-07 and the matching Advanced Provider Configuration → Model Information Example Host path was manually confirmed.
+**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1):** In progress. Verified implementation is complete through Phase 1.18A (Embedded Persistence Profile) and Phase 1.19A (Execution Target Preferences). Phase 1.20 Slice 1 (Direct LLM Conversation Path) is implemented and awaiting developer verification. Vector retrieval is deferred to reassessment with Phase 5.1.
+
+The present-day project state and the active verification gate are owned by [Current Status](docs/Hive_Current_Status.md) and [Active Work](docs/Hive_Active_Work.md). Completed-work evidence lives in the [verification archive](docs/verification/).
 
 See [Architecture](docs/architecture.md) and [Roadmap](docs/roadmap.md).
 

@@ -560,8 +560,6 @@ Extraction evidence such as source location, mapping provenance, execution ident
 
 Phase 1.17 must make mapping and candidate results reviewable, including per-item failures and source linkage. A UI may let the user open the original image/file and correct mappings or candidate values.
 
-### Batch review and authorization separation
-
 Phase 1.17 has two user-facing checkpoints around interpretation work:
 
 1. **Processing authorization:** the selected Single File or Folder batch may be authorized as one processing unit when policy permits it. Each image may still result in its own model call, but that does not by itself require a separate human approval per image.
@@ -1184,8 +1182,9 @@ This architecture does not authorize:
     durable Base-Agent work state
     base-Agent memory/Question/Objective persistence
 
-1.19
-    V1 vector storage and retrieval infrastructure
+1.19A
+    durable ExecutionTarget favorite preferences
+    (vector retrieval is deferred to Phase 5.1; no V1 vector infrastructure)
 
 1.20
     V1 Workspace foundation

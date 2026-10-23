@@ -268,7 +268,8 @@ Advanced Provider Configuration is a single generalized administrative surface:
 Advanced Provider Configuration
 ├── Providers
 ├── Accounts / Credentials
-└── Execution Targets
+├── Execution Targets
+└── Model Information (read-only discovery view)
 ```
 
 It is not provider-specific. The Advanced entry point may optionally open with a selected provider/account filter for convenience, but the underlying pages and contracts remain generalized.
@@ -370,7 +371,6 @@ StructuredCandidate:
 - Candidate fields/items can carry validation state and provenance instead of silently dropping unusable values.
 - Relevant execution, mapping, source, and evidence/confidence metadata may be retained; confidence is evidence, never authorization.
 
-Review and governance boundary:
 Review and governance boundary:
 - Phase 1.17 defines two distinct human checkpoints: authorization to process the selected input batch, and authorization to proceed with the reviewed/corrected candidate and mapping results.
 - The processing checkpoint may cover an entire selected batch rather than requiring one authorization per image solely because each image causes an individual model call.
