@@ -405,7 +405,7 @@ value = 42
 display = "Product A"
 ```
 
-The model can choose an option; it cannot execute arbitrary lookup SQL or arbitrary host queries.
+A model may rank or suggest among the returned options, but only a deterministic exact match, an explicit human decision, or an authorized deterministic rule establishes the resolved value (section 7.2). A model cannot execute arbitrary lookup SQL or arbitrary host queries, and cannot supply a value the host lookup did not return.
 
 ### 7.1 Lookup authorization
 
@@ -418,8 +418,9 @@ The host application remains responsible for exposing the lookup implementation 
 Extracted data usually carries display text (a customer name, an item description), while the host operation needs stored values (identifiers). Converting one to the other is its own deterministic step between the `StructuredCandidate` and the `BusinessOperationProposal`. It is neither an extraction concern nor a decision a model makes.
 
 - Resolution uses the bounded `ResolveLookup` capability through the Management authorization boundary, with the current-record context the host lookup requires.
-- Each lookup-bound candidate value ends in exactly one explicit state: **Resolved** (one exact match carrying stored value, display value, lookup identity, and provenance), **Ambiguous** (a bounded set of host-returned options), or **NotFound**.
-- Ambiguous and NotFound values are surfaced as structured choices for a human, or resolved by an explicitly configured deterministic rule. Hive never picks silently among several matches. A model may suggest an option, but its suggestion is evidence, not a resolution.
+- Each lookup-bound candidate value ends in exactly one explicit state: **Resolved** (one exact match carrying stored value, display value, lookup identity, and provenance), **Ambiguous** (a bounded set of host-returned options), or **NotFound** (the host lookup returned no match).
+- Only three things can establish **Resolved**: a deterministic exact match, an explicit human decision, or an explicitly configured and authorized deterministic rule. A model may rank or suggest options from the bounded host-returned set, and that ranking is evidence a human or rule may use. A model's selection alone never establishes Resolved, and a model can never introduce a value the host lookup did not return.
+- **Ambiguous** values present the bounded host-returned options (optionally ordered by a deterministic or model ranking) for a decision. **NotFound** values present a no-match state with a correction path: edit the candidate value, re-query the lookup with corrected input, or exclude the item. Hive never picks silently among several matches and never invents an option for a NotFound value. Creating a new host record is a separate host operation, not a lookup outcome.
 - A `BusinessOperationProposal` must not contain unresolved lookup values. Resolution evidence is bounded and can become stale, so the lookup is re-validated when the proposal is built and the resolved reference is re-checked at the host-write boundary.
 - Exact-match and normalization rules are deterministic, documented, and configurable per lookup. Fuzzy matching may only narrow the option list; it never decides.
 - Which review checkpoint presents the disambiguation choices is a workflow-policy decision for the owning phase plans (Phase 1.17 candidate review and Phase 1.23 proposal). The resolution contract is the same wherever it is presented.
@@ -839,7 +840,7 @@ This separates:
 The pipeline can contain up to four human decisions per item: processing authorization (Phase 1.17), candidate/mapping acceptance (Phase 1.17), pre-write Approval (Phase 1.23), and post-write Review (Phase 1.25). They are different decisions with different meanings and remain separately recorded. They are not required to be four separate screens or four clicks per item.
 
 - Checkpoints are policy-governed and enforced in code. The default policy is conservative: every checkpoint a policy marks as required needs an explicit human decision.
-- A policy may let one user action record more than one decision (for example "Review and Approve write") provided each decision is persisted separately with its own actor, time, and subject, and Approval stays bound to the exact proposal version.
+- A policy may let one user action record more than one decision (for example a single "Accept candidate and Approve write" action) provided each decision is persisted separately with its own actor, time, and subject, and Approval stays bound to the exact proposal version.
 - A policy may permit a batch-level decision over homogeneous items only when each item independently passes deterministic validation and unambiguous lookup resolution with no warnings. Items with failures, warnings, ambiguity, or policy exclusions are pulled out of the batch decision and handled individually.
 - Policy may reduce human involvement. It never removes Approval for an operation whose policy requires it, never converts model confidence into approval, and never lets Review substitute for Approval.
 - The Approve / Reject state machine remains owned by the Phase 1.22 intervention boundary. This policy decides when it is required, not how it works.

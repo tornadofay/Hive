@@ -86,7 +86,7 @@ Phase 0.4 established the original Hive-owned SQL Server persistence boundary wi
 
 #### Secret Store protection scope
 
-The V1 Secret Store implementations (SQL Server and Embedded) and the SQL bootstrap credential store protect secret material with Windows DPAPI at `DataProtectionScope.CurrentUser`. A protected value can therefore be decrypted only by the same Windows user profile on the same machine that protected it.
+The V1 Secret Store implementations (SQL Server and Embedded) and the SQL bootstrap credential store protect secret material with Windows DPAPI at `DataProtectionScope.CurrentUser`. A protected value is bound to the Windows user context that protected it. In the normal machine-local profile case it can be decrypted only by that same user on that same machine; appropriately configured roaming profiles can extend decryption to other machines for the same user, but never to a different Windows principal.
 
 This fits the single-user desktop deployment that Embedded targets and a SQL Server database used by one Windows principal. It does **not** support a shared SQL Server database used by several Windows users or service accounts: a ProviderAccount credential stored by one principal cannot be decrypted by another. V1 therefore treats a Hive database as single-Windows-principal for secret purposes, and this limit must be stated to administrators who choose the SQL Server profile.
 
