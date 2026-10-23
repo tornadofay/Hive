@@ -354,6 +354,16 @@ Direct LLM conversation is a Management-owned conversation aggregate, not an Age
 
 Phase 1.20 Slice 1 verifies the direct conversation path and its durable history. Agent selection/interaction, Agent target-selection policy, application/form-associated Agents, execution-planner behavior, tool governance, and later business-operation stages remain with their owning later phases.
 
+### 5.2 Workspace window and module boundary [Target]
+
+The Workspace is an independent window, not a page that exists only inside an example.
+
+- **Window and embedding.** `HiveWorkspaceForm` is a modeless window opened through the public `HiveWorkspaceLauncher`, single instance per host: a second request activates the existing window. `HiveWorkspaceView` is the embeddable shell, so a host may place the Workspace in its own form. The Example Host opens the window from `Overview / Getting Started / Workspace`, as it opens Settings from Example Configuration. Settings stays modal.
+- **Modules.** The shell owns navigation and a content host only. Each feature is an `IHiveWorkspaceModule` (id, title, order, creates its view). The initial modules are Direct LLM and Work Items. Later phases add modules (Agent interaction in 1.21, diagnostics in 1.29, Hive coordination in 2.8) without editing the shell. A module view holds layout and event wiring; behavior that does not need controls lives in separate classes, such as the Direct LLM target catalog.
+- **Management access.** Modules reach `IHiveManagementFacade` through `HiveWorkspaceContext`, which resolves the current facade on every call and raises `ManagementChanged` after host recomposition. A long-lived modeless window therefore never calls a retired graph.
+- **Direct LLM target picker.** The picker applies the saved favorite-target preference through `ExecutionTargetFavoriteFilter`: no favorites means all eligible targets; favorites set means only those favorites that are currently eligible; if none are usable the list is empty with guidance to update Favorites and it never falls back to non-favorites. A failure to load favorites is reported and never silently broadens the list. Favorites are a preference, not authorization; the send path still validates the chosen target.
+- **Presentation only.** The Workspace performs no persistence, provider, or secret access; everything goes through `IHiveManagementFacade`.
+
 V1 Agent interaction can therefore follow a bounded application pattern such as:
 
 ```text
