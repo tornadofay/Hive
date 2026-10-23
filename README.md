@@ -11,6 +11,19 @@ The data-entry pipeline is Hive's **V1 forcing function**, not Hive's permanent 
 
 The present-day state and the active verification gate are owned by [Current Status](docs/Hive_Current_Status.md) and [Active Work](docs/Hive_Active_Work.md). Completed-work evidence lives in the [verification archive](docs/verification/).
 
+## Standalone preview (Milestone A) [Target]
+
+Hive's first public deliverable is a **standalone Hive Workbench** — a self-contained WinForms application that demonstrates Hive's autonomous multi-agent value without requiring a host business application. It reuses the existing Workspace foundation and the neutral Management contracts; it does not fork the Workspace or build a separate coordination engine.
+
+**In scope:** onboarding (provider key via Windows DPAPI, or a local OpenAI-compatible endpoint; Embedded/SQLite persistence; project files; reproducible samples; quickstart; packaging); Workspace UX redesign; Agent definition extension (specialty profile, responsibilities, exclusions, expected output, tool capabilities, success criteria); governed Tools + authorization boundary; autonomous specialist creation with population guards; budget/cost controls; narrow manager-led coordination and one critic role.
+
+**Deferred:** build/test execution (Preview 2, behind isolation — a project-directory restriction alone is not a sandbox); screen observation / UI automation (post-V1); the full advanced guard panel (Preview 2); the host-integrated business write path (1.23–1.28, sequenced after the preview, not dropped).
+
+**Autonomy profiles:** Guided / Balanced (default) / High Autonomy (renamed from "Unrestricted"; hard floors and authorization remain intact), plus an Advanced panel. Guard decisions and configuration changes are recorded as attributable evidence.
+
+Details: [roadmap](docs/roadmap.md) (Milestone A section), [agents-and-hives](docs/architecture/agents-and-hives.md), [v1-host-and-management](docs/architecture/v1-host-and-management.md).
+
+---
 ## Getting started
 
 **Requirements**

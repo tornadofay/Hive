@@ -21,6 +21,55 @@ A decision gate may have documentation/architecture acceptance instead of automa
 
 ---
 
+---
+
+# Hive Public Preview — Standalone Workbench (Milestone A) [Target]
+
+> **Status:** Architecture/planning. Not yet authorized for implementation. Phase 1.20 Slice 1 is closed (no active task); Phase 1.20 remains in progress with Slices 2–4 not authorized. This milestone does not reopen or advance Slice 1 and does not authorize a new slice.
+
+Hive's first public deliverable is a **standalone Hive Workbench** — a self-contained WinForms application that demonstrates Hive's autonomous multi-agent value without requiring a host business application. It reuses the existing Workspace foundation (Phase 1.20) and the neutral Management contracts; it does **not** fork the Workspace or build a separate coordination engine.
+
+## Preview scope (in)
+
+1. **Onboarding** — provider key (DPAPI-protected) or local OpenAI-compatible endpoint; Embedded persistence; project files; reproducible samples; quickstart; packaging.
+2. **Workspace UX redesign** — conversation + Hive activity + projects + tools, reusing Slice 1 shell.
+3. **Agent definition extension** — specialty profile, responsibilities, exclusions, expected output, tool capabilities, success criteria.
+4. **Governed Tools + authorization boundary** (1.22 subset).
+5. **Bring forward from Phase 2:** 2.1 membership, 2.2 catalog/templates + semantic matching, 2.3 communication, 2.5 pause/stop, 2.7 population with guards, 2.8 minimum activity view.
+6. **Narrow subsets:** 3.1 manager-led coordination, 3.3 one critic role.
+7. **Budget/cost controls** (narrow 1.30 subset) before concurrent multi-Agent runs.
+8. **Autonomous specialist creation** governed by the two-level guard model (see `agents-and-hives.md`).
+
+## Preview scope (out — deferred)
+
+- **Build/test execution** (Preview 2) — behind an explicit toggle with isolation; a project-directory restriction alone is not a sandbox (child processes, network/machine-resource access, cancellation, and cleanup must be addressed).
+- **Screen observation / UI automation** (post-V1).
+- **Full advanced guard panel** (Preview 2; Preview 1 ships presets + "Show advanced").
+- **Host-integrated business write** (1.23–1.28) — stays in V1, sequenced after the preview. Not dropped.
+- **CognitiveAgent generations, Dreams, Questions, collective cognition** (Phase 3+).
+
+## Bring-forward dependency notes
+
+The Phase 2 items pulled into the preview are **narrow subsets**, not the full phase. Each retains its owning plan under `docs/plan/Phase2/`; the preview consumes only the subset needed for autonomous specialist creation, communication, pause/stop, and population guards. Full Phase 2 (2.4, 2.6) and Phase 3+ remain sequenced normally.
+
+## Autonomy profiles (preview)
+
+Three presets plus an Advanced panel: **Guided** (conservative), **Balanced** (default for new installs), **High Autonomy** (renamed from "Unrestricted"; hard floors and authorization remain intact). A preset must display exactly which policy keys it changes. A profile never touches authorization rules.
+
+## Guard model (preview) — two levels
+
+**Absolute ceilings (non-toggleable):** max recursion depth, max creation rate, max creation count, authorization enforcement, project-directory sandbox with canonical-path/traversal/symlink/reparse validation, no universal UI automation / host DB access / arbitrary reflection, secret redaction across logs/errors/tool results/telemetry/evidence, process timeout+cancellation terminating descendants+releasing resources+recording terminal outcome, exact duplicate prevention, provider/platform quotas.
+
+**Configurable operating limits (toggleable up to ceilings):** persistent membership cap (default 12, range 4–64), task population cap (default 6, range 1–16), concurrent execution cap (default 4, range 1–8), duplicate-detection strictness (semantic threshold), per-run budget cap, dormancy policy, consequential-action approval, creation-log visibility.
+
+Disabling a policy restriction never disables the enforcement mechanism that makes the hard floor effective.
+
+## Testing gate
+
+Scripted fake-provider scenarios as the regression base; non-determinism must be reproducible in tests. Atomic admission/reservation must hold under concurrent requests, cancellation, failure, and restart.
+
+---
+
 # Phase 0 — Foundations
 
 ## 0.1 — Solution & project scaffolding

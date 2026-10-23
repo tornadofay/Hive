@@ -124,6 +124,17 @@ Image input may use a vision-capable execution target. Structured input such as 
 
 Longer-term capabilities such as persistent individual cognition, offline Dream processing, structured Questions, collective cognition, generic host integration, broader governance, and additional host surfaces remain part of Hive's architecture, but they must not become prerequisites for the V1 pipeline.
 
+### Standalone preview product boundary [Target]
+
+Hive's first public deliverable is a **standalone Hive Workbench** — a self-contained WinForms application that demonstrates Hive's autonomous multi-agent value without requiring a host business application. This is a product boundary, not a separate platform: the Workbench reuses the existing Workspace foundation (Phase 1.20), the neutral Management contracts, and the Hive.Host.WinForms.UI presentation layer. It does not fork the Workspace or build a separate coordination engine.
+
+The Workbench consumes Hive's existing public contracts only; it never bypasses `Hive.Management` and never reaches into host-private types. Standalone project files, provider configuration (provider key via DPAPI or a local OpenAI-compatible endpoint), and Embedded persistence are Workbench concerns owned by the host surface, not by Hive.Core.
+
+Autonomous specialist creation, population guards, and budget controls are governed by the two-level guard model (absolute ceilings that are never toggleable; configurable operating limits bounded by those ceilings). See `agents-and-hives.md` for the specialty profile, exact-vs-semantic duplicate prevention, and dormancy rules.
+
+Deferred from the preview: build/test execution (Preview 2, behind isolation — a project-directory restriction alone is not a sandbox), screen observation / UI automation (post-V1), the full advanced guard panel (Preview 2), and the host-integrated business write path (1.23–1.28, sequenced after the preview, not dropped).
+
+---
 ### Primary design goals
 
 1. A reusable Agent/Hive platform rather than a workflow-specific application.

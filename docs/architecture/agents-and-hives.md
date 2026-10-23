@@ -75,6 +75,37 @@ A governing Hive assigns work only to Agents within its own membership. If a mem
 
 The current `AgentDefinition` implementation is narrower than this target model: its present contract includes a key, display name, generation, and optional configured execution target. Specialty profiles, parent lineage, factory-template management, and explicit configuration rebasing are future architecture/contract work, not capabilities implied by the current definition.
 
+### Specialty profile and uniqueness [Target]
+
+A specialized Agent's **specialty profile** is part of its `AgentDefinition`: responsibilities, exclusions, expected output, tool capabilities, and success criteria. These fields are first-class configuration, not free-text instructions, so that uniqueness, matching, and guard decisions can be made deterministically.
+
+**Duplicate prevention has two layers, and they are not the same problem:**
+
+1. **Exact duplicate prevention — mandatory, non-disableable.** Two requests whose normalized specialty definitions produce the same identity fingerprint resolve to a single specialist. This is a deterministic identity check (normalized definition + stable identity + canonical fingerprint), not a heuristic. It is a hard floor: no policy toggle can make exact duplication possible.
+2. **Semantic overlap detection — configurable strictness.** Compares responsibilities, exclusions, capabilities, and tool requirements to detect potential overlap and decide whether an existing specialist can fulfill the missing role. Two specialties may sound similar yet have genuinely different responsibilities; two differently named specialists may be functionally identical. The configurable strictness controls how conservatively Hive handles uncertain matches; it never disables exact dedup.
+
+**Concurrent creation resolution:** two managers requesting the same missing specialty concurrently must resolve to a single persistent specialist. Creation is serialized at the authoritative catalog boundary; it is not a check-then-act race.
+
+### Autonomous population guards [Target]
+
+A governing Hive may create specialists only within its population policy. Guards are **two-level**:
+
+- **Absolute ceilings (non-toggleable, unchangeable):** max recursion depth, max creation rate, max creation count, authorization enforcement, project-directory sandbox (canonical path validation including traversal, symlinks, and reparse points), no universal UI automation / host DB access / arbitrary reflection, secret redaction across logs/errors/tool results/telemetry/evidence, process timeout + cancellation terminating the process and descendants, releasing resources, and recording a terminal outcome, exact duplicate prevention, and provider/platform quotas (which remain authoritative regardless of Hive caps).
+- **Configurable operating limits (toggleable, bounded by the ceilings):** persistent membership cap, task population cap, concurrent execution cap, duplicate-detection strictness (semantic threshold), per-run budget cap (tokens + cost, checked against shared current execution usage), dormancy policy, consequential-action approval, creation-log visibility.
+
+Disabling a policy restriction **never** disables the enforcement mechanism that makes the hard floor effective. Approval disabling never grants permissions the caller lacks.
+
+**Enforcement rules:**
+- Concurrency uses an atomic admission/reservation boundary, not check-then-act. Failed or interrupted runs must not double-release or permanently hold a reservation.
+- The effective policy is an immutable snapshot per run; Settings changes apply to new runs only. No retroactive authority expansion.
+- Concurrent specialty creation dedups at the catalog boundary.
+- Guard decisions are recorded as attributable evidence so "why didn't Hive create a specialist?" is answerable.
+
+### Dormancy over destruction [Target]
+
+Idle specialists are **deactivated (dormant)**, not destroyed, by default. Dormancy preserves identity, memory, history, and experience and is reversible. Destroying reusable specialists defeats reuse and loses accumulated evidence. Dormancy thresholds are configurable; the deactivation itself is reversible by authorized policy.
+
+---
 ### Base Agent mechanisms vs CognitiveAgent semantics
 
 A base `Agent` may be substantially capable without being a `CognitiveAgent`. The boundary is **not** "simple features versus smart features"; it is whether the Agent owns adaptive cognitive interpretation and revision.
