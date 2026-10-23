@@ -105,6 +105,14 @@ Disabling a policy restriction **never** disables the enforcement mechanism that
 
 Idle specialists are **deactivated (dormant)**, not destroyed, by default. Dormancy preserves identity, memory, history, and experience and is reversible. Destroying reusable specialists defeats reuse and loses accumulated evidence. Dormancy thresholds are configurable; the deactivation itself is reversible by authorized policy.
 
+### Reusable specialist state in Preview 1 [Target]
+
+Preview 1 specialists are Base Agents, not CognitiveAgents. What a dormant/reusable specialist retains across tasks is deliberately limited and explicit:
+
+- **Retained:** `AgentDefinition` + specialty profile, configuration (execution target preferences, tool capabilities), assignment history, produced artifacts, and durable working context that the specialist's Tool boundary explicitly persists as project artifacts.
+- **Not retained / not promised:** CognitiveAgent-style learning, evaluation, adaptation, or experience-based strategy revision (Phase 4). Runtime-scoped work memory (Base-Agent runtime) is not automatically durable across tasks; continuity across tasks requires explicit persistence through the specialist's definition, configuration, history, or artifacts. Nothing in Preview 1 implies Agent-wide memory beyond those.
+- Dormancy preserves the retained set; it does not create new cognitive capability.
+
 ---
 ### Base Agent mechanisms vs CognitiveAgent semantics
 

@@ -15,4 +15,3 @@ Verify:
 - exact duplicate resolves to one specialist;
 - semantic overlap detection compares responsibilities/exclusions/capabilities;
 - configuration inheritance never grants authorization or credentials.
-"

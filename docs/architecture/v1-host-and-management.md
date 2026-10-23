@@ -387,15 +387,7 @@ using var registration = hostContext.Register(form);
 Registration is implemented in Phase 1.13 and retains an explicitly registered host root for bounded capture. Binding that context to Workspace and associating or reusing a specialized Agent is target behavior for Phase 1.21. It does not automatically create a Hive or Swarm. The host application remains responsible for application-specific business semantics; Hive provides the bounded integration, management, authorization, and work coordination boundaries.
 
 After Phase 2 establishes persistent Hive membership and Swarm state, Workspace can add persistent Hive organization/topology and collective coordination views. Those later views extend the V1 Workspace rather than replacing its LLM/Agent interaction model.
-
-### 5.3 Standalone Workbench host [Target]
-
-The **Hive Workbench** is a standalone WinForms host that consumes the existing Workspace shell and neutral Management contracts. It is a host, not a platform: it owns onboarding (provider key via DPAPI or a local OpenAI-compatible endpoint), Embedded persistence, project files, reproducible samples, and packaging. It does not fork the Workspace, does not build a separate coordination engine, and does not bypass `Hive.Management`.
-
-The Workbench opens the Workspace window (`HiveWorkspaceLauncher`) exactly as the Example Host does, and registers its modules through `IHiveWorkspaceModule`. Project-directory scoping for file/artifact tools is a Workbench host concern enforced at the Tool boundary, not a UI toggle. A project-directory restriction alone is not an execution sandbox; Preview 2 code execution must additionally address child processes, network/machine-resource access, cancellation, and cleanup.
-
----
-### 5.1 V1 WorkItem aggregate and Workspace operations
+### 5.3 V1 WorkItem aggregate and Workspace operations
 
 For Phase 1.11, `WorkItem` is the authoritative durable user-visible aggregate. Its durable state is persisted as an event stream with a current snapshot, so status transitions, approval transitions, optimistic concurrency, activity, and outbox work share one transaction.
 
@@ -421,6 +413,17 @@ Workspace is a host-facing presentation surface over `Hive.Management`. It does 
 The generic event store therefore gains only two reusable persistence capabilities needed by this aggregate boundary: listing current snapshots for a resource kind and participating in the selected backend's existing transaction for an aggregate-specific state change. WorkItem-specific attachment rules remain in the WorkItem persistence owner.
 
 
+
+
+### 5.4 Standalone Workbench host [Target]
+
+The **Hive Workbench** is a standalone WinForms host that consumes the existing Workspace shell and neutral Management contracts. It is a host, not a platform: it owns onboarding (provider key via DPAPI or a local OpenAI-compatible endpoint), Embedded persistence, project files, reproducible samples, and packaging. It does not fork the Workspace, does not build a separate coordination engine, and does not bypass `Hive.Management`.
+
+**Module registration contract (target):** The Workbench supplies its own project/artifact modules through the Workspace module contract. Because the current `IHiveWorkspaceModule` interface and the custom-module constructors on `HiveWorkspaceLauncher`/`HiveWorkspaceView` are internal, the Workbench cannot register modules today. The intended public extension seam is to promote `IHiveWorkspaceModule` to a public contract and add a public constructor/factory on `HiveWorkspaceLauncher` (and `HiveWorkspaceView`) accepting an `IEnumerable<IHiveWorkspaceModule>`, while keeping built-in module implementations (`DirectLlmWorkspaceModule`, `WorkItemsWorkspaceModule`) internal. The Workbench implements the public interface; it never references internal module types. This promotion is a prerequisite implementation task and is not yet authorized.
+
+The Workbench opens the Workspace window (`HiveWorkspaceLauncher`) exactly as the Example Host does. Project-directory scoping for file/artifact tools is a Workbench host concern enforced at the Tool boundary, not a UI toggle. A project-directory restriction alone is not an execution sandbox; Preview 2 code execution must additionally address child processes, network/machine-resource access, cancellation, and cleanup.
+
+---
 
 ## 13. Example Application
 

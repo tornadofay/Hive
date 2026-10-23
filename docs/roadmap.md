@@ -50,11 +50,19 @@ Hive's first public deliverable is a **standalone Hive Workbench** — a self-co
 
 ## Bring-forward dependency notes
 
-The Phase 2 items pulled into the preview are **narrow subsets**, not the full phase. Each retains its owning plan under `docs/plan/Phase2/`; the preview consumes only the subset needed for autonomous specialist creation, communication, pause/stop, and population guards. Full Phase 2 (2.4, 2.6) and Phase 3+ remain sequenced normally.
+The Phase 2 items pulled into the preview are **narrow subsets**, not the full phase. Their full plans do not yet exist (`docs/plan/Phase2/` is not present; Phase 2 is not authorized). The preview consumes only the subset needed for autonomous specialist creation, communication, pause/stop, and population guards; the unimplemented remainder of Phase 2 (including 2.4, 2.6 and the rest of 2.1/2.2/2.3/2.5/2.7/2.8) remains on the roadmap and will get its own plans when Phase 2 is authorized. Phase 3 is treated the same way: only 3.1 (manager-led coordination) and 3.3 (one critic role) are pulled forward as narrow subsets; 3.2 and 3.4 remain sequenced normally. The preview implements subsets only; it does not mark any phase complete.
+
+Detailed plans for the preview live under `docs/plan/Preview/`:
+- [P1 — Specialty profile](plan/Preview/P1-specialty-profile.md)
+- [P2 — Population & guards](plan/Preview/P2-population-guards.md)
+- [P3 — Workbench host](plan/Preview/P3-workbench-host.md)
+- [P4 — Governed Tools & authorization boundary](plan/Preview/P4-governed-tools.md)
 
 ## Autonomy profiles (preview)
 
 Three presets plus an Advanced panel: **Guided** (conservative), **Balanced** (default for new installs), **High Autonomy** (renamed from "Unrestricted"; hard floors and authorization remain intact). A preset must display exactly which policy keys it changes. A profile never touches authorization rules.
+
+**Preview 1 ships (presets + "Show advanced"):** the three presets, a read-only explanation of each hard floor (non-toggleable) with the reason it cannot be disabled, the list of configurable keys each preset changes, and an Advanced view that exposes the configurable keys (membership cap, task population cap, concurrent cap, semantic strictness threshold, per-run budget cap, dormancy thresholds, consequential-action approval, creation-log visibility) with their allowed ranges. Preview 1 does **not** ship the full guard-authoring panel (custom policy authoring, per-specialist overrides, simulation/what-if, or guard auditing UI) — that is Preview 2.
 
 ## Guard model (preview) — two levels
 

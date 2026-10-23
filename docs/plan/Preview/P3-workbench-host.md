@@ -15,4 +15,3 @@ Verify:
 - onboarding completes without SQL Server;
 - project files scoped to permitted directories;
 - Example scenario runs end-to-end with fake provider.
-"
