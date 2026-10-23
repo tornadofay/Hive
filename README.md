@@ -2,11 +2,37 @@
 
 **Hive is a general-purpose C# / .NET 10 platform for building, running, coordinating, observing, governing, and evolving multi-agent systems — proven first against a real deliverable: automating data entry from supported input sources into an existing business application.**
 
-The data-entry pipeline is Hive's **V1 forcing function**, not Hive's permanent definition. It determines what gets built first so the general platform is proven against a real problem instead of an abstract feature list.
+The data-entry pipeline is Hive's **V1 forcing function**, not Hive's permanent definition. It determines what gets built first so the general platform is proven against a real problem instead of an abstract feature list. Input preparation and interpretation (including vision when appropriate), structured candidate extraction, validation, business-app integration, and approval are V1 capabilities that emerge from the general Agent/Tool/platform architecture.
 
-Input preparation and interpretation, including vision when appropriate, structured candidate mapping/extraction, validation, business-app integration, and approval are V1 capabilities that emerge from the general Agent/Tool/platform architecture.
+## Project status
 
-## Architecture
+- **Phase 0 — Foundations:** complete.
+- **Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1):** in progress. Verified implementation is complete through Phase 1.18A (Embedded Persistence Profile) and Phase 1.19A (Execution Target Preferences). Phase 1.20 Slice 1 (Direct LLM Conversation Path) is implemented and awaiting developer verification. Vector retrieval is deferred to reassessment with Phase 5.1.
+
+The present-day state and the active verification gate are owned by [Current Status](docs/Hive_Current_Status.md) and [Active Work](docs/Hive_Active_Work.md). Completed-work evidence lives in the [verification archive](docs/verification/).
+
+## Getting started
+
+**Requirements**
+
+- Windows (the host is WinForms and secrets use Windows DPAPI).
+- The .NET 10 SDK.
+- Nothing else for a normal installation: the **Embedded** persistence profile (SQLite) needs no database server.
+- SQL Server or LocalDB only if you choose the SQL Server persistence profile, or to run the SQL Server persistence integration tests (see `tests/Hive.Tests/HivePersistenceTestConfiguration.cs` and the test-harness section of [docs/architecture/foundations.md](docs/architecture/foundations.md)).
+
+**Build, run, test**
+
+```text
+dotnet build Hive.sln
+dotnet run --project src/Hive.Example.WinForms
+dotnet test tests/Hive.Tests
+```
+
+`Hive.Example.WinForms` is the developer-facing Example Host. Warnings are treated as errors repository-wide (`Directory.Build.props`). Verification is currently developer-run; see [AGENTS.md](AGENTS.md) for the workflow and gates.
+
+Secrets are protected at rest with Windows DPAPI at current-user scope, so V1 treats a Hive database as single-Windows-principal for secret purposes (details in the foundations architecture document).
+
+## Architecture at a glance
 
 ```
 Host Application
@@ -35,114 +61,22 @@ Host Application
       ▼
 Microsoft Agent Framework
       │
-      ├── Agent/workflow execution
-      ├── Orchestration
-      ├── Checkpoints/resume where applicable
-      ├── HITL primitives
-      └── Workflow execution infrastructure
-      │
       ▼
 Provider / Model
 ```
 
-Hive uses MAF wherever MAF already owns the underlying mechanism. Hive does not become a second orchestration engine.
+Hive uses Microsoft Agent Framework (MAF) wherever MAF already owns the underlying mechanism and does not become a second orchestration engine. The architecture index is [docs/architecture.md](docs/architecture.md); detailed domain documents are under [docs/architecture/](docs/architecture/).
 
-## Stable Agent generations
+## Agents, Hives, and later generations
 
-```
-Agent                       Hive
-  │                           │
-  └── CognitiveAgent          └── CognitiveHive
-       later/additive              later/additive
-```
+- The base `Agent` and base `Hive` are complete and useful on their own. A base Agent can be capable without being cognitive: it has Objectives, durable work state, a Question/Answer protocol, an Understanding Gate, delegation interfaces, and lifecycle controls.
+- `CognitiveAgent` and `CognitiveHive` are later, additive generations. The concrete type is chosen explicitly when a resource is created; there is no runtime promotion or demotion.
+- A Hive is a persistent collective with membership. A Swarm is only the subset of members currently collaborating on a bounded problem; it is not a persistent layer.
+- A future CognitiveAgent adds persistent cognitive state that outlives any one runtime, offline Dream processing, specialty-aware Questions, and governed learning from evaluated outcomes. Dream results are simulations and are never treated as actual experience.
 
-The concrete type is selected when the resource/runtime is created.
+Details: [agents-and-hives](docs/architecture/agents-and-hives.md) and [cognitive resources](docs/architecture/cognitive-resources-and-portability.md).
 
-A normal Agent does not later turn into a CognitiveAgent, and a CognitiveAgent does not later turn into a normal Agent. Different generations can coexist in the same deployment.
-
-This keeps the base platform stable while allowing future agent/hive generations to introduce new implementation ideas without breaking existing projects.
-
-## Base Agent capability boundary
-
-The base `Agent` is allowed to be capable without being cognitive. It may provide reusable mechanisms such as:
-
-- explicit **Objectives** with lifecycle, completion criteria, priority, deadlines, and dependencies;
-- durable **memory infrastructure** for explicitly addressed conversation, execution history, artifacts, tool results, checkpoints, and configuration state;
-- a first-class **Question/Answer protocol** with provenance, ownership, status, waiting, and timeout;
-- a **Patience / Understanding Gate** that blocks consequential work until required information or confirmation is available;
-- bounded **Simulation infrastructure** that can execute and compare hypothetical scenarios in parallel;
-- **Delegation/coordination** interfaces for requesting work from Agents within an authorized coordination context; a governing Hive does not delegate goals to other Hives;
-- lifecycle and persistence controls that allow runtime death, dormancy, and later recreation.
-
-These mechanisms become cognitive only when a CognitiveAgent can autonomously interpret, revise, select, or learn from them—for example forming Goals, revising Beliefs, choosing Questions, selecting Dreams, interpreting simulation outcomes, or changing strategy from experience.
-
-## Dynamic Hives and Swarms
-
-A base Agent may sponsor a persistent Hive when a problem requires multiple specialties. The Agent remains an Agent; the Hive becomes a separate managed collective.
-
-A Hive manages membership and may create or reuse specialist Agents of authorized generations. A **Swarm is not another persistent layer**: it is simply the selected Hive members currently collaborating on a bounded problem. When the collaboration ends, the Swarm ceases to be active; the Hive and its Agents remain.
-
-A member Agent inside a Hive normally requests missing specialties from the parent Hive rather than creating child Hives itself. A solo Agent may sponsor a persistent Hive when it needs multiple specialties. Hive sponsorship does not own the Hive's lifetime.
-
-## Workspace
-
-`Hive.Workspace` is the human-facing operational surface over `Hive.Management`.
-
-The current V1 implementation provides the WorkItem-oriented Workspace surface for supported image input, WorkItem listing and paging, activity inspection, approval actions, and related V1 operations. It does not yet represent the complete Workspace roadmap.
-
-The broader Workspace foundation planned for Phase 1.20 adds direct LLM interaction, explicit ExecutionTarget selection, conversation/history, active runtime context, restart/reload handling, and the full user-facing interaction model. Agent interaction and application/form-associated Agent workflows are planned for Phase 1.21. Governed tools and generalized human intervention are planned for Phase 1.22. Later phases add business-operation execution, receipts/reconciliation, post-write Review, multi-Agent execution, recovery, diagnostics, and observability.
-
-A business application can register a host context with a bounded API such as:
-
-```csharp
-ai.Register(this);
-```
-
-Registration may bind or reuse a specialized Agent. It does not automatically create an Agent or Hive, and multiple open forms do not automatically become a Hive merely because they are visible at the same time.
-
-For V1, business-app integration supports **both API/service and bounded UI integration**. They are not mutually exclusive: a WorkItem or individual operation may use the API, the UI, or both. The implemented WinForms UI path can discover the application's Form hierarchy, UserControls, `Control`-derived and custom controls, containers such as Panels and GroupBoxes, nested controls, and relevant runtime/data-source context. Discovery provides context only; it never grants permission to click, edit, invoke, or otherwise mutate a control.
-
-## V1 work-unit semantics
-
-A single input submission may produce one or multiple independent WorkItems. A WorkItem is the durable unit of user-visible work and represents one logical business operation when a business operation is required; one operation may contain parent data and child rows and may require multiple executions or steps. A folder of images can therefore produce many independent WorkItems, while spreadsheet workbook/worksheet rows can produce the appropriate WorkItems for the host operation. Submission/batch grouping does not replace each WorkItem's identity, lifecycle, provenance, authorization, or applicable operation receipt/Review state.
-
-Image is the first V1 input boundary. Additional supported input sources such as spreadsheets are added through input-specific preparation/routing and converge on the same structured-candidate and business-operation boundaries.
-
-WorkItem identity and lifecycle are independent of individual runtime/execution lifetimes.
-
-## Cognitive lifecycle (later generation)
-
-A CognitiveAgent is a persistent cognitive entity whose runtime incarnation may end completely while its identity and cognitive state remain durable:
-
-```
-Persistent Agent state
-        ↓
-   runtime incarnation
-        ↓
-      operate
-        ↓
-       Death
-        ↓
-  no Agent runtime
-        │
-   ┌────┴────┐
-   │         │
- Dreams   human review/edit
-   │         │
-   └────┬────┘
-        ↓
- persistent state
-        ↓
-   Wake/Reincarnation
-        ↓
- new runtime incarnation
-```
-
-Dreams are bounded simulations/analyses that can run against persisted state without an active Agent runtime. They may explore multiple hypothetical plans in parallel and compare predicted outcomes. Dream results remain distinguishable from actual experiences.
-
-Questions are explicit cognitive work items. A Hive may route different Questions to Agents according to specialty so the members investigate different aspects of the same user objective; answers remain attributable and can feed collective reasoning.
-
-## Intended V1 data-entry pipeline
+## V1 data-entry pipeline
 
 ```
 Input submission
@@ -164,101 +98,55 @@ durable operation attempt / receipt
 policy-governed verification / Review
 ```
 
-Concrete paths include:
+Image is the first V1 input boundary. Supported inputs are prepared and routed by type: images through a vision-capable ExecutionTarget, `.xlsx` workbooks through worksheet and row mapping, and `.txt` text, and all converge on one structured-candidate boundary.
 
-```text
-Image      → vision capability       → structured candidate
-Spreadsheet → workbook/row mapping   → structured candidate
+A single submission may produce one or many independent WorkItems. A WorkItem is the durable unit of user-visible work and represents one logical business operation when one is required. Batch grouping never replaces a WorkItem's identity, lifecycle, provenance, authorization, receipt, or Review state.
+
+The business write is a governed Tool invocation over an authorized host capability. Approval (before the write) and Review (after the write) are separate concepts. Hive's database is never a gateway to the host application's business database. The proposal, write, receipt, and Review stages belong to later V1 phases; see the [roadmap](docs/roadmap.md).
+
+## Workspace and host integration
+
+The **Workspace** is the human-facing operational surface over `Hive.Management`. It is implemented in `Hive.Host.WinForms`; there is no separate `Hive.Workspace` project.
+
+Currently implemented: the WorkItem surface (image input, listing and paging, activity, approval actions) and the direct LLM conversation view with explicit ExecutionTarget selection (Phase 1.20 Slice 1, awaiting verification). Planned: Agent interaction and application/form-associated Agents (Phase 1.21), governed Tools and generalized intervention (Phase 1.22), and later business-operation execution, receipts, post-write Review, multi-Agent execution, recovery, diagnostics, and observability.
+
+Business-app integration supports both API/service and bounded UI integration, and a WorkItem or operation may use either or both. A WinForms host registers a root and captures bounded, immutable metadata:
+
+```csharp
+using var registration = hostContext.Register(form);
+var snapshot = await hostContext.CaptureAsync(registration, cancellationToken);
 ```
 
-Both paths converge on the common validation and business-operation boundary.
+Discovery provides context only; it never grants permission to click, edit, invoke, or otherwise mutate a control. Registration does not create an Agent or Hive. Details: [v1-business-app-integration](docs/architecture/v1-business-app-integration.md) and [v1-host-and-management](docs/architecture/v1-host-and-management.md).
 
-The intended business-app write is a governed Tool invocation surface over an authorized host/business capability. The business-write, receipt, and post-write Review lifecycle belongs to later V1 pipeline phases; Approval remains a separate pre-write intervention when policy requires it. Hive never treats its own database as a gateway to the host application's business database.
+## Management, UI foundation, examples, and tests
 
-V1 does not choose between API and UI as an architecture decision. Both integration paths are supported from the start, and the implementation may use either or both per operation according to the real application's capabilities and authorization policy.
-
-Image is the first V1 input boundary. Additional supported input sources can be added later without redefining Hive.
-
-Generic cross-host integration remains later; the initial UI discovery contract is specifically for the real WinForms host boundary used by V1.
+- **Management:** `Hive.Management` is the authoritative facade; WinForms is a thin shell over it. Settings covers Providers (Add Provider, Refresh, Advanced Provider Configuration), Agents, and Persistence (Database Setup and Data Migration between SQL Server and Embedded).
+- **UI foundation:** Hive-owned controls, native WinForms, and custom `System.Drawing` rendering behind `Hive.Host.WinForms.UI`, with Light / Dark / System themes. See [docs/ui/](docs/ui/).
+- **Example Host:** `Hive.Example.WinForms` is a first-class developer-facing application. Examples are auto-discovered through the `IHiveExample` contract and organized as Category → Subcategory → Example.
+- **Tests:** `Hive.Tests` is the authoritative automated suite. No coverage or verification claim is made until the test or manual check has actually been performed.
 
 ## Core principles
 
-- **C# / .NET 10 only**
-- **MAF-first:** reuse MAF for behavior it already owns
-- **General-purpose architecture, concrete V1 forcing function**
-- **Base Agent and Hive are complete on their own**
-- **CognitiveAgent/CognitiveHive are later additive generations**
-- **An Agent's persistent cognitive state outlives any one runtime incarnation; runtime death is not Agent deletion**
-- **Dreams can process persisted cognition while no Agent runtime is active**
-- **Dream results remain simulations/predictions and are never silently treated as actual experience**
-- **Questions are first-class, specialty-aware cognitive objects rather than repeated prompt text**
-- **CognitiveHive adds collective cognition without replacing or owning member cognition**
-- **Swarm is a non-persistent view of the currently collaborating Hive members**
-- **Agent generation is explicit at creation; it is never inferred automatically from task complexity**
-- **Dream/background processing remains subject to applicable budgets, quotas, concurrency, authorization, and cancellation**
-- **No runtime type promotion/demotion**
-- **Provider-neutral and capability-aware execution planning**
-- **One shared OpenAI-compatible provider transport**
-- **Hive state is separate from the host application's business database**
-- **Running executions use immutable configuration snapshots**
-- **Late provider results cannot overwrite terminal execution state**
-- **The LLM proposes/reasons; Hive enforcement boundaries decide**
-- **Secrets are encrypted at rest and redacted from diagnostics**
-- **Production verification covers concurrency, failure, recovery, security, and edge cases**
+- C# / .NET 10 only; MAF-first.
+- General-purpose architecture with a concrete V1 forcing function.
+- Base Agent and Hive are complete on their own; cognitive generations are additive and chosen at creation.
+- The LLM proposes and reasons; Hive enforcement boundaries decide. Authorization is enforced in code, never by prompts or UI visibility.
+- Hive state is separate from the host application's business database.
+- Provider-neutral, capability-aware execution planning; one shared OpenAI-compatible provider transport.
+- Running executions use immutable configuration snapshots; late provider results cannot overwrite terminal state.
+- Secrets are protected at rest and redacted from diagnostics.
+- Production verification covers concurrency, failure, recovery, security, and edge cases.
 
-## Management surface
+## Documentation map
 
-`Hive.Management` is the authoritative management facade. WinForms is a thin shell over that facade.
-
-V1 starts with:
-
-1. Providers — simple configured-provider Settings with Add Provider / Refresh and generalized Advanced Provider Configuration
-2. Agents
-3. V1 WorkItems / Operational Workspace
-
-The Provider resource model still contains Provider → ProviderAccount → ExecutionTarget. Normal Settings hides that graph for simple onboarding; Advanced Provider Configuration exposes the underlying generalized resource administration when required.
-
-Later areas are added when their owning phase lands: Hive Membership and Governance, CognitiveAgent/CognitiveHive capabilities, Knowledge/Skills/Learning resources, broader storage/deployment portability, configuration import/export, additional host surfaces, and the generic host-integration/operations extensions that remain outside V1.
-
-## WinForms UI foundation
-
-Hive's WinForms surfaces share a common UI foundation established in Phase 0.
-
-Hive's WinForms UI foundation is implemented through Hive-owned controls, native WinForms controls, and custom System.Drawing rendering. The implementation is isolated behind `Hive.Host.WinForms.UI`; consuming forms use Hive-owned theme and control contracts rather than a third-party renderer.
-
-The foundation starts with Light / Dark / System modes and shared palette, typography, spacing, and visual-state rules. Standard WinForms controls remain valid when their native behavior is sufficient; Hive does not wrap every control merely to rename it.
-
-## Example application
-
-`Hive.Example.WinForms` is a first-class developer-facing application, not a temporary demo. It uses the same UI foundation as the rest of Hive.
-
-Examples are organized by a scalable navigation path (Category → Subcategory → optional deeper groups → Example) through a left-side navigation surface and a replaceable content `UserControl`. Examples are auto-discovered through a small `IHiveExample` contract so adding an example does not require central shell wiring.
-
-The Example host also provides developer test tools that invoke `dotnet test` externally against `Hive.Tests` and stream results. The authoritative test suite remains `Hive.Tests`.
-
-The developer performs manual UI/application testing; no separate UI-automation framework is required by the architecture.
-
-## Automated tests
-
-`Hive.Tests` provides production-oriented unit and contract coverage.
-
-Important categories include:
-
-- identity/scope isolation;
-- capability matching;
-- execution planning;
-- immutable snapshots;
-- persistence, snapshots, and transactional outbox;
-- provider failure/timeout behavior;
-- MAF integration;
-- approval/stale-intervention behavior;
-- crash/resume;
-- security/redaction;
-- concurrent runtime isolation;
-- later cognitive state and recovery;
-- host integration boundaries.
-
-No test coverage or verification claim is made until the corresponding test or manual verification actually exists and has actually been performed.
+- [AGENTS.md](AGENTS.md) — repository operating rules, authorization, and verification gates.
+- [docs/architecture.md](docs/architecture.md) and [docs/architecture/](docs/architecture/) — architecture index and detailed domain documents.
+- [docs/roadmap.md](docs/roadmap.md) and [docs/plan/](docs/plan/) — ordered work and detailed plans.
+- [docs/Hive_Current_Status.md](docs/Hive_Current_Status.md) and [docs/Hive_Active_Work.md](docs/Hive_Active_Work.md) — current status and the active slice.
+- [docs/verification/](docs/verification/) — historical verification evidence.
+- [docs/ui/](docs/ui/) and [docs/examples/](docs/examples/) — UI and public-API usage guidance.
+- [.agents/skills/](.agents/skills/) — reusable agent workflow.
 
 ## Repository structure
 
@@ -268,13 +156,18 @@ Hive/
 ├── Directory.Build.props
 ├── Hive.sln
 ├── README.md
+├── .agents/skills/
 ├── docs/
 │   ├── architecture.md
+│   ├── architecture/
 │   ├── roadmap.md
+│   ├── plan/
 │   ├── Hive_Current_Status.md
 │   ├── Hive_Active_Work.md
+│   ├── verification/
+│   ├── ui/
 │   ├── examples/
-│   └── ui/
+│   └── off-work/            (preserved notes, non-authoritative)
 ├── src/
 │   ├── Hive.Core/
 │   ├── Hive.Agents/
@@ -290,17 +183,7 @@ Hive/
     └── Hive.Tests/
 ```
 
-The solution and project files are the implementation source for the actual project graph; the documentation files above define architecture, active scope, roadmap order, status, public examples, and practical WinForms UI/Example Host usage.
-
-## Project status
-
-**Phase 0 — Foundations: Complete.**
-
-**Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1):** In progress. Verified implementation is complete through Phase 1.18A (Embedded Persistence Profile) and Phase 1.19A (Execution Target Preferences). Phase 1.20 Slice 1 (Direct LLM Conversation Path) is implemented and awaiting developer verification. Vector retrieval is deferred to reassessment with Phase 5.1.
-
-The present-day project state and the active verification gate are owned by [Current Status](docs/Hive_Current_Status.md) and [Active Work](docs/Hive_Active_Work.md). Completed-work evidence lives in the [verification archive](docs/verification/).
-
-See [Architecture](docs/architecture.md) and [Roadmap](docs/roadmap.md).
+The solution and project files are the implementation source for the actual project graph.
 
 ## MAF reference
 
