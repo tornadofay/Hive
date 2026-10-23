@@ -23,7 +23,16 @@ public sealed class HiveThemeManager : IHiveThemeManager
         ColorTranslator.FromHtml("#FFFFFF"),
         ColorTranslator.FromHtml("#F1F3F5"),
         ColorTranslator.FromHtml("#667085"),
-        ColorTranslator.FromHtml("#DCE9FF"));
+        ColorTranslator.FromHtml("#DCE9FF"))
+        {
+            SoftBorder = ColorTranslator.FromHtml("#E6ECF4"),
+            CardBorder = ColorTranslator.FromHtml("#D8DEE8"),
+            HoverSurface = ColorTranslator.FromHtml("#F1F5FB"),
+            InformationBackground = ColorTranslator.FromHtml("#EEF4FF"),
+            SuccessBackground = ColorTranslator.FromHtml("#ECF8F1"),
+            WarningBackground = ColorTranslator.FromHtml("#FFF7E6"),
+            ErrorBackground = ColorTranslator.FromHtml("#FDECEA")
+        };
 
     private static readonly HivePalette DarkPalette = new(
         ColorTranslator.FromHtml("#0F141A"),
@@ -38,7 +47,16 @@ public sealed class HiveThemeManager : IHiveThemeManager
         ColorTranslator.FromHtml("#12181F"),
         ColorTranslator.FromHtml("#1A2027"),
         ColorTranslator.FromHtml("#A5AFBA"),
-        ColorTranslator.FromHtml("#24466F"));
+        ColorTranslator.FromHtml("#24466F"))
+        {
+            SoftBorder = ColorTranslator.FromHtml("#2A3541"),
+            CardBorder = ColorTranslator.FromHtml("#2B3642"),
+            HoverSurface = ColorTranslator.FromHtml("#1D2731"),
+            InformationBackground = ColorTranslator.FromHtml("#1B2A3F"),
+            SuccessBackground = ColorTranslator.FromHtml("#1A2E24"),
+            WarningBackground = ColorTranslator.FromHtml("#332A1A"),
+            ErrorBackground = ColorTranslator.FromHtml("#332022")
+        };
 
     private HiveThemeDefinition _theme;
 
@@ -246,8 +264,16 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 listView.ApplyTheme(theme);
                 break;
 
+            case HiveCardPanel cardPanel:
+                cardPanel.ApplyTheme(theme);
+                break;
+
             case HiveBorderPanel borderPanel:
                 borderPanel.ApplyTheme(theme);
+                break;
+
+            case HiveEmptyState emptyState:
+                emptyState.ApplyTheme(theme);
                 break;
 
             case HiveButton hiveButton:
@@ -443,7 +469,10 @@ public sealed class HiveThemeManager : IHiveThemeManager
                 Question = dark
                     ? ColorTranslator.FromHtml("#A7B1BF")
                     : ColorTranslator.FromHtml("#667085")
-            });
+            })
+            {
+                Radii = new HiveRadii(6, 8, 12)
+            };
     }
 
     private static HiveThemeMode ResolveEffectiveMode(

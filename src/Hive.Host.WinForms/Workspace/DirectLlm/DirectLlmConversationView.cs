@@ -23,6 +23,9 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
     private readonly HiveButton _newConversationButton;
     private readonly HiveButton _sendButton;
     private readonly HiveButton _cancelButton;
+    private HiveCardPanel _historyCard = null!;
+    private HiveCardPanel _transcriptCard = null!;
+    private HiveCardPanel _composerCard = null!;
     private readonly CancellationTokenSource _lifetimeCts = new();
 
     private readonly List<DirectLlmTargetOption> _targets = [];
@@ -116,6 +119,9 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(this);
+        _historyCard.ApplyTheme(_themeManager.Theme);
+        _transcriptCard.ApplyTheme(_themeManager.Theme);
+        _composerCard.ApplyTheme(_themeManager.Theme);
         _transcriptPanel.ApplyTheme(_themeManager);
         ApplyStatusVisual();
         UpdateActionState();
@@ -535,8 +541,14 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
             _themeManager);
     }
 
-    private void ThemeManagerOnChanged(object? sender, EventArgs e) =>
+    private void ThemeManagerOnChanged(object? sender, EventArgs e)
+    {
+        _historyCard.ApplyTheme(_themeManager.Theme);
+        _transcriptCard.ApplyTheme(_themeManager.Theme);
+        _composerCard.ApplyTheme(_themeManager.Theme);
+        _transcriptPanel.ApplyTheme(_themeManager);
         ApplyStatusVisual();
+    }
 
     private void ApplyStatusVisual()
     {
@@ -583,7 +595,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         {
             Dock = DockStyle.Fill,
             AutoEllipsis = true,
-            Font = new Font("Segoe UI", 11.5f, FontStyle.Bold),
+            Font = new Font(_themeManager.Theme.Typography.FontFamily, 11.5f, FontStyle.Bold),
             Text = "Direct LLM",
             TextAlign = ContentAlignment.MiddleLeft,
             AccessibleRole = AccessibleRole.StaticText
@@ -619,7 +631,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         {
             Dock = DockStyle.Fill,
             Text = "Execution target",
-            Font = new Font(Font, FontStyle.Bold),
+            Font = new Font(_themeManager.Theme.Typography.FontFamily, _themeManager.Theme.Typography.BodySize, FontStyle.Bold),
             TextAlign = ContentAlignment.MiddleLeft
         };
         targetRow.Controls.Add(targetLabel, 0, 0);
@@ -654,7 +666,9 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         historyPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
         historyPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         historyPanel.Controls.Add(CreateSectionLabel("Conversations"), 0, 0);
-        historyPanel.Controls.Add(_conversationList, 0, 1);
+        _historyCard = new HiveCardPanel { Dock = DockStyle.Fill, Padding = new Padding(8) };
+        _historyCard.Controls.Add(_conversationList);
+        historyPanel.Controls.Add(_historyCard, 0, 1);
         workspace.Panel1.Controls.Add(historyPanel);
 
         var conversationPanel = new TableLayoutPanel
@@ -670,8 +684,13 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         conversationPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 104));
         conversationPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
         conversationPanel.Controls.Add(_conversationDetailsLabel, 0, 0);
-        conversationPanel.Controls.Add(_transcriptScrollHost, 0, 1);
-        conversationPanel.Controls.Add(_messageScrollHost, 0, 2);
+        _transcriptCard = new HiveCardPanel { Dock = DockStyle.Fill, Padding = new Padding(8) };
+        _transcriptCard.Controls.Add(_transcriptScrollHost);
+        conversationPanel.Controls.Add(_transcriptCard, 0, 1);
+
+        _composerCard = new HiveCardPanel { Dock = DockStyle.Fill, Padding = new Padding(8) };
+        _composerCard.Controls.Add(_messageScrollHost);
+        conversationPanel.Controls.Add(_composerCard, 0, 2);
 
         var composerActions = new FlowLayoutPanel
         {
@@ -698,7 +717,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         new()
         {
             Dock = DockStyle.Fill,
-            Font = new Font(Font, FontStyle.Bold),
+            Font = new Font(_themeManager.Theme.Typography.FontFamily, _themeManager.Theme.Typography.BodySize, FontStyle.Bold),
             Text = text,
             TextAlign = ContentAlignment.MiddleLeft
         };

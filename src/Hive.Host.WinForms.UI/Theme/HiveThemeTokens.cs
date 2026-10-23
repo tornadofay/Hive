@@ -15,7 +15,16 @@ public sealed record HivePalette(
     Color InputBackground,
     Color DisabledBackground,
     Color DisabledText,
-    Color Selection);
+    Color Selection)
+{
+    public Color SoftBorder { get; init; } = Color.Empty;
+    public Color CardBorder { get; init; } = Color.Empty;
+    public Color HoverSurface { get; init; } = Color.Empty;
+    public Color InformationBackground { get; init; } = Color.Empty;
+    public Color SuccessBackground { get; init; } = Color.Empty;
+    public Color WarningBackground { get; init; } = Color.Empty;
+    public Color ErrorBackground { get; init; } = Color.Empty;
+}
 
 public sealed record HiveTypography(
     string FontFamily,
@@ -34,6 +43,11 @@ public sealed record HiveSpacing(
     int Md,
     int Lg,
     int Xl);
+
+public sealed record HiveRadii(
+    int Small,
+    int Medium,
+    int Large);
 
 public sealed record HiveVisualStates(
     Color HoverBackground,
@@ -62,4 +76,7 @@ public sealed record HiveThemeDefinition(
     HivePalette Palette,
     HiveTypography Typography,
     HiveSpacing Spacing,
-    HiveVisualStates VisualStates);
+    HiveVisualStates VisualStates)
+{
+    public HiveRadii Radii { get; init; } = new(6, 8, 12);
+}

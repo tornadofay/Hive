@@ -6,7 +6,7 @@ using System.ComponentModel;
 
 namespace Hive.Host.WinForms.UI.Controls;
 
-internal sealed class HiveBorderPanel : Panel
+public class HiveBorderPanel : Panel
 {
     private const int DefaultCornerRadius = 7;
 
@@ -61,7 +61,7 @@ internal sealed class HiveBorderPanel : Panel
         }
     }
 
-    internal void ApplyTheme(HiveThemeDefinition theme)
+    internal virtual void ApplyTheme(HiveThemeDefinition theme)
     {
         ArgumentNullException.ThrowIfNull(theme);
 
