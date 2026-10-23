@@ -318,7 +318,7 @@ Hive.Host.WinForms.UI ───────────────────�
 
 Hive.Example.WinForms ───────────────────→ Hive.Host.WinForms
                       ├──────────────────→ Hive.Host.WinForms.UI
-                      └──────────────────→ public platform contracts
+                      └──────────────────→ public platform contracts (plus approved example-only project references)
 ```
 
 `Hive.Tests` references the projects and test dependencies it exercises. The graph above summarizes production project dependencies rather than every project-file reference.

@@ -7,7 +7,7 @@ The data-entry pipeline is Hive's **V1 forcing function**, not Hive's permanent 
 ## Project status
 
 - **Phase 0 — Foundations:** complete.
-- **Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1):** in progress. Verified implementation is complete through Phase 1.18A (Embedded Persistence Profile) and Phase 1.19A (Execution Target Preferences). Phase 1.20 Slice 1 (Workspace Foundation) closed on 2026-10-23 with developer-reported verification of 818/818 tests passing; Slices 2-4 are not started and require explicit authorization. Vector retrieval is deferred to reassessment with Phase 5.1.
+- **Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1):** in progress. Verified implementation is complete through Phase 1.18A (Embedded Persistence Profile) and Phase 1.19A (Execution Target Preferences). Phase 1.20 Slice 1 (Workspace Foundation) closed on 2026-10-23 with developer-reported verification of 818/818 tests passing; Slices 2-4 are not started and require explicit authorization. The deferred vector-retrieval item formerly tracked as "Phase 1.19" is deferred to reassessment with Phase 5.1.
 
 The present-day state and the active verification gate are owned by [Current Status](docs/Hive_Current_Status.md) and [Active Work](docs/Hive_Active_Work.md). Completed-work evidence lives in the [verification archive](docs/verification/).
 
