@@ -2,7 +2,6 @@ using System.Reflection;
 using System.Windows.Forms;
 using Hive.Core;
 using Hive.Host.WinForms;
-using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 using Hive.Management;
 using Xunit;
@@ -12,68 +11,64 @@ namespace Hive.Tests;
 public sealed class HiveWorkspaceLifecycleTests
 {
     [Fact]
-    public void Constructor_ShowsExplicitActivitySelectionState()
+    public void Constructor_ExposesDirectLlmAndWorkItemsModulesWithoutStartingManagementCalls()
     {
-        var (management, _) = ManagementFacadeProxy.Create();
-        var accessContext = new ResourceAccessContext(
-            DeploymentId.New(),
-            TenantId.New(),
-            PrincipalId.New());
-        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var (management, proxy) = ManagementFacadeProxy.Create();
 
-        using var workspace = new HiveWorkspaceView(
-            management,
-            accessContext,
-            themeManager);
+        using var workspace = new HiveWorkspaceView(CreateContext(management));
+
+        var navigation = FindControl<ListBox>(workspace);
+
+        Assert.NotNull(navigation);
+        Assert.Equal(
+            ["Direct LLM", "Work Items"],
+            navigation!.Items.Cast<object>().Select(item => item.ToString()));
+        Assert.Equal(
+            ["direct-llm", "work-items"],
+            workspace.Modules.Select(module => module.Id));
+        Assert.Null(workspace.ActiveModuleId);
+        Assert.False(proxy.WorkItemsRequested.Task.IsCompleted);
+    }
+
+    [Fact]
+    public void ShowModule_WorkItems_ShowsExplicitActivitySelectionStateWithoutManagementCalls()
+    {
+        var (management, proxy) = ManagementFacadeProxy.Create();
+
+        using var workspace = new HiveWorkspaceView(CreateContext(management));
+
+        workspace.ShowModule("work-items");
 
         var state = FindLabel(
             workspace,
             "Select a WorkItem to view activity.");
 
+        Assert.Equal("work-items", workspace.ActiveModuleId);
         Assert.NotNull(state);
         Assert.True(state!.Visible);
+        Assert.False(proxy.WorkItemsRequested.Task.IsCompleted);
     }
 
     [Fact]
-    public void Constructor_ExposesWorkItemsAndDirectLlmModesWithoutStartingManagementCalls()
+    public void ShowModule_DirectLlm_DoesNotCallManagementUntilRefreshed()
     {
-        var (management, proxy) = ManagementFacadeProxy.Create();
-        var accessContext = new ResourceAccessContext(
-            DeploymentId.New(),
-            TenantId.New(),
-            PrincipalId.New());
-        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
+        var (management, _) = ManagementFacadeProxy.Create();
 
-        using var workspace = new HiveWorkspaceView(
-            management,
-            accessContext,
-            themeManager);
+        using var workspace = new HiveWorkspaceView(CreateContext(management));
 
-        var tabs = FindControl<HiveTabControl>(workspace);
+        workspace.ShowModule("direct-llm");
 
-        Assert.NotNull(tabs);
-        Assert.Equal(2, tabs!.TabPages.Count);
-        Assert.Equal("Work Items", tabs.TabPages[0].Text);
-        Assert.Equal("Direct LLM", tabs.TabPages[1].Text);
-        Assert.Equal(0, tabs.SelectedIndex);
-        Assert.False(proxy.WorkItemsRequested.Task.IsCompleted);
+        Assert.Equal("direct-llm", workspace.ActiveModuleId);
     }
 
     [Fact]
     public void RefreshAsync_DoesNotMutateDisposedViewWhenManagementCompletesLate()
     {
         var (management, proxy) = ManagementFacadeProxy.Create();
-        var accessContext = new ResourceAccessContext(
-            DeploymentId.New(),
-            TenantId.New(),
-            PrincipalId.New());
-        var themeManager = new HiveThemeManager(HiveThemeMode.Light);
 
-        using var workspace = new HiveWorkspaceView(
-            management,
-            accessContext,
-            themeManager);
+        using var workspace = new HiveWorkspaceView(CreateContext(management));
 
+        workspace.ShowModule("work-items");
         var refresh = workspace.RefreshAsync();
 
         WaitForTask(
@@ -92,6 +87,93 @@ public sealed class HiveWorkspaceLifecycleTests
             refresh,
             "The disposed workspace refresh did not complete.");
     }
+
+    [Fact]
+    public async Task ActivateModuleAsync_LoadsAModuleOnlyTheFirstTimeItIsShown()
+    {
+        var (management, _) = ManagementFacadeProxy.Create();
+        var first = new FakeModule("first", 10);
+        var second = new FakeModule("second", 20);
+
+        using var workspace = new HiveWorkspaceView(
+            CreateContext(management),
+            [first, second]);
+
+        await workspace.ActivateModuleAsync("first");
+        await workspace.ActivateModuleAsync("second");
+        await workspace.ActivateModuleAsync("first");
+
+        Assert.Equal(1, first.RefreshCount);
+        Assert.Equal(1, second.RefreshCount);
+        Assert.Equal("first", workspace.ActiveModuleId);
+    }
+
+    [Fact]
+    public async Task ManagementChanged_RefreshesOnlyTheActiveModule()
+    {
+        var (management, _) = ManagementFacadeProxy.Create();
+        var first = new FakeModule("first", 10);
+        var second = new FakeModule("second", 20);
+        var context = CreateContext(management);
+
+        using var workspace = new HiveWorkspaceView(context, [first, second]);
+
+        await workspace.ActivateModuleAsync("first");
+        await workspace.ActivateModuleAsync("second");
+        context.NotifyManagementChanged();
+
+        Assert.Equal(1, first.RefreshCount);
+        Assert.Equal(2, second.RefreshCount);
+    }
+
+    [Fact]
+    public void Constructor_RejectsDuplicateOrEmptyModuleSets()
+    {
+        var (management, _) = ManagementFacadeProxy.Create();
+        var context = CreateContext(management);
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveWorkspaceView(
+                context,
+                [new FakeModule("same", 1), new FakeModule("same", 2)]));
+
+        Assert.Throws<ArgumentException>(
+            () => new HiveWorkspaceView(
+                context,
+                Array.Empty<IHiveWorkspaceModule>()));
+    }
+
+    [Fact]
+    public void Context_ResolvesTheCurrentManagementFacadeOnEveryAccess()
+    {
+        var (first, _) = ManagementFacadeProxy.Create();
+        var (second, _) = ManagementFacadeProxy.Create();
+        var current = first;
+
+        var context = new HiveWorkspaceContext(
+            () => current,
+            CreateAccessContext(),
+            new HiveThemeManager(HiveThemeMode.Light));
+
+        Assert.Same(first, context.Management);
+
+        current = second;
+
+        Assert.Same(second, context.Management);
+    }
+
+    private static HiveWorkspaceContext CreateContext(
+        IHiveManagementFacade management) =>
+        new(
+            management,
+            CreateAccessContext(),
+            new HiveThemeManager(HiveThemeMode.Light));
+
+    private static ResourceAccessContext CreateAccessContext() =>
+        new(
+            DeploymentId.New(),
+            TenantId.New(),
+            PrincipalId.New());
 
     private static Label? FindLabel(
         Control root,
@@ -148,6 +230,39 @@ public sealed class HiveWorkspaceLifecycleTests
         }
 
         task.GetAwaiter().GetResult();
+    }
+
+    private sealed class FakeModule : IHiveWorkspaceModule
+    {
+        public FakeModule(string id, int order)
+        {
+            Id = id;
+            Order = order;
+        }
+
+        public string Id { get; }
+
+        public string Title => Id;
+
+        public int Order { get; }
+
+        public FakeView? View { get; private set; }
+
+        public int RefreshCount => View?.RefreshCount ?? 0;
+
+        public Control CreateView(HiveWorkspaceContext context) =>
+            View = new FakeView();
+    }
+
+    private sealed class FakeView : Control, IHiveWorkspaceRefreshable
+    {
+        public int RefreshCount { get; private set; }
+
+        public Task RefreshAsync(CancellationToken cancellationToken)
+        {
+            RefreshCount++;
+            return Task.CompletedTask;
+        }
     }
 
     public class ManagementFacadeProxy : DispatchProxy

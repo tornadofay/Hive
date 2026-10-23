@@ -50,6 +50,8 @@ internal sealed class HiveExampleServices : IServiceProvider
                     ? _output
                     : serviceType == typeof(IHiveManagementFacade)
                         ? _management
-                        : null;
+                        : serviceType == typeof(ResourceAccessContext)
+                            ? _accessContext
+                            : null;
     }
 }

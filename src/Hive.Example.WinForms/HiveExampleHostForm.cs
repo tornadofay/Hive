@@ -44,6 +44,7 @@ internal sealed class HiveExampleHostForm : HiveForm
 
     private HiveExampleServices? _services;
     private HiveHostComposition? _composition;
+    private HiveExampleWorkspaceHost? _workspaceHost;
     private static readonly ResourceAccessContext ExampleSettingsAccessContext =
         new(
             DeploymentId.Parse("6b6f1b2d-b28b-4bb8-92ef-9d9c7ce4c8f1"),
@@ -413,6 +414,9 @@ internal sealed class HiveExampleHostForm : HiveForm
             _configuredAgentSelector.SelectedIndexChanged -= ConfiguredAgentSelectorOnSelectedIndexChanged;
             DisposeActiveView();
 
+            _workspaceHost?.Dispose();
+            _workspaceHost = null;
+
             _composition?.Dispose();
             _composition = null;
             _services = null;
@@ -743,6 +747,37 @@ internal sealed class HiveExampleHostForm : HiveForm
             _outputView.SetCollapsed(false);
     }
 
+    internal void OpenHiveWorkspace()
+    {
+        var services = _services;
+
+        if (services is null ||
+            _composition?.Current is not { IsDisposed: false })
+        {
+            HiveUiErrorReporter.Report(
+                this,
+                "Hive host services are not initialized. Open the Workspace after the host finishes loading.",
+                "Hive Workspace",
+                _outputView,
+                _themeManager);
+            return;
+        }
+
+        _workspaceHost ??= new HiveExampleWorkspaceHost(
+            () => (_composition?.Current is { IsDisposed: false } graph)
+                ? graph.Management
+                : throw new InvalidOperationException(
+                    "Hive host services are not available."),
+            services.AccessContext,
+            _themeManager,
+            _outputView);
+
+        _workspaceHost.Open(this);
+    }
+
+    internal void NotifyWorkspaceDataChanged() =>
+        _workspaceHost?.NotifyManagementChanged();
+
     internal async Task OpenHiveSettingsAsync()
     {
         if (Interlocked.Exchange(ref _settingsOperationActive, 1) != 0)
@@ -811,6 +846,8 @@ internal sealed class HiveExampleHostForm : HiveForm
                 _outputView,
                 currentGraph,
                 ExampleSettingsAccessContext);
+
+            _workspaceHost?.NotifyManagementChanged();
 
             await RefreshConfiguredStateAsync(
                 preferredAgentId,
