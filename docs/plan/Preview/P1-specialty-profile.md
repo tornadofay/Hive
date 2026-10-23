@@ -11,6 +11,8 @@ Scope:
 
 Verify:
 - profile round-trips through persistence;
+- SQL Server and Embedded parity for the extended AgentDefinition contract;
+- migration compatibility with existing AgentDefinition records (additive, no data loss);
 - uniqueness fingerprint derived from normalized profile;
 - exact duplicate resolves to one specialist;
 - semantic overlap detection compares responsibilities/exclusions/capabilities;

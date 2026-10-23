@@ -57,6 +57,7 @@ Detailed plans for the preview live under `docs/plan/Preview/`:
 - [P2 — Population & guards](plan/Preview/P2-population-guards.md)
 - [P3 — Workbench host](plan/Preview/P3-workbench-host.md)
 - [P4 — Governed Tools & authorization boundary](plan/Preview/P4-governed-tools.md)
+- [P5 — End-to-end coordinated run (Manager/Hive/specialists)](plan/Preview/P5-end-to-end-workflow.md)
 
 ## Autonomy profiles (preview)
 

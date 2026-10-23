@@ -97,7 +97,7 @@ Disabling a policy restriction **never** disables the enforcement mechanism that
 
 **Enforcement rules:**
 - Concurrency uses an atomic admission/reservation boundary, not check-then-act. Failed or interrupted runs must not double-release or permanently hold a reservation.
-- The effective policy is an immutable snapshot per run; Settings changes apply to new runs only. No retroactive authority expansion.
+- The effective policy is an immutable snapshot per run; Settings changes apply to new runs only. No retroactive authority expansion. The snapshot captures operating policy only (limits/preferences); live enforcement (current authorization, credential validity, cancellation, emergency stop, hard safety requirements) is evaluated on every consequential action and is never frozen by the snapshot. A snapshot must never grant authority that has since been revoked.
 - Concurrent specialty creation dedups at the catalog boundary.
 - Guard decisions are recorded as attributable evidence so "why didn't Hive create a specialist?" is answerable.
 
