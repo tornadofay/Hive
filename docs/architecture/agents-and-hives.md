@@ -183,7 +183,7 @@ Model self-assessment can suggest progress or stagnation, but does not establish
 
 The loop must enforce maximum attempts, elapsed-time and token/cost budgets, concurrency bounds, cancellation, stale-state protection, and deterministic stopping rules. On exhaustion it returns the strongest supported candidate with its limitations or an explicit unresolved result; it never invents success merely to complete the loop. Comparison may consider correctness evidence, success criteria, robustness, applicability, safety, simplicity, latency, and cost as relevant to the task; unsupported confidence scores are not a substitute for evidence.
 
-Base-Agent problem-solving is current-task behavior. It may choose among approaches under the current policy, but it does not autonomously promote persistent methods, rewrite durable strategy, create Dreams, or acquire CognitiveAgent beliefs/goals/learning. Later CognitiveAgent phases may interpret the recorded actual outcomes and simulated evidence through their own lifecycle and governed learning contracts.
+Base-Agent problem-solving is current-task behavior. It may choose among approaches under the current policy, but it does not autonomously promote persistent methods, rewrite durable strategy, create Dreams, or acquire CognitiveAgent beliefs/goals/learning. Later CognitiveAgent phases may interpret the recorded actual outcomes and simulated evidence through their own lifecycle and governed learning contracts. Those phases consume the Phase 1.31 attempt, candidate, and verification records directly as their evidence source rather than defining a second attempt-history model.
 
 ### Cognitive Kernel vs Cognitive Strategy
 
@@ -519,6 +519,8 @@ A Dream may produce a proposed cognitive update to goals, beliefs, plans, memori
 When a proposed Dream result concerns a Phase 5 resource such as a Skill or Learning Candidate, the Dream produces evidence/proposal input; the owning resource/governance boundary performs the later promotion. A Dream does not bypass the roadmap's resource-ownership boundary merely because it can run independently.
 
 Dream processing is subject to an explicitly authorized Dream request or durable policy trigger plus applicable model/provider quota, token/cost budget, time budget, concurrency/parallelism limits, retrieval/work limits, and other resource-governance rules. Being offline or asleep never bypasses those limits, and the absence of a live runtime does not create new authority.
+
+Dreams are not run routinely after every execution. A Dream is started by an explicit authorized request or by a durable policy trigger grounded in evidence of value, such as repeated evaluated Mistakes of the same class, an unresolved high-consequence outcome, or a measured high-cost or high-frequency method. A trigger policy states its expected-benefit condition and a budget ceiling, so speculative simulation cannot consume token or cost budget on scenarios the real workload does not produce.
 
 ### Questions
 

@@ -532,6 +532,8 @@ Beliefs, bounded workspace/attention, goals, intentions, plans, methods, self-mo
 
 Risk, Fear, and Confidence are evidence-backed cognitive state rather than authorization or policy state. They may alter strategy and escalation behavior but never override authoritative enforcement.
 
+Representation: each is derived from measurable, evidence-backed inputs (consequence level, uncertainty, and historical reliability scoped by method and task class or specialty) through deterministic, versioned update rules, so it stays explainable, testable, and auditable. See `architecture/cognitive-resources-and-portability.md` section 11.4.
+
 Verify: versioned cognitive-state transitions preserve context/provenance for Risk/Fear/Confidence and do not permit cognitive state to bypass deterministic safety, authorization, capability, scope, or budget checks.
 
 ## 4.5 — Experience, Outcome Evaluation & Cognitive Event History
@@ -549,7 +551,7 @@ Define mutually exclusive outcome semantics for one evaluation:
 
 Technical execution failure is not automatically a Mistake. Technical execution success is not automatically a cognitive Success. Attribution of the failure or success remains a separate evidence problem and may involve the Agent, tools, specialists, the environment, or other factors.
 
-Where a problem-solving loop produced multiple attempts, preserve the linkage between each candidate, its method, actual or simulated origin, observed progress, switch/retry reason, supporting/challenging evidence, and applicable verifier results. Outcome correctness remains distinct from whether the chosen method was effective, economical, robust, or reusable. A model's conclusion that it has solved a task is not itself an evaluated outcome.
+Where a problem-solving loop produced multiple attempts, preserve the linkage between each candidate, its method, actual or simulated origin, observed progress, switch/retry reason, supporting/challenging evidence, and applicable verifier results. Outcome correctness remains distinct from whether the chosen method was effective, economical, robust, or reusable. A model's conclusion that it has solved a task is not itself an evaluated outcome. Phase 4.5 consumes the Phase 1.31 attempt, candidate, and verification records directly as its evidence source and does not introduce a second attempt-history model.
 
 Verify: outcome evaluation preserves evidence, attribution, attempt/method history, and the distinction between outcome correctness and method/strategy quality; actual/simulated evidence remain distinguishable; technical failure/success cannot be silently mapped to cognitive learning labels; partial and unresolved outcomes remain representable.
 
@@ -569,6 +571,8 @@ Dream purposes include:
 - Preparation — rehearse plausible future scenarios.
 
 Dream processing is governed by applicable authorization, provider/model quota, token/cost budget, time budget, concurrency/parallelism limits, retrieval/work limits, and cancellation.
+
+Dreams are not run routinely after every execution. A Dream is started by an explicit authorized request or a durable policy trigger grounded in evidence of value (for example repeated evaluated Mistakes of one class, an unresolved high-consequence outcome, or a measured high-cost or high-frequency method), and each trigger policy states its expected-benefit condition and budget ceiling.
 
 Dream evidence remains simulated/predicted evidence and cannot become actual experience. Counterfactual conclusions such as Regret must remain distinguishable from information actually available at the time of the original decision.
 
@@ -684,7 +688,7 @@ Generalize the proven V1 discovery contract to other UI/object models. Discovery
 # Phase 8 — Multi-Tenancy, Scale, Configuration Portability & Extensibility
 
 ## 8.1 — Authentication Boundary
-Add real authentication integration.
+Add real authentication integration. This includes a replaceable key-protection boundary behind the Secret Store so a shared SQL Server database can serve multiple Windows principals; V1 Secret Store protection is Windows DPAPI `CurrentUser` and supports one Windows principal per Hive database (see `architecture/foundations.md`, Secret Store protection scope).
 
 ## 8.2 — Distributed Execution Decision Point
 Re-evaluate Temporal/Dapr/distributed execution only from measured operational requirements.

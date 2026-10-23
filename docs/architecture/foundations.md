@@ -84,6 +84,14 @@ Phase 0.4 established the original Hive-owned SQL Server persistence boundary wi
 `HiveDatabaseOptions` keeps any credential-bearing SQL connection string as Persistence-internal state; public callers receive only non-secret configuration/metadata contracts. Raw credential-bearing connection strings must not cross the public Hive.Persistence API boundary.
 - `HiveDatabaseOptions` enables database creation by default. Passing `createDatabaseIfMissing: false` is an explicit opt-out when the SQL Server host requires a pre-provisioned database.
 
+#### Secret Store protection scope
+
+The V1 Secret Store implementations (SQL Server and Embedded) and the SQL bootstrap credential store protect secret material with Windows DPAPI at `DataProtectionScope.CurrentUser`. A protected value can therefore be decrypted only by the same Windows user profile on the same machine that protected it.
+
+This fits the single-user desktop deployment that Embedded targets and a SQL Server database used by one Windows principal. It does **not** support a shared SQL Server database used by several Windows users or service accounts: a ProviderAccount credential stored by one principal cannot be decrypted by another. V1 therefore treats a Hive database as single-Windows-principal for secret purposes, and this limit must be stated to administrators who choose the SQL Server profile.
+
+Multi-principal sharing requires a replaceable key-protection boundary behind `ISecretStore` (for example a shared key ring or an external key provider). That work belongs with the Phase 8 authentication/multi-tenancy boundary and must preserve the existing rules: plaintext is never persisted, backend ciphertext is never copied as portable data, and migration re-protects secrets for the destination.
+
 #### Database technology
 
 **SQL Server profile**
@@ -108,6 +116,7 @@ Phase 0.4 established the original Hive-owned SQL Server persistence boundary wi
 - The configured storage path is normalized to an absolute file path at the persistence boundary. Missing parent directories may be created only during explicit Embedded initialization; inspection/status is non-creating.
 - Embedded connections use file-backed `ReadWriteCreate` for explicit initialization, ordinary `ReadWrite` for non-creating inspection, foreign-key enforcement, disabled connection pooling (`Pooling=False`), and a bounded provider default timeout derived from the Hive command-timeout configuration. Shared-cache mode is not used so the store can use SQLite WAL safely.
 - Initialization enables WAL for durable/recoverable local operation and uses SQLite's durable synchronous mode. SQLite busy/locked behavior remains bounded by the configured timeout; unbounded application retry loops are not introduced.
+- `Pooling=False` is a safety choice for file lifetime and WAL behavior, not a per-operation connection policy for batch work. A unit of work that performs many store operations (for example ingesting a multi-row workbook into many WorkItems) should scope its connection and transaction deliberately instead of reopening the database file for every event. Batch-ingestion throughput on Embedded is measured with a representative fixture before any further optimization is chosen.
 - Embedded foundation migrations are embedded SQLite scripts ordered deterministically by numeric migration version. Each migration script, its migration-journal record, and the Hive-owned schema-version advancement commit as one write transaction. A failed or cancelled migration rolls back the entire transaction and never advances the schema version.
 - The foundation schema contains only the Hive schema-version singleton and Embedded migration journal. Domain/resource tables remain owned by their later persistence slices.
 - Future-schema and inconsistent metadata states fail closed. Corrupt/unreadable SQLite storage and local path/permission failures are surfaced through Hive-authored persistence errors without exposing provider exception details.

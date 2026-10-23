@@ -413,6 +413,17 @@ Lookup execution is authorized against both the lookup capability identity and t
 
 The host application remains responsible for exposing the lookup implementation and bounded result set. Hive authorization remains responsible for deciding whether the caller may invoke the requested lookup capability for the identified lookup.
 
+### 7.2 Lookup resolution and disambiguation
+
+Extracted data usually carries display text (a customer name, an item description), while the host operation needs stored values (identifiers). Converting one to the other is its own deterministic step between the `StructuredCandidate` and the `BusinessOperationProposal`. It is neither an extraction concern nor a decision a model makes.
+
+- Resolution uses the bounded `ResolveLookup` capability through the Management authorization boundary, with the current-record context the host lookup requires.
+- Each lookup-bound candidate value ends in exactly one explicit state: **Resolved** (one exact match carrying stored value, display value, lookup identity, and provenance), **Ambiguous** (a bounded set of host-returned options), or **NotFound**.
+- Ambiguous and NotFound values are surfaced as structured choices for a human, or resolved by an explicitly configured deterministic rule. Hive never picks silently among several matches. A model may suggest an option, but its suggestion is evidence, not a resolution.
+- A `BusinessOperationProposal` must not contain unresolved lookup values. Resolution evidence is bounded and can become stale, so the lookup is re-validated when the proposal is built and the resolved reference is re-checked at the host-write boundary.
+- Exact-match and normalization rules are deterministic, documented, and configurable per lookup. Fuzzy matching may only narrow the option list; it never decides.
+- Which review checkpoint presents the disambiguation choices is a workflow-policy decision for the owning phase plans (Phase 1.17 candidate review and Phase 1.23 proposal). The resolution contract is the same wherever it is presented.
+
 ## 8. UI edit surfaces and operation capabilities
 
 UI configuration may describe how the host expects data entry to happen. The neutral contract should preserve the semantic distinction without publishing private host-specific mode names.
@@ -823,6 +834,18 @@ This separates:
 - which host records were affected;
 - whether the resulting state is correct.
 
+### 14.1 Human checkpoint policy
+
+The pipeline can contain up to four human decisions per item: processing authorization (Phase 1.17), candidate/mapping acceptance (Phase 1.17), pre-write Approval (Phase 1.23), and post-write Review (Phase 1.25). They are different decisions with different meanings and remain separately recorded. They are not required to be four separate screens or four clicks per item.
+
+- Checkpoints are policy-governed and enforced in code. The default policy is conservative: every checkpoint a policy marks as required needs an explicit human decision.
+- A policy may let one user action record more than one decision (for example "Review and Approve write") provided each decision is persisted separately with its own actor, time, and subject, and Approval stays bound to the exact proposal version.
+- A policy may permit a batch-level decision over homogeneous items only when each item independently passes deterministic validation and unambiguous lookup resolution with no warnings. Items with failures, warnings, ambiguity, or policy exclusions are pulled out of the batch decision and handled individually.
+- Policy may reduce human involvement. It never removes Approval for an operation whose policy requires it, never converts model confidence into approval, and never lets Review substitute for Approval.
+- The Approve / Reject state machine remains owned by the Phase 1.22 intervention boundary. This policy decides when it is required, not how it works.
+
+The concrete default policy tiers are product decisions owned by the Phase 1.17, 1.22, 1.23, and 1.25 plans.
+
 ## 15. Provenance, staleness, and concurrency
 
 Every consequential host operation and review must remain attributable to:
@@ -837,6 +860,18 @@ Every consequential host operation and review must remain attributable to:
 - expected host version/concurrency token when available.
 
 A stale host context or disposed control must not silently receive a mutation. Consequential interaction requests carry the originating capture identity, and the adapter rejects requests created from an older capture.
+
+### 15.1 Multi-step UI operations (target direction)
+
+The capture-binding rule above is the implemented V1 behavior and stays in force until a slice changes it. Real WinForms hosts often react to one field edit by enabling, rebinding, or repopulating other controls (for example a customer selection that reloads branches or tax defaults). A UI-backed business operation made of several ordered field assignments must not fail, or force a new human authorization, merely because an earlier authorized step caused a legitimate host reaction.
+
+The intended refinement, to be designed and verified in the Phase 1.23 slice that first performs UI-backed multi-step writes:
+
+- distinguish **structural continuity** (the registered root and the target control/surface still exist with the same stable identity and ancestry) from **host-driven state change** (enabled state, bound data, options) caused by the operation's own earlier steps;
+- one authorized operation executes an ordered step list under a single `OperationId`, and the adapter verifies structural continuity and expected state at each step boundary;
+- a refreshed capture inside the operation may rebind only to controls whose stable identity matches the originally authorized targets, and only for capabilities already authorized for that operation; anything outside that set fails closed or requires new authorization;
+- replacement, removal, or reparenting of a target, closure of the registered root, or an unexpected host dialog still fails closed;
+- no per-field human approval is introduced, and capability descriptors remain descriptive, never authorization.
 
 The V1 neutral contract does not require an ETag/version token. A host may expose meaningful concurrency/version evidence when it has one, but a host without such evidence may use its ordinary save behavior.
 

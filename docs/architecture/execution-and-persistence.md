@@ -690,6 +690,19 @@ Required crash-safety properties:
 
 The outbox is not a general distributed message broker.
 
+### Batch ingestion and commit granularity
+
+The per-stream atomic unit (`Event + Snapshot + Outbox` in one transaction) is unchanged. A submission that creates or transitions many independent WorkItems should not pay one connection open, one durable flush, and one transaction per lifecycle step when the work is naturally grouped, particularly on the Embedded profile where every commit is a local durable write.
+
+The direction for such paths is:
+
+- a bounded batch append operation may commit the event, snapshot, and outbox rows of several independent streams in one transaction, with each stream keeping its own identity, expected-version check, resource version, and lifecycle;
+- batch size is bounded, and a version conflict or failure in one stream must not discard unrelated WorkItems, so a failed group falls back to per-stream commits and reports the outcome per stream;
+- grouping is an operational optimization and never merges WorkItem identity, authorization, provenance, receipt, or Review state;
+- the approach is chosen from a measurement on a representative workbook (for example hundreds of rows) on both persistence profiles, consistent with the Performance standard.
+
+This section states a requirement and direction. It is not an implemented capability and does not authorize implementation until a slice owns it with such a fixture.
+
 ### Full-data persistence migration
 
 Phase 1.18A Slice 4 adds a Management-owned full-data migration boundary over the two supported persistence profiles. `IHiveManagementFacade.MigratePersistenceDataAsync` transfers all current Hive-owned durable persistence represented by schema 15 between SQL Server and Embedded in either direction. The transfer preserves stable identities, relationships, resource versions/lifecycle/provenance, favorites, AgentDefinition state, WorkItem attachments, event/snapshot/outbox state, structured-extraction state carried by the event/snapshot boundary, Base-Agent work state, and Secret Store records. Secret material is decrypted only into `SecretMaterial` during migration and is re-protected for the destination DPAPI boundary; backend ciphertext is never copied as portable data.

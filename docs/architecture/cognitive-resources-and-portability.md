@@ -115,6 +115,8 @@ They should be contextual, versioned, and attributable to supporting evidence. T
 
 They must never be used as authorization state or as a substitute for explicit policy/capability checks.
 
+Representation requirement: Risk, Fear, and Confidence are defined by measurable, evidence-derived inputs rather than free-form psychological state. Each context-scoped value is derived from explicit inputs such as consequence level, uncertainty, and the historical reliability of a method for a task class or specialty, using deterministic, versioned update rules, bounded ranges, revision or decay rules, and tests. A named state such as Fear is a strategy-level interpretation of those inputs and must remain explainable from them. It must not be an opaque model-generated label or a second hidden source of truth, so the states stay reproducible and auditable.
+
 Learning is a first-class governed cognitive process, not model-weight training. Model output produces evidence or a candidate; authoritative cognitive/resource state changes only through Hive's validation, policy, authorization, reconciliation, and promotion boundaries. Promoted deterministic shortcuts must remain attributable, scoped by applicability conditions, and revocable/revisable when later evidence invalidates them.
 
 ### 11.5 Persistence backend and vector representation independence

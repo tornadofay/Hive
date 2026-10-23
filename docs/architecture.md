@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-10-10 (rev 61 — bounded Base-Agent problem-solving boundary review)
+Last updated: 2026-10-23 (rev 62 — documentation consistency and real-world hardening review)
 
 
 
