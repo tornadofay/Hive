@@ -101,6 +101,8 @@ Planned V1 interaction and operations examples should also cover:
 
 The host-level Hive Settings entry is introduced through the Overview / Getting Started configuration example. The example explains the configuration model and opens the real Settings window; it is not a fake configuration-inspection surface.
 
+The Workspace is opened the same way: `Overview / Getting Started / Workspace` explains the Workspace and opens the real, independent Workspace window through the public `HiveWorkspaceLauncher`; a developer fixture button creates a sample WorkItem. Direct LLM chat inside the window uses the saved favorite targets when any exist (set them in Settings, Providers, Favorite Execution Targets) and all eligible targets otherwise.
+
 Future examples can create independent branches without changing the host:
 
 ```text
