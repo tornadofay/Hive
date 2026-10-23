@@ -371,10 +371,10 @@ Application
 A business application can register a host context through a bounded public API such as:
 
 ```csharp
-ai.Register(this);
+using var registration = hostContext.Register(form);
 ```
 
-Registration binds host context to Workspace/Hive management and may reuse or associate a specialized Agent. It does not automatically create a Hive or Swarm. The host application remains responsible for application-specific business semantics; Hive provides the bounded integration, management, authorization, and work coordination boundaries.
+Registration is implemented in Phase 1.13 and retains an explicitly registered host root for bounded capture. Binding that context to Workspace and associating or reusing a specialized Agent is target behavior for Phase 1.21. It does not automatically create a Hive or Swarm. The host application remains responsible for application-specific business semantics; Hive provides the bounded integration, management, authorization, and work coordination boundaries.
 
 After Phase 2 establishes persistent Hive membership and Swarm state, Workspace can add persistent Hive organization/topology and collective coordination views. Those later views extend the V1 Workspace rather than replacing its LLM/Agent interaction model.
 

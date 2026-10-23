@@ -690,7 +690,7 @@ Required crash-safety properties:
 
 The outbox is not a general distributed message broker.
 
-### Batch ingestion and commit granularity
+### Batch ingestion and commit granularity [Target]
 
 The per-stream atomic unit (`Event + Snapshot + Outbox` in one transaction) is unchanged. A submission that creates or transitions many independent WorkItems should not pay one connection open, one durable flush, and one transaction per lifecycle step when the work is naturally grouped, particularly on the Embedded profile where every commit is a local durable write.
 

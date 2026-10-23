@@ -6,7 +6,7 @@ This document is part of the authoritative architecture defined by `docs/archite
 
 
 
-## 11. Cognitive Resources
+## 11. Cognitive Resources [Target]
 
 Advanced persistent cognitive resources are delivered after the cognitive lifecycle branch exists. Persistent resources must preserve the distinction between actual experience and simulated/dreamed outcomes and must preserve the evidence that led to adaptation.
 
@@ -152,7 +152,7 @@ A dormant parent may request or retrieve selected child contributions without re
 
 
 
-## 12. Configuration Portability
+## 12. Configuration Portability [Target]
 
 Configuration portability is a later platform capability.
 

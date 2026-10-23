@@ -84,7 +84,7 @@ Phase 0.4 established the original Hive-owned SQL Server persistence boundary wi
 `HiveDatabaseOptions` keeps any credential-bearing SQL connection string as Persistence-internal state; public callers receive only non-secret configuration/metadata contracts. Raw credential-bearing connection strings must not cross the public Hive.Persistence API boundary.
 - `HiveDatabaseOptions` enables database creation by default. Passing `createDatabaseIfMissing: false` is an explicit opt-out when the SQL Server host requires a pre-provisioned database.
 
-#### Secret Store protection scope
+#### Secret Store protection scope [Implemented]
 
 The V1 Secret Store implementations (SQL Server and Embedded) and the SQL bootstrap credential store protect secret material with Windows DPAPI at `DataProtectionScope.CurrentUser`. A protected value is bound to the Windows user context that protected it. In the normal machine-local profile case it can be decrypted only by that same user on that same machine; appropriately configured roaming profiles can extend decryption to other machines for the same user, but never to a different Windows principal.
 

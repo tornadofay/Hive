@@ -413,7 +413,7 @@ Lookup execution is authorized against both the lookup capability identity and t
 
 The host application remains responsible for exposing the lookup implementation and bounded result set. Hive authorization remains responsible for deciding whether the caller may invoke the requested lookup capability for the identified lookup.
 
-### 7.2 Lookup resolution and disambiguation
+### 7.2 Lookup resolution and disambiguation [Target]
 
 Extracted data usually carries display text (a customer name, an item description), while the host operation needs stored values (identifiers). Converting one to the other is its own deterministic step between the `StructuredCandidate` and the `BusinessOperationProposal`. It is neither an extraction concern nor a decision a model makes.
 
@@ -580,7 +580,7 @@ Phase 1.17 has two user-facing checkpoints around interpretation work:
 The second checkpoint is deliberately before consequential host mutation. It confirms the data Hive is proposing to carry forward; it does not itself execute or authorize the later business operation.
 
 Generic human-intervention `Approve / Reject` semantics remain owned by the Phase 1.22 governance boundary. Phase 1.17 defines the reviewable checkpoints/artifacts but does not create a parallel authorization state machine.
-## 11. Business operation proposal
+## 11. Business operation proposal [Target]
 
 A consequential business operation should be represented as a structured proposal before execution. The host application registers or exposes the logical operation capability through the Hive boundary; the model does not invent an arbitrary business operation name and gain permission merely by requesting it.
 
@@ -605,7 +605,7 @@ The proposal is the object that reaches Hive authorization and, where policy req
 
 Hive does not authorize a raw control click merely because the model requested one.
 
-## 12. Business-operation receipt
+## 12. Business-operation receipt [Target]
 
 Every consequential operation attempt that is submitted to the host boundary must have durable attempt/receipt evidence, including successful, rejected-before-mutation, partially applied, known-failed, and unknown outcomes.
 
@@ -689,7 +689,7 @@ Recovery must:
 
 A second host mutation is never justified merely because the caller did not receive a response. Where the host supports idempotency, the same logical operation identity is reused. Where it does not, reconciliation must establish a safe retry condition first.
 
-## 13. First-class post-write Review
+## 13. First-class post-write Review [Target]
 
 Approval and Review are separate concepts.
 
@@ -835,7 +835,7 @@ This separates:
 - which host records were affected;
 - whether the resulting state is correct.
 
-### 14.1 Human checkpoint policy
+### 14.1 Human checkpoint policy [Target]
 
 The pipeline can contain up to four human decisions per item: processing authorization (Phase 1.17), candidate/mapping acceptance (Phase 1.17), pre-write Approval (Phase 1.23), and post-write Review (Phase 1.25). They are different decisions with different meanings and remain separately recorded. They are not required to be four separate screens or four clicks per item.
 
@@ -862,7 +862,7 @@ Every consequential host operation and review must remain attributable to:
 
 A stale host context or disposed control must not silently receive a mutation. Consequential interaction requests carry the originating capture identity, and the adapter rejects requests created from an older capture.
 
-### 15.1 Multi-step UI operations (target direction)
+### 15.1 Multi-step UI operations [Target]
 
 The capture-binding rule above is the implemented V1 behavior and stays in force until a slice changes it. Real WinForms hosts often react to one field edit by enabling, rebinding, or repopulating other controls (for example a customer selection that reloads branches or tax defaults). A UI-backed business operation made of several ordered field assignments must not fail, or force a new human authorization, merely because an earlier authorized step caused a legitimate host reaction.
 

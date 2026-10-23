@@ -2,7 +2,7 @@
 
 
 
-Last updated: 2026-10-23 (rev 62 — documentation consistency and real-world hardening review)
+Last updated: 2026-10-23 (rev 63 — status labels, task read map, and registration API correction)
 
 
 
@@ -49,6 +49,32 @@ All files under `docs/architecture/` are part of the same architecture source of
 
 - Do not create a second architecture source. New detailed architectural material belongs in the appropriate file under `docs/architecture/`.
 - Global architectural invariants in this index apply across all domains. A detail document owns only the contracts within its declared scope and must not contradict those global invariants.
+
+### Status labels
+
+Where a section mixes current and intended behavior, it may carry a label: **[Implemented]** (backed by source and tests), **[Target]** (intended, not yet implemented), or **[Deferred]** (explicitly postponed and not authorized). A label describes implementation status only; verification evidence lives under `docs/verification/`. Unlabeled sections follow their document's declared scope. A label is updated only when an authorized change actually affects it.
+
+### Task-to-sections read map
+
+This map helps locate the relevant sections. It does not replace reading the full applicable documents for cross-project, public-API, persistence, orchestration, lifecycle, security, or durable-state changes.
+
+| Task touches | Start with |
+|---|---|
+| Identity, scope, ownership, WorkItem identity | `foundations.md` section 0.1 |
+| Persistence backends, schema, migration, Secret Store scope | `foundations.md` section 0.4; `execution-and-persistence.md` sections 6 and 9 |
+| Test harness | `foundations.md` section 0.5 |
+| WinForms UI foundation | `foundations.md` section 0.6; `docs/ui/` |
+| Providers, discovery, reconciliation, target selection, favorites | `execution-and-persistence.md` section 2 and the Phase 1.16 provider/model discovery boundary |
+| Execution planning, bounded reasoning evidence | `execution-and-persistence.md` section 7 |
+| Structured extraction and candidates | `execution-and-persistence.md` Phase 1.17 boundary; `v1-business-app-integration.md` Phase 1.17 section |
+| Approval, receipt, Review, checkpoints | `execution-and-persistence.md` section 8; `v1-business-app-integration.md` sections 11 to 14 |
+| Events, snapshots, outbox | `execution-and-persistence.md` section 9 |
+| Runtime usage and pricing evidence | `execution-and-persistence.md` section 10 |
+| Agent and Hive types, base work protocols, problem-solving loop | `agents-and-hives.md` section 3 and its Base-Agent sections |
+| Cognitive generations, Dreams, Questions | `agents-and-hives.md` section 10; `cognitive-resources-and-portability.md` |
+| Workspace, Management facade, Settings, Example Host | `v1-host-and-management.md` sections 5 and 13 |
+| Host integration contracts, lookups, data surfaces, adapter | `v1-business-app-integration.md` sections 1 to 10 and 15 to 20 |
+| Cognitive resources, configuration portability | `cognitive-resources-and-portability.md` |
 
 
 
