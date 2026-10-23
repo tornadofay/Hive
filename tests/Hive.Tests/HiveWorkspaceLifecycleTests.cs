@@ -89,6 +89,19 @@ public sealed class HiveWorkspaceLifecycleTests
     }
 
     [Fact]
+    public void Dispose_IsSafeToCallMoreThanOnceWithLoadedModules()
+    {
+        var (management, _) = ManagementFacadeProxy.Create();
+        var workspace = new HiveWorkspaceView(CreateContext(management));
+
+        workspace.ShowModule("direct-llm");
+        workspace.ShowModule("work-items");
+
+        workspace.Dispose();
+        workspace.Dispose();
+    }
+
+    [Fact]
     public async Task ActivateModuleAsync_LoadsAModuleOnlyTheFirstTimeItIsShown()
     {
         var (management, _) = ManagementFacadeProxy.Create();

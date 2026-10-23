@@ -133,7 +133,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing)
+        if (disposing && !_disposed)
         {
             _disposed = true;
             _themeManager.ThemeChanged -= ThemeManagerOnChanged;

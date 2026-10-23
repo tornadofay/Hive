@@ -1,13 +1,12 @@
 # Hive — Active Work
 
-Status: VERIFICATION FAILED / REMEDIATION REQUIRED — Phase 1.20 / Slice 1 — Workspace Foundation (rerun found one in-scope defect)
+Status: VERIFICATION PENDING — Phase 1.20 / Slice 1 — Workspace Foundation (disposal defect remediated, awaiting rerun)
 
 ## Latest verification result (developer-reported, 2026-10-23, rerun after remediation)
 - Whole solution built; `Hive.Tests` 816 passed, 1 failed, 0 skipped.
 - **Failure:** `HiveWorkspaceLifecycleTests.RefreshAsync_DoesNotMutateDisposedViewWhenManagementCompletesLate` threw `ObjectDisposedException: The CancellationTokenSource has been disposed` from the second call to `HiveWorkspaceView.Dispose`. Cause: the shell's `Dispose(bool)` is not idempotent and cancels a lifetime token source it already disposed. `DirectLlmConversationView` has the same pattern.
-- Remediation boundary: make disposal idempotent in the shell and the Direct LLM view and add a regression test. No other change is authorized by this failure.
-
-_Status below this line describes the earlier handoff and is superseded once the remediation returns to `VERIFICATION PENDING`._
+- Remediation implemented (not compiled or run here): `HiveWorkspaceView.Dispose` and `DirectLlmConversationView.Dispose` are idempotent, and `Dispose_IsSafeToCallMoreThanOnceWithLoadedModules` is the regression test. No other change was made.
+- Rerun targets: **HiveWorkspaceLifecycleTests.cs**, then the full **Hive.Tests** suite. The Example check in the handoff below has not yet been reported and is still required.
 
 ## Authorization
 Explicitly authorized by `Hive: Start Phase 1.20` on 2026-10-10. The owning plan is [Phase 1.20 — V1 Workspace Foundation](plan/Phase1/1.20.md). On 2026-10-23 the developer reported verification results and explicitly directed that Slice 1 be treated as incomplete and rescoped as below. The window and module boundary is in [architecture section 5.2](architecture/v1-host-and-management.md).

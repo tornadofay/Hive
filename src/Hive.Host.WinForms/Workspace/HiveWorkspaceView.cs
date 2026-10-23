@@ -146,7 +146,9 @@ public sealed class HiveWorkspaceView : UserControl
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing)
+        var firstDisposal = disposing && !_disposed;
+
+        if (firstDisposal)
         {
             _disposed = true;
             _context.ManagementChanged -= ContextOnManagementChanged;
@@ -157,7 +159,7 @@ public sealed class HiveWorkspaceView : UserControl
 
         base.Dispose(disposing);
 
-        if (disposing)
+        if (firstDisposal)
             _headingFont.Dispose();
     }
 
