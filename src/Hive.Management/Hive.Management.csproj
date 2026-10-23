@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../Hive.Core/Hive.Core.csproj" />
     <ProjectReference Include="../Hive.Agents/Hive.Agents.csproj" />
     <ProjectReference Include="../Hive.Persistence/Hive.Persistence.csproj" />

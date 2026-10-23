@@ -1,4 +1,5 @@
 using Hive.Core;
+using System.Drawing;
 using Hive.Host.WinForms.UI.Controls;
 using Hive.Host.WinForms.UI.Theme;
 using Hive.Management;
@@ -12,7 +13,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
     private readonly IHiveThemeManager _themeManager;
     private readonly HiveComboBox _executionTargetSelector;
     private readonly ListBox _conversationList;
-    private readonly TextBox _transcriptTextBox;
+    private readonly ChatTranscriptPanel _transcriptPanel;
     private readonly HiveScrollHost _transcriptScrollHost;
     private readonly TextBox _messageTextBox;
     private readonly HiveScrollHost _messageScrollHost;
@@ -65,15 +66,8 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         };
         _conversationList.SelectedIndexChanged += ConversationSelectionChanged;
 
-        _transcriptTextBox = new TextBox
+        _transcriptPanel = new ChatTranscriptPanel
         {
-            Multiline = true,
-            ReadOnly = true,
-            WordWrap = true,
-            ScrollBars = ScrollBars.None,
-            BorderStyle = BorderStyle.None,
-            Dock = DockStyle.Fill,
-            TabStop = true,
             AccessibleName = "Conversation transcript",
             AccessibleDescription = "Saved user messages and assistant replies for the selected conversation."
         };
@@ -83,7 +77,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
             Margin = Padding.Empty,
             AccessibleName = "Conversation transcript scroll area"
         };
-        _transcriptScrollHost.Attach(_transcriptTextBox);
+        _transcriptScrollHost.Attach(_transcriptPanel);
 
         _messageTextBox = new TextBox
         {
@@ -122,6 +116,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
         _themeManager.Apply(this);
+        _transcriptPanel.ApplyTheme(_themeManager);
         ApplyStatusVisual();
         UpdateActionState();
     }
@@ -265,7 +260,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         else
         {
             _selectedConversation = null;
-            _transcriptTextBox.Clear();
+            _transcriptPanel.ClearMessages();
             _conversationDetailsLabel.Text = "No conversation selected.";
         }
 
@@ -395,20 +390,18 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         _conversationDetailsLabel.Text =
             DirectLlmConversationPresentation.FormatDetails(conversation.Summary);
 
-        var lines = new List<string>();
+        _transcriptPanel.ClearMessages();
         foreach (var message in conversation.Messages)
         {
-            lines.Add(message.Role == DirectLlmConversationMessageRole.User
-                ? $"You  ·  {message.CreatedAtUtc.ToLocalTime():g}"
-                : $"Assistant  ·  {message.CreatedAtUtc.ToLocalTime():g}");
-            lines.Add(message.Content);
-            lines.Add(string.Empty);
+            var isUser = message.Role == DirectLlmConversationMessageRole.User;
+            var header = isUser
+                ? $"You  �  {message.CreatedAtUtc.ToLocalTime():g}"
+                : $"Assistant  �  {message.CreatedAtUtc.ToLocalTime():g}";
+            _transcriptPanel.AddMessage(isUser, header, message.Content);
         }
 
-        _transcriptTextBox.Text = lines.Count == 0
-            ? "No messages yet. Choose an ExecutionTarget and send a message."
-            : string.Join(Environment.NewLine, lines);
-
+        _transcriptPanel.ApplyTheme(_themeManager);
+        _transcriptScrollHost.Synchronize();
         _transcriptScrollHost.VerticalScrollPosition = int.MaxValue;
         UpdateActionState();
     }
@@ -545,6 +538,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         _statusLabel.BackColor = _themeManager.Theme.Palette.Surface;
         _conversationDetailsLabel.ForeColor = _themeManager.Theme.Palette.Text;
         _conversationDetailsLabel.BackColor = _themeManager.Theme.Palette.Surface;
+        _transcriptPanel.ApplyTheme(_themeManager);
     }
 
     private Control BuildLayout()
@@ -717,4 +711,173 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
 
     private bool IsUnavailable() =>
         _disposed || IsDisposed || Disposing;
+    private sealed class ChatTranscriptPanel : Panel
+    {
+        private readonly List<ChatBubble> _bubbles = new();
+        private readonly Label _placeholder;
+
+        public ChatTranscriptPanel()
+        {
+            Dock = DockStyle.None;
+            AutoSize = false;
+            Margin = Padding.Empty;
+            Padding = new Padding(12);
+            BackColor = System.Drawing.Color.Transparent;
+
+            _placeholder = new Label
+            {
+                Text = "No messages yet. Choose an ExecutionTarget and send a message.",
+                AutoSize = true,
+                Visible = true
+            };
+            Controls.Add(_placeholder);
+        }
+
+        public void ApplyTheme(IHiveThemeManager themeManager)
+        {
+            if (themeManager is null || _placeholder is null)
+                return;
+
+            BackColor = themeManager.Theme.Palette.WindowBackground;
+            _placeholder.ForeColor = themeManager.Theme.Palette.MutedText;
+            foreach (var bubble in _bubbles)
+                bubble.ApplyTheme(themeManager);
+        }
+
+        public void ClearMessages()
+        {
+            foreach (var bubble in _bubbles)
+                bubble.Dispose();
+            _bubbles.Clear();
+            Controls.Clear();
+            Controls.Add(_placeholder);
+            _placeholder.Visible = true;
+            PerformLayout();
+        }
+
+        public void AddMessage(bool isUser, string header, string content)
+        {
+            _placeholder.Visible = false;
+            var bubble = new ChatBubble(isUser, header, content);
+            _bubbles.Add(bubble);
+            Controls.Add(bubble);
+        }
+
+        protected override void OnLayout(LayoutEventArgs e)
+        {
+            base.OnLayout(e);
+            if (ClientSize.Width <= 0)
+                return;
+            if (_placeholder is null)
+                return;
+
+            int y = Padding.Top;
+            int bubbleMaxWidth = Math.Max(120, (int)(ClientSize.Width * 0.78));
+            foreach (var bubble in _bubbles)
+            {
+                bubble.SetMaximumBubbleWidth(bubbleMaxWidth);
+                bubble.PerformLayout();
+                int x = bubble.IsUser
+                    ? ClientSize.Width - bubble.Width - Padding.Right
+                    : Padding.Left;
+                if (x < Padding.Left)
+                    x = Padding.Left;
+                bubble.Location = new Point(x, y);
+                y += bubble.Height + 10;
+            }
+
+            if (_bubbles.Count == 0)
+            {
+                _placeholder.MaximumSize = new Size(Math.Max(1, ClientSize.Width - Padding.Horizontal), 0);
+                _placeholder.Location = new Point(Padding.Left, Padding.Top);
+            }
+        }
+
+        public override Size GetPreferredSize(Size proposedSize)
+        {
+            if (_placeholder is null)
+                return proposedSize.Width > 0 ? new Size(proposedSize.Width, 0) : new Size(320, 0);
+
+            int width = proposedSize.Width > 0
+                ? proposedSize.Width
+                : (Width > 0 ? Width : 320);
+
+            int y = Padding.Top;
+            int bubbleMaxWidth = Math.Max(120, (int)(width * 0.78));
+            foreach (var bubble in _bubbles)
+            {
+                bubble.SetMaximumBubbleWidth(bubbleMaxWidth);
+                var size = bubble.GetPreferredSize(new Size(bubbleMaxWidth, 0));
+                y += size.Height + 10;
+            }
+
+            if (_bubbles.Count == 0)
+            {
+                _placeholder.MaximumSize = new Size(Math.Max(1, width - Padding.Horizontal), 0);
+                y += _placeholder.GetPreferredSize(new Size(Math.Max(1, width - Padding.Horizontal), 0)).Height + 10;
+            }
+
+            y += Padding.Bottom;
+            return new Size(width, Math.Max(Padding.Vertical, y));
+        }
+    }
+
+    private sealed class ChatBubble : TableLayoutPanel
+    {
+        public bool IsUser { get; }
+
+        private readonly Label _headerLabel;
+        private readonly Label _contentLabel;
+
+        public ChatBubble(bool isUser, string header, string content)
+        {
+            IsUser = isUser;
+            AutoSize = true;
+            AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            ColumnCount = 1;
+            RowCount = 2;
+            Margin = Padding.Empty;
+            Padding = new Padding(12, 8, 12, 8);
+
+            RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+            _headerLabel = new Label
+            {
+                Text = header,
+                AutoSize = true,
+                Margin = new Padding(0, 0, 0, 4)
+            };
+            _contentLabel = new Label
+            {
+                Text = content,
+                AutoSize = true
+            };
+
+            Controls.Add(_headerLabel, 0, 0);
+            Controls.Add(_contentLabel, 0, 1);
+        }
+
+        public void SetMaximumBubbleWidth(int maxWidth)
+        {
+            MaximumSize = new Size(Math.Max(1, maxWidth), 0);
+            int innerWidth = Math.Max(1, maxWidth - Padding.Horizontal);
+            _headerLabel.MaximumSize = new Size(innerWidth, 0);
+            _contentLabel.MaximumSize = new Size(innerWidth, 0);
+        }
+
+        public void ApplyTheme(IHiveThemeManager themeManager)
+        {
+            if (themeManager is null)
+                return;
+
+            var palette = themeManager.Theme.Palette;
+            BackColor = IsUser ? palette.Accent : palette.ElevatedSurface;
+            _headerLabel.ForeColor = IsUser ? palette.AccentForeground : palette.MutedText;
+            _contentLabel.ForeColor = IsUser ? palette.AccentForeground : palette.Text;
+        }
+    }
 }
+
+
