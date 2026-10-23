@@ -354,7 +354,7 @@ Direct LLM conversation is a Management-owned conversation aggregate, not an Age
 
 Phase 1.20 Slice 1 verifies the direct conversation path and its durable history. Agent selection/interaction, Agent target-selection policy, application/form-associated Agents, execution-planner behavior, tool governance, and later business-operation stages remain with their owning later phases.
 
-### 5.2 Workspace window and module boundary [Target]
+### 5.2 Workspace window and module boundary [Implemented]
 
 The Workspace is an independent window, not a page that exists only inside an example.
 

@@ -50,3 +50,4 @@ Phase 1 is in progress. Completed slices are recorded here.
 - [Maintenance — UI: Settings Overview Layout & Configuration Guidance — 2026-10-09](../maintenance/ui-settings-overview-layout-configuration-guidance-2026-10-09.md)
 - [Maintenance — Test Database Lifecycle & Cleanup — 2026-10-10](../maintenance/test-database-lifecycle-cleanup-2026-10-10.md)
 - [Maintenance — UI: Error-Reporting Observer Containment — 2026-10-10](../maintenance/ui-error-reporting-observer-containment-2026-10-10.md)
+- [1.20 — Slice 1: Workspace Foundation — 2026-10-23](1.20-slice-1-workspace-foundation-closure-2026-10-23.md)

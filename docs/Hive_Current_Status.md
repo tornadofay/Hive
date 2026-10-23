@@ -8,11 +8,12 @@ Last updated: 2026-10-23
 - **Phase 1 — Base Agent, Provider Platform, Management UI, and Data-Entry Pipeline (V1):** In progress. Verified implementation is complete through **Phase 1.18A — Embedded Persistence Profile**, plus the completed **Phase 1.19A — Execution Target Preferences & Favorite Target Pool** follow-up (see the [Phase 1 verification archive](verification/phase-1/index.md)). Phase 1.19 vector retrieval is deferred and not authorized.
 - **Phase 1.18A:** Closed on 2026-10-09. SQL Server and Embedded persistence share the persistence contracts; full-data migration works in both directions, with source immutability, destination verification, secret re-protection, and application-restart durability confirmed. [Closure verification](verification/phase-1/1.18A-slice-6-closure-2026-10-09.md)
 - **Established V1 capabilities:** Structured extraction and validation (including .txt input), durable Base-Agent work state, provider/model capability discovery, and execution-target favorites are completed. Details and supporting verification are available in the [Phase 1 verification archive](verification/phase-1/index.md).
-- **Current authorization:** Phase 1.20 — V1 Workspace Foundation, Slice 1, reopened and rescoped as the Workspace foundation after developer verification found an Example failure and unmet window and favorites requirements. Remediation is implemented on `main`; **verification is pending**. See [Active Work](Hive_Active_Work.md) for the recorded outcome, boundary, and handoff. Do not start the next slice before this gate is closed.
+- **Phase 1.20 — V1 Workspace Foundation:** In progress. **Slice 1 (Workspace foundation) closed on 2026-10-23**: independent modeless Workspace window, embeddable shell, Direct LLM and Work Items modules, and a favorites-aware Direct LLM target picker. [Closure verification](verification/phase-1/1.20-slice-1-workspace-foundation-closure-2026-10-23.md)
+- **Current authorization:** none. No slice is active; see [Active Work](Hive_Active_Work.md). Slices 2-4 of Phase 1.20 are not started and need an explicit `Hive: Start next slice`.
 
 ## Latest verification
 
-The most recently completed WinForms UI/UX maintenance task has developer-reported verification of **798/798** `Hive.Tests` passing (0 failed, 0 skipped) with Treat Warnings as Errors enabled. The developer also confirmed long-message scrolling, MessageBox details, and overall UI acceptance. This verifies the UI/UX maintenance task, not Phase 1.20. [UI/UX audit closure record](verification/maintenance/hive-winforms-ui-ux-audit-2026-10-10.md)
+Phase 1.20 Slice 1 has developer-reported verification: whole solution rebuilt, `Hive.Tests` **818/818** passing (0 failed, 0 skipped), and the Workspace Example reported working as intended. [Closure record](verification/phase-1/1.20-slice-1-workspace-foundation-closure-2026-10-23.md)
 
 ## Deferred work
 
