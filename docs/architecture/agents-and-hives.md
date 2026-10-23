@@ -103,7 +103,7 @@ Disabling a policy restriction **never** disables the enforcement mechanism that
 
 ### Dormancy over destruction [Target]
 
-Idle specialists are **deactivated (dormant)**, not destroyed, by default. Dormancy preserves identity, memory, history, and experience and is reversible. Destroying reusable specialists defeats reuse and loses accumulated evidence. Dormancy thresholds are configurable; the deactivation itself is reversible by authorized policy.
+Idle specialists are **deactivated (dormant)**, not destroyed, by default. Dormancy preserves identity, durable task evidence (assignment history, produced artifacts, and explicitly persisted working context), and reversible state; it is not CognitiveAgent learning, evaluation, adaptation, or experience-based strategy revision (reserved for Phase 4 / CognitiveAgent). Destroying reusable specialists defeats reuse and loses accumulated evidence. Dormancy thresholds are configurable; the deactivation itself is reversible by authorized policy.
 
 ### Reusable specialist state in Preview 1 [Target]
 

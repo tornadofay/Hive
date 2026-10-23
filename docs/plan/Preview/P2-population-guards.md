@@ -3,9 +3,11 @@
 Objective: implement governed autonomous specialist creation with two-level guards (absolute ceilings + configurable operating limits) and atomic admission/reservation.
 
 Governing Hive identity and lifecycle (scope anchor):
-- The Workbench has exactly one governing Hive instance per run/session scope; it carries a persistent identity (Hive id) that keys membership, creation, budget, and guard evidence.
-- Limits, counters, and reservations are always scoped to that governing Hive identity; they never span unrelated Hives.
-- Lifecycle: a governing Hive may be archived or reset only through an authorized management action; archiving/resetting establishes a fresh allowance as specified below.
+- The standalone Workbench owns exactly one persistent governing Hive for the installation/profile (not one per run or session). That Hive has a stable persistent identity (Hive id) that survives application restart and is reused across runs/sessions.
+- Every task/run references that governing Hive identity; limits, counters, reservations, and guard evidence are always keyed to it and never span unrelated Hives.
+- A new governing Hive is created only through an authorized management action (initial onboarding or explicit archive/reset). Creating a fresh Hive per session is not permitted, because it would silently reset lifetime allowances and split the persistent specialist catalog.
+- Lifecycle: a governing Hive may be archived or reset only through an authorized management action; archiving/resetting establishes a fresh allowance as specified below and is recorded as evidence. Dormancy does not reset any allowance.
+- If independent Hives per session were ever required, lifetime limits would need a separate cross-session scope in addition; the default and required behavior is the single persistent governing Hive above.
 
 Absolute ceilings (concrete, non-toggleable) — proposed values, subject to developer confirmation:
 - Max recursion depth: governing Hive = depth 0. Permitted specialist depths: 1, 2, 3. A creation that would place a specialist at depth 4 is rejected. Scope: per creation chain; reset: n/a (structural).
@@ -30,11 +32,12 @@ Budget enforcement (atomic):
 - Separate limits: a token limit (tokens) and a monetary limit (cost in the configured currency unit); each has its own reservation and reconciliation rule; exceeding either fails closed.
 - Reservation identity and restart safety: reservations carry a stable reservation id, run id, governing Hive id, estimate basis, and timestamps; reconciliation is idempotent by reservation id (no double-settlement after restart).
 - Uncertain provider outcomes: distinguish (a) a request confirmed not to have been submitted (release the reservation) from (b) a request submitted with an unknown outcome (retain a conservative reservation until reconciliation; release only the portion known to be unused). A locally cancelled or timed-out call may still have reached the provider and incurred cost.
+- Terminal policy for unresolved reservations: a reservation for an unknown-outcome request is retained as a conservative hold. Reconciliation is retried on a bounded schedule while the run is in a `Reconciling` state. If reconciliation cannot complete within the defined reconciliation window, the reservation is conservatively settled as spent (charged to the run) and the run is marked `Failed — budget unresolved` (or `Completed with accepted verification exception` only when the developer explicitly waives the check); the retained hold is then released as a settled charge, never as a refund. Operator intervention (authorized management action) may re-open reconciliation or adjust the charge with evidence. An unresolved reservation is never held indefinitely and never silently released as unused.
 - Worst-case estimate: when the selected provider has no usable pricing information, use a defined fail-closed outcome — deny admission rather than allow an unbounded charge. "Worst case" is only enforceable with a defined bound; absent one, admission is denied.
 - Over-budget result: blocks further admissions and stops additional work for the run when appropriate; surfaces the overage.
 - Edge cases: unknown pricing or missing usage data → treat as worst-case estimate and flag for review, never silently allow; cancellation releases the reservation (only the confirmed-unused portion for unknown outcomes); failed/interrupted calls release the reservation (no double-release, no permanent hold); partial results are not billed as full.
-- Disabling the soft per-run budget cap (configurable) never bypasses provider/platform quotas or other mandatory execution limits.
-- Mapping to Phase 1.30: the preview's shared per-run budget maps to the established per-runtime budget boundary in `docs/plan/Phase1/1.30.md`; the preview extends it with multi-Agent sharing and reservation semantics rather than introducing a second budget scope.
+- Disabled soft cap: disabling the configurable per-run budget cap disables only that soft cap. Provider/platform quotas and all mandatory hard limits (absolute ceilings, authorization, sandbox, secret redaction, process termination) remain enforced; a run with the soft cap disabled still cannot exceed provider/platform quotas or any hard ceiling. The hard limits are never configurable off.
+- Mapping to Phase 1.30: the preview's shared per-run budget maps to the planned per-runtime budget boundary in `docs/plan/Phase1/1.30.md` (a plan, not a completed implementation); the preview extends it with multi-Agent sharing and reservation semantics rather than introducing a second budget scope. Implementation of the underlying budget mechanism remains governed by Phase 1.30.
 
 Verify:
 - concurrent requests do not exceed concurrent cap;
@@ -43,7 +46,7 @@ Verify:
 - Settings change mid-run does not alter in-flight authority, but revocation/cancellation/emergency stop take effect immediately;
 - two concurrent identical creation requests yield one specialist;
 - exact duplicate never possible regardless of strictness setting;
-- dormancy preserves identity/memory/history and is reversible;
+- dormancy preserves the Preview 1 retained state (AgentDefinition + specialty profile, configuration, assignment history, produced artifacts, and explicitly persisted working context) and is reversible; it does not retain CognitiveAgent-style learning, evaluation, adaptation, or experience-based strategy revision (reserved for Phase 4).
 - guard decisions and configuration changes recorded as attributable evidence (actor, time, previous and new values, affected scope, applicable policy profile);
 - "creation-log visibility" changes presentation only and never disables recording of guard evidence.
 - SQL Server and Embedded parity for guard/policy persistence where applicable.

@@ -11,7 +11,7 @@ Scope:
 - build/test execution deferred to Preview 2 behind isolation toggle.
 
 Verify:
-- single-instance behavior is defined per the required scope: repeated Show() on one launcher instance reuses the existing window (current guarantee); if launching the standalone executable twice must yield one window, an application-level single-instance + activation mechanism is required and must be specified before implementation; otherwise the acceptance test is narrowed to the per-launcher guarantee;
+- single-instance behavior: target is application-wide single instance for the standalone executable (one window per user session), implemented via a named mutex plus activation of the existing window; per-launcher reuse (repeated Show() reusing the existing window) is the minimum guaranteed fallback. The concrete mechanism must be specified before implementation; if application-wide single-instance cannot be delivered, narrow the acceptance test to the per-launcher guarantee and record the decision.
 - modules load on first activation and reload on Management recomposition; third-party modules participate in refresh via a public lifecycle contract (or by subscribing to the public context event and refreshing safely);
 - onboarding completes without SQL Server;
 - project files scoped to permitted directories;
