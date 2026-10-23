@@ -10,10 +10,10 @@ Authorized by `Hive: Start next slice` on 2026-10-23. Phase 1.20 / Slice 1 (Work
 
 **Layout:** agreed with developer on 2026-10-23: modern chat bubbles with a conversation history sidebar (messenger style). Implementation in progress.
 
-**Status:** implementation complete; awaiting developer verification.
+**Status:** remediation complete; awaiting developer verification.
 
 **Verification gate:** VERIFICATION PENDING. Required checks:
-- Build `Hive.Host.WinForms` (done here with `NuGetAudit=false`: succeeded, 0 warnings/errors).
+- Build `Hive.Host.WinForms` (done here: succeeded, 0 warnings/errors).
 - Run `HiveWorkspaceLifecycleTests`.
 - Run `DirectLlmConversationTests` (backend, unchanged).
-- Manual smoke: open `Hive.Example.WinForms` → `Overview / Getting Started / Workspace`, send messages, switch conversations, toggle theme.
+- Manual smoke: open `Hive.Example.WinForms` → `Overview / Getting Started / Workspace`, send messages, switch conversations, toggle theme; confirm reduced spacing and no excessive empty scroll area.

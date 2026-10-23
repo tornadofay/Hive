@@ -39,7 +39,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
 
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
-        Padding = new Padding(12);
+        Padding = new Padding(8);
         AccessibleName = "Direct LLM conversation workspace";
 
         _refreshButton = CreateButton("Refresh", HiveButtonStyle.Secondary);
@@ -260,7 +260,10 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         else
         {
             _selectedConversation = null;
+            _transcriptPanel.SuspendLayout();
             _transcriptPanel.ClearMessages();
+            _transcriptPanel.Size = Size.Empty;
+            _transcriptPanel.ResumeLayout(true);
             _conversationDetailsLabel.Text = "No conversation selected.";
         }
 
@@ -390,6 +393,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         _conversationDetailsLabel.Text =
             DirectLlmConversationPresentation.FormatDetails(conversation.Summary);
 
+        _transcriptPanel.SuspendLayout();
         _transcriptPanel.ClearMessages();
         foreach (var message in conversation.Messages)
         {
@@ -399,6 +403,8 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
                 : $"Assistant  �  {message.CreatedAtUtc.ToLocalTime():g}";
             _transcriptPanel.AddMessage(isUser, header, message.Content);
         }
+        _transcriptPanel.ResumeLayout(true);
+        _transcriptPanel.Size = Size.Empty;
 
         _transcriptPanel.ApplyTheme(_themeManager);
         _transcriptScrollHost.Synchronize();
@@ -534,10 +540,16 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
 
     private void ApplyStatusVisual()
     {
-        _statusLabel.ForeColor = _themeManager.Theme.Palette.MutedText;
-        _statusLabel.BackColor = _themeManager.Theme.Palette.Surface;
-        _conversationDetailsLabel.ForeColor = _themeManager.Theme.Palette.Text;
-        _conversationDetailsLabel.BackColor = _themeManager.Theme.Palette.Surface;
+        var palette = _themeManager.Theme.Palette;
+        BackColor = palette.Surface;
+        _statusLabel.ForeColor = palette.MutedText;
+        _statusLabel.BackColor = palette.Surface;
+        _conversationDetailsLabel.ForeColor = palette.Text;
+        _conversationDetailsLabel.BackColor = palette.Surface;
+        _conversationList.BackColor = palette.Surface;
+        _conversationList.ForeColor = palette.Text;
+        _messageTextBox.BackColor = palette.Surface;
+        _messageTextBox.ForeColor = palette.Text;
         _transcriptPanel.ApplyTheme(_themeManager);
     }
 
@@ -551,10 +563,10 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
 
         var header = new TableLayoutPanel
         {
@@ -571,7 +583,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         {
             Dock = DockStyle.Fill,
             AutoEllipsis = true,
-            Font = new Font(Font, FontStyle.Bold),
+            Font = new Font("Segoe UI", 11.5f, FontStyle.Bold),
             Text = "Direct LLM",
             TextAlign = ContentAlignment.MiddleLeft,
             AccessibleRole = AccessibleRole.StaticText
@@ -596,7 +608,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 2,
-            Margin = new Padding(0, 2, 0, 8),
+            Margin = new Padding(0, 2, 0, 4),
             Padding = Padding.Empty
         };
         targetRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 132));
@@ -606,7 +618,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         var targetLabel = new Label
         {
             Dock = DockStyle.Fill,
-            Text = "ExecutionTarget",
+            Text = "Execution target",
             Font = new Font(Font, FontStyle.Bold),
             TextAlign = ContentAlignment.MiddleLeft
         };
@@ -653,10 +665,10 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        conversationPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+        conversationPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
         conversationPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        conversationPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 116));
-        conversationPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
+        conversationPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 104));
+        conversationPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
         conversationPanel.Controls.Add(_conversationDetailsLabel, 0, 0);
         conversationPanel.Controls.Add(_transcriptScrollHost, 0, 1);
         conversationPanel.Controls.Add(_messageScrollHost, 0, 2);
@@ -721,7 +733,8 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
             Dock = DockStyle.None;
             AutoSize = false;
             Margin = Padding.Empty;
-            Padding = new Padding(12);
+            Padding = new Padding(8);
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
             BackColor = System.Drawing.Color.Transparent;
 
             _placeholder = new Label
@@ -763,6 +776,13 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
             Controls.Add(bubble);
         }
 
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (ClientSize.Width > 0)
+                PerformLayout();
+        }
+
         protected override void OnLayout(LayoutEventArgs e)
         {
             base.OnLayout(e);
@@ -772,7 +792,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
                 return;
 
             int y = Padding.Top;
-            int bubbleMaxWidth = Math.Max(120, (int)(ClientSize.Width * 0.78));
+            int bubbleMaxWidth = Math.Max(120, (int)(ClientSize.Width * 0.82));
             foreach (var bubble in _bubbles)
             {
                 bubble.SetMaximumBubbleWidth(bubbleMaxWidth);
@@ -783,7 +803,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
                 if (x < Padding.Left)
                     x = Padding.Left;
                 bubble.Location = new Point(x, y);
-                y += bubble.Height + 10;
+                y += bubble.Height + 6;
             }
 
             if (_bubbles.Count == 0)
@@ -803,12 +823,12 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
                 : (Width > 0 ? Width : 320);
 
             int y = Padding.Top;
-            int bubbleMaxWidth = Math.Max(120, (int)(width * 0.78));
+            int bubbleMaxWidth = Math.Max(120, (int)(width * 0.82));
             foreach (var bubble in _bubbles)
             {
                 bubble.SetMaximumBubbleWidth(bubbleMaxWidth);
                 var size = bubble.GetPreferredSize(new Size(bubbleMaxWidth, 0));
-                y += size.Height + 10;
+                y += size.Height + 6;
             }
 
             if (_bubbles.Count == 0)
@@ -817,7 +837,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
                 y += _placeholder.GetPreferredSize(new Size(Math.Max(1, width - Padding.Horizontal), 0)).Height + 10;
             }
 
-            y += Padding.Bottom;
+            y += 4;
             return new Size(width, Math.Max(Padding.Vertical, y));
         }
     }
@@ -834,10 +854,11 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
             IsUser = isUser;
             AutoSize = true;
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
             ColumnCount = 1;
             RowCount = 2;
             Margin = Padding.Empty;
-            Padding = new Padding(12, 8, 12, 8);
+            Padding = new Padding(10, 6, 10, 6);
 
             RowStyles.Add(new RowStyle(SizeType.AutoSize));
             RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -847,7 +868,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
             {
                 Text = header,
                 AutoSize = true,
-                Margin = new Padding(0, 0, 0, 4)
+                Margin = new Padding(0, 0, 0, 2)
             };
             _contentLabel = new Label
             {
@@ -879,5 +900,6 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         }
     }
 }
+
 
 
