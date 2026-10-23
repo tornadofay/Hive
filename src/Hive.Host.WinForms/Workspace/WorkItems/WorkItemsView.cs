@@ -5,11 +5,13 @@ using Hive.Management;
 
 namespace Hive.Host.WinForms;
 
-public sealed class HiveWorkspaceView : UserControl
+internal sealed class WorkItemsView : UserControl, IHiveWorkspaceRefreshable
 {
-    private readonly IHiveManagementFacade _management;
+    private readonly HiveWorkspaceContext _context;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
+
+    private IHiveManagementFacade Management => _context.Management;
 
     private readonly HiveListView _workItems;
     private readonly Label _statusLabel;
@@ -31,19 +33,16 @@ public sealed class HiveWorkspaceView : UserControl
     private CancellationTokenSource? _operationCts;
     private bool _suppressSelectionChanged;
 
-    public HiveWorkspaceView(
-        IHiveManagementFacade management,
-        ResourceAccessContext accessContext,
-        IHiveThemeManager themeManager)
+    internal WorkItemsView(HiveWorkspaceContext context)
     {
-        _management = management ?? throw new ArgumentNullException(nameof(management));
-        _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
-        _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _accessContext = context.AccessContext;
+        _themeManager = context.ThemeManager;
 
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
-        Padding = new Padding(16);
-        MinimumSize = new Size(760, 520);
+        Padding = new Padding(12);
+        MinimumSize = new Size(640, 480);
 
         _refreshButton = CreateButton("Refresh", HiveButtonStyle.Secondary);
         _addImageButton = CreateButton("Add image", HiveButtonStyle.Primary);
@@ -97,25 +96,8 @@ public sealed class HiveWorkspaceView : UserControl
             AccessibleRole = AccessibleRole.StatusBar
         };
 
-        var workspaceTabs = new HiveTabControl
-        {
-            Dock = DockStyle.Fill,
-            Margin = Padding.Empty,
-            AccessibleName = "Workspace modes"
-        };
-        var workItemsPage = workspaceTabs.TabPages.Add("Work Items");
-        workItemsPage.AccessibleName = "Work Item operations";
-        workItemsPage.Controls.Add(BuildLayout());
-
-        var directLlmPage = workspaceTabs.TabPages.Add("Direct LLM");
-        directLlmPage.AccessibleName = "Direct LLM conversations";
-        directLlmPage.Controls.Add(
-            new HiveDirectLlmConversationView(
-                _management,
-                _accessContext,
-                _themeManager));
-
-        Controls.Add(workspaceTabs);
+        AccessibleName = "Work Item operations";
+        Controls.Add(BuildLayout());
 
 
         _themeManager.ThemeChanged += ThemeManagerOnChanged;
@@ -178,7 +160,7 @@ public sealed class HiveWorkspaceView : UserControl
             ? _pageCursors[pageNumber - 1]
             : null;
 
-        var result = await _management.ListWorkItemsPageAsync(
+        var result = await Management.ListWorkItemsPageAsync(
             _accessContext,
             pageSize: WorkItemPageSize,
             cursor: cursor,
@@ -324,7 +306,7 @@ public sealed class HiveWorkspaceView : UserControl
                     dialog.FileName,
                     token).ConfigureAwait(true);
 
-                var result = await _management.CreateImageWorkItemAsync(
+                var result = await Management.CreateImageWorkItemAsync(
                     new WorkItemImageSubmission(
                         Path.GetFileName(dialog.FileName),
                         mediaType,
@@ -366,7 +348,7 @@ public sealed class HiveWorkspaceView : UserControl
         await RunOperationAsync(
             async token =>
             {
-                var result = await _management.RequestWorkItemApprovalAsync(
+                var result = await Management.RequestWorkItemApprovalAsync(
                     _selectedWorkItem.Id,
                     _selectedWorkItem.Resource.Version,
                     _accessContext,
@@ -397,7 +379,7 @@ public sealed class HiveWorkspaceView : UserControl
         await RunOperationAsync(
             async token =>
             {
-                var result = await _management.ApproveWorkItemAsync(
+                var result = await Management.ApproveWorkItemAsync(
                     _selectedWorkItem.Id,
                     _selectedWorkItem.Resource.Version,
                     _accessContext,
@@ -422,7 +404,7 @@ public sealed class HiveWorkspaceView : UserControl
         await RunOperationAsync(
             async token =>
             {
-                var result = await _management.RejectWorkItemAsync(
+                var result = await Management.RejectWorkItemAsync(
                     _selectedWorkItem.Id,
                     _selectedWorkItem.Resource.Version,
                     _accessContext,
@@ -502,7 +484,7 @@ public sealed class HiveWorkspaceView : UserControl
         _executionLabel.Text =
             "No execution/provider activity has been created for this WorkItem yet.";
 
-        var activity = await _management.GetWorkItemActivityAsync(
+        var activity = await Management.GetWorkItemActivityAsync(
             workItem.Id,
             _accessContext,
             cancellationToken).ConfigureAwait(true);
@@ -804,7 +786,7 @@ public sealed class HiveWorkspaceView : UserControl
         var title = new Label
         {
             Dock = DockStyle.Fill,
-            Text = "Workspace",
+            Text = "Work Items",
             Font = new Font(Font, FontStyle.Bold),
             TextAlign = ContentAlignment.MiddleLeft,
             AutoEllipsis = true

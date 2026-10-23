@@ -5,9 +5,9 @@ using Hive.Management;
 
 namespace Hive.Host.WinForms;
 
-public sealed class HiveDirectLlmConversationView : UserControl
+internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRefreshable
 {
-    private readonly IHiveManagementFacade _management;
+    private readonly HiveWorkspaceContext _context;
     private readonly ResourceAccessContext _accessContext;
     private readonly IHiveThemeManager _themeManager;
     private readonly HiveComboBox _executionTargetSelector;
@@ -24,20 +24,17 @@ public sealed class HiveDirectLlmConversationView : UserControl
     private readonly HiveButton _cancelButton;
     private readonly CancellationTokenSource _lifetimeCts = new();
 
-    private readonly List<TargetOption> _targets = [];
+    private readonly List<DirectLlmTargetOption> _targets = [];
     private DirectLlmConversationSummary? _selectedConversation;
     private CancellationTokenSource? _operationCts;
     private bool _suppressConversationSelection;
     private bool _disposed;
 
-    public HiveDirectLlmConversationView(
-        IHiveManagementFacade management,
-        ResourceAccessContext accessContext,
-        IHiveThemeManager themeManager)
+    internal DirectLlmConversationView(HiveWorkspaceContext context)
     {
-        _management = management ?? throw new ArgumentNullException(nameof(management));
-        _accessContext = accessContext ?? throw new ArgumentNullException(nameof(accessContext));
-        _themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _accessContext = context.AccessContext;
+        _themeManager = context.ThemeManager;
 
         Dock = DockStyle.Fill;
         Margin = Padding.Empty;
@@ -56,7 +53,7 @@ public sealed class HiveDirectLlmConversationView : UserControl
             AccessibleName = "Direct LLM ExecutionTarget",
             AccessibleDescription = "Choose the exact configured ExecutionTarget for the next direct LLM request."
         };
-        _executionTargetSelector.DisplayMember = nameof(TargetOption.DisplayLabel);
+        _executionTargetSelector.DisplayMember = nameof(DirectLlmTargetOption.DisplayLabel);
 
         _conversationList = new ListBox
         {
@@ -112,10 +109,9 @@ public sealed class HiveDirectLlmConversationView : UserControl
         _conversationDetailsLabel.AccessibleName = "Direct LLM execution details";
         _statusLabel = CreateValueLabel();
         _statusLabel.AccessibleRole = AccessibleRole.StatusBar;
-        _statusLabel.Text = "Select Refresh to load conversations and active ExecutionTargets.";
+        _statusLabel.Text = "Loading conversations and ExecutionTargets…";
 
-        _refreshButton.Click += async (_, _) =>
-            await RunOperationAsync(RefreshAsync);
+        _refreshButton.Click += async (_, _) => await RefreshAsync();
         _newConversationButton.Click += async (_, _) =>
             await RunOperationAsync(CreateConversationAsync);
         _sendButton.Click += async (_, _) =>
@@ -130,20 +126,10 @@ public sealed class HiveDirectLlmConversationView : UserControl
         UpdateActionState();
     }
 
-    public async Task RefreshAsync(CancellationToken cancellationToken = default)
-    {
-        var tokens = cancellationToken.CanBeCanceled
-            ? cancellationToken
-            : CancellationToken.None;
+    private IHiveManagementFacade Management => _context.Management;
 
-        await RefreshTargetsAsync(tokens).ConfigureAwait(true);
-        if (IsUnavailable())
-            return;
-
-        await RefreshConversationsAsync(
-            preferredConversationId: _selectedConversation?.Id,
-            tokens).ConfigureAwait(true);
-    }
+    public Task RefreshAsync(CancellationToken cancellationToken = default) =>
+        RunOperationAsync(RefreshCoreAsync, cancellationToken);
 
     protected override void Dispose(bool disposing)
     {
@@ -164,91 +150,50 @@ public sealed class HiveDirectLlmConversationView : UserControl
         base.Dispose(disposing);
     }
 
+    private async Task RefreshCoreAsync(CancellationToken cancellationToken)
+    {
+        await RefreshTargetsAsync(cancellationToken).ConfigureAwait(true);
+        if (IsUnavailable() || cancellationToken.IsCancellationRequested)
+            return;
+
+        await RefreshConversationsAsync(
+            _selectedConversation?.Id,
+            cancellationToken).ConfigureAwait(true);
+    }
+
     private async Task RefreshTargetsAsync(CancellationToken cancellationToken)
     {
-        _statusLabel.Text = "Loading active ExecutionTargets…";
+        _statusLabel.Text = "Loading ExecutionTargets…";
 
-        var providersResult = await _management.ListProvidersAsync(
+        var catalog = await DirectLlmTargetCatalog.LoadAsync(
+            Management,
             _accessContext,
-            includeRetired: false,
             cancellationToken).ConfigureAwait(true);
-
-        if (providersResult.IsFailure)
-        {
-            ReportError(providersResult.Error!, "ExecutionTargets could not be loaded.");
-            return;
-        }
-
-        var targets = new List<TargetOption>();
-        foreach (var provider in providersResult.Value!)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            if (provider.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active ||
-                BuiltInProviderCatalog.Find(provider.Key)?.RequiresNativeIntegration == true ||
-                !string.Equals(provider.TransportKind, "openai-compatible", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            var accountsResult = await _management.ListProviderAccountsAsync(
-                provider.Id,
-                _accessContext,
-                includeRetired: false,
-                cancellationToken).ConfigureAwait(true);
-
-            if (accountsResult.IsFailure)
-            {
-                ReportError(accountsResult.Error!, "Provider accounts could not be loaded.");
-                return;
-            }
-
-            foreach (var account in accountsResult.Value!)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (account.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active)
-                    continue;
-
-                var targetResult = await _management.ListExecutionTargetsAsync(
-                    account.Id,
-                    _accessContext,
-                    includeRetired: false,
-                    cancellationToken).ConfigureAwait(true);
-
-                if (targetResult.IsFailure)
-                {
-                    ReportError(targetResult.Error!, "ExecutionTargets could not be loaded.");
-                    return;
-                }
-
-                foreach (var target in targetResult.Value!)
-                {
-                    if (target.Resource.Lifecycle.Status != ResourceLifecycleStatus.Active ||
-                        target.Capabilities.Any(static capability =>
-                            capability.Capability == HiveCapabilityKeys.TextGeneration &&
-                            capability.State == CapabilityState.Unsupported))
-                    {
-                        continue;
-                    }
-
-                    targets.Add(new TargetOption(
-                        target,
-                        $"{provider.DisplayName} / {account.DisplayName} / " +
-                        $"{target.DisplayName} ({target.Model ?? target.Deployment})"));
-                }
-            }
-        }
 
         if (IsUnavailable() || cancellationToken.IsCancellationRequested)
             return;
 
+        if (catalog.IsFailure)
+        {
+            // Fail closed: never show an unfiltered list when favorites could not be read.
+            ApplyTargets(Array.Empty<DirectLlmTargetOption>());
+            ReportError(catalog.Error!, "ExecutionTargets could not be loaded.");
+            return;
+        }
+
+        var value = catalog.Value!;
+        ApplyTargets(value.Targets);
+        _statusLabel.Text = value.DescribeStatus();
+        UpdateActionState();
+    }
+
+    private void ApplyTargets(IReadOnlyList<DirectLlmTargetOption> targets)
+    {
         var previouslySelectedTargetId =
-            (_executionTargetSelector.SelectedItem as TargetOption)?.Target.Id;
+            (_executionTargetSelector.SelectedItem as DirectLlmTargetOption)?.Target.Id;
 
         _targets.Clear();
-        _targets.AddRange(
-            targets.OrderBy(static target => target.DisplayLabel, StringComparer.OrdinalIgnoreCase));
+        _targets.AddRange(targets);
 
         _executionTargetSelector.DataSource = null;
         _executionTargetSelector.DataSource = _targets;
@@ -260,25 +205,13 @@ public sealed class HiveDirectLlmConversationView : UserControl
         _executionTargetSelector.SelectedIndex = selectedIndex >= 0
             ? selectedIndex
             : _targets.Count > 0 ? 0 : -1;
-
-        if (_targets.Count == 0)
-        {
-            _statusLabel.Text =
-                "No active OpenAI-compatible ExecutionTargets are available. Configure one in Settings first.";
-        }
-        else
-        {
-            _statusLabel.Text = $"{_targets.Count} active ExecutionTarget(s) available.";
-        }
-
-        UpdateActionState();
     }
 
     private async Task RefreshConversationsAsync(
         ConversationId? preferredConversationId,
         CancellationToken cancellationToken)
     {
-        var conversationsResult = await _management.ListDirectLlmConversationsAsync(
+        var conversationsResult = await Management.ListDirectLlmConversationsAsync(
             _accessContext,
             pageSize: 50,
             cancellationToken).ConfigureAwait(true);
@@ -293,7 +226,7 @@ public sealed class HiveDirectLlmConversationView : UserControl
             return;
 
         var options = conversationsResult.Value!
-            .Select(static conversation => new ConversationOption(conversation))
+            .Select(static conversation => new DirectLlmConversationOption(conversation))
             .ToArray();
 
         _suppressConversationSelection = true;
@@ -341,7 +274,7 @@ public sealed class HiveDirectLlmConversationView : UserControl
 
     private async Task CreateConversationAsync(CancellationToken cancellationToken)
     {
-        var result = await _management.CreateDirectLlmConversationAsync(
+        var result = await Management.CreateDirectLlmConversationAsync(
             _accessContext,
             cancellationToken).ConfigureAwait(true);
 
@@ -360,7 +293,7 @@ public sealed class HiveDirectLlmConversationView : UserControl
 
     private async Task SendMessageAsync(CancellationToken cancellationToken)
     {
-        var target = _executionTargetSelector.SelectedItem as TargetOption;
+        var target = _executionTargetSelector.SelectedItem as DirectLlmTargetOption;
         if (target is null)
         {
             HiveMessageBox.ShowInformation(
@@ -396,7 +329,7 @@ public sealed class HiveDirectLlmConversationView : UserControl
         Result<DirectLlmConversation> result;
         try
         {
-            result = await _management.SendDirectLlmMessageAsync(
+            result = await Management.SendDirectLlmMessageAsync(
                 conversationId,
                 target.Target.Id,
                 message,
@@ -443,7 +376,7 @@ public sealed class HiveDirectLlmConversationView : UserControl
         ConversationId conversationId,
         CancellationToken cancellationToken)
     {
-        var result = await _management.GetDirectLlmConversationAsync(
+        var result = await Management.GetDirectLlmConversationAsync(
             conversationId,
             _accessContext,
             cancellationToken).ConfigureAwait(true);
@@ -459,7 +392,8 @@ public sealed class HiveDirectLlmConversationView : UserControl
 
         var conversation = result.Value!;
         _selectedConversation = conversation.Summary;
-        _conversationDetailsLabel.Text = FormatConversationDetails(conversation.Summary);
+        _conversationDetailsLabel.Text =
+            DirectLlmConversationPresentation.FormatDetails(conversation.Summary);
 
         var lines = new List<string>();
         foreach (var message in conversation.Messages)
@@ -482,7 +416,7 @@ public sealed class HiveDirectLlmConversationView : UserControl
     private async Task ConversationSelectionChangedAsync(CancellationToken cancellationToken)
     {
         if (_suppressConversationSelection ||
-            _conversationList.SelectedItem is not ConversationOption option)
+            _conversationList.SelectedItem is not DirectLlmConversationOption option)
         {
             return;
         }
@@ -498,7 +432,8 @@ public sealed class HiveDirectLlmConversationView : UserControl
     }
 
     private async Task RunOperationAsync(
-        Func<CancellationToken, Task> operation)
+        Func<CancellationToken, Task> operation,
+        CancellationToken externalToken = default)
     {
         if (_disposed || IsDisposed || Disposing ||
             Interlocked.CompareExchange(ref _operationCts, null, null) is not null)
@@ -506,7 +441,9 @@ public sealed class HiveDirectLlmConversationView : UserControl
             return;
         }
 
-        var operationCts = CancellationTokenSource.CreateLinkedTokenSource(_lifetimeCts.Token);
+        var operationCts = CancellationTokenSource.CreateLinkedTokenSource(
+            _lifetimeCts.Token,
+            externalToken);
         if (Interlocked.CompareExchange(ref _operationCts, operationCts, null) is not null)
         {
             operationCts.Dispose();
@@ -531,7 +468,7 @@ public sealed class HiveDirectLlmConversationView : UserControl
                     exception,
                     "Direct LLM operation failed",
                     "The direct LLM workspace operation could not be completed.",
-                    null,
+                    _context.Output,
                     _themeManager);
             }
         }
@@ -581,7 +518,7 @@ public sealed class HiveDirectLlmConversationView : UserControl
         _messageTextBox.Enabled = !busy && _selectedConversation is not null;
         _sendButton.Enabled = !busy &&
                               _selectedConversation is not null &&
-                              _executionTargetSelector.SelectedItem is TargetOption;
+                              _executionTargetSelector.SelectedItem is DirectLlmTargetOption;
         _cancelButton.Enabled = busy;
     }
 
@@ -780,29 +717,4 @@ public sealed class HiveDirectLlmConversationView : UserControl
 
     private bool IsUnavailable() =>
         _disposed || IsDisposed || Disposing;
-
-    private static string FormatConversationDetails(DirectLlmConversationSummary summary)
-    {
-        var lastTarget = summary.LastExecutionTargetId?.ToString() ?? "not selected";
-        var correlation = summary.ActiveCorrelationId?.ToString() ?? "none";
-        var status = summary.LastErrorCode is { Length: > 0 } code
-            ? $"{summary.Status} · {code}"
-            : summary.Status.ToString();
-
-        return $"{summary.Title}{Environment.NewLine}" +
-               $"Status: {status} · Messages: {summary.MessageCount} · " +
-               $"Last target: {lastTarget} · Active request: {correlation}";
-    }
-
-    private sealed record TargetOption(ExecutionTarget Target, string DisplayLabel)
-    {
-        public override string ToString() => DisplayLabel;
-    }
-
-    private sealed record ConversationOption(DirectLlmConversationSummary Conversation)
-    {
-        public override string ToString() =>
-            $"{Conversation.Title}  ·  {Conversation.Status}  ·  " +
-            $"{Conversation.UpdatedAtUtc.ToLocalTime():g}";
-    }
 }
