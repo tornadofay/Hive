@@ -183,8 +183,8 @@ These are proposed planning slices only. They are not current Hive phase/slice i
 Scope:
 
 - Create a standalone React + TypeScript frontend project/package with its own package manifest, lockfile, TypeScript configuration, and frontend checks.
-- Create a separate .NET 10 Windows executable host project for WebView2; prefer using the public `HiveForm` shell with WebView2 in its body, but do not turn the existing `Hive.Host.WinForms` library into an executable or repurpose `Hive.Example.WinForms`.
-- Confirm the native host route: preferably a separate WinForms executable using WebView2 inside the public `HiveForm` shell. Inspect the host-composition ownership and choose between reusing `Hive.Host.WinForms` without launching its legacy screens or extracting only the minimum shared composition needed. A project-level reference to `Hive.Host.WinForms.UI` may be required for the native shell; document the real dependency graph rather than claiming there is no reference to the existing UI assembly. Do not duplicate the Management/service graph.
+- Create a separate .NET 10 Windows executable host project, preferably a WinForms `WinExe` that embeds WebView2 in the public `HiveForm` shell. Do not turn the existing `Hive.Host.WinForms` library into an executable or repurpose `Hive.Example.WinForms`.
+- Inspect the current host-composition ownership and choose between reusing `Hive.Host.WinForms` without launching its legacy screens or extracting only the minimum shared composition needed. A project-level reference to `Hive.Host.WinForms.UI` may be required for the native shell; document the real dependency graph rather than claiming there is no reference to the existing UI assembly. Do not duplicate the Management/service graph.
 - Host local React assets in WebView2 through a controlled origin.
 - Demonstrate one UI-to-C# command and one C#-to-UI event using a versioned message envelope.
 - Verify initialization/disposal, failure messaging, fixed-origin/navigation handling, and one asynchronous sample request.
@@ -201,7 +201,7 @@ Acceptance:
 
 - The existing WinForms libraries remain buildable; `Hive.Example.WinForms` remains buildable and launchable without the frontend development server.
 - The new app does not launch legacy Workspace/Settings forms to render its React content; it uses the existing `HiveForm` shell only through its supported public API, with an opt-in EN/AR header action that does not change legacy forms by default.
-- The standalone/modeless path and the embeddable Workspace path have an explicit, tested technical design; embedding may not be silently dropped from parity.
+- The standalone/modeless and embedding paths have an explicit design and a documented parity decision. Slice 1 proves the proposed embedding route through a bounded feasibility spike; Slice 3 owns the complete WebView2-backed embedding implementation and behavior-level parity. Embedding may not be silently dropped.
 - Debug and production paths both load bundled/local UI content without relying on remote web assets.
 - Messages cross the bridge only through explicitly registered command/event handlers; no arbitrary host invocation is available.
 - Invalid messages and navigation fail closed.
