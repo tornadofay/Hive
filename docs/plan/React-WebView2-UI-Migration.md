@@ -2,12 +2,12 @@
 
 **Status:** Proposal / planning only — not authorized for implementation.  
 **Assessment date:** 2026-10-24  
-**Scope:** Build the React + TypeScript frontend as a separate project/package and host it through a new, separate thin WebView2 desktop host alongside the existing WinForms application. Preserve the current WinForms projects and their implemented behavior intact as a dormant legacy/fallback implementation. Migrate to verified UI parity, then direct active Hive-owned UI feature development to the React application while keeping WinForms on hold for possible future reuse. Preserve the existing Hive .NET backend and WinForms host-integration capabilities.  
+**Scope:** Add a separate React + TypeScript frontend project/package and a separate .NET 10 WebView2 desktop executable alongside the existing WinForms-based host path. Today, `Hive.Host.WinForms` and `Hive.Host.WinForms.UI` are libraries, while `Hive.Example.WinForms` is the executable consumer/example host; preserve all three existing projects and their implemented behavior. Use the current Hive-owned WinForms presentation as the parity baseline, then make the new React/WebView2 application the primary standalone Hive-owned UI only after parity and architecture alignment are formally approved. Preserve the existing backend and business-app host-integration capabilities.  
 **Authority:** This document is subordinate to AGENTS.md, docs/architecture.md, the relevant architecture detail documents, the roadmap, and Active Work. It creates no roadmap phase, does not advance Phase 1.20, and does not authorize implementation.
 
 ## 1. Objective
 
-Build a separate React + TypeScript frontend project/package and a separate thin .NET 10 WebView2 desktop host as a new application path alongside the current WinForms application. The new host must reuse the existing Hive application/Management behavior and composition responsibilities without depending on the old WinForms presentation layer to render React application content. Slice 1 may approve reuse of the existing `HiveWindowHeader` solely as native desktop chrome if its dependencies and lifecycle are suitable.
+Build a separate React + TypeScript frontend project/package and a separate thin .NET 10 WebView2 desktop executable as a new application path alongside the current Example Host. Prefer a separate WinForms executable host that uses WebView2 for application content and the existing public `HiveForm` shell for native desktop chrome. It must not display the legacy Workspace/Settings forms as the React application's content. Reuse existing Hive application/Management behavior and host composition; Slice 1 must resolve the current co-location of composition and presentation without duplicating the service graph.
 
 The existing WinForms projects must remain intact and buildable during migration. They are retained as a preserved implementation and fallback/reference, not a second UI that must receive every future feature. When React has demonstrably reached parity with the current implemented WinForms UI, make React the primary Hive-owned UI and put the old WinForms presentation on hold. Future Hive-owned UI development proceeds in React; the WinForms UI receives only explicitly authorized compatibility, build, or security corrections needed to preserve its retained value, not routine feature development or ongoing polish.
 
@@ -29,11 +29,17 @@ The repository's current status and verification records are authoritative; the 
 - Phase 1.20 Slice 1 (Workspace foundation) and Slice 2 (Chat UX redesign) are recorded as closed.
 - Phase 1.20 Slices 3–4 are not started and require their own explicit authorization.
 - Active Work currently says there is no active task. The 2026-10-24 Host/UI maintenance closure records 818/818 tests passing, the relevant UI projects building without warnings/errors, and a developer-reported manual smoke check.
-- src/Hive.Host.WinForms owns the current Workspace window/shell and host composition, including HiveWorkspaceView, HiveWorkspaceContext, HiveWorkspaceLauncher, and the module boundary.
-- src/Hive.Host.WinForms.UI contains the reusable Hive WinForms presentation controls and theme foundation.
-- src/Hive.Example.WinForms is a consumer/example host and must remain a consumer rather than become a platform dependency.
-- The current Workspace reaches application operations through IHiveManagementFacade; the architecture requires Management to own application operations and the Workspace to remain a presentation/control surface.
+- `src/Hive.Host.WinForms` is currently a `net10.0-windows` library that owns the Workspace/Settings presentation and host/service-graph composition, including `HiveWorkspaceView`, `HiveWorkspaceContext`, and `HiveWorkspaceLauncher`.
+- `src/Hive.Host.WinForms.UI` is a separate library that owns reusable WinForms controls/theme, including the public `HiveForm` shell and the internal `HiveWindowHeader` it composes.
+- `src/Hive.Example.WinForms` is the current executable consumer and verification host. It must remain a usable example/consumer, not become a platform dependency. The plan must not incorrectly describe `Hive.Host.WinForms` itself as an existing executable application.
+- The current Workspace reaches application operations through `IHiveManagementFacade`; Management owns application operations and the Workspace remains a presentation/control surface. The current architecture supports both a modeless single-instance Workspace window and an embeddable `HiveWorkspaceView`; that embedding behavior is part of the baseline and must be preserved or explicitly dispositioned before the React parity gate.
 - Existing WinForms host-context and bounded business-app integration capabilities have a different purpose from Hive's own UI. They must not be discarded merely because Hive's own screens adopt web technologies.
+
+### Architecture alignment prerequisite
+
+The current canonical architecture (`docs/architecture.md`, **Standalone preview product boundary**) defines the first public Hive Workbench as a self-contained WinForms application that reuses the Phase 1.20 Workspace and `Hive.Host.WinForms.UI`. This plan proposes a materially different future target: a separate React/WebView2 application becoming the primary standalone Hive-owned UI. That change is **proposed, not yet adopted**; this plan does not override the canonical architecture.
+
+Slice 1 is therefore also an architecture decision gate. It must reconcile the target Workbench/application boundary, project ownership, and roadmap sequencing with the canonical architecture before the plan proceeds to feature-migration slices. The owner must either approve this target direction and authorize the corresponding architecture/roadmap documentation updates under the normal workflow, or retain the WinForms Workbench target and stop/revise this migration proposal. Do not leave the plan and canonical architecture describing contradictory primary application targets. Until that decision is recorded, Slices 2–12 are not eligible to start.
 
 Relevant sources:
 
@@ -51,18 +57,18 @@ Relevant sources:
 
 ## 3. Proposed target architecture
 
-The proposed architecture is **two parallel application paths sharing Hive's existing application/backend capabilities**. Do not embed React into the existing Hive.Host.WinForms application as the migration strategy; create a separate React frontend project/package and a new, thin WebView2 desktop host alongside it. Do not migrate the existing WinForms projects in place or use legacy presentation controls as the React application's content UI. The existing `HiveWindowHeader` may be reused only for the new app's native window chrome if Slice 1 confirms this is a clean, bounded dependency.
+The proposed architecture is **two parallel application paths sharing Hive's existing application/backend capabilities**: the existing WinForms presentation exercised by `Hive.Example.WinForms`, and a new standalone React/WebView2 executable. Do not turn `Hive.Host.WinForms` into the new executable or put React into the existing Workspace/Settings forms. The new host should use the existing public `HiveForm` shell (which composes `HiveWindowHeader`) if Slice 1 proves this integration is clean. `HiveWindowHeader` is internal and must not be made public merely to enable reuse; the EN/AR action needs a narrow, opt-in extension through the existing shell, with all legacy forms retaining their current header behavior by default. Slice 1 must also resolve whether the new host can reuse the current host composition directly or needs a bounded shared composition boundary.
 
 Conceptual ownership:
 
 1. **Separate React + TypeScript frontend project/package** — owns Hive's new Workspace and management-screen presentation, frontend build/test setup, components, client-side interaction state, and static production assets. It has its own package manifest, dependency lockfile, TypeScript configuration, and frontend tests.
-2. **Separate WebView2 desktop host project** — a thin .NET 10 Windows application that owns the native desktop shell, window lifecycle, WebView lifecycle, approved native capabilities, asset loading, and explicit message-routing boundary. Its exact project name and host composition dependencies are decided in Slice 1. Preserve the existing `HiveWindowHeader` control and its visual treatment for the current WinForms application. For the new React/WebView2 application, prefer reusing that native header in the new host if Slice 1 confirms its dependencies and lifecycle can be used safely; React owns application content, not the native window controls. Do not make the new host depend on unrelated legacy WinForms presentation controls. If direct header reuse is not viable, define the smallest compatible native-shell alternative in Slice 1 rather than rebuilding desktop chrome in React by default.
+2. **Separate WebView2 desktop host project** — a thin .NET 10 Windows executable, preferably a WinForms host that embeds WebView2 in the body of the public `HiveForm` shell. It owns the window/WebView lifecycle, approved native capabilities, local asset loading, and bridge. The existing `HiveWindowHeader` is internal; do not expose or instantiate it across project boundaries directly. Instead, if the EN/AR header control requires a change, add a small, opt-in header action/event through the existing `HiveForm` API (or document a technically justified alternative in Slice 1). Existing WinForms forms must keep their current header buttons/behavior unless they explicitly opt into the new action. Decide the exact project name and host composition dependency in Slice 1.
 3. **Explicit C# bridge** — accepts only versioned, allowlisted commands and sends typed results/events; it is not a second service/business-logic layer.
 4. **Existing Hive application and Management services** — remain authoritative for resource operations, policy, validation, authorization, conversation/work state, provider selection, and consequential actions.
 5. **Existing persistence/provider/agent/coordination layers** — remain behind their current ownership boundaries. The frontend never connects directly to databases, provider endpoints, or secret storage.
 6. **Existing WinForms projects** — remain intact and buildable during the migration. After the React application passes the full parity gate, the current Hive-owned WinForms presentation is put on hold as a preserved fallback/reference. Host-integration contracts and controls with real consumers remain supported. Preserve the current legacy app's header behavior; the EN/AR selector belongs to the new React application's native header path and must not become ongoing feature work for the frozen legacy UI.
 
-Slice 1 must decide whether the WebView2 host can reuse the current host-composition implementation without depending on the old WinForms UI assembly. If composition ownership must be extracted or shared to preserve dependency direction, that change must be explicitly scoped and documented; do not duplicate the Management/service graph or make the React frontend reference WinForms presentation code. Keep the existing WinForms projects, their source, and their history; do not rename, repurpose, or delete them as part of the migration.
+Host composition and screen presentation are currently co-located in `Hive.Host.WinForms`, which references `Hive.Host.WinForms.UI`; do not assume the new host can reuse composition while having no project-level dependency on that assembly. In Slice 1 inspect the actual public composition surface and choose the smallest valid route: reuse the existing host library without launching its legacy forms, or establish a narrowly scoped shared composition boundary if dependency direction requires it. Do not duplicate the Management/service graph or make React content depend on legacy presentation types. Keep existing projects/source/history; do not rename, repurpose, or delete them.
 
 ### 3.1 Application lifecycle and preservation policy
 
@@ -113,13 +119,15 @@ The migration must not introduce an unbounded number of browser instances. Use a
 
 Localization is an architectural requirement from the start, even if the first production release initially ships with English translations only. Do not postpone the foundations until after screens contain hardcoded English labels and left-to-right assumptions.
 
-- The native desktop header for the new React/WebView2 application must expose an `EN | AR` language toggle. Prefer the existing `HiveWindowHeader` in the new host if Slice 1 validates reuse; keep the existing WinForms application's current header and behavior intact. The toggle must not require rebuilding desktop window controls in React.
-- Selecting a language must update the React UI at runtime without restarting Hive. The native host communicates the selected locale through the versioned bridge; React updates its translation resources and document direction (`ltr` for English, `rtl` for Arabic).
+- The native desktop header for the new React/WebView2 application must expose an `EN | AR` language toggle. Use the existing `HiveForm` shell and add a narrow, opt-in header action/event where appropriate; do not expose the internal `HiveWindowHeader` type. Existing WinForms forms must retain their current header behavior by default. The toggle must not rebuild desktop window controls in React.
+- Selecting a language must update the React UI at runtime without restarting Hive. The native host communicates the selected locale through the versioned bridge; React updates its translation resources, sets the document language (`lang="en"` or `lang="ar"`), and sets direction (`dir="ltr"` for English, `dir="rtl"` for Arabic).
 - Store visible UI strings in localization resources with stable keys; do not hardcode user-facing English copy throughout components. Establish the resource format, key conventions, pluralization/interpolation needs, missing-key behavior, and locale-loading approach as part of the early architecture/design-system work.
 - Support Arabic as a true right-to-left layout, not only translated strings: use direction-aware/logical layout properties, verify navigation and side panels, form alignment, text inputs, menus, dialogs, focus/navigation order, and direction-sensitive icons. Preserve sensible display of mixed Arabic/English text, identifiers, code, URLs, paths, provider/model names, and numeric data.
 - Use locale-aware formatting for dates, numbers, and other formatted values where appropriate, without changing canonical identifiers, stored data, protocol values, or backend semantics.
 - Persist the user's language preference across application restarts through an explicitly owned host/application preference mechanism. Slice 1 must identify the appropriate persistence owner; do not place secrets or other sensitive information in browser storage, and do not invent a new general settings subsystem solely for locale.
-- Establish frontend tests for language switching, translation-resource completeness, and both LTR/RTL layouts. The parity register must distinguish untranslated/missing resources from missing feature behavior.
+- Define a localization path for structured Management/application errors: map known stable error codes to localized UI messages where available; provide a generic localized fallback for unknown errors, and keep technical diagnostics separate and safely redacted. Do not blindly translate raw exception text or move business/error policy into React.
+- Verify Arabic font fallback/glyph coverage, baseline/line-height, clipping, and readability at supported DPI and window sizes.
+- Establish frontend tests for language switching, document `lang`/`dir`, translation-resource completeness, structured-error localization/fallback, Arabic font rendering, and both LTR/RTL layouts. The parity register must distinguish untranslated/missing resources from missing feature behavior.
 
 The localization framework and cross-boundary contract are part of the early build; completing and reviewing all Arabic translations may be done incrementally after the initial English experience is functional.
 
@@ -129,7 +137,7 @@ The localization framework and cross-boundary contract are part of the early bui
 
 Port behavior that is actually implemented today in Hive-owned screens, including applicable existing behavior for:
 
-- Workspace shell and module navigation;
+- Workspace shell and module navigation, including modeless single-instance launch/reuse and the supported embeddable Workspace surface;
 - Direct LLM target selection, favorites filtering, conversations/history, message submission and display, loading/running/failure presentation, and supported theme behavior;
 - existing Work Items operations and status presentation;
 - Settings/overview navigation and existing CRUD/editor workflows;
@@ -142,14 +150,14 @@ Port behavior that is actually implemented today in Hive-owned screens, includin
 - bidirectional full-data migration configuration, preflight, progress/status, and failure/completion reporting;
 - shared validation, confirmation, error/details dialogs, empty/loading states, navigation and focus behavior, resizing, themes, accessibility, and DPI behavior supported by the current application.
 
-The inventory must be reconciled against actual screens, call sites, and existing automated/manual acceptance paths before each corresponding area is considered migrated. The list above is a checklist to investigate, not a claim that every behavior is implemented identically or can be ported without changes.
+The inventory must be reconciled against actual screens, call sites, and existing automated/manual acceptance paths before each corresponding area is considered migrated. The list above is a checklist to investigate, not a claim that every behavior is implemented identically or can be ported without changes. The baseline is the current Hive-owned screens/behaviors delivered through the existing host projects; it does not mean replacing the Example Host's example-navigation/test tools with React.
 
 ### 4.2 Explicitly preserve outside the replacement UI
 
 - All existing C# domain, Management, provider, agent, coordination, execution, persistence, authorization, validation, and durable-state behavior unless a separate authorized requirement explicitly changes it.
 - Existing public contracts and compatibility semantics.
 - WinForms host integration, bounded host-context discovery, business-app control/data-surface adapters, and reusable host-facing types still used by integrated WinForms applications.
-- Hive.Example.WinForms as an independent consumer/example host with its established navigation and exact example/test handoff conventions.
+- `Hive.Example.WinForms` as an independent consumer/example/verification host with its established navigation and exact example/test handoff conventions; preserve it as a working consumer and do not convert it into the platform or the React app.
 - SQL Server and Embedded persistence parity and the existing secret-protection boundaries.
 - The distinction between Hive resources and the user's host-application business data.
 
@@ -166,7 +174,7 @@ The inventory must be reconciled against actual screens, call sites, and existin
 
 ## 5. Proposed implementation sequence — 12 migration slices
 
-These are proposed planning slices only. They are not current Hive phase/slice identifiers and cannot be started by using a continuation command. Before implementation, the proposal must be accepted, assigned the correct roadmap/Active Work authorization, and have affected architecture documents and project ownership boundaries resolved. The current WinForms implementation is the fixed parity baseline: do not add new UI features to WinForms during this migration just to keep both frontends aligned. Necessary corrections to keep the existing solution buildable or to address a material security/correctness issue must be separately bounded; do not use them to expand WinForms feature scope.
+These are proposed planning slices only. They are not current Hive phase/slice identifiers and cannot be started by using a continuation command. Before implementation, the proposal must be accepted, assigned the correct roadmap/Active Work authorization, and have affected architecture documents and project ownership boundaries resolved. The current implemented Hive-owned WinForms presentation is the fixed parity baseline; `Hive.Example.WinForms` remains the independent consumer/verification host, not the new product UI. Do not add new UI features to WinForms during migration just to keep both frontends aligned. Necessary corrections to keep the existing solution buildable or address a material security/correctness issue must be separately bounded. Recommended default sequencing: leave unstarted Phase 1.20 Slices 3–4 and Phase 1.21 work outside current-state parity, keep them under their existing phase ownership, and defer their user-facing UI implementation until React/WebView2 becomes primary. Those phases are neither implemented nor closed by this plan; any different ordering must be resolved before freezing the parity baseline.
 
 ### Slice 1 — Architecture and integration spike
 
@@ -175,27 +183,31 @@ These are proposed planning slices only. They are not current Hive phase/slice i
 Scope:
 
 - Create a standalone React + TypeScript frontend project/package with its own package manifest, lockfile, TypeScript configuration, and frontend checks.
-- Create a separate thin .NET 10 WebView2 desktop-host project/application; do not place React into the existing Hive.Host.WinForms or Hive.Host.WinForms.UI projects.
+- Create a separate .NET 10 Windows executable host project for WebView2; prefer using the public `HiveForm` shell with WebView2 in its body, but do not turn the existing `Hive.Host.WinForms` library into an executable or repurpose `Hive.Example.WinForms`.
+- Decide whether the host can reuse existing host/service composition without launching the existing Workspace/Settings forms. Record any necessary dependency extraction as explicit bounded scope; do not duplicate composition.
 - Decide the new host's native windowing approach and determine how it can reach existing Management/service composition without depending on the old WinForms presentation assembly or duplicating the service graph. If shared composition needs extraction, define that as an explicit bounded architecture change.
 - Host local React assets in WebView2 through a controlled origin.
 - Demonstrate one UI-to-C# command and one C#-to-UI event using a versioned message envelope.
 - Verify initialization/disposal, failure messaging, fixed-origin/navigation handling, and one asynchronous sample request.
 - Prove the current WinForms projects remain unchanged and buildable alongside the new frontend/host; launch each application path independently.
-- Decide whether the existing `HiveWindowHeader` can be reused by the new host without importing unrelated legacy presentation dependencies; preserve its current use in the legacy WinForms app. Define a narrow native-shell fallback if direct reuse is not viable.
+- Confirm the native header route through the public `HiveForm` shell. The internal `HiveWindowHeader` must remain internal; any EN/AR header action must be opt-in for the new host and leave existing WinForms forms unchanged by default.
+- Decide and document how the new React/WebView2 Workspace provides the existing embeddable Workspace capability as well as standalone/modeless launch/reuse. A standalone executable alone is not evidence of embedding parity.
 - Choose the localization/resource approach and decide where the user's locale preference is persisted. Define the versioned host-to-frontend locale-change message and initial locale bootstrap behavior.
-- Prove a small end-to-end EN/AR language switch in the spike, including an RTL sample layout, while keeping the app shell/window controls native.
+- Prove a small end-to-end EN/AR language switch in the spike, including the correct HTML `lang`/`dir` attributes, a structured-error translation/fallback example, and an RTL sample with Arabic font glyphs, while keeping the app shell/window controls native.
+- Resolve how the canonical Standalone Workbench target is reconciled with this proposed React/WebView2 primary application before Slice 2 can be authorized.
 - Exercise the proposed Visual Studio development/debug and production asset workflows.
 - Record the final architecture choice and revise affected architecture documents under the authorized scope.
 
 Acceptance:
 
-- The old WinForms application and the separate React/WebView2 application coexist in the solution; the new app does not depend on the existing WinForms presentation layer to render React application content. Reusing `HiveWindowHeader` for native chrome is permitted only if the Slice 1 dependency/lifecycle decision approves it.
-- Existing WinForms projects remain buildable and launchable without having the React development server running.
+- The existing WinForms libraries remain buildable; `Hive.Example.WinForms` remains buildable and launchable without the frontend development server.
+- The new app does not launch legacy Workspace/Settings forms to render its React content; it uses the existing `HiveForm` shell only through its supported public API, with an opt-in EN/AR header action that does not change legacy forms by default.
+- The standalone/modeless path and the embeddable Workspace path have an explicit, tested technical design; embedding may not be silently dropped from parity.
 - Debug and production paths both load bundled/local UI content without relying on remote web assets.
 - Messages cross the bridge only through explicitly registered command/event handlers; no arbitrary host invocation is available.
 - Invalid messages and navigation fail closed.
 - Missing assets or unavailable WebView2 produce a useful failure instead of a blank or hung window.
-- The selected approach is documented, including frontend tooling, project ownership, asset paths, exact developer build/test commands, header integration, localization resources, locale preference ownership, and the bridge contract.
+- The selected approach is documented, including frontend tooling, project ownership, asset paths, exact developer build/test commands, header integration, localization resources, locale preference ownership, the bridge contract, embedding behavior, and architecture/roadmap reconciliation.
 - A minimal EN/AR switch changes locale at runtime and sets the correct LTR/RTL document direction; this spike does not claim that all screens are translated.
 
 Stop/go gate: do not proceed to a broad migration if this slice exposes an unacceptable security, packaging, debugging, memory, or maintenance problem. Reassess the approach before further work; do not silently switch frameworks.
@@ -231,13 +243,13 @@ Acceptance:
 Scope:
 
 - Introduce compact left navigation/history, central content, and an optional collapsible right context area.
-- Preserve the current independent/modeless Workspace launch behavior and supported embedding scenario.
+- Preserve the current independent/modeless Workspace launch/reuse behavior and supported embedding scenario. Define a WebView2-backed embeddable Workspace surface behind a bounded host API, or document an explicit owner-approved compatibility disposition before claiming parity.
 - Preserve lazy module creation and module navigation semantics, adapting the module boundary only where required by the web presentation architecture.
 - Define browser-history/deep-link behavior only where useful and compatible with the desktop app; browser navigation must not become an authority boundary.
 
 Acceptance:
 
-- Workspace launch/reuse and host embedding behave as before.
+- Standalone/modeless launch and single-instance reuse work as before, and an equivalent WebView2-backed embedding surface is available where the existing supported contract requires it. If any existing consumer cannot be supported, the cutover is blocked until the owner explicitly accepts a documented compatibility exception.
 - Resizing and supported compact sizes do not clip or strand controls.
 - Navigation switches views without leaking handlers or stale state.
 - Management recomposition and application shutdown do not leave the frontend calling a retired service graph.
@@ -487,7 +499,7 @@ The exact command names and whether Visual Studio/MSBuild automatically invokes 
 | Bridge grows into a second backend | Explicit command/event allowlist; handlers route to existing application/Management boundaries only. |
 | Security boundary is weakened by web content | Local bundled assets, constrained navigation/CSP, message validation, minimal native capabilities, secrets kept out of browser storage. |
 | Frontend build breaks the existing .NET workflow | Prove exact build/test/debug/package behavior in Slice 1; keep backend-only test paths independent of the development server. |
-| Existing architecture ownership becomes contradictory | Resolve project/component ownership in Slice 1; update authoritative architecture only within a future authorized implementation task. |
+| Existing architecture ownership becomes contradictory | Treat the current WinForms Workbench statement as authoritative until the owner approves the proposed target change; reconcile the canonical architecture and roadmap in Slice 1 before authorizing feature-migration slices. |
 | Migration loses WinForms host-integration utility | Inventory consumers and retain host-facing WinForms types/contracts independently from Hive's own screen implementation. |
 | Memory/startup regression on modest machines | One bounded WebView by default, lazy modules, bundle analysis, cold-start/idle-memory measurement. |
 | Existing future roadmap work is accidentally pulled into migration | Port only implemented behavior; route unimplemented features to their owning phase and authorization. |
@@ -499,7 +511,7 @@ Planning estimate for one developer using AI-assisted implementation and develop
 
 - **Workspace-only migration:** approximately 4–6 slices, medium-to-high complexity.
 - **Full current Hive-owned UI parity:** approximately 10–14 slices; this document proposes 12 slices.
-- **Indicative elapsed effort:** about 3–6 weeks for the full migration, assuming regular work, a successful Slice 1 spike, and no major hidden coupling. This is a rough planning estimate, not a commitment or measured delivery forecast. Complex UI parity, browser/host lifecycle issues, packaging, or accessibility gaps could extend it.
+- **Indicative elapsed effort:** about 4–8 weeks for full current-state parity with EN/AR localization, RTL review, WebView2 packaging, and the required embedding decision, assuming regular work, a successful Slice 1 spike, and no major hidden coupling. This is a low-confidence planning range, not a commitment or measured delivery forecast; reassess it after Slice 1 proves the host/composition, embedding, packaging, and memory costs.
 
 The first slice is intentionally a go/no-go gate. After it exposes actual build, host, bridge, packaging, and memory costs, revise the estimate before authorizing broad feature migration if the evidence materially changes the assumptions.
 
@@ -512,7 +524,7 @@ The user/repository owner must explicitly approve or revise these choices:
 3. Approve the proposed 12-slice sequence or revise it after the spike.
 4. Approve the bridge/security design, host-composition ownership, frontend/desktop-host project boundaries, localization resource strategy, locale preference ownership, and the native-header reuse decision (including the EN/AR toggle).
 5. Confirm the lifecycle policy: preserve current WinForms projects/source and keep them buildable; after verified parity, put the Hive-owned WinForms presentation on hold and route new UI development to React only, with separately authorized compatibility/security/build fixes as the exception.
-6. Decide how the migration is represented in the roadmap and how existing Phase 1.20/1.21 work is sequenced. This plan must not advance, replace, or close those phases by itself.
+6. Approve the architecture-alignment decision against the current Standalone Workbench target and the recommended sequencing for unstarted Phase 1.20 Slices 3–4 / Phase 1.21 UI work. Do not close or advance those phases through this plan; reconcile the architecture and roadmap before authorizing Slice 2.
 7. Authorize Slice 1 through the repository's normal Active Work and phase/slice workflow.
 
 Until those decisions are made, this document is planning material only. It does not authorize coding, dependency additions, solution/project changes, migration of current screens, removal of WinForms presentation code, roadmap movement, or changes to Active Work.
