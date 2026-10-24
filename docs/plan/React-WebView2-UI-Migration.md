@@ -2,12 +2,14 @@
 
 **Status:** Proposal / planning only — not authorized for implementation.  
 **Assessment date:** 2026-10-24  
-**Scope:** Replace Hive's own Windows-app presentation progressively while preserving the existing Hive .NET backend and the WinForms host-integration capabilities.  
+**Scope:** Build the React + TypeScript frontend as a separate project/package and host it through a new, separate thin WebView2 desktop host alongside the existing WinForms application. Preserve the current WinForms projects and their implemented behavior intact as a dormant legacy/fallback implementation. Migrate to verified UI parity, then direct active Hive-owned UI feature development to the React application while keeping WinForms on hold for possible future reuse. Preserve the existing Hive .NET backend and WinForms host-integration capabilities.  
 **Authority:** This document is subordinate to AGENTS.md, docs/architecture.md, the relevant architecture detail documents, the roadmap, and Active Work. It creates no roadmap phase, does not advance Phase 1.20, and does not authorize implementation.
 
 ## 1. Objective
 
-Move Hive's own user-facing desktop experience from a predominantly WinForms-rendered UI to a modern React + TypeScript interface hosted by WebView2 inside the existing .NET 10 Windows application.
+Build a separate React + TypeScript frontend project/package and a separate thin .NET 10 WebView2 desktop host as a new application path alongside the current WinForms application. The new host must reuse the existing Hive application/Management behavior and composition responsibilities without depending on the old WinForms presentation layer as its UI implementation.
+
+The existing WinForms projects must remain intact and buildable during migration. They are retained as a preserved implementation and fallback/reference, not a second UI that must receive every future feature. When React has demonstrably reached parity with the current implemented WinForms UI, make React the primary Hive-owned UI and put the old WinForms presentation on hold. Future Hive-owned UI development proceeds in React; the WinForms UI receives only explicitly authorized compatibility, build, or security corrections needed to preserve its retained value, not routine feature development or ongoing polish.
 
 The desired visual/product direction is a **dense desktop IDE-style structure combined with clean, modern card-based content**:
 
@@ -49,19 +51,30 @@ Relevant sources:
 
 ## 3. Proposed target architecture
 
-The default proposal is to **retain the existing WinForms desktop host initially** and embed the new React UI through WebView2. Do not migrate to WPF solely to host React; both frameworks can host WebView2, and a WPF migration would add work without materially improving a Workspace rendered by React.
+The proposed architecture is **two parallel application paths sharing Hive's existing application/backend capabilities**. Do not embed React into the existing Hive.Host.WinForms application as the migration strategy; create a separate React frontend project/package and a new, thin WebView2 desktop host alongside it. Do not migrate the existing WinForms projects in place or use their presentation implementation as the new UI.
 
 Conceptual ownership:
 
-1. **React + TypeScript frontend** — renders Hive's own Workspace and management screens; owns presentational state, navigation, composing/rendering messages, client-side validation feedback, and interactive visual components.
-2. **WebView2** — renders the compiled local frontend inside the Windows application.
-3. **Thin WinForms host / bridge** — owns desktop window lifecycle, WebView2 lifecycle, approved native interactions, and a small explicit message-routing boundary. It must not become a second application/business-logic layer.
+1. **Separate React + TypeScript frontend project/package** — owns Hive's new Workspace and management-screen presentation, frontend build/test setup, components, client-side interaction state, and static production assets. It has its own package manifest, dependency lockfile, TypeScript configuration, and frontend tests.
+2. **Separate WebView2 desktop host project** — a thin .NET 10 Windows application that owns the window, WebView lifecycle, approved native capabilities, asset loading, and explicit message-routing boundary. Its exact project name and host composition dependencies are decided in Slice 1. The host may use a minimal native Windows windowing framework, but it must not reuse the old WinForms presentation layer as its UI.
+3. **Explicit C# bridge** — accepts only versioned, allowlisted commands and sends typed results/events; it is not a second service/business-logic layer.
 4. **Existing Hive application and Management services** — remain authoritative for resource operations, policy, validation, authorization, conversation/work state, provider selection, and consequential actions.
-5. **Existing persistence/provider/agent/coordination layers** — remain behind their current ownership boundaries. The frontend does not connect to databases, provider endpoints, or secret storage directly.
+5. **Existing persistence/provider/agent/coordination layers** — remain behind their current ownership boundaries. The frontend never connects directly to databases, provider endpoints, or secret storage.
+6. **Existing WinForms projects** — remain intact and buildable during the migration. After the React application passes the full parity gate, the current Hive-owned WinForms presentation is put on hold as a preserved fallback/reference. Host-integration contracts and controls with real consumers remain supported.
 
-The exact frontend project/folder and the ownership split between future web presentation assets and the existing Hive.Host.WinForms.UI project must be decided during the architecture/integration spike. Do not silently repurpose or delete the existing UI project. The architecture documents must be updated under an explicitly authorized implementation task if the spike changes their current ownership statements.
+Slice 1 must decide whether the WebView2 host can reuse the current host-composition implementation without depending on the old WinForms UI assembly. If composition ownership must be extracted or shared to preserve dependency direction, that change must be explicitly scoped and documented; do not duplicate the Management/service graph or make the React frontend reference WinForms presentation code. Keep the existing WinForms projects, their source, and their history; do not rename, repurpose, or delete them as part of the migration.
 
-### 3.1 Suggested runtime flow
+### 3.1 Application lifecycle and preservation policy
+
+The migration has two distinct periods:
+
+**Parity period:** the existing WinForms application is the reference baseline and remains intact/buildable. The React frontend and its separate WebView2 desktop host are developed alongside it. Do not port new UI work back to WinForms to keep both implementations synchronized; compare React against the behavior that exists in WinForms at the agreed baseline. Only separately scoped fixes required to preserve solution buildability or address a material correctness/security issue may touch the legacy UI during this period.
+
+**After the parity gate:** React/WebView2 becomes the primary Hive-owned desktop UI and the normal launch/distribution path for new Hive UI use. New Hive-owned UI features are implemented only in React. Existing WinForms-owned presentation projects remain in the solution and their source/history is preserved as a dormant fallback/reference. They are not routinely updated, polished, deleted, or rewritten. Explicitly authorized compatibility, security, or build fixes may be made when necessary to preserve their retained value. The old WinForms UI is not promised feature parity with capabilities added only after the cutover.
+
+This policy applies to Hive's own UI. It does not remove or replace the WinForms host-integration capabilities needed to integrate Hive with users' actual WinForms business applications.
+
+### 3.2 Suggested runtime flow
 
 User interaction in React → versioned, typed WebView2 message → allowlisted C# application-facing handler → existing Management/application service → typed result or progress/event message → React updates the relevant component.
 
@@ -69,7 +82,7 @@ Messages must represent specific supported commands and events. The bridge must 
 
 Where the current app uses HiveWorkspaceContext or another lifecycle-aware composition boundary, the migrated Workspace must continue to respect service-graph replacement and disposal. A long-lived modeless window must not retain and call a retired Management facade after host recomposition.
 
-### 3.2 Message contract and execution behavior
+### 3.3 Message contract and execution behavior
 
 The bridge design must settle these details before feature migration:
 
@@ -81,7 +94,7 @@ The bridge design must settle these details before feature migration:
 - Event subscriptions must have explicit ownership and deterministic removal during navigation, WebView disposal, host recomposition, and shutdown. Stale events must not update a disposed or replaced view.
 - Concurrent UI commands must follow existing Management concurrency and authorization contracts; the UI must not implement a competing authorization system, durable state machine, retry/fallback policy, or provider-selection policy.
 
-### 3.3 Frontend build and application packaging
+### 3.4 Frontend build and application packaging
 
 Proposed development tooling is a small React + TypeScript project with a conventional frontend build tool such as Vite. The first slice must prove the packaging and debugging approach before that choice becomes binding.
 
@@ -130,31 +143,37 @@ The inventory must be reconciled against actual screens, call sites, and existin
 
 - Rewriting Hive.Core, Hive.Management, Persistence, provider transport, agent orchestration, business rules, or authorization in JavaScript.
 - Moving database access, provider credentials, or secrets into browser code or browser storage.
-- Replacing the WinForms host with WPF, Tauri, Electron, or another desktop shell as part of this plan.
-- Replacing the user's actual WinForms business-app UI with React or making host applications run inside WebView2.
+- Rewriting or deleting the existing WinForms application/projects in place. The React frontend and its WebView2 desktop host are added as a separate application path.
+- Folding React source into Hive.Host.WinForms.UI or making the React frontend depend on legacy WinForms presentation types.
+- Replacing or weakening the user's actual WinForms business-app integration UI/contracts; the migration is for Hive's own screens, not for the business applications Hive integrates with.
 - Adding new Agent/Manager/Hive modes, orchestration behavior, business-app write capability, or other roadmap features merely because the new UI could display them.
 - Treating unstarted Phase 1.20 Slices 3–4 or Phase 1.21 Agent interaction as already implemented. Those features remain under their owning authorized roadmap work; when implemented, their UI can be added through their own acceptance scope.
-- Deleting historical UI controls or documents before their callers and architectural role have been verified.
+- Removing or broadly refactoring existing WinForms controls, forms, projects, examples, or documentation as a cleanup step. They are preserved for future reuse; any separately authorized fix must state its narrow purpose.
 
 ## 5. Proposed implementation sequence — 12 migration slices
 
-These are proposed planning slices only. They are not current Hive phase/slice identifiers and cannot be started by using a continuation command. Before implementation, the proposal must be accepted, assigned the correct roadmap/Active Work authorization, and have affected architecture documents and project ownership boundaries resolved.
+These are proposed planning slices only. They are not current Hive phase/slice identifiers and cannot be started by using a continuation command. Before implementation, the proposal must be accepted, assigned the correct roadmap/Active Work authorization, and have affected architecture documents and project ownership boundaries resolved. The current WinForms implementation is the fixed parity baseline: do not add new UI features to WinForms during this migration just to keep both frontends aligned. Necessary corrections to keep the existing solution buildable or to address a material security/correctness issue must be separately bounded; do not use them to expand WinForms feature scope.
 
 ### Slice 1 — Architecture and integration spike
 
-**Purpose:** Prove that the hybrid approach can be built, run, debugged, packaged, and secured within the current solution before investing in feature porting.
+**Purpose:** Prove that the separate React application path can be built, run, debugged, packaged, and secured inside the existing solution before investing in feature porting, while leaving the WinForms baseline intact.
 
 Scope:
 
-- Select the frontend source/build folder and define ownership relative to Hive.Host.WinForms, Hive.Host.WinForms.UI, and the example host.
-- Host a small local React/TypeScript view in WebView2, with a controlled local asset origin.
+- Create a standalone React + TypeScript frontend project/package with its own package manifest, lockfile, TypeScript configuration, and frontend checks.
+- Create a separate thin .NET 10 WebView2 desktop-host project/application; do not place React into the existing Hive.Host.WinForms or Hive.Host.WinForms.UI projects.
+- Decide the new host's native windowing approach and determine how it can reach existing Management/service composition without depending on the old WinForms presentation assembly or duplicating the service graph. If shared composition needs extraction, define that as an explicit bounded architecture change.
+- Host local React assets in WebView2 through a controlled origin.
 - Demonstrate one UI-to-C# command and one C#-to-UI event using a versioned message envelope.
 - Verify initialization/disposal, failure messaging, fixed-origin/navigation handling, and one asynchronous sample request.
-- Exercise proposed development and production asset workflows in Visual Studio.
+- Prove the current WinForms projects remain unchanged and buildable alongside the new frontend/host; launch each application path independently.
+- Exercise the proposed Visual Studio development/debug and production asset workflows.
 - Record the final architecture choice and revise affected architecture documents under the authorized scope.
 
 Acceptance:
 
+- The old WinForms application and the separate React/WebView2 application coexist in the solution; the new app does not depend on the existing WinForms presentation layer to render its UI.
+- Existing WinForms projects remain buildable and launchable without having the React development server running.
 - Debug and production paths both load bundled/local UI content without relying on remote web assets.
 - Messages cross the bridge only through explicitly registered command/event handlers; no arbitrary host invocation is available.
 - Invalid messages and navigation fail closed.
@@ -181,9 +200,9 @@ Acceptance:
 - Keyboard focus order and accessible labels/states exist for the initial primitives.
 - Components do not become generic boxes around every content element; the approved desktop-dense/card-selective direction remains intact.
 
-### Slice 3 — Workspace shell and navigation
+### Slice 3 — React Workspace shell and navigation
 
-**Purpose:** Replace the existing Workspace shell while preserving module and application boundaries.
+**Purpose:** Build the Workspace shell in the new React/WebView2 application while preserving the existing WinForms implementation unchanged and retaining the module/application ownership boundaries.
 
 Scope:
 
@@ -327,7 +346,7 @@ Acceptance:
 
 ### Slice 11 — Remaining screens and complete parity audit
 
-**Purpose:** Close gaps outside the first migrated feature areas.
+**Purpose:** Close gaps outside the first migrated feature areas, reconcile the full parity inventory, and define the cutover evidence without deleting or rewriting the legacy WinForms implementation.
 
 Scope:
 
@@ -335,7 +354,7 @@ Scope:
 - Port remaining Settings/CRUD/editor pages and shared dialogs not already covered.
 - Complete shared error, confirmation, accessibility, focus, keyboard, resize, DPI, clipboard, and theme handling where applicable.
 - Decide which native dialogs and Windows-specific interactions should remain native versus become web-rendered based on usability and accessibility requirements.
-- Identify every remaining use of legacy Hive-owned presentation and classify it as deliberately retained, still awaiting migration, or safe for removal.
+- Document each legacy WinForms project/screen that remains preserved after cutover, including its build status, current limitations, and any retained host-integration use. Classify it as frozen fallback/reference, shared integration capability, or an explicitly authorized exception; do not propose removal as routine migration cleanup.
 
 Acceptance:
 
@@ -355,7 +374,7 @@ Scope:
 - Build affected .NET projects and the full solution using the finalized developer workflow.
 - Manually verify the actual app from Visual Studio, including light/dark/system themes, launch/reuse, resizing, keyboard focus, navigation, representative CRUD, provider/model operations, persistence setup, migration presentation, async events, error paths, and disposal/recomposition.
 - Verify publish/install on a clean or representative Windows environment with the supported WebView2 deployment model.
-- Remove obsolete Hive-owned UI implementations only after parity and all references have been demonstrated; retain UI/control contracts still required for WinForms business-app integration.
+- Preserve the old Hive-owned WinForms UI projects and their current implementation after parity. Do not delete or rewrite them as part of this migration. Confirm the React application is the primary launch/distribution path for new Hive UI use, document the WinForms fallback/reference status, and retain only explicitly authorized compatibility/security/build fixes for the legacy path.
 
 Acceptance:
 
@@ -445,7 +464,7 @@ The exact command names and whether Visual Studio/MSBuild automatically invokes 
 | Migration loses WinForms host-integration utility | Inventory consumers and retain host-facing WinForms types/contracts independently from Hive's own screen implementation. |
 | Memory/startup regression on modest machines | One bounded WebView by default, lazy modules, bundle analysis, cold-start/idle-memory measurement. |
 | Existing future roadmap work is accidentally pulled into migration | Port only implemented behavior; route unimplemented features to their owning phase and authorization. |
-| Old and new UIs are maintained indefinitely | A staged coexistence window per feature, explicit retirement gate, one long-term owner for each operation. |
+| Old and new UIs are maintained indefinitely | Treat existing WinForms behavior as a fixed parity baseline; after the parity gate, route all new Hive-owned UI features to React and keep WinForms on hold, allowing only separately authorized compatibility/security/build corrections. |
 
 ## 10. Effort estimate and confidence
 
@@ -461,11 +480,12 @@ The first slice is intentionally a go/no-go gate. After it exposes actual build,
 
 The user/repository owner must explicitly approve or revise these choices:
 
-1. Adopt React + TypeScript + WebView2 for Hive's own UI, with the existing WinForms shell retained initially.
-2. Confirm the migration boundary: Workspace first versus all currently implemented Hive-owned management screens.
+1. Adopt React + TypeScript + WebView2 as a separate frontend project/package and a separate desktop host/application beside the existing WinForms application; do not fold it into the current WinForms UI projects.
+2. Confirm the parity boundary against the exact currently implemented WinForms behavior; unimplemented features remain with their owning phases.
 3. Approve the proposed 12-slice sequence or revise it after the spike.
-4. Approve the bridge/security design and the frontend/project ownership decision.
-5. Decide how the migration is represented in the roadmap and how existing Phase 1.20/1.21 work is sequenced. This plan must not advance, replace, or close those phases by itself.
-6. Authorize Slice 1 through the repository's normal Active Work and phase/slice workflow.
+4. Approve the bridge/security design, host-composition ownership, and frontend/desktop-host project boundaries.
+5. Confirm the lifecycle policy: preserve current WinForms projects/source and keep them buildable; after verified parity, put the Hive-owned WinForms presentation on hold and route new UI development to React only, with separately authorized compatibility/security/build fixes as the exception.
+6. Decide how the migration is represented in the roadmap and how existing Phase 1.20/1.21 work is sequenced. This plan must not advance, replace, or close those phases by itself.
+7. Authorize Slice 1 through the repository's normal Active Work and phase/slice workflow.
 
 Until those decisions are made, this document is planning material only. It does not authorize coding, dependency additions, solution/project changes, migration of current screens, removal of WinForms presentation code, roadmap movement, or changes to Active Work.
