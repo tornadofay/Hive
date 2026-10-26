@@ -87,6 +87,9 @@ public sealed class HiveScrollHost : UserControl
         set => SetScrollPosition(HorizontalScrollPosition, value);
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool SizeContentToPreferred { get; set; }
+
     public event EventHandler? ScrollPositionChanged;
 
     public void Attach(Control content)
@@ -874,7 +877,9 @@ public sealed class HiveScrollHost : UserControl
                 Math.Max(0, viewportSize.Height));
 
         var viewportWidth = Math.Max(1, viewportSize.Width);
-        var currentSize = _content.Size;
+        var currentSize = SizeContentToPreferred
+            ? Size.Empty
+            : _content.Size;
 
         Size unboundedPreferred;
         Size viewportPreferred;

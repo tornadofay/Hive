@@ -520,8 +520,18 @@ internal sealed class WorkItemsView : UserControl, IHiveWorkspaceRefreshable
 
             foreach (var entry in activity.Value!)
             {
-                _activityList.Items.Add(
-                    $"{entry.OccurredAtUtc:yyyy-MM-dd HH:mm:ss}  ·  v{entry.Version}  ·  {entry.Message}");
+                var text = $"{entry.OccurredAtUtc:yyyy-MM-dd HH:mm:ss}  ·  {entry.EventType}  ·  v{entry.Version}";
+                if (entry.Status is not null)
+                {
+                    text += $"  ·  {entry.Status}";
+                }
+
+                if (!string.IsNullOrWhiteSpace(entry.Message))
+                {
+                    text += $"  ·  {entry.Message}";
+                }
+
+                _activityList.Items.Add(text);
             }
         }
         finally
@@ -530,6 +540,9 @@ internal sealed class WorkItemsView : UserControl, IHiveWorkspaceRefreshable
         }
 
         UpdateActivityEmptyState();
+        _executionLabel.Text = activity.Value!.Count == 0
+            ? "No execution/provider activity has been created for this WorkItem yet."
+            : $"Recorded WorkItem activity: {activity.Value!.Count} event(s). These events are WorkItem history, not execution/provider processing.";
         UpdateActionState();
     }
 
@@ -547,7 +560,7 @@ internal sealed class WorkItemsView : UserControl, IHiveWorkspaceRefreshable
             ? "No attachment"
             : $"{_selectedWorkItem.Attachment.FileName} · {FormatSize(_selectedWorkItem.Attachment.ContentLength)} · {_selectedWorkItem.Attachment.MediaType}";
         _executionLabel.Text =
-            "No execution/provider activity has been created for this WorkItem yet.";
+            "No execution/provider activity has been created for this WorkItem yet. Recorded events above are WorkItem history.";
     }
 
     private void ClearDetails()

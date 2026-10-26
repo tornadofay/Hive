@@ -21,8 +21,18 @@ internal static class DirectLlmConversationPresentation
             ? $"{summary.Status} · {code}"
             : summary.Status.ToString();
 
-        return $"{summary.Title}{Environment.NewLine}" +
-               $"Status: {status} · Messages: {summary.MessageCount} · " +
-               $"Last target: {lastTarget} · Active request: {correlation}";
+        var lines = new List<string>
+        {
+            summary.Title,
+            $"Status: {status} · Messages: {summary.MessageCount}",
+            $"Execution target: {lastTarget} · Active request: {correlation}"
+        };
+
+        if (summary.LastErrorMessage is { Length: > 0 } message)
+        {
+            lines.Add($"Failure detail: {message}");
+        }
+
+        return string.Join(Environment.NewLine, lines);
     }
 }

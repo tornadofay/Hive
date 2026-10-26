@@ -83,6 +83,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         {
             Dock = DockStyle.Fill,
             Margin = Padding.Empty,
+            SizeContentToPreferred = true,
             AccessibleName = "Conversation transcript scroll area"
         };
         _transcriptScrollHost.Attach(_transcriptPanel);
@@ -691,7 +692,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        conversationPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
+        conversationPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
         conversationPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         conversationPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 104));
         conversationPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
