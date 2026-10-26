@@ -605,7 +605,7 @@ internal sealed class DirectLlmConversationView : UserControl, IHiveWorkspaceRef
         {
             Dock = DockStyle.Fill,
             AutoEllipsis = true,
-            Font = new Font(_themeManager.Theme.Typography.FontFamily, 11.5f, FontStyle.Bold),
+            Font = new Font(_themeManager.Theme.Typography.FontFamily, _themeManager.Theme.Typography.CardTitleSize, FontStyle.Bold),
             Text = "Direct LLM",
             TextAlign = ContentAlignment.MiddleLeft,
             AccessibleRole = AccessibleRole.StaticText

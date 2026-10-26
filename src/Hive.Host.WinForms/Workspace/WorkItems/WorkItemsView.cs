@@ -18,7 +18,7 @@ internal sealed class WorkItemsView : UserControl, IHiveWorkspaceRefreshable
     private readonly Label _attachmentLabel;
     private readonly Label _executionLabel;
     private readonly ListBox _activityList;
-    private readonly Label _activityEmptyLabel;
+    private readonly HiveEmptyState _activityEmptyState;
     private readonly HiveButton _refreshButton;
     private readonly HiveButton _addImageButton;
     private readonly HiveButton _requestApprovalButton;
@@ -85,13 +85,10 @@ internal sealed class WorkItemsView : UserControl, IHiveWorkspaceRefreshable
             AccessibleRole = AccessibleRole.List
         };
 
-        _activityEmptyLabel = new Label
+        _activityEmptyState = new HiveEmptyState(
+            "Select a WorkItem to view activity.")
         {
             Dock = DockStyle.Fill,
-            AutoSize = false,
-            TextAlign = ContentAlignment.MiddleCenter,
-            Padding = new Padding(16),
-            Text = "Select a WorkItem to view activity.",
             AccessibleName = "Workspace activity state",
             AccessibleRole = AccessibleRole.StatusBar
         };
@@ -475,8 +472,8 @@ internal sealed class WorkItemsView : UserControl, IHiveWorkspaceRefreshable
     {
         _statusLabel.Text = workItem.Status.ToString();
         ApplyStatusVisual();
-        _activityEmptyLabel.Text = "Loading activity...";
-        _activityEmptyLabel.Visible = true;
+        _activityEmptyState.Title = "Loading activity...";
+        _activityEmptyState.Visible = true;
         _activityList.Visible = false;
         _attachmentLabel.Text = workItem.Attachment is null
             ? "No attachment"
@@ -496,8 +493,8 @@ internal sealed class WorkItemsView : UserControl, IHiveWorkspaceRefreshable
         {
             if (!IsDisposed && !Disposing && _selectedWorkItem?.Id == workItem.Id)
             {
-                _activityEmptyLabel.Text = "Activity could not be loaded.";
-                _activityEmptyLabel.Visible = true;
+                _activityEmptyState.Title = "Activity could not be loaded.";
+                _activityEmptyState.Visible = true;
                 _activityList.Visible = false;
                 ShowError(activity.Error!);
             }
@@ -577,28 +574,27 @@ internal sealed class WorkItemsView : UserControl, IHiveWorkspaceRefreshable
     {
         if (_selectedWorkItem is null)
         {
-            _activityEmptyLabel.Text = "Select a WorkItem to view activity.";
-            _activityEmptyLabel.Visible = true;
+            _activityEmptyState.Title = "Select a WorkItem to view activity.";
+            _activityEmptyState.Visible = true;
             _activityList.Visible = false;
             return;
         }
 
         if (_activityList.Items.Count == 0)
         {
-            _activityEmptyLabel.Text = "No activity recorded for this WorkItem yet.";
-            _activityEmptyLabel.Visible = true;
+            _activityEmptyState.Title = "No activity recorded for this WorkItem yet.";
+            _activityEmptyState.Visible = true;
             _activityList.Visible = false;
             return;
         }
 
-        _activityEmptyLabel.Visible = false;
+        _activityEmptyState.Visible = false;
         _activityList.Visible = true;
     }
 
     private void ApplyActivityEmptyStateVisual()
     {
-        _activityEmptyLabel.ForeColor = _themeManager.Theme.Palette.MutedText;
-        _activityEmptyLabel.BackColor = _themeManager.Theme.Palette.Surface;
+        _activityEmptyState.ApplyTheme(_themeManager.Theme);
     }
 
     private void ApplyStatusVisual()
@@ -886,7 +882,7 @@ internal sealed class WorkItemsView : UserControl, IHiveWorkspaceRefreshable
             Padding = new Padding(0, 8, 0, 0)
         };
         activityPanel.Controls.Add(_activityList);
-        activityPanel.Controls.Add(_activityEmptyLabel);
+        activityPanel.Controls.Add(_activityEmptyState);
         activityPanel.Controls.Add(activityHeader);
 
         root.Controls.Add(header, 0, 0);

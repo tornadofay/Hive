@@ -6,6 +6,27 @@ namespace Hive.Host.WinForms.UI.Controls;
 
 public sealed class HiveEmptyState : Panel
 {
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public string Title
+    {
+        get => _titleLabel.Text;
+        set
+        {
+            _titleLabel.Text = value ?? string.Empty;
+        }
+    }
+
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public string? Description
+    {
+        get => _descriptionLabel.Visible ? _descriptionLabel.Text : null;
+        set
+        {
+            _descriptionLabel.Text = value ?? string.Empty;
+            _descriptionLabel.Visible = !string.IsNullOrWhiteSpace(value);
+        }
+    }
+
     private readonly Label _titleLabel;
     private readonly Label _descriptionLabel;
     private Font? _titleFont;
@@ -60,10 +81,7 @@ public sealed class HiveEmptyState : Panel
             Padding = Padding.Empty
         };
         center.Controls.Add(_titleLabel);
-        if (_descriptionLabel.Visible)
-        {
-            center.Controls.Add(_descriptionLabel);
-        }
+        center.Controls.Add(_descriptionLabel);
 
         host.Controls.Add(new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent }, 0, 0);
         host.Controls.Add(center, 0, 1);

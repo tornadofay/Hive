@@ -13,7 +13,7 @@ Last updated: 2026-10-26
 
 ## Latest verification
 
-Phase 1.20 Slice 3 has developer-reported verification: `Hive.Tests` **818/818** passing (0 failed, 0 skipped), builds with 0 warnings/errors, and the Workspace Example reported working as intended. [Closure record](verification/phase-1/1.20-slice-3-runtime-context-workitem-visibility-closure-2026-10-26.md)
+Phase 1.20 Slice 3 has developer-reported verification: `Hive.Tests` **818/818** passing (0 failed, 0 skipped), builds with 0 warnings/errors, and the Workspace Example reported working as intended. [Closure record](verification/phase-1/1.20-slice-3-runtime-context-workitem-visibility-closure-2026-10-26.md) Maintenance — Host/UI (deeper UI normalization) closed on 2026-10-26 with the same 818/818 test result and 0-warning/error builds. [Closure record](verification/maintenance/host-ui-deeper-normalization-2026-10-26.md)
 
 ## Deferred work
 

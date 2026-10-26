@@ -51,6 +51,62 @@ internal sealed class HiveNativeScrollAdapter
                 enabled: false);
         }
 
+        // A WinForms TextBox does not always rebuild its native scroll range
+        // when Text is assigned after the handle has been created. Reapply the
+        // configured scroll bars once when the native range looks degenerate so
+        // HiveScrollHost can mirror the real extent instead of a stale one-line
+        // range.
+        if (control is TextBoxBase textBoxBase &&
+            textBoxBase.TextLength > 0)
+        {
+            var preliminaryInfo = new ScrollInfo
+            {
+                cbSize = Marshal.SizeOf<ScrollInfo>(),
+                fMask = SiAll
+            };
+
+            var preliminaryHasInfo = GetScrollInfo(
+                control.Handle,
+                orientation == Orientation.Vertical ? SbVertical : SbHorizontal,
+                ref preliminaryInfo);
+
+            if (!preliminaryHasInfo ||
+                preliminaryInfo.nMax <= preliminaryInfo.nMin + 1 ||
+                preliminaryInfo.nPage <= 1)
+            {
+                if (control is TextBox textBox)
+                {
+                    var configured = orientation == Orientation.Vertical
+                        ? textBox.ScrollBars == ScrollBars.Vertical ||
+                          textBox.ScrollBars == ScrollBars.Both
+                        : textBox.ScrollBars == ScrollBars.Horizontal ||
+                          textBox.ScrollBars == ScrollBars.Both;
+
+                    if (configured)
+                    {
+                        var bars = textBox.ScrollBars;
+                        textBox.ScrollBars = ScrollBars.None;
+                        textBox.ScrollBars = bars;
+                    }
+                }
+                else if (control is RichTextBox richTextBox)
+                {
+                    var configured = orientation == Orientation.Vertical
+                        ? richTextBox.ScrollBars == RichTextBoxScrollBars.Vertical ||
+                          richTextBox.ScrollBars == RichTextBoxScrollBars.Both
+                        : richTextBox.ScrollBars == RichTextBoxScrollBars.Horizontal ||
+                          richTextBox.ScrollBars == RichTextBoxScrollBars.Both;
+
+                    if (configured)
+                    {
+                        var bars = richTextBox.ScrollBars;
+                        richTextBox.ScrollBars = RichTextBoxScrollBars.None;
+                        richTextBox.ScrollBars = bars;
+                    }
+                }
+            }
+        }
+
         var bar = orientation == Orientation.Vertical
             ? SbVertical
             : SbHorizontal;
