@@ -62,7 +62,7 @@ The proposed architecture is **two parallel application paths sharing Hive's exi
 Conceptual ownership:
 
 1. **Separate React + TypeScript frontend project/package** — owns Hive's new Workspace and management-screen presentation, frontend build/test setup, components, client-side interaction state, and static production assets. It has its own package manifest, dependency lockfile, TypeScript configuration, and frontend tests.
-2. **Separate WebView2 desktop host project** — a thin .NET 10 Windows executable, preferably a WinForms host that embeds WebView2 in the body of the public `HiveForm` shell. It owns the window/WebView lifecycle, approved native capabilities, local asset loading, and bridge. The existing `HiveWindowHeader` is internal; do not expose or instantiate it across project boundaries directly. Instead, if the EN/AR header control requires a change, add a small, opt-in header action/event through the existing `HiveForm` API (or document a technically justified alternative in Slice 1). Existing WinForms forms must keep their current header buttons/behavior unless they explicitly opt into the new action. Decide the exact project name and host composition dependency in Slice 1.
+2. **Separate WebView2 desktop host project** — a thin .NET 10 Windows executable, preferably a WinForms host that embeds WebView2 in the body of the public `HiveForm` shell. It owns the window/WebView lifecycle, approved native capabilities, local asset loading, and bridge. The existing `HiveWindowHeader` is internal; do not expose or instantiate it across project boundaries directly. Instead, if the EN/AR header control requires a change, add a small, opt-in header action/event through the existing `HiveForm` API (or document a technically justified alternative in Slice 1). Existing WinForms forms must keep their current header buttons/behavior unless they explicitly opt into the new action. The neutral composition project is `Hive.Host.Core`; `Hive.Host.WinForms` retains DPAPI and the WinForms adapter only, and the WebView2 host must not reference WinForms.
 3. **Explicit C# bridge** — accepts only versioned, allowlisted commands and sends typed results/events; it is not a second service/business-logic layer.
 4. **Existing Hive application and Management services** — remain authoritative for resource operations, policy, validation, authorization, conversation/work state, provider selection, and consequential actions.
 5. **Existing persistence/provider/agent/coordination layers** — remain behind their current ownership boundaries. The frontend never connects directly to databases, provider endpoints, or secret storage.
@@ -184,12 +184,12 @@ Scope:
 
 - Create a standalone React + TypeScript frontend project/package with its own package manifest, lockfile, TypeScript configuration, and frontend checks.
 - Create a separate .NET 10 Windows executable host project, preferably a WinForms `WinExe` that embeds WebView2 in the public `HiveForm` shell. Do not turn the existing `Hive.Host.WinForms` library into an executable or repurpose `Hive.Example.WinForms`.
-- Inspect the current host-composition ownership and choose between reusing `Hive.Host.WinForms` without launching its legacy screens or extracting only the minimum shared composition needed. A project-level reference to `Hive.Host.WinForms.UI` may be required for the native shell; document the real dependency graph rather than claiming there is no reference to the existing UI assembly. Do not duplicate the Management/service graph.
+- Move shared host composition into `Hive.Host.Core`; keep DPAPI and the WinForms adapter in `Hive.Host.WinForms`; prove the WebView2 host has no reference to WinForms. Reuse the existing Management/service graph without duplication. A project-level reference to `Hive.Host.WinForms.UI` may still be required for the native shell; document the real dependency graph rather than claiming there is no reference to the existing UI assembly.
 - Host local React assets in WebView2 through a controlled origin.
 - Demonstrate one UI-to-C# command and one C#-to-UI event using a versioned message envelope.
 - Verify initialization/disposal, failure messaging, fixed-origin/navigation handling, and one asynchronous sample request.
 - Prove all existing WinForms projects remain buildable and preserve their current user-visible behavior; launch the existing `Hive.Example.WinForms` host and the new React/WebView2 executable independently. No existing projects or screens are repurposed or removed. If the shared header needs an extension, it must be additive and opt-in, and existing forms must retain the current header behavior by default.
-- Confirm the native header route through the public `HiveForm` shell. The internal `HiveWindowHeader` must remain internal; any EN/AR header action must be opt-in for the new host and leave existing WinForms forms unchanged by default.
+- Confirm the native header route through the public `HiveForm` shell. Use `HiveForm.HeaderMode` (`Default` / `None`) as the opt-in control; `Default` preserves existing behavior. React renders its own title bar; a system title bar is acceptable. The internal `HiveWindowHeader` must remain internal; any EN/AR header action must be opt-in for the new host and leave existing WinForms forms unchanged by default.
 - Decide and document how the new React/WebView2 Workspace provides the existing embeddable Workspace capability as well as standalone/modeless launch/reuse. A standalone executable alone is not evidence of embedding parity.
 - Choose the localization/resource approach and decide where the user's locale preference is persisted. Define the versioned host-to-frontend locale-change message and initial locale bootstrap behavior.
 - Prove a small end-to-end EN/AR language switch in the spike, including the correct HTML `lang`/`dir` attributes, a structured-error translation/fallback example, and an RTL sample with Arabic font glyphs, while keeping the app shell/window controls native.
@@ -516,12 +516,25 @@ The first slice is intentionally a go/no-go gate. After it exposes actual build,
 
 ## 11. Decisions required before implementation authorization
 
+### Finalized by repository owner (2026-10-27)
+
+These planning decisions are now recorded. They refine this plan and the later architecture/Active Work authorization; they do not by themselves authorize implementation, coding, dependency additions, project changes, or Active Work movement.
+
+- Neutral composition project name: `Hive.Host.Core` (not `Hive.Hosting`).
+- `Hive.Host.Core` owns composition. `Hive.Host.WinForms` retains DPAPI and the WinForms adapter only. The WebView2 host must not reference WinForms.
+- Required semantic host capability for embedding: `IHostBusinessCapability` / `IHostRecordCapability` (or equivalently named neutral contracts) using record CRUD plus `Result<T>` / `ResourceAccessContext`. Management operations remain the authorization boundary; WinForms UI discovery remains the legacy fallback.
+- First capability version includes record CRUD and business operations through the existing `HiveBusinessOperationComposition`; it is not record-CRUD-only.
+- Localization structure is implemented now, with English-only initial content; Arabic translation/localization completion is post-parity.
+- Secrets are collected through web password input, stored host-side, and returned only as references. Errors are sanitized with stable codes/correlation IDs; secrets are never logged.
+- `HiveForm.HeaderMode` is opt-in (`Default` / `None`); `Default` preserves existing behavior. React renders its own title bar; a system title bar is acceptable.
+- Migration is product priority, but the first implementation boundary is bounded Slice 1: composition extraction plus dependency proof. No parity dates are set.
+
 The user/repository owner must explicitly approve or revise these choices:
 
 1. Adopt React + TypeScript + WebView2 as a separate frontend project/package and a separate desktop host/application beside the existing WinForms application; do not fold it into the current WinForms UI projects.
 2. Confirm the parity boundary against the exact currently implemented WinForms behavior; unimplemented features remain with their owning phases.
 3. Approve the proposed 12-slice sequence or revise it after the spike.
-4. Approve the bridge/security design, host-composition ownership, frontend/desktop-host project boundaries, localization resource strategy, locale preference ownership, and the native-header reuse decision (including the EN/AR toggle).
+4. Approve the bridge/security design, frontend/desktop-host project boundaries, localization resource strategy, locale preference ownership, and the native-header reuse decision (including the EN/AR toggle). Host-composition ownership is now recorded as `Hive.Host.Core` per the finalized decisions above.
 5. Confirm the lifecycle policy: preserve current WinForms projects/source and keep them buildable; after verified parity, put the Hive-owned WinForms presentation on hold and route new UI development to React only, with separately authorized compatibility/security/build fixes as the exception.
 6. Approve the architecture-alignment decision against the current Standalone Workbench target and the recommended sequencing for unstarted Phase 1.20 Slices 3–4 / Phase 1.21 UI work. Do not close or advance those phases through this plan; reconcile the architecture and roadmap before authorizing Slice 2.
 7. Authorize Slice 1 through the repository's normal Active Work and phase/slice workflow.
