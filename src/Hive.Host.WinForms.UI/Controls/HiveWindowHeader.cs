@@ -455,9 +455,9 @@ internal sealed class HiveWindowHeader : Control
 
         if (disposing)
         {
-            _titleFont.Dispose();
-            _subtitleFont.Dispose();
-            _buttonFont.Dispose();
+            _titleFont?.Dispose();
+            _subtitleFont?.Dispose();
+            _buttonFont?.Dispose();
             _borderPen?.Dispose();
             _backgroundBrush?.Dispose();
             _buttonHoverBrush?.Dispose();

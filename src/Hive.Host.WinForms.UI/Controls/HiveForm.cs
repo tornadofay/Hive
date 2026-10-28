@@ -186,12 +186,11 @@ public abstract class HiveForm : Form
             Region = null;
             _windowRegion?.Dispose();
             _windowRegion = null;
+
+            _formFont?.Dispose();
         }
 
         base.Dispose(disposing);
-
-        if (disposing)
-            _formFont.Dispose();
     }
 
     private void ApplyTheme()

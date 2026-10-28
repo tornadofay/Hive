@@ -520,10 +520,10 @@ public static class HiveMessageBox
             {
                 _windowPath?.Dispose();
                 _windowBorderPen?.Dispose();
-                _titleFont.Dispose();
-                _messageFont.Dispose();
-                _detailsFont.Dispose();
-                _buttonFont.Dispose();
+                _titleFont?.Dispose();
+                _messageFont?.Dispose();
+                _detailsFont?.Dispose();
+                _buttonFont?.Dispose();
             }
         }
 
