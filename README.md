@@ -204,7 +204,7 @@ https://learn.microsoft.com/en-us/agent-framework/workflows/
 
 ## License
 
-Hive is released under the [MIT License](LICENSE), allowing free use, modification, distribution, and commercial use subject to the license terms.
+Hive is released under the [Apache License 2.0](LICENSE), allowing free use, modification, distribution, and commercial use subject to the license terms.
 
 Copyright (c) 2026 Hani.
 
